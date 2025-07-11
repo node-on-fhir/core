@@ -1,264 +1,486 @@
-// packages/hipaa-compliance/client/AuditLogPage.jsx
+// /packages/hipaa-compliance/client/AuditLogPage.jsx
 
 import React, { useState, useEffect } from 'react';
-import { useTracker } from 'meteor/react-meteor-data';
-import { Meteor } from 'meteor/meteor';
-import { Session } from 'meteor/session';
-import { get } from 'lodash';
-
 import { 
-  Card,
-  CardHeader,
-  CardContent,
-  Container,
-  Grid,
-  Typography,
-  Button,
-  Tabs,
-  Tab,
   Box,
+  Paper,
+  Typography,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  TablePagination,
+  TextField,
+  Button,
   IconButton,
-  Tooltip
+  Drawer,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Chip,
+  Stack,
+  Grid,
+  Card,
+  CardContent,
+  Divider,
+  Alert,
+  CircularProgress,
+  Tooltip,
+  InputAdornment
 } from '@mui/material';
-
 import { 
-  Refresh as RefreshIcon,
-  GetApp as ExportIcon,
-  Assessment as ReportIcon,
-  Search as SearchIcon
+  FilterList,
+  Download,
+  Search,
+  ChevronLeft,
+  Assessment,
+  Person,
+  Event,
+  Description,
+  Warning,
+  CheckCircle,
+  Error,
+  Info
 } from '@mui/icons-material';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterMoment } from '@mui/x-date-pickers/AdapterMoment';
+import moment from 'moment';
+import { get } from 'lodash';
+import { Meteor } from 'meteor/meteor';
+import { useTracker } from 'meteor/react-meteor-data';
+import { Session } from 'meteor/session';
+import { AuditEvents } from '/imports/lib/schemas/SimpleSchemas/AuditEvents';
 
-// Removed dependency on hl7-fhir-data-infrastructure
-import { HipaaAuditLog } from '../lib/Collections';
-import AuditLogTable from './AuditLogTable';
-import AuditLogFilters from './AuditLogFilters';
+const eventTypeColors = {
+  'CREATE': 'success',
+  'READ': 'info',
+  'UPDATE': 'warning',
+  'DELETE': 'error',
+  'LOGIN': 'primary',
+  'LOGOUT': 'secondary',
+  'EXECUTE': 'default'
+};
 
-// Dynamic components from global scope
-let DynamicSpacer;
+const eventTypeIcons = {
+  'CREATE': <CheckCircle />,
+  'READ': <Info />,
+  'UPDATE': <Warning />,
+  'DELETE': <Error />,
+  'LOGIN': <Person />,
+  'LOGOUT': <Person />,
+  'EXECUTE': <Description />
+};
 
-Meteor.startup(function(){
-  DynamicSpacer = Meteor.DynamicSpacer;
-});
+export default function AuditLogPage() {
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(25);
+  const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  
+  // Filter states
+  const [searchTerm, setSearchTerm] = useState('');
+  const [startDate, setStartDate] = useState(moment().subtract(30, 'days'));
+  const [endDate, setEndDate] = useState(moment());
+  const [selectedUser, setSelectedUser] = useState('');
+  const [selectedEventType, setSelectedEventType] = useState('');
+  const [selectedOutcome, setSelectedOutcome] = useState('');
 
-export default function AuditLogPage(props) {
-  // State management
-  const [selectedTab, setSelectedTab] = useState(0);
-  const [filters, setFilters] = useState({
-    limit: 100,
-    eventType: '',
-    userId: '',
-    patientId: '',
-    collectionName: '',
-    startDate: null,
-    endDate: null,
-    searchText: ''
-  });
-  const [refreshKey, setRefreshKey] = useState(0);
-
-  // Subscribe to audit log data
-  const { auditEvents, isLoading, stats } = useTracker(() => {
-    const subscription = Meteor.subscribe('hipaa.auditLog', filters);
-    const statsSubscription = Meteor.subscribe('hipaa.auditStatistics');
+  // Subscribe to audit events
+  const { auditEvents, totalCount, isLoading } = useTracker(() => {
+    const subscription = Meteor.subscribe('auditevents');
+    
+    const query = {};
+    
+    // Apply filters
+    if (searchTerm) {
+      query.$or = [
+        { 'agent.name': { $regex: searchTerm, $options: 'i' } },
+        { 'entity.reference': { $regex: searchTerm, $options: 'i' } },
+        { 'entity.display': { $regex: searchTerm, $options: 'i' } }
+      ];
+    }
+    
+    if (startDate && endDate) {
+      query.recorded = {
+        $gte: startDate.toDate(),
+        $lte: endDate.toDate()
+      };
+    }
+    
+    if (selectedUser) {
+      query['agent.reference'] = selectedUser;
+    }
+    
+    if (selectedEventType) {
+      query['action'] = selectedEventType;
+    }
+    
+    if (selectedOutcome) {
+      query['outcome'] = selectedOutcome;
+    }
+    
+    const events = AuditEvents.find(query, {
+      sort: { recorded: -1 },
+      limit: rowsPerPage,
+      skip: page * rowsPerPage
+    }).fetch();
+    
+    const count = AuditEvents.find(query).count();
     
     return {
-      auditEvents: HipaaAuditLog.find({}, { 
-        sort: { eventDate: -1 } 
-      }).fetch(),
-      isLoading: !subscription.ready(),
-      stats: Session.get('HipaaAuditStatistics')
+      auditEvents: events,
+      totalCount: count,
+      isLoading: !subscription.ready()
     };
-  }, [filters, refreshKey]);
+  }, [page, rowsPerPage, searchTerm, startDate, endDate, selectedUser, selectedEventType, selectedOutcome]);
 
-  // Handle tab change
-  const handleTabChange = (event, newValue) => {
-    setSelectedTab(newValue);
+  // Get unique users for filter dropdown
+  const uniqueUsers = useTracker(() => {
+    const users = AuditEvents.find({}, {
+      fields: { 'agent.name': 1, 'agent.reference': 1 }
+    }).fetch();
+    
+    const uniqueMap = new Map();
+    users.forEach(event => {
+      const name = get(event, 'agent.name', 'Unknown');
+      const reference = get(event, 'agent.reference', '');
+      if (reference) {
+        uniqueMap.set(reference, name);
+      }
+    });
+    
+    return Array.from(uniqueMap, ([value, label]) => ({ value, label }));
+  }, []);
+
+  const handleChangePage = (event, newPage) => {
+    setPage(newPage);
   };
 
-  // Handle filter changes
-  const handleFilterChange = (newFilters) => {
-    setFilters({ ...filters, ...newFilters });
+  const handleChangeRowsPerPage = (event) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
   };
 
-  // Handle refresh
-  const handleRefresh = () => {
-    setRefreshKey(prev => prev + 1);
+  const handleExportCsv = () => {
+    setLoading(true);
+    Meteor.call('hipaa.auditEvents.exportCsv', {
+      startDate: startDate.toDate(),
+      endDate: endDate.toDate(),
+      userId: selectedUser,
+      eventType: selectedEventType
+    }, (error, result) => {
+      setLoading(false);
+      if (error) {
+        console.error('Export failed:', error);
+      } else {
+        // Create download link
+        const blob = new Blob([result], { type: 'text/csv' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `audit-log-${moment().format('YYYY-MM-DD')}.csv`;
+        a.click();
+      }
+    });
   };
 
-  // Handle export
-  const handleExport = async () => {
-    try {
-      const exportOptions = {
-        format: 'csv',
-        dateRange: {
-          start: filters.startDate || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
-          end: filters.endDate || new Date()
-        },
-        limit: 1000
-      };
-
-      const result = await Meteor.callAsync('hipaa.exportAuditTrail', exportOptions);
-      
-      // Create download link
-      const blob = new Blob([result.data], { type: 'text/csv' });
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `hipaa-audit-log-${new Date().toISOString()}.csv`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-    } catch (error) {
-      console.error('Export failed:', error);
-      alert('Failed to export audit log: ' + error.message);
-    }
+  const getEventIcon = (action) => {
+    return eventTypeIcons[action] || <Event />;
   };
 
-  // Handle generate report
-  const handleGenerateReport = async () => {
-    try {
-      const reportFilters = {
-        startDate: filters.startDate || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
-        endDate: filters.endDate || new Date(),
-        eventTypes: filters.eventType ? [filters.eventType] : undefined,
-        userId: filters.userId || undefined,
-        patientId: filters.patientId || undefined,
-        collectionName: filters.collectionName || undefined
-      };
-
-      const report = await Meteor.callAsync('hipaa.generateReport', reportFilters);
-      
-      // Open report in new window
-      const reportWindow = window.open('', '_blank');
-      reportWindow.document.write(`
-        <html>
-          <head>
-            <title>HIPAA Compliance Report</title>
-            <style>
-              body { font-family: Arial, sans-serif; padding: 20px; }
-              h1 { color: #333; }
-              table { border-collapse: collapse; width: 100%; margin: 20px 0; }
-              th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-              th { background-color: #f2f2f2; }
-              .stats { margin: 20px 0; }
-              .stat-item { margin: 10px 0; }
-            </style>
-          </head>
-          <body>
-            <h1>HIPAA Compliance Report</h1>
-            <p>Generated: ${new Date(report.generatedAt).toLocaleString()}</p>
-            <p>Generated By: ${report.generatedBy}</p>
-            
-            <div class="stats">
-              <h2>Summary Statistics</h2>
-              <div class="stat-item">Total Events: ${report.totalEvents}</div>
-              
-              <h3>Events by Type</h3>
-              <table>
-                <tr><th>Event Type</th><th>Count</th></tr>
-                ${Object.entries(report.eventsByType).map(([type, count]) => 
-                  `<tr><td>${type}</td><td>${count}</td></tr>`
-                ).join('')}
-              </table>
-              
-              <h3>Events by User</h3>
-              <table>
-                <tr><th>User</th><th>Count</th></tr>
-                ${Object.entries(report.eventsByUser).map(([user, count]) => 
-                  `<tr><td>${user}</td><td>${count}</td></tr>`
-                ).join('')}
-              </table>
-            </div>
-          </body>
-        </html>
-      `);
-      reportWindow.document.close();
-    } catch (error) {
-      console.error('Report generation failed:', error);
-      alert('Failed to generate report: ' + error.message);
-    }
-  };
-
-  // Render loading state
-  if (isLoading) {
+  const getEventChip = (action) => {
+    const color = eventTypeColors[action] || 'default';
     return (
-      <div id="auditLogPage" style={{ paddingLeft: 20, paddingRight: 20 }}>
-        <Container maxWidth="xl">
-          <Typography>Loading audit logs...</Typography>
-        </Container>
-      </div>
+      <Chip
+        icon={getEventIcon(action)}
+        label={action}
+        color={color}
+        size="small"
+      />
     );
-  }
+  };
+
+  const getOutcomeChip = (outcome) => {
+    const outcomeValue = get(outcome, 'code', '0');
+    const color = outcomeValue === '0' ? 'success' : 'error';
+    const label = outcomeValue === '0' ? 'Success' : 'Failed';
+    return <Chip label={label} color={color} size="small" variant="outlined" />;
+  };
 
   return (
-    <div id="auditLogPage" style={{ paddingLeft: 20, paddingRight: 20 }}>
-      <Container maxWidth="xl">
-        <Card>
-          <CardHeader 
-            title="HIPAA Audit Log"
-            subheader={`${auditEvents.length} events loaded`}
-            action={
-              <Box>
-                <Tooltip title="Refresh">
-                  <IconButton onClick={handleRefresh}>
-                    <RefreshIcon />
-                  </IconButton>
-                </Tooltip>
-                <Tooltip title="Export CSV">
-                  <IconButton onClick={handleExport}>
-                    <ExportIcon />
-                  </IconButton>
-                </Tooltip>
-                <Tooltip title="Generate Report">
-                  <IconButton onClick={handleGenerateReport}>
-                    <ReportIcon />
-                  </IconButton>
-                </Tooltip>
-              </Box>
-            }
-          />
-          <CardContent>
-            <Tabs value={selectedTab} onChange={handleTabChange}>
-              <Tab label="Audit Events" />
-              <Tab label="Filters" />
-              <Tab label="Statistics" />
-            </Tabs>
+    <LocalizationProvider dateAdapter={AdapterMoment}>
+      <Box sx={{ p: 3 }}>
+        {/* Header */}
+        <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Typography variant="h4" component="h1">
+            HIPAA Audit Log
+          </Typography>
+          <Stack direction="row" spacing={2}>
+            <Button
+              variant="outlined"
+              startIcon={<FilterList />}
+              onClick={() => setFilterDrawerOpen(true)}
+            >
+              Filters
+            </Button>
+            <Button
+              variant="contained"
+              startIcon={<Download />}
+              onClick={handleExportCsv}
+              disabled={loading}
+            >
+              Export CSV
+            </Button>
+          </Stack>
+        </Box>
 
-            <Box sx={{ mt: 2 }}>
-              {selectedTab === 0 && (
-                <AuditLogTable 
-                  auditEvents={auditEvents}
-                  onRowClick={(event) => {
-                    console.log('Audit event clicked:', event);
-                  }}
-                />
-              )}
-              
-              {selectedTab === 1 && (
-                <AuditLogFilters
-                  filters={filters}
-                  onFilterChange={handleFilterChange}
-                />
-              )}
-              
-              {selectedTab === 2 && stats && (
-                <Box>
-                  <Typography variant="h6">Audit Statistics</Typography>
-                  <Typography>Total Events: {stats.totalEvents}</Typography>
-                  <Typography variant="subtitle1" sx={{ mt: 2 }}>Events by Type:</Typography>
-                  {Object.entries(stats.eventTypes || {}).map(([type, count]) => (
-                    <Typography key={type} variant="body2">
-                      {type}: {count}
-                    </Typography>
-                  ))}
-                </Box>
-              )}
+        {/* Summary Cards */}
+        <Grid container spacing={3} sx={{ mb: 3 }}>
+          <Grid item xs={12} sm={6} md={3}>
+            <Card>
+              <CardContent>
+                <Typography color="textSecondary" gutterBottom>
+                  Total Events
+                </Typography>
+                <Typography variant="h4">
+                  {totalCount}
+                </Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+          <Grid item xs={12} sm={6} md={3}>
+            <Card>
+              <CardContent>
+                <Typography color="textSecondary" gutterBottom>
+                  Date Range
+                </Typography>
+                <Typography variant="body2">
+                  {startDate.format('MMM DD')} - {endDate.format('MMM DD, YYYY')}
+                </Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+          <Grid item xs={12} sm={6} md={3}>
+            <Card>
+              <CardContent>
+                <Typography color="textSecondary" gutterBottom>
+                  Active Filters
+                </Typography>
+                <Typography variant="h4">
+                  {[selectedUser, selectedEventType, selectedOutcome, searchTerm].filter(Boolean).length}
+                </Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+          <Grid item xs={12} sm={6} md={3}>
+            <Card>
+              <CardContent>
+                <Typography color="textSecondary" gutterBottom>
+                  Recent Activity
+                </Typography>
+                <Typography variant="body2" color="success.main">
+                  Last event: {auditEvents[0] ? moment(auditEvents[0].recorded).fromNow() : 'N/A'}
+                </Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+        </Grid>
+
+        {/* Search Bar */}
+        <Paper sx={{ p: 2, mb: 3 }}>
+          <TextField
+            fullWidth
+            variant="outlined"
+            placeholder="Search by user name, patient ID, or resource..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <Search />
+                </InputAdornment>
+              ),
+            }}
+          />
+        </Paper>
+
+        {/* Data Table */}
+        <Paper>
+          {isLoading ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
+              <CircularProgress />
             </Box>
-          </CardContent>
-        </Card>
-        
-        <DynamicSpacer />
-      </Container>
-    </div>
+          ) : (
+            <>
+              <TableContainer>
+                <Table>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Timestamp</TableCell>
+                      <TableCell>Event Type</TableCell>
+                      <TableCell>User</TableCell>
+                      <TableCell>Patient/Resource</TableCell>
+                      <TableCell>Action Details</TableCell>
+                      <TableCell>Outcome</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {auditEvents.map((event) => (
+                      <TableRow key={event._id} hover>
+                        <TableCell>
+                          <Typography variant="body2">
+                            {moment(event.recorded).format('MMM DD, YYYY')}
+                          </Typography>
+                          <Typography variant="caption" color="textSecondary">
+                            {moment(event.recorded).format('h:mm:ss A')}
+                          </Typography>
+                        </TableCell>
+                        <TableCell>
+                          {getEventChip(event.action)}
+                        </TableCell>
+                        <TableCell>
+                          <Typography variant="body2">
+                            {get(event, 'agent[0].name', 'Unknown User')}
+                          </Typography>
+                          <Typography variant="caption" color="textSecondary">
+                            {get(event, 'agent[0].requestor.identifier.value', '')}
+                          </Typography>
+                        </TableCell>
+                        <TableCell>
+                          <Typography variant="body2">
+                            {get(event, 'entity[0].what.display', get(event, 'entity[0].what.reference', 'N/A'))}
+                          </Typography>
+                          <Typography variant="caption" color="textSecondary">
+                            {get(event, 'entity[0].type.display', '')}
+                          </Typography>
+                        </TableCell>
+                        <TableCell>
+                          <Typography variant="body2" sx={{ maxWidth: 300 }} noWrap>
+                            {get(event, 'outcomeDesc', get(event, 'type.display', '-'))}
+                          </Typography>
+                        </TableCell>
+                        <TableCell>
+                          {getOutcomeChip(event.outcome)}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+              <TablePagination
+                component="div"
+                count={totalCount}
+                page={page}
+                onPageChange={handleChangePage}
+                rowsPerPage={rowsPerPage}
+                onRowsPerPageChange={handleChangeRowsPerPage}
+                rowsPerPageOptions={[10, 25, 50, 100]}
+              />
+            </>
+          )}
+        </Paper>
+
+        {/* Filter Drawer */}
+        <Drawer
+          anchor="right"
+          open={filterDrawerOpen}
+          onClose={() => setFilterDrawerOpen(false)}
+          PaperProps={{ sx: { width: 320 } }}
+        >
+          <Box sx={{ p: 3 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+              <IconButton onClick={() => setFilterDrawerOpen(false)} sx={{ mr: 1 }}>
+                <ChevronLeft />
+              </IconButton>
+              <Typography variant="h6">Filters</Typography>
+            </Box>
+            
+            <Stack spacing={3}>
+              <DatePicker
+                label="Start Date"
+                value={startDate}
+                onChange={(newValue) => setStartDate(newValue)}
+                renderInput={(params) => <TextField {...params} fullWidth />}
+              />
+              
+              <DatePicker
+                label="End Date"
+                value={endDate}
+                onChange={(newValue) => setEndDate(newValue)}
+                renderInput={(params) => <TextField {...params} fullWidth />}
+              />
+              
+              <FormControl fullWidth>
+                <InputLabel>User</InputLabel>
+                <Select
+                  value={selectedUser}
+                  onChange={(e) => setSelectedUser(e.target.value)}
+                  label="User"
+                >
+                  <MenuItem value="">All Users</MenuItem>
+                  {uniqueUsers.map(user => (
+                    <MenuItem key={user.value} value={user.value}>
+                      {user.label}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              
+              <FormControl fullWidth>
+                <InputLabel>Event Type</InputLabel>
+                <Select
+                  value={selectedEventType}
+                  onChange={(e) => setSelectedEventType(e.target.value)}
+                  label="Event Type"
+                >
+                  <MenuItem value="">All Types</MenuItem>
+                  <MenuItem value="CREATE">Create</MenuItem>
+                  <MenuItem value="READ">Read</MenuItem>
+                  <MenuItem value="UPDATE">Update</MenuItem>
+                  <MenuItem value="DELETE">Delete</MenuItem>
+                  <MenuItem value="LOGIN">Login</MenuItem>
+                  <MenuItem value="LOGOUT">Logout</MenuItem>
+                  <MenuItem value="EXECUTE">Execute</MenuItem>
+                </Select>
+              </FormControl>
+              
+              <FormControl fullWidth>
+                <InputLabel>Outcome</InputLabel>
+                <Select
+                  value={selectedOutcome}
+                  onChange={(e) => setSelectedOutcome(e.target.value)}
+                  label="Outcome"
+                >
+                  <MenuItem value="">All Outcomes</MenuItem>
+                  <MenuItem value="0">Success</MenuItem>
+                  <MenuItem value="4">Failed</MenuItem>
+                </Select>
+              </FormControl>
+              
+              <Divider />
+              
+              <Button
+                variant="outlined"
+                fullWidth
+                onClick={() => {
+                  setSearchTerm('');
+                  setSelectedUser('');
+                  setSelectedEventType('');
+                  setSelectedOutcome('');
+                  setStartDate(moment().subtract(30, 'days'));
+                  setEndDate(moment());
+                }}
+              >
+                Clear Filters
+              </Button>
+            </Stack>
+          </Box>
+        </Drawer>
+      </Box>
+    </LocalizationProvider>
   );
 }
