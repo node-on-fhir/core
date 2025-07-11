@@ -64,6 +64,7 @@ import { DocumentReferences } from '../lib/schemas/SimpleSchemas/DocumentReferen
 import { Consents } from '../lib/schemas/SimpleSchemas/Consents';
 import { RelatedPersons } from '../lib/schemas/SimpleSchemas/RelatedPersons';
 import { Patients } from '../lib/schemas/SimpleSchemas/Patients';
+import { FhirUtilities } from '../lib/FhirUtilities';
 
 
 const directiveTypes = [
@@ -418,7 +419,7 @@ function AdvancedDirectivesPage(props) {
         <Grid item xs={12} md={8}>
           <Card>
             <CardHeader
-              title="Advanced Directives & Living Will"
+              title={data.patient ? `Advanced Directives & Living Will - ${FhirUtilities.pluckName(data.patient)}` : "Advanced Directives & Living Will"}
               subheader="Legal documents that specify your healthcare wishes"
               action={
                 <Box>

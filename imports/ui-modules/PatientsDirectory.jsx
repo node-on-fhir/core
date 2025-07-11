@@ -49,8 +49,8 @@ Meteor.startup(function(){
 
 Session.setDefault('patientFormData', defaultPatient);
 Session.setDefault('patientSearchFilter', '');
-Session.setDefault('selectedPatientId', '');
-Session.setDefault('selectedPatient', '');
+Session.setDefault('selectedPatientId', null);
+Session.setDefault('selectedPatient', null);
 Session.setDefault('fhirVersion', 'v1.0.2');
 Session.setDefault('patientPageTabIndex', 0)
 Session.setDefault('PatientsDirectory.onePageLayout', true)

@@ -81,7 +81,7 @@
       "route": "/pacio-dashboard",
       "landingPage": "/pacio-dashboard",
       "homePage": "/pacio-dashboard",
-      "prominantHeader": false,
+      "prominentHeader": true,
       "showPatientNameInHeader": true,
       "displayNavbars": true,
       "disableHeader": false,

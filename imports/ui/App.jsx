@@ -1218,9 +1218,7 @@ export function App(props){
             location={props.location} 
             history={window.history}
             { ...otherProps } />        
-          <StyledMainRouter>
-            <CustomRouter />
-          </StyledMainRouter>
+          <StyledMainRouter style={{flex: 1}} />
           <Footer 
             drawerIsOpen={drawerIsOpen} 
             location={props.location} 
@@ -1237,8 +1235,18 @@ export function App(props){
 
 function StyledMainRouter(props){
   
-  const {children, ...otherProps} = props;
+  const {children, style, ...otherProps} = props;
   const { theme, toggleTheme } = useTheme();
+
+  // Track if prominent header is shown
+  const showProminentHeader = useTracker(function(){
+    const prominentHeaderSetting = get(Meteor, 'settings.public.defaults.prominentHeader', false);
+    const selectedPatient = Session.get("selectedPatient");
+    const selectedPatientId = Session.get("selectedPatientId");
+    // Check if we have either a selected patient object or ID
+    const hasPatient = !!(selectedPatient || selectedPatientId);
+    return prominentHeaderSetting && hasPatient;
+  }, []);
 
   let backgroundCanvas = get(Meteor, 'settings.public.theme.palette.backgroundCanvas', "#ffffff");
   let backgroundCanvasDark = get(Meteor, 'settings.public.theme.palette.backgroundCanvasDark', "#ffffff");
@@ -1247,7 +1255,15 @@ function StyledMainRouter(props){
     position: 'relative',
     height: '100%',
     overflowY: 'auto',
-    overflowX: 'hidden'
+    overflowX: 'hidden',
+    transition: 'padding-top 0.3s ease-in-out',
+    ...style // Merge the passed style prop
+  }
+
+  // Add padding when prominent header is shown
+  // The prominent header Toolbar is 64px, so we add that to the top padding
+  if(showProminentHeader){
+    mainAppStyle.paddingTop = '64px';
   }
 
   if(theme === "light"){

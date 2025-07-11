@@ -1,3 +1,4 @@
+// /Volumes/SonicMagic/Code/honeycomb-public-release/imports/ui/Header.jsx
 import React, { useState } from 'react';
 
 import PropTypes from 'prop-types';
@@ -8,6 +9,9 @@ import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
 import IconButton from '@mui/material/IconButton';
+import Collapse from '@mui/material/Collapse';
+import Grid from '@mui/material/Grid';
+import Divider from '@mui/material/Divider';
 
 import MenuIcon from '@mui/icons-material/Menu';
 import Brightness4Icon from '@mui/icons-material/Brightness4';
@@ -102,7 +106,9 @@ function Header({ drawerIsOpen, handleDrawerOpen, lastUpdated }) {
   let currentPatientId = "";
   let currentPatient = null;  
   let workflowTabs = "default";  
-  let displayNavbars = true;  
+  let displayNavbars = true;
+  let selectedPatient = null;
+  let showProminentHeader = false;  
 
   if(Meteor.isClient){
     selectedStartDate = useTracker(function(){
@@ -132,6 +138,39 @@ function Header({ drawerIsOpen, handleDrawerOpen, lastUpdated }) {
     displayNavbars = useTracker(function(){  
       return Session.get("displayNavbars");  
     }, []);  
+
+    selectedPatient = useTracker(function(){
+      const patient = Session.get("selectedPatient");
+      const patientId = Session.get("selectedPatientId");
+      console.log('Header useTracker - patient data:', {
+        patient,
+        patientId,
+        sessionKeys: Object.keys(Session.keys),
+        patientTruthy: !!patient,
+        patientType: typeof patient
+      });
+      return patient;
+    }, [lastUpdated]);
+
+    showProminentHeader = useTracker(function(){
+      const prominentHeaderSetting = get(Meteor, 'settings.public.defaults.prominentHeader', false);
+      const selectedPatientFromSession = Session.get("selectedPatient");
+      const selectedPatientId = Session.get("selectedPatientId");
+      // Check if we have either a selected patient object or ID
+      const hasPatient = !!(selectedPatientFromSession || selectedPatientId);
+      const shouldShow = Boolean(prominentHeaderSetting && hasPatient);
+      console.log('Header useTracker - showProminentHeader:', {
+        prominentHeaderSetting,
+        prominentHeaderSettingType: typeof prominentHeaderSetting,
+        hasSelectedPatient: hasPatient,
+        patientData: selectedPatientFromSession,
+        patientId: selectedPatientId,
+        shouldShow,
+        meteorSettings: Meteor.settings,
+        publicDefaults: get(Meteor, 'settings.public.defaults')
+      });
+      return shouldShow;
+    }, [lastUpdated]);
 
     // Get the actual Meteor user
     const meteorUser = useTracker(() => {
@@ -163,7 +202,7 @@ function Header({ drawerIsOpen, handleDrawerOpen, lastUpdated }) {
 
   let workflowTabsToRender;
   let selectedWorkflow;
-  if(get(Meteor, 'settings.public.defaults.prominantHeader', false)){    
+  if(get(Meteor, 'settings.public.defaults.prominentHeader', false)){    
     if(Meteor.isClient){
       headerWorkflows.forEach(function(workflow){
         if(Array.isArray(workflow.matchingPaths)){
@@ -196,15 +235,27 @@ function Header({ drawerIsOpen, handleDrawerOpen, lastUpdated }) {
     let selectedPatient;
 
     if(Meteor.isClient){
-      if(get(Meteor, 'settings.public.defaults.showPatientNameInHeader')){
+      // Check if prominent header is enabled
+      const prominentHeaderEnabled = get(Meteor, 'settings.public.defaults.prominentHeader', false);
+      
+      // Only show patient name in title if prominentHeader is NOT enabled
+      if(get(Meteor, 'settings.public.defaults.showPatientNameInHeader') && !prominentHeaderEnabled){
         if(Session.get("selectedPatient")){
           selectedPatient = Session.get("selectedPatient");
   
-          // titleText = FhirUtilities.pluckName(selectedPatient); 
-          titleText = FhirUtilities.pluckName(selectedPatient); 
+          let patientName = FhirUtilities.pluckName(selectedPatient); 
+          console.log('parseTitle - showPatientNameInHeader:', {
+            selectedPatient,
+            patientName,
+            prominentHeaderEnabled,
+            willReplaceTitleWithPatientName: !prominentHeaderEnabled
+          });
+          // Only replace title if we actually got a patient name and prominent header is disabled
+          if(patientName && patientName.trim() !== ''){
+            titleText = patientName;
+          }
           logger.verbose("Selected patients name that we're displaying in the Title: " + titleText)
         } else {
-
           if(!Meteor.isCordova){      
             titleText = titleText + secondaryTitleText;
           }
@@ -213,10 +264,10 @@ function Header({ drawerIsOpen, handleDrawerOpen, lastUpdated }) {
         if(!Meteor.isCordova){      
           titleText = titleText + secondaryTitleText;
         }
-
       }
     }
 
+    console.log('parseTitle() returning:', titleText);
     return titleText;    
   }
 
@@ -341,8 +392,43 @@ function Header({ drawerIsOpen, handleDrawerOpen, lastUpdated }) {
   //   appStyle.color = get(Meteor, 'settings.public.theme.palette.appBarTextColorDark'); 
   // }
 
+  // Prepare patient demographic data
+  let patientName = '';
+  let patientBirthDate = '';
+  let patientGender = '';
+  let patientIdentifier = '';
+  let patientPhone = '';
+  
+  console.log('Header render - checking prominent header:', {
+    showProminentHeader,
+    selectedPatient,
+    prominentHeaderSetting: get(Meteor, 'settings.public.defaults.prominentHeader')
+  });
+  
+  if(selectedPatient){
+    console.log('Header: Processing selectedPatient:', selectedPatient);
+    patientName = FhirUtilities.pluckName(selectedPatient);
+    console.log('Header: Patient name:', patientName);
+    patientBirthDate = get(selectedPatient, 'birthDate', '');
+    patientGender = get(selectedPatient, 'gender', '');
+    
+    // Get first identifier
+    let identifiers = get(selectedPatient, 'identifier', []);
+    if(identifiers.length > 0){
+      patientIdentifier = get(identifiers[0], 'value', '');
+    }
+    
+    // Get phone
+    let telecoms = get(selectedPatient, 'telecom', []);
+    telecoms.forEach(function(telecom){
+      if(get(telecom, 'system') === 'phone'){
+        patientPhone = get(telecom, 'value', '');
+      }
+    });
+  }
+
   return (
-    <Box id="header" sx={{ flexGrow: 1, zIndex: 1000 }}>
+    <Box id="header" sx={{ flexShrink: 0, zIndex: 1000 }}>
       <AppBar id="headerContent" position="static" >
         <Toolbar>
           <IconButton
@@ -356,7 +442,7 @@ function Header({ drawerIsOpen, handleDrawerOpen, lastUpdated }) {
             <MenuIcon color="standard" />
           </IconButton>
           <Typography id="headerTitle" variant="h6" component="div" sx={{ flexGrow: 1 }} color="standard.main">
-          { parseTitle() }
+          { parseTitle() || get(Meteor, 'settings.public.title', 'Honeycomb') }
           </Typography>
           <IconButton  
             onClick={toggleTheme}
@@ -365,6 +451,20 @@ function Header({ drawerIsOpen, handleDrawerOpen, lastUpdated }) {
           >
             {theme === 'light' ? <Brightness4Icon color="standard" /> : <Brightness7Icon color="standard" />}
           </IconButton>
+          {/* Clear patient button for testing */}
+          {selectedPatient && (
+            <Button 
+              color="standard" 
+              onClick={() => {
+                console.log('Clearing selected patient');
+                Session.set('selectedPatient', null);
+                Session.set('selectedPatientId', null);
+              }}
+              sx={{ mx: 1 }}
+            >
+              Clear Patient
+            </Button>
+          )}
           {/* { userItems }
           { dateTimeItems }        
           { demographicItems }
@@ -399,6 +499,59 @@ function Header({ drawerIsOpen, handleDrawerOpen, lastUpdated }) {
           )}
         </Toolbar>
       </AppBar>
+      {console.log('Render - showProminentHeader value:', showProminentHeader, typeof showProminentHeader)}
+      <Collapse 
+        in={showProminentHeader} 
+        timeout={300}
+        sx={{
+          position: 'absolute',
+          top: '64px', // Height of the main toolbar
+          left: 0,
+          right: 0,
+          zIndex: 999
+        }}
+      >
+        <AppBar 
+          position="static" 
+          sx={{ 
+            boxShadow: 1
+          }}
+        >
+          <Toolbar sx={{ paddingLeft: '75px !important', minHeight: '64px' }}>
+            <Box display="flex" alignItems="center" gap={3}>
+              <Box>
+                <Typography 
+                  variant="h5" 
+                  sx={{ 
+                    fontFamily: 'Helvetica Neue, Helvetica, Arial, sans-serif',
+                    fontWeight: 300,
+                    letterSpacing: '-0.5px'
+                  }}
+                >
+                  {patientName}
+                </Typography>
+              </Box>
+              <Divider orientation="vertical" flexItem />
+              <Box>
+                <Typography variant="caption" sx={{ opacity: 0.7 }}>ID</Typography>
+                <Typography variant="body2">{patientIdentifier || parseId()}</Typography>
+              </Box>
+              <Box>
+                <Typography variant="caption" sx={{ opacity: 0.7 }}>Birth Date</Typography>
+                <Typography variant="body2">{patientBirthDate ? moment(patientBirthDate).format('MMM DD, YYYY') : 'N/A'}</Typography>
+              </Box>
+              <Box>
+                <Typography variant="caption" sx={{ opacity: 0.7 }}>Gender</Typography>
+                <Typography variant="body2">{patientGender || 'N/A'}</Typography>
+              </Box>
+              <Box>
+                <Typography variant="caption" sx={{ opacity: 0.7 }}>Phone</Typography>
+                <Typography variant="body2">{patientPhone || 'N/A'}</Typography>
+              </Box>
+            </Box>
+          </Toolbar>
+        </AppBar>
+      </Collapse>
     </Box>
   );
 }

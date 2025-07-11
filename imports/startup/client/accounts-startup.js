@@ -50,6 +50,7 @@ Accounts.onLogout(() => {
   
   // Clear session data
   Session.set('selectedPatientId', null);
+  Session.set('selectedPatient', null);
   Session.set('twoFactorRequired', false);
   
   // Note: Navigation should be handled by React components
