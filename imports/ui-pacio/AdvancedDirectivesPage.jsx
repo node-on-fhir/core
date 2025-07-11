@@ -1,7 +1,9 @@
+// /Volumes/SonicMagic/Code/honeycomb-public-release/imports/ui-pacio/AdvancedDirectivesPage.jsx
 import React, { useState, useEffect } from 'react';
 import { useTracker } from 'meteor/react-meteor-data';
 import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
+import { useNavigate } from 'react-router-dom';
 
 import { 
   Container, 
@@ -113,6 +115,11 @@ function AdvancedDirectivesPage(props) {
   const data = useTracker(() => {
     const patientId = Session.get('selectedPatientId');
     
+    // Subscribe to DocumentReferences for the patient
+    const subscription = patientId ? 
+      Meteor.subscribe('pacio.documentReferences', patientId) : null;
+    const subscriptionsReady = subscription ? subscription.ready() : true;
+    
     let query = {};
     if(patientId){
       query = { 
@@ -134,6 +141,14 @@ function AdvancedDirectivesPage(props) {
       const typeCode = get(doc, 'type.coding[0].code');
       const isAdvancedDirective = directiveTypes.map(d => d.code).includes(typeCode);
       
+      console.log('Checking document:', {
+        docId: doc._id,
+        typeCode: typeCode,
+        fullType: get(doc, 'type'),
+        isAdvancedDirective: isAdvancedDirective,
+        validCodes: directiveTypes.map(d => d.code)
+      });
+      
       // If no type code or not an advanced directive type, still include it
       // This ensures we don't hide documents that might be relevant
       return isAdvancedDirective || !typeCode || allDocumentReferences.length <= 5;
@@ -149,7 +164,8 @@ function AdvancedDirectivesPage(props) {
       consents,
       relatedPersons,
       patient,
-      patientId
+      patientId,
+      loading: !subscriptionsReady
     };
   }, []);
 
@@ -242,8 +258,7 @@ function AdvancedDirectivesPage(props) {
             console.log('Document uploaded successfully:', result);
             setOpenDialog(false);
             setSelectedFile(null);
-            // Optionally refresh the page or update the document list
-            window.location.reload();
+            setSelectedDocumentType('42348-3');
           }
         });
       };
@@ -422,7 +437,9 @@ function AdvancedDirectivesPage(props) {
               }
             />
             <CardContent>
-              {data.documentReferences.length === 0 ? (
+              {data.loading ? (
+                <Typography>Loading documents...</Typography>
+              ) : data.documentReferences.length === 0 ? (
                 <Alert severity="warning">
                   <AlertTitle>No Advanced Directives Found</AlertTitle>
                   {data.allDocumentReferences.length > 0 ? (
@@ -578,7 +595,7 @@ function AdvancedDirectivesPage(props) {
         fullWidth
       >
         <DialogTitle>
-          Document Viewer
+          {selectedDocument && get(selectedDocument, 'type.text', 'Document Viewer')}
           <IconButton
             onClick={() => setOpenPdfViewer(false)}
             sx={{ position: 'absolute', right: 8, top: 8 }}
@@ -587,12 +604,106 @@ function AdvancedDirectivesPage(props) {
           </IconButton>
         </DialogTitle>
         <DialogContent>
-          <Box sx={{ height: '70vh', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f5f5f5' }}>
-            <Typography color="text.secondary">
-              PDF Viewer Component would be integrated here
-            </Typography>
+          <Box sx={{ height: '70vh', overflow: 'auto', backgroundColor: '#f5f5f5', p: 2 }}>
+            {selectedDocument && (() => {
+              const attachmentData = get(selectedDocument, 'content[0].attachment.data');
+              const contentType = get(selectedDocument, 'content[0].attachment.contentType', '');
+              const title = get(selectedDocument, 'content[0].attachment.title', 'Document');
+              
+              if (!attachmentData) {
+                return (
+                  <Alert severity="error">
+                    No document data available to display
+                  </Alert>
+                );
+              }
+              
+              // Decode base64 data
+              const dataUrl = `data:${contentType};base64,${attachmentData}`;
+              
+              // Check if it's an image
+              if (contentType.startsWith('image/')) {
+                return (
+                  <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+                    <img 
+                      src={dataUrl} 
+                      alt={title}
+                      style={{ 
+                        maxWidth: '100%', 
+                        maxHeight: '100%', 
+                        objectFit: 'contain' 
+                      }}
+                    />
+                  </Box>
+                );
+              }
+              
+              // Check if it's a PDF
+              if (contentType === 'application/pdf') {
+                return (
+                  <Box sx={{ width: '100%', height: '100%' }}>
+                    <iframe
+                      src={dataUrl}
+                      title={title}
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        border: 'none'
+                      }}
+                    />
+                  </Box>
+                );
+              }
+              
+              // Unsupported file type
+              return (
+                <Alert severity="warning">
+                  <AlertTitle>Unsupported File Type</AlertTitle>
+                  This document type ({contentType}) cannot be displayed in the viewer.
+                  <br />
+                  <Button 
+                    variant="outlined" 
+                    size="small" 
+                    sx={{ mt: 2 }}
+                    onClick={() => {
+                      const link = document.createElement('a');
+                      link.href = dataUrl;
+                      link.download = title;
+                      link.click();
+                    }}
+                  >
+                    Download Document
+                  </Button>
+                </Alert>
+              );
+            })()}
           </Box>
         </DialogContent>
+        <DialogActions>
+          <Button 
+            variant="outlined"
+            onClick={() => {
+              if (selectedDocument) {
+                const attachmentData = get(selectedDocument, 'content[0].attachment.data');
+                const contentType = get(selectedDocument, 'content[0].attachment.contentType', '');
+                const title = get(selectedDocument, 'content[0].attachment.title', 'Document');
+                
+                if (attachmentData) {
+                  const dataUrl = `data:${contentType};base64,${attachmentData}`;
+                  const link = document.createElement('a');
+                  link.href = dataUrl;
+                  link.download = title;
+                  link.click();
+                }
+              }
+            }}
+          >
+            Download
+          </Button>
+          <Button onClick={() => setOpenPdfViewer(false)}>
+            Close
+          </Button>
+        </DialogActions>
       </Dialog>
 
       <Dialog open={openDialog} onClose={handleCancelUpload}>

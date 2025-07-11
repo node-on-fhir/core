@@ -1,3 +1,4 @@
+// packages/sphr-analyzer/client/FileAnalysisPage.jsx
 import React from 'react';
 
 import { Button, Container, Grid, CardHeader, CardContent, Typography } from '@mui/material';
@@ -9,7 +10,7 @@ import { cloneDeep, get } from 'lodash';
 import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
 
-// import { Sunburst } from '@nivo/sunburst'
+import { Sunburst } from '@nivo/sunburst'
 import { useLocation, useNavigate } from "react-router-dom";
 
 
@@ -522,7 +523,7 @@ export function FileAnalysisPage(props){
 
     let data = {
       chart: {
-        width: Session.get('appWidth'),  
+        width: Session.get('appWidth') || 1200,  // Default width to prevent undefined
         height: 800
       },
       style: {
@@ -583,8 +584,8 @@ export function FileAnalysisPage(props){
       }
     };
 
-    data.chart.width = useTracker(function(){
-      return Session.get('appWidth');
+    const trackedWidth = useTracker(function(){
+      return Session.get('appWidth') || 1200;
     }, [])
 
     let dynamicSunburstData = cloneDeep(dynamicSunburstTemplate);
@@ -611,10 +612,10 @@ export function FileAnalysisPage(props){
 
     let layoutContent;
     if(recordsExists){
-      layoutContent = <Grid container justify="center" >
-        <Grid item md={12}>
+      layoutContent = <Grid container justifyContent="center" alignItems="center" style={{ paddingTop: '100px' }}>
+        <Grid item xs={12} style={{ display: 'flex', justifyContent: 'center' }}>
           <Sunburst
-            width={ data.chart.width}
+            width={ trackedWidth }
             height={ data.chart.height}                      
             data={dynamicSunburstData}
             margin={{ top: 10, right: 10, bottom: 10, left: 10 }}

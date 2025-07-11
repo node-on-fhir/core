@@ -66,7 +66,7 @@ export function SearchPatientsModalDialog({ open, onClose, onSelectPatient, bedI
     
     return Patients.find({}, { 
       limit: 20,
-      sort: { 'name.family': 1, 'name.given': 1 }
+      sort: { 'meta.lastUpdated': -1 }  // Sort by most recently updated instead
     }).fetch();
   });
 
