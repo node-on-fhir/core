@@ -958,6 +958,22 @@ export function PatientsTable(props){
                 <Stack direction="row" spacing={2} flexWrap="wrap">
                   {/* Static Buttons */}
                   <Button
+                    variant="contained"
+                    size="small"
+                    color="primary"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      console.log('Selecting patient:', patientId);
+                      const selectedPatient = patientsToRender.find(p => (p.id === patientId || p._id === patientId));
+                      console.log('Found patient:', selectedPatient);
+                      Session.set('selectedPatientId', patientId);
+                      Session.set('selectedPatient', selectedPatient);
+                    }}
+                  >
+                    Select Patient
+                  </Button>
+                  
+                  <Button
                     variant="outlined"
                     size="small"
                     startIcon={<ViewIcon />}
