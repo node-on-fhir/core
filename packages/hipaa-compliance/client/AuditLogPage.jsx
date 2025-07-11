@@ -53,7 +53,17 @@ import { get } from 'lodash';
 import { Meteor } from 'meteor/meteor';
 import { useTracker } from 'meteor/react-meteor-data';
 import { Session } from 'meteor/session';
-import { AuditEvents } from '/imports/lib/schemas/SimpleSchemas/AuditEvents';
+// Access AuditEvents from global collections
+let AuditEvents = null;
+
+// Try to get AuditEvents collection
+if (Meteor.isClient) {
+  Meteor.startup(function() {
+    AuditEvents = get(window, 'Collections.AuditEvents') || 
+                  get(global, 'Collections.AuditEvents') || 
+                  get(Meteor, 'Collections.AuditEvents');
+  });
+}
 
 const eventTypeColors = {
   'CREATE': 'success',
@@ -91,7 +101,23 @@ export default function AuditLogPage() {
 
   // Subscribe to audit events
   const { auditEvents, totalCount, isLoading } = useTracker(() => {
-    const subscription = Meteor.subscribe('auditevents');
+    // Check if AuditEvents collection is available
+    if (!AuditEvents) {
+      // Try to get it again
+      AuditEvents = get(window, 'Collections.AuditEvents') || 
+                    get(global, 'Collections.AuditEvents') || 
+                    get(Meteor, 'Collections.AuditEvents');
+      
+      if (!AuditEvents) {
+        return {
+          auditEvents: [],
+          totalCount: 0,
+          isLoading: false
+        };
+      }
+    }
+    
+    const subscription = Meteor.subscribe('auditEvents');
     
     const query = {};
     
@@ -140,6 +166,10 @@ export default function AuditLogPage() {
 
   // Get unique users for filter dropdown
   const uniqueUsers = useTracker(() => {
+    if (!AuditEvents) {
+      return [];
+    }
+    
     const users = AuditEvents.find({}, {
       fields: { 'agent.name': 1, 'agent.reference': 1 }
     }).fetch();
@@ -211,6 +241,20 @@ export default function AuditLogPage() {
     return <Chip label={label} color={color} size="small" variant="outlined" />;
   };
 
+  // Show error message if AuditEvents collection is not available
+  if (!AuditEvents && !isLoading) {
+    return (
+      <Box sx={{ p: 3 }}>
+        <Alert severity="warning">
+          <Typography variant="h6">HIPAA Audit Log Not Available</Typography>
+          <Typography variant="body2">
+            The AuditEvents collection is not available. Please ensure the core Honeycomb system is properly initialized.
+          </Typography>
+        </Alert>
+      </Box>
+    );
+  }
+
   return (
     <LocalizationProvider dateAdapter={AdapterMoment}>
       <Box sx={{ p: 3 }}>
@@ -241,49 +285,49 @@ export default function AuditLogPage() {
         {/* Summary Cards */}
         <Grid container spacing={3} sx={{ mb: 3 }}>
           <Grid item xs={12} sm={6} md={3}>
-            <Card>
-              <CardContent>
-                <Typography color="textSecondary" gutterBottom>
+            <Card sx={{ height: '100%' }}>
+              <CardContent sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                <Typography color="textSecondary" gutterBottom variant="overline">
                   Total Events
                 </Typography>
-                <Typography variant="h4">
-                  {totalCount}
+                <Typography variant="h4" sx={{ mt: 'auto' }}>
+                  {totalCount.toLocaleString()}
                 </Typography>
               </CardContent>
             </Card>
           </Grid>
           <Grid item xs={12} sm={6} md={3}>
-            <Card>
-              <CardContent>
-                <Typography color="textSecondary" gutterBottom>
+            <Card sx={{ height: '100%' }}>
+              <CardContent sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                <Typography color="textSecondary" gutterBottom variant="overline">
                   Date Range
                 </Typography>
-                <Typography variant="body2">
+                <Typography variant="h6" sx={{ mt: 'auto' }}>
                   {startDate.format('MMM DD')} - {endDate.format('MMM DD, YYYY')}
                 </Typography>
               </CardContent>
             </Card>
           </Grid>
           <Grid item xs={12} sm={6} md={3}>
-            <Card>
-              <CardContent>
-                <Typography color="textSecondary" gutterBottom>
+            <Card sx={{ height: '100%' }}>
+              <CardContent sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                <Typography color="textSecondary" gutterBottom variant="overline">
                   Active Filters
                 </Typography>
-                <Typography variant="h4">
+                <Typography variant="h4" sx={{ mt: 'auto' }}>
                   {[selectedUser, selectedEventType, selectedOutcome, searchTerm].filter(Boolean).length}
                 </Typography>
               </CardContent>
             </Card>
           </Grid>
           <Grid item xs={12} sm={6} md={3}>
-            <Card>
-              <CardContent>
-                <Typography color="textSecondary" gutterBottom>
+            <Card sx={{ height: '100%' }}>
+              <CardContent sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                <Typography color="textSecondary" gutterBottom variant="overline">
                   Recent Activity
                 </Typography>
-                <Typography variant="body2" color="success.main">
-                  Last event: {auditEvents[0] ? moment(auditEvents[0].recorded).fromNow() : 'N/A'}
+                <Typography variant="h6" sx={{ mt: 'auto' }} color={auditEvents[0] ? "text.primary" : "text.secondary"}>
+                  {auditEvents[0] ? moment(auditEvents[0].recorded).fromNow() : 'No events'}
                 </Typography>
               </CardContent>
             </Card>

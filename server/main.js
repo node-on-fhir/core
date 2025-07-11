@@ -53,6 +53,7 @@ import { OAuthClients } from '/imports/collections/OAuthClients';
 
 
 import { AllergyIntolerances } from '../imports/lib/schemas/SimpleSchemas/AllergyIntolerances';
+import { AuditEvents } from '../imports/lib/schemas/SimpleSchemas/AuditEvents';
 import { Bundles } from '../imports/lib/schemas/SimpleSchemas/Bundles';
 import { CarePlans } from '../imports/lib/schemas/SimpleSchemas/CarePlans';
 import { Claims } from '../imports/lib/schemas/SimpleSchemas/Claims';
@@ -86,12 +87,14 @@ import { NutritionOrders } from '../imports/lib/schemas/SimpleSchemas/NutritionO
 
 import { FhirUtilities } from '../imports/lib/FhirUtilities.js'
 import { FhirDehydrator } from '../imports/lib/FhirDehydrator.js'
+import { HipaaLogger } from '../imports/lib/HipaaLogger.js'
 
 import { LayoutHelpers } from '../imports/lib/LayoutHelpers.js'
 
 
 Meteor.Collections = {
   AllergyIntolerances,
+  AuditEvents,
   Bundles,
   CarePlans,
   Claims,
@@ -127,9 +130,11 @@ Meteor.Collections = {
 global.FhirUtilities = FhirUtilities;
 global.FhirDehydrator = FhirDehydrator;
 global.LayoutHelpers = LayoutHelpers;
+global.HipaaLogger = HipaaLogger;
 
 global.Collections = {
   AllergyIntolerances,
+  AuditEvents,
   Bundles,
   CarePlans,
   Claims,
@@ -164,6 +169,7 @@ global.Collections = {
 
 
 
+global.AuditEvents = AuditEvents;
 global.Conditions = Conditions;
 global.Claims = Claims;
 global.Encounters = Encounters;

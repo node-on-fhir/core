@@ -2,7 +2,7 @@
 
 import { Meteor } from 'meteor/meteor';
 import { get } from 'lodash';
-import { HipaaLogger } from '../lib/HipaaLogger';
+import { HipaaLogger } from '../lib/HipaaLoggerAccess';
 import { CollectionNames } from '../lib/Constants';
 
 // Try to get Accounts if available

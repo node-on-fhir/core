@@ -5,7 +5,7 @@ import { check, Match } from 'meteor/check';
 import { get } from 'lodash';
 import moment from 'moment';
 import { HipaaAuditLog } from '../lib/Collections';
-import { HipaaLogger } from '../lib/HipaaLogger';
+import { HipaaLogger } from '../lib/HipaaLoggerAccess';
 import { SecurityValidators } from '../lib/SecurityValidators';
 import { EncryptionManager } from '../lib/EncryptionManager';
 import { EventTypes } from '../lib/Constants';

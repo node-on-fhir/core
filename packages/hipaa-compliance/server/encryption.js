@@ -5,6 +5,17 @@ import { get } from 'lodash';
 import crypto from 'crypto';
 import { HipaaAuditLog } from '../lib/Collections';
 import { EncryptionManager } from '../lib/EncryptionManager';
+import { HipaaLogger } from '../lib/HipaaLoggerAccess';
+import { SecurityValidators } from '../lib/SecurityValidators';
+import { SecurityLevels } from '../lib/Constants';
+
+// Try to import Roles if available
+let Roles;
+try {
+  Roles = Package['alanning:roles']?.Roles;
+} catch (e) {
+  // Roles package not available
+}
 
 // Server-side encryption utilities
 Meteor.methods({

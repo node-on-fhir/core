@@ -7,7 +7,7 @@ import path from 'path';
 const { marked } = require('marked');
 import { PolicyRoutes } from '../lib/PolicyRoutes';
 import { policyGenerator } from '../lib/PolicyGenerator';
-import { HipaaLogger } from '../lib/HipaaLogger';
+import { HipaaLogger } from '../lib/HipaaLoggerAccess';
 
 // Try to import Roles if available
 let Roles;

@@ -200,6 +200,7 @@ Meteor.Tables = {
 import { ActivityDefinitions } from '../lib/schemas/SimpleSchemas/ActivityDefinitions';
 import { AllergyIntolerances } from '../lib/schemas/SimpleSchemas/AllergyIntolerances';
 import { ArtifactAssessments } from '../lib/schemas/SimpleSchemas/ArtifactAssessments';
+import { AuditEvents } from '../lib/schemas/SimpleSchemas/AuditEvents';
 import { BodyStructures } from '../lib/schemas/SimpleSchemas/BodyStructures';
 import { Bundles } from '../lib/schemas/SimpleSchemas/Bundles';
 import { CarePlans } from '../lib/schemas/SimpleSchemas/CarePlans';
@@ -238,6 +239,7 @@ import { Observations } from '../lib/schemas/SimpleSchemas/Observations';
 import { OperationOutcomes } from '../lib/schemas/SimpleSchemas/OperationOutcomes';
 import { Patients } from '../lib/schemas/SimpleSchemas/Patients';
 import { PlanDefinitions } from '../lib/schemas/SimpleSchemas/PlanDefinitions';
+import { Practitioners } from '../lib/schemas/SimpleSchemas/Practitioners';
 import { Procedures } from '../lib/schemas/SimpleSchemas/Procedures';
 import { Questionnaires } from '../lib/schemas/SimpleSchemas/Questionnaires';
 import { QuestionnaireResponses } from '../lib/schemas/SimpleSchemas/QuestionnaireResponses';
@@ -256,12 +258,14 @@ import { FhirDehydrator } from '../lib/FhirDehydrator.js'
 import { LayoutHelpers } from '../lib/LayoutHelpers.js'
 import { DynamicSpacer } from './DynamicSpacer'
 import MedicalRecordImporter from '../lib/MedicalRecordImporter.js'
+import { HipaaLogger } from '../lib/HipaaLogger.js'
 
 
 Meteor.Collections = {
   ActivityDefinitions,
   AllergyIntolerances,
   ArtifactAssessments,
+  AuditEvents,
   Bundles,
   BodyStructures,
   CarePlans,
@@ -301,6 +305,7 @@ Meteor.Collections = {
   OperationOutcomes,
   Patients,
   PlanDefinitions,
+  Practitioners,
   Procedures,
   Questionnaires,
   QuestionnaireResponses,
@@ -320,6 +325,7 @@ Meteor.NoDataWrapper = NoDataWrapper;
 Meteor.NotSignedInWrapper = NotSignedInWrapper;
 Meteor.MedicalRecordImporter = MedicalRecordImporter;
 Meteor.PatientCard = PatientCard;
+Meteor.HipaaLogger = HipaaLogger;
 
 
 
@@ -327,6 +333,7 @@ window.Collections = {
   ActivityDefinitions,
   AllergyIntolerances,
   ArtifactAssessments,
+  AuditEvents,
   Bundles,
   BodyStructures,
   CarePlans,
@@ -364,6 +371,7 @@ window.Collections = {
   OperationOutcomes,
   Patients,
   PlanDefinitions,
+  Practitioners,
   Procedures,
   Questionnaires,
   QuestionnaireResponses,
@@ -378,6 +386,7 @@ window.Collections = {
 }
 
 window.FhirUtilities = FhirUtilities;
+window.HipaaLogger = HipaaLogger;
 
 // SECURITY TODO:  maybe best to put a guard around this 
 // debug only?  or maybe only in development mode?
