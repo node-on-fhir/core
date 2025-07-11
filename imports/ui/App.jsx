@@ -794,16 +794,22 @@ if(!foundMainPage){
 const router = createBrowserRouter(dynamicRoutes);
 
 const CustomRouter = ({ children }) => {
+  // Debug: Log routes to check for issues
+  dynamicRoutes.forEach((route, index) => {
+    if (route.path === '/pacio-dashboard' || route.path === '/') {
+      console.log(`Route ${index}: path="${route.path}", element=`, route.element);
+    }
+  });
+  
   return (
-    
-      <Routes>
-        {dynamicRoutes.map((route, index) => (
-          <Route key={index} path={route.path} element={route.element} />
-        ))}
-        {/* Optionally, add a fallback route for 404 Not Found */}
-        {/* <Route path="*" element={<NotFound />} /> */}
-        <Route path="*" />
-      </Routes>
+    <Routes>
+      {dynamicRoutes.map((route, index) => (
+        <Route key={index} path={route.path} element={route.element} />
+      ))}
+      {/* Optionally, add a fallback route for 404 Not Found */}
+      {/* <Route path="*" element={<NotFound />} /> */}
+      <Route path="*" />
+    </Routes>
   );
 };
 

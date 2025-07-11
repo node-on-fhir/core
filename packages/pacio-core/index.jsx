@@ -111,7 +111,7 @@ const MainPageComponent = withSuspense(MainPageLazy);
 const MainPage = {
   'name': 'PACIO Dashboard',
   'path': '/',
-  'element': <MainPageLazy />
+  'element': <MainPageComponent />
 };
 
 // Patient Fetch Page - Lazy loaded

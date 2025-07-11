@@ -67,6 +67,7 @@ import {
   Circle as CircleIcon,
   Info as InfoIcon
 } from '@mui/icons-material';
+import LocationMap from '../components/LocationMap';
 
 export function MainPage() {
   const [viewMode, setViewMode] = useState('grid');
@@ -480,40 +481,13 @@ export function MainPage() {
                 <Typography variant="h6" gutterBottom>
                   Facility Location
                 </Typography>
-                <Box 
-                  sx={{ 
-                    height: '240px', 
-                    bgcolor: 'grey.200', 
-                    borderRadius: 1,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    position: 'relative',
-                    overflow: 'hidden'
-                  }}
-                >
-                  {/* Map placeholder - in real implementation, use Google Maps or similar */}
-                  <Box
-                    sx={{
-                      position: 'absolute',
-                      top: 0,
-                      left: 0,
-                      right: 0,
-                      bottom: 0,
-                      backgroundImage: `url("https://api.mapbox.com/styles/v1/mapbox/light-v10/static/${facilityData.facility.lng},${facilityData.facility.lat},14,0/400x240@2x?access_token=pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw")`,
-                      backgroundSize: 'cover',
-                      backgroundPosition: 'center'
-                    }}
-                  />
-                  <LocationOnIcon 
-                    sx={{ 
-                      fontSize: 40, 
-                      color: 'error.main',
-                      zIndex: 1,
-                      filter: 'drop-shadow(2px 2px 4px rgba(0,0,0,0.3))'
-                    }} 
-                  />
-                </Box>
+                <LocationMap
+                  latitude={facilityData.facility.lat}
+                  longitude={facilityData.facility.lng}
+                  name={facilityData.facility.name}
+                  height={240}
+                  zoom={14}
+                />
               </Paper>
             </Grid>
 

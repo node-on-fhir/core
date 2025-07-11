@@ -72,12 +72,40 @@ import {
 } from '@mui/icons-material';
 import { Beds } from '../../lib/collections/BedsCollection';
 import { SearchPatientsModalDialog } from '../components/SearchPatientsModalDialog';
+import LocationMap from '../components/LocationMap';
 
 export function MainPage() {
   const [selectedFilter, setSelectedFilter] = useState('all');
   const [bedStatusHeight, setBedStatusHeight] = useState(600);
   const [patientModalOpen, setPatientModalOpen] = useState(false);
   const [selectedBedId, setSelectedBedId] = useState(null);
+  const [hasMapApiKey, setHasMapApiKey] = useState(false);
+  
+  // Track authentication status
+  const userId = useTracker(() => Meteor.userId());
+
+  // Check if Google Maps API key is available
+  useEffect(() => {
+    const checkApiKey = async () => {
+      try {
+        console.log('Checking for Google Maps API key...');
+        const apiKey = await Meteor.callAsync('pacio.getGoogleMapsApiKey');
+        console.log('API key response:', apiKey ? 'Key found' : 'No key');
+        if (apiKey && apiKey !== 'YOUR_GOOGLE_MAPS_API_KEY_HERE') {
+          console.log('Setting hasMapApiKey to true');
+          setHasMapApiKey(true);
+        } else {
+          console.log('API key is placeholder or empty');
+          setHasMapApiKey(false);
+        }
+      } catch (error) {
+        console.log('Google Maps API key not configured:', error.message);
+        setHasMapApiKey(false);
+      }
+    };
+    
+    checkApiKey();
+  }, []);
 
   // Calculate dynamic height for bed status area
   useEffect(() => {
@@ -232,34 +260,37 @@ export function MainPage() {
             {facilityData.facility.address}
           </Typography>
         </Box>
-        <Box display="flex" gap={2} alignItems="center">
-          <FormControl size="small" sx={{ minWidth: 120 }}>
-            <InputLabel>Filter</InputLabel>
-            <Select
-              value={selectedFilter}
-              onChange={(e) => setSelectedFilter(e.target.value)}
-              label="Filter"
+        {userId && (
+          <Box display="flex" gap={2} alignItems="center">
+            <FormControl size="small" sx={{ minWidth: 120 }}>
+              <InputLabel>Filter</InputLabel>
+              <Select
+                value={selectedFilter}
+                onChange={(e) => setSelectedFilter(e.target.value)}
+                label="Filter"
+              >
+                <MenuItem value="all">All Beds</MenuItem>
+                <MenuItem value="occupied">Occupied</MenuItem>
+                <MenuItem value="available">Available</MenuItem>
+                <MenuItem value="cleaning">Cleaning</MenuItem>
+                <MenuItem value="maintenance">Maintenance</MenuItem>
+                <MenuItem value="critical">Critical Patients</MenuItem>
+              </Select>
+            </FormControl>
+            <Button
+              variant="outlined"
+              startIcon={<PeopleIcon />}
+              size="small"
             >
-              <MenuItem value="all">All Beds</MenuItem>
-              <MenuItem value="occupied">Occupied</MenuItem>
-              <MenuItem value="available">Available</MenuItem>
-              <MenuItem value="cleaning">Cleaning</MenuItem>
-              <MenuItem value="maintenance">Maintenance</MenuItem>
-              <MenuItem value="critical">Critical Patients</MenuItem>
-            </Select>
-          </FormControl>
-          <Button
-            variant="outlined"
-            startIcon={<PeopleIcon />}
-            size="small"
-          >
-            New Admission
-          </Button>
-        </Box>
+              New Admission
+            </Button>
+          </Box>
+        )}
       </Box>
 
-      {/* Key Metrics */}
-      <Grid container spacing={2} mb={2}>
+      {/* Key Metrics - Only show if authenticated */}
+      {userId && (
+        <Grid container spacing={2} mb={2}>
         <Grid item xs={6} sm={3}>
           <Card>
             <CardContent sx={{ p: 2 }}>
@@ -331,6 +362,7 @@ export function MainPage() {
           </Card>
         </Grid>
       </Grid>
+      )}
 
       <Grid container spacing={2}>
         {/* Bed Status Cards */}
@@ -593,52 +625,28 @@ export function MainPage() {
         {/* Right Side - Map and Alerts */}
         <Grid item xs={12} md={4}>
           <Grid container spacing={2}>
-            {/* Map View */}
-            <Grid item xs={12}>
-              <Paper sx={{ p: 2, height: `${(bedStatusHeight - 10) / 2}px` }}>
-                <Typography variant="h6" gutterBottom>
-                  Facility Location
-                </Typography>
-                <Box 
-                  sx={{ 
-                    height: 'calc(100% - 40px)', 
-                    bgcolor: 'grey.200', 
-                    borderRadius: 1,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    position: 'relative',
-                    overflow: 'hidden'
-                  }}
-                >
-                  {/* Map placeholder - in real implementation, use Google Maps or similar */}
-                  <Box
-                    sx={{
-                      position: 'absolute',
-                      top: 0,
-                      left: 0,
-                      right: 0,
-                      bottom: 0,
-                      backgroundImage: `url("https://api.mapbox.com/styles/v1/mapbox/light-v10/static/${facilityData.facility.lng},${facilityData.facility.lat},14,0/400x240@2x?access_token=pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw")`,
-                      backgroundSize: 'cover',
-                      backgroundPosition: 'center'
-                    }}
+            {/* Map View - Only show if API key is available */}
+            {hasMapApiKey && (
+              <Grid item xs={12}>
+                <Paper sx={{ p: 2, height: `${(bedStatusHeight - 10) / 2}px` }}>
+                  <Typography variant="h6" gutterBottom>
+                    Facility Location
+                  </Typography>
+                  <LocationMap
+                    latitude={facilityData.facility.lat}
+                    longitude={facilityData.facility.lng}
+                    name={facilityData.facility.name}
+                    height="calc(100% - 40px)"
+                    zoom={14}
                   />
-                  <LocationOnIcon 
-                    sx={{ 
-                      fontSize: 40, 
-                      color: 'error.main',
-                      zIndex: 1,
-                      filter: 'drop-shadow(2px 2px 4px rgba(0,0,0,0.3))'
-                    }} 
-                  />
-                </Box>
-              </Paper>
-            </Grid>
+                </Paper>
+              </Grid>
+            )}
 
-            {/* Recent Alerts */}
-            <Grid item xs={12}>
-              <Paper sx={{ p: 2, height: `${(bedStatusHeight - 10) / 2}px`, overflow: 'auto' }}>
+            {/* Recent Alerts - Only show if authenticated */}
+            {userId && (
+              <Grid item xs={12}>
+              <Paper sx={{ p: 2, height: hasMapApiKey ? `${(bedStatusHeight - 10) / 2}px` : `${bedStatusHeight}px`, overflow: 'auto' }}>
                 <Typography variant="h6" gutterBottom>
                   Recent Alerts
                 </Typography>
@@ -661,6 +669,7 @@ export function MainPage() {
                 </List>
               </Paper>
             </Grid>
+            )}
           </Grid>
         </Grid>
 

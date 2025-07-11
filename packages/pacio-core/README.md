@@ -172,9 +172,24 @@ Add to your settings.json:
         }
       }
     }
+  },
+  "private": {
+    "google": {
+      "mapsApiKey": "YOUR_GOOGLE_MAPS_API_KEY_HERE"
+    }
   }
 }
 ```
+
+### Google Maps Integration
+
+The PACIO Core package now includes Google Maps integration for facility location visualization. To enable this feature:
+
+1. Obtain a Google Maps API key from the [Google Cloud Console](https://console.cloud.google.com/)
+2. Add the API key to your settings file under `private.google.mapsApiKey`
+3. Alternatively, set the `GOOGLE_MAPS_API_KEY` environment variable
+
+The map will automatically fall back to a static Mapbox image if no API key is configured.
 
 ## Development
 

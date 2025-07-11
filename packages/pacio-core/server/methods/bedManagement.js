@@ -200,5 +200,37 @@ Meteor.methods({
       console.error('Error creating bed:', error);
       throw new Meteor.Error('insert-failed', 'Failed to create bed');
     }
+  },
+
+  'pacio.getGoogleMapsApiKey': async function() {
+    // No authentication required - facility location is public information
+
+    // Get Google Maps API key, preferring environment variable over placeholder
+    let apiKey = process.env.GOOGLE_MAPS_API_KEY;
+    
+    console.log('Checking for Google Maps API key...');
+    console.log('Environment variable GOOGLE_MAPS_API_KEY:', apiKey ? 'Found' : 'Not found');
+    
+    // If no environment variable, check settings
+    if (!apiKey) {
+      apiKey = Meteor.settings?.private?.google?.mapsApiKey || 
+               Meteor.settings?.google?.mapsApiKey;
+               
+      console.log('Settings value:', apiKey ? apiKey.substring(0, 10) + '...' : 'Not found');
+               
+      // If the settings value is the placeholder, ignore it
+      if (apiKey === 'YOUR_GOOGLE_MAPS_API_KEY_HERE') {
+        console.log('Ignoring placeholder value from settings');
+        apiKey = null;
+      }
+    }
+
+    if (!apiKey) {
+      console.warn('Google Maps API key not found in settings or environment variables');
+      throw new Meteor.Error('api-key-not-found', 'Google Maps API key is not configured');
+    }
+
+    console.log('Google Maps API key retrieved successfully');
+    return apiKey;
   }
 });
