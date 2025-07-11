@@ -122,10 +122,22 @@ function AdvancedDirectivesPage(props) {
       };
     }
 
-    const documentReferences = DocumentReferences.find({
-      ...query,
-      'type.coding.code': { $in: directiveTypes.map(d => d.code) }
-    }).fetch();
+    // First, let's get all document references for the patient
+    const allDocumentReferences = DocumentReferences.find(query).fetch();
+    
+    // Log what we found for debugging
+    console.log('All DocumentReferences for patient:', allDocumentReferences);
+    console.log('Document types found:', allDocumentReferences.map(d => get(d, 'type')));
+    
+    // Filter for advanced directive types if they exist, otherwise show all
+    const documentReferences = allDocumentReferences.filter(doc => {
+      const typeCode = get(doc, 'type.coding[0].code');
+      const isAdvancedDirective = directiveTypes.map(d => d.code).includes(typeCode);
+      
+      // If no type code or not an advanced directive type, still include it
+      // This ensures we don't hide documents that might be relevant
+      return isAdvancedDirective || !typeCode || allDocumentReferences.length <= 5;
+    });
 
     const consents = Consents.find(query).fetch();
     const relatedPersons = RelatedPersons.find({ patient: query['subject.reference'] }).fetch();
@@ -133,6 +145,7 @@ function AdvancedDirectivesPage(props) {
 
     return {
       documentReferences,
+      allDocumentReferences,
       consents,
       relatedPersons,
       patient,
@@ -412,7 +425,15 @@ function AdvancedDirectivesPage(props) {
               {data.documentReferences.length === 0 ? (
                 <Alert severity="warning">
                   <AlertTitle>No Advanced Directives Found</AlertTitle>
-                  Consider uploading your advanced directives, living will, or healthcare proxy documents.
+                  {data.allDocumentReferences.length > 0 ? (
+                    <>
+                      Found {data.allDocumentReferences.length} document(s) but none match advanced directive types.
+                      <br />
+                      Document types found: {data.allDocumentReferences.map(d => get(d, 'type.text') || get(d, 'type.coding[0].display') || 'Unknown').join(', ')}
+                    </>
+                  ) : (
+                    'Consider uploading your advanced directives, living will, or healthcare proxy documents.'
+                  )}
                 </Alert>
               ) : (
                 <List>

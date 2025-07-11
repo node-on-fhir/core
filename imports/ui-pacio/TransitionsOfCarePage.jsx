@@ -235,6 +235,53 @@ function TransitionsOfCarePage(props) {
       }
     };
   }, []);
+  
+  // Auto-check sections that have data
+  useEffect(() => {
+    if (data.sectionData) {
+      const sectionsWithData = {};
+      
+      // Map section IDs to their data
+      const sectionDataMapping = {
+        'patient-info': data.patient && Object.keys(data.patient).length > 0,
+        'diagnoses': data.sectionData.conditions && data.sectionData.conditions.length > 0,
+        'medications': (data.sectionData.medications && data.sectionData.medications.length > 0) || 
+                      (data.sectionData.medicationRequests && data.sectionData.medicationRequests.length > 0) ||
+                      (data.sectionData.medicationStatements && data.sectionData.medicationStatements.length > 0),
+        'allergies': data.sectionData.allergyIntolerances && data.sectionData.allergyIntolerances.length > 0,
+        'functional-status': data.sectionData.observations && data.sectionData.observations.filter(obs => 
+          get(obs, 'category[0].coding[0].code') === 'functional-status').length > 0,
+        'cognitive-status': data.sectionData.observations && data.sectionData.observations.filter(obs => 
+          get(obs, 'category[0].coding[0].code') === 'cognitive-status').length > 0,
+        'care-preferences': data.sectionData.carePlans && data.sectionData.carePlans.length > 0,
+        'care-team': data.sectionData.careTeams && data.sectionData.careTeams.length > 0,
+        'discharge-instructions': data.sectionData.documentReferences && data.sectionData.documentReferences.length > 0,
+        'nutrition': data.sectionData.nutritionOrders && data.sectionData.nutritionOrders.length > 0,
+        'skin-conditions': data.sectionData.observations && data.sectionData.observations.filter(obs => 
+          get(obs, 'category[0].coding[0].code') === 'exam' && 
+          get(obs, 'code.text', '').toLowerCase().includes('skin')).length > 0,
+        'immunizations': data.sectionData.immunizations && data.sectionData.immunizations.length > 0,
+        'vital-signs': data.sectionData.observations && data.sectionData.observations.filter(obs => 
+          get(obs, 'category[0].coding[0].code') === 'vital-signs').length > 0,
+        'social-history': data.sectionData.observations && data.sectionData.observations.filter(obs => 
+          get(obs, 'category[0].coding[0].code') === 'social-history').length > 0,
+        'equipment': data.sectionData.devices && data.sectionData.devices.length > 0,
+        'follow-up': data.sectionData.serviceRequests && data.sectionData.serviceRequests.length > 0
+      };
+      
+      // Set checkboxes for sections with data
+      Object.keys(sectionDataMapping).forEach(sectionId => {
+        if (sectionDataMapping[sectionId]) {
+          sectionsWithData[sectionId] = true;
+        }
+      });
+      
+      setCompletedSections(prev => ({
+        ...prev,
+        ...sectionsWithData
+      }));
+    }
+  }, [data.sectionData, data.patient]);
 
   const handlePrint = () => {
     window.print();

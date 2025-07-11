@@ -171,8 +171,14 @@ export function PatientsDirectory(props){
 
             console.log('openUrlOnRowClick', get(Meteor, 'settings.public.modules.fhir.Patients.openUrlOnRowClick', ''))
             if(get(Meteor, 'settings.public.modules.fhir.Patients.openUrlOnRowClick')){
-              props.history.replace(get(Meteor, 'settings.public.modules.fhir.Patients.openUrlOnRowClick', '/'))
+              // Navigate to patient chart when View Chart is clicked
+              window.location.href = get(Meteor, 'settings.public.modules.fhir.Patients.openUrlOnRowClick', '/patient-chart');
             }
+          }}
+          onFhirOperations={function(patientId){
+            console.log('FHIR Operations for patient:', patientId);
+            // Navigate to FHIR operations page
+            window.location.href = `/patient/${patientId}/fhir`;
           }}
           onSetPage={function(index){
             Session.set('PatientsTable.patientsIndex', index)
@@ -261,7 +267,7 @@ export function PatientsDirectory(props){
         py: { xs: 3, sm: 4, md: 5 }
       }}
     >
-      <Box sx={{ maxWidth: '1200px', mx: 'auto' }}>
+      <Box sx={{ width: '100%' }}>
         { data.patients.length > 0 && renderHeader() }
         { layoutContent }
       </Box>

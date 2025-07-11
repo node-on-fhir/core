@@ -2,6 +2,7 @@
 
 import { Meteor } from 'meteor/meteor';
 import { check } from 'meteor/check';
+import { Random } from 'meteor/random';
 import { get } from 'lodash';
 import { fetch } from 'meteor/fetch';
 import moment from 'moment';
@@ -204,6 +205,104 @@ Meteor.methods({
       console.log(`Total resources processed: ${result.totalProcessed}`);
       console.log('Resource counts:', result.resourceCounts);
       
+      // Save the bundle to the Bundles collection
+      if (result.bundle && result.bundle.entry && result.bundle.entry.length > 0) {
+        try {
+          const BundlesCollection = await global.Collections.Bundles;
+          if (BundlesCollection) {
+            // Add metadata to the bundle
+            const bundleToSave = {
+              ...result.bundle,
+              id: Random.id(),
+              _patientId: patientId,  // Add patient ID for easy filtering
+              meta: {
+                ...result.bundle.meta,
+                lastUpdated: new Date().toISOString(),
+                tag: [
+                  ...(result.bundle.meta?.tag || []),
+                  {
+                    system: 'https://honeycomb.fhir.org/bundle-source',
+                    code: 'patient-everything',
+                    display: `Patient $everything operation for ${patientId}`
+                  }
+                ]
+              },
+              // Add identifier for easy retrieval
+              identifier: [{
+                system: 'https://honeycomb.fhir.org/bundle-identifier',
+                value: `patient-everything-${patientId}-${Date.now()}`
+              }],
+              // Add extension with fetch details
+              extension: [{
+                url: 'https://honeycomb.fhir.org/fetch-details',
+                valueCode: JSON.stringify({
+                  sourceUrl: url,
+                  patientId: patientId,
+                  fetchedAt: new Date().toISOString(),
+                  fetchedBy: this.userId,
+                  pagesFetched: result.pagesFetched,
+                  resourceCounts: result.resourceCounts
+                })
+              }]
+            };
+            
+            const bundleId = await BundlesCollection.insertAsync(bundleToSave);
+            console.log(`Saved patient $everything bundle with ID: ${bundleId}`);
+            
+            // Add bundle ID to result
+            result.bundleId = bundleId;
+          } else {
+            console.warn('Bundles collection not found - bundle will not be persisted');
+          }
+        } catch (bundleError) {
+          console.error('Error saving bundle to Bundles collection:', bundleError);
+          // Don't throw - we still want to return the results even if bundle saving fails
+        }
+      }
+      
+      // Find and save the Patient resource specifically
+      if (result.bundle && result.bundle.entry) {
+        try {
+          // Find the Patient resource in the bundle
+          const patientEntry = result.bundle.entry.find(entry => 
+            entry.resource && entry.resource.resourceType === 'Patient'
+          );
+          
+          if (patientEntry && patientEntry.resource) {
+            const PatientsCollection = await global.Collections.Patients;
+            if (PatientsCollection) {
+              const patientResource = patientEntry.resource;
+              
+              // Check if patient already exists
+              const existingPatient = await PatientsCollection.findOneAsync({ id: patientResource.id });
+              
+              if (existingPatient) {
+                // Update existing patient
+                await PatientsCollection.updateAsync(
+                  { id: patientResource.id },
+                  { $set: patientResource }
+                );
+                console.log(`Updated Patient resource: ${patientResource.id}`);
+              } else {
+                // Insert new patient
+                await PatientsCollection.insertAsync(patientResource);
+                console.log(`Inserted new Patient resource: ${patientResource.id}`);
+              }
+              
+              // Update the result with the patient resource
+              result.patientResource = patientResource;
+            } else {
+              console.warn('Patients collection not found');
+            }
+          } else {
+            console.warn('No Patient resource found in bundle');
+          }
+        } catch (patientError) {
+          console.error('Error saving Patient resource:', patientError);
+          // Don't throw - continue with the response
+        }
+      }
+      
       // Limit resource details to prevent overwhelming the UI
       const maxDetailsToShow = 100;
       const resourceDetails = result.resourceDetails && result.resourceDetails.length > maxDetailsToShow 
@@ -220,7 +319,8 @@ Meteor.methods({
         patientResource: result.patientResource,
         timestamp: new Date(),
         resourceDetails: resourceDetails,
-        bundle: result.bundle
+        bundle: result.bundle,
+        bundleId: result.bundleId || null
       };
       
     } catch (error) {

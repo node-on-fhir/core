@@ -8,6 +8,7 @@ import {
   AdvanceDirectiveTemplates,
   GoalAchievements 
 } from '../../lib/collections/PacioCollections';
+import { Beds } from '../../lib/collections/BedsCollection';
 
 // Publish advance directives
 Meteor.publish('pacio.advanceDirectives', function(patientId, directiveId) {
@@ -215,6 +216,53 @@ Meteor.publish('pacio.documentReferences', function(patientId) {
   });
 });
 
+// Publish patients
+Meteor.publish('pacio.patients', async function(patientId, searchText) {
+  check(patientId, Match.Maybe(String));
+  check(searchText, Match.Maybe(String));
+  
+  if (!this.userId) {
+    return this.ready();
+  }
+  
+  const query = {};
+  
+  // If specific patient ID provided
+  if (patientId) {
+    query.$or = [
+      { id: patientId },
+      { _id: patientId }
+    ];
+  }
+  
+  // If search text provided, search in name fields
+  if (searchText && searchText.length > 0) {
+    const searchRegex = new RegExp(searchText, 'i');
+    query.$or = [
+      { 'name.text': searchRegex },
+      { 'name.family': searchRegex },
+      { 'name.given': searchRegex },
+      { 'identifier.value': searchRegex }
+    ];
+  }
+  
+  // Get Patients collection from global.Collections
+  const Patients = await global.Collections.Patients;
+  if (!Patients) {
+    console.warn('Patients collection not found in global.Collections');
+    return this.ready();
+  }
+  
+  // Limit results for performance
+  const options = {
+    sort: { 'name.family': 1, 'name.given': 1 },
+    limit: searchText ? 50 : 100
+  };
+  
+  console.log('Publishing patients with query:', query, 'options:', options);
+  return Patients.find(query, options);
+});
+
 // Publish patient sync status
 Meteor.publish('pacio.patientSyncStatus', function(patientId) {
   check(patientId, String);
@@ -235,8 +283,24 @@ Meteor.publish('pacio.advanceDirectiveTemplates', function() {
   return AdvanceDirectiveTemplates.find({ isActive: true });
 });
 
+// Publish beds
+Meteor.publish('pacio.beds', function(query = {}) {
+  check(query, Match.Optional({
+    status: Match.Optional(String),
+    facilityId: Match.Optional(String),
+    bedType: Match.Optional(String),
+    ward: Match.Optional(String)
+  }));
+  
+  if (!this.userId) {
+    return this.ready();
+  }
+  
+  return Beds.find(query);
+});
+
 // Publish all PACIO resources for a patient
-Meteor.publish('pacio.patientResources', function(patientId) {
+Meteor.publish('pacio.patientResources', async function(patientId) {
   check(patientId, String);
   
   if (!this.userId) {
@@ -245,16 +309,27 @@ Meteor.publish('pacio.patientResources', function(patientId) {
   
   const patientRef = `Patient/${patientId}`;
   
-  // Get collections
-  const AdvanceDirectives = Meteor.Collections && Meteor.Collections.AdvanceDirectives;
-  const Compositions = Meteor.Collections && Meteor.Collections.Compositions;
-  const Lists = Meteor.Collections && Meteor.Collections.Lists;
-  const Goals = Meteor.Collections && Meteor.Collections.Goals;
-  const NutritionOrders = Meteor.Collections && Meteor.Collections.NutritionOrders;
-  const ServiceRequests = Meteor.Collections && Meteor.Collections.ServiceRequests;
-  const DocumentReferences = Meteor.Collections && Meteor.Collections.DocumentReferences;
+  // Get collections from global.Collections
+  const Patients = await global.Collections.Patients;
+  const AdvanceDirectives = await global.Collections.AdvanceDirectives;
+  const Compositions = await global.Collections.Compositions;
+  const Lists = await global.Collections.Lists;
+  const Goals = await global.Collections.Goals;
+  const NutritionOrders = await global.Collections.NutritionOrders;
+  const ServiceRequests = await global.Collections.ServiceRequests;
+  const DocumentReferences = await global.Collections.DocumentReferences;
   
   const publications = [];
+  
+  // Patient record itself
+  if (Patients) {
+    publications.push(Patients.find({
+      $or: [
+        { id: patientId },
+        { _id: patientId }
+      ]
+    }));
+  }
   
   // Advance Directives
   if (AdvanceDirectives) {

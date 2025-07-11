@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, Fragment } from 'react';
 import PropTypes from 'prop-types';
 
 import { 
@@ -13,8 +13,23 @@ import {
   FirstPageIcon,
   KeyboardArrowLeft,
   KeyboardArrowRight,
-  LastPageIcon
+  LastPageIcon,
+  Collapse,
+  Box,
+  Typography,
+  Chip,
+  Stack
 } from '@mui/material';
+import { 
+  KeyboardArrowDown,
+  KeyboardArrowUp,
+  Edit as EditIcon,
+  Visibility as ViewIcon,
+  Share as ShareIcon,
+  Print as PrintIcon,
+  LocalHospital as HospitalIcon,
+  Assessment as AuditIcon
+} from '@mui/icons-material';
 
 
 // import Icon from 'react-icons-kit'
@@ -158,6 +173,31 @@ TablePaginationActions.propTypes = {
 
 export function PatientsTable(props){
   // logger.log('PatientsTable', props)
+
+  const [expandedRows, setExpandedRows] = useState({});
+  const [modalState, setModalState] = useState({});
+  const [dynamicButtons, setDynamicButtons] = useState([]);
+  const [selectedPatientForModal, setSelectedPatientForModal] = useState(null);
+
+  // Collect dynamic buttons from packages on mount
+  useEffect(() => {
+    const collectButtons = async () => {
+      let buttons = [];
+      
+      // Parse packages looking for PatientsDirectoryButtons
+      const packageNames = Object.keys(Package);
+      
+      for (const packageName of packageNames) {
+        if (Package[packageName].PatientsDirectoryButtons) {
+          buttons = buttons.concat(Package[packageName].PatientsDirectoryButtons);
+        }
+      }
+      
+      setDynamicButtons(buttons);
+    };
+    
+    collectButtons();
+  }, []);
 
   let { 
     children, 
@@ -454,9 +494,16 @@ export function PatientsTable(props){
         break;
     }
 
-    if(typeof onRowClick  === "function"){
-      onRowClick(patientId);
-    }
+    // Toggle expansion when clicking anywhere on the row
+    toggleRowExpansion(patientId, { stopPropagation: () => {} });
+  }
+
+  function toggleRowExpansion(patientId, event){
+    event.stopPropagation();
+    setExpandedRows(prev => ({
+      ...prev,
+      [patientId]: !prev[patientId]
+    }));
   }
   function renderActionIconsHeader(){
     if (!hideActionIcons) {
@@ -860,8 +907,21 @@ export function PatientsTable(props){
         rowStyle.height = '32px';
       }
 
+      const patientId = get(patientsToRender[i], 'id') || get(patientsToRender[i], '_id');
+      const isExpanded = expandedRows[patientId] || false;
+      
+      // Main row
       tableRows.push(
         <TableRow key={i} className="patientRow" hover={true} style={rowStyle} selected={selected} onClick={ selectPatientRow.bind(this, patientsToRender[i] )} >
+          <TableCell>
+            <IconButton
+              aria-label="expand row"
+              size="small"
+              onClick={(event) => toggleRowExpansion(patientId, event)}
+            >
+              {isExpanded ? <KeyboardArrowUp /> : <KeyboardArrowDown />}
+            </IconButton>
+          </TableCell>
           { renderActionIcons(patientsToRender[i]) }
           { renderRowAvatar(patientsToRender[i], styles.avatar) }
           { renderIdentifier(patientsToRender[i].identifier)}
@@ -885,6 +945,94 @@ export function PatientsTable(props){
 
           { renderSystemBarcode(patientsToRender[i]._id)}
           { renderBarcode(patientsToRender[i].id)}
+        </TableRow>
+      );
+      
+      // Expanded row with action buttons
+      const numberOfColumns = 20; // Adjust based on actual columns shown
+      tableRows.push(
+        <TableRow key={`${i}-expanded`}>
+          <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={numberOfColumns}>
+            <Collapse in={isExpanded} timeout="auto" unmountOnExit>
+              <Box sx={{ py: 2, px: 1 }}>
+                <Stack direction="row" spacing={2} flexWrap="wrap">
+                  {/* Static Buttons */}
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    startIcon={<ViewIcon />}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if(onRowClick) onRowClick(patientId);
+                    }}
+                  >
+                    View Chart
+                  </Button>
+                  
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    startIcon={<AuditIcon />}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      console.log('Audit patient:', patientId);
+                      // TODO: Implement audit functionality
+                    }}
+                  >
+                    Audit
+                  </Button>
+                  
+                  {/* Dynamic Buttons from Packages */}
+                  {dynamicButtons.map((buttonConfig) => {
+                    const ButtonComponent = (
+                      <Button
+                        key={buttonConfig.id}
+                        variant="outlined"
+                        size="small"
+                        color={buttonConfig.color || 'primary'}
+                        startIcon={buttonConfig.icon}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          
+                          if (buttonConfig.requiresModal) {
+                            setSelectedPatientForModal(patientsToRender[i]);
+                            setModalState({
+                              ...modalState,
+                              [buttonConfig.id]: true
+                            });
+                          } else if (buttonConfig.onClick) {
+                            buttonConfig.onClick(patientId, patientsToRender[i]);
+                          }
+                        }}
+                      >
+                        {buttonConfig.label}
+                      </Button>
+                    );
+                    
+                    // If button has a modal, render both button and modal
+                    if (buttonConfig.requiresModal && buttonConfig.modalComponent) {
+                      const ModalComponent = buttonConfig.modalComponent;
+                      return (
+                        <Fragment key={buttonConfig.id}>
+                          {ButtonComponent}
+                          <ModalComponent
+                            open={modalState[buttonConfig.id] || false}
+                            onClose={() => setModalState({
+                              ...modalState,
+                              [buttonConfig.id]: false
+                            })}
+                            patient={selectedPatientForModal}
+                          />
+                        </Fragment>
+                      );
+                    }
+                    
+                    return ButtonComponent;
+                  })}
+                </Stack>
+              </Box>
+            </Collapse>
+          </TableCell>
         </TableRow>
       );
     }
@@ -913,6 +1061,7 @@ export function PatientsTable(props){
       <Table size="small" aria-label="a dense table" { ...otherProps } >
         <TableHead>
           <TableRow>
+            <TableCell padding="checkbox" />
             { renderActionIconsHeader() }
             { renderRowAvatarHeader() }
             { renderIdentifierHeader() }

@@ -20,3 +20,6 @@ Package.onUse(function(api) {
     api.mainModule('index.jsx', 'client');
 });
 
+Npm.depends({
+    "@nivo/sunburst": "0.84.0"
+})

@@ -886,6 +886,18 @@ export function PatientSidebar(props){
 
   let dataManagementElements = [];
   let drawDataMgmDivider = false;
+  
+  // Patient Chart
+  if(get(Meteor, 'settings.public.defaults.sidebar.menuItems.PatientChart', true)){
+    drawDataMgmDivider = true;
+    dataManagementElements.push(<ListItem id='patientChartItem' key='patientChartItem' button onClick={function(){ openPage('/patient-chart'); }} >
+      <ListItemIcon >
+        <Icon icon={heartbeat} />
+      </ListItemIcon>
+      <ListItemText primary="Patient Chart"  />
+    </ListItem>);    
+  };
+  
   if(get(Meteor, 'settings.public.defaults.sidebar.menuItems.HealthRecords')){
     drawDataMgmDivider = true;
     dataManagementElements.push(<ListItem id='healthkitImportItem' key='healthkitImportItem' button onClick={function(){ openPage('/healthcard'); }} >

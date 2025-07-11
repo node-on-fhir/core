@@ -53,6 +53,7 @@ class HipaaLoggerClass {
     const event = {
       eventType: eventData.eventType || EventTypes.ACCESS,
       eventDate: new Date(),
+      createdAt: new Date(),
       message: eventData.message
     };
 

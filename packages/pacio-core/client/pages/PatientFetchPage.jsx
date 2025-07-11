@@ -1,5 +1,26 @@
 // /packages/pacio-core/client/pages/PatientFetchPage.jsx
 
+// Summary of the data flow:
+
+//   1. Initial fetch from external server: When you click "Fetch Patient Data" on /patient-fetch, it calls Meteor.call('pacio.fetchPatientEverything', ...) which runs on the server.
+//   2. Server-side processing: The server method:
+//     - Fetches data from the external FHIR server page by page
+//     - Directly inserts/updates resources into MongoDB collections on the server (lines 36-82 in fetchPatientEverything.js)
+//     - Returns the complete bundle back to the client
+//   3. Client-side processing: After server returns, the client:
+//     - Receives the bundle and calls Meteor.MedicalRecordImporter.importBundle()
+//     - This importer checks if there's an active subscription for each resource type (line 174-181)
+//     - If subscription exists: Calls Meteor.call('proxyInsert', ...) to insert via server method
+//     - If no subscription: Directly inserts into the client-side minimongo collection using window[collectionName]._collection.insert() (lines 204-211)
+
+//   So to answer your questions:
+//   - Yes, data is saved on the server during the initial fetch
+//   - It depends on whether there's a pub/sub:
+//     - With active subscriptions: Data flows via pub/sub from server to client
+//     - Without subscriptions: Data is also inserted directly into client-side cursors
+
+//   This dual approach ensures data is available on the client regardless of subscription status, though the pub/sub approach is preferred when available.
+
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   Box, 

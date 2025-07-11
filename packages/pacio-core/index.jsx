@@ -3,7 +3,19 @@
 import React, { Suspense } from 'react';
 import { Session } from 'meteor/session';
 import { Meteor } from 'meteor/meteor';
-import { CircularProgress, Box } from '@mui/material';
+import { CircularProgress, Box, Typography } from '@mui/material';
+
+// Import client startup to initialize subscriptions
+import './client/startup';
+
+// Import components we'll use for patient directory buttons
+import { AssignToBedModal } from './client/components/beds/AssignToBedModal';
+import { 
+  Bed as BedIcon,
+  LocalHospital as AdmitIcon,
+  ExitToApp as DischargeIcon,
+  SwapHoriz as TransferIcon
+} from '@mui/icons-material';
 
 // Loading component
 const Loading = () => (
@@ -94,6 +106,8 @@ const MainPageLazy = React.lazy(() =>
   import('./client/pages/MainPage').then(module => ({ default: module.MainPage }))
 );
 
+const MainPageComponent = withSuspense(MainPageLazy);
+
 const MainPage = {
   'name': 'PACIO Dashboard',
   'path': '/',
@@ -146,7 +160,7 @@ export const DynamicRoutes = [
   {
     name: 'PacioDashboard',
     path: '/pacio-dashboard',
-    element: <MainPage />,
+    element: <MainPageComponent />,
     requireAuth: true
   },
   // List routes (no patient ID)
@@ -432,6 +446,52 @@ export { AdvanceDirectiveUtils } from './lib/utilities/AdvanceDirectiveUtils';
 export { PdfUtils } from './lib/utilities/PdfUtils';
 
 
+// Patient Directory Buttons - Dynamic buttons for the patients table
+export const PatientsDirectoryButtons = [
+  {
+    id: 'assign-to-bed',
+    label: 'Assign to Bed',
+    icon: <BedIcon />,
+    color: 'primary',
+    requiresModal: true,
+    modalComponent: AssignToBedModal,
+    onClick: function(patientId, patient) {
+      console.log('Assign to bed clicked for patient:', patientId);
+      // The modal will handle the actual assignment
+    }
+  },
+  {
+    id: 'admit-patient',
+    label: 'Admit',
+    icon: <AdmitIcon />,
+    color: 'success',
+    onClick: function(patientId, patient) {
+      console.log('Admit patient:', patientId);
+      // TODO: Implement admission workflow
+    }
+  },
+  {
+    id: 'discharge-patient',
+    label: 'Discharge',
+    icon: <DischargeIcon />,
+    color: 'warning',
+    onClick: function(patientId, patient) {
+      console.log('Discharge patient:', patientId);
+      // TODO: Implement discharge workflow
+    }
+  },
+  {
+    id: 'transfer-patient',
+    label: 'Transfer',
+    icon: <TransferIcon />,
+    color: 'info',
+    onClick: function(patientId, patient) {
+      console.log('Transfer patient:', patientId);
+      // TODO: Implement transfer workflow
+    }
+  }
+];
+
 export { 
   DynamicRoutes,
   SidebarElements,
@@ -440,5 +500,6 @@ export {
   ModuleConfig,
   AdvanceDirectiveUtils,
   PdfUtils,
-  MainPage
+  MainPage,
+  PatientsDirectoryButtons
 };

@@ -3,6 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import { Meteor } from 'meteor/meteor';
 import { useTracker } from 'meteor/react-meteor-data';
+import { useSubscribe } from 'meteor/react-meteor-data';
+import { useNavigate } from 'react-router-dom';
 import { get } from 'lodash';
 import moment from 'moment';
 import {
@@ -68,10 +70,14 @@ import {
   Info as InfoIcon,
   LocalPharmacy as LocalPharmacyIcon
 } from '@mui/icons-material';
+import { Beds } from '../../lib/collections/BedsCollection';
+import { SearchPatientsModalDialog } from '../components/SearchPatientsModalDialog';
 
 export function MainPage() {
   const [selectedFilter, setSelectedFilter] = useState('all');
   const [bedStatusHeight, setBedStatusHeight] = useState(600);
+  const [patientModalOpen, setPatientModalOpen] = useState(false);
+  const [selectedBedId, setSelectedBedId] = useState(null);
 
   // Calculate dynamic height for bed status area
   useEffect(() => {
@@ -88,18 +94,33 @@ export function MainPage() {
     return () => window.removeEventListener('resize', calculateHeight);
   }, []);
 
-  // Mock data for medical home dashboard (1-16 beds)
+
+  // Subscribe to beds and patients data
+  const bedsLoading = useSubscribe('pacio.beds');
+  const patientsLoading = useSubscribe('pacio.patients');
+
+  // Check if user is logged in
+  const user = useTracker(() => Meteor.user());
+  
+  // Fetch data from collections - trust the cursor
   const facilityData = useTracker(() => {
+    // Simply get beds from the collection - all data is already there
+    const beds = Beds.find({}).fetch();
+    
+    // Calculate occupied beds
+    const occupiedBeds = beds.filter(bed => bed.status === 'occupied').length;
+    const totalBeds = beds.length || 16;
+    
     return {
       facility: {
         id: 'mh-001',
-        name: 'Willow Creek Medical Home',
+        name: "Rainbow's End Medical Home",
         type: 'Medical Home',
         address: '789 Healing Way, Springfield, IL 62704',
         lat: 39.7895,
         lng: -89.6387,
-        totalBeds: 16,
-        occupiedBeds: 14,
+        totalBeds: totalBeds,
+        occupiedBeds: occupiedBeds,
         staff: {
           nurses: 3,
           cnas: 4,
@@ -107,7 +128,7 @@ export function MainPage() {
           other: 2
         }
       },
-      beds: generateBedData(),
+      beds: beds,
       recentAlerts: [
         { id: 1, bedId: 'B03', type: 'medical', message: 'Abnormal vitals detected - Bed 3', time: moment().subtract(8, 'minutes'), priority: 'high' },
         { id: 2, bedId: 'B07', type: 'call', message: 'Call button activated - Bed 7', time: moment().subtract(15, 'minutes'), priority: 'medium' },
@@ -115,74 +136,18 @@ export function MainPage() {
         { id: 4, bedId: 'B01', type: 'fall', message: 'Fall prevention protocol - Bed 1', time: moment().subtract(45, 'minutes'), priority: 'high' }
       ]
     };
-  }, []);
+  }, [bedsLoading, patientsLoading]);
 
-  // Generate mock bed data for medical home
-  function generateBedData() {
-    const beds = [];
-    const totalBeds = 16;
-    
-    for (let bedNum = 1; bedNum <= totalBeds; bedNum++) {
-      const bedId = `B${bedNum.toString().padStart(2, '0')}`;
-      const isOccupied = bedNum <= 14; // 14 out of 16 beds occupied
-      
-      beds.push({
-        id: bedId,
-        number: bedNum,
-        status: isOccupied ? 'occupied' : 'vacant',
-        patient: isOccupied ? generatePatient(bedId) : null,
-        lastUpdated: moment().subtract(Math.random() * 120, 'minutes')
-      });
-    }
-    
-    return beds;
-  }
 
-  function generatePatient(bedId) {
-    const firstNames = ['John', 'Mary', 'Robert', 'Patricia', 'James', 'Barbara', 'William', 'Elizabeth', 'Michael', 'Linda'];
-    const lastNames = ['Smith', 'Johnson', 'Williams', 'Brown', 'Jones', 'Garcia', 'Miller', 'Davis', 'Wilson', 'Martinez'];
-    const conditions = ['Diabetes Management', 'Post-Surgical Recovery', 'Cardiac Monitoring', 'Respiratory Care', 'Wound Care', 'Physical Therapy'];
-    const physicians = ['Dr. Sarah Chen', 'Dr. James Wilson', 'Dr. Maria Rodriguez', 'Dr. David Thompson'];
-    
-    return {
-      name: `${firstNames[Math.floor(Math.random() * firstNames.length)]} ${lastNames[Math.floor(Math.random() * lastNames.length)]}`,
-      age: Math.floor(Math.random() * 40) + 50,
-      mrn: `MRN-${Math.floor(Math.random() * 900000) + 100000}`,
-      admitDate: moment().subtract(Math.floor(Math.random() * 30), 'days'),
-      primaryCondition: conditions[Math.floor(Math.random() * conditions.length)],
-      physician: physicians[Math.floor(Math.random() * physicians.length)],
-      acuityLevel: ['Stable', 'Stable', 'Monitoring', 'Critical'][Math.floor(Math.random() * 4)],
-      vitals: {
-        bp: `${110 + Math.floor(Math.random() * 30)}/${70 + Math.floor(Math.random() * 20)}`,
-        hr: 60 + Math.floor(Math.random() * 40),
-        temp: (97.5 + Math.random() * 2).toFixed(1),
-        o2: 94 + Math.floor(Math.random() * 6),
-        rr: 12 + Math.floor(Math.random() * 8),
-        lastChecked: moment().subtract(Math.floor(Math.random() * 60), 'minutes')
-      },
-      medications: {
-        nextDue: moment().add(Math.floor(Math.random() * 240), 'minutes'),
-        count: Math.floor(Math.random() * 5) + 2
-      },
-      labs: {
-        pending: Math.floor(Math.random() * 3),
-        critical: Math.random() > 0.8 ? 1 : 0
-      },
-      tasks: {
-        pending: Math.floor(Math.random() * 5),
-        overdue: Math.random() > 0.7 ? Math.floor(Math.random() * 2) + 1 : 0
-      },
-      fallRisk: Math.random() > 0.6,
-      isolation: Math.random() > 0.85,
-      dietRestrictions: Math.random() > 0.5 ? ['NPO', 'Low Sodium', 'Diabetic', 'Pureed'][Math.floor(Math.random() * 4)] : null
-    };
-  }
 
   // Filter beds based on selection
   const filteredBeds = facilityData.beds.filter(bed => {
     if (selectedFilter === 'occupied' && bed.status !== 'occupied') return false;
-    if (selectedFilter === 'vacant' && bed.status !== 'vacant') return false;
+    if (selectedFilter === 'vacant' && bed.status === 'occupied') return false;
     if (selectedFilter === 'critical' && bed.patient?.acuityLevel !== 'Critical') return false;
+    if (selectedFilter === 'available' && bed.status !== 'available') return false;
+    if (selectedFilter === 'cleaning' && bed.status !== 'cleaning') return false;
+    if (selectedFilter === 'maintenance' && bed.status !== 'maintenance') return false;
     return true;
   });
 
@@ -220,6 +185,40 @@ export function MainPage() {
     }
   };
 
+  // Handle assigning a patient to a bed
+  const handleAssignPatient = (bedId) => {
+    setSelectedBedId(bedId);
+    setPatientModalOpen(true);
+  };
+
+  // Handle patient selection from modal
+  const handlePatientSelected = (patient) => {
+    // Refresh the bed data will happen automatically via reactivity
+    console.log('Patient assigned:', patient);
+  };
+
+  // Handle marking a bed as clean
+  const handleMarkClean = async (bedId) => {
+    try {
+      await Meteor.callAsync('pacio.updateBedStatus', bedId, 'available');
+      console.log('Bed marked as clean');
+    } catch (error) {
+      console.error('Error marking bed as clean:', error);
+    }
+  };
+
+  // Show loading state while data is being fetched
+  if (bedsLoading() || patientsLoading()) {
+    return (
+      <Box sx={{ p: 2, height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <Box textAlign="center">
+          <LinearProgress sx={{ width: 200, mb: 2 }} />
+          <Typography color="textSecondary">Loading bed status...</Typography>
+        </Box>
+      </Box>
+    );
+  }
+
   return (
     <Box sx={{ p: 2, height: '100vh', overflow: 'hidden' }}>
       {/* Header */}
@@ -243,8 +242,10 @@ export function MainPage() {
             >
               <MenuItem value="all">All Beds</MenuItem>
               <MenuItem value="occupied">Occupied</MenuItem>
-              <MenuItem value="vacant">Vacant</MenuItem>
-              <MenuItem value="critical">Critical</MenuItem>
+              <MenuItem value="available">Available</MenuItem>
+              <MenuItem value="cleaning">Cleaning</MenuItem>
+              <MenuItem value="maintenance">Maintenance</MenuItem>
+              <MenuItem value="critical">Critical Patients</MenuItem>
             </Select>
           </FormControl>
           <Button
@@ -340,39 +341,64 @@ export function MainPage() {
                 Bed Status ({filteredBeds.length} beds)
               </Typography>
               <Typography variant="body2" color="textSecondary">
-                Last updated: {moment().format('h:mm A')}
+                {/* Remove dynamic timestamp to prevent re-renders */}
               </Typography>
             </Box>
             
+            {!user ? (
+              <Box 
+                display="flex" 
+                flexDirection="column" 
+                alignItems="center" 
+                justifyContent="center" 
+                height="300px"
+                gap={2}
+              >
+                <LocalHospitalIcon sx={{ fontSize: 60, color: 'text.secondary' }} />
+                <Typography variant="h6" color="text.secondary">
+                  Please log in to view bed status
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Patient information is protected and requires authentication
+                </Typography>
+                <Button 
+                  variant="contained" 
+                  onClick={() => window.location.href = '/signin'}
+                  sx={{ mt: 2 }}
+                >
+                  Sign In
+                </Button>
+              </Box>
+            ) : (
             <Grid container spacing={2}>
               {filteredBeds.map(bed => (
-                <Grid item xs={12} key={bed.id}>
+                <Grid item xs={12} key={bed._id || bed.bedId}>
                   <Card 
                     variant="outlined" 
                     sx={{ 
-                      borderLeft: bed.patient ? `4px solid ${getAcuityColor(bed.patient.acuityLevel)}` : '4px solid #e0e0e0',
+                      borderLeft: bed.status === 'occupied' ? `4px solid ${getAcuityColor(bed.acuityLevel || 'Stable')}` : '4px solid #e0e0e0',
                       '&:hover': { boxShadow: 2 }
                     }}
                   >
                     <CardContent>
-                      {bed.patient ? (
+                      {bed.status === 'occupied' ? (
                         <Box>
                           {/* Header Row */}
                           <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={2}>
                             <Box>
                               <Box display="flex" alignItems="center" gap={1}>
                                 <Typography variant="h6" component="span">
-                                  Bed {bed.number}
+                                  Bed {bed.bedId || bed.roomNumber}
                                 </Typography>
                                 <Chip 
-                                  label={bed.patient.acuityLevel} 
+                                  label={bed.acuityLevel || 'Stable'} 
                                   size="small" 
                                   sx={{ 
-                                    bgcolor: getAcuityColor(bed.patient.acuityLevel),
+                                    bgcolor: getAcuityColor(bed.acuityLevel || 'Stable'),
                                     color: 'white'
                                   }}
                                 />
-                                {bed.patient.isolation && (
+                                {bed.isolation && (
                                   <Chip 
                                     label="Isolation" 
                                     size="small" 
@@ -382,10 +408,10 @@ export function MainPage() {
                                 )}
                               </Box>
                               <Typography variant="body1" fontWeight="medium">
-                                {bed.patient.name}, {bed.patient.age}y
+                                {bed.patientName}, {bed.patientAge}y
                               </Typography>
                               <Typography variant="caption" color="textSecondary">
-                                {bed.patient.mrn} • Admitted {bed.patient.admitDate.fromNow()}
+                                {bed.patientMRN} • Admitted {bed.admissionDate ? moment(bed.admissionDate).fromNow() : 'N/A'}
                               </Typography>
                             </Box>
                             <IconButton size="small">
@@ -401,21 +427,21 @@ export function MainPage() {
                                 PRIMARY CONDITION
                               </Typography>
                               <Typography variant="body2" gutterBottom>
-                                {bed.patient.primaryCondition}
+                                {bed.primaryCondition || 'General Care'}
                               </Typography>
                               <Typography variant="caption" color="textSecondary" display="block" mt={1}>
                                 ATTENDING
                               </Typography>
                               <Typography variant="body2">
-                                {bed.patient.physician}
+                                {bed.attendingPhysician || 'Unassigned'}
                               </Typography>
-                              {bed.patient.dietRestrictions && (
+                              {bed.dietRestrictions && (
                                 <>
                                   <Typography variant="caption" color="textSecondary" display="block" mt={1}>
                                     DIET
                                   </Typography>
                                   <Typography variant="body2">
-                                    {bed.patient.dietRestrictions}
+                                    {bed.dietRestrictions}
                                   </Typography>
                                 </>
                               )}
@@ -424,40 +450,40 @@ export function MainPage() {
                             {/* Vitals Column */}
                             <Grid item xs={12} sm={4}>
                               <Typography variant="caption" color="textSecondary" display="block" gutterBottom>
-                                VITALS ({bed.patient.vitals.lastChecked.fromNow()})
+                                VITALS {bed.vitals && bed.vitals.lastChecked ? `(${moment(bed.vitals.lastChecked).fromNow()})` : ''}
                               </Typography>
                               <Box display="flex" flexWrap="wrap" gap={1}>
                                 <Chip 
-                                  label={`BP: ${bed.patient.vitals.bp}`} 
+                                  label={`BP: ${bed.vitals?.bp || 'N/A'}`} 
                                   size="small" 
                                   variant="outlined"
                                 />
                                 <Chip 
-                                  label={`HR: ${bed.patient.vitals.hr}`} 
+                                  label={`HR: ${bed.vitals?.hr || 'N/A'}`} 
                                   size="small" 
                                   variant="outlined"
-                                  sx={{ borderColor: getVitalColor('hr', bed.patient.vitals.hr) }}
+                                  sx={{ borderColor: getVitalColor('hr', bed.vitals?.hr) }}
                                 />
                                 <Chip 
-                                  label={`Temp: ${bed.patient.vitals.temp}°F`} 
+                                  label={`Temp: ${bed.vitals?.temp || 'N/A'}°F`} 
                                   size="small" 
                                   variant="outlined"
-                                  sx={{ borderColor: getVitalColor('temp', bed.patient.vitals.temp) }}
+                                  sx={{ borderColor: getVitalColor('temp', bed.vitals?.temp) }}
                                 />
                                 <Chip 
-                                  label={`O2: ${bed.patient.vitals.o2}%`} 
+                                  label={`O2: ${bed.vitals?.o2 || 'N/A'}%`} 
                                   size="small" 
                                   variant="outlined"
-                                  sx={{ borderColor: getVitalColor('o2', bed.patient.vitals.o2) }}
+                                  sx={{ borderColor: getVitalColor('o2', bed.vitals?.o2) }}
                                 />
                                 <Chip 
-                                  label={`RR: ${bed.patient.vitals.rr}`} 
+                                  label={`RR: ${bed.vitals?.rr || 'N/A'}`} 
                                   size="small" 
                                   variant="outlined"
                                 />
                               </Box>
                               <Box display="flex" gap={1} mt={1}>
-                                {bed.patient.fallRisk && (
+                                {bed.fallRisk && (
                                   <Chip 
                                     label="Fall Risk" 
                                     size="small" 
@@ -477,15 +503,15 @@ export function MainPage() {
                                 <Box display="flex" alignItems="center" gap={1}>
                                   <LocalPharmacyIcon fontSize="small" color="action" />
                                   <Typography variant="body2">
-                                    Next med: {bed.patient.medications.nextDue.format('h:mm A')}
+                                    Next med: {bed.medications?.nextDue ? moment(bed.medications.nextDue).format('h:mm A') : 'N/A'}
                                   </Typography>
                                 </Box>
-                                {bed.patient.labs.pending > 0 && (
+                                {bed.labs?.pending > 0 && (
                                   <Box display="flex" alignItems="center" gap={1}>
                                     <AssessmentIcon fontSize="small" color="action" />
                                     <Typography variant="body2">
-                                      {bed.patient.labs.pending} lab{bed.patient.labs.pending > 1 ? 's' : ''} pending
-                                      {bed.patient.labs.critical > 0 && (
+                                      {bed.labs.pending} lab{bed.labs.pending > 1 ? 's' : ''} pending
+                                      {bed.labs?.critical > 0 && (
                                         <Chip 
                                           label="Critical" 
                                           size="small" 
@@ -496,12 +522,12 @@ export function MainPage() {
                                     </Typography>
                                   </Box>
                                 )}
-                                {bed.patient.tasks.pending > 0 && (
+                                {bed.tasks?.pending > 0 && (
                                   <Box display="flex" alignItems="center" gap={1}>
-                                    <AssignmentIcon fontSize="small" color={bed.patient.tasks.overdue > 0 ? 'error' : 'action'} />
-                                    <Typography variant="body2" color={bed.patient.tasks.overdue > 0 ? 'error' : 'textPrimary'}>
-                                      {bed.patient.tasks.pending} task{bed.patient.tasks.pending > 1 ? 's' : ''}
-                                      {bed.patient.tasks.overdue > 0 && ` (${bed.patient.tasks.overdue} overdue)`}
+                                    <AssignmentIcon fontSize="small" color={bed.tasks?.overdue > 0 ? 'error' : 'action'} />
+                                    <Typography variant="body2" color={bed.tasks?.overdue > 0 ? 'error' : 'textPrimary'}>
+                                      {bed.tasks.pending} task{bed.tasks.pending > 1 ? 's' : ''}
+                                      {bed.tasks?.overdue > 0 && ` (${bed.tasks.overdue} overdue)`}
                                     </Typography>
                                   </Box>
                                 )}
@@ -512,21 +538,47 @@ export function MainPage() {
                       ) : (
                         <Box display="flex" alignItems="center" justifyContent="space-between">
                           <Box display="flex" alignItems="center" gap={2}>
-                            <Avatar sx={{ bgcolor: 'grey.300' }}>
-                              <BedIcon />
+                            <Avatar sx={{ 
+                              bgcolor: (bed.status === 'available' || bed.status === 'vacant') ? 'grey.300' : 
+                                      bed.status === 'cleaning' ? 'warning.light' : 
+                                      bed.status === 'maintenance' ? 'error.light' : 'grey.300' 
+                            }}>
+                              {bed.status === 'cleaning' ? <CleaningIcon /> : 
+                               bed.status === 'maintenance' ? <BuildIcon /> : <BedIcon />}
                             </Avatar>
                             <Box>
                               <Typography variant="h6">
-                                Bed {bed.number}
+                                Bed {bed.bedId || bed.roomNumber}
                               </Typography>
-                              <Typography variant="body2" color="textSecondary">
-                                Vacant
+                              <Typography variant="body2" color="textSecondary" sx={{ textTransform: 'capitalize' }}>
+                                {bed.status || 'Available'}
                               </Typography>
                             </Box>
                           </Box>
-                          <Button variant="outlined" size="small" startIcon={<PeopleIcon />}>
-                            Assign Patient
-                          </Button>
+                          {(bed.status === 'available' || bed.status === 'vacant') && (
+                            <Button 
+                              variant="outlined" 
+                              size="small" 
+                              startIcon={<PeopleIcon />}
+                              onClick={() => handleAssignPatient(bed._id)}
+                            >
+                              Assign Patient
+                            </Button>
+                          )}
+                          {bed.status === 'cleaning' && (
+                            <Button 
+                              variant="outlined" 
+                              size="small" 
+                              color="success" 
+                              startIcon={<CheckCircleIcon />}
+                              onClick={() => handleMarkClean(bed._id)}
+                            >
+                              Mark Clean
+                            </Button>
+                          )}
+                          {bed.status === 'maintenance' && (
+                            <Chip label="Under Maintenance" color="error" size="small" />
+                          )}
                         </Box>
                       )}
                     </CardContent>
@@ -534,6 +586,7 @@ export function MainPage() {
                 </Grid>
               ))}
             </Grid>
+            )}
           </Paper>
         </Grid>
 
@@ -612,6 +665,19 @@ export function MainPage() {
         </Grid>
 
       </Grid>
+      
+      {/* Patient Assignment Modal */}
+      <SearchPatientsModalDialog
+        open={patientModalOpen}
+        onClose={() => {
+          setPatientModalOpen(false);
+          setSelectedBedId(null);
+        }}
+        onSelectPatient={handlePatientSelected}
+        bedId={selectedBedId}
+      />
     </Box>
   );
 }
+
+export { MainPage };
