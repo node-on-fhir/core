@@ -4,6 +4,9 @@ import { Meteor } from 'meteor/meteor';
 import { Tracker } from 'meteor/tracker';
 import { Session } from 'meteor/session';
 
+// Import PACIO subscriptions
+import '../lib/PacioSubscriptions';
+
 // Initialize client-side collections
 Meteor.startup(async function() {
   console.log('Initializing PACIO Core client...');

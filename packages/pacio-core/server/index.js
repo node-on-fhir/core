@@ -10,6 +10,9 @@ import './methods/bedManagement';
 // Import publications
 import './publications/pacioPublications';
 
+// Import PACIO subscriptions for PHI resources
+import '../lib/PacioSubscriptions';
+
 // Export server utilities if needed
 export * from '../lib/utilities/AdvanceDirectiveUtils';
 export * from '../lib/utilities/PdfUtils';
