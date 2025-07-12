@@ -102,6 +102,11 @@ const CareTeamsPageLazy = React.lazy(() =>
 );
 const CareTeamsPage = withSuspense(CareTeamsPageLazy);
 
+const TakeVitalSignsPageLazy = React.lazy(() => 
+  import('./client/pages/TakeVitalSignsPage')
+);
+const TakeVitalSignsPage = withSuspense(TakeVitalSignsPageLazy);
+
 const MainPageLazy = React.lazy(() => 
   import('./client/pages/MainPage').then(module => ({ default: module.MainPage }))
 );
@@ -233,6 +238,12 @@ export const DynamicRoutes = [
     path: '/pdf/:binaryId',
     element: Meteor.PdfViewer ? <Meteor.PdfViewer /> : <div>PdfViewer not available</div>,
     requireAuth: true
+  },
+  {
+    name: 'TakeVitalSigns',
+    path: '/take-vital-signs',
+    element: <TakeVitalSignsPage />,
+    requireAuth: true
   }
 ];
 
@@ -267,6 +278,11 @@ export const SidebarWorkflows = [
     primaryText: 'Medication Lists',
     to: '/medication-lists',
     iconName: 'LocalPharmacy'
+  },
+  {
+    primaryText: 'Take Vital Signs',
+    to: '/take-vital-signs',
+    iconName: 'Favorite'
   }
 ];
 
