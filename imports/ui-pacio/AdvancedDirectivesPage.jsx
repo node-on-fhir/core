@@ -40,7 +40,9 @@ import {
   Alert,
   AlertTitle,
   Avatar,
-  Stack
+  Stack,
+  Tabs,
+  Tab
 } from '@mui/material';
 
 import { get } from 'lodash';
@@ -66,6 +68,12 @@ import { RelatedPersons } from '../lib/schemas/SimpleSchemas/RelatedPersons';
 import { Patients } from '../lib/schemas/SimpleSchemas/Patients';
 import { FhirUtilities } from '../lib/FhirUtilities';
 
+// Import the page components for the new tabs
+import AllergyIntolerancesPage from '../ui-fhir/allergyIntolerances/AllergyIntolerancesPage.jsx';
+import CarePlansPage from '../ui-fhir/carePlans/CarePlansPage.jsx';
+import ConditionsPage from '../ui-fhir/conditions/ConditionsPage.jsx';
+import ProceduresPage from '../ui-fhir/procedures/ProceduresPage.jsx';
+
 
 const directiveTypes = [
   { code: '42348-3', display: 'Advance Directives', icon: <DescriptionIcon /> },
@@ -84,6 +92,7 @@ function AdvancedDirectivesPage(props) {
   const [selectedFile, setSelectedFile] = useState(null);
   const [selectedDocumentType, setSelectedDocumentType] = useState('42348-3');
   const [uploading, setUploading] = useState(false);
+  const [tabValue, setTabValue] = useState(0);
   const [preferences, setPreferences] = useState({
     codeStatus: 'full',
     comfortCare: false,
@@ -283,6 +292,10 @@ function AdvancedDirectivesPage(props) {
     return type ? type.icon : <DescriptionIcon />;
   };
 
+  const handleTabChange = (event, newValue) => {
+    setTabValue(newValue);
+  };
+
   const EmergencyContacts = () => (
     <Card variant="outlined" sx={{ backgroundColor: '#fff3e0' }}>
       <CardHeader 
@@ -415,12 +428,24 @@ function AdvancedDirectivesPage(props) {
         </Breadcrumbs>
       </Box>
 
-      <Grid container spacing={3}>
-        <Grid item xs={12} md={8}>
-          <Card>
-            <CardHeader
-              title={data.patient ? `Advanced Directives & Living Will - ${FhirUtilities.pluckName(data.patient)}` : "Advanced Directives & Living Will"}
-              subheader="Legal documents that specify your healthcare wishes"
+      <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
+        <Tabs value={tabValue} onChange={handleTabChange} aria-label="advanced directives tabs">
+          <Tab label="Documents & Preferences" />
+          <Tab label="Allergies" />
+          <Tab label="Conditions" />
+          <Tab label="Care Plans" />
+          <Tab label="Procedures" />
+        </Tabs>
+      </Box>
+
+      {/* Tab Panel 0: Documents & Preferences */}
+      {tabValue === 0 && (
+        <Grid container spacing={3}>
+          <Grid item xs={12} md={8}>
+            <Card>
+              <CardHeader
+                title={data.patient ? `Advanced Directives & Living Will - ${FhirUtilities.pluckName(data.patient)}` : "Advanced Directives & Living Will"}
+                subheader="Legal documents that specify your healthcare wishes"
               action={
                 <Box>
                   <Button
@@ -588,6 +613,35 @@ function AdvancedDirectivesPage(props) {
           </Stack>
         </Grid>
       </Grid>
+      )}
+
+      {/* Tab Panel 1: Allergies */}
+      {tabValue === 1 && (
+        <Box sx={{ mt: 2 }}>
+          <AllergyIntolerancesPage />
+        </Box>
+      )}
+
+      {/* Tab Panel 2: Conditions */}
+      {tabValue === 2 && (
+        <Box sx={{ mt: 2 }}>
+          <ConditionsPage />
+        </Box>
+      )}
+
+      {/* Tab Panel 3: Care Plans */}
+      {tabValue === 3 && (
+        <Box sx={{ mt: 2 }}>
+          <CarePlansPage />
+        </Box>
+      )}
+
+      {/* Tab Panel 4: Procedures */}
+      {tabValue === 4 && (
+        <Box sx={{ mt: 2 }}>
+          <ProceduresPage />
+        </Box>
+      )}
 
       <Dialog 
         open={openPdfViewer} 

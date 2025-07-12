@@ -244,6 +244,16 @@ export const SidebarWorkflows = [
     iconName: 'Dashboard'
   },
   {
+    primaryText: 'Patient Fetch',
+    to: '/patient-fetch',
+    iconName: 'CloudDownload'
+  },
+  {
+    primaryText: 'Patient Directory',
+    to: '/patients',
+    iconName: 'Groups'
+  },
+  {
     primaryText: 'Advance Directives',
     to: '/advance-directives',
     iconName: 'Assignment'
@@ -257,16 +267,23 @@ export const SidebarWorkflows = [
     primaryText: 'Medication Lists',
     to: '/medication-lists',
     iconName: 'LocalPharmacy'
-  },
-  {
-    primaryText: 'Patient Fetch',
-    to: '/patient-fetch',
-    iconName: 'CloudDownload'
   }
 ];
 
 // Additional FHIR Resources for sidebar (alphabetically ordered)
 export const SidebarElements = [
+  {
+    primaryText: 'Allergy Intolerances',
+    to: '/allergy-intolerances',
+    iconName: 'Groups',
+    collectionName: 'AllergyIntolerances'
+  },
+  {
+    primaryText: 'Care Plans',
+    to: '/care-plans',
+    iconName: 'Groups',
+    collectionName: 'CarePlans'
+  },
   {
     primaryText: 'Care Teams',
     to: '/care-teams',
@@ -356,6 +373,12 @@ export const SidebarElements = [
     to: '/practitioners',
     iconName: 'userMd',
     collectionName: 'Practitioners'
+  },
+  {
+    primaryText: 'Procedures',
+    to: '/procedures',
+    iconName: 'userMd',
+    collectionName: 'Procedures'
   },
   {
     primaryText: 'Questionnaire Responses',

@@ -732,6 +732,23 @@ dynamicRoutes.push({
   path: "/communications",
   element: <CommunicationsPage />
 })
+// Additional FHIR resources for pacio-core
+dynamicRoutes.push({
+  path: "/allergy-intolerances",
+  element: <AllergyIntolerancesPage />
+})
+dynamicRoutes.push({
+  path: "/care-plans", 
+  element: <CarePlansPage />
+})
+dynamicRoutes.push({
+  path: "/conditions",
+  element: <ConditionsPage />
+})
+dynamicRoutes.push({
+  path: "/procedures",
+  element: <ProceduresPage />
+})
 
 
 
