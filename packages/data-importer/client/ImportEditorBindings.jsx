@@ -1268,14 +1268,21 @@ export function ImportEditorBindings(props){
       logger.debug('File contents: ', previewBuffer);
       logger.debug('ImportEditorBindings.MappingAlgorithm: ' + mappingAlgorithm);
 
-      //autoSelectFirstPatient(autoSelectFirstPatient, previewBuffer);    
-      if(autoSelectFirstPatient){
-        if(get(window.Patients.findOne(), 'resourceType') === "Patient"){
-          Session.set('selectedPatient', window.Patients.findOne());
-          Session.set('selectedPatientId', get(window.Patients.findOne(), 'id'));
+      // When autoSelectFirstPatient is enabled, parse the imported data to find the first Patient
+      if(autoSelectFirstPatient && previewBuffer){
+        // First check if this is a single Patient resource
+        if(get(previewBuffer, 'resourceType') === "Patient"){
+          Session.set('selectedPatient', previewBuffer);
+          Session.set('selectedPatientId', get(previewBuffer, 'id'));
+          console.log('Auto-selected patient from imported file:', get(previewBuffer, 'id'));
         } 
-        if(window.Compositions.findOne({title: "International Patient Summary"})){
-          Session.set('textNormalForm', get(window.Compositions.findOne({title: "International Patient Summary"}), 'text.div'));
+        // If it's a Bundle, look for the first Patient in the entries
+        else if(get(previewBuffer, 'resourceType') === "Bundle" && Array.isArray(get(previewBuffer, 'entry'))){
+          parseBufferForPatientAndSetAsSelected(previewBuffer);
+        }
+        // Check for International Patient Summary composition
+        if(get(previewBuffer, 'resourceType') === "Composition" && get(previewBuffer, 'title') === "International Patient Summary"){
+          Session.set('textNormalForm', get(previewBuffer, 'text.div'));
         }
       }  
 
@@ -1339,11 +1346,16 @@ export function ImportEditorBindings(props){
 
     function parseBufferForPatientAndSetAsSelected(previewBuffer) {
       if (autoSelectFirstPatient) {
+        let patientFound = false;
+        
         if(Array.isArray(get(previewBuffer, 'entry'))){
           previewBuffer.entry.forEach(function (entry) {
-            if (get(entry, 'resource.resourceType') === "Patient") {
+            // Set the first Patient resource we find
+            if (!patientFound && get(entry, 'resource.resourceType') === "Patient") {
               Session.set('selectedPatient', get(entry, 'resource'));
               Session.set('selectedPatientId', get(entry, 'resource.id'));
+              patientFound = true; // Mark that we've found a patient
+              console.log('Auto-selected patient from imported file:', get(entry, 'resource.id'));
             }
             if ((get(entry, 'resource.resourceType') === "Composition") && (get(entry, 'resource.title') === "International Patient Summary")) {
               Session.set('textNormalForm', get(entry, 'resource.text.div', ""));

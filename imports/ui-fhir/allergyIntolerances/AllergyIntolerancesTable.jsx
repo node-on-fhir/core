@@ -367,20 +367,6 @@ function AllergyIntolerancesTable(props){
     }
   }
 
-  function renderRecorderHeader(){
-    if (!hideRecorder) {
-      return (
-        <TableCell className="recorder">Recorder</TableCell>
-      );
-    }
-  }
-  function renderRecorder(recorder ){
-    if (!hideRecorder) {
-      return (
-        <TableCell className='recorder'>{ recorder }</TableCell>       );
-    }
-  }
-
 
   function renderVerificationStatusHeader(){
     if (!hideVerification) {
@@ -667,30 +653,24 @@ AllergyIntolerancesTable.defaultProps = {
   allergyIntolerances: [],
   selectedAllergyIntoleranceId: '',
   
-  hideCheckbox: false,
-  hideActionIcons: false,
-  hideIdentifier: false,
-  hidePatientDisplay: false,
-  hidePatientReference: false,
-
-  hideIdentifier: true,
-  hideToggle: true,
+  hideCheckbox: true,
   hideActionIcons: true,
-  hideType: true,
-  hideCategory: true,
-  hidePatient: true,
-  hideRecorder: true,
+  hideIdentifier: true,
+  hidePatientDisplay: false,
+  hidePatientReference: true,
   hideReaction: false,
-  hideStatus: false,
-  hideVerification: false,
   hideCriticality: false,
-  hideSeverity: false,
+  hideSeverity: true,
   hideRecorder: true,
   hideOnset: false,
+  hideSubstance: false,
+  hideCategory: true,
+  hideVerification: false,
   hideClinical: false,
-  hideRecordedDate: false,
+  hideType: true,
+  hideRecordedDate: true,
 
-  hideBarcode: false,
+  hideBarcode: true,
   disablePagination: false,
   autoColumns: true,
   rowsPerPage: 5,

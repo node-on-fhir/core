@@ -230,6 +230,8 @@ export function flattenActivityDefinition(activity) {
 
 export function flattenAllergyIntolerance(allergy){
   let result = {
+    _id: '',
+    id: '',
     patientDisplay: '',
     asserterDisplay: '',
     identifier: '',
@@ -253,6 +255,9 @@ export function flattenAllergyIntolerance(allergy){
   };
   result.resourceType = get(allergy, 'resourceType', "Unknown");
 
+  // IDs
+  result._id = get(allergy, '_id', '');
+  result.id = get(allergy, 'id', '');
   result.identifier = get(allergy, 'identifier[0].value');
   
   // Handle clinicalStatus - can be string (STU3) or CodeableConcept (R4)
@@ -260,6 +265,8 @@ export function flattenAllergyIntolerance(allergy){
     result.clinicalStatus = get(allergy, 'clinicalStatus');
   } else if(get(allergy, 'clinicalStatus.coding[0].code')){
     result.clinicalStatus = get(allergy, 'clinicalStatus.coding[0].code');
+  } else if(get(allergy, 'clinicalStatus.coding[0].display')){
+    result.clinicalStatus = get(allergy, 'clinicalStatus.coding[0].display');
   }
   
   // Handle verificationStatus - can be string (STU3) or CodeableConcept (R4)
@@ -267,49 +274,91 @@ export function flattenAllergyIntolerance(allergy){
     result.verificationStatus = get(allergy, 'verificationStatus');
   } else if(get(allergy, 'verificationStatus.coding[0].code')){
     result.verificationStatus = get(allergy, 'verificationStatus.coding[0].code');
+  } else if(get(allergy, 'verificationStatus.coding[0].display')){
+    result.verificationStatus = get(allergy, 'verificationStatus.coding[0].display');
   }
   
   result.type = get(allergy, 'type');
   result.category = get(allergy, 'category[0]');
 
-  if(has(allergy, 'substance.coding[0].display')){
+  // Handle substance/code - R4 uses 'code' instead of 'substance'
+  if(has(allergy, 'code.coding[0].display')){
+    result.substance = get(allergy, 'code.coding[0].display');
+    result.snomedCode = get(allergy, 'code.coding[0].code');
+    result.snomedDisplay = get(allergy, 'code.coding[0].display');
+  } else if(has(allergy, 'code.text')){
+    result.substance = get(allergy, 'code.text');
+  } else if(has(allergy, 'substance.coding[0].display')){
+    // Fallback for older DSTU2/STU3 versions
     result.substance = get(allergy, 'substance.coding[0].display');
   } else {
     result.substance = get(allergy, 'substance.text');
   }
 
-  if(get(allergy, 'code.coding[0]')){            
-    result.snomedCode = get(allergy, 'code.coding[0].code');
-    result.snomedDisplay = get(allergy, 'code.coding[0].display');
+  // Patient info
+  result.patient = get(allergy, 'patient.display', '');
+  result.patientDisplay = get(allergy, 'patient.display', '');
+  if(!result.patientDisplay && get(allergy, 'patient.reference')){
+    // Extract patient name from reference if display is not available
+    result.patientDisplay = get(allergy, 'patient.reference', '').replace('Patient/', '');
   }
 
-  // DSTU2 v1.0.2
-  result.patient = get(allergy, 'patient.display');
-  result.recorder = get(allergy, 'recorder.display');
-  result.reaction = get(allergy, 'reaction[0].description', '');
-  result.onset = moment(get(allergy, 'reaction[0].onset')).format("YYYY-MM-DD");
-  result.recordedDate = moment(get(allergy, 'recordedDate')).format("YYYY-MM-DD");
+  // Recorder info
+  result.recorder = get(allergy, 'recorder.display', '');
+  if(!result.recorder && get(allergy, 'recorder.reference')){
+    // Extract recorder name from reference if display is not available
+    result.recorder = get(allergy, 'recorder.reference', '').replace('Practitioner/', '');
+  }
 
-  // DSTU v4
+  // Handle reactions - extract all manifestations
+  let reactions = [];
+  if(get(allergy, 'reaction') && Array.isArray(allergy.reaction)){
+    allergy.reaction.forEach(function(rxn){
+      if(get(rxn, 'manifestation') && Array.isArray(rxn.manifestation)){
+        rxn.manifestation.forEach(function(manifestation){
+          if(get(manifestation, 'coding[0].display')){
+            reactions.push(get(manifestation, 'coding[0].display'));
+          } else if(get(manifestation, 'text')){
+            reactions.push(get(manifestation, 'text'));
+          }
+        });
+      }
+      // Also check for description
+      if(get(rxn, 'description')){
+        reactions.push(get(rxn, 'description'));
+      }
+    });
+  }
+  result.reaction = reactions.join(', ');
+
+  // Onset date - check multiple possible locations
   if(get(allergy, 'onsetDateTime')){
     result.onset = moment(get(allergy, 'onsetDateTime')).format("YYYY-MM-DD");
-  }
-  if(get(allergy, 'reaction[0].manifestation[0].text')){
-    result.reaction = get(allergy, 'reaction[0].manifestation[0].text', '');
-  }
-  if(get(allergy, 'reaction[0].severity')){
-    result.reaction = get(allergy, 'reaction[0].severity', '');
+  } else if(get(allergy, 'reaction[0].onset')){
+    result.onset = moment(get(allergy, 'reaction[0].onset')).format("YYYY-MM-DD");
+  } else if(get(allergy, 'recordedDate')){
+    // Use recorded date as fallback
+    result.onset = moment(get(allergy, 'recordedDate')).format("YYYY-MM-DD");
   }
 
+  // Recorded date
+  if(get(allergy, 'recordedDate')){
+    result.recordedDate = moment(get(allergy, 'recordedDate')).format("YYYY-MM-DD");
+  }
+
+  // Handle criticality - R4 values are different from older versions
   if(get(allergy, 'criticality')){
-    switch (get(allergy, 'criticality')) {
-      case "CRITL":
+    switch (get(allergy, 'criticality').toLowerCase()) {
+      case "low":
+      case "critl":
         result.criticality = 'Low Risk';         
         break;
-      case "CRITH":
+      case "high":
+      case "crith":
         result.criticality = 'High Risk';         
         break;
-      case "CRITU":
+      case "unable-to-assess":
+      case "critu":
         result.criticality = 'Unable to determine';         
         break;        
       default:
@@ -317,6 +366,19 @@ export function flattenAllergyIntolerance(allergy){
       break;
     }
   };
+
+  // Extract severity from reactions
+  let severities = [];
+  if(get(allergy, 'reaction') && Array.isArray(allergy.reaction)){
+    allergy.reaction.forEach(function(rxn){
+      if(get(rxn, 'severity')){
+        severities.push(get(rxn, 'severity'));
+      }
+    });
+  }
+  if(severities.length > 0){
+    result.severity = severities.join(', ');
+  }
 
   if(get(allergy, "issue[0].details.text")){
     result.operationOutcome = get(allergy, "issue[0].details.text");
