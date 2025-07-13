@@ -407,6 +407,9 @@ window.Collections = {
 window.FhirUtilities = FhirUtilities;
 window.HipaaLogger = HipaaLogger;
 
+// Make AuditEvents directly accessible in console
+window.AuditEvents = AuditEvents;
+
 // SECURITY TODO:  maybe best to put a guard around this 
 // debug only?  or maybe only in development mode?
 window.Session = Session;

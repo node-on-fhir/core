@@ -15,7 +15,7 @@ var hipaaEvent = {
 */
 
 
-HipaaLogger = {
+const HipaaLogger = {
   /**
   * @summary Logs a FHIR AuditEvent
   * @locus Client
@@ -93,3 +93,14 @@ HipaaLogger = {
     );
   }
 };
+
+// Make it globally available for backward compatibility
+if (typeof window !== 'undefined') {
+  window.HipaaLogger = HipaaLogger;
+}
+if (typeof global !== 'undefined') {
+  global.HipaaLogger = HipaaLogger;
+}
+
+// Export for ES6 module compatibility
+export { HipaaLogger };

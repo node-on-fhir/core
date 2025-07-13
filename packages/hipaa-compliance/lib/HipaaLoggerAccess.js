@@ -21,7 +21,8 @@ export const HipaaLogger = {
     if (logger && logger.logEvent) {
       return logger.logEvent(...args);
     }
-    console.warn('HipaaLogger not available');
+    // Silently fail - HipaaLogger might not be available during startup
+    // This is expected behavior as packages load before the main app
     return null;
   },
   
@@ -30,7 +31,8 @@ export const HipaaLogger = {
     if (logger && logger.logAuditEvent) {
       return logger.logAuditEvent(...args);
     }
-    console.warn('HipaaLogger not available');
+    // Silently fail - HipaaLogger might not be available during startup
+    // This is expected behavior as packages load before the main app
     return null;
   },
   
@@ -39,7 +41,8 @@ export const HipaaLogger = {
     if (logger && logger.logPatientAccess) {
       return logger.logPatientAccess(...args);
     }
-    console.warn('HipaaLogger not available');
+    // Silently fail - HipaaLogger might not be available during startup
+    // This is expected behavior as packages load before the main app
     return null;
   },
   
@@ -48,7 +51,8 @@ export const HipaaLogger = {
     if (logger && logger.logDataModification) {
       return logger.logDataModification(...args);
     }
-    console.warn('HipaaLogger not available');
+    // Silently fail - HipaaLogger might not be available during startup
+    // This is expected behavior as packages load before the main app
     return null;
   },
   
@@ -57,7 +61,8 @@ export const HipaaLogger = {
     if (logger && logger.logSystemEvent) {
       return logger.logSystemEvent(...args);
     }
-    console.warn('HipaaLogger not available');
+    // Silently fail - HipaaLogger might not be available during startup
+    // This is expected behavior as packages load before the main app
     return null;
   },
   
@@ -66,7 +71,8 @@ export const HipaaLogger = {
     if (logger && logger.logSecurityEvent) {
       return logger.logSecurityEvent(...args);
     }
-    console.warn('HipaaLogger not available');
+    // Silently fail - HipaaLogger might not be available during startup
+    // This is expected behavior as packages load before the main app
     return null;
   },
   

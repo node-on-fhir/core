@@ -66,8 +66,22 @@ Meteor.methods({
       auditEvent.outcomeDesc = message;
     }
 
-    // Merge additional data
-    Object.assign(auditEvent, additionalData);
+    // Merge additional data (but preserve arrays like entity)
+    if (additionalData) {
+      // Handle entity array specially
+      if (additionalData.entity && !auditEvent.entity) {
+        auditEvent.entity = additionalData.entity;
+      }
+      
+      // Handle action
+      if (additionalData.action) {
+        auditEvent.action = additionalData.action;
+      }
+      
+      // Merge other properties
+      const { entity, action, ...otherData } = additionalData;
+      Object.assign(auditEvent, otherData);
+    }
 
     // Insert the audit event
     try {

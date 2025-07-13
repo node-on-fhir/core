@@ -1,5 +1,6 @@
 import React, { useState, useEffect, Fragment } from 'react';
 import PropTypes from 'prop-types';
+import { useNavigate } from 'react-router-dom';
 
 import { 
   Button,
@@ -174,6 +175,7 @@ TablePaginationActions.propTypes = {
 export function PatientsTable(props){
   // logger.log('PatientsTable', props)
 
+  const navigate = useNavigate();
   const [expandedRows, setExpandedRows] = useState({});
   const [modalState, setModalState] = useState({});
   const [dynamicButtons, setDynamicButtons] = useState([]);
@@ -979,7 +981,38 @@ export function PatientsTable(props){
                     startIcon={<ViewIcon />}
                     onClick={(e) => {
                       e.stopPropagation();
-                      if(onRowClick) onRowClick(patientId);
+                      
+                      // Set the selected patient in session
+                      const selectedPatient = patientsToRender.find(p => (p.id === patientId || p._id === patientId));
+                      Session.set('selectedPatientId', patientId);
+                      Session.set('selectedPatient', selectedPatient);
+                      
+                      // Log AuditEvent for viewing patient chart
+                      Meteor.call('auditEvents.log', 'rest', Meteor.userId(), `Patient/${patientId}`, 
+                        `User viewed patient chart for ${selectedPatient?.name || patientId}`, {
+                          action: 'READ',
+                          entity: [{
+                            what: {
+                              reference: `Patient/${patientId}`,
+                              display: selectedPatient?.name || 'Unknown Patient'
+                            },
+                            type: {
+                              system: 'http://hl7.org/fhir/resource-types',
+                              code: 'Patient',
+                              display: 'Patient'
+                            }
+                          }]
+                        }, (error) => {
+                          if (error) {
+                            console.error('Error logging audit event:', error);
+                          } else {
+                            console.log('Audit event logged for patient chart view');
+                          }
+                        }
+                      );
+                      
+                      // Navigate to patient chart
+                      navigate('/patient-chart');
                     }}
                   >
                     View Chart

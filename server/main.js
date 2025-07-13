@@ -56,6 +56,7 @@ import { OAuthClients } from '/imports/collections/OAuthClients';
 
 import { AllergyIntolerances } from '../imports/lib/schemas/SimpleSchemas/AllergyIntolerances';
 import { AuditEvents } from '../imports/lib/schemas/SimpleSchemas/AuditEvents';
+import '../imports/api/AuditEvents/AuditEvents'; // Import the methods
 import { Bundles } from '../imports/lib/schemas/SimpleSchemas/Bundles';
 import { CarePlans } from '../imports/lib/schemas/SimpleSchemas/CarePlans';
 import { Claims } from '../imports/lib/schemas/SimpleSchemas/Claims';

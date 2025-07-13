@@ -27,6 +27,7 @@ if(Meteor.isClient){
       // PHI Resources
       const subscriptions = [
         'AllergyIntolerances',
+        'AuditEvents',
         'CarePlans', 
         'Compositions',
         'Conditions',
@@ -60,6 +61,22 @@ if(Meteor.isClient){
 
 if(Meteor.isServer){
   // Define all PACIO PHI publications
+  
+  Meteor.publish('pacio.AuditEvents', function(patientId, clinicianId, clientSecretOrBearerToken){
+    const AuditEvents = Meteor.Collections && Meteor.Collections.AuditEvents;
+    if (!AuditEvents) {
+      console.warn('AuditEvents collection not yet initialized');
+      return this.ready();
+    }
+    
+    const query = {};
+    // if (patientId) {
+    //   query['patient.reference'] = `Patient/${patientId}`;
+    // }
+    
+    console.log('pacio.AuditEvents publishing for patient:', patientId, 'query:', query);
+    return AuditEvents.find(query, { sort: { date: -1 } });
+  });
   
   Meteor.publish('pacio.AllergyIntolerances', function(patientId, clinicianId, clientSecretOrBearerToken){
     const AllergyIntolerances = Meteor.Collections && Meteor.Collections.AllergyIntolerances;
