@@ -351,6 +351,21 @@ function MedicationRequestsTable(props){
     }
   }
 
+  function renderDosageInstruction(dosageInstructionText){
+    if (!props.hideDosageInstruction) {
+      return (
+        <TableCell className='dosageInstruction'>{ dosageInstructionText }</TableCell>
+      );
+    }
+  }
+  function renderDosageInstructionHeader(){
+    if (!props.hideDosageInstruction) {
+      return (
+        <TableCell className='dosageInstruction'>Dosage</TableCell>
+      );
+    }
+  }
+
   function renderBarcode(id){
     if (!props.hideBarcode) {
       return (
@@ -483,6 +498,7 @@ function MedicationRequestsTable(props){
           { renderRequester(medicationRequestsToRender[i].requesterDisplay) }
           { renderPriority(medicationRequestsToRender[i].priority) }
           { renderIntent(medicationRequestsToRender[i].intent) }
+          { renderDosageInstruction(medicationRequestsToRender[i].dosageInstructionText) }
           { renderBarcode(medicationRequestsToRender[i]._id) }
           { renderActionButton(medicationRequestsToRender[i]) }
         </TableRow>
@@ -505,6 +521,7 @@ function MedicationRequestsTable(props){
             { renderRequesterHeader() }
             { renderPriorityHeader() }
             { renderIntentHeader() }
+            { renderDosageInstructionHeader() }
             { renderBarcodeHeader() }
             { renderActionButtonHeader() }
           </TableRow>
@@ -548,6 +565,7 @@ MedicationRequestsTable.propTypes = {
   hideRequester: PropTypes.bool,
   hidePriority: PropTypes.bool,
   hideIntent: PropTypes.bool,
+  hideDosageInstruction: PropTypes.bool,
   hideBarcode: PropTypes.bool,
 
   onCellClick: PropTypes.func,
@@ -583,6 +601,7 @@ MedicationRequestsTable.defaultProps = {
   hideRequester: false,
   hidePriority: true,
   hideIntent: true,
+  hideDosageInstruction: false,
   hideBarcode: true,
   tableRowSize: 'medium',
   rowsPerPage: 5,

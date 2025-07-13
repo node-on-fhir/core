@@ -351,6 +351,21 @@ function MedicationAdministrationsTable(props){
     }
   }
 
+  function renderNote(note){
+    if (!props.hideNote) {
+      return (
+        <TableCell className='note'>{ note }</TableCell>
+      );
+    }
+  }
+  function renderNoteHeader(){
+    if (!props.hideNote) {
+      return (
+        <TableCell className='note'>Note</TableCell>
+      );
+    }
+  }
+
   function renderBarcode(id){
     if (!props.hideBarcode) {
       return (
@@ -483,6 +498,7 @@ function MedicationAdministrationsTable(props){
           { renderPerformer(medicationAdministrationsToRender[i].performerDisplay) }
           { renderDosage(medicationAdministrationsToRender[i].dosageText) }
           { renderRoute(medicationAdministrationsToRender[i].route) }
+          { renderNote(medicationAdministrationsToRender[i].note) }
           { renderBarcode(medicationAdministrationsToRender[i]._id) }
           { renderActionButton(medicationAdministrationsToRender[i]) }
         </TableRow>
@@ -505,6 +521,7 @@ function MedicationAdministrationsTable(props){
             { renderPerformerHeader() }
             { renderDosageHeader() }
             { renderRouteHeader() }
+            { renderNoteHeader() }
             { renderBarcodeHeader() }
             { renderActionButtonHeader() }
           </TableRow>
@@ -548,6 +565,7 @@ MedicationAdministrationsTable.propTypes = {
   hidePerformer: PropTypes.bool,
   hideDosage: PropTypes.bool,
   hideRoute: PropTypes.bool,
+  hideNote: PropTypes.bool,
   hideBarcode: PropTypes.bool,
 
   onCellClick: PropTypes.func,
@@ -583,6 +601,7 @@ MedicationAdministrationsTable.defaultProps = {
   hidePerformer: false,
   hideDosage: false,
   hideRoute: true,
+  hideNote: false,
   hideBarcode: true,
   tableRowSize: 'medium',
   rowsPerPage: 5,

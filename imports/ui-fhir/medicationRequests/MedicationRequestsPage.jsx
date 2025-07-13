@@ -149,6 +149,9 @@ export function MedicationRequestsPage(props){
           rowsPerPage={LayoutHelpers.calcTableRows()} 
           actionButtonLabel="Remove"
           hideActionButton={get(Meteor, 'settings.public.modules.fhir.MedicationRequests.hideRemoveButtonOnTable', true)}
+          hideStatus={false}
+          hidePriority={false}
+          hideIntent={false}
           onActionButtonClick={function(selectedId){
             MedicationRequests._collection.remove({_id: selectedId})
           }}

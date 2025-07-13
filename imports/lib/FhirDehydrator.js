@@ -3228,10 +3228,24 @@ export function flattenMedicationAdministration(medicationAdministration, intern
   result.id = get(medicationAdministration, 'id', '');
   result.status = get(medicationAdministration, 'status', '');
   result.statusReason = get(medicationAdministration, 'statusReason[0].coding[0].display', '');
-  result.category = get(medicationAdministration, 'category.coding[0].display', '');
+  // Handle category - check multiple paths
+  if(get(medicationAdministration, 'category.coding[0].display')){
+    result.category = get(medicationAdministration, 'category.coding[0].display', '');
+  } else if(get(medicationAdministration, 'category.coding[0].code')){
+    result.category = get(medicationAdministration, 'category.coding[0].code', '');
+  }
   result.identifier = get(medicationAdministration, 'identifier[0].value', '');
 
-  result.patientDisplay = get(medicationAdministration, 'subject.display', '');
+  // Handle subject/patient display - check multiple paths
+  if(get(medicationAdministration, 'subject.display')){
+    result.patientDisplay = get(medicationAdministration, 'subject.display', '');
+    result.subjectDisplay = get(medicationAdministration, 'subject.display', '');
+  } else if(get(medicationAdministration, 'subject.reference')){
+    // Extract patient name from reference if display is missing
+    let refParts = get(medicationAdministration, 'subject.reference', '').split('/');
+    result.patientDisplay = refParts.length > 1 ? refParts[1] : get(medicationAdministration, 'subject.reference', '');
+    result.subjectDisplay = result.patientDisplay;
+  }
   result.patientReference = get(medicationAdministration, 'subject.reference', '');
   
   result.contextDisplay = get(medicationAdministration, 'context.display', '');
@@ -3247,7 +3261,14 @@ export function flattenMedicationAdministration(medicationAdministration, intern
     result.effectivePeriodEnd = moment(get(medicationAdministration, 'effectivePeriod.end')).format(internalDateFormat);
   }
 
-  result.performerDisplay = get(medicationAdministration, 'performer[0].actor.display', '');
+  // Handle performer - check multiple paths
+  if(get(medicationAdministration, 'performer[0].actor.display')){
+    result.performerDisplay = get(medicationAdministration, 'performer[0].actor.display', '');
+  } else if(get(medicationAdministration, 'performer[0].actor.reference')){
+    // Extract performer name from reference if display is missing
+    let refParts = get(medicationAdministration, 'performer[0].actor.reference', '').split('/');
+    result.performerDisplay = refParts.length > 1 ? refParts[1] : get(medicationAdministration, 'performer[0].actor.reference', '');
+  }
   result.performerReference = get(medicationAdministration, 'performer[0].actor.reference', '');
 
   result.reasonCode = get(medicationAdministration, 'reasonCode[0].coding[0].code', '');
@@ -3261,19 +3282,41 @@ export function flattenMedicationAdministration(medicationAdministration, intern
 
   result.note = get(medicationAdministration, 'note[0].text', '');
 
+  // Check multiple medication paths for better compatibility
   if(get(medicationAdministration, 'medicationCodeableConcept.text')){
     result.medicationDisplay = get(medicationAdministration, 'medicationCodeableConcept.text');
     result.medicationCode = get(medicationAdministration, 'medicationCodeableConcept.coding[0].code', '');
-  } else if(get(medicationAdministration, 'medicationReference')){
+  } else if(get(medicationAdministration, 'medicationCodeableConcept.coding[0].display')){
+    result.medicationDisplay = get(medicationAdministration, 'medicationCodeableConcept.coding[0].display');
+    result.medicationCode = get(medicationAdministration, 'medicationCodeableConcept.coding[0].code', '');
+  } else if(get(medicationAdministration, 'medicationReference.display')){
     result.medicationDisplay = get(medicationAdministration, 'medicationReference.display', '');
+    result.medicationReference = get(medicationAdministration, 'medicationReference.reference', '');
+  } else if(get(medicationAdministration, 'medicationReference')){
+    result.medicationDisplay = get(medicationAdministration, 'medicationReference.reference', '');
     result.medicationReference = get(medicationAdministration, 'medicationReference.reference', '');
   }
 
+  // Handle dosage information
   result.dosageText = get(medicationAdministration, 'dosage.text', '');
-  result.dosageRoute = get(medicationAdministration, 'dosage.route.text', '');
-  result.route = get(medicationAdministration, 'dosage.route.text', ''); // Table expects 'route' field
+  
+  // Handle route - check multiple paths
+  if(get(medicationAdministration, 'dosage.route.text')){
+    result.dosageRoute = get(medicationAdministration, 'dosage.route.text', '');
+    result.route = get(medicationAdministration, 'dosage.route.text', '');
+  } else if(get(medicationAdministration, 'dosage.route.coding[0].display')){
+    result.dosageRoute = get(medicationAdministration, 'dosage.route.coding[0].display', '');
+    result.route = get(medicationAdministration, 'dosage.route.coding[0].display', '');
+  }
+  
+  // Handle dose - format value and unit together
   result.dosageDoseValue = get(medicationAdministration, 'dosage.dose.value', '');
   result.dosageDoseUnit = get(medicationAdministration, 'dosage.dose.unit', '');
+  
+  // Create a combined dosage text for display
+  if(result.dosageDoseValue && result.dosageDoseUnit){
+    result.dosageText = result.dosageDoseValue + ' ' + result.dosageDoseUnit;
+  }
 
   if(get(medicationAdministration, 'dosage.rateRatio')){
     result.dosageRateRatio = get(medicationAdministration, 'dosage.rateRatio.numerator.value', '') + ' ' + 
@@ -3337,16 +3380,42 @@ export function flattenMedicationRequest(medicationRequest, internalDateFormat){
   result.priority = get(medicationRequest, 'priority', '');
   result.identifier = get(medicationRequest, 'identifier[0].value', '');
 
-  // Handle subject/patient fields
-  result.subjectDisplay = get(medicationRequest, 'subject.display', '');
+  // Handle subject/patient fields - check multiple paths
+  if(get(medicationRequest, 'subject.display')){
+    result.subjectDisplay = get(medicationRequest, 'subject.display', '');
+  } else if(get(medicationRequest, 'subject.reference')){
+    // Extract patient name from reference if display is missing
+    let refParts = get(medicationRequest, 'subject.reference', '').split('/');
+    result.subjectDisplay = refParts.length > 1 ? refParts[1] : get(medicationRequest, 'subject.reference', '');
+  }
   result.subjectReference = get(medicationRequest, 'subject.reference', '');
-  result.patientDisplay = get(medicationRequest, 'patient.display', '');
+  
+  // Also check patient field for backward compatibility
+  if(get(medicationRequest, 'patient.display')){
+    result.patientDisplay = get(medicationRequest, 'patient.display', '');
+  } else if(get(medicationRequest, 'patient.reference')){
+    let refParts = get(medicationRequest, 'patient.reference', '').split('/');
+    result.patientDisplay = refParts.length > 1 ? refParts[1] : get(medicationRequest, 'patient.reference', '');
+  }
   result.patientReference = get(medicationRequest, 'patient.reference', '');
   
-  // Handle requester/prescriber fields
-  result.requesterDisplay = get(medicationRequest, 'requester.display', '');
+  // Handle requester/prescriber fields - check multiple paths
+  if(get(medicationRequest, 'requester.display')){
+    result.requesterDisplay = get(medicationRequest, 'requester.display', '');
+  } else if(get(medicationRequest, 'requester.reference')){
+    result.requesterDisplay = get(medicationRequest, 'requester.reference', '');
+  } else if(get(medicationRequest, 'requester')){
+    result.requesterDisplay = get(medicationRequest, 'requester', '');
+  }
+  
   result.requesterReference = get(medicationRequest, 'requester.reference', '');
-  result.prescriberDisplay = get(medicationRequest, 'prescriber.display', '');
+  
+  // Also check prescriber for backward compatibility
+  if(get(medicationRequest, 'prescriber.display')){
+    result.prescriberDisplay = get(medicationRequest, 'prescriber.display', '');
+  } else if(get(medicationRequest, 'prescriber.reference')){
+    result.prescriberDisplay = get(medicationRequest, 'prescriber.reference', '');
+  }
   result.prescriberReference = get(medicationRequest, 'prescriber.reference', '');
   
   result.encounterDisplay = get(medicationRequest, 'encounter.display', '');
@@ -3359,11 +3428,18 @@ export function flattenMedicationRequest(medicationRequest, internalDateFormat){
     result.dateWritten = moment(get(medicationRequest, 'dateWritten')).format(internalDateFormat);
   }
 
+  // Check multiple medication paths for better compatibility
   if(get(medicationRequest, 'medicationCodeableConcept.text')){
     result.medicationDisplay = get(medicationRequest, 'medicationCodeableConcept.text');
     result.medicationCode = get(medicationRequest, 'medicationCodeableConcept.coding[0].code', '');
-  } else if(get(medicationRequest, 'medicationReference')){
+  } else if(get(medicationRequest, 'medicationCodeableConcept.coding[0].display')){
+    result.medicationDisplay = get(medicationRequest, 'medicationCodeableConcept.coding[0].display');
+    result.medicationCode = get(medicationRequest, 'medicationCodeableConcept.coding[0].code', '');
+  } else if(get(medicationRequest, 'medicationReference.display')){
     result.medicationDisplay = get(medicationRequest, 'medicationReference.display', '');
+    result.medicationReference = get(medicationRequest, 'medicationReference.reference', '');
+  } else if(get(medicationRequest, 'medicationReference')){
+    result.medicationDisplay = get(medicationRequest, 'medicationReference.reference', '');
     result.medicationReference = get(medicationRequest, 'medicationReference.reference', '');
   }
 
