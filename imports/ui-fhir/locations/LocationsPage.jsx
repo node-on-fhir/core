@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { useTracker } from 'meteor/react-meteor-data';
+import { useNavigate } from 'react-router-dom';
 
 import { 
   Grid, 
@@ -53,6 +54,7 @@ Session.setDefault('LocationsTable.locationsIndex', 0)
 // MAIN COMPONENT
 
 export function LocationsPage(props){
+  const navigate = useNavigate();
 
   let data = {
     currentLocationId: '',
@@ -99,7 +101,7 @@ export function LocationsPage(props){
 
   function handleAddLocation(){
     console.log('Add Location button clicked');
-    // Add logic for adding a new location
+    navigate('/locations/new');
   }
 
   function renderHeader() {

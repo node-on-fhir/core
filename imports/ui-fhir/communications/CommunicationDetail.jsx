@@ -1,4 +1,4 @@
-// /imports/ui-fhir/conditions/ConditionDetail.jsx
+// /imports/ui-fhir/communications/CommunicationDetail.jsx
 
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
@@ -19,23 +19,17 @@ import {
   Typography,
   Box,
   Stack,
-  Chip,
-  InputAdornment,
-  IconButton,
-  Tooltip
+  Chip
 } from '@mui/material';
-
-import QrCodeIcon from '@mui/icons-material/QrCode';
-import SearchIcon from '@mui/icons-material/Search';
 
 import { get, set } from 'lodash';
 import moment from 'moment';
 
-import { Conditions } from '/imports/lib/schemas/SimpleSchemas/Conditions';
+import { Communications } from '/imports/lib/schemas/SimpleSchemas/Communications';
 import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
 
-function ConditionDetail(props) {
+function CommunicationDetail(props) {
   const navigate = useNavigate();
   const { id } = useParams();
   
@@ -49,58 +43,44 @@ function ConditionDetail(props) {
   }, []);
   
   // Initialize state with proper FHIR R4 structure
-  const [condition, setCondition] = useState({
-    resourceType: "Condition",
+  const [communication, setCommunication] = useState({
+    resourceType: "Communication",
+    status: "completed",
+    category: [{
+      coding: [{
+        system: "http://terminology.hl7.org/CodeSystem/communication-category",
+        code: "notification",
+        display: "Notification"
+      }]
+    }],
+    priority: "routine",
     subject: {
       reference: "",
       display: ""
+    },
+    topic: {
+      text: ""
     },
     encounter: {
       reference: "",
       display: ""
     },
-    asserter: {
+    sent: moment().format('YYYY-MM-DDTHH:mm:ss'),
+    received: moment().format('YYYY-MM-DDTHH:mm:ss'),
+    recipient: [{
+      reference: "",
+      display: ""
+    }],
+    sender: {
       reference: "",
       display: ""
     },
-    recordedDate: moment().format('YYYY-MM-DD'),
-    code: {
-      coding: [{
-        system: "http://snomed.info/sct",
-        code: "",
-        display: ""
-      }],
+    reasonCode: [{
       text: ""
-    },
-    clinicalStatus: {
-      coding: [{
-        system: "http://terminology.hl7.org/CodeSystem/condition-clinical",
-        code: "active",
-        display: "Active"
-      }]
-    },
-    verificationStatus: {
-      coding: [{
-        system: "http://terminology.hl7.org/CodeSystem/condition-ver-status",
-        code: "confirmed",
-        display: "Confirmed"
-      }]
-    },
-    category: [{
-      coding: [{
-        system: "http://terminology.hl7.org/CodeSystem/condition-category",
-        code: "problem-list-item",
-        display: "Problem List Item"
-      }]
     }],
-    severity: {
-      coding: [{
-        system: "http://snomed.info/sct",
-        code: "",
-        display: ""
-      }]
-    },
-    onsetDateTime: moment().format('YYYY-MM-DD'),
+    payload: [{
+      contentString: ""
+    }],
     note: [{
       text: ""
     }]
@@ -110,13 +90,13 @@ function ConditionDetail(props) {
   const [error, setError] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
 
-  // Set patient name and asserter on component mount for new conditions
+  // Set patient name and sender on component mount for new communications
   useEffect(function() {
     if (!id || id === 'new') {
-      // Enable editing for new conditions
+      // Enable editing for new communications
       setIsEditing(true);
       
-      // For new conditions, set the patient name
+      // For new communications, set the patient name
       let patientName = '';
       let patientReference = '';
       
@@ -134,46 +114,46 @@ function ConditionDetail(props) {
         patientReference = `Patient/${get(currentUser, 'profile.patientId', '')}`;
       }
       
-      // Set asserter to current user
-      let asserterName = '';
-      let asserterReference = '';
+      // Set sender to current user
+      let senderName = '';
+      let senderReference = '';
       
       if (currentUser) {
-        asserterName = get(currentUser, 'profile.name.text', '') ||
-                      `${get(currentUser, 'profile.name.given[0]', '')} ${get(currentUser, 'profile.name.family', '')}`.trim() ||
-                      get(currentUser, 'username', '');
-        asserterReference = `Practitioner/${get(currentUser, '_id', '')}`;
+        senderName = get(currentUser, 'profile.name.text', '') ||
+                    `${get(currentUser, 'profile.name.given[0]', '')} ${get(currentUser, 'profile.name.family', '')}`.trim() ||
+                    get(currentUser, 'username', '');
+        senderReference = `Practitioner/${get(currentUser, '_id', '')}`;
       }
       
-      setCondition(prev => ({
+      setCommunication(prev => ({
         ...prev,
         subject: {
           reference: patientReference,
           display: patientName
         },
-        asserter: {
-          reference: asserterReference,
-          display: asserterName
+        sender: {
+          reference: senderReference,
+          display: senderName
         }
       }));
     } else {
-      // Viewing existing condition - start in read-only mode
+      // Viewing existing communication - start in read-only mode
       setIsEditing(false);
     }
   }, [id, selectedPatient, currentUser]);
 
-  // Load condition if editing
+  // Load communication if editing
   useEffect(function() {
-    async function loadCondition() {
+    async function loadCommunication() {
       if (id && id !== 'new') {
         setLoading(true);
         try {
-          const result = await Meteor.callAsync('conditions.get', id);
+          const result = await Meteor.callAsync('communications.get', id);
           if (result) {
-            setCondition(result);
+            setCommunication(result);
           }
         } catch (err) {
-          console.error('Error loading condition:', err);
+          console.error('Error loading communication:', err);
           setError(err.message);
         } finally {
           setLoading(false);
@@ -181,14 +161,14 @@ function ConditionDetail(props) {
       }
     }
     
-    loadCondition();
+    loadCommunication();
   }, [id]);
 
   // Handle field changes
   function handleChange(path, value) {
-    const updatedCondition = { ...condition };
-    set(updatedCondition, path, value);
-    setCondition(updatedCondition);
+    const updatedCommunication = { ...communication };
+    set(updatedCommunication, path, value);
+    setCommunication(updatedCommunication);
   }
 
   // Handle save
@@ -198,20 +178,20 @@ function ConditionDetail(props) {
     
     try {
       if (id && id !== 'new') {
-        // Update existing condition
-        await Meteor.callAsync('conditions.update', id, condition);
-        console.log('Condition updated successfully');
+        // Update existing communication
+        await Meteor.callAsync('communications.update', id, communication);
+        console.log('Communication updated successfully');
         // Exit edit mode after successful save
         setIsEditing(false);
       } else {
-        // Create new condition
-        const newId = await Meteor.callAsync('conditions.create', condition);
-        console.log('Condition created with ID:', newId);
-        // Navigate back to conditions list for new conditions
-        navigate('/conditions');
+        // Create new communication
+        const newId = await Meteor.callAsync('communications.create', communication);
+        console.log('Communication created with ID:', newId);
+        // Navigate back to communications list for new communications
+        navigate('/communications');
       }
     } catch (err) {
-      console.error('Error saving condition:', err);
+      console.error('Error saving communication:', err);
       setError(err.message);
     } finally {
       setLoading(false);
@@ -222,14 +202,14 @@ function ConditionDetail(props) {
   async function handleDelete() {
     if (!id || id === 'new') return;
     
-    if (window.confirm('Are you sure you want to delete this condition?')) {
+    if (window.confirm('Are you sure you want to delete this communication?')) {
       setLoading(true);
       try {
-        await Meteor.callAsync('conditions.remove', id);
-        console.log('Condition deleted successfully');
-        navigate('/conditions');
+        await Meteor.callAsync('communications.remove', id);
+        console.log('Communication deleted successfully');
+        navigate('/communications');
       } catch (err) {
-        console.error('Error deleting condition:', err);
+        console.error('Error deleting communication:', err);
         setError(err.message);
       } finally {
         setLoading(false);
@@ -239,37 +219,39 @@ function ConditionDetail(props) {
 
   // Handle cancel
   function handleCancel() {
-    navigate('/conditions');
+    navigate('/communications');
   }
 
-  const clinicalStatusOptions = [
-    { code: 'active', display: 'Active' },
-    { code: 'recurrence', display: 'Recurrence' },
-    { code: 'relapse', display: 'Relapse' },
-    { code: 'inactive', display: 'Inactive' },
-    { code: 'remission', display: 'Remission' },
-    { code: 'resolved', display: 'Resolved' }
+  const statusOptions = [
+    { code: 'preparation', display: 'Preparation' },
+    { code: 'in-progress', display: 'In Progress' },
+    { code: 'not-done', display: 'Not Done' },
+    { code: 'on-hold', display: 'On Hold' },
+    { code: 'stopped', display: 'Stopped' },
+    { code: 'completed', display: 'Completed' },
+    { code: 'entered-in-error', display: 'Entered in Error' },
+    { code: 'unknown', display: 'Unknown' }
   ];
 
-  const verificationStatusOptions = [
-    { code: 'unconfirmed', display: 'Unconfirmed' },
-    { code: 'provisional', display: 'Provisional' },
-    { code: 'differential', display: 'Differential' },
-    { code: 'confirmed', display: 'Confirmed' },
-    { code: 'refuted', display: 'Refuted' },
-    { code: 'entered-in-error', display: 'Entered in Error' }
+  const priorityOptions = [
+    { code: 'routine', display: 'Routine' },
+    { code: 'urgent', display: 'Urgent' },
+    { code: 'asap', display: 'ASAP' },
+    { code: 'stat', display: 'STAT' }
   ];
 
   const categoryOptions = [
-    { code: 'problem-list-item', display: 'Problem List Item' },
-    { code: 'encounter-diagnosis', display: 'Encounter Diagnosis' }
+    { code: 'alert', display: 'Alert' },
+    { code: 'notification', display: 'Notification' },
+    { code: 'reminder', display: 'Reminder' },
+    { code: 'instruction', display: 'Instruction' }
   ];
 
   return (
     <Container maxWidth="md" sx={{ py: 4 }}>
       <Card sx={{ boxShadow: 3 }}>
         <CardHeader 
-          title={id && id !== 'new' ? 'Edit Condition' : 'New Condition'}
+          title={id && id !== 'new' ? 'Edit Communication' : 'New Communication'}
           sx={{ bgcolor: 'primary.main', color: 'primary.contrastText' }}
         />
         <CardContent>
@@ -290,65 +272,37 @@ function ConditionDetail(props) {
             <TextField
               fullWidth
               label="Patient Name"
-              value={get(condition, 'subject.display', '')}
-              helperText={get(condition, 'subject.reference', '') || 'Patient reference will be assigned'}
+              value={get(communication, 'subject.display', '')}
+              helperText={get(communication, 'subject.reference', '') || 'Patient reference will be assigned'}
               disabled // Always disabled to prevent editing
             />
             
             <TextField
               fullWidth
-              label="Asserter Name"
-              value={get(condition, 'asserter.display', '')}
-              onChange={(e) => handleChange('asserter.display', e.target.value)}
-              helperText={get(condition, 'asserter.reference', '') || 'Practitioner reference will be assigned'}
+              label="Sender Name"
+              value={get(communication, 'sender.display', '')}
+              onChange={(e) => handleChange('sender.display', e.target.value)}
+              helperText={get(communication, 'sender.reference', '') || 'Sender reference will be assigned'}
               disabled={!isEditing}
             />
             
             <TextField
               fullWidth
-              label="SNOMED Code"
-              value={get(condition, 'code.coding[0].code', '')}
-              onChange={(e) => handleChange('code.coding[0].code', e.target.value)}
-              helperText="SNOMED CT code"
-              disabled={!isEditing}
-              InputProps={{
-                endAdornment: (
-                  <InputAdornment position="end">
-                    <Tooltip title="Lookup codes with the SNOMED CT Browser">
-                      <IconButton
-                        onClick={() => window.open('http://browser.ihtsdotools.org/?perspective=full&conceptId1=404684003&edition=us-edition&release=v20180301&server=https://prod-browser-exten.ihtsdotools.org/api/snomed&langRefset=900000000000509007', '_blank')}
-                        edge="end"
-                        disabled={!isEditing}
-                      >
-                        <SearchIcon />
-                      </IconButton>
-                    </Tooltip>
-                  </InputAdornment>
-                ),
-              }}
-            />
-            
-            <TextField
-              fullWidth
-              label="Condition Name"
-              value={get(condition, 'code.coding[0].display', '')}
-              onChange={(e) => handleChange('code.coding[0].display', e.target.value)}
-              helperText="Human-readable name of the condition"
+              label="Recipient Name"
+              value={get(communication, 'recipient[0].display', '')}
+              onChange={(e) => handleChange('recipient[0].display', e.target.value)}
+              helperText="Who should receive this communication"
               disabled={!isEditing}
             />
             
             <FormControl fullWidth disabled={!isEditing}>
-              <InputLabel>Clinical Status</InputLabel>
+              <InputLabel>Status</InputLabel>
               <Select
-                value={get(condition, 'clinicalStatus.coding[0].code', 'active')}
-                onChange={(e) => {
-                  const option = clinicalStatusOptions.find(o => o.code === e.target.value);
-                  handleChange('clinicalStatus.coding[0].code', option.code);
-                  handleChange('clinicalStatus.coding[0].display', option.display);
-                }}
-                label="Clinical Status"
+                value={get(communication, 'status', 'completed')}
+                onChange={(e) => handleChange('status', e.target.value)}
+                label="Status"
               >
-                {clinicalStatusOptions.map(option => (
+                {statusOptions.map(option => (
                   <MenuItem key={option.code} value={option.code}>
                     {option.display}
                   </MenuItem>
@@ -357,17 +311,13 @@ function ConditionDetail(props) {
             </FormControl>
             
             <FormControl fullWidth disabled={!isEditing}>
-              <InputLabel>Verification Status</InputLabel>
+              <InputLabel>Priority</InputLabel>
               <Select
-                value={get(condition, 'verificationStatus.coding[0].code', 'confirmed')}
-                onChange={(e) => {
-                  const option = verificationStatusOptions.find(o => o.code === e.target.value);
-                  handleChange('verificationStatus.coding[0].code', option.code);
-                  handleChange('verificationStatus.coding[0].display', option.display);
-                }}
-                label="Verification Status"
+                value={get(communication, 'priority', 'routine')}
+                onChange={(e) => handleChange('priority', e.target.value)}
+                label="Priority"
               >
-                {verificationStatusOptions.map(option => (
+                {priorityOptions.map(option => (
                   <MenuItem key={option.code} value={option.code}>
                     {option.display}
                   </MenuItem>
@@ -378,7 +328,7 @@ function ConditionDetail(props) {
             <FormControl fullWidth disabled={!isEditing}>
               <InputLabel>Category</InputLabel>
               <Select
-                value={get(condition, 'category[0].coding[0].code', 'problem-list-item')}
+                value={get(communication, 'category[0].coding[0].code', 'notification')}
                 onChange={(e) => {
                   const option = categoryOptions.find(o => o.code === e.target.value);
                   handleChange('category[0].coding[0].code', option.code);
@@ -396,21 +346,50 @@ function ConditionDetail(props) {
             
             <TextField
               fullWidth
-              type="date"
-              label="Onset Date"
-              value={moment(get(condition, 'onsetDateTime', '')).format('YYYY-MM-DD')}
-              onChange={(e) => handleChange('onsetDateTime', e.target.value)}
+              label="Topic"
+              value={get(communication, 'topic.text', '')}
+              onChange={(e) => handleChange('topic.text', e.target.value)}
+              helperText="What this communication is about"
+              disabled={!isEditing}
+            />
+            
+            <TextField
+              fullWidth
+              type="datetime-local"
+              label="Sent Date/Time"
+              value={moment(get(communication, 'sent', '')).format('YYYY-MM-DDTHH:mm')}
+              onChange={(e) => handleChange('sent', e.target.value)}
               InputLabelProps={{ shrink: true }}
               disabled={!isEditing}
             />
             
             <TextField
               fullWidth
-              type="date"
-              label="Recorded Date"
-              value={moment(get(condition, 'recordedDate', '')).format('YYYY-MM-DD')}
-              onChange={(e) => handleChange('recordedDate', e.target.value)}
+              type="datetime-local"
+              label="Received Date/Time"
+              value={moment(get(communication, 'received', '')).format('YYYY-MM-DDTHH:mm')}
+              onChange={(e) => handleChange('received', e.target.value)}
               InputLabelProps={{ shrink: true }}
+              disabled={!isEditing}
+            />
+            
+            <TextField
+              fullWidth
+              multiline
+              rows={4}
+              label="Message"
+              value={get(communication, 'payload[0].contentString', '')}
+              onChange={(e) => handleChange('payload[0].contentString', e.target.value)}
+              helperText="The actual message content"
+              disabled={!isEditing}
+            />
+            
+            <TextField
+              fullWidth
+              label="Reason"
+              value={get(communication, 'reasonCode[0].text', '')}
+              onChange={(e) => handleChange('reasonCode[0].text', e.target.value)}
+              helperText="Why this communication was sent"
               disabled={!isEditing}
             />
             
@@ -419,9 +398,9 @@ function ConditionDetail(props) {
               multiline
               rows={3}
               label="Notes"
-              value={get(condition, 'note[0].text', '')}
+              value={get(communication, 'note[0].text', '')}
               onChange={(e) => handleChange('note[0].text', e.target.value)}
-              helperText="Additional notes about the condition"
+              helperText="Additional notes about the communication"
               disabled={!isEditing}
             />
           </Stack>
@@ -432,7 +411,7 @@ function ConditionDetail(props) {
             // Read-only mode buttons
             <>
               <Button 
-                onClick={() => navigate('/conditions')}
+                onClick={() => navigate('/communications')}
               >
                 Back
               </Button>
@@ -452,21 +431,21 @@ function ConditionDetail(props) {
                   if (id && id !== 'new') {
                     // Cancel editing and reload original data
                     setIsEditing(false);
-                    // Reload the condition to discard changes
-                    async function reloadCondition() {
+                    // Reload the communication to discard changes
+                    async function reloadCommunication() {
                       try {
-                        const result = await Meteor.callAsync('conditions.get', id);
+                        const result = await Meteor.callAsync('communications.get', id);
                         if (result) {
-                          setCondition(result);
+                          setCommunication(result);
                         }
                       } catch (err) {
-                        console.error('Error reloading condition:', err);
+                        console.error('Error reloading communication:', err);
                       }
                     }
-                    reloadCondition();
+                    reloadCommunication();
                   } else {
-                    // For new conditions, go back
-                    navigate('/conditions');
+                    // For new communications, go back
+                    navigate('/communications');
                   }
                 }}
                 disabled={loading}
@@ -498,4 +477,4 @@ function ConditionDetail(props) {
   );
 }
 
-export default ConditionDetail;
+export default CommunicationDetail;

@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { useTracker } from 'meteor/react-meteor-data';
+import { useNavigate } from 'react-router-dom';
 
 import { 
   Grid, 
@@ -56,6 +57,7 @@ Session.setDefault('CommunicationsTable.communicationsIndex', 0)
 // MAIN COMPONENT
 
 export function CommunicationsPage(props){
+  const navigate = useNavigate();
 
   let data = {
     currentCommunicationId: '',
@@ -108,7 +110,7 @@ export function CommunicationsPage(props){
 
   function handleAddCommunication(){
     console.log('Add Communication button clicked');
-    // Add logic for adding a new communication
+    navigate('/communications/new');
   }
 
   function renderHeader() {
@@ -166,6 +168,10 @@ export function CommunicationsPage(props){
             Session.set('CommunicationsTable.communicationsIndex', index);
           }}        
           page={data.communicationsIndex}
+          onRowClick={function(communicationId){
+            console.log('CommunicationsPage.onRowClick', communicationId);
+            navigate('/communications/' + communicationId);
+          }}
         />
       </CardContent>
     </Card>

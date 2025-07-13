@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { useTracker } from 'meteor/react-meteor-data';
+import { useNavigate } from 'react-router-dom';
 
 import { 
   Grid, 
@@ -52,6 +53,7 @@ Session.setDefault('ProceduresTable.proceduresIndex', 0)
 // MAIN COMPONENT
 
 export function ProceduresPage(props){
+  const navigate = useNavigate();
 
   let data = {
     currentProcedureId: '',
@@ -98,7 +100,7 @@ export function ProceduresPage(props){
 
   function handleAddProcedure(){
     console.log('Add Procedure button clicked');
-    // Add logic for adding a new procedure
+    navigate('/procedures/new');
   }
 
   function renderHeader() {

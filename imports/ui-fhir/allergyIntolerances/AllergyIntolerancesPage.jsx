@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { useTracker } from 'meteor/react-meteor-data';
+import { useNavigate } from 'react-router-dom';
 
 import { 
   Grid, 
@@ -51,6 +52,7 @@ Session.setDefault('AllergyIntolerancesTable.allergyIntolerancesIndex', 0)
 // MAIN COMPONENT
 
 export function AllergyIntolerancesPage(props){
+  const navigate = useNavigate();
 
   let data = {
     currentAllergyIntoleranceId: '',
@@ -97,7 +99,7 @@ export function AllergyIntolerancesPage(props){
 
   function handleAddAllergyIntolerance(){
     console.log('Add Allergy Intolerance button clicked');
-    // Add logic for adding a new allergy intolerance
+    navigate('/allergy-intolerances/new');
   }
 
   function renderHeader() {

@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { useTracker } from 'meteor/react-meteor-data';
+import { useNavigate } from 'react-router-dom';
 
 import { 
   Grid, 
@@ -56,6 +57,7 @@ Session.setDefault('ListsTable.listsIndex', 0)
 // MAIN COMPONENT
 
 export function ListsPage(props){
+  const navigate = useNavigate();
 
   let data = {
     currentListId: '',
@@ -108,6 +110,7 @@ export function ListsPage(props){
 
   function handleAddList(){
     console.log('Add List button clicked');
+    navigate('/lists/new');
     // Add logic for adding a new list
   }
 
@@ -166,6 +169,10 @@ export function ListsPage(props){
             Session.set('ListsTable.listsIndex', index);
           }}        
           page={data.listsIndex}
+          onRowClick={function(listId){
+            console.log('ListsPage.onRowClick', listId);
+            navigate('/lists/' + listId);
+          }}
         />
       </CardContent>
     </Card>

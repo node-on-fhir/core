@@ -76,6 +76,25 @@ import CarePlansPage from '../ui-fhir/carePlans/CarePlansPage.jsx';
 import CodeSystemsPage from '../ui-fhir/codeSystems/CodeSystemsPage.jsx';
 import CompositionsPage from '../ui-fhir/compositions/CompositionsPage.jsx';
 import ConditionsPage from '../ui-fhir/conditions/ConditionsPage.jsx';
+import ConditionDetail from '../ui-fhir/conditions/ConditionDetail.jsx';
+import CommunicationDetail from '../ui-fhir/communications/CommunicationDetail.jsx';
+import DocumentReferenceDetail from '../ui-fhir/documentReferences/DocumentReferenceDetail.jsx';
+import ListDetail from '../ui-fhir/lists/ListDetail.jsx';
+import NutritionOrderDetail from '../ui-fhir/nutritionOrders/NutritionOrderDetail.jsx';
+import PractitionerDetail from '../ui-fhir/practitioners/PractitionerDetail.jsx';
+import ServiceRequestDetail from '../ui-fhir/serviceRequests/ServiceRequestDetail.jsx';
+import AllergyIntoleranceDetail from '../ui-fhir/allergyIntolerances/AllergyIntoleranceDetail.jsx';
+import CarePlanDetail from '../ui-fhir/carePlans/CarePlanDetail.jsx';
+import CareTeamDetail from '../ui-fhir/careTeams/CareTeamDetail.jsx';
+import CompositionDetail from '../ui-fhir/compositions/CompositionDetail.jsx';
+import GoalDetail from '../ui-fhir/goals/GoalDetail.jsx';
+import LocationDetail from '../ui-fhir/locations/LocationDetail.jsx';
+import MedicationAdministrationDetail from '../ui-fhir/medicationAdministrations/MedicationAdministrationDetail.jsx';
+import MedicationRequestDetail from '../ui-fhir/medicationRequests/MedicationRequestDetail.jsx';
+import MedicationDetail from '../ui-fhir/medications/MedicationDetail.jsx';
+import ObservationDetail from '../ui-fhir/observations/ObservationDetail.jsx';
+import ProcedureDetail from '../ui-fhir/procedures/ProcedureDetail.jsx';
+import QuestionnaireResponseDetail from '../ui-fhir/questionnaireResponses/QuestionnaireResponseDetail.jsx';
 import DevicesPage from '../ui-fhir/devices/DevicesPage.jsx';
 import DocumentReferencesPage from '../ui-fhir/documentReferences/DocumentReferencesPage.jsx';
 import EncountersPage from '../ui-fhir/encounters/EncountersPage.jsx';
@@ -515,6 +534,14 @@ if(get(Meteor, 'settings.public.modules.fhir.AllergyIntolerances')){
     path: "/allergy-intolerances",
     element: <AllergyIntolerancesPage />
   })
+  dynamicRoutes.push({
+    path: "/allergy-intolerances/new",
+    element: <AllergyIntoleranceDetail />
+  })
+  dynamicRoutes.push({
+    path: "/allergy-intolerances/:id",
+    element: <AllergyIntoleranceDetail />
+  })
 }
 if(get(Meteor, 'settings.public.modules.fhir.ArtifactAssessments')){
   dynamicRoutes.push({
@@ -539,11 +566,27 @@ if(get(Meteor, 'settings.public.modules.fhir.CareTeams')){
     path: "/care-teams",
     element: <CareTeamsPage />
   })
+  dynamicRoutes.push({
+    path: "/care-teams/new",
+    element: <CareTeamDetail />
+  })
+  dynamicRoutes.push({
+    path: "/care-teams/:id",
+    element: <CareTeamDetail />
+  })
 }
 if(get(Meteor, 'settings.public.modules.fhir.CarePlans')){
   dynamicRoutes.push({
     path: "/care-plans",
     element: <CarePlansPage />
+  })
+  dynamicRoutes.push({
+    path: "/care-plans/new",
+    element: <CarePlanDetail />
+  })
+  dynamicRoutes.push({
+    path: "/care-plans/:id",
+    element: <CarePlanDetail />
   })
 }
 if(get(Meteor, 'settings.public.modules.fhir.CodeSystems')){
@@ -557,11 +600,27 @@ if(get(Meteor, 'settings.public.modules.fhir.Compositions')){
     path: "/compositions",
     element: <CompositionsPage />
   })
+  dynamicRoutes.push({
+    path: "/compositions/new",
+    element: <CompositionDetail />
+  })
+  dynamicRoutes.push({
+    path: "/compositions/:id",
+    element: <CompositionDetail />
+  })
 }
 if(get(Meteor, 'settings.public.modules.fhir.Conditions')){
   dynamicRoutes.push({
     path: "/conditions",
     element: <ConditionsPage />
+  })
+  dynamicRoutes.push({
+    path: "/conditions/new",
+    element: <ConditionDetail />
+  })
+  dynamicRoutes.push({
+    path: "/conditions/:id",
+    element: <ConditionDetail />
   })
 }
 if(get(Meteor, 'settings.public.modules.fhir.Devices')){
@@ -574,6 +633,14 @@ if(get(Meteor, 'settings.public.modules.fhir.DocumentReferences')){
   dynamicRoutes.push({
     path: "/document-references",
     element: <DocumentReferencesPage />
+  })
+  dynamicRoutes.push({
+    path: "/documentReferences/new",
+    element: <DocumentReferenceDetail />
+  })
+  dynamicRoutes.push({
+    path: "/documentReferences/:id",
+    element: <DocumentReferenceDetail />
   })
 }
 if(get(Meteor, 'settings.public.modules.fhir.Encounters')){
@@ -592,6 +659,14 @@ if(get(Meteor, 'settings.public.modules.fhir.Goals')){
   dynamicRoutes.push({
     path: "/goals",
     element: <GoalsPage />
+  })
+  dynamicRoutes.push({
+    path: "/goals/new",
+    element: <GoalDetail />
+  })
+  dynamicRoutes.push({
+    path: "/goals/:id",
+    element: <GoalDetail />
   })
 }
 if(get(Meteor, 'settings.public.modules.fhir.GuidanceResponses')){
@@ -617,11 +692,27 @@ if(get(Meteor, 'settings.public.modules.fhir.Locations')){
     path: "/locations",
     element: <LocationsPage />
   })
+  dynamicRoutes.push({
+    path: "/locations/new",
+    element: <LocationDetail />
+  })
+  dynamicRoutes.push({
+    path: "/locations/:id",
+    element: <LocationDetail />
+  })
 }
 if(get(Meteor, 'settings.public.modules.fhir.Observations')){
   dynamicRoutes.push({
     path: "/observations",
     element: <ObservationsPage />
+  })
+  dynamicRoutes.push({
+    path: "/observations/new",
+    element: <ObservationDetail />
+  })
+  dynamicRoutes.push({
+    path: "/observations/:id",
+    element: <ObservationDetail />
   })
 }
 if(get(Meteor, 'settings.public.modules.fhir.Patients')){
@@ -647,6 +738,14 @@ if(get(Meteor, 'settings.public.modules.fhir.Procedures')){
     path: "/procedures",
     element: <ProceduresPage />
   })
+  dynamicRoutes.push({
+    path: "/procedures/new",
+    element: <ProcedureDetail />
+  })
+  dynamicRoutes.push({
+    path: "/procedures/:id",
+    element: <ProcedureDetail />
+  })
 }
 if(get(Meteor, 'settings.public.modules.fhir.Questionnaires')){
   dynamicRoutes.push({
@@ -658,6 +757,14 @@ if(get(Meteor, 'settings.public.modules.fhir.QuestionnaireResponses')){
   dynamicRoutes.push({
     path: "/questionnaire-responses",
     element: <QuestionnaireResponsesPage />
+  })
+  dynamicRoutes.push({
+    path: "/questionnaire-responses/new",
+    element: <QuestionnaireResponseDetail />
+  })
+  dynamicRoutes.push({
+    path: "/questionnaire-responses/:id",
+    element: <QuestionnaireResponseDetail />
   })
 }
 if(get(Meteor, 'settings.public.modules.fhir.ResearchSubjects')){
@@ -676,6 +783,14 @@ if(get(Meteor, 'settings.public.modules.fhir.ServiceRequests')){
   dynamicRoutes.push({
     path: "/service-requests",
     element: <ServiceRequestsPage />
+  })
+  dynamicRoutes.push({
+    path: "/serviceRequests/new",
+    element: <ServiceRequestDetail />
+  })
+  dynamicRoutes.push({
+    path: "/serviceRequests/:id",
+    element: <ServiceRequestDetail />
   })
 }
 // Always include Tasks route since it's in the pacio-core sidebar
@@ -700,11 +815,27 @@ if(get(Meteor, 'settings.public.modules.fhir.Medications')){
     path: "/medications",
     element: <MedicationsPage />
   })
+  dynamicRoutes.push({
+    path: "/medications/new",
+    element: <MedicationDetail />
+  })
+  dynamicRoutes.push({
+    path: "/medications/:id",
+    element: <MedicationDetail />
+  })
 }
 if(get(Meteor, 'settings.public.modules.fhir.MedicationRequests')){
   dynamicRoutes.push({
     path: "/medication-requests",
     element: <MedicationRequestsPage />
+  })
+  dynamicRoutes.push({
+    path: "/medication-requests/new",
+    element: <MedicationRequestDetail />
+  })
+  dynamicRoutes.push({
+    path: "/medication-requests/:id",
+    element: <MedicationRequestDetail />
   })
 }
 if(get(Meteor, 'settings.public.modules.fhir.MedicationAdministrations')){
@@ -712,11 +843,27 @@ if(get(Meteor, 'settings.public.modules.fhir.MedicationAdministrations')){
     path: "/medication-administrations",
     element: <MedicationAdministrationsPage />
   })
+  dynamicRoutes.push({
+    path: "/medication-administrations/new",
+    element: <MedicationAdministrationDetail />
+  })
+  dynamicRoutes.push({
+    path: "/medication-administrations/:id",
+    element: <MedicationAdministrationDetail />
+  })
 }
 if(get(Meteor, 'settings.public.modules.fhir.NutritionOrders')){
   dynamicRoutes.push({
     path: "/nutrition-orders",
     element: <NutritionOrdersPage />
+  })
+  dynamicRoutes.push({
+    path: "/nutritionOrders/new",
+    element: <NutritionOrderDetail />
+  })
+  dynamicRoutes.push({
+    path: "/nutritionOrders/:id",
+    element: <NutritionOrderDetail />
   })
 }
 // Always include these routes since they're in the pacio-core sidebar
@@ -725,12 +872,36 @@ dynamicRoutes.push({
   element: <PractitionersPage />
 })
 dynamicRoutes.push({
+  path: "/practitioners/new",
+  element: <PractitionerDetail />
+})
+dynamicRoutes.push({
+  path: "/practitioners/:id",
+  element: <PractitionerDetail />
+})
+dynamicRoutes.push({
   path: "/lists",
   element: <ListsPage />
 })
 dynamicRoutes.push({
+  path: "/lists/new",
+  element: <ListDetail />
+})
+dynamicRoutes.push({
+  path: "/lists/:id",
+  element: <ListDetail />
+})
+dynamicRoutes.push({
   path: "/communications",
   element: <CommunicationsPage />
+})
+dynamicRoutes.push({
+  path: "/communications/new",
+  element: <CommunicationDetail />
+})
+dynamicRoutes.push({
+  path: "/communications/:id",
+  element: <CommunicationDetail />
 })
 // Additional FHIR resources for pacio-core
 dynamicRoutes.push({

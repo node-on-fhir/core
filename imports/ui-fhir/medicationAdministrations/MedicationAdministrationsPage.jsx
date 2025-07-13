@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useTracker } from 'meteor/react-meteor-data';
+import { useNavigate } from 'react-router-dom';
 
 import { 
   Grid, 
@@ -49,6 +50,7 @@ Session.setDefault('MedicationAdministrationsTable.medicationAdministrationsInde
 // MAIN COMPONENT
 
 export function MedicationAdministrationsPage(props){
+  const navigate = useNavigate();
 
   let data = {
     currentMedicationAdministrationId: '',
@@ -95,7 +97,7 @@ export function MedicationAdministrationsPage(props){
 
   function handleAddMedicationAdministration(){
     console.log('Add Medication Administration button clicked');
-    // Add logic for adding a new medication administration
+    navigate('/medication-administrations/new');
   }
 
   function renderHeader() {

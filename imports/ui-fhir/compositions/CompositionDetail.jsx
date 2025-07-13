@@ -77,8 +77,14 @@ export function CompositionDetail(props){
   }
 
   return(
-    <div className='CompositionDetails' >
-      <Grid container spacing={3} style={{paddingBottom: '20px'}}>
+    <Container maxWidth="md" sx={{ py: 4 }}>
+      <Card sx={{ boxShadow: 3 }}>
+        <CardHeader 
+          title={props.compositionId ? 'Edit Composition' : 'New Composition'}
+          sx={{ bgcolor: 'primary.main', color: 'primary.contrastText' }}
+        />
+        <CardContent>
+          <Grid container spacing={3}>
         <Grid item xs={6}>
           <TextField
             id='subjectDisplayInput'                
@@ -163,8 +169,20 @@ export function CompositionDetail(props){
             fullWidth
             /><br/>
         </Grid>
-      </Grid>
-    </div>
+          </Grid>
+        </CardContent>
+        <CardActions>
+          {props.compositionId ? (
+            <>
+              <Button variant="contained" color="primary" onClick={props.onUpsert} sx={{ mr: 2 }}>Save</Button>
+              <Button variant="outlined" color="error" onClick={props.onRemove}>Delete</Button>
+            </>
+          ) : (
+            <Button variant="contained" color="primary" onClick={props.onInsert}>Create</Button>
+          )}
+        </CardActions>
+      </Card>
+    </Container>
   );
 }
 

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useTracker } from 'meteor/react-meteor-data';
+import { useNavigate } from 'react-router-dom';
 
 import { 
   Grid, 
@@ -51,6 +52,7 @@ Session.setDefault('ConditionsTable.conditionsIndex', 0)
 // MAIN COMPONENT
 
 export function ConditionsPage(props){
+  const navigate = useNavigate();
 
   let data = {
     currentConditionId: '',
@@ -97,7 +99,7 @@ export function ConditionsPage(props){
 
   function handleAddCondition(){
     console.log('Add Condition button clicked');
-    // Add logic for adding a new condition
+    navigate('/conditions/new');
   }
 
   function renderHeader() {
@@ -152,6 +154,10 @@ export function ConditionsPage(props){
           hideActionButton={get(Meteor, 'settings.public.modules.fhir.Conditions.hideRemoveButtonOnTable', true)}
           onActionButtonClick={function(selectedId){
             Conditions._collection.remove({_id: selectedId})
+          }}
+          onRowClick={function(conditionId){
+            console.log('ConditionsPage.onRowClick', conditionId);
+            navigate('/conditions/' + conditionId);
           }}
           onSetPage={function(index){
             setConditionsPageIndex(index)

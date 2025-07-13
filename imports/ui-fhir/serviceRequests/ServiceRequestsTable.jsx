@@ -671,11 +671,11 @@ export function ServiceRequestsTable(props){
       logger.trace('serviceRequestsToRender[i]', serviceRequestsToRender[i])
       tableRows.push(
         <TableRow className="serviceRequestRow" 
-          key={i} style={rowStyle} 
-          // onClick={ rowClick.bind(this, serviceRequestsToRender[i]._id)} 
+          key={i} 
           style={rowStyle} 
+          onClick={ rowClick.bind(this, serviceRequestsToRender[i].id || serviceRequestsToRender[i]._id)} 
           hover={true} 
-          // selected={selected} 
+          selected={selected} 
           >            
           {renderSelected(get(serviceRequestsToRender[i], '_id'))}
           {renderIdentifier(get(serviceRequestsToRender[i], 'identifier', ''))}

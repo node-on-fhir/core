@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useTracker } from 'meteor/react-meteor-data';
+import { useNavigate } from 'react-router-dom';
 
 import { 
   Grid, 
@@ -52,6 +53,7 @@ Session.setDefault('DocumentReferencesTable.documentReferencesIndex', 0)
 // MAIN COMPONENT
 
 export function DocumentReferencesPage(props){
+  const navigate = useNavigate();
 
   // Subscribe to document references
   const isLoading = useSubscribe('pacio.documentReferences');
@@ -101,7 +103,7 @@ export function DocumentReferencesPage(props){
 
   function handleAddDocumentReference(){
     console.log('Add DocumentReference button clicked');
-    // Add logic for adding a new document reference
+    navigate('/documentReferences/new');
   }
 
   function renderHeader() {
@@ -159,6 +161,10 @@ export function DocumentReferencesPage(props){
             setDocumentReferencesPageIndex(index)
           }}        
           page={data.documentReferencesIndex}
+          onRowClick={function(documentReferenceId){
+            console.log('DocumentReferencesPage.onRowClick', documentReferenceId);
+            navigate('/documentReferences/' + documentReferenceId);
+          }}
         />
       </CardContent>
     </Card>

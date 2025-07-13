@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { useTracker } from 'meteor/react-meteor-data';
+import { useNavigate } from 'react-router-dom';
 
 import { 
   Grid, 
@@ -51,6 +52,7 @@ Session.setDefault('CarePlansTable.carePlansIndex', 0)
 // MAIN COMPONENT
 
 export function CarePlansPage(props){
+  const navigate = useNavigate();
 
   let data = {
     currentCarePlanId: '',
@@ -97,7 +99,7 @@ export function CarePlansPage(props){
 
   function handleAddCarePlan(){
     console.log('Add Care Plan button clicked');
-    // Add logic for adding a new care plan
+    navigate('/care-plans/new');
   }
 
   function renderHeader() {

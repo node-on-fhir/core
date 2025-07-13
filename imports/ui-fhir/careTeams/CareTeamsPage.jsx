@@ -1,5 +1,6 @@
 import React  from 'react';
 import { useTracker } from 'meteor/react-meteor-data';
+import { useNavigate } from 'react-router-dom';
 
 import { 
   Grid,
@@ -81,6 +82,7 @@ Session.setDefault('CareTeamsTable.hideCheckbox', true)
 // COMPONENT
 
 function CareTeamsPage(props){
+  const navigate = useNavigate();
 
   let headerHeight = LayoutHelpers.calcHeaderHeight();
   let formFactor = LayoutHelpers.determineFormFactor();
@@ -142,14 +144,7 @@ function CareTeamsPage(props){
 
   function handleAddCareTeam(){
     console.log('CareTeamsPage.handleAddCareTeam');
-    Session.set('selectedCareTeam', false);
-    Session.set('selectedCareTeamId', '');
-    Session.set('CareTeam.Current', false);
-    
-    Session.set('mainAppDialogOpen', true);
-    Session.set('mainAppDialogComponent', "CareTeamDetail");
-    Session.set('mainAppDialogMaxWidth', "sm");
-    Session.set('mainAppDialogTitle', "Add Care Team");
+    navigate('/care-teams/new');
   }
 
   function renderHeader() {

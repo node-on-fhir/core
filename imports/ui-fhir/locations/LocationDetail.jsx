@@ -1,628 +1,786 @@
-// /Volumes/SonicMagic/Code/honeycomb-public-release/imports/ui-fhir/locations/LocationDetail.jsx
+// /imports/ui-fhir/locations/LocationDetail.jsx
 
-import React from 'react';
-import PropTypes from 'prop-types';
-
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useTracker } from 'meteor/react-meteor-data';
 
 import { 
   Button,
   Card,
-  Checkbox,
   CardActions,
   CardContent,
   CardHeader,
-  Grid,
+  Container,
   TextField,
   Select,
   MenuItem,
+  FormControl,
+  InputLabel,
+  Typography,
+  Box,
+  Stack,
+  Chip,
+  InputAdornment,
+  IconButton,
+  Tooltip,
+  Link,
+  CircularProgress,
+  Alert
 } from '@mui/material';
 
+import QrCodeIcon from '@mui/icons-material/QrCode';
+import SearchIcon from '@mui/icons-material/Search';
+import LocationOnIcon from '@mui/icons-material/LocationOn';
+
 import { get, set } from 'lodash';
+import moment from 'moment';
+import GoogleMapReact from 'google-map-react';
 
-  
-export class LocationDetail extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      locationId: false,
-      location: {
-        resourceType: "Location",
-        name: "",
-        status: "active",
-        mode: "instance",
-        type: {
-          coding: [{
-            system: "http://terminology.hl7.org/CodeSystem/v3-RoleCode",
-            code: "",
-            display: ""
-          }]
-        },
-        telecom: [],
-        address: {
-          use: "work",
-          type: "both",
-          line: [],
-          city: "",
-          state: "",
-          postalCode: "",
-          country: ""
-        },
-        physicalType: {
-          coding: [{
-            system: "http://terminology.hl7.org/CodeSystem/location-physical-type",
-            code: "",
-            display: ""
-          }]
-        },
-        position: {
-          longitude: null,
-          latitude: null,
-          altitude: null
-        },
-        managingOrganization: {
-          reference: "",
-          display: ""
-        },
-        partOf: {
-          reference: "",
-          display: ""
-        }
-      }, 
-      form: {
-        name: '',
-        status: 'active',
-        mode: 'instance',
-        typeCode: '',
-        typeDisplay: '',
-        addressLine: '',
-        city: '',
-        state: '',
-        postalCode: '',
-        country: '',
-        telecom: '',
-        physicalTypeCode: '',
-        physicalTypeDisplay: '',
-        latitude: '',
-        longitude: '',
-        altitude: '',
-        managingOrganizationDisplay: '',
-        partOfDisplay: ''
-      }
-    }
-  }
-  dehydrateFhirResource(location) {
-    let formData = Object.assign({}, this.state.form);
+import { Locations } from '/imports/lib/schemas/SimpleSchemas/Locations';
+import { Meteor } from 'meteor/meteor';
+import { Session } from 'meteor/session';
 
-    formData.name = get(location, 'name', '')
-    formData.status = get(location, 'status', 'active')
-    formData.mode = get(location, 'mode', 'instance')
-    formData.typeCode = get(location, 'type.coding[0].code', '')
-    formData.typeDisplay = get(location, 'type.coding[0].display', '')
-    formData.addressLine = get(location, 'address.line[0]', '')
-    formData.city = get(location, 'address.city', '')
-    formData.state = get(location, 'address.state', '')
-    formData.postalCode = get(location, 'address.postalCode', '')
-    formData.country = get(location, 'address.country', '')
-    formData.telecom = get(location, 'telecom[0].value', '')
-    formData.physicalTypeCode = get(location, 'physicalType.coding[0].code', '')
-    formData.physicalTypeDisplay = get(location, 'physicalType.coding[0].display', '')
-    formData.latitude = get(location, 'position.latitude', '')
-    formData.longitude = get(location, 'position.longitude', '')
-    formData.altitude = get(location, 'position.altitude', '')
-    formData.managingOrganizationDisplay = get(location, 'managingOrganization.display', '')
-    formData.partOfDisplay = get(location, 'partOf.display', '')
-
-    return formData;
-  }
-  shouldComponentUpdate(nextProps){
-    get(Meteor, 'settings.public.logging') === "debug" && console.log('LocationDetail.shouldComponentUpdate()', nextProps, this.state)
-    let shouldUpdate = true;
-
-    // received a location from the table; okay lets update again
-    if(nextProps.locationId !== this.state.locationId){
-      
-      if(nextProps.location){
-        this.setState({location: nextProps.location})     
-        this.setState({form: this.dehydrateFhirResource(nextProps.location)})       
-      }
-
-      this.setState({locationId: nextProps.locationId})
-      shouldUpdate = true;
-    }
-
-    // both false; don't take any more updates
-    if(nextProps.location === this.state.location){
-      shouldUpdate = false;
-    }
- 
-    return shouldUpdate;
-  }
-
-  getMeteorData() {
-    let data = {
-      locationId: this.props.locationId,
-      location: false,
-      form: this.state.form
-    };
-
-    if(this.props.location){
-      data.location = this.props.location;
-      data.form = this.dehydrateFhirResource(this.props.location);
-    }
-
-    return data;
-  }
-  
-  setHint(text){
-    if(this.props.showHints !== false){
-      return text;
-    } else {
-      return '';
-    }
-  }
-  render() {
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log('LocationDetail.render()', this.state)
-
-    return (
-      <div id={this.props.id} className="locationDetail">
-        <CardContent>
-          <Grid container spacing={3}>
-            <Grid item xs={6}>
-              <TextField
-                id='nameInput'
-                name='name'
-                label='Name'
-                value={ get(this, 'data.form.name', '') }
-                onChange={ this.changeState.bind(this, 'name')}
-                hintText={ this.setHint('Emergency Room') }
-                fullWidth
-                /><br/>
-
-              <Select
-                id='statusInput'
-                name='status'
-                label='Status'
-                value={ get(this, 'data.form.status', 'active') }
-                onChange={ this.changeState.bind(this, 'status')}
-                fullWidth
-                >
-                <MenuItem value="active">Active</MenuItem>
-                <MenuItem value="suspended">Suspended</MenuItem>
-                <MenuItem value="inactive">Inactive</MenuItem>
-              </Select><br/>
-
-              <Select
-                id='modeInput'
-                name='mode'
-                label='Mode'
-                value={ get(this, 'data.form.mode', 'instance') }
-                onChange={ this.changeState.bind(this, 'mode')}
-                fullWidth
-                >
-                <MenuItem value="instance">Instance</MenuItem>
-                <MenuItem value="kind">Kind</MenuItem>
-              </Select><br/>
-
-              <TextField
-                id='typeCodeInput'
-                name='typeCode'
-                label='Type Code'
-                value={ get(this, 'data.form.typeCode', '') }
-                hintText={ this.setHint('ER') }
-                onChange={ this.changeState.bind(this, 'typeCode')}
-                fullWidth
-                /><br/>
-
-              <TextField
-                id='typeDisplayInput'
-                name='typeDisplay'
-                label='Type Display'
-                value={ get(this, 'data.form.typeDisplay', '') }
-                onChange={ this.changeState.bind(this, 'typeDisplay')}
-                hintText={ this.setHint('Emergency Room') }
-                fullWidth
-                /><br/>
-
-              <TextField
-                id='physicalTypeCodeInput'
-                name='physicalTypeCode'
-                label='Physical Type Code'
-                value={ get(this, 'data.form.physicalTypeCode', '') }
-                hintText={ this.setHint('ro') }
-                onChange={ this.changeState.bind(this, 'physicalTypeCode')}
-                fullWidth
-                /><br/>
-
-              <TextField
-                id='physicalTypeDisplayInput'
-                name='physicalTypeDisplay'
-                label='Physical Type Display'
-                value={ get(this, 'data.form.physicalTypeDisplay', '') }
-                onChange={ this.changeState.bind(this, 'physicalTypeDisplay')}
-                hintText={ this.setHint('Room') }
-                fullWidth
-                /><br/>
-
-              <TextField
-                id='managingOrganizationDisplayInput'
-                name='managingOrganizationDisplay'
-                label='Managing Organization'
-                value={ get(this, 'data.form.managingOrganizationDisplay', '') }
-                onChange={ this.changeState.bind(this, 'managingOrganizationDisplay')}
-                hintText={ this.setHint('General Hospital') }
-                fullWidth
-                /><br/>
-
-              <TextField
-                id='partOfDisplayInput'
-                name='partOfDisplay'
-                label='Part Of'
-                value={ get(this, 'data.form.partOfDisplay', '') }
-                onChange={ this.changeState.bind(this, 'partOfDisplay')}
-                hintText={ this.setHint('Main Building') }
-                fullWidth
-                /><br/>
-            </Grid>
-            <Grid item xs={6}>
-              <TextField
-                id='addressLineInput'
-                name='addressLine'
-                label='Address Line'
-                value={ get(this, 'data.form.addressLine', '') }
-                onChange={ this.changeState.bind(this, 'addressLine')}
-                hintText={ this.setHint('123 Main St') }
-                fullWidth
-                /><br/>
-
-              <TextField
-                id='cityInput'
-                name='city'
-                label='City'
-                value={ get(this, 'data.form.city', '') }
-                onChange={ this.changeState.bind(this, 'city')}
-                hintText={ this.setHint('Chicago') }
-                fullWidth
-                /><br/>
-
-              <TextField
-                id='stateInput'
-                name='state'
-                label='State'
-                value={ get(this, 'data.form.state', '') }
-                onChange={ this.changeState.bind(this, 'state')}
-                hintText={ this.setHint('IL') }
-                fullWidth
-                /><br/>
-
-              <TextField
-                id='postalCodeInput'
-                name='postalCode'
-                label='Postal Code'
-                value={ get(this, 'data.form.postalCode', '') }
-                onChange={ this.changeState.bind(this, 'postalCode')}
-                hintText={ this.setHint('60601') }
-                fullWidth
-                /><br/>
-
-              <TextField
-                id='countryInput'
-                name='country'
-                label='Country'
-                value={ get(this, 'data.form.country', '') }
-                onChange={ this.changeState.bind(this, 'country')}
-                hintText={ this.setHint('USA') }
-                fullWidth
-                /><br/>
-
-              <TextField
-                id='telecomInput'
-                name='telecom'
-                label='Phone'
-                value={ get(this, 'data.form.telecom', '') }
-                onChange={ this.changeState.bind(this, 'telecom')}
-                hintText={ this.setHint('312-555-1234') }
-                fullWidth
-                /><br/>
-
-              <TextField
-                id='latitudeInput'
-                name='latitude'
-                label='Latitude'
-                value={ get(this, 'data.form.latitude', '') }
-                onChange={ this.changeState.bind(this, 'latitude')}
-                hintText={ this.setHint('41.8781') }
-                fullWidth
-                /><br/>
-
-              <TextField
-                id='longitudeInput'
-                name='longitude'
-                label='Longitude'
-                value={ get(this, 'data.form.longitude', '') }
-                onChange={ this.changeState.bind(this, 'longitude')}
-                hintText={ this.setHint('-87.6298') }
-                fullWidth
-                /><br/>
-
-              <TextField
-                id='altitudeInput'
-                name='altitude'
-                label='Altitude'
-                value={ get(this, 'data.form.altitude', '') }
-                onChange={ this.changeState.bind(this, 'altitude')}
-                hintText={ this.setHint('0') }
-                fullWidth
-                /><br/>
-            </Grid>
-          </Grid>
-
-          <br/>
-          <a href='https://www.hl7.org/fhir/valueset-c80-facilitycodes.html'>Location Type Codes</a>
-          <br/>
-          <a href='https://www.hl7.org/fhir/valueset-location-physical-type.html'>Physical Type Codes</a>
-
-        </CardContent>
-        <CardActions>
-          { this.determineButtons(this.state.locationId) }
-        </CardActions>
+// Map marker component
+const LocationMarker = function({ text }) {
+  return (
+    <div style={{
+      position: 'absolute',
+      transform: 'translate(-50%, -50%)',
+      width: '40px',
+      height: '40px',
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      borderRadius: '50%',
+      backgroundColor: '#d32f2f',
+      color: 'white',
+      fontWeight: 'bold',
+      border: '3px solid white',
+      boxShadow: '0 2px 5px rgba(0,0,0,0.3)',
+      zIndex: 1
+    }}>
+      <LocationOnIcon sx={{ fontSize: 24, color: 'white' }} />
+      <div style={{
+        position: 'absolute',
+        width: '200px',
+        top: '45px',
+        left: '-80px',
+        backgroundColor: 'white',
+        color: '#333',
+        padding: '8px 12px',
+        borderRadius: '4px',
+        fontSize: '13px',
+        boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+        textAlign: 'center',
+        pointerEvents: 'none',
+        fontWeight: 'normal'
+      }}>
+        {text}
       </div>
-    );
-  }
-
-  determineButtons(locationId){
-    if (locationId) {
-      return (
-        <div>
-          <Button id="updateLocationButton" primary={true} onClick={this.handleSaveButton.bind(this)} style={{marginRight: '20px'}} >Save</Button>
-          <Button id="deleteLocationButton" onClick={this.handleDeleteButton.bind(this)} >Delete</Button>
-        </div>
-      );
-    } else {
-      return(
-        <Button id="saveLocationButton" primary={true} onClick={this.handleSaveButton.bind(this)} >Save</Button>
-      );
-    }
-  }
-
-
-  updateFormData(formData, field, textValue){
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log("LocationDetail.updateFormData", formData, field, textValue);
-
-    switch (field) {
-      case "name":
-        set(formData, 'name', textValue)
-        break;
-      case "status":
-        set(formData, 'status', textValue)
-        break;        
-      case "mode":
-        set(formData, 'mode', textValue)
-        break;
-      case "typeCode":
-        set(formData, 'typeCode', textValue)
-        break;
-      case "typeDisplay":
-        set(formData, 'typeDisplay', textValue)
-        break;
-      case "addressLine":
-        set(formData, 'addressLine', textValue)
-        break;
-      case "city":
-        set(formData, 'city', textValue)
-        break;
-      case "state":
-        set(formData, 'state', textValue)
-        break;
-      case "postalCode":
-        set(formData, 'postalCode', textValue)
-        break;
-      case "country":
-        set(formData, 'country', textValue)
-        break;
-      case "telecom":
-        set(formData, 'telecom', textValue)
-        break;
-      case "physicalTypeCode":
-        set(formData, 'physicalTypeCode', textValue)
-        break;
-      case "physicalTypeDisplay":
-        set(formData, 'physicalTypeDisplay', textValue)
-        break;
-      case "latitude":
-        set(formData, 'latitude', textValue)
-        break;
-      case "longitude":
-        set(formData, 'longitude', textValue)
-        break;
-      case "altitude":
-        set(formData, 'altitude', textValue)
-        break;
-      case "managingOrganizationDisplay":
-        set(formData, 'managingOrganizationDisplay', textValue)
-        break;
-      case "partOfDisplay":
-        set(formData, 'partOfDisplay', textValue)
-        break;
-      default:
-    }
-
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log("formData", formData);
-    return formData;
-  }
-  updateLocation(locationData, field, textValue){
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log("LocationDetail.updateLocation", locationData, field, textValue);
-
-    switch (field) {
-      case "name":
-        set(locationData, 'name', textValue)
-        break;
-      case "status":
-        set(locationData, 'status', textValue)
-        break;
-      case "mode":
-        set(locationData, 'mode', textValue)
-        break;
-      case "typeCode":
-        set(locationData, 'type.coding[0].code', textValue)
-        break;
-      case "typeDisplay":
-        set(locationData, 'type.coding[0].display', textValue)
-        break;
-      case "addressLine":
-        set(locationData, 'address.line[0]', textValue)
-        break;
-      case "city":
-        set(locationData, 'address.city', textValue)
-        break;  
-      case "state":
-        set(locationData, 'address.state', textValue)
-        break;
-      case "postalCode":
-        set(locationData, 'address.postalCode', textValue)
-        break;
-      case "country":
-        set(locationData, 'address.country', textValue)
-        break;
-      case "telecom":
-        set(locationData, 'telecom[0].value', textValue)
-        if(!get(locationData, 'telecom[0].system')){
-          set(locationData, 'telecom[0].system', 'phone')
-        }
-        break;
-      case "physicalTypeCode":
-        set(locationData, 'physicalType.coding[0].code', textValue)
-        break;
-      case "physicalTypeDisplay":
-        set(locationData, 'physicalType.coding[0].display', textValue)
-        break;
-      case "latitude":
-        set(locationData, 'position.latitude', parseFloat(textValue))
-        break;
-      case "longitude":
-        set(locationData, 'position.longitude', parseFloat(textValue))
-        break;
-      case "altitude":
-        set(locationData, 'position.altitude', parseFloat(textValue))
-        break;
-      case "managingOrganizationDisplay":
-        set(locationData, 'managingOrganization.display', textValue)
-        break;
-      case "partOfDisplay":
-        set(locationData, 'partOf.display', textValue)
-        break;
-    }
-    return locationData;
-  }
-  componentDidUpdate(props){
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log('LocationDisplay.componentDidUpdate()', props, this.state)
-  }
-  // this could be a mixin
-  changeState(field, event, textValue){
-
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log("   ");
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log("LocationDetail.changeState", field, textValue);
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log("this.state", this.state);
-
-    let formData = Object.assign({}, this.state.form);
-    let locationData = Object.assign({}, this.state.location);
-
-    formData = this.updateFormData(formData, field, textValue);
-    locationData = this.updateLocation(locationData, field, textValue);
-
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log("locationData", locationData);
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log("formData", formData);
-
-    this.setState({location: locationData})
-    this.setState({form: formData})
-
-  }
-
-  handleSaveButton(){
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log('^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^&&')
-    console.log('Saving a new Location...', this.state)
-
-    let self = this;
-    let fhirLocationData = Object.assign({}, this.state.location);
-
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log('fhirLocationData', fhirLocationData);
-
-
-    let locationValidator = LocationSchema.newContext();
-    locationValidator.validate(fhirLocationData)
-
-    console.log('IsValid: ', locationValidator.isValid())
-    console.log('ValidationErrors: ', locationValidator.validationErrors());
-
-    if (this.state.locationId) {
-      if(get(Meteor, 'settings.public.logging') === "debug") console.log("Updating Location...");
-      delete fhirLocationData._id;
-
-      Locations._collection.update(
-        {_id: this.state.locationId}, {$set: fhirLocationData }, function(error, result) {
-          if (error) {
-            console.log("error", error);
-            // Bert.alert(error.reason, 'danger');
-          }
-          if (result) {
-            if(self.props.onUpdate){
-              self.props.onUpdate(self.data.locationId);
-            }
-            // Bert.alert('Location updated!', 'success');
-          }
-        });
-    } else {
-
-      if(get(Meteor, 'settings.public.logging') === "debug") console.log("Create a new Location", fhirLocationData);
-
-      Locations._collection.insert(fhirLocationData, function(error, result) {
-        if (error) {
-          console.log("error", error);
-          // Bert.alert(error.reason, 'danger');
-        }
-        if (result) {
-          if(self.props.onInsert){
-            self.props.onInsert(self.data.locationId);
-          }
-          // Bert.alert('Location added!', 'success');
-        }
-      });
-    }
-  }
-
-  handleCancelButton(){
-    if(this.props.onCancel){
-      this.props.onCancel();
-    }
-  }
-
-  handleDeleteButton(){
-    console.log('LocationDetail.handleDeleteButton()', this.state.locationId)
-
-    let self = this;
-    Locations._collection.remove({_id: this.state.locationId}, function(error, result){
-      if (error) {
-        // Bert.alert(error.reason, 'danger');
-      }
-      if (result) {
-        if(this.props.onInsert){
-          this.props.onInsert(self.data.locationId);
-        }
-        // Bert.alert('Location removed!', 'success');
-      }
-    });
-  }
-}
-
-LocationDetail.propTypes = {
-  id: PropTypes.string,
-  locationId: PropTypes.oneOfType([PropTypes.string, PropTypes.bool]),
-  location: PropTypes.oneOfType([PropTypes.object, PropTypes.bool]),
-  showHints: PropTypes.bool,
-  onInsert: PropTypes.func,
-  onUpdate: PropTypes.func,
-  onRemove: PropTypes.func,
-  onCancel: PropTypes.func
+    </div>
+  );
 };
+
+function LocationDetail(props) {
+  const navigate = useNavigate();
+  const { id } = useParams();
+  
+  // Get current user from session/tracker
+  const currentUser = useTracker(function() {
+    return Meteor.user();
+  }, []);
+  
+  // Initialize state with proper FHIR R4 structure
+  const [location, setLocation] = useState({
+    resourceType: "Location",
+    name: "",
+    status: "active",
+    mode: "instance",
+    type: {
+      coding: [{
+        system: "http://terminology.hl7.org/CodeSystem/v3-RoleCode",
+        code: "",
+        display: ""
+      }]
+    },
+    telecom: [{
+      system: "phone",
+      value: "",
+      use: "work"
+    }],
+    address: {
+      use: "work",
+      type: "both",
+      line: [""],
+      city: "",
+      state: "",
+      postalCode: "",
+      country: ""
+    },
+    physicalType: {
+      coding: [{
+        system: "http://terminology.hl7.org/CodeSystem/location-physical-type",
+        code: "",
+        display: ""
+      }]
+    },
+    position: {
+      longitude: null,
+      latitude: null,
+      altitude: null
+    },
+    managingOrganization: {
+      reference: "",
+      display: ""
+    },
+    partOf: {
+      reference: "",
+      display: ""
+    }
+  });
+
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [isEditing, setIsEditing] = useState(false);
+  
+  // Google Maps state
+  const [googleMapsApiKey, setGoogleMapsApiKey] = useState('');
+  const [mapLoading, setMapLoading] = useState(true);
+  const [mapError, setMapError] = useState(null);
+
+  // Set default values on component mount for new locations
+  useEffect(function() {
+    if (!id || id === 'new') {
+      // Enable editing for new locations
+      setIsEditing(true);
+    } else {
+      // Viewing existing location - start in read-only mode
+      setIsEditing(false);
+    }
+  }, [id]);
+
+  // Load location if editing
+  useEffect(function() {
+    async function loadLocation() {
+      if (id && id !== 'new') {
+        setLoading(true);
+        try {
+          const result = await Meteor.callAsync('locations.get', id);
+          if (result) {
+            setLocation(result);
+          }
+        } catch (err) {
+          console.error('Error loading location:', err);
+          setError(err.message);
+        } finally {
+          setLoading(false);
+        }
+      }
+    }
+    
+    loadLocation();
+  }, [id]);
+
+  // Fetch Google Maps API key
+  useEffect(function() {
+    async function fetchApiKey() {
+      try {
+        const key = await Meteor.callAsync('pacio.getGoogleMapsApiKey');
+        if (key) {
+          console.log('Successfully retrieved Google Maps API key');
+          setGoogleMapsApiKey(key);
+        } else {
+          console.warn('Google Maps API key is empty');
+        }
+        setMapLoading(false);
+      } catch (err) {
+        console.error('Error getting Maps API key:', err);
+        setMapError(err.message);
+        setMapLoading(false);
+      }
+    }
+    
+    fetchApiKey();
+  }, []);
+
+  // Handle field changes
+  function handleChange(path, value) {
+    const updatedLocation = { ...location };
+    set(updatedLocation, path, value);
+    setLocation(updatedLocation);
+  }
+
+  // Geocode address to get coordinates
+  async function geocodeAddress() {
+    if (!isEditing) return;
+    
+    const address = [
+      get(location, 'address.line[0]', ''),
+      get(location, 'address.city', ''),
+      get(location, 'address.state', ''),
+      get(location, 'address.postalCode', ''),
+      get(location, 'address.country', '')
+    ].filter(Boolean).join(', ');
+    
+    if (!address.trim()) {
+      console.log('No address to geocode');
+      setError('Please enter an address before geocoding');
+      return;
+    }
+    
+    setLoading(true);
+    setError(null);
+    
+    try {
+      console.log('Geocoding address:', address);
+      
+      const result = await Meteor.callAsync('geocodeAddress', address);
+      
+      if (result) {
+        handleChange('position.latitude', result.latitude);
+        handleChange('position.longitude', result.longitude);
+        console.log('Successfully geocoded to:', result);
+        setError(null);
+      }
+    } catch (err) {
+      console.error('Error geocoding address:', err);
+      if (err.error === 'no-results') {
+        setError('No coordinates found for this address. Please check the address and try again.');
+      } else if (err.error === 'no-api-key') {
+        setError('Google Maps API key not configured on server. Please contact administrator.');
+      } else if (err.error === 'api-key-restriction') {
+        setError('API key configuration issue. Please contact administrator to set up geocoding.');
+      } else {
+        setError(err.reason || 'Failed to geocode address. Please try again.');
+      }
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  // Handle save
+  async function handleSave() {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      if (id && id !== 'new') {
+        // Update existing location
+        await Meteor.callAsync('locations.update', id, location);
+        console.log('Location updated successfully');
+        // Exit edit mode after successful save
+        setIsEditing(false);
+      } else {
+        // Create new location
+        const newId = await Meteor.callAsync('locations.create', location);
+        console.log('Location created with ID:', newId);
+        // Navigate back to locations list for new locations
+        navigate('/locations');
+      }
+    } catch (err) {
+      console.error('Error saving location:', err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  // Handle delete
+  async function handleDelete() {
+    if (!id || id === 'new') return;
+    
+    if (window.confirm('Are you sure you want to delete this location?')) {
+      setLoading(true);
+      try {
+        await Meteor.callAsync('locations.remove', id);
+        console.log('Location deleted successfully');
+        navigate('/locations');
+      } catch (err) {
+        console.error('Error deleting location:', err);
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    }
+  }
+
+  // Handle cancel
+  function handleCancel() {
+    navigate('/locations');
+  }
+
+  const statusOptions = ['active', 'suspended', 'inactive'];
+  const modeOptions = ['instance', 'kind'];
+
+  return (
+    <Container maxWidth="md" sx={{ py: 4 }}>
+      <Card sx={{ boxShadow: 3 }}>
+        <CardHeader 
+          title={id && id !== 'new' ? 'Edit Location' : 'New Location'}
+          sx={{ bgcolor: 'primary.main', color: 'primary.contrastText' }}
+        />
+        <CardContent>
+          {error && (
+            <Typography color="error" sx={{ mb: 2 }}>
+              Error: {error}
+            </Typography>
+          )}
+          
+          {/* System ID Barcode */}
+          {(id && id !== 'new') && (
+            <Box sx={{ mb: 3, textAlign: 'right' }}>
+              <span className="barcode helveticas" style={{ fontSize: '2rem' }}>{id}</span>
+            </Box>
+          )}
+          
+          <Stack spacing={3}>
+            <TextField
+              fullWidth
+              label="Name"
+              value={get(location, 'name', '')}
+              onChange={(e) => handleChange('name', e.target.value)}
+              helperText="Name of the location"
+              disabled={!isEditing}
+            />
+            
+            <FormControl fullWidth disabled={!isEditing}>
+              <InputLabel>Status</InputLabel>
+              <Select
+                value={get(location, 'status', 'active')}
+                onChange={(e) => handleChange('status', e.target.value)}
+                label="Status"
+              >
+                {statusOptions.map(status => (
+                  <MenuItem key={status} value={status}>
+                    {status.charAt(0).toUpperCase() + status.slice(1)}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            
+            <FormControl fullWidth disabled={!isEditing}>
+              <InputLabel>Mode</InputLabel>
+              <Select
+                value={get(location, 'mode', 'instance')}
+                onChange={(e) => handleChange('mode', e.target.value)}
+                label="Mode"
+              >
+                {modeOptions.map(mode => (
+                  <MenuItem key={mode} value={mode}>
+                    {mode.charAt(0).toUpperCase() + mode.slice(1)}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            
+            <TextField
+              fullWidth
+              label="Type Code"
+              value={get(location, 'type.coding[0].code', '')}
+              onChange={(e) => handleChange('type.coding[0].code', e.target.value)}
+              helperText="Location type code (e.g., ER, ICU)"
+              disabled={!isEditing}
+            />
+            
+            <TextField
+              fullWidth
+              label="Type Display"
+              value={get(location, 'type.coding[0].display', '')}
+              onChange={(e) => handleChange('type.coding[0].display', e.target.value)}
+              helperText="Human-readable location type"
+              disabled={!isEditing}
+            />
+            
+            <TextField
+              fullWidth
+              label="Physical Type Code"
+              value={get(location, 'physicalType.coding[0].code', '')}
+              onChange={(e) => handleChange('physicalType.coding[0].code', e.target.value)}
+              helperText="Physical type code (e.g., ro for room)"
+              disabled={!isEditing}
+            />
+            
+            <TextField
+              fullWidth
+              label="Physical Type Display"
+              value={get(location, 'physicalType.coding[0].display', '')}
+              onChange={(e) => handleChange('physicalType.coding[0].display', e.target.value)}
+              helperText="Human-readable physical type"
+              disabled={!isEditing}
+            />
+            
+            <Typography variant="h6" sx={{ mt: 2 }}>Address</Typography>
+            
+            <TextField
+              fullWidth
+              label="Address Line"
+              value={get(location, 'address.line[0]', '')}
+              onChange={(e) => handleChange('address.line[0]', e.target.value)}
+              helperText="Street address"
+              disabled={!isEditing}
+            />
+            
+            <Stack direction="row" spacing={2}>
+              <TextField
+                fullWidth
+                label="City"
+                value={get(location, 'address.city', '')}
+                onChange={(e) => handleChange('address.city', e.target.value)}
+                disabled={!isEditing}
+              />
+              
+              <TextField
+                fullWidth
+                label="State"
+                value={get(location, 'address.state', '')}
+                onChange={(e) => handleChange('address.state', e.target.value)}
+                disabled={!isEditing}
+              />
+            </Stack>
+            
+            <Stack direction="row" spacing={2}>
+              <TextField
+                fullWidth
+                label="Postal Code"
+                value={get(location, 'address.postalCode', '')}
+                onChange={(e) => handleChange('address.postalCode', e.target.value)}
+                disabled={!isEditing}
+              />
+              
+              <TextField
+                fullWidth
+                label="Country"
+                value={get(location, 'address.country', '')}
+                onChange={(e) => handleChange('address.country', e.target.value)}
+                disabled={!isEditing}
+              />
+            </Stack>
+            
+            <TextField
+              fullWidth
+              label="Phone"
+              value={get(location, 'telecom[0].value', '')}
+              onChange={(e) => handleChange('telecom[0].value', e.target.value)}
+              helperText="Contact phone number"
+              disabled={!isEditing}
+            />
+            
+            <Typography variant="h6" sx={{ mt: 2 }}>Position</Typography>
+            
+            <Stack direction="row" spacing={2}>
+              <TextField
+                fullWidth
+                label="Latitude"
+                value={get(location, 'position.latitude', '')}
+                onChange={(e) => handleChange('position.latitude', parseFloat(e.target.value) || null)}
+                type="number"
+                disabled={!isEditing}
+              />
+              
+              <TextField
+                fullWidth
+                label="Longitude"
+                value={get(location, 'position.longitude', '')}
+                onChange={(e) => handleChange('position.longitude', parseFloat(e.target.value) || null)}
+                type="number"
+                disabled={!isEditing}
+              />
+              
+              <TextField
+                fullWidth
+                label="Altitude"
+                value={get(location, 'position.altitude', '')}
+                onChange={(e) => handleChange('position.altitude', parseFloat(e.target.value) || null)}
+                type="number"
+                disabled={!isEditing}
+              />
+            </Stack>
+            
+            {/* Add Geocode button when editing */}
+            {isEditing && (
+              <Stack direction="row" spacing={2} sx={{ mt: 1 }}>
+                <Button
+                  variant="outlined"
+                  onClick={geocodeAddress}
+                  disabled={loading}
+                >
+                  Geocode Full Address
+                </Button>
+                <Button
+                  variant="outlined"
+                  onClick={async () => {
+                    // Try geocoding with just city and state
+                    const simpleAddress = [
+                      get(location, 'address.city', ''),
+                      get(location, 'address.state', '')
+                    ].filter(Boolean).join(', ');
+                    
+                    if (!simpleAddress.trim()) {
+                      setError('Please enter at least city and state');
+                      return;
+                    }
+                    
+                    setLoading(true);
+                    setError(null);
+                    
+                    try {
+                      const result = await Meteor.callAsync('geocodeAddress', simpleAddress);
+                      
+                      if (result) {
+                        handleChange('position.latitude', result.latitude);
+                        handleChange('position.longitude', result.longitude);
+                        console.log('Successfully geocoded city/state to:', result);
+                      }
+                    } catch (err) {
+                      if (err.error === 'no-results') {
+                        setError('Could not find coordinates for city/state');
+                      } else {
+                        setError('Geocoding failed');
+                      }
+                    } finally {
+                      setLoading(false);
+                    }
+                  }}
+                  disabled={loading}
+                >
+                  Geocode City/State Only
+                </Button>
+              </Stack>
+            )}
+            
+            {/* Google Maps Display */}
+            <Box sx={{ mt: 3 }}>
+              <Typography variant="h6" sx={{ mb: 2 }}>Map</Typography>
+              
+              {(() => {
+                const lat = get(location, 'position.latitude');
+                const lng = get(location, 'position.longitude');
+                const hasCoordinates = lat !== null && lat !== undefined && lat !== '' && 
+                                      lng !== null && lng !== undefined && lng !== '';
+                
+                if (!hasCoordinates) {
+                  return (
+                    <Alert severity="info">
+                      Enter latitude and longitude coordinates or use the "Geocode Address" button to display a map.
+                    </Alert>
+                  );
+                }
+                
+                if (mapLoading) {
+                  return (
+                    <Box 
+                      sx={{ 
+                        height: 300, 
+                        display: 'flex', 
+                        justifyContent: 'center', 
+                        alignItems: 'center',
+                        bgcolor: 'grey.100',
+                        borderRadius: 1
+                      }}
+                    >
+                      <CircularProgress />
+                    </Box>
+                  );
+                }
+                
+                if (mapError) {
+                  return <Alert severity="error">Error loading map: {mapError}</Alert>;
+                }
+                
+                if (!googleMapsApiKey) {
+                  // Fallback to static Mapbox image when no API key
+                  return (
+                    <Box 
+                      sx={{ 
+                        height: 300, 
+                        position: 'relative',
+                        overflow: 'hidden',
+                        borderRadius: 1
+                      }}
+                    >
+                    <Box
+                      sx={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        backgroundImage: `url("https://api.mapbox.com/styles/v1/mapbox/light-v10/static/${get(location, 'position.longitude')},${get(location, 'position.latitude')},14,0/400x240@2x?access_token=pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw")`,
+                        backgroundSize: 'cover',
+                        backgroundPosition: 'center'
+                      }}
+                    />
+                    <Box
+                      sx={{
+                        position: 'absolute',
+                        top: '50%',
+                        left: '50%',
+                        transform: 'translate(-50%, -50%)',
+                        zIndex: 1
+                      }}
+                    >
+                      <LocationOnIcon 
+                        sx={{ 
+                          fontSize: 40, 
+                          color: 'error.main',
+                          filter: 'drop-shadow(2px 2px 4px rgba(0,0,0,0.3))'
+                        }} 
+                      />
+                    </Box>
+                    <Box
+                      sx={{
+                        position: 'absolute',
+                        bottom: 8,
+                        left: 8,
+                        backgroundColor: 'rgba(255,255,255,0.9)',
+                        padding: '4px 8px',
+                        borderRadius: '4px',
+                        fontSize: '11px'
+                      }}
+                    >
+                      <Typography variant="caption">
+                        Map requires Google Maps API key
+                      </Typography>
+                    </Box>
+                  </Box>
+                  );
+                }
+                
+                // Google Maps with API key
+                return (
+                  <Box sx={{ height: 300, width: '100%', borderRadius: 1, overflow: 'hidden' }}>
+                    <GoogleMapReact
+                      bootstrapURLKeys={{ key: googleMapsApiKey }}
+                      defaultCenter={{ 
+                        lat: parseFloat(lat), 
+                        lng: parseFloat(lng) 
+                      }}
+                      center={{
+                        lat: parseFloat(lat), 
+                        lng: parseFloat(lng)
+                      }}
+                      defaultZoom={14}
+                      options={{
+                        fullscreenControl: false,
+                        zoomControl: true,
+                        mapTypeControl: false,
+                        scaleControl: false,
+                        streetViewControl: false,
+                        rotateControl: false
+                      }}
+                    >
+                      <LocationMarker
+                        lat={parseFloat(lat)}
+                        lng={parseFloat(lng)}
+                        text={get(location, 'name', 'Location')}
+                      />
+                    </GoogleMapReact>
+                  </Box>
+                );
+              })()}
+            </Box>
+            
+            <Typography variant="h6" sx={{ mt: 2 }}>Organization</Typography>
+            
+            <TextField
+              fullWidth
+              label="Managing Organization"
+              value={get(location, 'managingOrganization.display', '')}
+              onChange={(e) => handleChange('managingOrganization.display', e.target.value)}
+              helperText="Organization that manages this location"
+              disabled={!isEditing}
+            />
+            
+            <TextField
+              fullWidth
+              label="Part Of"
+              value={get(location, 'partOf.display', '')}
+              onChange={(e) => handleChange('partOf.display', e.target.value)}
+              helperText="Another location this one is part of"
+              disabled={!isEditing}
+            />
+            
+            <Box sx={{ mt: 2 }}>
+              <Link href="https://www.hl7.org/fhir/valueset-c80-facilitycodes.html" target="_blank" rel="noopener">
+                Location Type Codes
+              </Link>
+              {' | '}
+              <Link href="https://www.hl7.org/fhir/valueset-location-physical-type.html" target="_blank" rel="noopener">
+                Physical Type Codes
+              </Link>
+            </Box>
+          </Stack>
+        </CardContent>
+        
+        <CardActions sx={{ justifyContent: 'flex-end', p: 2 }}>
+          {!isEditing && id && id !== 'new' ? (
+            // Read-only mode buttons
+            <>
+              <Button 
+                onClick={() => navigate('/locations')}
+              >
+                Back
+              </Button>
+              <Button 
+                onClick={() => setIsEditing(true)}
+                variant="contained"
+                color="primary"
+              >
+                Edit
+              </Button>
+            </>
+          ) : (
+            // Edit mode buttons
+            <>
+              <Button 
+                onClick={() => {
+                  if (id && id !== 'new') {
+                    // Cancel editing and reload original data
+                    setIsEditing(false);
+                    // Reload the location to discard changes
+                    async function reloadLocation() {
+                      try {
+                        const result = await Meteor.callAsync('locations.get', id);
+                        if (result) {
+                          setLocation(result);
+                        }
+                      } catch (err) {
+                        console.error('Error reloading location:', err);
+                      }
+                    }
+                    reloadLocation();
+                  } else {
+                    // For new locations, go back
+                    navigate('/locations');
+                  }
+                }}
+                disabled={loading}
+              >
+                Cancel
+              </Button>
+              {id && id !== 'new' && (
+                <Button 
+                  onClick={handleDelete}
+                  color="error"
+                  disabled={loading}
+                >
+                  Delete
+                </Button>
+              )}
+              <Button 
+                onClick={handleSave}
+                variant="contained"
+                color="primary"
+                disabled={loading}
+              >
+                {loading ? 'Saving...' : 'Save'}
+              </Button>
+            </>
+          )}
+        </CardActions>
+      </Card>
+    </Container>
+  );
+}
 
 export default LocationDetail;

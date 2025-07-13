@@ -517,7 +517,7 @@ function LocationsTable(props){
 
       locations.forEach(function(location){
         if((count >= (page * rowsPerPage)) && (count < (page + 1) * rowsPerPage)){
-          locationsToRender.push(FhirDehydrator.dehydrateLocation(location, internalDateFormat));
+          locationsToRender.push(FhirDehydrator.dehydrateLocation(location, true));
         }
         count++;
       });  
@@ -563,7 +563,7 @@ function LocationsTable(props){
         ); 
       } else {
         tableRows.push(
-          <TableRow className="locationRow" key={i} style={rowStyle} onClick={ handleRowClick.bind(this, locationsToRender[i]._id)} style={rowStyle} hover={true} selected={selected} >            
+          <TableRow className="locationRow" key={i} style={rowStyle} onClick={ handleRowClick.bind(this, locationsToRender[i].id || locationsToRender[i]._id)} hover={true} selected={selected} >            
             { renderCheckbox(i) }
             { renderActionIcons(locationsToRender[i]) }
             { renderIdentifier(get(locationsToRender[i], "identifier", "")) }

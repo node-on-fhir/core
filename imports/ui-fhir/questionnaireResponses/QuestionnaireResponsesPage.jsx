@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useTracker } from 'meteor/react-meteor-data';
+import { useNavigate } from 'react-router-dom';
 
 import { 
   Card,
@@ -82,6 +83,7 @@ if(get(Meteor, 'settings.public.theme.palette')){
 
 
 export function QuestionnaireResponsesPage(props){
+  const navigate = useNavigate();
 
 
   let data = {
@@ -175,7 +177,7 @@ export function QuestionnaireResponsesPage(props){
 
   function handleAddQuestionnaireResponse(){
     console.log('Add Questionnaire Response button clicked');
-    // Add logic for adding a new questionnaire response
+    navigate('/questionnaire-responses/new');
   }
 
   function renderHeader() {

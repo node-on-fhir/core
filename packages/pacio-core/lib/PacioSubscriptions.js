@@ -35,6 +35,7 @@ if(Meteor.isClient){
         'Goals',
         'Immunizations',
         'Lists',
+        'Locations',
         'MedicationAdministrations',
         'MedicationRequests',
         'NutritionOrders',
@@ -202,6 +203,22 @@ if(Meteor.isServer){
     
     console.log('pacio.Lists publishing for patient:', patientId, 'query:', query);
     return Lists.find(query, { sort: { date: -1 } });
+  });
+
+    Meteor.publish('pacio.Locations', function(patientId, clinicianId, clientSecretOrBearerToken){
+    const Locations = Meteor.Collections && Meteor.Collections.Locations;
+    if (!Locations) {
+      console.warn('Locations collection not yet initialized');
+      return this.ready();
+    }
+    
+    const query = {};
+    // if (patientId) {
+    //   query['subject.reference'] = `Patient/${patientId}`;
+    // }
+    
+    console.log('pacio.Locations publishing for patient:', patientId, 'query:', query);
+    return Locations.find(query, { sort: { date: -1 } });
   });
 
   Meteor.publish('pacio.MedicationAdministrations', function(patientId, clinicianId, clientSecretOrBearerToken){

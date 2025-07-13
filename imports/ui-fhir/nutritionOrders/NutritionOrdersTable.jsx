@@ -33,6 +33,7 @@ function NutritionOrdersTable(props){
     page = 0,
     onSetPage,
     onSetRowsPerPage,
+    onRowClick,
     ...otherProps
   } = props;
 
@@ -72,7 +73,15 @@ function NutritionOrdersTable(props){
       <TableRow 
         key={nutritionOrder.id || nutritionOrder._id || index}
         hover
-        sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
+        sx={{ 
+          '&:last-child td, &:last-child th': { border: 0 },
+          cursor: onRowClick ? 'pointer' : 'default'
+        }}
+        onClick={() => {
+          if(onRowClick && typeof onRowClick === 'function'){
+            onRowClick(nutritionOrder.id || nutritionOrder._id);
+          }
+        }}
       >
         {!hideCheckbox && (
           <TableCell padding="checkbox">

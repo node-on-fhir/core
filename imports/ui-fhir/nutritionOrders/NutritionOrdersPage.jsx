@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useTracker, useSubscribe } from 'meteor/react-meteor-data';
+import { useNavigate } from 'react-router-dom';
 
 import { 
   Grid, 
@@ -82,6 +83,7 @@ Session.setDefault('DevicesTable.nutritionOrdersIndex', 0)
 // MAIN COMPONENT
 
 export function NutritionOrdersPage(props){
+  const navigate = useNavigate();
 
   let headerHeight = LayoutHelpers.calcHeaderHeight();
   let formFactor = LayoutHelpers.determineFormFactor();
@@ -118,7 +120,7 @@ export function NutritionOrdersPage(props){
 
   function handleAddNutritionOrder(){
     console.log('Add Nutrition Order button clicked');
-    // Add logic for adding a new nutrition order
+    navigate('/nutritionOrders/new');
   }
 
   function renderHeader() {
@@ -169,6 +171,10 @@ export function NutritionOrdersPage(props){
           hideStatus={false}
           hideName={false}
           paginationLimit={10}
+          onRowClick={function(nutritionOrderId){
+            console.log('NutritionOrdersPage.onRowClick', nutritionOrderId);
+            navigate('/nutritionOrders/' + nutritionOrderId);
+          }}
         />
       </CardContent>
     </Card>

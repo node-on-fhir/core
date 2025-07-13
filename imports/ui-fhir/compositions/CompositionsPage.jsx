@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useTracker } from 'meteor/react-meteor-data';
+import { useNavigate } from 'react-router-dom';
 import { useSubscribe } from 'meteor/react-meteor-data';
 
 import { 
@@ -51,6 +52,8 @@ Session.setDefault('CompositionsTable.compositionsIndex', 0)
 // MAIN COMPONENT
 
 export function CompositionsPage(props){
+  const navigate = useNavigate();
+  
   // Subscribe to compositions
   const isLoading = useSubscribe('pacio.compositions');
 
@@ -98,7 +101,7 @@ export function CompositionsPage(props){
 
   function handleAddComposition(){
     console.log('Add Composition button clicked');
-    // Add logic for adding a new composition
+    navigate('/compositions/new');
   }
 
   function compositionRowClick(id){

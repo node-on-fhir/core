@@ -1,717 +1,559 @@
-import { 
-  Button,
-  CardHeader,
-  CardContent,
-  CardActions,
-  TextField,
-  Grid,
-  Select,
-  MenuItem,
-  DatePicker,
-  Toggle
-} from '@mui/material';
+// /imports/ui-fhir/procedures/ProcedureDetail.jsx
 
-
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useTracker } from 'meteor/react-meteor-data';
 
+import { 
+  Button,
+  Card,
+  CardActions,
+  CardContent,
+  CardHeader,
+  Container,
+  TextField,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
+  Typography,
+  Box,
+  Stack,
+  Chip,
+  InputAdornment,
+  IconButton,
+  Tooltip,
+  Switch,
+  FormControlLabel,
+  Link
+} from '@mui/material';
+
+import QrCodeIcon from '@mui/icons-material/QrCode';
+import SearchIcon from '@mui/icons-material/Search';
+
 import { get, set } from 'lodash';
+import moment from 'moment';
 import PropTypes from 'prop-types';
 
+import { Procedures } from '/imports/lib/schemas/SimpleSchemas/Procedures';
+import { Meteor } from 'meteor/meteor';
+import { Session } from 'meteor/session';
 
-const styles = {
-  block: {
-    maxWidth: 250,
-  },
-  toggle: {
-    marginTop: 16,
-  },
-  thumbOff: {
-    backgroundColor: '#ffcccc',
-  },
-  trackOff: {
-    backgroundColor: '#ff9d9d',
-  },
-  thumbSwitched: {
-    backgroundColor: 'red',
-  },
-  trackSwitched: {
-    backgroundColor: '#ff9d9d',
-  },
-  labelStyle: {
-    color: 'red',
-  },
-}; 
-
-
-export class ProcedureDetail extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      procedureId: false,
-      procedure: {
-        resourceType: 'Procedure',
-        identifier: [{
-          type: {
-            coding: [
-              {
-                system: "",
-                code: ""
-              }
-            ],
-            text: "Serial Number"
-          },
-          value: ""
+function ProcedureDetail(props) {
+  const navigate = useNavigate();
+  const { id } = useParams();
+  
+  // Get selected patient and current user from session/tracker
+  const selectedPatient = useTracker(function() {
+    return Session.get('selectedPatient');
+  }, []);
+  
+  const currentUser = useTracker(function() {
+    return Meteor.user();
+  }, []);
+  
+  // Initialize state with proper FHIR R4 structure
+  const [procedure, setProcedure] = useState({
+    resourceType: 'Procedure',
+    identifier: [{
+      use: 'official',
+      type: {
+        coding: [{
+          system: "http://terminology.hl7.org/CodeSystem/v2-0203",
+          code: "PLAC"
         }],
-        status: 'unknown',
-        notPerformed: false,
-        identifier: [{
-          use: 'official',
-          value: ''
-        }],
-        subject: {
-          reference: '',
-          display: ''
-        },
-        performer:{
-          reference: '',
-          display: ''
-        },
-        bodySite:{
-          reference: '',
-          display: ''
-        },
-        code: {
-          text: '',
-          coding: [{
-            system: '',
-            code: '',
-            display: ''
-          }]
-        },
-        category: {
-          text: '',
-          coding: [{
-            system: '',
-            code: '',
-            display: ''
-          }]
-        },
-        notes: [{
-          time: null,
-          text: ''
-        }]
+        text: "Placer Identifier"
       },
-      form: {
-        identifier: '',
-        categoryCode: '',
-        categoryDisplay: '',
-        procedureCode: '',
-        procedureCodeDisplay: '',
-        bodySiteDisplay: '',
-        bodySiteReference: '',
-        performedDateTime: '',
-        performedDate: null,
-        performedTime: null,
-        notPerformed: false,
-        performerDisplay: '',
-        performerReference: '',
-        subjectDisplay: '',
-        subjectReference: '',
-        noteTime: '',
-        noteText: ''
+      value: ""
+    }],
+    status: 'unknown',
+    notPerformed: false,
+    category: {
+      coding: [{
+        system: "http://snomed.info/sct",
+        code: "",
+        display: ""
+      }],
+      text: ""
+    },
+    code: {
+      coding: [{
+        system: "http://snomed.info/sct",
+        code: "",
+        display: ""
+      }],
+      text: ""
+    },
+    subject: {
+      reference: "",
+      display: ""
+    },
+    encounter: {
+      reference: "",
+      display: ""
+    },
+    performedDateTime: moment().format('YYYY-MM-DDTHH:mm'),
+    performer: [{
+      actor: {
+        reference: "",
+        display: ""
       }
-    }
-  }
-  dehydrateFhirResource(procedure) {
-    let formData = Object.assign({}, this.state.form);
+    }],
+    bodySite: [{
+      coding: [{
+        system: "http://snomed.info/sct",
+        code: "",
+        display: ""
+      }],
+      text: ""
+    }],
+    note: [{
+      time: moment().format('YYYY-MM-DDTHH:mm:ss'),
+      text: ""
+    }]
+  });
 
-    formData.identifier = get(procedure, 'identifier[0].value')
-    formData.categoryCode = get(procedure, 'category.coding[0].code')
-    formData.categoryDisplay = get(procedure, 'category.coding[0].display')    
-    formData.procedureCode = get(procedure, 'code.coding[0].code')
-    formData.procedureCodeDisplay = get(procedure, 'code.coding[0].display')
-    formData.bodySiteDisplay = get(procedure, 'bodySite.display')
-    formData.bodySiteReference = get(procedure, 'bodySite.reference')
-    formData.performedDateTime = get(procedure, 'performedDateTime')
-    formData.performedDate = get(procedure, 'performedDate')
-    formData.performedTime = get(procedure, 'performedTime')
-    formData.notPerformed = get(procedure, 'notPerformed')
-    formData.performerDisplay = get(procedure, 'performer.display')
-    formData.performerReference = get(procedure, 'performer.reference')
-    formData.subjectDisplay = get(procedure, 'subject.display')
-    formData.subjectReference = get(procedure, 'subject.reference')
-    formData.noteTime = get(procedure, 'notes[0].time')
-    formData.noteText = get(procedure, 'notes[0].text')
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [isEditing, setIsEditing] = useState(false);
 
-    return formData;
-  }
-  shouldComponentUpdate(nextProps){
-    process.env.NODE_ENV === "test" && console.log('ProcedureDetail.shouldComponentUpdate()', nextProps, this.state)
-    let shouldUpdate = true;
-
-    // received an procedure from the table; okay lets update again
-    if(nextProps.procedureId !== this.state.procedureId){
+  // Set patient name and performer on component mount for new procedures
+  useEffect(function() {
+    if (!id || id === 'new') {
+      // Enable editing for new procedures
+      setIsEditing(true);
       
-      if(nextProps.procedure){
-        this.setState({procedure: nextProps.procedure})     
-        this.setState({form: this.dehydrateFhirResource(nextProps.procedure)})       
-      }
-
-      this.setState({procedureId: nextProps.procedureId})
-      shouldUpdate = true;
-    }
-
-    // both false; don't take any more updates
-    if(nextProps.procedure === this.state.procedure){
-      shouldUpdate = false;
-    }
-
-    // // both false; don't take any more updates
-    // if(nextProps.procedure === this.state.procedure){
-    //   shouldUpdate = false;
-    // }
-
-    // // received an procedure from the table; okay lets update again
-    // if(nextProps.procedureId !== this.state.procedureId){
-    //   this.setState({procedureId: nextProps.procedureId})
+      // For new procedures, set the patient name
+      let patientName = '';
+      let patientReference = '';
       
-    //   if(nextProps.procedure){
-    //     this.setState({procedure: nextProps.procedure})     
-    //     this.setState({form: this.dehydrateFhirResource(nextProps.procedure)})       
-    //   }
-    //   shouldUpdate = true;
-    // }
- 
-    return shouldUpdate;
-  }
-  getMeteorData() {
-    let data = {
-      procedureId: this.props.procedureId,
-      procedure: false,
-      showDatePicker: false,
-      form: this.state.form
-    };
-
-    if(this.props.showDatePicker){
-      data.showDatePicker = this.props.showDatePicker;
-    }
-
-    if(this.props.procedure){
-      data.procedure = this.props.procedure;
-      data.form = this.dehydrateFhirResource(this.props.procedure);
-    }  
-
-    console.log('ProcedureDetail[data]', data);
-    return data;
-  }
-
-  renderDatePicker(showDatePicker, form){
-    let datePickerValue;
-
-    if(get(form, 'performedDateTime')){
-      datePickerValue = get(form, 'performedDateTime');
-    }
-    if(get(form, 'performedPeriod.start')){
-      datePickerValue = get(form, 'performedPeriod.start');
-    }
-    if (typeof datePickerValue === "string"){
-      datePickerValue = new Date(datePickerValue);
-    }
-
-    if (showDatePicker) {
-      return(<div></div>)
-      // return (
-      //   <DatePicker 
-      //     name='performedDateTime'
-      //     hintText="Performed Date/Time" 
-      //     container="inline" 
-      //     mode="landscape"
-      //     value={ datePickerValue ? datePickerValue : ''}    
-      //     onChange={ this.changeState.bind(this, 'performedDateTime')}      
-      //     />
-      // );
-    }
-  }
-  setHint(text){
-    if(this.props.showHints !== false){
-      return text;
-    } else {
-      return '';
-    }
-  }
-  render() {
-    if(process.env.NODE_ENV === "test") console.log('ProcedureDetail.render()', this.state)
-
-    let link;
-    let notes;
-    
-    if(!this.state.procedureId){
-      link = <a href='http://browser.ihtsdotools.org/?perspective=full&conceptId1=404684003&edition=us-edition&release=v20180301&server=https://prod-browser-exten.ihtsdotools.org/api/snomed&langRefset=900000000000509007'>Lookup codes with the SNOMED CT Browser</a>
-    } 
-    
-    // this is a proof-of-concept feature for evidence based medicine lookup
-    // needs to be refactored out eventually
-    if(get(this, 'data.form.procedureCode') === "74160"){
-      link = <a href='https://www.healthdecision.org/tool#/tool/lungca' target="_blank">Lung Cancer - Clinical Decision Support Tools</a>
-    }
-
-    if(get(this, 'data.form.noteText')){
-      notes = <Row>
-        <Col md={12}>
-          <TextField
-            id='noteTextInput'                
-            name='noteText'
-            label='Note Text'
-            value={  get(this, 'data.form.noteText', '') }
-            onChange={ this.changeState.bind(this, 'noteText')}
-            //floatingLabelFixed={true}
-            hintText={this.setHint('Routine follow-up.  No complications.')}
-            multiLine={true}          
-            rows={5}
-            fullWidth
-            /><br/>  
-        </Col>
-      </Row>
-
-    }
-
-    return (
-      <div id={this.props.id} className="procedureDetail">
-        <CardContent>
-          
-        <Grid container spacing={3}>
-          <Grid item xs={6}>
-            <TextField
-                id='identifierInput'                
-                name='identifier'
-                label='Identifier'
-                value={  get(this, 'data.form.identifier') }
-                onChange={ this.changeState.bind(this, 'identifier')}
-                hintText={this.setHint('IR-28376481')}
-                //floatingLabelFixed={true}
-                fullWidth
-                /><br/>
-              <TextField
-                id='categoryDisplayInput'                
-                name='categoryDisplay'
-                label='Procedure Category'
-                value={  get(this, 'data.form.categoryDisplay') }
-                onChange={ this.changeState.bind(this, 'categoryDisplay')}
-                hintText={this.setHint('Interventional Radiology')}
-                //floatingLabelFixed={true}
-                fullWidth
-              /><br/>
-
-              <TextField
-                id='categoryCodeInput'                
-                name='categoryCode'
-                label='Category Code'
-                value={  get(this, 'data.form.categoryCode') }
-                onChange={ this.changeState.bind(this, 'categoryCode')}
-                hintText={this.setHint('240917005')}
-                //floatingLabelFixed={true}
-                fullWidth
-                /><br/>
-
-              <TextField
-                id='procedureCodeDisplayInput'                
-                name='procedureCodeDisplay'
-                label='Procedure'
-                value={  get(this, 'data.form.procedureCodeDisplay') }
-                onChange={ this.changeState.bind(this, 'procedureCodeDisplay')}
-                hintText={this.setHint('Biliary drainage intervention')}
-                //floatingLabelFixed={true}
-                fullWidth
-                /><br/>
-
-              <TextField
-                id='procedureCodeInput'                
-                name='procedureCode'
-                label='Procedure Code'
-                value={  get(this, 'data.form.procedureCode') }
-                onChange={ this.changeState.bind(this, 'procedureCode')}
-                hintText={this.setHint('277566006')}
-                //floatingLabelFixed={true}
-                fullWidth
-                /><br/>
-
-              <TextField
-                id='subjectDisplayInput'                
-                name='subjectDisplay'
-                label='Subject'
-                value={  get(this, 'data.form.subjectDisplay') }
-                onChange={ this.changeState.bind(this, 'subjectDisplay')}
-                hintText={this.setHint('Jane Doe')}
-                //floatingLabelFixed={true}
-                fullWidth
-                /><br/>
-
-              <TextField
-                id='subjectReferenceInput'                
-                name='subjectReference'
-                label='Subject Reference'
-                value={  get(this, 'data.form.subjectReference') }
-                onChange={ this.changeState.bind(this, 'subjectReference')}
-                hintText={this.setHint('Patient/12345')}
-                //floatingLabelFixed={true}
-                fullWidth
-                /><br/>
-
-              <TextField
-                id='bodySiteDisplayInput'                
-                name='bodySiteDisplay'
-                label='Body Site'
-                value={  get(this, 'data.form.bodySiteDisplay') }
-                onChange={ this.changeState.bind(this, 'bodySiteDisplay')}
-                hintText={this.setHint('Billiary Ducts')}
-                //floatingLabelFixed={true}
-                fullWidth
-                /><br/>
-
-              <TextField
-                id='bodySiteReferenceInput'                
-                name='bodySiteReference'
-                label='Body Site Reference'
-                value={  get(this, 'data.form.bodySiteReference') }
-                onChange={ this.changeState.bind(this, 'bodySiteReference')}
-                hintText={this.setHint('BodySite/222244')}
-                //floatingLabelFixed={true}
-                fullWidth
-                /><br/>
-
-              <TextField
-                id='performerDisplayInput'                
-                name='performerDisplay'
-                label='Performed By'
-                value={  get(this, 'data.form.performerDisplay') }
-                onChange={ this.changeState.bind(this, 'performerDisplay')}
-                //floatingLabelFixed={true}
-                hintText={this.setHint('Chris Taub')}
-                fullWidth
-                /><br/>
-
-              <TextField
-                id='performerReferenceInput'                
-                name='performerReference'
-                label='Performer Reference'
-                value={  get(this, 'data.form.performerReference') }
-                onChange={ this.changeState.bind(this, 'performerReference')}
-                hintText={this.setHint('Practitioner/77777')}
-                //floatingLabelFixed={true}
-                fullWidth
-                /><br/>
-
-              <Toggle
-                label="Not Performed"
-                labelPosition="right"
-                defaultToggled={false}
-                style={styles.toggle}
-              />
-
-              <TextField
-                id='noteTimeInput'                
-                name='noteTime'
-                type='date'
-                label='Time'
-                value={  get(this, 'data.form.noteTime') }
-                onChange={ this.changeState.bind(this, 'noteTime')}
-                //floatingLabelFixed={true}
-                fullWidth
-                /><br/>
-          </Grid>
-          <Grid item xs={4}>
-            {/* <Col md={2}>
-              <TextField
-                id='performedDateInput'                
-                name='performedDate'
-                type='date'
-                label='Performed Date'
-                value={  get(this, 'data.form.performedDate') }
-                onChange={ this.changeState.bind(this, 'performedDate')}
-                //floatingLabelFixed={true}
-                fullWidth
-                /><br/>
-            </Col>    */}
-            {/* <Col md={2}>
-              <TextField
-                id='performedTimeInput'                
-                name='performedTime'
-                type='time'
-                label='Performed Date'
-                value={  get(this, 'data.form.performedTime') }
-                onChange={ this.changeState.bind(this, 'performedTime')}
-                //floatingLabelFixed={true}
-                fullWidth
-                /><br/>
-            </Col>    */}
-          </Grid>
-        </Grid>
-          
-          { notes } 
-          { link }
-
-          <br/>
-          { this.renderDatePicker(this.data.showDatePicker, get(this, 'data.form') ) }
-          <br/>
-
-        </CardContent>
-        <CardActions>
-          { this.determineButtons(this.data.procedureId) }
-        </CardActions>
-      </div>
-    );
-  }
-
-
- 
-  determineButtons(procedureId){
-    if(!this.props.hideButtons){
-      if (procedureId) {
-        return (
-          <div>
-            <Button id="updateProcedureButton" primary={true} onClick={this.handleSaveButton.bind(this)} style={{marginRight: '20px'}}>Save</Button>
-            <Button id="deleteProcedureButton" onClick={this.handleDeleteButton.bind(this)} >Delete</Button>
-          </div>
-        );
-      } else {
-        return(
-          <Button id="saveProcedureButton" primary={true} onClick={this.handleSaveButton.bind(this)} >Save</Button>
-        );
+      if (selectedPatient) {
+        // Prefer selected patient
+        patientName = get(selectedPatient, 'name[0].text', '') || 
+                     `${get(selectedPatient, 'name[0].given[0]', '')} ${get(selectedPatient, 'name[0].family', '')}`.trim();
+        patientReference = `Patient/${get(selectedPatient, '_id', '')}`;
+      } else if (currentUser) {
+        // Fall back to current user
+        patientName = get(currentUser, 'profile.name.text', '') ||
+                     `${get(currentUser, 'profile.name.given[0]', '')} ${get(currentUser, 'profile.name.family', '')}`.trim() ||
+                     get(currentUser, 'username', '');
+        // You might need to look up the Patient resource for the current user
+        patientReference = `Patient/${get(currentUser, 'profile.patientId', '')}`;
       }
-    }
-  }
-
-
-  updateFormData(formData, field, textValue){
-    if(process.env.NODE_ENV === "test") console.log("PatientDetail.updateFormData", formData, field, textValue);
-
-    switch (field) {
-      case "identifier":
-        set(formData, 'identifier', textValue)
-        break;
-      case "categoryCode":
-        set(formData, 'categoryCode', textValue)
-        break;
-      case "categoryDisplay":
-        set(formData, 'categoryDisplay', textValue)
-        break;        
-      case "procedureCode":
-        set(formData, 'procedureCode', textValue)
-        break;
-      case "procedureCodeDisplay":
-        set(formData, 'procedureCodeDisplay', textValue)
-        break;
-      case "bodySiteDisplay":
-        set(formData, 'bodySiteDisplay', textValue)
-        break;
-      case "bodySiteReference":
-        set(formData, 'bodySiteReference', textValue)
-        break;
-      case "notPerformed":
-        set(formData, 'notPerformed', textValue)
-        break;
-      case "performerDisplay":
-        set(formData, 'performerDisplay', textValue)
-        break;
-      case "performerReference":
-        set(formData, 'performerReference', textValue)
-        break;
-      case "subjectDisplay":
-        set(formData, 'subjectDisplay', textValue)
-        break;
-      case "subjectReference":
-        set(formData, 'subjectReference', textValue)
-        break;
-      case "noteTime":
-        set(formData, 'noteTime', textValue)
-        break;
-      case "noteText":
-        set(formData, 'noteText', textValue)
-        break;
-      case "performedDateTime":
-        set(formData, 'performedDateTime', textValue)
-        break;   
-    }
-
-    if(process.env.NODE_ENV === "test") console.log("formData", formData);
-    return formData;
-  }
-
-  updateProcedure(procedureData, field, textValue){
-    if(process.env.NODE_ENV === "test") console.log("PatientDetail.updateProcedure", procedureData, field, textValue);
-
-    let telecomArray = get(procedureData, 'telecom');
-
-    switch (field) {
-      case "identifier":
-        set(procedureData, 'identifier[0].value', textValue)
-        break;
-      case "categoryCode":
-        set(procedureData, 'category.coding[0].code', textValue)
-        break;
-      case "categoryDisplay":
-        set(procedureData, 'category.coding[0].display', textValue)
-        break;        
-      case "procedureCode":
-        set(procedureData, 'code.coding[0].code', textValue)
-        break;
-      case "procedureCodeDisplay":
-        set(procedureData, 'code.coding[0].display', textValue)
-        break;
-      case "bodySiteDisplay":
-        set(procedureData, 'bodySite.display', textValue)
-        break;
-      case "bodySiteReference":
-        set(procedureData, 'bodySite.reference', )
-        break;
-      case "notPerformed":
-        set(procedureData, 'notPerformed', textValue)
-        break;
-      case "performerDisplay":
-        set(procedureData, 'performer.display', textValue)
-        break;
-      case "performerReference":
-        set(procedureData, 'performer.reference', textValue)
-        break;
-      case "subjectDisplay":
-        set(procedureData, 'subject.display', textValue)
-        break;
-      case "subjectReference":
-        set(procedureData, 'subject.reference', textValue)
-        break;
-      case "noteTime":
-        set(procedureData, 'notes[0].time', textValue)
-        break;
-      case "noteText":
-        set(procedureData, 'notes[0].text', textValue)
-        break;
-      case "performedDateTime":
-        set(procedureData, 'performedDateTime', textValue)
-        break;
+      
+      // Set performer to current user
+      let performerName = '';
+      let performerReference = '';
+      
+      if (currentUser) {
+        performerName = get(currentUser, 'profile.name.text', '') ||
+                       `${get(currentUser, 'profile.name.given[0]', '')} ${get(currentUser, 'profile.name.family', '')}`.trim() ||
+                       get(currentUser, 'username', '');
+        performerReference = `Practitioner/${get(currentUser, '_id', '')}`;
       }
-    return procedureData;
-  }
-
-  changeState(field, event, textValue){
-
-    if(process.env.NODE_ENV === "test") console.log("   ");
-    if(process.env.NODE_ENV === "test") console.log("ProcedureDetail.changeState", field, textValue);
-    if(process.env.NODE_ENV === "test") console.log("this.state", this.state);
-
-    let formData = Object.assign({}, this.state.form);
-    let procedureData = Object.assign({}, this.state.procedure);
-
-    formData = this.updateFormData(formData, field, textValue);
-    procedureData = this.updateProcedure(procedureData, field, textValue);
-
-    if(process.env.NODE_ENV === "test") console.log("procedureData", procedureData);
-    if(process.env.NODE_ENV === "test") console.log("formData", formData);
-
-    this.setState({procedure: procedureData})
-    this.setState({form: formData})
-  }
-
-
-  handleSaveButton(){
-    if(process.env.NODE_ENV === "test") console.log('^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^&&')
-    console.log('Saving a new Procedure...', this.state)
-
-    let self = this;
-    let fhirProcedureData = Object.assign({}, this.state.procedure);
-
-    if(process.env.NODE_ENV === "test") console.log('fhirProcedureData', fhirProcedureData);
-
-
-    let procedureValidator = ProcedureSchema.newContext();
-    procedureValidator.validate(fhirProcedureData)
-
-    console.log('IsValid: ', procedureValidator.isValid())
-    console.log('ValidationErrors: ', procedureValidator.validationErrors());
-
-
-    if (this.state.procedureId) {
-      if(process.env.NODE_ENV === "test") console.log("Updating Procedure...");
-      delete fhirProcedureData._id;
-
-      // not sure why we're having to respecify this; fix for a bug elsewhere
-      fhirProcedureData.resourceType = 'Procedure';
-
-      Procedures._collection.update(
-        {_id: this.state.procedureId}, {$set: fhirProcedureData }, function(error, result) {
-          if (error) {
-            console.log("error", error);
-
-            // Bert.alert(error.reason, 'danger');
+      
+      setProcedure(prev => ({
+        ...prev,
+        subject: {
+          reference: patientReference,
+          display: patientName
+        },
+        performer: [{
+          actor: {
+            reference: performerReference,
+            display: performerName
           }
+        }]
+      }));
+    } else {
+      // Viewing existing procedure - start in read-only mode
+      setIsEditing(false);
+    }
+  }, [id, selectedPatient, currentUser]);
+
+  // Load procedure if editing
+  useEffect(function() {
+    async function loadProcedure() {
+      if (id && id !== 'new') {
+        setLoading(true);
+        try {
+          const result = await Meteor.callAsync('procedures.get', id);
           if (result) {
-            HipaaLogger.logEvent({eventType: "update", userId: Meteor.userId(), userName: Meteor.user().fullName(), collectionName: "Procedures", recordId: self.state.procedureId });
-            Session.set('procedurePageTabIndex', 1);
-            Session.set('selectedProcedureId', false);
-            Session.set('procedureUpsert', false);
-            // Bert.alert('Procedure updated!', 'success');
+            setProcedure(result);
           }
-        });
-    } else {
-
-      if(process.env.NODE_ENV === "test") console.log("create a new procedure", fhirProcedureData);
-
-      if(get(fhirProcedureData, 'code.coding[0].display')){
-        fhirProcedureData.code.text = get(fhirProcedureData, 'code.coding[0].display');
+        } catch (err) {
+          console.error('Error loading procedure:', err);
+          setError(err.message);
+        } finally {
+          setLoading(false);
+        }
       }
+    }
+    
+    loadProcedure();
+  }, [id]);
 
-      Procedures._collection.insert(fhirProcedureData, function(error, result) {
-        if (error) {
-          console.log("error", error);
-          // Bert.alert(error.reason, 'danger');
-        }
-        if (result) {
-          HipaaLogger.logEvent({eventType: "create", userId: Meteor.userId(), userName: Meteor.user().fullName(), collectionName: "Procedures", recordId: self.state.procedureId });
-          Session.set('procedurePageTabIndex', 1);
-          Session.set('selectedProcedureId', false);
-          Session.set('procedureUpsert', false);
-          // Bert.alert('Procedure added!', 'success');
-        }
-      });
+  // Handle field changes
+  function handleChange(path, value) {
+    const updatedProcedure = { ...procedure };
+    set(updatedProcedure, path, value);
+    setProcedure(updatedProcedure);
+  }
+
+  // Handle save
+  async function handleSave() {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      // Ensure code.text is set from display if available
+      if (get(procedure, 'code.coding[0].display')) {
+        handleChange('code.text', get(procedure, 'code.coding[0].display'));
+      }
+      
+      if (id && id !== 'new') {
+        // Update existing procedure
+        await Meteor.callAsync('procedures.update', id, procedure);
+        console.log('Procedure updated successfully');
+        // Exit edit mode after successful save
+        setIsEditing(false);
+      } else {
+        // Create new procedure
+        const newId = await Meteor.callAsync('procedures.create', procedure);
+        console.log('Procedure created with ID:', newId);
+        // Navigate back to procedures list for new procedures
+        navigate('/procedures');
+      }
+    } catch (err) {
+      console.error('Error saving procedure:', err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
     }
   }
 
-  handleCancelButton(){
-    if(this.props.onCancel){
-      this.props.onCancel();
+  // Handle delete
+  async function handleDelete() {
+    if (!id || id === 'new') return;
+    
+    if (window.confirm('Are you sure you want to delete this procedure?')) {
+      setLoading(true);
+      try {
+        await Meteor.callAsync('procedures.remove', id);
+        console.log('Procedure deleted successfully');
+        navigate('/procedures');
+      } catch (err) {
+        console.error('Error deleting procedure:', err);
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
     }
   }
 
-  handleDeleteButton(){
-    let self = this;
-    Procedures._collection.remove({_id: this.state.procedureId}, function(error, result){
-      if (error) {
-        // Bert.alert(error.reason, 'danger');
-      }
-      if (result) {
-        HipaaLogger.logEvent({eventType: "delete", userId: Meteor.userId(), userName: Meteor.user().fullName(), collectionName: "Procedures", recordId: self.state.procedureId});
-        Session.set('procedurePageTabIndex', 1);
-        Session.set('selectedProcedureId', false);
-        // Bert.alert('Procedure removed!', 'success');
-      }
-    });
+  // Handle cancel
+  function handleCancel() {
+    navigate('/procedures');
   }
+
+  const statusOptions = [
+    { value: 'preparation', label: 'Preparation' },
+    { value: 'in-progress', label: 'In Progress' },
+    { value: 'not-done', label: 'Not Done' },
+    { value: 'on-hold', label: 'On Hold' },
+    { value: 'stopped', label: 'Stopped' },
+    { value: 'completed', label: 'Completed' },
+    { value: 'entered-in-error', label: 'Entered in Error' },
+    { value: 'unknown', label: 'Unknown' }
+  ];
+
+
+  return (
+    <Container maxWidth="md" sx={{ py: 4 }}>
+      <Card sx={{ boxShadow: 3 }}>
+        <CardHeader 
+          title={id && id !== 'new' ? 'Edit Procedure' : 'New Procedure'}
+          sx={{ bgcolor: 'primary.main', color: 'primary.contrastText' }}
+        />
+        <CardContent>
+          {error && (
+            <Typography color="error" sx={{ mb: 2 }}>
+              Error: {error}
+            </Typography>
+          )}
+          
+          {/* System ID Barcode */}
+          {(id && id !== 'new') && (
+            <Box sx={{ mb: 3, textAlign: 'right' }}>
+              <span className="barcode helveticas" style={{ fontSize: '2rem' }}>{id}</span>
+            </Box>
+          )}
+          
+          <Stack spacing={3}>
+            <TextField
+              fullWidth
+              label="Identifier"
+              value={get(procedure, 'identifier[0].value', '')}
+              onChange={(e) => handleChange('identifier[0].value', e.target.value)}
+              helperText="Unique identifier for this procedure"
+              disabled={!isEditing}
+            />
+            
+            <Stack direction="row" spacing={2}>
+              <TextField
+                fullWidth
+                label="Category Code"
+                value={get(procedure, 'category.coding[0].code', '')}
+                onChange={(e) => handleChange('category.coding[0].code', e.target.value)}
+                helperText="Category code (e.g., 240917005)"
+                disabled={!isEditing}
+              />
+              
+              <TextField
+                fullWidth
+                label="Category Display"
+                value={get(procedure, 'category.coding[0].display', '') || get(procedure, 'category.text', '')}
+                onChange={(e) => {
+                  handleChange('category.coding[0].display', e.target.value);
+                  handleChange('category.text', e.target.value);
+                }}
+                helperText="e.g., Interventional Radiology"
+                disabled={!isEditing}
+              />
+            </Stack>
+            
+            <Stack direction="row" spacing={2}>
+              <TextField
+                fullWidth
+                label="Procedure Code"
+                value={get(procedure, 'code.coding[0].code', '')}
+                onChange={(e) => handleChange('code.coding[0].code', e.target.value)}
+                helperText="SNOMED CT procedure code"
+                disabled={!isEditing}
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <Tooltip title="Lookup SNOMED CT codes">
+                        <IconButton
+                          onClick={() => window.open('http://browser.ihtsdotools.org/?perspective=full&conceptId1=404684003&edition=us-edition&release=v20180301&server=https://prod-browser-exten.ihtsdotools.org/api/snomed&langRefset=900000000000509007', '_blank')}
+                          edge="end"
+                          disabled={!isEditing}
+                        >
+                          <SearchIcon />
+                        </IconButton>
+                      </Tooltip>
+                    </InputAdornment>
+                  ),
+                }}
+              />
+              
+              <TextField
+                fullWidth
+                label="Procedure Name"
+                value={get(procedure, 'code.coding[0].display', '') || get(procedure, 'code.text', '')}
+                onChange={(e) => {
+                  handleChange('code.coding[0].display', e.target.value);
+                  handleChange('code.text', e.target.value);
+                }}
+                helperText="Human-readable procedure name"
+                disabled={!isEditing}
+              />
+            </Stack>
+            
+            <Stack direction="row" spacing={2}>
+              <FormControl fullWidth disabled={!isEditing}>
+                <InputLabel>Status</InputLabel>
+                <Select
+                  value={get(procedure, 'status', 'unknown')}
+                  onChange={(e) => handleChange('status', e.target.value)}
+                  label="Status"
+                >
+                  {statusOptions.map(option => (
+                    <MenuItem key={option.value} value={option.value}>
+                      {option.label}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              
+              <TextField
+                fullWidth
+                type="datetime-local"
+                label="Performed Date/Time"
+                value={moment(get(procedure, 'performedDateTime', '')).format('YYYY-MM-DDTHH:mm')}
+                onChange={(e) => handleChange('performedDateTime', e.target.value)}
+                InputLabelProps={{ shrink: true }}
+                disabled={!isEditing}
+              />
+              
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={get(procedure, 'notPerformed', false)}
+                    onChange={(e) => handleChange('notPerformed', e.target.checked)}
+                    disabled={!isEditing}
+                  />
+                }
+                label="Not Performed"
+              />
+            </Stack>
+            
+            <Typography variant="h6" sx={{ mt: 2 }}>Patient & Performer</Typography>
+            
+            <Stack direction="row" spacing={2}>
+              <TextField
+                fullWidth
+                label="Patient Name"
+                value={get(procedure, 'subject.display', '')}
+                helperText={get(procedure, 'subject.reference', '') || 'Patient reference will be assigned'}
+                disabled // Always disabled to prevent editing
+              />
+              
+              <TextField
+                fullWidth
+                label="Performed By"
+                value={get(procedure, 'performer[0].actor.display', '')}
+                onChange={(e) => handleChange('performer[0].actor.display', e.target.value)}
+                helperText={get(procedure, 'performer[0].actor.reference', '') || 'Practitioner reference will be assigned'}
+                disabled={!isEditing}
+              />
+            </Stack>
+            
+            <Typography variant="h6" sx={{ mt: 2 }}>Body Site</Typography>
+            
+            <Stack direction="row" spacing={2}>
+              <TextField
+                fullWidth
+                label="Body Site Code"
+                value={get(procedure, 'bodySite[0].coding[0].code', '')}
+                onChange={(e) => handleChange('bodySite[0].coding[0].code', e.target.value)}
+                disabled={!isEditing}
+              />
+              
+              <TextField
+                fullWidth
+                label="Body Site Display"
+                value={get(procedure, 'bodySite[0].coding[0].display', '') || get(procedure, 'bodySite[0].text', '')}
+                onChange={(e) => {
+                  handleChange('bodySite[0].coding[0].display', e.target.value);
+                  handleChange('bodySite[0].text', e.target.value);
+                }}
+                helperText="e.g., Biliary Ducts, Right Arm, Left Knee"
+                disabled={!isEditing}
+              />
+            </Stack>
+            
+            {!props.hideNotes && (
+              <>
+                <Typography variant="h6" sx={{ mt: 2 }}>Notes</Typography>
+                
+                <Stack direction="row" spacing={2}>
+                  <TextField
+                    fullWidth
+                    type="datetime-local"
+                    label="Note Time"
+                    value={moment(get(procedure, 'note[0].time', '')).format('YYYY-MM-DDTHH:mm')}
+                    onChange={(e) => handleChange('note[0].time', e.target.value)}
+                    InputLabelProps={{ shrink: true }}
+                    disabled={!isEditing}
+                  />
+                  
+                  <TextField
+                    fullWidth
+                    multiline
+                    rows={3}
+                    label="Note Text"
+                    value={get(procedure, 'note[0].text', '')}
+                    onChange={(e) => handleChange('note[0].text', e.target.value)}
+                    helperText="e.g., Routine follow-up. No complications."
+                    disabled={!isEditing}
+                  />
+                </Stack>
+              </>
+            )}
+            
+          </Stack>
+        </CardContent>
+        
+        {!props.hideButtons && (
+          <CardActions sx={{ justifyContent: 'flex-end', p: 2 }}>
+            {!isEditing && id && id !== 'new' ? (
+              // Read-only mode buttons
+              <>
+                <Button 
+                  onClick={() => navigate('/procedures')}
+                >
+                  Back
+                </Button>
+                <Button 
+                  onClick={() => setIsEditing(true)}
+                  variant="contained"
+                  color="primary"
+                >
+                  Edit
+                </Button>
+              </>
+            ) : (
+              // Edit mode buttons
+              <>
+                <Button 
+                  onClick={() => {
+                    if (id && id !== 'new') {
+                      // Cancel editing and reload original data
+                      setIsEditing(false);
+                      // Reload the procedure to discard changes
+                      async function reloadProcedure() {
+                        try {
+                          const result = await Meteor.callAsync('procedures.get', id);
+                          if (result) {
+                            setProcedure(result);
+                          }
+                        } catch (err) {
+                          console.error('Error reloading procedure:', err);
+                        }
+                      }
+                      reloadProcedure();
+                    } else {
+                      // For new procedures, go back
+                      navigate('/procedures');
+                    }
+                  }}
+                  disabled={loading}
+                >
+                  Cancel
+                </Button>
+                {id && id !== 'new' && (
+                  <Button 
+                    onClick={handleDelete}
+                    color="error"
+                    disabled={loading}
+                  >
+                    Delete
+                  </Button>
+                )}
+                <Button 
+                  onClick={handleSave}
+                  variant="contained"
+                  color="primary"
+                  disabled={loading}
+                >
+                  {loading ? 'Saving...' : 'Save'}
+                </Button>
+              </>
+            )}
+          </CardActions>
+        )}
+      </Card>
+    </Container>
+  );
 }
 
-
 ProcedureDetail.propTypes = {
-  id: PropTypes.string,
-  fhirVersion: PropTypes.string,
-  procedureId: PropTypes.oneOfType([PropTypes.string, PropTypes.bool]),
-  procedure: PropTypes.oneOfType([PropTypes.object, PropTypes.bool]),
   showPatientInputs: PropTypes.bool,
   hideButtons: PropTypes.bool,
   hideNotes: PropTypes.bool,
   showHints: PropTypes.bool,
-  onInsert: PropTypes.func,
-  onUpdate: PropTypes.func,
-  onRemove: PropTypes.func,
-  onCancel: PropTypes.func
+  showDatePicker: PropTypes.bool
 };
 
 export default ProcedureDetail;

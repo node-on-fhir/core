@@ -24,6 +24,7 @@ import { Session } from 'meteor/session';
 
 import React, { useEffect, useState }  from 'react';
 import { useTracker } from 'meteor/react-meteor-data';
+import { useNavigate } from 'react-router-dom';
 
 
 import { get, set } from 'lodash';
@@ -105,6 +106,7 @@ if(get(Meteor, 'settings.public.theme.palette')){
 // MAIN COMPONENT
 
 export function ServiceRequestsPage(props){
+  const navigate = useNavigate();
 
 
   //---------------------------------------------------------------------------------------------------------
@@ -304,6 +306,10 @@ export function ServiceRequestsPage(props){
           }}  
           page={data.serviceRequestsIndex}
           sort="occurrenceDateTime"
+          onRowClick={function(serviceRequestId){
+            console.log('ServiceRequestsPage.onRowClick', serviceRequestId);
+            navigate('/serviceRequests/' + serviceRequestId);
+          }}
         />
       </CardContent>
     </Card>
@@ -384,7 +390,7 @@ export function ServiceRequestsPage(props){
 
   function handleAddServiceRequest(){
     console.log('Add Service Request button clicked');
-    // Add logic for adding a new service request
+    navigate('/serviceRequests/new');
   }
 
   function renderHeader() {

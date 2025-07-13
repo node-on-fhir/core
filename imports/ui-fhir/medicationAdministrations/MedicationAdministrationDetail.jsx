@@ -1,485 +1,458 @@
-// =======================================================================
-// Using FHIR R4
-//
-// https://www.hl7.org/fhir/medicationadministration.html
-//
-//
-// =======================================================================
+// /imports/ui-fhir/medicationAdministrations/MedicationAdministrationDetail.jsx
 
-import React from 'react';
-import PropTypes from 'prop-types';
-
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useTracker } from 'meteor/react-meteor-data';
 
 import { 
   Button,
   Card,
-  Checkbox,
   CardActions,
   CardContent,
   CardHeader,
-  Grid,
+  Container,
   TextField,
   Select,
   MenuItem,
+  FormControl,
+  InputLabel,
+  Typography,
+  Box,
+  Stack,
+  Chip,
+  InputAdornment,
+  IconButton,
+  Tooltip
 } from '@mui/material';
 
-import { get, set } from 'lodash';
+import QrCodeIcon from '@mui/icons-material/QrCode';
+import SearchIcon from '@mui/icons-material/Search';
 
+import { get, set } from 'lodash';
+import moment from 'moment';
+
+import { MedicationAdministrations } from '/imports/lib/schemas/SimpleSchemas/MedicationAdministrations';
+import { Meteor } from 'meteor/meteor';
+import { Session } from 'meteor/session';
+
+function MedicationAdministrationDetail(props) {
+  const navigate = useNavigate();
+  const { id } = useParams();
   
-export class MedicationAdministrationDetail extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      medicationAdministrationId: false,
-      medicationAdministration: {
-        resourceType: "MedicationAdministration",
-        status: "completed",
-        subject: {
-          reference: "",
+  // Get selected patient and current user from session/tracker
+  const selectedPatient = useTracker(function() {
+    return Session.get('selectedPatient');
+  }, []);
+  
+  const currentUser = useTracker(function() {
+    return Meteor.user();
+  }, []);
+  
+  // Initialize state with proper FHIR R4 structure
+  const [medicationAdministration, setMedicationAdministration] = useState({
+    resourceType: "MedicationAdministration",
+    status: "completed",
+    subject: {
+      reference: "",
+      display: ""
+    },
+    effectiveDateTime: moment().format('YYYY-MM-DDTHH:mm'),
+    medicationCodeableConcept: {
+      coding: [{
+        system: "http://www.nlm.nih.gov/research/umls/rxnorm",
+        code: "",
+        display: ""
+      }],
+      text: ""
+    },
+    performer: [{
+      actor: {
+        reference: "",
+        display: ""
+      }
+    }],
+    dosage: {
+      text: "",
+      route: {
+        coding: [{
+          system: "http://snomed.info/sct",
+          code: "",
           display: ""
-        },
-        effectiveDateTime: null,
-        medicationCodeableConcept: {
-          coding: [
-            {
-              system: "http://www.nlm.nih.gov/research/umls/rxnorm",
-              code: "",
-              display: ""
-            }
-          ],
-          text: ""
+        }]
+      },
+      dose: {
+        value: null,
+        unit: "",
+        system: "http://unitsofmeasure.org",
+        code: ""
+      }
+    }
+  });
+
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [isEditing, setIsEditing] = useState(false);
+
+  // Set patient name and performer on component mount for new administrations
+  useEffect(function() {
+    if (!id || id === 'new') {
+      // Enable editing for new administrations
+      setIsEditing(true);
+      
+      // For new administrations, set the patient name
+      let patientName = '';
+      let patientReference = '';
+      
+      if (selectedPatient) {
+        // Prefer selected patient
+        patientName = get(selectedPatient, 'name[0].text', '') || 
+                     `${get(selectedPatient, 'name[0].given[0]', '')} ${get(selectedPatient, 'name[0].family', '')}`.trim();
+        patientReference = `Patient/${get(selectedPatient, '_id', '')}`;
+      } else if (currentUser) {
+        // Fall back to current user
+        patientName = get(currentUser, 'profile.name.text', '') ||
+                     `${get(currentUser, 'profile.name.given[0]', '')} ${get(currentUser, 'profile.name.family', '')}`.trim() ||
+                     get(currentUser, 'username', '');
+        // You might need to look up the Patient resource for the current user
+        patientReference = `Patient/${get(currentUser, 'profile.patientId', '')}`;
+      }
+      
+      // Set performer to current user
+      let performerName = '';
+      let performerReference = '';
+      
+      if (currentUser) {
+        performerName = get(currentUser, 'profile.name.text', '') ||
+                       `${get(currentUser, 'profile.name.given[0]', '')} ${get(currentUser, 'profile.name.family', '')}`.trim() ||
+                       get(currentUser, 'username', '');
+        performerReference = `Practitioner/${get(currentUser, '_id', '')}`;
+      }
+      
+      setMedicationAdministration(prev => ({
+        ...prev,
+        subject: {
+          reference: patientReference,
+          display: patientName
         },
         performer: [{
           actor: {
-            reference: "",
-            display: ""
+            reference: performerReference,
+            display: performerName
           }
-        }],
-        dosage: {
-          text: "",
-          route: {
-            coding: [{
-              system: "http://snomed.info/sct",
-              code: "",
-              display: ""
-            }]
-          },
-          dose: {
-            value: null,
-            unit: "",
-            system: "http://unitsofmeasure.org",
-            code: ""
+        }]
+      }));
+    } else {
+      // Viewing existing administration - start in read-only mode
+      setIsEditing(false);
+    }
+  }, [id, selectedPatient, currentUser]);
+
+  // Load medication administration if editing
+  useEffect(function() {
+    async function loadMedicationAdministration() {
+      if (id && id !== 'new') {
+        setLoading(true);
+        try {
+          const result = await Meteor.callAsync('medicationAdministrations.get', id);
+          if (result) {
+            setMedicationAdministration(result);
           }
+        } catch (err) {
+          console.error('Error loading medication administration:', err);
+          setError(err.message);
+        } finally {
+          setLoading(false);
         }
-      }, 
-      form: {
-        subjectDisplay: '',
-        status: 'completed',
-        medicationDisplay: '',
-        medicationCode: '',
-        effectiveDateTime: '',
-        performerDisplay: '',
-        dosageText: '',
-        dosageValue: '',
-        dosageUnit: '',
-        routeDisplay: ''
+      }
+    }
+    
+    loadMedicationAdministration();
+  }, [id]);
+
+  // Handle field changes
+  function handleChange(path, value) {
+    const updatedMedicationAdministration = { ...medicationAdministration };
+    set(updatedMedicationAdministration, path, value);
+    setMedicationAdministration(updatedMedicationAdministration);
+  }
+
+  // Handle save
+  async function handleSave() {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      if (id && id !== 'new') {
+        // Update existing medication administration
+        await Meteor.callAsync('medicationAdministrations.update', id, medicationAdministration);
+        console.log('Medication administration updated successfully');
+        // Exit edit mode after successful save
+        setIsEditing(false);
+      } else {
+        // Create new medication administration
+        const newId = await Meteor.callAsync('medicationAdministrations.create', medicationAdministration);
+        console.log('Medication administration created with ID:', newId);
+        // Navigate back to medication administrations list for new administrations
+        navigate('/medication-administrations');
+      }
+    } catch (err) {
+      console.error('Error saving medication administration:', err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  // Handle delete
+  async function handleDelete() {
+    if (!id || id === 'new') return;
+    
+    if (window.confirm('Are you sure you want to delete this medication administration?')) {
+      setLoading(true);
+      try {
+        await Meteor.callAsync('medicationAdministrations.remove', id);
+        console.log('Medication administration deleted successfully');
+        navigate('/medication-administrations');
+      } catch (err) {
+        console.error('Error deleting medication administration:', err);
+        setError(err.message);
+      } finally {
+        setLoading(false);
       }
     }
   }
-  dehydrateFhirResource(medicationAdministration) {
-    let formData = Object.assign({}, this.state.form);
 
-    formData.subjectDisplay = get(medicationAdministration, 'subject.display', '')
-    formData.status = get(medicationAdministration, 'status', 'completed')
-    formData.medicationDisplay = get(medicationAdministration, 'medicationCodeableConcept.text', get(medicationAdministration, 'medicationCodeableConcept.coding[0].display', ''))
-    formData.medicationCode = get(medicationAdministration, 'medicationCodeableConcept.coding[0].code', '')
-    formData.effectiveDateTime = get(medicationAdministration, 'effectiveDateTime', '')
-    formData.performerDisplay = get(medicationAdministration, 'performer[0].actor.display', '')
-    formData.dosageText = get(medicationAdministration, 'dosage.text', '')
-    formData.dosageValue = get(medicationAdministration, 'dosage.dose.value', '')
-    formData.dosageUnit = get(medicationAdministration, 'dosage.dose.unit', '')
-    formData.routeDisplay = get(medicationAdministration, 'dosage.route.coding[0].display', '')
-
-    return formData;
-  }
-  shouldComponentUpdate(nextProps){
-    get(Meteor, 'settings.public.logging') === "debug" && console.log('MedicationAdministrationDetail.shouldComponentUpdate()', nextProps, this.state)
-    let shouldUpdate = true;
-
-    // received a medication administration from the table; okay lets update again
-    if(nextProps.medicationAdministrationId !== this.state.medicationAdministrationId){
-      
-      if(nextProps.medicationAdministration){
-        this.setState({medicationAdministration: nextProps.medicationAdministration})     
-        this.setState({form: this.dehydrateFhirResource(nextProps.medicationAdministration)})       
-      }
-
-      this.setState({medicationAdministrationId: nextProps.medicationAdministrationId})
-      shouldUpdate = true;
-    }
-
-    // both false; don't take any more updates
-    if(nextProps.medicationAdministration === this.state.medicationAdministration){
-      shouldUpdate = false;
-    }
- 
-    return shouldUpdate;
+  // Handle cancel
+  function handleCancel() {
+    navigate('/medication-administrations');
   }
 
-  getMeteorData() {
-    let data = {
-      medicationAdministrationId: this.props.medicationAdministrationId,
-      medicationAdministration: false,
-      form: this.state.form
-    };
+  const statusOptions = [
+    { value: 'in-progress', label: 'In Progress' },
+    { value: 'not-done', label: 'Not Done' },
+    { value: 'on-hold', label: 'On Hold' },
+    { value: 'completed', label: 'Completed' },
+    { value: 'entered-in-error', label: 'Entered in Error' },
+    { value: 'stopped', label: 'Stopped' },
+    { value: 'unknown', label: 'Unknown' }
+  ];
 
-    if(this.props.medicationAdministration){
-      data.medicationAdministration = this.props.medicationAdministration;
-      data.form = this.dehydrateFhirResource(this.props.medicationAdministration);
-    }
-
-    return data;
-  }
-
-  renderDatePicker(showDatePicker, datePickerValue){
-    if (showDatePicker) {
-      return (
-        <TextField
-          id='effectiveDateTimeInput'
-          name='effectiveDateTime'
-          label='Administration Date/Time'
-          type='datetime-local'
-          value={datePickerValue}
-          onChange={this.changeState.bind(this, 'effectiveDateTime')}
-          fullWidth
-          InputLabelProps={{
-            shrink: true,
-          }}
+  return (
+    <Container maxWidth="md" sx={{ py: 4 }}>
+      <Card sx={{ boxShadow: 3 }}>
+        <CardHeader 
+          title={id && id !== 'new' ? 'Edit Medication Administration' : 'New Medication Administration'}
+          sx={{ bgcolor: 'primary.main', color: 'primary.contrastText' }}
         />
-      );
-    }
-  }
-
-  setHint(text){
-    if(this.props.showHints !== false){
-      return text;
-    } else {
-      return '';
-    }
-  }
-
-  render() {
-    get(Meteor, 'settings.public.logging') === "debug" && console.log('MedicationAdministrationDetail.render()', this.state)
-    let formData = this.state.form;
-
-    return (
-      <div id={this.props.id} className="medicationAdministrationDetail">
-        <Card>
-          <CardContent>
-            <Grid container spacing={3}>
-              <Grid item xs={12}>
-                <TextField
-                  id='subjectDisplayInput'
-                  name='subjectDisplay'
-                  label='Patient'
-                  value={formData.subjectDisplay}
-                  onChange={this.changeState.bind(this, 'subjectDisplay')}
-                  fullWidth
-                  InputLabelProps={{
-                    shrink: true,
-                  }}
-                />
-              </Grid>
-              <Grid item xs={6}>
-                <TextField
-                  id='medicationDisplayInput'
-                  name='medicationDisplay'
-                  label='Medication'
-                  value={formData.medicationDisplay}
-                  onChange={this.changeState.bind(this, 'medicationDisplay')}
-                  fullWidth
-                  InputLabelProps={{
-                    shrink: true,
-                  }}
-                />
-              </Grid>
-              <Grid item xs={6}>
-                <TextField
-                  id='medicationCodeInput'
-                  name='medicationCode'
-                  label='Medication Code'
-                  value={formData.medicationCode}
-                  onChange={this.changeState.bind(this, 'medicationCode')}
-                  fullWidth
-                  InputLabelProps={{
-                    shrink: true,
-                  }}
-                />
-              </Grid>
-              <Grid item xs={4}>
+        <CardContent>
+          {error && (
+            <Typography color="error" sx={{ mb: 2 }}>
+              Error: {error}
+            </Typography>
+          )}
+          
+          {/* System ID Barcode */}
+          {(id && id !== 'new') && (
+            <Box sx={{ mb: 3, textAlign: 'right' }}>
+              <span className="barcode helveticas" style={{ fontSize: '2rem' }}>{id}</span>
+            </Box>
+          )}
+          
+          <Stack spacing={3}>
+            <TextField
+              fullWidth
+              label="Patient"
+              value={get(medicationAdministration, 'subject.display', '')}
+              helperText={get(medicationAdministration, 'subject.reference', '') || 'Patient reference will be assigned'}
+              disabled // Always disabled to prevent editing
+            />
+            
+            <Stack direction="row" spacing={2}>
+              <TextField
+                fullWidth
+                label="Medication Name"
+                value={get(medicationAdministration, 'medicationCodeableConcept.text', '') || 
+                       get(medicationAdministration, 'medicationCodeableConcept.coding[0].display', '')}
+                onChange={(e) => handleChange('medicationCodeableConcept.text', e.target.value)}
+                helperText="Name of the medication administered"
+                disabled={!isEditing}
+              />
+              
+              <TextField
+                fullWidth
+                label="Medication Code"
+                value={get(medicationAdministration, 'medicationCodeableConcept.coding[0].code', '')}
+                onChange={(e) => handleChange('medicationCodeableConcept.coding[0].code', e.target.value)}
+                helperText="RxNorm code"
+                disabled={!isEditing}
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <Tooltip title="Lookup RxNorm codes">
+                        <IconButton
+                          onClick={() => window.open('https://mor.nlm.nih.gov/RxNav/', '_blank')}
+                          edge="end"
+                          disabled={!isEditing}
+                        >
+                          <SearchIcon />
+                        </IconButton>
+                      </Tooltip>
+                    </InputAdornment>
+                  ),
+                }}
+              />
+            </Stack>
+            
+            <Stack direction="row" spacing={2}>
+              <FormControl fullWidth disabled={!isEditing}>
+                <InputLabel>Status</InputLabel>
                 <Select
-                  id='statusInput'
-                  name='status'
-                  label='Status'
-                  value={formData.status}
-                  onChange={this.changeState.bind(this, 'status')}
-                  fullWidth
+                  value={get(medicationAdministration, 'status', 'completed')}
+                  onChange={(e) => handleChange('status', e.target.value)}
+                  label="Status"
                 >
-                  <MenuItem value="in-progress">In Progress</MenuItem>
-                  <MenuItem value="not-done">Not Done</MenuItem>
-                  <MenuItem value="on-hold">On Hold</MenuItem>
-                  <MenuItem value="completed">Completed</MenuItem>
-                  <MenuItem value="entered-in-error">Entered in Error</MenuItem>
-                  <MenuItem value="stopped">Stopped</MenuItem>
-                  <MenuItem value="unknown">Unknown</MenuItem>
+                  {statusOptions.map(option => (
+                    <MenuItem key={option.value} value={option.value}>
+                      {option.label}
+                    </MenuItem>
+                  ))}
                 </Select>
-              </Grid>
-              <Grid item xs={8}>
-                { this.renderDatePicker(true, formData.effectiveDateTime) }
-              </Grid>
-              <Grid item xs={12}>
-                <TextField
-                  id='performerDisplayInput'
-                  name='performerDisplay'
-                  label='Administered By'
-                  value={formData.performerDisplay}
-                  onChange={this.changeState.bind(this, 'performerDisplay')}
-                  fullWidth
-                  InputLabelProps={{
-                    shrink: true,
-                  }}
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <TextField
-                  id='dosageTextInput'
-                  name='dosageText'
-                  label='Dosage Instructions'
-                  value={formData.dosageText}
-                  onChange={this.changeState.bind(this, 'dosageText')}
-                  placeholder={this.setHint("Take 2 tablets by mouth every 6 hours")}
-                  fullWidth
-                  multiline
-                  rows={2}
-                  InputLabelProps={{
-                    shrink: true,
-                  }}
-                />
-              </Grid>
-              <Grid item xs={4}>
-                <TextField
-                  id='dosageValueInput'
-                  name='dosageValue'
-                  label='Dose Amount'
-                  type='number'
-                  value={formData.dosageValue}
-                  onChange={this.changeState.bind(this, 'dosageValue')}
-                  fullWidth
-                  InputLabelProps={{
-                    shrink: true,
-                  }}
-                />
-              </Grid>
-              <Grid item xs={4}>
-                <TextField
-                  id='dosageUnitInput'
-                  name='dosageUnit'
-                  label='Dose Unit'
-                  value={formData.dosageUnit}
-                  onChange={this.changeState.bind(this, 'dosageUnit')}
-                  placeholder={this.setHint("mg, mL, tablets, etc.")}
-                  fullWidth
-                  InputLabelProps={{
-                    shrink: true,
-                  }}
-                />
-              </Grid>
-              <Grid item xs={4}>
-                <TextField
-                  id='routeDisplayInput'
-                  name='routeDisplay'
-                  label='Route'
-                  value={formData.routeDisplay}
-                  onChange={this.changeState.bind(this, 'routeDisplay')}
-                  placeholder={this.setHint("oral, IV, IM, etc.")}
-                  fullWidth
-                  InputLabelProps={{
-                    shrink: true,
-                  }}
-                />
-              </Grid>
-            </Grid>
-          </CardContent>
-          <CardActions>
-            { this.determineButtons(formData) }
-          </CardActions>
-        </Card>
-      </div>
-    );
-  }
-
-  determineButtons(formData){
-    if (this.props.medicationAdministrationId) {
-      return (
-        <div>
-          <Button 
-            id="updateMedicationAdministrationButton"
-            color="primary" 
-            variant="contained" 
-            onClick={this.handleSaveButton.bind(this)}
-            style={{marginRight: '20px'}}
-          >
-            Save
-          </Button>
-          <Button 
-            id="deleteMedicationAdministrationButton"
-            onClick={this.handleDeleteButton.bind(this)}
-          >
-            Delete
-          </Button>
-        </div>
-      );
-    } else {
-      return(
-        <Button 
-          id="saveMedicationAdministrationButton" 
-          color="primary" 
-          variant="contained" 
-          onClick={this.handleSaveButton.bind(this)}
-        >
-          Save
-        </Button>
-      );
-    }
-  }
-
-  updateFormData(formData, field, textValue){
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log("MedicationAdministrationDetail.updateFormData", formData, field, textValue);
-
-    switch (field) {
-      case "subjectDisplay":
-        set(formData, 'subjectDisplay', textValue)
-        break;
-      case "status":
-        set(formData, 'status', textValue)
-        break;
-      case "medicationDisplay":
-        set(formData, 'medicationDisplay', textValue)
-        break;
-      case "medicationCode":
-        set(formData, 'medicationCode', textValue)
-        break;        
-      case "effectiveDateTime":
-        set(formData, 'effectiveDateTime', textValue)
-        break;
-      case "performerDisplay":
-        set(formData, 'performerDisplay', textValue)
-        break;
-      case "dosageText":
-        set(formData, 'dosageText', textValue)
-        break;
-      case "dosageValue":
-        set(formData, 'dosageValue', textValue)
-        break;
-      case "dosageUnit":
-        set(formData, 'dosageUnit', textValue)
-        break;
-      case "routeDisplay":
-        set(formData, 'routeDisplay', textValue)
-        break;
-      default:
-    }
-
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log("formData", formData);
-    return formData;
-  }
-  updateMedicationAdministration(medicationAdministrationData, field, textValue){
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log("MedicationAdministrationDetail.updateMedicationAdministration", medicationAdministrationData, field, textValue);
-
-    switch (field) {
-      case "subjectDisplay":
-        set(medicationAdministrationData, 'subject.display', textValue)
-        break;
-      case "status":
-        set(medicationAdministrationData, 'status', textValue)
-        break;
-      case "medicationDisplay":
-        set(medicationAdministrationData, 'medicationCodeableConcept.text', textValue)
-        break;
-      case "medicationCode":
-        set(medicationAdministrationData, 'medicationCodeableConcept.coding[0].code', textValue)
-        break;        
-      case "effectiveDateTime":
-        set(medicationAdministrationData, 'effectiveDateTime', textValue)
-        break;
-      case "performerDisplay":
-        set(medicationAdministrationData, 'performer[0].actor.display', textValue)
-        break;
-      case "dosageText":
-        set(medicationAdministrationData, 'dosage.text', textValue)
-        break;
-      case "dosageValue":
-        set(medicationAdministrationData, 'dosage.dose.value', parseFloat(textValue))
-        break;
-      case "dosageUnit":
-        set(medicationAdministrationData, 'dosage.dose.unit', textValue)
-        break;
-      case "routeDisplay":
-        set(medicationAdministrationData, 'dosage.route.coding[0].display', textValue)
-        break;
-    }
-    return medicationAdministrationData;
-  }
-
-  changeState(field, event, textValue){
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log("   ");
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log("MedicationAdministrationDetail.changeState", field, textValue);
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log("this.state", this.state);
-
-    let formData = Object.assign({}, this.state.form);
-    let medicationAdministrationData = Object.assign({}, this.state.medicationAdministration);
-
-    formData = this.updateFormData(formData, field, textValue);
-    medicationAdministrationData = this.updateMedicationAdministration(medicationAdministrationData, field, textValue);
-
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log("medicationAdministrationData", medicationAdministrationData);
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log("formData", formData);
-
-    this.setState({form: formData})
-    this.setState({medicationAdministration: medicationAdministrationData})
-  }
-
-  handleSaveButton(){
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log('MedicationAdministrationDetail.handleSaveButton()');
-    let self = this;
-    if(this.props.onUpsert){
-      this.props.onUpsert(self);
-    }
-  }
-
-  handleCancelButton(){
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log('MedicationAdministrationDetail.handleCancelButton()');
-  }
-
-  handleDeleteButton(){
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log('MedicationAdministrationDetail.handleDeleteButton()');
-    let self = this;
-    if(this.props.onDelete){
-      this.props.onDelete(self);
-    }
-  }
+              </FormControl>
+              
+              <TextField
+                fullWidth
+                type="datetime-local"
+                label="Administration Date/Time"
+                value={moment(get(medicationAdministration, 'effectiveDateTime', '')).format('YYYY-MM-DDTHH:mm')}
+                onChange={(e) => handleChange('effectiveDateTime', e.target.value)}
+                InputLabelProps={{ shrink: true }}
+                disabled={!isEditing}
+              />
+            </Stack>
+            
+            <TextField
+              fullWidth
+              label="Administered By"
+              value={get(medicationAdministration, 'performer[0].actor.display', '')}
+              onChange={(e) => handleChange('performer[0].actor.display', e.target.value)}
+              helperText={get(medicationAdministration, 'performer[0].actor.reference', '') || 'Practitioner reference will be assigned'}
+              disabled={!isEditing}
+            />
+            
+            <TextField
+              fullWidth
+              multiline
+              rows={2}
+              label="Dosage Instructions"
+              value={get(medicationAdministration, 'dosage.text', '')}
+              onChange={(e) => handleChange('dosage.text', e.target.value)}
+              helperText="e.g., Take 2 tablets by mouth every 6 hours"
+              disabled={!isEditing}
+            />
+            
+            <Stack direction="row" spacing={2}>
+              <TextField
+                fullWidth
+                type="number"
+                label="Dose Amount"
+                value={get(medicationAdministration, 'dosage.dose.value', '')}
+                onChange={(e) => handleChange('dosage.dose.value', parseFloat(e.target.value) || null)}
+                disabled={!isEditing}
+              />
+              
+              <TextField
+                fullWidth
+                label="Dose Unit"
+                value={get(medicationAdministration, 'dosage.dose.unit', '')}
+                onChange={(e) => {
+                  handleChange('dosage.dose.unit', e.target.value);
+                  handleChange('dosage.dose.code', e.target.value);
+                }}
+                helperText="e.g., mg, mL, tablets"
+                disabled={!isEditing}
+              />
+              
+              <TextField
+                fullWidth
+                label="Route"
+                value={get(medicationAdministration, 'dosage.route.coding[0].display', '')}
+                onChange={(e) => handleChange('dosage.route.coding[0].display', e.target.value)}
+                helperText="e.g., oral, IV, IM"
+                disabled={!isEditing}
+              />
+            </Stack>
+          </Stack>
+        </CardContent>
+        
+        <CardActions sx={{ justifyContent: 'flex-end', p: 2 }}>
+          {!isEditing && id && id !== 'new' ? (
+            // Read-only mode buttons
+            <>
+              <Button 
+                onClick={() => navigate('/medication-administrations')}
+              >
+                Back
+              </Button>
+              <Button 
+                onClick={() => setIsEditing(true)}
+                variant="contained"
+                color="primary"
+              >
+                Edit
+              </Button>
+            </>
+          ) : (
+            // Edit mode buttons
+            <>
+              <Button 
+                onClick={() => {
+                  if (id && id !== 'new') {
+                    // Cancel editing and reload original data
+                    setIsEditing(false);
+                    // Reload the medication administration to discard changes
+                    async function reloadMedicationAdministration() {
+                      try {
+                        const result = await Meteor.callAsync('medicationAdministrations.get', id);
+                        if (result) {
+                          setMedicationAdministration(result);
+                        }
+                      } catch (err) {
+                        console.error('Error reloading medication administration:', err);
+                      }
+                    }
+                    reloadMedicationAdministration();
+                  } else {
+                    // For new medication administrations, go back
+                    navigate('/medication-administrations');
+                  }
+                }}
+                disabled={loading}
+              >
+                Cancel
+              </Button>
+              {id && id !== 'new' && (
+                <Button 
+                  onClick={handleDelete}
+                  color="error"
+                  disabled={loading}
+                >
+                  Delete
+                </Button>
+              )}
+              <Button 
+                onClick={handleSave}
+                variant="contained"
+                color="primary"
+                disabled={loading}
+              >
+                {loading ? 'Saving...' : 'Save'}
+              </Button>
+            </>
+          )}
+        </CardActions>
+      </Card>
+    </Container>
+  );
 }
-
-MedicationAdministrationDetail.propTypes = {
-  id: PropTypes.string,
-  medicationAdministrationId: PropTypes.string,
-  medicationAdministration: PropTypes.object,
-  showHints: PropTypes.bool,
-  onDelete: PropTypes.func,
-  onUpsert: PropTypes.func,
-  onCancel: PropTypes.func,
-  showDatePicker: PropTypes.bool
-};
 
 export default MedicationAdministrationDetail;

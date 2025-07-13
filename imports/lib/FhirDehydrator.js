@@ -2739,7 +2739,12 @@ export function flattenLocation(location, simplifiedAddress, preferredExtensionU
     result.id = get(location, 'id');
   }
   if (get(location, '_id')){
-    result._id = get(location, '_id');
+    // Handle MongoDB ObjectID format
+    if (typeof location._id === 'object' && location._id._str) {
+      result._id = location._id._str;
+    } else {
+      result._id = get(location, '_id');
+    }
   }
   if (get(location, 'identifier[0].value')) {
     result.identifier = get(location, 'identifier[0].value');

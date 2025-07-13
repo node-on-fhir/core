@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { useTracker } from 'meteor/react-meteor-data';
+import { useNavigate } from 'react-router-dom';
 
 import { 
   Grid, 
@@ -56,6 +57,7 @@ Session.setDefault('PractitionersTable.practitionersIndex', 0)
 // MAIN COMPONENT
 
 export function PractitionersPage(props){
+  const navigate = useNavigate();
 
   let data = {
     currentPractitionerId: '',
@@ -108,6 +110,7 @@ export function PractitionersPage(props){
 
   function handleAddPractitioner(){
     console.log('Add Practitioner button clicked');
+    navigate('/practitioners/new');
     // Add logic for adding a new practitioner
   }
 
@@ -166,6 +169,10 @@ export function PractitionersPage(props){
             Session.set('PractitionersTable.practitionersIndex', index);
           }}        
           page={data.practitionersIndex}
+          onRowClick={function(practitionerId){
+            console.log('PractitionersPage.onRowClick', practitionerId);
+            navigate('/practitioners/' + practitionerId);
+          }}
         />
       </CardContent>
     </Card>

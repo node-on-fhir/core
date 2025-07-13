@@ -705,7 +705,7 @@ function DocumentReferencesTable(props){
         ); 
       } else {
         tableRows.push(
-          <TableRow className="documentReferenceRow" key={i} style={rowStyle} onClick={ handleRowClick.bind(this, documentReferencesToRender[i]._id)} style={rowStyle} hover={true} selected={selected} >            
+          <TableRow className="documentReferenceRow" key={i} style={rowStyle} onClick={ handleRowClick.bind(this, documentReferencesToRender[i].id || documentReferencesToRender[i]._id)} hover={true} selected={selected} >            
             { renderCheckbox(i) }
             { renderActionIcons(documentReferencesToRender[i]) }
             { renderIdentifier(get(documentReferencesToRender[i], "identifier", "")) }

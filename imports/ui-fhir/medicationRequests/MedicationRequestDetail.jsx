@@ -1,704 +1,616 @@
-// =======================================================================
-// Using FHIR R4
-//
-// https://www.hl7.org/fhir/medicationrequest.html
-//
-//
-// =======================================================================
+// /imports/ui-fhir/medicationRequests/MedicationRequestDetail.jsx
 
-import React from 'react';
-import PropTypes from 'prop-types';
-
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useTracker } from 'meteor/react-meteor-data';
 
 import { 
   Button,
   Card,
-  Checkbox,
   CardActions,
   CardContent,
   CardHeader,
-  Grid,
+  Container,
   TextField,
   Select,
   MenuItem,
+  FormControl,
+  InputLabel,
+  Typography,
+  Box,
+  Stack,
+  Chip,
+  InputAdornment,
+  IconButton,
+  Tooltip
 } from '@mui/material';
 
+import QrCodeIcon from '@mui/icons-material/QrCode';
+import SearchIcon from '@mui/icons-material/Search';
+
 import { get, set } from 'lodash';
+import moment from 'moment';
 
+import { MedicationRequests } from '/imports/lib/schemas/SimpleSchemas/MedicationRequests';
+import { Meteor } from 'meteor/meteor';
+import { Session } from 'meteor/session';
+
+function MedicationRequestDetail(props) {
+  const navigate = useNavigate();
+  const { id } = useParams();
   
-export class MedicationRequestDetail extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      medicationRequestId: false,
-      medicationRequest: {
-        resourceType: "MedicationRequest",
-        status: "active",
-        intent: "order",
-        subject: {
-          reference: "",
-          display: ""
-        },
-        authoredOn: null,
-        requester: {
-          reference: "",
-          display: ""
-        },
-        medicationCodeableConcept: {
-          coding: [
-            {
-              system: "http://www.nlm.nih.gov/research/umls/rxnorm",
-              code: "",
-              display: ""
-            }
-          ],
-          text: ""
-        },
-        priority: "routine",
-        dosageInstruction: [{
-          text: "",
-          timing: {
-            repeat: {
-              frequency: 1,
-              period: 1,
-              periodUnit: "d"
-            }
-          },
-          route: {
-            coding: [{
-              system: "http://snomed.info/sct",
-              code: "",
-              display: ""
-            }]
-          },
-          doseAndRate: [{
-            doseQuantity: {
-              value: null,
-              unit: "",
-              system: "http://unitsofmeasure.org",
-              code: ""
-            }
-          }]
-        }],
-        dispenseRequest: {
-          validityPeriod: {
-            start: null,
-            end: null
-          },
-          quantity: {
-            value: null,
-            unit: ""
-          }
+  // Get selected patient and current user from session/tracker
+  const selectedPatient = useTracker(function() {
+    return Session.get('selectedPatient');
+  }, []);
+  
+  const currentUser = useTracker(function() {
+    return Meteor.user();
+  }, []);
+  
+  // Initialize state with proper FHIR R4 structure
+  const [medicationRequest, setMedicationRequest] = useState({
+    resourceType: "MedicationRequest",
+    status: "active",
+    intent: "order",
+    subject: {
+      reference: "",
+      display: ""
+    },
+    authoredOn: moment().format('YYYY-MM-DD'),
+    requester: {
+      reference: "",
+      display: ""
+    },
+    medicationCodeableConcept: {
+      coding: [{
+        system: "http://www.nlm.nih.gov/research/umls/rxnorm",
+        code: "",
+        display: ""
+      }],
+      text: ""
+    },
+    priority: "routine",
+    dosageInstruction: [{
+      text: "",
+      timing: {
+        repeat: {
+          frequency: 1,
+          period: 1,
+          periodUnit: "d"
         }
-      }, 
-      form: {
-        subjectDisplay: '',
-        status: 'active',
-        intent: 'order',
-        priority: 'routine',
-        medicationDisplay: '',
-        medicationCode: '',
-        authoredOn: '',
-        requesterDisplay: '',
-        dosageInstructionText: '',
-        dosageValue: '',
-        dosageUnit: '',
-        frequency: '',
-        period: '',
-        periodUnit: 'd',
-        routeDisplay: '',
-        dispenseQuantity: '',
-        dispenseUnit: '',
-        validityStart: '',
-        validityEnd: ''
+      },
+      route: {
+        coding: [{
+          system: "http://snomed.info/sct",
+          code: "",
+          display: ""
+        }]
+      },
+      doseAndRate: [{
+        doseQuantity: {
+          value: null,
+          unit: "",
+          system: "http://unitsofmeasure.org",
+          code: ""
+        }
+      }]
+    }],
+    dispenseRequest: {
+      validityPeriod: {
+        start: moment().format('YYYY-MM-DD'),
+        end: moment().add(30, 'days').format('YYYY-MM-DD')
+      },
+      quantity: {
+        value: null,
+        unit: ""
       }
     }
-  }
-  dehydrateFhirResource(medicationRequest) {
-    let formData = Object.assign({}, this.state.form);
+  });
 
-    formData.subjectDisplay = get(medicationRequest, 'subject.display', '')
-    formData.status = get(medicationRequest, 'status', 'active')
-    formData.intent = get(medicationRequest, 'intent', 'order')
-    formData.priority = get(medicationRequest, 'priority', 'routine')
-    formData.medicationDisplay = get(medicationRequest, 'medicationCodeableConcept.text', get(medicationRequest, 'medicationCodeableConcept.coding[0].display', ''))
-    formData.medicationCode = get(medicationRequest, 'medicationCodeableConcept.coding[0].code', '')
-    formData.authoredOn = get(medicationRequest, 'authoredOn', '')
-    formData.requesterDisplay = get(medicationRequest, 'requester.display', '')
-    formData.dosageInstructionText = get(medicationRequest, 'dosageInstruction[0].text', '')
-    formData.dosageValue = get(medicationRequest, 'dosageInstruction[0].doseAndRate[0].doseQuantity.value', '')
-    formData.dosageUnit = get(medicationRequest, 'dosageInstruction[0].doseAndRate[0].doseQuantity.unit', '')
-    formData.frequency = get(medicationRequest, 'dosageInstruction[0].timing.repeat.frequency', '')
-    formData.period = get(medicationRequest, 'dosageInstruction[0].timing.repeat.period', '')
-    formData.periodUnit = get(medicationRequest, 'dosageInstruction[0].timing.repeat.periodUnit', 'd')
-    formData.routeDisplay = get(medicationRequest, 'dosageInstruction[0].route.coding[0].display', '')
-    formData.dispenseQuantity = get(medicationRequest, 'dispenseRequest.quantity.value', '')
-    formData.dispenseUnit = get(medicationRequest, 'dispenseRequest.quantity.unit', '')
-    formData.validityStart = get(medicationRequest, 'dispenseRequest.validityPeriod.start', '')
-    formData.validityEnd = get(medicationRequest, 'dispenseRequest.validityPeriod.end', '')
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [isEditing, setIsEditing] = useState(false);
 
-    return formData;
-  }
-  shouldComponentUpdate(nextProps){
-    get(Meteor, 'settings.public.logging') === "debug" && console.log('MedicationRequestDetail.shouldComponentUpdate()', nextProps, this.state)
-    let shouldUpdate = true;
-
-    // received a medication request from the table; okay lets update again
-    if(nextProps.medicationRequestId !== this.state.medicationRequestId){
+  // Set patient name and requester on component mount for new requests
+  useEffect(function() {
+    if (!id || id === 'new') {
+      // Enable editing for new requests
+      setIsEditing(true);
       
-      if(nextProps.medicationRequest){
-        this.setState({medicationRequest: nextProps.medicationRequest})     
-        this.setState({form: this.dehydrateFhirResource(nextProps.medicationRequest)})       
+      // For new requests, set the patient name
+      let patientName = '';
+      let patientReference = '';
+      
+      if (selectedPatient) {
+        // Prefer selected patient
+        patientName = get(selectedPatient, 'name[0].text', '') || 
+                     `${get(selectedPatient, 'name[0].given[0]', '')} ${get(selectedPatient, 'name[0].family', '')}`.trim();
+        patientReference = `Patient/${get(selectedPatient, '_id', '')}`;
+      } else if (currentUser) {
+        // Fall back to current user
+        patientName = get(currentUser, 'profile.name.text', '') ||
+                     `${get(currentUser, 'profile.name.given[0]', '')} ${get(currentUser, 'profile.name.family', '')}`.trim() ||
+                     get(currentUser, 'username', '');
+        // You might need to look up the Patient resource for the current user
+        patientReference = `Patient/${get(currentUser, 'profile.patientId', '')}`;
       }
-
-      this.setState({medicationRequestId: nextProps.medicationRequestId})
-      shouldUpdate = true;
-    }
-
-    // both false; don't take any more updates
-    if(nextProps.medicationRequest === this.state.medicationRequest){
-      shouldUpdate = false;
-    }
- 
-    return shouldUpdate;
-  }
-
-  getMeteorData() {
-    let data = {
-      medicationRequestId: this.props.medicationRequestId,
-      medicationRequest: false,
-      form: this.state.form
-    };
-
-    if(this.props.medicationRequest){
-      data.medicationRequest = this.props.medicationRequest;
-      data.form = this.dehydrateFhirResource(this.props.medicationRequest);
-    }
-
-    return data;
-  }
-
-  setHint(text){
-    if(this.props.showHints !== false){
-      return text;
+      
+      // Set requester to current user
+      let requesterName = '';
+      let requesterReference = '';
+      
+      if (currentUser) {
+        requesterName = get(currentUser, 'profile.name.text', '') ||
+                       `${get(currentUser, 'profile.name.given[0]', '')} ${get(currentUser, 'profile.name.family', '')}`.trim() ||
+                       get(currentUser, 'username', '');
+        requesterReference = `Practitioner/${get(currentUser, '_id', '')}`;
+      }
+      
+      setMedicationRequest(prev => ({
+        ...prev,
+        subject: {
+          reference: patientReference,
+          display: patientName
+        },
+        requester: {
+          reference: requesterReference,
+          display: requesterName
+        }
+      }));
     } else {
-      return '';
+      // Viewing existing request - start in read-only mode
+      setIsEditing(false);
+    }
+  }, [id, selectedPatient, currentUser]);
+
+  // Load medication request if editing
+  useEffect(function() {
+    async function loadMedicationRequest() {
+      if (id && id !== 'new') {
+        setLoading(true);
+        try {
+          const result = await Meteor.callAsync('medicationRequests.get', id);
+          if (result) {
+            setMedicationRequest(result);
+          }
+        } catch (err) {
+          console.error('Error loading medication request:', err);
+          setError(err.message);
+        } finally {
+          setLoading(false);
+        }
+      }
+    }
+    
+    loadMedicationRequest();
+  }, [id]);
+
+  // Handle field changes
+  function handleChange(path, value) {
+    const updatedMedicationRequest = { ...medicationRequest };
+    set(updatedMedicationRequest, path, value);
+    setMedicationRequest(updatedMedicationRequest);
+  }
+
+  // Handle save
+  async function handleSave() {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      if (id && id !== 'new') {
+        // Update existing medication request
+        await Meteor.callAsync('medicationRequests.update', id, medicationRequest);
+        console.log('Medication request updated successfully');
+        // Exit edit mode after successful save
+        setIsEditing(false);
+      } else {
+        // Create new medication request
+        const newId = await Meteor.callAsync('medicationRequests.create', medicationRequest);
+        console.log('Medication request created with ID:', newId);
+        // Navigate back to medication requests list for new requests
+        navigate('/medication-requests');
+      }
+    } catch (err) {
+      console.error('Error saving medication request:', err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
     }
   }
 
-  render() {
-    get(Meteor, 'settings.public.logging') === "debug" && console.log('MedicationRequestDetail.render()', this.state)
-    let formData = this.state.form;
+  // Handle delete
+  async function handleDelete() {
+    if (!id || id === 'new') return;
+    
+    if (window.confirm('Are you sure you want to delete this medication request?')) {
+      setLoading(true);
+      try {
+        await Meteor.callAsync('medicationRequests.remove', id);
+        console.log('Medication request deleted successfully');
+        navigate('/medication-requests');
+      } catch (err) {
+        console.error('Error deleting medication request:', err);
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    }
+  }
 
-    return (
-      <div id={this.props.id} className="medicationRequestDetail">
-        <Card>
-          <CardContent>
-            <Grid container spacing={3}>
-              <Grid item xs={12}>
-                <TextField
-                  id='subjectDisplayInput'
-                  name='subjectDisplay'
-                  label='Patient'
-                  value={formData.subjectDisplay}
-                  onChange={this.changeState.bind(this, 'subjectDisplay')}
-                  fullWidth
-                  InputLabelProps={{
-                    shrink: true,
-                  }}
-                />
-              </Grid>
-              <Grid item xs={6}>
-                <TextField
-                  id='medicationDisplayInput'
-                  name='medicationDisplay'
-                  label='Medication'
-                  value={formData.medicationDisplay}
-                  onChange={this.changeState.bind(this, 'medicationDisplay')}
-                  fullWidth
-                  InputLabelProps={{
-                    shrink: true,
-                  }}
-                />
-              </Grid>
-              <Grid item xs={6}>
-                <TextField
-                  id='medicationCodeInput'
-                  name='medicationCode'
-                  label='Medication Code'
-                  value={formData.medicationCode}
-                  onChange={this.changeState.bind(this, 'medicationCode')}
-                  fullWidth
-                  InputLabelProps={{
-                    shrink: true,
-                  }}
-                />
-              </Grid>
-              <Grid item xs={3}>
+  // Handle cancel
+  function handleCancel() {
+    navigate('/medication-requests');
+  }
+
+  const statusOptions = [
+    { value: 'active', label: 'Active' },
+    { value: 'on-hold', label: 'On Hold' },
+    { value: 'cancelled', label: 'Cancelled' },
+    { value: 'completed', label: 'Completed' },
+    { value: 'entered-in-error', label: 'Entered in Error' },
+    { value: 'stopped', label: 'Stopped' },
+    { value: 'draft', label: 'Draft' },
+    { value: 'unknown', label: 'Unknown' }
+  ];
+
+  const intentOptions = [
+    { value: 'proposal', label: 'Proposal' },
+    { value: 'plan', label: 'Plan' },
+    { value: 'order', label: 'Order' },
+    { value: 'original-order', label: 'Original Order' },
+    { value: 'reflex-order', label: 'Reflex Order' },
+    { value: 'filler-order', label: 'Filler Order' },
+    { value: 'instance-order', label: 'Instance Order' },
+    { value: 'option', label: 'Option' }
+  ];
+
+  const priorityOptions = [
+    { value: 'routine', label: 'Routine' },
+    { value: 'urgent', label: 'Urgent' },
+    { value: 'asap', label: 'ASAP' },
+    { value: 'stat', label: 'STAT' }
+  ];
+
+  const periodUnitOptions = [
+    { value: 's', label: 'Second' },
+    { value: 'min', label: 'Minute' },
+    { value: 'h', label: 'Hour' },
+    { value: 'd', label: 'Day' },
+    { value: 'wk', label: 'Week' },
+    { value: 'mo', label: 'Month' },
+    { value: 'a', label: 'Year' }
+  ];
+
+  return (
+    <Container maxWidth="md" sx={{ py: 4 }}>
+      <Card sx={{ boxShadow: 3 }}>
+        <CardHeader 
+          title={id && id !== 'new' ? 'Edit Medication Request' : 'New Medication Request'}
+          sx={{ bgcolor: 'primary.main', color: 'primary.contrastText' }}
+        />
+        <CardContent>
+          {error && (
+            <Typography color="error" sx={{ mb: 2 }}>
+              Error: {error}
+            </Typography>
+          )}
+          
+          {/* System ID Barcode */}
+          {(id && id !== 'new') && (
+            <Box sx={{ mb: 3, textAlign: 'right' }}>
+              <span className="barcode helveticas" style={{ fontSize: '2rem' }}>{id}</span>
+            </Box>
+          )}
+          
+          <Stack spacing={3}>
+            <TextField
+              fullWidth
+              label="Patient"
+              value={get(medicationRequest, 'subject.display', '')}
+              helperText={get(medicationRequest, 'subject.reference', '') || 'Patient reference will be assigned'}
+              disabled // Always disabled to prevent editing
+            />
+            
+            <Stack direction="row" spacing={2}>
+              <TextField
+                fullWidth
+                label="Medication Name"
+                value={get(medicationRequest, 'medicationCodeableConcept.text', '') || 
+                       get(medicationRequest, 'medicationCodeableConcept.coding[0].display', '')}
+                onChange={(e) => handleChange('medicationCodeableConcept.text', e.target.value)}
+                helperText="Name of the medication"
+                disabled={!isEditing}
+              />
+              
+              <TextField
+                fullWidth
+                label="Medication Code"
+                value={get(medicationRequest, 'medicationCodeableConcept.coding[0].code', '')}
+                onChange={(e) => handleChange('medicationCodeableConcept.coding[0].code', e.target.value)}
+                helperText="RxNorm code"
+                disabled={!isEditing}
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <Tooltip title="Lookup RxNorm codes">
+                        <IconButton
+                          onClick={() => window.open('https://mor.nlm.nih.gov/RxNav/', '_blank')}
+                          edge="end"
+                          disabled={!isEditing}
+                        >
+                          <SearchIcon />
+                        </IconButton>
+                      </Tooltip>
+                    </InputAdornment>
+                  ),
+                }}
+              />
+            </Stack>
+            
+            <Stack direction="row" spacing={2}>
+              <FormControl fullWidth disabled={!isEditing}>
+                <InputLabel>Status</InputLabel>
                 <Select
-                  id='statusInput'
-                  name='status'
-                  label='Status'
-                  value={formData.status}
-                  onChange={this.changeState.bind(this, 'status')}
-                  fullWidth
+                  value={get(medicationRequest, 'status', 'active')}
+                  onChange={(e) => handleChange('status', e.target.value)}
+                  label="Status"
                 >
-                  <MenuItem value="active">Active</MenuItem>
-                  <MenuItem value="on-hold">On Hold</MenuItem>
-                  <MenuItem value="cancelled">Cancelled</MenuItem>
-                  <MenuItem value="completed">Completed</MenuItem>
-                  <MenuItem value="entered-in-error">Entered in Error</MenuItem>
-                  <MenuItem value="stopped">Stopped</MenuItem>
-                  <MenuItem value="draft">Draft</MenuItem>
-                  <MenuItem value="unknown">Unknown</MenuItem>
+                  {statusOptions.map(option => (
+                    <MenuItem key={option.value} value={option.value}>
+                      {option.label}
+                    </MenuItem>
+                  ))}
                 </Select>
-              </Grid>
-              <Grid item xs={3}>
+              </FormControl>
+              
+              <FormControl fullWidth disabled={!isEditing}>
+                <InputLabel>Intent</InputLabel>
                 <Select
-                  id='intentInput'
-                  name='intent'
-                  label='Intent'
-                  value={formData.intent}
-                  onChange={this.changeState.bind(this, 'intent')}
-                  fullWidth
+                  value={get(medicationRequest, 'intent', 'order')}
+                  onChange={(e) => handleChange('intent', e.target.value)}
+                  label="Intent"
                 >
-                  <MenuItem value="proposal">Proposal</MenuItem>
-                  <MenuItem value="plan">Plan</MenuItem>
-                  <MenuItem value="order">Order</MenuItem>
-                  <MenuItem value="original-order">Original Order</MenuItem>
-                  <MenuItem value="reflex-order">Reflex Order</MenuItem>
-                  <MenuItem value="filler-order">Filler Order</MenuItem>
-                  <MenuItem value="instance-order">Instance Order</MenuItem>
-                  <MenuItem value="option">Option</MenuItem>
+                  {intentOptions.map(option => (
+                    <MenuItem key={option.value} value={option.value}>
+                      {option.label}
+                    </MenuItem>
+                  ))}
                 </Select>
-              </Grid>
-              <Grid item xs={3}>
+              </FormControl>
+              
+              <FormControl fullWidth disabled={!isEditing}>
+                <InputLabel>Priority</InputLabel>
                 <Select
-                  id='priorityInput'
-                  name='priority'
-                  label='Priority'
-                  value={formData.priority}
-                  onChange={this.changeState.bind(this, 'priority')}
-                  fullWidth
+                  value={get(medicationRequest, 'priority', 'routine')}
+                  onChange={(e) => handleChange('priority', e.target.value)}
+                  label="Priority"
                 >
-                  <MenuItem value="routine">Routine</MenuItem>
-                  <MenuItem value="urgent">Urgent</MenuItem>
-                  <MenuItem value="asap">ASAP</MenuItem>
-                  <MenuItem value="stat">STAT</MenuItem>
+                  {priorityOptions.map(option => (
+                    <MenuItem key={option.value} value={option.value}>
+                      {option.label}
+                    </MenuItem>
+                  ))}
                 </Select>
-              </Grid>
-              <Grid item xs={3}>
-                <TextField
-                  id='authoredOnInput'
-                  name='authoredOn'
-                  label='Authored On'
-                  type='date'
-                  value={formData.authoredOn}
-                  onChange={this.changeState.bind(this, 'authoredOn')}
-                  fullWidth
-                  InputLabelProps={{
-                    shrink: true,
-                  }}
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <TextField
-                  id='requesterDisplayInput'
-                  name='requesterDisplay'
-                  label='Requester'
-                  value={formData.requesterDisplay}
-                  onChange={this.changeState.bind(this, 'requesterDisplay')}
-                  fullWidth
-                  InputLabelProps={{
-                    shrink: true,
-                  }}
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <TextField
-                  id='dosageInstructionTextInput'
-                  name='dosageInstructionText'
-                  label='Dosage Instructions'
-                  value={formData.dosageInstructionText}
-                  onChange={this.changeState.bind(this, 'dosageInstructionText')}
-                  placeholder={this.setHint("Take 2 tablets by mouth every 6 hours")}
-                  fullWidth
-                  multiline
-                  rows={2}
-                  InputLabelProps={{
-                    shrink: true,
-                  }}
-                />
-              </Grid>
-              <Grid item xs={3}>
-                <TextField
-                  id='dosageValueInput'
-                  name='dosageValue'
-                  label='Dose Amount'
-                  type='number'
-                  value={formData.dosageValue}
-                  onChange={this.changeState.bind(this, 'dosageValue')}
-                  fullWidth
-                  InputLabelProps={{
-                    shrink: true,
-                  }}
-                />
-              </Grid>
-              <Grid item xs={3}>
-                <TextField
-                  id='dosageUnitInput'
-                  name='dosageUnit'
-                  label='Dose Unit'
-                  value={formData.dosageUnit}
-                  onChange={this.changeState.bind(this, 'dosageUnit')}
-                  placeholder={this.setHint("mg, mL, tablets, etc.")}
-                  fullWidth
-                  InputLabelProps={{
-                    shrink: true,
-                  }}
-                />
-              </Grid>
-              <Grid item xs={2}>
-                <TextField
-                  id='frequencyInput'
-                  name='frequency'
-                  label='Frequency'
-                  type='number'
-                  value={formData.frequency}
-                  onChange={this.changeState.bind(this, 'frequency')}
-                  fullWidth
-                  InputLabelProps={{
-                    shrink: true,
-                  }}
-                />
-              </Grid>
-              <Grid item xs={2}>
-                <TextField
-                  id='periodInput'
-                  name='period'
-                  label='Period'
-                  type='number'
-                  value={formData.period}
-                  onChange={this.changeState.bind(this, 'period')}
-                  fullWidth
-                  InputLabelProps={{
-                    shrink: true,
-                  }}
-                />
-              </Grid>
-              <Grid item xs={2}>
+              </FormControl>
+              
+              <TextField
+                fullWidth
+                type="date"
+                label="Authored On"
+                value={moment(get(medicationRequest, 'authoredOn', '')).format('YYYY-MM-DD')}
+                onChange={(e) => handleChange('authoredOn', e.target.value)}
+                InputLabelProps={{ shrink: true }}
+                disabled={!isEditing}
+              />
+            </Stack>
+            
+            <TextField
+              fullWidth
+              label="Requester"
+              value={get(medicationRequest, 'requester.display', '')}
+              onChange={(e) => handleChange('requester.display', e.target.value)}
+              helperText={get(medicationRequest, 'requester.reference', '') || 'Practitioner reference will be assigned'}
+              disabled={!isEditing}
+            />
+            
+            <Typography variant="h6" sx={{ mt: 2 }}>Dosage Instructions</Typography>
+            
+            <TextField
+              fullWidth
+              multiline
+              rows={2}
+              label="Dosage Instructions Text"
+              value={get(medicationRequest, 'dosageInstruction[0].text', '')}
+              onChange={(e) => handleChange('dosageInstruction[0].text', e.target.value)}
+              helperText="e.g., Take 2 tablets by mouth every 6 hours"
+              disabled={!isEditing}
+            />
+            
+            <Stack direction="row" spacing={2}>
+              <TextField
+                fullWidth
+                type="number"
+                label="Dose Amount"
+                value={get(medicationRequest, 'dosageInstruction[0].doseAndRate[0].doseQuantity.value', '')}
+                onChange={(e) => handleChange('dosageInstruction[0].doseAndRate[0].doseQuantity.value', parseFloat(e.target.value) || null)}
+                disabled={!isEditing}
+              />
+              
+              <TextField
+                fullWidth
+                label="Dose Unit"
+                value={get(medicationRequest, 'dosageInstruction[0].doseAndRate[0].doseQuantity.unit', '')}
+                onChange={(e) => {
+                  handleChange('dosageInstruction[0].doseAndRate[0].doseQuantity.unit', e.target.value);
+                  handleChange('dosageInstruction[0].doseAndRate[0].doseQuantity.code', e.target.value);
+                }}
+                helperText="e.g., mg, mL, tablets"
+                disabled={!isEditing}
+              />
+            </Stack>
+            
+            <Stack direction="row" spacing={2}>
+              <TextField
+                fullWidth
+                type="number"
+                label="Frequency"
+                value={get(medicationRequest, 'dosageInstruction[0].timing.repeat.frequency', '')}
+                onChange={(e) => handleChange('dosageInstruction[0].timing.repeat.frequency', parseInt(e.target.value) || null)}
+                helperText="Times per period"
+                disabled={!isEditing}
+              />
+              
+              <TextField
+                fullWidth
+                type="number"
+                label="Period"
+                value={get(medicationRequest, 'dosageInstruction[0].timing.repeat.period', '')}
+                onChange={(e) => handleChange('dosageInstruction[0].timing.repeat.period', parseInt(e.target.value) || null)}
+                disabled={!isEditing}
+              />
+              
+              <FormControl fullWidth disabled={!isEditing}>
+                <InputLabel>Period Unit</InputLabel>
                 <Select
-                  id='periodUnitInput'
-                  name='periodUnit'
-                  label='Period Unit'
-                  value={formData.periodUnit}
-                  onChange={this.changeState.bind(this, 'periodUnit')}
-                  fullWidth
+                  value={get(medicationRequest, 'dosageInstruction[0].timing.repeat.periodUnit', 'd')}
+                  onChange={(e) => handleChange('dosageInstruction[0].timing.repeat.periodUnit', e.target.value)}
+                  label="Period Unit"
                 >
-                  <MenuItem value="s">Second</MenuItem>
-                  <MenuItem value="min">Minute</MenuItem>
-                  <MenuItem value="h">Hour</MenuItem>
-                  <MenuItem value="d">Day</MenuItem>
-                  <MenuItem value="wk">Week</MenuItem>
-                  <MenuItem value="mo">Month</MenuItem>
-                  <MenuItem value="a">Year</MenuItem>
+                  {periodUnitOptions.map(option => (
+                    <MenuItem key={option.value} value={option.value}>
+                      {option.label}
+                    </MenuItem>
+                  ))}
                 </Select>
-              </Grid>
-              <Grid item xs={3}>
-                <TextField
-                  id='routeDisplayInput'
-                  name='routeDisplay'
-                  label='Route'
-                  value={formData.routeDisplay}
-                  onChange={this.changeState.bind(this, 'routeDisplay')}
-                  placeholder={this.setHint("oral, IV, IM, etc.")}
-                  fullWidth
-                  InputLabelProps={{
-                    shrink: true,
-                  }}
-                />
-              </Grid>
-              <Grid item xs={3}>
-                <TextField
-                  id='dispenseQuantityInput'
-                  name='dispenseQuantity'
-                  label='Dispense Quantity'
-                  type='number'
-                  value={formData.dispenseQuantity}
-                  onChange={this.changeState.bind(this, 'dispenseQuantity')}
-                  fullWidth
-                  InputLabelProps={{
-                    shrink: true,
-                  }}
-                />
-              </Grid>
-              <Grid item xs={3}>
-                <TextField
-                  id='dispenseUnitInput'
-                  name='dispenseUnit'
-                  label='Dispense Unit'
-                  value={formData.dispenseUnit}
-                  onChange={this.changeState.bind(this, 'dispenseUnit')}
-                  placeholder={this.setHint("tablets, mL, etc.")}
-                  fullWidth
-                  InputLabelProps={{
-                    shrink: true,
-                  }}
-                />
-              </Grid>
-              <Grid item xs={3}>
-                <TextField
-                  id='validityStartInput'
-                  name='validityStart'
-                  label='Valid From'
-                  type='date'
-                  value={formData.validityStart}
-                  onChange={this.changeState.bind(this, 'validityStart')}
-                  fullWidth
-                  InputLabelProps={{
-                    shrink: true,
-                  }}
-                />
-              </Grid>
-              <Grid item xs={3}>
-                <TextField
-                  id='validityEndInput'
-                  name='validityEnd'
-                  label='Valid Until'
-                  type='date'
-                  value={formData.validityEnd}
-                  onChange={this.changeState.bind(this, 'validityEnd')}
-                  fullWidth
-                  InputLabelProps={{
-                    shrink: true,
-                  }}
-                />
-              </Grid>
-            </Grid>
-          </CardContent>
-          <CardActions>
-            { this.determineButtons(formData) }
-          </CardActions>
-        </Card>
-      </div>
-    );
-  }
-
-  determineButtons(formData){
-    if (this.props.medicationRequestId) {
-      return (
-        <div>
-          <Button 
-            id="updateMedicationRequestButton"
-            color="primary" 
-            variant="contained" 
-            onClick={this.handleSaveButton.bind(this)}
-            style={{marginRight: '20px'}}
-          >
-            Save
-          </Button>
-          <Button 
-            id="deleteMedicationRequestButton"
-            onClick={this.handleDeleteButton.bind(this)}
-          >
-            Delete
-          </Button>
-        </div>
-      );
-    } else {
-      return(
-        <Button 
-          id="saveMedicationRequestButton" 
-          color="primary" 
-          variant="contained" 
-          onClick={this.handleSaveButton.bind(this)}
-        >
-          Save
-        </Button>
-      );
-    }
-  }
-
-  updateFormData(formData, field, textValue){
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log("MedicationRequestDetail.updateFormData", formData, field, textValue);
-
-    switch (field) {
-      case "subjectDisplay":
-        set(formData, 'subjectDisplay', textValue)
-        break;
-      case "status":
-        set(formData, 'status', textValue)
-        break;
-      case "intent":
-        set(formData, 'intent', textValue)
-        break;
-      case "priority":
-        set(formData, 'priority', textValue)
-        break;
-      case "medicationDisplay":
-        set(formData, 'medicationDisplay', textValue)
-        break;
-      case "medicationCode":
-        set(formData, 'medicationCode', textValue)
-        break;        
-      case "authoredOn":
-        set(formData, 'authoredOn', textValue)
-        break;
-      case "requesterDisplay":
-        set(formData, 'requesterDisplay', textValue)
-        break;
-      case "dosageInstructionText":
-        set(formData, 'dosageInstructionText', textValue)
-        break;
-      case "dosageValue":
-        set(formData, 'dosageValue', textValue)
-        break;
-      case "dosageUnit":
-        set(formData, 'dosageUnit', textValue)
-        break;
-      case "frequency":
-        set(formData, 'frequency', textValue)
-        break;
-      case "period":
-        set(formData, 'period', textValue)
-        break;
-      case "periodUnit":
-        set(formData, 'periodUnit', textValue)
-        break;
-      case "routeDisplay":
-        set(formData, 'routeDisplay', textValue)
-        break;
-      case "dispenseQuantity":
-        set(formData, 'dispenseQuantity', textValue)
-        break;
-      case "dispenseUnit":
-        set(formData, 'dispenseUnit', textValue)
-        break;
-      case "validityStart":
-        set(formData, 'validityStart', textValue)
-        break;
-      case "validityEnd":
-        set(formData, 'validityEnd', textValue)
-        break;
-      default:
-    }
-
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log("formData", formData);
-    return formData;
-  }
-  updateMedicationRequest(medicationRequestData, field, textValue){
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log("MedicationRequestDetail.updateMedicationRequest", medicationRequestData, field, textValue);
-
-    switch (field) {
-      case "subjectDisplay":
-        set(medicationRequestData, 'subject.display', textValue)
-        break;
-      case "status":
-        set(medicationRequestData, 'status', textValue)
-        break;
-      case "intent":
-        set(medicationRequestData, 'intent', textValue)
-        break;
-      case "priority":
-        set(medicationRequestData, 'priority', textValue)
-        break;
-      case "medicationDisplay":
-        set(medicationRequestData, 'medicationCodeableConcept.text', textValue)
-        break;
-      case "medicationCode":
-        set(medicationRequestData, 'medicationCodeableConcept.coding[0].code', textValue)
-        break;        
-      case "authoredOn":
-        set(medicationRequestData, 'authoredOn', textValue)
-        break;
-      case "requesterDisplay":
-        set(medicationRequestData, 'requester.display', textValue)
-        break;
-      case "dosageInstructionText":
-        set(medicationRequestData, 'dosageInstruction[0].text', textValue)
-        break;
-      case "dosageValue":
-        set(medicationRequestData, 'dosageInstruction[0].doseAndRate[0].doseQuantity.value', parseFloat(textValue))
-        break;
-      case "dosageUnit":
-        set(medicationRequestData, 'dosageInstruction[0].doseAndRate[0].doseQuantity.unit', textValue)
-        break;
-      case "frequency":
-        set(medicationRequestData, 'dosageInstruction[0].timing.repeat.frequency', parseInt(textValue))
-        break;
-      case "period":
-        set(medicationRequestData, 'dosageInstruction[0].timing.repeat.period', parseInt(textValue))
-        break;
-      case "periodUnit":
-        set(medicationRequestData, 'dosageInstruction[0].timing.repeat.periodUnit', textValue)
-        break;
-      case "routeDisplay":
-        set(medicationRequestData, 'dosageInstruction[0].route.coding[0].display', textValue)
-        break;
-      case "dispenseQuantity":
-        set(medicationRequestData, 'dispenseRequest.quantity.value', parseFloat(textValue))
-        break;
-      case "dispenseUnit":
-        set(medicationRequestData, 'dispenseRequest.quantity.unit', textValue)
-        break;
-      case "validityStart":
-        set(medicationRequestData, 'dispenseRequest.validityPeriod.start', textValue)
-        break;
-      case "validityEnd":
-        set(medicationRequestData, 'dispenseRequest.validityPeriod.end', textValue)
-        break;
-    }
-    return medicationRequestData;
-  }
-
-  changeState(field, event, textValue){
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log("   ");
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log("MedicationRequestDetail.changeState", field, textValue);
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log("this.state", this.state);
-
-    let formData = Object.assign({}, this.state.form);
-    let medicationRequestData = Object.assign({}, this.state.medicationRequest);
-
-    formData = this.updateFormData(formData, field, textValue);
-    medicationRequestData = this.updateMedicationRequest(medicationRequestData, field, textValue);
-
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log("medicationRequestData", medicationRequestData);
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log("formData", formData);
-
-    this.setState({form: formData})
-    this.setState({medicationRequest: medicationRequestData})
-  }
-
-  handleSaveButton(){
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log('MedicationRequestDetail.handleSaveButton()');
-    let self = this;
-    if(this.props.onUpsert){
-      this.props.onUpsert(self);
-    }
-  }
-
-  handleCancelButton(){
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log('MedicationRequestDetail.handleCancelButton()');
-  }
-
-  handleDeleteButton(){
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log('MedicationRequestDetail.handleDeleteButton()');
-    let self = this;
-    if(this.props.onDelete){
-      this.props.onDelete(self);
-    }
-  }
+              </FormControl>
+              
+              <TextField
+                fullWidth
+                label="Route"
+                value={get(medicationRequest, 'dosageInstruction[0].route.coding[0].display', '')}
+                onChange={(e) => handleChange('dosageInstruction[0].route.coding[0].display', e.target.value)}
+                helperText="e.g., oral, IV, IM"
+                disabled={!isEditing}
+              />
+            </Stack>
+            
+            <Typography variant="h6" sx={{ mt: 2 }}>Dispense Request</Typography>
+            
+            <Stack direction="row" spacing={2}>
+              <TextField
+                fullWidth
+                type="number"
+                label="Dispense Quantity"
+                value={get(medicationRequest, 'dispenseRequest.quantity.value', '')}
+                onChange={(e) => handleChange('dispenseRequest.quantity.value', parseFloat(e.target.value) || null)}
+                disabled={!isEditing}
+              />
+              
+              <TextField
+                fullWidth
+                label="Dispense Unit"
+                value={get(medicationRequest, 'dispenseRequest.quantity.unit', '')}
+                onChange={(e) => handleChange('dispenseRequest.quantity.unit', e.target.value)}
+                helperText="e.g., tablets, mL"
+                disabled={!isEditing}
+              />
+            </Stack>
+            
+            <Stack direction="row" spacing={2}>
+              <TextField
+                fullWidth
+                type="date"
+                label="Valid From"
+                value={moment(get(medicationRequest, 'dispenseRequest.validityPeriod.start', '')).format('YYYY-MM-DD')}
+                onChange={(e) => handleChange('dispenseRequest.validityPeriod.start', e.target.value)}
+                InputLabelProps={{ shrink: true }}
+                disabled={!isEditing}
+              />
+              
+              <TextField
+                fullWidth
+                type="date"
+                label="Valid Until"
+                value={moment(get(medicationRequest, 'dispenseRequest.validityPeriod.end', '')).format('YYYY-MM-DD')}
+                onChange={(e) => handleChange('dispenseRequest.validityPeriod.end', e.target.value)}
+                InputLabelProps={{ shrink: true }}
+                disabled={!isEditing}
+              />
+            </Stack>
+          </Stack>
+        </CardContent>
+        
+        <CardActions sx={{ justifyContent: 'flex-end', p: 2 }}>
+          {!isEditing && id && id !== 'new' ? (
+            // Read-only mode buttons
+            <>
+              <Button 
+                onClick={() => navigate('/medication-requests')}
+              >
+                Back
+              </Button>
+              <Button 
+                onClick={() => setIsEditing(true)}
+                variant="contained"
+                color="primary"
+              >
+                Edit
+              </Button>
+            </>
+          ) : (
+            // Edit mode buttons
+            <>
+              <Button 
+                onClick={() => {
+                  if (id && id !== 'new') {
+                    // Cancel editing and reload original data
+                    setIsEditing(false);
+                    // Reload the medication request to discard changes
+                    async function reloadMedicationRequest() {
+                      try {
+                        const result = await Meteor.callAsync('medicationRequests.get', id);
+                        if (result) {
+                          setMedicationRequest(result);
+                        }
+                      } catch (err) {
+                        console.error('Error reloading medication request:', err);
+                      }
+                    }
+                    reloadMedicationRequest();
+                  } else {
+                    // For new medication requests, go back
+                    navigate('/medication-requests');
+                  }
+                }}
+                disabled={loading}
+              >
+                Cancel
+              </Button>
+              {id && id !== 'new' && (
+                <Button 
+                  onClick={handleDelete}
+                  color="error"
+                  disabled={loading}
+                >
+                  Delete
+                </Button>
+              )}
+              <Button 
+                onClick={handleSave}
+                variant="contained"
+                color="primary"
+                disabled={loading}
+              >
+                {loading ? 'Saving...' : 'Save'}
+              </Button>
+            </>
+          )}
+        </CardActions>
+      </Card>
+    </Container>
+  );
 }
-
-MedicationRequestDetail.propTypes = {
-  id: PropTypes.string,
-  medicationRequestId: PropTypes.string,
-  medicationRequest: PropTypes.object,
-  showHints: PropTypes.bool,
-  onDelete: PropTypes.func,
-  onUpsert: PropTypes.func,
-  onCancel: PropTypes.func
-};
 
 export default MedicationRequestDetail;

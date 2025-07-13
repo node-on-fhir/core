@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useTracker } from 'meteor/react-meteor-data';
+import { useNavigate } from 'react-router-dom';
 
 import { 
   Grid, 
@@ -48,6 +49,7 @@ Session.setDefault('ObservationsTable.observationsIndex', 0)
 // MAIN COMPONENT
 
 export function ObservationsPage(props){
+  const navigate = useNavigate();
 
   let data = {
     selectedObservationId: '',
@@ -212,7 +214,7 @@ export function ObservationsPage(props){
 
   function handleAddObservation(){
     console.log('Add Observation button clicked');
-    // Add logic for adding a new observation
+    navigate('/observations/new');
   }
 
   function renderHeader() {

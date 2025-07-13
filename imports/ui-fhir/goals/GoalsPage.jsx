@@ -15,6 +15,7 @@ import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
 import React, { useState } from 'react';
 import { useTracker } from 'meteor/react-meteor-data';
+import { useNavigate } from 'react-router-dom';
 
 // import ListDetail from './ListDetail';
 import GoalsTable from '../carePlans/GoalsTable';
@@ -86,6 +87,7 @@ if(get(Meteor, 'settings.public.theme.palette')){
 // Main Component
 
 export function GoalsPage(props){
+  const navigate = useNavigate();
 
   let headerHeight = LayoutHelpers.calcHeaderHeight();
   let formFactor = LayoutHelpers.determineFormFactor();
@@ -96,7 +98,7 @@ export function GoalsPage(props){
 
   function handleAddGoal(){
     console.log('Add Goal button clicked');
-    // Add logic for adding a new goal
+    navigate('/goals/new');
   }
 
   function renderHeader() {
