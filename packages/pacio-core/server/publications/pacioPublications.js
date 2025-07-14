@@ -255,8 +255,8 @@ Meteor.publish('pacio.patients', async function(patientId, searchText) {
   
   // Limit results for performance
   const options = {
-    sort: { 'name.family': 1, 'name.given': 1 },
     limit: searchText ? 50 : 100
+    // Removed sort due to MongoDB parallel array indexing issues with FHIR name structure
   };
   
   console.log('Publishing patients with query:', query, 'options:', options);

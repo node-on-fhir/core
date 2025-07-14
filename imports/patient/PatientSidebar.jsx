@@ -502,6 +502,11 @@ export function PatientSidebar(props){
   // Trackers
 
   let currentUser = useTracker(function(){  
+    // Try Meteor.user() first, fallback to Session
+    const meteorUser = Meteor.user();
+    if (meteorUser) {
+      return meteorUser;
+    }
     return Session.get('currentUser');    
   }, [props.lastUpdated]);  
 
@@ -950,6 +955,20 @@ export function PatientSidebar(props){
   }
 
   //----------------------------------------------------------------------
+  // Patient Directory
+  
+  let patientDirectoryElements = [];
+  if(get(Meteor, 'settings.public.modules.PatientDirectory')){
+    patientDirectoryElements.push(<ListItem id='patientDirectoryItem' key='patientDirectoryItem' button onClick={function(){ openPage('/patient-directory'); }} >
+      <ListItemIcon >
+        <Icon icon={users} />
+      </ListItemIcon>
+      <ListItemText primary="Patient Directory" />
+    </ListItem>);    
+    patientDirectoryElements.push(<Divider key="patient-directory-hr" />);
+  };
+
+  //----------------------------------------------------------------------
   // Theming
 
   let themingElements = [];
@@ -1132,14 +1151,18 @@ export function PatientSidebar(props){
   };
 
   let profileElements = [];
-  if(get(Meteor, 'settings.public.defaults.sidebar.menuItems.Profile') && currentUser){
-    profileElements.push(<ListItem id='profileMenuItem' key='profileMenuItem' button onClick={function(){ openPage('/profile'); }} >
+  const showUserProfile = get(Meteor, 'settings.public.defaults.sidebar.menuItems.UserProfile');
+  console.log('UserProfile menu item enabled:', showUserProfile);
+  console.log('Current user:', currentUser);
+  
+  if(showUserProfile && currentUser){
+    profileElements.push(<ListItem id='profileMenuItem' key='profileMenuItem' button onClick={function(){ openPage('/my-profile'); }} >
       <ListItemIcon >
         <Icon icon={user} />
       </ListItemIcon>
-      <ListItemText primary="Profile" />
+      <ListItemText primary="My Profile" />
     </ListItem>);    
-    profileElements.push(<Divider key="login-hr" />);
+    profileElements.push(<Divider key="profile-hr" />);
   };
 
   let oauthElements = [];
@@ -1160,6 +1183,7 @@ export function PatientSidebar(props){
       { loginElements }
       { profileElements }
       { dataManagementElements }
+      { patientDirectoryElements }
       { customWorkflowElements }
 
       <div id='patientWorkflowElements' key='patientWorkflowElements'>

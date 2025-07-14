@@ -79,6 +79,7 @@ import ConditionsPage from '../ui-fhir/conditions/ConditionsPage.jsx';
 import ConditionDetail from '../ui-fhir/conditions/ConditionDetail.jsx';
 import CommunicationDetail from '../ui-fhir/communications/CommunicationDetail.jsx';
 import DocumentReferenceDetail from '../ui-fhir/documentReferences/DocumentReferenceDetail.jsx';
+import PatientDetail from '../ui-fhir/patients/PatientDetail.jsx';
 import ListDetail from '../ui-fhir/lists/ListDetail.jsx';
 import NutritionOrderDetail from '../ui-fhir/nutritionOrders/NutritionOrderDetail.jsx';
 import PractitionerDetail from '../ui-fhir/practitioners/PractitionerDetail.jsx';
@@ -131,6 +132,7 @@ import CommunicationsPage from '../ui-fhir/communications/CommunicationsPage.jsx
 import MedicationListsPage from '../ui-pacio/MedicationListsPage.jsx';
 import TransitionsOfCarePage from '../ui-pacio/TransitionsOfCarePage.jsx';
 import AdvancedDirectivesPage from '../ui-pacio/AdvancedDirectivesPage.jsx';
+import MyProfilePage from './pages/MyProfilePage.jsx';
 
 //===============================================================================================================
 
@@ -511,7 +513,7 @@ if(get(Meteor, 'settings.public.modules.accounts.enabled', true)){
   });
 }
 
-if(get(Meteor, 'settings.public.modules.PatientsDirectory')){
+if(get(Meteor, 'settings.public.modules.PatientDirectory')){
   dynamicRoutes.push({
     path: "/patient-directory",
     element: <PatientsDirectory />
@@ -722,6 +724,14 @@ if(get(Meteor, 'settings.public.modules.fhir.Patients')){
   dynamicRoutes.push({
     path: "/patients",
     element: <PatientsDirectory />
+  })
+  dynamicRoutes.push({
+    path: "/patients/new",
+    element: <PatientDetail />
+  })
+  dynamicRoutes.push({
+    path: "/patients/:id",
+    element: <PatientDetail />
   })
 }
 if(get(Meteor, 'settings.public.modules.fhir.OperationOutcomes')){
@@ -946,6 +956,10 @@ dynamicRoutes.push({
 dynamicRoutes.push({
   path: "/advance-directives", 
   element: <AdvancedDirectivesPage />
+});
+dynamicRoutes.push({
+  path: "/my-profile", 
+  element: <MyProfilePage />
 });
 
 // ==============================================================================

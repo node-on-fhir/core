@@ -73,6 +73,8 @@
       "sidebar": {
         "menuItems": {
           "HomePage": true,
+          "UserProfile": true,
+          "PatientDirectory": true,
           "Privacy": true,
           "TermsAndConditions": true,
           "FhirResources": false,

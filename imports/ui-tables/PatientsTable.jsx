@@ -215,6 +215,7 @@ export function PatientsTable(props){
     hideActive,
     hideName,
     hideGender,
+    hideBirthSex,
     hideBirthDate,
     hideMaritalStatus,
     hideLanguage,
@@ -689,6 +690,21 @@ export function PatientsTable(props){
     }
   }
 
+  function renderBirthSexHeader(){
+    if (!hideBirthSex) {
+      return (
+        <TableCell className="birthSex">Birth Sex</TableCell>
+      );
+    }
+  }
+  function renderBirthSex(birthSex, _id){
+    if (!hideBirthSex) {
+      return (
+        <TableCell className='birthSex' onClick={ cellClick.bind(this, _id)} >{birthSex}</TableCell>
+      );
+    }
+  }
+
   function renderBirthDateHeader(){
     if (!hideBirthDate) {
       
@@ -930,6 +946,7 @@ export function PatientsTable(props){
 
           { renderName(get(patientsToRender[i], "name"), get(patientsToRender[i], "_id"))}
           { renderGender(get(patientsToRender[i], "gender"), get(patientsToRender[i], "_id"))}
+          { renderBirthSex(get(patientsToRender[i], "birthSex"), get(patientsToRender[i], "_id"))}
           { renderBirthDate(get(patientsToRender[i], "birthDate"), get(patientsToRender[i], "_id"))}
 
           { renderAddress(get(patientsToRender[i], 'addressLine') ) }
@@ -1117,6 +1134,7 @@ export function PatientsTable(props){
 
             { renderNameHeader() }
             { renderGenderHeader() }
+            { renderBirthSexHeader() }
             { renderBirthDateHeader() }
 
             { renderAddressHeader() }
@@ -1162,6 +1180,7 @@ PatientsTable.propTypes = {
 
   hideName: PropTypes.bool,
   hideGender: PropTypes.bool,
+  hideBirthSex: PropTypes.bool,
   hideBirthDate: PropTypes.bool,
   
   hideMaritalStatus: PropTypes.bool,
@@ -1207,6 +1226,7 @@ PatientsTable.defaultProps = {
   paginationCount: 100,
   hideName: false,
   hideGender: false,
+  hideBirthSex: false,
   hideBirthDate: false,
 
   hideMaritalStatus: false,

@@ -42,7 +42,7 @@ Add to your `.env.development` file (make sure it's in `.gitignore`):
 # Enable development auto-login
 NODE_ENV=development
 DEV_AUTO_LOGIN=true
-DEV_AUTO_USERNAME=devuser
+DEV_AUTO_USERNAME=demouser
 DEV_AUTO_PASSWORD=development-only-password-2024
 ```
 
@@ -85,7 +85,7 @@ Or add to your development settings file:
 ### Best Practices
 
 1. **Never commit `.env` files** containing credentials
-2. **Use descriptive usernames** like "devuser" or "testaccount"
+2. **Use descriptive usernames** like "demouser" or "testaccount"
 3. **Rotate passwords** periodically even in development
 4. **Monitor logs** for unexpected auto-login attempts
 5. **Disable in staging** environments that mirror production

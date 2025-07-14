@@ -103,7 +103,8 @@
           "TermsAndConditions": true,
           "DataImport": true,
           "DataExport": true,
-          "ConstructionZone": false
+          "ConstructionZone": false,
+          "UserProfile": true
         },
         "hidden": [
           "/audit-events",
@@ -135,6 +136,7 @@
       }
     },
     "modules": {
+      "PatientDirectory": true,
       "apps": {
         "AdvanceDirectives": true,
         "GoalTracking": true,

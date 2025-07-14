@@ -3981,6 +3981,7 @@ export function flattenPatient(patient, internalDateFormat){
     identifier: '',
     active: true,
     gender: get(patient, 'gender'),
+    birthSex: '',
     name: get(patient, 'name[0].text', ''),
     mrn: '',
     birthDate: '',
@@ -4007,6 +4008,33 @@ export function flattenPatient(patient, internalDateFormat){
   result.active = get(patient, 'active', true).toString();
   
   result.gender = get(patient, 'gender', '');
+
+  // Extract birth sex from US Core extension
+  if(get(patient, 'extension') && Array.isArray(patient.extension)){
+    patient.extension.forEach(function(extension){
+      if(extension.url === 'http://hl7.org/fhir/us/core/StructureDefinition/us-core-birthsex'){
+        if(extension.valueCode){
+          // Map codes to display values
+          switch(extension.valueCode){
+            case 'M':
+              result.birthSex = 'Male';
+              break;
+            case 'F':
+              result.birthSex = 'Female';
+              break;
+            case 'UNK':
+              result.birthSex = 'Unknown';
+              break;
+            case 'ASKU':
+              result.birthSex = 'Not Disclosed';
+              break;
+            default:
+              result.birthSex = extension.valueCode;
+          }
+        }
+      }
+    });
+  }
 
   // patient name has gone through a number of revisions, and we need to search a few different spots, and assemble as necessary  
   let resultingNameString = "";

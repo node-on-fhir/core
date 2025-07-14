@@ -32,6 +32,7 @@ import '../imports/api/documentReferences/methods.js';
 import '../imports/api/compositions/methods.js';
 import '../imports/api/conditions/methods.js';
 import '../imports/api/locations/methods.js';
+import '../imports/api/patients/methods.js';
 
 
 
