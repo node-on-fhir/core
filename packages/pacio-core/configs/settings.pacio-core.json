@@ -236,6 +236,7 @@
     }
   },
   "private": {
+    "debug": true,
     "fhir": {
       "disableOauth": false,
       "schemaValidation": {

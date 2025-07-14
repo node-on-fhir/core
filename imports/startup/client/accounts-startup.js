@@ -3,6 +3,7 @@
 import { Meteor } from 'meteor/meteor';
 import { Accounts } from 'meteor/accounts-base';
 import { Session } from 'meteor/session';
+import { Tracker } from 'meteor/tracker';
 import { get } from 'lodash';
 
 // Import accounts client components
@@ -32,6 +33,20 @@ Accounts.onLogin(() => {
   
   // Subscribe to user-specific data
   Meteor.subscribe('accounts.currentUser');
+  
+  // Set the current user in session
+  const user = Meteor.user();
+  if (user) {
+    console.log('Setting currentUser in session:', user);
+    Session.set('currentUser', user);
+    
+    // Get the login token (which serves as the session access token)
+    const loginToken = Accounts._storedLoginToken();
+    if (loginToken) {
+      console.log('Setting accountsAccessToken in session');
+      Session.set('accountsAccessToken', loginToken);
+    }
+  }
   
   // Check if two-factor is required
   Meteor.call('accounts.checkTwoFactor', (error, result) => {
@@ -189,5 +204,31 @@ export const requireAdmin = (context, redirect) => {
     redirect('/unauthorized');
   }
 };
+
+// Keep currentUser session variable in sync with Meteor.user()
+Meteor.startup(() => {
+  Tracker.autorun(() => {
+    const user = Meteor.user();
+    const currentSessionUser = Session.get('currentUser');
+    
+    // Update session if user changed
+    if (user && (!currentSessionUser || currentSessionUser._id !== user._id)) {
+      console.log('Updating currentUser in session from tracker');
+      Session.set('currentUser', user);
+    } else if (!user && currentSessionUser) {
+      console.log('Clearing currentUser from session');
+      Session.set('currentUser', null);
+    }
+    
+    // Also ensure token is set if we have a user but no token
+    if (user && !Session.get('accountsAccessToken')) {
+      const loginToken = Accounts._storedLoginToken();
+      if (loginToken) {
+        console.log('Setting missing accountsAccessToken');
+        Session.set('accountsAccessToken', loginToken);
+      }
+    }
+  });
+});
 
 console.log('Accounts client module started');

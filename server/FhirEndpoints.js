@@ -117,17 +117,79 @@ Meteor.startup(async function(){
 import { AccessControl } from 'role-acl';
 
 let accessControlList = [];
-Consents.find({'category.coding.code': 'IDSCL'}).forEach(function(consentRecord){
-  // console.log('consentRecord', consentRecord)
-  accessControlList.push(FhirUtilities.consentIntoAccessControl(consentRecord));
-})
-
 let accessControlListsInitialized = false;
+let acl = new AccessControl();
 
-if(accessControlList.length > 0){
-  accessControlListsInitialized = true;
+// Function to initialize ACL
+function initializeAccessControl() {
+  // Clear existing grants
+  accessControlList = [];
+  acl = new AccessControl();
+  
+  // Load consent records
+  Consents.find({'category.coding.code': 'IDSCL'}).forEach(function(consentRecord){
+    let aclRecord = FhirUtilities.consentIntoAccessControl(consentRecord);
+    console.log('Converting Consent to ACL record:', aclRecord);
+    accessControlList.push(aclRecord);
+  });
+
+  if(accessControlList.length > 0){
+    accessControlListsInitialized = true;
+  }
+
+  // Convert our access control list to proper grant format
+  accessControlList.forEach(function(aclRecord) {
+    console.log('Processing ACL record:', aclRecord);
+    
+    if(aclRecord.role && aclRecord.resource && aclRecord.action) {
+      // Grant the permission
+      let grant = acl.grant(aclRecord.role)
+        .execute(aclRecord.action)
+        .on(aclRecord.resource, aclRecord.attributes || ['*']);
+        
+      // Add condition if present
+      if(aclRecord.condition) {
+        grant.when(aclRecord.condition);
+      }
+      
+      console.log(`Granted ${aclRecord.role} permission to ${aclRecord.action} on ${aclRecord.resource}`);
+    }
+  });
+
+  // Always grant noauth role full access when NOAUTH is enabled
+  if(process.env.NOAUTH) {
+    console.log('NOAUTH mode enabled - granting full access to noauth role');
+    // Grant access to all common FHIR resources
+    const fhirResources = ['Patient', 'Practitioner', 'Organization', 'Observation', 'Condition', 
+                          'Procedure', 'Medication', 'MedicationRequest', 'AllergyIntolerance', 
+                          'Immunization', 'DiagnosticReport', 'DocumentReference'];
+    fhirResources.forEach(function(resource) {
+      acl.grant('noauth').execute('access').on(resource, ['*']);
+    });
+  }
+  
+  // For development with auto-login, grant the user role access
+  if(process.env.DEV_AUTO_LOGIN === "true") {
+    console.log('DEV_AUTO_LOGIN enabled - granting access to user role');
+    const fhirResources = ['Patient', 'Practitioner', 'Organization', 'Observation', 'Condition', 
+                          'Procedure', 'Medication', 'MedicationRequest', 'AllergyIntolerance', 
+                          'Immunization', 'DiagnosticReport', 'DocumentReference'];
+    fhirResources.forEach(function(resource) {
+      acl.grant('user').execute('access').on(resource, ['*']);
+    });
+  }
+
+  console.log('ACL initialized with ' + accessControlList.length + ' access control records');
+  console.log('Available roles:', acl.getRoles());
 }
-const acl = new AccessControl(accessControlList);
+
+// Initialize ACL immediately (synchronously)
+initializeAccessControl();
+
+// Re-initialize on startup in case database wasn't ready
+Meteor.startup(function() {
+  initializeAccessControl();
+});
 
 //------------------------------------------------------------------------------------------
 
@@ -271,14 +333,34 @@ async function parseUserAuthorization(req){
   let authorizationContextToExport = false;
 
   // BASIC AUTH
-  if(get(Meteor, 'settings.private.accessControl.enableBasicAuth')){
+  if(get(Meteor, 'settings.private.accessControl.enableBasicAuth') || process.env.DEV_AUTO_LOGIN === "true"){
     if(get(req, "headers.authorization")){
       let encodedAuth = get(req, "headers.authorization");
       let decodedAuth = base64url.decode(encodedAuth.replace("Basic ", ""))
-      console.log('decodedAuth: ' + decodedAuth)
+      console.log('Basic Auth detected - decodedAuth: ' + decodedAuth)
   
       let authParts = decodedAuth.split(":");
-      if(authParts[0] && Collections["OAuthClients"]){
+      
+      // First check if it's a dev auto-login user
+      if(process.env.DEV_AUTO_LOGIN === "true" && 
+         authParts[0] === process.env.DEV_AUTO_USERNAME && 
+         authParts[1] === process.env.DEV_AUTO_PASSWORD) {
+        console.log('Dev auto-login credentials matched via Basic Auth');
+        
+        // Find the auto-created user
+        const user = await Meteor.users.findOneAsync({username: process.env.DEV_AUTO_USERNAME});
+        if(user) {
+          authorizationContext = {
+            role: get(user, 'roles[0]', 'user'),
+            userId: user._id,
+            patientId: get(user, 'patientId'),
+            practitionerId: get(user, 'practitionerId')
+          };
+          console.log('Basic Auth successful for dev user:', authParts[0]);
+        }
+      } 
+      // Then check OAuth clients
+      else if(authParts[0] && Collections["OAuthClients"]){
         let clientRegistration = await Collections["OAuthClients"].findOneAsync({client_id: authParts[0]})
         console.log('clientRegistration', clientRegistration)
         if(clientRegistration && authParts[1]){
@@ -288,11 +370,10 @@ async function parseUserAuthorization(req){
               userId: authParts[0]
             };;
             console.log('User presented registered client_secret via Basic Auth. Granting system access.');
-
           }          
         }
       } else {
-        console.log("For some reason the OAuthClients collection doesn't exist.")
+        console.log("Basic Auth credentials did not match any known users or OAuth clients")
       }
     }  
   }
@@ -365,31 +446,27 @@ async function parseUserAuthorization(req){
   console.warn('>>> the above userId and authToken were extracted with jwt.decode() ')
   console.warn('>>> jwt.decode() should be replaced with jwt.verify()')
 
-  // console.log('>>> SmartOnFHIR.OAuthServerConfig', OAuthServerConfig)
-  if(typeof OAuthServerConfig === 'object' && sessionToken){
-    // let accessToken = OAuthServerConfig.collections.accessToken.findOneAsync({accessToken: accessTokenStr})
-    // console.log('>>> SmartOnFHIR.accessToken', accessToken)
-
-    let sessionUser;
-    if(userId){
-      sessionUser = await accountsServer.findUserById(userId);
+  // Simple session token authentication using Meteor's login tokens
+  if(sessionToken && !authorizationContext){
+    console.log('>>> Checking session token authentication');
+    
+    // Find user by their login token
+    const hashedToken = Accounts._hashLoginToken(sessionToken);
+    const user = await Meteor.users.findOneAsync({
+      'services.resume.loginTokens.hashedToken': hashedToken
+    });
+    
+    if(user) {
+      console.log('>>> Session token authenticated for user:', user.username);
+      authorizationContext = {
+        role: get(user, 'roles[0]', 'user'),
+        userId: user._id,
+        patientId: get(user, 'patientId', ''),
+        practitionerId: get(user, 'practitionerId', '')
+      };
     } else {
-      let session = await accountsServer.findSessionByAccessToken(authToken);
-      // const session = await accountsServer.findSessionByAccessToken(get(sessionToken, 'payload.data.token'));
-      process.env.DEBUG_ACCOUNTS && console.log('>>> SmartOnFHIR.session', session)
-  
-      sessionUser = await accountsServer.findUserById(get(session, 'userId'));
+      console.log('>>> Session token not found or expired');
     }
-
-    process.env.DEBUG_ACCOUNTS && console.log('>>> SmartOnFHIR.sessionUser', sessionUser)
-    process.env.DEBUG_ACCOUNTS && console.log('>>> SmartOnFHIR.sessionUserRole', get(sessionUser, 'roles[0]'))
-
-    authorizationContext = {
-      role: get(sessionUser, 'roles[0]', 'citizen'),
-      userId: get(sessionUser, '_id', ''),
-      patientId: get(sessionUser, 'patientId', ''),
-      practitionerId: get(sessionUser, 'practitionerId', '')
-    };
   }
 
   if (get(Meteor, 'settings.private.fhir.disableOauth') === true) {
@@ -649,15 +726,9 @@ if(typeof serverRouteManifest === "object"){
               if(get(Meteor, 'settings.private.debug') === true) { console.log('Security checks completed'); }
 
               // the person is authorized and known; but do they have permission to access?
-              let userRole = {
-                role: 'citizen',
-                userId: null
-              };
+              let userRole = get(authorizationContext, 'role', 'citizen');
               
               // TODO:  if logged in, user role becomes 'healthcare provider' etc.
-
-
-              // const permission = acl.can(userRole.role.role).execute('access').with({'securityLevel': 'restricted'}).sync().on(routeResourceType);
 
               let records;
               let lastModified = moment().subtract(100, 'years');
@@ -751,8 +822,42 @@ if(typeof serverRouteManifest === "object"){
                     if (get(Meteor, 'settings.private.fhir.disableAccessControl') === true) {
                       accessGranted = true;
                     } else {
-                      permission = acl.can(userRole).execute('access').with({'securityLevel': recordSecurityLevel}).sync().on(routeResourceType);    
-                      accessGranted = permission.granted;
+                      console.log('DEBUG - Checking ACL permissions:');
+                      console.log('  userRole:', userRole);
+                      console.log('  userRole type:', typeof userRole);
+                      console.log('  recordSecurityLevel:', recordSecurityLevel);
+                      console.log('  routeResourceType:', routeResourceType);
+                      console.log('  accessControlList length:', accessControlList.length);
+                      
+                      try {
+                        // Check if role exists first
+                        const roles = acl.getRoles();
+                        console.log('Available roles:', roles);
+                        console.log('Checking if role exists:', roles.includes(userRole));
+                        
+                        if(roles.includes(userRole)) {
+                          permission = acl.can(userRole).execute('access').sync().on(routeResourceType);
+                          accessGranted = permission.granted;
+                          console.log('Permission check details:');
+                          console.log('  - Role:', userRole);
+                          console.log('  - Action:', 'access');
+                          console.log('  - Resource:', routeResourceType);
+                          console.log('  - Permission object:', permission);
+                          console.log('  - Granted:', permission.granted);
+                          console.log('  - Attributes:', permission.attributes);
+                          
+                          // Let's also check what permissions this role has
+                          const roleGrants = acl.getGrants();
+                          console.log('All grants:', JSON.stringify(roleGrants, null, 2));
+                        } else {
+                          console.log('Role not found in ACL, defaulting to denied');
+                          accessGranted = false;
+                        }
+                      } catch (error) {
+                        console.error('ACL Error:', error.message);
+                        console.error('ACL Error Stack:', error.stack);
+                        accessGranted = false;
+                      }
                     }
     
                     console.log('accessGranted: ' + accessGranted);

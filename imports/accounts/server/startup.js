@@ -314,6 +314,9 @@ function setupAccountsPublications() {
         status: 1,
         statusConnection: 1,
         lastActivityAt: 1,
+        patientId: 1,
+        practitionerId: 1,
+        fullLegalName: 1,
         'services.google.picture': 1,
         'services.github.avatar_url': 1,
         'services.twoFactor.enabled': 1

@@ -10,8 +10,11 @@ import {
   Box,
   Paper,
   Divider,
-  Alert
+  Alert,
+  IconButton,
+  InputAdornment
 } from '@mui/material';
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 
 import { get } from 'lodash';
 import { useTracker } from 'meteor/react-meteor-data';
@@ -19,8 +22,9 @@ import { useNavigate } from 'react-router-dom';
 
 import { Session } from 'meteor/session';
 import { Meteor } from 'meteor/meteor';
+import { Accounts } from 'meteor/accounts-base';
 
-import { PatientCard } from '../../patient/PatientCard.jsx';
+import PatientCard from '../../patient/PatientCard.jsx';
 import { Patients } from '../../lib/schemas/SimpleSchemas/Patients';
 
 function MyProfilePage(props) {
@@ -32,13 +36,32 @@ function MyProfilePage(props) {
   const [error, setError] = useState();
   const [successMessage, setSuccessMessage] = useState('');
   const navigate = useNavigate();
+  
+  // Subscribe to current user data
+  useTracker(() => {
+    const handle = Meteor.subscribe('accounts.currentUser');
+    return handle.ready();
+  }, []);
 
   let currentUser = useTracker(function(){
-    return Session.get('currentUser');
+    const sessionUser = Session.get('currentUser');
+    const meteorUser = Meteor.user();
+    console.log('MyProfilePage - sessionUser:', sessionUser);
+    console.log('MyProfilePage - meteorUser:', meteorUser);
+    console.log('MyProfilePage - userId:', Meteor.userId());
+    
+    // Use Meteor.user() if session is not set
+    return sessionUser || meteorUser;
   }, [])
 
   let accountsAccessToken = useTracker(function(){
-    return Session.get('accountsAccessToken');
+    const sessionToken = Session.get('accountsAccessToken');
+    const storedToken = Accounts._storedLoginToken();
+    console.log('MyProfilePage - sessionToken:', sessionToken);
+    console.log('MyProfilePage - storedToken:', storedToken);
+    
+    // Use stored token if session is not set
+    return sessionToken || storedToken;
   }, [])
 
   // Get the patient record for the current user
@@ -60,6 +83,13 @@ function MyProfilePage(props) {
   if(get(Meteor, 'settings.public.defaults.prominantHeader')){
     headerHeight = 128;
   }
+  
+  // Debug current data
+  console.log('MyProfilePage render - currentUser:', currentUser);
+  console.log('MyProfilePage render - currentUser._id:', get(currentUser, '_id'));
+  console.log('MyProfilePage render - currentUser.id:', get(currentUser, 'id'));
+  console.log('MyProfilePage render - currentUser.emails:', get(currentUser, 'emails'));
+  console.log('MyProfilePage render - accountsAccessToken:', accountsAccessToken);
 
   async function handleDeleteAccount(){
     console.log('Deleting account...');
@@ -287,6 +317,34 @@ function MyProfilePage(props) {
         My Profile
       </Typography>
 
+      {currentPatient ? (
+        <Box sx={{ mb: 3 }}>
+          <PatientCard 
+            patient={currentPatient}
+            showBarcode={false}
+            showDetails={false}
+            showSummary={true}
+            showName={true}
+          />
+        </Box>
+      ) : (
+        <Paper elevation={3} sx={{ p: 2, mb: 3, textAlign: 'center', backgroundColor: 'grey.50' }}>
+          <Typography variant="body2" color="text.secondary">
+            No patient record linked to your account. 
+            <Button 
+              size="small"
+              sx={{ ml: 1 }}
+              onClick={() => {
+                Session.set('selectedPatientId', get(currentUser, 'patientId') || get(currentUser, 'id'));
+                navigate('/patients/new');
+              }}
+            >
+              Create Patient Record
+            </Button>
+          </Typography>
+        </Paper>
+      )}
+
       <Paper elevation={3} sx={{ p: 3, mb: 3 }}>
         <Typography variant="h6" gutterBottom>
           Profile Information
@@ -295,18 +353,8 @@ function MyProfilePage(props) {
           <TextField 
             fullWidth
             type="text"
-            label="Name"
-            value={get(currentUser, 'fullLegalName', '')}
-            InputLabelProps={{shrink: true}}
-            InputProps={{
-              readOnly: true,
-            }}
-          />
-          <TextField 
-            fullWidth
-            type="text"
             label="User ID"
-            value={get(currentUser, 'id', '')}
+            value={get(currentUser, '_id', get(currentUser, 'id', ''))}
             InputLabelProps={{shrink: true}}
             InputProps={{
               readOnly: true,
@@ -325,17 +373,59 @@ function MyProfilePage(props) {
           <TextField 
             fullWidth
             type="text"
-            label="Session Access Token"
+            label="Session Access Token (API Key)"
             value={accountsAccessToken}
             InputLabelProps={{shrink: true}}
             InputProps={{
               readOnly: true,
+              endAdornment: accountsAccessToken && (
+                <InputAdornment position="end">
+                  <IconButton
+                    onClick={() => {
+                      navigator.clipboard.writeText(accountsAccessToken);
+                      setSuccessMessage('API token copied to clipboard!');
+                    }}
+                    edge="end"
+                  >
+                    <ContentCopyIcon />
+                  </IconButton>
+                </InputAdornment>
+              ),
             }}
             multiline
             rows={2}
+            helperText="Use this token as your API key by including it in the 'session' header when making API requests"
           />
         </Box>
       </Paper>
+
+      {accountsAccessToken && (
+        <Paper elevation={3} sx={{ p: 3, mb: 3 }}>
+          <Typography variant="h6" gutterBottom>
+            API Usage Example
+          </Typography>
+          <Box sx={{ backgroundColor: 'grey.100', p: 2, borderRadius: 1, fontFamily: 'monospace' }}>
+            <Typography variant="body2" component="pre" sx={{ whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
+{`# Get a specific Patient record:
+curl -H "session:${accountsAccessToken}" \\
+  http://localhost:3000/baseR4/Patient/${get(currentUser, 'patientId', 'patient-id')}
+
+# Search for Patients:
+curl -H "session:${accountsAccessToken}" \\
+  http://localhost:3000/baseR4/Patient?name=smith
+
+# Get Observations for a Patient:
+curl -H "session:${accountsAccessToken}" \\
+  http://localhost:3000/baseR4/Observation?patient=${get(currentUser, 'patientId', 'patient-id')}`}
+            </Typography>
+          </Box>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
+            Your User ID is: <strong>{get(currentUser, '_id', 'not available')}</strong><br/>
+            Your linked Patient ID is: <strong>{get(currentUser, 'patientId', 'not linked')}</strong><br/>
+            Use your session token to authenticate API requests to access FHIR resources.
+          </Typography>
+        </Paper>
+      )}
 
       <Paper elevation={3} sx={{ p: 3, mb: 3 }}>
         <Typography variant="h6" gutterBottom>
@@ -375,44 +465,6 @@ function MyProfilePage(props) {
         </Box>
       </Paper>
 
-      {currentPatient ? (
-        <Paper elevation={3} sx={{ p: 3, mb: 3 }}>
-          <Typography variant="h6" gutterBottom>
-            Patient Profile
-          </Typography>
-          <PatientCard 
-            patient={currentPatient}
-            showBarcode={false}
-            showDetails={false}
-            showSummary={true}
-            showName={true}
-          />
-        </Paper>
-      ) : (
-        <Paper elevation={3} sx={{ p: 3, mb: 3 }}>
-          <Typography variant="h6" gutterBottom>
-            Patient Profile
-          </Typography>
-          <Box sx={{ textAlign: 'center', py: 4 }}>
-            <Typography variant="body1" color="text.secondary" gutterBottom>
-              No patient record linked to your account.
-            </Typography>
-            <Button 
-              variant="contained" 
-              color="primary"
-              sx={{ mt: 2 }}
-              onClick={() => {
-                // Set the current user's ID as the patient ID for the new patient
-                Session.set('selectedPatientId', get(currentUser, 'patientId') || get(currentUser, 'id'));
-                // Navigate to create new patient
-                navigate('/patients/new');
-              }}
-            >
-              Create Patient Record
-            </Button>
-          </Box>
-        </Paper>
-      )}
 
       <Paper elevation={3} sx={{ p: 3, mb: 3 }}>
         <Typography variant="h6" gutterBottom>
