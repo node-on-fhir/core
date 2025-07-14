@@ -2148,6 +2148,193 @@ if(typeof serverRouteManifest === "object"){
     }
   });
 
+  // Special FHIR Operations
+  // Patient/$everything operation
+  // https://www.hl7.org/fhir/patient-operation-everything.html
+  WebApp.handlers.get("/" + fhirPath + "/Patient/:id/$everything", async (req, res) => {
+    if(get(Meteor, 'settings.private.debug') === true) { 
+      console.log('> GET /' + fhirPath + '/Patient/' + req.params.id + '/$everything'); 
+    }
+
+    logToInboundQueue(req);
+
+    res.setHeader("content-type", 'application/fhir+json;charset=utf-8');
+    res.setHeader("ETag", fhirVersion);
+
+    const remainingRequests = await limiter.removeTokens(1);
+    if (remainingRequests < 0) {
+      res.status(429).json({message: "429 Too Many Requests - your IP is being rate limited"});
+      return;
+    }
+
+    try {
+      // Parse authorization
+      let authorizationContext = await parseUserAuthorization(req);
+      if (!isAuthorized(authorizationContext)) {
+        res.status(403).json({
+          resourceType: "OperationOutcome",
+          issue: [{
+            severity: "error",
+            code: "forbidden",
+            diagnostics: "Access denied"
+          }]
+        });
+        return;
+      }
+
+      const patientId = get(req, 'params.id');
+      
+      // First, verify the patient exists
+      const patient = await Collections.Patients.findOneAsync({id: patientId});
+      if (!patient) {
+        res.status(404).json({
+          resourceType: "OperationOutcome",
+          issue: [{
+            severity: "error",
+            code: "not-found",
+            diagnostics: `Patient with id ${patientId} not found`
+          }]
+        });
+        return;
+      }
+
+      // Check if user has access to this patient
+      const userRole = get(authorizationContext, 'role');
+      const userId = get(authorizationContext, 'userId');
+      const userPatientId = get(authorizationContext, 'patientId');
+      
+      // Access control: user can only access their own patient record unless they have elevated privileges
+      if (userRole !== 'noauth' && userRole !== 'healthcare provider' && userRole !== 'admin') {
+        if (userPatientId !== patientId) {
+          res.status(403).json({
+            resourceType: "OperationOutcome",
+            issue: [{
+              severity: "error",
+              code: "forbidden",
+              diagnostics: "You can only access your own patient record"
+            }]
+          });
+          return;
+        }
+      }
+
+      // Initialize the bundle
+      const bundle = {
+        resourceType: "Bundle",
+        type: "searchset",
+        timestamp: new Date().toISOString(),
+        total: 0,
+        link: [{
+          relation: "self",
+          url: `${get(Meteor, 'settings.public.fhirUrl', 'http://localhost:3000')}/${fhirPath}/Patient/${patientId}/$everything`
+        }],
+        entry: []
+      };
+
+      // Add the patient resource first
+      bundle.entry.push({
+        fullUrl: `${get(Meteor, 'settings.public.fhirUrl', 'http://localhost:3000')}/${fhirPath}/Patient/${patientId}`,
+        resource: RestHelpers.prepForFhirTransfer(patient),
+        search: {
+          mode: "match"
+        }
+      });
+
+      // Define the collections to search and their patient reference paths
+      const collectionsToSearch = [
+        { collection: 'AllergyIntolerances', paths: ['patient.reference'] },
+        { collection: 'Observations', paths: ['subject.reference'] },
+        { collection: 'Conditions', paths: ['subject.reference'] },
+        { collection: 'Procedures', paths: ['subject.reference'] },
+        { collection: 'Encounters', paths: ['subject.reference', 'patient.reference'] },
+        { collection: 'MedicationOrders', paths: ['patient.reference'] },
+        { collection: 'MedicationStatements', paths: ['subject.reference'] },
+        { collection: 'Immunizations', paths: ['patient.reference'] },
+        { collection: 'CarePlans', paths: ['subject.reference', 'for.reference'] },
+        { collection: 'Goals', paths: ['subject.reference', 'for.reference'] },
+        { collection: 'DiagnosticReports', paths: ['subject.reference'] },
+        { collection: 'DocumentReferences', paths: ['subject.reference'] },
+        { collection: 'CareTeams', paths: ['subject.reference', 'patient.reference'] },
+        { collection: 'ServiceRequests', paths: ['subject.reference'] },
+        { collection: 'RiskAssessments', paths: ['subject.reference'] },
+        { collection: 'ClinicalImpressions', paths: ['subject.reference'] },
+        { collection: 'FamilyMemberHistories', paths: ['patient.reference'] },
+        { collection: 'DeviceUseStatements', paths: ['subject.reference'] },
+        { collection: 'Coverage', paths: ['beneficiary.reference'] },
+        { collection: 'ExplanationOfBenefits', paths: ['patient.reference'] }
+      ];
+
+      // Search all collections in parallel
+      const searchPromises = collectionsToSearch.map(async ({ collection, paths }) => {
+        if (!Collections[collection]) {
+          console.log(`Collection ${collection} not found, skipping...`);
+          return [];
+        }
+
+        // Build query for all possible patient reference paths
+        const orQueries = paths.map(path => {
+          const query = {};
+          query[path] = { $in: [
+            `Patient/${patientId}`,
+            `${get(Meteor, 'settings.public.fhirUrl', 'http://localhost:3000')}/${fhirPath}/Patient/${patientId}`,
+            patientId  // Some references might just have the ID
+          ]};
+          return query;
+        });
+
+        try {
+          // Use find() with fetch() for now until we confirm the async pattern
+          const resources = await Collections[collection].find(
+            { $or: orQueries },
+            { limit: 100 }  // Limit results per resource type
+          ).fetch();
+
+          return resources.map(resource => ({
+            fullUrl: `${get(Meteor, 'settings.public.fhirUrl', 'http://localhost:3000')}/${fhirPath}/${resource.resourceType}/${resource.id}`,
+            resource: RestHelpers.prepForFhirTransfer(resource),
+            search: {
+              mode: "include"
+            }
+          }));
+        } catch (error) {
+          console.error(`Error searching ${collection}:`, error);
+          return [];
+        }
+      });
+
+      // Wait for all searches to complete
+      const searchResults = await Promise.all(searchPromises);
+      
+      // Flatten and add to bundle
+      searchResults.forEach(results => {
+        bundle.entry.push(...results);
+      });
+
+      // Update total
+      bundle.total = bundle.entry.length;
+
+      // Add metadata
+      bundle.meta = {
+        lastUpdated: new Date().toISOString()
+      };
+
+      console.log(`Patient/$everything returned ${bundle.total} resources for patient ${patientId}`);
+      
+      res.status(200).json(bundle);
+
+    } catch (error) {
+      console.error('Error in Patient/$everything:', error);
+      res.status(500).json({
+        resourceType: "OperationOutcome",
+        issue: [{
+          severity: "error",
+          code: "exception",
+          diagnostics: "Internal server error processing $everything operation"
+        }]
+      });
+    }
+  });
+
   console.log('FHIR Server is online.');
 } else {
   console.log('FHIR Server is offline.  Settings file and route manifest not available.');
