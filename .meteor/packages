@@ -30,11 +30,3 @@ service-configuration
 accounts-password
 accounts-base
 
-clinical:pacio-core
-clinical:data-importer
-clinical:data-exporter
-clinical:hipaa-compliance
-mitre:sphr-analyzer
-# mitre:national-directory
-symptomatic:timelines
-
