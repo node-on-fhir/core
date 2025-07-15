@@ -116,7 +116,7 @@ npm init nightwatch
 ?Enter new config file name: ignore.conf.js
 
 ## Once completed, run the honeycomb nightwatch tests
-npx nightwatch ./tests/nightwatch/examples/honeycomb
+npx nightwatch ./tests/nightwatch/honeycomb
 ```
 
 ## SMART on FHIR - Server Configuration

@@ -36,7 +36,7 @@ describe('Accounts - Login (Progressive Flow)', function() {
       // Password field may be disabled initially in progressive flow
       .verify.elementPresent('input[name="password"], input[type="password"]')
       .verify.elementPresent('button[type="submit"]')
-      .assert.textContains('h1, h2, h3, h4, h5, h6', 'Sign In')
+      .assert.textContains('h4', 'Sign In')
       .saveScreenshot('tests/nightwatch/screenshots/login/01-initial-load.png');
   });
 

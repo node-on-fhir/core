@@ -350,5 +350,14 @@
     "google": {
       "mapsApiKey": "YOUR_GOOGLE_MAPS_API_KEY_HERE"
     }
+  },
+    "galaxy.meteor.com": {
+    "env": {
+      "MONGO_URL": "mongodb+srv://timelines:KerUVltGs6wgtOPf@timelines.7djb2.mongodb.net/meteor?retryWrites=true&w=majority",
+      "NODE_ENV": "production",
+      "ROOT_URL": "https://carewatch.meteorapp.com",
+      "NOAUTH": 1,
+      "GOOGLE_MAPS_API_KEY": "AIzaSyCOzgK3394kWdhWVKPvNNhnTj33Qtp98mk"
+    }
   }
 }
