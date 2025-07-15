@@ -27,6 +27,13 @@ import '../imports/lib/UdapMethods.js';
 // Import accounts startup if enabled
 import '../imports/startup/server/index.js';
 
+// Import API methods
+import '../imports/api/documentReferences/methods.js';
+import '../imports/api/compositions/methods.js';
+import '../imports/api/conditions/methods.js';
+import '../imports/api/locations/methods.js';
+import '../imports/api/patients/methods.js';
+
 
 
 
@@ -49,6 +56,8 @@ import { OAuthClients } from '/imports/collections/OAuthClients';
 
 
 import { AllergyIntolerances } from '../imports/lib/schemas/SimpleSchemas/AllergyIntolerances';
+import { AuditEvents } from '../imports/lib/schemas/SimpleSchemas/AuditEvents';
+import '../imports/api/AuditEvents/AuditEvents'; // Import the methods
 import { Bundles } from '../imports/lib/schemas/SimpleSchemas/Bundles';
 import { CarePlans } from '../imports/lib/schemas/SimpleSchemas/CarePlans';
 import { Claims } from '../imports/lib/schemas/SimpleSchemas/Claims';
@@ -57,6 +66,7 @@ import { Communications } from '../imports/lib/schemas/SimpleSchemas/Communicati
 import { CommunicationRequests } from '../imports/lib/schemas/SimpleSchemas/CommunicationRequests';
 import { Compositions } from '../imports/lib/schemas/SimpleSchemas/Compositions';
 import { Devices } from '../imports/lib/schemas/SimpleSchemas/Devices';
+import { DocumentReferences } from '../imports/lib/schemas/SimpleSchemas/DocumentReferences';
 import { Encounters } from '../imports/lib/schemas/SimpleSchemas/Encounters';
 import { Endpoints } from '../imports/lib/schemas/SimpleSchemas/Endpoints';
 import { ExplanationOfBenefits } from '../imports/lib/schemas/SimpleSchemas/ExplanationOfBenefits';
@@ -72,28 +82,32 @@ import { MessageHeaders } from '../imports/lib/schemas/SimpleSchemas/MessageHead
 import { Organizations } from '../imports/lib/schemas/SimpleSchemas/Organizations';
 import { Observations } from '../imports/lib/schemas/SimpleSchemas/Observations';
 import { Patients } from '../imports/lib/schemas/SimpleSchemas/Patients';
+import { Practitioners } from '../imports/lib/schemas/SimpleSchemas/Practitioners';
 import { Procedures } from '../imports/lib/schemas/SimpleSchemas/Procedures';
 import { Questionnaires } from '../imports/lib/schemas/SimpleSchemas/Questionnaires';
 import { QuestionnaireResponses } from '../imports/lib/schemas/SimpleSchemas/QuestionnaireResponses';
 import { Tasks } from '../imports/lib/schemas/SimpleSchemas/Tasks';
+import { NutritionOrders } from '../imports/lib/schemas/SimpleSchemas/NutritionOrders';
 
 import { FhirUtilities } from '../imports/lib/FhirUtilities.js'
 import { FhirDehydrator } from '../imports/lib/FhirDehydrator.js'
+import { HipaaLogger } from '../imports/lib/HipaaLogger.js'
 
 import { LayoutHelpers } from '../imports/lib/LayoutHelpers.js'
 
 
 Meteor.Collections = {
   AllergyIntolerances,
+  AuditEvents,
   Bundles,
   CarePlans,
   Claims,
   Conditions,
-  Claims,
   Communications,
   CommunicationRequests,
   Compositions,
   Devices,
+  DocumentReferences,
   Encounters,
   Endpoints,
   ExplanationOfBenefits,
@@ -106,9 +120,11 @@ Meteor.Collections = {
   MessageHeaders,
   Measures,
   MeasureReports,
+  NutritionOrders,
   Organizations,
   Observations,
   Patients,
+  Practitioners,
   Procedures,
   Questionnaires,
   QuestionnaireResponses,
@@ -118,9 +134,11 @@ Meteor.Collections = {
 global.FhirUtilities = FhirUtilities;
 global.FhirDehydrator = FhirDehydrator;
 global.LayoutHelpers = LayoutHelpers;
+global.HipaaLogger = HipaaLogger;
 
 global.Collections = {
   AllergyIntolerances,
+  AuditEvents,
   Bundles,
   CarePlans,
   Claims,
@@ -129,6 +147,7 @@ global.Collections = {
   CommunicationRequests,
   Compositions,
   Devices,
+  DocumentReferences,
   Encounters,
   Endpoints,
   ExplanationOfBenefits,
@@ -141,9 +160,11 @@ global.Collections = {
   MessageHeaders,
   Measures,
   MeasureReports,
+  NutritionOrders,
   Organizations,
   Observations,
   Patients,
+  Practitioners,
   Procedures,
   Questionnaires,
   QuestionnaireResponses,
@@ -152,6 +173,7 @@ global.Collections = {
 
 
 
+global.AuditEvents = AuditEvents;
 global.Conditions = Conditions;
 global.Claims = Claims;
 global.Encounters = Encounters;
@@ -159,6 +181,7 @@ global.Endpoints = Endpoints;
 global.ExplanationOfBenefits = ExplanationOfBenefits;
 global.Immunizations = Immunizations;
 global.Observations = Observations;
+global.Practitioners = Practitioners;
 global.Procedures = Procedures;
 global.MedicationRequests = MedicationRequests;
 global.MeasureReports = MeasureReports;

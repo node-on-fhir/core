@@ -12,10 +12,15 @@ import {
   CardHeader,
   CardContent,
   CardActions,
+  Container,
   TextField,
   Grid,
   Select,
   MenuItem,
+  FormControl,
+  InputLabel,
+  Stack,
+  Box
 } from '@mui/material';
 
 import { get, set, setWith } from 'lodash';
@@ -23,7 +28,7 @@ import { get, set, setWith } from 'lodash';
 import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
 
-import React, { Component } from 'react';
+import React, { Component, Fragment } from 'react';
 import { useTracker } from 'meteor/react-meteor-data';
 import PropTypes from 'prop-types';
 
@@ -64,7 +69,8 @@ export class AllergyIntoleranceDetail extends React.Component {
         type: 0,
         criticality: 0,
         patientDisplay: '',
-        recorderDisplay: ''
+        recorderDisplay: '',
+        substance: ''
       }
     }
   }
@@ -201,164 +207,209 @@ export class AllergyIntoleranceDetail extends React.Component {
     let formData = this.state.form;
 
     return (
-      <div id={this.props.id} className="allergyIntoleranceDetail">
-        <CardContent>
-          <Grid container spacing={3}>
-            <Grid item xs={3}>
-              <Select
-                id='clinicalStatusInput'
-                name='clinicalStatus'
-                //floatingLabelText='Clinical Status'
-                value={ get(formData, 'clinicalStatus', '') }
-                onChange={ this.changeState.bind(this, 'clinicalStatus')}
-                //floatingLabelFixed={true}
-                fullWidth
-              >
-                <MenuItem value={0} >active</MenuItem>
-                <MenuItem value={1} >inactive</MenuItem>
-                <MenuItem value={2} >resolved</MenuItem>
-              </Select>
-            </Grid>
-            <Grid item xs={3}>
-             <Select
-                id='verificationStatusInput'
-                name='verificationStatus'
-                //floatingLabelText='Verification Status'
-                value={ get(formData, 'verificationStatus', '') }
-                onChange={ this.changeState.bind(this, 'verificationStatus')}
-                //floatingLabelFixed={true}
-                fullWidth
-              >
-                <MenuItem value={0} >unconfirmed</MenuItem>
-                <MenuItem value={1} >confirmed</MenuItem>
-                <MenuItem value={2} >refuted</MenuItem>
-                <MenuItem value={3} >entered-in-error</MenuItem>
-              </Select>
-            </Grid>
-            <Grid item xs={3}>
-              <Select
+      <Container maxWidth="md" sx={{ py: 4 }}>
+        <Card sx={{ boxShadow: 3 }}>
+          <CardHeader 
+            title={this.state.allergyIntoleranceId ? 'Edit Allergy/Intolerance' : 'New Allergy/Intolerance'}
+            sx={{ bgcolor: 'primary.main', color: 'primary.contrastText' }}
+          />
+          <CardContent sx={{ p: 4 }}>
+            {/* System ID Barcode */}
+            {this.state.allergyIntoleranceId && (
+              <Box sx={{ mb: 3, textAlign: 'right' }}>
+                <span className="barcode helveticas" style={{ fontSize: '2rem' }}>{this.state.allergyIntoleranceId}</span>
+              </Box>
+            )}
+            
+            <Stack spacing={3}>
+              {/* Status selects - full width */}
+              <FormControl fullWidth>
+                <InputLabel>Clinical Status</InputLabel>
+                <Select
+                  id='clinicalStatusInput'
+                  name='clinicalStatus'
+                  label="Clinical Status"
+                  value={ get(formData, 'clinicalStatus', 0) }
+                  onChange={ this.changeState.bind(this, 'clinicalStatus')}
+                >
+                  <MenuItem value={0}>Active</MenuItem>
+                  <MenuItem value={1}>Inactive</MenuItem>
+                  <MenuItem value={2}>Resolved</MenuItem>
+                </Select>
+              </FormControl>
+
+              <FormControl fullWidth>
+                <InputLabel>Verification Status</InputLabel>
+                <Select
+                  id='verificationStatusInput'
+                  name='verificationStatus'
+                  label="Verification Status"
+                  value={ get(formData, 'verificationStatus', 0) }
+                  onChange={ this.changeState.bind(this, 'verificationStatus')}
+                >
+                  <MenuItem value={0}>Unconfirmed</MenuItem>
+                  <MenuItem value={1}>Confirmed</MenuItem>
+                  <MenuItem value={2}>Refuted</MenuItem>
+                  <MenuItem value={3}>Entered in Error</MenuItem>
+                </Select>
+              </FormControl>
+
+              <FormControl fullWidth>
+                <InputLabel>Category</InputLabel>
+                <Select
                   id='categoryInput'
                   name='category'
-                  //floatingLabelText='Category'
-                  value={ get(formData, 'category', '') }
+                  label="Category"
+                  value={ get(formData, 'category', 0) }
                   onChange={ this.changeState.bind(this, 'category')}
-                  //floatingLabelFixed={true}
-                  fullWidth
                 >
-                  <MenuItem value={0} >food</MenuItem>
-                  <MenuItem value={1} >medication</MenuItem>
-                  <MenuItem value={2} >environment</MenuItem>
-                  <MenuItem value={3} >biologic</MenuItem>
+                  <MenuItem value={0}>Food</MenuItem>
+                  <MenuItem value={1}>Medication</MenuItem>
+                  <MenuItem value={2}>Environment</MenuItem>
+                  <MenuItem value={3}>Biologic</MenuItem>
                 </Select>
-            </Grid>
-            <Grid item xs={3}>
-              <Select
-                id='typeInput'
-                name='type'
-                //floatingLabelText='Type'
-                value={ get(formData, 'type', '') }
-                onChange={ this.changeState.bind(this, 'type')}
-                //floatingLabelFixed={true}
-                fullWidth
-              >
-                <MenuItem value={0} >allergy</MenuItem>
-                <MenuItem value={1} >intollerance</MenuItem>
-              </Select>
-            </Grid>
-          </Grid>
+              </FormControl>
 
-          <Grid container spacing={3}>
-            <Grid item xs={4}>
-             <TextField
+              <FormControl fullWidth>
+                <InputLabel>Type</InputLabel>
+                <Select
+                  id='typeInput'
+                  name='type'
+                  label="Type"
+                  value={ get(formData, 'type', 0) }
+                  onChange={ this.changeState.bind(this, 'type')}
+                >
+                  <MenuItem value={0}>Allergy</MenuItem>
+                  <MenuItem value={1}>Intolerance</MenuItem>
+                </Select>
+              </FormControl>
+
+              {/* Text fields - full width */}
+              <TextField
                 id='identifierInput'
                 name='identifier'
-                floatingLabelText='Identifier'            
+                label='Identifier'
+                placeholder="Enter identifier"
                 value={ get(formData, 'allergyIdentifier', '') }
                 onChange={ this.changeState.bind(this, 'identifier')}
-                hintText="Shellfish"
-                floatingLabelFixed={true}
                 fullWidth
-                /><br/>
-            </Grid>
-            <Grid item xs={4}>
+              />
+
               <TextField
                 id='reactionInput'
                 name='reaction'
-                floatingLabelText='Reaction Description'
+                label='Reaction Description'
+                placeholder="e.g., Hives, Anaphylaxis, Rash"
                 value={ get(formData, 'reactionDescription', '') }
                 onChange={ this.changeState.bind(this, 'reaction')}
-                hintText="Hives"
-                floatingLabelFixed={true}
                 fullWidth
-                /><br/>
-            </Grid>
-            <Grid item xs={4}>
-              <SelectField
-                id='criticalityInput'
-                name='criticality'
-                floatingLabelText='Criticality'
-                value={ get(formData, 'criticality', '') }
-                onChange={ this.changeState.bind(this, 'criticality')}
-                floatingLabelFixed={true}
-                fullWidth
-              >
-                <MenuItem value={0} primaryText="low" />
-                <MenuItem value={1} primaryText="high" />
-                <MenuItem value={2} primaryText="unable-to-assess" />
-              </SelectField>
-            </Grid>
-          </Grid>
+              />
 
-          <Grid container spacing={3}>
-            <Grid item xs={4}>
+              <FormControl fullWidth>
+                <InputLabel>Criticality</InputLabel>
+                <Select
+                  id='criticalityInput'
+                  name='criticality'
+                  label="Criticality"
+                  value={ get(formData, 'criticality', 0) }
+                  onChange={ this.changeState.bind(this, 'criticality')}
+                >
+                  <MenuItem value={0}>Low</MenuItem>
+                  <MenuItem value={1}>High</MenuItem>
+                  <MenuItem value={2}>Unable to Assess</MenuItem>
+                </Select>
+              </FormControl>
+
               <TextField
                 id='patientDisplayInput'
                 name='patientDisplay'
-                floatingLabelText='Patient'
+                label='Patient Name'
+                placeholder="Patient's full name"
                 value={ get(formData, 'patientDisplay', '') }
                 onChange={ this.changeState.bind(this, 'patientDisplay')}
-                hintText="Jane Doe"
-                floatingLabelFixed={true}
                 fullWidth
-                /><br/>
-            </Grid>
-            <Grid item xs={4}>
+                helperText="The patient who has the allergy or intolerance"
+              />
+
               <TextField
                 id='recorderDisplayInput'
                 name='recorderDisplay'
-                floatingLabelText='Recorder'
+                label='Recorded By'
+                placeholder="Healthcare provider's name"
                 value={ get(formData, 'recorderDisplay', '') }
                 onChange={ this.changeState.bind(this, 'recorderDisplay')}
-                hintText="Nurse Jackie"
-                floatingLabelFixed={true}
                 fullWidth
-                /><br/>
-            </Grid>
-          </Grid>
+                helperText="The person who recorded this allergy"
+              />
+
+              <TextField
+                id='substanceInput'
+                name='substance'
+                label='Allergen/Substance'
+                placeholder="e.g., Peanuts, Penicillin, Latex"
+                value={ get(formData, 'substance', '') }
+                onChange={ this.changeState.bind(this, 'substance')}
+                fullWidth
+                helperText="The specific substance that causes the allergic reaction"
+              />
+            </Stack>
 
           {/* <br/>
           { this.renderDatePicker(this.data.showDatePicker, get(this, 'data.allergy.onsetDateTime') ) }
           <br/> */}
         
-        </CardContent>
-        <CardActions>
-          { this.determineButtons(this.state.allergyIntoleranceId ) }
-        </CardActions>
-      </div>
+          </CardContent>
+          <CardActions sx={{ justifyContent: 'flex-end', p: 2 }}>
+            { this.determineButtons(this.state.allergyIntoleranceId ) }
+          </CardActions>
+        </Card>
+      </Container>
     );
   }
 
   determineButtons(allergyId){
     if (allergyId) {
       return (
-        <div>
-          <Button id="updateAllergyIntoleranceButton" primary={true} onClick={this.handleSaveButton.bind(this) } style={{marginRight: '20px'}} >Save</Button>
-          <Button id="deleteAllergyIntoleranceButton" onClick={this.handleDeleteButton.bind(this) } >Delete</Button>
-        </div>
+        <>
+          <Button 
+            onClick={this.handleCancelButton.bind(this)}
+          >
+            Cancel
+          </Button>
+          <Button 
+            id="deleteAllergyIntoleranceButton" 
+            onClick={this.handleDeleteButton.bind(this)}
+            color="error"
+          >
+            Delete
+          </Button>
+          <Button 
+            id="updateAllergyIntoleranceButton" 
+            onClick={this.handleSaveButton.bind(this)}
+            variant="contained"
+            color="primary"
+          >
+            Save
+          </Button>
+        </>
       );
     } else {
       return(
-        <Button id="saveAllergyIntoleranceButton" primary={true} onClick={this.handleSaveButton.bind(this) } >Save</Button>
+        <>
+          <Button 
+            onClick={this.handleCancelButton.bind(this)}
+          >
+            Cancel
+          </Button>
+          <Button 
+            id="saveAllergyIntoleranceButton" 
+            onClick={this.handleSaveButton.bind(this)}
+            variant="contained"
+            color="primary"
+          >
+            Save
+          </Button>
+        </>
       );
     }
   }
@@ -396,7 +447,10 @@ export class AllergyIntoleranceDetail extends React.Component {
         break;
       case "criticality":
         set(formData, 'criticality', textValue)
-        break;  
+        break;
+      case "substance":
+        set(formData, 'substance', textValue)
+        break;
       default:
     }
 

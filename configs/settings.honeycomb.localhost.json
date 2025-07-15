@@ -61,9 +61,9 @@
       "route": "/",
       "landingPage": "/",
       "homePage": "/",
-      "prominantHeader": false,
+      "prominentHeader": true,
       "useDateRangeInQueries": false,
-      "showPatientNameInHeader": false,
+      "showPatientNameInHeader": true,
       "displayNavbars": true,
       "disableHeader": false,
       "disableFooter": false,
@@ -73,6 +73,8 @@
       "sidebar": {
         "menuItems": {
           "HomePage": true,
+          "UserProfile": true,
+          "PatientDirectory": true,
           "Privacy": true,
           "TermsAndConditions": true,
           "FhirResources": false,

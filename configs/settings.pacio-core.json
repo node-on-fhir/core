@@ -1,0 +1,18 @@
+{
+  "public": {
+    "title": "Honeycomb with PACIO Core",
+    "defaults": {
+      "route": "/pacio-dashboard"
+    },
+    "interfaces": {
+      "patientFetch": {
+        "defaultUrl": "https://gw.interop.community/paciosandbox/open/Patient/patient-betsysmith-johnson01/$everything"
+      }
+    }
+  },
+  "private": {
+    "pacio": {
+      "enabled": true
+    }
+  }
+}

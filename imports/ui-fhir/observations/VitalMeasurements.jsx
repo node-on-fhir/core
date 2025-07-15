@@ -12,7 +12,8 @@ import {
   TextField,
   DatePicker,
   Tabs,
-  Tab
+  Tab,
+  Box
 } from '@mui/material';
 
 import { Meteor } from 'meteor/meteor';
@@ -131,7 +132,7 @@ export class VitalMeasurements extends React.Component {
         </TextField>
       }
     return (
-      <StyledCard id="addPostCard" height="auto" scrollable={true} margin={20} headerHeight={headerHeight} >
+      <Card id="addPostCard">
         <CardContent>
           <Tabs id="observationsPageTabs" value={this.data.tabIndex} onChange={this.handleTabChange } aria-label="simple tabs example">
             <Tab label="Vitals" value={0} />
@@ -219,7 +220,7 @@ export class VitalMeasurements extends React.Component {
 
         </CardContent>
         <Button id="addObservationButton" onMouseUp={ this.handleInsertObservations.bind(this) } primary={true} >New Observation</Button>
-      </StyledCard>
+      </Card>
     );
   }
   handleInsertObservations(){

@@ -660,7 +660,7 @@ function ObservationsTable(props){
           <TableRow className="observationRow" key={i} onClick={ rowClick.bind(this, observationsToRender[i]._id)} hover={true} style={rowStyle}>
             { renderToggle() }
             { renderActionIcons(observationsToRender[i]) }
-            { renderTextIcon(get(conditionsToRender[i], "text.div", "")) }
+            { renderTextIcon(get(observationsToRender[i], "text.div", "")) }
             { renderCategory(get(observationsToRender[i], "category")) }
             { renderCodeValue(get(observationsToRender[i], "codeValue")) }
             { renderCode(get(observationsToRender[i], "codeDisplay"), get(observationsToRender[i], "effectiveDateTime")) }
@@ -688,7 +688,7 @@ function ObservationsTable(props){
           <TableRow className="observationRow" key={i} onClick={ rowClick.bind(this, observationsToRender[i].id)} hover={true} style={rowStyle}>            
             { renderToggle() }
             { renderActionIcons(observationsToRender[i]) }
-            { renderTextIcon(get(conditionsToRender[i], "text.div", "")) }
+            { renderTextIcon(get(observationsToRender[i], "text.div", "")) }
             { renderCategory(get(observationsToRender[i], "category")) }
             { renderCodeValue(get(observationsToRender[i], "codeValue")) }
             { renderCode(get(observationsToRender[i], "codeDisplay")) }

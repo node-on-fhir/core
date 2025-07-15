@@ -1,3 +1,8 @@
+import React, { useState } from 'react';
+import { useTracker } from 'meteor/react-meteor-data';
+import { useNavigate } from 'react-router-dom';
+import { useSubscribe } from 'meteor/react-meteor-data';
+
 import { 
   Grid, 
   Container,
@@ -6,33 +11,30 @@ import {
   CardHeader,
   CardContent,
   Button,
-  Tab, 
-  Tabs,
-  Typography,
-  Box
+  Box,
+  Typography
 } from '@mui/material';
+import AddIcon from '@mui/icons-material/Add'; 
 
 import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
-import React, { useState } from 'react';
-import { useTracker } from 'meteor/react-meteor-data';
 
 import CompositionDetail from './CompositionDetail';
 import CompositionsTable from './CompositionsTable';
 import LayoutHelpers from '../../lib/LayoutHelpers';
 
-import { get, cloneDeep } from 'lodash';
+import { get } from 'lodash';
 
 
-//---------------------------------------------------------------
+//=============================================================================================================================================
+// DATA CURSORS
 
 Meteor.startup(function(){
-  DynamicSpacer = Meteor.DynamicSpacer
+  Compositions = Meteor.Collections.Compositions;
 })
 
-
-//---------------------------------------------------------------
-// Session Variables
+//=============================================================================================================================================
+// SESSION VARIABLES
 
 Session.setDefault('compositionPageTabIndex', 0);
 Session.setDefault('compositionSearchFilter', '');
@@ -40,47 +42,42 @@ Session.setDefault('selectedCompositionId', false);
 Session.setDefault('selectedComposition', false);
 Session.setDefault('fhirVersion', 'v1.0.2');
 Session.setDefault('compositionsArray', []);
-Session.setDefault('selectedCompositionId', '')
 
-Session.setDefault('CompositionsPage.onePageLayout', false)
+Session.setDefault('CompositionsPage.onePageLayout', true)
 Session.setDefault('CompositionsPage.defaultQuery', {})
 Session.setDefault('CompositionsTable.hideCheckbox', true)
-Session.setDefault('CompositionsTable.devicesIndex', 0)
+Session.setDefault('CompositionsTable.compositionsIndex', 0)
 
-
-//---------------------------------------------------------------
-// Theming
-
-const muiTheme = Theming.createTheme();
-
-//---------------------------------------------------------------
-// Main Component
+//=============================================================================================================================================
+// MAIN COMPONENT
 
 export function CompositionsPage(props){
-
-  let headerHeight = LayoutHelpers.calcHeaderHeight();
-  let formFactor = LayoutHelpers.determineFormFactor();
-  let paddingWidth = LayoutHelpers.calcCanvasPaddingWidth();
-  let noDataImage = get(Meteor, 'settings.public.defaults.noData.noDataImagePath', "packages/clinical_hl7-fhir-data-infrastructure/assets/NoData.png");  
+  const navigate = useNavigate();
   
+  // Subscribe to compositions
+  const isLoading = useSubscribe('pacio.compositions');
 
   let data = {
-    selectedCompositionId: Session.get("selectedCompositionId"),
-    selectedComposition: false,
+    currentCompositionId: '',
+    selectedComposition: null,
+    compositions: [],
     onePageLayout: true,
     showSystemIds: false,
     showFhirIds: false,
-    compositionsIndex: 0,
-    selected: [],
-    compositions: [],
-    selectedComposition: {}
+    compositionsIndex: 0
   };
 
+  data.onePageLayout = useTracker(function(){
+    return Session.get('CompositionsPage.onePageLayout');
+  }, [])
+  data.hideCheckbox = useTracker(function(){
+    return Session.get('CompositionsTable.hideCheckbox');
+  }, [])
   data.selectedCompositionId = useTracker(function(){
     return Session.get('selectedCompositionId');
   }, [])
   data.selectedComposition = useTracker(function(){
-    return Compositions.findOne({id: Session.get('selectedCompositionId')});
+    return Compositions.findOne({_id: Session.get('selectedCompositionId')});
   }, [])
   data.compositions = useTracker(function(){
     return Compositions.find().fetch();
@@ -95,57 +92,119 @@ export function CompositionsPage(props){
     return Session.get('showFhirIds');
   }, [])
 
-  data.onePageLayout = useTracker(function(){
-    return Session.get('CompositionsPage.onePageLayout');
-  }, [])
 
+  let headerHeight = LayoutHelpers.calcHeaderHeight();
+  let formFactor = LayoutHelpers.determineFormFactor();
+  let paddingWidth = LayoutHelpers.calcCanvasPaddingWidth();
+  
+  let noDataImage = get(Meteor, 'settings.public.defaults.noData.noDataImagePath', "packages/clinical_hl7-fhir-data-infrastructure/assets/NoData.png");  
+
+  function handleAddComposition(){
+    console.log('Add Composition button clicked');
+    navigate('/compositions/new');
+  }
 
   function compositionRowClick(id){
     console.log('compositionRowClick', id)
     Session.set('selectedCompositionId', id)
   }
 
+  function setCompositionsPageIndex(index){
+    Session.set('CompositionsTable.compositionsIndex', index)
+  }
+
+  function renderHeader() {
+    return (
+      <Box mb={2}>
+        <Grid container spacing={2} alignItems="center" justifyContent="space-between">
+          <Grid item xs={12} sm={6}>
+            <Typography variant="h4">
+              Compositions
+            </Typography>
+            <Typography variant="subtitle2" color="textSecondary">
+              {data.compositions.length} compositions found
+            </Typography>
+          </Grid>
+          <Grid item>
+            <Button
+              variant="contained"
+              color="primary"
+              startIcon={<AddIcon />}
+              onClick={handleAddComposition}
+            >
+              Add Composition
+            </Button>
+          </Grid>
+        </Grid>
+      </Box>
+    );
+  }
 
   let layoutContent;
   if(data.compositions.length > 0){
     if(data.onePageLayout){
-      layoutContent = <Card height="auto" scrollable={true} margin={20}>
-        <CardHeader
-          title="Compositions"
-        />
-        <CardContent>
+      layoutContent = <Card 
+        sx={{ 
+          width: '100%',
+          borderRadius: 3,
+          boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+          border: '1px solid',
+          borderColor: 'divider',
+          overflow: 'hidden'
+        }}
+      >
+        <CardContent sx={{ p: 0 }}>
           <CompositionsTable 
-            compositions={ data.compositions }
-            paginationLimit={10}
-            />
+            id='compositionsTable'
+            compositions={data.compositions}
+            count={data.compositions.length}  
+            formFactorLayout={formFactor}
+            rowsPerPage={LayoutHelpers.calcTableRows()} 
+            actionButtonLabel="Remove"
+            hideActionButton={get(Meteor, 'settings.public.modules.fhir.Compositions.hideRemoveButtonOnTable', true)}
+            onActionButtonClick={function(selectedId){
+              Compositions._collection.remove({_id: selectedId})
+            }}
+            onSetPage={function(index){
+              setCompositionsPageIndex(index)
+            }}        
+            page={data.compositionsIndex}
+          />
         </CardContent>
       </Card>
     } else {
-  
+      // Two-column layout with detail view
       let sectionCards = [];
       let componentSections = get(data.selectedComposition, 'section', []);
       if(Array.isArray(componentSections)){
         componentSections.forEach(function(section){
-          sectionCards.push(<Card>
+          sectionCards.push(<Card key={section.title} sx={{ mb: 2, borderRadius: 2 }}>
             <CardHeader title={get(section, 'title', '')} />
-            <CardContent style={{maxHeight: '200px'}} >
+            <CardContent style={{maxHeight: '200px', overflow: 'auto'}} >
               <div className="dangerouslySetInnerHTML" dangerouslySetInnerHTML={{__html: get(section, 'text.div', '')}} style={{width: '100%'}}></div>
             </CardContent>      
           </Card>)
-          sectionCards.push(<DynamicSpacer />)
         })
       }
   
       layoutContent = <Grid container spacing={3}>
         <Grid item md={8}>
-          <Card height="auto" scrollable={true} margin={20}>
-            <CardHeader
-              title="Compositions"
-            />
-            <CardContent>
+          <Card 
+            sx={{ 
+              width: '100%',
+              borderRadius: 3,
+              boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+              border: '1px solid',
+              borderColor: 'divider',
+              overflow: 'hidden'
+            }}
+          >
+            <CardContent sx={{ p: 0 }}>
               <CompositionsTable 
-                compositions={ data.compositions }
-                paginationLimit={10}
+                compositions={data.compositions}
+                count={data.compositions.length}
+                formFactorLayout={formFactor}
+                rowsPerPage={LayoutHelpers.calcTableRows()}
                 hideBarcode={true}
                 hideIdentifier={true}
                 hideSubjectReference={true}
@@ -157,23 +216,17 @@ export function CompositionsPage(props){
               />            
             </CardContent>
           </Card>
-  
         </Grid>
         <Grid item md={4}>
-          <Card scrollable={true} margin={20}>
-            <h2 className="barcode barcodes">{data.selectedCompositionId}</h2>            
+          <Card sx={{ mb: 2, borderRadius: 2 }}>
+            <CardContent>
+              <Typography variant="h6" component="h2" className="barcode barcodes">
+                {data.selectedCompositionId}
+              </Typography>
+            </CardContent>
           </Card>
-          <DynamicSpacer />
-          {/* <Card scrollable={true} margin={20}>
-            <CardContent style={{maxHeight: '200px'}}>
-              <pre>
-                {JSON.stringify(data.selectedComposition, null, 2)}
-              </pre>
-            </CardContent>      
-          </Card>
-          <DynamicSpacer /> */}
   
-          <Card scrollable={true} margin={20} style={{paddingBottom: '20px'}}>
+          <Card sx={{ mb: 2, borderRadius: 2 }}>
             <CardHeader title="Metadata" />
             <CardContent style={{maxHeight: '200px', paddingBottom: '20px'}}>
               <CompositionDetail 
@@ -181,27 +234,92 @@ export function CompositionsPage(props){
               />
             </CardContent>      
           </Card>
-          <DynamicSpacer />
+          
           { sectionCards }
         </Grid>
       </Grid> 
     }
   } else {
-    layoutContent = <Container maxWidth="sm" style={{display: 'flex', flexDirection: 'column', flexWrap: 'nowrap', height: '100%', justifyContent: 'center'}}>
-      {/* <img src={Meteor.absoluteUrl() + noDataImage} style={{width: '100%'}}  /> */}
-      <CardContent>
-        <CardHeader 
-          title={get(Meteor, 'settings.public.defaults.noData.defaultTitle', "No Data Available")} 
-          subheader={get(Meteor, 'settings.public.defaults.noData.defaultMessage', "No records were found in the client data cursor.  To debug, check the data cursor in the client console, then check subscriptions and publications, and relevant search queries.  If the data is not loaded in, use a tool like Mongo Compass to load the records directly into the Mongo database, or use the FHIR API interfaces.")} 
-        />
-      </CardContent>
-    </Container>
+    layoutContent = <Box 
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        minHeight: '50vh',
+        textAlign: 'center'
+      }}
+    >
+      <Card 
+        sx={{ 
+          maxWidth: '600px',
+          width: '100%',
+          borderRadius: 3,
+          boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+          border: '1px solid',
+          borderColor: 'divider',
+          backgroundColor: 'background.paper'
+        }}
+      >
+        <CardContent sx={{ p: 6 }}>
+          <Box sx={{ mb: 3 }}>
+            <Typography 
+              variant="h5" 
+              sx={{ 
+                fontWeight: 500,
+                color: 'text.primary',
+                mb: 2
+              }}
+            >
+              {get(Meteor, 'settings.public.defaults.noData.defaultTitle', "No Data Available")}
+            </Typography>
+            <Typography 
+              variant="body1" 
+              sx={{ 
+                color: 'text.secondary',
+                lineHeight: 1.7,
+                maxWidth: '480px',
+                mx: 'auto'
+              }}
+            >
+              {get(Meteor, 'settings.public.defaults.noData.defaultMessage', "No records were found in the client data cursor. To debug, check the data cursor in the client console, then check subscriptions and publications, and relevant search queries. If the data is not loaded in, use a tool like Mongo Compass to load the records directly into the Mongo database, or use the FHIR API interfaces.")}
+            </Typography>
+          </Box>
+          <Button
+            variant="outlined"
+            startIcon={<AddIcon />}
+            onClick={handleAddComposition}
+            sx={{
+              borderRadius: 2,
+              textTransform: 'none',
+              px: 3,
+              py: 1,
+              borderWidth: 2,
+              '&:hover': {
+                borderWidth: 2
+              }
+            }}
+          >
+            Add Your First Composition
+          </Button>
+        </CardContent>
+      </Card>
+    </Box>
   }
-
+  
   return (
-    <div id="compositionsPage" style={{padding: "20px"}} >
+    <Box 
+      id="compositionsPage" 
+      sx={{
+        minHeight: '100vh',
+        backgroundColor: 'background.default',
+        px: { xs: 2, sm: 3, md: 4 },
+        py: { xs: 3, sm: 4, md: 5 }
+      }}
+    >
+      { data.compositions.length > 0 && renderHeader() }
       { layoutContent }
-    </div>
+    </Box>
   );
 }
 

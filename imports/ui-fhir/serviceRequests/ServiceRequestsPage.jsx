@@ -7,8 +7,11 @@ import {
   CardContent,
   Button,
   Dialog,
-  TextField
-} from '@mui/material'; 
+  TextField,
+  Typography,
+  Box
+} from '@mui/material';
+import AddIcon from '@mui/icons-material/Add'; 
 
 
 
@@ -21,6 +24,7 @@ import { Session } from 'meteor/session';
 
 import React, { useEffect, useState }  from 'react';
 import { useTracker } from 'meteor/react-meteor-data';
+import { useNavigate } from 'react-router-dom';
 
 
 import { get, set } from 'lodash';
@@ -102,6 +106,7 @@ if(get(Meteor, 'settings.public.theme.palette')){
 // MAIN COMPONENT
 
 export function ServiceRequestsPage(props){
+  const navigate = useNavigate();
 
 
   //---------------------------------------------------------------------------------------------------------
@@ -276,41 +281,158 @@ export function ServiceRequestsPage(props){
 
   // let [serviceRequestsIndex, setServiceRequestsIndex] = setState(0);
 
-  let serviceRequestPageContent;
-  if(true){
-    serviceRequestPageContent = <ServiceRequestsTable 
-      showBarcodes={true} 
-      hideIdentifier={true}
-      serviceRequests={data.serviceRequests}
-      hideRequestorReference={true}
-      noDataMessage={false}
-      rowsPerPage={LayoutHelpers.calcTableRows()}
-      onSetPage={function(index){
-        // setServiceRequestsIndex(index)
-      }}  
-      page={data.serviceRequestsIndex}
-      sort="occurrenceDateTime"
-    />
+  let layoutContent;
+  if(data.serviceRequests.length > 0){
+    layoutContent = <Card 
+      sx={{ 
+        width: '100%',
+        borderRadius: 3,
+        boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+        border: '1px solid',
+        borderColor: 'divider',
+        overflow: 'hidden'
+      }}
+    >
+      <CardContent sx={{ p: 0 }}>
+        <ServiceRequestsTable 
+          showBarcodes={true} 
+          hideIdentifier={true}
+          serviceRequests={data.serviceRequests}
+          hideRequestorReference={true}
+          noDataMessage={false}
+          rowsPerPage={LayoutHelpers.calcTableRows()}
+          onSetPage={function(index){
+            Session.set('ServiceRequestsTable.serviceRequestsIndex', index)
+          }}  
+          page={data.serviceRequestsIndex}
+          sort="occurrenceDateTime"
+          onRowClick={function(serviceRequestId){
+            console.log('ServiceRequestsPage.onRowClick', serviceRequestId);
+            navigate('/serviceRequests/' + serviceRequestId);
+          }}
+        />
+      </CardContent>
+    </Card>
+  } else {
+    layoutContent = <Box 
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        minHeight: '50vh',
+        textAlign: 'center'
+      }}
+    >
+      <Card 
+        sx={{ 
+          maxWidth: '600px',
+          width: '100%',
+          borderRadius: 3,
+          boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+          border: '1px solid',
+          borderColor: 'divider',
+          backgroundColor: 'background.paper'
+        }}
+      >
+        <CardContent sx={{ p: 6 }}>
+          <Box sx={{ mb: 3 }}>
+            <Typography 
+              variant="h5" 
+              sx={{ 
+                fontWeight: 500,
+                color: 'text.primary',
+                mb: 2
+              }}
+            >
+              {get(Meteor, 'settings.public.defaults.noData.defaultTitle', "No Data Available")}
+            </Typography>
+            <Typography 
+              variant="body1" 
+              sx={{ 
+                color: 'text.secondary',
+                lineHeight: 1.7,
+                maxWidth: '480px',
+                mx: 'auto'
+              }}
+            >
+              {get(Meteor, 'settings.public.defaults.noData.defaultMessage', "No records were found in the client data cursor. To debug, check the data cursor in the client console, then check subscriptions and publications, and relevant search queries. If the data is not loaded in, use a tool like Mongo Compass to load the records directly into the Mongo database, or use the FHIR API interfaces.")}
+            </Typography>
+          </Box>
+          <Button
+            variant="outlined"
+            startIcon={<AddIcon />}
+            onClick={handleAddServiceRequest}
+            sx={{
+              borderRadius: 2,
+              textTransform: 'none',
+              px: 3,
+              py: 1,
+              borderWidth: 2,
+              '&:hover': {
+                borderWidth: 2
+              }
+            }}
+          >
+            Add Your First Service Request
+          </Button>
+        </CardContent>
+      </Card>
+    </Box>
   }
 
   let headerHeight = LayoutHelpers.calcHeaderHeight();
   let formFactor = LayoutHelpers.determineFormFactor();
   let paddingWidth = LayoutHelpers.calcCanvasPaddingWidth();
+  let noDataImage = get(Meteor, 'settings.public.defaults.noData.noDataImagePath', "packages/clinical_hl7-fhir-data-infrastructure/assets/NoData.png");  
 
   let cardWidth = window.innerWidth - paddingWidth;
 
+  function handleAddServiceRequest(){
+    console.log('Add Service Request button clicked');
+    navigate('/serviceRequests/new');
+  }
+
+  function renderHeader() {
+    return (
+      <Box mb={2}>
+        <Grid container spacing={2} alignItems="center" justifyContent="space-between">
+          <Grid item xs={12} sm={6}>
+            <Typography variant="h4">
+              Service Requests
+            </Typography>
+            <Typography variant="subtitle2" color="textSecondary">
+              {data.serviceRequests.length} service requests found
+            </Typography>
+          </Grid>
+          <Grid item>
+            <Button
+              variant="contained"
+              color="primary"
+              startIcon={<AddIcon />}
+              onClick={handleAddServiceRequest}
+            >
+              Add Service Request
+            </Button>
+          </Grid>
+        </Grid>
+      </Box>
+    );
+  }
+
   return (
-      <div id="serviceRequestsPage" style={{padding: "20px"}} >
-        <Card height="auto" width={cardWidth + 'px'} margin={20} >
-          <CardHeader
-            title={ data.serviceRequests.length + " Service Requests"}
-          />
-          <CardContent>
-            { serviceRequestPageContent }
-          </CardContent>
-        </Card>
-        
-      </div>
+    <Box 
+      id="serviceRequestsPage" 
+      sx={{
+        minHeight: '100vh',
+        backgroundColor: 'background.default',
+        px: { xs: 2, sm: 3, md: 4 },
+        py: { xs: 3, sm: 4, md: 5 }
+      }}
+    >
+      { data.serviceRequests.length > 0 && renderHeader() }
+      { layoutContent }
+    </Box>
   );
 
 }

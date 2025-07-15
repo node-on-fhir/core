@@ -1,0 +1,44 @@
+{
+    "resourceType": "List",
+    "id": "SMP-Home-MedList",
+    "status": "current",
+    "mode": "snapshot",
+    "title": "Home Medication List",
+    "code": {
+      "coding": [
+        {
+          "code": "104205-0",
+          "system": "http://loinc.org",
+          "display": "Standard Medication List"
+        }
+      ]
+    },
+    "subject": {
+      "reference": "Patient/patientJM1",
+      "display": "Jenny Mosley"
+    },
+    "date": "2024-09-21T16:00:00-08:00",
+    "entry": [
+      {
+        "date": "2024-09-21",
+        "item": {
+          "reference": "MedicationStatement/SMP-MedStmt-AtorvastatinHome",
+          "display": "Atorvastatin 40 mg"
+        }
+      },
+      {
+        "date": "2024-09-21",
+        "item": {
+          "reference": "MedicationStatement/SMP-MedStmt-AlprazolamHome",
+          "display": "Alprazolam 0.5 mg"
+        }
+      },
+      {
+        "date": "2024-09-21",
+        "item": {
+          "reference": "MedicationStatement/SMP-MedStmt-MetoprololHome",
+          "display": "Metoprolol 50 mg"
+        }
+      }
+    ]
+  }

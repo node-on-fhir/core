@@ -40,6 +40,7 @@ window.addEventListener('unhandledrejection', (event) => {
 
 // Initialize session variables
 Session.setDefault('selectedPatientId', null);
+Session.setDefault('selectedPatient', null);
 Session.setDefault('mainAppDialogOpen', false);
 Session.setDefault('theme', get(Meteor, 'settings.public.theme.default', 'light'));
 Session.setDefault('sidebarOpen', true);

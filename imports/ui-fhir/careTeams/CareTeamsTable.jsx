@@ -587,7 +587,7 @@ function CareTeamsTable(props){
 
   return(
     <div id={id} className="tableWithPagination">
-      <Table size={tableRowSize} aria-label="a dense table">
+      <Table className='careTeamsTable' size={tableRowSize} aria-label="a dense table" { ...otherProps }>
         <TableHead>
           <TableRow>
             { renderToggleHeader() }

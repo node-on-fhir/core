@@ -19,9 +19,17 @@ import React from 'react';
 import { useTracker } from 'meteor/react-meteor-data';
 import PropTypes from 'prop-types';
 
-import { ConditionsTable } from 'meteor/clinical:hl7-fhir-data-infrastructure';
-import { GoalsTable } from 'meteor/clinical:hl7-fhir-data-infrastructure';
-import { MedicationsTable } from 'meteor/clinical:hl7-fhir-data-infrastructure';
+import { Meteor } from 'meteor/meteor';
+import { Session } from 'meteor/session';
+import { get, set } from 'lodash';
+
+import ConditionsTable from '../conditions/ConditionsTable';
+import GoalsTable from '../goals/GoalsTable';
+import MedicationsTable from '../medications/MedicationsTable';
+
+// Collections will be initialized on Meteor.startup
+let CarePlans;
+let HipaaLogger;
 
 let defaultCarePlan = {
   "resourceType": "CarePlan",
@@ -74,12 +82,12 @@ let defaultCarePlan = {
 Session.setDefault('carePlanUpsert', false);
 Session.setDefault('selectedCarePlan', false);
 
-
 //---------------------------------------------------------------
 
 Meteor.startup(function(){
-  DynamicSpacer = Meteor.DynamicSpacer
-})
+  CarePlans = Meteor.Collections.CarePlans;
+  HipaaLogger = Meteor.HipaaLogger;
+});
 
 //---------------------------------------------------------------
 
@@ -115,26 +123,37 @@ export class CarePlanDetail extends React.Component {
   }
 
   render() {
+    const data = this.getMeteorData();
+    
     return (
-      <div id={this.props.id} className="carePlanDetail">
-        <CardContent>
-          <CardHeader title='Addresses' />
-          <ConditionsTable />
-          <DynamicSpacer />
+      <Container maxWidth="md" sx={{ py: 4 }}>
+        <Card sx={{ boxShadow: 3 }}>
+          <CardHeader 
+            title={data.carePlanId ? 'Edit Care Plan' : 'New Care Plan'}
+            sx={{ bgcolor: 'primary.main', color: 'primary.contrastText' }}
+          />
+          <CardContent>
+            <Typography variant="h6" sx={{ mb: 2 }}>Addresses</Typography>
+            {/* <ConditionsTable /> */}
+            <Typography color="text.secondary">Conditions table will be displayed here</Typography>
+            <Box sx={{ mb: 4 }} />
 
-          <CardHeader title='Goals' />
-          <GoalsTable />
-          <DynamicSpacer />
+            <Typography variant="h6" sx={{ mb: 2 }}>Goals</Typography>
+            {/* <GoalsTable /> */}
+            <Typography color="text.secondary">Goals table will be displayed here</Typography>
+            <Box sx={{ mb: 4 }} />
 
-          <CardHeader title='Medications' />
-          <MedicationsTable />
-          <DynamicSpacer />
-        </CardContent>
+            <Typography variant="h6" sx={{ mb: 2 }}>Medications</Typography>
+            {/* <MedicationsTable /> */}
+            <Typography color="text.secondary">Medications table will be displayed here</Typography>
+            <Box sx={{ mb: 4 }} />
+          </CardContent>
 
-        <CardActions>
-          { this.determineButtons(this.data.carePlanId) }
-        </CardActions>
-      </div>
+          <CardActions>
+            { this.determineButtons(data.carePlanId) }
+          </CardActions>
+        </Card>
+      </Container>
     );
   }
 
@@ -143,13 +162,13 @@ export class CarePlanDetail extends React.Component {
     if (carePlanId) {
       return (
         <div>
-          <Button id="saveCarePlanButton" primary={true} onClick={this.handleSaveButton.bind(this)}  style={{marginRight: '20px'}} >Save</Button>
-          <Button id="deleteCarePlanButton" onClick={this.handleDeleteButton.bind(this)}>Delete</Button>
+          <Button id="saveCarePlanButton" variant="contained" color="primary" onClick={this.handleSaveButton.bind(this)} sx={{mr: 2}}>Save</Button>
+          <Button id="deleteCarePlanButton" variant="outlined" onClick={this.handleDeleteButton.bind(this)}>Delete</Button>
         </div>
       );
     } else {
       return(
-        <Button id="saveCarePlanButton" primary={true} onClick={this.handleSaveButton.bind(this)}>Save</Button>
+        <Button id="saveCarePlanButton" variant="contained" color="primary" onClick={this.handleSaveButton.bind(this)}>Save</Button>
       );
     }
   }
@@ -173,7 +192,8 @@ export class CarePlanDetail extends React.Component {
 
     // if there's an existing carePlan, use them
     if (Session.get('selectedCarePlan')) {
-      carePlanUpdate = this.data.carePlan;
+      const data = this.getMeteorData();
+      carePlanUpdate = data.carePlan;
     }
 
     switch (field) {
@@ -256,7 +276,7 @@ export class CarePlanDetail extends React.Component {
   }
 
   handleDeleteButton(){
-    CarePlan._collection.remove({_id: Session.get('selectedCarePlan')}, function(error, result){
+    CarePlans._collection.remove({_id: Session.get('selectedCarePlan')}, function(error, result){
       if (error) {
         // Bert.alert(error.reason, 'danger');
       }

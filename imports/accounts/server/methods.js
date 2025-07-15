@@ -4,6 +4,17 @@ import { Meteor } from 'meteor/meteor';
 import { check } from 'meteor/check';
 import { Random } from 'meteor/random';
 import crypto from 'crypto';
+import { get } from 'lodash';
+import { CarePlans } from '../../lib/schemas/SimpleSchemas/CarePlans';
+import { CareTeams } from '../../lib/schemas/SimpleSchemas/CareTeams';
+import { Conditions } from '../../lib/schemas/SimpleSchemas/Conditions';
+import { Devices } from '../../lib/schemas/SimpleSchemas/Devices';
+import { Observations } from '../../lib/schemas/SimpleSchemas/Observations';
+import { MedicationStatements } from '../../lib/schemas/SimpleSchemas/MedicationStatements';
+import { Patients } from '../../lib/schemas/SimpleSchemas/Patients';
+import { Practitioners } from '../../lib/schemas/SimpleSchemas/Practitioners';
+import { Procedures } from '../../lib/schemas/SimpleSchemas/Procedures';
+import { FhirUtilities } from '../../lib/FhirUtilities';
 
 Meteor.methods({
   // Removed custom accounts.createUser and accounts.login methods
@@ -171,5 +182,160 @@ Meteor.methods({
       isEmail: isEmail,
       hasPassword: user ? !!(user.services && user.services.password) : null
     };
+  },
+
+  async 'deleteMyAccount'() {
+    console.log('[deleteMyAccount] Starting account deletion process');
+    
+    // Get current user from the access token
+    // In Meteor 3, we use this.userId for the logged-in user
+    const userId = this.userId;
+    
+    if (!userId) {
+      throw new Meteor.Error(401, 'Unauthorized - User not logged in');
+    }
+    
+    const currentUser = await Meteor.users.findOneAsync(userId);
+    
+    if (!currentUser) {
+      throw new Meteor.Error(404, 'User not found');
+    }
+    
+    // Get patientId from user record
+    let selectedPatientId = get(currentUser, 'patientId');
+    let selectedPatient = null;
+    
+    // Get patient record if patientId exists
+    if (selectedPatientId) {
+      selectedPatient = await Patients.findOneAsync({
+        $or: [
+          { id: selectedPatientId },
+          { _id: selectedPatientId }
+        ]
+      });
+    }
+    
+    console.log('[deleteMyAccount] Deleting user:', userId);
+    console.log('[deleteMyAccount] Patient ID:', selectedPatientId);
+    
+    // Log HIPAA audit event if enabled
+    if (get(Meteor, 'settings.private.accessControl.enableHipaaLogging')) {
+      const newAuditEvent = {
+        "resourceType": "AuditEvent",
+        "type": {
+          'code': 'DeactivateUser',
+          'display': 'Deactivate User'
+        },
+        "action": 'Deactivation',
+        "recorded": new Date(),
+        "outcome": [{
+          "code": {
+            "display": "Operation Successful",
+            "code": "success",
+            "system": "http://hl7.org/fhir/issue-severity"
+          }
+        }],
+        "agent": [{
+          "name": selectedPatient ? FhirUtilities.pluckName(selectedPatient) : get(currentUser, 'fullLegalName', 'Unknown User'),
+          "who": {
+            "display": selectedPatient ? FhirUtilities.pluckName(selectedPatient) : get(currentUser, 'fullLegalName', 'Unknown User'),
+            "reference": selectedPatientId ? `Patient/${selectedPatientId}` : ''
+          },
+          "requestor": false
+        }],
+        "source": {
+          "site": Meteor.absoluteUrl(),
+          "identifier": {
+            "value": Meteor.absoluteUrl()
+          }
+        },
+        "entity": [{
+          "reference": {
+            "reference": ''
+          }
+        }]
+      };
+      
+      console.log('[deleteMyAccount] Logging HIPAA event:', newAuditEvent);
+      // Use the auditEvents.log method instead
+      await Meteor.callAsync("auditEvents.log", 
+        'DeactivateUser',
+        userId,
+        selectedPatientId ? `Patient/${selectedPatientId}` : null,
+        'User account and health data deleted',
+        { fhirResource: newAuditEvent }
+      );
+    }
+    
+    // Delete all patient-related data
+    if (selectedPatientId) {
+      const patientQuery = FhirUtilities.addPatientFilterToQuery(selectedPatientId);
+      
+      // Delete Conditions
+      const conditionsDeleted = await Conditions.removeAsync(patientQuery);
+      console.log(`[deleteMyAccount] Deleted ${conditionsDeleted} conditions`);
+      
+      // Delete CarePlans
+      const carePlansDeleted = await CarePlans.removeAsync(patientQuery);
+      console.log(`[deleteMyAccount] Deleted ${carePlansDeleted} care plans`);
+      
+      // Delete CareTeams
+      const careTeamsDeleted = await CareTeams.removeAsync(patientQuery);
+      console.log(`[deleteMyAccount] Deleted ${careTeamsDeleted} care teams`);
+      
+      // Delete Devices
+      const devicesDeleted = await Devices.removeAsync(patientQuery);
+      console.log(`[deleteMyAccount] Deleted ${devicesDeleted} devices`);
+      
+      // Delete MedicationStatements
+      const medicationStatementsDeleted = await MedicationStatements.removeAsync(patientQuery);
+      console.log(`[deleteMyAccount] Deleted ${medicationStatementsDeleted} medication statements`);
+      
+      // Delete Observations
+      const observationsDeleted = await Observations.removeAsync(patientQuery);
+      console.log(`[deleteMyAccount] Deleted ${observationsDeleted} observations`);
+      
+      // Delete Procedures
+      const proceduresDeleted = await Procedures.removeAsync(patientQuery);
+      console.log(`[deleteMyAccount] Deleted ${proceduresDeleted} procedures`);
+      
+      // Delete Patient record
+      const patientsDeleted = await Patients.removeAsync({
+        $or: [
+          { id: selectedPatientId },
+          { _id: selectedPatientId }
+        ]
+      });
+      console.log(`[deleteMyAccount] Deleted ${patientsDeleted} patient records`);
+    }
+    
+    // Delete the user account
+    await Meteor.users.removeAsync(userId);
+    console.log('[deleteMyAccount] User account deleted successfully');
+    
+    return "User health data deleted, and account deactivated.";
+  },
+
+  async 'users.linkPatient'(patientId) {
+    check(patientId, String);
+    
+    // Ensure user is logged in
+    if (!this.userId) {
+      throw new Meteor.Error(401, 'User must be logged in');
+    }
+    
+    try {
+      // Update the current user's patientId
+      const result = await Meteor.users.updateAsync(
+        { _id: this.userId },
+        { $set: { patientId: patientId } }
+      );
+      
+      console.log(`[users.linkPatient] Linked patient ${patientId} to user ${this.userId}`);
+      return result;
+    } catch (error) {
+      console.error('[users.linkPatient] Error:', error);
+      throw new Meteor.Error(500, 'Failed to link patient to user');
+    }
   }
 });

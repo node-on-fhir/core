@@ -1,0 +1,48 @@
+{
+    "resourceType": "MedicationStatement",
+    "id": "SMP-MedStmt-PolyethyleneGlycolPalliative",
+    "text": {
+      "status": "generated",
+      "div": "<div>Polyethelyne Glycol 17 grams po qd</div>"
+    },
+    "basedOn": [
+      {
+        "reference": "MedicationRequest/MedicationRequest-PolyethyleneGlycolPalliative"
+      }
+    ],
+    "status": "active",
+    "medicationCodeableConcept": {
+      "coding": [
+        {
+            "code": "876193",
+            "system": "http://www.nlm.nih.gov/research/umls/rxnorm",
+            "display": "Polyethylene glycol 3350 (Miralax)"
+        }
+      ]
+    },
+    "subject": {
+      "reference": "Patient/patientJM1",
+      "display": "Jenny Mosley"
+    },
+    "informationSource": {
+      "reference": "Organization/Org-SNF-Happy-Nursing-Facility",
+      "display": "Happy Nursing Facility"
+    },
+    "reasonCode": [
+      {
+        "coding": [
+          {
+            "code": "21782001",
+            "system": "http://snomed.info/sct",
+            "display": "Drug-induced constipation"
+          }
+        ]
+      }
+    ],
+    "dosage": [
+      {
+        "sequence": 1,
+        "text": "Take 1 capful per day. Mix with any liquid. Encourage patient to drink water."
+      }
+    ]
+  }

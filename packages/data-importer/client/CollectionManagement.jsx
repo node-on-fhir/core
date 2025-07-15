@@ -90,6 +90,7 @@ let supportedResources = [
   "MedicationStatement",
   "MessageHeader",
   "Network",
+  "NutritionOrder",
   "Observation",
   "Organization",
   "OrganizationAffiliation",
@@ -1666,6 +1667,24 @@ export function CollectionManagement(props){
     </TableRow>
   }
 
+  let nutritionOrdersRow;
+  if(determineRowVisible("NutritionOrder")){
+    shouldDisplayNoDataRow = false;
+    nutritionOrdersRow = <TableRow className='dataManagementRow'  hover={true}>
+      { renderIcon("NutritionOrder") }
+      { renderImportCheckmark(methods.toggleNutritionOrders.bind(this), 'NutritionOrder') }
+      <TableCell className="collection">NutritionOrders</TableCell>
+      { renderPreview('NutritionOrder')} 
+      { renderClientCount('NutritionOrder')} 
+      { renderLocalClientCount('NutritionOrder')} 
+      { renderPubSub('NutritionOrder')} 
+      { renderImportButton('NutritionOrders')} 
+      { renderDropButton('NutritionOrder')} 
+      { renderExportButton('NutritionOrders')} 
+      { renderExportCheckmark(exportMethods.toggleNutritionOrdersExport.bind(this), 'NutritionOrder') }
+    </TableRow>
+  }
+
   let observationsRow;
   if(determineRowVisible("Observation")){
     shouldDisplayNoDataRow = false;
@@ -2161,6 +2180,7 @@ export function CollectionManagement(props){
         { medicationStatementsRow }
         { messageHeadersRow }
         { networksRow }
+        { nutritionOrdersRow }
         { observationsRow }
         { organizationsRow }
         { organizationAffiliationsRow }

@@ -95,6 +95,8 @@ function ConditionsTable(props){
 
     // ------------------------------------------------------------------------
   // Form Factors
+  
+  let multiline = false;
 
   if(formFactorLayout){
     logger.verbose('formFactorLayout', formFactorLayout + ' ' + window.innerWidth);

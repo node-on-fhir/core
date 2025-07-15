@@ -1,6 +1,6 @@
 Package.describe({
     name: 'mitre:sphr-analyzer',
-    version: '0.5.0',
+    version: '0.5.1',
     summary: 'Example Node on FHIR plugin, with dynamic routes and UI elements.',
     documentation: 'README.md'
 });

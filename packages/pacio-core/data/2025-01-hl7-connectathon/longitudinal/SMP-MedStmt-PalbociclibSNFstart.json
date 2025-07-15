@@ -1,0 +1,48 @@
+{
+    "resourceType": "MedicationStatement",
+    "id": "SMP-MedStmt-PalbociclibSNFstart",
+    "text": {
+      "status": "generated",
+      "div": "<div>Palbociclib 125 MG tablet po qd</div>"
+    },
+    "basedOn": [
+      {
+        "reference": "MedicationRequest/MedicationRequest-PalbociclibSNFstart"
+      }
+    ],
+    "status": "active",
+    "medicationCodeableConcept": {
+      "coding": [
+        {
+            "code": "2284105",
+            "system": "http://www.nlm.nih.gov/research/umls/rxnorm",
+            "display": "palbociclib 125 MG Oral Tablet"
+        }
+      ]
+    },
+    "subject": {
+      "reference": "Patient/patientJM1",
+      "display": "Jenny Mosley"
+    },
+    "informationSource": {
+      "reference": "Organization/Org-SNF-Happy-Nursing-Facility",
+      "display": "Happy Nursing Facility"
+    },
+    "reasonCode": [
+      {
+        "coding": [
+          {
+            "code": "94225005",
+            "system": "http://snomed.info/sct",
+            "display": "Metastatic malignant neoplasm to brain"
+          }
+        ]
+      }
+    ],
+    "dosage": [
+      {
+        "sequence": 1,
+        "text": "1 tablet po qd"
+      }
+    ]
+  }

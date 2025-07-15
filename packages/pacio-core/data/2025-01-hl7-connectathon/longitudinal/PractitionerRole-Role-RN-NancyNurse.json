@@ -1,0 +1,29 @@
+{
+    "resourceType": "PractitionerRole",
+    "id": "Role-SLP-NancyNurse",
+    "active": true,
+    "code": [
+      {
+        "coding": [
+          {
+            "code": "364SL0600X",
+            "system": "https://taxonomy.nucc.org/",
+            "display": "Long-Term Care Clinical Nurse Specialist"
+          }
+        ]
+      }
+    ],
+    "practitioner": {
+      "reference": "Practitioner/Practitioner-NancyNurse",
+      "display": "Nancy Nurse"
+    },
+    "organization": {
+      "reference": "Organization/org-SNF-Happy-Nursing-Facility",
+      "display": "Happy Nursing Facility"
+    },
+    "location": [
+      {
+        "reference": "Location/org-Loc-SNF-Happy-Nursing-Facility"
+      }
+    ]
+  }

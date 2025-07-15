@@ -1,0 +1,102 @@
+{
+    "resourceType": "MedicationRequest",
+    "id": "medicationrequest-DexamethasoneSNFstart",
+    "meta": {
+      "profile": [
+        "http://hl7.org/fhir/us/core/StructureDefinition/us-core-medicationrequest"
+      ]
+    },
+    "status": "active",
+    "intent": "order",
+    "category": [
+      {
+        "coding": [
+          {
+            "code": "inpatient"
+          }
+        ]
+      }
+    ],
+    "priority": "routine",
+    "medicationCodeableConcept": {
+      "coding": [
+        {
+          "code": "197582",
+          "system": "http://www.nlm.nih.gov/research/umls/rxnorm",
+          "display": "dexAMETHasone 4 MG Oral Tablet"
+        }
+      ],
+      "text": "dexAMETHasone 4 MG Oral Tablet"
+    },
+    "subject": {
+      "reference": "Patient/patientJM1",
+      "display": "Jenny Mosley"
+    },
+    "authoredOn": "2024-10-02T22:30:00-08:00",
+    "requester": {
+      "reference": "Practitioner/Practitioner-GeraldPark",
+      "display": "Gerald Park"
+    },
+    "reasonCode": [
+      {
+        "coding": [
+          {
+            "version": "http://snomed.info/sct/731000124108",
+            "code": "94225005",
+            "system": "http://snomed.info/sct",
+            "display": "Metastatic malignant neoplasm to brain"
+          }
+        ],
+        "text": "Metastatic malignant neoplasm to brain"
+      }
+    ],
+    "dosageInstruction": [
+      {
+        "text": "Dexamethasone 4 MG Oral Tablet taken daily while undergoing chemotherapy",
+        "timing": {
+          "repeat": {
+            "boundsPeriod": {
+              "start": "2024-10-02"
+            },
+            "frequency": 1,
+            "period": 1,
+            "periodUnit": "d"
+          }
+        },
+        "route": {
+          "coding": [
+            {
+              "code": "26643006",
+              "system": "http://snomed.info/sct",
+              "display": "Oral route (qualifier value)"
+            }
+          ]
+        },
+        "doseAndRate": [
+          {
+            "doseQuantity": {
+              "value": 4,
+              "code": "mg",
+              "system": "http://unitsofmeasure.org",
+              "unit": "mg"
+            }
+          }
+        ]
+      }
+    ],
+    "dispenseRequest": {
+      "numberOfRepeatsAllowed": 1,
+      "quantity": {
+        "value": 120,
+        "code": "mg",
+        "system": "http://unitsofmeasure.org",
+        "unit": "mg"
+      },
+      "expectedSupplyDuration": {
+        "value": 1,
+        "code": "m",
+        "system": "http://unitsofmeasure.org",
+        "unit": "month"
+      }
+    }
+  }

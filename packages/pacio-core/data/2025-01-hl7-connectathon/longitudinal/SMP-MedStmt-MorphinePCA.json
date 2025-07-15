@@ -1,0 +1,49 @@
+{
+    "resourceType": "MedicationStatement",
+    "id": "SMP-MedStmt-MorphinePCA",
+    "text": {
+      "status": "generated",
+      "div": "<div>Morphine 1.5 MG via PCA</div>"
+    },
+    "basedOn": [
+      {
+        "reference": "MedicationRequest/MedicationRequest-MorphinePCA"
+      }
+    ],
+    "status": "active",
+    "medicationCodeableConcept": {
+      "coding": [
+        {
+            "code": "892531",
+            "system": "http://www.nlm.nih.gov/research/umls/rxnorm",
+            "display": "morphine sulfate 10 MG/ML"
+          }
+      ]
+    },
+    "subject": {
+      "reference": "Patient/patientJM1",
+      "display": "Jenny Mosley"
+    },
+    "informationSource": {
+      "reference": "Organization/Org-Hospice-Suquamish",
+      "display": "Suquamish Hospice"
+    },
+    "reasonCode": [
+      {
+        "coding": [
+            {
+                "version": "http://snomed.info/sct/731000124108",
+                "code": "735935009",
+                "system": "http://snomed.info/sct",
+                "display": "Pain due to neoplastic disease (finding)"
+              }
+        ]
+      }
+    ],
+    "dosage": [
+      {
+        "sequence": 1,
+        "text": "Patient may receive up to 1.5 mg / 2 hour period via SubCue patch. If patient complains of pain, rescue dose may be administered. If this is inadquate, notify on call practitioner."
+      }
+    ]
+  }

@@ -19,11 +19,11 @@ let DynamicRoutes = [{
 let SidebarElements = [];
 
 let SidebarWorkflows = [{
-  'primaryText': 'Quality Checks',
+  'primaryText': 'PHR Quality Checks',
   'to': '/quality-checks',
   'href': '/quality-checks'
 }, {
-  'primaryText': 'File analysis',
+  'primaryText': 'PHR File Analysis',
   'to': '/file-analysis',
   'href': '/file-analysis'
 }];

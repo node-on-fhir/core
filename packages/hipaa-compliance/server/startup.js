@@ -2,8 +2,7 @@
 
 import { Meteor } from 'meteor/meteor';
 import { get, set } from 'lodash';
-import { HipaaAuditLog, HipaaAuditLogSchema } from '../lib/Collections';
-import { HipaaLogger } from '../lib/HipaaLogger';
+import { HipaaLogger } from '../lib/HipaaLoggerAccess';
 import { EncryptionManager } from '../lib/EncryptionManager';
 import { setupAuditHooks, setupUserActivityHooks } from './hooks';
 
@@ -16,13 +15,7 @@ Meteor.startup(async function() {
   // Initialize the logger
   HipaaLogger.initialize();
 
-  // Add validation to HipaaAuditLog inserts
-  if (HipaaAuditLog.before) {
-    HipaaAuditLog.before.insert(function(userId, doc) {
-      // Validate against schema
-      HipaaAuditLogSchema.validate(doc);
-    });
-  }
+  // Note: Validation is now handled by the core AuditEvents collection
 
   // Create indexes for performance
   await createIndexes();
@@ -83,28 +76,34 @@ function injectEnvironmentVariables() {
 // Create database indexes
 async function createIndexes() {
   try {
-    const collection = HipaaAuditLog.rawCollection();
+    // Get AuditEvents from global Collections
+    const AuditEvents = await global.Collections?.AuditEvents;
+    if (!AuditEvents) {
+      console.warn('AuditEvents collection not available for indexing');
+      return;
+    }
+    
+    const collection = AuditEvents.rawCollection();
     
     // Create indexes for common queries
-    await collection.createIndex({ eventDate: -1 });
-    await collection.createIndex({ eventType: 1, eventDate: -1 });
-    await collection.createIndex({ userId: 1, eventDate: -1 });
-    await collection.createIndex({ patientId: 1, eventDate: -1 });
-    await collection.createIndex({ collectionName: 1, eventDate: -1 });
-    await collection.createIndex({ resourceId: 1 });
+    await collection.createIndex({ recorded: -1 });
+    await collection.createIndex({ 'type.code': 1, recorded: -1 });
+    await collection.createIndex({ 'agent.who.reference': 1, recorded: -1 });
+    await collection.createIndex({ 'patient.reference': 1, recorded: -1 });
+    await collection.createIndex({ 'entity.what.reference': 1 });
     
     // Compound index for patient audit trails
     await collection.createIndex({ 
-      patientId: 1, 
-      eventType: 1, 
-      eventDate: -1 
+      'patient.reference': 1, 
+      'type.code': 1, 
+      recorded: -1 
     });
 
     // Text index for search
     await collection.createIndex({
-      message: 'text',
-      userName: 'text',
-      patientName: 'text'
+      outcomeDesc: 'text',
+      'agent.who.display': 'text',
+      'patient.display': 'text'
     });
 
     console.log('HIPAA audit log indexes created successfully');
@@ -144,10 +143,17 @@ export const cleanupOldAuditLogs = async function() {
     cutoffDate: cutoffDate
   });
 
+  // Get AuditEvents from global Collections
+  const AuditEvents = await global.Collections?.AuditEvents;
+  if (!AuditEvents) {
+    console.warn('AuditEvents collection not available for cleanup');
+    return 0;
+  }
+
   // In production, you would archive rather than delete
   // For now, we'll just count what would be cleaned
-  const oldEventCount = await HipaaAuditLog.find({
-    eventDate: { $lt: cutoffDate }
+  const oldEventCount = await AuditEvents.find({
+    recorded: { $lt: cutoffDate }
   }).countAsync();
 
   if (oldEventCount > 0) {

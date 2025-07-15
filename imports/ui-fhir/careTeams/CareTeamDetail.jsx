@@ -2,6 +2,10 @@ import {
   Grid, 
   Button, 
   Container,
+  Card,
+  CardHeader,
+  CardContent,
+  CardActions,
   Typography,
   DatePicker,
   TextField,
@@ -74,9 +78,14 @@ export function CareTeamDetail(props){
 
 
   return(
-    <div className='CareTeamDetails'>
-
-        <Grid container spacing={3}>
+    <Container maxWidth="md" sx={{ py: 4 }}>
+      <Card sx={{ boxShadow: 3 }}>
+        <CardHeader 
+          title={activeId ? 'Edit Care Team' : 'New Care Team'}
+          sx={{ bgcolor: 'primary.main', color: 'primary.contrastText' }}
+        />
+        <CardContent>
+          <Grid container spacing={3}>
           <Grid item xs={6}>
             <TextField
               id="nameInput"
@@ -225,10 +234,20 @@ export function CareTeamDetail(props){
             </FormControl>   */}
                              
           </Grid>
-
-          
         </Grid>
-    </div>
+        </CardContent>
+        <CardActions>
+          {activeId ? (
+            <div>
+              <Button variant="contained" color="primary" onClick={onUpsert} sx={{ mr: 2 }}>Save</Button>
+              <Button variant="outlined" color="error" onClick={onRemove}>Delete</Button>
+            </div>
+          ) : (
+            <Button variant="contained" color="primary" onClick={onInsert}>Create</Button>
+          )}
+        </CardActions>
+      </Card>
+    </Container>
   );
 }
 

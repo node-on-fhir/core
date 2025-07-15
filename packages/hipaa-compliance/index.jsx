@@ -3,6 +3,8 @@
 import React from 'react';
 import { Button } from '@mui/material';
 import { Security as SecurityIcon } from '@mui/icons-material';
+import { get } from 'lodash';
+import { Meteor } from 'meteor/meteor';
 
 // Import components
 import AuditLogPage from './client/AuditLogPage';
@@ -83,8 +85,11 @@ export {
   FooterButtons 
 };
 
-// Also export the logger for direct use by other packages
-export { HipaaLogger } from './lib/HipaaLogger';
+// Import HipaaLogger wrapper that accesses the global logger
+import { HipaaLogger } from './lib/HipaaLoggerAccess';
+
+// Also export local modules for direct use by other packages
+export { HipaaLogger };
 export { HipaaAuditLog } from './lib/Collections';
 export { EventTypes, SecurityLevels, UserRoles } from './lib/Constants';
 export { SecurityValidators } from './lib/SecurityValidators';

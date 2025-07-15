@@ -9,11 +9,13 @@ import {
   Box,
   Grid
 } from '@mui/material';
+import AddIcon from '@mui/icons-material/Add';
 
 import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
 import React, { useState } from 'react';
 import { useTracker } from 'meteor/react-meteor-data';
+import { useNavigate } from 'react-router-dom';
 
 // import ListDetail from './ListDetail';
 import GoalsTable from '../carePlans/GoalsTable';
@@ -85,6 +87,7 @@ if(get(Meteor, 'settings.public.theme.palette')){
 // Main Component
 
 export function GoalsPage(props){
+  const navigate = useNavigate();
 
   let headerHeight = LayoutHelpers.calcHeaderHeight();
   let formFactor = LayoutHelpers.determineFormFactor();
@@ -92,6 +95,38 @@ export function GoalsPage(props){
   let noDataImage = get(Meteor, 'settings.public.defaults.noData.noDataImagePath', "packages/clinical_hl7-fhir-data-infrastructure/assets/NoData.png");  
 
   let cardWidth = window.innerWidth - paddingWidth;
+
+  function handleAddGoal(){
+    console.log('Add Goal button clicked');
+    navigate('/goals/new');
+  }
+
+  function renderHeader() {
+    return (
+      <Box mb={2}>
+        <Grid container spacing={2} alignItems="center" justifyContent="space-between">
+          <Grid item xs={12} sm={6}>
+            <Typography variant="h4">
+              Goals
+            </Typography>
+            <Typography variant="subtitle2" color="textSecondary">
+              {data.goals.length} goals found
+            </Typography>
+          </Grid>
+          <Grid item>
+            <Button
+              variant="contained"
+              color="primary"
+              startIcon={<AddIcon />}
+              onClick={handleAddGoal}
+            >
+              Add Goal
+            </Button>
+          </Grid>
+        </Grid>
+      </Box>
+    );
+  }
 
   
   let data = {
@@ -141,28 +176,44 @@ export function GoalsPage(props){
   let layoutContent;
   if(data.goals.length > 0){
     if(data.onePageLayout){
-      layoutContent = <Card height="auto" margin={20} width={cardWidth + 'px'}>
-        <CardHeader title={data.goals.length + " Goals"} />
-          <CardContent>
-            <GoalsTable 
-              goals={ data.goals }
-              hideCheckbox={true} 
-              hideActionIcons={true}
-              hideIdentifier={true} 
-              paginationLimit={10}   
-              onSetPage={function(index){
-                setGoalsIndex(index)
-              }}   
-              page={data.goalsIndex}                 
-            />
-          </CardContent>
-        </Card>
+      layoutContent = <Card 
+        sx={{ 
+          width: '100%',
+          borderRadius: 3,
+          boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+          border: '1px solid',
+          borderColor: 'divider',
+          overflow: 'hidden'
+        }}
+      >
+        <CardContent sx={{ p: 0 }}>
+          <GoalsTable 
+            goals={ data.goals }
+            hideCheckbox={true} 
+            hideActionIcons={true}
+            hideIdentifier={true} 
+            paginationLimit={10}   
+            onSetPage={function(index){
+              setGoalsIndex(index)
+            }}   
+            page={data.goalsIndex}                 
+          />
+        </CardContent>
+      </Card>
     } else {
       layoutContent = <Grid container spacing={3}>
         <Grid item lg={6}>
-          <Card height="auto" margin={20} width={cardWidth + 'px'}>
-            <CardHeader title={data.goals.length + " Goals"} />
-            <CardContent>
+          <Card 
+            sx={{ 
+              width: '100%',
+              borderRadius: 3,
+              boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+              border: '1px solid',
+              borderColor: 'divider',
+              overflow: 'hidden'
+            }}
+          >
+            <CardContent sx={{ p: 0 }}>
               <GoalsTable 
                 goals={ data.goals }
                 selectedGoalId={ data.selectedGoalId }
@@ -189,7 +240,15 @@ export function GoalsPage(props){
           </Card>
         </Grid>
         <Grid item lg={4}>
-          <Card height="auto" margin={20} scrollable width={cardWidth + 'px'}>
+          <Card 
+            sx={{ 
+              width: '100%',
+              borderRadius: 3,
+              boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+              border: '1px solid',
+              borderColor: 'divider'
+            }}
+          >
             <h1 className="barcode" style={{fontWeight: 100}}>{data.selectedGoalId }</h1>
             <CardContent>
               <CardContent>
@@ -209,22 +268,87 @@ export function GoalsPage(props){
       </Grid>
     }
   } else {
-    layoutContent = <Container maxWidth="sm" style={{display: 'flex', flexDirection: 'column', flexWrap: 'nowrap', height: '100%', justifyContent: 'center'}}>
-      {/* <img src={Meteor.absoluteUrl() + noDataImage} style={{width: '100%'}}  /> */}
-      <CardContent>
-        <CardHeader 
-          title={get(Meteor, 'settings.public.defaults.noData.defaultTitle', "No Data Available")} 
-          subheader={get(Meteor, 'settings.public.defaults.noData.defaultMessage', "No records were found in the client data cursor.  To debug, check the data cursor in the client console, then check subscriptions and publications, and relevant search queries.  If the data is not loaded in, use a tool like Mongo Compass to load the records directly into the Mongo database, or use the FHIR API interfaces.")} 
-        />
-      </CardContent>
-    </Container>
+    layoutContent = <Box 
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        minHeight: '50vh',
+        textAlign: 'center'
+      }}
+    >
+      <Card 
+        sx={{ 
+          maxWidth: '600px',
+          width: '100%',
+          borderRadius: 3,
+          boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+          border: '1px solid',
+          borderColor: 'divider',
+          backgroundColor: 'background.paper'
+        }}
+      >
+        <CardContent sx={{ p: 6 }}>
+          <Box sx={{ mb: 3 }}>
+            <Typography 
+              variant="h5" 
+              sx={{ 
+                fontWeight: 500,
+                color: 'text.primary',
+                mb: 2
+              }}
+            >
+              {get(Meteor, 'settings.public.defaults.noData.defaultTitle', "No Data Available")}
+            </Typography>
+            <Typography 
+              variant="body1" 
+              sx={{ 
+                color: 'text.secondary',
+                lineHeight: 1.7,
+                maxWidth: '480px',
+                mx: 'auto'
+              }}
+            >
+              {get(Meteor, 'settings.public.defaults.noData.defaultMessage', "No records were found in the client data cursor. To debug, check the data cursor in the client console, then check subscriptions and publications, and relevant search queries. If the data is not loaded in, use a tool like Mongo Compass to load the records directly into the Mongo database, or use the FHIR API interfaces.")}
+            </Typography>
+          </Box>
+          <Button
+            variant="outlined"
+            startIcon={<AddIcon />}
+            onClick={handleAddGoal}
+            sx={{
+              borderRadius: 2,
+              textTransform: 'none',
+              px: 3,
+              py: 1,
+              borderWidth: 2,
+              '&:hover': {
+                borderWidth: 2
+              }
+            }}
+          >
+            Add Your First Goal
+          </Button>
+        </CardContent>
+      </Card>
+    </Box>
   }
 
 
   return (
-    <div id="goalsPage" style={{padding: "20px"}} >
+    <Box 
+      id="goalsPage" 
+      sx={{
+        minHeight: '100vh',
+        backgroundColor: 'background.default',
+        px: { xs: 2, sm: 3, md: 4 },
+        py: { xs: 3, sm: 4, md: 5 }
+      }}
+    >
+      { data.goals.length > 0 && renderHeader() }
       { layoutContent }
-    </div>
+    </Box>
   );
 }
 

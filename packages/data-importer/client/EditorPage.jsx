@@ -61,15 +61,15 @@ let Patients;
 let Procedures;
 
 Meteor.startup(function(){
-  AllergyIntolerances = window.Collections.AllergyIntolerances;
-  CarePlans = window.Collections.CarePlans;
-  Conditions = window.Collections.Conditions;
-  Encounters = window.Collections.Encounters;
-  Immunizations = window.Collections.Immunizations;
-  MedicationStatements = window.Collections.MedicationStatements;
-  Observations = window.Collections.Observations;
-  Patients = window.Collections.Patients;
-  Procedures = window.Collections.Procedures;
+  AllergyIntolerances = Meteor.Collections.AllergyIntolerances;
+  CarePlans = Meteor.Collections.CarePlans;
+  Conditions = Meteor.Collections.Conditions;
+  Encounters = Meteor.Collections.Encounters;
+  Immunizations = Meteor.Collections.Immunizations;
+  MedicationStatements = Meteor.Collections.MedicationStatements;
+  Observations = Meteor.Collections.Observations;
+  Patients = Meteor.Collections.Patients;
+  Procedures = Meteor.Collections.Procedures;
 })
 
 

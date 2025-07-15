@@ -1,5 +1,8 @@
+// /imports/ui-fhir/procedures/ProceduresPage.jsx
+
 import React, { useState } from 'react';
 import { useTracker } from 'meteor/react-meteor-data';
+import { useNavigate } from 'react-router-dom';
 
 import { 
   Grid, 
@@ -9,11 +12,10 @@ import {
   CardHeader,
   CardContent,
   Button,
-  Tab, 
-  Tabs,
-  Typography,
-  Box
+  Box,
+  Typography
 } from '@mui/material';
+import AddIcon from '@mui/icons-material/Add'; 
 
 import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
@@ -22,9 +24,7 @@ import { Session } from 'meteor/session';
 import ProceduresTable from './ProceduresTable';
 import LayoutHelpers from '../../lib/LayoutHelpers';
 
-import { get, cloneDeep } from 'lodash';
-
-import { MuiThemeProvider, createTheme } from '@mui/material/styles';
+import { get } from 'lodash';
 
 //=============================================================================================================================================
 // DATA CURSORS
@@ -34,44 +34,10 @@ Meteor.startup(function(){
 })
 
 //=============================================================================================================================================
-
-  // Global Theming 
-  // This is necessary for the Material UI component render layer
-  let theme = {
-    primaryColor: "rgb(177, 128, 13)",
-    primaryText: "rgba(255, 255, 255, 1) !important",
-
-    secondaryColor: "rgb(177, 128, 13)",
-    secondaryText: "rgba(255, 255, 255, 1) !important",
-
-    cardColor: "rgba(255, 255, 255, 1) !important",
-    cardTextColor: "rgba(0, 0, 0, 1) !important",
-
-    errorColor: "rgb(128,20,60) !important",
-    errorText: "#ffffff !important",
-
-    appBarColor: "#f5f5f5 !important",
-    appBarTextColor: "rgba(0, 0, 0, 1) !important",
-
-    paperColor: "#f5f5f5 !important",
-    paperTextColor: "rgba(0, 0, 0, 1) !important",
-
-    backgroundCanvas: "rgba(255, 255, 255, 1) !important",
-    background: "linear-gradient(45deg, rgb(177, 128, 13) 30%, rgb(150, 202, 144) 90%)",
-
-    nivoTheme: "greens"
-  }
-
-  // if we have a globally defined theme from a settings file
-  if(get(Meteor, 'settings.public.theme.palette')){
-    theme = Object.assign(theme, get(Meteor, 'settings.public.theme.palette'));
-  }
-
-
-
-
-//=============================================================================================================================================
 // SESSION VARIABLES
+
+Session.setDefault('selectedProcedureId', false);
+
 
 Session.setDefault('procedurePageTabIndex', 1); 
 Session.setDefault('procedureSearchFilter', ''); 
@@ -87,11 +53,16 @@ Session.setDefault('ProceduresTable.proceduresIndex', 0)
 // MAIN COMPONENT
 
 export function ProceduresPage(props){
+  const navigate = useNavigate();
+
   let data = {
-    selectedProcedureId: '',
+    currentProcedureId: '',
     selectedProcedure: null,
     procedures: [],
-    onePageLayout: true
+    onePageLayout: true,
+    showSystemIds: false,
+    showFhirIds: false,
+    proceduresIndex: 0
   };
 
   data.onePageLayout = useTracker(function(){
@@ -104,7 +75,7 @@ export function ProceduresPage(props){
     return Session.get('selectedProcedureId');
   }, [])
   data.selectedProcedure = useTracker(function(){
-    return Procedures.findOne(Session.get('selectedProcedureId'));
+    return Procedures.findOne({_id: Session.get('selectedProcedureId')});
   }, [])
   data.procedures = useTracker(function(){
     return Procedures.find().fetch();
@@ -120,55 +91,159 @@ export function ProceduresPage(props){
   }, [])
 
 
-  if(process.env.NODE_ENV === "test") console.log('In ProceduresPage render');
-
   let headerHeight = LayoutHelpers.calcHeaderHeight();
   let formFactor = LayoutHelpers.determineFormFactor();
   let paddingWidth = LayoutHelpers.calcCanvasPaddingWidth();
-
-  let cardWidth = window.innerWidth - paddingWidth;
-  let proceduresTitle = data.procedures.length + " Procedures";
+  
   let noDataImage = get(Meteor, 'settings.public.defaults.noData.noDataImagePath', "packages/clinical_hl7-fhir-data-infrastructure/assets/NoData.png");  
+  let noDataCardStyle = {};
 
+  function handleAddProcedure(){
+    console.log('Add Procedure button clicked');
+    navigate('/procedures/new');
+  }
+
+  function renderHeader() {
+    return (
+      <Box mb={2}>
+        <Grid container spacing={2} alignItems="center" justifyContent="space-between">
+          <Grid item xs={12} sm={6}>
+            <Typography variant="h4">
+              Procedures
+            </Typography>
+            <Typography variant="subtitle2" color="textSecondary">
+              {data.procedures.length} procedures found
+            </Typography>
+          </Grid>
+          <Grid item>
+            <Button
+              variant="contained"
+              color="primary"
+              startIcon={<AddIcon />}
+              onClick={handleAddProcedure}
+            >
+              Add Procedure
+            </Button>
+          </Grid>
+        </Grid>
+      </Box>
+    );
+  }
 
   let layoutContent;
   if(data.procedures.length > 0){
-    layoutContent = <Card height="auto" scrollable={true} margin={20} width={cardWidth + 'px'}>
-      <CardHeader title={proceduresTitle} />
-        <CardContent>
-          <ProceduresTable 
-            procedures={data.procedures}
-            count={data.procedures.length}
-            tableRowSize="medium"
-            formFactorLayout={formFactor}
-            rowsPerPage={ LayoutHelpers.calcTableRows("medium",  props.appHeight) }
-            onSetPage={function(index){
-              setProceduresIndex(index)
-            }}  
-            page={data.proceduresIndex}
-            size="small"
-
-          />
+    layoutContent = <Card 
+      sx={{ 
+        width: '100%',
+        borderRadius: 3,
+        boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+        border: '1px solid',
+        borderColor: 'divider',
+        overflow: 'hidden'
+      }}
+    >
+      <CardContent sx={{ p: 0 }}>
+        <ProceduresTable 
+          id='proceduresTable'
+          procedures={data.procedures}
+          count={data.procedures.length}  
+          formFactorLayout={formFactor}
+          rowsPerPage={LayoutHelpers.calcTableRows()} 
+          actionButtonLabel="Remove"
+          hideActionButton={get(Meteor, 'settings.public.modules.fhir.Procedures.hideRemoveButtonOnTable', true)}
+          onActionButtonClick={function(selectedId){
+            Procedures._collection.remove({_id: selectedId})
+          }}
+          onSetPage={function(index){
+            Session.set('ProceduresTable.proceduresIndex', index)
+          }}        
+          page={data.proceduresIndex}
+        />
       </CardContent>
     </Card>
   } else {
-    layoutContent = <Container maxWidth="sm" style={{display: 'flex', flexDirection: 'column', flexWrap: 'nowrap', height: '100%', justifyContent: 'center'}}>
-      {/* <img src={Meteor.absoluteUrl() + noDataImage} style={{width: '100%'}}  /> */}
-      <CardContent>
-        <CardHeader 
-          title={get(Meteor, 'settings.public.defaults.noData.defaultTitle', "No Data Available")} 
-          subheader={get(Meteor, 'settings.public.defaults.noData.defaultMessage', "No records were found in the client data cursor.  To debug, check the data cursor in the client console, then check subscriptions and publications, and relevant search queries.  If the data is not loaded in, use a tool like Mongo Compass to load the records directly into the Mongo database, or use the FHIR API interfaces.")} 
-        />
-      </CardContent>
-    </Container>
+    layoutContent = <Box 
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        minHeight: '50vh',
+        textAlign: 'center'
+      }}
+    >
+      <Card 
+        sx={{ 
+          maxWidth: '600px',
+          width: '100%',
+          borderRadius: 3,
+          boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+          border: '1px solid',
+          borderColor: 'divider',
+          backgroundColor: 'background.paper'
+        }}
+      >
+        <CardContent sx={{ p: 6 }}>
+          <Box sx={{ mb: 3 }}>
+            <Typography 
+              variant="h5" 
+              sx={{ 
+                fontWeight: 500,
+                color: 'text.primary',
+                mb: 2
+              }}
+            >
+              {get(Meteor, 'settings.public.defaults.noData.defaultTitle', "No Data Available")}
+            </Typography>
+            <Typography 
+              variant="body1" 
+              sx={{ 
+                color: 'text.secondary',
+                lineHeight: 1.7,
+                maxWidth: '480px',
+                mx: 'auto'
+              }}
+            >
+              {get(Meteor, 'settings.public.defaults.noData.defaultMessage', "No records were found in the client data cursor. To debug, check the data cursor in the client console, then check subscriptions and publications, and relevant search queries. If the data is not loaded in, use a tool like Mongo Compass to load the records directly into the Mongo database, or use the FHIR API interfaces.")}
+            </Typography>
+          </Box>
+          <Button
+            variant="outlined"
+            startIcon={<AddIcon />}
+            onClick={handleAddProcedure}
+            sx={{
+              borderRadius: 2,
+              textTransform: 'none',
+              px: 3,
+              py: 1,
+              borderWidth: 2,
+              '&:hover': {
+                borderWidth: 2
+              }
+            }}
+          >
+            Add Your First Procedure
+          </Button>
+        </CardContent>
+      </Card>
+    </Box>
   }
-
-
+  
   return (
-    <div id="proceduresPage" style={{padding: "20px"}} >
+    <Box 
+      id="proceduresPage" 
+      sx={{
+        minHeight: '100vh',
+        backgroundColor: 'background.default',
+        px: { xs: 2, sm: 3, md: 4 },
+        py: { xs: 3, sm: 4, md: 5 }
+      }}
+    >
+      { data.procedures.length > 0 && renderHeader() }
       { layoutContent }
-    </div>
+    </Box>
   );
 }
+
 
 export default ProceduresPage;

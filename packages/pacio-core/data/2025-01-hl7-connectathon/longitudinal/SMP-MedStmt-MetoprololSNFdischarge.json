@@ -1,0 +1,48 @@
+{
+    "resourceType": "MedicationStatement",
+    "id": "SMP-MedStmt-MetoprololSNFdischarge",
+    "text": {
+      "status": "generated",
+      "div": "<div>Metoprolol tartrate 50 MG po bid</div>"
+    },
+    "basedOn": [
+      {
+        "reference": "MedicationRequest/medicationrequest-MetoprololSNFdischarge"
+      }
+    ],
+    "status": "active",
+    "medicationCodeableConcept": {
+      "coding": [
+        {
+            "code": "866514",
+            "system": "http://www.nlm.nih.gov/research/umls/rxnorm",
+            "display": "metoprolol tartrate 50 MG Oral Tablet"
+        }
+      ]
+    },
+    "subject": {
+      "reference": "Patient/patientJM1",
+      "display": "Jenny Mosley"
+    },
+    "informationSource": {
+      "reference": "Organization/Org-SNF-Happy-Nursing-Facility",
+      "display": "Happy Nursing Facility"
+    },
+    "reasonCode": [
+      {
+        "coding": [
+          {
+            "code": "38341003",
+            "system": "http://snomed.info/sct",
+            "display": "Hypertensive disorder, systemic arterial (disorder)"
+          }
+        ]
+      }
+    ],
+    "dosage": [
+      {
+        "sequence": 1,
+        "text": "po morning and night"
+      }
+    ]
+  }

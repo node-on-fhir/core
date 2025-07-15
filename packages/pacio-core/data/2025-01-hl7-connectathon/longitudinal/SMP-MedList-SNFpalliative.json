@@ -1,0 +1,100 @@
+{
+  "resourceType": "List",
+  "id": "SMP-MedList-SNFpalliative",
+  "status": "current",
+  "mode": "snapshot",
+  "title": "SNF + Pallative Care Administration List",
+  "code": {
+    "coding": [
+      {
+        "code": "104207-6",
+        "system": "http://loinc.org",
+        "display": "Institution Administration List"
+      }
+    ]
+  },
+  "subject": {
+    "reference": "Patient/patientJM1",
+    "display": "Jenny Mosley"
+  },
+  "date": "2024-10-23T22:40:00-08:00",
+  "entry": [
+    {
+      "date": "2024-10-23",
+      "item": {
+        "reference": "MedicationStatement/SMP-MedStmt-AtorvastatinSNFpalliative",
+        "display": "Atorvastatin 40 mg"
+      }
+    },
+    {
+      "date": "2024-10-23",
+      "item": {
+        "reference": "MedicationStatement/SMP-MedStmt-AlprazolamSNFpalliative",
+        "display": "Alprazolam 0.5 mg"
+      }
+    },
+    {
+      "date": "2024-10-23",
+      "item": {
+        "reference": "MedicationStatement/SMP-MedStmt-MetoprololSNFpalliative",
+        "display": "Metoprolol 50 mg"
+      }
+    },
+    {
+      "date": "2024-10-23",
+      "item": {
+        "reference": "MedicationStatement/SMP-MedStmt-AcetaminophenSNFpalliative",
+        "display": "Acetaminophen 500 mg"
+      }
+    },
+    {
+      "date": "2024-10-23",
+      "item": {
+        "reference": "MedicationStatement/SMP-MedStmt-DexamethasoneSNFpalliative",
+        "display": "Dexamethasone 4 mg"
+      }
+    },
+    {
+      "date": "2024-10-23",
+      "item": {
+        "reference": "MedicationStatement/SMP-MedStmt-GabapentinSNFpalliative",
+        "display": "Gabapentin 300 mg"
+      }
+    },
+    {
+      "date": "2024-10-23",
+      "item": {
+        "reference": "MedicationStatement/SMP-MedStmt-MetoclopramideSNFpalliative",
+        "display": "Metoclopramide 10 mg"
+      }
+    },
+    {
+      "date": "2024-10-23",
+      "item": {
+        "reference": "MedicationStatement/SMP-MedStmt-OndansetronSNFpalliative",
+        "display": "Ondansetron 8 mg"
+      }
+    },
+    {
+      "date": "2024-10-23",
+      "item": {
+        "reference": "MedicationStatement/SMP-MedStmt-PalbociclibSNFpalliative",
+        "display": "Palbociclib 125 mg"
+      }
+    },
+    {
+      "date": "2024-10-23",
+      "item": {
+        "reference": "MedicationStatement/SMP-MedStmt-OralMorphinepalliative",
+        "display": "Oral Morphine 4 mg/ml"
+      }
+    },
+    {
+      "date": "2024-10-23",
+      "item": {
+        "reference": "MedicationStatement/SMP-MedStmt-PolyethyleneGlycolPalliative",
+        "display": "Polyethelyene Glycol 17 grams"
+      }
+    }
+  ]
+}

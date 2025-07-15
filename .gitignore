@@ -16,3 +16,9 @@ packages/*
 
 .DS_Store
 
+# Environment files (contain secrets)
+.env
+.env.*
+!.env.*.example
+
+.meteor/packages

@@ -1,0 +1,48 @@
+{
+    "resourceType": "MedicationStatement",
+    "id": "SMP-MedStmt-GabapentinHosp1",
+    "text": {
+      "status": "generated",
+      "div": "<div>Gabapentin 300 MG po tid</div>"
+    },
+    "basedOn": [
+      {
+        "reference": "MedicationRequest/MedicationRequest-GabapentinHosp1"
+      }
+    ],
+    "status": "active",
+    "medicationCodeableConcept": {
+      "coding": [
+        {
+            "code": "310431",
+            "system": "http://www.nlm.nih.gov/research/umls/rxnorm",
+            "display": "gabapentin 300 MG Oral Capsule"
+        }
+      ]
+    },
+    "subject": {
+      "reference": "Patient/patientJM1",
+      "display": "Jenny Mosley"
+    },
+    "informationSource": {
+      "reference": "Organization/Org-Onc-Hosp-Puget-Sound",
+      "display": "Pugent Sound Cancer Center"
+    },
+    "reasonCode": [
+      {
+        "coding": [
+          {
+            "code": "735935009",
+            "system": "http://snomed.info/sct",
+            "display": "Pain due to neoplastic disease (finding)"
+          }
+        ]
+      }
+    ],
+    "dosage": [
+      {
+        "sequence": 1,
+        "text": "1 capsule po on day one, 2 capsules po day 2, 3 capsules po in the evening thereafter"
+      }
+    ]
+  }

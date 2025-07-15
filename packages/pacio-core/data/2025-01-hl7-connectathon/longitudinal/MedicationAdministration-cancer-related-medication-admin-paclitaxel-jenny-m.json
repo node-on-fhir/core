@@ -1,0 +1,68 @@
+{
+  "resourceType" : "MedicationAdministration",
+  "id" : "cancer-related-medication-admin-paclitaxel-jenny-m",
+  "meta" : {
+    "profile" : ["http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-cancer-related-medication-administration"]
+  },
+  "text" : {
+    "status" : "extensions",
+    "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p class=\"res-header-id\"><b>Generated Narrative: MedicationAdministration cancer-related-medication-admin-paclitaxel-jenny-m</b></p><a name=\"cancer-related-medication-admin-paclitaxel-jenny-m\"> </a><a name=\"hccancer-related-medication-admin-paclitaxel-jenny-m\"> </a><a name=\"cancer-related-medication-admin-paclitaxel-jenny-m-en-US\"> </a><p><b>Procedure Intent Extension</b>: <span title=\"Codes:{http://snomed.info/sct 373808002}\">Curative - procedure intent (qualifier value)</span></p><p><b>status</b>: Completed</p><p><b>category</b>: <span title=\"Codes:{http://terminology.hl7.org/CodeSystem/medicationrequest-category outpatient}\">Outpatient</span></p><p><b>medication</b>: <span title=\"Codes:{http://www.nlm.nih.gov/research/umls/rxnorm 56946}\">PACLitaxel</span></p><p><b>subject</b>: <a href=\"Patient-patientJM1.html\">Mosley, Jenny Female, DoB: 1955-10-03 ( http://hl7.org/fhir/sid/us-medicare#MedicareHIC#1EG4-TE5-MK73)</a></p><p><b>effective</b>: 2018-04-22</p><h3>Performers</h3><table class=\"grid\"><tr><td style=\"display: none\">-</td><td><b>Actor</b></td></tr><tr><td style=\"display: none\">*</td><td><a href=\"Practitioner-us-core-practitioner-nancy-oncology-nurse.html\">Practitioner Nancy Nurse </a></td></tr></table><p><b>reasonReference</b>: <a href=\"Condition-primary-cancer-condition-jenny-m.html\">Condition Primary malignant neoplasm of female left breast (disorder)</a></p><p><b>note</b>: PACLitaxel (175 mg/m² IV), 272.01mg ( @2018-04-12)</p><h3>Dosages</h3><table class=\"grid\"><tr><td style=\"display: none\">-</td><td><b>Route</b></td><td><b>Dose</b></td></tr><tr><td style=\"display: none\">*</td><td><span title=\"Codes:{http://snomed.info/sct 47625008}\">Intravenous route (qualifier value)</span></td><td>272.01 mg<span style=\"background: LightGoldenRodYellow\"> (Details: UCUM  codemg = 'mg')</span></td></tr></table></div>"
+  },
+  "extension" : [{
+    "url" : "http://hl7.org/fhir/us/mcode/StructureDefinition/mcode-procedure-intent",
+    "valueCodeableConcept" : {
+      "coding" : [{
+        "system" : "http://snomed.info/sct",
+        "version" : "http://snomed.info/sct/900000000000207008",
+        "code" : "373808002",
+        "display" : "Curative - procedure intent (qualifier value)"
+      }]
+    }
+  }],
+  "status" : "completed",
+  "category" : {
+    "coding" : [{
+      "system" : "http://terminology.hl7.org/CodeSystem/medicationrequest-category",
+      "code" : "outpatient"
+    }]
+  },
+  "medicationCodeableConcept" : {
+    "coding" : [{
+      "system" : "http://www.nlm.nih.gov/research/umls/rxnorm",
+      "code" : "56946",
+      "display" : "PACLitaxel"
+    }]
+  },
+  "subject" : {
+    "reference" : "Patient/patientJM1"
+  },
+  "effectiveDateTime" : "2018-04-22",
+  "performer" : [{
+    "actor" : {
+      "reference" : "Practitioner/us-core-practitioner-nancy-oncology-nurse"
+    }
+  }],
+  "reasonReference" : [{
+    "reference" : "Condition/primary-cancer-condition-jenny-m"
+  }],
+  "note" : [{
+    "time" : "2018-04-12",
+    "text" : "PACLitaxel (175 mg/m² IV), 272.01mg"
+  }],
+  "dosage" : {
+    "route" : {
+      "coding" : [{
+        "system" : "http://snomed.info/sct",
+        "version" : "http://snomed.info/sct/900000000000207008",
+        "code" : "47625008",
+        "display" : "Intravenous route (qualifier value)"
+      }]
+    },
+    "dose" : {
+      "value" : 272.01,
+      "unit" : "mg",
+      "system" : "http://unitsofmeasure.org",
+      "code" : "mg"
+    }
+  }
+}

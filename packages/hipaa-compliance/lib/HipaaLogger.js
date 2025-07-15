@@ -2,7 +2,6 @@
 
 import { Meteor } from 'meteor/meteor';
 import { get, set } from 'lodash';
-import { HipaaAuditLog } from './Collections';
 import { EventTypes, AuditDetailLevels } from './Constants';
 
 // Core HIPAA Logger class
@@ -36,11 +35,24 @@ class HipaaLoggerClass {
         return null;
       }
 
-      // Insert the event
+      // Insert the event using core AuditEvents collection
       if (Meteor.isServer) {
-        return await HipaaAuditLog.insertAsync(auditEvent);
+        // Get AuditEvents from global Collections
+        const AuditEvents = await global.Collections?.AuditEvents;
+        if (!AuditEvents) {
+          console.error('AuditEvents collection not available');
+          return null;
+        }
+        return await AuditEvents.insertAsync(auditEvent);
       } else {
-        return HipaaAuditLog.insert(auditEvent);
+        // On client, use Meteor method instead
+        return Meteor.call('auditEvents.log', 
+          auditEvent.eventType, 
+          auditEvent.userId, 
+          auditEvent.resourceId, 
+          auditEvent.message,
+          auditEvent
+        );
       }
     } catch (error) {
       console.error('Error logging HIPAA event:', error);
@@ -53,6 +65,7 @@ class HipaaLoggerClass {
     const event = {
       eventType: eventData.eventType || EventTypes.ACCESS,
       eventDate: new Date(),
+      createdAt: new Date(),
       message: eventData.message
     };
 

@@ -56,6 +56,9 @@ export const Index = () => {
     }, {
       url: "/oauth-clients",
       title: "OAuth Clients"
+    }, {
+      url: "/patient-chart",
+      title: "Patient Chart"
     }
   ]
   

@@ -38,6 +38,12 @@ function injectEnvironmentVariables() {
     set(Meteor, 'settings.public.environment', process.env.NODE_ENV);
   }
 
+  // Development auto-login configuration
+  if (process.env.NODE_ENV === 'development' && process.env.DEV_AUTO_LOGIN === 'true') {
+    set(Meteor, 'settings.public.devAutoLoginEnabled', true);
+    console.log('Development auto-login enabled');
+  }
+
   // Database configuration
   if (process.env.MONGO_URL) {
     // Already handled by Meteor

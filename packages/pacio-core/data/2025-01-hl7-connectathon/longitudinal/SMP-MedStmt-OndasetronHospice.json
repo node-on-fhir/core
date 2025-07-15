@@ -1,0 +1,49 @@
+{
+    "resourceType": "MedicationStatement",
+    "id": "SMP-MedStmt-OndansetronHospice",
+    "text": {
+      "status": "generated",
+      "div": "<div>Ondansetron 8 MG ODT po tid</div>"
+    },
+    "basedOn": [
+      {
+        "reference": "MedicationRequest/MedicationRequest-OndansetronHospice"
+      }
+    ],
+    "status": "active",
+    "medicationCodeableConcept": {
+      "coding": [
+        {
+            "code": "312087",
+            "system": "http://www.nlm.nih.gov/research/umls/rxnorm",
+            "display": "ondansetron 8 MG Disintegrating Oral Tablet"
+        }
+      ]
+    },
+    "subject": {
+      "reference": "Patient/patientJM1",
+      "display": "Jenny Mosley"
+    },
+    "informationSource": {
+      "reference": "Organization/Org-Hospice-Suquamish",
+      "display": "Suquamish Hospice"
+    },
+    "reasonCode": [
+      {
+        "coding": [
+            {
+              "version": "http://snomed.info/sct/731000124108",
+              "code": "698861005",
+              "system": "http://snomed.info/sct",
+              "display": "Intractable nausea and vomiting (disorder)"
+            }
+        ]
+      }
+    ],
+    "dosage": [
+      {
+        "sequence": 1,
+        "text": "1 oral disintigrating tablet by mouth every 8 hours"
+      }
+    ]
+  }

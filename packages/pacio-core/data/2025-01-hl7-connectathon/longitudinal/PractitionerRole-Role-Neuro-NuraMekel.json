@@ -1,0 +1,29 @@
+{
+  "resourceType": "PractitionerRole",
+  "id": "Role-Neuro-NuraMekel",
+  "active": true,
+  "code": [
+    {
+      "coding": [
+        {
+          "code": "2084N0400X",
+          "system": "https://taxonomy.nucc.org/",
+          "display": "Neurology Physician"
+        }
+      ]
+    }
+  ],
+  "practitioner": {
+    "reference": "Practitioner/Practitioner-NuraMekel",
+    "display": "Nura Mekel"
+  },
+  "organization": {
+      "reference": "Organization/Org-Onc-Hosp-Puget-Sound",
+      "display": "Puget Sound Cancer Center"
+    },
+    "location": [
+      {
+        "reference": "Location/org-Loc-Hosp-Puget-Sound"
+    }
+  ]
+}

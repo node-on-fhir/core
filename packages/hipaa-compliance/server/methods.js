@@ -5,7 +5,7 @@ import { check, Match } from 'meteor/check';
 import { get } from 'lodash';
 import moment from 'moment';
 import { HipaaAuditLog } from '../lib/Collections';
-import { HipaaLogger } from '../lib/HipaaLogger';
+import { HipaaLogger } from '../lib/HipaaLoggerAccess';
 import { SecurityValidators } from '../lib/SecurityValidators';
 import { EncryptionManager } from '../lib/EncryptionManager';
 import { EventTypes } from '../lib/Constants';
@@ -310,5 +310,79 @@ Meteor.methods({
     };
 
     return JSON.stringify(bundle, null, 2);
+  },
+
+  // Export audit events as CSV (for modern UI)
+  'hipaa.auditEvents.exportCsv': async function(filters) {
+    check(filters, {
+      startDate: Date,
+      endDate: Date,
+      userId: Match.Optional(String),
+      eventType: Match.Optional(String)
+    });
+
+    // Validate permissions
+    if (!this.userId) {
+      throw new Meteor.Error('not-authorized', 'You must be logged in to export audit logs');
+    }
+
+    // Import AuditEvents collection
+    const { AuditEvents } = await import('/imports/lib/schemas/SimpleSchemas/AuditEvents');
+
+    // Build query
+    const query = {
+      recorded: {
+        $gte: filters.startDate,
+        $lte: filters.endDate
+      }
+    };
+
+    if (filters.userId) {
+      query['agent.reference'] = filters.userId;
+    }
+
+    if (filters.eventType) {
+      query['action'] = filters.eventType;
+    }
+
+    // Fetch events
+    const events = await AuditEvents.find(query, {
+      sort: { recorded: -1 }
+    }).fetchAsync();
+
+    // Build CSV
+    const csvHeader = 'Timestamp,Event Type,User,User ID,Patient/Resource,Resource Type,Action Details,Outcome\n';
+    
+    const csvRows = events.map(event => {
+      const timestamp = moment(event.recorded).format('YYYY-MM-DD HH:mm:ss');
+      const eventType = event.action || '';
+      const userName = get(event, 'agent[0].name', 'Unknown');
+      const userId = get(event, 'agent[0].requestor.identifier.value', '');
+      const resource = get(event, 'entity[0].what.display', get(event, 'entity[0].what.reference', ''));
+      const resourceType = get(event, 'entity[0].type.display', '');
+      const actionDetails = get(event, 'outcomeDesc', get(event, 'type.display', ''));
+      const outcome = get(event, 'outcome.code', '0') === '0' ? 'Success' : 'Failed';
+      
+      // Escape CSV fields
+      const escapeField = (field) => {
+        if (field.includes(',') || field.includes('"') || field.includes('\n')) {
+          return `"${field.replace(/"/g, '""')}"`;
+        }
+        return field;
+      };
+      
+      return [
+        timestamp,
+        eventType,
+        escapeField(userName),
+        userId,
+        escapeField(resource),
+        resourceType,
+        escapeField(actionDetails),
+        outcome
+      ].join(',');
+    });
+
+    return csvHeader + csvRows.join('\n');
   }
 });

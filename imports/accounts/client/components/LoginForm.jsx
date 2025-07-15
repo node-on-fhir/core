@@ -15,6 +15,7 @@ import {
   InputAdornment
 } from '@mui/material';
 import { logger } from '../../lib/AccountsLogger';
+import { useDevAutoLogin } from '../hooks/useDevAutoLogin';
 
 export function LoginForm({ onSuccess, onSignupClick, onForgotPasswordClick }) {
   const [username, setUsername] = useState('');
@@ -30,6 +31,21 @@ export function LoginForm({ onSuccess, onSignupClick, onForgotPasswordClick }) {
   const [checkingNewUsername, setCheckingNewUsername] = useState(false);
   const [newUsernameAvailable, setNewUsernameAvailable] = useState(null);
   const navigate = useNavigate();
+
+  // Development auto-login
+  const { autoLoginStatus, error: autoLoginError } = useDevAutoLogin();
+
+  // Handle successful auto-login
+  useEffect(() => {
+    if (autoLoginStatus === 'success' && Meteor.userId()) {
+      logger.info('Auto-login successful, redirecting...');
+      if (onSuccess) {
+        onSuccess();
+      } else {
+        navigate('/');
+      }
+    }
+  }, [autoLoginStatus, onSuccess, navigate]);
 
   // Check if email is configured on component mount
   useEffect(() => {

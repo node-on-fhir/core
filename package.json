@@ -39,6 +39,7 @@
     "base-64": "^1.0.0",
     "base64-url": "^2.3.3",
     "base64url": "^3.0.1",
+    "bcrypt": "^6.0.0",
     "body-parser": "^1.20.2",
     "btoa": "^1.2.1",
     "chai": "^5.1.1",
@@ -50,6 +51,7 @@
     "fhirclient": "^2.5.4",
     "file-dialog": "0.0.8",
     "formik": "^2.4.6",
+    "google-map-react": "2.2.1",
     "history": "^5.3.0",
     "limiter": "^2.1.0",
     "lodash": "4.17.21",
@@ -81,8 +83,7 @@
     "validator": "^13.12.0",
     "winston": "^3.14.2",
     "xlsx": "0.18.5",
-    "xml2js": "0.6.2",
-    "bcrypt": "^6.0.0"
+    "xml2js": "0.6.2"
   },
   "meteor": {
     "modern": true,

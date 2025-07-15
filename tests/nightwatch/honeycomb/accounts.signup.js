@@ -31,7 +31,7 @@ describe('Accounts - Signup/Registration (Enhanced)', function() {
       .verify.elementPresent('input[name="password"]')
       .verify.elementPresent('input[name="confirm"], input[name="confirmPassword"]')
       .verify.elementPresent('button[type="submit"]')
-      .assert.textContains('h1, h2, h3, h4, h5, h6', 'Create Account')
+      .assert.textContains('h4', 'Create Account')
       .saveScreenshot('tests/nightwatch/screenshots/signup/01-initial-load.png');
   });
 

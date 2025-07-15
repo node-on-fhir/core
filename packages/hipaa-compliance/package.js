@@ -58,7 +58,8 @@ Package.onUse(function(api) {
   ], ['client', 'server']);
 
   api.addFiles([
-    'lib/HipaaLogger.js',
+    // HipaaLogger is now accessed from the global window/Meteor object
+    'lib/HipaaLoggerAccess.js',
     'lib/SecurityValidators.js',
     'lib/EncryptionManager.js',
     'lib/PolicyRoutes.js',
@@ -69,7 +70,7 @@ Package.onUse(function(api) {
   api.mainModule('index.jsx', 'client');
 
   // Export for other packages
-  api.export('HipaaLogger');
+  // Note: HipaaLogger is now accessed from the global window/Meteor object
   api.export('HipaaAuditLog');
   api.export('HipaaConstants');
 });

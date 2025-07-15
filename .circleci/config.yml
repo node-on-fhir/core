@@ -85,8 +85,8 @@ jobs:
       - run:
           name: Install Meteor
           command: |
-            echo "Installing Meteor 3.0.2..."
-            curl https://install.meteor.com/?release=3.0.2 | sh
+            echo "Installing Meteor 3.3..."
+            curl https://install.meteor.com/?release=3.3 | sh
             
             echo "Setting up PATH..."
             echo 'export PATH="$HOME/.meteor:$PATH"' >> $BASH_ENV

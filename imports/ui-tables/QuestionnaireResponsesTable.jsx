@@ -442,11 +442,42 @@ export function QuestionnaireResponsesTable(props){
     internalDateFormat = dateFormat;
   }
 
+  // Pagination
+  let paginationCount = 0;
+  if(props.count){
+    paginationCount = props.count;
+  } else {
+    paginationCount = questionnaireResponses ? questionnaireResponses.length : 0;
+  }
+
+  function handleChangePage(event, newPage){
+    if(typeof onSetPage === "function"){
+      onSetPage(newPage);
+    }
+  }
+
+  let paginationFooter;
+  if(!disablePagination){
+    paginationFooter = <TablePagination
+      component="div"
+      rowsPerPageOptions={[5, 10, 25, 100]}
+      colSpan={3}
+      count={paginationCount}
+      rowsPerPage={rowsPerPage || 5}
+      page={page || 0}
+      onPageChange={handleChangePage}
+      style={{float: 'right', border: 'none'}}
+    />
+  }
 
   if(questionnaireResponses){
     if(questionnaireResponses.length > 0){              
+      let count = 0;
       questionnaireResponses.forEach(function(questionnaireResponse){
-        responsesToRender.push(FhirDehydrator.dehydrateQuestionnaireResponse(questionnaireResponse, internalDateFormat));
+        if((count >= ((page || 0) * (rowsPerPage || 5))) && (count < ((page || 0) + 1) * (rowsPerPage || 5))){
+          responsesToRender.push(FhirDehydrator.dehydrateQuestionnaireResponse(questionnaireResponse, internalDateFormat));
+        }
+        count++;
       });  
     }
   }
@@ -494,6 +525,7 @@ export function QuestionnaireResponsesTable(props){
           { tableRows }
         </TableBody>
       </Table>
+      { paginationFooter }
     </div>
   );
 }

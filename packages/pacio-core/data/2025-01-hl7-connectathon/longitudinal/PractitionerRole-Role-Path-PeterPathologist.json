@@ -1,0 +1,29 @@
+{
+    "resourceType": "PractitionerRole",
+    "id": "Role-Path-PeterPathologist",
+    "active": true,
+    "code": [
+      {
+        "coding": [
+          {
+            "code": "207ZC0500X",
+            "system": "https://taxonomy.nucc.org/",
+            "display": "Cytopathology Physician"
+          }
+        ]
+      }
+    ],
+    "practitioner": {
+      "reference": "Practitioner/Practitioner-PeterPathologist",
+      "display": "Peter Pathologist"
+    },
+    "organization": {
+      "reference": "Organization/Org-Onc-Hosp-Puget-Sound",
+      "display": "Puget Sound Cancer Center"
+    },
+    "location": [
+      {
+        "reference": "Location/org-Loc-Hosp-Puget-Sound"
+      }
+    ]
+  }

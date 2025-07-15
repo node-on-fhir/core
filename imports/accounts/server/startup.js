@@ -15,6 +15,11 @@ if (get(Meteor, 'settings.public.environment') !== 'production') {
   import('./test-methods');
 }
 
+// Import dev auto-login in development
+if (Meteor.isDevelopment) {
+  import('./dev-autologin');
+}
+
 Meteor.startup(async () => {
   // Check if accounts module is enabled
   const accountsEnabled = get(Meteor, 'settings.public.modules.accounts.enabled', true);
@@ -309,6 +314,9 @@ function setupAccountsPublications() {
         status: 1,
         statusConnection: 1,
         lastActivityAt: 1,
+        patientId: 1,
+        practitionerId: 1,
+        fullLegalName: 1,
         'services.google.picture': 1,
         'services.github.avatar_url': 1,
         'services.twoFactor.enabled': 1

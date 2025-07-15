@@ -178,8 +178,14 @@ export const FhirUtilities = {
     let selectedIndex = 0;
     let resultingNameString = "";
 
+    // Check if name is a string (non-standard but common newbie error)
+    const nameField = get(fhirPatientResource, 'name');
+    if(typeof nameField === 'string'){
+      // Direct string name - not standard FHIR but handle gracefully
+      resultingNameString = nameField;
+    }
     // assuming the data isnt anonymized
-    if(Array.isArray(get(fhirPatientResource, 'name'))){
+    else if(Array.isArray(nameField)){
       
       // we should parse through the available names
       fhirPatientResource.name.forEach(function(name, index){

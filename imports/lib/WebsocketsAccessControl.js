@@ -52,6 +52,7 @@ import { Procedures } from './schemas/SimpleSchemas/Procedures';
 import { Provenances } from './schemas/SimpleSchemas/Provenances';
 import { Questionnaires } from './schemas/SimpleSchemas/Questionnaires';
 import { QuestionnaireResponses } from './schemas/SimpleSchemas/QuestionnaireResponses';
+import { NutritionOrders } from './schemas/SimpleSchemas/NutritionOrders';
 import { Restrictions } from './schemas/SimpleSchemas/Restrictions';
 import { RelatedPersons } from './schemas/SimpleSchemas/RelatedPersons';
 import { RiskAssessments } from './schemas/SimpleSchemas/RiskAssessments';
@@ -86,6 +87,7 @@ let collectionNames = [
         "Measure",
         "MeasureReports",
         "Networks",
+        "NutritionOrders",
         "OAuthClients",
         "Observations",
         "Organizations",
@@ -129,6 +131,7 @@ let Collections = {
     Measures: Measures,
     MeasureReports: MeasureReports,
     Networks: Networks,
+    NutritionOrders: NutritionOrders,
     OAuthClients: OAuthClients,
     Observations: Observations,
     Organizations: Organizations,

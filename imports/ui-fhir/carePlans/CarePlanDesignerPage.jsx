@@ -10,13 +10,10 @@ import {
 
 // import AccountCircle from 'material-ui/svg-icons/action/account-circle';
 
-import { ActivitiesTable, GoalsTable } from 'meteor/clinical:hl7-fhir-data-infrastructure';
-import { MedicationsTable } from 'meteor/clinical:hl7-fhir-data-infrastructure';
-import { PatientsTable } from 'meteor/clinical:hl7-fhir-data-infrastructure';
-
-if(Package["clinical:hl7-fhir-data-infrastructure"]){
-  import { QuestionnaireTable } from 'meteor/clinical:hl7-fhir-data-infrastructure';
-}
+import ActivitiesTable from './ActivitiesTable';
+import GoalsTable from '../goals/GoalsTable';
+import MedicationsTable from '../medications/MedicationsTable';
+import { PatientsTable } from '../../ui-tables/PatientsTable';
 
 import { CarePlansTable } from './CarePlansTable';
 
@@ -235,27 +232,7 @@ export class CarePlanDesignerPage extends React.Component {
     }
     let questionnairesCard;
     if(get(Meteor, 'settings.public.modules.fhir.CarePlans.displayQuestionnairesCard') !== false){
-      if(Package["clinical:hl7-fhir-data-infrastructure"]){
-        questionnairesCard = <section id="questionnairesSection" style={style.indexCardPadding} >
-        <Card style={style.indexCard} >
-          <CardHeader
-            title='Questionnaires'
-            subtitle='The questionnaire that you need the patient to answer.'
-          />
-          <CardContent>
-            <QuestionnaireTable
-              hideIdentifier={true} 
-              hideToggles={true} 
-              hideActions={true} 
-              onRemoveRecord={function(quesitonnaireId){
-                Questionnaires._collection.remove({_id: quesitonnaireId})
-              }}  
-              />
-          </CardContent>
-        </Card>
-        <DynamicSpacer />        
-      </section>
-      }
+      // Questionnaires feature disabled - QuestionnaireTable component not available
     }
 
     return (

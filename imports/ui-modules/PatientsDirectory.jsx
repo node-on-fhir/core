@@ -1,26 +1,28 @@
+// /imports/ui-modules/PatientsDirectory.jsx
+
 import React, { useState } from 'react';
 import { useTracker } from 'meteor/react-meteor-data';
 
 import { 
+  Grid,
+  Container,
+  Divider,
   Card,
   CardHeader,
   CardContent,
-  Container,
-  Tab, 
-  Tabs,
-  Typography,
-  Box
+  Button,
+  Box,
+  Typography
 } from '@mui/material';
+import AddIcon from '@mui/icons-material/Add';
 
+import { Meteor } from 'meteor/meteor';
+import { Session } from 'meteor/session';
 
 import PatientsTable from '../ui-tables/PatientsTable';
 import LayoutHelpers from '../lib/LayoutHelpers';
 
 import { get, has, set } from 'lodash';
-
-  
-import { Meteor } from 'meteor/meteor';
-import { Session } from 'meteor/session';
 
 
 
@@ -47,8 +49,8 @@ Meteor.startup(function(){
 
 Session.setDefault('patientFormData', defaultPatient);
 Session.setDefault('patientSearchFilter', '');
-Session.setDefault('selectedPatientId', '');
-Session.setDefault('selectedPatient', '');
+Session.setDefault('selectedPatientId', null);
+Session.setDefault('selectedPatient', null);
 Session.setDefault('fhirVersion', 'v1.0.2');
 Session.setDefault('patientPageTabIndex', 0)
 Session.setDefault('PatientsDirectory.onePageLayout', true)
@@ -102,17 +104,64 @@ export function PatientsDirectory(props){
   // let paddingWidth = LayoutHelpers.calcCanvasPaddingWidth();
   
   let noDataImage = get(Meteor, 'settings.public.defaults.noData.noDataImagePath', "packages/clinical_hl7-fhir-data-infrastructure/assets/NoData.png");  
+  let noDataCardStyle = {};
 
+  function handleAddPatient(){
+    console.log('Add Patient button clicked');
+    // Add logic for adding a new patient
+  }
+
+  function renderHeader() {
+    return (
+      <Box mb={2}>
+        <Grid container spacing={2} alignItems="center" justifyContent="space-between">
+          <Grid item xs={12} sm={6}>
+            <Typography variant="h4">
+              Patients
+            </Typography>
+            <Typography variant="subtitle2" color="textSecondary">
+              {data.patients.length} patients found
+            </Typography>
+          </Grid>
+          <Grid item>
+            <Button
+              variant="contained"
+              color="primary"
+              startIcon={<AddIcon />}
+              onClick={handleAddPatient}
+            >
+              Add Patient
+            </Button>
+          </Grid>
+        </Grid>
+      </Box>
+    );
+  }
 
   let layoutContent;
   if(data.patients.length > 0){
-    layoutContent = <Card height="auto" scrollable={true} margin={20} >
-      <CardHeader title={data.patients.length + " Patients"} />
-      <CardContent>
+    layoutContent = <Card 
+      sx={{ 
+        width: '100%',
+        borderRadius: 3,
+        boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+        border: '1px solid',
+        borderColor: 'divider',
+        overflow: 'hidden'
+      }}
+    >
+      <CardContent sx={{ p: 0 }}>
         <PatientsTable 
-          noDataMessagePadding={100}
-          patients={ data.patients }
+          id='patientsTable'
+          patients={data.patients}
           count={data.patients.length}
+          formFactorLayout={formFactor}
+          rowsPerPage={LayoutHelpers.calcTableRows()} 
+          actionButtonLabel="Remove"
+          hideActionButton={get(Meteor, 'settings.public.modules.fhir.Patients.hideRemoveButtonOnTable', true)}
+          onActionButtonClick={function(selectedId){
+            Patients._collection.remove({_id: selectedId})
+          }}
           rowClickMode="id"
           onRowClick={function(patientId){
             console.log('onTableRowClick', patientId);
@@ -122,36 +171,107 @@ export function PatientsDirectory(props){
 
             console.log('openUrlOnRowClick', get(Meteor, 'settings.public.modules.fhir.Patients.openUrlOnRowClick', ''))
             if(get(Meteor, 'settings.public.modules.fhir.Patients.openUrlOnRowClick')){
-              props.history.replace(get(Meteor, 'settings.public.modules.fhir.Patients.openUrlOnRowClick', '/'))
+              // Navigate to patient chart when View Chart is clicked
+              window.location.href = get(Meteor, 'settings.public.modules.fhir.Patients.openUrlOnRowClick', '/patient-chart');
             }
           }}
-          onSetPage={function(index){
-            setPatientsIndex(index)
+          onFhirOperations={function(patientId){
+            console.log('FHIR Operations for patient:', patientId);
+            // Navigate to FHIR operations page
+            window.location.href = `/patient/${patientId}/fhir`;
           }}
+          onSetPage={function(index){
+            Session.set('PatientsTable.patientsIndex', index)
+          }}        
           page={data.patientsIndex}
-          formFactorLayout={formFactor}    
-          rowsPerPage={LayoutHelpers.calcTableRows()}      
           logger={window.logger ? window.logger : null}
           size="medium"
-        />   
+        />
       </CardContent>
     </Card>
   } else {
-    layoutContent = <Container maxWidth="sm" >
-      {/* <img src={Meteor.absoluteUrl() + noDataImage} style={{width: '100%', marginTop: get(Meteor, 'settings.public.defaults.noData.marginTop', '-200px')}} />     */}
-      <CardContent>
-        <CardHeader 
-          title={get(Meteor, 'settings.public.defaults.noData.defaultTitle', "No Data Available")} 
-          subheader={get(Meteor, 'settings.public.defaults.noData.defaultMessage', "No records were found in the client data cursor.  To debug, check the data cursor in the client console, then check subscriptions and publications, and relevant search queries.  If the data is not loaded in, use a tool like Mongo Compass to load the records directly into the Mongo database, or use the FHIR API interfaces.")} 
-        />
-      </CardContent>
-    </Container>
+    layoutContent = <Box 
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        minHeight: '50vh',
+        textAlign: 'center'
+      }}
+    >
+      <Card 
+        sx={{ 
+          maxWidth: '600px',
+          width: '100%',
+          borderRadius: 3,
+          boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+          border: '1px solid',
+          borderColor: 'divider',
+          backgroundColor: 'background.paper'
+        }}
+      >
+        <CardContent sx={{ p: 6 }}>
+          <Box sx={{ mb: 3 }}>
+            <Typography 
+              variant="h5" 
+              sx={{ 
+                fontWeight: 500,
+                color: 'text.primary',
+                mb: 2
+              }}
+            >
+              {get(Meteor, 'settings.public.defaults.noData.defaultTitle', "No Data Available")}
+            </Typography>
+            <Typography 
+              variant="body1" 
+              sx={{ 
+                color: 'text.secondary',
+                lineHeight: 1.7,
+                maxWidth: '480px',
+                mx: 'auto'
+              }}
+            >
+              {get(Meteor, 'settings.public.defaults.noData.defaultMessage', "No records were found in the client data cursor. To debug, check the data cursor in the client console, then check subscriptions and publications, and relevant search queries. If the data is not loaded in, use a tool like Mongo Compass to load the records directly into the Mongo database, or use the FHIR API interfaces.")}
+            </Typography>
+          </Box>
+          <Button
+            variant="outlined"
+            startIcon={<AddIcon />}
+            onClick={handleAddPatient}
+            sx={{
+              borderRadius: 2,
+              textTransform: 'none',
+              px: 3,
+              py: 1,
+              borderWidth: 2,
+              '&:hover': {
+                borderWidth: 2
+              }
+            }}
+          >
+            Add Your First Patient
+          </Button>
+        </CardContent>
+      </Card>
+    </Box>
   }
-
+  
   return (
-    <div id="PatientsDirectoryClass" style={{padding: '20px'}}>
-      { layoutContent }
-    </div>
+    <Box 
+      id="patientsDirectory" 
+      sx={{
+        minHeight: '100vh',
+        backgroundColor: 'background.default',
+        px: { xs: 2, sm: 3, md: 4 },
+        py: { xs: 3, sm: 4, md: 5 }
+      }}
+    >
+      <Box sx={{ width: '100%' }}>
+        { data.patients.length > 0 && renderHeader() }
+        { layoutContent }
+      </Box>
+    </Box>
   );
 }
 

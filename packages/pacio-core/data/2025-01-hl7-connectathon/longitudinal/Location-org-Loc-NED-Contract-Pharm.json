@@ -1,0 +1,18 @@
+{
+  "resourceType": "Location",
+  "id": "org-Loc-NED-Contract-Pharm",
+  "status": "active",
+  "name": "Not Every Day Contract Pharmacy",
+  "address": [
+    {
+      "line": [
+        "8103 8th Ave S"
+      ],
+      "city": "Seattle",
+      "state": "WA",
+      "postalCode": "98108",
+      "country": "US",
+      "text": "8103 8th Ave S, Seattle, WA 98108"
+    }
+  ]
+}

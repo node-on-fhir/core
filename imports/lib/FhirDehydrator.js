@@ -230,6 +230,8 @@ export function flattenActivityDefinition(activity) {
 
 export function flattenAllergyIntolerance(allergy){
   let result = {
+    _id: '',
+    id: '',
     patientDisplay: '',
     asserterDisplay: '',
     identifier: '',
@@ -253,50 +255,110 @@ export function flattenAllergyIntolerance(allergy){
   };
   result.resourceType = get(allergy, 'resourceType', "Unknown");
 
+  // IDs
+  result._id = get(allergy, '_id', '');
+  result.id = get(allergy, 'id', '');
   result.identifier = get(allergy, 'identifier[0].value');
-  result.clinicalStatus = get(allergy, 'clinicalStatus');
-  result.verificationStatus = get(allergy, 'verificationStatus');
+  
+  // Handle clinicalStatus - can be string (STU3) or CodeableConcept (R4)
+  if(typeof get(allergy, 'clinicalStatus') === 'string'){
+    result.clinicalStatus = get(allergy, 'clinicalStatus');
+  } else if(get(allergy, 'clinicalStatus.coding[0].code')){
+    result.clinicalStatus = get(allergy, 'clinicalStatus.coding[0].code');
+  } else if(get(allergy, 'clinicalStatus.coding[0].display')){
+    result.clinicalStatus = get(allergy, 'clinicalStatus.coding[0].display');
+  }
+  
+  // Handle verificationStatus - can be string (STU3) or CodeableConcept (R4)
+  if(typeof get(allergy, 'verificationStatus') === 'string'){
+    result.verificationStatus = get(allergy, 'verificationStatus');
+  } else if(get(allergy, 'verificationStatus.coding[0].code')){
+    result.verificationStatus = get(allergy, 'verificationStatus.coding[0].code');
+  } else if(get(allergy, 'verificationStatus.coding[0].display')){
+    result.verificationStatus = get(allergy, 'verificationStatus.coding[0].display');
+  }
+  
   result.type = get(allergy, 'type');
   result.category = get(allergy, 'category[0]');
 
-  if(has(allergy, 'substance.coding[0].display')){
+  // Handle substance/code - R4 uses 'code' instead of 'substance'
+  if(has(allergy, 'code.coding[0].display')){
+    result.substance = get(allergy, 'code.coding[0].display');
+    result.snomedCode = get(allergy, 'code.coding[0].code');
+    result.snomedDisplay = get(allergy, 'code.coding[0].display');
+  } else if(has(allergy, 'code.text')){
+    result.substance = get(allergy, 'code.text');
+  } else if(has(allergy, 'substance.coding[0].display')){
+    // Fallback for older DSTU2/STU3 versions
     result.substance = get(allergy, 'substance.coding[0].display');
   } else {
     result.substance = get(allergy, 'substance.text');
   }
 
-  if(get(allergy, 'code.coding[0]')){            
-    result.snomedCode = get(allergy, 'code.coding[0].code');
-    result.snomedDisplay = get(allergy, 'code.coding[0].display');
+  // Patient info
+  result.patient = get(allergy, 'patient.display', '');
+  result.patientDisplay = get(allergy, 'patient.display', '');
+  if(!result.patientDisplay && get(allergy, 'patient.reference')){
+    // Extract patient name from reference if display is not available
+    result.patientDisplay = get(allergy, 'patient.reference', '').replace('Patient/', '');
   }
 
-  // DSTU2 v1.0.2
-  result.patient = get(allergy, 'patient.display');
-  result.recorder = get(allergy, 'recorder.display');
-  result.reaction = get(allergy, 'reaction[0].description', '');
-  result.onset = moment(get(allergy, 'reaction[0].onset')).format("YYYY-MM-DD");
-  result.recordedDate = moment(get(allergy, 'recordedDate')).format("YYYY-MM-DD");
+  // Recorder info
+  result.recorder = get(allergy, 'recorder.display', '');
+  if(!result.recorder && get(allergy, 'recorder.reference')){
+    // Extract recorder name from reference if display is not available
+    result.recorder = get(allergy, 'recorder.reference', '').replace('Practitioner/', '');
+  }
 
-  // DSTU v4
+  // Handle reactions - extract all manifestations
+  let reactions = [];
+  if(get(allergy, 'reaction') && Array.isArray(allergy.reaction)){
+    allergy.reaction.forEach(function(rxn){
+      if(get(rxn, 'manifestation') && Array.isArray(rxn.manifestation)){
+        rxn.manifestation.forEach(function(manifestation){
+          if(get(manifestation, 'coding[0].display')){
+            reactions.push(get(manifestation, 'coding[0].display'));
+          } else if(get(manifestation, 'text')){
+            reactions.push(get(manifestation, 'text'));
+          }
+        });
+      }
+      // Also check for description
+      if(get(rxn, 'description')){
+        reactions.push(get(rxn, 'description'));
+      }
+    });
+  }
+  result.reaction = reactions.join(', ');
+
+  // Onset date - check multiple possible locations
   if(get(allergy, 'onsetDateTime')){
     result.onset = moment(get(allergy, 'onsetDateTime')).format("YYYY-MM-DD");
-  }
-  if(get(allergy, 'reaction[0].manifestation[0].text')){
-    result.reaction = get(allergy, 'reaction[0].manifestation[0].text', '');
-  }
-  if(get(allergy, 'reaction[0].severity')){
-    result.reaction = get(allergy, 'reaction[0].severity', '');
+  } else if(get(allergy, 'reaction[0].onset')){
+    result.onset = moment(get(allergy, 'reaction[0].onset')).format("YYYY-MM-DD");
+  } else if(get(allergy, 'recordedDate')){
+    // Use recorded date as fallback
+    result.onset = moment(get(allergy, 'recordedDate')).format("YYYY-MM-DD");
   }
 
+  // Recorded date
+  if(get(allergy, 'recordedDate')){
+    result.recordedDate = moment(get(allergy, 'recordedDate')).format("YYYY-MM-DD");
+  }
+
+  // Handle criticality - R4 values are different from older versions
   if(get(allergy, 'criticality')){
-    switch (get(allergy, 'criticality')) {
-      case "CRITL":
+    switch (get(allergy, 'criticality').toLowerCase()) {
+      case "low":
+      case "critl":
         result.criticality = 'Low Risk';         
         break;
-      case "CRITH":
+      case "high":
+      case "crith":
         result.criticality = 'High Risk';         
         break;
-      case "CRITU":
+      case "unable-to-assess":
+      case "critu":
         result.criticality = 'Unable to determine';         
         break;        
       default:
@@ -304,6 +366,19 @@ export function flattenAllergyIntolerance(allergy){
       break;
     }
   };
+
+  // Extract severity from reactions
+  let severities = [];
+  if(get(allergy, 'reaction') && Array.isArray(allergy.reaction)){
+    allergy.reaction.forEach(function(rxn){
+      if(get(rxn, 'severity')){
+        severities.push(get(rxn, 'severity'));
+      }
+    });
+  }
+  if(severities.length > 0){
+    result.severity = severities.join(', ');
+  }
 
   if(get(allergy, "issue[0].details.text")){
     result.operationOutcome = get(allergy, "issue[0].details.text");
@@ -2692,13 +2767,28 @@ export function flattenLocation(location, simplifiedAddress, preferredExtensionU
     identifier: '',
     name: '',
     address: '',
+    addressLine: '',
     city: '',
     state: '',
     postalCode: '',
     country: '',
     type: '',
+    typeCode: '',
+    typeDisplay: '',
+    status: '',
+    mode: '',
+    telecom: '',
+    managingOrganizationDisplay: '',
+    managingOrganizationReference: '',
+    physicalTypeCode: '',
+    physicalTypeDisplay: '',
+    operationalStatusCode: '',
+    operationalStatusDisplay: '',
+    partOfDisplay: '',
+    partOfReference: '',
     latitude: '',
     longitude: '',
+    altitude: '',
     selectedExtension: '',
     operationOutcome: ''
   };
@@ -2711,26 +2801,42 @@ export function flattenLocation(location, simplifiedAddress, preferredExtensionU
     result.id = get(location, 'id');
   }
   if (get(location, '_id')){
-    result._id = get(location, '_id');
+    // Handle MongoDB ObjectID format
+    if (typeof location._id === 'object' && location._id._str) {
+      result._id = location._id._str;
+    } else {
+      result._id = get(location, '_id');
+    }
+  }
+  if (get(location, 'identifier[0].value')) {
+    result.identifier = get(location, 'identifier[0].value');
   }
   if (get(location, 'name')) {
     result.name = get(location, 'name');
   }
+  if (get(location, 'status')) {
+    result.status = get(location, 'status');
+  }
+  if (get(location, 'mode')) {
+    result.mode = get(location, 'mode');
+  }
+  
+  // Handle address
   if (get(location, 'address')) {
     if(simplifiedAddress){
       result.address = FhirUtilities.stringifyAddress(get(location, 'address'), {noPrefix: true});
     } else {
       result.address = get(location, 'address');
     }
+    result.addressLine = get(location, 'address.line[0]', '');
   } else if (get(location, 'address[0]')) {
     if(simplifiedAddress){
       result.address = FhirUtilities.stringifyAddress(get(location, 'address[0]'), {noPrefix: true});
     } else {
       result.address = get(location, 'address[0]');
     }
+    result.addressLine = get(location, 'address[0].line[0]', '');
   }
-
-
 
   if (get(location, 'address.city')) {
     result.city = get(location, 'address.city');
@@ -2753,14 +2859,56 @@ export function flattenLocation(location, simplifiedAddress, preferredExtensionU
     result.country = get(location, 'address[0].country');
   }
 
+  // Handle type
   if (get(location, 'type[0].text')) {
     result.type = get(location, 'type[0].text');
+    result.typeDisplay = get(location, 'type[0].text');
   }
+  if (get(location, 'type[0].coding[0].code')) {
+    result.typeCode = get(location, 'type[0].coding[0].code');
+  }
+  if (get(location, 'type[0].coding[0].display')) {
+    result.typeDisplay = get(location, 'type[0].coding[0].display');
+  }
+
+  // Handle telecom
+  if (get(location, 'telecom[0].value')) {
+    result.telecom = get(location, 'telecom[0].value');
+  }
+
+  // Handle managing organization
+  if (get(location, 'managingOrganization')) {
+    result.managingOrganizationDisplay = get(location, 'managingOrganization.display', '');
+    result.managingOrganizationReference = get(location, 'managingOrganization.reference', '');
+  }
+
+  // Handle physical type
+  if (get(location, 'physicalType')) {
+    result.physicalTypeCode = get(location, 'physicalType.coding[0].code', '');
+    result.physicalTypeDisplay = get(location, 'physicalType.coding[0].display', '');
+  }
+
+  // Handle operational status
+  if (get(location, 'operationalStatus')) {
+    result.operationalStatusCode = get(location, 'operationalStatus.code', '');
+    result.operationalStatusDisplay = get(location, 'operationalStatus.display', '');
+  }
+
+  // Handle part of
+  if (get(location, 'partOf')) {
+    result.partOfDisplay = get(location, 'partOf.display', '');
+    result.partOfReference = get(location, 'partOf.reference', '');
+  }
+
+  // Handle position
   if (get(location, 'position.latitude')) {
     result.latitude = get(location, 'position.latitude', null);
   }
   if (get(location, 'position.longitude')) {
     result.longitude = get(location, 'position.longitude', null);
+  }
+  if (get(location, 'position.altitude')) {
+    result.altitude = get(location, 'position.altitude', null);
   }
 
   if (Array.isArray(get(location, 'extension'))) {
@@ -2970,6 +3118,9 @@ export function flattenMedication(medication, dateFormat){
     identifier: '',
 
     code: '',
+    medicationCodeableConceptText: '',
+    form: '',
+    manufacturer: '',
 
     marketingAuthorizationHolderDisplay: '',
     marketingAuthorizationHolderReference: '',
@@ -2995,18 +3146,23 @@ export function flattenMedication(medication, dateFormat){
   result.identifier = get(medication, 'identifier[0].value', '');
 
   if(get(medication, 'code.text', '')){
-    result.code = get(medication, 'code.text', ''); 
+    result.code = get(medication, 'code.text', '');
+    result.medicationCodeableConceptText = get(medication, 'code.text', ''); 
   } else {
     result.code = get(medication, 'code.coding[0].code', '');
+    result.medicationCodeableConceptText = get(medication, 'code.coding[0].display', '');
   }
 
   result.marketingAuthorizationHolderDisplay = get(medication, 'marketingAuthorizationHolder.display', '');
   result.marketingAuthorizationHolderReference = get(medication, 'marketingAuthorizationHolder.reference', '');
+  result.manufacturer = get(medication, 'marketingAuthorizationHolder.display', '');
 
   if(get(medication, 'doseForm.text', '')){
-    result.doseForm = get(medication, 'doseForm.text', ''); 
+    result.doseForm = get(medication, 'doseForm.text', '');
+    result.form = get(medication, 'doseForm.text', ''); 
   } else {
     result.doseForm = get(medication, 'doseForm.coding[0].code', '');
+    result.form = get(medication, 'doseForm.coding[0].display', '');
   }
 
   result.totalVolume = get(medication, 'totalVolume.value', '') + ' ' + get(medication, 'totalVolume.unit', ''); 
@@ -3082,6 +3238,288 @@ export function flattenMedicationOrder(medicationOrder, dateFormat){
 
   if(get(medicationOrder, "issue[0].details.text")){
     result.operationOutcome = get(medicationOrder, "issue[0].details.text");
+  }
+
+  return result;
+}
+
+export function flattenMedicationAdministration(medicationAdministration, internalDateFormat){
+  let result = {
+    _id: '',
+    id: '',
+    status: '',
+    statusReason: '',
+    category: '',
+    identifier: '',
+    patientDisplay: '',
+    patientReference: '',
+    contextDisplay: '',
+    contextReference: '',
+    supportingInformation: '',
+    effectiveDateTime: '',
+    effectivePeriodStart: '',
+    effectivePeriodEnd: '',
+    performerDisplay: '',
+    performerReference: '',
+    reasonCode: '',
+    reasonDisplay: '',
+    requestDisplay: '',
+    requestReference: '',
+    deviceDisplay: '',
+    deviceReference: '',
+    note: '',
+    medicationDisplay: '',
+    medicationReference: '',
+    medicationCode: '',
+    dosageText: '',
+    dosageRoute: '',
+    dosageDoseValue: '',
+    dosageDoseUnit: '',
+    dosageRateRatio: '',
+    dosageRateQuantity: '',
+    operationOutcome: ''
+  };
+
+  result.resourceType = get(medicationAdministration, 'resourceType', "MedicationAdministration");
+
+  if(!internalDateFormat){
+    internalDateFormat = get(Meteor, "settings.public.defaults.internalDateFormat", "YYYY-MM-DD");
+  }
+
+  result._id = get(medicationAdministration, '_id');
+  result.id = get(medicationAdministration, 'id', '');
+  result.status = get(medicationAdministration, 'status', '');
+  result.statusReason = get(medicationAdministration, 'statusReason[0].coding[0].display', '');
+  // Handle category - check multiple paths
+  if(get(medicationAdministration, 'category.coding[0].display')){
+    result.category = get(medicationAdministration, 'category.coding[0].display', '');
+  } else if(get(medicationAdministration, 'category.coding[0].code')){
+    result.category = get(medicationAdministration, 'category.coding[0].code', '');
+  }
+  result.identifier = get(medicationAdministration, 'identifier[0].value', '');
+
+  // Handle subject/patient display - check multiple paths
+  if(get(medicationAdministration, 'subject.display')){
+    result.patientDisplay = get(medicationAdministration, 'subject.display', '');
+    result.subjectDisplay = get(medicationAdministration, 'subject.display', '');
+  } else if(get(medicationAdministration, 'subject.reference')){
+    // Extract patient name from reference if display is missing
+    let refParts = get(medicationAdministration, 'subject.reference', '').split('/');
+    result.patientDisplay = refParts.length > 1 ? refParts[1] : get(medicationAdministration, 'subject.reference', '');
+    result.subjectDisplay = result.patientDisplay;
+  }
+  result.patientReference = get(medicationAdministration, 'subject.reference', '');
+  
+  result.contextDisplay = get(medicationAdministration, 'context.display', '');
+  result.contextReference = get(medicationAdministration, 'context.reference', '');
+
+  if(get(medicationAdministration, 'effectiveDateTime')){
+    result.effectiveDateTime = moment(get(medicationAdministration, 'effectiveDateTime')).format(internalDateFormat);
+  }
+  if(get(medicationAdministration, 'effectivePeriod.start')){
+    result.effectivePeriodStart = moment(get(medicationAdministration, 'effectivePeriod.start')).format(internalDateFormat);
+  }
+  if(get(medicationAdministration, 'effectivePeriod.end')){
+    result.effectivePeriodEnd = moment(get(medicationAdministration, 'effectivePeriod.end')).format(internalDateFormat);
+  }
+
+  // Handle performer - check multiple paths
+  if(get(medicationAdministration, 'performer[0].actor.display')){
+    result.performerDisplay = get(medicationAdministration, 'performer[0].actor.display', '');
+  } else if(get(medicationAdministration, 'performer[0].actor.reference')){
+    // Extract performer name from reference if display is missing
+    let refParts = get(medicationAdministration, 'performer[0].actor.reference', '').split('/');
+    result.performerDisplay = refParts.length > 1 ? refParts[1] : get(medicationAdministration, 'performer[0].actor.reference', '');
+  }
+  result.performerReference = get(medicationAdministration, 'performer[0].actor.reference', '');
+
+  result.reasonCode = get(medicationAdministration, 'reasonCode[0].coding[0].code', '');
+  result.reasonDisplay = get(medicationAdministration, 'reasonCode[0].text', '');
+
+  result.requestDisplay = get(medicationAdministration, 'request.display', '');
+  result.requestReference = get(medicationAdministration, 'request.reference', '');
+
+  result.deviceDisplay = get(medicationAdministration, 'device[0].display', '');
+  result.deviceReference = get(medicationAdministration, 'device[0].reference', '');
+
+  result.note = get(medicationAdministration, 'note[0].text', '');
+
+  // Check multiple medication paths for better compatibility
+  if(get(medicationAdministration, 'medicationCodeableConcept.text')){
+    result.medicationDisplay = get(medicationAdministration, 'medicationCodeableConcept.text');
+    result.medicationCode = get(medicationAdministration, 'medicationCodeableConcept.coding[0].code', '');
+  } else if(get(medicationAdministration, 'medicationCodeableConcept.coding[0].display')){
+    result.medicationDisplay = get(medicationAdministration, 'medicationCodeableConcept.coding[0].display');
+    result.medicationCode = get(medicationAdministration, 'medicationCodeableConcept.coding[0].code', '');
+  } else if(get(medicationAdministration, 'medicationReference.display')){
+    result.medicationDisplay = get(medicationAdministration, 'medicationReference.display', '');
+    result.medicationReference = get(medicationAdministration, 'medicationReference.reference', '');
+  } else if(get(medicationAdministration, 'medicationReference')){
+    result.medicationDisplay = get(medicationAdministration, 'medicationReference.reference', '');
+    result.medicationReference = get(medicationAdministration, 'medicationReference.reference', '');
+  }
+
+  // Handle dosage information
+  result.dosageText = get(medicationAdministration, 'dosage.text', '');
+  
+  // Handle route - check multiple paths
+  if(get(medicationAdministration, 'dosage.route.text')){
+    result.dosageRoute = get(medicationAdministration, 'dosage.route.text', '');
+    result.route = get(medicationAdministration, 'dosage.route.text', '');
+  } else if(get(medicationAdministration, 'dosage.route.coding[0].display')){
+    result.dosageRoute = get(medicationAdministration, 'dosage.route.coding[0].display', '');
+    result.route = get(medicationAdministration, 'dosage.route.coding[0].display', '');
+  }
+  
+  // Handle dose - format value and unit together
+  result.dosageDoseValue = get(medicationAdministration, 'dosage.dose.value', '');
+  result.dosageDoseUnit = get(medicationAdministration, 'dosage.dose.unit', '');
+  
+  // Create a combined dosage text for display
+  if(result.dosageDoseValue && result.dosageDoseUnit){
+    result.dosageText = result.dosageDoseValue + ' ' + result.dosageDoseUnit;
+  }
+
+  if(get(medicationAdministration, 'dosage.rateRatio')){
+    result.dosageRateRatio = get(medicationAdministration, 'dosage.rateRatio.numerator.value', '') + ' ' + 
+                            get(medicationAdministration, 'dosage.rateRatio.numerator.unit', '') + '/' +
+                            get(medicationAdministration, 'dosage.rateRatio.denominator.value', '') + ' ' +
+                            get(medicationAdministration, 'dosage.rateRatio.denominator.unit', '');
+  } else if(get(medicationAdministration, 'dosage.rateQuantity')){
+    result.dosageRateQuantity = get(medicationAdministration, 'dosage.rateQuantity.value', '') + ' ' +
+                               get(medicationAdministration, 'dosage.rateQuantity.unit', '');
+  }
+
+  if(get(medicationAdministration, "issue[0].details.text")){
+    result.operationOutcome = get(medicationAdministration, "issue[0].details.text");
+  }
+
+  return result;
+}
+
+export function flattenMedicationRequest(medicationRequest, internalDateFormat){
+  let result = {
+    _id: '',
+    id: '',
+    status: '',
+    intent: '',
+    priority: '',
+    identifier: '',
+    subjectDisplay: '',
+    subjectReference: '',
+    patientDisplay: '',
+    patientReference: '',
+    requesterDisplay: '',
+    requesterReference: '',
+    prescriberDisplay: '',
+    prescriberReference: '',
+    encounterDisplay: '',
+    encounterReference: '',
+    authoredOn: '',
+    dateWritten: '',
+    medicationDisplay: '',
+    medicationReference: '',
+    medicationCode: '',
+    dosageInstructionText: '',
+    quantityValue: '',
+    quantityUnit: '',
+    numberOfRepeatsAllowed: '',
+    validityPeriodStart: '',
+    validityPeriodEnd: '',
+    operationOutcome: ''
+  };
+
+  result.resourceType = get(medicationRequest, 'resourceType', "MedicationRequest");
+
+  if(!internalDateFormat){
+    internalDateFormat = get(Meteor, "settings.public.defaults.internalDateFormat", "YYYY-MM-DD");
+  }
+
+  result._id = get(medicationRequest, '_id');
+  result.id = get(medicationRequest, 'id', '');
+  result.status = get(medicationRequest, 'status', '');
+  result.intent = get(medicationRequest, 'intent', '');
+  result.priority = get(medicationRequest, 'priority', '');
+  result.identifier = get(medicationRequest, 'identifier[0].value', '');
+
+  // Handle subject/patient fields - check multiple paths
+  if(get(medicationRequest, 'subject.display')){
+    result.subjectDisplay = get(medicationRequest, 'subject.display', '');
+  } else if(get(medicationRequest, 'subject.reference')){
+    // Extract patient name from reference if display is missing
+    let refParts = get(medicationRequest, 'subject.reference', '').split('/');
+    result.subjectDisplay = refParts.length > 1 ? refParts[1] : get(medicationRequest, 'subject.reference', '');
+  }
+  result.subjectReference = get(medicationRequest, 'subject.reference', '');
+  
+  // Also check patient field for backward compatibility
+  if(get(medicationRequest, 'patient.display')){
+    result.patientDisplay = get(medicationRequest, 'patient.display', '');
+  } else if(get(medicationRequest, 'patient.reference')){
+    let refParts = get(medicationRequest, 'patient.reference', '').split('/');
+    result.patientDisplay = refParts.length > 1 ? refParts[1] : get(medicationRequest, 'patient.reference', '');
+  }
+  result.patientReference = get(medicationRequest, 'patient.reference', '');
+  
+  // Handle requester/prescriber fields - check multiple paths
+  if(get(medicationRequest, 'requester.display')){
+    result.requesterDisplay = get(medicationRequest, 'requester.display', '');
+  } else if(get(medicationRequest, 'requester.reference')){
+    result.requesterDisplay = get(medicationRequest, 'requester.reference', '');
+  } else if(get(medicationRequest, 'requester')){
+    result.requesterDisplay = get(medicationRequest, 'requester', '');
+  }
+  
+  result.requesterReference = get(medicationRequest, 'requester.reference', '');
+  
+  // Also check prescriber for backward compatibility
+  if(get(medicationRequest, 'prescriber.display')){
+    result.prescriberDisplay = get(medicationRequest, 'prescriber.display', '');
+  } else if(get(medicationRequest, 'prescriber.reference')){
+    result.prescriberDisplay = get(medicationRequest, 'prescriber.reference', '');
+  }
+  result.prescriberReference = get(medicationRequest, 'prescriber.reference', '');
+  
+  result.encounterDisplay = get(medicationRequest, 'encounter.display', '');
+  result.encounterReference = get(medicationRequest, 'encounter.reference', '');
+
+  if(get(medicationRequest, 'authoredOn')){
+    result.authoredOn = moment(get(medicationRequest, 'authoredOn')).format(internalDateFormat);
+  }
+  if(get(medicationRequest, 'dateWritten')){
+    result.dateWritten = moment(get(medicationRequest, 'dateWritten')).format(internalDateFormat);
+  }
+
+  // Check multiple medication paths for better compatibility
+  if(get(medicationRequest, 'medicationCodeableConcept.text')){
+    result.medicationDisplay = get(medicationRequest, 'medicationCodeableConcept.text');
+    result.medicationCode = get(medicationRequest, 'medicationCodeableConcept.coding[0].code', '');
+  } else if(get(medicationRequest, 'medicationCodeableConcept.coding[0].display')){
+    result.medicationDisplay = get(medicationRequest, 'medicationCodeableConcept.coding[0].display');
+    result.medicationCode = get(medicationRequest, 'medicationCodeableConcept.coding[0].code', '');
+  } else if(get(medicationRequest, 'medicationReference.display')){
+    result.medicationDisplay = get(medicationRequest, 'medicationReference.display', '');
+    result.medicationReference = get(medicationRequest, 'medicationReference.reference', '');
+  } else if(get(medicationRequest, 'medicationReference')){
+    result.medicationDisplay = get(medicationRequest, 'medicationReference.reference', '');
+    result.medicationReference = get(medicationRequest, 'medicationReference.reference', '');
+  }
+
+  result.dosageInstructionText = get(medicationRequest, 'dosageInstruction[0].text', '');
+
+  result.quantityValue = get(medicationRequest, 'dispenseRequest.quantity.value', '');
+  result.quantityUnit = get(medicationRequest, 'dispenseRequest.quantity.unit', '');
+  result.numberOfRepeatsAllowed = get(medicationRequest, 'dispenseRequest.numberOfRepeatsAllowed', '');
+
+  if(get(medicationRequest, 'dispenseRequest.validityPeriod.start')){
+    result.validityPeriodStart = moment(get(medicationRequest, 'dispenseRequest.validityPeriod.start')).format(internalDateFormat);
+  }
+  if(get(medicationRequest, 'dispenseRequest.validityPeriod.end')){
+    result.validityPeriodEnd = moment(get(medicationRequest, 'dispenseRequest.validityPeriod.end')).format(internalDateFormat);
+  }
+
+  if(get(medicationRequest, "issue[0].details.text")){
+    result.operationOutcome = get(medicationRequest, "issue[0].details.text");
   }
 
   return result;
@@ -3543,6 +3981,7 @@ export function flattenPatient(patient, internalDateFormat){
     identifier: '',
     active: true,
     gender: get(patient, 'gender'),
+    birthSex: '',
     name: get(patient, 'name[0].text', ''),
     mrn: '',
     birthDate: '',
@@ -3569,6 +4008,33 @@ export function flattenPatient(patient, internalDateFormat){
   result.active = get(patient, 'active', true).toString();
   
   result.gender = get(patient, 'gender', '');
+
+  // Extract birth sex from US Core extension
+  if(get(patient, 'extension') && Array.isArray(patient.extension)){
+    patient.extension.forEach(function(extension){
+      if(extension.url === 'http://hl7.org/fhir/us/core/StructureDefinition/us-core-birthsex'){
+        if(extension.valueCode){
+          // Map codes to display values
+          switch(extension.valueCode){
+            case 'M':
+              result.birthSex = 'Male';
+              break;
+            case 'F':
+              result.birthSex = 'Female';
+              break;
+            case 'UNK':
+              result.birthSex = 'Unknown';
+              break;
+            case 'ASKU':
+              result.birthSex = 'Not Disclosed';
+              break;
+            default:
+              result.birthSex = extension.valueCode;
+          }
+        }
+      }
+    });
+  }
 
   // patient name has gone through a number of revisions, and we need to search a few different spots, and assemble as necessary  
   let resultingNameString = "";
@@ -4784,7 +5250,9 @@ export function flatten(collectionName, resource){
     case "MedicationStatements":
       return flattenMedicationStatement(resource);
     case "MedicationRequests":
-      return notImplementedMessage;     
+      return flattenMedicationRequest(resource);
+    case "MedicationAdministrations":
+      return flattenMedicationAdministration(resource);     
     case "Observations":
       return flattenObservation(resource);
     case "Organizations":
@@ -4895,6 +5363,8 @@ export const FhirDehydrator = {
   dehydrateMedication: flattenMedication,
   dehydrateMedicationOrder: flattenMedicationOrder,
   dehydrateMedicationStatement: flattenMedicationStatement,
+  dehydrateMedicationRequest: flattenMedicationRequest,
+  dehydrateMedicationAdministration: flattenMedicationAdministration,
   dehydrateNetwork: flattenNetwork,
   dehydrateObservation: flattenObservation,
   dehydrateOrganization: flattenOrganization,
@@ -4982,6 +5452,8 @@ export default {
   flattenMedication,
   flattenMedicationOrder,
   flattenMedicationStatement,
+  flattenMedicationRequest,
+  flattenMedicationAdministration,
   flattenObservation,
   flattenOperationOutcome,
   flattenOrganization,

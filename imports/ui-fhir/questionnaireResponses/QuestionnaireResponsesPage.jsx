@@ -1,13 +1,18 @@
 import React, { useState } from 'react';
 import { useTracker } from 'meteor/react-meteor-data';
+import { useNavigate } from 'react-router-dom';
 
 import { 
   Card,
   CardContent, 
   CardHeader,
   Container,
-  Grid
+  Grid,
+  Button,
+  Typography,
+  Box
 } from '@mui/material';
+import AddIcon from '@mui/icons-material/Add';
 
 
 // import QuestionnaireResponseDetail from './QuestionnaireResponseDetail';
@@ -78,6 +83,7 @@ if(get(Meteor, 'settings.public.theme.palette')){
 
 
 export function QuestionnaireResponsesPage(props){
+  const navigate = useNavigate();
 
 
   let data = {
@@ -167,18 +173,55 @@ export function QuestionnaireResponsesPage(props){
 
 
   let cardWidth = window.innerWidth - paddingWidth;
-  let noDataImage = get(Meteor, 'settings.public.defaults.noData.noDataImagePath', "packages/clinical_hl7-fhir-data-infrastructure/assets/NoData.png");  
+  let noDataImage = get(Meteor, 'settings.public.defaults.noData.noDataImagePath', "packages/clinical_hl7-fhir-data-infrastructure/assets/NoData.png");
+
+  function handleAddQuestionnaireResponse(){
+    console.log('Add Questionnaire Response button clicked');
+    navigate('/questionnaire-responses/new');
+  }
+
+  function renderHeader() {
+    return (
+      <Box mb={2}>
+        <Grid container spacing={2} alignItems="center" justifyContent="space-between">
+          <Grid item xs={12} sm={6}>
+            <Typography variant="h4">
+              Questionnaire Responses
+            </Typography>
+            <Typography variant="subtitle2" color="textSecondary">
+              {data.questionnaireResponses.length} responses found
+            </Typography>
+          </Grid>
+          <Grid item>
+            <Button
+              variant="contained"
+              color="primary"
+              startIcon={<AddIcon />}
+              onClick={handleAddQuestionnaireResponse}
+            >
+              Add Response
+            </Button>
+          </Grid>
+        </Grid>
+      </Box>
+    );
+  }  
 
 
   let layoutContent;
-  
-  
-  let layoutContainer;
   if(data.questionnaireResponses.length > 0){
     if(data.onePageLayout){
-      layoutContent = <Card height="auto" margin={20} width={cardWidth + 'px'} style={{marginLeft: '20px', marginRight: '20px'}}>
-        <CardHeader title={data.questionnaireResponses.length + " Questionnaire Responses"} />
-        <CardContent>
+      layoutContent = <Card 
+        sx={{ 
+          width: '100%',
+          borderRadius: 3,
+          boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+          border: '1px solid',
+          borderColor: 'divider',
+          overflow: 'hidden'
+        }}
+      >
+        <CardContent sx={{ p: 0 }}>
           <QuestionnaireResponsesTable 
             questionnaireResponses={data.questionnaireResponses}
             count={data.questionnaireResponses.length}
@@ -197,7 +240,7 @@ export function QuestionnaireResponsesPage(props){
               Session.set('selectedQuestionnaireResponse', QuestionnaireResponses.findOne(responseId));                  
             }}
             onSetPage={function(index){
-              setQuestionaireResponsesIndex(index)
+              Session.set('QuestionnaireResponsesTable.questionnaireResponsesIndex', index)
             }}  
             page={data.questionaireResponsesIndex}
             formFactorLayout={formFactor}
@@ -208,10 +251,18 @@ export function QuestionnaireResponsesPage(props){
       </Card>
     } else {
       layoutContent = <Grid container spacing={3}>
-        <Grid item lg={6} style={{width: '100%'}} >
-          <Card height="auto" margin={20} width={cardWidth + 'px'}>
-            <CardHeader title={data.questionnaireResponses.length + " Responses"} />
-            <CardContent>
+        <Grid item lg={6}>
+          <Card 
+            sx={{ 
+              width: '100%',
+              borderRadius: 3,
+              boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+              border: '1px solid',
+              borderColor: 'divider',
+              overflow: 'hidden'
+            }}
+          >
+            <CardContent sx={{ p: 0 }}>
               <QuestionnaireResponsesTable 
                 questionnaireResponses={data.questionnaireResponses}
                 count={data.questionnaireResponses.length}
@@ -231,7 +282,7 @@ export function QuestionnaireResponsesPage(props){
                   Session.set('selectedQuestionnaireResponse', QuestionnaireResponses._collection.findOne({id: responseId}));                  
                 }}
                 onSetPage={function(index){
-                  setQuestionaireResponsesIndex(index)
+                  Session.set('QuestionnaireResponsesTable.questionnaireResponsesIndex', index)
                 }}  
                 page={data.questionaireResponsesIndex}
                 formFactorLayout={formFactor}
@@ -241,8 +292,16 @@ export function QuestionnaireResponsesPage(props){
             </CardContent>
           </Card>
         </Grid>
-        <Grid item lg={5} style={{width: '100%', marginBottom: '80px'}} >
-          <Card height="auto" margin={20} width={cardWidth + 'px'}>
+        <Grid item lg={5}>
+          <Card 
+            sx={{ 
+              width: '100%',
+              borderRadius: 3,
+              boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+              border: '1px solid',
+              borderColor: 'divider'
+            }}
+          >
             <h1 className="barcode" style={{fontWeight: 100}}>{data.questionnaireResponseId }</h1>
             <CardContent>
               <CardContent>
@@ -263,22 +322,87 @@ export function QuestionnaireResponsesPage(props){
       </Grid>
     }
   } else {
-    layoutContent = <Container maxWidth="sm" style={{display: 'flex', flexDirection: 'column', flexWrap: 'nowrap', height: '100%', justifyContent: 'center'}}>
-      {/* <img src={Meteor.absoluteUrl() + noDataImage} style={{width: '100%'}}  /> */}
-      <CardContent>
-        <CardHeader 
-          title={get(Meteor, 'settings.public.defaults.noData.defaultTitle', "No Data Available")} 
-          subheader={get(Meteor, 'settings.public.defaults.noData.defaultMessage', "No records were found in the client data cursor.  To debug, check the data cursor in the client console, then check subscriptions and publications, and relevant search queries.  If the data is not loaded in, use a tool like Mongo Compass to load the records directly into the Mongo database, or use the FHIR API interfaces.")} 
-        />
-      </CardContent>
-    </Container>
+    layoutContent = <Box 
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        minHeight: '50vh',
+        textAlign: 'center'
+      }}
+    >
+      <Card 
+        sx={{ 
+          maxWidth: '600px',
+          width: '100%',
+          borderRadius: 3,
+          boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+          border: '1px solid',
+          borderColor: 'divider',
+          backgroundColor: 'background.paper'
+        }}
+      >
+        <CardContent sx={{ p: 6 }}>
+          <Box sx={{ mb: 3 }}>
+            <Typography 
+              variant="h5" 
+              sx={{ 
+                fontWeight: 500,
+                color: 'text.primary',
+                mb: 2
+              }}
+            >
+              {get(Meteor, 'settings.public.defaults.noData.defaultTitle', "No Data Available")}
+            </Typography>
+            <Typography 
+              variant="body1" 
+              sx={{ 
+                color: 'text.secondary',
+                lineHeight: 1.7,
+                maxWidth: '480px',
+                mx: 'auto'
+              }}
+            >
+              {get(Meteor, 'settings.public.defaults.noData.defaultMessage', "No records were found in the client data cursor. To debug, check the data cursor in the client console, then check subscriptions and publications, and relevant search queries. If the data is not loaded in, use a tool like Mongo Compass to load the records directly into the Mongo database, or use the FHIR API interfaces.")}
+            </Typography>
+          </Box>
+          <Button
+            variant="outlined"
+            startIcon={<AddIcon />}
+            onClick={handleAddQuestionnaireResponse}
+            sx={{
+              borderRadius: 2,
+              textTransform: 'none',
+              px: 3,
+              py: 1,
+              borderWidth: 2,
+              '&:hover': {
+                borderWidth: 2
+              }
+            }}
+          >
+            Add Your First Response
+          </Button>
+        </CardContent>
+      </Card>
+    </Box>
   }
 
 
   return (
-    <div id="questionnaireResponsesPage" style={{padding: "20px"}} >
+    <Box 
+      id="questionnaireResponsesPage" 
+      sx={{
+        minHeight: '100vh',
+        backgroundColor: 'background.default',
+        px: { xs: 2, sm: 3, md: 4 },
+        py: { xs: 3, sm: 4, md: 5 }
+      }}
+    >
+      { data.questionnaireResponses.length > 0 && renderHeader() }
       { layoutContent }
-    </div>
+    </Box>
   );
 }
 

@@ -15,7 +15,7 @@ function AppCanvas(props) {
     backgroundImage = "url(" + get(Meteor, 'settings.public.theme.backgroundImagePath') + ")";
   }
 
-  let styleObject = {overflow: 'hidden'}
+  let styleObject = {overflow: 'auto'}
 
   if(backgroundImage){
     styleObject["backgroundImage"] = backgroundImage;

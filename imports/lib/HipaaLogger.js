@@ -15,43 +15,40 @@ var hipaaEvent = {
 */
 
 
-HipaaLogger = {
+const HipaaLogger = {
   /**
-  * @summary Detects if a specific environment variable was exposed from the server.
+  * @summary Logs a FHIR AuditEvent
   * @locus Client
   * @memberOf HipaaLogger
   * @name logAuditEvent
   * @param AuditEvent
   * @version 1.2.3
   */
-
   logAuditEvent: function(auditEvent){
     check(auditEvent, Object);
 
     process.env.DEBUG && console.log('auditEvent', auditEvent);    
 
-    return Meteor.call("logAuditEvent", auditEvent, function (error, result){
-      if (error){
-        console.log("error", error);
+    // Check if HIPAA package is available and use its enhanced logger
+    if (Package['clinical:hipaa-compliance']) {
+      const packageLogger = Package['clinical:hipaa-compliance'].HipaaLogger;
+      if (packageLogger && packageLogger.logAuditEvent) {
+        return packageLogger.logAuditEvent(auditEvent);
       }
-      if (result){
-         return result
-      }
+    }
+
+    // Fallback to core audit logging
+    return Meteor.call("auditEvents.log", 'audit', null, null, 'FHIR AuditEvent logged', {
+      fhirResource: auditEvent
     });
   },
+
   /**
-  * @summary Detects if a specific environment variable was exposed from the server.
+  * @summary Logs a HIPAA event
   * @locus Client
   * @memberOf HipaaLogger
   * @name logEvent
-  * @param hipaaEvent.eventType
-  * @param hipaaEvent.userId
-  * @param hipaaEvent.userName
-  * @param hipaaEvent.collectionName
-  * @param hipaaEvent.recordId
-  * @param hipaaEvent.patientId
-  * @param hipaaEvent.patientName
-  * @param hipaaEvent.message
+  * @param hipaaEvent
   * @version 1.2.3
   * @example
   * ```js
@@ -70,13 +67,40 @@ HipaaLogger = {
   logEvent: function(hipaaEvent){
     check(hipaaEvent, Object);
 
-    return Meteor.call("logEvent", hipaaEvent, function (error, result){
-      if (error){
-        console.log("error", error);
+    // Check if HIPAA package is available and use its enhanced logger
+    if (Package['clinical:hipaa-compliance']) {
+      const packageLogger = Package['clinical:hipaa-compliance'].HipaaLogger;
+      if (packageLogger && packageLogger.logEvent) {
+        return packageLogger.logEvent(hipaaEvent);
       }
-      if (result){
-         return result
+    }
+
+    // Fallback to core audit logging
+    const resourceId = hipaaEvent.recordId ? 
+      `${hipaaEvent.collectionName}/${hipaaEvent.recordId}` : null;
+    
+    return Meteor.call("auditEvents.log", 
+      hipaaEvent.eventType || 'access',
+      hipaaEvent.userId || Meteor.userId(),
+      resourceId,
+      hipaaEvent.message || `${hipaaEvent.eventType} on ${hipaaEvent.collectionName}`,
+      {
+        userName: hipaaEvent.userName,
+        collectionName: hipaaEvent.collectionName,
+        patientId: hipaaEvent.patientId,
+        patientName: hipaaEvent.patientName
       }
-    });
+    );
   }
 };
+
+// Make it globally available for backward compatibility
+if (typeof window !== 'undefined') {
+  window.HipaaLogger = HipaaLogger;
+}
+if (typeof global !== 'undefined') {
+  global.HipaaLogger = HipaaLogger;
+}
+
+// Export for ES6 module compatibility
+export { HipaaLogger };
