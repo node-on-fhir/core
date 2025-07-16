@@ -1,0 +1,83 @@
+[{
+  "_id": "xyimTZu54pd2LbeSd",
+  "bedId": "101A",
+  "roomNumber": "101",
+  "ward": "Medical",
+  "floor": "1",
+  "bedType": "standard",
+  "status": "occupied",
+  "admissionDate": {
+    "$date": "2025-07-11T11:29:36.534Z"
+  },
+  "patientAge": 74,
+  "patientId": "XsyYMWc4vrdMnLLpH",
+  "patientMRN": "1032702",
+  "patientName": "Smith-Johnson, Betsy",
+  "updatedAt": {
+    "$date": "2025-07-11T11:29:36.534Z"
+  },
+  "updatedBy": "hLwAQKrB8jpc2qWZF"
+},
+{
+  "_id": "DzGcJT7KqKEB47Z4F",
+  "bedId": "101B",
+  "roomNumber": "101",
+  "ward": "Medical",
+  "floor": "1",
+  "bedType": "standard",
+  "status": "available"
+},
+{
+  "_id": "9DQGYkfSvr3QtPN3g",
+  "bedId": "102A",
+  "roomNumber": "102",
+  "ward": "Medical",
+  "floor": "1",
+  "bedType": "standard",
+  "status": "available"
+},
+{
+  "_id": "BjGQekKWpEXrnSbAZ",
+  "bedId": "201A",
+  "roomNumber": "201",
+  "ward": "Surgical",
+  "floor": "2",
+  "bedType": "standard",
+  "status": "available"
+},
+{
+  "_id": "2d8im4LHquMMksmze",
+  "bedId": "201B",
+  "roomNumber": "201",
+  "ward": "Surgical",
+  "floor": "2",
+  "bedType": "standard",
+  "status": "available"
+},
+{
+  "_id": "YY6HqBv9zzfPpQAYS",
+  "bedId": "ICU-1",
+  "roomNumber": "ICU-1",
+  "ward": "ICU",
+  "floor": "3",
+  "bedType": "ICU",
+  "status": "available"
+},
+{
+  "_id": "mdJzPyYXmhaAtjhGH",
+  "bedId": "ICU-2",
+  "roomNumber": "ICU-2",
+  "ward": "ICU",
+  "floor": "3",
+  "bedType": "ICU",
+  "status": "available"
+},
+{
+  "_id": "4dxjwirzXS6FHcNqe",
+  "bedId": "ICU-3",
+  "roomNumber": "ICU-3",
+  "ward": "ICU",
+  "floor": "3",
+  "bedType": "ICU",
+  "status": "available"
+}]

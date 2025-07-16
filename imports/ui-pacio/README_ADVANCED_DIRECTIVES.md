@@ -1,11 +1,11 @@
-# Advanced Directives Page with Tabs
+# Advance Healthcare Directives Page with Tabs
 
 ## Summary
 
-The Advanced Directives page has been updated to include tabs for displaying related clinical data:
+The Advance Healthcare Directives page has been updated to include tabs for displaying related clinical data:
 
 ### Tab Structure:
-1. **Documents & Preferences** (Tab 0) - Original advanced directives functionality
+1. **Documents & Preferences** (Tab 0) - Original advance healthcare directives functionality
    - Upload and view advanced directive documents
    - Manage care preferences
    - Emergency contacts
@@ -53,7 +53,7 @@ The Advanced Directives page has been updated to include tabs for displaying rel
 
 // Tab panels
 {tabValue === 0 && (
-  // Original advanced directives content
+  // Original advance healthcare directives content
 )}
 {tabValue === 1 && (
   <Box sx={{ mt: 2 }}>
@@ -66,7 +66,7 @@ The Advanced Directives page has been updated to include tabs for displaying rel
 ## Testing
 
 To test the implementation:
-1. Navigate to the Advanced Directives page
+1. Navigate to the Advance Healthcare Directives page
 2. Verify all 5 tabs are visible
 3. Click each tab to ensure the correct content displays
 4. Each tab should maintain the patient context from Session
@@ -75,4 +75,4 @@ To test the implementation:
 
 - Each imported page component handles its own data fetching and subscriptions
 - The patient context is maintained through Session variables
-- The tab structure allows users to access related clinical information without leaving the advanced directives context
+- The tab structure allows users to access related clinical information without leaving the advance healthcare directives context
