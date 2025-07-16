@@ -423,13 +423,13 @@ function AdvancedDirectivesPage(props) {
           </Link>
           <Typography color="text.primary" sx={{ display: 'flex', alignItems: 'center' }}>
             <DescriptionIcon sx={{ mr: 0.5 }} fontSize="inherit" />
-            Advanced Directives
+            Advance Healthcare Directives
           </Typography>
         </Breadcrumbs>
       </Box>
 
       <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
-        <Tabs value={tabValue} onChange={handleTabChange} aria-label="advanced directives tabs">
+        <Tabs value={tabValue} onChange={handleTabChange} aria-label="advance healthcare directives tabs">
           <Tab label="Documents & Preferences" />
           <Tab label="Allergies" />
           <Tab label="Conditions" />
@@ -444,7 +444,7 @@ function AdvancedDirectivesPage(props) {
           <Grid item xs={12} md={8}>
             <Card>
               <CardHeader
-                title={data.patient ? `Advanced Directives & Living Will - ${FhirUtilities.pluckName(data.patient)}` : "Advanced Directives & Living Will"}
+                title={data.patient ? `Advance Directives & Living Will - ${FhirUtilities.pluckName(data.patient)}` : "Advance Directives & Living Will"}
                 subheader="Legal documents that specify your healthcare wishes"
               action={
                 <Box>
@@ -467,7 +467,7 @@ function AdvancedDirectivesPage(props) {
                 <Typography>Loading documents...</Typography>
               ) : data.documentReferences.length === 0 ? (
                 <Alert severity="warning">
-                  <AlertTitle>No Advanced Directives Found</AlertTitle>
+                  <AlertTitle>No Advance Healthcare Directives Found</AlertTitle>
                   {data.allDocumentReferences.length > 0 ? (
                     <>
                       Found {data.allDocumentReferences.length} document(s) but none match advanced directive types.
@@ -475,7 +475,7 @@ function AdvancedDirectivesPage(props) {
                       Document types found: {data.allDocumentReferences.map(d => get(d, 'type.text') || get(d, 'type.coding[0].display') || 'Unknown').join(', ')}
                     </>
                   ) : (
-                    'Consider uploading your advanced directives, living will, or healthcare proxy documents.'
+                    'Consider uploading your advance healthcare directives, living will, or healthcare proxy documents.'
                   )}
                 </Alert>
               ) : (
@@ -596,7 +596,7 @@ function AdvancedDirectivesPage(props) {
               <CardContent>
                 <Stack spacing={1}>
                   <Link href="#" underline="hover">
-                    Understanding Advanced Directives
+                    Understanding Advance Healthcare Directives
                   </Link>
                   <Link href="#" underline="hover">
                     State-Specific Forms
