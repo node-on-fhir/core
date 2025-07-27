@@ -34,6 +34,9 @@ import '../imports/api/conditions/methods.js';
 import '../imports/api/locations/methods.js';
 import '../imports/api/patients/methods.js';
 
+// Import FHIR methods
+import '../imports/methods/fhirResourceStatistics.js';
+
 
 
 

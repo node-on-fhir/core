@@ -43,19 +43,35 @@
         "nivoTheme": "red_grey"
       }
     },
-    "projectPage": {
-      "carouselImages": [
-        "https://raw.githubusercontent.com/symptomatic/node-on-fhir/development/docs/assets/ScreenShot-BulkDataQuery.png",
-        "https://raw.githubusercontent.com/symptomatic/node-on-fhir/development/docs/assets/ScreenShot-ChicagoHospital-HeatMap.png",
-        "https://raw.githubusercontent.com/symptomatic/node-on-fhir/development/docs/assets/Screenshot-PatientChart.png",
-        "https://raw.githubusercontent.com/symptomatic/node-on-fhir/development/docs/assets/ScreenShot-ExportDataModule.png",
-        "https://raw.githubusercontent.com/symptomatic/node-on-fhir/development/docs/assets/ScreenShot-Geomapping.png"
-      ]
-    },
     "loggingThreshold": "debug",
     "fhirAutoSubscribe": true,
     "capabilityStatement": {
-      "resourceTypes": ["Condition", "Device", "Encounter", "Immunization", "Medication", "MedicationOrder", "MedicationRequest", "MedicationStatement", "Observation", "Procedure"]
+      "resourceTypes": [
+        "AllergyIntolerance",
+        "CareTeam",
+        "CarePlan",
+        "Condition",
+        "Composition",
+        "Consent",
+        "Communication",
+        "DocumentReference",
+        "Encounter",
+        "Goal",
+        "Immunization",
+        "List",
+        "Location",
+        "Medication",
+        "MedicationRequest",
+        "MedicationStatement",
+        "NutritionOrder",
+        "Observation",
+        "Patient",
+        "Practitioner",
+        "Procedure",
+        "Questionnaire",
+        "QuestionnaireResponse",
+        "ServiceRequest"
+      ]
     },
     "defaults": {
       "route": "/",
@@ -73,16 +89,31 @@
       "sidebar": {
         "menuItems": {
           "HomePage": true,
-          "UserProfile": true,
+          "PatientSummary": true,
           "PatientDirectory": true,
-          "Privacy": true,
-          "TermsAndConditions": true,
-          "FhirResources": false,
+          "FhirResources": true,
+          "FhirModules": true,
           "DynamicModules": true,
           "SidebarWorkflows": true,
-          "Theme": true,
-          "ConstructionZone": false
-        }
+          "Theme": false,
+          "About": true,
+          "Privacy": true,
+          "TermsAndConditions": true,
+          "DataImport": true,
+          "DataExport": true,
+          "ConstructionZone": false,
+          "UserProfile": true
+        },
+        "hidden": [
+          "/audit-events",
+          "/body-sites",
+          "/bundles",
+          "/contracts",
+          "/devices",
+          "/imaging-studies",
+          "/message-headers",
+          "/risk-assessments"
+        ]
       }
     },
     "interfaces": {
@@ -108,30 +139,36 @@
       "port": 3000
     },
     "modules": {
+      "PatientDirectory": true,
       "apps": {},
       "fhir": {
         "AllergyIntolerances": true,
         "AuditEvents": true,
-        "BodySites": true,
         "CarePlans": true,
+        "CareTeams": true,
+        "Compositions": true,
+        "Communications": true,
         "Conditions": true,
-        "Devices": true,
-        "DiagnosticReports": true,
+        "Consents": true,
+        "DocumentReferences": true,
+        "Encounters": true,
         "Goals": true,
-        "ImagingStudies": true,
         "Immunizations": true,
-        "Locations": true,
         "Lists": true,
+        "Locations": true,
         "Medications": true,
-        "MedicationOrders": true,
+        "MedicationRequests": true,
+        "MedicationAdministrations": true,
         "MedicationStatements": true,
+        "NutritionOrders": true,
         "Organizations": true,
         "Observations": true,
         "Patients": true,
         "Practitioners": true,
         "Procedures": true,
         "Questionnaires": true,
-        "RiskAssessments": true
+        "QuestionnaireResponses": true,
+        "ServiceRequests": true
       }
     }
   },
@@ -146,13 +183,83 @@
       "autopublishSubscriptions": true,
       "autoGenerateSubscriptions": true,
       "rest": {
-        "Observation": {
+        "Binary": {
           "interactions": ["read", "create", "update", "delete"],
+          "search": false,
+          "publication": true
+        },
+        "CareTeam": {
+          "interactions": ["read", "create", "update", "delete", "search"],
+          "search": true,
+          "publication": true
+        },
+        "CarePlan": {
+          "interactions": ["read", "create", "update", "delete", "search"],
+          "search": true,
+          "publication": true
+        },
+        "Communication": {
+          "interactions": ["read", "create", "update", "delete", "search"],
+          "search": true,
+          "publication": true
+        },
+        "Composition": {
+          "interactions": ["read", "create", "update", "delete", "search"],
+          "search": true,
+          "publication": true
+        },
+        "Condition": {
+          "interactions": ["read", "create", "update", "delete", "search"],
+          "search": true,
+          "publication": true
+        },
+        "Consent": {
+          "interactions": ["read", "create", "update", "delete", "search"],
+          "search": true,
+          "publication": true
+        },
+        "DocumentReference": {
+          "interactions": ["read", "create", "update", "delete", "search"],
+          "search": true,
+          "publication": true
+        },
+        "Goal": {
+          "interactions": ["read", "create", "update", "delete", "search"],
+          "search": true,
+          "publication": true
+        },
+        "List": {
+          "interactions": ["read", "create", "update", "delete", "search"],
+          "search": true,
+          "publication": true
+        },
+        "Location": {
+          "interactions": ["read", "create", "update", "delete", "search"],
+          "search": true,
+          "publication": true
+        },
+        "NutritionOrder": {
+          "interactions": ["read", "create", "update", "delete", "search"],
+          "search": true,
+          "publication": true
+        },
+        "Observation": {
+          "interactions": ["read", "create", "update", "delete", "search"],
           "search": true,
           "publication": true
         },
         "Patient": {
-          "interactions": ["read", "create", "update", "delete"],
+          "interactions": ["read", "search"],
+          "search": true,
+          "publication": true
+        },
+        "Practitioner": {
+          "interactions": ["read", "search"],
+          "search": true,
+          "publication": true
+        },
+        "ServiceRequest": {
+          "interactions": ["read", "create", "update", "delete", "search"],
           "search": true,
           "publication": true
         }

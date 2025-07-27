@@ -133,6 +133,7 @@ import MedicationListsPage from '../ui-pacio/MedicationListsPage.jsx';
 import TransitionsOfCarePage from '../ui-pacio/TransitionsOfCarePage.jsx';
 import AdvancedDirectivesPage from '../ui-pacio/AdvancedDirectivesPage.jsx';
 import MyProfilePage from './pages/MyProfilePage.jsx';
+import FhirResourcesDashboard from './FhirResourcesDashboard.jsx';
 
 //===============================================================================================================
 
@@ -478,6 +479,9 @@ let dynamicRoutes = [
   }, {
     path: "/patient-chart",
     element: <PatientChart />
+  }, {
+    path: "/fhir-resources-index",
+    element: <FhirResourcesDashboard />
   }  
 ]
 
