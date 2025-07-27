@@ -11,13 +11,39 @@ describe('Accounts - Signup/Registration (Enhanced)', function() {
       .url(get(client, 'globals.launch_url', 'http://localhost:3000'))
       .pause(2000)
       .executeAsync(function(done) {
-        // Clear any existing test users
+        // Clear any existing test users and logout if needed
         if (typeof Meteor !== 'undefined') {
-          Meteor.call('test.clearUsers', done);
+          // First logout if logged in
+          if (Meteor.userId()) {
+            Meteor.logout(function() {
+              // Then clear users
+              Meteor.call('test.clearUsers', function(err) {
+                done();
+              });
+            });
+          } else {
+            // Just clear users
+            Meteor.call('test.clearUsers', function(err) {
+              done();
+            });
+          }
         } else {
           done();
         }
       });
+  });
+  
+  beforeEach(function(client) {
+    // Ensure clean state before each test
+    client
+      .executeAsync(function(done) {
+        if (typeof Meteor !== 'undefined' && Meteor.userId()) {
+          Meteor.logout(done);
+        } else {
+          done();
+        }
+      })
+      .pause(500);
   });
 
   it('should load the signup page with all required elements', function(client) {
@@ -393,7 +419,15 @@ describe('Accounts - Signup/Registration (Enhanced)', function() {
     client
       .executeAsync(function(done) {
         if (typeof Meteor !== 'undefined') {
-          Meteor.call('test.clearUsers', done);
+          // Logout first
+          if (Meteor.userId()) {
+            Meteor.logout(function() {
+              // Then clear users
+              Meteor.call('test.clearUsers', done);
+            });
+          } else {
+            Meteor.call('test.clearUsers', done);
+          }
         } else {
           done();
         }

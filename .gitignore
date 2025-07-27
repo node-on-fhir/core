@@ -22,3 +22,5 @@ packages/*
 !.env.*.example
 
 .meteor/packages
+
+settings.*.json
