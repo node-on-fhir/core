@@ -1,116 +1,118 @@
+// /imports/components/PatientSearchDialog.jsx
+
 import React, { useState } from 'react';
 
-import { makeStyles, withStyles } from '@material-ui/core/styles';
-
 import { 
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,    
   TextField,
-  Input,
   InputAdornment,
-  InputLabel,
-  FormControl,
-  IconButton
-} from '@material-ui/core';
+  IconButton,
+  DialogContent,
+  Box,
+  CircularProgress,
+  Typography
+} from '@mui/material';
+
+import SearchIcon from '@mui/icons-material/Search';
 
 import PropTypes from 'prop-types';
 
-import Grid from '@material-ui/core/Grid';
-import DialogActions from '@material-ui/core/DialogActions';
-import DialogContent from '@material-ui/core/DialogContent';
-import DialogContentText from '@material-ui/core/DialogContentText';
-import DialogTitle from '@material-ui/core/DialogTitle';
-import SearchIcon from '@material-ui/icons/Search';
-
-import { get, has } from 'lodash';
+import { get } from 'lodash';
 import { Meteor } from 'meteor/meteor';
-import { Session } from 'meteor/session';
-import { HTTP } from 'meteor/http';
-import JSON5 from 'json5';
+import { useTracker } from 'meteor/react-meteor-data';
 
-import moment from 'moment';
-import clsx from 'clsx';
-import { ReactMeteorData, useTracker } from 'meteor/react-meteor-data';
+import PatientsTable from '/imports/ui-tables/PatientsTable';
 
-import { PageCanvas, StyledCard, PatientsTable, FhirUtilities, LayoutHelpers } from 'fhir-starter';
-
-import { Patients } from 'meteor/clinical:hl7-fhir-data-infrastructure';
-
-
-//==============================================================================================
-// THEMING
-
-const useStyles = makeStyles(theme => ({
-  container: {
-    display: 'flex',
-    flexWrap: 'wrap',
-  },
-  githubIcon: {
-    margin: '0px'
+// Get the Patients collection
+let Patients;
+Meteor.startup(function(){
+  if (Meteor.Collections?.Patients) {
+    Patients = Meteor.Collections.Patients;
   }
-}));
-
-//==============================================================================================
-// MAIN COMPONENT
+});
 
 function PatientSearchDialog(props){
-
   let { 
-    children,
     defaultSearchTerm, 
     onSelect,
     hideFhirBarcode,
     ...otherProps 
   } = props;
 
-  const classes = useStyles();
-  const [searchTerm, setSearchTerm] = React.useState(defaultSearchTerm);
+  const [searchTerm, setSearchTerm] = useState(defaultSearchTerm);
+
+  // Subscribe to patients data
+  const isReady = useTracker(function(){
+    const handle = Meteor.subscribe('patients.all');
+    return handle.ready();
+  }, []);
 
   let patients = useTracker(function(){
-    return Patients.find({'name.text': {$regex: searchTerm }}).fetch();
-  });
+    if (!Patients || !isReady) return [];
+    
+    // Create a regex search that's case-insensitive
+    let searchQuery = {};
+    if (searchTerm && searchTerm.length > 0) {
+      searchQuery = {
+        $or: [
+          {'name.text': {$regex: searchTerm, $options: 'i'}},
+          {'name.family': {$regex: searchTerm, $options: 'i'}},
+          {'name.given': {$regex: searchTerm, $options: 'i'}}
+        ]
+      };
+    }
+    
+    return Patients.find(searchQuery).fetch();
+  }, [searchTerm, isReady]);
 
-  console.log("PatientSearchDialog.searchTerm", searchTerm)
-  console.log("PatientSearchDialog.patients", patients)
+  console.log("PatientSearchDialog.searchTerm", searchTerm);
+  console.log("PatientSearchDialog.patients", patients);
 
-
-  function changeInput(variable, event, value){
-    // console.log('changeInput', variable, event, event.currentTarget.value);
-    setSearchTerm(event.currentTarget.value);
+  function changeInput(event){
+    setSearchTerm(event.target.value);
   }  
-  function handleFilterPatients(event, foo){
-    console.log('handleFilterPatients', event, foo)
+
+  function handleFilterPatients(event){
+    console.log('handleFilterPatients', searchTerm);
   }
 
-
-
   return (
-    <DialogContent dividers={scroll === 'paper'} style={{minWidth: '100%', minHeight: '650px', fontSize: '120%'}}>
-      <FormControl className={clsx(classes.margin, classes.textField)} fullWidth>
-        {/* <InputLabel htmlFor="title-input" shrink={true}>Patient Search</InputLabel> */}
-        <Input
+    <DialogContent dividers sx={{minHeight: '650px'}}>
+      <Box sx={{ mb: 2 }}>
+        <TextField
           id="patientSearchField"
-          placeholder="Jane Doe"
-          onChange={ changeInput.bind(this, 'patientSearchField')}
-          value={ searchTerm }
-          fullWidth        
-          InputLabelProps={{ shrink: true }}
-          endAdornment={
-            <InputAdornment position="end">
-              <IconButton
-                aria-label="toggle password visibility"
-                onClick={ handleFilterPatients.bind(this) }
-              >
-                <SearchIcon />
-              </IconButton>
-            </InputAdornment>
-          }  
+          placeholder="Search by patient name..."
+          onChange={changeInput}
+          value={searchTerm}
+          fullWidth
+          variant="outlined"
+          InputProps={{
+            endAdornment: (
+              <InputAdornment position="end">
+                <IconButton
+                  aria-label="search patients"
+                  onClick={handleFilterPatients}
+                  edge="end"
+                >
+                  <SearchIcon />
+                </IconButton>
+              </InputAdornment>
+            )
+          }}
         />
-      </FormControl>
-      <PatientsTable 
+      </Box>
+      
+      {!isReady ? (
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '400px' }}>
+          <CircularProgress />
+        </Box>
+      ) : patients.length === 0 ? (
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '400px' }}>
+          <Typography variant="h6" color="text.secondary">
+            {searchTerm ? 'No patients found matching your search' : 'No patients available'}
+          </Typography>
+        </Box>
+      ) : (
+        <PatientsTable 
         hideActionIcons={true}
         hideActive={true}
         hideAddress={true}
@@ -125,22 +127,28 @@ function PatientSearchDialog(props){
         hideFhirBarcode={hideFhirBarcode}
         patients={patients}
         paginationCount={patients.length}        
-        rowsPerPage={20}
-        rowClickMode="id"
+        rowsPerPage={25}
         onRowClick={function(selectedPatientId){
           console.log('PatientSearchDialog.PatientsTable.onRowClick', selectedPatientId);
-
           
           if(typeof onSelect === "function"){
-            onSelect(selectedPatientId)
+            // Find the patient object to pass both ID and full patient data
+            console.log('Looking for patient with ID:', selectedPatientId);
+            console.log('Available patients:', patients);
+            const selectedPatient = patients.find(p => p._id === selectedPatientId || p.id === selectedPatientId);
+            console.log('Found patient:', selectedPatient);
+            if (selectedPatient) {
+              onSelect(selectedPatientId, selectedPatient);
+            } else {
+              onSelect(selectedPatientId);
+            }
           }
         }}
       />
+      )}
     </DialogContent>
   );
 }
-
-
 
 PatientSearchDialog.propTypes = { 
   hideFhirBarcode: PropTypes.bool,
@@ -153,4 +161,4 @@ PatientSearchDialog.defaultProps = {
   hideFhirBarcode: true
 }
 
-export default PatientSearchDialog
+export default PatientSearchDialog;

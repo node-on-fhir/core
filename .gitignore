@@ -24,3 +24,5 @@ packages/*
 .meteor/packages
 
 settings.*.json
+
+screenshots/*

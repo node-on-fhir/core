@@ -15,7 +15,7 @@ import {
 
 
 import moment from 'moment';
-import { get } from 'lodash';
+import { get, reverse } from 'lodash';
 
 // import { Icon } from 'react-icons-kit'
 // import { tag } from 'react-icons-kit/fa/tag'
@@ -88,6 +88,8 @@ function ConditionsTable(props){
 
     page,
     onSetPage,
+    
+    order,
 
     ...otherProps 
   } = props;
@@ -337,24 +339,12 @@ function ConditionsTable(props){
   }
 
   function renderTextIconHeader(){
-    if (!hideTextIcon) {
-      return (
-        <TableCell className='textIcon'>Text</TableCell>
-      );
-    }
+    // Text column removed
+    return null;
   }
   function renderTextIcon(textDiv ){
-
-    let textIcon = "None";
-    if((typeof textDiv === "string" && (textDiv.length > 0))){
-      textIcon = "Text"
-    }
-
-    if (!hideTextIcon) {
-      return (
-        <TableCell className='textIcon' style={{minWidth: '140px'}}>{ textIcon }</TableCell>
-      );
-    }
+    // Text column removed
+    return null;
   }
   function renderPatientNameHeader(){
     if (!hidePatientName) {
@@ -533,8 +523,10 @@ function ConditionsTable(props){
 
   function renderBarcode(id){
     if (!hideBarcode) {
+      // Handle MongoDB ObjectID objects
+      const idString = typeof id === 'object' && id._str ? id._str : String(id);
       return (
-        <TableCell><span className="barcode helveticas">{id}</span></TableCell>
+        <TableCell><span className="barcode helveticas">{idString}</span></TableCell>
       );
     }
   }
@@ -618,8 +610,14 @@ function ConditionsTable(props){
   if(conditions){
     if(conditions.length > 0){     
       let count = 0;    
+      
+      // Apply order: if 'descending' or alias 'reverse', reverse the array
+      let orderedConditions = conditions;
+      if(order === 'descending' || order === 'reverse'){
+        orderedConditions = reverse([...conditions]); // Create a copy and reverse it
+      }
 
-      conditions.forEach(function(condition){
+      orderedConditions.forEach(function(condition){
         if((count >= (page * rowsPerPage)) && (count < (page + 1) * rowsPerPage)){
           conditionsToRender.push(FhirDehydrator.dehydrateCondition(condition, internalDateFormat));
         }
@@ -667,7 +665,7 @@ function ConditionsTable(props){
         ); 
       } else {
         tableRows.push(
-          <TableRow className="conditionRow" key={i} style={rowStyle} onClick={ handleRowClick.bind(this, conditionsToRender[i]._id)} style={rowStyle} hover={true} selected={selected} >            
+          <TableRow className="conditionRow" key={i} style={rowStyle} onClick={ handleRowClick.bind(this, conditionsToRender[i]._id || conditionsToRender[i].id)} hover={true} selected={selected} >            
             { renderCheckbox(i) }
             { renderActionIcons(conditionsToRender[i]) }
             { renderTextIcon(get(conditionsToRender[i], "text.div", "")) }
@@ -779,6 +777,8 @@ ConditionsTable.propTypes = {
   count: PropTypes.number,
   tableRowSize: PropTypes.string,
   formFactorLayout: PropTypes.string,
+  
+  order: PropTypes.oneOf(['ascending', 'descending', 'reverse']),
 
   labels: PropTypes.object
 };
@@ -811,7 +811,8 @@ ConditionsTable.defaultProps = {
     snomedDisplay: "SNOMED Display",
     snomedCode: "SNOMED Code"
   },
-  defaultCheckboxValue: false
+  defaultCheckboxValue: false,
+  order: 'ascending'
 }
 
 export default ConditionsTable;

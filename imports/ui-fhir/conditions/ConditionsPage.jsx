@@ -11,9 +11,13 @@ import {
   CardContent,
   Button,
   Box,
-  Typography
+  Typography,
+  ToggleButton,
+  ToggleButtonGroup
 } from '@mui/material';
-import AddIcon from '@mui/icons-material/Add'; 
+import AddIcon from '@mui/icons-material/Add';
+import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
+import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward'; 
 
 import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
@@ -53,6 +57,7 @@ Session.setDefault('ConditionsTable.conditionsIndex', 0)
 
 export function ConditionsPage(props){
   const navigate = useNavigate();
+  const [sortOrder, setSortOrder] = useState('descending');
 
   // Subscribe to conditions data
   const isLoading = useTracker(() => {
@@ -114,6 +119,12 @@ export function ConditionsPage(props){
     navigate('/conditions/new');
   }
 
+  function handleSortOrderChange(event, newOrder){
+    if(newOrder !== null){
+      setSortOrder(newOrder);
+    }
+  }
+
   function renderHeader() {
     return (
       <Box mb={2}>
@@ -127,14 +138,30 @@ export function ConditionsPage(props){
             </Typography>
           </Grid>
           <Grid item>
-            <Button
-              variant="contained"
-              color="primary"
-              startIcon={<AddIcon />}
-              onClick={handleAddCondition}
-            >
-              Add Condition
-            </Button>
+            <Box display="flex" gap={2} alignItems="center">
+              <ToggleButtonGroup
+                value={sortOrder}
+                exclusive
+                onChange={handleSortOrderChange}
+                aria-label="sort order"
+                size="small"
+              >
+                <ToggleButton value="ascending" aria-label="ascending order">
+                  <ArrowUpwardIcon />
+                </ToggleButton>
+                <ToggleButton value="descending" aria-label="descending order">
+                  <ArrowDownwardIcon />
+                </ToggleButton>
+              </ToggleButtonGroup>
+              <Button
+                variant="contained"
+                color="primary"
+                startIcon={<AddIcon />}
+                onClick={handleAddCondition}
+              >
+                Add Condition
+              </Button>
+            </Box>
           </Grid>
         </Grid>
       </Box>
@@ -161,11 +188,13 @@ export function ConditionsPage(props){
           formFactorLayout={formFactor}
           rowsPerPage={LayoutHelpers.calcTableRows()} 
           actionButtonLabel="Remove"
+          hideAsserterName={false}
           hideClinicalStatus={true}
           hideEvidence={true}
           hideActionButton={get(Meteor, 'settings.public.modules.fhir.Conditions.hideRemoveButtonOnTable', true)}
+          order={sortOrder}
           onActionButtonClick={function(selectedId){
-            Conditions._collection.remove({_id: selectedId})
+            Conditions.remove({_id: selectedId})
           }}
           onRowClick={function(conditionId){
             console.log('ConditionsPage.onRowClick', conditionId);
@@ -190,6 +219,7 @@ export function ConditionsPage(props){
       }}
     >
       <Card 
+        className="no-data-card"
         sx={{ 
           maxWidth: '600px',
           width: '100%',

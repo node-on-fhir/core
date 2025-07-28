@@ -85,5 +85,69 @@ module.exports = {
       email: `${prefix}_${timestamp}_${random}@test.com`,
       password: 'TestPassword123!'
     };
+  },
+
+  // Create test patient via Meteor method
+  createTestPatient: function(client, patientData, callback) {
+    client.executeAsync(function(data, done) {
+      if (typeof Meteor !== 'undefined') {
+        console.log('Creating test patient:', data.name);
+        
+        // Default patient structure
+        const patient = {
+          resourceType: 'Patient',
+          active: true,
+          name: [{
+            use: 'official',
+            text: data.name || 'Test Patient',
+            family: data.family || 'Patient',
+            given: [data.given || 'Test']
+          }],
+          gender: data.gender || 'unknown',
+          birthDate: data.birthDate || '1990-01-01'
+        };
+        
+        // Add identifier if provided
+        if (data.identifier) {
+          patient.identifier = [{
+            use: 'usual',
+            value: data.identifier
+          }];
+        }
+        
+        Meteor.call('patients.insert', patient, function(error, result) {
+          if (error) {
+            console.error('Error creating test patient:', error);
+          } else {
+            console.log('Test patient created with ID:', result);
+          }
+          done({ error: error, result: result });
+        });
+      } else {
+        done({ error: 'Meteor not available' });
+      }
+    }, [patientData], function(result) {
+      console.log('Create test patient result:', result.value);
+      if (callback) callback(result.value);
+    });
+  },
+
+  // Clear test patients
+  clearTestPatients: function(client, callback) {
+    client.executeAsync(function(done) {
+      if (typeof Meteor !== 'undefined') {
+        console.log('Test cleanup: Clearing test patients');
+        Meteor.call('test.clearPatients', function(err) {
+          if (err) {
+            console.error('Error clearing patients:', err);
+          }
+          done();
+        });
+      } else {
+        done();
+      }
+    }, function() {
+      if (callback) callback();
+    });
   }
 };
