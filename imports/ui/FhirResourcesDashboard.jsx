@@ -123,7 +123,7 @@ export function FhirResourcesDashboard() {
     { name: 'Allergy Intolerances', route: '/allergy-intolerances', settingsKey: 'AllergyIntolerances', collection: 'AllergyIntolerances' },
     { name: 'Artifact Assessments', route: '/artifact-assessments', settingsKey: 'ArtifactAssessments', collection: 'ArtifactAssessments' },
     { name: 'Bundles', route: '/bundles', settingsKey: 'Bundles', collection: 'Bundles' },
-    { name: 'Care Plans', route: '/care-plans', settingsKey: 'CarePlans', collection: 'CarePlans' },
+    { name: 'Care Plans', route: '/careplans', settingsKey: 'CarePlans', collection: 'CarePlans' },
     { name: 'Care Teams', route: '/care-teams', settingsKey: 'CareTeams', collection: 'CareTeams' },
     { name: 'Claims', route: '/claims', settingsKey: 'Claims', collection: 'Claims' },
     { name: 'Code Systems', route: '/code-systems', settingsKey: 'CodeSystems', collection: 'CodeSystems' },

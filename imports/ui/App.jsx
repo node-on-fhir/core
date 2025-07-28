@@ -586,15 +586,15 @@ if(get(Meteor, 'settings.public.modules.fhir.CareTeams')){
 }
 if(get(Meteor, 'settings.public.modules.fhir.CarePlans')){
   dynamicRoutes.push({
-    path: "/care-plans",
+    path: "/careplans",
     element: <CarePlansPage />
   })
   dynamicRoutes.push({
-    path: "/care-plans/new",
+    path: "/careplans/new",
     element: <CarePlanDetail />
   })
   dynamicRoutes.push({
-    path: "/care-plans/:id",
+    path: "/careplans/:id",
     element: <CarePlanDetail />
   })
 }

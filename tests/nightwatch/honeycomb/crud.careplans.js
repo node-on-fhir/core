@@ -28,6 +28,7 @@ describe('CarePlans CRUD Operations', function() {
   before(browser => {
     console.log('Starting CarePlans CRUD test suite...');
     browser
+      .windowSize('current', 1400, 900)  // Set to landscape/desktop size
       .url('http://localhost:3000')
       .waitForElementVisible('body', 5000);
   });
@@ -38,6 +39,7 @@ describe('CarePlans CRUD Operations', function() {
 
   it('01. Setup test environment', browser => {
     browser
+      .windowSize('current', 1400, 900)  // Ensure landscape mode
       .url('http://localhost:3000')
       .waitForElementVisible('body', 5000)
       .pause(2000);
@@ -457,8 +459,23 @@ describe('CarePlans CRUD Operations', function() {
   it('05. Verify new care plan appears in list', browser => {
     browser
       .waitForElementVisible('#carePlansPage', 5000)
-      .pause(1000)
+      .pause(2000)  // Give subscription time to update
       .waitForElementVisible('#carePlansTable', 5000)
+      .execute(function() {
+        // Debug: Log what's in the table
+        const table = document.querySelector('#carePlansTable');
+        if (table) {
+          console.log('Table content:', table.innerText);
+          const rows = table.querySelectorAll('tbody tr');
+          console.log('Number of rows:', rows.length);
+          rows.forEach((row, index) => {
+            console.log(`Row ${index}:`, row.innerText);
+          });
+        }
+        return table ? table.innerText : 'Table not found';
+      }, [], function(result) {
+        console.log('Table debug info:', result.value);
+      })
       .assert.containsText('#carePlansTable', testCarePlan.authorName)
       .assert.containsText('#carePlansTable', testCarePlan.title)
       .saveScreenshot('tests/nightwatch/screenshots/careplans/06-careplan-in-list.png');

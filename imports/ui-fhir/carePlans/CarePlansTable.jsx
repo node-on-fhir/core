@@ -1,5 +1,8 @@
+// /imports/ui-fhir/carePlans/CarePlansTable.jsx
+
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
+import { useNavigate } from 'react-router-dom';
 
 import { 
   Checkbox, 
@@ -18,8 +21,6 @@ import { get } from 'lodash';
 
 import moment from 'moment';
 
-import { browserHistory } from 'react-router';
-
 // import { Icon } from 'react-icons-kit'
 // import { tag } from 'react-icons-kit/fa/tag'
 // import {iosTrashOutline} from 'react-icons-kit/ionicons/iosTrashOutline'
@@ -27,6 +28,17 @@ import { browserHistory } from 'react-router';
 import { FhirUtilities } from '../../lib/FhirUtilities';
 
 import { FhirDehydrator } from '../../lib/FhirDehydrator';
+
+// Logger setup
+const logger = {
+  debug: console.debug.bind(console),
+  trace: console.trace.bind(console),
+  data: console.log.bind(console),
+  verbose: console.debug.bind(console),
+  info: console.info.bind(console),
+  warn: console.warn.bind(console),
+  error: console.error.bind(console)
+};
 
 
 //===========================================================================
@@ -46,6 +58,8 @@ Session.setDefault('selectedCarePlans', []);
 
 function CarePlansTable(props){
   logger.debug('Rendering the CarePlansTable');
+  
+  const navigate = useNavigate();
   
   // logger.data('CarePlansTable.props', {data: props}, {source: "CarePlansTable.jsx"});
 

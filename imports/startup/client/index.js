@@ -6,6 +6,9 @@ import { get } from 'lodash';
 // Core startup (always runs)
 import './core-startup';
 
+// Initialize collections (always runs)
+import './collections';
+
 // Conditional imports based on configuration
 Meteor.startup(() => {
   // Check if accounts module is enabled

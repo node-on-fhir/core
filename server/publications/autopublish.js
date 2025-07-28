@@ -4,43 +4,103 @@ import { Meteor } from 'meteor/meteor';
 import { get } from 'lodash';
 
 // Import all collections that might need autopublishing
-import { Conditions } from '/imports/lib/schemas/SimpleSchemas/Conditions';
-import { Patients } from '/imports/lib/schemas/SimpleSchemas/Patients';
-import { Practitioners } from '/imports/lib/schemas/SimpleSchemas/Practitioners';
-import { Encounters } from '/imports/lib/schemas/SimpleSchemas/Encounters';
-import { Observations } from '/imports/lib/schemas/SimpleSchemas/Observations';
-import { Procedures } from '/imports/lib/schemas/SimpleSchemas/Procedures';
-import { Immunizations } from '/imports/lib/schemas/SimpleSchemas/Immunizations';
+import { ActivityDefinitions } from '/imports/lib/schemas/SimpleSchemas/ActivityDefinitions';
 import { AllergyIntolerances } from '/imports/lib/schemas/SimpleSchemas/AllergyIntolerances';
+import { ArtifactAssessments } from '/imports/lib/schemas/SimpleSchemas/ArtifactAssessments';
+import { AuditEvents } from '/imports/lib/schemas/SimpleSchemas/AuditEvents';
+import { Bundles } from '/imports/lib/schemas/SimpleSchemas/Bundles';
 import { CarePlans } from '/imports/lib/schemas/SimpleSchemas/CarePlans';
+import { CareTeams } from '/imports/lib/schemas/SimpleSchemas/CareTeams';
+import { Claims } from '/imports/lib/schemas/SimpleSchemas/Claims';
+import { CodeSystems } from '/imports/lib/schemas/SimpleSchemas/CodeSystems';
+import { Communications } from '/imports/lib/schemas/SimpleSchemas/Communications';
+import { CommunicationRequests } from '/imports/lib/schemas/SimpleSchemas/CommunicationRequests';
+import { Compositions } from '/imports/lib/schemas/SimpleSchemas/Compositions';
+import { Conditions } from '/imports/lib/schemas/SimpleSchemas/Conditions';
+import { Devices } from '/imports/lib/schemas/SimpleSchemas/Devices';
+import { DocumentReferences } from '/imports/lib/schemas/SimpleSchemas/DocumentReferences';
+import { Encounters } from '/imports/lib/schemas/SimpleSchemas/Encounters';
+import { Endpoints } from '/imports/lib/schemas/SimpleSchemas/Endpoints';
+import { Evidences } from '/imports/lib/schemas/SimpleSchemas/Evidences';
+import { ExplanationOfBenefits } from '/imports/lib/schemas/SimpleSchemas/ExplanationOfBenefits';
 import { Goals } from '/imports/lib/schemas/SimpleSchemas/Goals';
+import { GuidanceResponses } from '/imports/lib/schemas/SimpleSchemas/GuidanceResponses';
+import { Immunizations } from '/imports/lib/schemas/SimpleSchemas/Immunizations';
+import { Libraries } from '/imports/lib/schemas/SimpleSchemas/Libraries';
+import { Lists } from '/imports/lib/schemas/SimpleSchemas/Lists';
+import { Locations } from '/imports/lib/schemas/SimpleSchemas/Locations';
 import { Medications } from '/imports/lib/schemas/SimpleSchemas/Medications';
+import { MedicationAdministrations } from '/imports/lib/schemas/SimpleSchemas/MedicationAdministrations';
 import { MedicationRequests } from '/imports/lib/schemas/SimpleSchemas/MedicationRequests';
 import { MedicationStatements } from '/imports/lib/schemas/SimpleSchemas/MedicationStatements';
-import { DocumentReferences } from '/imports/lib/schemas/SimpleSchemas/DocumentReferences';
-import { Locations } from '/imports/lib/schemas/SimpleSchemas/Locations';
+import { Measures } from '/imports/lib/schemas/SimpleSchemas/Measures';
+import { MeasureReports } from '/imports/lib/schemas/SimpleSchemas/MeasureReports';
+import { MessageHeaders } from '/imports/lib/schemas/SimpleSchemas/MessageHeaders';
+import { NutritionOrders } from '/imports/lib/schemas/SimpleSchemas/NutritionOrders';
+import { OperationOutcomes } from '/imports/lib/schemas/SimpleSchemas/OperationOutcomes';
 import { Organizations } from '/imports/lib/schemas/SimpleSchemas/Organizations';
+import { Observations } from '/imports/lib/schemas/SimpleSchemas/Observations';
+import { Patients } from '/imports/lib/schemas/SimpleSchemas/Patients';
+import { PlanDefinitions } from '/imports/lib/schemas/SimpleSchemas/PlanDefinitions';
+import { Practitioners } from '/imports/lib/schemas/SimpleSchemas/Practitioners';
+import { Procedures } from '/imports/lib/schemas/SimpleSchemas/Procedures';
+import { Questionnaires } from '/imports/lib/schemas/SimpleSchemas/Questionnaires';
+import { QuestionnaireResponses } from '/imports/lib/schemas/SimpleSchemas/QuestionnaireResponses';
+import { ResearchStudies } from '/imports/lib/schemas/SimpleSchemas/ResearchStudies';
+import { ResearchSubjects } from '/imports/lib/schemas/SimpleSchemas/ResearchSubjects';
 import { ServiceRequests } from '/imports/lib/schemas/SimpleSchemas/ServiceRequests';
+import { Tasks } from '/imports/lib/schemas/SimpleSchemas/Tasks';
+import { ValueSets } from '/imports/lib/schemas/SimpleSchemas/ValueSets';
 
 // Map of collection names to collection objects
 const collectionsMap = {
-  'Conditions': Conditions,
-  'Patients': Patients,
-  'Practitioners': Practitioners,
-  'Encounters': Encounters,
-  'Observations': Observations,
-  'Procedures': Procedures,
-  'Immunizations': Immunizations,
+  'ActivityDefinitions': ActivityDefinitions,
   'AllergyIntolerances': AllergyIntolerances,
+  'ArtifactAssessments': ArtifactAssessments,
+  'AuditEvents': AuditEvents,
+  'Bundles': Bundles,
   'CarePlans': CarePlans,
+  'CareTeams': CareTeams,
+  'Claims': Claims,
+  'CodeSystems': CodeSystems,
+  'Communications': Communications,
+  'CommunicationRequests': CommunicationRequests,
+  'Compositions': Compositions,
+  'Conditions': Conditions,
+  'Devices': Devices,
+  'DocumentReferences': DocumentReferences,
+  'Encounters': Encounters,
+  'Endpoints': Endpoints,
+  'Evidences': Evidences,
+  'ExplanationOfBenefits': ExplanationOfBenefits,
   'Goals': Goals,
+  'GuidanceResponses': GuidanceResponses,
+  'Immunizations': Immunizations,
+  'Libraries': Libraries,
+  'Lists': Lists,
+  'Locations': Locations,
   'Medications': Medications,
+  'MedicationAdministrations': MedicationAdministrations,
   'MedicationRequests': MedicationRequests,
   'MedicationStatements': MedicationStatements,
-  'DocumentReferences': DocumentReferences,
-  'Locations': Locations,
+  'Measures': Measures,
+  'MeasureReports': MeasureReports,
+  'MessageHeaders': MessageHeaders,
+  'NutritionOrders': NutritionOrders,
+  'OperationOutcomes': OperationOutcomes,
   'Organizations': Organizations,
-  'ServiceRequests': ServiceRequests
+  'Observations': Observations,
+  'Patients': Patients,
+  'PlanDefinitions': PlanDefinitions,
+  'Practitioners': Practitioners,
+  'Procedures': Procedures,
+  'Questionnaires': Questionnaires,
+  'QuestionnaireResponses': QuestionnaireResponses,
+  'ResearchStudies': ResearchStudies,
+  'ResearchSubjects': ResearchSubjects,
+  'ServiceRequests': ServiceRequests,
+  'Tasks': Tasks,
+  'ValueSets': ValueSets
 };
 
 // Check if we're in production
@@ -78,17 +138,20 @@ if (autopublishEnabled) {
           // In development, we can be more permissive
           options.limit = options.limit || 1000;
           
-          // Add user-based filtering if needed
-          if (this.userId) {
-            // For patient-specific resources, filter by patient
+          // In development with autopublish, allow unauthenticated access for testing
+          if (!this.userId && isDevelopment && autopublishEnabled) {
+            console.log(`Allowing unauthenticated access to ${collectionName} in development mode`);
+            // Continue with the query
+          } else if (!this.userId) {
+            // In production or without autopublish, require authentication
+            return this.ready();
+          } else if (this.userId) {
+            // Add user-based filtering if needed
             if (['Conditions', 'Observations', 'Procedures', 'Immunizations', 'AllergyIntolerances'].includes(collectionName)) {
               // Only return records for patients the user has access to
               // This is a simplified example - you'd want more sophisticated access control
               query['subject.reference'] = { $exists: true };
             }
-          } else {
-            // If not logged in, return nothing
-            return this.ready();
           }
           
           console.log(`Publishing ${collectionName} with query:`, query, 'options:', options);
@@ -108,7 +171,10 @@ if (autopublishEnabled) {
       const publicationName = `${collectionName.toLowerCase()}.all`;
       
       Meteor.publish(publicationName, function() {
-        if (!this.userId) {
+        if (!this.userId && isDevelopment && autopublishEnabled) {
+          console.log(`Publishing all ${collectionName} for development (unauthenticated)`);
+          return collection.find({});
+        } else if (!this.userId) {
           return this.ready();
         }
         

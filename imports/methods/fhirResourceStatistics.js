@@ -59,11 +59,13 @@ Meteor.methods({
     // Try to get each collection dynamically
     for (const collectionName of collectionNames) {
       try {
-        // Try to get the collection from the global scope
-        const Collection = global[collectionName] || Meteor[collectionName];
+        // Try to get the collection from various possible locations
+        const Collection = get(Meteor, `Collections.${collectionName}`) || 
+                         global[collectionName] || 
+                         Meteor[collectionName];
         
         if (!Collection) {
-          console.log(`Collection ${collectionName} not found in global scope`);
+          console.log(`Collection ${collectionName} not found in Meteor.Collections, global scope, or Meteor`);
           statistics[collectionName] = {
             serverCount: 0,
             clientCount: 0,
