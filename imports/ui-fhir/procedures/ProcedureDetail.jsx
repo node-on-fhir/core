@@ -107,6 +107,26 @@ function ProcedureDetail(props) {
       }],
       text: ""
     }],
+    outcome: {
+      coding: [{
+        system: "http://snomed.info/sct",
+        code: "",
+        display: ""
+      }],
+      text: ""
+    },
+    reasonCode: [{
+      coding: [{
+        system: "http://snomed.info/sct",
+        code: "",
+        display: ""
+      }],
+      text: ""
+    }],
+    location: {
+      reference: "",
+      display: ""
+    },
     note: [{
       time: moment().format('YYYY-MM-DDTHH:mm:ss'),
       text: ""
@@ -213,13 +233,13 @@ function ProcedureDetail(props) {
       
       if (id && id !== 'new') {
         // Update existing procedure
-        await Meteor.callAsync('procedures.update', id, procedure);
+        await Meteor.callAsync('updateProcedure', id, procedure);
         console.log('Procedure updated successfully');
         // Exit edit mode after successful save
         setIsEditing(false);
       } else {
         // Create new procedure
-        const newId = await Meteor.callAsync('procedures.create', procedure);
+        const newId = await Meteor.callAsync('createProcedure', procedure);
         console.log('Procedure created with ID:', newId);
         // Navigate back to procedures list for new procedures
         navigate('/procedures');
@@ -239,7 +259,7 @@ function ProcedureDetail(props) {
     if (window.confirm('Are you sure you want to delete this procedure?')) {
       setLoading(true);
       try {
-        await Meteor.callAsync('procedures.remove', id);
+        await Meteor.callAsync('removeProcedure', id);
         console.log('Procedure deleted successfully');
         navigate('/procedures');
       } catch (err) {
@@ -269,7 +289,7 @@ function ProcedureDetail(props) {
 
 
   return (
-    <Container maxWidth="md" sx={{ py: 4 }}>
+    <Container id="procedureDetailPage" maxWidth="md" sx={{ py: 4 }}>
       <Card sx={{ boxShadow: 3 }}>
         <CardHeader 
           title={id && id !== 'new' ? 'Edit Procedure' : 'New Procedure'}
@@ -291,6 +311,7 @@ function ProcedureDetail(props) {
           
           <Stack spacing={3}>
             <TextField
+              id="identifier"
               fullWidth
               label="Identifier"
               value={get(procedure, 'identifier[0].value', '')}
@@ -301,6 +322,7 @@ function ProcedureDetail(props) {
             
             <Stack direction="row" spacing={2}>
               <TextField
+                id="categoryCode"
                 fullWidth
                 label="Category Code"
                 value={get(procedure, 'category.coding[0].code', '')}
@@ -310,6 +332,7 @@ function ProcedureDetail(props) {
               />
               
               <TextField
+                id="categoryDisplay"
                 fullWidth
                 label="Category Display"
                 value={get(procedure, 'category.coding[0].display', '') || get(procedure, 'category.text', '')}
@@ -324,6 +347,7 @@ function ProcedureDetail(props) {
             
             <Stack direction="row" spacing={2}>
               <TextField
+                id="codeCode"
                 fullWidth
                 label="Procedure Code"
                 value={get(procedure, 'code.coding[0].code', '')}
@@ -348,6 +372,7 @@ function ProcedureDetail(props) {
               />
               
               <TextField
+                id="codeDisplay"
                 fullWidth
                 label="Procedure Name"
                 value={get(procedure, 'code.coding[0].display', '') || get(procedure, 'code.text', '')}
@@ -364,6 +389,7 @@ function ProcedureDetail(props) {
               <FormControl fullWidth disabled={!isEditing}>
                 <InputLabel>Status</InputLabel>
                 <Select
+                  id="status"
                   value={get(procedure, 'status', 'unknown')}
                   onChange={(e) => handleChange('status', e.target.value)}
                   label="Status"
@@ -377,6 +403,7 @@ function ProcedureDetail(props) {
               </FormControl>
               
               <TextField
+                id="performedDateTime"
                 fullWidth
                 type="datetime-local"
                 label="Performed Date/Time"
@@ -402,6 +429,7 @@ function ProcedureDetail(props) {
             
             <Stack direction="row" spacing={2}>
               <TextField
+                id="subjectDisplay"
                 fullWidth
                 label="Patient Name"
                 value={get(procedure, 'subject.display', '')}
@@ -410,6 +438,7 @@ function ProcedureDetail(props) {
               />
               
               <TextField
+                id="performerDisplay"
                 fullWidth
                 label="Performed By"
                 value={get(procedure, 'performer[0].actor.display', '')}
@@ -423,6 +452,7 @@ function ProcedureDetail(props) {
             
             <Stack direction="row" spacing={2}>
               <TextField
+                id="bodySiteCode"
                 fullWidth
                 label="Body Site Code"
                 value={get(procedure, 'bodySite[0].coding[0].code', '')}
@@ -431,6 +461,7 @@ function ProcedureDetail(props) {
               />
               
               <TextField
+                id="bodySiteDisplay"
                 fullWidth
                 label="Body Site Display"
                 value={get(procedure, 'bodySite[0].coding[0].display', '') || get(procedure, 'bodySite[0].text', '')}
@@ -439,6 +470,55 @@ function ProcedureDetail(props) {
                   handleChange('bodySite[0].text', e.target.value);
                 }}
                 helperText="e.g., Biliary Ducts, Right Arm, Left Knee"
+                disabled={!isEditing}
+              />
+            </Stack>
+            
+            <Typography variant="h6" sx={{ mt: 2 }}>Outcome & Reason</Typography>
+            
+            <Stack spacing={2}>
+              <TextField
+                id="outcome"
+                fullWidth
+                label="Outcome"
+                value={get(procedure, 'outcome.text', '')}
+                onChange={(e) => handleChange('outcome.text', e.target.value)}
+                helperText="e.g., successful, unsuccessful, partially successful"
+                disabled={!isEditing}
+              />
+              
+              <Stack direction="row" spacing={2}>
+                <TextField
+                  id="reasonCode"
+                  fullWidth
+                  label="Reason Code"
+                  value={get(procedure, 'reasonCode[0].coding[0].code', '')}
+                  onChange={(e) => handleChange('reasonCode[0].coding[0].code', e.target.value)}
+                  helperText="SNOMED code for procedure reason"
+                  disabled={!isEditing}
+                />
+                
+                <TextField
+                  id="reasonDisplay"
+                  fullWidth
+                  label="Reason Display"
+                  value={get(procedure, 'reasonCode[0].coding[0].display', '') || get(procedure, 'reasonCode[0].text', '')}
+                  onChange={(e) => {
+                    handleChange('reasonCode[0].coding[0].display', e.target.value);
+                    handleChange('reasonCode[0].text', e.target.value);
+                  }}
+                  helperText="e.g., Appendicitis, Fracture"
+                  disabled={!isEditing}
+                />
+              </Stack>
+              
+              <TextField
+                id="locationDisplay"
+                fullWidth
+                label="Location"
+                value={get(procedure, 'location.display', '')}
+                onChange={(e) => handleChange('location.display', e.target.value)}
+                helperText="e.g., Operating Room 3, Emergency Department"
                 disabled={!isEditing}
               />
             </Stack>
@@ -459,6 +539,7 @@ function ProcedureDetail(props) {
                   />
                   
                   <TextField
+                    id="notesTextarea"
                     fullWidth
                     multiline
                     rows={3}
@@ -532,6 +613,7 @@ function ProcedureDetail(props) {
                   </Button>
                 )}
                 <Button 
+                  id="saveProcedureButton"
                   onClick={handleSave}
                   variant="contained"
                   color="primary"

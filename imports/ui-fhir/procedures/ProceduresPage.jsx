@@ -25,13 +25,10 @@ import ProceduresTable from './ProceduresTable';
 import LayoutHelpers from '../../lib/LayoutHelpers';
 
 import { get } from 'lodash';
+import { Procedures } from '/imports/lib/schemas/SimpleSchemas/Procedures';
 
 //=============================================================================================================================================
 // DATA CURSORS
-
-Meteor.startup(function(){
-  Procedures = Meteor.Collections.Procedures;
-})
 
 //=============================================================================================================================================
 // SESSION VARIABLES
@@ -64,6 +61,16 @@ export function ProceduresPage(props){
     showFhirIds: false,
     proceduresIndex: 0
   };
+
+  // Subscribe to Procedures
+  useTracker(function(){
+    let autoPublishEnabled = get(Meteor, 'settings.public.defaults.autopublish', false);
+    if(autoPublishEnabled){
+      return Meteor.subscribe('autopublish.Procedures', {}, {});
+    } else {
+      return Meteor.subscribe('procedures.all');
+    }
+  }, []);
 
   data.onePageLayout = useTracker(function(){
     return Session.get('ProceduresPage.onePageLayout');
@@ -101,6 +108,11 @@ export function ProceduresPage(props){
   function handleAddProcedure(){
     console.log('Add Procedure button clicked');
     navigate('/procedures/new');
+  }
+
+  function handleRowClick(procedureId){
+    console.log('Procedure row clicked:', procedureId);
+    navigate('/procedures/' + procedureId);
   }
 
   function renderHeader() {
@@ -158,6 +170,7 @@ export function ProceduresPage(props){
             Session.set('ProceduresTable.proceduresIndex', index)
           }}        
           page={data.proceduresIndex}
+          onRowClick={handleRowClick}
         />
       </CardContent>
     </Card>

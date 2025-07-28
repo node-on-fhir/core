@@ -4503,9 +4503,23 @@ export function flattenProcedure(procedure, internalDateFormat){
   }
 
   result.performedStart = moment(get(procedure, 'performedDateTime')).format(internalDateFormat);      
-  result.performerDisplay = get(procedure, 'performer.display');
-  result.performerReference = get(procedure, 'performer.reference');
-  result.bodySiteDisplay = get(procedure, 'bodySite.display');
+  
+  // Handle performer array structure
+  if(Array.isArray(get(procedure, 'performer'))){
+    result.performerDisplay = get(procedure, 'performer[0].actor.display', '');
+    result.performerReference = get(procedure, 'performer[0].actor.reference', '');
+  } else {
+    // Legacy format
+    result.performerDisplay = get(procedure, 'performer.display', '');
+    result.performerReference = get(procedure, 'performer.reference', '');
+  }
+  
+  // Handle bodySite array structure
+  if(Array.isArray(get(procedure, 'bodySite'))){
+    result.bodySiteDisplay = get(procedure, 'bodySite[0].coding[0].display', '') || get(procedure, 'bodySite[0].text', '');
+  } else {
+    result.bodySiteDisplay = get(procedure, 'bodySite.display', '');
+  }
 
   if(get(procedure, 'performedPeriod')){
     result.performedStart = moment(get(procedure, 'performedPeriod.start')).format(internalDateFormat);      

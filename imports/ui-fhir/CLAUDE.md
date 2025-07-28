@@ -93,13 +93,16 @@ const collectionsMap = {
 
 ### 1. Collection Initialization in Components
 **File**: `/imports/ui-fhir/{resourceTypes}/{ResourceTypes}Page.jsx`
-**Fix**: Add `let {ResourceTypes};` before the Meteor.startup block
+**IMPORTANT**: Import the collection directly instead of using Meteor.startup
 ```javascript
-let {ResourceTypes};
+// Import the collection directly - avoids timing issues
+import { {ResourceTypes} } from '/imports/lib/schemas/SimpleSchemas/{ResourceTypes}';
 
-Meteor.startup(function(){
-  {ResourceTypes} = Meteor.Collections.{ResourceTypes};
-});
+// DO NOT USE THIS PATTERN (causes timing issues):
+// let {ResourceTypes};
+// Meteor.startup(function(){
+//   {ResourceTypes} = Meteor.Collections.{ResourceTypes};
+// });
 ```
 
 ### 2. Subscription Management
@@ -220,10 +223,43 @@ before(browser => {
 ```
 
 ### 9. Settings Configuration
-**File**: `/configs/settings.honeycomb.localhost.json`
-**Ensure**:
-- `public.defaults.autopublish: true`
-- Resource is enabled in `public.modules.fhir.{ResourceTypes}: true`
+**File**: `/configs/settings.honeycomb.localhost.json` (or relevant settings file)
+**CRITICAL - Three places to configure**:
+
+1. **Enable autopublish**:
+   ```json
+   "public": {
+     "defaults": {
+       "autopublish": true
+     }
+   }
+   ```
+
+2. **Enable the module**:
+   ```json
+   "public": {
+     "modules": {
+       "fhir": {
+         "{ResourceTypes}": true
+       }
+     }
+   }
+   ```
+
+3. **Configure REST API and publication**:
+   ```json
+   "private": {
+     "fhir": {
+       "rest": {
+         "{ResourceType}": {
+           "interactions": ["read", "create", "update", "delete", "search"],
+           "search": true,
+           "publication": true
+         }
+       }
+     }
+   }
+   ```
 
 ## Step-by-Step Implementation Process
 
@@ -271,10 +307,18 @@ before(browser => {
    - Verify registration in `/imports/startup/client/collections.js`
    - Check browser console: `window.{ResourceTypes}`
 
-2. **No data showing after save**:
-   - Check autopublish settings
-   - Verify subscription is active
-   - Add debug logging to subscription
+2. **No data showing after save / "Encounters are in database but not in browser cursors"**:
+   - Check THREE places in settings:
+     * `public.defaults.autopublish: true`
+     * `public.modules.fhir.{ResourceTypes}: true`
+     * `private.fhir.rest.{ResourceType}` exists with `publication: true`
+   - Verify collection is imported directly (not via Meteor.startup)
+   - Check which settings file is being used: `ps aux | grep meteor | grep settings`
+   - Restart Meteor server after settings changes
+   - Debug in console:
+     * `window.{ResourceTypes}.find().fetch()`
+     * `Meteor.settings.public.defaults.autopublish`
+     * Check network tab for subscription calls
 
 3. **Table only shows 2 columns**:
    - Test is running in portrait mode
@@ -284,9 +328,21 @@ before(browser => {
    - Ensure `setIsEditing(true)` for new resources
    - Check `disabled={!isEditing}` on fields
 
-5. **Author/Subject not showing in table**:
+5. **Author/Subject/Practitioner not showing in table**:
    - Check FhirDehydrator flatten function
    - Verify data structure matches (e.g., `author.display` vs `authorDisplay`)
+   - For Encounters: practitioner data is in `participant` array:
+     ```javascript
+     // Extract practitioner from participant array
+     if(Array.isArray(get(encounter, 'participant'))){
+       encounter.participant.forEach(function(participant){
+         if(get(participant, 'individual.display')){
+           result.practitionerDisplay = get(participant, 'individual.display');
+           result.practitionerReference = get(participant, 'individual.reference', '');
+         }
+       });
+     }
+     ```
 
 ## Testing Commands
 ```bash
@@ -310,12 +366,55 @@ npm test -- tests/nightwatch/honeycomb/crud.*.js
 - Follow FHIR R4 specifications for resource structure
 - Always test in browser console first: `{ResourceTypes}.find().fetch()`
 
+## Additional Learned Insights
 
-- Use the /import/ui-fhir/condition as gold standard template.
-- Use camelCase for the directory name; and ProperCase for the file names.
-- Make sure to include a {Resource}Page and {Resources}Table 
-- Create a schema in /imports/lib/schemas/SimpleSchemas
-- Add dehydrate/flatten methods in /imports/lib/FhirDehydrator
-- Add conditional routes in App.jsx
-- Attach the {Resources}Table to the Meteor.Tables object.
-- Add a collection count in PatientSidebar.jsx
+### Test Handling for Empty States
+When implementing delete functionality, tests should handle both table and "No Data Available" states:
+```javascript
+// Check for either table or no-data message
+const hasTable = document.querySelector('#encountersTable') !== null;
+const hasNoDataCard = document.querySelector('.no-data-card') !== null ||
+                    document.querySelector('#encountersPage').textContent.includes('No Data Available');
+const validState = hasTable || hasNoDataCard;
+```
+
+### Schema Export Naming
+Ensure schema exports match the expected names:
+```javascript
+// Correct
+export { Encounter, EncounterSchemaDstu2, EncounterSchema, EncounterSchemaStu3 }
+
+// Watch for typos like 'ncounterSchemaDstu2'
+```
+
+### FhirDehydrator Updates
+When adding flatten functions, ensure all required fields are extracted:
+- Check test data structure for expected fields
+- Handle both single references and arrays (e.g., participant array)
+- Support multiple field naming conventions (reason vs reasonCode)
+
+### Import Path Consistency
+Be consistent with import paths:
+```javascript
+// Table imports should match directory structure
+import EncountersTable from '../ui-fhir/encounters/EncountersTable';
+// NOT from '../ui-tables/EncountersTable'
+```
+
+
+## Implementation Checklist Summary
+
+- [ ] Use `/imports/ui-fhir/conditions` as gold standard template
+- [ ] Use camelCase for directory name; PascalCase for file names
+- [ ] Create `{ResourceTypes}Page.jsx` and `{ResourceTypes}Table.jsx`
+- [ ] Import `{ResourceType}Detail.jsx` in App.jsx (often missed!)
+- [ ] Create/verify schema in `/imports/lib/schemas/SimpleSchemas`
+- [ ] Add flatten{ResourceType} method in `/imports/lib/FhirDehydrator`
+- [ ] Add routes in App.jsx (list, new, detail)
+- [ ] Create Meteor methods in `/imports/api/{resourceTypes}/methods.js`
+- [ ] Import methods in `/server/main.js`
+- [ ] Register collection in 3 places (server, client, autopublish)
+- [ ] Configure settings in 3 places (autopublish, module, REST)
+- [ ] Attach {ResourceTypes}Table to Meteor.Tables object
+- [ ] Add collection count in PatientSidebar.jsx
+- [ ] Restart Meteor server after settings changes

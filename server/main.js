@@ -35,6 +35,7 @@ import '../imports/api/encounters/methods.js';
 import '../imports/api/locations/methods.js';
 import '../imports/api/patients/methods.js';
 import '../imports/api/carePlans/methods.js';
+import '../imports/api/procedures/methods.js';
 
 // Import FHIR methods
 import '../imports/methods/fhirResourceStatistics.js';
