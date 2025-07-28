@@ -296,28 +296,8 @@ export function FhirResourcesDashboard() {
           <Typography variant="h4">
             FHIR Resources Dashboard
           </Typography>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, position: 'relative' }}>
-            <Chip
-              icon={meteorStatus.connected ? <WifiIcon /> : <WifiOffIcon />}
-              label={meteorStatus.connected ? 'Connected' : 'Disconnected'}
-              color={meteorStatus.connected ? 'success' : 'error'}
-              size="small"
-            />
-            <Tooltip title={`Last refresh: ${lastRefresh.fromNow()}`}>
-              <IconButton onClick={fetchResourceStats} disabled={refreshing} size="small">
-                <RefreshIcon className={refreshing ? 'rotating' : ''} />
-              </IconButton>
-            </Tooltip>
-            <ButtonGroup 
-              size="small" 
-              variant="outlined"
-              sx={{ 
-                position: 'absolute',
-                top: '32px',
-                right: 0,
-                whiteSpace: 'nowrap'
-              }}
-            >
+          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 1 }}>
+            <ButtonGroup size="small" variant="outlined">
               <Button
                 onClick={() => setFilterMode('all')}
                 variant={filterMode === 'all' ? 'contained' : 'outlined'}
@@ -340,6 +320,19 @@ export function FhirResourcesDashboard() {
                 Resources With Data
               </Button>
             </ButtonGroup>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <Chip
+                icon={meteorStatus.connected ? <WifiIcon /> : <WifiOffIcon />}
+                label={meteorStatus.connected ? 'Connected' : 'Disconnected'}
+                color={meteorStatus.connected ? 'success' : 'error'}
+                size="small"
+              />
+              <Tooltip title={`Last refresh: ${lastRefresh.fromNow()}`}>
+                <IconButton onClick={fetchResourceStats} disabled={refreshing} size="small">
+                  <RefreshIcon className={refreshing ? 'rotating' : ''} />
+                </IconButton>
+              </Tooltip>
+            </Box>
           </Box>
         </Box>
         

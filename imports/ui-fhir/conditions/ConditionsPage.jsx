@@ -54,6 +54,18 @@ Session.setDefault('ConditionsTable.conditionsIndex', 0)
 export function ConditionsPage(props){
   const navigate = useNavigate();
 
+  // Subscribe to conditions data
+  const isLoading = useTracker(() => {
+    const handle = Meteor.subscribe('autopublish.Conditions');
+    return !handle.ready();
+  }, []);
+
+  // Alternative subscription for development
+  useTracker(() => {
+    const handle = Meteor.subscribe('conditions.all');
+    return handle.ready();
+  }, []);
+
   let data = {
     currentConditionId: '',
     selectedCondition: null,

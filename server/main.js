@@ -37,7 +37,8 @@ import '../imports/api/patients/methods.js';
 // Import FHIR methods
 import '../imports/methods/fhirResourceStatistics.js';
 
-
+// Import publications (including autopublish if enabled)
+import './publications/autopublish.js';
 
 
 import { Meteor } from 'meteor/meteor';

@@ -266,7 +266,7 @@ function ConditionDetail(props) {
   ];
 
   return (
-    <Container maxWidth="md" sx={{ py: 4 }}>
+    <Container id="conditionDetailPage" maxWidth="md" sx={{ py: 4 }}>
       <Card sx={{ boxShadow: 3 }}>
         <CardHeader 
           title={id && id !== 'new' ? 'Edit Condition' : 'New Condition'}
@@ -288,6 +288,7 @@ function ConditionDetail(props) {
           
           <Stack spacing={3}>
             <TextField
+              id="patientDisplay"
               fullWidth
               label="Patient Name"
               value={get(condition, 'subject.display', '')}
@@ -296,6 +297,7 @@ function ConditionDetail(props) {
             />
             
             <TextField
+              id="asserterDisplay"
               fullWidth
               label="Asserter Name"
               value={get(condition, 'asserter.display', '')}
@@ -305,6 +307,7 @@ function ConditionDetail(props) {
             />
             
             <TextField
+              id="snomedCode"
               fullWidth
               label="SNOMED Code"
               value={get(condition, 'code.coding[0].code', '')}
@@ -329,6 +332,7 @@ function ConditionDetail(props) {
             />
             
             <TextField
+              id="snomedDisplay"
               fullWidth
               label="Condition Name"
               value={get(condition, 'code.coding[0].display', '')}
@@ -340,6 +344,7 @@ function ConditionDetail(props) {
             <FormControl fullWidth disabled={!isEditing}>
               <InputLabel>Clinical Status</InputLabel>
               <Select
+                id="clinicalStatus"
                 value={get(condition, 'clinicalStatus.coding[0].code', 'active')}
                 onChange={(e) => {
                   const option = clinicalStatusOptions.find(o => o.code === e.target.value);
@@ -359,6 +364,7 @@ function ConditionDetail(props) {
             <FormControl fullWidth disabled={!isEditing}>
               <InputLabel>Verification Status</InputLabel>
               <Select
+                id="verificationStatus"
                 value={get(condition, 'verificationStatus.coding[0].code', 'confirmed')}
                 onChange={(e) => {
                   const option = verificationStatusOptions.find(o => o.code === e.target.value);
@@ -378,6 +384,7 @@ function ConditionDetail(props) {
             <FormControl fullWidth disabled={!isEditing}>
               <InputLabel>Category</InputLabel>
               <Select
+                id="category"
                 value={get(condition, 'category[0].coding[0].code', 'problem-list-item')}
                 onChange={(e) => {
                   const option = categoryOptions.find(o => o.code === e.target.value);
@@ -395,6 +402,7 @@ function ConditionDetail(props) {
             </FormControl>
             
             <TextField
+              id="onsetDate"
               fullWidth
               type="date"
               label="Onset Date"
@@ -405,6 +413,7 @@ function ConditionDetail(props) {
             />
             
             <TextField
+              id="recordedDate"
               fullWidth
               type="date"
               label="Recorded Date"
@@ -415,6 +424,7 @@ function ConditionDetail(props) {
             />
             
             <TextField
+              id="notesTextarea"
               fullWidth
               multiline
               rows={3}

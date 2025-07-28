@@ -75,6 +75,12 @@ function injectEnvironmentVariables() {
   if (process.env.ENABLE_HIPAA) {
     set(Meteor, 'settings.private.hipaa.enabled', process.env.ENABLE_HIPAA === 'true');
   }
+  
+  // Autopublish configuration
+  if (process.env.ENABLE_AUTOPUBLISH) {
+    set(Meteor, 'settings.private.fhir.autopublishSubscriptions', process.env.ENABLE_AUTOPUBLISH === 'true');
+    console.log('Autopublish enabled via environment variable:', process.env.ENABLE_AUTOPUBLISH);
+  }
 
   // API keys and secrets
   if (process.env.JWT_SECRET) {

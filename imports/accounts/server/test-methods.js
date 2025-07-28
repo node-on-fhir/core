@@ -49,12 +49,12 @@ if (get(Meteor, 'settings.public.environment') !== 'production') {
       
       if (existingUser) {
         // Update password if user exists
-        Accounts.setPassword(existingUser._id, userData.password);
+        await Accounts.setPasswordAsync(existingUser._id, userData.password);
         return existingUser._id;
       }
 
       // Create new user
-      const userId = Accounts.createUser({
+      const userId = await Accounts.createUserAsync({
         username: userData.username,
         email: userData.email,
         password: userData.password
