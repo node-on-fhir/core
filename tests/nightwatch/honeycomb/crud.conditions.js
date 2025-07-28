@@ -1,5 +1,7 @@
 // tests/nightwatch/honeycomb/crud.conditions.js
 
+const testUtils = require('./shared-test-utils');
+
 describe('Conditions CRUD Operations', function() {
   const timestamp = Date.now();
   const testCondition = {
@@ -106,6 +108,8 @@ describe('Conditions CRUD Operations', function() {
               } else {
                 console.log('Test patient created with ID:', result.result);
                 browser.assert.ok(true, 'Successfully created test patient');
+                
+                // Patient created successfully
               }
             });
           } else {
@@ -131,6 +135,18 @@ describe('Conditions CRUD Operations', function() {
           } else {
             console.log('Test patient created with ID:', result.result);
             browser.assert.ok(true, 'Successfully created test patient');
+            
+            // Set the Session variables for the selected patient
+            browser.execute(function(patientId) {
+              if (typeof Session !== 'undefined' && typeof Patients !== 'undefined') {
+                const patient = Patients.findOne({_id: patientId});
+                if (patient) {
+                  Session.set('selectedPatientId', patientId);
+                  Session.set('selectedPatient', patient);
+                  console.log('Set selected patient in Session:', patientId);
+                }
+              }
+            }, [result.result]);
           }
         });
       }
@@ -146,6 +162,33 @@ describe('Conditions CRUD Operations', function() {
         }
         done();
       });
+      
+      // After everything is set up, ensure the patient is selected in the Session
+      browser.pause(1000) // Give everything time to settle
+        .execute(function(testIdentifier) {
+          if (typeof Session !== 'undefined' && typeof Patients !== 'undefined') {
+            // Find the test patient we just created
+            const patient = Patients.findOne({
+              'identifier.value': testIdentifier
+            });
+            if (patient) {
+              Session.set('selectedPatientId', patient._id);
+              Session.set('selectedPatient', patient);
+              console.log('Set selected patient in Session:', patient._id, patient.name?.[0]?.text);
+              return { success: true, patientId: patient._id, patientName: patient.name?.[0]?.text };
+            } else {
+              console.error('Could not find test patient with identifier:', testIdentifier);
+              return { success: false, error: 'Patient not found' };
+            }
+          }
+          return { success: false, error: 'Session or Patients not available' };
+        }, ['test-patient-' + timestamp], function(result) {
+          if (result.value.success) {
+            console.log('Successfully set selected patient:', result.value);
+          } else {
+            console.error('Failed to set selected patient:', result.value.error);
+          }
+        });
     });
   });
 
@@ -256,11 +299,63 @@ describe('Conditions CRUD Operations', function() {
 
     browser
       .pause(500)
-      .clearValue('#asserterDisplay')
+      // Clear and set asserter display
+      .click('#asserterDisplay')
+      .execute(function() {
+        const asserterField = document.querySelector('#asserterDisplay');
+        if (asserterField) {
+          // Select all text
+          asserterField.select();
+          // Simulate backspace to clear
+          asserterField.value = '';
+          // Fire multiple events to ensure React updates
+          const inputEvent = new Event('input', { bubbles: true });
+          const changeEvent = new Event('change', { bubbles: true });
+          asserterField.dispatchEvent(inputEvent);
+          asserterField.dispatchEvent(changeEvent);
+          // Also try the React-specific approach
+          const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+          nativeInputValueSetter.call(asserterField, '');
+          asserterField.dispatchEvent(inputEvent);
+        }
+      })
+      .pause(100)
       .setValue('#asserterDisplay', testCondition.asserterName)
-      .clearValue('#snomedCode')
+      // Clear and set SNOMED code
+      .click('#snomedCode')
+      .execute(function() {
+        const snomedCodeField = document.querySelector('#snomedCode');
+        if (snomedCodeField) {
+          snomedCodeField.select();
+          snomedCodeField.value = '';
+          const inputEvent = new Event('input', { bubbles: true });
+          const changeEvent = new Event('change', { bubbles: true });
+          snomedCodeField.dispatchEvent(inputEvent);
+          snomedCodeField.dispatchEvent(changeEvent);
+          const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+          nativeInputValueSetter.call(snomedCodeField, '');
+          snomedCodeField.dispatchEvent(inputEvent);
+        }
+      })
+      .pause(100)
       .setValue('#snomedCode', testCondition.snomedCode)
-      .clearValue('#snomedDisplay')
+      // Clear and set SNOMED display
+      .click('#snomedDisplay')
+      .execute(function() {
+        const snomedDisplayField = document.querySelector('#snomedDisplay');
+        if (snomedDisplayField) {
+          snomedDisplayField.select();
+          snomedDisplayField.value = '';
+          const inputEvent = new Event('input', { bubbles: true });
+          const changeEvent = new Event('change', { bubbles: true });
+          snomedDisplayField.dispatchEvent(inputEvent);
+          snomedDisplayField.dispatchEvent(changeEvent);
+          const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+          nativeInputValueSetter.call(snomedDisplayField, '');
+          snomedDisplayField.dispatchEvent(inputEvent);
+        }
+      })
+      .pause(100)
       .setValue('#snomedDisplay', testCondition.conditionName);
 
     // Handle Material-UI Select components differently
@@ -321,11 +416,23 @@ describe('Conditions CRUD Operations', function() {
 
     browser
       .pause(500)
-      .clearValue('#recordedDate')
+      // Clear and set recorded date
+      .click('#recordedDate')
+      .keys([browser.Keys.COMMAND, 'a'])
+      .keys(browser.Keys.BACK_SPACE)
+      .pause(100)
       .setValue('#recordedDate', testCondition.recordedDate)
-      .clearValue('#onsetDate')
+      // Clear and set onset date
+      .click('#onsetDate')
+      .keys([browser.Keys.COMMAND, 'a'])
+      .keys(browser.Keys.BACK_SPACE)
+      .pause(100)
       .setValue('#onsetDate', testCondition.onsetDate)
-      .clearValue('#notesTextarea')
+      // Clear and set notes
+      .click('#notesTextarea')
+      .keys([browser.Keys.COMMAND, 'a'])
+      .keys(browser.Keys.BACK_SPACE)
+      .pause(100)
       .setValue('#notesTextarea', testCondition.notes)
       .pause(500)
       .saveScreenshot('tests/nightwatch/screenshots/conditions/04-filled-condition-form.png');
@@ -522,16 +629,10 @@ describe('Conditions CRUD Operations', function() {
 
     // Update condition details
     browser
-      .execute(function() {
-        // Clear the asserter display field more reliably
-        const asserterField = document.querySelector('#asserterDisplay');
-        if (asserterField) {
-          asserterField.value = '';
-          // Trigger change event for React
-          const event = new Event('change', { bubbles: true });
-          asserterField.dispatchEvent(event);
-        }
-      })
+      .click('#asserterDisplay')
+      .keys([browser.Keys.COMMAND, 'a'])
+      .keys(browser.Keys.BACK_SPACE)
+      .pause(100)
       .setValue('#asserterDisplay', updatedCondition.asserterName)
       .click('#clinicalStatus')
       .pause(300)
@@ -565,16 +666,10 @@ describe('Conditions CRUD Operations', function() {
       }, [updatedCondition.verificationStatus], function(result) {
         browser.assert.equal(result.value, true, 'Selected verification status');
       })
-      .execute(function() {
-        // Clear the notes field more reliably
-        const notesField = document.querySelector('#notesTextarea');
-        if (notesField) {
-          notesField.value = '';
-          // Trigger change event for React
-          const event = new Event('change', { bubbles: true });
-          notesField.dispatchEvent(event);
-        }
-      })
+      .click('#notesTextarea')
+      .keys([browser.Keys.COMMAND, 'a'])
+      .keys(browser.Keys.BACK_SPACE)
+      .pause(100)
       .setValue('#notesTextarea', updatedCondition.notes)
       .pause(500)
       .saveScreenshot('tests/nightwatch/screenshots/conditions/08-updated-condition-form.png');
