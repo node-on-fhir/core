@@ -1641,6 +1641,10 @@ export function flattenEncounter(encounter, internalDateFormat){
     meta: '',
     subject: '',
     subjectId: '',
+    patientDisplay: '',
+    patientReference: '',
+    practitionerDisplay: '',
+    practitionerReference: '',
     status: '',
     statusHistory: 0,
     periodStart: '',
@@ -1649,6 +1653,7 @@ export function flattenEncounter(encounter, internalDateFormat){
     reasonDisplay: '', 
     typeCode: '',
     typeDisplay: '',
+    class: '',
     classCode: '',
     duration: '',
     operationOutcome: ''
@@ -1665,17 +1670,39 @@ export function flattenEncounter(encounter, internalDateFormat){
 
   result.subject = determineSubjectDisplayString(encounter);
   result.subjectId = get(encounter, 'subject.reference', '');
+  result.patientDisplay = get(encounter, 'subject.display', '');
+  result.patientReference = get(encounter, 'subject.reference', '');
+
+  // Extract practitioner from participant array
+  if(Array.isArray(get(encounter, 'participant'))){
+    encounter.participant.forEach(function(participant){
+      if(get(participant, 'individual.display')){
+        result.practitionerDisplay = get(participant, 'individual.display');
+        result.practitionerReference = get(participant, 'individual.reference', '');
+      }
+    });
+  }
 
   result.status = get(encounter, 'status', '');
-  result.reasonCode = get(encounter, 'reason[0].coding[0].code', '');
-  result.reasonDisplay = get(encounter, 'reason[0].coding[0].display', '');
+  
+  // Handle both reason and reasonCode structures
+  if(get(encounter, 'reasonCode[0].coding[0].code')){
+    result.reasonCode = get(encounter, 'reasonCode[0].coding[0].code', '');
+    result.reasonDisplay = get(encounter, 'reasonCode[0].coding[0].display', '');
+  } else if(get(encounter, 'reason[0].coding[0].code')){
+    result.reasonCode = get(encounter, 'reason[0].coding[0].code', '');
+    result.reasonDisplay = get(encounter, 'reason[0].coding[0].display', '');
+  }
+  
   result.typeCode = get(encounter, 'type[0].coding[0].code', '');
   result.typeDisplay = get(encounter, 'type[0].coding[0].display', '');
 
   if(get(encounter, 'class.code')){
     result.classCode = get(encounter, 'class.code', '');
+    result.class = get(encounter, 'class.code', '');
   } else if(get(encounter, 'class')){
     result.classCode = get(encounter, 'class', '');
+    result.class = get(encounter, 'class', '');
   }
 
   let statusHistory = get(encounter, 'statusHistory', []);

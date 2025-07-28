@@ -26,3 +26,4 @@ packages/*
 settings.*.json
 
 screenshots/*
+screenshots/*/*

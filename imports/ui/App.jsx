@@ -79,6 +79,7 @@ import ConditionsPage from '../ui-fhir/conditions/ConditionsPage.jsx';
 import ConditionDetail from '../ui-fhir/conditions/ConditionDetail.jsx';
 import CommunicationDetail from '../ui-fhir/communications/CommunicationDetail.jsx';
 import DocumentReferenceDetail from '../ui-fhir/documentReferences/DocumentReferenceDetail.jsx';
+import EncounterDetail from '../ui-fhir/encounters/EncounterDetail.jsx';
 import PatientDetail from '../ui-fhir/patients/PatientDetail.jsx';
 import ListDetail from '../ui-fhir/lists/ListDetail.jsx';
 import NutritionOrderDetail from '../ui-fhir/nutritionOrders/NutritionOrderDetail.jsx';
@@ -168,7 +169,7 @@ import { ConditionsTable } from '../ui-tables/ConditionsTable';
 // import { CommunicationRequestsTable } from '../ui-tables/CommunicationRequestsTable';
 // import { CompositionsTable } from '../ui-tables/CompositionsTable';
 // import { DevicesTable } from '../ui-tables/DevicesTable';
-import { EncountersTable } from '../ui-tables/EncountersTable';
+import EncountersTable from '../ui-fhir/encounters/EncountersTable';
 import EndpointsTable from '../ui-tables/EndpointsTable';
 import { ImmunizationsTable } from '../ui-tables/ImmunizationsTable';
 import { LocationsTable } from '../ui-tables/LocationsTable';
@@ -656,6 +657,14 @@ if(get(Meteor, 'settings.public.modules.fhir.Encounters')){
   dynamicRoutes.push({
     path: "/encounters",
     element: <EncountersPage />
+  })
+  dynamicRoutes.push({
+    path: "/encounters/new",
+    element: <EncounterDetail />
+  })
+  dynamicRoutes.push({
+    path: "/encounters/:id",
+    element: <EncounterDetail />
   })
 }
 if(get(Meteor, 'settings.public.modules.fhir.Evidences')){
