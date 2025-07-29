@@ -48,6 +48,7 @@ function QuestionnairesTable(props){
     hideIdentifier = false,
     hideActionIcons = true,
     hideTitle = false,
+    hidePublisher = false,
     hideStatus = false,
     hideDate = false,
     hideNumItems = false,
@@ -293,6 +294,20 @@ function QuestionnairesTable(props){
       );
     }
   }
+  function renderPublisher(publisher){
+    if (!hidePublisher) {
+      return (
+        <TableCell><span className="publisher">{publisher}</span></TableCell>
+      );
+    }
+  }
+  function renderPublisherHeader(){
+    if (!hidePublisher) {
+      return (
+        <TableCell>Publisher</TableCell>
+      );
+    }
+  }
   function renderStatus(status){
     if (!hideStatus) {
       return (
@@ -390,12 +405,13 @@ function QuestionnairesTable(props){
       }
 
       tableRows.push(
-        <TableRow key={i} className="questionnaireRow" style={{cursor: "pointer"}} onClick={ selectQuestionnaireRow.bind(this, questionnairesToRender[i].id )} >
+        <TableRow key={i} className="questionnaireRow" style={{cursor: "pointer"}} onClick={ selectQuestionnaireRow.bind(this, questionnairesToRender[i]._id || questionnairesToRender[i].id )} >
           { renderToggle(i, questionnairesToRender[i]._id) }
           { renderActionIcons(questionnairesToRender[i]) }
           { renderIdentifier(questionnairesToRender[i].identifier) }
 
           { renderTitle(questionnairesToRender[i].title) } 
+          { renderPublisher(questionnairesToRender[i].publisher) }
           { renderStatus(questionnairesToRender[i].status) }
           { renderDate(questionnairesToRender[i].date) }
           { renderNumItems(questionnairesToRender[i].numItems) }
@@ -416,6 +432,7 @@ function QuestionnairesTable(props){
           { renderIdentifierHeader() }
 
           { renderTitleHeader() }
+          { renderPublisherHeader() }
           { renderStatusHeader() }
           { renderDateHeader() }
           { renderNumItemsHeader() }
@@ -451,6 +468,7 @@ QuestionnairesTable.propTypes = {
   hideBarcode: PropTypes.bool,
   hideActionIcons: PropTypes.bool,
   hideTitle: PropTypes.bool,
+  hidePublisher: PropTypes.bool,
   hideStatus: PropTypes.bool,
   hideDate: PropTypes.bool,
   hideNumItems: PropTypes.bool,
@@ -471,5 +489,9 @@ QuestionnairesTable.propTypes = {
 
   formFactorLayout: PropTypes.string
 };
+
+// Attach to Meteor.Tables for global access
+Meteor.Tables = Meteor.Tables || {};
+Meteor.Tables.QuestionnairesTable = QuestionnairesTable;
 
 export default QuestionnairesTable;

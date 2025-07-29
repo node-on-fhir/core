@@ -347,6 +347,28 @@
           "search": true,
           "publication": true
         },
+        "Questionnaire": {
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "search"
+          ],
+          "search": true,
+          "publication": true
+        },
+        "QuestionnaireResponse": {
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "search"
+          ],
+          "search": true,
+          "publication": true
+        },
         "ServiceRequest": {
           "interactions": [
             "read",

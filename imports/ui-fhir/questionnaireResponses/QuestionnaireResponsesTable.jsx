@@ -95,6 +95,7 @@ function QuestionnaireResponsesTable(props){
     hideStatus,
     hideBarcode,
     hideAuthored,
+    hideAuthor,
     hideActionIcons,
   
     onCellClick,
@@ -150,6 +151,7 @@ function QuestionnaireResponsesTable(props){
         hideStatus = false;
         hideBarcode = true;
         hideAuthored = true;
+        hideAuthor = false;
         multiline = true;
         break;
       case "web":
@@ -162,6 +164,7 @@ function QuestionnaireResponsesTable(props){
         hideSubjectReference = false;
         hideStatus = false;
         hideAuthored = false;
+        hideAuthor = false;
         hideBarcode = true;
         break;
       case "desktop":
@@ -174,6 +177,7 @@ function QuestionnaireResponsesTable(props){
         hideSubjectReference = false;
         hideStatus = false;
         hideAuthored = false;
+        hideAuthor = false;
         hideBarcode = false;
         break;
       case "hdmi":
@@ -186,6 +190,7 @@ function QuestionnaireResponsesTable(props){
         hideSubjectReference = false;
         hideStatus = false;
         hideAuthored = false;
+        hideAuthor = false;
         hideBarcode = false;
         break;   
       case "hdmi":
@@ -310,6 +315,20 @@ function QuestionnaireResponsesTable(props){
       );
     }
   }
+  function renderAuthor(author){
+    if (!hideAuthor) {
+      return (
+        <TableCell className='author'>{ author }</TableCell>
+      );
+    }
+  }
+  function renderAuthorHeader(){
+    if (!hideAuthor) {
+      return (
+        <TableCell className='author'>Author</TableCell>
+      );
+    }
+  }
   function renderIdentifier(identifier){
     if (!hideIdentifier) {
       return (
@@ -385,12 +404,12 @@ function QuestionnaireResponsesTable(props){
       if(multiline){
         return (<TableCell >
           <span className='authored' style={{fontWeight: 400}}>{ response.authored }</span> <span className='status' style={{float: 'right'}}>{ response.status }</span><br />
-          <span className='questionnaireUrl' style={{color: 'gray'}}>{response.questionnaire }</span> <br />
+          <span className='questionnaireUrl' style={{color: 'gray'}}>{response.questionnaireDisplay || response.questionnaire }</span> <br />
           <span className='subjectReference' style={{color: 'gray'}}>{ response.subjectReference }</span>
         </TableCell>)  
       } else {
         return (
-          <TableCell className='questionnaireUrl'>{ response.questionnaire }</TableCell>
+          <TableCell className='questionnaireUrl'>{ response.questionnaireDisplay || response.questionnaire }</TableCell>
         );  
       }
     }
@@ -454,7 +473,9 @@ function QuestionnaireResponsesTable(props){
   if(questionnaireResponses){
     if(questionnaireResponses.length > 0){              
       questionnaireResponses.forEach(function(questionnaireResponse){
-        responsesToRender.push(FhirDehydrator.dehydrateQuestionnaireResponse(questionnaireResponse, internalDateFormat));
+        const flattened = FhirDehydrator.dehydrateQuestionnaireResponse(questionnaireResponse, internalDateFormat);
+        console.log('Flattened response:', flattened);
+        responsesToRender.push(flattened);
       });  
     }
   }
@@ -465,12 +486,13 @@ function QuestionnaireResponsesTable(props){
   } else {
     for (var i = 0; i < responsesToRender.length; i++) {
       tableRows.push(
-        <TableRow key={i} className="patientRow" style={{cursor: "pointer"}} onClick={ handleRowClick.bind(this, get(responsesToRender[i], 'id', i) )} hover={true} >
+        <TableRow key={i} className="patientRow" style={{cursor: "pointer"}} onClick={ handleRowClick.bind(this, get(responsesToRender[i], '_id', get(responsesToRender[i], 'id', i)) )} hover={true} >
           { renderToggle(responsesToRender[i]) }
           { renderActionIcons(responsesToRender[i]) }
           { renderIdentifier(responsesToRender[i].identifier) }
           { renderStatus(responsesToRender[i].status) }
           { renderAuthored(responsesToRender[i].authored) }
+          { renderAuthor(responsesToRender[i].authorDisplay || responsesToRender[i].author) }
           { renderQuestionnaire(responsesToRender[i]) }
           { renderSubjectDisplay(responsesToRender[i].subjectDisplay) }
           { renderSubjectReference(responsesToRender[i].subjectReference) }
@@ -491,6 +513,7 @@ function QuestionnaireResponsesTable(props){
             { renderIdentifierHeader() }
             { renderStatusHeader() }
             { renderAuthoredHeader() }
+            { renderAuthorHeader() }
             { renderQuestionnaireHeader() }
             { renderSubjectDisplayHeader() }
             { renderSubjectReferenceHeader() }
@@ -564,7 +587,8 @@ QuestionnaireResponsesTable.defaultTypes = {
   hideBarcode: false,
   hideActionIcons: true,
   hideStatus: false,
-  hideAuthored: false
+  hideAuthored: false,
+  hideAuthor: false
 }
 
 

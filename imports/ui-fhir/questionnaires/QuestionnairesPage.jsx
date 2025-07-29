@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useTracker } from 'meteor/react-meteor-data';
+import { useNavigate } from 'react-router-dom';
 
 import { 
   Card,
@@ -7,8 +8,16 @@ import {
   CardHeader, 
   Container,
   Button,
-  Grid
+  Grid,
+  Box,
+  Typography,
+  ToggleButton,
+  ToggleButtonGroup
 } from '@mui/material';
+
+import AddIcon from '@mui/icons-material/Add';
+import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
+import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 
 // import QuestionnaireExpansionPanels from './QuestionnaireExpansionPanels';
 // import SortableQuestionnaire from './SortableQuestionnaire';
@@ -20,11 +29,6 @@ import LayoutHelpers from '../../lib/LayoutHelpers';
 // import questionnaireStyles from "./QuestionnaireStyles.css";
 
 
-import { 
-  FormControl,
-  Input,
-  InputAdornment
-} from '@mui/material';
 
 import { Session } from 'meteor/session';
 import { Random } from 'meteor/random';
@@ -40,6 +44,8 @@ let defaultQuestionnaire = {
 
 //===========================================================================
 
+let DynamicSpacer;
+let ValueSets;
 Meteor.startup(function(){
   DynamicSpacer = Meteor.DynamicSpacer;
   ValueSets = Meteor.Collections.ValueSets;
@@ -76,9 +82,8 @@ Session.setDefault('QuestionnairesTable.questionnairesIndex', 0)
 //=============================================================================================================================================
 // DATA CURSORS
 
-Meteor.startup(function(){
-  Questionnaires = Meteor.Collections.Questionnaires;
-})
+// Import the collection directly - avoids timing issues
+import { Questionnaires } from '/imports/lib/schemas/SimpleSchemas/Questionnaires';
 
 
 //===============================================================================================================
@@ -128,6 +133,19 @@ if(get(Meteor, 'settings.public.theme.palette')){
 // Main Component
 
 export function QuestionnairesPage(props){
+  const navigate = useNavigate();
+  const [sortOrder, setSortOrder] = useState('descending');
+  
+  // Subscribe to Questionnaires
+  useTracker(function(){
+    let autoPublishEnabled = get(Meteor, 'settings.public.defaults.autopublish', false);
+    if(autoPublishEnabled){
+      return Meteor.subscribe('autopublish.Questionnaires', {}, {});
+    } else {
+      return Meteor.subscribe('questionnaires.all');
+    }
+  }, []);
+  
   let data = {
     questionnaire: defaultQuestionnaire,
     questionnaireSearchFilter: '',
@@ -267,6 +285,59 @@ export function QuestionnairesPage(props){
       }});
     }
   }
+  function handleAddQuestionnaire() {
+    navigate('/questionnaires/new');
+  }
+  
+  function handleSortOrderChange(event, newOrder) {
+    if (newOrder !== null) {
+      setSortOrder(newOrder);
+    }
+  }
+  
+  function renderHeader() {
+    return (
+      <Box mb={2}>
+        <Grid container spacing={2} alignItems="center" justifyContent="space-between">
+          <Grid item xs={12} sm={6}>
+            <Typography variant="h4">
+              Questionnaires
+            </Typography>
+            <Typography variant="subtitle2" color="textSecondary">
+              {data.questionnaires.length} questionnaires found
+            </Typography>
+          </Grid>
+          <Grid item>
+            <Box display="flex" gap={2} alignItems="center">
+              <ToggleButtonGroup
+                value={sortOrder}
+                exclusive
+                onChange={handleSortOrderChange}
+                aria-label="sort order"
+                size="small"
+              >
+                <ToggleButton value="ascending" aria-label="ascending order">
+                  <ArrowUpwardIcon />
+                </ToggleButton>
+                <ToggleButton value="descending" aria-label="descending order">
+                  <ArrowDownwardIcon />
+                </ToggleButton>
+              </ToggleButtonGroup>
+              <Button
+                variant="contained"
+                color="primary"
+                startIcon={<AddIcon />}
+                onClick={handleAddQuestionnaire}
+              >
+                Add Questionnaire
+              </Button>
+            </Box>
+          </Grid>
+        </Grid>
+      </Box>
+    );
+  }
+  
   function handleTabChange(index){
     Session.set('questionnairePageTabIndex', index);
   }
@@ -484,174 +555,129 @@ export function QuestionnairesPage(props){
 
 
 
-  // let classes = useStyles();
-  let classes = {
-    button: {
-      background: theme.background,
-      border: 0,
-      borderRadius: 3,
-      boxShadow: '0 3px 5px 2px rgba(255, 105, 135, .3)',
-      color: theme.buttonText,
-      height: 48,
-      padding: '0 30px',
-    },
-    input: {
-      marginBottom: '20px'
-    },
-    compactInput: {
-      marginBottom: '10px'
-    },
-    label: {
-      paddingBottom: '10px'
-    }
-  }
-
-  let headerHeight = LayoutHelpers.calcHeaderHeight();
   let formFactor = LayoutHelpers.determineFormFactor(2);
-  let paddingWidth = LayoutHelpers.calcCanvasPaddingWidth();
-
-  let cardWidth = window.innerWidth - paddingWidth;
-  let noDataImage = get(Meteor, 'settings.public.defaults.noData.noDataImagePath', "packages/clinical_hl7-fhir-data-infrastructure/assets/NoData.png");  
-
-
-
-  let secondaryGridSize = 5;
-  let secondaryGridStyle = {
-    position: 'sticky', 
-    top: '0px', 
-    marginBottom: '84px',
-    width: '100%'
-  }
-
-  // if(window.innerWidth < 768){
-  //   let secondaryGridSize = 5;
-  // }
-
-  let constructionZoneButton;
-  if(get(Meteor, 'settings.public.options.QuestionnairesPage.displaySubmitResponseButton') === true){
-    constructionZoneButton = <Button id='saveAnswersButton' onClick={handleSaveQuestionnaireResponse.bind(this)} color="primary" variant="contained" fullWidth>Submit Questionnaire Response (Hardcoded)</Button>;
-  }
 
 
   let layoutContent;
   if(data.questionnaires.length > 0){
-    layoutContent = <Grid container spacing={3} style={{marginLeft: '20px', marginRight: '20px', width: '100%'}}>
-      <Grid item lg={6} style={{width: '100%', marginLeft: '0px', marginRight: '0px'}} >
-        <Card height="auto" margin={20} width={cardWidth + 'px'}>
-          <CardHeader
-            title={data.questionnaires.length + " Questionnaires"}
-          />
-          <QuestionnairesTable 
-            questionnaires={ data.questionnaires }
-            selectedQuestionnaireId={data.selectedQuestionnaireId}                  
-            onRemoveRecord={function(questionnaireId){
-              Questionnaires.remove({_id: questionnaireId})
-            }}
-            onRowClick={function(questionnaireId){
-              console.log('Clicked on a row.  Questionnaire Id: ' + questionnaireId)
-              Session.set('selectedQuestionnaireId', questionnaireId)
-              Session.set('selectedQuestionnaire', Questionnaires.findOne({id: questionnaireId}))
-            }}
-            onSetPage={function(index){
-              setQuestionairesIndex(index)
-            }}    
-            page={data.questionnairesIndex}
-            formFactorLayout={formFactor}              
-          />
-        </Card>
-      </Grid>
-      <Grid item lg={secondaryGridSize} style={secondaryGridStyle}>
-        <h1 className="barcode helveticas">{get(data, 'selectedQuestionnaireId')}</h1>
-        <Card margin={20} width={cardWidth + 'px'}>
-          <CardContent>
-            <FormControl style={{width: '100%', marginTop: '20px'}}>
-              <InputAdornment style={classes.label} position="start"
-              >Questionnaire Title</InputAdornment>
-              <Input
-                id="publisherInput"
-                name="publisherInput"
-                style={classes.input}
-                value={ get(data, 'selectedQuestionnaire.title', '') }
-                onChange={ changeText.bind(this, 'title')}
-                fullWidth              
-              />       
-            </FormControl>    
-            <Grid container spacing={3}>
-              <Grid item md={3}>
-                <FormControl style={{width: '100%', marginTop: '20px'}}>
-                  <InputAdornment 
-                    style={classes.label}
-                    position="start"
-                  >Date</InputAdornment>
-                  <Input
-                    id="dateInput"
-                    name="dateInput"
-                    style={classes.input}
-                    value={ moment(get(data, 'selectedQuestionnaire.date', '')).format("YYYY-MM-DD") }
-                    fullWidth              
-                  />       
-                </FormControl>    
-              </Grid>
-              <Grid item md={3}>
-                <FormControl style={{width: '100%', marginTop: '20px'}}>
-                  <InputAdornment 
-                    style={classes.label}
-                    position="start"
-                  >Status</InputAdornment>
-                  <Input
-                    id="statusInput"
-                    name="statusInput"
-                    style={classes.input}
-                    value={ get(data, 'selectedQuestionnaire.status', '') }
-                    fullWidth              
-                  />       
-                </FormControl>    
-              </Grid>
-              <Grid item md={6}>
-                <FormControl style={{width: '100%', marginTop: '20px'}}>
-                  <InputAdornment 
-                    style={classes.label}
-                    position="start"
-                  >Identifier</InputAdornment>
-                  <Input
-                    id="identifierInput"
-                    name="identifierInput"
-                    style={classes.input}
-                    value={ get(data, 'selectedQuestionnaire.identifier.value', '') }
-                    fullWidth              
-                  />       
-                </FormControl>    
-              </Grid>
-
-              
-            </Grid>
-          </CardContent>
-        </Card>
-        <DynamicSpacer />
-        <QuestionnaireExpansion 
-          selectedQuestionnaire={get(data, 'selectedQuestionnaire')}
-        />
-        <DynamicSpacer />
-        { constructionZoneButton }
-      </Grid>
-    </Grid>
-  } else {
-    layoutContent = <Container maxWidth="sm" style={{display: 'flex', flexDirection: 'column', flexWrap: 'nowrap', height: '100%', justifyContent: 'center'}}>
-      {/* <img src={Meteor.absoluteUrl() + noDataImage} style={{width: '100%'}}  /> */}
-      <CardContent>
-        <CardHeader 
-          title={get(Meteor, 'settings.public.defaults.noData.defaultTitle', "No Data Available")} 
-          subheader={get(Meteor, 'settings.public.defaults.noData.defaultMessage', "No records were found in the client data cursor.  To debug, check the data cursor in the client console, then check subscriptions and publications, and relevant search queries.  If the data is not loaded in, use a tool like Mongo Compass to load the records directly into the Mongo database, or use the FHIR API interfaces.")} 
+    layoutContent = <Card 
+      sx={{ 
+        width: '100%',
+        borderRadius: 3,
+        boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+        border: '1px solid',
+        borderColor: 'divider',
+        overflow: 'hidden'
+      }}
+    >
+      <CardContent sx={{ p: 0 }}>
+        <QuestionnairesTable 
+          id='questionnairesTable'
+          questionnaires={data.questionnaires}
+          count={data.questionnaires.length}
+          selectedQuestionnaireId={data.selectedQuestionnaireId}                  
+          formFactorLayout={formFactor}
+          rowsPerPage={LayoutHelpers.calcTableRows()}
+          actionButtonLabel="Remove"
+          hideActionButton={get(Meteor, 'settings.public.modules.fhir.Questionnaires.hideRemoveButtonOnTable', true)}
+          order={sortOrder}
+          onRemoveRecord={function(questionnaireId){
+            Questionnaires.remove({_id: questionnaireId})
+          }}
+          onRowClick={function(questionnaireId){
+            console.log('QuestionnairesPage.onRowClick', questionnaireId);
+            navigate('/questionnaires/' + questionnaireId);
+          }}
+          onSetPage={function(index){
+            Session.set('QuestionnairesTable.questionnairesIndex', index)
+          }}    
+          page={data.questionnairesIndex}
         />
       </CardContent>
-    </Container>
+    </Card>
+  } else {
+    layoutContent = <Box 
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        minHeight: '50vh',
+        textAlign: 'center'
+      }}
+    >
+      <Card 
+        className="no-data-card"
+        sx={{ 
+          maxWidth: '600px',
+          width: '100%',
+          borderRadius: 3,
+          boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+          border: '1px solid',
+          borderColor: 'divider',
+          backgroundColor: 'background.paper'
+        }}
+      >
+        <CardContent sx={{ p: 6 }}>
+          <Box sx={{ mb: 3 }}>
+            <Typography 
+              variant="h5" 
+              sx={{ 
+                fontWeight: 500,
+                color: 'text.primary',
+                mb: 2
+              }}
+            >
+              {get(Meteor, 'settings.public.defaults.noData.defaultTitle', "No Data Available")}
+            </Typography>
+            <Typography 
+              variant="body1" 
+              sx={{ 
+                color: 'text.secondary',
+                lineHeight: 1.7,
+                maxWidth: '480px',
+                mx: 'auto'
+              }}
+            >
+              {get(Meteor, 'settings.public.defaults.noData.defaultMessage', "No records were found in the client data cursor. To debug, check the data cursor in the client console, then check subscriptions and publications, and relevant search queries. If the data is not loaded in, use a tool like Mongo Compass to load the records directly into the Mongo database, or use the FHIR API interfaces.")}
+            </Typography>
+          </Box>
+          <Button
+            variant="outlined"
+            startIcon={<AddIcon />}
+            onClick={handleAddQuestionnaire}
+            sx={{
+              borderRadius: 2,
+              textTransform: 'none',
+              px: 3,
+              py: 1,
+              borderWidth: 2,
+              '&:hover': {
+                borderWidth: 2
+              }
+            }}
+          >
+            Add Your First Questionnaire
+          </Button>
+        </CardContent>
+      </Card>
+    </Box>
   }
 
 
   return (
-    <div id="questionnairesPage" style={{padding: "20px"}} >
+    <Box 
+      id="questionnairesPage" 
+      sx={{
+        minHeight: '100vh',
+        backgroundColor: 'background.default',
+        px: { xs: 2, sm: 3, md: 4 },
+        py: { xs: 3, sm: 4, md: 5 }
+      }}
+    >
+      { data.questionnaires.length > 0 && renderHeader() }
       { layoutContent }
-    </div>
+    </Box>
   );
 }
 

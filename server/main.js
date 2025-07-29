@@ -36,6 +36,11 @@ import '../imports/api/locations/methods.js';
 import '../imports/api/patients/methods.js';
 import '../imports/api/carePlans/methods.js';
 import '../imports/api/procedures/methods.js';
+import '../imports/api/questionnaires/methods.js';
+import '../imports/api/questionnaireResponses/methods.js';
+
+// Import test methods (for non-production environments)
+import '../imports/accounts/server/test-methods.js';
 
 // Import FHIR methods
 import '../imports/methods/fhirResourceStatistics.js';

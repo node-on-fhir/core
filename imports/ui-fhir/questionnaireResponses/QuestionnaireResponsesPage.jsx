@@ -96,6 +96,16 @@ export function QuestionnaireResponsesPage(props){
     organizationsIndex: 0
   };
 
+  // Subscribe to QuestionnaireResponses
+  useTracker(function(){
+    let autoPublishEnabled = get(Meteor, 'settings.public.defaults.autopublish', false);
+    if(autoPublishEnabled){
+      return Meteor.subscribe('autopublish.QuestionnaireResponses', {}, {});
+    } else {
+      return Meteor.subscribe('questionnaireresponses.all');
+    }
+  }, []);
+
   data.onePageLayout = useTracker(function(){
     return Session.get('QuestionnaireResponsesPage.onePageLayout');
   }, [])
@@ -199,7 +209,7 @@ export function QuestionnaireResponsesPage(props){
               startIcon={<AddIcon />}
               onClick={handleAddQuestionnaireResponse}
             >
-              Add Response
+              Add Questionnaire Response
             </Button>
           </Grid>
         </Grid>
@@ -237,7 +247,8 @@ export function QuestionnaireResponsesPage(props){
             onRowClick={function(responseId){
               console.log('onRowClick()', responseId)
               Session.set('selectedQuestionnaireResponseId', responseId);                  
-              Session.set('selectedQuestionnaireResponse', QuestionnaireResponses.findOne(responseId));                  
+              Session.set('selectedQuestionnaireResponse', QuestionnaireResponses.findOne(responseId));
+              navigate(`/questionnaire-responses/${responseId}`);                  
             }}
             onSetPage={function(index){
               Session.set('QuestionnaireResponsesTable.questionnaireResponsesIndex', index)
@@ -279,7 +290,8 @@ export function QuestionnaireResponsesPage(props){
                 onRowClick={function(responseId){
                   console.log('onRowClick()', responseId)
                   Session.set('selectedQuestionnaireResponseId', responseId);                  
-                  Session.set('selectedQuestionnaireResponse', QuestionnaireResponses._collection.findOne({id: responseId}));                  
+                  Session.set('selectedQuestionnaireResponse', QuestionnaireResponses.findOne(responseId));
+                  navigate(`/questionnaire-responses/${responseId}`);                  
                 }}
                 onSetPage={function(index){
                   Session.set('QuestionnaireResponsesTable.questionnaireResponsesIndex', index)
@@ -382,7 +394,7 @@ export function QuestionnaireResponsesPage(props){
               }
             }}
           >
-            Add Your First Response
+            Add Your First Questionnaire Response
           </Button>
         </CardContent>
       </Card>

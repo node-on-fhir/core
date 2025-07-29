@@ -402,19 +402,79 @@ import EncountersTable from '../ui-fhir/encounters/EncountersTable';
 ```
 
 
+## Recent Implementation Insights (Questionnaires CRUD)
+
+### Page Component Styling
+When implementing the {ResourceTypes}Page component, ensure consistent styling with ConditionsPage:
+1. **Use Box container** with proper sx props instead of div with inline styles
+2. **Include header section** with:
+   - Typography for title and resource count
+   - Sort toggle buttons (ascending/descending) 
+   - Add {ResourceType} button
+3. **Style the table card** with borderRadius, boxShadow, and border
+4. **Match no-data state** styling with centered Box, styled Card, and proper button
+
+### No-Data State Requirements
+The test expects an "Add Your First {ResourceType}" button in the no-data state:
+```javascript
+// Required structure for no-data state
+<Button
+  variant="outlined"
+  startIcon={<AddIcon />}
+  onClick={handleAdd{ResourceType}}
+>
+  Add Your First {ResourceType}
+</Button>
+```
+
+### Table Component Updates
+When the test expects specific columns (e.g., publisher for Questionnaires):
+1. Check what fields the flatten function returns
+2. Add the column to the table component:
+   - Add `hide{FieldName}` prop with default false
+   - Create `render{FieldName}()` and `render{FieldName}Header()` functions
+   - Add to table row rendering in correct position
+   - Add to table header in same position
+   - Add to PropTypes validation
+
+### Import Test Methods
+If tests use `test.createTestUser`, ensure test methods are imported:
+```javascript
+// In server/main.js
+import '../imports/accounts/server/test-methods.js';
+```
+
+### Table Row Click Handler
+Ensure the table passes the correct ID to row click handler:
+```javascript
+// Use _id or id, whichever exists
+onClick={selectRow.bind(this, item._id || item.id)}
+```
+
+### Clean Code Practices
+1. Remove unused imports (FormControl, Input, InputAdornment if not needed)
+2. Remove unused variables (classes, cardWidth, etc.)
+3. Remove commented-out code
+4. Use consistent import patterns for collections
+
 ## Implementation Checklist Summary
 
-- [ ] Use `/imports/ui-fhir/conditions` as gold standard template
+- [ ] Use `/imports/ui-fhir/conditions` as gold standard template for styling
 - [ ] Use camelCase for directory name; PascalCase for file names
-- [ ] Create `{ResourceTypes}Page.jsx` and `{ResourceTypes}Table.jsx`
+- [ ] Create `{ResourceTypes}Page.jsx` with modern styling (Box, Typography, etc.)
+- [ ] Create `{ResourceTypes}Table.jsx` with all expected columns
+- [ ] Create `{ResourceType}Detail.jsx` with proper form fields
 - [ ] Import `{ResourceType}Detail.jsx` in App.jsx (often missed!)
 - [ ] Create/verify schema in `/imports/lib/schemas/SimpleSchemas`
-- [ ] Add flatten{ResourceType} method in `/imports/lib/FhirDehydrator`
+- [ ] Check/update flatten{ResourceType} method in `/imports/lib/FhirDehydrator`
 - [ ] Add routes in App.jsx (list, new, detail)
 - [ ] Create Meteor methods in `/imports/api/{resourceTypes}/methods.js`
 - [ ] Import methods in `/server/main.js`
+- [ ] Import test methods if needed
 - [ ] Register collection in 3 places (server, client, autopublish)
 - [ ] Configure settings in 3 places (autopublish, module, REST)
 - [ ] Attach {ResourceTypes}Table to Meteor.Tables object
-- [ ] Add collection count in PatientSidebar.jsx
+- [ ] Add "Add {ResourceType}" button in both data and no-data states
+- [ ] Test and fix any missing columns or functionality
+- [ ] Clean up unused code and imports
 - [ ] Restart Meteor server after settings changes

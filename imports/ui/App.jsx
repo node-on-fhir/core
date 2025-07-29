@@ -97,6 +97,7 @@ import MedicationDetail from '../ui-fhir/medications/MedicationDetail.jsx';
 import ObservationDetail from '../ui-fhir/observations/ObservationDetail.jsx';
 import ProcedureDetail from '../ui-fhir/procedures/ProcedureDetail.jsx';
 import QuestionnaireResponseDetail from '../ui-fhir/questionnaireResponses/QuestionnaireResponseDetail.jsx';
+import QuestionnaireDetail from '../ui-fhir/questionnaires/QuestionnaireDetail.jsx';
 import DevicesPage from '../ui-fhir/devices/DevicesPage.jsx';
 import DocumentReferencesPage from '../ui-fhir/documentReferences/DocumentReferencesPage.jsx';
 import EncountersPage from '../ui-fhir/encounters/EncountersPage.jsx';
@@ -777,6 +778,14 @@ if(get(Meteor, 'settings.public.modules.fhir.Questionnaires')){
   dynamicRoutes.push({
     path: "/questionnaires",
     element: <QuestionnairesPage />
+  })
+  dynamicRoutes.push({
+    path: "/questionnaires/new",
+    element: <QuestionnaireDetail />
+  })
+  dynamicRoutes.push({
+    path: "/questionnaires/:id",
+    element: <QuestionnaireDetail />
   })
 }
 if(get(Meteor, 'settings.public.modules.fhir.QuestionnaireResponses')){

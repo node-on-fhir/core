@@ -4608,7 +4608,10 @@ export function flattenQuestionnaire(questionnaire){
     id: get(questionnaire, 'id'),
     identifier: '',
     title: '',
-    state: '',
+    name: '',
+    publisher: '',
+    status: '',
+    version: '',
     date: '',
     numItems: 0,
     operationOutcome: ''
@@ -4617,11 +4620,16 @@ export function flattenQuestionnaire(questionnaire){
   result.resourceType = get(questionnaire, 'resourceType', "Unknown");
 
   result.id = get(questionnaire, 'id', '');
-
-  result.date = moment(questionnaire.date).add(1, 'days').format("YYYY-MM-DD")
   result.title = get(questionnaire, 'title', '');
+  result.name = get(questionnaire, 'name', '');
+  result.publisher = get(questionnaire, 'publisher', '');
   result.status = get(questionnaire, 'status', '');
+  result.version = get(questionnaire, 'version', '');
   result.identifier = get(questionnaire, 'identifier[0].value', '');
+
+  if(get(questionnaire, 'date')){
+    result.date = moment(questionnaire.date).format("YYYY-MM-DD");
+  }
 
   if(Array.isArray(questionnaire.item)){
     result.numItems = questionnaire.item.length;
@@ -4641,6 +4649,7 @@ export function flattenQuestionnaireResponse(questionnaireResponse){
     title: '',
     identifier: '',
     questionnaire: '',
+    questionnaireDisplay: '',
     status: '',
     subjectDisplay: '',
     subjectReference: '',
@@ -4648,6 +4657,8 @@ export function flattenQuestionnaireResponse(questionnaireResponse){
     sourceReference: '',
     encounter: '',
     author: '',
+    authorDisplay: '',
+    authorReference: '',
     date: '',
     count: 0,
     numItems: 0,
@@ -4661,18 +4672,26 @@ export function flattenQuestionnaireResponse(questionnaireResponse){
   // to account for when converting back to a string
   result.date = moment(questionnaireResponse.authored).add(1, 'days').format("YYYY-MM-DD HH:mm")
   result.questionnaire = get(questionnaireResponse, 'questionnaire', '');
+  
+  // Extract questionnaire display from extension
+  const extensions = get(questionnaireResponse, 'extension', []);
+  const displayExtension = extensions.find(ext => ext.url === 'http://example.org/fhir/StructureDefinition/questionnaire-display');
+  result.questionnaireDisplay = get(displayExtension, 'valueString', '');
+  
   result.encounter = get(questionnaireResponse, 'encounter.reference', '');
   result.subjectDisplay = get(questionnaireResponse, 'subject.display', '');
   result.subjectReference = get(questionnaireResponse, 'subject.reference', '');
   result.sourceDisplay = get(questionnaireResponse, 'source.display', '');
   result.sourceReference = get(questionnaireResponse, 'source.reference', '');
+  result.authorDisplay = get(questionnaireResponse, 'author.display', '');
+  result.authorReference = get(questionnaireResponse, 'author.reference', '');
   result.author = get(questionnaireResponse, 'author.display', '');
   result.identifier = get(questionnaireResponse, 'identifier[0].value', '');
   result.status = get(questionnaireResponse, 'status', '');
   result.id = get(questionnaireResponse, 'id', '');
   result.identifier = get(questionnaireResponse, 'identifier[0].value', '');
 
-  if(has(questionnaireResponse), 'authored'){
+  if(has(questionnaireResponse, 'authored')){
     result.authored = moment(get(questionnaireResponse, 'authored')).format("YYYY-MM-DD HH:mm");
   }
 
