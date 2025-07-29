@@ -1,0 +1,163 @@
+import { Meteor } from 'meteor/meteor';
+import { check } from 'meteor/check';
+import { get } from 'lodash';
+import moment from 'moment';
+
+// Import to ensure schema is loaded, but we'll use the global collection
+import '/imports/lib/schemas/SimpleSchemas/ResearchStudies';
+
+// Get the correct ResearchStudies collection reference
+function getResearchStudies() {
+  if (Meteor.isServer) {
+    // On server, use the global collection set up in server/main.js
+    return Meteor.Collections?.ResearchStudies || global.ResearchStudies;
+  } else {
+    // On client, use from Meteor.Collections if available
+    return Meteor.Collections?.ResearchStudies;
+  }
+}
+
+Meteor.methods({
+  async 'researchStudies.create'(researchStudyData) {
+    check(researchStudyData, Object);
+    
+    if (!this.userId) {
+      throw new Meteor.Error('not-authorized', 'User must be logged in to create research studies');
+    }
+    
+    // Add metadata
+    const researchStudy = {
+      ...researchStudyData,
+      resourceType: 'ResearchStudy',
+      meta: {
+        lastUpdated: new Date(),
+        versionId: '1'
+      }
+    };
+    
+    // Insert and return the new research study
+    const ResearchStudies = getResearchStudies();
+    const researchStudyId = await ResearchStudies.insertAsync(researchStudy);
+    
+    // Log for HIPAA compliance
+    if (Meteor.isServer) {
+      console.log('ResearchStudy created', {
+        userId: this.userId,
+        researchStudyId: researchStudyId,
+        timestamp: new Date()
+      });
+    }
+    
+    return researchStudyId;
+  },
+  
+  async 'researchStudies.update'(researchStudyId, researchStudyData) {
+    check(researchStudyId, String);
+    check(researchStudyData, Object);
+    
+    if (!this.userId) {
+      throw new Meteor.Error('not-authorized', 'User must be logged in to update research studies');
+    }
+    
+    const ResearchStudies = getResearchStudies();
+    
+    // Check if research study exists
+    const existingResearchStudy = await ResearchStudies.findOneAsync({ _id: researchStudyId });
+    if (!existingResearchStudy) {
+      throw new Meteor.Error('not-found', 'ResearchStudy not found');
+    }
+    
+    // Update metadata
+    const updatedResearchStudy = {
+      ...researchStudyData,
+      _id: researchStudyId,
+      resourceType: 'ResearchStudy',
+      meta: {
+        ...get(researchStudyData, 'meta', {}),
+        lastUpdated: new Date(),
+        versionId: String(parseInt(get(existingResearchStudy, 'meta.versionId', '0')) + 1)
+      }
+    };
+    
+    // Update the research study
+    const result = await ResearchStudies.updateAsync(
+      { _id: researchStudyId },
+      { $set: updatedResearchStudy }
+    );
+    
+    // Log for HIPAA compliance
+    if (Meteor.isServer) {
+      console.log('ResearchStudy updated', {
+        userId: this.userId,
+        researchStudyId: researchStudyId,
+        timestamp: new Date()
+      });
+    }
+    
+    return result;
+  },
+  
+  async 'researchStudies.remove'(researchStudyId) {
+    check(researchStudyId, String);
+    
+    if (!this.userId) {
+      throw new Meteor.Error('not-authorized', 'User must be logged in to remove research studies');
+    }
+    
+    const ResearchStudies = getResearchStudies();
+    
+    // Check if research study exists
+    const existingResearchStudy = await ResearchStudies.findOneAsync({ _id: researchStudyId });
+    if (!existingResearchStudy) {
+      throw new Meteor.Error('not-found', 'ResearchStudy not found');
+    }
+    
+    // Remove the research study
+    const result = await ResearchStudies.removeAsync({ _id: researchStudyId });
+    
+    // Log for HIPAA compliance
+    if (Meteor.isServer) {
+      console.log('ResearchStudy removed', {
+        userId: this.userId,
+        researchStudyId: researchStudyId,
+        timestamp: new Date()
+      });
+    }
+    
+    return result;
+  },
+  
+  async 'researchStudies.get'(researchStudyId) {
+    check(researchStudyId, String);
+    
+    if (!this.userId) {
+      throw new Meteor.Error('not-authorized', 'User must be logged in to view research studies');
+    }
+    
+    const ResearchStudies = getResearchStudies();
+    console.log('researchStudies.get called with ID:', researchStudyId);
+    console.log('Using ResearchStudies collection:', !!ResearchStudies);
+    
+    // Try both ways to find the research study
+    let researchStudy = await ResearchStudies.findOneAsync({ _id: researchStudyId });
+    
+    if (!researchStudy) {
+      // Also try without the query object
+      researchStudy = await ResearchStudies.findOneAsync(researchStudyId);
+    }
+    
+    if (!researchStudy) {
+      console.log('ResearchStudy not found for ID:', researchStudyId);
+      console.log('Total research studies in collection:', await ResearchStudies.countAsync());
+      
+      // Log a few research studies to see their ID format
+      const sampleResearchStudies = await ResearchStudies.find({}, { limit: 3 }).fetchAsync();
+      console.log('Sample research study IDs:', sampleResearchStudies.map(rs => ({ _id: rs._id, type: typeof rs._id })));
+      
+      throw new Meteor.Error('not-found', 'ResearchStudy not found');
+    }
+    
+    console.log('Found research study:', researchStudy._id);
+    return researchStudy;
+  }
+});

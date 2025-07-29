@@ -163,6 +163,7 @@
         "Procedures": true,
         "Questionnaires": true,
         "QuestionnaireResponses": true,
+        "ResearchStudies": true,
         "ServiceRequests": true
       }
     }
@@ -359,6 +360,17 @@
           "publication": true
         },
         "QuestionnaireResponse": {
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "search"
+          ],
+          "search": true,
+          "publication": true
+        },
+        "ResearchStudy": {
           "interactions": [
             "read",
             "create",

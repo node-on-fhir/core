@@ -69,3 +69,12 @@ export function flattenCareTeam(team){
 
 Could you follow this general pattern, and create one for the Claim resource?  We are basically trying to serialize a structured tree (JSON) into something suitable for a CSV row or table.  We default to the first item in any array; and use lodash and moment libraries.
 ```
+
+
+
+
+#### Creating CRUD UI Patterns for new Resources
+
+```
+Claude, let's do another FHIR resource.  This time will be de-novo.  Let's create the FHIR ResearchStudy CRUD pattern.  First, create a  /tests/nightwatch/honecomb/crud.researchstudy.js test file, following the crud.conditions.js test file.  Next, follow the instructions in /imports/ui-fhir/CLAUDE.md, and try to create the entire resource CRUD pattern  Don't do anything fancy.  We'll get to that later.  For now, just follow the CRUD pattern.  Follow the TDD tests till they're green. You have permission to launch `npx nightwatch` commands and search the honeycomb-public-release code repository as needed.  
+```

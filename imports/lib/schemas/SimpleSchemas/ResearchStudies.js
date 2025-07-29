@@ -49,6 +49,167 @@ let ResearchStudySchema = DomainResourceSchema.extend({
   "resourceType" : {
     type: String,
     defaultValue: "ResearchStudy"
+  },
+  "identifier" : {
+    optional: true,
+    type: Array
+  },
+  "identifier.$" : {
+    optional: true,
+    type: IdentifierSchema
+  },
+  "title" : {
+    optional: true,
+    type: String
+  },
+  "protocol" : {
+    optional: true,
+    type: Array
+  },
+  "protocol.$" : {
+    optional: true,
+    type: ReferenceSchema
+  },
+  "partOf" : {
+    optional: true,
+    type: Array
+  },
+  "partOf.$" : {
+    optional: true,
+    type: ReferenceSchema
+  },
+  "status" : {
+    type: String,
+    allowedValues: ['active', 'administratively-completed', 'approved', 'closed-to-accrual', 'closed-to-accrual-and-intervention', 'completed', 'disapproved', 'in-review', 'temporarily-closed-to-accrual', 'temporarily-closed-to-accrual-and-intervention', 'withdrawn'],
+    defaultValue: 'active'
+  },
+  "primaryPurposeType" : {
+    optional: true,
+    type: CodeableConceptSchema
+  },
+  "phase" : {
+    optional: true,
+    type: CodeableConceptSchema
+  },
+  "category" : {
+    optional: true,
+    type: Array
+  },
+  "category.$" : {
+    optional: true,
+    type: CodeableConceptSchema
+  },
+  "focus" : {
+    optional: true,
+    type: Array
+  },
+  "focus.$" : {
+    optional: true,
+    type: CodeableConceptSchema
+  },
+  "condition" : {
+    optional: true,
+    type: Array
+  },
+  "condition.$" : {
+    optional: true,
+    type: CodeableConceptSchema
+  },
+  "contact" : {
+    optional: true,
+    type: Array
+  },
+  "contact.$" : {
+    optional: true,
+    type: ContactPointSchema
+  },
+  "relatedArtifact" : {
+    optional: true,
+    type: Array
+  },
+  "relatedArtifact.$" : {
+    optional: true,
+    blackbox: true,
+    type: Object
+  },
+  "keyword" : {
+    optional: true,
+    type: Array
+  },
+  "keyword.$" : {
+    optional: true,
+    type: CodeableConceptSchema
+  },
+  "location" : {
+    optional: true,
+    type: Array
+  },
+  "location.$" : {
+    optional: true,
+    type: CodeableConceptSchema
+  },
+  "description" : {
+    optional: true,
+    type: String
+  },
+  "enrollment" : {
+    optional: true,
+    type: Array
+  },
+  "enrollment.$" : {
+    optional: true,
+    type: ReferenceSchema
+  },
+  "period" : {
+    optional: true,
+    type: PeriodSchema
+  },
+  "sponsor" : {
+    optional: true,
+    type: ReferenceSchema
+  },
+  "principalInvestigator" : {
+    optional: true,
+    type: ReferenceSchema
+  },
+  "site" : {
+    optional: true,
+    type: Array
+  },
+  "site.$" : {
+    optional: true,
+    type: ReferenceSchema
+  },
+  "reasonStopped" : {
+    optional: true,
+    type: CodeableConceptSchema
+  },
+  "note" : {
+    optional: true,
+    type: Array
+  },
+  "note.$" : {
+    optional: true,
+    blackbox: true,
+    type: Object
+  },
+  "arm" : {
+    optional: true,
+    type: Array
+  },
+  "arm.$" : {
+    optional: true,
+    blackbox: true,
+    type: Object
+  },
+  "objective" : {
+    optional: true,
+    type: Array
+  },
+  "objective.$" : {
+    optional: true,
+    blackbox: true,
+    type: Object
   }
 });
 

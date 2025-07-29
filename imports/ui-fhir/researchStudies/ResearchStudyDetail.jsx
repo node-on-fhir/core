@@ -1,449 +1,636 @@
-// =======================================================================
-// Using DSTU2  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-//
-// https://www.hl7.org/fhir/DSTU2/researchStudys.html
-//
-//
-// =======================================================================
+// /imports/ui-fhir/researchStudies/ResearchStudyDetail.jsx
 
-import React from 'react';
-import PropTypes from 'prop-types';
-
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useTracker } from 'meteor/react-meteor-data';
 
 import { 
   Button,
   Card,
-  Checkbox,
   CardActions,
   CardContent,
   CardHeader,
-  Grid,
+  Container,
   TextField,
   Select,
   MenuItem,
+  FormControl,
+  InputLabel,
+  Typography,
+  Box,
+  Stack,
+  Chip,
+  InputAdornment,
+  IconButton,
+  Tooltip,
+  Paper,
+  Alert,
+  Grid,
+  Dialog
 } from '@mui/material';
 
+import QrCodeIcon from '@mui/icons-material/QrCode';
+import SearchIcon from '@mui/icons-material/Search';
+import LockIcon from '@mui/icons-material/Lock';
+import LockOpenIcon from '@mui/icons-material/LockOpen';
+import EditIcon from '@mui/icons-material/Edit';
+import AccessTimeIcon from '@mui/icons-material/AccessTime';
+
 import { get, set } from 'lodash';
+import moment from 'moment';
 
+import { Meteor } from 'meteor/meteor';
+import { Session } from 'meteor/session';
 
-export class ResearchStudyDetail extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      researchStudyId: false,
-      researchStudy: {
-        resourceType: "ResearchStudy",
-        patient: {
-          reference: "",
-          display: ""
-        },
-        asserter: {
-          reference: "",
-          display: ""
-        },
-        dateRecorded: null,
-        code: {
-          coding: [
-            {
-              system: "http://snomed.info/sct",
-              code: "",
-              display: ""
-            }
-          ]
-        },
-        clinicalStatus: "active",
-        verificationStatus: "confirmed",
-        researchStudy: [],
-        onsetDateTime: null
-      }, 
-      form: {
-        patientDisplay: '',
-        asserterDisplay: '',
-        snomedCode: '',
-        snomedDisplay: '',
-        clinicalStatus: '',
-        verificationStatus: '',
-        researchStudyDisplay: '',
-        onsetDateTime: ''
-      }
-    }
-  }
-  dehydrateFhirResource(researchStudy) {
-    let formData = Object.assign({}, this.state.form);
+import { FhirUtilities } from '/imports/lib/FhirUtilities';
 
-    formData.patientDisplay = get(researchStudy, 'patient.display')
-    formData.asserterDisplay = get(researchStudy, 'asserter.display')    
-    formData.snomedCode = get(researchStudy, 'code.coding[0].code')
-    formData.snomedDisplay = get(researchStudy, 'code.coding[0].display')
-    formData.clinicalStatus = get(researchStudy, 'clinicalStatus')
-    formData.verificationStatus = get(researchStudy, 'verificationStatus')
-    formData.onsetDateTime = get(researchStudy, 'onsetDateTime')
+// Import the collection directly - avoids timing issues
+import { ResearchStudies } from '/imports/lib/schemas/SimpleSchemas/ResearchStudies';
 
-    return formData;
-  }
-  shouldComponentUpdate(nextProps){
-    get(Meteor, 'settings.public.logging') === "debug" && console.log('ResearchStudyDetail.shouldComponentUpdate()', nextProps, this.state)
-    let shouldUpdate = true;
-
-    // received an researchStudy from the table; okay lets update again
-    if(nextProps.researchStudyId !== this.state.researchStudyId){
-      
-      if(nextProps.researchStudy){
-        this.setState({researchStudy: nextProps.researchStudy})     
-        this.setState({form: this.dehydrateFhirResource(nextProps.researchStudy)})       
-      }
-
-      this.setState({researchStudyId: nextProps.researchStudyId})
-      shouldUpdate = true;
-    }
-
-    // both false; don't take any more updates
-    if(nextProps.researchStudy === this.state.researchStudy){
-      shouldUpdate = false;
-    }
- 
-    return shouldUpdate;
-  }
-
-  getMeteorData() {
-    let data = {
-      researchStudyId: this.props.researchStudyId,
-      researchStudy: false,
-      showDatePicker: false,
-      form: this.state.form
-    };
-
-    if(this.props.showDatePicker){
-      data.showDatePicker = this.props.showDatePicker
-    }
-    if(this.props.researchStudy){
-      data.researchStudy = this.props.researchStudy;
-      data.form = this.dehydrateFhirResource(this.props.researchStudy);
-    }
-
-    return data;
-  }
-  renderDatePicker(showDatePicker, form){
-    let datePickerValue;
-
-    if(get(form, 'onsetDateTime')){
-      datePickerValue = get(form, 'onsetDateTime');
-    }
-    if(get(form, 'onsetPeriod.start')){
-      datePickerValue = get(form, 'onsetPeriod.start');
-    }
-    if (typeof datePickerValue === "string"){
-      datePickerValue = new Date(datePickerValue);
-    }
-    if (showDatePicker) {
-      return (<div></div>)
-      // return (
-      //   <DatePicker 
-      //     name='onsetDateTime'
-      //     hintText="Onset Date" 
-      //     container="inline" 
-      //     mode="landscape"
-      //     value={ datePickerValue ? datePickerValue : null }    
-      //     onChange={ this.changeState.bind(this, 'onsetDateTime')}      
-      //     />
-      // );      
-    }
-  }
-  setHint(text){
-    if(this.props.showHints !== false){
-      return text;
-    } else {
-      return '';
-    }
-  }
-  render() {
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log('ResearchStudyDetail.render()', this.state)
-
-    return (
-      <div id={this.props.id} className="researchStudyDetail">
-        <CardContent>
-          <Grid container spacing={3}>
-            <Grid item xs={6}>
-              <TextField
-                id='patientDisplayInput'
-                name='patientDisplay'
-                label='Patient'
-                value={ get(this, 'data.form.patientDisplay', '') }
-                onChange={ this.changeState.bind(this, 'patientDisplay')}
-                hintText={ this.setHint('Jane Doe') }
-                //floatingLabelFixed={true}
-                fullWidth
-                /><br/>
-
-              <TextField
-                id='asserterDisplayInput'
-                name='asserterDisplay'
-                label='Asserter'
-                value={ get(this, 'data.form.asserterDisplay', '') }
-                onChange={ this.changeState.bind(this, 'asserterDisplay')}
-                hintText={ this.setHint('Nurse Jackie') }
-                //floatingLabelFixed={true}
-                fullWidth
-                /><br/>
-
-              <TextField
-                id='snomedCodeInput'
-                name='snomedCode'
-                label='SNOMED Code'
-                value={ get(this, 'data.form.snomedCode', '') }
-                hintText={ this.setHint('307343001') }
-                onChange={ this.changeState.bind(this, 'snomedCode')}
-                //floatingLabelFixed={true}
-                fullWidth
-                /><br/>
-
-              <TextField
-                id='snomedDisplayInput'
-                name='snomedDisplay'
-                label='SNOMED Display'
-                value={ get(this, 'data.form.snomedDisplay', '') }
-                onChange={ this.changeState.bind(this, 'snomedDisplay')}
-                hintText={ this.setHint('Acquired hemoglobin H disease (disorder)') }
-                //floatingLabelFixed={true}
-                fullWidth
-                /><br/>
-
-              <TextField
-                id='clinicalStatusInput'
-                name='clinicalStatus'
-                label='Clinical Status'
-                value={ get(this, 'data.form.clinicalStatus', '') }
-                hintText={ this.setHint('active | recurrence | inactive | remission | resolved') }
-                onChange={ this.changeState.bind(this, 'clinicalStatus')}
-                //floatingLabelFixed={true}
-                fullWidth
-                /><br/>
-
-              <TextField
-                id='verificationStatusInput'
-                name='verificationStatus'
-                label='Verification Status'
-                value={ get(this, 'data.form.verificationStatus', '') }
-                hintText={ this.setHint('provisional | differential | confirmed | refuted | entered-in-error | unknown') }
-                onChange={ this.changeState.bind(this, 'verificationStatus')}
-                //floatingLabelFixed={true}
-                fullWidth
-                /><br/>
-            </Grid>
-            <Grid item xs={6}>
-            </Grid>
-          </Grid>
-
-          <br/>
-          { this.renderDatePicker(this.data.showDatePicker, get(this, 'data.form') ) }
-          <br/>
-
-          <a href='http://browser.ihtsdotools.org/?perspective=full&conceptId1=404684003&edition=us-edition&release=v20180301&server=https://prod-browser-exten.ihtsdotools.org/api/snomed&langRefset=900000000000509007'>Lookup codes with the SNOMED CT Browser</a>
-
-        </CardContent>
-        <CardActions>
-          { this.determineButtons(this.state.researchStudyId) }
-        </CardActions>
-      </div>
-    );
-  }
-
-  determineButtons(researchStudyId){
-    if (researchStudyId) {
-      return (
-        <div>
-          <Button id="updateResearchStudyButton" primary={true} onClick={this.handleSaveButton.bind(this)} style={{marginRight: '20px'}} >Save</Button>
-          <Button id="deleteResearchStudyButton" onClick={this.handleDeleteButton.bind(this)} >Delete</Button>
-        </div>
-      );
-    } else {
-      return(
-        <Button id="saveResearchStudyButton" primary={true} onClick={this.handleSaveButton.bind(this)} >Save</Button>
-      );
-    }
-  }
-
-
-  updateFormData(formData, field, textValue){
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log("ResearchStudyDetail.updateFormData", formData, field, textValue);
-
-    switch (field) {
-      case "patientDisplay":
-        set(formData, 'patientDisplay', textValue)
-        break;
-      case "asserterDisplay":
-        set(formData, 'asserterDisplay', textValue)
-        break;        
-      case "verificationStatus":
-        set(formData, 'verificationStatus', textValue)
-        break;
-      case "clinicalStatus":
-        set(formData, 'clinicalStatus', textValue)
-        break;
-      case "snomedCode":
-        set(formData, 'snomedCode', textValue)
-        break;
-      case "snomedDisplay":
-        set(formData, 'snomedDisplay', textValue)
-        break;
-      case "researchStudyDisplay":
-        set(formData, 'researchStudyDisplay', textValue)
-        break;
-      case "onsetDateTime":
-        set(formData, 'onsetDateTime', textValue)
-        break;
-      default:
-    }
-
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log("formData", formData);
-    return formData;
-  }
-  updateResearchStudy(researchStudyData, field, textValue){
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log("ResearchStudyDetail.updateResearchStudy", researchStudyData, field, textValue);
-
-    switch (field) {
-      case "patientDisplay":
-        set(researchStudyData, 'patient.display', textValue)
-        break;
-      case "asserterDisplay":
-        set(researchStudyData, 'asserter.display', textValue)
-        break;
-      case "verificationStatus":
-        set(researchStudyData, 'verificationStatus', textValue)
-        break;
-      case "clinicalStatus":
-        set(researchStudyData, 'clinicalStatus', textValue)
-        break;
-      case "snomedCode":
-        set(researchStudyData, 'code.coding[0].code', textValue)
-        break;
-      case "snomedDisplay":
-        set(researchStudyData, 'code.coding[0].display', textValue)
-        break;
-      case "researchStudyDisplay":
-        set(researchStudyData, 'researchStudy[0].detail[0].display', textValue)
-        break;  
-      case "datePicker":
-        set(researchStudyData, 'onsetDateTime', textValue)
-        break;
-      case "onsetDateTime":
-        set(researchStudyData, 'onsetDateTime', textValue)
-        break;
+function ResearchStudyDetail(props) {
+  const navigate = useNavigate();
+  const { id } = useParams();
   
-    }
-    return researchStudyData;
-  }
-  componentDidUpdate(props){
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log('ResearchStudyDisplay.componentDidUpdate()', props, this.state)
-  }
-  // this could be a mixin
-  changeState(field, event, textValue){
-
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log("   ");
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log("ResearchStudyDetail.changeState", field, textValue);
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log("this.state", this.state);
-
-    let formData = Object.assign({}, this.state.form);
-    let researchStudyData = Object.assign({}, this.state.researchStudy);
-
-    formData = this.updateFormData(formData, field, textValue);
-    researchStudyData = this.updateResearchStudy(researchStudyData, field, textValue);
-
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log("researchStudyData", researchStudyData);
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log("formData", formData);
-
-    this.setState({researchStudy: researchStudyData})
-    this.setState({form: formData})
-
-  }
-
-  handleSaveButton(){
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log('^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^&&')
-    console.log('Saving a new ResearchStudy...', this.state)
-
-    let self = this;
-    let fhirResearchStudyData = Object.assign({}, this.state.researchStudy);
-
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log('fhirResearchStudyData', fhirResearchStudyData);
-
-
-    let researchStudyValidator = ResearchStudySchema.newContext();
-    researchStudyValidator.validate(fhirResearchStudyData)
-
-    console.log('IsValid: ', researchStudyValidator.isValid())
-    console.log('ValidationErrors: ', researchStudyValidator.validationErrors());
-
-    if (this.state.researchStudyId) {
-      if(get(Meteor, 'settings.public.logging') === "debug") console.log("Updating ResearchStudy...");
-      delete fhirResearchStudyData._id;
-
-      ResearchStudies._collection.update(
-        {_id: this.state.researchStudyId}, {$set: fhirResearchStudyData }, function(error, result) {
-          if (error) {
-            console.log("error", error);
-            // Bert.alert(error.reason, 'danger');
-          }
-          if (result) {
-            if(self.props.onUpdate){
-              self.props.onUpdate(self.data.researchStudyId);
-            }
-            // Bert.alert('ResearchStudy updated!', 'success');
-          }
-        });
+  // Subscribe to research studies data
+  const subscriptionReady = useTracker(() => {
+    let autoPublishEnabled = get(Meteor, 'settings.public.defaults.autopublish', false);
+    if(autoPublishEnabled){
+      const handle = Meteor.subscribe('autopublish.ResearchStudies', {}, {});
+      return handle.ready();
     } else {
+      const handle = Meteor.subscribe('researchStudies.all');
+      return handle.ready();
+    }
+  }, []);
+  
+  const currentUser = useTracker(function() {
+    return Meteor.user();
+  }, []);
+  
+  // Initialize state with proper FHIR R4 structure
+  const [researchStudy, setResearchStudy] = useState({
+    resourceType: "ResearchStudy",
+    identifier: [{
+      system: "",
+      value: ""
+    }],
+    title: "",
+    status: "active",
+    phase: {
+      coding: [{
+        system: "http://terminology.hl7.org/CodeSystem/research-study-phase",
+        code: "phase-3",
+        display: "Phase 3"
+      }]
+    },
+    category: [{
+      coding: [{
+        system: "http://terminology.hl7.org/CodeSystem/research-study-prim-purp-type",
+        code: "interventional",
+        display: "Interventional"
+      }]
+    }],
+    focus: [{
+      coding: [{
+        system: "http://snomed.info/sct",
+        code: "",
+        display: ""
+      }]
+    }],
+    description: "",
+    period: {
+      start: moment().format('YYYY-MM-DD'),
+      end: moment().add(1, 'year').format('YYYY-MM-DD')
+    },
+    principalInvestigator: {
+      reference: "",
+      display: ""
+    },
+    enrollment: [{
+      reference: "",
+      display: ""
+    }],
+    note: [{
+      text: ""
+    }]
+  });
 
-      if(get(Meteor, 'settings.public.logging') === "debug") console.log("Create a new ResearchStudy", fhirResearchStudyData);
-
-      ResearchStudies._collection.insert(fhirResearchStudyData, function(error, result) {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [isEditing, setIsEditing] = useState(!id || id === 'new');
+  
+  // Load existing research study if editing
+  useEffect(() => {
+    if (id && id !== 'new' && ResearchStudies) {
+      setLoading(true);
+      Meteor.call('researchStudies.get', id, (error, result) => {
+        setLoading(false);
         if (error) {
-          console.log("error", error);
-          // Bert.alert(error.reason, 'danger');
+          setError(error.reason);
+          console.error('Error loading research study:', error);
+        } else if (result) {
+          console.log('Loaded research study:', result);
+          setResearchStudy(result);
+          setIsEditing(false);
         }
-        if (result) {
-          if(self.props.onInsert){
-            self.props.onInsert(self.data.researchStudyId);
-          }
-          // Bert.alert('ResearchStudy added!', 'success');
+      });
+    } else if (id === 'new') {
+      // For new research studies, start in edit mode
+      setIsEditing(true);
+    }
+  }, [id]);
+
+  // Handle field changes
+  const handleChange = (path, value) => {
+    const newResearchStudy = { ...researchStudy };
+    set(newResearchStudy, path, value);
+    setResearchStudy(newResearchStudy);
+  };
+
+  // Handle save
+  const handleSave = () => {
+    setError(null);
+    setLoading(true);
+    
+    const userId = Meteor.userId();
+    if (!userId) {
+      setError('You must be logged in to save research studies');
+      setLoading(false);
+      return;
+    }
+    
+    // Prepare the data for save - ensure proper structure for CodeableConcepts
+    const dataToSave = { ...researchStudy };
+    
+    // Ensure phase is properly structured if it exists
+    if (dataToSave.phase && typeof dataToSave.phase === 'object' && dataToSave.phase.coding) {
+      // Keep as is - already properly structured
+    } else if (dataToSave.phase) {
+      // Convert simple string to CodeableConcept
+      const phaseMap = {
+        'n-a': 'N/A',
+        'early-phase-1': 'Early Phase 1',
+        'phase-1': 'Phase 1',
+        'phase-1-phase-2': 'Phase 1/Phase 2',
+        'phase-2': 'Phase 2',
+        'phase-2-phase-3': 'Phase 2/Phase 3',
+        'phase-3': 'Phase 3',
+        'phase-4': 'Phase 4'
+      };
+      dataToSave.phase = {
+        coding: [{
+          system: 'http://hl7.org/fhir/research-study-phase',
+          code: dataToSave.phase,
+          display: phaseMap[dataToSave.phase] || dataToSave.phase
+        }],
+        text: phaseMap[dataToSave.phase] || dataToSave.phase
+      };
+    }
+    
+    // Convert category to array of CodeableConcepts if needed
+    if (dataToSave.category && !Array.isArray(dataToSave.category)) {
+      dataToSave.category = [{
+        coding: [{
+          system: 'http://hl7.org/fhir/research-study-category',
+          code: dataToSave.category,
+          display: dataToSave.category.charAt(0).toUpperCase() + dataToSave.category.slice(1)
+        }],
+        text: dataToSave.category.charAt(0).toUpperCase() + dataToSave.category.slice(1)
+      }];
+    }
+    
+    // Convert focus to array of CodeableConcepts if needed
+    if (dataToSave.focusType || dataToSave.focusCode || dataToSave.focusDisplay) {
+      const focusObject = {
+        coding: [{
+          system: 'http://snomed.info/sct',
+          code: dataToSave.focusCode || '',
+          display: dataToSave.focusDisplay || ''
+        }],
+        text: dataToSave.focusDisplay || ''
+      };
+      dataToSave.focus = [focusObject];
+      // Remove the separate fields
+      delete dataToSave.focusType;
+      delete dataToSave.focusCode;
+      delete dataToSave.focusDisplay;
+    }
+    
+    console.log('handleSave called with id:', id, 'id === "new":', id === 'new', 'typeof id:', typeof id);
+    
+    if (!id || id === 'new') {
+      console.log('Creating new research study:', dataToSave);
+      Meteor.call('researchStudies.create', dataToSave, (error, newId) => {
+        setLoading(false);
+        if (error) {
+          setError(error.reason);
+          console.error('Create error:', error);
+        } else {
+          console.log('Research study created with ID:', newId);
+          navigate('/research-studies');
+        }
+      });
+    } else {
+      console.log('Updating research study:', id, dataToSave);
+      Meteor.call('researchStudies.update', id, dataToSave, (error) => {
+        setLoading(false);
+        if (error) {
+          setError(error.reason);
+          console.error('Update error:', error);
+        } else {
+          console.log('Research study updated successfully');
+          setIsEditing(false);
+          navigate('/research-studies');
         }
       });
     }
-  }
+  };
 
-  handleCancelButton(){
-    if(this.props.onCancel){
-      this.props.onCancel();
-    }
-  }
-
-  handleDeleteButton(){
-    console.log('ResearchStudyDetail.handleDeleteButton()', this.state.researchStudyId)
-
-    let self = this;
-    ResearchStudies._collection.remove({_id: this.state.researchStudyId}, function(error, result){
-      if (error) {
-        // Bert.alert(error.reason, 'danger');
-      }
-      if (result) {
-        if(this.props.onInsert){
-          this.props.onInsert(self.data.researchStudyId);
+  // Handle delete
+  const handleDelete = () => {
+    if (window.confirm('Are you sure you want to delete this research study?')) {
+      setLoading(true);
+      Meteor.call('researchStudies.remove', id, (error) => {
+        setLoading(false);
+        if (error) {
+          setError(error.reason);
+          console.error('Delete error:', error);
+        } else {
+          navigate('/research-studies');
         }
-        // Bert.alert('ResearchStudy removed!', 'success');
-      }
-    });
-  }
-}
+      });
+    }
+  };
 
-ResearchStudyDetail.propTypes = {
-  id: PropTypes.string,
-  researchStudyId: PropTypes.oneOfType([PropTypes.string, PropTypes.bool]),
-  researchStudy: PropTypes.oneOfType([PropTypes.object, PropTypes.bool]),
-  showDatePicker: PropTypes.bool,
-  showHints: PropTypes.bool,
-  onInsert: PropTypes.func,
-  onUpdate: PropTypes.func,
-  onRemove: PropTypes.func,
-  onCancel: PropTypes.func
-};
+  // Handle cancel
+  const handleCancel = () => {
+    if (!id || id === 'new') {
+      navigate('/research-studies');
+    } else {
+      // Reload the original data
+      setLoading(true);
+      Meteor.call('researchStudies.get', id, (error, result) => {
+        setLoading(false);
+        if (error) {
+          setError(error.reason);
+        } else if (result) {
+          setResearchStudy(result);
+          setIsEditing(false);
+        }
+      });
+    }
+  };
+
+  return (
+    <Container maxWidth="md" style={{ marginTop: '20px' }}>
+      <Card id="researchStudyDetailPage">
+        <CardHeader
+          title={
+            <Box display="flex" alignItems="center" justifyContent="space-between">
+              <Typography variant="h6">
+                {!id || id === 'new' ? 'New Research Study' : 'Research Study Details'}
+              </Typography>
+              <Box>
+                <Tooltip title={isEditing ? "Lock to view mode" : "Unlock to edit"}>
+                  <IconButton
+                    onClick={() => setIsEditing(!isEditing)}
+                    color="primary"
+                    disabled={!id || id === 'new'}
+                  >
+                    {isEditing ? <LockOpenIcon /> : <LockIcon />}
+                  </IconButton>
+                </Tooltip>
+                <Tooltip title="View barcode">
+                  <IconButton color="primary">
+                    <QrCodeIcon />
+                  </IconButton>
+                </Tooltip>
+              </Box>
+            </Box>
+          }
+          subheader={
+            <Box display="flex" alignItems="center" gap={1} mt={1}>
+              <AccessTimeIcon fontSize="small" color="action" />
+              <Typography variant="caption" color="textSecondary">
+                Last updated: {get(researchStudy, 'meta.lastUpdated') ? moment(researchStudy.meta.lastUpdated).format('YYYY-MM-DD HH:mm') : 'Never'}
+              </Typography>
+            </Box>
+          }
+        />
+        
+        <CardContent>
+          {error && (
+            <Alert severity="error" onClose={() => setError(null)} style={{ marginBottom: '16px' }}>
+              {error}
+            </Alert>
+          )}
+          
+          <Grid container spacing={3}>
+            <Grid item xs={12}>
+              <TextField
+                id="title"
+                label="Title"
+                fullWidth
+                value={get(researchStudy, 'title', '')}
+                onChange={(e) => handleChange('title', e.target.value)}
+                disabled={!isEditing}
+                margin="normal"
+              />
+            </Grid>
+
+            <Grid item xs={12} md={6}>
+              <TextField
+                id="principalInvestigatorDisplay"
+                label="Principal Investigator"
+                fullWidth
+                value={get(researchStudy, 'principalInvestigator.display', '')}
+                onChange={(e) => handleChange('principalInvestigator.display', e.target.value)}
+                disabled={!isEditing}
+                margin="normal"
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <Tooltip title="Search for investigator">
+                        <IconButton
+                          edge="end"
+                          disabled={!isEditing}
+                        >
+                          <SearchIcon />
+                        </IconButton>
+                      </Tooltip>
+                    </InputAdornment>
+                  ),
+                }}
+              />
+            </Grid>
+
+            <Grid item xs={12} md={6}>
+              <FormControl fullWidth margin="normal">
+                <InputLabel id="status-label">Status</InputLabel>
+                <Select
+                  labelId="status-label"
+                  id="status"
+                  value={get(researchStudy, 'status', 'active')}
+                  onChange={(e) => handleChange('status', e.target.value)}
+                  disabled={!isEditing}
+                  label="Status"
+                >
+                  <MenuItem value="active">Active</MenuItem>
+                  <MenuItem value="administratively-completed">Administratively Completed</MenuItem>
+                  <MenuItem value="approved">Approved</MenuItem>
+                  <MenuItem value="closed-to-accrual">Closed to Accrual</MenuItem>
+                  <MenuItem value="closed-to-accrual-and-intervention">Closed to Accrual and Intervention</MenuItem>
+                  <MenuItem value="completed">Completed</MenuItem>
+                  <MenuItem value="disapproved">Disapproved</MenuItem>
+                  <MenuItem value="in-review">In Review</MenuItem>
+                  <MenuItem value="temporarily-closed-to-accrual">Temporarily Closed to Accrual</MenuItem>
+                  <MenuItem value="temporarily-closed-to-accrual-and-intervention">Temporarily Closed to Accrual and Intervention</MenuItem>
+                  <MenuItem value="withdrawn">Withdrawn</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+
+            <Grid item xs={12} md={6}>
+              <FormControl fullWidth margin="normal">
+                <InputLabel id="phase-label">Phase</InputLabel>
+                <Select
+                  labelId="phase-label"
+                  id="phase"
+                  value={get(researchStudy, 'phase.coding[0].code', 'phase-3')}
+                  onChange={(e) => {
+                    const phaseMap = {
+                      'n-a': 'N/A',
+                      'early-phase-1': 'Early Phase 1',
+                      'phase-1': 'Phase 1',
+                      'phase-1-phase-2': 'Phase 1/Phase 2',
+                      'phase-2': 'Phase 2',
+                      'phase-2-phase-3': 'Phase 2/Phase 3',
+                      'phase-3': 'Phase 3',
+                      'phase-4': 'Phase 4'
+                    };
+                    handleChange('phase.coding[0].code', e.target.value);
+                    handleChange('phase.coding[0].display', phaseMap[e.target.value]);
+                  }}
+                  disabled={!isEditing}
+                  label="Phase"
+                >
+                  <MenuItem value="n-a">N/A</MenuItem>
+                  <MenuItem value="early-phase-1">Early Phase 1</MenuItem>
+                  <MenuItem value="phase-1">Phase 1</MenuItem>
+                  <MenuItem value="phase-1-phase-2">Phase 1/Phase 2</MenuItem>
+                  <MenuItem value="phase-2">Phase 2</MenuItem>
+                  <MenuItem value="phase-2-phase-3">Phase 2/Phase 3</MenuItem>
+                  <MenuItem value="phase-3">Phase 3</MenuItem>
+                  <MenuItem value="phase-4">Phase 4</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+
+            <Grid item xs={12} md={6}>
+              <FormControl fullWidth margin="normal">
+                <InputLabel id="category-label">Category</InputLabel>
+                <Select
+                  labelId="category-label"
+                  id="category"
+                  value={get(researchStudy, 'category[0].coding[0].code', 'interventional')}
+                  onChange={(e) => {
+                    const categoryMap = {
+                      'interventional': 'Interventional',
+                      'observational': 'Observational',
+                      'expanded-access': 'Expanded Access'
+                    };
+                    handleChange('category[0].coding[0].code', e.target.value);
+                    handleChange('category[0].coding[0].display', categoryMap[e.target.value]);
+                  }}
+                  disabled={!isEditing}
+                  label="Category"
+                >
+                  <MenuItem value="interventional">Interventional</MenuItem>
+                  <MenuItem value="observational">Observational</MenuItem>
+                  <MenuItem value="expanded-access">Expanded Access</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+
+            <Grid item xs={12} md={6}>
+              <FormControl fullWidth margin="normal">
+                <InputLabel id="focusType-label">Focus Type</InputLabel>
+                <Select
+                  labelId="focusType-label"
+                  id="focusType"
+                  value={get(researchStudy, 'focus[0].coding[0].system', 'http://snomed.info/sct')}
+                  onChange={(e) => handleChange('focus[0].coding[0].system', e.target.value)}
+                  disabled={!isEditing}
+                  label="Focus Type"
+                >
+                  <MenuItem value="http://snomed.info/sct">SNOMED CT</MenuItem>
+                  <MenuItem value="http://www.nlm.nih.gov/research/umls/rxnorm">RxNorm</MenuItem>
+                  <MenuItem value="http://loinc.org">LOINC</MenuItem>
+                  <MenuItem value="medication">Medication</MenuItem>
+                  <MenuItem value="device">Device</MenuItem>
+                  <MenuItem value="procedure">Procedure</MenuItem>
+                  <MenuItem value="condition">Condition</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+
+            <Grid item xs={12} md={6}>
+              <TextField
+                id="focusCode"
+                label="Focus Code"
+                fullWidth
+                value={get(researchStudy, 'focus[0].coding[0].code', '')}
+                onChange={(e) => handleChange('focus[0].coding[0].code', e.target.value)}
+                disabled={!isEditing}
+                margin="normal"
+              />
+            </Grid>
+
+            <Grid item xs={12} md={6}>
+              <TextField
+                id="focusDisplay"
+                label="Focus Display"
+                fullWidth
+                value={get(researchStudy, 'focus[0].coding[0].display', '')}
+                onChange={(e) => handleChange('focus[0].coding[0].display', e.target.value)}
+                disabled={!isEditing}
+                margin="normal"
+              />
+            </Grid>
+
+            <Grid item xs={12}>
+              <TextField
+                id="descriptionTextarea"
+                label="Description"
+                fullWidth
+                multiline
+                rows={4}
+                value={get(researchStudy, 'description', '')}
+                onChange={(e) => handleChange('description', e.target.value)}
+                disabled={!isEditing}
+                margin="normal"
+              />
+            </Grid>
+
+            <Grid item xs={12} md={6}>
+              <TextField
+                id="periodStart"
+                label="Period Start"
+                type="date"
+                fullWidth
+                value={get(researchStudy, 'period.start', '')}
+                onChange={(e) => handleChange('period.start', e.target.value)}
+                disabled={!isEditing}
+                margin="normal"
+                InputLabelProps={{
+                  shrink: true,
+                }}
+              />
+            </Grid>
+
+            <Grid item xs={12} md={6}>
+              <TextField
+                id="periodEnd"
+                label="Period End"
+                type="date"
+                fullWidth
+                value={get(researchStudy, 'period.end', '')}
+                onChange={(e) => handleChange('period.end', e.target.value)}
+                disabled={!isEditing}
+                margin="normal"
+                InputLabelProps={{
+                  shrink: true,
+                }}
+              />
+            </Grid>
+
+            <Grid item xs={12} md={6}>
+              <TextField
+                id="enrollmentTarget"
+                label="Enrollment Target"
+                fullWidth
+                type="number"
+                value={get(researchStudy, 'enrollment[0].display', '').split('/')[1] || ''}
+                onChange={(e) => {
+                  const actual = get(researchStudy, 'enrollment[0].display', '').split('/')[0] || '0';
+                  handleChange('enrollment[0].display', `${actual}/${e.target.value}`);
+                }}
+                disabled={!isEditing}
+                margin="normal"
+              />
+            </Grid>
+
+            <Grid item xs={12} md={6}>
+              <TextField
+                id="enrollmentActual"
+                label="Enrollment Actual"
+                fullWidth
+                type="number"
+                value={get(researchStudy, 'enrollment[0].display', '').split('/')[0] || ''}
+                onChange={(e) => {
+                  const target = get(researchStudy, 'enrollment[0].display', '').split('/')[1] || '0';
+                  handleChange('enrollment[0].display', `${e.target.value}/${target}`);
+                }}
+                disabled={!isEditing}
+                margin="normal"
+              />
+            </Grid>
+
+            <Grid item xs={12}>
+              <TextField
+                id="notesTextarea"
+                label="Notes"
+                fullWidth
+                multiline
+                rows={3}
+                value={get(researchStudy, 'note[0].text', '')}
+                onChange={(e) => handleChange('note[0].text', e.target.value)}
+                disabled={!isEditing}
+                margin="normal"
+              />
+            </Grid>
+          </Grid>
+        </CardContent>
+        
+        <CardActions style={{ justifyContent: 'flex-end', padding: '16px' }}>
+          {isEditing ? (
+            <>
+              <Button onClick={handleCancel} disabled={loading}>
+                Cancel
+              </Button>
+              <Button
+                id="saveResearchStudyButton"
+                variant="contained"
+                color="primary"
+                onClick={handleSave}
+                disabled={loading}
+              >
+                Save
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button
+                color="error"
+                onClick={handleDelete}
+                disabled={loading || id === 'new'}
+              >
+                Delete
+              </Button>
+              <Button
+                variant="contained"
+                startIcon={<EditIcon />}
+                onClick={() => setIsEditing(true)}
+                disabled={loading}
+              >
+                Edit
+              </Button>
+            </>
+          )}
+        </CardActions>
+      </Card>
+    </Container>
+  );
+}
 
 export default ResearchStudyDetail;

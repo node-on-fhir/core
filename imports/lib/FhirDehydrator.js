@@ -4714,17 +4714,24 @@ export function flattenResearchStudy(study) {
     title: '',
     status: '',
     phase: '',
+    phaseText: '',
     category: '',
+    categoryText: '',
     focus: '',
+    focusCode: '',
+    focusDisplay: '',
     condition: '',
     protocol: '',
     partOf: '',
     primaryPurposeType: '',
     enrollmentCount: 0,
+    enrollmentText: '',
     periodStart: '',
     periodEnd: '',
+    periodText: '',
     sponsor: '',
     principalInvestigator: '',
+    principalInvestigatorDisplay: '',
     site: '',
     description: '',
     keyword: '',
@@ -4746,9 +4753,13 @@ export function flattenResearchStudy(study) {
   
   // Classification and status
   result.status = get(study, 'status', '');
-  result.phase = get(study, 'phase.coding[0].display', '');
-  result.category = get(study, 'category[0].coding[0].display', '');
+  result.phase = get(study, 'phase.coding[0].code', '');
+  result.phaseText = get(study, 'phase.coding[0].display', '');
+  result.category = get(study, 'category[0].coding[0].code', '');
+  result.categoryText = get(study, 'category[0].coding[0].display', '');
   result.focus = get(study, 'focus[0].coding[0].display', '');
+  result.focusCode = get(study, 'focus[0].coding[0].code', '');
+  result.focusDisplay = get(study, 'focus[0].coding[0].display', '');
   result.condition = get(study, 'condition[0].coding[0].display', '');
   
   // References
@@ -4761,15 +4772,36 @@ export function flattenResearchStudy(study) {
   // Enrollment
   if (Array.isArray(study.enrollment)) {
     result.enrollmentCount = study.enrollment.length;
+    // Check if enrollment has display like "750/1000"
+    const enrollmentDisplay = get(study, 'enrollment[0].display', '');
+    if (enrollmentDisplay) {
+      result.enrollmentText = enrollmentDisplay;
+    } else {
+      result.enrollmentText = result.enrollmentCount.toString();
+    }
   }
   
   // Period
-  result.periodStart = moment(get(study, 'period.start')).format('YYYY-MM-DD hh:mm a');
-  result.periodEnd = moment(get(study, 'period.end')).format('YYYY-MM-DD hh:mm a');
+  const periodStart = get(study, 'period.start', '');
+  const periodEnd = get(study, 'period.end', '');
+  if (periodStart) {
+    result.periodStart = moment(periodStart).format('YYYY-MM-DD');
+  }
+  if (periodEnd) {
+    result.periodEnd = moment(periodEnd).format('YYYY-MM-DD');
+  }
+  if (periodStart && periodEnd) {
+    result.periodText = `${result.periodStart} - ${result.periodEnd}`;
+  } else if (periodStart) {
+    result.periodText = `Started ${result.periodStart}`;
+  } else if (periodEnd) {
+    result.periodText = `Ends ${result.periodEnd}`;
+  }
   
   // Parties involved
   result.sponsor = get(study, 'sponsor.display', '');
-  result.principalInvestigator = get(study, 'principalInvestigator.display', '');
+  result.principalInvestigator = get(study, 'principalInvestigator.reference', '');
+  result.principalInvestigatorDisplay = get(study, 'principalInvestigator.display', '');
   result.site = get(study, 'site[0].display', '');
   
   // Description and keywords

@@ -31,6 +31,7 @@ import '../imports/startup/server/index.js';
 import '../imports/api/documentReferences/methods.js';
 import '../imports/api/compositions/methods.js';
 import '../imports/api/conditions/methods.js';
+import '../imports/api/research-studies/methods.js';
 import '../imports/api/encounters/methods.js';
 import '../imports/api/locations/methods.js';
 import '../imports/api/patients/methods.js';

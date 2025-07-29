@@ -119,6 +119,7 @@ import ProceduresPage from '../ui-fhir/procedures/ProceduresPage.jsx';
 import QuestionnairesPage from '../ui-fhir/questionnaires/QuestionnairesPage.jsx';
 import QuestionnaireResponsesPage from '../ui-fhir/questionnaireResponses/QuestionnaireResponsesPage.jsx';
 import ResearchStudiesPage from '../ui-fhir/researchStudies/ResearchStudiesPage.jsx';
+import ResearchStudyDetail from '../ui-fhir/researchStudies/ResearchStudyDetail.jsx';
 import ResearchSubjectsPage from '../ui-fhir/researchSubjects/ResearchSubjectsPage.jsx';
 import ServiceRequestsPage from '../ui-fhir/serviceRequests/ServiceRequestsPage.jsx';
 import TasksPage from '../ui-fhir/tasks/TasksPage.jsx';
@@ -668,6 +669,20 @@ if(get(Meteor, 'settings.public.modules.fhir.Encounters')){
     element: <EncounterDetail />
   })
 }
+// TEMP: Adding ResearchStudies routes directly for testing
+// Commented out - routes are now added conditionally above
+// dynamicRoutes.push({
+//   path: "/research-studies",
+//   element: <ResearchStudiesPage />
+// })
+// dynamicRoutes.push({
+//   path: "/research-studies/new",
+//   element: <ResearchStudyDetail />
+// })
+// dynamicRoutes.push({
+//   path: "/research-studies/:id",
+//   element: <ResearchStudyDetail />
+// })
 if(get(Meteor, 'settings.public.modules.fhir.Evidences')){
   dynamicRoutes.push({
     path: "/evidences",
@@ -812,6 +827,14 @@ if(get(Meteor, 'settings.public.modules.fhir.ResearchStudies')){
   dynamicRoutes.push({
     path: "/research-studies",
     element: <ResearchStudiesPage />
+  })
+  dynamicRoutes.push({
+    path: "/research-studies/new",
+    element: <ResearchStudyDetail />
+  })
+  dynamicRoutes.push({
+    path: "/research-studies/:id",
+    element: <ResearchStudyDetail />
   })
 }
 if(get(Meteor, 'settings.public.modules.fhir.ServiceRequests')){
@@ -1017,13 +1040,15 @@ if(!foundMainPage){
 
 // ==============================================================================
 // Router
+console.log('Total dynamic routes:', dynamicRoutes.length);
+console.log('All routes:', dynamicRoutes.map(r => r.path));
 
 const router = createBrowserRouter(dynamicRoutes);
 
 const CustomRouter = ({ children }) => {
   // Debug: Log routes to check for issues
   dynamicRoutes.forEach((route, index) => {
-    if (route.path === '/pacio-dashboard' || route.path === '/') {
+    if (route.path === '/pacio-dashboard' || route.path === '/' || route.path === '/research-studies') {
       console.log(`Route ${index}: path="${route.path}", element=`, route.element);
     }
   });
