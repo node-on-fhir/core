@@ -72,6 +72,7 @@ export function ServiceRequestsTable(props){
     hideText,
     hideOrderDetail,
     hideIntent,
+    hideCodeDisplay,
     cancelButtonType,
     cancelColor,
 
@@ -218,9 +219,13 @@ export function ServiceRequestsTable(props){
   // Helper Functions
 
   function rowClick(id){
-    Session.set('serviceRequestsUpsert', false);
-    Session.set('selectedServiceRequest', id);
-    Session.set('serviceRequestPageTabIndex', 2);
+    if(props.onRowClick){
+      props.onRowClick(id);
+    } else {
+      Session.set('serviceRequestsUpsert', false);
+      Session.set('selectedServiceRequest', id);
+      Session.set('serviceRequestPageTabIndex', 2);
+    }
   }
   function handleRevoke(id){
     console.log('handleRevoke', id)
@@ -576,6 +581,21 @@ export function ServiceRequestsTable(props){
     }
   }
 
+  function renderCodeDisplayHeader(){
+    if (!hideCodeDisplay) {
+      return (
+        <TableCell className='codeDisplay'>Code</TableCell>
+      );
+    }
+  }
+  function renderCodeDisplay(codeDisplay){
+    if (!hideCodeDisplay) {
+      return (
+        <TableCell className='codeDisplay' style={{minWidth: '140px'}}>{ codeDisplay }</TableCell>
+      );
+    }
+  }
+
   //---------------------------------------------------------------------
   // Pagination
 
@@ -680,6 +700,7 @@ export function ServiceRequestsTable(props){
           {renderSelected(get(serviceRequestsToRender[i], '_id'))}
           {renderIdentifier(get(serviceRequestsToRender[i], 'identifier', ''))}
           {renderAuthoredOn(get(serviceRequestsToRender[i], '_id'), get(serviceRequestsToRender[i], 'authoredOn'))}
+          {renderCodeDisplay(get(serviceRequestsToRender[i], 'codeDisplay')) }
           {renderStatus(get(serviceRequestsToRender[i], 'status'))}
           {renderIntent(get(serviceRequestsToRender[i], 'intent'))}
 
@@ -703,12 +724,13 @@ export function ServiceRequestsTable(props){
 
   return(
     <div>
-      <Table className='serviceRequestsTable' size="small" aria-label="a dense table">
+      <Table id="serviceRequestsTable" className='serviceRequestsTable' size="small" aria-label="a dense table">
         <TableHead>
           <TableRow>
             {renderSelectedHeader() }
             {renderIdentifierHeader() }
             {renderAuthoredOnHeader() }
+            {renderCodeDisplayHeader() }
             {renderStatusHeader() }
             {renderIntentHeader() }
 
@@ -762,6 +784,7 @@ ServiceRequestsTable.propTypes = {
   hidePerformerReference: PropTypes.bool,
   hideRequestorName: PropTypes.bool,
   hideRequestorReference: PropTypes.bool,
+  hideCodeDisplay: PropTypes.bool,
 
 
   hideOrderDetail: PropTypes.bool,
@@ -819,10 +842,11 @@ ServiceRequestsTable.defaultProps = {
   hideRequestorReference: true,
   hideBarcode: true,
   hideRequestorReference: false,
-  hideText: false,
-  hideOrderDetail: false,
+  hideText: true,
+  hideOrderDetail: true,
   hideIntent: false,
   hideDoNotPerform: true,
+  hideCodeDisplay: false,
 
   disablePagination: false,
   selectedListId: '',

@@ -223,7 +223,7 @@ function ServiceRequestDetail(props) {
         const newId = await Meteor.callAsync('serviceRequests.create', serviceRequest);
         console.log('Service request created with ID:', newId);
         // Navigate back to service requests list for new service requests
-        navigate('/serviceRequests');
+        navigate('/service-requests');
       }
     } catch (err) {
       console.error('Error saving service request:', err);
@@ -242,7 +242,7 @@ function ServiceRequestDetail(props) {
       try {
         await Meteor.callAsync('serviceRequests.remove', id);
         console.log('Service request deleted successfully');
-        navigate('/serviceRequests');
+        navigate('/service-requests');
       } catch (err) {
         console.error('Error deleting service request:', err);
         setError(err.message);
@@ -254,7 +254,7 @@ function ServiceRequestDetail(props) {
 
   // Handle cancel
   function handleCancel() {
-    navigate('/serviceRequests');
+    navigate('/service-requests');
   }
 
   const statusOptions = [
@@ -298,7 +298,7 @@ function ServiceRequestDetail(props) {
   ];
 
   return (
-    <Container maxWidth="md" sx={{ py: 4 }}>
+    <Container id="serviceRequestDetailPage" maxWidth="md" sx={{ py: 4 }}>
       <Card sx={{ boxShadow: 3 }}>
         <CardHeader 
           title={id && id !== 'new' ? 'Edit Service Request' : 'New Service Request'}
@@ -320,6 +320,7 @@ function ServiceRequestDetail(props) {
           
           <Stack spacing={3}>
             <TextField
+              id="subjectDisplay"
               fullWidth
               label="Patient Name"
               value={get(serviceRequest, 'subject.display', '')}
@@ -328,6 +329,7 @@ function ServiceRequestDetail(props) {
             />
             
             <TextField
+              id="requesterDisplay"
               fullWidth
               label="Requester Name"
               value={get(serviceRequest, 'requester.display', '')}
@@ -339,6 +341,7 @@ function ServiceRequestDetail(props) {
             <FormControl fullWidth disabled={!isEditing}>
               <InputLabel>Status</InputLabel>
               <Select
+                id="status"
                 value={get(serviceRequest, 'status', 'active')}
                 onChange={(e) => handleChange('status', e.target.value)}
                 label="Status"
@@ -354,6 +357,7 @@ function ServiceRequestDetail(props) {
             <FormControl fullWidth disabled={!isEditing}>
               <InputLabel>Intent</InputLabel>
               <Select
+                id="intent"
                 value={get(serviceRequest, 'intent', 'order')}
                 onChange={(e) => handleChange('intent', e.target.value)}
                 label="Intent"
@@ -369,6 +373,7 @@ function ServiceRequestDetail(props) {
             <FormControl fullWidth disabled={!isEditing}>
               <InputLabel>Priority</InputLabel>
               <Select
+                id="priority"
                 value={get(serviceRequest, 'priority', 'routine')}
                 onChange={(e) => handleChange('priority', e.target.value)}
                 label="Priority"
@@ -393,6 +398,7 @@ function ServiceRequestDetail(props) {
             />
             
             <TextField
+              id="codeCode"
               fullWidth
               label="Service Code"
               value={get(serviceRequest, 'code.coding[0].code', '')}
@@ -402,6 +408,7 @@ function ServiceRequestDetail(props) {
             />
             
             <TextField
+              id="codeDisplay"
               fullWidth
               label="Service Description"
               value={get(serviceRequest, 'code.coding[0].display', '')}
@@ -413,29 +420,28 @@ function ServiceRequestDetail(props) {
               disabled={!isEditing}
             />
             
-            <FormControl fullWidth disabled={!isEditing}>
-              <InputLabel>Service Category</InputLabel>
-              <Select
-                value={get(serviceRequest, 'category[0].coding[0].code', '')}
-                onChange={(e) => {
-                  const option = categoryOptions.find(o => o.code === e.target.value);
-                  if (option) {
-                    handleChange('category[0].coding[0].code', option.code);
-                    handleChange('category[0].coding[0].display', option.display);
-                  }
-                }}
-                label="Service Category"
-              >
-                <MenuItem value="">
-                  <em>Not specified</em>
-                </MenuItem>
-                {categoryOptions.map(option => (
-                  <MenuItem key={option.code} value={option.code}>
-                    {option.display}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
+            <TextField
+              id="categoryCode"
+              fullWidth
+              label="Category Code"
+              value={get(serviceRequest, 'category[0].coding[0].code', '')}
+              onChange={(e) => handleChange('category[0].coding[0].code', e.target.value)}
+              helperText="SNOMED CT code for service category"
+              disabled={!isEditing}
+            />
+            
+            <TextField
+              id="categoryDisplay"
+              fullWidth
+              label="Category Description"
+              value={get(serviceRequest, 'category[0].coding[0].display', '')}
+              onChange={(e) => {
+                handleChange('category[0].coding[0].display', e.target.value);
+                handleChange('category[0].text', e.target.value);
+              }}
+              helperText="Description of the service category"
+              disabled={!isEditing}
+            />
             
             <TextField
               fullWidth
@@ -448,6 +454,7 @@ function ServiceRequestDetail(props) {
             />
             
             <TextField
+              id="authoredOn"
               fullWidth
               type="datetime-local"
               label="Authored On"
@@ -469,6 +476,7 @@ function ServiceRequestDetail(props) {
             />
             
             <TextField
+              id="performerDisplay"
               fullWidth
               label="Performer Name"
               value={get(serviceRequest, 'performer[0].display', '')}
@@ -487,6 +495,7 @@ function ServiceRequestDetail(props) {
             />
             
             <TextField
+              id="reasonCode"
               fullWidth
               label="Reason Code"
               value={get(serviceRequest, 'reasonCode[0].coding[0].code', '')}
@@ -496,6 +505,7 @@ function ServiceRequestDetail(props) {
             />
             
             <TextField
+              id="reasonDisplay"
               fullWidth
               label="Reason Description"
               value={get(serviceRequest, 'reasonCode[0].text', '')}
@@ -528,6 +538,7 @@ function ServiceRequestDetail(props) {
             />
             
             <TextField
+              id="notesTextarea"
               fullWidth
               multiline
               rows={3}
@@ -545,7 +556,7 @@ function ServiceRequestDetail(props) {
             // Read-only mode buttons
             <>
               <Button 
-                onClick={() => navigate('/serviceRequests')}
+                onClick={() => navigate('/service-requests')}
               >
                 Back
               </Button>
@@ -579,7 +590,7 @@ function ServiceRequestDetail(props) {
                     reloadServiceRequest();
                   } else {
                     // For new service requests, go back
-                    navigate('/serviceRequests');
+                    navigate('/service-requests');
                   }
                 }}
                 disabled={loading}
@@ -596,6 +607,7 @@ function ServiceRequestDetail(props) {
                 </Button>
               )}
               <Button 
+                id="saveServiceRequestButton"
                 onClick={handleSave}
                 variant="contained"
                 color="primary"

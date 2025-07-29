@@ -4919,10 +4919,15 @@ export function flattenServiceRequest(document){
     subjectName: get(document, 'subject.display', ''),
     performer: get(document, 'performer[0].display', ''),
     performerReference: get(document, 'performer[0].reference', ''),
+    performerName: get(document, 'performer[0].display', ''),
     orderDetail: get(document, 'orderDetail[0].text', ''),
-    requestor: get(document, 'requestor[0].display', ''),
-    requestorReference: get(document, 'requestor[0].reference', ''),
+    requester: get(document, 'requester.display', ''),
+    requesterReference: get(document, 'requester.reference', ''),
+    requestorName: get(document, 'requester.display', ''),
+    requestorReference: get(document, 'requester.reference', ''),
     locationReference: get(document, 'locationReference[0].name', ''),
+    code: get(document, 'code.coding[0].code', ''),
+    codeDisplay: get(document, 'code.coding[0].display', ''),
     text: get(document, 'text.div', ''),
   };
 

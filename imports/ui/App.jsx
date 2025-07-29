@@ -820,11 +820,11 @@ if(get(Meteor, 'settings.public.modules.fhir.ServiceRequests')){
     element: <ServiceRequestsPage />
   })
   dynamicRoutes.push({
-    path: "/serviceRequests/new",
+    path: "/service-requests/new",
     element: <ServiceRequestDetail />
   })
   dynamicRoutes.push({
-    path: "/serviceRequests/:id",
+    path: "/service-requests/:id",
     element: <ServiceRequestDetail />
   })
 }

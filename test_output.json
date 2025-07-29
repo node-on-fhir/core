@@ -1,0 +1,91 @@
+npm warn config init.author.name Use `--init-author-name` instead.
+npm warn config init.author.email Use `--init-author-email` instead.
+npm warn config init.author.url Use `--init-author-url` instead.
+
+
+[ServiceRequests CRUD Operations] Test Suite
+───────────────────────────────────────────────────────────────────────────────
+- Starting ChromeDriver on port 9515...
+
+ℹ Connected to ChromeDriver on port 9515 (3117ms).
+  Using: chrome (138.0.7204.169) on MAC.
+
+Starting ServiceRequests CRUD test suite...
+- Loading url: http://localhost:3000
+
+  ℹ Loaded url http://localhost:3000 in 2223ms
+  ✔ Element <body> was visible after 48 milliseconds.
+
+  Running 01. Setup test environment:
+───────────────────────────────────────────────────────────────────────────────────────────────────
+- Loading url: http://localhost:3000
+
+  ℹ Loaded url http://localhost:3000 in 713ms
+  ✔ Element <body> was visible after 19 milliseconds.
+Initial login state: { isLoggedIn: false, userId: null, username: null }
+Not logged in, attempting programmatic login...
+Logged in as: janedoe userId: 7jKARSTrKQ9BxXgma
+  ✔ Passed [ok]: Successfully created test user and logged in
+Create test patient result: { error: null, result: 'TRWsupvfH2BPqATnS' }
+Test patient created with ID: TRWsupvfH2BPqATnS
+  ✔ Passed [ok]: Successfully created test patient
+Failed to set selected patient: Patient not found
+
+  ✨ PASSED. 3 assertions. (5.495s)
+
+  Running 02. Verify service requests list page loads:
+───────────────────────────────────────────────────────────────────────────────────────────────────
+- Loading url: http://localhost:3000/servicerequests
+
+  ℹ Loaded url http://localhost:3000/servicerequests in 660ms
+  ✔ Element <#serviceRequestsPage> was visible after 20 milliseconds.
+  ✖ NightwatchAssertError
+   Failed [equal]: (Either service requests table or no-data message is present) - expected "true" but got: "null" (0ms)
+
+    Error location:
+    /Volumes/SonicMagic/Code/honeycomb-public-release/tests/nightwatch/honeycomb/crud.servicerequests.js:207
+    ––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––
+     205 |         };
+     206 |       }, [], function(result) {
+     207 |         browser.assert.equal(result.value.hasEitherElement, true, 'Either service requests table or no-data message is present'); 
+     208 |       })
+     209 |       .saveScreenshot('tests/nightwatch/screenshots/servicerequests/02-servicerequests-list.png');
+    ––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––
+
+
+  FAILED: 1 assertions failed and  1 passed (3.423s)
+
+───────────────────────────────────────────────────────────────────────────────────────────────────
+
+  ️TEST FAILURE (15.259s):  
+   - 1 assertions failed; 5 passed
+   - 9 skipped
+
+   ✖ 1) crud.servicerequests
+
+   – 02. Verify service requests list page loads (3.423s)
+
+   → ✖ NightwatchAssertError
+   Failed [equal]: (Either service requests table or no-data message is present) - expected "true" but got: "null" (0ms)
+
+    Error location:
+    /Volumes/SonicMagic/Code/honeycomb-public-release/tests/nightwatch/honeycomb/crud.servicerequests.js:207
+    ––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––
+     205 |         };
+     206 |       }, [], function(result) {
+     207 |         browser.assert.equal(result.value.hasEitherElement, true, 'Either service requests table or no-data message is present'); 
+     208 |       })
+     209 |       .saveScreenshot('tests/nightwatch/screenshots/servicerequests/02-servicerequests-list.png');
+    ––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––
+
+    SKIPPED (at runtime):
+    - 03. Navigate to new service request form
+    - 04. Create new service request
+    - 05. Verify new service request appears in list
+    - 06. View service request details
+    - 07. Update existing service request
+    - 08. Verify updated service request in list
+    - 09. Delete service request
+    - 10. Verify service request removed from list
+    - 11. Test form validation
+
