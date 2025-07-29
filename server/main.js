@@ -39,6 +39,7 @@ import '../imports/api/carePlans/methods.js';
 import '../imports/api/procedures/methods.js';
 import '../imports/api/questionnaires/methods.js';
 import '../imports/api/questionnaireResponses/methods.js';
+import '../imports/api/researchSubjects/methods.js';
 import '../imports/api/serviceRequests/methods.js';
 
 // Import test methods (for non-production environments)

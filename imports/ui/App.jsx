@@ -121,6 +121,7 @@ import QuestionnaireResponsesPage from '../ui-fhir/questionnaireResponses/Questi
 import ResearchStudiesPage from '../ui-fhir/researchStudies/ResearchStudiesPage.jsx';
 import ResearchStudyDetail from '../ui-fhir/researchStudies/ResearchStudyDetail.jsx';
 import ResearchSubjectsPage from '../ui-fhir/researchSubjects/ResearchSubjectsPage.jsx';
+import ResearchSubjectDetail from '../ui-fhir/researchSubjects/ResearchSubjectDetail.jsx';
 import ServiceRequestsPage from '../ui-fhir/serviceRequests/ServiceRequestsPage.jsx';
 import TasksPage from '../ui-fhir/tasks/TasksPage.jsx';
 import ValueSetsPage from '../ui-fhir/valuesets/ValueSetsPage.jsx';
@@ -821,6 +822,14 @@ if(get(Meteor, 'settings.public.modules.fhir.ResearchSubjects')){
   dynamicRoutes.push({
     path: "/research-subjects",
     element: <ResearchSubjectsPage />
+  })
+  dynamicRoutes.push({
+    path: "/research-subjects/new",
+    element: <ResearchSubjectDetail />
+  })
+  dynamicRoutes.push({
+    path: "/research-subjects/:id",
+    element: <ResearchSubjectDetail />
   })
 }
 if(get(Meteor, 'settings.public.modules.fhir.ResearchStudies')){

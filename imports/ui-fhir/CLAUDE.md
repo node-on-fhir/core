@@ -478,3 +478,86 @@ onClick={selectRow.bind(this, item._id || item.id)}
 - [ ] Test and fix any missing columns or functionality
 - [ ] Clean up unused code and imports
 - [ ] Restart Meteor server after settings changes
+
+## ResearchStudy Implementation Learnings
+
+### 1. Settings File Verification
+**Critical**: Always verify which settings file is being used by the running application
+```bash
+# Check the actual settings file in use
+ps aux | grep meteor | grep settings
+
+# Common issue: Using wrong settings file
+# Expected: meteor run --settings configs/settings.honeycomb.localhost.json
+# Actual: meteor run --settings configs/settings.honeycomb.tdd.json
+```
+When tests fail with "Match failed [400]" or data isn't showing, first check you're updating the correct settings file!
+
+### 2. Method Call Debugging
+When getting "Match failed [400]" errors:
+1. **Check server console for detailed error**:
+   ```
+   Exception while invoking method 'researchStudies.update' Error: Match error: Expected string, got null
+   ```
+   This shows the exact validation failure
+
+2. **Debug method calls in Detail component**:
+   ```javascript
+   console.log('handleSave called with id:', id, 'id === "new":', id === 'new', 'typeof id:', typeof id);
+   ```
+
+3. **Common issue**: Component calling update instead of create
+   - Check if `id === 'new'` condition is working
+   - Handle cases where id might be undefined: `if (!id || id === 'new')`
+
+### 3. Schema Validation and CodeableConcepts
+**Issue**: SimpleSchema expects specific data structures for FHIR types
+- `status`: Expects a simple string, not an object
+- `phase`, `category`, `focus`: Expect CodeableConcept structure
+
+**Solution**: Transform data before save:
+```javascript
+// Convert simple string to CodeableConcept
+if (dataToSave.phase && typeof dataToSave.phase !== 'object') {
+  dataToSave.phase = {
+    coding: [{
+      system: 'http://hl7.org/fhir/research-study-phase',
+      code: dataToSave.phase,
+      display: phaseMap[dataToSave.phase] || dataToSave.phase
+    }],
+    text: phaseMap[dataToSave.phase] || dataToSave.phase
+  };
+}
+```
+
+### 4. Delete Button Visibility
+**Issue**: Delete test failing because it tries to enter edit mode first
+**Learning**: Delete button is visible when NOT in edit mode
+```javascript
+// Wrong approach in test:
+// Click Edit button first, then Delete
+
+// Correct approach:
+// Click Delete button directly (it's visible in view mode)
+```
+
+### 5. Handling Empty State After Deletion
+Tests must handle both scenarios after deletion:
+```javascript
+// Either research studies table or no-data message is valid
+const hasTable = document.querySelector('#researchStudiesTable') !== null;
+const hasNoDataCard = document.querySelector('.no-data-card') !== null ||
+                    document.querySelector('#researchStudiesPage').textContent.includes('No Data Available');
+return hasTable || hasNoDataCard;
+```
+
+### 6. Route Parameter Handling
+When using `useParams()` to get the ID:
+- Handle undefined/null cases: `const [isEditing, setIsEditing] = useState(!id || id === 'new');`
+- Apply same logic throughout component for consistency
+
+### 7. Console Error Messages Can Be Misleading
+**Learning**: "Update error" in console doesn't always mean update method was called
+- The error message comes from the client-side error handler
+- Check server logs for the actual method being called
+- In our case, it was still the create method failing validation

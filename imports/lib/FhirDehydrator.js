@@ -4841,6 +4841,7 @@ export function flattenResearchSubject(researchSubject, internalDateFormat){
     status: '',
     study: '',
     studyTitle: '',
+    studyDisplay: '',
     patientReference: '',
     patientDisplay: '',
     consent: '',
@@ -4861,6 +4862,7 @@ export function flattenResearchSubject(researchSubject, internalDateFormat){
   // Study details
   if (get(researchSubject, 'study.display')) {
     result.study = get(researchSubject, 'study.display', '');
+    result.studyDisplay = get(researchSubject, 'study.display', '');
   } else if (get(researchSubject, 'study.reference')) {
     result.study = get(researchSubject, 'study.reference', '');
   }
