@@ -11,6 +11,7 @@ import {
   Box,
   Typography,
   Card,
+  CardHeader,
   CardContent,
   CardActions,
   Select,
@@ -19,7 +20,12 @@ import {
   InputLabel,
   IconButton,
   InputAdornment,
-  Tooltip
+  Tooltip,
+  Stack,
+  Chip,
+  Alert,
+  Paper,
+  Dialog
 } from '@mui/material';
 
 import { useTheme } from '@mui/material/styles';
@@ -31,6 +37,8 @@ import SaveIcon from '@mui/icons-material/Save';
 import CancelIcon from '@mui/icons-material/Cancel';
 import DeleteIcon from '@mui/icons-material/Delete';
 import SearchIcon from '@mui/icons-material/Search';
+import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import QrCodeIcon from '@mui/icons-material/QrCode';
 
 import { Meteor } from 'meteor/meteor';
 import { Random } from 'meteor/random';
@@ -40,27 +48,22 @@ import { useTracker } from 'meteor/react-meteor-data';
 import { get, set, has, cloneDeep } from 'lodash';
 import moment from 'moment';
 
-// Get the Procedures collection from Meteor.Collections
-let Procedures;
-Meteor.startup(function(){
-  Procedures = Meteor.Collections.Procedures;
-});
+import PatientSearchDialog from '../../patient/PatientSearchDialog';
+import { FhirUtilities } from '../../lib/FhirUtilities';
 
-// Get the Patients collection 
-let Patients;
-Meteor.startup(function(){
-  if (Meteor.Collections?.Patients) {
-    Patients = Meteor.Collections.Patients;
-  }
-});
+// Import the collections directly - avoids timing issues
+import { Procedures } from '../../lib/schemas/SimpleSchemas/Procedures';
+import { Patients } from '../../lib/schemas/SimpleSchemas/Patients';
 
 //===========================================================================
 // COMPONENT
 
-export function ProcedureDetail(props) {
+function ProcedureDetail(props) {
   const theme = useTheme();
   const navigate = useNavigate();
   const { id } = useParams();
+  
+  console.log('ProcedureDetail component rendered with id:', id);
 
   const [procedure, setProcedure] = useState({
     resourceType: 'Procedure',
@@ -87,6 +90,9 @@ export function ProcedureDetail(props) {
   });
 
   const [isEditing, setIsEditing] = useState(!id || id === 'new');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [patientSearchOpen, setPatientSearchOpen] = useState(false);
 
   // Fetch existing procedure
   useEffect(() => {
@@ -132,7 +138,7 @@ export function ProcedureDetail(props) {
     setProcedure(newProcedure);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     console.log('=== ProcedureDetail handleSave called ===');
     console.log('Original procedure data:', procedure);
     console.log('Procedure status:', get(procedure, 'status'));
@@ -170,105 +176,150 @@ export function ProcedureDetail(props) {
       console.log('DataToSave has code:', dataToSave.code);
       console.log('DataToSave has subject:', dataToSave.subject);
       
-      Meteor.call('createProcedure', dataToSave, (error, result) => {
-        if (error) {
-          console.error('Create error:', error);
-          console.error('Error details:', error.details);
-          console.error('Error reason:', error.reason);
-          console.error('Error message:', error.message);
-          console.error('Full error object:', JSON.stringify(error, null, 2));
-          
-          // Show user-friendly error message
-          if (error.error === 'validation-error') {
-            alert('Validation Error: ' + error.reason);
-          } else if (error.error === 'not-authorized') {
-            alert('Authorization Error: You must be logged in to create procedures');
-          } else {
-            alert('Error creating procedure: ' + (error.reason || error.message || 'Unknown error'));
-          }
+      setLoading(true);
+      setError(null);
+      
+      try {
+        const result = await Meteor.callAsync('createProcedure', dataToSave);
+        console.log('Procedure created successfully with result:', result);
+        console.log('Navigating to /procedures');
+        navigate('/procedures');
+      } catch (error) {
+        console.error('Create error:', error);
+        console.error('Error details:', error.details);
+        console.error('Error reason:', error.reason);
+        console.error('Error message:', error.message);
+        console.error('Full error object:', JSON.stringify(error, null, 2));
+        
+        // Show user-friendly error message
+        if (error.error === 'validation-error') {
+          setError('Validation Error: ' + error.reason);
+        } else if (error.error === 'not-authorized') {
+          setError('Authorization Error: You must be logged in to create procedures');
         } else {
-          console.log('Procedure created successfully with result:', result);
-          console.log('Navigating to /procedures');
-          navigate('/procedures');
+          setError('Error creating procedure: ' + (error.reason || error.message || 'Unknown error'));
         }
-      });
+      } finally {
+        setLoading(false);
+      }
     } else {
       // Update existing procedure
-      Meteor.call('updateProcedure', id, dataToSave, (error, result) => {
-        if (error) {
-          console.error('Update error:', error);
-          console.error('Full error object:', JSON.stringify(error, null, 2));
-          alert('Error updating procedure: ' + (error.reason || error.message || 'Unknown error'));
-        } else {
-          console.log('Procedure updated successfully:', result);
-          console.log('Navigating to /procedures');
-          navigate('/procedures');
-        }
-      });
+      setLoading(true);
+      setError(null);
+      
+      try {
+        const result = await Meteor.callAsync('updateProcedure', id, dataToSave);
+        console.log('Procedure updated successfully:', result);
+        setIsEditing(false);
+      } catch (error) {
+        console.error('Update error:', error);
+        console.error('Full error object:', JSON.stringify(error, null, 2));
+        setError('Error updating procedure: ' + (error.reason || error.message || 'Unknown error'));
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
+    if (!id || id === 'new') return;
+    
     if (window.confirm('Are you sure you want to delete this procedure?')) {
-      Meteor.call('removeProcedure', id, (error, result) => {
-        if (error) {
-          console.error('Delete error:', error);
-        } else {
-          console.log('Procedure deleted');
-          navigate('/procedures');
-        }
-      });
+      setLoading(true);
+      try {
+        await Meteor.callAsync('removeProcedure', id);
+        console.log('Procedure deleted');
+        navigate('/procedures');
+      } catch (error) {
+        console.error('Delete error:', error);
+        setError('Error deleting procedure: ' + (error.reason || error.message || 'Unknown error'));
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
   const handleSearchUser = () => {
     console.log('Search user clicked');
-    // TODO: Implement patient search dialog
+    setPatientSearchOpen(true);
   };
 
-  const renderHeader = () => {
-    let headerText = id === 'new' ? 'New Procedure' : 'Procedure Details';
-    
-    return (
-      <Box sx={{ mb: 3 }}>
-        <Grid container spacing={2} alignItems="center">
-          <Grid item xs>
-            <Typography variant="h4">
-              {headerText}
-            </Typography>
-          </Grid>
-          <Grid item>
-            {!isEditing ? (
-              <Button
-                startIcon={<LockOpenIcon />}
-                onClick={() => setIsEditing(true)}
-                variant="outlined"
-              >
-                Edit
-              </Button>
-            ) : (
-              <Button
-                startIcon={<LockIcon />}
-                onClick={() => setIsEditing(false)}
-                variant="outlined"
-              >
-                Lock
-              </Button>
-            )}
-          </Grid>
-        </Grid>
-      </Box>
-    );
+  const handlePatientSelect = (patientId, patient) => {
+    console.log('Patient selected:', patientId, patient);
+    setProcedure(prev => ({
+      ...prev,
+      subject: {
+        reference: `Patient/${patientId}`,
+        display: get(patient, 'name[0].text', get(patient, 'name', ''))
+      }
+    }));
+    setPatientSearchOpen(false);
   };
 
   return (
     <Container id="procedureDetailPage" maxWidth="md" sx={{ py: 4 }}>
-      <Box>
-        {renderHeader()}
-        
-        <Card>
-          <CardContent>
-            <Grid container spacing={3}>
+      <Card sx={{ boxShadow: 3 }}>
+        <CardHeader 
+          title={
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <Typography variant="h6" className={id && id !== 'new' ? "barcode helveticas" : ""}>
+                {id && id !== 'new' ? id : 'New Record'}
+              </Typography>
+              {id && id !== 'new' && (
+                <Stack direction="row" spacing={2} alignItems="center">
+                  {/* Lock/Edit icon */}
+                  <Tooltip title={isEditing ? 'Edit Mode' : 'View Mode'}>
+                    <IconButton 
+                      size="small" 
+                      sx={{ color: 'inherit' }}
+                      onClick={() => setIsEditing(!isEditing)}
+                    >
+                      {isEditing ? <LockOpenIcon /> : <LockIcon />}
+                    </IconButton>
+                  </Tooltip>
+                  
+                  {/* ID/QR Code icon */}
+                  <Tooltip title="Resource ID">
+                    <IconButton size="small" sx={{ color: 'inherit' }}>
+                      <QrCodeIcon />
+                    </IconButton>
+                  </Tooltip>
+                  
+                  {/* Version */}
+                  <Chip 
+                    label={`v${get(procedure, 'meta.versionId', '1')}`} 
+                    size="small" 
+                    sx={{ bgcolor: 'rgba(255,255,255,0.3)' }}
+                  />
+                  
+                  {/* Last Updated */}
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                    <AccessTimeIcon sx={{ fontSize: 16 }} />
+                    <Typography variant="caption">
+                      {moment(get(procedure, 'meta.lastUpdated', new Date())).fromNow()}
+                    </Typography>
+                  </Box>
+                </Stack>
+              )}
+            </Box>
+          }
+          subheader={id === 'new' ? 'Create a new procedure' : `Procedure performed on ${moment(get(procedure, 'performedDateTime', '')).format('MMM DD, YYYY')}`}
+          sx={{ 
+            bgcolor: 'primary.main', 
+            color: 'primary.contrastText',
+            '& .MuiCardHeader-subheader': {
+              color: 'primary.contrastText',
+              opacity: 0.8
+            }
+          }}
+        />
+        <CardContent>
+          {error && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {error}
+            </Alert>
+          )}
+          <Grid container spacing={3}>
               {/* Patient Field */}
               <Grid item xs={12} md={6}>
                 <TextField
@@ -496,8 +547,9 @@ export function ProcedureDetail(props) {
                   onClick={handleSave}
                   variant="contained"
                   startIcon={<SaveIcon />}
+                  disabled={loading}
                 >
-                  Save
+                  {loading ? 'Saving...' : 'Save'}
                 </Button>
               </>
             )}
@@ -511,8 +563,20 @@ export function ProcedureDetail(props) {
               </Button>
             )}
           </CardActions>
-        </Card>
-      </Box>
+      </Card>
+      
+      {/* Patient Search Dialog */}
+      <Dialog 
+        open={patientSearchOpen} 
+        onClose={() => setPatientSearchOpen(false)}
+        maxWidth="md"
+        fullWidth
+      >
+        <PatientSearchDialog 
+          onSelect={handlePatientSelect}
+          defaultSearchTerm={get(procedure, 'subject.display', '')}
+        />
+      </Dialog>
     </Container>
   );
 }
