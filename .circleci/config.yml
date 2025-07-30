@@ -289,6 +289,11 @@ jobs:
             echo "Starting Nightwatch tests with CircleCI configuration..."
             if [ -f "nightwatch.circle.conf.js" ]; then
               echo "Using CircleCI-specific configuration"
+              
+              # Debug: Show the current nightwatch.circle.conf.js settings
+              echo "=== Debugging: Current nightwatch.circle.conf.js verbosity settings ==="
+              grep -A 10 -B 5 "detailed_output\|verbose\|log_path\|silent" nightwatch.circle.conf.js || true
+              
               # Create a modified config that doesn't start ChromeDriver
               echo "const config = require('./nightwatch.circle.conf.js');" > nightwatch.circle.manual.conf.js
               echo "config.test_settings.default.webdriver.start_process = false;" >> nightwatch.circle.manual.conf.js
@@ -296,6 +301,11 @@ jobs:
               echo "config.test_settings.default.webdriver.default_path_prefix = '';" >> nightwatch.circle.manual.conf.js
               echo "module.exports = config;" >> nightwatch.circle.manual.conf.js
               
+              # Debug: Show the generated config
+              echo "=== Generated nightwatch.circle.manual.conf.js ==="
+              cat nightwatch.circle.manual.conf.js
+              
+              echo "=== Running Nightwatch with reduced verbosity ==="
               # Run tests and capture exit code
               npx nightwatch --config nightwatch.circle.manual.conf.js
               TEST_EXIT_CODE=$?
