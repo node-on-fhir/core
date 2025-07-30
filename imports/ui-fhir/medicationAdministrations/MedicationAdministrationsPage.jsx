@@ -1,3 +1,5 @@
+// imports/ui-fhir/medicationAdministrations/MedicationAdministrationsPage.jsx
+
 import React, { useState } from 'react';
 import { useTracker } from 'meteor/react-meteor-data';
 import { useNavigate } from 'react-router-dom';
@@ -11,9 +13,13 @@ import {
   CardContent,
   Button,
   Box,
-  Typography
+  Typography,
+  ToggleButton,
+  ToggleButtonGroup
 } from '@mui/material';
-import AddIcon from '@mui/icons-material/Add'; 
+import AddIcon from '@mui/icons-material/Add';
+import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
+import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward'; 
 
 import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
@@ -51,6 +57,7 @@ Session.setDefault('MedicationAdministrationsTable.medicationAdministrationsInde
 
 export function MedicationAdministrationsPage(props){
   const navigate = useNavigate();
+  const [sortOrder, setSortOrder] = useState('descending');
 
   let data = {
     currentMedicationAdministrationId: '',
@@ -87,6 +94,16 @@ export function MedicationAdministrationsPage(props){
     return Session.get('showFhirIds');
   }, [])
 
+  // Subscribe to MedicationAdministrations
+  useTracker(function(){
+    let autoPublishEnabled = get(Meteor, 'settings.public.defaults.autopublish', false);
+    if(autoPublishEnabled){
+      return Meteor.subscribe('autopublish.MedicationAdministrations', {}, {});
+    } else {
+      return Meteor.subscribe('medicationAdministrations.all');
+    }
+  }, []);
+
 
   let headerHeight = LayoutHelpers.calcHeaderHeight();
   let formFactor = LayoutHelpers.determineFormFactor();
@@ -98,6 +115,12 @@ export function MedicationAdministrationsPage(props){
   function handleAddMedicationAdministration(){
     console.log('Add Medication Administration button clicked');
     navigate('/medication-administrations/new');
+  }
+
+  function handleSortOrderChange(event, newOrder){
+    if(newOrder !== null){
+      setSortOrder(newOrder);
+    }
   }
 
   function renderHeader() {
@@ -113,19 +136,48 @@ export function MedicationAdministrationsPage(props){
             </Typography>
           </Grid>
           <Grid item>
-            <Button
-              variant="contained"
-              color="primary"
-              startIcon={<AddIcon />}
-              onClick={handleAddMedicationAdministration}
-            >
-              Add Administration
-            </Button>
+            <Box display="flex" gap={2} alignItems="center">
+              <ToggleButtonGroup
+                value={sortOrder}
+                exclusive
+                onChange={handleSortOrderChange}
+                aria-label="sort order"
+                size="small"
+              >
+                <ToggleButton value="ascending" aria-label="ascending order">
+                  <ArrowUpwardIcon />
+                </ToggleButton>
+                <ToggleButton value="descending" aria-label="descending order">
+                  <ArrowDownwardIcon />
+                </ToggleButton>
+              </ToggleButtonGroup>
+              <Button
+                variant="contained"
+                color="primary"
+                startIcon={<AddIcon />}
+                onClick={handleAddMedicationAdministration}
+              >
+                Add Administration
+              </Button>
+            </Box>
           </Grid>
         </Grid>
       </Box>
     );
   }
+
+  // Sort medication administrations by effectiveDateTime
+  let sortedMedicationAdministrations = [...data.medicationAdministrations];
+  sortedMedicationAdministrations.sort((a, b) => {
+    let dateA = get(a, 'effectiveDateTime', '');
+    let dateB = get(b, 'effectiveDateTime', '');
+    
+    if (sortOrder === 'ascending') {
+      return dateA > dateB ? 1 : -1;
+    } else {
+      return dateA < dateB ? 1 : -1;
+    }
+  });
 
   let layoutContent;
   if(data.medicationAdministrations.length > 0){
@@ -142,8 +194,8 @@ export function MedicationAdministrationsPage(props){
       <CardContent sx={{ p: 0 }}>
         <MedicationAdministrationsTable 
           id='medicationAdministrationsTable'
-          medicationAdministrations={data.medicationAdministrations}
-          count={data.medicationAdministrations.length}  
+          medicationAdministrations={sortedMedicationAdministrations}
+          count={sortedMedicationAdministrations.length}  
           formFactorLayout={formFactor}
           rowsPerPage={LayoutHelpers.calcTableRows()} 
           actionButtonLabel="Remove"
@@ -156,6 +208,10 @@ export function MedicationAdministrationsPage(props){
           }}
           onSetPage={function(index){
             Session.set('MedicationAdministrationsTable.medicationAdministrationsIndex', index)
+          }}
+          onRowClick={function(medicationAdministrationId){
+            console.log('MedicationAdministrationsPage.onRowClick', medicationAdministrationId);
+            navigate('/medication-administrations/' + medicationAdministrationId);
           }}        
           page={data.medicationAdministrationsIndex}
         />

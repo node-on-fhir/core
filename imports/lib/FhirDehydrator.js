@@ -3182,7 +3182,8 @@ export function flattenMedication(medication, dateFormat){
 
   result.marketingAuthorizationHolderDisplay = get(medication, 'marketingAuthorizationHolder.display', '');
   result.marketingAuthorizationHolderReference = get(medication, 'marketingAuthorizationHolder.reference', '');
-  result.manufacturer = get(medication, 'marketingAuthorizationHolder.display', '');
+  // Handle both marketingAuthorizationHolder and manufacturer fields
+  result.manufacturer = get(medication, 'marketingAuthorizationHolder.display', '') || get(medication, 'manufacturer.display', '');
 
   if(get(medication, 'doseForm.text', '')){
     result.doseForm = get(medication, 'doseForm.text', '');

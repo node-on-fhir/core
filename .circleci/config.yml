@@ -19,6 +19,10 @@ jobs:
           TOOL_NODE_FLAGS: --max_old_space_size=4096
           TEST_BROWSER_DRIVER: chrome
           MONGO_URL: mongodb://mongo:27017/meteor_test
+          ENABLE_AUTOPUBLISH: true
+          DEV_AUTO_LOGIN: true
+          DEV_AUTO_USERNAME: "demouser"
+          DEV_AUTO_PASSWORD: "password2025"
       - image: mongo:6.0
         name: mongo
     
@@ -127,7 +131,7 @@ jobs:
           name: Start Meteor
           command: |
             if [ -f "configs/accounts.multiuser.settings.json" ]; then
-              meteor run --settings configs/accounts.multiuser.settings.json --port 3000
+              meteor run --settings configs/settings.honeycomb.tdd.json --port 3000
             else
               meteor run --port 3000
             fi
@@ -202,7 +206,7 @@ jobs:
             fi
             
             echo "=== Checking test files ==="
-            ls -la tests/nightwatch/honeycomb/ || echo "Test directory not found"
+            ls -la tests/nightwatch/honeycomb/enable_autopublish || echo "Test directory not found"
             
             echo "=== Checking Nightwatch configs ==="
             ls -la *.conf.js || echo "No config files found"

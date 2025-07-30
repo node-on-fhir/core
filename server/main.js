@@ -41,6 +41,9 @@ import '../imports/api/questionnaires/methods.js';
 import '../imports/api/questionnaireResponses/methods.js';
 import '../imports/api/researchSubjects/methods.js';
 import '../imports/api/serviceRequests/methods.js';
+import '../imports/api/medicationAdministrations/methods.js';
+import '../imports/api/medicationRequests/methods.js';
+import '../imports/api/medications/methods.js';
 
 // Import test methods (for non-production environments)
 import '../imports/accounts/server/test-methods.js';
@@ -244,6 +247,7 @@ global.Observations = Observations;
 global.Practitioners = Practitioners;
 global.Procedures = Procedures;
 global.MedicationRequests = MedicationRequests;
+global.Medications = Medications;
 global.MeasureReports = MeasureReports;
 global.Patients = Patients;
 global.Questionnaires = Questionnaires;

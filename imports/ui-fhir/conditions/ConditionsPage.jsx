@@ -32,9 +32,7 @@ import { get } from 'lodash';
 //=============================================================================================================================================
 // DATA CURSORS
 
-Meteor.startup(function(){
-  Conditions = Meteor.Collections.Conditions;
-})
+import { Conditions } from '/imports/lib/schemas/SimpleSchemas/Conditions';
 
 //=============================================================================================================================================
 // SESSION VARIABLES
@@ -61,14 +59,14 @@ export function ConditionsPage(props){
 
   // Subscribe to conditions data
   const isLoading = useTracker(() => {
-    const handle = Meteor.subscribe('autopublish.Conditions');
-    return !handle.ready();
-  }, []);
-
-  // Alternative subscription for development
-  useTracker(() => {
-    const handle = Meteor.subscribe('conditions.all');
-    return handle.ready();
+    let autoPublishEnabled = get(Meteor, 'settings.public.defaults.autopublish', false);
+    if(autoPublishEnabled){
+      const handle = Meteor.subscribe('autopublish.Conditions', {}, {});
+      return !handle.ready();
+    } else {
+      const handle = Meteor.subscribe('conditions.all');
+      return !handle.ready();
+    }
   }, []);
 
   let data = {

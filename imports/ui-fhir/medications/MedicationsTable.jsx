@@ -20,6 +20,17 @@ import { get } from 'lodash';
 import { FhirUtilities } from '../../lib/FhirUtilities';
 import { FhirDehydrator } from '../../lib/FhirDehydrator';
 
+// Logger definition
+const logger = {
+  debug: console.debug.bind(console),
+  trace: console.trace.bind(console),
+  data: console.log.bind(console),
+  verbose: console.debug.bind(console),
+  info: console.info.bind(console),
+  warn: console.warn.bind(console),
+  error: console.error.bind(console)
+};
+
 //===========================================================================
 // MAIN COMPONENT
 

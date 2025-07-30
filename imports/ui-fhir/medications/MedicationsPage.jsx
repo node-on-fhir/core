@@ -53,6 +53,13 @@ Session.setDefault('MedicationsTable.medicationsIndex', 0)
 export function MedicationsPage(props){
   const navigate = useNavigate();
 
+  // Subscribe to medications data
+  const isLoading = useTracker(() => {
+    // Check if we should use autopublish (development mode)
+    const handle = Meteor.subscribe('autopublish.Medications', {}, {});
+    return !handle.ready();
+  }, []);
+
   let data = {
     currentMedicationId: '',
     selectedMedication: null,
@@ -151,6 +158,11 @@ export function MedicationsPage(props){
           hideActionButton={get(Meteor, 'settings.public.modules.fhir.Medications.hideRemoveButtonOnTable', true)}
           onActionButtonClick={function(selectedId){
             Medications._collection.remove({_id: selectedId})
+          }}
+          onRowClick={function(medicationId){
+            console.log('Medication row clicked:', medicationId);
+            Session.set('selectedMedicationId', medicationId);
+            navigate('/medications/' + medicationId);
           }}
           onSetPage={function(index){
             Session.set('MedicationsTable.medicationsIndex', index)

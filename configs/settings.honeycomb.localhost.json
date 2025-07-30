@@ -302,6 +302,28 @@
           "search": true,
           "publication": true
         },
+        "MedicationAdministration": {
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "search"
+          ],
+          "search": true,
+          "publication": true
+        },
+        "MedicationRequest": {
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "search"
+          ],
+          "search": true,
+          "publication": true
+        },
         "NutritionOrder": {
           "interactions": [
             "read",

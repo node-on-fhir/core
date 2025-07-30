@@ -1,3 +1,4 @@
+// /Volumes/SonicMagic/Code/honeycomb-public-release/imports/ui-fhir/procedures/ProceduresTable.jsx
 
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
@@ -33,6 +34,16 @@ let set = _.set;
 import LayoutHelpers from '../../lib/LayoutHelpers';
 import FhirUtilities from '../../lib/FhirUtilities';
 import { FhirDehydrator } from '../../lib/FhirDehydrator';
+
+const logger = {
+  debug: console.debug.bind(console),
+  trace: console.trace.bind(console),
+  data: console.log.bind(console),
+  verbose: console.debug.bind(console),
+  info: console.info.bind(console),
+  warn: console.warn.bind(console),
+  error: console.error.bind(console)
+};
 
 //===========================================================================
 // THEMING

@@ -27,9 +27,7 @@ import { get } from 'lodash';
 //=============================================================================================================================================
 // DATA CURSORS
 
-Meteor.startup(function(){
-  MedicationRequests = Meteor.Collections.MedicationRequests;
-})
+import { MedicationRequests } from '/imports/lib/schemas/SimpleSchemas/MedicationRequests';
 
 
 //=============================================================================================================================================
@@ -87,6 +85,16 @@ export function MedicationRequestsPage(props){
   data.showFhirIds = useTracker(function(){
     return Session.get('showFhirIds');
   }, [])
+
+  // Subscribe to MedicationRequests
+  useTracker(function(){
+    let autoPublishEnabled = get(Meteor, 'settings.public.defaults.autopublish', false);
+    if(autoPublishEnabled){
+      return Meteor.subscribe('autopublish.MedicationRequests', {}, {});
+    } else {
+      return Meteor.subscribe('medicationRequests.all');
+    }
+  }, []);
 
 
   let headerHeight = LayoutHelpers.calcHeaderHeight();
@@ -157,7 +165,11 @@ export function MedicationRequestsPage(props){
           }}
           onSetPage={function(index){
             Session.set('MedicationRequestsTable.medicationRequestsIndex', index)
-          }}        
+          }}
+          onRowClick={function(medicationRequestId){
+            console.log('MedicationRequestsPage.onRowClick', medicationRequestId);
+            navigate('/medication-requests/' + medicationRequestId);
+          }}
           page={data.medicationRequestsIndex}
         />
       </CardContent>
