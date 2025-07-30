@@ -48,12 +48,12 @@ import { useTracker } from 'meteor/react-meteor-data';
 import { get, set, has, cloneDeep } from 'lodash';
 import moment from 'moment';
 
-import PatientSearchDialog from '../../components/PatientSearchDialog';
-import { FhirUtilities } from '../../lib/FhirUtilities';
+import PatientSearchDialog from '/imports/components/PatientSearchDialog';
+import { FhirUtilities } from '/imports/lib/FhirUtilities';
 
 // Import the collections directly - avoids timing issues
-import { Procedures } from '../../lib/schemas/SimpleSchemas/Procedures';
-import { Patients } from '../../lib/schemas/SimpleSchemas/Patients';
+import { Procedures } from '/imports/lib/schemas/SimpleSchemas/Procedures';
+import { Patients } from '/imports/lib/schemas/SimpleSchemas/Patients';
 
 //===========================================================================
 // COMPONENT
@@ -388,7 +388,7 @@ function ProcedureDetail(props) {
                   fullWidth
                   label="Performed Date/Time"
                   type="datetime-local"
-                  value={get(procedure, 'performedDateTime', '').substring(0, 16)}
+                  value={get(procedure, 'performedDateTime', '') ? String(get(procedure, 'performedDateTime', '')).substring(0, 16) : ''}
                   onChange={(e) => handleChange('performedDateTime', e.target.value)}
                   disabled={!isEditing}
                   InputLabelProps={{

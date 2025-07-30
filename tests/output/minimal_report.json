@@ -1,1 +1,1 @@
-{"modules":{"enable_autopublish/crud.medications":{"modulePath":"/Volumes/SonicMagic/Code/honeycomb-public-release/tests/nightwatch/honeycomb/enable_autopublish/crud.medications.js","status":"pass"}}}
+{"modules":{"crud.procedures":{"modulePath":"/Volumes/SonicMagic/Code/honeycomb-public-release/tests/nightwatch/honeycomb/enable_autopublish/crud.procedures.js","status":"fail"}}}

@@ -520,71 +520,11 @@ describe('Procedures CRUD Operations', function() {
     browser
       .waitForElementVisible('#proceduresPage', 5000)
       .pause(2000)  // Give subscription more time to update
-      .execute(function() {
-        // Check if Procedures collection exists and has data
-        if (window.Procedures) {
-          const procedures = window.Procedures.find().fetch();
-          console.log('Procedures in database:', procedures.length);
-          procedures.forEach((proc, index) => {
-            console.log(`Procedure ${index}:`, {
-              display: proc.code && proc.code.text,
-              status: proc.status,
-              id: proc._id
-            });
-          });
-        } else {
-          console.log('Procedures collection not available in window');
-        }
-        
-        // Check if table exists or no-data message
-        const hasTable = document.querySelector('#proceduresTable') !== null;
-        const hasNoDataCard = document.querySelector('.no-data-card') !== null ||
-                            (document.querySelector('#proceduresPage') && 
-                             document.querySelector('#proceduresPage').textContent.includes('No Data Available'));
-        
-        return {
-          hasTable: hasTable,
-          hasNoDataCard: hasNoDataCard,
-          pageContent: document.querySelector('#proceduresPage') ? 
-                       document.querySelector('#proceduresPage').innerText.substring(0, 200) : 'No page'
-        };
-      }, [], function(result) {
-        console.log('Page state:', result.value);
-      })
-      .pause(1000);
-      
-    // Check if either table exists or valid no-data state
-    browser.execute(function() {
-      const hasTable = document.querySelector('#proceduresTable') !== null;
-      const hasNoDataCard = document.querySelector('.no-data-card') !== null ||
-                          (document.querySelector('#proceduresPage') && 
-                           document.querySelector('#proceduresPage').textContent.includes('No Data Available'));
-      return hasTable || hasNoDataCard;
-    }, [], function(result) {
-      if (result.value) {
-        // Page is in a valid state, now check for the procedure
-        browser.execute(function(display) {
-          const table = document.querySelector('#proceduresTable');
-          if (table) {
-            return table.textContent.includes(display);
-          }
-          // If no table, check if procedures are in the database
-          if (window.Procedures) {
-            const procedures = window.Procedures.find().fetch();
-            return procedures.some(p => p.code && p.code.text === display);
-          }
-          return false;
-        }, [testProcedure.display], function(displayResult) {
-          if (!displayResult.value) {
-            console.warn('Procedure not found in table or database. This may indicate a save or display issue.');
-          }
-        });
-      } else {
-        browser.assert.fail('Page is not in a valid state - neither table nor no-data message found');
-      }
-    });
-      
-    browser.saveScreenshot('tests/nightwatch/screenshots/procedures/06-procedure-in-list.png');
+      .waitForElementVisible('#proceduresTable', 5000)
+      .assert.containsText('#proceduresTable', testProcedure.performerName)
+      .assert.containsText('#proceduresTable', testProcedure.display)
+      .assert.containsText('#proceduresTable', testProcedure.categoryDisplay)
+      .saveScreenshot('tests/nightwatch/screenshots/procedures/06-procedure-in-list.png');
   });
 
   it('06. View procedure details', browser => {
