@@ -105,18 +105,23 @@ const collectionsMap = {
 
 // Check if we're in production
 const isProduction = get(Meteor, 'settings.public.environment') === 'production';
-const isDevelopment = !isProduction && (get(Meteor, 'settings.public.environment') === 'development' || process.env.NODE_ENV === 'development' || !get(Meteor, 'settings.public.environment'));
+const isDevelopment = !isProduction && (get(Meteor, 'settings.public.environment') === 'development' || process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test' || !get(Meteor, 'settings.public.environment'));
 
 // Initialize autopublish if enabled AND not in production
 const autopublishEnabled = get(Meteor, 'settings.private.fhir.autopublishSubscriptions', false) && isDevelopment;
 
-if (autopublishEnabled) {
-  console.log('Autopublish is ENABLED for development. Setting up automatic publications...');
+// Also check for environment variable override for testing
+const forceAutopublish = process.env.ENABLE_AUTOPUBLISH === 'true';
+const finalAutopublishEnabled = autopublishEnabled || forceAutopublish;
+
+if (finalAutopublishEnabled) {
+  console.log('Autopublish is ENABLED for development/testing. Setting up automatic publications...');
+  console.log('Environment:', process.env.NODE_ENV, 'Force autopublish:', forceAutopublish);
 } else if (get(Meteor, 'settings.private.fhir.autopublishSubscriptions', false) && isProduction) {
   console.error('ERROR: Autopublish is not allowed in production. Ignoring autopublishSubscriptions setting.');
 }
 
-if (autopublishEnabled) {
+if (finalAutopublishEnabled) {
 
   // Create publications for each collection
   Object.keys(collectionsMap).forEach(function(collectionName) {
@@ -139,7 +144,7 @@ if (autopublishEnabled) {
           options.limit = options.limit || 1000;
           
           // In development with autopublish, allow unauthenticated access for testing
-          if (!this.userId && isDevelopment && autopublishEnabled) {
+          if (!this.userId && isDevelopment && finalAutopublishEnabled) {
             console.log(`Allowing unauthenticated access to ${collectionName} in development mode`);
             // Continue with the query
           } else if (!this.userId) {
@@ -171,7 +176,7 @@ if (autopublishEnabled) {
       const publicationName = `${collectionName.toLowerCase()}.all`;
       
       Meteor.publish(publicationName, function() {
-        if (!this.userId && isDevelopment && autopublishEnabled) {
+        if (!this.userId && isDevelopment && finalAutopublishEnabled) {
           console.log(`Publishing all ${collectionName} for development (unauthenticated)`);
           return collection.find({});
         } else if (!this.userId) {
@@ -190,4 +195,4 @@ if (autopublishEnabled) {
 }
 
 // Export the publication status for other modules to check
-export { autopublishEnabled };
+export { finalAutopublishEnabled as autopublishEnabled };

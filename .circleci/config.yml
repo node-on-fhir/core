@@ -220,6 +220,9 @@ jobs:
             echo "=== Create test output directories ==="
             mkdir -p tests/output/logs tests/screenshots
             chmod -R 777 tests/output tests/screenshots
+
+            echo "=== Check nightwatch.circle.conf.js ==="
+            echo nightwatch.circle.conf.j
       
       - run:
           name: Run Nightwatch tests
@@ -294,11 +297,18 @@ jobs:
               echo "=== Debugging: Current nightwatch.circle.conf.js verbosity settings ==="
               grep -A 10 -B 5 "detailed_output\|verbose\|log_path\|silent" nightwatch.circle.conf.js || true
               
-              # Create a modified config that doesn't start ChromeDriver
+              # Create a modified config that doesn't start ChromeDriver and reduces verbosity
               echo "const config = require('./nightwatch.circle.conf.js');" > nightwatch.circle.manual.conf.js
               echo "config.test_settings.default.webdriver.start_process = false;" >> nightwatch.circle.manual.conf.js
               echo "config.test_settings.default.webdriver.port = 9515;" >> nightwatch.circle.manual.conf.js
               echo "config.test_settings.default.webdriver.default_path_prefix = '';" >> nightwatch.circle.manual.conf.js
+              echo "// Disable verbose HTTP request/response logging" >> nightwatch.circle.manual.conf.js
+              echo "config.test_settings.default.webdriver.log_path = false;" >> nightwatch.circle.manual.conf.js
+              echo "config.test_settings.default.webdriver.verbose = false;" >> nightwatch.circle.manual.conf.js
+              echo "config.test_settings.default.webdriver.log_file_name = false;" >> nightwatch.circle.manual.conf.js
+              echo "// Disable request logging at the test level" >> nightwatch.circle.manual.conf.js
+              echo "config.test_settings.default.request_logs = false;" >> nightwatch.circle.manual.conf.js
+              echo "config.test_settings.default.enable_global_apis = false;" >> nightwatch.circle.manual.conf.js
               echo "module.exports = config;" >> nightwatch.circle.manual.conf.js
               
               # Debug: Show the generated config
@@ -307,7 +317,8 @@ jobs:
               
               echo "=== Running Nightwatch with reduced verbosity ==="
               # Run tests and capture exit code
-              npx nightwatch --config nightwatch.circle.manual.conf.js
+              # Using --silent flag to reduce output verbosity
+              npx nightwatch --config nightwatch.circle.manual.conf.js --reporter minimal
               TEST_EXIT_CODE=$?
             elif [ -f "nightwatch.conf.js" ]; then
               echo "Using default configuration"
