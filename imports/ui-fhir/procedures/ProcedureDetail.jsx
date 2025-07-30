@@ -48,7 +48,7 @@ import { useTracker } from 'meteor/react-meteor-data';
 import { get, set, has, cloneDeep } from 'lodash';
 import moment from 'moment';
 
-import PatientSearchDialog from '../../patient/PatientSearchDialog';
+import PatientSearchDialog from '../../components/PatientSearchDialog';
 import { FhirUtilities } from '../../lib/FhirUtilities';
 
 // Import the collections directly - avoids timing issues
