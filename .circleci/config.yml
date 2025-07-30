@@ -129,7 +129,7 @@ jobs:
       - run:
           name: Start Meteor
           command: |
-            if [ -f "configs/accounts.multiuser.settings.json" ]; then
+            if [ -f "configs/settings.honeycomb.tdd.json" ]; then
               meteor run --settings configs/settings.honeycomb.tdd.json --port 3000
             else
               meteor run --port 3000
@@ -339,6 +339,12 @@ jobs:
             fi
             find . -name "*.png" -type f -exec cp {} $CIRCLE_ARTIFACTS/ \; || true
             
+
+            # Collect Nightwatch report
+            if [ -d "tests/output/nightwatch-html-report" ]; then
+              cp -r tests/output/nightwatch-html-report $CIRCLE_ARTIFACTS/ || true
+            fi            
+
             # Collect logs
             if [ -d "tests/output/logs" ]; then
               cp -r tests/output/logs $CIRCLE_ARTIFACTS/ || true
