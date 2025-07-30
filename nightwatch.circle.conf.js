@@ -41,7 +41,7 @@ module.exports = {
       request_timeout_options: {
         timeout: 60000,
         retry_attempts: 3
-      }
+      },
       
       desiredCapabilities: {
         browserName: 'chrome',
