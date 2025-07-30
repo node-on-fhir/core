@@ -26,18 +26,12 @@ import LayoutHelpers from '../../lib/LayoutHelpers';
 
 import { get } from 'lodash';
 
+// Import the collection directly to avoid timing issues
+import { CarePlans } from '/imports/lib/schemas/SimpleSchemas/CarePlans';
+
 
 //=============================================================================================================================================
 // DATA CURSORS
-
-let CarePlans;
-
-Meteor.startup(function(){
-  console.log('CarePlansPage - Meteor.Collections:', Meteor.Collections);
-  console.log('CarePlansPage - Meteor.Collections.CarePlans:', Meteor.Collections.CarePlans);
-  CarePlans = Meteor.Collections.CarePlans;
-  console.log('CarePlansPage - CarePlans collection initialized:', CarePlans);
-})
 
 
 //=============================================================================================================================================
@@ -97,13 +91,18 @@ export function CarePlansPage(props){
     return Session.get('selectedCarePlanId');
   }, [])
   data.selectedCarePlan = useTracker(function(){
+    if (!CarePlans) return null;
     return CarePlans.findOne({_id: Session.get('selectedCarePlanId')});
   }, [])
   data.carePlans = useTracker(function(){
+    if (!CarePlans) {
+      console.log('CarePlansPage - CarePlans collection not ready');
+      return [];
+    }
     const plans = CarePlans.find({}, { sort: { 'meta.lastUpdated': -1 } }).fetch();
-    console.log('CarePlansPage - found care plans:', plans.length, plans);
+    console.log('CarePlansPage - found care plans:', plans.length);
     if (plans.length > 0) {
-      console.log('CarePlansPage - first care plan:', plans[0]);
+      console.log('CarePlansPage - first care plan author:', plans[0].author);
     }
     return plans;
   }, [])

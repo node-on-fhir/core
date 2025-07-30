@@ -25,11 +25,9 @@ import ProceduresTable from './ProceduresTable';
 import LayoutHelpers from '../../lib/LayoutHelpers';
 
 import { get } from 'lodash';
-// Get the Procedures collection from Meteor.Collections
-let Procedures;
-Meteor.startup(function(){
-  Procedures = Meteor.Collections.Procedures;
-});
+
+// Import the collection directly to avoid timing issues
+import { Procedures } from '/imports/lib/schemas/SimpleSchemas/Procedures';
 
 //=============================================================================================================================================
 // DATA CURSORS
@@ -86,10 +84,17 @@ export function ProceduresPage(props){
     return Session.get('selectedProcedureId');
   }, [])
   data.selectedProcedure = useTracker(function(){
+    if (!Procedures) return null;
     return Procedures.findOne({_id: Session.get('selectedProcedureId')});
   }, [])
   data.procedures = useTracker(function(){
-    return Procedures.find().fetch();
+    if (!Procedures) {
+      console.log('ProceduresPage - Procedures collection not ready');
+      return [];
+    }
+    const procs = Procedures.find().fetch();
+    console.log('ProceduresPage - found procedures:', procs.length);
+    return procs;
   }, [])
   data.proceduresIndex = useTracker(function(){
     return Session.get('ProceduresTable.proceduresIndex')
@@ -168,7 +173,11 @@ export function ProceduresPage(props){
           actionButtonLabel="Remove"
           hideActionButton={get(Meteor, 'settings.public.modules.fhir.Procedures.hideRemoveButtonOnTable', true)}
           onActionButtonClick={function(selectedId){
-            Procedures._collection.remove({_id: selectedId})
+            if (Procedures && Procedures._collection) {
+              Procedures._collection.remove({_id: selectedId})
+            } else {
+              console.error('Cannot remove procedure - collection not ready');
+            }
           }}
           onSetPage={function(index){
             Session.set('ProceduresTable.proceduresIndex', index)
