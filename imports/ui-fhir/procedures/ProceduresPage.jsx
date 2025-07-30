@@ -13,9 +13,13 @@ import {
   CardContent,
   Button,
   Box,
-  Typography
+  Typography,
+  ToggleButton,
+  ToggleButtonGroup
 } from '@mui/material';
-import AddIcon from '@mui/icons-material/Add'; 
+import AddIcon from '@mui/icons-material/Add';
+import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
+import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward'; 
 
 import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
@@ -53,6 +57,7 @@ Session.setDefault('ProceduresTable.proceduresIndex', 0)
 
 export function ProceduresPage(props){
   const navigate = useNavigate();
+  const [sortOrder, setSortOrder] = useState('descending');
 
   let data = {
     currentProcedureId: '',
@@ -92,10 +97,16 @@ export function ProceduresPage(props){
       console.log('ProceduresPage - Procedures collection not ready');
       return [];
     }
-    const procs = Procedures.find().fetch();
+    const sortOptions = {};
+    if (sortOrder === 'ascending') {
+      sortOptions.sort = { 'performedDateTime': 1 };
+    } else {
+      sortOptions.sort = { 'performedDateTime': -1 };
+    }
+    const procs = Procedures.find({}, sortOptions).fetch();
     console.log('ProceduresPage - found procedures:', procs.length);
     return procs;
-  }, [])
+  }, [sortOrder])
   data.proceduresIndex = useTracker(function(){
     return Session.get('ProceduresTable.proceduresIndex')
   }, [])
@@ -124,6 +135,12 @@ export function ProceduresPage(props){
     navigate('/procedures/' + procedureId);
   }
 
+  function handleSortOrderChange(event, newOrder){
+    if(newOrder !== null){
+      setSortOrder(newOrder);
+    }
+  }
+
   function renderHeader() {
     return (
       <Box mb={2}>
@@ -137,14 +154,30 @@ export function ProceduresPage(props){
             </Typography>
           </Grid>
           <Grid item>
-            <Button
-              variant="contained"
-              color="primary"
-              startIcon={<AddIcon />}
-              onClick={handleAddProcedure}
-            >
-              Add Procedure
-            </Button>
+            <Box display="flex" gap={2} alignItems="center">
+              <ToggleButtonGroup
+                value={sortOrder}
+                exclusive
+                onChange={handleSortOrderChange}
+                aria-label="sort order"
+                size="small"
+              >
+                <ToggleButton value="ascending" aria-label="ascending order">
+                  <ArrowUpwardIcon />
+                </ToggleButton>
+                <ToggleButton value="descending" aria-label="descending order">
+                  <ArrowDownwardIcon />
+                </ToggleButton>
+              </ToggleButtonGroup>
+              <Button
+                variant="contained"
+                color="primary"
+                startIcon={<AddIcon />}
+                onClick={handleAddProcedure}
+              >
+                Add Procedure
+              </Button>
+            </Box>
           </Grid>
         </Grid>
       </Box>

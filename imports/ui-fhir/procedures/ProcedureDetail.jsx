@@ -554,13 +554,28 @@ function ProcedureDetail(props) {
               </>
             )}
             {!isEditing && id !== 'new' && (
-              <Button
-                onClick={handleDelete}
-                color="error"
-                startIcon={<DeleteIcon />}
-              >
-                Delete
-              </Button>
+              <>
+                <Button
+                  onClick={() => navigate('/procedures')}
+                  startIcon={<CancelIcon />}
+                >
+                  Back
+                </Button>
+                <Button
+                  onClick={() => setIsEditing(true)}
+                  startIcon={<LockOpenIcon />}
+                  variant="outlined"
+                >
+                  Edit
+                </Button>
+                <Button
+                  onClick={handleDelete}
+                  color="error"
+                  startIcon={<DeleteIcon />}
+                >
+                  Delete
+                </Button>
+              </>
             )}
           </CardActions>
       </Card>
