@@ -38,6 +38,7 @@ module.exports = {
       log_screenshot_data: false, // Don't log base64 data, but still take screenshots
       // Disable HTTP request/response logging
       disable_colors: false,
+      enable_http_request_logging: false, // Disable WebDriver HTTP request/response logging
       request_timeout_options: {
         timeout: 60000,
         retry_attempts: 3

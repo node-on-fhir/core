@@ -222,7 +222,7 @@ jobs:
             chmod -R 777 tests/output tests/screenshots
 
             echo "=== Check nightwatch.circle.conf.js ==="
-            echo nightwatch.circle.conf.j
+            more nightwatch.circle.conf.js
       
       - run:
           name: Run Nightwatch tests
@@ -309,6 +309,8 @@ jobs:
               echo "// Disable request logging at the test level" >> nightwatch.circle.manual.conf.js
               echo "config.test_settings.default.request_logs = false;" >> nightwatch.circle.manual.conf.js
               echo "config.test_settings.default.enable_global_apis = false;" >> nightwatch.circle.manual.conf.js
+              echo "config.test_settings.default.enable_http_request_logging = false;" >> nightwatch.circle.manual.conf.js
+              echo "config.test_settings.default.log_path = false;" >> nightwatch.circle.manual.conf.js
               echo "module.exports = config;" >> nightwatch.circle.manual.conf.js
               
               # Debug: Show the generated config
@@ -318,7 +320,7 @@ jobs:
               echo "=== Running Nightwatch with reduced verbosity ==="
               # Run tests and capture exit code
               # Using --silent flag to reduce output verbosity
-              npx nightwatch --config nightwatch.circle.manual.conf.js --reporter minimal
+              npx nightwatch --config nightwatch.circle.manual.conf.js
               TEST_EXIT_CODE=$?
             elif [ -f "nightwatch.conf.js" ]; then
               echo "Using default configuration"
