@@ -25,7 +25,11 @@ import ProceduresTable from './ProceduresTable';
 import LayoutHelpers from '../../lib/LayoutHelpers';
 
 import { get } from 'lodash';
-import { Procedures } from '/imports/lib/schemas/SimpleSchemas/Procedures';
+// Get the Procedures collection from Meteor.Collections
+let Procedures;
+Meteor.startup(function(){
+  Procedures = Meteor.Collections.Procedures;
+});
 
 //=============================================================================================================================================
 // DATA CURSORS

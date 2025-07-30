@@ -269,12 +269,37 @@ describe('ServiceRequests CRUD Operations', function() {
         console.log('Has table:', hasTable);
         
         let buttonTexts = [];
+        let clicked = false;
+        
+        // Try multiple approaches to find the button
         for (let button of buttons) {
-          buttonTexts.push(button.textContent);
-          if (button.textContent.includes('Add Service Request') || 
-              button.textContent.includes('ADD SERVICE REQUEST')) {
+          const buttonText = button.textContent || button.innerText || '';
+          const trimmedText = buttonText.trim();
+          buttonTexts.push(trimmedText);
+          console.log('Checking button:', trimmedText, 'HTML:', button.outerHTML.substring(0, 100));
+          
+          // Check various text patterns
+          if (trimmedText.includes('Add Service Request') || 
+              trimmedText.includes('ADD SERVICE REQUEST') ||
+              trimmedText.includes('Add Your First Service Request') ||
+              trimmedText.toLowerCase().includes('add') && trimmedText.toLowerCase().includes('service request')) {
+            console.log('Found matching button, clicking:', trimmedText);
             button.click();
-            return { clicked: true, buttonText: button.textContent };
+            clicked = true;
+            return { clicked: true, buttonText: trimmedText };
+          }
+        }
+        
+        // If we didn't find it by text, try by class or other attributes
+        if (!clicked) {
+          const addButtons = document.querySelectorAll('button[class*="MuiButton"]');
+          for (let button of addButtons) {
+            const text = (button.textContent || '').trim();
+            if (text.toLowerCase().includes('service request')) {
+              console.log('Found button by MUI class, clicking:', text);
+              button.click();
+              return { clicked: true, buttonText: text, method: 'mui-class' };
+            }
           }
         }
         
@@ -288,6 +313,12 @@ describe('ServiceRequests CRUD Operations', function() {
         };
       }, [], function(result) {
         console.log('Button search result:', result.value);
+        if (!result.value.clicked) {
+          console.log('Failed to find button. Available buttons:', result.value.buttonTexts);
+          console.log('Page has Service Requests text:', result.value.hasServiceRequestsText);
+          console.log('Page has table:', result.value.hasTable);
+          console.log('Sample page content:', result.value.pageContentSample);
+        }
         browser.assert.equal(result.value.clicked, true, 'Clicked Add Service Request button');
       });
 

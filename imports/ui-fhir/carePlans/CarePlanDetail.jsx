@@ -92,10 +92,7 @@ function CarePlanDetail(props) {
       reference: "",
       display: ""
     },
-    author: {
-      reference: "",
-      display: ""
-    },
+    author: [],
     period: {
       start: moment().format('YYYY-MM-DD'),
       end: moment().add(1, 'year').format('YYYY-MM-DD')
@@ -129,6 +126,10 @@ function CarePlanDetail(props) {
 
   // Set initial state and author on component mount
   useEffect(function() {
+    console.log('=== Initial setup effect running ===');
+    console.log('ID:', id);
+    console.log('Current user:', currentUser);
+    
     if (!id || id === 'new') {
       // Enable editing for new care plans
       setIsEditing(true);
@@ -152,27 +153,44 @@ function CarePlanDetail(props) {
       let authorReference = '';
       
       if (currentUser) {
+        console.log('Setting author from current user');
+        console.log('Current user profile:', get(currentUser, 'profile'));
+        console.log('Current user profile.name:', get(currentUser, 'profile.name'));
+        
         authorName = get(currentUser, 'profile.name.text', '') ||
                     `${get(currentUser, 'profile.name.given[0]', '')} ${get(currentUser, 'profile.name.family', '')}`.trim() ||
                     get(currentUser, 'username', '');
         authorReference = `Practitioner/${get(currentUser, '_id', '')}`;
+        
+        console.log('Computed author name:', authorName);
+        console.log('Computed author reference:', authorReference);
+      } else {
+        console.log('No current user available for author');
       }
       
-      setCarePlan(prev => ({
-        ...prev,
-        subject: {
-          reference: patientReference,
-          display: patientName
-        },
-        author: {
-          reference: authorReference,
-          display: authorName
-        }
-      }));
+      console.log('Setting initial care plan with author:', { authorName, authorReference });
+      
+      setCarePlan(prev => {
+        const updated = {
+          ...prev,
+          subject: {
+            reference: patientReference,
+            display: patientName
+          },
+          author: [{
+            reference: authorReference,
+            display: authorName
+          }]
+        };
+        console.log('New care plan state:', updated);
+        return updated;
+      });
     } else {
       // Viewing existing care plan - start in read-only mode
       setIsEditing(false);
     }
+    
+    console.log('=== End initial setup effect ===');
   }, [id, currentUser, selectedPatient, selectedPatientId]);
 
   // Load care plan if editing
@@ -185,6 +203,13 @@ function CarePlanDetail(props) {
           const result = CarePlans.findOne({_id: id});
           if (result) {
             console.log('CarePlanDetail: Loaded care plan:', result);
+            
+            // Handle legacy care plans where author might be an object instead of an array
+            if (result.author && !Array.isArray(result.author)) {
+              console.log('CarePlanDetail: Converting legacy author object to array');
+              result.author = [result.author];
+            }
+            
             setCarePlan(result);
             setError(null); // Clear any previous errors
           }
@@ -203,10 +228,26 @@ function CarePlanDetail(props) {
   // Handle field changes
   function handleChange(path, value) {
     console.log('handleChange called with path:', path, 'value:', value);
+    
+    // Add specific logging for author field changes
+    if (path.startsWith('author')) {
+      console.log('=== Author field change detected ===');
+      console.log('Path:', path);
+      console.log('New value:', value);
+      console.log('Current author before change:', get(carePlan, 'author'));
+    }
+    
     setCarePlan(prevCarePlan => {
       const updatedCarePlan = JSON.parse(JSON.stringify(prevCarePlan)); // Deep clone
       set(updatedCarePlan, path, value);
       console.log('Updated care plan:', updatedCarePlan);
+      
+      // Log author field after update
+      if (path.startsWith('author')) {
+        console.log('Author after update:', get(updatedCarePlan, 'author'));
+        console.log('=== End author field change ===');
+      }
+      
       return updatedCarePlan;
     });
   }
@@ -286,18 +327,31 @@ function CarePlanDetail(props) {
 
   // Handle save
   async function handleSave() {
+    console.log('=== handleSave called ===');
+    console.log('Full care plan object before save:', carePlan);
+    console.log('Author field:', get(carePlan, 'author'));
+    console.log('Author[0].display:', get(carePlan, 'author[0].display'));
+    console.log('Author[0].reference:', get(carePlan, 'author[0].reference'));
+    console.log('Subject field:', get(carePlan, 'subject'));
+    console.log('Subject.display:', get(carePlan, 'subject.display'));
+    console.log('Subject.reference:', get(carePlan, 'subject.reference'));
+    
     setLoading(true);
     setError(null);
     
     try {
       if (id && id !== 'new') {
         // Update existing care plan
+        console.log('Updating care plan with ID:', id);
+        console.log('Sending care plan to updateCarePlan:', carePlan);
         await Meteor.callAsync('updateCarePlan', id, carePlan);
         console.log('Care plan updated successfully');
         // Exit edit mode after successful save
         setIsEditing(false);
       } else {
         // Create new care plan
+        console.log('Creating new care plan');
+        console.log('Sending care plan to createCarePlan:', carePlan);
         const newId = await Meteor.callAsync('createCarePlan', carePlan);
         console.log('Care plan created with ID:', newId);
         // Navigate back to care plans list for new care plans
@@ -309,6 +363,8 @@ function CarePlanDetail(props) {
     } finally {
       setLoading(false);
     }
+    
+    console.log('=== End handleSave ===');
   }
 
   // Handle delete
@@ -445,9 +501,13 @@ function CarePlanDetail(props) {
                 id="authorDisplay"
                 fullWidth
                 label="Author"
-                value={get(carePlan, 'author.display', '')}
-                onChange={(e) => handleChange('author.display', e.target.value)}
-                helperText={get(carePlan, 'author.reference', '') || 'Practitioner reference will be assigned'}
+                value={get(carePlan, 'author[0].display', '')}
+                onChange={(e) => {
+                  console.log('Author field onChange triggered');
+                  console.log('New value:', e.target.value);
+                  handleChange('author[0].display', e.target.value);
+                }}
+                helperText={get(carePlan, 'author[0].reference', '') || 'Practitioner reference will be assigned'}
                 disabled={!isEditing}
               />
             </Grid>

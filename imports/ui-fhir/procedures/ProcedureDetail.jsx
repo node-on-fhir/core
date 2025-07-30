@@ -40,8 +40,19 @@ import { useTracker } from 'meteor/react-meteor-data';
 import { get, set, has, cloneDeep } from 'lodash';
 import moment from 'moment';
 
-import { Procedures } from '/imports/lib/schemas/SimpleSchemas/Procedures';
-import { Patients } from '/imports/lib/schemas/SimpleSchemas/Patients';
+// Get the Procedures collection from Meteor.Collections
+let Procedures;
+Meteor.startup(function(){
+  Procedures = Meteor.Collections.Procedures;
+});
+
+// Get the Patients collection 
+let Patients;
+Meteor.startup(function(){
+  if (Meteor.Collections?.Patients) {
+    Patients = Meteor.Collections.Patients;
+  }
+});
 
 //===========================================================================
 // COMPONENT
@@ -122,6 +133,12 @@ export function ProcedureDetail(props) {
   };
 
   const handleSave = () => {
+    console.log('=== ProcedureDetail handleSave called ===');
+    console.log('Original procedure data:', procedure);
+    console.log('Procedure status:', get(procedure, 'status'));
+    console.log('Procedure code:', get(procedure, 'code'));
+    console.log('Procedure subject:', get(procedure, 'subject'));
+    
     const dataToSave = cloneDeep(procedure);
     
     // Ensure we have required fields
@@ -142,11 +159,20 @@ export function ProcedureDetail(props) {
         dataToSave.meta.versionId = '1';
       }
 
+      console.log('Creating new procedure with data:', dataToSave);
+      console.log('DataToSave has resourceType:', dataToSave.resourceType);
+      console.log('DataToSave has status:', dataToSave.status);
+      console.log('DataToSave has code:', dataToSave.code);
+      console.log('DataToSave has subject:', dataToSave.subject);
+      
       Meteor.call('createProcedure', dataToSave, (error, result) => {
         if (error) {
           console.error('Create error:', error);
+          console.error('Error details:', error.details);
+          console.error('Error reason:', error.reason);
+          console.error('Error message:', error.message);
         } else {
-          console.log('Procedure created:', result);
+          console.log('Procedure created successfully with result:', result);
           navigate('/procedures');
         }
       });
