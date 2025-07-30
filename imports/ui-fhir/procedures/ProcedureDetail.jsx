@@ -262,8 +262,8 @@ export function ProcedureDetail(props) {
   };
 
   return (
-    <Container maxWidth="md" sx={{ py: 4 }}>
-      <Box id="procedureDetailPage">
+    <Container id="procedureDetailPage" maxWidth="md" sx={{ py: 4 }}>
+      <Box>
         {renderHeader()}
         
         <Card>
