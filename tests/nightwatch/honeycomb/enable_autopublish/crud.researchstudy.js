@@ -50,13 +50,50 @@ describe('ResearchStudy CRUD Operations', function() {
 
     // Check if we're logged in (either via autologin or need to login manually)
     browser.execute(function() {
-      return {
-        isLoggedIn: typeof Meteor !== 'undefined' && !!Meteor.userId(),
-        userId: Meteor.userId ? Meteor.userId() : null,
-        username: Meteor.user ? (Meteor.user() ? Meteor.user().username : null) : null
-      };
+      // First check if Meteor is even defined
+      if (typeof Meteor === 'undefined') {
+        return {
+          meteorReady: false,
+          isLoggedIn: false,
+          userId: null,
+          username: null,
+          error: 'Meteor is not defined'
+        };
+      }
+      
+      try {
+        return {
+          meteorReady: true,
+          isLoggedIn: !!Meteor.userId(),
+          userId: Meteor.userId ? Meteor.userId() : null,
+          username: Meteor.user && Meteor.user() ? Meteor.user().username : null,
+          error: null
+        };
+      } catch (e) {
+        return {
+          meteorReady: true,
+          isLoggedIn: false,
+          userId: null,
+          username: null,
+          error: e.message
+        };
+      }
     }, [], function(result) {
+      console.log('Initial login state result:', result);
+      
+      if (!result.value) {
+        console.error('Execute command returned null/undefined.');
+        browser.assert.fail('Failed to check login state');
+        return;
+      }
+      
       console.log('Initial login state:', result.value);
+      
+      if (!result.value.meteorReady) {
+        console.error('Meteor is not ready:', result.value.error);
+        browser.assert.fail('Meteor is not loaded on the page');
+        return;
+      }
       
       if (!result.value.isLoggedIn) {
         console.log('Not logged in, attempting programmatic login...');

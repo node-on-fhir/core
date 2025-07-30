@@ -697,6 +697,7 @@ let ProcedureSchema = ProcedureR4;
 // BaseSchema.extend(ProcedureSchema);
 // DomainResourceSchema.extend(ProcedureSchema);
 
-Procedures.attachSchema(ProcedureSchema);
+// Procedures.attachSchema(ProcedureSchema);
+// TODO: Collection2 package needs to be installed for attachSchema to work in Meteor v3
 
 export { Procedure, Procedures, ProcedureSchema, ProcedureDstu2, ProcedureStu3, ProcedureR4 };
