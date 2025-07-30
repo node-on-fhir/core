@@ -697,6 +697,6 @@ let ProcedureSchema = ProcedureR4;
 // BaseSchema.extend(ProcedureSchema);
 // DomainResourceSchema.extend(ProcedureSchema);
 
-// Procedures.attachSchema(ProcedureSchema);
+Procedures.attachSchema(ProcedureSchema);
 
 export { Procedure, Procedures, ProcedureSchema, ProcedureDstu2, ProcedureStu3, ProcedureR4 };

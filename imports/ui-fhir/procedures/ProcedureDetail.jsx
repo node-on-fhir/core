@@ -147,6 +147,11 @@ export function ProcedureDetail(props) {
     }
     dataToSave.meta.lastUpdated = new Date();
     
+    // Convert performedDateTime string to Date object if present
+    if (dataToSave.performedDateTime && typeof dataToSave.performedDateTime === 'string') {
+      dataToSave.performedDateTime = new Date(dataToSave.performedDateTime);
+    }
+    
     // Ensure performer has reference if display is set
     if (get(dataToSave, 'performer[0].actor.display') && !get(dataToSave, 'performer[0].actor.reference')) {
       set(dataToSave, 'performer[0].actor.reference', `Practitioner/${Random.id()}`);
@@ -171,8 +176,19 @@ export function ProcedureDetail(props) {
           console.error('Error details:', error.details);
           console.error('Error reason:', error.reason);
           console.error('Error message:', error.message);
+          console.error('Full error object:', JSON.stringify(error, null, 2));
+          
+          // Show user-friendly error message
+          if (error.error === 'validation-error') {
+            alert('Validation Error: ' + error.reason);
+          } else if (error.error === 'not-authorized') {
+            alert('Authorization Error: You must be logged in to create procedures');
+          } else {
+            alert('Error creating procedure: ' + (error.reason || error.message || 'Unknown error'));
+          }
         } else {
           console.log('Procedure created successfully with result:', result);
+          console.log('Navigating to /procedures');
           navigate('/procedures');
         }
       });
@@ -181,8 +197,11 @@ export function ProcedureDetail(props) {
       Meteor.call('updateProcedure', id, dataToSave, (error, result) => {
         if (error) {
           console.error('Update error:', error);
+          console.error('Full error object:', JSON.stringify(error, null, 2));
+          alert('Error updating procedure: ' + (error.reason || error.message || 'Unknown error'));
         } else {
-          console.log('Procedure updated:', result);
+          console.log('Procedure updated successfully:', result);
+          console.log('Navigating to /procedures');
           navigate('/procedures');
         }
       });
@@ -302,9 +321,8 @@ export function ProcedureDetail(props) {
                   >
                     <MenuItem value="preparation">Preparation</MenuItem>
                     <MenuItem value="in-progress">In Progress</MenuItem>
-                    <MenuItem value="not-done">Not Done</MenuItem>
-                    <MenuItem value="on-hold">On Hold</MenuItem>
-                    <MenuItem value="stopped">Stopped</MenuItem>
+                    <MenuItem value="suspended">Suspended</MenuItem>
+                    <MenuItem value="aborted">Aborted</MenuItem>
                     <MenuItem value="completed">Completed</MenuItem>
                     <MenuItem value="entered-in-error">Entered in Error</MenuItem>
                     <MenuItem value="unknown">Unknown</MenuItem>
