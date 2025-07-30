@@ -220,9 +220,6 @@ jobs:
             echo "=== Create test output directories ==="
             mkdir -p tests/output/logs tests/screenshots
             chmod -R 777 tests/output tests/screenshots
-
-            echo "=== Check nightwatch.circle.conf.js ==="
-            more nightwatch.circle.conf.js
       
       - run:
           name: Run Nightwatch tests
