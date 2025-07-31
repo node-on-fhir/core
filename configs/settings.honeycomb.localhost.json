@@ -417,6 +417,17 @@
           "search": true,
           "publication": true
         },
+        "Procedure": {
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "search"
+          ],
+          "search": true,
+          "publication": true
+        },
         "ServiceRequest": {
           "interactions": [
             "read",

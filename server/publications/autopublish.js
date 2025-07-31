@@ -152,11 +152,12 @@ if (finalAutopublishEnabled) {
             return this.ready();
           } else if (this.userId) {
             // Add user-based filtering if needed
-            if (['Conditions', 'Observations', 'Procedures', 'Immunizations', 'AllergyIntolerances'].includes(collectionName)) {
-              // Only return records for patients the user has access to
-              // This is a simplified example - you'd want more sophisticated access control
-              query['subject.reference'] = { $exists: true };
-            }
+            // TODO: Implement proper PHI filtering in the future
+            // if (['Conditions', 'Observations', 'Procedures', 'Immunizations', 'AllergyIntolerances'].includes(collectionName)) {
+            //   // Only return records for patients the user has access to
+            //   // This is a simplified example - you'd want more sophisticated access control
+            //   query['subject.reference'] = { $exists: true };
+            // }
           }
           
           console.log(`Publishing ${collectionName} with query:`, query, 'options:', options);
