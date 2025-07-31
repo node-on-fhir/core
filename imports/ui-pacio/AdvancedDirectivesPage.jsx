@@ -68,11 +68,7 @@ import { RelatedPersons } from '../lib/schemas/SimpleSchemas/RelatedPersons';
 import { Patients } from '../lib/schemas/SimpleSchemas/Patients';
 import { FhirUtilities } from '../lib/FhirUtilities';
 
-// Import the page components for the new tabs
-import AllergyIntolerancesPage from '../ui-fhir/allergyIntolerances/AllergyIntolerancesPage.jsx';
-import CarePlansPage from '../ui-fhir/carePlans/CarePlansPage.jsx';
-import ConditionsPage from '../ui-fhir/conditions/ConditionsPage.jsx';
-import ProceduresPage from '../ui-fhir/procedures/ProceduresPage.jsx';
+// Removed unused page imports - now using only DocumentReferences
 
 
 const directiveTypes = [
@@ -146,23 +142,16 @@ function AdvancedDirectivesPage(props) {
     console.log('All DocumentReferences for patient:', allDocumentReferences);
     console.log('Document types found:', allDocumentReferences.map(d => get(d, 'type')));
     
-    // Filter for advanced directive types if they exist, otherwise show all
-    const documentReferences = allDocumentReferences.filter(doc => {
+    // Filter for advance directive types only
+    const advanceDirectives = allDocumentReferences.filter(doc => {
       const typeCode = get(doc, 'type.coding[0].code');
-      const isAdvancedDirective = directiveTypes.map(d => d.code).includes(typeCode);
-      
-      console.log('Checking document:', {
-        docId: doc._id,
-        typeCode: typeCode,
-        fullType: get(doc, 'type'),
-        isAdvancedDirective: isAdvancedDirective,
-        validCodes: directiveTypes.map(d => d.code)
-      });
-      
-      // If no type code or not an advanced directive type, still include it
-      // This ensures we don't hide documents that might be relevant
-      return isAdvancedDirective || !typeCode || allDocumentReferences.length <= 5;
+      return directiveTypes.map(d => d.code).includes(typeCode);
     });
+    
+    // Keep all documents for the "All Documents" tab
+    const documentReferences = advanceDirectives;
+    
+    console.log(`Found ${allDocumentReferences.length} total documents, ${advanceDirectives.length} are advance directives`);
 
     const consents = Consents.find(query).fetch();
     const relatedPersons = RelatedPersons.find({ patient: query['subject.reference'] }).fetch();
@@ -429,12 +418,9 @@ function AdvancedDirectivesPage(props) {
       </Box>
 
       <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
-        <Tabs value={tabValue} onChange={handleTabChange} aria-label="advance healthcare directives tabs">
-          <Tab label="Documents & Preferences" />
-          <Tab label="Allergies" />
-          <Tab label="Conditions" />
-          <Tab label="Care Plans" />
-          <Tab label="Procedures" />
+        <Tabs value={tabValue} onChange={handleTabChange} aria-label="document tabs">
+          <Tab label="Advance Directives" />
+          <Tab label="All Documents" />
         </Tabs>
       </Box>
 
@@ -444,7 +430,7 @@ function AdvancedDirectivesPage(props) {
           <Grid item xs={12} md={8}>
             <Card>
               <CardHeader
-                title={data.patient ? `Advance Directives & Living Will - ${FhirUtilities.pluckName(data.patient)}` : "Advance Directives & Living Will"}
+                title={data.patient ? `Advance Directives - ${FhirUtilities.pluckName(data.patient)}` : "Advance Directives"}
                 subheader="Legal documents that specify your healthcare wishes"
               action={
                 <Box>
@@ -466,13 +452,13 @@ function AdvancedDirectivesPage(props) {
               {data.loading ? (
                 <Typography>Loading documents...</Typography>
               ) : data.documentReferences.length === 0 ? (
-                <Alert severity="warning">
-                  <AlertTitle>No Advance Healthcare Directives Found</AlertTitle>
+                <Alert severity="info">
+                  <AlertTitle>No Advance Directives Found</AlertTitle>
                   {data.allDocumentReferences.length > 0 ? (
                     <>
-                      Found {data.allDocumentReferences.length} document(s) but none match advanced directive types.
+                      Found {data.allDocumentReferences.length} document(s) but none are advance directive types.
                       <br />
-                      Document types found: {data.allDocumentReferences.map(d => get(d, 'type.text') || get(d, 'type.coding[0].display') || 'Unknown').join(', ')}
+                      Check the "All Documents" tab to view other clinical documents.
                     </>
                   ) : (
                     'Consider uploading your advance healthcare directives, living will, or healthcare proxy documents.'
@@ -615,31 +601,66 @@ function AdvancedDirectivesPage(props) {
       </Grid>
       )}
 
-      {/* Tab Panel 1: Allergies */}
+      {/* Tab Panel 1: All Documents */}
       {tabValue === 1 && (
         <Box sx={{ mt: 2 }}>
-          <AllergyIntolerancesPage />
-        </Box>
-      )}
-
-      {/* Tab Panel 2: Conditions */}
-      {tabValue === 2 && (
-        <Box sx={{ mt: 2 }}>
-          <ConditionsPage />
-        </Box>
-      )}
-
-      {/* Tab Panel 3: Care Plans */}
-      {tabValue === 3 && (
-        <Box sx={{ mt: 2 }}>
-          <CarePlansPage />
-        </Box>
-      )}
-
-      {/* Tab Panel 4: Procedures */}
-      {tabValue === 4 && (
-        <Box sx={{ mt: 2 }}>
-          <ProceduresPage />
+          <Card>
+            <CardHeader
+              title="All Clinical Documents"
+              subheader="All medical documents including clinical notes, discharge summaries, and advance directives"
+            />
+            <CardContent>
+              {data.loading ? (
+                <Typography>Loading documents...</Typography>
+              ) : data.allDocumentReferences.length === 0 ? (
+                <Alert severity="info">
+                  <AlertTitle>No Documents Found</AlertTitle>
+                  No clinical documents are available for this patient.
+                </Alert>
+              ) : (
+                <List>
+                  {data.allDocumentReferences.map((doc) => (
+                    <React.Fragment key={doc._id}>
+                      <ListItem>
+                        <ListItemIcon>
+                          <DescriptionIcon />
+                        </ListItemIcon>
+                        <ListItemText
+                          primary={get(doc, 'type.text', get(doc, 'type.coding[0].display', 'Clinical Document'))}
+                          secondary={
+                            <Stack direction="row" spacing={1} alignItems="center">
+                              <Typography variant="body2" color="text.secondary">
+                                {moment(get(doc, 'date')).format('MMMM DD, YYYY')}
+                              </Typography>
+                              {get(doc, 'description') && (
+                                <Typography variant="body2" color="text.secondary">
+                                  • {get(doc, 'description')}
+                                </Typography>
+                              )}
+                              {get(doc, 'status') === 'current' ? (
+                                <Chip icon={<VerifiedIcon />} label="Current" size="small" color="success" />
+                              ) : (
+                                <Chip label={get(doc, 'status', 'Unknown')} size="small" />
+                              )}
+                            </Stack>
+                          }
+                        />
+                        <ListItemSecondaryAction>
+                          <IconButton onClick={() => handleViewDocument(doc)} title="View Document">
+                            <VisibilityIcon />
+                          </IconButton>
+                          <IconButton onClick={() => handleShare(doc)} title="Share Document">
+                            <ShareIcon />
+                          </IconButton>
+                        </ListItemSecondaryAction>
+                      </ListItem>
+                      <Divider variant="inset" component="li" />
+                    </React.Fragment>
+                  ))}
+                </List>
+              )}
+            </CardContent>
+          </Card>
         </Box>
       )}
 

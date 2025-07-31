@@ -284,7 +284,7 @@ function MedicationRequestDetail(props) {
   ];
 
   return (
-    <Container maxWidth="md" sx={{ py: 4 }}>
+    <Container id="medicationRequestDetailPage" maxWidth="md" sx={{ py: 4 }}>
       <Card sx={{ boxShadow: 3 }}>
         <CardHeader 
           title={id && id !== 'new' ? 'Edit Medication Request' : 'New Medication Request'}
@@ -306,6 +306,7 @@ function MedicationRequestDetail(props) {
           
           <Stack spacing={3}>
             <TextField
+              id="subjectDisplay"
               fullWidth
               label="Patient"
               value={get(medicationRequest, 'subject.display', '')}
@@ -315,6 +316,7 @@ function MedicationRequestDetail(props) {
             
             <Stack direction="row" spacing={2}>
               <TextField
+                id="medicationDisplay"
                 fullWidth
                 label="Medication Name"
                 value={get(medicationRequest, 'medicationCodeableConcept.text', '') || 
@@ -325,6 +327,7 @@ function MedicationRequestDetail(props) {
               />
               
               <TextField
+                id="medicationCode"
                 fullWidth
                 label="Medication Code"
                 value={get(medicationRequest, 'medicationCodeableConcept.coding[0].code', '')}
@@ -353,6 +356,7 @@ function MedicationRequestDetail(props) {
               <FormControl fullWidth disabled={!isEditing}>
                 <InputLabel>Status</InputLabel>
                 <Select
+                  id="status"
                   value={get(medicationRequest, 'status', 'active')}
                   onChange={(e) => handleChange('status', e.target.value)}
                   label="Status"
@@ -368,6 +372,7 @@ function MedicationRequestDetail(props) {
               <FormControl fullWidth disabled={!isEditing}>
                 <InputLabel>Intent</InputLabel>
                 <Select
+                  id="intent"
                   value={get(medicationRequest, 'intent', 'order')}
                   onChange={(e) => handleChange('intent', e.target.value)}
                   label="Intent"
@@ -383,6 +388,7 @@ function MedicationRequestDetail(props) {
               <FormControl fullWidth disabled={!isEditing}>
                 <InputLabel>Priority</InputLabel>
                 <Select
+                  id="priority"
                   value={get(medicationRequest, 'priority', 'routine')}
                   onChange={(e) => handleChange('priority', e.target.value)}
                   label="Priority"
@@ -396,6 +402,7 @@ function MedicationRequestDetail(props) {
               </FormControl>
               
               <TextField
+                id="authoredOn"
                 fullWidth
                 type="date"
                 label="Authored On"
@@ -407,6 +414,7 @@ function MedicationRequestDetail(props) {
             </Stack>
             
             <TextField
+              id="requesterDisplay"
               fullWidth
               label="Requester"
               value={get(medicationRequest, 'requester.display', '')}
@@ -418,6 +426,7 @@ function MedicationRequestDetail(props) {
             <Typography variant="h6" sx={{ mt: 2 }}>Dosage Instructions</Typography>
             
             <TextField
+              id="dosageInstruction"
               fullWidth
               multiline
               rows={2}
@@ -487,8 +496,31 @@ function MedicationRequestDetail(props) {
               </FormControl>
               
               <TextField
+                id="dosageTiming"
                 fullWidth
-                label="Route"
+                label="Timing"
+                value={get(medicationRequest, 'dosageInstruction[0].timing.code.text', '')}
+                onChange={(e) => handleChange('dosageInstruction[0].timing.code.text', e.target.value)}
+                helperText="e.g., 1/d, BID, TID"
+                disabled={!isEditing}
+              />
+            </Stack>
+            
+            <Stack direction="row" spacing={2}>
+              <TextField
+                id="dosageRouteCode"
+                fullWidth
+                label="Route Code"
+                value={get(medicationRequest, 'dosageInstruction[0].route.coding[0].code', '')}
+                onChange={(e) => handleChange('dosageInstruction[0].route.coding[0].code', e.target.value)}
+                helperText="SNOMED code"
+                disabled={!isEditing}
+              />
+              
+              <TextField
+                id="dosageRouteDisplay"
+                fullWidth
+                label="Route Display"
                 value={get(medicationRequest, 'dosageInstruction[0].route.coding[0].display', '')}
                 onChange={(e) => handleChange('dosageInstruction[0].route.coding[0].display', e.target.value)}
                 helperText="e.g., oral, IV, IM"
@@ -500,6 +532,7 @@ function MedicationRequestDetail(props) {
             
             <Stack direction="row" spacing={2}>
               <TextField
+                id="dispenseQuantity"
                 fullWidth
                 type="number"
                 label="Dispense Quantity"
@@ -509,11 +542,23 @@ function MedicationRequestDetail(props) {
               />
               
               <TextField
+                id="dispenseUnit"
                 fullWidth
                 label="Dispense Unit"
                 value={get(medicationRequest, 'dispenseRequest.quantity.unit', '')}
                 onChange={(e) => handleChange('dispenseRequest.quantity.unit', e.target.value)}
                 helperText="e.g., tablets, mL"
+                disabled={!isEditing}
+              />
+              
+              <TextField
+                id="numberOfRepeats"
+                fullWidth
+                type="number"
+                label="Number of Repeats"
+                value={get(medicationRequest, 'dispenseRequest.numberOfRepeatsAllowed', '')}
+                onChange={(e) => handleChange('dispenseRequest.numberOfRepeatsAllowed', parseInt(e.target.value) || null)}
+                helperText="Number of refills allowed"
                 disabled={!isEditing}
               />
             </Stack>
@@ -539,6 +584,42 @@ function MedicationRequestDetail(props) {
                 disabled={!isEditing}
               />
             </Stack>
+            
+            <Typography variant="h6" sx={{ mt: 2 }}>Clinical Information</Typography>
+            
+            <Stack direction="row" spacing={2}>
+              <TextField
+                id="reasonCode"
+                fullWidth
+                label="Reason Code"
+                value={get(medicationRequest, 'reasonCode[0].coding[0].code', '')}
+                onChange={(e) => handleChange('reasonCode[0].coding[0].code', e.target.value)}
+                helperText="SNOMED code for condition"
+                disabled={!isEditing}
+              />
+              
+              <TextField
+                id="reasonDisplay"
+                fullWidth
+                label="Reason Display"
+                value={get(medicationRequest, 'reasonCode[0].text', '') || get(medicationRequest, 'reasonCode[0].coding[0].display', '')}
+                onChange={(e) => handleChange('reasonCode[0].text', e.target.value)}
+                helperText="e.g., Hypertension, Diabetes"
+                disabled={!isEditing}
+              />
+            </Stack>
+            
+            <TextField
+              id="notesTextarea"
+              fullWidth
+              multiline
+              rows={3}
+              label="Notes"
+              value={get(medicationRequest, 'note[0].text', '')}
+              onChange={(e) => handleChange('note[0].text', e.target.value)}
+              helperText="Additional notes or instructions"
+              disabled={!isEditing}
+            />
           </Stack>
         </CardContent>
         

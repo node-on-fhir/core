@@ -957,5 +957,5 @@ let EncounterSchema = EncounterSchemaR4;
 // Encounters.attachSchema(EncounterSchema);
 
 
-export { Encounter, ncounterSchemaDstu2, EncounterSchema, EncounterSchemaStu3 }
+export { Encounter, EncounterSchemaDstu2, EncounterSchema, EncounterSchemaStu3 }
 

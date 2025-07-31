@@ -36,6 +36,13 @@ module.exports = {
       detailed_output: false,
       disable_error_log: false,
       log_screenshot_data: false, // Don't log base64 data, but still take screenshots
+      // Disable HTTP request/response logging
+      disable_colors: false,
+      enable_http_request_logging: false, // Disable WebDriver HTTP request/response logging
+      request_timeout_options: {
+        timeout: 60000,
+        retry_attempts: 3
+      },
       
       desiredCapabilities: {
         browserName: 'chrome',
@@ -58,14 +65,15 @@ module.exports = {
         start_process: true,
         // ChromeDriver will be installed by CircleCI orb
         server_path: chromeDriverPath,
-        log_path: './tests/output/logs',
+        log_path: false,  // Disable webdriver HTTP request logging
         port: 9515,
         cli_args: [
           '--log-level=WARNING',  // Only show warnings and errors
           '--port=9515',
           '--allowed-ips=',
           '--disable-dev-shm-usage',
-          '--whitelisted-ips='
+          '--whitelisted-ips=',
+          '--silent'  // Add silent flag to reduce ChromeDriver output
         ],
         // Increase timeout for webdriver
         timeout_options: {
@@ -74,7 +82,10 @@ module.exports = {
         },
         // Additional selenium settings
         keep_alive: true,
-        check_process_delay: 1000
+        check_process_delay: 1000,
+        // Disable verbose output
+        verbose: false,
+        log_file_name: false  // Don't create log files
       }
     }
   },

@@ -26,13 +26,12 @@ import LayoutHelpers from '../../lib/LayoutHelpers';
 
 import { get } from 'lodash';
 
+// Import the collection directly to avoid timing issues
+import { CarePlans } from '/imports/lib/schemas/SimpleSchemas/CarePlans';
+
 
 //=============================================================================================================================================
 // DATA CURSORS
-
-Meteor.startup(function(){
-  CarePlans = Meteor.Collections.CarePlans;
-})
 
 
 //=============================================================================================================================================
@@ -64,6 +63,24 @@ export function CarePlansPage(props){
     carePlansIndex: 0
   };
 
+  // Subscribe to CarePlans
+  useTracker(function(){
+    console.log('CarePlansPage - checking autopublish setting:', get(Meteor, 'settings.public.defaults.autopublish'));
+    let autoPublishEnabled = get(Meteor, 'settings.public.defaults.autopublish', false);
+    if(autoPublishEnabled){
+      console.log('CarePlansPage - subscribing to autopublish.CarePlans');
+      const handle = Meteor.subscribe('autopublish.CarePlans', {}, {});
+      console.log('CarePlansPage - subscription ready?', handle.ready());
+      return handle;
+    } else {
+      // Try the simple subscription
+      console.log('CarePlansPage - subscribing to careplans.all');
+      const handle = Meteor.subscribe('careplans.all');
+      console.log('CarePlansPage - subscription ready?', handle.ready());
+      return handle;
+    }
+  }, []);
+
   data.onePageLayout = useTracker(function(){
     return Session.get('CarePlansPage.onePageLayout');
   }, [])
@@ -74,10 +91,20 @@ export function CarePlansPage(props){
     return Session.get('selectedCarePlanId');
   }, [])
   data.selectedCarePlan = useTracker(function(){
+    if (!CarePlans) return null;
     return CarePlans.findOne({_id: Session.get('selectedCarePlanId')});
   }, [])
   data.carePlans = useTracker(function(){
-    return CarePlans.find().fetch();
+    if (!CarePlans) {
+      console.log('CarePlansPage - CarePlans collection not ready');
+      return [];
+    }
+    const plans = CarePlans.find({}, { sort: { 'meta.lastUpdated': -1 } }).fetch();
+    console.log('CarePlansPage - found care plans:', plans.length);
+    if (plans.length > 0) {
+      console.log('CarePlansPage - first care plan author:', plans[0].author);
+    }
+    return plans;
   }, [])
   data.carePlansIndex = useTracker(function(){
     return Session.get('CarePlansTable.carePlansIndex')
@@ -99,7 +126,7 @@ export function CarePlansPage(props){
 
   function handleAddCarePlan(){
     console.log('Add Care Plan button clicked');
-    navigate('/care-plans/new');
+    navigate('/careplans/new');
   }
 
   function renderHeader() {
@@ -152,6 +179,9 @@ export function CarePlansPage(props){
           hideActionButton={get(Meteor, 'settings.public.modules.fhir.CarePlans.hideRemoveButtonOnTable', true)}
           onActionButtonClick={function(selectedId){
             CarePlans._collection.remove({_id: selectedId})
+          }}
+          onRowClick={function(carePlanId){
+            navigate('/careplans/' + carePlanId);
           }}
           onSetPage={function(index){
             Session.set('CarePlansTable.carePlansIndex', index)

@@ -68,11 +68,28 @@ function MedicationDetail(props) {
       }],
       text: ""
     },
-    ingredient: [],
+    ingredient: [{
+      itemCodeableConcept: {
+        coding: [{
+          system: "http://snomed.info/sct",
+          code: "",
+          display: ""
+        }]
+      },
+      strength: {
+        numerator: {
+          value: "",
+          unit: ""
+        }
+      }
+    }],
     batch: {
       lotNumber: "",
       expirationDate: moment().add(1, 'year').format('YYYY-MM-DD')
-    }
+    },
+    note: [{
+      text: ""
+    }]
   });
 
   const [loading, setLoading] = useState(false);
@@ -210,7 +227,7 @@ function MedicationDetail(props) {
   }
 
   return (
-    <Container maxWidth="md" sx={{ py: 4 }}>
+    <Container id="medicationDetailPage" maxWidth="md" sx={{ py: 4 }}>
       <Card sx={{ boxShadow: 3 }}>
         <CardHeader 
           title={id && id !== 'new' ? 'Edit Medication' : 'New Medication'}
@@ -242,6 +259,7 @@ function MedicationDetail(props) {
             
             <Stack direction="row" spacing={2}>
               <TextField
+                id="codeCode"
                 fullWidth
                 label="RxNorm Code"
                 value={get(medication, 'code.coding[0].code', '')}
@@ -266,6 +284,7 @@ function MedicationDetail(props) {
               />
               
               <TextField
+                id="codeDisplay"
                 fullWidth
                 label="Display Name"
                 value={get(medication, 'code.coding[0].display', '')}
@@ -279,6 +298,7 @@ function MedicationDetail(props) {
               <FormControl fullWidth disabled={!isEditing}>
                 <InputLabel>Status</InputLabel>
                 <Select
+                  id="status"
                   value={get(medication, 'status', 'active')}
                   onChange={(e) => handleChange('status', e.target.value)}
                   label="Status"
@@ -292,6 +312,17 @@ function MedicationDetail(props) {
               </FormControl>
               
               <TextField
+                id="formCode"
+                fullWidth
+                label="Form Code"
+                value={get(medication, 'form.coding[0].code', '')}
+                onChange={(e) => handleChange('form.coding[0].code', e.target.value)}
+                helperText="SNOMED code"
+                disabled={!isEditing}
+              />
+              
+              <TextField
+                id="formDisplay"
                 fullWidth
                 label="Form"
                 value={get(medication, 'form.coding[0].display', '') || get(medication, 'form.text', '')}
@@ -304,6 +335,7 @@ function MedicationDetail(props) {
               />
               
               <TextField
+                id="manufacturerDisplay"
                 fullWidth
                 label="Manufacturer"
                 value={get(medication, 'manufacturer.display', '')}
@@ -313,21 +345,57 @@ function MedicationDetail(props) {
               />
             </Stack>
             
-            <TextField
-              fullWidth
-              multiline
-              rows={2}
-              label="Ingredients"
-              value={getIngredientsDisplay()}
-              onChange={(e) => updateIngredientsFromDisplay(e.target.value)}
-              helperText="Comma-separated list of active ingredients"
-              disabled={!isEditing}
-            />
+            <Typography variant="h6" sx={{ mt: 2 }}>Ingredients</Typography>
+            
+            <Stack direction="row" spacing={2}>
+              <TextField
+                id="ingredientCode"
+                fullWidth
+                label="Ingredient Code"
+                value={get(medication, 'ingredient[0].itemCodeableConcept.coding[0].code', '')}
+                onChange={(e) => handleChange('ingredient[0].itemCodeableConcept.coding[0].code', e.target.value)}
+                helperText="SNOMED code"
+                disabled={!isEditing}
+              />
+              
+              <TextField
+                id="ingredientDisplay"
+                fullWidth
+                label="Ingredient Display"
+                value={get(medication, 'ingredient[0].itemCodeableConcept.coding[0].display', '')}
+                onChange={(e) => handleChange('ingredient[0].itemCodeableConcept.coding[0].display', e.target.value)}
+                helperText="Active ingredient name"
+                disabled={!isEditing}
+              />
+            </Stack>
+            
+            <Stack direction="row" spacing={2}>
+              <TextField
+                id="ingredientStrength"
+                fullWidth
+                label="Ingredient Strength"
+                value={get(medication, 'ingredient[0].strength.numerator.value', '')}
+                onChange={(e) => handleChange('ingredient[0].strength.numerator.value', e.target.value)}
+                helperText="Numeric value"
+                disabled={!isEditing}
+              />
+              
+              <TextField
+                id="ingredientStrengthUnit"
+                fullWidth
+                label="Strength Unit"
+                value={get(medication, 'ingredient[0].strength.numerator.unit', '')}
+                onChange={(e) => handleChange('ingredient[0].strength.numerator.unit', e.target.value)}
+                helperText="e.g., mg, ml, units"
+                disabled={!isEditing}
+              />
+            </Stack>
             
             <Typography variant="h6" sx={{ mt: 2 }}>Batch Information</Typography>
             
             <Stack direction="row" spacing={2}>
               <TextField
+                id="batchNumber"
                 fullWidth
                 label="Lot Number"
                 value={get(medication, 'batch.lotNumber', '')}
@@ -336,6 +404,7 @@ function MedicationDetail(props) {
               />
               
               <TextField
+                id="expirationDate"
                 fullWidth
                 type="date"
                 label="Expiration Date"
@@ -345,6 +414,18 @@ function MedicationDetail(props) {
                 disabled={!isEditing}
               />
             </Stack>
+            
+            <TextField
+              id="notesTextarea"
+              fullWidth
+              multiline
+              rows={3}
+              label="Notes"
+              value={get(medication, 'note[0].text', '')}
+              onChange={(e) => handleChange('note[0].text', e.target.value)}
+              helperText="Additional notes or comments"
+              disabled={!isEditing}
+            />
           </Stack>
         </CardContent>
         

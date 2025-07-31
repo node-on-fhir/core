@@ -22,3 +22,8 @@ packages/*
 !.env.*.example
 
 .meteor/packages
+
+settings.*.json
+
+screenshots/*
+screenshots/*/*

@@ -49,9 +49,45 @@ let ResearchSubjectSchema = DomainResourceSchema.extend({
   "resourceType" : {
     type: String,
     defaultValue: "ResearchSubject"
+  },
+  "identifier" : {
+    optional: true,
+    type: Array
+  },
+  "identifier.$" : {
+    optional: true,
+    type: IdentifierSchema
+  },
+  "status" : {
+    type: String,
+    allowedValues: ['candidate', 'eligible', 'follow-up', 'ineligible', 'not-registered', 'off-study', 'on-study', 'on-study-intervention', 'on-study-observation', 'pending-on-study', 'potential-candidate', 'screening', 'withdrawn']
+  },
+  "period" : {
+    optional: true,
+    type: PeriodSchema
+  },
+  "study" : {
+    type: ReferenceSchema
+  },
+  "subject" : {
+    type: ReferenceSchema
+  },
+  "assignedArm" : {
+    optional: true,
+    type: String
+  },
+  "actualArm" : {
+    optional: true,
+    type: String
+  },
+  "consent" : {
+    optional: true,
+    type: ReferenceSchema
   }
 });
 
+// Note: attachSchema is not available in Meteor v3 without aldeed:collection2 package
 // ResearchSubjects.attachSchema(ResearchSubjectSchema);
 
 export default { ResearchSubject, ResearchSubjects, ResearchSubjectSchema };
+export { ResearchSubject, ResearchSubjects, ResearchSubjectSchema };

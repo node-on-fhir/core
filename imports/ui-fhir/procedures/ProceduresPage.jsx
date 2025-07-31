@@ -13,9 +13,13 @@ import {
   CardContent,
   Button,
   Box,
-  Typography
+  Typography,
+  ToggleButton,
+  ToggleButtonGroup
 } from '@mui/material';
-import AddIcon from '@mui/icons-material/Add'; 
+import AddIcon from '@mui/icons-material/Add';
+import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
+import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward'; 
 
 import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
@@ -26,12 +30,11 @@ import LayoutHelpers from '../../lib/LayoutHelpers';
 
 import { get } from 'lodash';
 
+// Import the collection directly to avoid timing issues
+import { Procedures } from '/imports/lib/schemas/SimpleSchemas/Procedures';
+
 //=============================================================================================================================================
 // DATA CURSORS
-
-Meteor.startup(function(){
-  Procedures = Meteor.Collections.Procedures;
-})
 
 //=============================================================================================================================================
 // SESSION VARIABLES
@@ -54,6 +57,7 @@ Session.setDefault('ProceduresTable.proceduresIndex', 0)
 
 export function ProceduresPage(props){
   const navigate = useNavigate();
+  const [sortOrder, setSortOrder] = useState('descending');
 
   let data = {
     currentProcedureId: '',
@@ -65,6 +69,16 @@ export function ProceduresPage(props){
     proceduresIndex: 0
   };
 
+  // Subscribe to Procedures
+  useTracker(function(){
+    let autoPublishEnabled = get(Meteor, 'settings.public.defaults.autopublish', false);
+    if(autoPublishEnabled){
+      return Meteor.subscribe('autopublish.Procedures', {}, {});
+    } else {
+      return Meteor.subscribe('procedures.all');
+    }
+  }, []);
+
   data.onePageLayout = useTracker(function(){
     return Session.get('ProceduresPage.onePageLayout');
   }, [])
@@ -75,11 +89,24 @@ export function ProceduresPage(props){
     return Session.get('selectedProcedureId');
   }, [])
   data.selectedProcedure = useTracker(function(){
+    if (!Procedures) return null;
     return Procedures.findOne({_id: Session.get('selectedProcedureId')});
   }, [])
   data.procedures = useTracker(function(){
-    return Procedures.find().fetch();
-  }, [])
+    if (!Procedures) {
+      console.log('ProceduresPage - Procedures collection not ready');
+      return [];
+    }
+    const sortOptions = {};
+    if (sortOrder === 'ascending') {
+      sortOptions.sort = { 'performedDateTime': 1 };
+    } else {
+      sortOptions.sort = { 'performedDateTime': -1 };
+    }
+    const procs = Procedures.find({}, sortOptions).fetch();
+    console.log('ProceduresPage - found procedures:', procs.length);
+    return procs;
+  }, [sortOrder])
   data.proceduresIndex = useTracker(function(){
     return Session.get('ProceduresTable.proceduresIndex')
   }, [])
@@ -103,6 +130,17 @@ export function ProceduresPage(props){
     navigate('/procedures/new');
   }
 
+  function handleRowClick(procedureId){
+    console.log('Procedure row clicked:', procedureId);
+    navigate('/procedures/' + procedureId);
+  }
+
+  function handleSortOrderChange(event, newOrder){
+    if(newOrder !== null){
+      setSortOrder(newOrder);
+    }
+  }
+
   function renderHeader() {
     return (
       <Box mb={2}>
@@ -116,14 +154,30 @@ export function ProceduresPage(props){
             </Typography>
           </Grid>
           <Grid item>
-            <Button
-              variant="contained"
-              color="primary"
-              startIcon={<AddIcon />}
-              onClick={handleAddProcedure}
-            >
-              Add Procedure
-            </Button>
+            <Box display="flex" gap={2} alignItems="center">
+              <ToggleButtonGroup
+                value={sortOrder}
+                exclusive
+                onChange={handleSortOrderChange}
+                aria-label="sort order"
+                size="small"
+              >
+                <ToggleButton value="ascending" aria-label="ascending order">
+                  <ArrowUpwardIcon />
+                </ToggleButton>
+                <ToggleButton value="descending" aria-label="descending order">
+                  <ArrowDownwardIcon />
+                </ToggleButton>
+              </ToggleButtonGroup>
+              <Button
+                variant="contained"
+                color="primary"
+                startIcon={<AddIcon />}
+                onClick={handleAddProcedure}
+              >
+                Add Procedure
+              </Button>
+            </Box>
           </Grid>
         </Grid>
       </Box>
@@ -152,12 +206,17 @@ export function ProceduresPage(props){
           actionButtonLabel="Remove"
           hideActionButton={get(Meteor, 'settings.public.modules.fhir.Procedures.hideRemoveButtonOnTable', true)}
           onActionButtonClick={function(selectedId){
-            Procedures._collection.remove({_id: selectedId})
+            if (Procedures && Procedures._collection) {
+              Procedures._collection.remove({_id: selectedId})
+            } else {
+              console.error('Cannot remove procedure - collection not ready');
+            }
           }}
           onSetPage={function(index){
             Session.set('ProceduresTable.proceduresIndex', index)
           }}        
           page={data.proceduresIndex}
+          onRowClick={handleRowClick}
         />
       </CardContent>
     </Card>

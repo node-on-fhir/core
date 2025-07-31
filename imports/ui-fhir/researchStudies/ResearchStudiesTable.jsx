@@ -33,6 +33,19 @@ import { FhirDehydrator } from '../../lib/FhirDehydrator';
 
 
 //===========================================================================
+// LOGGER
+
+const logger = {
+  debug: console.debug.bind(console),
+  trace: console.trace.bind(console),
+  data: console.log.bind(console),
+  verbose: console.debug.bind(console),
+  info: console.info.bind(console),
+  warn: console.warn.bind(console),
+  error: console.error.bind(console)
+};
+
+//===========================================================================
 // MAIN COMPONENT
 
 
@@ -55,6 +68,14 @@ function ResearchStudiesTable(props){
     hideActionIcons = true,
     hideIdentifier = true,
     hideTitle = false,
+    hidePrincipalInvestigator = false,
+    hideStatus = false,
+    hidePhase = false,
+    hideCategory = false,
+    hideFocus = false,
+    hideDescription = false,
+    hidePeriod = false,
+    hideEnrollment = false,
     hideBarcode = false,
     hideTextIcon = true,
   
@@ -98,67 +119,70 @@ function ResearchStudiesTable(props){
       case "phone":
         hideCheckbox = true;
         hideActionIcons = true;
-        hidePatientName = true;
-        hideTitle = true;
-        hideSnomedCode = true;
-        hideSnomedDisplay = false;
-        hideVerification = false;
-        hideSeverity = true;
-        hideDates = true;
-        hideEndDate = true;
+        hideTitle = false;
+        hidePrincipalInvestigator = true;
+        hideStatus = true;
+        hidePhase = true;
+        hideCategory = true;
+        hideFocus = true;
+        hideDescription = true;
+        hidePeriod = true;
+        hideEnrollment = true;
         hideBarcode = true;  
-        multiline = true;
-        hideTextIcon = false
+        hideTextIcon = true;
         break;
       case "tablet":
         hideCheckbox = true;
         hideActionIcons = true;
-        hidePatientName = false;
-        hideTitle = true;
-        hideSnomedCode = false;
-        hideSnomedDisplay = false;
-        hideVerification = true;
-        hideSeverity = true;
-        hideDates = false;
-        hideEndDate = true;
+        hideTitle = false;
+        hidePrincipalInvestigator = false;
+        hideStatus = true;
+        hidePhase = true;
+        hideCategory = true;
+        hideFocus = true;
+        hideDescription = true;
+        hidePeriod = true;
+        hideEnrollment = true;
         hideBarcode = false;   
-        multiline = false;
-        hideTextIcon = false
-        hideTextIcon = false
+        hideTextIcon = true;
         break;
       case "web":
-        hideSnomedCode = false;
-        hideSnomedDisplay = false;
-        hidePatientName = false;
-        hideVerification = true;
-        hideSeverity = true;
-        hideDates = true;
-        hideEndDate = false;
+        hideTitle = false;
+        hidePrincipalInvestigator = false;
+        hideStatus = false;
+        hidePhase = true;
+        hideCategory = true;
+        hideFocus = true;
+        hideDescription = true;
+        hidePeriod = true;
+        hideEnrollment = true;
         hideBarcode = false;
-        multiline = false;
-        hideTextIcon = false
+        hideTextIcon = true;
         break;
       case "desktop":
-        hidePatientName = false;
-        hideSnomedCode = false;
-        hideSnomedDisplay = false;
-        hideVerification = true;
-        hideSeverity = true;
-        hideDates = false;
-        hideEndDate = true;
+        hideTitle = false;
+        hidePrincipalInvestigator = false;
+        hideStatus = false;
+        hidePhase = false;
+        hideCategory = true;
+        hideFocus = true;
+        hideDescription = true;
+        hidePeriod = true;
+        hideEnrollment = true;
         hideBarcode = false;
-        multiline = false;
         hideTextIcon = true;
         break;
       case "hdmi":
-        hideSnomedCode = false;
-        hideSnomedDisplay = false;
-        hideVerification = false;
-        hideSeverity = false;
-        hideDates = false;
-        hideEndDate = false;
+        hideTitle = false;
+        hidePrincipalInvestigator = false;
+        hideStatus = false;
+        hidePhase = false;
+        hideCategory = false;
+        hideFocus = false;
+        hideDescription = false;
+        hidePeriod = false;
+        hideEnrollment = false;
         hideBarcode = false;
-        multiline = false;
         hideTextIcon = true;
         break;            
     }
@@ -367,6 +391,126 @@ function ResearchStudiesTable(props){
         <TableCell className='title'>{ title }</TableCell>
       );
     }
+  }
+  
+  function renderPrincipalInvestigatorHeader(){
+    if (!hidePrincipalInvestigator) {
+      return (
+        <TableCell className='principalInvestigator'>Principal Investigator</TableCell>
+      );
+    }
+  }
+  function renderPrincipalInvestigator(principalInvestigator ){
+    if (!hidePrincipalInvestigator) {
+      return (
+        <TableCell className='principalInvestigator'>{ principalInvestigator }</TableCell>
+      );
+    }
+  }
+  
+  function renderStatusHeader(){
+    if (!hideStatus) {
+      return (
+        <TableCell className='status'>Status</TableCell>
+      );
+    }
+  }
+  function renderStatus(status ){
+    if (!hideStatus) {
+      return (
+        <TableCell className='status'>{ status }</TableCell>
+      );
+    }
+  }
+  
+  function renderPhaseHeader(){
+    if (!hidePhase) {
+      return (
+        <TableCell className='phase'>Phase</TableCell>
+      );
+    }
+  }
+  function renderPhase(phase ){
+    if (!hidePhase) {
+      return (
+        <TableCell className='phase'>{ phase }</TableCell>
+      );
+    }
+  }
+  
+  function renderCategoryHeader(){
+    if (!hideCategory) {
+      return (
+        <TableCell className='category'>Category</TableCell>
+      );
+    }
+  }
+  function renderCategory(category ){
+    if (!hideCategory) {
+      return (
+        <TableCell className='category'>{ category }</TableCell>
+      );
+    }
+  }
+  
+  function renderFocusHeader(){
+    if (!hideFocus) {
+      return (
+        <TableCell className='focus'>Focus</TableCell>
+      );
+    }
+  }
+  function renderFocus(focus ){
+    if (!hideFocus) {
+      return (
+        <TableCell className='focus'>{ focus }</TableCell>
+      );
+    }
+  }
+  
+  function renderDescriptionHeader(){
+    if (!hideDescription) {
+      return (
+        <TableCell className='description'>Description</TableCell>
+      );
+    }
+  }
+  function renderDescription(description ){
+    if (!hideDescription) {
+      return (
+        <TableCell className='description'>{ description }</TableCell>
+      );
+    }
+  }
+  
+  function renderPeriodHeader(){
+    if (!hidePeriod) {
+      return (
+        <TableCell className='period'>Period</TableCell>
+      );
+    }
+  }
+  function renderPeriod(period ){
+    if (!hidePeriod) {
+      return (
+        <TableCell className='period'>{ period }</TableCell>
+      );
+    }
+  }
+  
+  function renderEnrollmentHeader(){
+    if (!hideEnrollment) {
+      return (
+        <TableCell className='enrollment'>Enrollment</TableCell>
+      );
+    }
+  }
+  function renderEnrollment(enrollment ){
+    if (!hideEnrollment) {
+      return (
+        <TableCell className='enrollment'>{ enrollment }</TableCell>
+      );
+    }
   } 
   
   function renderActionIconsHeader(){
@@ -536,7 +680,15 @@ function ResearchStudiesTable(props){
             { renderActionIcons(researchStudiesToRender[i]) }
             { renderTextIcon(get(researchStudiesToRender[i], "text.div", "")) }
             { renderIdentifier(get(researchStudiesToRender[i], "identifier", "")) }
-            { renderTitle(get(researchStudiesToRender[i], "title", "")) } 
+            { renderTitle(get(researchStudiesToRender[i], "title", "")) }
+            { renderPrincipalInvestigator(get(researchStudiesToRender[i], "principalInvestigatorDisplay", "")) }
+            { renderStatus(get(researchStudiesToRender[i], "status", "")) }
+            { renderPhase(get(researchStudiesToRender[i], "phaseText", "")) }
+            { renderCategory(get(researchStudiesToRender[i], "categoryText", "")) }
+            { renderFocus(get(researchStudiesToRender[i], "focusDisplay", "")) }
+            { renderDescription(get(researchStudiesToRender[i], "description", "")) }
+            { renderPeriod(get(researchStudiesToRender[i], "periodText", "")) }
+            { renderEnrollment(get(researchStudiesToRender[i], "enrollmentText", "")) } 
             { renderBarcode(get(researchStudiesToRender[i], "_id", ""))}
             { renderActionButton(get(researchStudiesToRender[i], "_id", "")) }
           </TableRow>
@@ -563,6 +715,14 @@ function ResearchStudiesTable(props){
             { renderTextIconHeader() }
             { renderIdentifierHeader() }
             { renderTitleHeader() }
+            { renderPrincipalInvestigatorHeader() }
+            { renderStatusHeader() }
+            { renderPhaseHeader() }
+            { renderCategoryHeader() }
+            { renderFocusHeader() }
+            { renderDescriptionHeader() }
+            { renderPeriodHeader() }
+            { renderEnrollmentHeader() }
             { renderBarcodeHeader() }
             { renderActionButtonHeader() }
           </TableRow>
@@ -590,6 +750,14 @@ ResearchStudiesTable.propTypes = {
   hideActionIcons: PropTypes.bool,
   hideIdentifier: PropTypes.bool,
   hideTitle: PropTypes.bool,
+  hidePrincipalInvestigator: PropTypes.bool,
+  hideStatus: PropTypes.bool,
+  hidePhase: PropTypes.bool,
+  hideCategory: PropTypes.bool,
+  hideFocus: PropTypes.bool,
+  hideDescription: PropTypes.bool,
+  hidePeriod: PropTypes.bool,
+  hideEnrollment: PropTypes.bool,
   hideBarcode: PropTypes.bool,
   hideTextIcon: PropTypes.bool,
 

@@ -1,3 +1,5 @@
+// /imports/lib/schemas/SimpleSchemas/ServiceRequests.js
+
 if(Package['clinical:autopublish']){
   console.log("*****************************************************************************")
   console.log("HIPAA WARNING:  Your app has the 'clinical-autopublish' package installed.");
@@ -144,6 +146,178 @@ let ServiceRequestSchemaR4 = new SimpleSchema({
     blackbox: true,
     type:  CodeableConceptSchema 
     },
+  "subject" : {
+    optional: true,
+    blackbox: true,
+    type:  ReferenceSchema 
+    },
+  "encounter" : {
+    optional: true,
+    blackbox: true,
+    type:  ReferenceSchema 
+    },
+  "occurrence" : {
+    optional: true,
+    blackbox: true,
+    type:  Object
+    },
+  "occurrenceDateTime" : {
+    optional: true,
+    type:  String
+    },
+  "occurrencePeriod" : {
+    optional: true,
+    blackbox: true,
+    type:  Object
+    },
+  "occurrencePeriod.start" : {
+    optional: true,
+    type:  String
+    },
+  "occurrencePeriod.end" : {
+    optional: true,
+    type:  String
+    },
+  "occurrenceTiming" : {
+    optional: true,
+    blackbox: true,
+    type:  Object
+    },
+  "asNeeded" : {
+    optional: true,
+    blackbox: true,
+    type:  Object
+    },
+  "asNeededBoolean" : {
+    optional: true,
+    type:  Boolean
+    },
+  "asNeededCodeableConcept" : {
+    optional: true,
+    blackbox: true,
+    type:  CodeableConceptSchema
+    },
+  "authoredOn" : {
+    optional: true,
+    type:  String
+    },
+  "requester" : {
+    optional: true,
+    blackbox: true,
+    type:  ReferenceSchema 
+    },
+  "performerType" : {
+    optional: true,
+    blackbox: true,
+    type:  CodeableConceptSchema 
+    },
+  "performer" : {
+    optional: true,
+    type:  Array
+    },
+  "performer.$" : {
+    optional: true,
+    blackbox: true,
+    type:  ReferenceSchema 
+    },
+  "locationCode" : {
+    optional: true,
+    type:  Array
+    },
+  "locationCode.$" : {
+    optional: true,
+    blackbox: true,
+    type:  CodeableConceptSchema 
+    },
+  "locationReference" : {
+    optional: true,
+    type:  Array
+    },
+  "locationReference.$" : {
+    optional: true,
+    blackbox: true,
+    type:  ReferenceSchema 
+    },
+  "reasonCode" : {
+    optional: true,
+    type:  Array
+    },
+  "reasonCode.$" : {
+    optional: true,
+    blackbox: true,
+    type:  CodeableConceptSchema 
+    },
+  "reasonReference" : {
+    optional: true,
+    type:  Array
+    },
+  "reasonReference.$" : {
+    optional: true,
+    blackbox: true,
+    type:  ReferenceSchema 
+    },
+  "insurance" : {
+    optional: true,
+    type:  Array
+    },
+  "insurance.$" : {
+    optional: true,
+    blackbox: true,
+    type:  ReferenceSchema 
+    },
+  "supportingInfo" : {
+    optional: true,
+    type:  Array
+    },
+  "supportingInfo.$" : {
+    optional: true,
+    blackbox: true,
+    type:  ReferenceSchema 
+    },
+  "specimen" : {
+    optional: true,
+    type:  Array
+    },
+  "specimen.$" : {
+    optional: true,
+    blackbox: true,
+    type:  ReferenceSchema 
+    },
+  "bodySite" : {
+    optional: true,
+    type:  Array
+    },
+  "bodySite.$" : {
+    optional: true,
+    blackbox: true,
+    type:  CodeableConceptSchema 
+    },
+  "note" : {
+    optional: true,
+    type:  Array
+    },
+  "note.$" : {
+    optional: true,
+    blackbox: true,
+    type:  Object 
+    },
+  "note.$.text" : {
+    optional: true,
+    type:  String 
+    },
+  "patientInstruction" : {
+    optional: true,
+    type:  String
+    },
+  "relevantHistory" : {
+    optional: true,
+    type:  Array
+    },
+  "relevantHistory.$" : {
+    optional: true,
+    blackbox: true,
+    type:  ReferenceSchema 
+    }
 });
 
 

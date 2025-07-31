@@ -5,167 +5,151 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useTracker } from 'meteor/react-meteor-data';
 
 import { 
+  Alert,
+  Box,
   Button,
   Card,
   CardActions,
   CardContent,
   CardHeader,
-  Container,
-  TextField,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
-  Typography,
-  Box,
-  Stack,
   Chip,
-  InputAdornment,
+  Container,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
+  FormControl,
+  Grid,
   IconButton,
+  InputAdornment,
+  InputLabel,
+  MenuItem,
+  Select,
+  Stack,
+  TextField,
   Tooltip,
-  Divider,
-  FormControlLabel,
-  RadioGroup,
-  Radio,
-  Checkbox
+  Typography
 } from '@mui/material';
 
-import QrCodeIcon from '@mui/icons-material/QrCode';
+import EditIcon from '@mui/icons-material/Edit';
+import LockIcon from '@mui/icons-material/Lock';
+import LockOpenIcon from '@mui/icons-material/LockOpen';
 import SearchIcon from '@mui/icons-material/Search';
+import AccessTimeIcon from '@mui/icons-material/AccessTime';
 
-import { get, set } from 'lodash';
+import { get, set, has, cloneDeep } from 'lodash';
 import moment from 'moment';
 
-import { QuestionnaireResponses } from '/imports/lib/schemas/SimpleSchemas/QuestionnaireResponses';
-import { Questionnaires } from '/imports/lib/schemas/SimpleSchemas/Questionnaires';
 import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
+import { Random } from 'meteor/random';
+
+import PatientSearchDialog from '/imports/components/PatientSearchDialog';
+import { FhirUtilities } from '/imports/lib/FhirUtilities';
+
+// Collections are initialized globally
+let QuestionnaireResponses;
+let Questionnaires;
+
+Meteor.startup(function(){
+  QuestionnaireResponses = Meteor.Collections.QuestionnaireResponses;
+  Questionnaires = Meteor.Collections.Questionnaires;
+});
 
 function QuestionnaireResponseDetail(props) {
   const navigate = useNavigate();
   const { id } = useParams();
   
-  // Get selected patient and current user from session/tracker
+  console.log('QuestionnaireResponseDetail mounted with id:', id);
+  console.log('Type of id:', typeof id);
+  console.log('id === "new":', id === 'new');
+  console.log('id is undefined:', id === undefined);
+  console.log('pathname:', window.location.pathname);
+  
+  // Check if we're creating a new response
+  const isNew = !id || window.location.pathname.endsWith('/new');
+  console.log('isNew:', isNew);
+  
+  // State
+  const [questionnaireResponse, setQuestionnaireResponse] = useState({
+    resourceType: 'QuestionnaireResponse',
+    questionnaire: '',
+    status: 'in-progress',
+    authored: moment().format('YYYY-MM-DDTHH:mm:ss')
+  });
+
+  const [isEditing, setIsEditing] = useState(isNew);
+  const [showPatientSearch, setShowPatientSearch] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  // Subscribe to data
+  useTracker(function(){
+    let autoPublishEnabled = get(Meteor, 'settings.public.defaults.autopublish', false);
+    if(autoPublishEnabled){
+      return Meteor.subscribe('autopublish.QuestionnaireResponses', {}, {});
+    } else {
+      return Meteor.subscribe('questionnaireresponses.all');
+    }
+  }, []);
+
+  // Get selected patient from session
   const selectedPatient = useTracker(function() {
     return Session.get('selectedPatient');
   }, []);
-  
-  const currentUser = useTracker(function() {
-    return Meteor.user();
-  }, []);
-  
-  // Initialize state with proper FHIR R4 structure
-  const [questionnaireResponse, setQuestionnaireResponse] = useState({
-    resourceType: "QuestionnaireResponse",
-    identifier: {
-      system: "",
-      value: ""
-    },
-    questionnaire: "",
-    status: "in-progress",
-    subject: {
-      reference: "",
-      display: ""
-    },
-    encounter: {
-      reference: "",
-      display: ""
-    },
-    authored: moment().format('YYYY-MM-DDTHH:mm:ss'),
-    author: {
-      reference: "",
-      display: ""
-    },
-    source: {
-      reference: "",
-      display: ""
-    },
-    item: []
-  });
-
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [isEditing, setIsEditing] = useState(false);
-  const [originalQuestionnaire, setOriginalQuestionnaire] = useState(null);
-
-  // Set patient name and author on component mount for new responses
-  useEffect(function() {
-    if (!id || id === 'new') {
-      // Enable editing for new responses
-      setIsEditing(true);
-      
-      // For new responses, set the patient name
-      let patientName = '';
-      let patientReference = '';
-      
-      if (selectedPatient) {
-        // Prefer selected patient
-        patientName = get(selectedPatient, 'name[0].text', '') || 
-                     `${get(selectedPatient, 'name[0].given[0]', '')} ${get(selectedPatient, 'name[0].family', '')}`.trim();
-        patientReference = `Patient/${get(selectedPatient, '_id', '')}`;
-      } else if (currentUser) {
-        // Fall back to current user
-        patientName = get(currentUser, 'profile.name.text', '') ||
-                     `${get(currentUser, 'profile.name.given[0]', '')} ${get(currentUser, 'profile.name.family', '')}`.trim() ||
-                     get(currentUser, 'username', '');
-        // You might need to look up the Patient resource for the current user
-        patientReference = `Patient/${get(currentUser, 'profile.patientId', '')}`;
-      }
-      
-      // Set author and source to current user
-      let authorName = '';
-      let authorReference = '';
-      
-      if (currentUser) {
-        authorName = get(currentUser, 'profile.name.text', '') ||
-                    `${get(currentUser, 'profile.name.given[0]', '')} ${get(currentUser, 'profile.name.family', '')}`.trim() ||
-                    get(currentUser, 'username', '');
-        authorReference = `Practitioner/${get(currentUser, '_id', '')}`;
-      }
-      
-      setQuestionnaireResponse(prev => ({
-        ...prev,
-        subject: {
-          reference: patientReference,
-          display: patientName
-        },
-        author: {
-          reference: authorReference,
-          display: authorName
-        },
-        source: {
-          reference: patientReference,
-          display: patientName
-        }
-      }));
-    } else {
-      // Viewing existing response - start in read-only mode
-      setIsEditing(false);
-    }
-  }, [id, selectedPatient, currentUser]);
 
   // Load questionnaire response if editing
   useEffect(function() {
     async function loadQuestionnaireResponse() {
-      if (id && id !== 'new') {
-        setLoading(true);
+      console.log('loadQuestionnaireResponse called with id:', id, 'isNew:', isNew);
+      console.log('QuestionnaireResponses collection available:', !!QuestionnaireResponses);
+      
+      if (id && !isNew) {
         try {
-          const result = await Meteor.callAsync('questionnaireResponses.get', id);
-          if (result) {
-            setQuestionnaireResponse(result);
-            
-            // Load the original questionnaire if referenced
-            if (get(result, 'questionnaire')) {
-              let questionnaireId = result.questionnaire;
-              if (questionnaireId.includes('/')) {
-                questionnaireId = questionnaireId.split('/')[1];
+          setLoading(true);
+          
+          // First, try to get from local collection if available
+          if (QuestionnaireResponses) {
+            let localResponse = QuestionnaireResponses.findOne(id) || 
+                                QuestionnaireResponses.findOne({_id: id}) || 
+                                QuestionnaireResponses.findOne({id: id});
+            if (localResponse) {
+              console.log('Found questionnaire response in local collection:', localResponse);
+              
+              // Extract questionnaireDisplay from extension if present
+              if (localResponse.extension && Array.isArray(localResponse.extension)) {
+                const displayExtension = localResponse.extension.find(ext => 
+                  ext.url === 'http://example.org/fhir/StructureDefinition/questionnaire-display'
+                );
+                if (displayExtension && displayExtension.valueString) {
+                  localResponse.questionnaireDisplay = displayExtension.valueString;
+                }
               }
               
-              const questionnaire = await Meteor.callAsync('questionnaires.get', questionnaireId);
-              if (questionnaire) {
-                setOriginalQuestionnaire(questionnaire);
+              setQuestionnaireResponse(localResponse);
+              setLoading(false);
+              return;
+            }
+          }
+          
+          // If not found locally, call the method
+          console.log('Calling method to get questionnaire response...');
+          const response = await Meteor.callAsync('questionnaireResponses.get', id);
+          if (response) {
+            // Extract questionnaireDisplay from extension if present
+            if (response.extension && Array.isArray(response.extension)) {
+              const displayExtension = response.extension.find(ext => 
+                ext.url === 'http://example.org/fhir/StructureDefinition/questionnaire-display'
+              );
+              if (displayExtension && displayExtension.valueString) {
+                response.questionnaireDisplay = displayExtension.valueString;
               }
             }
+            setQuestionnaireResponse(response);
+          } else {
+            setError('Questionnaire response not found');
           }
         } catch (err) {
           console.error('Error loading questionnaire response:', err);
@@ -175,424 +159,499 @@ function QuestionnaireResponseDetail(props) {
         }
       }
     }
-    
     loadQuestionnaireResponse();
+  }, [id, isNew, QuestionnaireResponses]);
+
+  // Set patient info when selected patient changes
+  useEffect(function() {
+    if (selectedPatient && isEditing) {
+      handleChange('subject.reference', `Patient/${selectedPatient._id}`);
+      handleChange('subject.display', FhirUtilities.pluckName(selectedPatient));
+    }
+  }, [selectedPatient, isEditing]);
+
+  // Set author info for new records
+  useEffect(function() {
+    if (isNew && Meteor.user()) {
+      const user = Meteor.user();
+      const authorName = get(user, 'profile.name.text', user.username || 'Unknown User');
+      handleChange('author.display', authorName);
+      handleChange('author.reference', `Practitioner/${user._id}`);
+    }
   }, [id]);
 
-  // Handle field changes
   function handleChange(path, value) {
-    const updatedQuestionnaireResponse = { ...questionnaireResponse };
-    set(updatedQuestionnaireResponse, path, value);
-    setQuestionnaireResponse(updatedQuestionnaireResponse);
+    const updatedResponse = cloneDeep(questionnaireResponse);
+    set(updatedResponse, path, value);
+    setQuestionnaireResponse(updatedResponse);
   }
 
-  // Handle answer changes
-  function handleAnswerChange(itemIndex, value, answerType) {
-    const updatedQuestionnaireResponse = { ...questionnaireResponse };
-    const items = get(updatedQuestionnaireResponse, 'item', []);
-    
-    if (!items[itemIndex]) {
-      items[itemIndex] = { answer: [{}] };
-    }
-    
-    if (!items[itemIndex].answer) {
-      items[itemIndex].answer = [{}];
-    }
-    
-    // Clear other answer types
-    items[itemIndex].answer[0] = {};
-    
-    // Set the appropriate answer type
-    switch(answerType) {
-      case 'boolean':
-        items[itemIndex].answer[0].valueBoolean = value === 'true';
-        break;
-      case 'string':
-        items[itemIndex].answer[0].valueString = value;
-        break;
-      case 'integer':
-        items[itemIndex].answer[0].valueInteger = parseInt(value) || null;
-        break;
-      case 'date':
-        items[itemIndex].answer[0].valueDate = value;
-        break;
-      case 'dateTime':
-        items[itemIndex].answer[0].valueDateTime = value;
-        break;
-      case 'coding':
-        items[itemIndex].answer[0].valueCoding = {
-          system: "",
-          code: value,
-          display: value
-        };
-        break;
-      default:
-        items[itemIndex].answer[0].valueString = value;
-    }
-    
-    set(updatedQuestionnaireResponse, 'item', items);
-    setQuestionnaireResponse(updatedQuestionnaireResponse);
+  function handleSearchUser() {
+    setShowPatientSearch(true);
   }
 
-  // Handle save
+  function handleSelectPatient(patient) {
+    if (patient) {
+      handleChange('subject.reference', `Patient/${patient._id}`);
+      handleChange('subject.display', FhirUtilities.pluckName(patient));
+    }
+    setShowPatientSearch(false);
+  }
+
   async function handleSave() {
-    setLoading(true);
-    setError(null);
+    console.log('handleSave called');
+    console.log('Current ID:', id);
+    console.log('Is new:', isNew);
     
     try {
-      if (id && id !== 'new') {
-        // Update existing questionnaire response
-        await Meteor.callAsync('questionnaireResponses.update', id, questionnaireResponse);
-        console.log('Questionnaire response updated successfully');
-        // Exit edit mode after successful save
-        setIsEditing(false);
-      } else {
+      setLoading(true);
+      setError('');
+
+      // Log the current form data
+      console.log('Current questionnaireResponse state:', questionnaireResponse);
+      
+      // Create a minimal valid QuestionnaireResponse
+      const responseToSave = {
+        resourceType: 'QuestionnaireResponse',
+        status: get(questionnaireResponse, 'status', 'in-progress'),
+        authored: get(questionnaireResponse, 'authored') ? moment(get(questionnaireResponse, 'authored')).toISOString() : moment().toISOString()
+      };
+
+      // Add questionnaire if present
+      const questionnaire = get(questionnaireResponse, 'questionnaire', '').trim();
+      if (questionnaire) {
+        responseToSave.questionnaire = questionnaire;
+      }
+      
+      // Add questionnaire display as extension
+      const questionnaireDisplay = get(questionnaireResponse, 'questionnaireDisplay', '').trim();
+      if (questionnaireDisplay) {
+        responseToSave.extension = responseToSave.extension || [];
+        responseToSave.extension.push({
+          url: 'http://example.org/fhir/StructureDefinition/questionnaire-display',
+          valueString: questionnaireDisplay
+        });
+      }
+      
+      // Only include nested objects if they have actual data
+      if (get(questionnaireResponse, 'subject.reference') || get(questionnaireResponse, 'subject.display')) {
+        responseToSave.subject = {
+          reference: get(questionnaireResponse, 'subject.reference', ''),
+          display: get(questionnaireResponse, 'subject.display', '')
+        };
+      }
+      
+      if (get(questionnaireResponse, 'author.reference') || get(questionnaireResponse, 'author.display')) {
+        responseToSave.author = {
+          reference: get(questionnaireResponse, 'author.reference', ''),
+          display: get(questionnaireResponse, 'author.display', '')
+        };
+      }
+      
+      if (get(questionnaireResponse, 'source.reference') || get(questionnaireResponse, 'source.display')) {
+        responseToSave.source = {
+          reference: get(questionnaireResponse, 'source.reference', ''),
+          display: get(questionnaireResponse, 'source.display', '')
+        };
+      }
+      
+      // Handle identifier array properly
+      const identifierValue = get(questionnaireResponse, 'identifier[0].value', '');
+      if (identifierValue) {
+        responseToSave.identifier = [{
+          system: 'http://example.org/identifier',
+          value: identifierValue
+        }];
+      }
+      
+      // Handle basedOn array
+      const basedOnRef = get(questionnaireResponse, 'basedOn[0].reference', '');
+      if (basedOnRef) {
+        responseToSave.basedOn = [{
+          reference: basedOnRef
+        }];
+      }
+      
+      // Handle partOf array
+      const partOfRef = get(questionnaireResponse, 'partOf[0].reference', '');
+      if (partOfRef) {
+        responseToSave.partOf = [{
+          reference: partOfRef
+        }];
+      }
+      
+      // Handle reasonCode array
+      const reasonCode = get(questionnaireResponse, 'reasonCode[0].coding[0].code', '');
+      const reasonDisplay = get(questionnaireResponse, 'reasonCode[0].coding[0].display', '');
+      if (reasonCode || reasonDisplay) {
+        responseToSave.reasonCode = [{
+          coding: [{
+            system: 'http://snomed.info/sct',
+            code: reasonCode,
+            display: reasonDisplay
+          }]
+        }];
+      }
+      
+      // Handle note array
+      const noteText = get(questionnaireResponse, 'note[0].text', '');
+      if (noteText) {
+        responseToSave.note = [{
+          text: noteText,
+          time: new Date().toISOString()
+        }];
+      }
+
+      if (isNew) {
         // Create new questionnaire response
-        const newId = await Meteor.callAsync('questionnaireResponses.create', questionnaireResponse);
-        console.log('Questionnaire response created with ID:', newId);
-        // Navigate back to questionnaire responses list for new responses
+        console.log('Attempting to save questionnaire response:', JSON.stringify(responseToSave, null, 2));
+        
+        // First check if the method exists with minimal data
+        try {
+          const testData = { resourceType: 'QuestionnaireResponse', status: 'in-progress' };
+          console.log('Testing method with minimal data:', testData);
+          const testResult = await Meteor.callAsync('questionnaireResponses.create', testData);
+          console.log('Method test succeeded with ID:', testResult);
+        } catch (testErr) {
+          console.error('Method test failed:', testErr);
+          console.error('Error details:', testErr.details || testErr.error || testErr.message);
+        }
+        
+        const newId = await Meteor.callAsync('questionnaireResponses.create', responseToSave);
+        console.log('Created questionnaire response with ID:', newId);
         navigate('/questionnaire-responses');
+      } else {
+        // Update existing questionnaire response
+        await Meteor.callAsync('questionnaireResponses.update', id, responseToSave);
+        console.log('Updated questionnaire response:', id);
+        setIsEditing(false);
       }
     } catch (err) {
       console.error('Error saving questionnaire response:', err);
-      setError(err.message);
+      console.error('Error details:', err.details || err.error || err);
+      setError(err.message || err.reason || 'Unknown error');
     } finally {
       setLoading(false);
     }
   }
 
-  // Handle delete
   async function handleDelete() {
-    if (!id || id === 'new') return;
-    
-    if (window.confirm('Are you sure you want to delete this questionnaire response?')) {
+    try {
       setLoading(true);
-      try {
-        await Meteor.callAsync('questionnaireResponses.remove', id);
-        console.log('Questionnaire response deleted successfully');
-        navigate('/questionnaire-responses');
-      } catch (err) {
-        console.error('Error deleting questionnaire response:', err);
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
+      await Meteor.callAsync('questionnaireResponses.remove', id);
+      navigate('/questionnaire-responses');
+    } catch (err) {
+      console.error('Error deleting questionnaire response:', err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+      setShowDeleteDialog(false);
     }
   }
 
-  // Handle cancel
-  function handleCancel() {
-    navigate('/questionnaire-responses');
-  }
-
-  const statusOptions = [
-    { value: 'in-progress', label: 'In Progress' },
-    { value: 'completed', label: 'Completed' },
-    { value: 'amended', label: 'Amended' },
-    { value: 'entered-in-error', label: 'Entered in Error' },
-    { value: 'stopped', label: 'Stopped' }
-  ];
-
-  // Render answer fields based on questionnaire items
-  function renderAnswerFields() {
-    const items = get(questionnaireResponse, 'item', []);
-    const questionnaireItems = get(originalQuestionnaire, 'item', []);
-    
-    if (questionnaireItems.length === 0 && items.length === 0) {
-      return (
-        <Typography variant="body2" color="text.secondary">
-          No questions available. Please ensure a questionnaire is linked to this response.
-        </Typography>
-      );
-    }
-    
-    // Use questionnaire items as template if available
-    const itemsToRender = questionnaireItems.length > 0 ? questionnaireItems : items;
-    
-    return itemsToRender.map((questionItem, index) => {
-      const responseItem = items[index] || {};
-      const linkId = get(questionItem, 'linkId', `item_${index}`);
-      const text = get(questionItem, 'text', get(responseItem, 'text', `Question ${index + 1}`));
-      const type = get(questionItem, 'type', 'string');
-      
-      // Get the current answer value
-      let currentValue = '';
-      const answer = get(responseItem, 'answer[0]', {});
-      
-      if (answer.valueString) currentValue = answer.valueString;
-      else if (answer.valueBoolean !== undefined) currentValue = answer.valueBoolean.toString();
-      else if (answer.valueInteger !== undefined) currentValue = answer.valueInteger.toString();
-      else if (answer.valueDate) currentValue = answer.valueDate;
-      else if (answer.valueDateTime) currentValue = answer.valueDateTime;
-      else if (answer.valueCoding) currentValue = answer.valueCoding.code || answer.valueCoding.display;
-      
-      // Ensure item has linkId and text
-      if (!items[index]) {
-        items[index] = { linkId, text };
-      } else {
-        if (!items[index].linkId) items[index].linkId = linkId;
-        if (!items[index].text) items[index].text = text;
-      }
-      
-      switch(type) {
-        case 'boolean':
-          return (
-            <FormControl key={linkId} fullWidth disabled={!isEditing}>
-              <Typography variant="body1" gutterBottom>{text}</Typography>
-              <RadioGroup
-                value={currentValue}
-                onChange={(e) => handleAnswerChange(index, e.target.value, 'boolean')}
-              >
-                <FormControlLabel value="true" control={<Radio />} label="Yes" />
-                <FormControlLabel value="false" control={<Radio />} label="No" />
-              </RadioGroup>
-            </FormControl>
-          );
-          
-        case 'integer':
-          return (
-            <TextField
-              key={linkId}
-              fullWidth
-              type="number"
-              label={text}
-              value={currentValue}
-              onChange={(e) => handleAnswerChange(index, e.target.value, 'integer')}
-              disabled={!isEditing}
-            />
-          );
-          
-        case 'date':
-          return (
-            <TextField
-              key={linkId}
-              fullWidth
-              type="date"
-              label={text}
-              value={moment(currentValue).format('YYYY-MM-DD')}
-              onChange={(e) => handleAnswerChange(index, e.target.value, 'date')}
-              InputLabelProps={{ shrink: true }}
-              disabled={!isEditing}
-            />
-          );
-          
-        case 'dateTime':
-          return (
-            <TextField
-              key={linkId}
-              fullWidth
-              type="datetime-local"
-              label={text}
-              value={moment(currentValue).format('YYYY-MM-DDTHH:mm')}
-              onChange={(e) => handleAnswerChange(index, e.target.value, 'dateTime')}
-              InputLabelProps={{ shrink: true }}
-              disabled={!isEditing}
-            />
-          );
-          
-        case 'choice':
-          const answerOptions = get(questionItem, 'answerOption', []);
-          if (answerOptions.length > 0) {
-            return (
-              <FormControl key={linkId} fullWidth disabled={!isEditing}>
-                <InputLabel>{text}</InputLabel>
-                <Select
-                  value={currentValue}
-                  onChange={(e) => handleAnswerChange(index, e.target.value, 'coding')}
-                  label={text}
-                >
-                  {answerOptions.map((option, optIndex) => {
-                    const optionValue = get(option, 'valueCoding.code') || 
-                                       get(option, 'valueCoding.display') || 
-                                       get(option, 'valueString', '');
-                    const optionDisplay = get(option, 'valueCoding.display') || 
-                                         get(option, 'valueString', optionValue);
-                    return (
-                      <MenuItem key={optIndex} value={optionValue}>
-                        {optionDisplay}
-                      </MenuItem>
-                    );
-                  })}
-                </Select>
-              </FormControl>
-            );
-          }
-          // Fall through to string if no options
-          
-        case 'string':
-        case 'text':
-        default:
-          return (
-            <TextField
-              key={linkId}
-              fullWidth
-              label={text}
-              value={currentValue}
-              onChange={(e) => handleAnswerChange(index, e.target.value, 'string')}
-              multiline={type === 'text'}
-              rows={type === 'text' ? 3 : 1}
-              disabled={!isEditing}
-            />
-          );
-      }
-    });
+  function renderHeader() {
+    return (
+      <Box sx={{ mb: 3 }}>
+        <Grid container spacing={2} alignItems="center">
+          <Grid item xs>
+            <Typography variant="h4" component="h1">
+              {isNew ? 'New Questionnaire Response' : 'Questionnaire Response Details'}
+            </Typography>
+          </Grid>
+          {!isNew && (
+            <>
+              <Grid item>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <AccessTimeIcon fontSize="small" color="action" />
+                  <Typography variant="body2" color="text.secondary">
+                    {moment(get(questionnaireResponse, 'meta.lastUpdated')).format('MMM DD, YYYY')}
+                  </Typography>
+                </Box>
+              </Grid>
+              <Grid item>
+                <Chip 
+                  label={`v${get(questionnaireResponse, 'meta.versionId', '1')}`}
+                  size="small"
+                  color="primary"
+                  variant="outlined"
+                />
+              </Grid>
+              <Grid item>
+                <Tooltip title={isEditing ? "Lock to prevent editing" : "Unlock to edit"}>
+                  <IconButton onClick={() => setIsEditing(!isEditing)}>
+                    {isEditing ? <LockOpenIcon /> : <LockIcon />}
+                  </IconButton>
+                </Tooltip>
+              </Grid>
+            </>
+          )}
+        </Grid>
+        {id !== 'new' && (
+          <Box sx={{ mt: 1 }}>
+            <Typography variant="caption" className="barcode helveticas">
+              {id}
+            </Typography>
+          </Box>
+        )}
+      </Box>
+    );
   }
 
   return (
-    <Container maxWidth="md" sx={{ py: 4 }}>
-      <Card sx={{ boxShadow: 3 }}>
-        <CardHeader 
-          title={id && id !== 'new' ? 'Edit Questionnaire Response' : 'New Questionnaire Response'}
-          sx={{ bgcolor: 'primary.main', color: 'primary.contrastText' }}
-        />
+    <Container id="questionnaireResponseDetailPage" maxWidth="lg" sx={{ py: 4 }}>
+      {error && (
+        <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError('')}>
+          {error}
+        </Alert>
+      )}
+
+      {renderHeader()}
+
+      <Card>
         <CardContent>
-          {error && (
-            <Typography color="error" sx={{ mb: 2 }}>
-              Error: {error}
-            </Typography>
-          )}
-          
-          {/* System ID Barcode */}
-          {(id && id !== 'new') && (
-            <Box sx={{ mb: 3, textAlign: 'right' }}>
-              <span className="barcode helveticas" style={{ fontSize: '2rem' }}>{id}</span>
-            </Box>
-          )}
-          
-          <Stack spacing={3}>
-            <TextField
-              fullWidth
-              label="Questionnaire Reference"
-              value={get(questionnaireResponse, 'questionnaire', '')}
-              onChange={(e) => handleChange('questionnaire', e.target.value)}
-              helperText="Reference to the questionnaire being answered (e.g., Questionnaire/123)"
-              disabled={!isEditing}
-            />
+          <Grid container spacing={3}>
+            {/* Basic Information */}
+            <Grid item xs={12} md={6}>
+              <TextField
+                id="identifier"
+                fullWidth
+                label="Identifier"
+                value={get(questionnaireResponse, 'identifier[0].value', '')}
+                onChange={(e) => handleChange('identifier[0].value', e.target.value)}
+                disabled={!isEditing}
+                margin="normal"
+              />
+            </Grid>
             
-            <Stack direction="row" spacing={2}>
-              <FormControl fullWidth disabled={!isEditing}>
+            <Grid item xs={12} md={6}>
+              <FormControl id="status" fullWidth margin="normal" disabled={!isEditing}>
                 <InputLabel>Status</InputLabel>
                 <Select
                   value={get(questionnaireResponse, 'status', 'in-progress')}
                   onChange={(e) => handleChange('status', e.target.value)}
                   label="Status"
                 >
-                  {statusOptions.map(option => (
-                    <MenuItem key={option.value} value={option.value}>
-                      {option.label}
-                    </MenuItem>
-                  ))}
+                  <MenuItem value="in-progress">In Progress</MenuItem>
+                  <MenuItem value="completed">Completed</MenuItem>
+                  <MenuItem value="amended">Amended</MenuItem>
+                  <MenuItem value="entered-in-error">Entered in Error</MenuItem>
+                  <MenuItem value="stopped">Stopped</MenuItem>
                 </Select>
               </FormControl>
-              
+            </Grid>
+
+            {/* Subject/Patient */}
+            <Grid item xs={12} md={6}>
               <TextField
+                id="subjectDisplay"
                 fullWidth
-                type="datetime-local"
-                label="Authored Date/Time"
-                value={moment(get(questionnaireResponse, 'authored', '')).format('YYYY-MM-DDTHH:mm')}
-                onChange={(e) => handleChange('authored', e.target.value)}
-                InputLabelProps={{ shrink: true }}
+                label="Patient"
+                value={get(questionnaireResponse, 'subject.display', '')}
+                onChange={(e) => handleChange('subject.display', e.target.value)}
                 disabled={!isEditing}
+                margin="normal"
+                InputProps={{
+                  endAdornment: isEditing && (
+                    <InputAdornment position="end">
+                      <Tooltip title="Search for patient">
+                        <IconButton onClick={handleSearchUser} edge="end">
+                          <SearchIcon />
+                        </IconButton>
+                      </Tooltip>
+                    </InputAdornment>
+                  )
+                }}
               />
-            </Stack>
-            
-            <TextField
-              fullWidth
-              label="Subject (Patient)"
-              value={get(questionnaireResponse, 'subject.display', '')}
-              helperText={get(questionnaireResponse, 'subject.reference', '') || 'Patient reference will be assigned'}
-              disabled // Always disabled to prevent editing
-            />
-            
-            <TextField
-              fullWidth
-              label="Author"
-              value={get(questionnaireResponse, 'author.display', '')}
-              onChange={(e) => handleChange('author.display', e.target.value)}
-              helperText={get(questionnaireResponse, 'author.reference', '') || 'Author reference will be assigned'}
-              disabled={!isEditing}
-            />
-            
-            {originalQuestionnaire && (
-              <Box sx={{ mt: 2, p: 2, bgcolor: 'grey.100', borderRadius: 1 }}>
-                <Typography variant="subtitle2" gutterBottom>
-                  Questionnaire: {get(originalQuestionnaire, 'title', 'Untitled Questionnaire')}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  {get(originalQuestionnaire, 'description', '')}
-                </Typography>
-              </Box>
-            )}
-            
-            <Divider />
-            
-            <Typography variant="h6">Answers</Typography>
-            
-            <Stack spacing={2}>
-              {renderAnswerFields()}
-            </Stack>
-          </Stack>
+            </Grid>
+
+            {/* Author */}
+            <Grid item xs={12} md={6}>
+              <TextField
+                id="authorDisplay"
+                fullWidth
+                label="Author"
+                value={get(questionnaireResponse, 'author.display', '')}
+                onChange={(e) => handleChange('author.display', e.target.value)}
+                disabled={!isEditing}
+                margin="normal"
+              />
+            </Grid>
+
+            {/* Questionnaire Reference */}
+            <Grid item xs={12} md={6}>
+              <TextField
+                id="questionnaire"
+                fullWidth
+                label="Questionnaire Reference"
+                value={get(questionnaireResponse, 'questionnaire', '')}
+                onChange={(e) => handleChange('questionnaire', e.target.value)}
+                disabled={!isEditing}
+                margin="normal"
+                helperText="Format: Questionnaire/id"
+              />
+            </Grid>
+
+            {/* Questionnaire Display */}
+            <Grid item xs={12} md={6}>
+              <TextField
+                id="questionnaireDisplay"
+                fullWidth
+                label="Questionnaire Display"
+                value={get(questionnaireResponse, 'questionnaireDisplay', '')}
+                onChange={(e) => handleChange('questionnaireDisplay', e.target.value)}
+                disabled={!isEditing}
+                margin="normal"
+              />
+            </Grid>
+
+            {/* Authored Date */}
+            <Grid item xs={12} md={6}>
+              <TextField
+                id="authored"
+                fullWidth
+                label="Authored"
+                type="datetime-local"
+                value={moment(get(questionnaireResponse, 'authored', '')).format('YYYY-MM-DDTHH:mm')}
+                onChange={(e) => handleChange('authored', moment(e.target.value).toISOString())}
+                disabled={!isEditing}
+                margin="normal"
+                InputLabelProps={{
+                  shrink: true,
+                }}
+              />
+            </Grid>
+
+            {/* Source */}
+            <Grid item xs={12} md={6}>
+              <TextField
+                id="source"
+                fullWidth
+                label="Source"
+                value={get(questionnaireResponse, 'source.display', '')}
+                onChange={(e) => handleChange('source.display', e.target.value)}
+                disabled={!isEditing}
+                margin="normal"
+                helperText="Who answered the questions"
+              />
+            </Grid>
+
+            {/* Based On */}
+            <Grid item xs={12} md={6}>
+              <TextField
+                id="basedOn"
+                fullWidth
+                label="Based On"
+                value={get(questionnaireResponse, 'basedOn[0].reference', '')}
+                onChange={(e) => handleChange('basedOn[0].reference', e.target.value)}
+                disabled={!isEditing}
+                margin="normal"
+                helperText="ServiceRequest or CarePlan reference"
+              />
+            </Grid>
+
+            {/* Part Of */}
+            <Grid item xs={12} md={6}>
+              <TextField
+                id="partOf"
+                fullWidth
+                label="Part Of"
+                value={get(questionnaireResponse, 'partOf[0].reference', '')}
+                onChange={(e) => handleChange('partOf[0].reference', e.target.value)}
+                disabled={!isEditing}
+                margin="normal"
+                helperText="Encounter or Procedure reference"
+              />
+            </Grid>
+
+            {/* Reason Code */}
+            <Grid item xs={12} md={6}>
+              <TextField
+                id="reasonCode"
+                fullWidth
+                label="Reason Code"
+                value={get(questionnaireResponse, 'reasonCode[0].coding[0].code', '')}
+                onChange={(e) => handleChange('reasonCode[0].coding[0].code', e.target.value)}
+                disabled={!isEditing}
+                margin="normal"
+                helperText="SNOMED CT code"
+              />
+            </Grid>
+
+            {/* Reason Display */}
+            <Grid item xs={12} md={6}>
+              <TextField
+                id="reasonDisplay"
+                fullWidth
+                label="Reason Display"
+                value={get(questionnaireResponse, 'reasonCode[0].coding[0].display', '')}
+                onChange={(e) => handleChange('reasonCode[0].coding[0].display', e.target.value)}
+                disabled={!isEditing}
+                margin="normal"
+              />
+            </Grid>
+
+            {/* Notes */}
+            <Grid item xs={12}>
+              <TextField
+                id="notesTextarea"
+                fullWidth
+                multiline
+                rows={4}
+                label="Notes"
+                value={get(questionnaireResponse, 'note[0].text', '')}
+                onChange={(e) => handleChange('note[0].text', e.target.value)}
+                disabled={!isEditing}
+                margin="normal"
+              />
+            </Grid>
+          </Grid>
         </CardContent>
-        
+
         <CardActions sx={{ justifyContent: 'flex-end', p: 2 }}>
-          {!isEditing && id && id !== 'new' ? (
-            // Read-only mode buttons
+          {!isEditing && !isNew ? (
             <>
-              <Button 
-                onClick={() => navigate('/questionnaire-responses')}
-              >
+              <Button onClick={() => navigate('/questionnaire-responses')}>
                 Back
               </Button>
-              <Button 
-                onClick={() => setIsEditing(true)}
+              <Button
                 variant="contained"
                 color="primary"
+                startIcon={<EditIcon />}
+                onClick={() => setIsEditing(true)}
               >
                 Edit
               </Button>
             </>
           ) : (
-            // Edit mode buttons
             <>
-              <Button 
+              <Button
                 onClick={() => {
-                  if (id && id !== 'new') {
-                    // Cancel editing and reload original data
-                    setIsEditing(false);
-                    // Reload the questionnaire response to discard changes
-                    async function reloadQuestionnaireResponse() {
-                      try {
-                        const result = await Meteor.callAsync('questionnaireResponses.get', id);
-                        if (result) {
-                          setQuestionnaireResponse(result);
-                        }
-                      } catch (err) {
-                        console.error('Error reloading questionnaire response:', err);
-                      }
-                    }
-                    reloadQuestionnaireResponse();
-                  } else {
-                    // For new questionnaire responses, go back
+                  if (isNew) {
                     navigate('/questionnaire-responses');
+                  } else {
+                    setIsEditing(false);
+                    // Reload original data
+                    window.location.reload();
                   }
                 }}
                 disabled={loading}
               >
                 Cancel
               </Button>
-              {id && id !== 'new' && (
-                <Button 
-                  onClick={handleDelete}
+              {!isNew && (
+                <Button
                   color="error"
+                  onClick={() => setShowDeleteDialog(true)}
                   disabled={loading}
                 >
                   Delete
                 </Button>
               )}
-              <Button 
-                onClick={handleSave}
+              <Button
+                id="saveQuestionnaireResponseButton"
                 variant="contained"
                 color="primary"
+                onClick={handleSave}
                 disabled={loading}
               >
                 {loading ? 'Saving...' : 'Save'}
@@ -601,6 +660,32 @@ function QuestionnaireResponseDetail(props) {
           )}
         </CardActions>
       </Card>
+
+      {/* Patient Search Dialog */}
+      <PatientSearchDialog
+        open={showPatientSearch}
+        onClose={() => setShowPatientSearch(false)}
+        onSelect={handleSelectPatient}
+      />
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog
+        open={showDeleteDialog}
+        onClose={() => setShowDeleteDialog(false)}
+      >
+        <DialogTitle>Delete Questionnaire Response</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Are you sure you want to delete this questionnaire response? This action cannot be undone.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setShowDeleteDialog(false)}>Cancel</Button>
+          <Button onClick={handleDelete} color="error" autoFocus>
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Container>
   );
 }

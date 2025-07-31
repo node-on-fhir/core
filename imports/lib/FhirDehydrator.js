@@ -723,7 +723,7 @@ export function flattenCarePlan(plan){
 
   result.subject = determineSubjectDisplayString(plan);
 
-  result.author = get(plan, 'author.display', '')
+  result.author = get(plan, 'author[0].display', '')
   result.start = moment(get(plan, 'period.start')).format("YYYY-MM-DD hh:mm a");
   result.end = moment(get(plan, 'period.start')).format("YYYY-MM-DD hh:mm a");
   result.category = get(plan, 'category[0].text', '')  
@@ -1641,6 +1641,10 @@ export function flattenEncounter(encounter, internalDateFormat){
     meta: '',
     subject: '',
     subjectId: '',
+    patientDisplay: '',
+    patientReference: '',
+    practitionerDisplay: '',
+    practitionerReference: '',
     status: '',
     statusHistory: 0,
     periodStart: '',
@@ -1649,6 +1653,7 @@ export function flattenEncounter(encounter, internalDateFormat){
     reasonDisplay: '', 
     typeCode: '',
     typeDisplay: '',
+    class: '',
     classCode: '',
     duration: '',
     operationOutcome: ''
@@ -1665,17 +1670,39 @@ export function flattenEncounter(encounter, internalDateFormat){
 
   result.subject = determineSubjectDisplayString(encounter);
   result.subjectId = get(encounter, 'subject.reference', '');
+  result.patientDisplay = get(encounter, 'subject.display', '');
+  result.patientReference = get(encounter, 'subject.reference', '');
+
+  // Extract practitioner from participant array
+  if(Array.isArray(get(encounter, 'participant'))){
+    encounter.participant.forEach(function(participant){
+      if(get(participant, 'individual.display')){
+        result.practitionerDisplay = get(participant, 'individual.display');
+        result.practitionerReference = get(participant, 'individual.reference', '');
+      }
+    });
+  }
 
   result.status = get(encounter, 'status', '');
-  result.reasonCode = get(encounter, 'reason[0].coding[0].code', '');
-  result.reasonDisplay = get(encounter, 'reason[0].coding[0].display', '');
+  
+  // Handle both reason and reasonCode structures
+  if(get(encounter, 'reasonCode[0].coding[0].code')){
+    result.reasonCode = get(encounter, 'reasonCode[0].coding[0].code', '');
+    result.reasonDisplay = get(encounter, 'reasonCode[0].coding[0].display', '');
+  } else if(get(encounter, 'reason[0].coding[0].code')){
+    result.reasonCode = get(encounter, 'reason[0].coding[0].code', '');
+    result.reasonDisplay = get(encounter, 'reason[0].coding[0].display', '');
+  }
+  
   result.typeCode = get(encounter, 'type[0].coding[0].code', '');
   result.typeDisplay = get(encounter, 'type[0].coding[0].display', '');
 
   if(get(encounter, 'class.code')){
     result.classCode = get(encounter, 'class.code', '');
+    result.class = get(encounter, 'class.code', '');
   } else if(get(encounter, 'class')){
     result.classCode = get(encounter, 'class', '');
+    result.class = get(encounter, 'class', '');
   }
 
   let statusHistory = get(encounter, 'statusHistory', []);
@@ -3155,7 +3182,8 @@ export function flattenMedication(medication, dateFormat){
 
   result.marketingAuthorizationHolderDisplay = get(medication, 'marketingAuthorizationHolder.display', '');
   result.marketingAuthorizationHolderReference = get(medication, 'marketingAuthorizationHolder.reference', '');
-  result.manufacturer = get(medication, 'marketingAuthorizationHolder.display', '');
+  // Handle both marketingAuthorizationHolder and manufacturer fields
+  result.manufacturer = get(medication, 'marketingAuthorizationHolder.display', '') || get(medication, 'manufacturer.display', '');
 
   if(get(medication, 'doseForm.text', '')){
     result.doseForm = get(medication, 'doseForm.text', '');
@@ -4476,9 +4504,23 @@ export function flattenProcedure(procedure, internalDateFormat){
   }
 
   result.performedStart = moment(get(procedure, 'performedDateTime')).format(internalDateFormat);      
-  result.performerDisplay = get(procedure, 'performer.display');
-  result.performerReference = get(procedure, 'performer.reference');
-  result.bodySiteDisplay = get(procedure, 'bodySite.display');
+  
+  // Handle performer array structure
+  if(Array.isArray(get(procedure, 'performer'))){
+    result.performerDisplay = get(procedure, 'performer[0].actor.display', '');
+    result.performerReference = get(procedure, 'performer[0].actor.reference', '');
+  } else {
+    // Legacy format
+    result.performerDisplay = get(procedure, 'performer.display', '');
+    result.performerReference = get(procedure, 'performer.reference', '');
+  }
+  
+  // Handle bodySite array structure
+  if(Array.isArray(get(procedure, 'bodySite'))){
+    result.bodySiteDisplay = get(procedure, 'bodySite[0].coding[0].display', '') || get(procedure, 'bodySite[0].text', '');
+  } else {
+    result.bodySiteDisplay = get(procedure, 'bodySite.display', '');
+  }
 
   if(get(procedure, 'performedPeriod')){
     result.performedStart = moment(get(procedure, 'performedPeriod.start')).format(internalDateFormat);      
@@ -4567,7 +4609,10 @@ export function flattenQuestionnaire(questionnaire){
     id: get(questionnaire, 'id'),
     identifier: '',
     title: '',
-    state: '',
+    name: '',
+    publisher: '',
+    status: '',
+    version: '',
     date: '',
     numItems: 0,
     operationOutcome: ''
@@ -4576,11 +4621,16 @@ export function flattenQuestionnaire(questionnaire){
   result.resourceType = get(questionnaire, 'resourceType', "Unknown");
 
   result.id = get(questionnaire, 'id', '');
-
-  result.date = moment(questionnaire.date).add(1, 'days').format("YYYY-MM-DD")
   result.title = get(questionnaire, 'title', '');
+  result.name = get(questionnaire, 'name', '');
+  result.publisher = get(questionnaire, 'publisher', '');
   result.status = get(questionnaire, 'status', '');
+  result.version = get(questionnaire, 'version', '');
   result.identifier = get(questionnaire, 'identifier[0].value', '');
+
+  if(get(questionnaire, 'date')){
+    result.date = moment(questionnaire.date).format("YYYY-MM-DD");
+  }
 
   if(Array.isArray(questionnaire.item)){
     result.numItems = questionnaire.item.length;
@@ -4600,6 +4650,7 @@ export function flattenQuestionnaireResponse(questionnaireResponse){
     title: '',
     identifier: '',
     questionnaire: '',
+    questionnaireDisplay: '',
     status: '',
     subjectDisplay: '',
     subjectReference: '',
@@ -4607,6 +4658,8 @@ export function flattenQuestionnaireResponse(questionnaireResponse){
     sourceReference: '',
     encounter: '',
     author: '',
+    authorDisplay: '',
+    authorReference: '',
     date: '',
     count: 0,
     numItems: 0,
@@ -4620,18 +4673,26 @@ export function flattenQuestionnaireResponse(questionnaireResponse){
   // to account for when converting back to a string
   result.date = moment(questionnaireResponse.authored).add(1, 'days').format("YYYY-MM-DD HH:mm")
   result.questionnaire = get(questionnaireResponse, 'questionnaire', '');
+  
+  // Extract questionnaire display from extension
+  const extensions = get(questionnaireResponse, 'extension', []);
+  const displayExtension = extensions.find(ext => ext.url === 'http://example.org/fhir/StructureDefinition/questionnaire-display');
+  result.questionnaireDisplay = get(displayExtension, 'valueString', '');
+  
   result.encounter = get(questionnaireResponse, 'encounter.reference', '');
   result.subjectDisplay = get(questionnaireResponse, 'subject.display', '');
   result.subjectReference = get(questionnaireResponse, 'subject.reference', '');
   result.sourceDisplay = get(questionnaireResponse, 'source.display', '');
   result.sourceReference = get(questionnaireResponse, 'source.reference', '');
+  result.authorDisplay = get(questionnaireResponse, 'author.display', '');
+  result.authorReference = get(questionnaireResponse, 'author.reference', '');
   result.author = get(questionnaireResponse, 'author.display', '');
   result.identifier = get(questionnaireResponse, 'identifier[0].value', '');
   result.status = get(questionnaireResponse, 'status', '');
   result.id = get(questionnaireResponse, 'id', '');
   result.identifier = get(questionnaireResponse, 'identifier[0].value', '');
 
-  if(has(questionnaireResponse), 'authored'){
+  if(has(questionnaireResponse, 'authored')){
     result.authored = moment(get(questionnaireResponse, 'authored')).format("YYYY-MM-DD HH:mm");
   }
 
@@ -4654,17 +4715,24 @@ export function flattenResearchStudy(study) {
     title: '',
     status: '',
     phase: '',
+    phaseText: '',
     category: '',
+    categoryText: '',
     focus: '',
+    focusCode: '',
+    focusDisplay: '',
     condition: '',
     protocol: '',
     partOf: '',
     primaryPurposeType: '',
     enrollmentCount: 0,
+    enrollmentText: '',
     periodStart: '',
     periodEnd: '',
+    periodText: '',
     sponsor: '',
     principalInvestigator: '',
+    principalInvestigatorDisplay: '',
     site: '',
     description: '',
     keyword: '',
@@ -4686,9 +4754,13 @@ export function flattenResearchStudy(study) {
   
   // Classification and status
   result.status = get(study, 'status', '');
-  result.phase = get(study, 'phase.coding[0].display', '');
-  result.category = get(study, 'category[0].coding[0].display', '');
+  result.phase = get(study, 'phase.coding[0].code', '');
+  result.phaseText = get(study, 'phase.coding[0].display', '');
+  result.category = get(study, 'category[0].coding[0].code', '');
+  result.categoryText = get(study, 'category[0].coding[0].display', '');
   result.focus = get(study, 'focus[0].coding[0].display', '');
+  result.focusCode = get(study, 'focus[0].coding[0].code', '');
+  result.focusDisplay = get(study, 'focus[0].coding[0].display', '');
   result.condition = get(study, 'condition[0].coding[0].display', '');
   
   // References
@@ -4701,15 +4773,36 @@ export function flattenResearchStudy(study) {
   // Enrollment
   if (Array.isArray(study.enrollment)) {
     result.enrollmentCount = study.enrollment.length;
+    // Check if enrollment has display like "750/1000"
+    const enrollmentDisplay = get(study, 'enrollment[0].display', '');
+    if (enrollmentDisplay) {
+      result.enrollmentText = enrollmentDisplay;
+    } else {
+      result.enrollmentText = result.enrollmentCount.toString();
+    }
   }
   
   // Period
-  result.periodStart = moment(get(study, 'period.start')).format('YYYY-MM-DD hh:mm a');
-  result.periodEnd = moment(get(study, 'period.end')).format('YYYY-MM-DD hh:mm a');
+  const periodStart = get(study, 'period.start', '');
+  const periodEnd = get(study, 'period.end', '');
+  if (periodStart) {
+    result.periodStart = moment(periodStart).format('YYYY-MM-DD');
+  }
+  if (periodEnd) {
+    result.periodEnd = moment(periodEnd).format('YYYY-MM-DD');
+  }
+  if (periodStart && periodEnd) {
+    result.periodText = `${result.periodStart} - ${result.periodEnd}`;
+  } else if (periodStart) {
+    result.periodText = `Started ${result.periodStart}`;
+  } else if (periodEnd) {
+    result.periodText = `Ends ${result.periodEnd}`;
+  }
   
   // Parties involved
   result.sponsor = get(study, 'sponsor.display', '');
-  result.principalInvestigator = get(study, 'principalInvestigator.display', '');
+  result.principalInvestigator = get(study, 'principalInvestigator.reference', '');
+  result.principalInvestigatorDisplay = get(study, 'principalInvestigator.display', '');
   result.site = get(study, 'site[0].display', '');
   
   // Description and keywords
@@ -4749,6 +4842,7 @@ export function flattenResearchSubject(researchSubject, internalDateFormat){
     status: '',
     study: '',
     studyTitle: '',
+    studyDisplay: '',
     patientReference: '',
     patientDisplay: '',
     consent: '',
@@ -4769,6 +4863,7 @@ export function flattenResearchSubject(researchSubject, internalDateFormat){
   // Study details
   if (get(researchSubject, 'study.display')) {
     result.study = get(researchSubject, 'study.display', '');
+    result.studyDisplay = get(researchSubject, 'study.display', '');
   } else if (get(researchSubject, 'study.reference')) {
     result.study = get(researchSubject, 'study.reference', '');
   }
@@ -4859,10 +4954,15 @@ export function flattenServiceRequest(document){
     subjectName: get(document, 'subject.display', ''),
     performer: get(document, 'performer[0].display', ''),
     performerReference: get(document, 'performer[0].reference', ''),
+    performerName: get(document, 'performer[0].display', ''),
     orderDetail: get(document, 'orderDetail[0].text', ''),
-    requestor: get(document, 'requestor[0].display', ''),
-    requestorReference: get(document, 'requestor[0].reference', ''),
+    requester: get(document, 'requester.display', ''),
+    requesterReference: get(document, 'requester.reference', ''),
+    requestorName: get(document, 'requester.display', ''),
+    requestorReference: get(document, 'requester.reference', ''),
     locationReference: get(document, 'locationReference[0].name', ''),
+    code: get(document, 'code.coding[0].code', ''),
+    codeDisplay: get(document, 'code.coding[0].display', ''),
     text: get(document, 'text.div', ''),
   };
 

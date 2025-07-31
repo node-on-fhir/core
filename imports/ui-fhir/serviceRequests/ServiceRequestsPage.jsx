@@ -1,3 +1,5 @@
+// /imports/ui-fhir/serviceRequests/ServiceRequestsPage.jsx
+
 import { 
   Grid, 
   Container,
@@ -28,6 +30,7 @@ import { useNavigate } from 'react-router-dom';
 
 
 import { get, set } from 'lodash';
+import { ServiceRequests } from '/imports/lib/schemas/SimpleSchemas/ServiceRequests';
 
 
 let defaultServiceRequest = {
@@ -39,14 +42,6 @@ let defaultServiceRequest = {
   family: '',
   gender: ''
 };
-
-
-//=============================================================================================================================================
-// DATA CURSORS
-
-Meteor.startup(function(){
-  ServiceRequests = Meteor.Collections.ServiceRequests;
-})
 
 //=============================================================================================================================================
 // SESSION VARIABLES
@@ -147,6 +142,16 @@ export function ServiceRequestsPage(props){
   data.selectedServiceRequestId = useTracker(function(){
     return Session.get('selectedServiceRequestId');
   })
+
+  // Subscribe to ServiceRequests
+  useTracker(function(){
+    let autoPublishEnabled = get(Meteor, 'settings.public.defaults.autopublish', false);
+    if(autoPublishEnabled){
+      return Meteor.subscribe('autopublish.ServiceRequests', {}, {});
+    } else {
+      return Meteor.subscribe('servicerequests.all');
+    }
+  }, []);
 
   data.serviceRequests = useTracker(function(){
     return ServiceRequests.find().fetch()
@@ -308,7 +313,7 @@ export function ServiceRequestsPage(props){
           sort="occurrenceDateTime"
           onRowClick={function(serviceRequestId){
             console.log('ServiceRequestsPage.onRowClick', serviceRequestId);
-            navigate('/serviceRequests/' + serviceRequestId);
+            navigate('/service-requests/' + serviceRequestId);
           }}
         />
       </CardContent>
@@ -390,7 +395,7 @@ export function ServiceRequestsPage(props){
 
   function handleAddServiceRequest(){
     console.log('Add Service Request button clicked');
-    navigate('/serviceRequests/new');
+    navigate('/service-requests/new');
   }
 
   function renderHeader() {

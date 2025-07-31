@@ -238,7 +238,7 @@ function MedicationAdministrationDetail(props) {
   ];
 
   return (
-    <Container maxWidth="md" sx={{ py: 4 }}>
+    <Container id="medicationAdministrationDetailPage" maxWidth="md" sx={{ py: 4 }}>
       <Card sx={{ boxShadow: 3 }}>
         <CardHeader 
           title={id && id !== 'new' ? 'Edit Medication Administration' : 'New Medication Administration'}
@@ -260,6 +260,7 @@ function MedicationAdministrationDetail(props) {
           
           <Stack spacing={3}>
             <TextField
+              id="subjectDisplay"
               fullWidth
               label="Patient"
               value={get(medicationAdministration, 'subject.display', '')}
@@ -269,6 +270,7 @@ function MedicationAdministrationDetail(props) {
             
             <Stack direction="row" spacing={2}>
               <TextField
+                id="medicationDisplay"
                 fullWidth
                 label="Medication Name"
                 value={get(medicationAdministration, 'medicationCodeableConcept.text', '') || 
@@ -279,6 +281,7 @@ function MedicationAdministrationDetail(props) {
               />
               
               <TextField
+                id="medicationCode"
                 fullWidth
                 label="Medication Code"
                 value={get(medicationAdministration, 'medicationCodeableConcept.coding[0].code', '')}
@@ -307,6 +310,7 @@ function MedicationAdministrationDetail(props) {
               <FormControl fullWidth disabled={!isEditing}>
                 <InputLabel>Status</InputLabel>
                 <Select
+                  id="status"
                   value={get(medicationAdministration, 'status', 'completed')}
                   onChange={(e) => handleChange('status', e.target.value)}
                   label="Status"
@@ -320,6 +324,7 @@ function MedicationAdministrationDetail(props) {
               </FormControl>
               
               <TextField
+                id="effectiveDateTime"
                 fullWidth
                 type="datetime-local"
                 label="Administration Date/Time"
@@ -330,7 +335,23 @@ function MedicationAdministrationDetail(props) {
               />
             </Stack>
             
+            <FormControl fullWidth disabled={!isEditing}>
+              <InputLabel>Category</InputLabel>
+              <Select
+                id="category"
+                value={get(medicationAdministration, 'category.coding[0].code', 'inpatient')}
+                onChange={(e) => handleChange('category.coding[0].code', e.target.value)}
+                label="Category"
+              >
+                <MenuItem value="inpatient">Inpatient</MenuItem>
+                <MenuItem value="outpatient">Outpatient</MenuItem>
+                <MenuItem value="community">Community</MenuItem>
+                <MenuItem value="discharge">Discharge</MenuItem>
+              </Select>
+            </FormControl>
+            
             <TextField
+              id="performerDisplay"
               fullWidth
               label="Administered By"
               value={get(medicationAdministration, 'performer[0].actor.display', '')}
@@ -340,6 +361,7 @@ function MedicationAdministrationDetail(props) {
             />
             
             <TextField
+              id="dosageText"
               fullWidth
               multiline
               rows={2}
@@ -352,6 +374,7 @@ function MedicationAdministrationDetail(props) {
             
             <Stack direction="row" spacing={2}>
               <TextField
+                id="dosageDose"
                 fullWidth
                 type="number"
                 label="Dose Amount"
@@ -361,6 +384,7 @@ function MedicationAdministrationDetail(props) {
               />
               
               <TextField
+                id="dosageDoseUnit"
                 fullWidth
                 label="Dose Unit"
                 value={get(medicationAdministration, 'dosage.dose.unit', '')}
@@ -373,6 +397,7 @@ function MedicationAdministrationDetail(props) {
               />
               
               <TextField
+                id="dosageRouteDisplay"
                 fullWidth
                 label="Route"
                 value={get(medicationAdministration, 'dosage.route.coding[0].display', '')}

@@ -7,6 +7,9 @@ import { App } from '/imports/ui/App';
 
 import { get, has } from 'lodash';
 
+// Initialize startup modules (including collections)
+import '/imports/startup/client';
+
 import { AccountsClient } from '@accounts/client';
 import { AccountsClientPassword } from '@accounts/client-password';
 import { RestClient } from '@accounts/rest-client';

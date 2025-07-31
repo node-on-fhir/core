@@ -70,3 +70,16 @@ footer {
   0% { opacity: 0; }
   100% { opacity: 1; }
 }
+
+@keyframes rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.rotating {
+  animation: rotate 1s linear infinite;
+}

@@ -27,7 +27,7 @@ import SimpleSchema from 'simpl-schema';
 // REFACTOR:  we want to deprecate meteor/clinical:hl7-resource-datatypes
 // so please remove references from the following line
 // and replace with import from ../../datatypes/*
-import { BaseSchema, DomainResourceSchema, IdentifierSchema, ContactPointSchema, AddressSchema, ReferenceSchema, SignatureSchema, CodeableConceptSchema } from 'meteor/clinical:hl7-resource-datatypes';
+import { BaseSchema, DomainResourceSchema, IdentifierSchema, ContactPointSchema, AddressSchema, ReferenceSchema, SignatureSchema, CodeableConceptSchema, AnnotationSchema, PeriodSchema } from 'meteor/clinical:hl7-resource-datatypes';
 
 
 // create the object using our BaseModel
@@ -102,7 +102,7 @@ let ProcedureDstu2 = new SimpleSchema({
     type: ReferenceSchema
   },
   "status" : {
-    type: Code,
+    type: String,
     allowedValues: [ 'in-progress', 'aborted', 'completed', 'entered-in-error'],
     defaultValue: 'completed'
   },
@@ -303,7 +303,7 @@ let ProcedureStu3 = new SimpleSchema({
     type: ReferenceSchema
   },  
   "status" : {
-    type: Code,
+    type: String,
     allowedValues: [ 'preparation', 'in-progress', 'suspended', 'aborted', 'completed', 'entered-in-error', 'unknown'],
     defaultValue: 'completed'
   },
@@ -483,7 +483,7 @@ let ProcedureR4 = new SimpleSchema({
   },
   "resourceType" : {
     type: String,
-    defaultValue: "Patient"
+    defaultValue: "Procedure"
   },
   "text" : {
     optional: true,
@@ -529,7 +529,7 @@ let ProcedureR4 = new SimpleSchema({
     type: ReferenceSchema
   },  
   "status" : {
-    type: Code,
+    type: String,
     allowedValues: [ 'preparation', 'in-progress', 'suspended', 'aborted', 'completed', 'entered-in-error', 'unknown'],
     defaultValue: 'completed'
   },
@@ -698,5 +698,6 @@ let ProcedureSchema = ProcedureR4;
 // DomainResourceSchema.extend(ProcedureSchema);
 
 // Procedures.attachSchema(ProcedureSchema);
+// TODO: Collection2 package needs to be installed for attachSchema to work in Meteor v3
 
-export default { Procedure, ProcedureSchema, ProcedureDstu2, ProcedureStu3, ProcedureR4 };
+export { Procedure, Procedures, ProcedureSchema, ProcedureDstu2, ProcedureStu3, ProcedureR4 };

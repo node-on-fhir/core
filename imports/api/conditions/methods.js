@@ -5,7 +5,19 @@ import { check } from 'meteor/check';
 import { get } from 'lodash';
 import moment from 'moment';
 
-import { Conditions } from '/imports/lib/schemas/SimpleSchemas/Conditions';
+// Import to ensure schema is loaded, but we'll use the global collection
+import '/imports/lib/schemas/SimpleSchemas/Conditions';
+
+// Get the correct Conditions collection reference
+function getConditions() {
+  if (Meteor.isServer) {
+    // On server, use the global collection set up in server/main.js
+    return Meteor.Collections?.Conditions || global.Conditions;
+  } else {
+    // On client, use from Meteor.Collections if available
+    return Meteor.Collections?.Conditions;
+  }
+}
 
 Meteor.methods({
   async 'conditions.create'(conditionData) {
@@ -26,7 +38,8 @@ Meteor.methods({
     };
     
     // Insert and return the new condition
-    const conditionId = await Conditions._collection.insertAsync(condition);
+    const Conditions = getConditions();
+    const conditionId = await Conditions.insertAsync(condition);
     
     // Log for HIPAA compliance
     if (Meteor.isServer) {
@@ -48,6 +61,8 @@ Meteor.methods({
       throw new Meteor.Error('not-authorized', 'User must be logged in to update conditions');
     }
     
+    const Conditions = getConditions();
+    
     // Check if condition exists
     const existingCondition = await Conditions.findOneAsync({ _id: conditionId });
     if (!existingCondition) {
@@ -67,7 +82,7 @@ Meteor.methods({
     };
     
     // Update the condition
-    const result = await Conditions._collection.updateAsync(
+    const result = await Conditions.updateAsync(
       { _id: conditionId },
       { $set: updatedCondition }
     );
@@ -91,6 +106,8 @@ Meteor.methods({
       throw new Meteor.Error('not-authorized', 'User must be logged in to remove conditions');
     }
     
+    const Conditions = getConditions();
+    
     // Check if condition exists
     const existingCondition = await Conditions.findOneAsync({ _id: conditionId });
     if (!existingCondition) {
@@ -98,7 +115,7 @@ Meteor.methods({
     }
     
     // Remove the condition
-    const result = await Conditions._collection.removeAsync({ _id: conditionId });
+    const result = await Conditions.removeAsync({ _id: conditionId });
     
     // Log for HIPAA compliance
     if (Meteor.isServer) {
@@ -119,12 +136,30 @@ Meteor.methods({
       throw new Meteor.Error('not-authorized', 'User must be logged in to view conditions');
     }
     
-    const condition = await Conditions.findOneAsync({ _id: conditionId });
+    const Conditions = getConditions();
+    console.log('conditions.get called with ID:', conditionId);
+    console.log('Using Conditions collection:', !!Conditions);
+    
+    // Try both ways to find the condition
+    let condition = await Conditions.findOneAsync({ _id: conditionId });
     
     if (!condition) {
+      // Also try without the query object
+      condition = await Conditions.findOneAsync(conditionId);
+    }
+    
+    if (!condition) {
+      console.log('Condition not found for ID:', conditionId);
+      console.log('Total conditions in collection:', await Conditions.countAsync());
+      
+      // Log a few conditions to see their ID format
+      const sampleConditions = await Conditions.find({}, { limit: 3 }).fetchAsync();
+      console.log('Sample condition IDs:', sampleConditions.map(c => ({ _id: c._id, type: typeof c._id })));
+      
       throw new Meteor.Error('not-found', 'Condition not found');
     }
     
+    console.log('Found condition:', condition._id);
     return condition;
   }
 });

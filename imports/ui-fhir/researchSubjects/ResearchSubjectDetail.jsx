@@ -1,449 +1,550 @@
-// =======================================================================
-// Using DSTU2  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-//
-// https://www.hl7.org/fhir/DSTU2/researchSubjects.html
-//
-//
-// =======================================================================
+// /imports/ui-fhir/researchSubjects/ResearchSubjectDetail.jsx
 
-import React from 'react';
-import PropTypes from 'prop-types';
-
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useTracker } from 'meteor/react-meteor-data';
 
 import { 
   Button,
   Card,
-  Checkbox,
   CardActions,
   CardContent,
   CardHeader,
-  Grid,
+  Container,
   TextField,
   Select,
   MenuItem,
+  FormControl,
+  InputLabel,
+  Typography,
+  Box,
+  Stack,
+  Chip,
+  InputAdornment,
+  IconButton,
+  Tooltip,
+  Paper,
+  Alert,
+  Grid,
+  Dialog
 } from '@mui/material';
 
+import QrCodeIcon from '@mui/icons-material/QrCode';
+import SearchIcon from '@mui/icons-material/Search';
+import LockIcon from '@mui/icons-material/Lock';
+import LockOpenIcon from '@mui/icons-material/LockOpen';
+import EditIcon from '@mui/icons-material/Edit';
+import AccessTimeIcon from '@mui/icons-material/AccessTime';
+
 import { get, set } from 'lodash';
+import moment from 'moment';
 
+import { Meteor } from 'meteor/meteor';
+import { Session } from 'meteor/session';
 
-export class ResearchSubjectDetail extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      researchSubjectId: false,
-      researchSubject: {
-        resourceType: "ResearchSubject",
-        patient: {
-          reference: "",
-          display: ""
-        },
-        asserter: {
-          reference: "",
-          display: ""
-        },
-        dateRecorded: null,
-        code: {
-          coding: [
-            {
-              system: "http://snomed.info/sct",
-              code: "",
-              display: ""
-            }
-          ]
-        },
-        clinicalStatus: "active",
-        verificationStatus: "confirmed",
-        researchSubject: [],
-        onsetDateTime: null
-      }, 
-      form: {
-        patientDisplay: '',
-        asserterDisplay: '',
-        snomedCode: '',
-        snomedDisplay: '',
-        clinicalStatus: '',
-        verificationStatus: '',
-        researchSubjectDisplay: '',
-        onsetDateTime: ''
-      }
-    }
+import PatientSearchDialog from '/imports/components/PatientSearchDialog';
+import { FhirUtilities } from '/imports/lib/FhirUtilities';
+
+// Import the collection directly
+import { ResearchSubjects } from '/imports/lib/schemas/SimpleSchemas/ResearchSubjects';
+
+// Get the Patients collection 
+let Patients;
+Meteor.startup(function(){
+  if (Meteor.Collections?.Patients) {
+    Patients = Meteor.Collections.Patients;
   }
-  dehydrateFhirResource(researchSubject) {
-    let formData = Object.assign({}, this.state.form);
+});
 
-    formData.patientDisplay = get(researchSubject, 'patient.display')
-    formData.asserterDisplay = get(researchSubject, 'asserter.display')    
-    formData.snomedCode = get(researchSubject, 'code.coding[0].code')
-    formData.snomedDisplay = get(researchSubject, 'code.coding[0].display')
-    formData.clinicalStatus = get(researchSubject, 'clinicalStatus')
-    formData.verificationStatus = get(researchSubject, 'verificationStatus')
-    formData.onsetDateTime = get(researchSubject, 'onsetDateTime')
-
-    return formData;
-  }
-  shouldComponentUpdate(nextProps){
-    get(Meteor, 'settings.public.logging') === "debug" && console.log('ResearchSubjectDetail.shouldComponentUpdate()', nextProps, this.state)
-    let shouldUpdate = true;
-
-    // received an researchSubject from the table; okay lets update again
-    if(nextProps.researchSubjectId !== this.state.researchSubjectId){
-      
-      if(nextProps.researchSubject){
-        this.setState({researchSubject: nextProps.researchSubject})     
-        this.setState({form: this.dehydrateFhirResource(nextProps.researchSubject)})       
-      }
-
-      this.setState({researchSubjectId: nextProps.researchSubjectId})
-      shouldUpdate = true;
-    }
-
-    // both false; don't take any more updates
-    if(nextProps.researchSubject === this.state.researchSubject){
-      shouldUpdate = false;
-    }
- 
-    return shouldUpdate;
-  }
-
-  getMeteorData() {
-    let data = {
-      researchSubjectId: this.props.researchSubjectId,
-      researchSubject: false,
-      showDatePicker: false,
-      form: this.state.form
-    };
-
-    if(this.props.showDatePicker){
-      data.showDatePicker = this.props.showDatePicker
-    }
-    if(this.props.researchSubject){
-      data.researchSubject = this.props.researchSubject;
-      data.form = this.dehydrateFhirResource(this.props.researchSubject);
-    }
-
-    return data;
-  }
-  renderDatePicker(showDatePicker, form){
-    let datePickerValue;
-
-    if(get(form, 'onsetDateTime')){
-      datePickerValue = get(form, 'onsetDateTime');
-    }
-    if(get(form, 'onsetPeriod.start')){
-      datePickerValue = get(form, 'onsetPeriod.start');
-    }
-    if (typeof datePickerValue === "string"){
-      datePickerValue = new Date(datePickerValue);
-    }
-    if (showDatePicker) {
-      return (<div></div>)
-      // return (
-      //   <DatePicker 
-      //     name='onsetDateTime'
-      //     hintText="Onset Date" 
-      //     container="inline" 
-      //     mode="landscape"
-      //     value={ datePickerValue ? datePickerValue : null }    
-      //     onChange={ this.changeState.bind(this, 'onsetDateTime')}      
-      //     />
-      // );      
-    }
-  }
-  setHint(text){
-    if(this.props.showHints !== false){
-      return text;
-    } else {
-      return '';
-    }
-  }
-  render() {
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log('ResearchSubjectDetail.render()', this.state)
-
-    return (
-      <div id={this.props.id} className="researchSubjectDetail">
-        <CardContent>
-          <Grid container spacing={3}>
-            <Grid item xs={6}>
-              <TextField
-                id='patientDisplayInput'
-                name='patientDisplay'
-                label='Patient'
-                value={ get(this, 'data.form.patientDisplay', '') }
-                onChange={ this.changeState.bind(this, 'patientDisplay')}
-                hintText={ this.setHint('Jane Doe') }
-                //floatingLabelFixed={true}
-                fullWidth
-                /><br/>
-
-              <TextField
-                id='asserterDisplayInput'
-                name='asserterDisplay'
-                label='Asserter'
-                value={ get(this, 'data.form.asserterDisplay', '') }
-                onChange={ this.changeState.bind(this, 'asserterDisplay')}
-                hintText={ this.setHint('Nurse Jackie') }
-                //floatingLabelFixed={true}
-                fullWidth
-                /><br/>
-
-              <TextField
-                id='snomedCodeInput'
-                name='snomedCode'
-                label='SNOMED Code'
-                value={ get(this, 'data.form.snomedCode', '') }
-                hintText={ this.setHint('307343001') }
-                onChange={ this.changeState.bind(this, 'snomedCode')}
-                //floatingLabelFixed={true}
-                fullWidth
-                /><br/>
-
-              <TextField
-                id='snomedDisplayInput'
-                name='snomedDisplay'
-                label='SNOMED Display'
-                value={ get(this, 'data.form.snomedDisplay', '') }
-                onChange={ this.changeState.bind(this, 'snomedDisplay')}
-                hintText={ this.setHint('Acquired hemoglobin H disease (disorder)') }
-                //floatingLabelFixed={true}
-                fullWidth
-                /><br/>
-
-              <TextField
-                id='clinicalStatusInput'
-                name='clinicalStatus'
-                label='Clinical Status'
-                value={ get(this, 'data.form.clinicalStatus', '') }
-                hintText={ this.setHint('active | recurrence | inactive | remission | resolved') }
-                onChange={ this.changeState.bind(this, 'clinicalStatus')}
-                //floatingLabelFixed={true}
-                fullWidth
-                /><br/>
-
-              <TextField
-                id='verificationStatusInput'
-                name='verificationStatus'
-                label='Verification Status'
-                value={ get(this, 'data.form.verificationStatus', '') }
-                hintText={ this.setHint('provisional | differential | confirmed | refuted | entered-in-error | unknown') }
-                onChange={ this.changeState.bind(this, 'verificationStatus')}
-                //floatingLabelFixed={true}
-                fullWidth
-                /><br/>
-            </Grid>
-            <Grid item xs={6}>
-            </Grid>
-          </Grid>
-
-          <br/>
-          { this.renderDatePicker(this.data.showDatePicker, get(this, 'data.form') ) }
-          <br/>
-
-          <a href='http://browser.ihtsdotools.org/?perspective=full&conceptId1=404684003&edition=us-edition&release=v20180301&server=https://prod-browser-exten.ihtsdotools.org/api/snomed&langRefset=900000000000509007'>Lookup codes with the SNOMED CT Browser</a>
-
-        </CardContent>
-        <CardActions>
-          { this.determineButtons(this.state.researchSubjectId) }
-        </CardActions>
-      </div>
-    );
-  }
-
-  determineButtons(researchSubjectId){
-    if (researchSubjectId) {
-      return (
-        <div>
-          <Button id="updateResearchSubjectButton" primary={true} onClick={this.handleSaveButton.bind(this)} style={{marginRight: '20px'}} >Save</Button>
-          <Button id="deleteResearchSubjectButton" onClick={this.handleDeleteButton.bind(this)} >Delete</Button>
-        </div>
-      );
-    } else {
-      return(
-        <Button id="saveResearchSubjectButton" primary={true} onClick={this.handleSaveButton.bind(this)} >Save</Button>
-      );
-    }
-  }
-
-
-  updateFormData(formData, field, textValue){
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log("ResearchSubjectDetail.updateFormData", formData, field, textValue);
-
-    switch (field) {
-      case "patientDisplay":
-        set(formData, 'patientDisplay', textValue)
-        break;
-      case "asserterDisplay":
-        set(formData, 'asserterDisplay', textValue)
-        break;        
-      case "verificationStatus":
-        set(formData, 'verificationStatus', textValue)
-        break;
-      case "clinicalStatus":
-        set(formData, 'clinicalStatus', textValue)
-        break;
-      case "snomedCode":
-        set(formData, 'snomedCode', textValue)
-        break;
-      case "snomedDisplay":
-        set(formData, 'snomedDisplay', textValue)
-        break;
-      case "researchSubjectDisplay":
-        set(formData, 'researchSubjectDisplay', textValue)
-        break;
-      case "onsetDateTime":
-        set(formData, 'onsetDateTime', textValue)
-        break;
-      default:
-    }
-
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log("formData", formData);
-    return formData;
-  }
-  updateResearchSubject(researchSubjectData, field, textValue){
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log("ResearchSubjectDetail.updateResearchSubject", researchSubjectData, field, textValue);
-
-    switch (field) {
-      case "patientDisplay":
-        set(researchSubjectData, 'patient.display', textValue)
-        break;
-      case "asserterDisplay":
-        set(researchSubjectData, 'asserter.display', textValue)
-        break;
-      case "verificationStatus":
-        set(researchSubjectData, 'verificationStatus', textValue)
-        break;
-      case "clinicalStatus":
-        set(researchSubjectData, 'clinicalStatus', textValue)
-        break;
-      case "snomedCode":
-        set(researchSubjectData, 'code.coding[0].code', textValue)
-        break;
-      case "snomedDisplay":
-        set(researchSubjectData, 'code.coding[0].display', textValue)
-        break;
-      case "researchSubjectDisplay":
-        set(researchSubjectData, 'researchSubject[0].detail[0].display', textValue)
-        break;  
-      case "datePicker":
-        set(researchSubjectData, 'onsetDateTime', textValue)
-        break;
-      case "onsetDateTime":
-        set(researchSubjectData, 'onsetDateTime', textValue)
-        break;
+function ResearchSubjectDetail(props) {
+  const navigate = useNavigate();
+  const { id } = useParams();
   
+  // Subscribe to research subjects and patients data
+  const subscriptionReady = useTracker(() => {
+    const researchSubjectsHandle = Meteor.subscribe('autopublish.ResearchSubjects');
+    const patientsHandle = Meteor.subscribe('patients.all');
+    return researchSubjectsHandle.ready() && patientsHandle.ready();
+  }, []);
+
+  // Get selected patient and current user from session/tracker
+  const selectedPatient = useTracker(function() {
+    return Session.get('selectedPatient');
+  }, []);
+  
+  const selectedPatientId = useTracker(function() {
+    return Session.get('selectedPatientId');
+  }, []);
+  
+  const currentUser = useTracker(function() {
+    return Meteor.user();
+  }, []);
+  
+  // Initialize state with proper FHIR R4 structure
+  const [researchSubject, setResearchSubject] = useState({
+    resourceType: "ResearchSubject",
+    identifier: [],
+    status: "on-study",
+    period: {
+      start: moment().format('YYYY-MM-DD'),
+      end: moment().add(1, 'year').format('YYYY-MM-DD')
+    },
+    study: {
+      reference: "",
+      display: ""
+    },
+    subject: {
+      reference: "",
+      display: ""
+    },
+    assignedArm: "",
+    actualArm: "",
+    consent: {
+      reference: "",
+      display: ""
     }
-    return researchSubjectData;
-  }
-  componentDidUpdate(props){
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log('ResearchSubjectDisplay.componentDidUpdate()', props, this.state)
-  }
-  // this could be a mixin
-  changeState(field, event, textValue){
+  });
 
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log("   ");
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log("ResearchSubjectDetail.changeState", field, textValue);
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log("this.state", this.state);
-
-    let formData = Object.assign({}, this.state.form);
-    let researchSubjectData = Object.assign({}, this.state.researchSubject);
-
-    formData = this.updateFormData(formData, field, textValue);
-    researchSubjectData = this.updateResearchSubject(researchSubjectData, field, textValue);
-
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log("researchSubjectData", researchSubjectData);
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log("formData", formData);
-
-    this.setState({researchSubject: researchSubjectData})
-    this.setState({form: formData})
-
-  }
-
-  handleSaveButton(){
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log('^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^&&')
-    console.log('Saving a new ResearchSubject...', this.state)
-
-    let self = this;
-    let fhirResearchSubjectData = Object.assign({}, this.state.researchSubject);
-
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log('fhirResearchSubjectData', fhirResearchSubjectData);
-
-
-    let researchSubjectValidator = ResearchSubjectSchema.newContext();
-    researchSubjectValidator.validate(fhirResearchSubjectData)
-
-    console.log('IsValid: ', researchSubjectValidator.isValid())
-    console.log('ValidationErrors: ', researchSubjectValidator.validationErrors());
-
-    if (this.state.researchSubjectId) {
-      if(get(Meteor, 'settings.public.logging') === "debug") console.log("Updating ResearchSubject...");
-      delete fhirResearchSubjectData._id;
-
-      ResearchSubjects._collection.update(
-        {_id: this.state.researchSubjectId}, {$set: fhirResearchSubjectData }, function(error, result) {
-          if (error) {
-            console.log("error", error);
-            // Bert.alert(error.reason, 'danger');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [isEditing, setIsEditing] = useState(!id || id === 'new');
+  const [patientSearchOpen, setPatientSearchOpen] = useState(false);
+  
+  // Load existing research subject if editing
+  useEffect(() => {
+    if (id && id !== 'new' && ResearchSubjects) {
+      setLoading(true);
+      const existingSubject = ResearchSubjects.findOne(id);
+      
+      if (existingSubject) {
+        console.log('Loading existing research subject:', existingSubject);
+        setResearchSubject(existingSubject);
+        setIsEditing(false);
+      } else {
+        console.log('Research subject not found:', id);
+        setError('Research subject not found');
+      }
+      setLoading(false);
+    } else if (id === 'new') {
+      // For new research subjects, set the selected patient if available
+      if (selectedPatient && selectedPatientId) {
+        setResearchSubject(prev => ({
+          ...prev,
+          subject: {
+            reference: `Patient/${selectedPatientId}`,
+            display: get(selectedPatient, 'name[0].text', '')
           }
-          if (result) {
-            if(self.props.onUpdate){
-              self.props.onUpdate(self.data.researchSubjectId);
-            }
-            // Bert.alert('ResearchSubject updated!', 'success');
+        }));
+      }
+      setIsEditing(true);
+    }
+  }, [id, selectedPatient, selectedPatientId, subscriptionReady]);
+
+  // Handle form field changes
+  const handleChange = (field, value) => {
+    console.log('handleChange', field, value);
+    let newSubject = Object.assign({}, researchSubject);
+    
+    // Special handling for nested fields to ensure parent objects exist
+    if (field.includes('.')) {
+      const parts = field.split('.');
+      let current = newSubject;
+      
+      // Create parent objects if they don't exist
+      for (let i = 0; i < parts.length - 1; i++) {
+        if (!current[parts[i]]) {
+          current[parts[i]] = {};
+        }
+        current = current[parts[i]];
+      }
+    }
+    
+    set(newSubject, field, value);
+    setResearchSubject(newSubject);
+  };
+
+  // Handle save
+  const handleSave = () => {
+    console.log('handleSave called with id:', id, 'id === "new":', id === 'new', 'typeof id:', typeof id);
+    setError(null);
+
+    // Client-side validation
+    console.log('Validating research subject before save:', {
+      study: researchSubject.study,
+      subject: researchSubject.subject,
+      status: researchSubject.status
+    });
+    
+    if (!researchSubject.study?.display?.trim()) {
+      setError('Please enter a Research Study reference');
+      return;
+    }
+    
+    if (!researchSubject.subject?.display?.trim() && !researchSubject.subject?.reference) {
+      setError('Please select a Patient/Subject');
+      return;
+    }
+    
+    if (!researchSubject.status) {
+      setError('Please select a Status');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      let dataToSave = Object.assign({}, researchSubject);
+      
+      // Clean up data before saving
+      delete dataToSave._id;
+      
+      // Ensure subject reference is set
+      if (!dataToSave.subject?.reference) {
+        if (selectedPatientId) {
+          dataToSave.subject = {
+            reference: `Patient/${selectedPatientId}`,
+            display: get(selectedPatient, 'name[0].text', '')
+          };
+        } else if (dataToSave.subject?.display) {
+          // If we have a display name but no reference, create a placeholder reference
+          // This is mainly for testing purposes
+          const patientId = dataToSave.subject.display.replace(/[^a-zA-Z0-9]/g, '-');
+          dataToSave.subject.reference = `Patient/${patientId}`;
+        }
+      }
+      
+      // Ensure study reference is set
+      if (dataToSave.study && dataToSave.study.display && !dataToSave.study.reference) {
+        // Generate a reference from the display text if no reference exists
+        const studyId = dataToSave.study.display.replace(/[^a-zA-Z0-9]/g, '-');
+        dataToSave.study.reference = `ResearchStudy/${studyId}`;
+      }
+
+      console.log('Saving research subject:', dataToSave);
+      console.log('subject object:', dataToSave.subject);
+      console.log('study object:', dataToSave.study);
+      
+      if (!id || id === 'new') {
+        // Create new research subject
+        Meteor.call('researchSubjects.create', {
+          researchSubject: dataToSave
+        }, (error, result) => {
+          setLoading(false);
+          if (error) {
+            console.error('Create error:', error);
+            setError(error.reason || 'Failed to create research subject');
+          } else {
+            console.log('Created research subject:', result);
+            navigate('/research-subjects');
           }
         });
-    } else {
-
-      if(get(Meteor, 'settings.public.logging') === "debug") console.log("Create a new ResearchSubject", fhirResearchSubjectData);
-
-      ResearchSubjects._collection.insert(fhirResearchSubjectData, function(error, result) {
-        if (error) {
-          console.log("error", error);
-          // Bert.alert(error.reason, 'danger');
-        }
-        if (result) {
-          if(self.props.onInsert){
-            self.props.onInsert(self.data.researchSubjectId);
+      } else {
+        // Update existing research subject
+        Meteor.call('researchSubjects.update', {
+          _id: id,
+          researchSubject: dataToSave
+        }, (error, result) => {
+          setLoading(false);
+          if (error) {
+            console.error('Update error:', error);
+            setError(error.reason || 'Failed to update research subject');
+          } else {
+            console.log('Updated research subject');
+            setIsEditing(false);
+            navigate('/research-subjects');
           }
-          // Bert.alert('ResearchSubject added!', 'success');
-        }
-      });
-    }
-  }
-
-  handleCancelButton(){
-    if(this.props.onCancel){
-      this.props.onCancel();
-    }
-  }
-
-  handleDeleteButton(){
-    console.log('ResearchSubjectDetail.handleDeleteButton()', this.state.researchSubjectId)
-
-    let self = this;
-    ResearchSubjects._collection.remove({_id: this.state.researchSubjectId}, function(error, result){
-      if (error) {
-        // Bert.alert(error.reason, 'danger');
+        });
       }
-      if (result) {
-        if(this.props.onInsert){
-          this.props.onInsert(self.data.researchSubjectId);
-        }
-        // Bert.alert('ResearchSubject removed!', 'success');
+    } catch (err) {
+      setLoading(false);
+      setError(err.message);
+      console.error('Save error:', err);
+    }
+  };
+
+  // Handle delete
+  const handleDelete = () => {
+    if (id && id !== 'new') {
+      if (window.confirm('Are you sure you want to delete this research subject?')) {
+        setLoading(true);
+        
+        Meteor.call('researchSubjects.remove', {
+          _id: id
+        }, (error) => {
+          setLoading(false);
+          if (error) {
+            console.error('Delete error:', error);
+            setError(error.reason || 'Failed to delete research subject');
+          } else {
+            console.log('Deleted research subject');
+            navigate('/research-subjects');
+          }
+        });
       }
+    }
+  };
+
+  const handlePatientSelect = (patient) => {
+    console.log('Selected patient:', patient);
+    handleChange('subject', {
+      reference: `Patient/${patient._id}`,
+      display: get(patient, 'name[0].text', '')
     });
-  }
-}
+    setPatientSearchOpen(false);
+  };
 
-ResearchSubjectDetail.propTypes = {
-  id: PropTypes.string,
-  researchSubjectId: PropTypes.oneOfType([PropTypes.string, PropTypes.bool]),
-  researchSubject: PropTypes.oneOfType([PropTypes.object, PropTypes.bool]),
-  showDatePicker: PropTypes.bool,
-  showHints: PropTypes.bool,
-  onInsert: PropTypes.func,
-  onUpdate: PropTypes.func,
-  onRemove: PropTypes.func,
-  onCancel: PropTypes.func
-};
+  const handleSearchUser = () => {
+    setPatientSearchOpen(true);
+  };
+
+  // Get display text for status
+  const getStatusDisplay = (status) => {
+    const statusMap = {
+      'candidate': 'Candidate',
+      'eligible': 'Eligible',
+      'follow-up': 'Follow-up',
+      'ineligible': 'Ineligible',
+      'not-registered': 'Not Registered',
+      'off-study': 'Off Study',
+      'on-study': 'On Study',
+      'on-study-intervention': 'On Study Intervention',
+      'on-study-observation': 'On Study Observation',
+      'pending-on-study': 'Pending On Study',
+      'potential-candidate': 'Potential Candidate',
+      'screening': 'Screening',
+      'withdrawn': 'Withdrawn'
+    };
+    return statusMap[status] || status;
+  };
+
+  return (
+    <Container maxWidth="md" sx={{ py: 4 }}>
+      <Card 
+        id="researchSubjectDetailPage"
+        sx={{ 
+          borderRadius: 2,
+          boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+          border: '1px solid',
+          borderColor: 'divider',
+        }}
+      >
+        <CardHeader 
+          title={
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <Typography variant="h5" component="h2">
+                {id === 'new' ? 'New Research Subject' : 'Research Subject Details'}
+              </Typography>
+              <Box sx={{ display: 'flex', gap: 1 }}>
+                {!isEditing && id !== 'new' && (
+                  <Tooltip title="Edit">
+                    <IconButton onClick={() => setIsEditing(true)}>
+                      <LockIcon />
+                    </IconButton>
+                  </Tooltip>
+                )}
+                {isEditing && id !== 'new' && (
+                  <Tooltip title="Cancel Edit">
+                    <IconButton onClick={() => setIsEditing(false)}>
+                      <LockOpenIcon />
+                    </IconButton>
+                  </Tooltip>
+                )}
+              </Box>
+            </Box>
+          }
+          sx={{ 
+            borderBottom: '1px solid',
+            borderColor: 'divider',
+            bgcolor: 'grey.50'
+          }}
+        />
+        
+        <CardContent sx={{ p: 3 }}>
+          {error && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {error}
+            </Alert>
+          )}
+          
+          <Grid container spacing={3}>
+            <Grid item xs={12}>
+              <TextField
+                id="subjectDisplay"
+                fullWidth
+                label="Subject/Patient *"
+                placeholder="Search for patient"
+                helperText="Required: The patient enrolled in this study"
+                value={get(researchSubject, 'subject.display', '')}
+                onChange={(e) => handleChange('subject.display', e.target.value)}
+                disabled={!isEditing}
+                required
+                error={!!error && error.includes('Patient')}
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <Tooltip title="Search for patient">
+                        <IconButton
+                          onClick={handleSearchUser}
+                          edge="end"
+                          disabled={!isEditing}
+                        >
+                          <SearchIcon />
+                        </IconButton>
+                      </Tooltip>
+                    </InputAdornment>
+                  ),
+                }}
+              />
+            </Grid>
+            
+            <Grid item xs={12}>
+              <TextField
+                id="studyDisplay"
+                fullWidth
+                label="Research Study *"
+                placeholder="Enter study name or identifier"
+                helperText="Required: The research study this subject is enrolled in"
+                value={get(researchSubject, 'study.display', '')}
+                onChange={(e) => handleChange('study.display', e.target.value)}
+                disabled={!isEditing}
+                required
+                error={!!error && error.includes('Study')}
+              />
+            </Grid>
+            
+            <Grid item xs={12} sm={6}>
+              <FormControl fullWidth>
+                <InputLabel id="status-label">Status</InputLabel>
+                <Select
+                  labelId="status-label"
+                  id="status"
+                  value={get(researchSubject, 'status', 'on-study')}
+                  onChange={(e) => handleChange('status', e.target.value)}
+                  disabled={!isEditing}
+                  label="Status"
+                >
+                  <MenuItem value="candidate">Candidate</MenuItem>
+                  <MenuItem value="eligible">Eligible</MenuItem>
+                  <MenuItem value="follow-up">Follow-up</MenuItem>
+                  <MenuItem value="ineligible">Ineligible</MenuItem>
+                  <MenuItem value="not-registered">Not Registered</MenuItem>
+                  <MenuItem value="off-study">Off Study</MenuItem>
+                  <MenuItem value="on-study">On Study</MenuItem>
+                  <MenuItem value="on-study-intervention">On Study Intervention</MenuItem>
+                  <MenuItem value="on-study-observation">On Study Observation</MenuItem>
+                  <MenuItem value="pending-on-study">Pending On Study</MenuItem>
+                  <MenuItem value="potential-candidate">Potential Candidate</MenuItem>
+                  <MenuItem value="screening">Screening</MenuItem>
+                  <MenuItem value="withdrawn">Withdrawn</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+            
+            <Grid item xs={12} sm={6}>
+              <TextField
+                id="periodStart"
+                fullWidth
+                label="Period Start"
+                type="date"
+                value={get(researchSubject, 'period.start', '')}
+                onChange={(e) => handleChange('period.start', e.target.value)}
+                disabled={!isEditing}
+                InputLabelProps={{
+                  shrink: true,
+                }}
+              />
+            </Grid>
+            
+            <Grid item xs={12} sm={6}>
+              <TextField
+                id="periodEnd"
+                fullWidth
+                label="Period End"
+                type="date"
+                value={get(researchSubject, 'period.end', '')}
+                onChange={(e) => handleChange('period.end', e.target.value)}
+                disabled={!isEditing}
+                InputLabelProps={{
+                  shrink: true,
+                }}
+              />
+            </Grid>
+            
+            <Grid item xs={12} sm={6}>
+              <TextField
+                id="assignedArm"
+                fullWidth
+                label="Assigned Arm"
+                value={get(researchSubject, 'assignedArm', '')}
+                onChange={(e) => handleChange('assignedArm', e.target.value)}
+                disabled={!isEditing}
+              />
+            </Grid>
+            
+            <Grid item xs={12} sm={6}>
+              <TextField
+                id="actualArm"
+                fullWidth
+                label="Actual Arm"
+                value={get(researchSubject, 'actualArm', '')}
+                onChange={(e) => handleChange('actualArm', e.target.value)}
+                disabled={!isEditing}
+              />
+            </Grid>
+            
+            <Grid item xs={12}>
+              <TextField
+                id="consentDisplay"
+                fullWidth
+                label="Consent"
+                value={get(researchSubject, 'consent.display', '')}
+                onChange={(e) => handleChange('consent.display', e.target.value)}
+                disabled={!isEditing}
+              />
+            </Grid>
+          </Grid>
+        </CardContent>
+        
+        <CardActions sx={{ justifyContent: 'flex-end', px: 3, py: 2, bgcolor: 'grey.50', borderTop: '1px solid', borderColor: 'divider' }}>
+          <Button 
+            onClick={() => navigate('/research-subjects')}
+            sx={{ textTransform: 'none' }}
+          >
+            Cancel
+          </Button>
+          {isEditing && (
+            <>
+              {id !== 'new' && (
+                <Button 
+                  color="error" 
+                  onClick={handleDelete}
+                  disabled={loading}
+                  sx={{ textTransform: 'none' }}
+                >
+                  Delete
+                </Button>
+              )}
+              <Button 
+                variant="contained" 
+                onClick={handleSave}
+                disabled={loading}
+                id="saveResearchSubjectButton"
+                sx={{ textTransform: 'none' }}
+              >
+                {loading ? 'Saving...' : 'Save'}
+              </Button>
+            </>
+          )}
+        </CardActions>
+      </Card>
+      
+      <PatientSearchDialog
+        open={patientSearchOpen}
+        onClose={() => setPatientSearchOpen(false)}
+        onSelect={handlePatientSelect}
+      />
+    </Container>
+  );
+}
 
 export default ResearchSubjectDetail;

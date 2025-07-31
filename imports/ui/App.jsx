@@ -79,6 +79,7 @@ import ConditionsPage from '../ui-fhir/conditions/ConditionsPage.jsx';
 import ConditionDetail from '../ui-fhir/conditions/ConditionDetail.jsx';
 import CommunicationDetail from '../ui-fhir/communications/CommunicationDetail.jsx';
 import DocumentReferenceDetail from '../ui-fhir/documentReferences/DocumentReferenceDetail.jsx';
+import EncounterDetail from '../ui-fhir/encounters/EncounterDetail.jsx';
 import PatientDetail from '../ui-fhir/patients/PatientDetail.jsx';
 import ListDetail from '../ui-fhir/lists/ListDetail.jsx';
 import NutritionOrderDetail from '../ui-fhir/nutritionOrders/NutritionOrderDetail.jsx';
@@ -96,6 +97,7 @@ import MedicationDetail from '../ui-fhir/medications/MedicationDetail.jsx';
 import ObservationDetail from '../ui-fhir/observations/ObservationDetail.jsx';
 import ProcedureDetail from '../ui-fhir/procedures/ProcedureDetail.jsx';
 import QuestionnaireResponseDetail from '../ui-fhir/questionnaireResponses/QuestionnaireResponseDetail.jsx';
+import QuestionnaireDetail from '../ui-fhir/questionnaires/QuestionnaireDetail.jsx';
 import DevicesPage from '../ui-fhir/devices/DevicesPage.jsx';
 import DocumentReferencesPage from '../ui-fhir/documentReferences/DocumentReferencesPage.jsx';
 import EncountersPage from '../ui-fhir/encounters/EncountersPage.jsx';
@@ -117,7 +119,9 @@ import ProceduresPage from '../ui-fhir/procedures/ProceduresPage.jsx';
 import QuestionnairesPage from '../ui-fhir/questionnaires/QuestionnairesPage.jsx';
 import QuestionnaireResponsesPage from '../ui-fhir/questionnaireResponses/QuestionnaireResponsesPage.jsx';
 import ResearchStudiesPage from '../ui-fhir/researchStudies/ResearchStudiesPage.jsx';
+import ResearchStudyDetail from '../ui-fhir/researchStudies/ResearchStudyDetail.jsx';
 import ResearchSubjectsPage from '../ui-fhir/researchSubjects/ResearchSubjectsPage.jsx';
+import ResearchSubjectDetail from '../ui-fhir/researchSubjects/ResearchSubjectDetail.jsx';
 import ServiceRequestsPage from '../ui-fhir/serviceRequests/ServiceRequestsPage.jsx';
 import TasksPage from '../ui-fhir/tasks/TasksPage.jsx';
 import ValueSetsPage from '../ui-fhir/valuesets/ValueSetsPage.jsx';
@@ -133,6 +137,7 @@ import MedicationListsPage from '../ui-pacio/MedicationListsPage.jsx';
 import TransitionsOfCarePage from '../ui-pacio/TransitionsOfCarePage.jsx';
 import AdvancedDirectivesPage from '../ui-pacio/AdvancedDirectivesPage.jsx';
 import MyProfilePage from './pages/MyProfilePage.jsx';
+import FhirResourcesDashboard from './FhirResourcesDashboard.jsx';
 
 //===============================================================================================================
 
@@ -167,7 +172,7 @@ import { ConditionsTable } from '../ui-tables/ConditionsTable';
 // import { CommunicationRequestsTable } from '../ui-tables/CommunicationRequestsTable';
 // import { CompositionsTable } from '../ui-tables/CompositionsTable';
 // import { DevicesTable } from '../ui-tables/DevicesTable';
-import { EncountersTable } from '../ui-tables/EncountersTable';
+import EncountersTable from '../ui-fhir/encounters/EncountersTable';
 import EndpointsTable from '../ui-tables/EndpointsTable';
 import { ImmunizationsTable } from '../ui-tables/ImmunizationsTable';
 import { LocationsTable } from '../ui-tables/LocationsTable';
@@ -478,6 +483,9 @@ let dynamicRoutes = [
   }, {
     path: "/patient-chart",
     element: <PatientChart />
+  }, {
+    path: "/fhir-resources-index",
+    element: <FhirResourcesDashboard />
   }  
 ]
 
@@ -582,15 +590,15 @@ if(get(Meteor, 'settings.public.modules.fhir.CareTeams')){
 }
 if(get(Meteor, 'settings.public.modules.fhir.CarePlans')){
   dynamicRoutes.push({
-    path: "/care-plans",
+    path: "/careplans",
     element: <CarePlansPage />
   })
   dynamicRoutes.push({
-    path: "/care-plans/new",
+    path: "/careplans/new",
     element: <CarePlanDetail />
   })
   dynamicRoutes.push({
-    path: "/care-plans/:id",
+    path: "/careplans/:id",
     element: <CarePlanDetail />
   })
 }
@@ -653,7 +661,29 @@ if(get(Meteor, 'settings.public.modules.fhir.Encounters')){
     path: "/encounters",
     element: <EncountersPage />
   })
+  dynamicRoutes.push({
+    path: "/encounters/new",
+    element: <EncounterDetail />
+  })
+  dynamicRoutes.push({
+    path: "/encounters/:id",
+    element: <EncounterDetail />
+  })
 }
+// TEMP: Adding ResearchStudies routes directly for testing
+// Commented out - routes are now added conditionally above
+// dynamicRoutes.push({
+//   path: "/research-studies",
+//   element: <ResearchStudiesPage />
+// })
+// dynamicRoutes.push({
+//   path: "/research-studies/new",
+//   element: <ResearchStudyDetail />
+// })
+// dynamicRoutes.push({
+//   path: "/research-studies/:id",
+//   element: <ResearchStudyDetail />
+// })
 if(get(Meteor, 'settings.public.modules.fhir.Evidences')){
   dynamicRoutes.push({
     path: "/evidences",
@@ -765,6 +795,14 @@ if(get(Meteor, 'settings.public.modules.fhir.Questionnaires')){
     path: "/questionnaires",
     element: <QuestionnairesPage />
   })
+  dynamicRoutes.push({
+    path: "/questionnaires/new",
+    element: <QuestionnaireDetail />
+  })
+  dynamicRoutes.push({
+    path: "/questionnaires/:id",
+    element: <QuestionnaireDetail />
+  })
 }
 if(get(Meteor, 'settings.public.modules.fhir.QuestionnaireResponses')){
   dynamicRoutes.push({
@@ -785,11 +823,27 @@ if(get(Meteor, 'settings.public.modules.fhir.ResearchSubjects')){
     path: "/research-subjects",
     element: <ResearchSubjectsPage />
   })
+  dynamicRoutes.push({
+    path: "/research-subjects/new",
+    element: <ResearchSubjectDetail />
+  })
+  dynamicRoutes.push({
+    path: "/research-subjects/:id",
+    element: <ResearchSubjectDetail />
+  })
 }
 if(get(Meteor, 'settings.public.modules.fhir.ResearchStudies')){
   dynamicRoutes.push({
     path: "/research-studies",
     element: <ResearchStudiesPage />
+  })
+  dynamicRoutes.push({
+    path: "/research-studies/new",
+    element: <ResearchStudyDetail />
+  })
+  dynamicRoutes.push({
+    path: "/research-studies/:id",
+    element: <ResearchStudyDetail />
   })
 }
 if(get(Meteor, 'settings.public.modules.fhir.ServiceRequests')){
@@ -798,11 +852,11 @@ if(get(Meteor, 'settings.public.modules.fhir.ServiceRequests')){
     element: <ServiceRequestsPage />
   })
   dynamicRoutes.push({
-    path: "/serviceRequests/new",
+    path: "/service-requests/new",
     element: <ServiceRequestDetail />
   })
   dynamicRoutes.push({
-    path: "/serviceRequests/:id",
+    path: "/service-requests/:id",
     element: <ServiceRequestDetail />
   })
 }
@@ -995,13 +1049,15 @@ if(!foundMainPage){
 
 // ==============================================================================
 // Router
+console.log('Total dynamic routes:', dynamicRoutes.length);
+console.log('All routes:', dynamicRoutes.map(r => r.path));
 
 const router = createBrowserRouter(dynamicRoutes);
 
 const CustomRouter = ({ children }) => {
   // Debug: Log routes to check for issues
   dynamicRoutes.forEach((route, index) => {
-    if (route.path === '/pacio-dashboard' || route.path === '/') {
+    if (route.path === '/pacio-dashboard' || route.path === '/' || route.path === '/research-studies') {
       console.log(`Route ${index}: path="${route.path}", element=`, route.element);
     }
   });

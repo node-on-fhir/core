@@ -5,6 +5,14 @@ import { Accounts } from 'meteor/accounts-base';
 import { check } from 'meteor/check';
 import { get } from 'lodash';
 
+// Get the Patients collection
+let Patients;
+Meteor.startup(function(){
+  if (Meteor.Collections?.Patients) {
+    Patients = Meteor.Collections.Patients;
+  }
+});
+
 // Only register test methods in test/development environments
 if (get(Meteor, 'settings.public.environment') !== 'production') {
   Meteor.methods({
@@ -49,12 +57,12 @@ if (get(Meteor, 'settings.public.environment') !== 'production') {
       
       if (existingUser) {
         // Update password if user exists
-        Accounts.setPassword(existingUser._id, userData.password);
+        await Accounts.setPasswordAsync(existingUser._id, userData.password);
         return existingUser._id;
       }
 
       // Create new user
-      const userId = Accounts.createUser({
+      const userId = await Accounts.createUserAsync({
         username: userData.username,
         email: userData.email,
         password: userData.password
@@ -102,6 +110,27 @@ if (get(Meteor, 'settings.public.environment') !== 'production') {
     async 'test.isFirstRun'() {
       const userCount = await Meteor.users.find().countAsync();
       return userCount === 0;
+    },
+
+    // Clear all test patients
+    async 'test.clearPatients'() {
+      // Only allow in test environments
+      if (get(Meteor, 'settings.public.environment') === 'production') {
+        throw new Meteor.Error('not-allowed', 'Cannot clear patients in production');
+      }
+
+      if (!Patients) {
+        console.warn('Patients collection not available');
+        return 0;
+      }
+
+      // Remove all test patients (those with test identifier prefix)
+      const result = await Patients.removeAsync({
+        'identifier.value': /^test-patient-/
+      });
+
+      console.log('Cleared test patients:', result);
+      return result;
     }
   });
 }

@@ -987,6 +987,12 @@ export function PatientsTable(props){
                       console.log('Found patient:', selectedPatient);
                       Session.set('selectedPatientId', patientId);
                       Session.set('selectedPatient', selectedPatient);
+                      
+                      // Also call onRowClick if provided
+                      if (typeof onRowClick === 'function') {
+                        console.log('Calling onRowClick from Select Patient button');
+                        onRowClick(patientId);
+                      }
                     }}
                   >
                     Select Patient

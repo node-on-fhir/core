@@ -3,7 +3,8 @@
     "allow": [
       "Bash(sed:*)",
       "Bash(find:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(npx nightwatch:*)"
     ],
     "deny": []
   }

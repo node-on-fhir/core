@@ -2,6 +2,7 @@
 
 import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
+import { Tracker } from 'meteor/tracker';
 import { get } from 'lodash';
 
 // Core client initialization that always runs
