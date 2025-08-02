@@ -315,10 +315,8 @@ export function flattenAllergyIntolerance(allergy){
   // Patient info
   result.patient = get(allergy, 'patient.display', '');
   result.patientDisplay = get(allergy, 'patient.display', '');
-  if(!result.patientDisplay && get(allergy, 'patient.reference')){
-    // Extract patient name from reference if display is not available
-    result.patientDisplay = get(allergy, 'patient.reference', '').replace('Patient/', '');
-  }
+  result.patientReference = get(allergy, 'patient.reference', '');
+  // Keep patientDisplay and patientReference separate - don't fall back to reference for display
 
   // Recorder info
   result.recorder = get(allergy, 'recorder.display', '');
@@ -713,6 +711,8 @@ export function flattenCarePlan(plan){
     _id: '',
     id: '',
     subject: '',
+    patientDisplay: '',
+    patientReference: '',
     author: '',
     template: '',
     category: '',
@@ -739,6 +739,15 @@ export function flattenCarePlan(plan){
   }
 
   result.subject = determineSubjectDisplayString(plan);
+  
+  // Add separate patient display and reference fields
+  if(get(plan, 'subject')){
+    result.patientDisplay = get(plan, 'subject.display', '');
+    result.patientReference = get(plan, 'subject.reference', '');
+  } else if(get(plan, 'patient')){
+    result.patientDisplay = get(plan, 'patient.display', '');
+    result.patientReference = get(plan, 'patient.reference', '');
+  }
 
   result.author = get(plan, 'author[0].display', '')
   result.start = moment(get(plan, 'period.start')).format("YYYY-MM-DD hh:mm a");

@@ -443,7 +443,7 @@ function AllergyIntolerancesTable(props){
   function renderPatientNameHeader(){
     if (!hidePatientDisplay) {
       return (
-        <TableCell className='patientDisplay'>Patient</TableCell>
+        <TableCell className='patientDisplay'>Patient Name</TableCell>
       );
     }
   }
@@ -451,6 +451,20 @@ function AllergyIntolerancesTable(props){
     if (!hidePatientDisplay) {
       return (
         <TableCell className='patientDisplay' style={{minWidth: '140px'}}>{ patientDisplay }</TableCell>
+      );
+    }
+  }
+  function renderPatientReferenceHeader(){
+    if (!hidePatientReference) {
+      return (
+        <TableCell className='patientReference'>Patient Reference</TableCell>
+      );
+    }
+  }
+  function renderPatientReference(patientReference){
+    if (!hidePatientReference) {
+      return (
+        <TableCell className='patientReference' style={{minWidth: '140px'}}>{ patientReference }</TableCell>
       );
     }
   }
@@ -558,6 +572,7 @@ function AllergyIntolerancesTable(props){
           { renderType(allergyIntolerancesToRender[i].type) }
           { renderCategory(allergyIntolerancesToRender[i].category) }
           { renderPatientName(allergyIntolerancesToRender[i].patientDisplay ) } 
+          { renderPatientReference(allergyIntolerancesToRender[i].patientReference ) }
 
           { renderRecorder(allergyIntolerancesToRender[i].recorder ) } 
           { renderOnset(allergyIntolerancesToRender[i].onset ) } 
@@ -588,6 +603,7 @@ function AllergyIntolerancesTable(props){
             { renderTypeHeader() }
             { renderCategoryHeader() }
             { renderPatientNameHeader() }
+            { renderPatientReferenceHeader() }
 
             { renderRecorderHeader() }
             { renderOnsetHeader() }

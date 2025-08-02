@@ -21,7 +21,7 @@ import NotSignedInWrapper from "../ui/NotSignedInWrapper";
 
 export default function PatientChart(props) {
     let headerHeight = 64;
-    if(get(Meteor, 'settings.public.defaults.prominantHeader')){
+    if(get(Meteor, 'settings.public.defaults.prominentHeader')){
       headerHeight = 128;
     }
 

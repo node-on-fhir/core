@@ -988,6 +988,30 @@ export function PatientsTable(props){
                       Session.set('selectedPatientId', patientId);
                       Session.set('selectedPatient', selectedPatient);
                       
+                      // Log AuditEvent for patient selection
+                      Meteor.call('auditEvents.log', 'rest', Meteor.userId(), `Patient/${patientId}`, 
+                        `User selected patient ${selectedPatient?.name || patientId}`, {
+                          action: 'READ',
+                          entity: [{
+                            what: {
+                              reference: `Patient/${patientId}`,
+                              display: selectedPatient?.name || 'Unknown Patient'
+                            },
+                            type: {
+                              system: 'http://hl7.org/fhir/resource-types',
+                              code: 'Patient',
+                              display: 'Patient'
+                            }
+                          }]
+                        }, (error) => {
+                          if (error) {
+                            console.error('Error logging audit event:', error);
+                          } else {
+                            console.log('Audit event logged for patient selection');
+                          }
+                        }
+                      );
+                      
                       // Also call onRowClick if provided
                       if (typeof onRowClick === 'function') {
                         console.log('Calling onRowClick from Select Patient button');

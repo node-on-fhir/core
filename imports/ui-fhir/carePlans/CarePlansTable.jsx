@@ -1,6 +1,6 @@
 // /imports/ui-fhir/carePlans/CarePlansTable.jsx
 
-import React, { useState } from 'react';
+import React, { useState, Fragment } from 'react';
 import PropTypes from 'prop-types';
 import { useNavigate } from 'react-router-dom';
 
@@ -11,8 +11,18 @@ import {
   TableCell,
   TableBody,
   TableHead,
-  TablePagination
+  TablePagination,
+  IconButton,
+  Collapse,
+  Box,
+  Typography,
+  Grid,
+  Chip
 } from '@mui/material';
+import {
+  KeyboardArrowDown,
+  KeyboardArrowUp
+} from '@mui/icons-material';
 
 import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
@@ -76,6 +86,9 @@ function CarePlansTable(props){
     hideIdentifier,
     hideActionIcons,
     hideSubject,
+    hideSubjectReference,
+    hidePatientDisplay,
+    hidePatientReference,
     hideAuthor,
     hideTitle,
     hideActivities,
@@ -86,6 +99,7 @@ function CarePlansTable(props){
     hideCreated,
     hideStatus,
     hideBarcode,
+    hideExpandableRows,
 
     onRowClick,
     onRemoveRecord,
@@ -112,8 +126,17 @@ function CarePlansTable(props){
   // Form Factors
 
   // Store original prop values before form factor overrides
-  const originalHideSubject = props.hideSubject;
-  const originalHideBarcode = props.hideBarcode;
+  const hideSubjectFromProp = props.hideSubject;
+  const hideSubjectReferenceFromProp = props.hideSubjectReference;
+  const hidePatientDisplayFromProp = props.hidePatientDisplay;
+  const hidePatientReferenceFromProp = props.hidePatientReference;
+  const hideBarcodeFromProp = props.hideBarcode;
+  const hideIdentifierFromProp = props.hideIdentifier;
+  const hideAuthorFromProp = props.hideAuthor;
+  const hideCategoryFromProp = props.hideCategory;
+  
+  // State for managing expanded rows
+  const [expandedRows, setExpandedRows] = useState({});
 
   if(formFactorLayout){
     logger.verbose('formFactorLayout', formFactorLayout + ' ' + window.innerWidth);
@@ -124,12 +147,15 @@ function CarePlansTable(props){
         hideIdentifier = true;
         hideActionIcons = true;
         hideSubject = true;
+        hideSubjectReference = true;
+        hidePatientDisplay = true;
+        hidePatientReference = true;
         hideAuthor = true;
         hideTitle = false;
         hideActivities = true;
         hideGoals = true;
         hideAddresses = true;
-        hideCategory = true;
+        hideCategory = (hideCategoryFromProp !== undefined) ? hideCategoryFromProp : true;
         hideTemplate = true;
         hideCreated = false;
         hideStatus = true;
@@ -139,75 +165,96 @@ function CarePlansTable(props){
         hideCheckboxes = true;
         hideIdentifier = true;
         hideActionIcons = true;
-        hideSubject = true;
+        hideSubject = (hideSubjectFromProp !== undefined) ? hideSubjectFromProp : true;
+        hideSubjectReference = (hideSubjectReferenceFromProp !== undefined) ? hideSubjectReferenceFromProp : true;
+        hidePatientDisplay = (hidePatientDisplayFromProp !== undefined) ? hidePatientDisplayFromProp : true;
+        hidePatientReference = (hidePatientReferenceFromProp !== undefined) ? hidePatientReferenceFromProp : true;
         hideAuthor = true;
         hideTitle = false;
         hideActivities = true;
         hideGoals = true;
         hideAddresses = true;
-        hideCategory = true;
+        hideCategory = (hideCategoryFromProp !== undefined) ? hideCategoryFromProp : true;
         hideTemplate = true;
         hideCreated = false;
         hideStatus = true;
-        hideBarcode = true;
+        hideBarcode = (hideBarcodeFromProp !== undefined) ? hideBarcodeFromProp : true;
         break;
       case "web":
         hideCheckboxes = true;
         hideIdentifier = true;
         hideActionIcons = true;
-        hideSubject = true;
+        hideSubject = (hideSubjectFromProp !== undefined) ? hideSubjectFromProp : true;
+        hideSubjectReference = (hideSubjectReferenceFromProp !== undefined) ? hideSubjectReferenceFromProp : true;
+        hidePatientDisplay = (hidePatientDisplayFromProp !== undefined) ? hidePatientDisplayFromProp : false;
+        hidePatientReference = (hidePatientReferenceFromProp !== undefined) ? hidePatientReferenceFromProp : true;
         hideAuthor = false;
         hideTitle = false;
         hideActivities = false;
         hideGoals = false;
         hideAddresses = true;
-        hideCategory = false;
+        hideCategory = (hideCategoryFromProp !== undefined) ? hideCategoryFromProp : false;
         hideTemplate = true;
         hideCreated = false;
         hideStatus = false;
-        hideBarcode = true;
+        hideBarcode = (hideBarcodeFromProp !== undefined) ? hideBarcodeFromProp : true;
         break;
       case "desktop":
         hideCheckboxes = true;
         hideIdentifier = true;
         hideActionIcons = true;
-        hideSubject = false;
+        hideSubject = (hideSubjectFromProp !== undefined) ? hideSubjectFromProp : false;
+        hideSubjectReference = (hideSubjectReferenceFromProp !== undefined) ? hideSubjectReferenceFromProp : true;
+        hidePatientDisplay = (hidePatientDisplayFromProp !== undefined) ? hidePatientDisplayFromProp : false;
+        hidePatientReference = (hidePatientReferenceFromProp !== undefined) ? hidePatientReferenceFromProp : true;
         hideAuthor = false;
         hideTitle = false;
         hideActivities = false;
         hideGoals = false;
         hideAddresses = false;
-        hideCategory = false;
+        hideCategory = (hideCategoryFromProp !== undefined) ? hideCategoryFromProp : false;
         hideTemplate = false;
         hideCreated = false;
         hideStatus = false;
-        hideBarcode = false;
+        hideBarcode = (hideBarcodeFromProp !== undefined) ? hideBarcodeFromProp : false;
         break;
       case "videowall":
         hideCheckboxes = false;
         hideIdentifier = false;
         hideActionIcons = false;
-        hideSubject = false;
+        hideSubject = (hideSubjectFromProp !== undefined) ? hideSubjectFromProp : false;
+        hideSubjectReference = (hideSubjectReferenceFromProp !== undefined) ? hideSubjectReferenceFromProp : false;
+        hidePatientDisplay = (hidePatientDisplayFromProp !== undefined) ? hidePatientDisplayFromProp : false;
+        hidePatientReference = (hidePatientReferenceFromProp !== undefined) ? hidePatientReferenceFromProp : false;
         hideAuthor = false;
         hideTitle = false;
         hideActivities = false;
         hideGoals = false;
         hideAddresses = false;
-        hideCategory = false;
+        hideCategory = (hideCategoryFromProp !== undefined) ? hideCategoryFromProp : false;
         hideTemplate = false;
         hideCreated = false;
         hideStatus = false;
-        hideBarcode = false;
+        hideBarcode = (hideBarcodeFromProp !== undefined) ? hideBarcodeFromProp : false;
         break;            
     }
   }
 
-  // Restore original prop value if it was explicitly set
-  if(typeof originalHideSubject !== 'undefined'){
-    hideSubject = originalHideSubject;
+  // Note: With the updated form factor handling above, we no longer need to restore values here
+  
+  // Always hide these columns as requested
+  hideIdentifier = true;
+  if(typeof hideAuthorFromProp !== 'undefined'){
+    hideAuthor = hideAuthorFromProp;
+  } else {
+    hideAuthor = true;
   }
-  if(typeof originalHideBarcode !== 'undefined'){
-    hideBarcode = originalHideBarcode;
+  
+  // Always show category column unless explicitly hidden
+  if(typeof hideCategoryFromProp !== 'undefined'){
+    hideCategory = hideCategoryFromProp;
+  } else {
+    hideCategory = false;
   }
 
   // ------------------------------------------------------------------------
@@ -250,19 +297,29 @@ function CarePlansTable(props){
   // Column Rendering
 
   function renderToggleHeader(){
-    if (!hideCheckboxes) {
+    if (!hideExpandableRows) {
       return (
-        <TableCell className="toggle" style={{width: '60px'}} >Toggle</TableCell>
+        <TableCell className="toggle" style={{width: '60px'}} ></TableCell>
       );
     }
   }
-  function renderToggle(){
-    if (!hideCheckboxes) {
+  function renderToggle(carePlanId){
+    if (!hideExpandableRows) {
       return (
         <TableCell className="toggle" style={{width: '60px'}}>
-            {/* <Checkbox
-              defaultChecked={true}
-            /> */}
+          <IconButton
+            aria-label="expand row"
+            size="small"
+            onClick={(event) => {
+              event.stopPropagation();
+              setExpandedRows(prevState => ({
+                ...prevState,
+                [carePlanId]: !prevState[carePlanId]
+              }));
+            }}
+          >
+            {expandedRows[carePlanId] ? <KeyboardArrowUp /> : <KeyboardArrowDown />}
+          </IconButton>
         </TableCell>
       );
     }
@@ -308,7 +365,7 @@ function CarePlansTable(props){
   function renderSubjectHeader(){
     if (!hideSubject) {
       return (
-        <TableCell className='patientDisplay'>Patient</TableCell>
+        <TableCell className='subject'>Subject</TableCell>
       );
     }
   }
@@ -319,6 +376,34 @@ function CarePlansTable(props){
       );
     }
   }
+  function renderPatientNameHeader(){
+    if (!hidePatientDisplay) {
+      return (
+        <TableCell className='patientDisplay'>Patient Name</TableCell>
+      );
+    }
+  }
+  function renderPatientName(patientDisplay){
+    if (!hidePatientDisplay) {
+      return (
+        <TableCell className='patientDisplay' style={{minWidth: '140px'}}>{ patientDisplay }</TableCell>
+      );
+    }
+  }
+  function renderPatientReferenceHeader(){
+    if (!hidePatientReference) {
+      return (
+        <TableCell className='patientReference'>Patient Reference</TableCell>
+      );
+    }
+  }
+  function renderPatientReference(patientReference){
+    if (!hidePatientReference) {
+      return (
+        <TableCell className='patientReference' style={{minWidth: '140px'}}>{ patientReference }</TableCell>
+      );
+    }
+  }
   function renderTitleHeader(){
     if (!hideTitle) {
       return (
@@ -326,10 +411,10 @@ function CarePlansTable(props){
       );
     }
   }
-  function renderTitle(title ){
+  function renderTitle(title){
     if (!hideTitle) {
       return (
-        <TableCell className='title' >{ title }</TableCell>
+        <TableCell className='title' >{ title || '' }</TableCell>
       );
     }
   }
@@ -363,10 +448,17 @@ function CarePlansTable(props){
     }
   }
 
-  function renderCategory(category){
+  function renderCategory(carePlan){
     if (!hideCategory) {
+      // Extract SNOMED text from category
+      let snomedText = '';
+      if(carePlan && carePlan.categoryText){
+        snomedText = carePlan.categoryText;
+      } else if(carePlan && carePlan.category){
+        snomedText = carePlan.category;
+      }
       return (
-        <TableCell className="category">{category}</TableCell>
+        <TableCell className="category">{snomedText}</TableCell>
       );
     }
   }
@@ -437,17 +529,8 @@ function CarePlansTable(props){
 
   function renderBarcode(id){
     if (!hideBarcode) {
-      // Ensure id is a string, handle ObjectID case
-      let idString = '';
-      if(typeof id === 'object' && id !== null){
-        if(id._str){
-          idString = id._str;
-        } else {
-          idString = id.toString();
-        }
-      } else if(id){
-        idString = String(id);
-      }
+      // Handle MongoDB ObjectID objects
+      const idString = typeof id === 'object' && id._str ? id._str : String(id);
       return (
         <TableCell><span className="barcode">{idString}</span></TableCell>
       );
@@ -521,7 +604,11 @@ function CarePlansTable(props){
 
       carePlans.forEach(function(carePlan){
         if((count >= (page * rowsPerPage)) && (count < (page + 1) * rowsPerPage)){
-          carePlansToRender.push(FhirDehydrator.dehydrateCarePlan(carePlan));
+          let dehydratedCarePlan = FhirDehydrator.dehydrateCarePlan(carePlan);
+          // Add additional fields we need
+          dehydratedCarePlan.categoryText = get(carePlan, 'category[0].coding[0].display', '') || get(carePlan, 'category[0].text', '');
+          dehydratedCarePlan.originalActivities = get(carePlan, 'activity', []);
+          carePlansToRender.push(dehydratedCarePlan);
         }
         count++;
       }); 
@@ -550,26 +637,95 @@ function CarePlansTable(props){
         rowStyle.height = '32px';
       }
       tableRows.push(
-        <TableRow className="carePlanRow" key={i} onClick={ handleRowClick.bind(this, carePlansToRender[i]._id)} hover={true} style={rowStyle} selected={selected} >            
-          { renderToggle() }
-          { renderActionIcons(carePlansToRender[i]) }
-          { renderTitle( carePlansToRender[i].title ) } 
-          { renderSubject( carePlansToRender[i].subject ) } 
-          { renderCategory( carePlansToRender[i].category ) } 
+        <React.Fragment key={i}>
+          <TableRow className="carePlanRow" onClick={ handleRowClick.bind(this, carePlansToRender[i]._id)} hover={true} style={rowStyle} selected={selected} >            
+            { renderToggle(carePlansToRender[i]._id) }
+            { renderActionIcons(carePlansToRender[i]) }
+            { renderTitle( carePlansToRender[i].title ) } 
+            { renderSubject( carePlansToRender[i].subject ) } 
+            { renderPatientName( carePlansToRender[i].patientDisplay ) }
+            { renderPatientReference( carePlansToRender[i].patientReference ) }
+            { renderCategory( carePlansToRender[i] ) } 
 
-          { renderIdentifier(carePlansToRender[i].identifier)}
-          
-          { renderAuthor( carePlansToRender[i].author ) } 
+            { renderIdentifier(carePlansToRender[i].identifier)}
+            
+            { renderAuthor( carePlansToRender[i].author ) } 
 
-          { renderActivities( carePlansToRender[i].activities ) } 
-          { renderGoals( carePlansToRender[i].goals ) } 
-          { renderAddresses( carePlansToRender[i].addresses ) } 
+            { renderActivities( carePlansToRender[i].activities ) } 
+            { renderGoals( carePlansToRender[i].goals ) } 
+            { renderAddresses( carePlansToRender[i].addresses ) } 
 
-          { renderCreated(carePlansToRender[i].recorded) }
-          { renderStatus(carePlansToRender[i].status) }
-          
-          { renderBarcode(carePlansToRender[i]._id)}
-        </TableRow>
+            { renderCreated(carePlansToRender[i].recorded) }
+            { renderStatus(carePlansToRender[i].status) }
+            
+            { renderBarcode(carePlansToRender[i]._id)}
+          </TableRow>
+          {!hideExpandableRows && (
+            <TableRow>
+              <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={20}>
+                <Collapse in={expandedRows[carePlansToRender[i]._id]} timeout="auto" unmountOnExit>
+                  <Box sx={{ margin: 2 }}>
+                    <Typography variant="h6" gutterBottom component="div">
+                      Care Plan Activities
+                    </Typography>
+                    {carePlansToRender[i].originalActivities && carePlansToRender[i].originalActivities.length > 0 ? (
+                      <Box>
+                        {carePlansToRender[i].originalActivities.map((activity, index) => (
+                          <Box key={index} sx={{ mb: 2, p: 2, border: '1px solid #e0e0e0', borderRadius: 1 }}>
+                            <Box sx={{ 
+                              display: 'grid', 
+                              gridTemplateColumns: '2fr 1fr 1fr 2fr 2fr',
+                              gap: 2,
+                              alignItems: 'start'
+                            }}>
+                              <Box>
+                                <Typography variant="caption" color="textSecondary" display="block">Activity</Typography>
+                                <Typography variant="body2">
+                                  {get(activity, 'detail.description') || get(activity, 'detail.code.text') || 'No description'}
+                                </Typography>
+                              </Box>
+                              <Box>
+                                <Typography variant="caption" color="textSecondary" display="block">Code</Typography>
+                                <Typography variant="body2">
+                                  {get(activity, 'detail.code.coding[0].code', 'N/A')}
+                                </Typography>
+                              </Box>
+                              <Box>
+                                <Typography variant="caption" color="textSecondary" display="block">Status</Typography>
+                                <Chip 
+                                  label={get(activity, 'detail.status', 'unknown')} 
+                                  size="small" 
+                                  color={get(activity, 'detail.status') === 'completed' ? 'success' : 'default'}
+                                  sx={{ mt: 0.5 }}
+                                />
+                              </Box>
+                              <Box>
+                                <Typography variant="caption" color="textSecondary" display="block">Reason Reference</Typography>
+                                <Typography variant="body2">
+                                  {get(activity, 'detail.reasonReference[0].display') || get(activity, 'detail.reasonReference[0].reference') || '-'}
+                                </Typography>
+                              </Box>
+                              <Box>
+                                <Typography variant="caption" color="textSecondary" display="block">Location</Typography>
+                                <Typography variant="body2">
+                                  {get(activity, 'detail.location.display') || get(activity, 'detail.location.reference') || '-'}
+                                </Typography>
+                              </Box>
+                            </Box>
+                          </Box>
+                        ))}
+                      </Box>
+                    ) : (
+                      <Typography variant="body2" color="textSecondary">
+                        No activities found for this care plan.
+                      </Typography>
+                    )}
+                  </Box>
+                </Collapse>
+              </TableCell>
+            </TableRow>
+          )}
+        </React.Fragment>
       );    
     }
   }
@@ -583,6 +739,8 @@ function CarePlansTable(props){
             { renderActionIconsHeader() }
             { renderTitleHeader() }
             { renderSubjectHeader() }
+            { renderPatientNameHeader() }
+            { renderPatientReferenceHeader() }
             { renderCategoryHeader() }
 
             { renderIdentifierHeader() }
@@ -624,6 +782,9 @@ CarePlansTable.propTypes = {
   hideIdentifier: PropTypes.bool,
   hideActionIcons: PropTypes.bool,
   hideSubject: PropTypes.bool,
+  hideSubjectReference: PropTypes.bool,
+  hidePatientDisplay: PropTypes.bool,
+  hidePatientReference: PropTypes.bool,
   hideAuthor: PropTypes.bool,
   hideTitle: PropTypes.bool,
   hideActivities: PropTypes.bool,
@@ -634,6 +795,7 @@ CarePlansTable.propTypes = {
   hideCreated: PropTypes.bool,
   hideStatus: PropTypes.bool,
   hideBarcode: PropTypes.bool,
+  hideExpandableRows: PropTypes.bool,
 
   onCellClick: PropTypes.func,
   onRowClick: PropTypes.func,
@@ -658,17 +820,21 @@ CarePlansTable.defaultProps = {
   hideCheckboxes: true,
   hideActionIcons: true,
   hideIdentifier: false,
-  hideSubject: false,
+  hideSubject: true,
+  hideSubjectReference: true,
+  hidePatientDisplay: false,
+  hidePatientReference: true,
   hideAuthor: false,
   hideTitle: false,
   hideActivities: false,
   hideGoals: false,
   hideAddresses: false,
-  hideCategory: true,
+  hideCategory: false,
   hideTemplate: false,
   hideCreated: false,
   hideStatus: false,
   hideBarcode: true,
+  hideExpandableRows: false,
   carePlans: []
 };
 

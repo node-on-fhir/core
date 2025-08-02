@@ -266,7 +266,7 @@
 //     },
 //     toolbar: {
 //       display: 'inline-block',
-//       minHeight: get(Meteor, 'settings.public.defaults.prominantHeader') ? "128px" : "64px",
+//       minHeight: get(Meteor, 'settings.public.defaults.prominentHeader') ? "128px" : "64px",
 //       float: 'left'
 //     },
 //     northeast_title: {
@@ -308,7 +308,7 @@
 // if(get(Meteor, 'settings.public.defaults.disableHeader')){
 //   rawStyles.headerNavContainer.display = 'none'
 // }
-// if(get(Meteor, 'settings.public.defaults.prominantHeader')){
+// if(get(Meteor, 'settings.public.defaults.prominentHeader')){
 //   rawStyles.headerNavContainer.height = '128px';
 // }
 

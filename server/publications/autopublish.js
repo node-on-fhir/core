@@ -198,17 +198,21 @@ if (finalAutopublishEnabled) {
               console.log('ID search detected, checking collection for matches...');
               
               // Try to find by various ID formats
-              query.$or.forEach(condition => {
+              // Note: Commenting out debug counts to avoid async issues in Meteor v3
+              // These were only for debugging and not essential for the publication
+              /*
+              query.$or.forEach(async (condition) => {
                 if(condition._id) {
-                  const stringCount = collection.find({_id: condition._id}).count();
-                  const objectIdCount = collection.find({_id: new Mongo.ObjectID(condition._id)}).count();
+                  const stringCount = await collection.find({_id: condition._id}).countAsync();
+                  const objectIdCount = await collection.find({_id: new Mongo.ObjectID(condition._id)}).countAsync();
                   console.log(`Searching for _id: ${condition._id} - String matches: ${stringCount}, ObjectID matches: ${objectIdCount}`);
                 }
                 if(condition.id) {
-                  const count = collection.find({id: condition.id}).count();
+                  const count = await collection.find({id: condition.id}).countAsync();
                   console.log(`Searching for id: ${condition.id} - Matches: ${count}`);
                 }
               });
+              */
             }
           } else {
             console.log(`Publishing ${collectionName} with query:`, JSON.stringify(query), 'options:', options);

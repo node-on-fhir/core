@@ -49,6 +49,10 @@ import '../imports/api/medications/methods.js';
 // Import test methods (for non-production environments)
 import '../imports/accounts/server/test-methods.js';
 
+// Import publications
+import './publications/autopublish.js';
+import './publications/patients.js';
+
 // Import FHIR methods
 import '../imports/methods/fhirResourceStatistics.js';
 

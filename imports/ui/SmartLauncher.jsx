@@ -385,7 +385,7 @@ export function Launcher(props){
   
     
     let headerHeight = 84;
-    if(get(Meteor, 'settings.public.defaults.prominantHeader')){
+    if(get(Meteor, 'settings.public.defaults.prominentHeader')){
         headerHeight = 148;
     }  
 

@@ -44,6 +44,7 @@ import CdsHooksDebugger from './CdsHooksDebugger.jsx';
 
 import NoDataWrapper from './NoDataWrapper.jsx';
 import NotSignedInWrapper from './NotSignedInWrapper.jsx';
+import AuthenticatedRoute from './components/AuthenticatedRoute.jsx';
 
 import HomePage from './HomePage.jsx';
 import ServerConfigurationPage from '../ui-vault-server/ServerConfigurationPage.jsx';
@@ -537,7 +538,7 @@ if(get(Meteor, 'settings.public.modules.accounts.enabled', true)){
 if(get(Meteor, 'settings.public.modules.PatientDirectory')){
   dynamicRoutes.push({
     path: "/patient-directory",
-    element: <PatientsDirectory />
+    element: <AuthenticatedRoute><PatientsDirectory /></AuthenticatedRoute>
   })
 }
 if(get(Meteor, 'settings.public.modules.Theming')){
@@ -766,15 +767,15 @@ if(get(Meteor, 'settings.public.modules.fhir.Observations')){
 if(get(Meteor, 'settings.public.modules.fhir.Patients')){
   dynamicRoutes.push({
     path: "/patients",
-    element: <PatientsDirectory />
+    element: <AuthenticatedRoute><PatientsDirectory /></AuthenticatedRoute>
   })
   dynamicRoutes.push({
     path: "/patients/new",
-    element: <PatientDetail />
+    element: <AuthenticatedRoute><PatientDetail /></AuthenticatedRoute>
   })
   dynamicRoutes.push({
     path: "/patients/:id",
-    element: <PatientDetail />
+    element: <AuthenticatedRoute><PatientDetail /></AuthenticatedRoute>
   })
 }
 if(get(Meteor, 'settings.public.modules.fhir.OperationOutcomes')){
@@ -991,6 +992,14 @@ dynamicRoutes.push({
 dynamicRoutes.push({
   path: "/care-plans", 
   element: <CarePlansPage />
+})
+dynamicRoutes.push({
+  path: "/care-plans/new",
+  element: <CarePlanDetail />
+})
+dynamicRoutes.push({
+  path: "/care-plans/:id",
+  element: <CarePlanDetail />
 })
 dynamicRoutes.push({
   path: "/conditions",
