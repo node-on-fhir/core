@@ -1,6 +1,6 @@
-import React  from 'react';
+import React, { useState } from 'react';
 import { useTracker } from 'meteor/react-meteor-data';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { 
   Grid,
@@ -10,9 +10,16 @@ import {
   Container,
   Box,
   Typography,
-  Button
+  Button,
+  ToggleButton,
+  ToggleButtonGroup
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
+import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
+import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
+import PersonIcon from '@mui/icons-material/Person';
+import CodeIcon from '@mui/icons-material/Code';
+import BadgeIcon from '@mui/icons-material/Badge';
 
 import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
@@ -27,6 +34,7 @@ import LayoutHelpers from '../../lib/LayoutHelpers';
 
 import { get, cloneDeep } from 'lodash';
 import { CareTeams } from '../../lib/schemas/SimpleSchemas/CareTeams';
+import { FhirUtilities } from '/imports/lib/FhirUtilities';
 
 
 //=============================================================================================================================================
@@ -83,6 +91,11 @@ Session.setDefault('CareTeamsTable.hideCheckbox', true)
 
 function CareTeamsPage(props){
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const [sortOrder, setSortOrder] = useState('descending');
+  const [showPatientName, setShowPatientName] = useState(false);
+  const [showPatientReference, setShowPatientReference] = useState(false);
+  const [showSystemId, setShowSystemId] = useState(false);
 
   let headerHeight = LayoutHelpers.calcHeaderHeight();
   let formFactor = LayoutHelpers.determineFormFactor();
@@ -91,13 +104,37 @@ function CareTeamsPage(props){
   
   let cardWidth = window.innerWidth - paddingWidth;
 
+  // Subscribe to CareTeams data
+  const isLoading = useTracker(() => {
+    const selectedPatientId = Session.get('selectedPatientId');
+    let autoPublishEnabled = get(Meteor, 'settings.public.defaults.autopublish', false);
+    
+    // Build query to filter by patient
+    const query = selectedPatientId ? {
+      $or: [
+        {"patient.reference": "Patient/" + selectedPatientId},
+        {"subject.reference": "Patient/" + selectedPatientId},
+        {"patient.reference": { $regex: ".*Patient/" + selectedPatientId}}, 
+        {"subject.reference": { $regex: ".*Patient/" + selectedPatientId}}
+      ]
+    } : {};
+    
+    if(autoPublishEnabled){
+      const handle = Meteor.subscribe('autopublish.CareTeams', query, { limit: 1000 });
+      return !handle.ready();
+    } else {
+      const handle = Meteor.subscribe('careteams.all');
+      return !handle.ready();
+    }
+  }, [Session.get('selectedPatientId')]);
 
   let data = {    
     selectedCareTeam: null,
     selectedCareTeamId: '',
     onePageLayout: true,
     hideCheckbox: true,
-    careTeams: []
+    careTeams: [],
+    careTeamsIndex: 0
   };
 
   data.onePageLayout = useTracker(function(){
@@ -114,7 +151,12 @@ function CareTeamsPage(props){
     return Session.get('selectedCareTeamId');
   }, [])
   data.careTeams = useTracker(function(){
-    return CareTeams.find().fetch();
+    const selectedPatientId = Session.get('selectedPatientId');
+    const query = FhirUtilities.addPatientFilterToQuery(selectedPatientId);
+    return CareTeams.find(query).fetch();
+  }, [])
+  data.careTeamsIndex = useTracker(function(){
+    return Session.get('CareTeamsTable.careTeamsIndex', 0)
   }, [])
 
   function handleRowClick(careTeamId){
@@ -147,6 +189,12 @@ function CareTeamsPage(props){
     navigate('/care-teams/new');
   }
 
+  function handleSortOrderChange(event, newOrder){
+    if(newOrder !== null){
+      setSortOrder(newOrder);
+    }
+  }
+
   function renderHeader() {
     return (
       <Box mb={2}>
@@ -160,14 +208,56 @@ function CareTeamsPage(props){
             </Typography>
           </Grid>
           <Grid item>
-            <Button
-              variant="contained"
-              color="primary"
-              startIcon={<AddIcon />}
-              onClick={handleAddCareTeam}
-            >
-              Add Care Team
-            </Button>
+            <Box display="flex" gap={2} alignItems="center">
+              <ToggleButtonGroup
+                value={sortOrder}
+                exclusive
+                onChange={handleSortOrderChange}
+                aria-label="sort order"
+                size="small"
+              >
+                <ToggleButton value="ascending" aria-label="ascending order">
+                  <ArrowUpwardIcon />
+                </ToggleButton>
+                <ToggleButton value="descending" aria-label="descending order">
+                  <ArrowDownwardIcon />
+                </ToggleButton>
+              </ToggleButtonGroup>
+              
+              <ToggleButtonGroup
+                value={[
+                  showPatientName && 'patientName',
+                  showPatientReference && 'patientReference',
+                  showSystemId && 'systemId'
+                ].filter(Boolean)}
+                onChange={(event, newFormats) => {
+                  setShowPatientName(newFormats.includes('patientName'));
+                  setShowPatientReference(newFormats.includes('patientReference'));
+                  setShowSystemId(newFormats.includes('systemId'));
+                }}
+                aria-label="display options"
+                size="small"
+              >
+                <ToggleButton value="patientName" aria-label="show patient name">
+                  <PersonIcon />
+                </ToggleButton>
+                <ToggleButton value="patientReference" aria-label="show patient reference">
+                  <CodeIcon />
+                </ToggleButton>
+                <ToggleButton value="systemId" aria-label="show system id">
+                  <BadgeIcon />
+                </ToggleButton>
+              </ToggleButtonGroup>
+              
+              <Button
+                variant="contained"
+                color="primary"
+                startIcon={<AddIcon />}
+                onClick={handleAddCareTeam}
+              >
+                Add Care Team
+              </Button>
+            </Box>
           </Grid>
         </Grid>
       </Box>
@@ -176,56 +266,40 @@ function CareTeamsPage(props){
 
   let layoutContent;
   if(data.careTeams.length > 0){
-    if(data.onePageLayout){
-      layoutContent = <Card height='auto' width={cardWidth + 'px'} margin={20} >
-        <CardHeader title={ data.careTeams.length + ' Care Teams'} />
-        <CardContent>
-          <CareTeamsTable 
-            formFactorLayout={formFactor}  
-            careTeams={ data.careTeams}
-            count={data.careTeams.length}
-            selectedCarePlanId={ data.selectedCarePlanId }
-            hideCheckbox={data.hideCheckbox}
-            rowsPerPage={ LayoutHelpers.calcTableRows("medium",  props.appHeight) }
-            onRowClick={ handleRowClick.bind(this) }
-            size="small"
-          />
-        </CardContent>
-      </Card>
-    } else {
-      layoutContent = <Card 
-        sx={{ 
-          width: '100%',
-          borderRadius: 3,
-          boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-          border: '1px solid',
-          borderColor: 'divider',
-          overflow: 'hidden'
-        }}
-      >
-        <CardContent sx={{ p: 0 }}>
-          <CareTeamsTable 
-            id='careTeamsTable'
-            careTeams={ data.careTeams}
-            count={ data.careTeams.length}
-            hideCheckbox={data.hideCheckbox}
-            formFactorLayout={formFactor}
-            rowsPerPage={ LayoutHelpers.calcTableRows("medium",  props.appHeight) }
-            onRowClick={ handleRowClick.bind(this) }
-            hideActionButton={get(Meteor, 'settings.public.modules.fhir.Conditions.hideRemoveButtonOnTable', true)}
-            onActionButtonClick={function(selectedId){
-              CareTeams._collection.remove({_id: selectedId})
-            }}
-            onSetPage={function(index){
-              // setCareTeamsPageIndex(index)
-            }}        
-            page={data.careTeamsIndex}
-          />
-        </CardContent>
-      </Card>
-
-      
-    }
+    layoutContent = <Card 
+      sx={{ 
+        width: '100%',
+        borderRadius: 3,
+        boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+        border: '1px solid',
+        borderColor: 'divider',
+        overflow: 'hidden'
+      }}
+    >
+      <CardContent sx={{ p: 0 }}>
+        <CareTeamsTable 
+          id='careTeamsTable'
+          careTeams={ data.careTeams}
+          count={ data.careTeams.length}
+          hideCheckbox={data.hideCheckbox}
+          formFactorLayout={formFactor}
+          hideSubject={!showPatientName}
+          hideSubjectReference={!showPatientReference}
+          hideBarcode={!showSystemId}
+          rowsPerPage={ LayoutHelpers.calcTableRows() }
+          onRowClick={ handleRowClick.bind(this) }
+          hideActionButton={get(Meteor, 'settings.public.modules.fhir.CareTeams.hideRemoveButtonOnTable', true)}
+          order={sortOrder}
+          onActionButtonClick={function(selectedId){
+            CareTeams._collection.remove({_id: selectedId})
+          }}
+          onSetPage={function(index){
+            Session.set('CareTeamsTable.careTeamsIndex', index)
+          }}        
+          page={data.careTeamsIndex}
+        />
+      </CardContent>
+    </Card>
   } else {
     layoutContent = <Box 
       sx={{

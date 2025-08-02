@@ -62,6 +62,7 @@ function CareTeamsTable(props){
     hideCategory,
     hideName,
     hideSubject,
+    hideSubjectReference,
     hideEncounter,
     hidePeriodStart,
     hidePeriodEnd,
@@ -99,6 +100,11 @@ function CareTeamsTable(props){
   // ------------------------------------------------------------------------
   // Form Factors
 
+  // Store the original prop values before form factor overrides
+  const hideSubjectFromProp = hideSubject;
+  const hideSubjectReferenceFromProp = hideSubjectReference;
+  const hideBarcodeFromProp = hideBarcode;
+
   if(formFactorLayout){
     logger.verbose('formFactorLayout', formFactorLayout + ' ' + window.innerWidth);
 
@@ -129,7 +135,8 @@ function CareTeamsTable(props){
         hideStatus = false;
         hideCategory = true;
         hideName = false;
-        hideSubject = false;
+        hideSubject = (hideSubjectFromProp !== undefined) ? hideSubjectFromProp : false;
+        hideSubjectReference = (hideSubjectReferenceFromProp !== undefined) ? hideSubjectReferenceFromProp : true;
         hideEncounter = false;
         hidePeriodStart = false;
         hidePeriodEnd = false;
@@ -139,7 +146,7 @@ function CareTeamsTable(props){
         hideReasonDisplay = false;
         hideReasonReference = false;
         hideManagingOrganization = false;    
-        hideBarcode = true;
+        hideBarcode = (hideBarcodeFromProp !== undefined) ? hideBarcodeFromProp : true;
         break;
       case "web":
         hideCheckboxes = true;
@@ -148,7 +155,8 @@ function CareTeamsTable(props){
         hideStatus = false;
         hideCategory = true;
         hideName = false;
-        hideSubject = false;
+        hideSubject = (hideSubjectFromProp !== undefined) ? hideSubjectFromProp : false;
+        hideSubjectReference = (hideSubjectReferenceFromProp !== undefined) ? hideSubjectReferenceFromProp : true;
         hideEncounter = false;
         hidePeriodStart = false;
         hidePeriodEnd = false;
@@ -158,7 +166,7 @@ function CareTeamsTable(props){
         hideReasonDisplay = false;
         hideReasonReference = false;
         hideManagingOrganization = false;    
-        hideBarcode = true;
+        hideBarcode = (hideBarcodeFromProp !== undefined) ? hideBarcodeFromProp : true;
         break;
       case "desktop":
         hideCheckboxes = true;
@@ -167,7 +175,8 @@ function CareTeamsTable(props){
         hideStatus = false;
         hideCategory = true;
         hideName = false;
-        hideSubject = false;
+        hideSubject = (hideSubjectFromProp !== undefined) ? hideSubjectFromProp : false;
+        hideSubjectReference = (hideSubjectReferenceFromProp !== undefined) ? hideSubjectReferenceFromProp : true;
         hideEncounter = false;
         hidePeriodStart = false;
         hidePeriodEnd = false;
@@ -177,7 +186,7 @@ function CareTeamsTable(props){
         hideReasonDisplay = false;
         hideReasonReference = false;
         hideManagingOrganization = false;    
-        hideBarcode = true;
+        hideBarcode = (hideBarcodeFromProp !== undefined) ? hideBarcodeFromProp : true;
         break;
       case "videowall":
         hideCheckboxes = false;
@@ -347,6 +356,20 @@ function CareTeamsTable(props){
       );
     }
   }
+  function renderSubjectReferenceHeader(){
+    if (!hideSubjectReference) {
+      return (
+        <TableCell className='subjectReference'>Patient Reference</TableCell>
+      );
+    }
+  }
+  function renderSubjectReference(subjectReference ){
+    if (!hideSubjectReference) {
+      return (
+        <TableCell className='subjectReference' style={{minWidth: '140px'}}>{ subjectReference }</TableCell>
+      );
+    }
+  }
   function renderNameHeader(){
     if (!hideName) {
       return (
@@ -495,8 +518,10 @@ function CareTeamsTable(props){
 
   function renderBarcode(id){
     if (!hideBarcode) {
+      // Handle MongoDB ObjectID objects
+      const idString = typeof id === 'object' && id._str ? id._str : String(id);
       return (
-        <TableCell><span className="barcode">{id}</span></TableCell>
+        <TableCell><span className="barcode">{idString}</span></TableCell>
       );
     }
   }
@@ -567,6 +592,7 @@ function CareTeamsTable(props){
           { renderIdentifier(careTeamsToRender[i].identifier)}
           
           { renderSubject( careTeamsToRender[i].subject ) } 
+          { renderSubjectReference( careTeamsToRender[i].subjectReference ) }
           { renderName( careTeamsToRender[i].name ) } 
           {/* { renderTitle( careTeamsToRender[i].title ) } 
           { renderAuthor( careTeamsToRender[i].author ) } 
@@ -596,6 +622,7 @@ function CareTeamsTable(props){
 
             { renderIdentifierHeader() }
             { renderSubjectHeader() }
+            { renderSubjectReferenceHeader() }
             { renderNameHeader() }
             {/* { renderTitleHeader() }
             { renderAuthorHeader() }

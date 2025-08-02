@@ -561,3 +561,108 @@ When using `useParams()` to get the ID:
 - The error message comes from the client-side error handler
 - Check server logs for the actual method being called
 - In our case, it was still the create method failing validation
+
+## Common Resource Page Improvements and Patterns
+
+When implementing or improving FHIR resource pages (e.g., Conditions, CarePlans, Procedures, etc.), apply these patterns:
+
+### 1. **Handle MongoDB ObjectID Rendering**
+- Use `extractIdString()` helper function in FhirDehydrator to safely convert MongoDB ObjectIDs to strings
+- Prevents "Objects are not valid as a React child" error caused by ObjectIDs with `{_str: "..."}` structure
+- Update renderBarcode functions in table components to handle ObjectIDs properly:
+```javascript
+const idString = typeof id === 'object' && id._str ? id._str : String(id);
+```
+
+### 2. **Implement Patient-Based Data Filtering**
+- Use `FhirUtilities.addPatientFilterToQuery()` to filter resources by selected patient
+- Update both client-side filtering and server-side subscriptions:
+```javascript
+const selectedPatientId = Session.get('selectedPatientId');
+const query = FhirUtilities.addPatientFilterToQuery(selectedPatientId);
+const resources = {ResourceTypes}.find(query).fetch();
+```
+- Pass query to subscription for server-side filtering:
+```javascript
+Meteor.subscribe('autopublish.{ResourceTypes}', query, { limit: 1000 });
+```
+
+### 3. **Add Table Column Visibility Controls**
+- Implement toggle buttons in the header for common columns:
+  - **Person icon** (👤) - Toggle Patient/Subject Name column
+  - **Code icon** ({}) - Toggle Patient/Subject Reference column  
+  - **Badge icon** (🎫) - Toggle System ID/Barcode column
+- Use Material-UI ToggleButtonGroup with state management:
+```javascript
+const [showPatientName, setShowPatientName] = useState(false);
+const [showPatientReference, setShowPatientReference] = useState(false);
+const [showSystemId, setShowSystemId] = useState(false);
+```
+
+### 4. **Fix Form Factor Override Issues**
+- Store original prop values before form factor switch:
+```javascript
+const hidePatientNameFromProp = hidePatientName;
+const hideBarcodeFromProp = hideBarcode;
+```
+- Preserve user preferences in form factor cases:
+```javascript
+hidePatientName = (hidePatientNameFromProp !== undefined) ? hidePatientNameFromProp : false;
+hideBarcode = (hideBarcodeFromProp !== undefined) ? hideBarcodeFromProp : false;
+```
+
+### 5. **Implement Proper Pagination**
+- Use Session variable for page index:
+```javascript
+onSetPage={function(index){
+  Session.set('{ResourceTypes}Table.{resourceTypes}Index', index)
+}}
+```
+- Track page state with useTracker:
+```javascript
+data.{resourceTypes}Index = useTracker(function(){
+  return Session.get('{ResourceTypes}Table.{resourceTypes}Index')
+}, [])
+```
+
+### 6. **Optimize Table Row Count**
+- Use `LayoutHelpers.calcTableRows()` for dynamic row calculation
+- Account for prominent header when patient is selected
+- Ensure proper spacing for all UI elements
+- The helper automatically adjusts for:
+  - Selected patient header space
+  - Pagination controls
+  - Various margins and paddings
+
+### 7. **Implement Privacy by Default**
+- Hide patient-identifying information by default when viewing a specific patient's data
+- Support URL parameters for override: `?hidePatientName=false`
+- Provide visual toggle controls for easy access
+
+### 8. **Consistent Implementation Across Resources**
+- Apply these patterns consistently across all resource types
+- Use the same prop names and patterns (e.g., `hideSubject` for CarePlans, `hidePatientName` for Conditions)
+- Maintain similar UI/UX patterns for user familiarity
+
+### Example Implementation for New Resource Type:
+```javascript
+// In {ResourceTypes}Page.jsx
+const [showPatientName, setShowPatientName] = useState(false);
+const selectedPatientId = Session.get('selectedPatientId');
+const query = FhirUtilities.addPatientFilterToQuery(selectedPatientId);
+
+// In subscription
+Meteor.subscribe('autopublish.{ResourceTypes}', query, { limit: 1000 });
+
+// In table props
+<{ResourceTypes}Table
+  hidePatientName={!showPatientName}
+  hidePatientReference={!showPatientReference}
+  hideBarcode={!showSystemId}
+  onSetPage={function(index){
+    Session.set('{ResourceTypes}Table.{resourceTypes}Index', index)
+  }}
+/>
+```
+
+These patterns ensure consistent behavior, improved performance, and better user experience across all FHIR resource pages.

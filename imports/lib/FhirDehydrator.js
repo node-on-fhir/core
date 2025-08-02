@@ -273,7 +273,7 @@ export function flattenAllergyIntolerance(allergy){
   result.resourceType = get(allergy, 'resourceType', "Unknown");
 
   // IDs
-  result._id = get(allergy, '_id', '');
+  result._id = extractIdString(get(allergy, '_id', ''));
   result.id = get(allergy, 'id', '');
   result.identifier = get(allergy, 'identifier[0].value');
   
@@ -793,6 +793,7 @@ export function flattenCareTeam(team){
     category: '',
     name: '',
     subject: '',
+    subjectReference: '',
     periodStart: '',
     periodEnd: '',
     reasonReference: '',
@@ -809,12 +810,13 @@ export function flattenCareTeam(team){
   result.resourceType = get(team, 'resourceType', "Unknown");
 
   result.id = get(team, 'id', '');
-  result._id = get(team, '_id', '');
+  result._id = extractIdString(get(team, '_id', ''));
 
   result.identifier = get(team, 'identifier[0].value', '')    
   result.status = get(team, 'status', '')    
   result.name = get(team, 'name', '')    
   result.subject = determineSubjectDisplayString(team);
+  result.subjectReference = get(team, 'subject.reference', '');
   result.periodStart = moment(get(team, 'period.start')).format("YYYY-MM-DD hh:mm a");
   result.periodEnd = moment(get(team, 'period.start')).format("YYYY-MM-DD hh:mm a");
 

@@ -1,6 +1,7 @@
 // server/publications/autopublish.js
 
 import { Meteor } from 'meteor/meteor';
+import { Mongo } from 'meteor/mongo';
 import { get } from 'lodash';
 
 // Import all collections that might need autopublishing
@@ -140,6 +141,33 @@ if (finalAutopublishEnabled) {
           query = query || {};
           options = options || {};
           
+          // Handle ObjectID conversion in queries
+          if (query.$or && Array.isArray(query.$or)) {
+            query.$or = query.$or.map(condition => {
+              // Check if any condition has _id as a string that looks like an ObjectID
+              if (condition._id && typeof condition._id === 'string' && /^[a-f\d]{24}$/i.test(condition._id)) {
+                // Create both string and ObjectID versions of the query
+                return {
+                  $or: [
+                    condition, // Keep the string version
+                    { ...condition, _id: new Mongo.ObjectID(condition._id) } // Add ObjectID version
+                  ]
+                };
+              }
+              return condition;
+            });
+            // Flatten nested $or conditions
+            const flattenedConditions = [];
+            query.$or.forEach(condition => {
+              if (condition.$or) {
+                flattenedConditions.push(...condition.$or);
+              } else {
+                flattenedConditions.push(condition);
+              }
+            });
+            query.$or = flattenedConditions;
+          }
+          
           // In development, we can be more permissive
           options.limit = options.limit || 1000;
           
@@ -160,7 +188,34 @@ if (finalAutopublishEnabled) {
             // }
           }
           
-          console.log(`Publishing ${collectionName} with query:`, query, 'options:', options);
+          // Special handling for Patients collection to debug
+          if(collectionName === 'Patients' && query.$or) {
+            console.log(`Publishing ${collectionName} with original query:`, JSON.stringify(query));
+            
+            // Check if we're searching for a specific ID
+            const hasIdSearch = query.$or.some(condition => condition._id || condition.id);
+            if(hasIdSearch) {
+              console.log('ID search detected, checking collection for matches...');
+              
+              // Try to find by various ID formats
+              query.$or.forEach(condition => {
+                if(condition._id) {
+                  const stringCount = collection.find({_id: condition._id}).count();
+                  const objectIdCount = collection.find({_id: new Mongo.ObjectID(condition._id)}).count();
+                  console.log(`Searching for _id: ${condition._id} - String matches: ${stringCount}, ObjectID matches: ${objectIdCount}`);
+                }
+                if(condition.id) {
+                  const count = collection.find({id: condition.id}).count();
+                  console.log(`Searching for id: ${condition.id} - Matches: ${count}`);
+                }
+              });
+            }
+          } else {
+            console.log(`Publishing ${collectionName} with query:`, JSON.stringify(query), 'options:', options);
+          }
+          
+          // Don't use count() in publications as it's not needed and causes issues in Meteor v3
+          // Just return the cursor
           return collection.find(query, options);
         });
         
