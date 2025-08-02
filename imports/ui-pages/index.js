@@ -36,7 +36,6 @@ export { default as MedicationStatementsPage } from '../ui-fhir/medicationStatem
 export { default as NutritionOrdersPage } from '../ui-fhir/nutritionOrders/NutritionOrdersPage';
 export { default as ObservationsPage } from '../ui-fhir/observations/ObservationsPage';
 export { default as OperationOutcomesPage } from '../ui-fhir/operationOutcomes/OperationOutcomesPage';
-export { default as PatientsPage } from '../ui-fhir/patients/PatientsPage';
 export { default as PlanDefinitionsPage } from '../ui-fhir/planDefinitions/PlanDefinitionsPage';
 export { default as PractitionersPage } from '../ui-fhir/practitioners/PractitionersPage';
 export { default as ProceduresPage } from '../ui-fhir/procedures/ProceduresPage';
@@ -49,65 +48,6 @@ export { default as ServiceRequestsPage } from '../ui-fhir/serviceRequests/Servi
 export { default as TasksPage } from '../ui-fhir/tasks/TasksPage';
 export { default as ValueSetsPage } from '../ui-fhir/valuesets/ValueSetsPage';
 
-// Registry builder function for programmatic access
-export function getAllPages() {
-  return {
-    ActivityDefinitionsPage,
-    AllergyIntolerancesPage,
-    ArtifactAssessmentsPage,
-    BasicsPage,
-    BundlesPage,
-    CarePlanDesignerPage,
-    CarePlanDetailPage,
-    CarePlansPage,
-    CareTeamsPage,
-    ClaimsPage,
-    CodeSystemsPage,
-    CommunicationsPage,
-    CompositionsPage,
-    ConditionsPage,
-    DevicesPage,
-    DocumentReferencesPage,
-    EncountersPage,
-    EvidencesPage,
-    GoalsPage,
-    GuidanceResponsesPage,
-    ImmunizationsPage,
-    LibrariesPage,
-    ListsPage,
-    LocationsPage,
-    MedicationAdministrationsPage,
-    MedicationRequestsPage,
-    MedicationsPage,
-    MedicationStatementsPage,
-    NutritionOrdersPage,
-    ObservationsPage,
-    OperationOutcomesPage,
-    PatientsPage,
-    PlanDefinitionsPage,
-    PractitionersPage,
-    ProceduresPage,
-    QuestionnaireResponsesPage,
-    QuestionnairesDesignerPartialPage,
-    QuestionnairesPage,
-    ResearchStudiesPage,
-    ResearchSubjectsPage,
-    ServiceRequestsPage,
-    TasksPage,
-    ValueSetsPage
-  };
-}
-
-// Auto-registration on Meteor.Pages when client starts up
-if (Meteor.isClient) {
-  Meteor.startup(function() {
-    if (!Meteor.Pages) {
-      Meteor.Pages = {};
-    }
-    
-    const pages = getAllPages();
-    Object.assign(Meteor.Pages, pages);
-    
-    console.log('Registered ' + Object.keys(pages).length + ' FHIR Page components on Meteor.Pages');
-  });
-}
+// Note: Components are automatically available when imported in App.jsx
+// The virtual index exports allow clean imports like:
+// import { PatientsPage, ConditionsPage } from '/imports/ui-pages';

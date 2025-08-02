@@ -23,7 +23,7 @@ import SearchIcon from '@mui/icons-material/Search';
 import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
 
-import PatientsTable from '../ui-fhir/patients/PatientsTable';
+import { PatientsTable } from '../ui-tables';
 import LayoutHelpers from '../lib/LayoutHelpers';
 import { Patients } from '../lib/schemas/SimpleSchemas/Patients';
 

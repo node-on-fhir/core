@@ -46,62 +46,6 @@ export { default as ServiceRequestDetail } from '../ui-fhir/serviceRequests/Serv
 export { default as TaskDetail } from '../ui-fhir/tasks/TaskDetail';
 export { default as ValueSetDetail } from '../ui-fhir/valuesets/ValueSetDetail';
 
-// Registry builder function for programmatic access
-export function getAllDetails() {
-  return {
-    ActivityDefinitionDetail,
-    AllergyIntoleranceDetail,
-    ArtifactAssessmentDetail,
-    BasicDetail,
-    BundleDetail,
-    CarePlanDetail,
-    CareTeamDetail,
-    ClaimDetail,
-    CodeSystemDetail,
-    CommunicationDetail,
-    CompositionDetail,
-    ConditionDetail,
-    DeviceDetail,
-    DocumentReferenceDetail,
-    EncounterDetail,
-    EvidenceDetail,
-    GoalDetail,
-    GuidanceResponseDetail,
-    ImmunizationDetail,
-    LibraryDetail,
-    ListDetail,
-    LocationDetail,
-    MedicationAdministrationDetail,
-    MedicationRequestDetail,
-    MedicationDetail,
-    MedicationStatementDetail,
-    NutritionOrderDetail,
-    ObservationDetail,
-    OperationOutcomeDetail,
-    PatientDetail,
-    PlanDefinitionDetail,
-    PractitionerDetail,
-    ProcedureDetail,
-    QuestionnaireResponseDetail,
-    QuestionnaireDetail,
-    ResearchStudyDetail,
-    ResearchSubjectDetail,
-    ServiceRequestDetail,
-    TaskDetail,
-    ValueSetDetail
-  };
-}
-
-// Auto-registration on Meteor.Details when client starts up
-if (Meteor.isClient) {
-  Meteor.startup(function() {
-    if (!Meteor.Details) {
-      Meteor.Details = {};
-    }
-    
-    const details = getAllDetails();
-    Object.assign(Meteor.Details, details);
-    
-    console.log('Registered ' + Object.keys(details).length + ' FHIR Detail components on Meteor.Details');
-  });
-}
+// Note: Components are automatically available when imported in App.jsx
+// The virtual index exports allow clean imports like:
+// import { PatientDetail, ConditionDetail } from '/imports/ui-details';

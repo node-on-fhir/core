@@ -13,7 +13,7 @@ import {
 import ActivitiesTable from './ActivitiesTable';
 import GoalsTable from '../goals/GoalsTable';
 import MedicationsTable from '../medications/MedicationsTable';
-import PatientsTable from '../patients/PatientsTable';
+import { PatientsTable } from '../../ui-tables';
 
 import { CarePlansTable } from './CarePlansTable';
 

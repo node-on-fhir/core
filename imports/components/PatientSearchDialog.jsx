@@ -20,7 +20,7 @@ import { get } from 'lodash';
 import { Meteor } from 'meteor/meteor';
 import { useTracker } from 'meteor/react-meteor-data';
 
-import PatientsTable from '/imports/ui-fhir/patients/PatientsTable';
+import { PatientsTable } from '/imports/ui-tables';
 
 // Get the Patients collection
 let Patients;

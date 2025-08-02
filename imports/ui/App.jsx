@@ -80,6 +80,7 @@ import {
   CarePlanDetailPage,
   CareTeamsPage,
   CarePlansPage,
+  ClaimsPage,
   CodeSystemsPage,
   CompositionsPage,
   ConditionsPage,
@@ -99,7 +100,6 @@ import {
   NutritionOrdersPage,
   ObservationsPage,
   OperationOutcomesPage,
-  PatientsPage,
   PlanDefinitionsPage,
   ProceduresPage,
   QuestionnairesPage,
@@ -157,8 +157,6 @@ import {
   ValueSetDetail
 } from '../ui-details';
 
-import ClaimsPage from '../ui-claims/claims/ClaimsPage.jsx';
-
 //===============================================================================================================
 // PACIO Pages
 
@@ -188,11 +186,6 @@ Meteor.startup(function(){
 // FHIR UI Components
 // 
 // Now using centralized virtual indexes for better organization and cross-resource patterns
-// The indexes automatically register components on Meteor.Tables, Meteor.Pages, and Meteor.Details
-
-import '../ui-tables';  // Auto-registers all Tables on Meteor.Tables
-import '../ui-pages';   // Auto-registers all Pages on Meteor.Pages
-import '../ui-details'; // Auto-registers all Details on Meteor.Details
 
 //===============================================================================================================
 // Data Cursors

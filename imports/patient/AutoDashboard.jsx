@@ -62,7 +62,7 @@ import EncountersTable from '../ui-fhir/encounters/EncountersTable';
 import ProceduresTable from '../ui-fhir/procedures/ProceduresTable';
 import ConditionsTable from '../ui-fhir/conditions/ConditionsTable';
 import ObservationsTable from '../ui-fhir/observations/ObservationsTable';
-import ConsentsTable from '../ui-fhir/consents/ConsentsTable';
+import { ConsentsTable } from '../ui-tables';
 import QuestionnairesTable from '../ui-fhir/questionnaires/QuestionnairesTable';
 import QuestionnaireResponsesTable from '../ui-fhir/questionnaireResponses/QuestionnaireResponsesTable';
 import GoalsTable from '../ui-fhir/goals/GoalsTable';
