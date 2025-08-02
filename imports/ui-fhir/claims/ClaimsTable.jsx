@@ -17,6 +17,8 @@ import {
 import moment from 'moment';
 import { get } from 'lodash';
 
+import { Random } from 'meteor/random'
+
 // import { Icon } from 'react-icons-kit'
 // import { tag } from 'react-icons-kit/fa/tag'
 // import {iosTrashOutline} from 'react-icons-kit/ionicons/iosTrashOutline'
@@ -43,24 +45,29 @@ Meteor.startup(function(){
 
 function ClaimsTable(props){
   logger.info('Rendering the ClaimsTable');
-  
+  logger.verbose('clinical:hl7-fhir-data-infrastructure.client.ClaimsTable');
+  logger.data('ClaimsTable.props', {data: props}, {source: "ClaimsTable.jsx"});
 
+
+  
   let { 
     id,
     children, 
 
     data,
-    claims,
+    claims = [],
     selectedClaimId,
 
     query,
     paginationLimit,
-    disablePagination,
+    disablePagination = false,
   
-    hideCheckbox,
-    hideActionIcons,
+    hideCheckbox = true,
+    hideActionIcons = true,
+    hideActionButton = true,
+    defaultCheckboxValue = true,
 
-    hideBarcode,
+    hideBarcode = false,
     hideTextIcon,
   
     onCellClick,
@@ -68,20 +75,24 @@ function ClaimsTable(props){
     onMetaClick,
     onRemoveRecord,
     onActionButtonClick,
-    hideActionButton,
+    
     actionButtonLabel,
   
     autoColumns,
-    rowsPerPage,
-    tableRowSize,
-    dateFormat,
+    rowsPerPage = 5,
+    tableRowSize = "medium",
+    dateFormat = "YYYY-MM-DD hh:mm:ss",
     showMinutes,
     hideEnteredInError,
     formFactorLayout,
     count,
-    labels,
+    labels = {
+      checkbox: "Checkbox",
+      snomedDisplay: "SNOMED Display",
+      snomedCode: "SNOMED Code"
+    },
 
-    defaultCheckboxValue,
+    
 
     page,
     onSetPage,
@@ -682,7 +693,7 @@ function ClaimsTable(props){
 
   
   return(
-    <div id={id} className="tableWithPagination">
+    <div id={Random.id()} className="tableWithPagination">
       <Table className='claimsTable' size={tableRowSize} aria-label="a dense table" { ...otherProps }>
         <TableHead>
           <TableRow>
@@ -741,22 +752,5 @@ ClaimsTable.propTypes = {
   labels: PropTypes.object
 };
 
-ClaimsTable.defaultProps = {
-  tableRowSize: 'medium',
-  rowsPerPage: 5,
-  dateFormat: "YYYY-MM-DD hh:mm:ss",
-  hideCheckbox: true,
-  hideActionIcons: true,
-  hideBarcode: false,
-  hideActionButton: true,
-  disablePagination: false,  
-  claims: [],
-  labels: {
-    checkbox: "Checkbox",
-    snomedDisplay: "SNOMED Display",
-    snomedCode: "SNOMED Code"
-  },
-  defaultCheckboxValue: false
-}
 
 export default ClaimsTable;

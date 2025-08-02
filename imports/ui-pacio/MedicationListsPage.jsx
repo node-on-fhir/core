@@ -38,7 +38,7 @@ import { AllergyIntolerances } from '../lib/schemas/SimpleSchemas/AllergyIntoler
 
 import MedicationRequestsTable from '../ui-fhir/medicationRequests/MedicationRequestsTable';
 import MedicationAdministrationsTable from '../ui-fhir/medicationAdministrations/MedicationAdministrationsTable';
-import AllergyIntolerancesTable from '../ui-tables/AllergyIntolerancesTable';
+import AllergyIntolerancesTable from '../ui-fhir/allergyIntolerances/AllergyIntolerancesTable';
 
 
 function TabPanel(props) {

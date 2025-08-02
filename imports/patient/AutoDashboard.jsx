@@ -54,18 +54,18 @@ import {
 
 import { useTracker } from 'meteor/react-meteor-data';
 
-import ImmunizationsTable from '../ui-tables/ImmunizationsTable';
-import CarePlansTable from '../ui-tables/CarePlansTable';
-import CareTeamsTable from '../ui-tables/CareTeamsTable';
-import LocationsTable from '../ui-tables/LocationsTable';
-import EncountersTable from '../ui-tables/EncountersTable';
-import ProceduresTable from '../ui-tables/ProceduresTable';
-import ConditionsTable from '../ui-tables/ConditionsTable';
-import ObservationsTable from '../ui-tables/ObservationsTable';
-import ConsentsTable from '../ui-tables/ConsentsTable';
-import QuestionnairesTable from '../ui-tables/QuestionnairesTable';
-import QuestionnaireResponsesTable from '../ui-tables/QuestionnaireResponsesTable';
-import GoalsTable from '../ui-tables/GoalsTable';
+import ImmunizationsTable from '../ui-fhir/immunizations/ImmunizationsTable';
+import CarePlansTable from '../ui-fhir/carePlans/CarePlansTable';
+import CareTeamsTable from '../ui-fhir/careTeams/CareTeamsTable';
+import LocationsTable from '../ui-fhir/locations/LocationsTable';
+import EncountersTable from '../ui-fhir/encounters/EncountersTable';
+import ProceduresTable from '../ui-fhir/procedures/ProceduresTable';
+import ConditionsTable from '../ui-fhir/conditions/ConditionsTable';
+import ObservationsTable from '../ui-fhir/observations/ObservationsTable';
+import ConsentsTable from '../ui-fhir/consents/ConsentsTable';
+import QuestionnairesTable from '../ui-fhir/questionnaires/QuestionnairesTable';
+import QuestionnaireResponsesTable from '../ui-fhir/questionnaireResponses/QuestionnaireResponsesTable';
+import GoalsTable from '../ui-fhir/goals/GoalsTable';
 import MedicationAdministrationsTable from '../ui-fhir/medicationAdministrations/MedicationAdministrationsTable';
 import MedicationRequestsTable from '../ui-fhir/medicationRequests/MedicationRequestsTable';
 import DocumentReferencesTable from '../ui-fhir/documentReferences/DocumentReferencesTable';
