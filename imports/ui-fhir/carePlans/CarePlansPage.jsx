@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useTracker } from 'meteor/react-meteor-data';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { 
   Grid, 
@@ -13,9 +13,16 @@ import {
   CardContent,
   Button,
   Box,
-  Typography
+  Typography,
+  ToggleButton,
+  ToggleButtonGroup
 } from '@mui/material';
-import AddIcon from '@mui/icons-material/Add'; 
+import AddIcon from '@mui/icons-material/Add';
+import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
+import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
+import PersonIcon from '@mui/icons-material/Person';
+import CodeIcon from '@mui/icons-material/Code';
+import BadgeIcon from '@mui/icons-material/Badge'; 
 
 import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
@@ -28,6 +35,7 @@ import { get } from 'lodash';
 
 // Import the collection directly to avoid timing issues
 import { CarePlans } from '/imports/lib/schemas/SimpleSchemas/CarePlans';
+import { FhirUtilities } from '/imports/lib/FhirUtilities';
 
 
 //=============================================================================================================================================
@@ -52,6 +60,11 @@ Session.setDefault('CarePlansTable.carePlansIndex', 0)
 
 export function CarePlansPage(props){
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const [sortOrder, setSortOrder] = useState('descending');
+  const [showPatientName, setShowPatientName] = useState(false);
+  const [showPatientReference, setShowPatientReference] = useState(false);
+  const [showSystemId, setShowSystemId] = useState(false);
 
   let data = {
     currentCarePlanId: '',
@@ -65,11 +78,23 @@ export function CarePlansPage(props){
 
   // Subscribe to CarePlans
   useTracker(function(){
+    const selectedPatientId = Session.get('selectedPatientId');
     console.log('CarePlansPage - checking autopublish setting:', get(Meteor, 'settings.public.defaults.autopublish'));
     let autoPublishEnabled = get(Meteor, 'settings.public.defaults.autopublish', false);
+    
+    // Build query to filter by patient
+    const query = selectedPatientId ? {
+      $or: [
+        {"patient.reference": "Patient/" + selectedPatientId},
+        {"subject.reference": "Patient/" + selectedPatientId},
+        {"patient.reference": { $regex: ".*Patient/" + selectedPatientId}}, 
+        {"subject.reference": { $regex: ".*Patient/" + selectedPatientId}}
+      ]
+    } : {};
+    
     if(autoPublishEnabled){
-      console.log('CarePlansPage - subscribing to autopublish.CarePlans');
-      const handle = Meteor.subscribe('autopublish.CarePlans', {}, {});
+      console.log('CarePlansPage - subscribing to autopublish.CarePlans with query:', query);
+      const handle = Meteor.subscribe('autopublish.CarePlans', query, { limit: 1000 });
       console.log('CarePlansPage - subscription ready?', handle.ready());
       return handle;
     } else {
@@ -79,7 +104,7 @@ export function CarePlansPage(props){
       console.log('CarePlansPage - subscription ready?', handle.ready());
       return handle;
     }
-  }, []);
+  }, [Session.get('selectedPatientId')]);
 
   data.onePageLayout = useTracker(function(){
     return Session.get('CarePlansPage.onePageLayout');
@@ -99,8 +124,10 @@ export function CarePlansPage(props){
       console.log('CarePlansPage - CarePlans collection not ready');
       return [];
     }
-    const plans = CarePlans.find({}, { sort: { 'meta.lastUpdated': -1 } }).fetch();
-    console.log('CarePlansPage - found care plans:', plans.length);
+    const selectedPatientId = Session.get('selectedPatientId');
+    const query = FhirUtilities.addPatientFilterToQuery(selectedPatientId);
+    const plans = CarePlans.find(query, { sort: { 'meta.lastUpdated': -1 } }).fetch();
+    console.log('CarePlansPage - found care plans:', plans.length, 'for patient:', selectedPatientId || 'public');
     if (plans.length > 0) {
       console.log('CarePlansPage - first care plan author:', plans[0].author);
     }
@@ -129,6 +156,12 @@ export function CarePlansPage(props){
     navigate('/careplans/new');
   }
 
+  function handleSortOrderChange(event, newOrder){
+    if(newOrder !== null){
+      setSortOrder(newOrder);
+    }
+  }
+
   function renderHeader() {
     return (
       <Box mb={2}>
@@ -142,14 +175,56 @@ export function CarePlansPage(props){
             </Typography>
           </Grid>
           <Grid item>
-            <Button
-              variant="contained"
-              color="primary"
-              startIcon={<AddIcon />}
-              onClick={handleAddCarePlan}
-            >
-              Add Care Plan
-            </Button>
+            <Box display="flex" gap={2} alignItems="center">
+              <ToggleButtonGroup
+                value={sortOrder}
+                exclusive
+                onChange={handleSortOrderChange}
+                aria-label="sort order"
+                size="small"
+              >
+                <ToggleButton value="ascending" aria-label="ascending order">
+                  <ArrowUpwardIcon />
+                </ToggleButton>
+                <ToggleButton value="descending" aria-label="descending order">
+                  <ArrowDownwardIcon />
+                </ToggleButton>
+              </ToggleButtonGroup>
+              
+              <ToggleButtonGroup
+                value={[
+                  showPatientName && 'patientName',
+                  showPatientReference && 'patientReference',
+                  showSystemId && 'systemId'
+                ].filter(Boolean)}
+                onChange={(event, newFormats) => {
+                  setShowPatientName(newFormats.includes('patientName'));
+                  setShowPatientReference(newFormats.includes('patientReference'));
+                  setShowSystemId(newFormats.includes('systemId'));
+                }}
+                aria-label="display options"
+                size="small"
+              >
+                <ToggleButton value="patientName" aria-label="show patient name">
+                  <PersonIcon />
+                </ToggleButton>
+                <ToggleButton value="patientReference" aria-label="show patient reference">
+                  <CodeIcon />
+                </ToggleButton>
+                <ToggleButton value="systemId" aria-label="show system id">
+                  <BadgeIcon />
+                </ToggleButton>
+              </ToggleButtonGroup>
+              
+              <Button
+                variant="contained"
+                color="primary"
+                startIcon={<AddIcon />}
+                onClick={handleAddCarePlan}
+              >
+                Add Care Plan
+              </Button>
+            </Box>
           </Grid>
         </Grid>
       </Box>
@@ -176,7 +251,11 @@ export function CarePlansPage(props){
           formFactorLayout={formFactor}
           rowsPerPage={LayoutHelpers.calcTableRows()} 
           actionButtonLabel="Remove"
+          hideSubject={!showPatientName}
+          hideSubjectReference={!showPatientReference}
+          hideBarcode={!showSystemId}
           hideActionButton={get(Meteor, 'settings.public.modules.fhir.CarePlans.hideRemoveButtonOnTable', true)}
+          order={sortOrder}
           onActionButtonClick={function(selectedId){
             CarePlans._collection.remove({_id: selectedId})
           }}

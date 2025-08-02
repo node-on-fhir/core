@@ -338,8 +338,19 @@ export function ProceduresTable(props){
 
   function renderBarcode(id){
     if (!hideBarcode) {
+      // Ensure id is a string, handle ObjectID case
+      let idString = '';
+      if(typeof id === 'object' && id !== null){
+        if(id._str){
+          idString = id._str;
+        } else {
+          idString = id.toString();
+        }
+      } else if(id){
+        idString = String(id);
+      }
       return (
-        <TableCell><span className="barcode helvetica">{id}</span></TableCell>
+        <TableCell><span className="barcode helvetica">{idString}</span></TableCell>
       );
     }
   }

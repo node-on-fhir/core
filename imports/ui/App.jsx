@@ -49,6 +49,8 @@ import HomePage from './HomePage.jsx';
 import ServerConfigurationPage from '../ui-vault-server/ServerConfigurationPage.jsx';
 import UdapRegistrationPage from '../ui-vault-server/UdapRegistrationPage.jsx';
 import OAuthClientsPage from '../ui-vault-server/OAuthClientsPage.jsx';
+import FhirBasePage from './pages/FhirBasePage.jsx';
+import SwaggerPage from '../ui-vault-server/SwaggerPage.jsx';
 
 // Account components (conditionally loaded)
 import { LoginPage } from '../accounts/client/pages/LoginPage';
@@ -486,8 +488,19 @@ let dynamicRoutes = [
   }, {
     path: "/fhir-resources-index",
     element: <FhirResourcesDashboard />
+  }, {
+    path: "/fhir",
+    element: <FhirBasePage />
+  }, {
+    path: "/baseR4",
+    element: <FhirBasePage />
+  }, {
+    path: "/swagger",
+    element: <SwaggerPage />
   }  
 ]
+
+
 
 // Account routes
 if(get(Meteor, 'settings.public.modules.accounts.enabled', true)){

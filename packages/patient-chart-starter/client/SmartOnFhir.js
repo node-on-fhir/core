@@ -5,8 +5,8 @@ import { Session } from 'meteor/session';
 import { Meteor } from 'meteor/meteor';
 import { HTTP } from 'meteor/http';
 
-import http from 'http';
-import https from 'https';
+// import http from 'http';
+// import https from 'https';
 
 
 //----------------------------------------------------------------------

@@ -56,7 +56,7 @@ export const LayoutHelpers = {
     let innerCanvasHeight = 0;  
 
     let headerHeight = footerHeight = 64;
-    if(get(Meteor, 'settings.public.defaults.prominantHeader')){
+    if(get(Meteor, 'settings.public.defaults.prominentHeader')){
       headerHeight = 128;
     }
 
@@ -95,7 +95,7 @@ export const LayoutHelpers = {
   },
   calcHeaderHeight: function(){
     let headerHeight = 64;
-    if(get(Meteor, 'settings.public.defaults.prominantHeader')){
+    if(get(Meteor, 'settings.public.defaults.prominentHeader')){
       headerHeight = 128;
     }
     return headerHeight;
@@ -104,7 +104,7 @@ export const LayoutHelpers = {
     if(!headerHeight){
       headerHeight = 64;
     }
-    if(get(Meteor, 'settings.public.defaults.prominantHeader')){
+    if(get(Meteor, 'settings.public.defaults.prominentHeader')){
       headerHeight = 128;
     }
     if(!footerHeight){
@@ -132,16 +132,32 @@ export const LayoutHelpers = {
     }
 
     let innerCanvasHeight = LayoutHelpers.calcInnerCanvasHeight(null, null, innerHeight);
+    
+    // Card header in the page (e.g., "Conditions" title)
     let cardHeaderHeight = 64;
-    if(get(Meteor, 'settings.public.defaults.prominantHeader')){
-      cardHeaderHeight = 128;
+    
+    // Additional space used when a patient is selected and prominentHeader is enabled
+    let selectedPatientHeaderSpace = 0;
+    if(get(Meteor, 'settings.public.defaults.prominentHeader') && (Session.get('selectedPatientId') || Session.get('selectedPatient'))){
+      // The prominent header is already accounted for in calcInnerCanvasHeight
+      // But we need to account for any additional spacing or elements
+      selectedPatientHeaderSpace = 20; // Additional margin when patient is selected
     }
 
     let cardMargin = 20;
     let tableMargins = 60;
-    let tableHeight = innerCanvasHeight - cardMargin - cardHeaderHeight - tableMargins - 100;
-    // let smallerHeight = tableHeight - 200;
+    let paginationHeight = 52; // Space for pagination controls
+    let tableHeight = innerCanvasHeight - cardMargin - cardHeaderHeight - tableMargins - paginationHeight - selectedPatientHeaderSpace;
+    
     let numberOfRows = Number((tableHeight / rowHeight).toFixed(0));
+
+    // Reduce by 1 to account for rounding and ensure content fits
+    numberOfRows = numberOfRows - 1;
+
+    // Ensure we have at least 5 rows
+    if(numberOfRows < 5){
+      numberOfRows = 5;
+    }
 
     return numberOfRows;
   },

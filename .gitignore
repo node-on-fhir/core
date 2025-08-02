@@ -10,6 +10,7 @@ test
 tests_output
 tests/output
 tests/screenshots
+tests_output
 
 packages
 packages/*
@@ -27,3 +28,4 @@ settings.*.json
 
 screenshots/*
 screenshots/*/*
+

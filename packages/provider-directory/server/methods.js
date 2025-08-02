@@ -294,41 +294,7 @@ Meteor.methods({
             console.log('result', result);
         } catch (error) {
             console.error('error', error);
-        }
-        
-        // HTTP.get(endpointUrl, function(error, result){
-        //     if(error){
-      
-        //     }
-        //     if(result){
-        //       // console.log('result', result)
-        //       let parsedData = JSON.parse(result.content);
-        //     //   console.log('parsedData', parsedData)
-        //       console.log('Received ' + get(parsedData, 'total') + ' records.')
-      
-        //       if(get(parsedData, 'resourceType') === "Bundle"){
-        //         if(Array.isArray(parsedData.entry)){
-        //           parsedData.entry.forEach(function(entry, index){
-        //             if(get(entry, 'resourceType') === "Endpoint"){
-        //               // console.log("Endpoint " + index)
-        //               if(has(entry, 'id')){
-        //                 if(!Endpoints.findOne({id: entry.id})){
-        //                     Endpoints.insert(entry);
-        //                   }      
-        //               } else {
-        //                 if(!has(entry, 'id')){
-        //                     entry.id = Random.id();
-        //                   }
-        //                   Endpoints.insert(entry);
-        //               }
-        //             }
-        //           })
-        //         }
-        //       }
-        //     }
-        // })
-
-
+        }        
     },
     initCodeSystems: async function(){
         console.log("Initializing code systems....");

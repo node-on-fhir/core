@@ -33,7 +33,7 @@ import { BaseSchema, DomainResourceSchema, IdentifierSchema, ContactPointSchema,
 // create the object using our BaseModel
 let Procedure = BaseModel.extend();
 
-export let Procedures = new Mongo.Collection('Procedures');
+let Procedures = new Mongo.Collection('Procedures');
 
 //Assign a collection so the object knows how to perform CRUD operations
 Procedure.prototype._collection = Procedures;

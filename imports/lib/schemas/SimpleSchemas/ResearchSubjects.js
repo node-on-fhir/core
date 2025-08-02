@@ -90,4 +90,3 @@ let ResearchSubjectSchema = DomainResourceSchema.extend({
 // ResearchSubjects.attachSchema(ResearchSubjectSchema);
 
 export default { ResearchSubject, ResearchSubjects, ResearchSubjectSchema };
-export { ResearchSubject, ResearchSubjects, ResearchSubjectSchema };

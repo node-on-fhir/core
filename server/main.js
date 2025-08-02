@@ -23,6 +23,7 @@ import './OAuthEndpoints.js';
 import './ProxyRelay.js';
 import './VaultServer.js';
 import '../imports/lib/UdapMethods.js';
+import './Swagger.js';
 
 // Import accounts startup if enabled
 import '../imports/startup/server/index.js';

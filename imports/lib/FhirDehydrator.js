@@ -11,6 +11,23 @@ import FhirUtilities from './FhirUtilities';
 //========================================================================================
 // Helper Functions  
 
+// Helper function to safely extract string from ObjectID or any value
+function extractIdString(value){
+  if(!value) return '';
+  
+  // Handle ObjectID case with _str property
+  if(typeof value === 'object' && value !== null){
+    if(value._str){
+      return value._str;
+    } else if(value.toString && typeof value.toString === 'function'){
+      return value.toString();
+    }
+  }
+  
+  // Convert to string for primitive values
+  return String(value);
+}
+
 function determineSubjectDisplayString(resourceRecord){
   let subjectDisplayString = '';
   if(get(resourceRecord, 'subject')){
@@ -715,10 +732,10 @@ export function flattenCarePlan(plan){
   result.resourceType = get(plan, 'resourceType', "Unknown");
 
   result.id = get(plan, 'id', '');
-  result._id = get(plan, '_id', '');
+  result._id = extractIdString(get(plan, '_id'));
 
   if (get(plan, 'template')) {
-    result.template = plan.template.toString();
+    result.template = extractIdString(get(plan, 'template'));
   }
 
   result.subject = determineSubjectDisplayString(plan);
@@ -4485,7 +4502,7 @@ export function flattenProcedure(procedure, internalDateFormat){
     internalDateFormat = "YYYY-MM-DD";
   }
 
-  result._id = get(procedure, '_id');
+  result._id = extractIdString(get(procedure, '_id'));
   result.id = get(procedure, 'id', '');
   
   result.status = get(procedure, 'status', '');
@@ -4854,7 +4871,7 @@ export function flattenResearchSubject(researchSubject, internalDateFormat){
   };
 
   result.resourceType = get(researchSubject, 'resourceType', 'ResearchSubject');
-  result._id = get(researchSubject, '_id', '');
+  result._id = extractIdString(get(researchSubject, '_id'));
   result.id = get(researchSubject, 'id', '');
 
   // Status of the subject's participation

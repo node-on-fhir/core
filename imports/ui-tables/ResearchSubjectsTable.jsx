@@ -670,8 +670,20 @@ export function ResearchSubjectsTable(props){
         barcodeClasses = "barcode helvetica";
       }
 
+      // Ensure id is a string, handle ObjectID case
+      let idString = '';
+      if(typeof id === 'object' && id !== null){
+        if(id._str){
+          idString = id._str;
+        } else {
+          idString = id.toString();
+        }
+      } else if(id){
+        idString = String(id);
+      }
+
       return (
-        <TableCell><span className={barcodeClasses}>{id}</span></TableCell>
+        <TableCell><span className={barcodeClasses}>{idString}</span></TableCell>
       );
     }
   }

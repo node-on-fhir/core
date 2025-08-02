@@ -279,22 +279,6 @@ function BackendServicesConfigPage(props){
   function handleFetchWellknownUdap(){
     console.log('wellKnownUdapUrl', wellKnownUdapUrl);
 
-    // HTTP.get(wellKnownUdapUrl, function(error, result){
-    //   if(error){
-    //     console.log('handleFetchWellknownUdap.error', error)
-    //   }
-    //   if(result){
-    //     console.log('handleFetchWellknownUdap.result.data', get(result, 'data'))
-
-    //     setUdapConfig(get(result, 'data'));
-        
-    //     if(Array.isArray(get(result, 'data.x5c'))){
-    //       console.log('x.509 cert: ' + result.data.x5c[0]);
-    //       setCertificate(result.data.x5c);          
-    //     }
-    //   }
-    // })
-
     Meteor.call('fetchWellKnownUdap', wellKnownUdapUrl, function(error, result){
       if(error){
         console.log('handleFetchWellknownUdap.error', error)

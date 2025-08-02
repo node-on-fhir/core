@@ -1,3 +1,5 @@
+// /imports/ui-tables/CarePlansTable.jsx
+
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 
@@ -20,6 +22,17 @@ import moment from 'moment';
 
 
 import { FhirDehydrator } from '../lib/FhirDehydrator';
+
+// Logger setup
+const logger = {
+  debug: console.debug.bind(console),
+  trace: console.trace.bind(console),
+  data: console.log.bind(console),
+  verbose: console.debug.bind(console),
+  info: console.info.bind(console),
+  warn: console.warn.bind(console),
+  error: console.error.bind(console)
+};
 
 
 
@@ -88,6 +101,9 @@ export function CarePlansTable(props){
 
   // ------------------------------------------------------------------------
   // Form Factors
+
+  // Store original prop values before form factor overrides
+  const originalHideSubject = props.hideSubject;
 
   if(formFactorLayout){
     logger.verbose('formFactorLayout', formFactorLayout + ' ' + window.innerWidth);
@@ -174,6 +190,11 @@ export function CarePlansTable(props){
         hideBarcode = false;
         break;            
     }
+  }
+
+  // Restore original prop value if it was explicitly set
+  if(typeof originalHideSubject !== 'undefined'){
+    hideSubject = originalHideSubject;
   }
 
   // ------------------------------------------------------------------------
@@ -403,8 +424,19 @@ export function CarePlansTable(props){
 
   function renderBarcode(id){
     if (!hideBarcode) {
+      // Ensure id is a string, handle ObjectID case
+      let idString = '';
+      if(typeof id === 'object' && id !== null){
+        if(id._str){
+          idString = id._str;
+        } else {
+          idString = id.toString();
+        }
+      } else if(id){
+        idString = String(id);
+      }
       return (
-        <TableCell><span className="barcode">{id}</span></TableCell>
+        <TableCell><span className="barcode">{idString}</span></TableCell>
       );
     }
   }

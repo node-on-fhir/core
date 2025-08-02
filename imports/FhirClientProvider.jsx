@@ -19,8 +19,10 @@ import { Conditions } from './lib/schemas/SimpleSchemas/Conditions';
 import { Encounters } from './lib/schemas/SimpleSchemas/Encounters';
 import { Immunizations } from './lib/schemas/SimpleSchemas/Immunizations';
 import { Locations } from './lib/schemas/SimpleSchemas/Locations';
+import { MedicationOrders } from './lib/schemas/SimpleSchemas/MedicationOrders';
 import { Observations } from './lib/schemas/SimpleSchemas/Observations';
 import { Patients } from './lib/schemas/SimpleSchemas/Patients';
+import { Practitioners } from './lib/schemas/SimpleSchemas/Practitioners';
 import { Procedures } from './lib/schemas/SimpleSchemas/Procedures';
 import { Questionnaires } from './lib/schemas/SimpleSchemas/Questionnaires';
 import { QuestionnaireResponses } from './lib/schemas/SimpleSchemas/QuestionnaireResponses';
@@ -73,7 +75,7 @@ function fetchPatientData(ehrLaunchCapabilities, client, accessToken) {
           }
         });
 
-        console.log('querying the server for Conditions using HTTP.get()')
+        console.log('querying the server for Conditions using fetch()')
         let conditionUrlAssembled = get(client.getState(), 'serverUrl') + "/Condition?patient=" + client.getPatientId();
         // console.log('FhirClientProvider.conditionUrlAssembled:    ', conditionUrlAssembled);
 
@@ -86,9 +88,10 @@ function fetchPatientData(ehrLaunchCapabilities, client, accessToken) {
           // console.log('FhirClientProvider.conditionUrlAssembled.httpHeaders:    ', httpHeaders);
 
           // need to reconcile with client.request() syntax above    
-          HTTP.get(conditionUrlAssembled, httpHeaders, function(error, result){
-            if(result){
-              let parsedConditionBundle = JSON.parse(get(result, "content", {}))
+          fetch(conditionUrlAssembled, httpHeaders)
+            .then(response => response.text())
+            .then(content => {
+              let parsedConditionBundle = JSON.parse(content || "{}");
               console.log('FhirClientProvider.parsedConditionBundle', parsedConditionBundle);       
               
               if(parsedConditionBundle.resourceType === "Condition"){
@@ -96,11 +99,10 @@ function fetchPatientData(ehrLaunchCapabilities, client, accessToken) {
                   Conditions._collection.upsert({id: parsedConditionBundle.id}, {$set: parsedConditionBundle}, {validate: false, filter: false}, function(){});     
                 }
               }
-            }
-            if(error){
-              console.error('HTTP.get().conditionUrlAssembled.error', error)
-            }   
-          })    
+            })
+            .catch(error => {
+              console.error('fetch().conditionUrlAssembled.error', error)
+            });   
         }
       }
 
@@ -352,53 +354,58 @@ export function FhirClientProvider(props){
 
                         if(accessToken){
                           if(metadataUrl){            
-                            HTTP.get(metadataUrl, httpHeaders, function(error, conformanceStatement){
-                              let parsedCapabilityStatement = JSON.parse(get(conformanceStatement, "content"))
-                              console.log('Received a conformance statement for the server received via iss URL parameter.', parsedCapabilityStatement);
-                      
-                              let ehrLaunchCapabilities = FhirUtilities.parseCapabilityStatement(parsedCapabilityStatement);
-                              console.log("Result of parsing through the CapabilityStatement.  These are the ResourceTypes we can search for", ehrLaunchCapabilities);
-                              Session.set('FhirClientProvider.ehrLaunchCapabilities', ehrLaunchCapabilities)
-                  
-                              fetchPatientData(ehrLaunchCapabilities, smartClient, accessToken);
+                            fetch(metadataUrl, httpHeaders)
+                              .then(response => response.text())
+                              .then(content => {
+                                let parsedCapabilityStatement = JSON.parse(content || "{}");
+                                console.log('Received a conformance statement for the server received via iss URL parameter.', parsedCapabilityStatement);
+                        
+                                let ehrLaunchCapabilities = FhirUtilities.parseCapabilityStatement(parsedCapabilityStatement);
+                                console.log("Result of parsing through the CapabilityStatement.  These are the ResourceTypes we can search for", ehrLaunchCapabilities);
+                                Session.set('FhirClientProvider.ehrLaunchCapabilities', ehrLaunchCapabilities)
+                    
+                                fetchPatientData(ehrLaunchCapabilities, smartClient, accessToken);
 
-                              if(get(Meteor, 'settings.private.accessControl.enableHipaaLogging')){
-                                let newAuditEvent = { 
-                                  "resourceType" : "AuditEvent",
-                                  "type" : { 
-                                    'code': 'Fetch Patient Data',
-                                    'display': 'Fetch Patient Data',
-                                    }, 
-                                  "action" : 'Fetch Chart',
-                                  "recorded" : new Date(), 
-                                  "outcome" : "Success",
-                                  "outcomeDesc" : 'Medical records fetched from hospital electronic medical record system.',
-                                  "agent" : [{ 
-                                    "name" : FhirUtilities.pluckName(Session.get('selectedPatient')),
-                                    "who": {
-                                      "display": FhirUtilities.pluckName(Session.get('selectedPatient')),
-                                      "reference": "Patient/" + get(Session.get('selectedPatient'), 'id')
+                                if(get(Meteor, 'settings.private.accessControl.enableHipaaLogging')){
+                                  let newAuditEvent = { 
+                                    "resourceType" : "AuditEvent",
+                                    "type" : { 
+                                      'code': 'Fetch Patient Data',
+                                      'display': 'Fetch Patient Data',
+                                      }, 
+                                    "action" : 'Fetch Chart',
+                                    "recorded" : new Date(), 
+                                    "outcome" : "Success",
+                                    "outcomeDesc" : 'Medical records fetched from hospital electronic medical record system.',
+                                    "agent" : [{ 
+                                      "name" : FhirUtilities.pluckName(Session.get('selectedPatient')),
+                                      "who": {
+                                        "display": FhirUtilities.pluckName(Session.get('selectedPatient')),
+                                        "reference": "Patient/" + get(Session.get('selectedPatient'), 'id')
+                                      },
+                                      "requestor" : false
+                                    }],
+                                    "source" : { 
+                                      "site" : Meteor.absoluteUrl(),
+                                      "identifier": {
+                                        "value": Meteor.absoluteUrl(),
+
+                                      }
                                     },
-                                    "requestor" : false
-                                  }],
-                                  "source" : { 
-                                    "site" : Meteor.absoluteUrl(),
-                                    "identifier": {
-                                      "value": Meteor.absoluteUrl(),
+                                    "entity": [{
+                                      "reference": {
+                                        "reference": ''
+                                      }
+                                    }]
+                                  };
 
-                                    }
-                                  },
-                                  "entity": [{
-                                    "reference": {
-                                      "reference": ''
-                                    }
-                                  }]
-                                };
-
-                                console.log('Logging a hipaa event...', newAuditEvent)
-                                let hipaaEventId = Meteor.call("logAuditEvent", newAuditEvent);            
-                              }
-                            })    
+                                  console.log('Logging a hipaa event...', newAuditEvent)
+                                  let hipaaEventId = Meteor.call("logAuditEvent", newAuditEvent);            
+                                }
+                              })
+                              .catch(error => {
+                                console.error('fetch().metadataUrl.error', error);
+                              });    
                           }
 
                           if(patientId){
@@ -408,9 +415,10 @@ export function FhirClientProvider(props){
 
                             if(patientUrl){        
                               // need to reconcile with client.request() syntax above    
-                              HTTP.get(patientUrl, httpHeaders, function(httpError, httpResult){
-                                if(httpResult){
-                                  let parsedPatientBundle = JSON.parse(get(httpResult, "content", {}))
+                              fetch(patientUrl, httpHeaders)
+                                .then(response => response.text())
+                                .then(content => {
+                                  let parsedPatientBundle = JSON.parse(content || "{}");
                                   console.log('FhirClientProvider.parsedPatientBundle', parsedPatientBundle);                      
     
                                   if(parsedPatientBundle.resourceType === "Patient"){
@@ -467,12 +475,10 @@ export function FhirClientProvider(props){
                                     console.log('Logging a hipaa event...', newAuditEvent)
                                     let hipaaEventId = Meteor.call("logAuditEvent", newAuditEvent)            
                                   }
-
-                                }
-                                if(httpError){
+                                })
+                                .catch(httpError => {
                                   console.error('FhirClientProvider.patientUrl.get().httpError', httpError);
-                                }
-                              })
+                                });
                             }
                           } else {
                             console.log('FhirClientProvider.SMART.ready().patientId not found.  Please check scopes and permissions.')
@@ -484,9 +490,10 @@ export function FhirClientProvider(props){
 
                             if(practitionerUrl){            
                               // need to reconcile with client.request() syntax above
-                              HTTP.get(practitionerUrl, httpHeaders, function(httpError, httpResult){
-                                if(httpResult){
-                                  let parsedPractitionerBundle = JSON.parse(get(httpResult, "content"))
+                              fetch(practitionerUrl, httpHeaders)
+                                .then(response => response.text())
+                                .then(content => {
+                                  let parsedPractitionerBundle = JSON.parse(content || "{}");
                                   console.log('FhirClientProvider.parsedPractitionerBundle', parsedPractitionerBundle);     
     
                                   if(parsedPractitionerBundle.resourceType === "Practitioner"){
@@ -495,11 +502,10 @@ export function FhirClientProvider(props){
                                       Session.set('currentUser', parsedPractitionerBundle);
                                     }
                                   }  
-                                }
-                                if(httpError){
+                                })
+                                .catch(httpError => {
                                   console.error('FhirClientProvider.practitionerUrl.get().error', httpError);
-                                }
-                              })    
+                                });    
                             }
                           } else {
                             console.warn('FhirClientProvider.SMART.ready().fhirUser not found.  Please check scopes and permissions.')

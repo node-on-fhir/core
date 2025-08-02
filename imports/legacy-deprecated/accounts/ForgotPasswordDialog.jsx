@@ -22,7 +22,7 @@ import DialogTitle from '@material-ui/core/DialogTitle';
 
 import { get, has } from 'lodash';
 import { Meteor } from 'meteor/meteor';
-import { HTTP } from 'meteor/http';
+import { fetch } from 'meteor/fetch';
 import JSON5 from 'json5';
 
 // import { FhirUtilities } from 'meteor/clinical:hl7-fhir-data-infrastructure';
