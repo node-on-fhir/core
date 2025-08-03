@@ -39,12 +39,27 @@ function transformConditionForStorage(conditionData) {
     delete transformed.note;
   }
   
+  // Preserve the code field (SNOMED code)
+  // The schema expects CodeableConceptSchema, so we keep it as-is
+  if (conditionData.code) {
+    transformed.code = conditionData.code;
+  }
+  
+  // Preserve category field
+  if (conditionData.category) {
+    transformed.category = conditionData.category;
+  }
+  
   return transformed;
 }
 
 // Helper function to transform from SimpleSchema format back to FHIR R4
 function transformConditionForDisplay(condition) {
   if (!condition) return condition;
+  
+  console.log('=== transformConditionForDisplay ===');
+  console.log('Input condition has code:', !!condition.code);
+  console.log('Input code:', JSON.stringify(condition.code, null, 2));
   
   const transformed = { ...condition };
   
@@ -79,6 +94,10 @@ function transformConditionForDisplay(condition) {
     }];
     delete transformed.notes;
   }
+  
+  console.log('=== transformConditionForDisplay output ===');
+  console.log('Output condition has code:', !!transformed.code);
+  console.log('Output code:', JSON.stringify(transformed.code, null, 2));
   
   return transformed;
 }

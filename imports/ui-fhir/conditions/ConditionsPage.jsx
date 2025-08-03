@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTracker } from 'meteor/react-meteor-data';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
@@ -64,6 +64,13 @@ export function ConditionsPage(props){
   const [showPatientName, setShowPatientName] = useState(false);
   const [showPatientReference, setShowPatientReference] = useState(false);
   const [showSystemId, setShowSystemId] = useState(false);
+  
+  // Clean up debug flag on unmount
+  useEffect(() => {
+    return () => {
+      Session.set('ConditionsPage.debugLogged', false);
+    };
+  }, []);
 
   // Subscribe to conditions data
   const isLoading = useTracker(() => {
@@ -71,21 +78,26 @@ export function ConditionsPage(props){
     const selectedPatient = Session.get('selectedPatient');
     let autoPublishEnabled = get(Meteor, 'settings.public.defaults.autopublish', false);
     
-    // Use FHIR id for filtering, not MongoDB _id
-    const fhirId = get(selectedPatient, 'id') || selectedPatientId;
+    // Use FhirUtilities to build the query - it handles all reference formats
+    let query = {};
     
-    // Build query to filter by patient
-    const query = fhirId ? {
-      $or: [
-        {"patient.reference": "Patient/" + fhirId},
-        {"subject.reference": "Patient/" + fhirId},
-        {"patient.reference": { $regex: ".*Patient/" + fhirId}}, 
-        {"subject.reference": { $regex: ".*Patient/" + fhirId}},
-        // Also try MongoDB _id as fallback
-        {"patient.reference": "Patient/" + selectedPatientId},
-        {"subject.reference": "Patient/" + selectedPatientId}
-      ]
-    } : {};
+    // If we have a patient selected, filter by that patient
+    // FHIR resources reference patients by their FHIR id, not MongoDB _id
+    if(selectedPatient || selectedPatientId) {
+      const fhirId = get(selectedPatient, 'id');
+      
+      if(fhirId) {
+        // Use the FHIR id as primary search
+        query = FhirUtilities.addPatientFilterToQuery(fhirId);
+      } else if(selectedPatientId) {
+        // Fallback to MongoDB _id if no FHIR id available
+        query = FhirUtilities.addPatientFilterToQuery(selectedPatientId);
+      }
+    }
+    
+    console.log('Conditions subscription - selectedPatientId:', selectedPatientId);
+    console.log('Conditions subscription - FHIR id:', get(selectedPatient, 'id'));
+    console.log('Conditions subscription query:', query);
     
     if(autoPublishEnabled){
       const handle = Meteor.subscribe('autopublish.Conditions', query, { limit: 1000 });
@@ -122,11 +134,39 @@ export function ConditionsPage(props){
     const selectedPatientId = Session.get('selectedPatientId');
     const selectedPatient = Session.get('selectedPatient');
     
-    // Use FHIR id for filtering
-    const fhirId = get(selectedPatient, 'id') || selectedPatientId;
-    const query = FhirUtilities.addPatientFilterToQuery(fhirId);
+    // Use FHIR id for filtering, as that's what FHIR resources reference
+    const fhirId = get(selectedPatient, 'id');
+    const patientIdToUse = fhirId || selectedPatientId;
     
-    return Conditions.find(query).fetch();
+    const query = patientIdToUse ? FhirUtilities.addPatientFilterToQuery(patientIdToUse) : {};
+    
+    // Only do debug logging once when component mounts
+    if(!Session.get('ConditionsPage.debugLogged')) {
+      Session.set('ConditionsPage.debugLogged', true);
+      
+      console.log('Conditions data - MongoDB _id:', selectedPatientId);
+      console.log('Conditions data - FHIR id:', fhirId);
+      console.log('Conditions data - Using ID for query:', patientIdToUse);
+      console.log('Conditions data - query:', query);
+      
+      // First check all conditions
+      const allConditions = Conditions.find().fetch();
+      console.log('Total Conditions in client collection:', allConditions.length);
+      
+      // Log first few conditions to see their structure
+      if(allConditions.length > 0) {
+        console.log('Sample Condition structure:', allConditions[0]);
+        console.log('First 3 patient references:');
+        allConditions.slice(0, 3).forEach(c => {
+          console.log('- _id:', c._id, 'patient:', get(c, 'patient'), 'subject:', get(c, 'subject'));
+        });
+      }
+    }
+    
+    // Sort by _id descending to get newest first
+    // MongoDB ObjectIDs contain timestamp, so sorting by _id gives chronological order
+    const results = Conditions.find(query, { sort: { _id: -1 } }).fetch();
+    return results;
   }, [])
   data.conditionsIndex = useTracker(function(){
     return Session.get('ConditionsTable.conditionsIndex')

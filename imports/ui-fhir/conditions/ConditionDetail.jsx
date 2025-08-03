@@ -371,6 +371,9 @@ function ConditionDetail(props) {
     console.log('Condition to save:', JSON.stringify(condition, null, 2));
     console.log('Subject display:', get(condition, 'subject.display'));
     console.log('Subject reference:', get(condition, 'subject.reference'));
+    console.log('SNOMED code:', get(condition, 'code.coding[0].code'));
+    console.log('SNOMED display:', get(condition, 'code.coding[0].display'));
+    console.log('Full code object:', JSON.stringify(condition.code, null, 2));
     
     try {
       if (id && id !== 'new') {
@@ -578,6 +581,7 @@ function ConditionDetail(props) {
                 onChange={(e) => handleChange('code.coding[0].code', e.target.value)}
                 helperText="SNOMED CT code"
                 disabled={!isEditing}
+                InputLabelProps={{ shrink: true }}
                 InputProps={{
                   endAdornment: (
                     <InputAdornment position="end">
@@ -605,6 +609,7 @@ function ConditionDetail(props) {
                 onChange={(e) => handleChange('code.coding[0].display', e.target.value)}
                 helperText="Human-readable name of the condition"
                 disabled={!isEditing}
+                InputLabelProps={{ shrink: true }}
               />
             </Grid>
             
