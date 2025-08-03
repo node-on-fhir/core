@@ -145,12 +145,15 @@ function ConditionDetail(props) {
   const [error, setError] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [patientSearchOpen, setPatientSearchOpen] = useState(false);
+  const [forceUpdate, setForceUpdate] = useState(0); // Force re-render counter
   
   // Debug effect to monitor condition changes
   useEffect(() => {
-    console.log('Condition state changed:', condition);
+    console.log('=== Condition state changed ===');
+    console.log('Full condition:', JSON.stringify(condition, null, 2));
     console.log('Subject display:', get(condition, 'subject.display'));
     console.log('Subject reference:', get(condition, 'subject.reference'));
+    console.log('================================');
   }, [condition]);
 
 
@@ -171,7 +174,11 @@ function ConditionDetail(props) {
         } else if (selectedPatient.name && Array.isArray(selectedPatient.name)) {
           patientName = FhirUtilities.pluckName(selectedPatient);
         }
-        patientReference = `Patient/${selectedPatientId}`;
+        
+        // Use FHIR id for reference, not MongoDB _id
+        const fhirId = selectedPatient.id || selectedPatientId;
+        patientReference = `Patient/${fhirId}`;
+        console.log('Setting patient reference:', patientReference);
       }
       
       // Set asserter to current user
@@ -249,7 +256,9 @@ function ConditionDetail(props) {
     console.log('=== handlePatientSelect called ===');
     console.log('Selected patient ID:', patientId);
     console.log('Selected patient object:', patient);
-    console.log('Current condition before update:', condition);
+    console.log('Patient object type:', typeof patient);
+    console.log('Patient object keys:', patient ? Object.keys(patient) : 'null');
+    console.log('Current condition before update:', JSON.stringify(condition.subject));
     
     try {
       if (patient) {
@@ -277,12 +286,26 @@ function ConditionDetail(props) {
         setCondition(prevCondition => {
           console.log('Previous condition in setState:', prevCondition);
           const updated = JSON.parse(JSON.stringify(prevCondition));
-          set(updated, 'subject.reference', `Patient/${patientId}`);
+          
+          // Use FHIR id for reference, not MongoDB _id
+          const fhirId = patient.id || patient._id || patientId;
+          console.log('Using FHIR ID for reference:', fhirId);
+          
+          set(updated, 'subject.reference', `Patient/${fhirId}`);
           set(updated, 'subject.display', patientName);
           console.log('Updated condition in setState:', updated);
           console.log('Subject after update:', updated.subject);
           return updated;
         });
+        
+        // Force a re-render to ensure UI updates
+        setForceUpdate(prev => prev + 1);
+        
+        // Close the dialog after a small delay to ensure state update completes
+        setTimeout(() => {
+          setPatientSearchOpen(false);
+        }, 100);
+        return; // Exit early to avoid closing dialog twice
       } else {
         // If patient object not provided, try to find it
         if (Patients) {
@@ -315,6 +338,12 @@ function ConditionDetail(props) {
   async function handleSave() {
     setLoading(true);
     setError(null);
+    
+    // Debug log the condition being saved
+    console.log('=== handleSave called ===');
+    console.log('Condition to save:', JSON.stringify(condition, null, 2));
+    console.log('Subject display:', get(condition, 'subject.display'));
+    console.log('Subject reference:', get(condition, 'subject.reference'));
     
     try {
       if (id && id !== 'new') {

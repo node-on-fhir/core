@@ -73,6 +73,16 @@ Meteor.methods({
       cleanPatient.maritalStatus = patientData.maritalStatus;
     }
     
+    // Handle identifier array
+    if (patientData.identifier && patientData.identifier.length > 0) {
+      cleanPatient.identifier = patientData.identifier.map(id => ({
+        use: id.use || 'usual',
+        value: id.value || '',
+        system: id.system,
+        type: id.type
+      })).filter(id => id.value);
+    }
+    
     // Handle extensions separately to avoid parallel array issues
     if (patientData.extension && patientData.extension.length > 0) {
       cleanPatient.extension = patientData.extension.filter(ext => 
@@ -152,6 +162,16 @@ Meteor.methods({
       // Handle other complex fields
       if (patientData.communication) cleanPatient.communication = patientData.communication;
       if (patientData.maritalStatus) cleanPatient.maritalStatus = patientData.maritalStatus;
+      
+      // Handle identifier array
+      if (patientData.identifier) {
+        cleanPatient.identifier = patientData.identifier.map(id => ({
+          use: id.use || 'usual',
+          value: id.value || '',
+          system: id.system,
+          type: id.type
+        })).filter(id => id.value);
+      }
       
       // Handle extensions
       if (patientData.extension) {

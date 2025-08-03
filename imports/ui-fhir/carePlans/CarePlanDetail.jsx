@@ -133,6 +133,8 @@ function CarePlanDetail(props) {
     console.log('=== Initial setup effect running ===');
     console.log('ID:', id);
     console.log('Current user:', currentUser);
+    console.log('Current user ID:', currentUser?._id);
+    console.log('Current user username:', currentUser?.username);
     
     if (!id || id === 'new') {
       // Enable editing for new care plans
@@ -161,32 +163,46 @@ function CarePlanDetail(props) {
         console.log('Current user profile:', get(currentUser, 'profile'));
         console.log('Current user profile.name:', get(currentUser, 'profile.name'));
         
-        authorName = get(currentUser, 'profile.name.text', '') ||
-                    `${get(currentUser, 'profile.name.given[0]', '')} ${get(currentUser, 'profile.name.family', '')}`.trim() ||
-                    get(currentUser, 'username', '');
+        // First try profile.name fields, then fall back to username
+        const profileNameText = get(currentUser, 'profile.name.text', '');
+        const profileNameParts = `${get(currentUser, 'profile.name.given[0]', '')} ${get(currentUser, 'profile.name.family', '')}`.trim();
+        const username = get(currentUser, 'username', '');
+        
+        console.log('Profile name text:', profileNameText);
+        console.log('Profile name parts:', profileNameParts);
+        console.log('Username:', username);
+        
+        authorName = profileNameText || profileNameParts || username;
         authorReference = `Practitioner/${get(currentUser, '_id', '')}`;
         
         console.log('Computed author name:', authorName);
         console.log('Computed author reference:', authorReference);
       } else {
-        console.log('No current user available for author');
+        console.log('No current user available for author - will retry when user is available');
+        // Don't set empty author - wait for currentUser to be available
+        return;
       }
       
       console.log('Setting initial care plan with author:', { authorName, authorReference });
       
       setCarePlan(prev => {
+        // Only update if we don't already have an author set
+        const hasExistingAuthor = prev.author && prev.author.length > 0 && prev.author[0].display;
+        
         const updated = {
           ...prev,
           subject: {
             reference: patientReference,
             display: patientName
           },
-          author: [{
+          author: hasExistingAuthor ? prev.author : [{
             reference: authorReference,
             display: authorName
           }]
         };
         console.log('New care plan state:', updated);
+        console.log('Has existing author:', hasExistingAuthor);
+        console.log('Author array:', updated.author);
         return updated;
       });
     } else {

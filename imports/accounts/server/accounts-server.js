@@ -136,8 +136,14 @@ export const AccountsServer = {
 
   // Setup account creation and modification hooks
   setupAccountHooks() {
+    logger.info('Setting up account hooks...');
+    logger.debug('Accounts object:', Object.keys(Accounts || {}));
+    
     // Validate new users
-    Accounts.validateNewUser((user) => {
+    // TODO: In Meteor 3, validateNewUser might not be available immediately
+    // Check if the method exists before using it
+    if (Accounts && typeof Accounts.validateNewUser === 'function') {
+      Accounts.validateNewUser((user) => {
       logger.group('validateNewUser');
       logger.info('Validating new user:', {
         username: user.username,
@@ -191,9 +197,13 @@ export const AccountsServer = {
         throw error;
       }
     });
+    } else {
+      logger.warn('Accounts.validateNewUser is not available in Meteor 3');
+    }
 
     // On user creation
-    Accounts.onCreateUser((options, user) => {
+    if (Accounts && typeof Accounts.onCreateUser === 'function') {
+      Accounts.onCreateUser((options, user) => {
       logger.group('onCreateUser');
       logger.info('Creating user');
       logger.debug('User object:', {
@@ -252,9 +262,13 @@ export const AccountsServer = {
       logger.groupEnd();
       return user;
     });
+    } else {
+      logger.warn('Accounts.onCreateUser is not available in Meteor 3');
+    }
 
     // After login
-    Accounts.onLogin(async (info) => {
+    if (Accounts && typeof Accounts.onLogin === 'function') {
+      Accounts.onLogin(async (info) => {
       // Update last login time
       await Meteor.users.updateAsync(info.user._id, {
         $set: {
@@ -279,9 +293,13 @@ export const AccountsServer = {
         }
       }
     });
+    } else {
+      logger.warn('Accounts.onLogin is not available in Meteor 3');
+    }
 
     // After logout
-    Accounts.onLogout((info) => {
+    if (Accounts && typeof Accounts.onLogout === 'function') {
+      Accounts.onLogout((info) => {
       if (info.user) {
         // Log logout event if HIPAA logging is enabled and package is available
         if (get(Meteor, 'settings.private.hipaa.enabled', false) && Package["clinical:hipaa-compliance"]) {
@@ -296,9 +314,13 @@ export const AccountsServer = {
         }
       }
     });
+    } else {
+      logger.warn('Accounts.onLogout is not available in Meteor 3');
+    }
 
     // Failed login attempts
-    Accounts.onLoginFailure((info) => {
+    if (Accounts && typeof Accounts.onLoginFailure === 'function') {
+      Accounts.onLoginFailure((info) => {
       // Log failed attempt if HIPAA logging is enabled and package is available
       if (get(Meteor, 'settings.private.hipaa.enabled', false) && Package["clinical:hipaa-compliance"]) {
         try {
@@ -316,6 +338,9 @@ export const AccountsServer = {
         }
       }
     });
+    } else {
+      logger.warn('Accounts.onLoginFailure is not available in Meteor 3');
+    }
   },
 
   // Configure password policy

@@ -34,6 +34,92 @@ import AllInclusiveIcon from '@mui/icons-material/AllInclusive';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import DatasetIcon from '@mui/icons-material/Dataset';
 
+// Import FHIR collections
+import { ActivityDefinitions } from '/imports/lib/schemas/SimpleSchemas/ActivityDefinitions';
+import { AllergyIntolerances } from '/imports/lib/schemas/SimpleSchemas/AllergyIntolerances';
+import { ArtifactAssessments } from '/imports/lib/schemas/SimpleSchemas/ArtifactAssessments';
+import { Bundles } from '/imports/lib/schemas/SimpleSchemas/Bundles';
+import { CarePlans } from '/imports/lib/schemas/SimpleSchemas/CarePlans';
+import { CareTeams } from '/imports/lib/schemas/SimpleSchemas/CareTeams';
+import { Claims } from '/imports/lib/schemas/SimpleSchemas/Claims';
+import { CodeSystems } from '/imports/lib/schemas/SimpleSchemas/CodeSystems';
+import { Communications } from '/imports/lib/schemas/SimpleSchemas/Communications';
+import { Compositions } from '/imports/lib/schemas/SimpleSchemas/Compositions';
+import { Conditions } from '/imports/lib/schemas/SimpleSchemas/Conditions';
+import { Devices } from '/imports/lib/schemas/SimpleSchemas/Devices';
+import { DocumentReferences } from '/imports/lib/schemas/SimpleSchemas/DocumentReferences';
+import { Encounters } from '/imports/lib/schemas/SimpleSchemas/Encounters';
+import { Evidences } from '/imports/lib/schemas/SimpleSchemas/Evidences';
+import { Goals } from '/imports/lib/schemas/SimpleSchemas/Goals';
+import { GuidanceResponses } from '/imports/lib/schemas/SimpleSchemas/GuidanceResponses';
+import { Immunizations } from '/imports/lib/schemas/SimpleSchemas/Immunizations';
+import { Libraries } from '/imports/lib/schemas/SimpleSchemas/Libraries';
+import { Lists } from '/imports/lib/schemas/SimpleSchemas/Lists';
+import { Locations } from '/imports/lib/schemas/SimpleSchemas/Locations';
+import { MedicationAdministrations } from '/imports/lib/schemas/SimpleSchemas/MedicationAdministrations';
+import { MedicationRequests } from '/imports/lib/schemas/SimpleSchemas/MedicationRequests';
+import { MedicationStatements } from '/imports/lib/schemas/SimpleSchemas/MedicationStatements';
+import { Medications } from '/imports/lib/schemas/SimpleSchemas/Medications';
+import { NutritionOrders } from '/imports/lib/schemas/SimpleSchemas/NutritionOrders';
+import { Observations } from '/imports/lib/schemas/SimpleSchemas/Observations';
+import { OperationOutcomes } from '/imports/lib/schemas/SimpleSchemas/OperationOutcomes';
+import { Organizations } from '/imports/lib/schemas/SimpleSchemas/Organizations';
+import { Patients } from '/imports/lib/schemas/SimpleSchemas/Patients';
+import { PlanDefinitions } from '/imports/lib/schemas/SimpleSchemas/PlanDefinitions';
+import { Practitioners } from '/imports/lib/schemas/SimpleSchemas/Practitioners';
+import { Procedures } from '/imports/lib/schemas/SimpleSchemas/Procedures';
+import { QuestionnaireResponses } from '/imports/lib/schemas/SimpleSchemas/QuestionnaireResponses';
+import { Questionnaires } from '/imports/lib/schemas/SimpleSchemas/Questionnaires';
+import { ResearchStudies } from '/imports/lib/schemas/SimpleSchemas/ResearchStudies';
+import { ResearchSubjects } from '/imports/lib/schemas/SimpleSchemas/ResearchSubjects';
+import { ServiceRequests } from '/imports/lib/schemas/SimpleSchemas/ServiceRequests';
+import { Tasks } from '/imports/lib/schemas/SimpleSchemas/Tasks';
+import { ValueSets } from '/imports/lib/schemas/SimpleSchemas/ValueSets';
+
+// Map collection names to actual collection objects
+const collectionsMap = {
+  'ActivityDefinitions': ActivityDefinitions,
+  'AllergyIntolerances': AllergyIntolerances,
+  'ArtifactAssessments': ArtifactAssessments,
+  'Bundles': Bundles,
+  'CarePlans': CarePlans,
+  'CareTeams': CareTeams,
+  'Claims': Claims,
+  'CodeSystems': CodeSystems,
+  'Communications': Communications,
+  'Compositions': Compositions,
+  'Conditions': Conditions,
+  'Devices': Devices,
+  'DocumentReferences': DocumentReferences,
+  'Encounters': Encounters,
+  'Evidences': Evidences,
+  'Goals': Goals,
+  'GuidanceResponses': GuidanceResponses,
+  'Immunizations': Immunizations,
+  'Libraries': Libraries,
+  'Lists': Lists,
+  'Locations': Locations,
+  'MedicationAdministrations': MedicationAdministrations,
+  'MedicationRequests': MedicationRequests,
+  'MedicationStatements': MedicationStatements,
+  'Medications': Medications,
+  'NutritionOrders': NutritionOrders,
+  'Observations': Observations,
+  'OperationOutcomes': OperationOutcomes,
+  'Organizations': Organizations,
+  'Patients': Patients,
+  'PlanDefinitions': PlanDefinitions,
+  'Practitioners': Practitioners,
+  'Procedures': Procedures,
+  'QuestionnaireResponses': QuestionnaireResponses,
+  'Questionnaires': Questionnaires,
+  'ResearchStudies': ResearchStudies,
+  'ResearchSubjects': ResearchSubjects,
+  'ServiceRequests': ServiceRequests,
+  'Tasks': Tasks,
+  'ValueSets': ValueSets
+};
+
 const ResourceRow = styled(Box)(({ theme }) => ({
   display: 'flex',
   alignItems: 'center',
@@ -188,7 +274,8 @@ export function FhirResourcesDashboard() {
     } else if (filterMode === 'withData') {
       filtered = filtered.filter(r => {
         const stats = resourceStats[r.collection] || {};
-        return (stats.serverCount > 0) || (stats.clientCount > 0);
+        const localCount = localCounts ? (localCounts[r.collection] || 0) : 0;
+        return (stats.serverCount > 0) || (localCount > 0);
       });
     }
     
@@ -217,6 +304,30 @@ export function FhirResourcesDashboard() {
       });
     });
     return subscriptions;
+  }, []);
+
+  // Track local document counts for each collection
+  const localCounts = useTracker(() => {
+    const counts = {};
+    fhirResources.forEach(resource => {
+      const collection = collectionsMap[resource.collection];
+      if (collection && collection.find) {
+        try {
+          // Use Meteor v3 count() method
+          const count = collection.find().count();
+          counts[resource.collection] = count;
+          if (count > 0) {
+            console.log(`${resource.collection} local count: ${count}`);
+          }
+        } catch (error) {
+          console.warn(`Error counting ${resource.collection}:`, error);
+          counts[resource.collection] = 0;
+        }
+      } else {
+        counts[resource.collection] = 0;
+      }
+    });
+    return counts;
   }, []);
 
   // Fetch resource statistics from the server
@@ -254,8 +365,7 @@ export function FhirResourcesDashboard() {
     return sum + (stats.serverCount || 0);
   }, 0);
   const totalClientCount = enabledResources.reduce((sum, resource) => {
-    const stats = resourceStats[resource.collection] || {};
-    return sum + (stats.clientCount || 0);
+    return sum + (localCounts[resource.collection] || 0);
   }, 0);
 
   const formatCount = (count) => {
@@ -424,7 +534,7 @@ export function FhirResourcesDashboard() {
             enabledResources.map(resource => {
               const stats = resourceStats[resource.collection] || {};
               const serverCount = stats.serverCount || 0;
-              const clientCount = stats.clientCount || 0;
+              const clientCount = localCounts[resource.collection] || 0; // Use local count from tracker
               const isDisabled = !serverCount && !clientCount;
               const hasActivePubSub = hasPubSub[resource.collection];
               

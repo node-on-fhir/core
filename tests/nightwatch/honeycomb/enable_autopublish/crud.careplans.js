@@ -289,24 +289,9 @@ describe('CarePlans CRUD Operations', function() {
 
     browser
       .pause(500)
-      .click('#authorDisplay')
-      .execute(function() {
-        const authorField = document.querySelector('#authorDisplay');
-        if (authorField) {
-          authorField.select();
-          authorField.value = '';
-          const inputEvent = new Event('input', { bubbles: true });
-          const changeEvent = new Event('change', { bubbles: true });
-          authorField.dispatchEvent(inputEvent);
-          authorField.dispatchEvent(changeEvent);
-          const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
-          nativeInputValueSetter.call(authorField, '');
-          authorField.dispatchEvent(inputEvent);
-        }
-      })
-      .pause(100)
       // The author field is automatically set to the current logged-in user by the component
       // We'll verify it shows 'janedoe' instead of trying to override it
+      // DO NOT clear the author field - it should be pre-populated
       .pause(500)
       .execute(function() {
         const authorField = document.querySelector('#authorDisplay');

@@ -169,11 +169,23 @@ if (finalAutopublishEnabled) {
           }
           
           // In development, we can be more permissive
-          options.limit = options.limit || 1000;
+          // Cap at 100 records per cursor for performance
+          options.limit = options.limit || 100;
+          // Ensure user can't request more than 100 records
+          if (options.limit > 100) {
+            options.limit = 100;
+          }
+          
+          // Default sort by most recent for better development experience
+          if (!options.sort) {
+            options.sort = { 
+              '_id': -1  // Most recent first (naive but works with MongoDB ObjectIDs)
+            };
+          }
           
           // In development with autopublish, allow unauthenticated access for testing
           if (!this.userId && isDevelopment && finalAutopublishEnabled) {
-            console.log(`Allowing unauthenticated access to ${collectionName} in development mode`);
+            console.log(`Allowing unauthenticated access to ${collectionName} in development mode (max 100 records)`);
             // Continue with the query
           } else if (!this.userId) {
             // In production or without autopublish, require authentication
@@ -215,7 +227,7 @@ if (finalAutopublishEnabled) {
               */
             }
           } else {
-            console.log(`Publishing ${collectionName} with query:`, JSON.stringify(query), 'options:', options);
+            console.log(`Publishing ${collectionName} with query:`, JSON.stringify(query), 'options:', options, '(max 100 records)');
           }
           
           // Don't use count() in publications as it's not needed and causes issues in Meteor v3
@@ -237,14 +249,24 @@ if (finalAutopublishEnabled) {
       
       Meteor.publish(publicationName, function() {
         if (!this.userId && isDevelopment && finalAutopublishEnabled) {
-          console.log(`Publishing all ${collectionName} for development (unauthenticated)`);
-          return collection.find({});
+          console.log(`Publishing all ${collectionName} for development (unauthenticated) - limited to 100 records`);
+          return collection.find({}, { 
+            limit: 100,
+            sort: { 
+              '_id': -1  // Most recent first (naive but works with MongoDB ObjectIDs)
+            }
+          });
         } else if (!this.userId) {
           return this.ready();
         }
         
-        console.log(`Publishing all ${collectionName} for development`);
-        return collection.find({});
+        console.log(`Publishing all ${collectionName} for development - limited to 100 records`);
+        return collection.find({}, { 
+          limit: 100,
+          sort: { 
+            '_id': -1  // Most recent first (naive but works with MongoDB ObjectIDs)
+          }
+        });
       });
       
       console.log(`Created development publication: ${publicationName}`);

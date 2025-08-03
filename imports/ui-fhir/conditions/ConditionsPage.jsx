@@ -68,15 +68,22 @@ export function ConditionsPage(props){
   // Subscribe to conditions data
   const isLoading = useTracker(() => {
     const selectedPatientId = Session.get('selectedPatientId');
+    const selectedPatient = Session.get('selectedPatient');
     let autoPublishEnabled = get(Meteor, 'settings.public.defaults.autopublish', false);
     
+    // Use FHIR id for filtering, not MongoDB _id
+    const fhirId = get(selectedPatient, 'id') || selectedPatientId;
+    
     // Build query to filter by patient
-    const query = selectedPatientId ? {
+    const query = fhirId ? {
       $or: [
+        {"patient.reference": "Patient/" + fhirId},
+        {"subject.reference": "Patient/" + fhirId},
+        {"patient.reference": { $regex: ".*Patient/" + fhirId}}, 
+        {"subject.reference": { $regex: ".*Patient/" + fhirId}},
+        // Also try MongoDB _id as fallback
         {"patient.reference": "Patient/" + selectedPatientId},
-        {"subject.reference": "Patient/" + selectedPatientId},
-        {"patient.reference": { $regex: ".*Patient/" + selectedPatientId}}, 
-        {"subject.reference": { $regex: ".*Patient/" + selectedPatientId}}
+        {"subject.reference": "Patient/" + selectedPatientId}
       ]
     } : {};
     
@@ -113,7 +120,12 @@ export function ConditionsPage(props){
   }, [])
   data.conditions = useTracker(function(){
     const selectedPatientId = Session.get('selectedPatientId');
-    const query = FhirUtilities.addPatientFilterToQuery(selectedPatientId);
+    const selectedPatient = Session.get('selectedPatient');
+    
+    // Use FHIR id for filtering
+    const fhirId = get(selectedPatient, 'id') || selectedPatientId;
+    const query = FhirUtilities.addPatientFilterToQuery(fhirId);
+    
     return Conditions.find(query).fetch();
   }, [])
   data.conditionsIndex = useTracker(function(){
