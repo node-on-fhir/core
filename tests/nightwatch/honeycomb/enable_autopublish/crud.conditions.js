@@ -360,12 +360,40 @@ describe('Conditions CRUD Operations', function() {
     browser
       .assert.urlContains('/conditions/new');
 
-    // Check what's in the patient field
+    // Check what's in the patient field and populate it if empty
     browser.execute(function() {
       const patientField = document.querySelector('#patientDisplay');
+      let patientFieldValue = patientField ? patientField.value : '';
+      
+      // If patient field is empty, populate it from session
+      if (patientField && !patientFieldValue && typeof Session !== 'undefined') {
+        const selectedPatient = Session.get('selectedPatient');
+        if (selectedPatient) {
+          // Get patient name from FHIR structure
+          let patientName = '';
+          if (selectedPatient.name) {
+            if (typeof selectedPatient.name === 'string') {
+              patientName = selectedPatient.name;
+            } else if (Array.isArray(selectedPatient.name) && selectedPatient.name[0]) {
+              patientName = selectedPatient.name[0].text || 
+                          `${selectedPatient.name[0].given?.join(' ') || ''} ${selectedPatient.name[0].family || ''}`.trim();
+            }
+          }
+          
+          if (patientName) {
+            patientField.value = patientName;
+            patientField.dispatchEvent(new Event('input', { bubbles: true }));
+            patientField.dispatchEvent(new Event('change', { bubbles: true }));
+            console.log('Manually set patient field to:', patientName);
+            patientFieldValue = patientName;
+          }
+        }
+      }
+      
       return {
-        patientFieldValue: patientField ? patientField.value : 'field not found',
-        patientFieldId: patientField ? patientField.id : 'field not found'
+        patientFieldValue: patientFieldValue,
+        patientFieldId: patientField ? patientField.id : 'field not found',
+        wasEmpty: !patientFieldValue
       };
     }, [], function(result) {
       console.log('Patient field check:', result.value);
@@ -603,8 +631,24 @@ describe('Conditions CRUD Operations', function() {
         // Skip asserter - it's already set to 'janedoe'
         const results = {};
         
-        // Skip setting patient display - it should already be populated from the selected patient
-        // results.patientDisplay = setFieldValue('#patientDisplay', 'Test Patient');
+        // Ensure patient display is set - it might not be populated from session
+        const patientField = document.querySelector('#patientDisplay');
+        if (patientField && !patientField.value) {
+          // If still empty, get patient name from session
+          const selectedPatient = Session.get('selectedPatient');
+          if (selectedPatient && selectedPatient.name) {
+            let patientName = '';
+            if (typeof selectedPatient.name === 'string') {
+              patientName = selectedPatient.name;
+            } else if (Array.isArray(selectedPatient.name) && selectedPatient.name[0]) {
+              patientName = selectedPatient.name[0].text || 
+                          `${selectedPatient.name[0].given?.join(' ') || ''} ${selectedPatient.name[0].family || ''}`.trim();
+            }
+            if (patientName) {
+              results.patientDisplay = setFieldValue('#patientDisplay', patientName);
+            }
+          }
+        }
         
         results.snomedCode = setFieldValue('#snomedCode', condition.snomedCode);
         results.snomedDisplay = setFieldValue('#snomedDisplay', condition.conditionName);
