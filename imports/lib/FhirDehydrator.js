@@ -11,6 +11,23 @@ import FhirUtilities from './FhirUtilities';
 //========================================================================================
 // Helper Functions  
 
+// Helper function to safely extract string from ObjectID or any value
+function extractIdString(value){
+  if(!value) return '';
+  
+  // Handle ObjectID case with _str property
+  if(typeof value === 'object' && value !== null){
+    if(value._str){
+      return value._str;
+    } else if(value.toString && typeof value.toString === 'function'){
+      return value.toString();
+    }
+  }
+  
+  // Convert to string for primitive values
+  return String(value);
+}
+
 function determineSubjectDisplayString(resourceRecord){
   let subjectDisplayString = '';
   if(get(resourceRecord, 'subject')){
@@ -256,7 +273,7 @@ export function flattenAllergyIntolerance(allergy){
   result.resourceType = get(allergy, 'resourceType', "Unknown");
 
   // IDs
-  result._id = get(allergy, '_id', '');
+  result._id = extractIdString(get(allergy, '_id', ''));
   result.id = get(allergy, 'id', '');
   result.identifier = get(allergy, 'identifier[0].value');
   
@@ -298,10 +315,8 @@ export function flattenAllergyIntolerance(allergy){
   // Patient info
   result.patient = get(allergy, 'patient.display', '');
   result.patientDisplay = get(allergy, 'patient.display', '');
-  if(!result.patientDisplay && get(allergy, 'patient.reference')){
-    // Extract patient name from reference if display is not available
-    result.patientDisplay = get(allergy, 'patient.reference', '').replace('Patient/', '');
-  }
+  result.patientReference = get(allergy, 'patient.reference', '');
+  // Keep patientDisplay and patientReference separate - don't fall back to reference for display
 
   // Recorder info
   result.recorder = get(allergy, 'recorder.display', '');
@@ -696,6 +711,8 @@ export function flattenCarePlan(plan){
     _id: '',
     id: '',
     subject: '',
+    patientDisplay: '',
+    patientReference: '',
     author: '',
     template: '',
     category: '',
@@ -715,13 +732,22 @@ export function flattenCarePlan(plan){
   result.resourceType = get(plan, 'resourceType', "Unknown");
 
   result.id = get(plan, 'id', '');
-  result._id = get(plan, '_id', '');
+  result._id = extractIdString(get(plan, '_id'));
 
   if (get(plan, 'template')) {
-    result.template = plan.template.toString();
+    result.template = extractIdString(get(plan, 'template'));
   }
 
   result.subject = determineSubjectDisplayString(plan);
+  
+  // Add separate patient display and reference fields
+  if(get(plan, 'subject')){
+    result.patientDisplay = get(plan, 'subject.display', '');
+    result.patientReference = get(plan, 'subject.reference', '');
+  } else if(get(plan, 'patient')){
+    result.patientDisplay = get(plan, 'patient.display', '');
+    result.patientReference = get(plan, 'patient.reference', '');
+  }
 
   result.author = get(plan, 'author[0].display', '')
   result.start = moment(get(plan, 'period.start')).format("YYYY-MM-DD hh:mm a");
@@ -776,6 +802,7 @@ export function flattenCareTeam(team){
     category: '',
     name: '',
     subject: '',
+    subjectReference: '',
     periodStart: '',
     periodEnd: '',
     reasonReference: '',
@@ -792,12 +819,13 @@ export function flattenCareTeam(team){
   result.resourceType = get(team, 'resourceType', "Unknown");
 
   result.id = get(team, 'id', '');
-  result._id = get(team, '_id', '');
+  result._id = extractIdString(get(team, '_id', ''));
 
   result.identifier = get(team, 'identifier[0].value', '')    
   result.status = get(team, 'status', '')    
   result.name = get(team, 'name', '')    
   result.subject = determineSubjectDisplayString(team);
+  result.subjectReference = get(team, 'subject.reference', '');
   result.periodStart = moment(get(team, 'period.start')).format("YYYY-MM-DD hh:mm a");
   result.periodEnd = moment(get(team, 'period.start')).format("YYYY-MM-DD hh:mm a");
 
@@ -4485,7 +4513,7 @@ export function flattenProcedure(procedure, internalDateFormat){
     internalDateFormat = "YYYY-MM-DD";
   }
 
-  result._id = get(procedure, '_id');
+  result._id = extractIdString(get(procedure, '_id'));
   result.id = get(procedure, 'id', '');
   
   result.status = get(procedure, 'status', '');
@@ -4854,7 +4882,7 @@ export function flattenResearchSubject(researchSubject, internalDateFormat){
   };
 
   result.resourceType = get(researchSubject, 'resourceType', 'ResearchSubject');
-  result._id = get(researchSubject, '_id', '');
+  result._id = extractIdString(get(researchSubject, '_id'));
   result.id = get(researchSubject, 'id', '');
 
   // Status of the subject's participation

@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTracker } from 'meteor/react-meteor-data';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { 
   Grid, 
@@ -17,7 +17,10 @@ import {
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
-import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward'; 
+import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
+import PersonIcon from '@mui/icons-material/Person';
+import CodeIcon from '@mui/icons-material/Code';
+import BadgeIcon from '@mui/icons-material/Badge'; 
 
 import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
@@ -33,6 +36,7 @@ import { get } from 'lodash';
 // DATA CURSORS
 
 import { Conditions } from '/imports/lib/schemas/SimpleSchemas/Conditions';
+import { FhirUtilities } from '/imports/lib/FhirUtilities';
 
 //=============================================================================================================================================
 // SESSION VARIABLES
@@ -56,18 +60,53 @@ Session.setDefault('ConditionsTable.conditionsIndex', 0)
 export function ConditionsPage(props){
   const navigate = useNavigate();
   const [sortOrder, setSortOrder] = useState('descending');
+  const [searchParams] = useSearchParams();
+  const [showPatientName, setShowPatientName] = useState(false);
+  const [showPatientReference, setShowPatientReference] = useState(false);
+  const [showSystemId, setShowSystemId] = useState(false);
+  
+  // Clean up debug flag on unmount
+  useEffect(() => {
+    return () => {
+      Session.set('ConditionsPage.debugLogged', false);
+    };
+  }, []);
 
   // Subscribe to conditions data
   const isLoading = useTracker(() => {
+    const selectedPatientId = Session.get('selectedPatientId');
+    const selectedPatient = Session.get('selectedPatient');
     let autoPublishEnabled = get(Meteor, 'settings.public.defaults.autopublish', false);
+    
+    // Use FhirUtilities to build the query - it handles all reference formats
+    let query = {};
+    
+    // If we have a patient selected, filter by that patient
+    // FHIR resources reference patients by their FHIR id, not MongoDB _id
+    if(selectedPatient || selectedPatientId) {
+      const fhirId = get(selectedPatient, 'id');
+      
+      if(fhirId) {
+        // Use the FHIR id as primary search
+        query = FhirUtilities.addPatientFilterToQuery(fhirId);
+      } else if(selectedPatientId) {
+        // Fallback to MongoDB _id if no FHIR id available
+        query = FhirUtilities.addPatientFilterToQuery(selectedPatientId);
+      }
+    }
+    
+    console.log('Conditions subscription - selectedPatientId:', selectedPatientId);
+    console.log('Conditions subscription - FHIR id:', get(selectedPatient, 'id'));
+    console.log('Conditions subscription query:', query);
+    
     if(autoPublishEnabled){
-      const handle = Meteor.subscribe('autopublish.Conditions', {}, {});
+      const handle = Meteor.subscribe('autopublish.Conditions', query, { limit: 1000 });
       return !handle.ready();
     } else {
       const handle = Meteor.subscribe('conditions.all');
       return !handle.ready();
     }
-  }, []);
+  }, [Session.get('selectedPatientId')]);
 
   let data = {
     currentConditionId: '',
@@ -92,7 +131,42 @@ export function ConditionsPage(props){
     return Conditions.findOne({_id: Session.get('selectedConditionId')});
   }, [])
   data.conditions = useTracker(function(){
-    return Conditions.find().fetch();
+    const selectedPatientId = Session.get('selectedPatientId');
+    const selectedPatient = Session.get('selectedPatient');
+    
+    // Use FHIR id for filtering, as that's what FHIR resources reference
+    const fhirId = get(selectedPatient, 'id');
+    const patientIdToUse = fhirId || selectedPatientId;
+    
+    const query = patientIdToUse ? FhirUtilities.addPatientFilterToQuery(patientIdToUse) : {};
+    
+    // Only do debug logging once when component mounts
+    if(!Session.get('ConditionsPage.debugLogged')) {
+      Session.set('ConditionsPage.debugLogged', true);
+      
+      console.log('Conditions data - MongoDB _id:', selectedPatientId);
+      console.log('Conditions data - FHIR id:', fhirId);
+      console.log('Conditions data - Using ID for query:', patientIdToUse);
+      console.log('Conditions data - query:', query);
+      
+      // First check all conditions
+      const allConditions = Conditions.find().fetch();
+      console.log('Total Conditions in client collection:', allConditions.length);
+      
+      // Log first few conditions to see their structure
+      if(allConditions.length > 0) {
+        console.log('Sample Condition structure:', allConditions[0]);
+        console.log('First 3 patient references:');
+        allConditions.slice(0, 3).forEach(c => {
+          console.log('- _id:', c._id, 'patient:', get(c, 'patient'), 'subject:', get(c, 'subject'));
+        });
+      }
+    }
+    
+    // Sort by _id descending to get newest first
+    // MongoDB ObjectIDs contain timestamp, so sorting by _id gives chronological order
+    const results = Conditions.find(query, { sort: { _id: -1 } }).fetch();
+    return results;
   }, [])
   data.conditionsIndex = useTracker(function(){
     return Session.get('ConditionsTable.conditionsIndex')
@@ -151,6 +225,32 @@ export function ConditionsPage(props){
                   <ArrowDownwardIcon />
                 </ToggleButton>
               </ToggleButtonGroup>
+              
+              <ToggleButtonGroup
+                value={[
+                  showPatientName && 'patientName',
+                  showPatientReference && 'patientReference',
+                  showSystemId && 'systemId'
+                ].filter(Boolean)}
+                onChange={(event, newFormats) => {
+                  setShowPatientName(newFormats.includes('patientName'));
+                  setShowPatientReference(newFormats.includes('patientReference'));
+                  setShowSystemId(newFormats.includes('systemId'));
+                }}
+                aria-label="display options"
+                size="small"
+              >
+                <ToggleButton value="patientName" aria-label="show patient name">
+                  <PersonIcon />
+                </ToggleButton>
+                <ToggleButton value="patientReference" aria-label="show patient reference">
+                  <CodeIcon />
+                </ToggleButton>
+                <ToggleButton value="systemId" aria-label="show system id">
+                  <BadgeIcon />
+                </ToggleButton>
+              </ToggleButtonGroup>
+              
               <Button
                 variant="contained"
                 color="primary"
@@ -189,6 +289,9 @@ export function ConditionsPage(props){
           hideAsserterName={false}
           hideClinicalStatus={true}
           hideEvidence={true}
+          hidePatientName={!showPatientName}
+          hidePatientReference={!showPatientReference}
+          hideBarcode={!showSystemId}
           hideActionButton={get(Meteor, 'settings.public.modules.fhir.Conditions.hideRemoveButtonOnTable', true)}
           order={sortOrder}
           onActionButtonClick={function(selectedId){
@@ -199,7 +302,7 @@ export function ConditionsPage(props){
             navigate('/conditions/' + conditionId);
           }}
           onSetPage={function(index){
-            setConditionsPageIndex(index)
+            Session.set('ConditionsTable.conditionsIndex', index)
           }}        
           page={data.conditionsIndex}
         />

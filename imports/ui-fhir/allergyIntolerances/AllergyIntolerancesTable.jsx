@@ -98,6 +98,11 @@ function AllergyIntolerancesTable(props){
   // ------------------------------------------------------------------------
   // Form Factors
 
+  // Store the original prop values before form factor overrides
+  const hidePatientDisplayFromProp = hidePatientDisplay;
+  const hidePatientReferenceFromProp = hidePatientReference;
+  const hideBarcodeFromProp = hideBarcode;
+
   if(formFactorLayout){
     logger.verbose('formFactorLayout', formFactorLayout + ' ' + window.innerWidth);
 
@@ -118,46 +123,46 @@ function AllergyIntolerancesTable(props){
       case "tablet":
         hideSeverity = false;
         hideCriticality = false;
-        hidePatientDisplay = true;
-        hidePatientReference = true;
+        hidePatientDisplay = (hidePatientDisplayFromProp !== undefined) ? hidePatientDisplayFromProp : true;
+        hidePatientReference = (hidePatientReferenceFromProp !== undefined) ? hidePatientReferenceFromProp : true;
         hideRecordedDate = false;
         hideClinical = false;
         hideVerification = true;
         hideOnset = true;
-        hideBarcode = true;
+        hideBarcode = (hideBarcodeFromProp !== undefined) ? hideBarcodeFromProp : true;
       break;
       case "web":
         hideSeverity = false;
         hideCriticality = false;
-        hidePatientDisplay = false;
-        hidePatientReference = false;
+        hidePatientDisplay = (hidePatientDisplayFromProp !== undefined) ? hidePatientDisplayFromProp : false;
+        hidePatientReference = (hidePatientReferenceFromProp !== undefined) ? hidePatientReferenceFromProp : false;
         hideRecordedDate = false;
         hideClinical = false;
         hideVerification = false;
         hideOnset = false;
-        hideBarcode = true;
+        hideBarcode = (hideBarcodeFromProp !== undefined) ? hideBarcodeFromProp : true;
       break;
       case "desktop":
         hideSeverity = false;
         hideCriticality = false;
-        hidePatientDisplay = false;
-        hidePatientReference = false;
+        hidePatientDisplay = (hidePatientDisplayFromProp !== undefined) ? hidePatientDisplayFromProp : false;
+        hidePatientReference = (hidePatientReferenceFromProp !== undefined) ? hidePatientReferenceFromProp : false;
         hideRecordedDate = false;
         hideClinical = false;
         hideVerification = false;
         hideOnset = false;
-        hideBarcode = true;
+        hideBarcode = (hideBarcodeFromProp !== undefined) ? hideBarcodeFromProp : true;
       break;
       case "hdmi":
         hideSeverity = false;
         hideCriticality = false;
-        hidePatientDisplay = false;
-        hidePatientReference = false;
+        hidePatientDisplay = (hidePatientDisplayFromProp !== undefined) ? hidePatientDisplayFromProp : false;
+        hidePatientReference = (hidePatientReferenceFromProp !== undefined) ? hidePatientReferenceFromProp : false;
         hideRecordedDate = false;
         hideClinical = false;
         hideVerification = false;
         hideOnset = false;
-        hideBarcode = false;
+        hideBarcode = (hideBarcodeFromProp !== undefined) ? hideBarcodeFromProp : false;
       break;            
     }
   }
@@ -263,8 +268,10 @@ function AllergyIntolerancesTable(props){
   }
   function renderBarcode(id){
     if (!hideBarcode) {
+      // Handle MongoDB ObjectID objects
+      const idString = typeof id === 'object' && id._str ? id._str : String(id);
       return (
-        <TableCell><span className="barcode">{id}</span></TableCell>
+        <TableCell><span className="barcode">{idString}</span></TableCell>
       );
     }
   }
@@ -436,7 +443,7 @@ function AllergyIntolerancesTable(props){
   function renderPatientNameHeader(){
     if (!hidePatientDisplay) {
       return (
-        <TableCell className='patientDisplay'>Patient</TableCell>
+        <TableCell className='patientDisplay'>Patient Name</TableCell>
       );
     }
   }
@@ -444,6 +451,20 @@ function AllergyIntolerancesTable(props){
     if (!hidePatientDisplay) {
       return (
         <TableCell className='patientDisplay' style={{minWidth: '140px'}}>{ patientDisplay }</TableCell>
+      );
+    }
+  }
+  function renderPatientReferenceHeader(){
+    if (!hidePatientReference) {
+      return (
+        <TableCell className='patientReference'>Patient Reference</TableCell>
+      );
+    }
+  }
+  function renderPatientReference(patientReference){
+    if (!hidePatientReference) {
+      return (
+        <TableCell className='patientReference' style={{minWidth: '140px'}}>{ patientReference }</TableCell>
       );
     }
   }
@@ -551,6 +572,7 @@ function AllergyIntolerancesTable(props){
           { renderType(allergyIntolerancesToRender[i].type) }
           { renderCategory(allergyIntolerancesToRender[i].category) }
           { renderPatientName(allergyIntolerancesToRender[i].patientDisplay ) } 
+          { renderPatientReference(allergyIntolerancesToRender[i].patientReference ) }
 
           { renderRecorder(allergyIntolerancesToRender[i].recorder ) } 
           { renderOnset(allergyIntolerancesToRender[i].onset ) } 
@@ -581,6 +603,7 @@ function AllergyIntolerancesTable(props){
             { renderTypeHeader() }
             { renderCategoryHeader() }
             { renderPatientNameHeader() }
+            { renderPatientReferenceHeader() }
 
             { renderRecorderHeader() }
             { renderOnsetHeader() }

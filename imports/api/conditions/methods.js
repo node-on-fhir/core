@@ -19,6 +19,89 @@ function getConditions() {
   }
 }
 
+// Helper function to transform FHIR R4 format to SimpleSchema format
+function transformConditionForStorage(conditionData) {
+  const transformed = { ...conditionData };
+  
+  // Transform clinicalStatus from CodeableConcept to simple string
+  if (transformed.clinicalStatus && transformed.clinicalStatus.coding) {
+    transformed.clinicalStatus = get(transformed, 'clinicalStatus.coding[0].code');
+  }
+  
+  // Transform verificationStatus from CodeableConcept to simple string
+  if (transformed.verificationStatus && transformed.verificationStatus.coding) {
+    transformed.verificationStatus = get(transformed, 'verificationStatus.coding[0].code');
+  }
+  
+  // Transform notes array to single string (R4 to older format)
+  if (transformed.note && Array.isArray(transformed.note)) {
+    transformed.notes = get(transformed, 'note[0].text', '');
+    delete transformed.note;
+  }
+  
+  // Preserve the code field (SNOMED code)
+  // The schema expects CodeableConceptSchema, so we keep it as-is
+  if (conditionData.code) {
+    transformed.code = conditionData.code;
+  }
+  
+  // Preserve category field
+  if (conditionData.category) {
+    transformed.category = conditionData.category;
+  }
+  
+  return transformed;
+}
+
+// Helper function to transform from SimpleSchema format back to FHIR R4
+function transformConditionForDisplay(condition) {
+  if (!condition) return condition;
+  
+  console.log('=== transformConditionForDisplay ===');
+  console.log('Input condition has code:', !!condition.code);
+  console.log('Input code:', JSON.stringify(condition.code, null, 2));
+  
+  const transformed = { ...condition };
+  
+  // Transform clinicalStatus from string to CodeableConcept
+  if (typeof transformed.clinicalStatus === 'string') {
+    const status = transformed.clinicalStatus;
+    transformed.clinicalStatus = {
+      coding: [{
+        system: "http://terminology.hl7.org/CodeSystem/condition-clinical",
+        code: status,
+        display: status.charAt(0).toUpperCase() + status.slice(1)
+      }]
+    };
+  }
+  
+  // Transform verificationStatus from string to CodeableConcept
+  if (typeof transformed.verificationStatus === 'string') {
+    const status = transformed.verificationStatus;
+    transformed.verificationStatus = {
+      coding: [{
+        system: "http://terminology.hl7.org/CodeSystem/condition-ver-status",
+        code: status,
+        display: status.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')
+      }]
+    };
+  }
+  
+  // Transform notes string to array (older format to R4)
+  if (transformed.notes && !transformed.note) {
+    transformed.note = [{
+      text: transformed.notes
+    }];
+    delete transformed.notes;
+  }
+  
+  console.log('=== transformConditionForDisplay output ===');
+  console.log('Output condition has code:', !!transformed.code);
+  console.log('Output code:', JSON.stringify(transformed.code, null, 2));
+  
+  return transformed;
+}
+
 Meteor.methods({
   async 'conditions.create'(conditionData) {
     check(conditionData, Object);
@@ -27,9 +110,17 @@ Meteor.methods({
       throw new Meteor.Error('not-authorized', 'User must be logged in to create conditions');
     }
     
+    console.log('=== conditions.create called ===');
+    console.log('Original data:', JSON.stringify(conditionData, null, 2));
+    
+    // Transform the data to match the schema
+    const transformedData = transformConditionForStorage(conditionData);
+    
+    console.log('Transformed data:', JSON.stringify(transformedData, null, 2));
+    
     // Add metadata
     const condition = {
-      ...conditionData,
+      ...transformedData,
       resourceType: 'Condition',
       meta: {
         lastUpdated: new Date(),
@@ -37,20 +128,31 @@ Meteor.methods({
       }
     };
     
-    // Insert and return the new condition
-    const Conditions = getConditions();
-    const conditionId = await Conditions.insertAsync(condition);
+    console.log('Final condition to insert:', JSON.stringify(condition, null, 2));
     
-    // Log for HIPAA compliance
-    if (Meteor.isServer) {
-      console.log('Condition created', {
-        userId: this.userId,
-        conditionId: conditionId,
-        timestamp: new Date()
-      });
+    try {
+      // Insert and return the new condition
+      const Conditions = getConditions();
+      console.log('Got Conditions collection:', !!Conditions);
+      
+      const conditionId = await Conditions.insertAsync(condition);
+      console.log('Successfully inserted condition with ID:', conditionId);
+      
+      // Log for HIPAA compliance
+      if (Meteor.isServer) {
+        console.log('Condition created', {
+          userId: this.userId,
+          conditionId: conditionId,
+          timestamp: new Date()
+        });
+      }
+      
+      return conditionId;
+    } catch (error) {
+      console.error('Error inserting condition:', error);
+      console.error('Error details:', error.sanitizedError || error);
+      throw error;
     }
-    
-    return conditionId;
   },
   
   async 'conditions.update'(conditionId, conditionData) {
@@ -69,13 +171,16 @@ Meteor.methods({
       throw new Meteor.Error('not-found', 'Condition not found');
     }
     
+    // Transform the data to match the schema
+    const transformedData = transformConditionForStorage(conditionData);
+    
     // Update metadata
     const updatedCondition = {
-      ...conditionData,
+      ...transformedData,
       _id: conditionId,
       resourceType: 'Condition',
       meta: {
-        ...get(conditionData, 'meta', {}),
+        ...get(transformedData, 'meta', {}),
         lastUpdated: new Date(),
         versionId: String(parseInt(get(existingCondition, 'meta.versionId', '0')) + 1)
       }
@@ -160,6 +265,10 @@ Meteor.methods({
     }
     
     console.log('Found condition:', condition._id);
-    return condition;
+    
+    // Transform the condition back to FHIR R4 format for display
+    const transformedCondition = transformConditionForDisplay(condition);
+    
+    return transformedCondition;
   }
 });

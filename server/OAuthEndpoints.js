@@ -3,11 +3,9 @@ import { Random } from 'meteor/random';
 import { WebApp } from "meteor/webapp";
 import { fetch, Headers } from 'meteor/fetch';
 
-// console.log("WebApp", WebApp)
-
 import { get, set, has, uniq, cloneDeep, toLower } from 'lodash';
 
-import http from 'http';
+
 import moment from 'moment';
 import atob from 'atob';
 import btoa from 'btoa';

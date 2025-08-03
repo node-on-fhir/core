@@ -120,27 +120,6 @@ export function SearchLibraryOfMedicineDialog(props){
   function handleQueryLibrary(){
     console.log('handleQueryLibrary', props);
 
-    // let newCertificateRecord = {
-    //     resourceType: "UdapCertificate",
-    //     createdAt: new Date(),
-    //     certificateOwner:  Session.get('newUdapCertificateOwner'),
-    //     certificate:  Session.get('newUdapCertificate')
-    // }    
-
-    // // HTTP.post(Meteor.absoluteUrl() + "/newCertificate", {data: newCertificateRecord}, function(error, result){
-    // HTTP.post("https://cts.nlm.nih.gov/fhir/ValueSet/2.16.840.1.113883.11.20.9.46", {
-    //   header: {
-    //     auth: "apikey:2fa4ee2c-0023-4c5a-a4f1-5ae0f8a1c8ba"
-    //   }
-    // }, function(error, result){
-    //   if(error){
-    //       alert(JSON.stringify(error.message));
-    //   }
-    //   if(result){
-    //       console.log('HTTP.post', result)
-    //       // Session.set('mainAppDialogOpen', false);
-    //   }
-    // })
 
     Meteor.call('fetchValueSetFromNlm', valueSetSearchTerm, function(error, result){
       if(error){

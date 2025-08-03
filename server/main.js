@@ -23,6 +23,7 @@ import './OAuthEndpoints.js';
 import './ProxyRelay.js';
 import './VaultServer.js';
 import '../imports/lib/UdapMethods.js';
+import './Swagger.js';
 
 // Import accounts startup if enabled
 import '../imports/startup/server/index.js';
@@ -47,6 +48,11 @@ import '../imports/api/medications/methods.js';
 
 // Import test methods (for non-production environments)
 import '../imports/accounts/server/test-methods.js';
+
+// Import publications
+import './publications/autopublish.js';
+import './publications/patients.js';
+import './publications/conditions.js';
 
 // Import FHIR methods
 import '../imports/methods/fhirResourceStatistics.js';

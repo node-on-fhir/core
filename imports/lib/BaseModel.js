@@ -209,5 +209,13 @@ BaseModel.prototype.validate = function (options) {
       );
   }
 };
+
+// Helper method to get string version of _id (handles ObjectID)
+BaseModel.prototype.getIdString = function () {
+  if (this._id && typeof this._id === 'object' && this._id._str) {
+    return this._id._str;
+  }
+  return this._id;
+};
  
 export default BaseModel;

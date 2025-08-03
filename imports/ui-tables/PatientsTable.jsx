@@ -497,8 +497,18 @@ export function PatientsTable(props){
         break;
     }
 
-    // Toggle expansion when clicking anywhere on the row
-    toggleRowExpansion(patientId, { stopPropagation: () => {} });
+    // If we're in a selection mode (onRowClick is provided), select the patient
+    // This is typically used in dialogs like PatientSearchDialog
+    if (typeof onRowClick === 'function') {
+      console.log('PatientsTable: Selecting patient via row click:', patientId);
+      console.log('PatientsTable: Patient object:', patient);
+      // Pass both the ID and the patient object
+      // This matches what PatientSearchDialog expects in its onRowClick handler
+      onRowClick(patientId, patient);
+    } else {
+      // Otherwise just toggle expansion for normal table view
+      toggleRowExpansion(patientId, { stopPropagation: () => {} });
+    }
   }
 
   function toggleRowExpansion(patientId, event){
@@ -985,8 +995,35 @@ export function PatientsTable(props){
                       console.log('Selecting patient:', patientId);
                       const selectedPatient = patientsToRender.find(p => (p.id === patientId || p._id === patientId));
                       console.log('Found patient:', selectedPatient);
-                      Session.set('selectedPatientId', patientId);
+                      
+                      // Normalize the patient ID (handle ObjectID)
+                      const normalizedId = typeof patientId === 'object' && patientId._str ? patientId._str : patientId;
+                      Session.set('selectedPatientId', normalizedId);
                       Session.set('selectedPatient', selectedPatient);
+                      
+                      // Log AuditEvent for patient selection
+                      Meteor.call('auditEvents.log', 'rest', Meteor.userId(), `Patient/${patientId}`, 
+                        `User selected patient ${selectedPatient?.name || patientId}`, {
+                          action: 'READ',
+                          entity: [{
+                            what: {
+                              reference: `Patient/${patientId}`,
+                              display: selectedPatient?.name || 'Unknown Patient'
+                            },
+                            type: {
+                              system: 'http://hl7.org/fhir/resource-types',
+                              code: 'Patient',
+                              display: 'Patient'
+                            }
+                          }]
+                        }, (error) => {
+                          if (error) {
+                            console.error('Error logging audit event:', error);
+                          } else {
+                            console.log('Audit event logged for patient selection');
+                          }
+                        }
+                      );
                       
                       // Also call onRowClick if provided
                       if (typeof onRowClick === 'function') {
@@ -1007,7 +1044,9 @@ export function PatientsTable(props){
                       
                       // Set the selected patient in session
                       const selectedPatient = patientsToRender.find(p => (p.id === patientId || p._id === patientId));
-                      Session.set('selectedPatientId', patientId);
+                      // Normalize the patient ID (handle ObjectID)
+                      const normalizedId = typeof patientId === 'object' && patientId._str ? patientId._str : patientId;
+                      Session.set('selectedPatientId', normalizedId);
                       Session.set('selectedPatient', selectedPatient);
                       
                       // Log AuditEvent for viewing patient chart

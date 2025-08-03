@@ -1,6 +1,7 @@
 // server/publications/autopublish.js
 
 import { Meteor } from 'meteor/meteor';
+import { Mongo } from 'meteor/mongo';
 import { get } from 'lodash';
 
 // Import all collections that might need autopublishing
@@ -140,12 +141,51 @@ if (finalAutopublishEnabled) {
           query = query || {};
           options = options || {};
           
+          // Handle ObjectID conversion in queries
+          if (query.$or && Array.isArray(query.$or)) {
+            query.$or = query.$or.map(condition => {
+              // Check if any condition has _id as a string that looks like an ObjectID
+              if (condition._id && typeof condition._id === 'string' && /^[a-f\d]{24}$/i.test(condition._id)) {
+                // Create both string and ObjectID versions of the query
+                return {
+                  $or: [
+                    condition, // Keep the string version
+                    { ...condition, _id: new Mongo.ObjectID(condition._id) } // Add ObjectID version
+                  ]
+                };
+              }
+              return condition;
+            });
+            // Flatten nested $or conditions
+            const flattenedConditions = [];
+            query.$or.forEach(condition => {
+              if (condition.$or) {
+                flattenedConditions.push(...condition.$or);
+              } else {
+                flattenedConditions.push(condition);
+              }
+            });
+            query.$or = flattenedConditions;
+          }
+          
           // In development, we can be more permissive
-          options.limit = options.limit || 1000;
+          // Cap at 100 records per cursor for performance
+          options.limit = options.limit || 100;
+          // Ensure user can't request more than 100 records
+          if (options.limit > 100) {
+            options.limit = 100;
+          }
+          
+          // Default sort by most recent for better development experience
+          if (!options.sort) {
+            options.sort = { 
+              '_id': -1  // Most recent first (naive but works with MongoDB ObjectIDs)
+            };
+          }
           
           // In development with autopublish, allow unauthenticated access for testing
           if (!this.userId && isDevelopment && finalAutopublishEnabled) {
-            console.log(`Allowing unauthenticated access to ${collectionName} in development mode`);
+            console.log(`Allowing unauthenticated access to ${collectionName} in development mode (max 100 records)`);
             // Continue with the query
           } else if (!this.userId) {
             // In production or without autopublish, require authentication
@@ -160,7 +200,38 @@ if (finalAutopublishEnabled) {
             // }
           }
           
-          console.log(`Publishing ${collectionName} with query:`, query, 'options:', options);
+          // Special handling for Patients collection to debug
+          if(collectionName === 'Patients' && query.$or) {
+            console.log(`Publishing ${collectionName} with original query:`, JSON.stringify(query));
+            
+            // Check if we're searching for a specific ID
+            const hasIdSearch = query.$or.some(condition => condition._id || condition.id);
+            if(hasIdSearch) {
+              console.log('ID search detected, checking collection for matches...');
+              
+              // Try to find by various ID formats
+              // Note: Commenting out debug counts to avoid async issues in Meteor v3
+              // These were only for debugging and not essential for the publication
+              /*
+              query.$or.forEach(async (condition) => {
+                if(condition._id) {
+                  const stringCount = await collection.find({_id: condition._id}).countAsync();
+                  const objectIdCount = await collection.find({_id: new Mongo.ObjectID(condition._id)}).countAsync();
+                  console.log(`Searching for _id: ${condition._id} - String matches: ${stringCount}, ObjectID matches: ${objectIdCount}`);
+                }
+                if(condition.id) {
+                  const count = await collection.find({id: condition.id}).countAsync();
+                  console.log(`Searching for id: ${condition.id} - Matches: ${count}`);
+                }
+              });
+              */
+            }
+          } else {
+            console.log(`Publishing ${collectionName} with query:`, JSON.stringify(query), 'options:', options, '(max 100 records)');
+          }
+          
+          // Don't use count() in publications as it's not needed and causes issues in Meteor v3
+          // Just return the cursor
           return collection.find(query, options);
         });
         
@@ -178,14 +249,24 @@ if (finalAutopublishEnabled) {
       
       Meteor.publish(publicationName, function() {
         if (!this.userId && isDevelopment && finalAutopublishEnabled) {
-          console.log(`Publishing all ${collectionName} for development (unauthenticated)`);
-          return collection.find({});
+          console.log(`Publishing all ${collectionName} for development (unauthenticated) - limited to 100 records`);
+          return collection.find({}, { 
+            limit: 100,
+            sort: { 
+              '_id': -1  // Most recent first (naive but works with MongoDB ObjectIDs)
+            }
+          });
         } else if (!this.userId) {
           return this.ready();
         }
         
-        console.log(`Publishing all ${collectionName} for development`);
-        return collection.find({});
+        console.log(`Publishing all ${collectionName} for development - limited to 100 records`);
+        return collection.find({}, { 
+          limit: 100,
+          sort: { 
+            '_id': -1  // Most recent first (naive but works with MongoDB ObjectIDs)
+          }
+        });
       });
       
       console.log(`Created development publication: ${publicationName}`);

@@ -1,8 +1,8 @@
 // /imports/ui-fhir/carePlans/CarePlansPage.jsx
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTracker } from 'meteor/react-meteor-data';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { 
   Grid, 
@@ -13,9 +13,16 @@ import {
   CardContent,
   Button,
   Box,
-  Typography
+  Typography,
+  ToggleButton,
+  ToggleButtonGroup
 } from '@mui/material';
-import AddIcon from '@mui/icons-material/Add'; 
+import AddIcon from '@mui/icons-material/Add';
+import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
+import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
+import PersonIcon from '@mui/icons-material/Person';
+import CodeIcon from '@mui/icons-material/Code';
+import BadgeIcon from '@mui/icons-material/Badge'; 
 
 import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
@@ -28,6 +35,8 @@ import { get } from 'lodash';
 
 // Import the collection directly to avoid timing issues
 import { CarePlans } from '/imports/lib/schemas/SimpleSchemas/CarePlans';
+import { FhirUtilities } from '/imports/lib/FhirUtilities';
+import { Patients } from '/imports/lib/schemas/SimpleSchemas/Patients';
 
 
 //=============================================================================================================================================
@@ -52,6 +61,19 @@ Session.setDefault('CarePlansTable.carePlansIndex', 0)
 
 export function CarePlansPage(props){
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const [sortOrder, setSortOrder] = useState('descending');
+  const [showPatientName, setShowPatientName] = useState(false);
+  const [showPatientReference, setShowPatientReference] = useState(false);
+  const [showSystemId, setShowSystemId] = useState(false);
+  const [showTitle, setShowTitle] = useState(true);
+  
+  // Clean up debug flag on unmount
+  useEffect(() => {
+    return () => {
+      Session.set('CarePlansPage.debugLogged', false);
+    };
+  }, []);
 
   let data = {
     currentCarePlanId: '',
@@ -63,23 +85,41 @@ export function CarePlansPage(props){
     carePlansIndex: 0
   };
 
-  // Subscribe to CarePlans
-  useTracker(function(){
-    console.log('CarePlansPage - checking autopublish setting:', get(Meteor, 'settings.public.defaults.autopublish'));
+  // Subscribe to CarePlans data
+  const isLoading = useTracker(() => {
+    const selectedPatientId = Session.get('selectedPatientId');
+    const selectedPatient = Session.get('selectedPatient');
     let autoPublishEnabled = get(Meteor, 'settings.public.defaults.autopublish', false);
-    if(autoPublishEnabled){
-      console.log('CarePlansPage - subscribing to autopublish.CarePlans');
-      const handle = Meteor.subscribe('autopublish.CarePlans', {}, {});
-      console.log('CarePlansPage - subscription ready?', handle.ready());
-      return handle;
-    } else {
-      // Try the simple subscription
-      console.log('CarePlansPage - subscribing to careplans.all');
-      const handle = Meteor.subscribe('careplans.all');
-      console.log('CarePlansPage - subscription ready?', handle.ready());
-      return handle;
+    
+    // Use FhirUtilities to build the query - it handles all reference formats
+    let query = {};
+    
+    // If we have a patient selected, filter by that patient
+    // FHIR resources reference patients by their FHIR id, not MongoDB _id
+    if(selectedPatient || selectedPatientId) {
+      const fhirId = get(selectedPatient, 'id');
+      
+      if(fhirId) {
+        // Use the FHIR id as primary search
+        query = FhirUtilities.addPatientFilterToQuery(fhirId);
+      } else if(selectedPatientId) {
+        // Fallback to MongoDB _id if no FHIR id available
+        query = FhirUtilities.addPatientFilterToQuery(selectedPatientId);
+      }
     }
-  }, []);
+    
+    console.log('CarePlans subscription - selectedPatientId:', selectedPatientId);
+    console.log('CarePlans subscription - FHIR id:', get(selectedPatient, 'id'));
+    console.log('CarePlans subscription query:', query);
+    
+    if(autoPublishEnabled){
+      const handle = Meteor.subscribe('autopublish.CarePlans', query, { limit: 1000 });
+      return !handle.ready();
+    } else {
+      const handle = Meteor.subscribe('careplans.all');
+      return !handle.ready();
+    }
+  }, [Session.get('selectedPatientId')]);
 
   data.onePageLayout = useTracker(function(){
     return Session.get('CarePlansPage.onePageLayout');
@@ -95,16 +135,40 @@ export function CarePlansPage(props){
     return CarePlans.findOne({_id: Session.get('selectedCarePlanId')});
   }, [])
   data.carePlans = useTracker(function(){
-    if (!CarePlans) {
-      console.log('CarePlansPage - CarePlans collection not ready');
-      return [];
+    const selectedPatientId = Session.get('selectedPatientId');
+    const selectedPatient = Session.get('selectedPatient');
+    
+    // Use FHIR id for filtering, as that's what FHIR resources reference
+    const fhirId = get(selectedPatient, 'id');
+    const patientIdToUse = fhirId || selectedPatientId;
+    
+    const query = patientIdToUse ? FhirUtilities.addPatientFilterToQuery(patientIdToUse) : {};
+    
+    // Only do debug logging once when component mounts
+    if(!Session.get('CarePlansPage.debugLogged')) {
+      Session.set('CarePlansPage.debugLogged', true);
+      
+      console.log('CarePlans data - MongoDB _id:', selectedPatientId);
+      console.log('CarePlans data - FHIR id:', fhirId);
+      console.log('CarePlans data - Using ID for query:', patientIdToUse);
+      console.log('CarePlans data - query:', query);
+      
+      // First check all care plans
+      const allCarePlans = CarePlans.find().fetch();
+      console.log('Total CarePlans in client collection:', allCarePlans.length);
+      
+      // Log first few care plans to see their structure
+      if(allCarePlans.length > 0) {
+        console.log('Sample CarePlan structure:', allCarePlans[0]);
+        console.log('First 3 patient references:');
+        allCarePlans.slice(0, 3).forEach(cp => {
+          console.log('- _id:', cp._id, 'patient:', get(cp, 'patient'), 'subject:', get(cp, 'subject'));
+        });
+      }
     }
-    const plans = CarePlans.find({}, { sort: { 'meta.lastUpdated': -1 } }).fetch();
-    console.log('CarePlansPage - found care plans:', plans.length);
-    if (plans.length > 0) {
-      console.log('CarePlansPage - first care plan author:', plans[0].author);
-    }
-    return plans;
+    
+    const results = CarePlans.find(query, { sort: { 'meta.lastUpdated': -1 } }).fetch();
+    return results;
   }, [])
   data.carePlansIndex = useTracker(function(){
     return Session.get('CarePlansTable.carePlansIndex')
@@ -126,7 +190,13 @@ export function CarePlansPage(props){
 
   function handleAddCarePlan(){
     console.log('Add Care Plan button clicked');
-    navigate('/careplans/new');
+    navigate('/care-plans/new');
+  }
+
+  function handleSortOrderChange(event, newOrder){
+    if(newOrder !== null){
+      setSortOrder(newOrder);
+    }
   }
 
   function renderHeader() {
@@ -142,14 +212,61 @@ export function CarePlansPage(props){
             </Typography>
           </Grid>
           <Grid item>
-            <Button
-              variant="contained"
-              color="primary"
-              startIcon={<AddIcon />}
-              onClick={handleAddCarePlan}
-            >
-              Add Care Plan
-            </Button>
+            <Box display="flex" gap={2} alignItems="center">
+              <ToggleButtonGroup
+                value={sortOrder}
+                exclusive
+                onChange={handleSortOrderChange}
+                aria-label="sort order"
+                size="small"
+              >
+                <ToggleButton value="ascending" aria-label="ascending order">
+                  <ArrowUpwardIcon />
+                </ToggleButton>
+                <ToggleButton value="descending" aria-label="descending order">
+                  <ArrowDownwardIcon />
+                </ToggleButton>
+              </ToggleButtonGroup>
+              
+              <ToggleButtonGroup
+                value={[
+                  showTitle && 'title',
+                  showPatientName && 'patientName',
+                  showPatientReference && 'patientReference',
+                  showSystemId && 'systemId'
+                ].filter(Boolean)}
+                onChange={(event, newFormats) => {
+                  setShowTitle(newFormats.includes('title'));
+                  setShowPatientName(newFormats.includes('patientName'));
+                  setShowPatientReference(newFormats.includes('patientReference'));
+                  setShowSystemId(newFormats.includes('systemId'));
+                }}
+                aria-label="display options"
+                size="small"
+              >
+                <ToggleButton value="title" aria-label="show title">
+                  <Typography variant="button">T</Typography>
+                </ToggleButton>
+                <ToggleButton value="patientName" aria-label="show patient name">
+                  <PersonIcon />
+                </ToggleButton>
+                <ToggleButton value="patientReference" aria-label="show patient reference">
+                  <CodeIcon />
+                </ToggleButton>
+                <ToggleButton value="systemId" aria-label="show system id">
+                  <BadgeIcon />
+                </ToggleButton>
+              </ToggleButtonGroup>
+              
+              <Button
+                variant="contained"
+                color="primary"
+                startIcon={<AddIcon />}
+                onClick={handleAddCarePlan}
+              >
+                Add Care Plan
+              </Button>
+            </Box>
           </Grid>
         </Grid>
       </Box>
@@ -176,12 +293,17 @@ export function CarePlansPage(props){
           formFactorLayout={formFactor}
           rowsPerPage={LayoutHelpers.calcTableRows()} 
           actionButtonLabel="Remove"
+          hideTitle={!showTitle}
+          hidePatientDisplay={!showPatientName}
+          hidePatientReference={!showPatientReference}
+          hideBarcode={!showSystemId}
           hideActionButton={get(Meteor, 'settings.public.modules.fhir.CarePlans.hideRemoveButtonOnTable', true)}
+          order={sortOrder}
           onActionButtonClick={function(selectedId){
             CarePlans._collection.remove({_id: selectedId})
           }}
           onRowClick={function(carePlanId){
-            navigate('/careplans/' + carePlanId);
+            navigate('/care-plans/' + carePlanId);
           }}
           onSetPage={function(index){
             Session.set('CarePlansTable.carePlansIndex', index)

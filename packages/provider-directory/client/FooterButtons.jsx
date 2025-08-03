@@ -1002,24 +1002,7 @@ export function AddCertificateDialogActions(props){
         
         console.log('JSON.stringify(newCertificateRecord)', JSON.stringify(newCertificateRecord))
 
-        // let relayUrl = get(Meteor, 'settings.public.interfaces.fhirRelay.channel.endpoint', 'http://localhost:3000/baseR4')
-        // if(relayUrl){
-        //     let currentCodeSystem = Session.get('CodeSystem.Current')
-        //     let assembledUrl = relayUrl;
-        //     if(has(currentCodeSystem, 'id')){
-        //         assembledUrl = relayUrl + '/' + resourceType + '/' + get(currentCodeSystem, 'id');
-        //         console.log('PUT ' + assembledUrl)
-        //         HTTP.put(assembledUrl, {data: currentCodeSystem}, function(error, result){
-        //             if(error){
-        //                 alert(JSON.stringify(error.message));
-        //             }
-        //             if(result){
-        //                 Session.set('mainAppDialogOpen', false)
-        //             }
-        //         })
-        //     } else {
-        //         assembledUrl = relayUrl + '/' + resourceType;
-        //         console.log('POST ' + assembledUrl)
+
         HTTP.post(Meteor.absoluteUrl() + "/newCertificate", {data: newCertificateRecord}, function(error, result){
             if(error){
                 alert(JSON.stringify(error.message));

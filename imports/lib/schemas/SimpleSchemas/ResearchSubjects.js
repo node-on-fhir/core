@@ -1,3 +1,5 @@
+// /imports/lib/schemas/SimpleSchemas/ResearchSubjects.js
+
 import { get } from 'lodash';
 import validator from 'validator';
 
@@ -89,5 +91,4 @@ let ResearchSubjectSchema = DomainResourceSchema.extend({
 // Note: attachSchema is not available in Meteor v3 without aldeed:collection2 package
 // ResearchSubjects.attachSchema(ResearchSubjectSchema);
 
-export default { ResearchSubject, ResearchSubjects, ResearchSubjectSchema };
 export { ResearchSubject, ResearchSubjects, ResearchSubjectSchema };

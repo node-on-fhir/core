@@ -44,11 +44,14 @@ import CdsHooksDebugger from './CdsHooksDebugger.jsx';
 
 import NoDataWrapper from './NoDataWrapper.jsx';
 import NotSignedInWrapper from './NotSignedInWrapper.jsx';
+import AuthenticatedRoute from './components/AuthenticatedRoute.jsx';
 
 import HomePage from './HomePage.jsx';
 import ServerConfigurationPage from '../ui-vault-server/ServerConfigurationPage.jsx';
 import UdapRegistrationPage from '../ui-vault-server/UdapRegistrationPage.jsx';
 import OAuthClientsPage from '../ui-vault-server/OAuthClientsPage.jsx';
+import FhirBasePage from './pages/FhirBasePage.jsx';
+import SwaggerPage from '../ui-vault-server/SwaggerPage.jsx';
 
 // Account components (conditionally loaded)
 import { LoginPage } from '../accounts/client/pages/LoginPage';
@@ -67,68 +70,92 @@ import PatientsDirectory from '../ui-modules/PatientsDirectory.jsx';
 //===============================================================================================================
 // FHIR Page Components
 
-import ActivityDefinitionsPage from '../ui-fhir/activityDefinitions/ActivityDefinitionsPage.jsx';
-import AllergyIntolerancesPage from '../ui-fhir/allergyIntolerances/AllergyIntolerancesPage.jsx';
-import ArtifactAssessmentsPage from '../ui-fhir/artifactAssessments/ArtifactAssessmentsPage.jsx';
-import BundlesPage from '../ui-fhir/bundles/BundlesPage.jsx';
-import CareTeamsPage from '../ui-fhir/careTeams/CareTeamsPage.jsx';
-import CarePlansPage from '../ui-fhir/carePlans/CarePlansPage.jsx';
-import CodeSystemsPage from '../ui-fhir/codeSystems/CodeSystemsPage.jsx';
-import CompositionsPage from '../ui-fhir/compositions/CompositionsPage.jsx';
-import ConditionsPage from '../ui-fhir/conditions/ConditionsPage.jsx';
-import ConditionDetail from '../ui-fhir/conditions/ConditionDetail.jsx';
-import CommunicationDetail from '../ui-fhir/communications/CommunicationDetail.jsx';
-import DocumentReferenceDetail from '../ui-fhir/documentReferences/DocumentReferenceDetail.jsx';
-import EncounterDetail from '../ui-fhir/encounters/EncounterDetail.jsx';
-import PatientDetail from '../ui-fhir/patients/PatientDetail.jsx';
-import ListDetail from '../ui-fhir/lists/ListDetail.jsx';
-import NutritionOrderDetail from '../ui-fhir/nutritionOrders/NutritionOrderDetail.jsx';
-import PractitionerDetail from '../ui-fhir/practitioners/PractitionerDetail.jsx';
-import ServiceRequestDetail from '../ui-fhir/serviceRequests/ServiceRequestDetail.jsx';
-import AllergyIntoleranceDetail from '../ui-fhir/allergyIntolerances/AllergyIntoleranceDetail.jsx';
-import CarePlanDetail from '../ui-fhir/carePlans/CarePlanDetail.jsx';
-import CareTeamDetail from '../ui-fhir/careTeams/CareTeamDetail.jsx';
-import CompositionDetail from '../ui-fhir/compositions/CompositionDetail.jsx';
-import GoalDetail from '../ui-fhir/goals/GoalDetail.jsx';
-import LocationDetail from '../ui-fhir/locations/LocationDetail.jsx';
-import MedicationAdministrationDetail from '../ui-fhir/medicationAdministrations/MedicationAdministrationDetail.jsx';
-import MedicationRequestDetail from '../ui-fhir/medicationRequests/MedicationRequestDetail.jsx';
-import MedicationDetail from '../ui-fhir/medications/MedicationDetail.jsx';
-import ObservationDetail from '../ui-fhir/observations/ObservationDetail.jsx';
-import ProcedureDetail from '../ui-fhir/procedures/ProcedureDetail.jsx';
-import QuestionnaireResponseDetail from '../ui-fhir/questionnaireResponses/QuestionnaireResponseDetail.jsx';
-import QuestionnaireDetail from '../ui-fhir/questionnaires/QuestionnaireDetail.jsx';
-import DevicesPage from '../ui-fhir/devices/DevicesPage.jsx';
-import DocumentReferencesPage from '../ui-fhir/documentReferences/DocumentReferencesPage.jsx';
-import EncountersPage from '../ui-fhir/encounters/EncountersPage.jsx';
-import EvidencesPage from '../ui-fhir/evidences/EvidencesPage.jsx';
-import GoalsPage from '../ui-fhir/goals/GoalsPage.jsx';
-import GuidanceResponsesPage from '../ui-fhir/guidanceResponses/GuidanceResponsesPage.jsx';
-import ImmunizationsPage from '../ui-fhir/immunizations/ImmunizationsPage.jsx';
-import LibrariesPage from '../ui-fhir/libraries/LibrariesPage.jsx';
-import LocationsPage from '../ui-fhir/locations/LocationsPage.jsx';
-import MedicationsPage from '../ui-fhir/medications/MedicationsPage.jsx';
-import MedicationRequestsPage from '../ui-fhir/medicationRequests/MedicationRequestsPage.jsx';
-import MedicationAdministrationsPage from '../ui-fhir/medicationAdministrations/MedicationAdministrationsPage.jsx';
-import MedicationStatementsPage from '../ui-fhir/medicationStatements/MedicationStatementsPage.jsx';
-import NutritionOrdersPage from '../ui-fhir/nutritionOrders/NutritionOrdersPage.jsx';
-import ObservationsPage from '../ui-fhir/observations/ObservationsPage.jsx';
-import OperationOutcomesPage from '../ui-fhir/operationOutcomes/OperationOutcomesPage.jsx';
-import PlanDefinitionsPage from '../ui-fhir/planDefinitions/PlanDefinitionsPage.jsx';
-import ProceduresPage from '../ui-fhir/procedures/ProceduresPage.jsx';
-import QuestionnairesPage from '../ui-fhir/questionnaires/QuestionnairesPage.jsx';
-import QuestionnaireResponsesPage from '../ui-fhir/questionnaireResponses/QuestionnaireResponsesPage.jsx';
-import ResearchStudiesPage from '../ui-fhir/researchStudies/ResearchStudiesPage.jsx';
-import ResearchStudyDetail from '../ui-fhir/researchStudies/ResearchStudyDetail.jsx';
-import ResearchSubjectsPage from '../ui-fhir/researchSubjects/ResearchSubjectsPage.jsx';
-import ResearchSubjectDetail from '../ui-fhir/researchSubjects/ResearchSubjectDetail.jsx';
-import ServiceRequestsPage from '../ui-fhir/serviceRequests/ServiceRequestsPage.jsx';
-import TasksPage from '../ui-fhir/tasks/TasksPage.jsx';
-import ValueSetsPage from '../ui-fhir/valuesets/ValueSetsPage.jsx';
-import ClaimsPage from '../ui-claims/claims/ClaimsPage.jsx';
-import PractitionersPage from '../ui-fhir/practitioners/PractitionersPage.jsx';
-import ListsPage from '../ui-fhir/lists/ListsPage.jsx';
-import CommunicationsPage from '../ui-fhir/communications/CommunicationsPage.jsx';
+import {
+  ActivityDefinitionsPage,
+  AllergyIntolerancesPage,
+  ArtifactAssessmentsPage,
+  BasicsPage,
+  BundlesPage,
+  CarePlanDesignerPage,
+  CarePlanDetailPage,
+  CareTeamsPage,
+  CarePlansPage,
+  ClaimsPage,
+  CodeSystemsPage,
+  CompositionsPage,
+  ConditionsPage,
+  DevicesPage,
+  DocumentReferencesPage,
+  EncountersPage,
+  EvidencesPage,
+  GoalsPage,
+  GuidanceResponsesPage,
+  ImmunizationsPage,
+  LibrariesPage,
+  LocationsPage,
+  MedicationsPage,
+  MedicationRequestsPage,
+  MedicationAdministrationsPage,
+  MedicationStatementsPage,
+  NutritionOrdersPage,
+  ObservationsPage,
+  OperationOutcomesPage,
+  PlanDefinitionsPage,
+  ProceduresPage,
+  QuestionnairesPage,
+  QuestionnaireResponsesPage,
+  ResearchStudiesPage,
+  ResearchSubjectsPage,
+  ServiceRequestsPage,
+  TasksPage,
+  ValueSetsPage,
+  PractitionersPage,
+  ListsPage,
+  CommunicationsPage
+} from '../ui-pages';
+
+import {
+  ActivityDefinitionDetail,
+  AllergyIntoleranceDetail,
+  ArtifactAssessmentDetail,
+  BasicDetail,
+  BundleDetail,
+  CarePlanDetail,
+  CareTeamDetail,
+  ClaimDetail,
+  CodeSystemDetail,
+  CommunicationDetail,
+  CompositionDetail,
+  ConditionDetail,
+  DeviceDetail,
+  DocumentReferenceDetail,
+  EncounterDetail,
+  EvidenceDetail,
+  GoalDetail,
+  GuidanceResponseDetail,
+  ImmunizationDetail,
+  LibraryDetail,
+  ListDetail,
+  LocationDetail,
+  MedicationAdministrationDetail,
+  MedicationRequestDetail,
+  MedicationDetail,
+  MedicationStatementDetail,
+  NutritionOrderDetail,
+  ObservationDetail,
+  OperationOutcomeDetail,
+  PatientDetail,
+  PlanDefinitionDetail,
+  PractitionerDetail,
+  ProcedureDetail,
+  QuestionnaireResponseDetail,
+  QuestionnaireDetail,
+  ResearchStudyDetail,
+  ResearchSubjectDetail,
+  ServiceRequestDetail,
+  TaskDetail,
+  ValueSetDetail
+} from '../ui-details';
 
 //===============================================================================================================
 // PACIO Pages
@@ -158,67 +185,9 @@ Meteor.startup(function(){
 //===============================================================================================================
 // FHIR UI Components
 // 
-// Not crazy about this coding pattern, and shipping all this UI code to the client
-// but it's the way it is for now.  We'll refactor this later, and try to make it
-// more modular, or implement some sort of tree shaking;
-// Maybe add checks to Meteor.settings.private.fhir.rest.enabled to see if we should
-// ship the code to the client or not?
+// Now using centralized virtual indexes for better organization and cross-resource patterns
 
-import { AllergyIntolerancesTable } from '../ui-tables/AllergyIntolerancesTable';
-import { BundlesTable } from '../ui-tables/BundlesTable';
-import { CarePlansTable } from '../ui-tables/CarePlansTable';
-import { CareTeamsTable } from '../ui-tables/CareTeamsTable';
-import { ConditionsTable } from '../ui-tables/ConditionsTable';
-// import { CommunicationRequestsTable } from '../ui-tables/CommunicationRequestsTable';
-// import { CompositionsTable } from '../ui-tables/CompositionsTable';
-// import { DevicesTable } from '../ui-tables/DevicesTable';
-import EncountersTable from '../ui-fhir/encounters/EncountersTable';
-import EndpointsTable from '../ui-tables/EndpointsTable';
-import { ImmunizationsTable } from '../ui-tables/ImmunizationsTable';
-import { LocationsTable } from '../ui-tables/LocationsTable';
-// import { MedicationsTable } from '../ui-tables/MedicationsTable';
-// import { MedicationRequestsTable } from '../ui-tables/MedicationRequestsTable';
-// import { MedicationStatementsTable } from '../ui-tables/MedicationStatementsTable';
-// import { MeasuresTable } from '../ui-tables/MeasuresTable';
-// import { MeasureReportsTable } from '../ui-tables/MeasureReportsTable';
-// import { MessageHeadersTable } from '../ui-tables/MessageHeadersTable';
-// import { OrganizationsTable } from '../ui-tables/OrganizationsTable';
-import { ObservationsTable } from '../ui-tables/ObservationsTable';
-import { PatientsTable } from '../ui-tables/PatientsTable';
-import { PersonsTable } from '../ui-tables/PersonsTable';
-import { ProceduresTable } from '../ui-tables/ProceduresTable';
-import { QuestionnairesTable } from '../ui-tables/QuestionnairesTable';
-import { QuestionnaireResponsesTable } from '../ui-tables/QuestionnaireResponsesTable';
-import { ResearchSubjectsTable } from '../ui-tables/ResearchSubjectsTable';
-// import { TasksTable } from '../ui-tables/TasksTable';
-
-// Import tables from ui-fhir directory since they don't exist in ui-tables
-import PractitionersTable from '../ui-fhir/practitioners/PractitionersTable';
-import ListsTable from '../ui-fhir/lists/ListsTable';
-import CommunicationsTable from '../ui-fhir/communications/CommunicationsTable';
-
-Meteor.Tables = {
-  AllergyIntolerancesTable,
-  BundlesTable,
-  CarePlansTable,
-  CareTeamsTable,
-  CommunicationsTable,
-  ConditionsTable,
-  // DevicesTable,
-  EncountersTable,
-  EndpointsTable,
-  ImmunizationsTable,
-  ListsTable,
-  LocationsTable,
-  ObservationsTable,
-  PatientsTable,
-  PersonsTable,
-  PractitionersTable,
-  ProceduresTable,
-  QuestionnairesTable,
-  QuestionnaireResponsesTable,
-  ResearchSubjectsTable
-}
+import '../ui-tables';  // Auto-registers all Tables on Meteor.Tables
 
 //===============================================================================================================
 // Data Cursors
@@ -486,8 +455,19 @@ let dynamicRoutes = [
   }, {
     path: "/fhir-resources-index",
     element: <FhirResourcesDashboard />
+  }, {
+    path: "/fhir",
+    element: <FhirBasePage />
+  }, {
+    path: "/baseR4",
+    element: <FhirBasePage />
+  }, {
+    path: "/swagger",
+    element: <SwaggerPage />
   }  
 ]
+
+
 
 // Account routes
 if(get(Meteor, 'settings.public.modules.accounts.enabled', true)){
@@ -524,7 +504,7 @@ if(get(Meteor, 'settings.public.modules.accounts.enabled', true)){
 if(get(Meteor, 'settings.public.modules.PatientDirectory')){
   dynamicRoutes.push({
     path: "/patient-directory",
-    element: <PatientsDirectory />
+    element: <AuthenticatedRoute><PatientsDirectory /></AuthenticatedRoute>
   })
 }
 if(get(Meteor, 'settings.public.modules.Theming')){
@@ -753,15 +733,15 @@ if(get(Meteor, 'settings.public.modules.fhir.Observations')){
 if(get(Meteor, 'settings.public.modules.fhir.Patients')){
   dynamicRoutes.push({
     path: "/patients",
-    element: <PatientsDirectory />
+    element: <AuthenticatedRoute><PatientsDirectory /></AuthenticatedRoute>
   })
   dynamicRoutes.push({
     path: "/patients/new",
-    element: <PatientDetail />
+    element: <AuthenticatedRoute><PatientDetail /></AuthenticatedRoute>
   })
   dynamicRoutes.push({
     path: "/patients/:id",
-    element: <PatientDetail />
+    element: <AuthenticatedRoute><PatientDetail /></AuthenticatedRoute>
   })
 }
 if(get(Meteor, 'settings.public.modules.fhir.OperationOutcomes')){
@@ -978,6 +958,14 @@ dynamicRoutes.push({
 dynamicRoutes.push({
   path: "/care-plans", 
   element: <CarePlansPage />
+})
+dynamicRoutes.push({
+  path: "/care-plans/new",
+  element: <CarePlanDetail />
+})
+dynamicRoutes.push({
+  path: "/care-plans/:id",
+  element: <CarePlanDetail />
 })
 dynamicRoutes.push({
   path: "/conditions",

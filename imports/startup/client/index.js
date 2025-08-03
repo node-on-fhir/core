@@ -9,6 +9,9 @@ import './core-startup';
 // Initialize collections (always runs)
 import './collections';
 
+// Session overrides for ObjectID handling
+import './session-overrides';
+
 // Conditional imports based on configuration
 Meteor.startup(() => {
   // Check if accounts module is enabled

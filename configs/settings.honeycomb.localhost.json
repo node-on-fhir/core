@@ -302,6 +302,17 @@
           "search": true,
           "publication": true
         },
+        "Medication": {
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "search"
+          ],
+          "search": true,
+          "publication": true
+        },
         "MedicationAdministration": {
           "interactions": [
             "read",

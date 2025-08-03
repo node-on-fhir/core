@@ -49,7 +49,7 @@
   "public.defaults.nfcOrbital": false,
   "public.defaults.notificationMenu": false,
   "public.defaults.searchbarVisible": true,
-  "public.defaults.prominantHeader": false,
+  "public.defaults.prominentHeader": false,
   "public.defaults.showPatientNameInHeader": false,  
   "public.defaults.displayUserNameInHeader": false,  
   "public.defaults.enablePatientOveride": false,

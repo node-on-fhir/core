@@ -20,7 +20,7 @@ export default function PatientQuickChart(props) {
     logger.data('PatientQuickChart.props', {data: props}, {source: "PatientQuickChart.jsx"});
 
     let headerHeight = 64;
-    if(get(Meteor, 'settings.public.defaults.prominantHeader')){
+    if(get(Meteor, 'settings.public.defaults.prominentHeader')){
       headerHeight = 128;
     }
 

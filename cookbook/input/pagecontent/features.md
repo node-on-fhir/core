@@ -38,7 +38,7 @@
   "public": {
     "title": "Custom Workflow",
     "defaults": {  
-      "prominantHeader": true,
+      "prominentHeader": true,
       "showPatientNameInHeader": true,
       "displayUserNameInHeader": true,
       "displayPollingRefreshIcon": true,

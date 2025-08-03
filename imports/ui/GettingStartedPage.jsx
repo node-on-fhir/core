@@ -113,7 +113,7 @@ function GettingStartedPage(props){
   // Page Styling 
 
   let headerHeight = 64;
-  if(get(Meteor, 'settings.public.defaults.prominantHeader')){
+  if(get(Meteor, 'settings.public.defaults.prominentHeader')){
     headerHeight = 128;
   }
 

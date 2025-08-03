@@ -662,33 +662,7 @@ function MainPage(props){
       }
     })
 
-    // console.log('endpointUrlWithParams', endpointUrlWithParams);
-    // HTTP.get(endpointUrlWithParams, {
-    //    headers: httpHeaders
-    //  }, function(error, result){
-    //   if(error){
-    //     console.error('error', error)
-    //   }
-    //   if(result){
-    //     console.log('result', JSON.parse(get(result, 'content')));
 
-    //     let parsedContent = JSON.parse(get(result, 'content'));
-    //     if(get(parsedContent, 'total') === 0){
-    //       // setShowNoResults(true);
-    //     } else {
-    //       let entryArray = get(parsedContent, 'entry');
-    //       if(Array.isArray(entryArray)){
-    //         let endpointArray = entryArray.map(function(entry){
-    //           return entry.resource;
-    //         })        
-    //         setMatchedEndpoints(endpointArray)
-    //         console.log('endpointArray', endpointArray)  
-    //         setShowSearchResults(true);
-    //         // setShowNoResults(false);
-    //       }  
-    //     }
-    //   }
-    // })
 
     console.log('locationUrlWithParams', locationUrlWithParams);
     HTTP.get(locationUrlWithParams, {
@@ -718,33 +692,6 @@ function MainPage(props){
       }
     })
 
-    // console.log('insurancePlanUrlWithParams', insurancePlanUrlWithParams);
-    // HTTP.get(insurancePlanUrlWithParams, {
-    //   headers: httpHeaders
-    // }, function(error, result){
-    //   if(error){
-    //     console.error('error', error)
-    //   }
-    //   if(result){
-    //     console.log('result', JSON.parse(get(result, 'content')));
-
-    //     let parsedContent = JSON.parse(get(result, 'content'));
-    //     if(get(parsedContent, 'total') === 0){
-    //       // setShowNoResults(true);
-    //     } else {
-    //       let entryArray = get(parsedContent, 'entry');
-    //       if(Array.isArray(entryArray)){
-    //         let insurancePlanArray = entryArray.map(function(entry){
-    //           return entry.resource;
-    //         })        
-    //         setMatchedInsurancePlans(insurancePlanArray)
-    //         console.log('insurancePlanArray', insurancePlanArray)  
-    //         setShowSearchResults(true);
-    //         // setShowNoResults(false);
-    //       }  
-    //     }
-    //   }
-    // })
 
     console.log('healthcareServiceUrlWithParams', healthcareServiceUrlWithParams);
     HTTP.get(healthcareServiceUrlWithParams, {

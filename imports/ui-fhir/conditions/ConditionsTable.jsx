@@ -99,6 +99,10 @@ function ConditionsTable(props){
   // Form Factors
   
   let multiline = false;
+  
+  // Store the original prop values before form factor overrides
+  const hidePatientNameFromProp = hidePatientName;
+  const hideBarcodeFromProp = hideBarcode;
 
   if(formFactorLayout){
     logger.verbose('formFactorLayout', formFactorLayout + ' ' + window.innerWidth);
@@ -123,7 +127,7 @@ function ConditionsTable(props){
       case "tablet":
         hideCheckbox = true;
         hideActionIcons = true;
-        hidePatientName = false;
+        hidePatientName = (hidePatientNameFromProp !== undefined) ? hidePatientNameFromProp : false;
         hidePatientReference = true;
         hideClinicalStatus = true;
         hideSnomedCode = false;
@@ -133,7 +137,7 @@ function ConditionsTable(props){
         hideEvidence = true;
         hideDates = false;
         hideEndDate = true;
-        hideBarcode = false;   
+        hideBarcode = (hideBarcodeFromProp !== undefined) ? hideBarcodeFromProp : false;   
         multiline = false;
         hideTextIcon = false
         hideTextIcon = false
@@ -142,19 +146,19 @@ function ConditionsTable(props){
         hideClinicalStatus = true;
         hideSnomedCode = false;
         hideSnomedDisplay = false;
-        hidePatientName = false;
+        hidePatientName = (hidePatientNameFromProp !== undefined) ? hidePatientNameFromProp : false;
         hideVerification = true;
         hideSeverity = true;
         hideEvidence = true;
         hideDates = true;
         hideEndDate = false;
-        hideBarcode = false;
+        hideBarcode = (hideBarcodeFromProp !== undefined) ? hideBarcodeFromProp : false;
         multiline = false;
         hideTextIcon = false
         break;
       case "desktop":
         hideClinicalStatus = true;
-        hidePatientName = false;
+        hidePatientName = (hidePatientNameFromProp !== undefined) ? hidePatientNameFromProp : false;
         hideSnomedCode = false;
         hideSnomedDisplay = false;
         hideVerification = true;
@@ -162,7 +166,7 @@ function ConditionsTable(props){
         hideEvidence = true;
         hideDates = false;
         hideEndDate = true;
-        hideBarcode = false;
+        hideBarcode = (hideBarcodeFromProp !== undefined) ? hideBarcodeFromProp : false;
         multiline = false;
         hideTextIcon = true;
         break;
@@ -175,7 +179,7 @@ function ConditionsTable(props){
         hideEvidence = false;
         hideDates = false;
         hideEndDate = false;
-        hideBarcode = false;
+        hideBarcode = (hideBarcodeFromProp !== undefined) ? hideBarcodeFromProp : false;
         multiline = false;
         hideTextIcon = true;
         break;            

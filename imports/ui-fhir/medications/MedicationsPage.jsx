@@ -18,18 +18,14 @@ import AddIcon from '@mui/icons-material/Add';
 import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
 
+// Direct import - no Meteor.startup needed
+import { Medications } from '/imports/lib/schemas/SimpleSchemas/Medications';
+
 // import MedicationDetail from './MedicationDetail';
 import MedicationsTable from './MedicationsTable';
 import LayoutHelpers from '../../lib/LayoutHelpers';
 
 import { get } from 'lodash';
-
-//=============================================================================================================================================
-// DATA CURSORS
-
-Meteor.startup(function(){
-  Medications = Meteor.Collections.Medications;
-})
 
 
 //=============================================================================================================================================
@@ -83,7 +79,12 @@ export function MedicationsPage(props){
     return Medications.findOne({_id: Session.get('selectedMedicationId')});
   }, [])
   data.medications = useTracker(function(){
-    return Medications.find().fetch();
+    // Sort by most recent first (using _id in reverse order)
+    return Medications.find({}, {
+      sort: { 
+        '_id': -1  // Most recent first (naive but works with MongoDB ObjectIDs)
+      }
+    }).fetch();
   }, [])
   data.medicationsIndex = useTracker(function(){
     return Session.get('MedicationsTable.medicationsIndex')

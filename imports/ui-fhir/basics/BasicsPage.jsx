@@ -23,7 +23,7 @@ import { get, cloneDeep } from 'lodash';
 
 import { MuiThemeProvider, createTheme } from '@mui/material/styles';
 
-import { Basics } from '../../lib/schemas/Basics';
+import { Basics } from '../../lib/schemas/SimpleSchemas/Basics';
 
 
 //---------------------------------------------------------------
@@ -41,7 +41,7 @@ Session.setDefault('BasicsPage.onePageLayout', true)
 //---------------------------------------------------------------
 // Theming
 
-const muiTheme = Theming.createTheme();
+const muiTheme = createTheme();
 
 
 

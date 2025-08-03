@@ -364,15 +364,39 @@ describe('Medications CRUD Operations', function() {
     browser
       .execute(function() {
         window.consoleErrors = [];
+        window.saveAttempted = false;
+        window.saveResult = null;
+        
         const originalError = console.error;
         console.error = function() {
           window.consoleErrors.push(Array.from(arguments).join(' '));
           originalError.apply(console, arguments);
         };
         
+        // Intercept Meteor.callAsync to capture save attempts
+        const originalCall = Meteor.callAsync;
+        Meteor.callAsync = async function(method, ...args) {
+          console.log('Meteor.callAsync intercepted:', method);
+          if (method === 'medications.create') {
+            window.saveAttempted = true;
+            try {
+              const result = await originalCall.apply(this, [method, ...args]);
+              window.saveResult = { success: true, result: result };
+              console.log('Save successful, result:', result);
+              return result;
+            } catch (error) {
+              window.saveResult = { success: false, error: error.message || error.toString() };
+              console.error('Save failed:', error);
+              throw error;
+            }
+          }
+          return originalCall.apply(this, [method, ...args]);
+        };
+        
         const buttons = document.querySelectorAll('button');
         for (let button of buttons) {
           if (button.textContent.includes('Save')) {
+            console.log('Clicking save button...');
             button.click();
             return true;
           }
@@ -399,6 +423,12 @@ describe('Medications CRUD Operations', function() {
       
       const consoleErrors = window.consoleErrors || [];
       
+      // Check browser console logs for any errors
+      let consoleLogs = [];
+      if (window.console && window.console.logs) {
+        consoleLogs = window.console.logs;
+      }
+      
       return {
         url: currentUrl,
         hasTable: hasTable,
@@ -407,11 +437,22 @@ describe('Medications CRUD Operations', function() {
         hasError: errorText.length > 0,
         errorText: errorText.trim(),
         consoleErrors: consoleErrors,
+        consoleLogs: consoleLogs,
         userId: Meteor.userId ? Meteor.userId() : 'No Meteor.userId',
-        isLoggedIn: Meteor.userId ? !!Meteor.userId() : false
+        isLoggedIn: Meteor.userId ? !!Meteor.userId() : false,
+        saveAttempted: window.saveAttempted || false,
+        saveResult: window.saveResult || null
       };
     }, [], function(result) {
       console.log('Post-save state:', result.value);
+      if (result.value.consoleErrors && result.value.consoleErrors.length > 0) {
+        console.log('Console errors:', result.value.consoleErrors);
+      }
+      if (result.value.saveAttempted) {
+        console.log('Save was attempted. Result:', result.value.saveResult);
+      } else {
+        console.log('Save was NOT attempted - method may not have been called');
+      }
       if (result.value.hasError) {
         browser.assert.fail(`Save failed with error: ${result.value.errorText}`);
       }
@@ -431,8 +472,63 @@ describe('Medications CRUD Operations', function() {
   it('05. Verify new medication appears in list', browser => {
     browser
       .waitForElementVisible('#medicationsPage', 5000)
-      .pause(1000)
-      .waitForElementVisible('#medicationsTable', 5000)
+      .pause(3000) // Give time for subscription to update with new data
+      .waitForElementVisible('#medicationsTable', 5000);
+    
+    // Debug: Check what's in the table and database
+    browser.execute(function(timestamp) {
+      const table = document.querySelector('#medicationsTable');
+      const rows = table ? table.querySelectorAll('tbody tr') : [];
+      const firstFiveRows = [];
+      for (let i = 0; i < Math.min(5, rows.length); i++) {
+        firstFiveRows.push(rows[i].textContent);
+      }
+      
+      // Check if our medication was saved
+      const searchManufacturer = `Pharma Corp ${timestamp}`;
+      const ourMedication = Medications ? Medications.findOne({
+        'manufacturer.display': searchManufacturer
+      }) : null;
+      
+      // Also check by the saved ID if we have it
+      let savedMedication = null;
+      if (window.saveResult && window.saveResult.result) {
+        savedMedication = Medications ? Medications.findOne({
+          _id: window.saveResult.result
+        }) : null;
+      }
+      
+      // Get the most recent medications
+      const recentMeds = Medications ? Medications.find({}, {
+        sort: { '_id': -1 },
+        limit: 5
+      }).fetch() : [];
+      
+      return {
+        firstFiveRows: firstFiveRows,
+        ourMedication: ourMedication ? {
+          _id: ourMedication._id,
+          display: ourMedication.code?.coding?.[0]?.display,
+          manufacturer: ourMedication.manufacturer?.display,
+          createdAt: ourMedication._id?.getTimestamp ? ourMedication._id.getTimestamp() : 'N/A'
+        } : null,
+        savedMedication: savedMedication ? {
+          _id: savedMedication._id,
+          display: savedMedication.code?.coding?.[0]?.display,
+          manufacturer: savedMedication.manufacturer?.display
+        } : null,
+        saveResultId: window.saveResult?.result || null,
+        recentMeds: recentMeds.map(m => ({
+          _id: m._id,
+          display: m.code?.coding?.[0]?.display || m.code?.text,
+          manufacturer: m.manufacturer?.display
+        }))
+      };
+    }, [timestamp.toString()], function(result) {
+      console.log('Debug info:', JSON.stringify(result.value, null, 2));
+    });
+    
+    browser
       .assert.containsText('#medicationsTable', testMedication.display)
       .assert.containsText('#medicationsTable', testMedication.manufacturer)
       .saveScreenshot('tests/nightwatch/screenshots/medications/06-medication-in-list.png');

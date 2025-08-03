@@ -20,7 +20,7 @@ import { get } from 'lodash';
 import { Meteor } from 'meteor/meteor';
 import { useTracker } from 'meteor/react-meteor-data';
 
-import PatientsTable from '/imports/ui-tables/PatientsTable';
+import { PatientsTable } from '/imports/ui-tables';
 
 // Get the Patients collection
 let Patients;
@@ -128,19 +128,25 @@ function PatientSearchDialog(props){
         patients={patients}
         paginationCount={patients.length}        
         rowsPerPage={25}
-        onRowClick={function(selectedPatientId){
+        onRowClick={function(selectedPatientId, selectedPatient){
           console.log('PatientSearchDialog.PatientsTable.onRowClick', selectedPatientId);
+          console.log('PatientSearchDialog.PatientsTable.onRowClick - patient object:', selectedPatient);
           
           if(typeof onSelect === "function"){
-            // Find the patient object to pass both ID and full patient data
-            console.log('Looking for patient with ID:', selectedPatientId);
-            console.log('Available patients:', patients);
-            const selectedPatient = patients.find(p => p._id === selectedPatientId || p.id === selectedPatientId);
-            console.log('Found patient:', selectedPatient);
+            // PatientsTable now passes both ID and patient object
             if (selectedPatient) {
+              console.log('Calling onSelect with patient object');
               onSelect(selectedPatientId, selectedPatient);
             } else {
-              onSelect(selectedPatientId);
+              // Fallback: try to find the patient if not provided
+              console.log('No patient object provided, looking for patient with ID:', selectedPatientId);
+              const foundPatient = patients.find(p => p._id === selectedPatientId || p.id === selectedPatientId);
+              console.log('Found patient:', foundPatient);
+              if (foundPatient) {
+                onSelect(selectedPatientId, foundPatient);
+              } else {
+                onSelect(selectedPatientId);
+              }
             }
           }
         }}

@@ -1,7 +1,8 @@
 // /imports/ui-modules/PatientsDirectory.jsx
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useTracker } from 'meteor/react-meteor-data';
+import { useNavigate } from 'react-router-dom';
 
 import { 
   Grid,
@@ -12,15 +13,19 @@ import {
   CardContent,
   Button,
   Box,
-  Typography
+  Typography,
+  TextField,
+  InputAdornment
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
+import SearchIcon from '@mui/icons-material/Search';
 
 import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
 
-import PatientsTable from '../ui-tables/PatientsTable';
+import { PatientsTable } from '../ui-tables';
 import LayoutHelpers from '../lib/LayoutHelpers';
+import { Patients } from '../lib/schemas/SimpleSchemas/Patients';
 
 import { get, has, set } from 'lodash';
 
@@ -39,10 +44,6 @@ let defaultPatient = {
 
 
 //===========================================================================
-
-Meteor.startup(function(){
-  Patients = Meteor.Collections.Patients;
-})
 
 //===========================================================================
 // SESSION VARIABLES
@@ -63,6 +64,116 @@ Session.setDefault('PatientsTable.patientsIndex', 0)
 // MAIN COMPONENT  
 
 export function PatientsDirectory(props){
+  const navigate = useNavigate();
+  const [searchFilter, setSearchFilter] = useState('');
+  const [debouncedSearchFilter, setDebouncedSearchFilter] = useState('');
+  const searchTimeoutRef = useRef(null);
+
+  // Debounce the search filter to prevent rapid re-subscriptions
+  useEffect(() => {
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+    
+    searchTimeoutRef.current = setTimeout(() => {
+      setDebouncedSearchFilter(searchFilter);
+    }, 300); // 300ms delay
+    
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, [searchFilter]);
+
+  // Subscribe to Patients data with search filter
+  const isLoading = useTracker(() => {
+    console.log('PatientDirectory subscription - debouncedSearchFilter:', debouncedSearchFilter);
+    
+    // Check if autopublish is enabled (for backward compatibility)
+    let autoPublishEnabled = get(Meteor, 'settings.public.defaults.autopublish', false);
+    
+    // Check if PatientDirectory module is enabled
+    const patientDirectoryEnabled = get(Meteor, 'settings.public.modules.patientDirectory.enabled', true);
+    if (!patientDirectoryEnabled) {
+      console.log('PatientDirectory module is disabled');
+      return false;
+    }
+    
+    // Build query for search
+    let query = {};
+    if(debouncedSearchFilter && debouncedSearchFilter.trim() !== ''){
+      const trimmedFilter = debouncedSearchFilter.trim();
+      
+      // Check if this looks like a MongoDB ObjectID (24 hex characters) or FHIR ID
+      const isObjectId = /^[a-f\d]{24}$/i.test(trimmedFilter);
+      const isFhirId = /^[a-f\d]{8}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{12}$/i.test(trimmedFilter);
+      
+      if(isObjectId || isFhirId){
+        // Exact match for IDs - use string matching only
+        query = {
+          $or: [
+            {'id': trimmedFilter},
+            {'_id': trimmedFilter}
+          ]
+        };
+        console.log('Exact ID search query:', query);
+      } else {
+        // Regex search for other fields
+        const searchRegex = new RegExp(debouncedSearchFilter, 'i');
+        query = {
+          $or: [
+            {'id': {$regex: searchRegex}},
+            {'_id': {$regex: searchRegex}},
+            {'name.text': {$regex: searchRegex}},
+            {'name.0.text': {$regex: searchRegex}},
+            {'name.given': {$regex: searchRegex}},
+            {'name.0.given': {$regex: searchRegex}},
+            {'name.family': {$regex: searchRegex}},
+            {'name.0.family': {$regex: searchRegex}},
+            {'identifier.value': {$regex: searchRegex}},
+            {'identifier.0.value': {$regex: searchRegex}},
+            {'telecom.value': {$regex: searchRegex}},
+            {'telecom.0.value': {$regex: searchRegex}},
+            {'address.city': {$regex: searchRegex}},
+            {'address.0.city': {$regex: searchRegex}},
+            {'address.state': {$regex: searchRegex}},
+            {'address.0.state': {$regex: searchRegex}},
+            {'address.postalCode': {$regex: searchRegex}},
+            {'address.0.postalCode': {$regex: searchRegex}}
+          ]
+        };
+      }
+    }
+    
+    // Choose the appropriate publication based on configuration
+    let handle;
+    if(autoPublishEnabled){
+      // Use autopublish if enabled (development mode)
+      console.log('Using autopublish.Patients with query:', JSON.stringify(query));
+      handle = Meteor.subscribe('autopublish.Patients', query, { limit: 1000 });
+    } else {
+      // Use the proper authenticated publication
+      const isDevelopment = get(Meteor, 'settings.public.environment') === 'development' || !get(Meteor, 'settings.public.environment');
+      
+      if (isDevelopment) {
+        // In development, use patients.all for simplicity if no search
+        if (Object.keys(query).length === 0) {
+          console.log('Using patients.all publication (development)');
+          handle = Meteor.subscribe('patients.all');
+        } else {
+          console.log('Using patients.search publication with query:', JSON.stringify(query));
+          handle = Meteor.subscribe('patients.search', query, { limit: 1000 });
+        }
+      } else {
+        // In production, always use patients.search with authentication
+        console.log('Using patients.search publication with query:', JSON.stringify(query));
+        handle = Meteor.subscribe('patients.search', query, { limit: 1000 });
+      }
+    }
+    
+    return !handle.ready();
+  }, [debouncedSearchFilter]);
 
   let data = {
     selectedPatientId: '',
@@ -87,8 +198,103 @@ export function PatientsDirectory(props){
     return Patients.findOne({_id: Session.get('selectedPatientId')});
   }, [])
   data.patients = useTracker(function(){
-    return Patients.find().fetch();
-  }, [])
+    // If autopublish is enabled, the subscription is already filtered
+    // so we can just return all patients in the local collection
+    let autoPublishEnabled = get(Meteor, 'settings.public.defaults.autopublish', false);
+    
+    if(autoPublishEnabled){
+      // Get all patients from collection
+      let results = Patients.find().fetch();
+      console.log('Autopublish patients found:', results.length);
+      
+      // If we have a search filter and server-side filtering didn't work, 
+      // apply client-side filtering as fallback
+      if(debouncedSearchFilter && debouncedSearchFilter.trim() !== '') {
+        const trimmedFilter = debouncedSearchFilter.trim();
+        
+        // Check if this looks like a MongoDB ObjectID (24 hex characters) or FHIR ID
+        const isObjectId = /^[a-f\d]{24}$/i.test(trimmedFilter);
+        const isFhirId = /^[a-f\d]{8}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{12}$/i.test(trimmedFilter);
+        
+        if(isObjectId || isFhirId) {
+          // Exact match for IDs
+          results = results.filter(p => {
+            const idStr = p._id && p._id._str ? p._id._str : String(p._id);
+            return p.id === trimmedFilter || idStr === trimmedFilter;
+          });
+          console.log('Filtered to exact matches:', results.length);
+        } else {
+          // Regex search for other fields
+          const searchRegex = new RegExp(debouncedSearchFilter, 'i');
+          results = results.filter(p => {
+            return (
+              searchRegex.test(p.id || '') ||
+              searchRegex.test(p._id || '') ||
+              searchRegex.test(get(p, 'name[0].text', '')) ||
+              searchRegex.test(get(p, 'name[0].given[0]', '')) ||
+              searchRegex.test(get(p, 'name[0].family', '')) ||
+              searchRegex.test(get(p, 'identifier[0].value', '')) ||
+              searchRegex.test(get(p, 'telecom[0].value', '')) ||
+              searchRegex.test(get(p, 'address[0].city', '')) ||
+              searchRegex.test(get(p, 'address[0].state', '')) ||
+              searchRegex.test(get(p, 'address[0].postalCode', ''))
+            );
+          });
+          console.log('Filtered by regex search:', results.length);
+        }
+      }
+      
+      return results;
+    } else {
+      // Fall back to client-side filtering for non-autopublish mode
+      let query = {};
+      
+      if(debouncedSearchFilter && debouncedSearchFilter.trim() !== ''){
+        const trimmedFilter = debouncedSearchFilter.trim();
+        
+        // Check if this looks like a MongoDB ObjectID (24 hex characters) or FHIR ID
+        const isObjectId = /^[a-f\d]{24}$/i.test(trimmedFilter);
+        const isFhirId = /^[a-f\d]{8}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{12}$/i.test(trimmedFilter);
+        
+        if(isObjectId || isFhirId){
+          // Exact match for IDs - use string matching only
+          query = {
+            $or: [
+              {'id': trimmedFilter},
+              {'_id': trimmedFilter}
+            ]
+          };
+        } else {
+          // Regex search for other fields
+          const searchRegex = new RegExp(debouncedSearchFilter, 'i');
+          query = {
+            $or: [
+              {'id': {$regex: searchRegex}},
+              {'_id': {$regex: searchRegex}},
+              {'name.text': {$regex: searchRegex}},
+              {'name.0.text': {$regex: searchRegex}},
+              {'name.given': {$regex: searchRegex}},
+              {'name.0.given': {$regex: searchRegex}},
+              {'name.family': {$regex: searchRegex}},
+              {'name.0.family': {$regex: searchRegex}},
+              {'identifier.value': {$regex: searchRegex}},
+              {'identifier.0.value': {$regex: searchRegex}},
+              {'telecom.value': {$regex: searchRegex}},
+              {'telecom.0.value': {$regex: searchRegex}},
+              {'address.city': {$regex: searchRegex}},
+              {'address.0.city': {$regex: searchRegex}},
+              {'address.state': {$regex: searchRegex}},
+              {'address.0.state': {$regex: searchRegex}},
+              {'address.postalCode': {$regex: searchRegex}},
+              {'address.0.postalCode': {$regex: searchRegex}}
+            ]
+          };
+        }
+      }
+      
+      return Patients.find(query).fetch();
+    }
+  }, [debouncedSearchFilter])
   data.patientsIndex = useTracker(function(){
     return Session.get('PatientsTable.patientsIndex')
   }, [])
@@ -108,12 +314,26 @@ export function PatientsDirectory(props){
 
   function handleAddPatient(){
     console.log('Add Patient button clicked');
+    // Clear search filter if active
+    if(searchFilter || debouncedSearchFilter){
+      setSearchFilter('');
+      setDebouncedSearchFilter('');
+    }
     // Add logic for adding a new patient
   }
 
   function renderHeader() {
+    // Log some IDs for debugging when not searching
+    if(!debouncedSearchFilter && data.patients.length > 0) {
+      console.log('Sample patient IDs from your database:');
+      data.patients.slice(0, 3).forEach(p => {
+        const idStr = p._id && p._id._str ? p._id._str : String(p._id);
+        console.log(`- _id: ${idStr}, id: ${p.id}`);
+      });
+    }
+    
     return (
-      <Box mb={2}>
+      <Box mb={3}>
         <Grid container spacing={2} alignItems="center" justifyContent="space-between">
           <Grid item xs={12} sm={6}>
             <Typography variant="h4">
@@ -121,6 +341,7 @@ export function PatientsDirectory(props){
             </Typography>
             <Typography variant="subtitle2" color="textSecondary">
               {data.patients.length} patients found
+              {debouncedSearchFilter && ` (filtered)`}
             </Typography>
           </Grid>
           <Grid item>
@@ -134,6 +355,43 @@ export function PatientsDirectory(props){
             </Button>
           </Grid>
         </Grid>
+        
+        <Box mt={3}>
+          <TextField
+            fullWidth
+            variant="outlined"
+            placeholder="Search patients by ID, name, identifier, phone, city, state, or postal code..."
+            value={searchFilter}
+            onChange={(e) => {
+              console.log('Search input changed:', e.target.value);
+              setSearchFilter(e.target.value);
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Escape') {
+                setSearchFilter('');
+              }
+            }}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon />
+                </InputAdornment>
+              ),
+            }}
+            sx={{
+              backgroundColor: 'background.paper',
+              '& .MuiOutlinedInput-root': {
+                borderRadius: 2,
+                '& fieldset': {
+                  borderColor: 'divider',
+                },
+                '&:hover fieldset': {
+                  borderColor: 'primary.main',
+                },
+              },
+            }}
+          />
+        </Box>
       </Box>
     );
   }
@@ -162,17 +420,34 @@ export function PatientsDirectory(props){
           onActionButtonClick={function(selectedId){
             Patients._collection.remove({_id: selectedId})
           }}
-          rowClickMode="id"
+          rowClickMode="_id"
           onRowClick={function(patientId){
             console.log('onTableRowClick', patientId);
 
-            Session.set('selectedPatientId', patientId);
-            Session.set('selectedPatient', Patients.findOne({id: patientId}));
+            // Find patient by either id or _id
+            let patient = Patients.findOne({id: patientId});
+            if(!patient) {
+              patient = Patients.findOne({_id: patientId});
+            }
+            
+            console.log('Found patient:', patient);
+            
+            // Set the _id as selectedPatientId (MongoDB ID)
+            if(patient) {
+              const mongoId = patient._id && patient._id._str ? patient._id._str : patient._id;
+              Session.set('selectedPatientId', mongoId);
+              Session.set('selectedPatient', patient);
+              console.log('Set selectedPatientId to:', mongoId);
+              console.log('Set selectedPatient to:', patient);
+            } else {
+              console.error('Could not find patient with id:', patientId);
+            }
 
             console.log('openUrlOnRowClick', get(Meteor, 'settings.public.modules.fhir.Patients.openUrlOnRowClick', ''))
             if(get(Meteor, 'settings.public.modules.fhir.Patients.openUrlOnRowClick')){
               // Navigate to patient chart when View Chart is clicked
-              window.location.href = get(Meteor, 'settings.public.modules.fhir.Patients.openUrlOnRowClick', '/patient-chart');
+              const targetUrl = get(Meteor, 'settings.public.modules.fhir.Patients.openUrlOnRowClick', '/patient-chart');
+              navigate(targetUrl);
             }
           }}
           onFhirOperations={function(patientId){
@@ -221,7 +496,7 @@ export function PatientsDirectory(props){
                 mb: 2
               }}
             >
-              {get(Meteor, 'settings.public.defaults.noData.defaultTitle', "No Data Available")}
+              {debouncedSearchFilter ? "No Patients Found" : get(Meteor, 'settings.public.defaults.noData.defaultTitle', "No Data Available")}
             </Typography>
             <Typography 
               variant="body1" 
@@ -232,7 +507,10 @@ export function PatientsDirectory(props){
                 mx: 'auto'
               }}
             >
-              {get(Meteor, 'settings.public.defaults.noData.defaultMessage', "No records were found in the client data cursor. To debug, check the data cursor in the client console, then check subscriptions and publications, and relevant search queries. If the data is not loaded in, use a tool like Mongo Compass to load the records directly into the Mongo database, or use the FHIR API interfaces.")}
+              {debouncedSearchFilter ? 
+                `No patients match your search criteria "${debouncedSearchFilter}". Try adjusting your search terms.` : 
+                get(Meteor, 'settings.public.defaults.noData.defaultMessage', "No records were found in the client data cursor. To debug, check the data cursor in the client console, then check subscriptions and publications, and relevant search queries. If the data is not loaded in, use a tool like Mongo Compass to load the records directly into the Mongo database, or use the FHIR API interfaces.")
+              }
             </Typography>
           </Box>
           <Button
@@ -250,7 +528,7 @@ export function PatientsDirectory(props){
               }
             }}
           >
-            Add Your First Patient
+            {debouncedSearchFilter ? "Clear Search & Add Patient" : "Add Your First Patient"}
           </Button>
         </CardContent>
       </Card>
@@ -268,7 +546,7 @@ export function PatientsDirectory(props){
       }}
     >
       <Box sx={{ width: '100%' }}>
-        { data.patients.length > 0 && renderHeader() }
+        { renderHeader() }
         { layoutContent }
       </Box>
     </Box>

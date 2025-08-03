@@ -1,8 +1,8 @@
 // /imports/ui-fhir/allergyIntolerances/AllergyIntolerancesPage.jsx
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTracker } from 'meteor/react-meteor-data';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { 
   Grid, 
@@ -13,9 +13,16 @@ import {
   CardContent,
   Button,
   Box,
-  Typography
+  Typography,
+  ToggleButton,
+  ToggleButtonGroup
 } from '@mui/material';
-import AddIcon from '@mui/icons-material/Add'; 
+import AddIcon from '@mui/icons-material/Add';
+import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
+import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
+import PersonIcon from '@mui/icons-material/Person';
+import CodeIcon from '@mui/icons-material/Code';
+import BadgeIcon from '@mui/icons-material/Badge'; 
 
 import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
@@ -29,9 +36,10 @@ import { get } from 'lodash';
 //=============================================================================================================================================
 // DATA CURSORS
 
-Meteor.startup(function(){
-  AllergyIntolerances = Meteor.Collections.AllergyIntolerances;
-})
+// Import the collection directly to avoid timing issues
+import { AllergyIntolerances } from '/imports/lib/schemas/SimpleSchemas/AllergyIntolerances';
+import { Patients } from '/imports/lib/schemas/SimpleSchemas/Patients';
+import { FhirUtilities } from '/imports/lib/FhirUtilities';
 
 //=============================================================================================================================================
 // SESSION VARIABLES
@@ -53,6 +61,54 @@ Session.setDefault('AllergyIntolerancesTable.allergyIntolerancesIndex', 0)
 
 export function AllergyIntolerancesPage(props){
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const [sortOrder, setSortOrder] = useState('descending');
+  const [showPatientName, setShowPatientName] = useState(false);
+  const [showPatientReference, setShowPatientReference] = useState(false);
+  const [showSystemId, setShowSystemId] = useState(false);
+  
+  // Clean up debug flag on unmount
+  useEffect(() => {
+    return () => {
+      Session.set('AllergyIntolerancesPage.debugLogged', false);
+    };
+  }, []);
+
+  // Subscribe to AllergyIntolerances data
+  const isLoading = useTracker(() => {
+    const selectedPatientId = Session.get('selectedPatientId');
+    const selectedPatient = Session.get('selectedPatient');
+    let autoPublishEnabled = get(Meteor, 'settings.public.defaults.autopublish', false);
+    
+    // Use FhirUtilities to build the query - it handles all reference formats
+    let query = {};
+    
+    // If we have a patient selected, filter by that patient
+    // FHIR resources reference patients by their FHIR id, not MongoDB _id
+    if(selectedPatient || selectedPatientId) {
+      const fhirId = get(selectedPatient, 'id');
+      
+      if(fhirId) {
+        // Use the FHIR id as primary search
+        query = FhirUtilities.addPatientFilterToQuery(fhirId);
+      } else if(selectedPatientId) {
+        // Fallback to MongoDB _id if no FHIR id available
+        query = FhirUtilities.addPatientFilterToQuery(selectedPatientId);
+      }
+    }
+    
+    console.log('AllergyIntolerances subscription - selectedPatientId:', selectedPatientId);
+    console.log('AllergyIntolerances subscription - FHIR id:', get(selectedPatient, 'id'));
+    console.log('AllergyIntolerances subscription query:', query);
+    
+    if(autoPublishEnabled){
+      const handle = Meteor.subscribe('autopublish.AllergyIntolerances', query, { limit: 1000 });
+      return !handle.ready();
+    } else {
+      const handle = Meteor.subscribe('allergyintolerances.all');
+      return !handle.ready();
+    }
+  }, [Session.get('selectedPatientId')]);
 
   let data = {
     currentAllergyIntoleranceId: '',
@@ -77,7 +133,40 @@ export function AllergyIntolerancesPage(props){
     return AllergyIntolerances.findOne({_id: Session.get('selectedAllergyIntoleranceId')});
   }, [])
   data.allergyIntolerances = useTracker(function(){
-    return AllergyIntolerances.find().fetch();
+    const selectedPatientId = Session.get('selectedPatientId');
+    const selectedPatient = Session.get('selectedPatient');
+    
+    // Use FHIR id for filtering, as that's what FHIR resources reference
+    const fhirId = get(selectedPatient, 'id');
+    const patientIdToUse = fhirId || selectedPatientId;
+    
+    const query = patientIdToUse ? FhirUtilities.addPatientFilterToQuery(patientIdToUse) : {};
+    
+    // Only do debug logging once when component mounts
+    if(!Session.get('AllergyIntolerancesPage.debugLogged')) {
+      Session.set('AllergyIntolerancesPage.debugLogged', true);
+      
+      console.log('AllergyIntolerances data - MongoDB _id:', selectedPatientId);
+      console.log('AllergyIntolerances data - FHIR id:', fhirId);
+      console.log('AllergyIntolerances data - Using ID for query:', patientIdToUse);
+      console.log('AllergyIntolerances data - query:', query);
+      
+      // First check all allergies
+      const allAllergies = AllergyIntolerances.find().fetch();
+      console.log('Total AllergyIntolerances in client collection:', allAllergies.length);
+      
+      // Log first few allergies to see their structure
+      if(allAllergies.length > 0) {
+        console.log('Sample AllergyIntolerance structure:', allAllergies[0]);
+        console.log('First 3 patient references:');
+        allAllergies.slice(0, 3).forEach(a => {
+          console.log('- _id:', a._id, 'patient:', get(a, 'patient'), 'subject:', get(a, 'subject'));
+        });
+      }
+    }
+    
+    const results = AllergyIntolerances.find(query).fetch();
+    return results;
   }, [])
   data.allergyIntolerancesIndex = useTracker(function(){
     return Session.get('AllergyIntolerancesTable.allergyIntolerancesIndex')
@@ -102,6 +191,12 @@ export function AllergyIntolerancesPage(props){
     navigate('/allergy-intolerances/new');
   }
 
+  function handleSortOrderChange(event, newOrder){
+    if(newOrder !== null){
+      setSortOrder(newOrder);
+    }
+  }
+
   function renderHeader() {
     return (
       <Box mb={2}>
@@ -115,14 +210,56 @@ export function AllergyIntolerancesPage(props){
             </Typography>
           </Grid>
           <Grid item>
-            <Button
-              variant="contained"
-              color="primary"
-              startIcon={<AddIcon />}
-              onClick={handleAddAllergyIntolerance}
-            >
-              Add Allergy
-            </Button>
+            <Box display="flex" gap={2} alignItems="center">
+              <ToggleButtonGroup
+                value={sortOrder}
+                exclusive
+                onChange={handleSortOrderChange}
+                aria-label="sort order"
+                size="small"
+              >
+                <ToggleButton value="ascending" aria-label="ascending order">
+                  <ArrowUpwardIcon />
+                </ToggleButton>
+                <ToggleButton value="descending" aria-label="descending order">
+                  <ArrowDownwardIcon />
+                </ToggleButton>
+              </ToggleButtonGroup>
+              
+              <ToggleButtonGroup
+                value={[
+                  showPatientName && 'patientName',
+                  showPatientReference && 'patientReference',
+                  showSystemId && 'systemId'
+                ].filter(Boolean)}
+                onChange={(event, newFormats) => {
+                  setShowPatientName(newFormats.includes('patientName'));
+                  setShowPatientReference(newFormats.includes('patientReference'));
+                  setShowSystemId(newFormats.includes('systemId'));
+                }}
+                aria-label="display options"
+                size="small"
+              >
+                <ToggleButton value="patientName" aria-label="show patient name">
+                  <PersonIcon />
+                </ToggleButton>
+                <ToggleButton value="patientReference" aria-label="show patient reference">
+                  <CodeIcon />
+                </ToggleButton>
+                <ToggleButton value="systemId" aria-label="show system id">
+                  <BadgeIcon />
+                </ToggleButton>
+              </ToggleButtonGroup>
+              
+              <Button
+                variant="contained"
+                color="primary"
+                startIcon={<AddIcon />}
+                onClick={handleAddAllergyIntolerance}
+              >
+                Add Allergy
+              </Button>
+            </Box>
           </Grid>
         </Grid>
       </Box>
@@ -149,9 +286,16 @@ export function AllergyIntolerancesPage(props){
           formFactorLayout={formFactor}
           rowsPerPage={LayoutHelpers.calcTableRows()} 
           actionButtonLabel="Remove"
+          hidePatientDisplay={!showPatientName}
+          hidePatientReference={!showPatientReference}
+          hideBarcode={!showSystemId}
           hideActionButton={get(Meteor, 'settings.public.modules.fhir.AllergyIntolerances.hideRemoveButtonOnTable', true)}
+          order={sortOrder}
           onActionButtonClick={function(selectedId){
             AllergyIntolerances._collection.remove({_id: selectedId})
+          }}
+          onRowClick={function(allergyIntoleranceId){
+            navigate('/allergy-intolerances/' + allergyIntoleranceId);
           }}
           onSetPage={function(index){
             Session.set('AllergyIntolerancesTable.allergyIntolerancesIndex', index)

@@ -26,7 +26,8 @@ import {
   Paper,
   Alert,
   Grid,
-  Dialog
+  Dialog,
+  Divider
 } from '@mui/material';
 
 import QrCodeIcon from '@mui/icons-material/QrCode';
@@ -35,6 +36,8 @@ import LockIcon from '@mui/icons-material/Lock';
 import LockOpenIcon from '@mui/icons-material/LockOpen';
 import EditIcon from '@mui/icons-material/Edit';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import AddIcon from '@mui/icons-material/Add';
+import DeleteIcon from '@mui/icons-material/Delete';
 
 import { get, set } from 'lodash';
 import moment from 'moment';
@@ -109,7 +112,8 @@ function CarePlanDetail(props) {
     }],
     note: [{
       text: ""
-    }]
+    }],
+    activity: []
   });
 
   const [loading, setLoading] = useState(false);
@@ -129,6 +133,8 @@ function CarePlanDetail(props) {
     console.log('=== Initial setup effect running ===');
     console.log('ID:', id);
     console.log('Current user:', currentUser);
+    console.log('Current user ID:', currentUser?._id);
+    console.log('Current user username:', currentUser?.username);
     
     if (!id || id === 'new') {
       // Enable editing for new care plans
@@ -157,32 +163,46 @@ function CarePlanDetail(props) {
         console.log('Current user profile:', get(currentUser, 'profile'));
         console.log('Current user profile.name:', get(currentUser, 'profile.name'));
         
-        authorName = get(currentUser, 'profile.name.text', '') ||
-                    `${get(currentUser, 'profile.name.given[0]', '')} ${get(currentUser, 'profile.name.family', '')}`.trim() ||
-                    get(currentUser, 'username', '');
+        // First try profile.name fields, then fall back to username
+        const profileNameText = get(currentUser, 'profile.name.text', '');
+        const profileNameParts = `${get(currentUser, 'profile.name.given[0]', '')} ${get(currentUser, 'profile.name.family', '')}`.trim();
+        const username = get(currentUser, 'username', '');
+        
+        console.log('Profile name text:', profileNameText);
+        console.log('Profile name parts:', profileNameParts);
+        console.log('Username:', username);
+        
+        authorName = profileNameText || profileNameParts || username;
         authorReference = `Practitioner/${get(currentUser, '_id', '')}`;
         
         console.log('Computed author name:', authorName);
         console.log('Computed author reference:', authorReference);
       } else {
-        console.log('No current user available for author');
+        console.log('No current user available for author - will retry when user is available');
+        // Don't set empty author - wait for currentUser to be available
+        return;
       }
       
       console.log('Setting initial care plan with author:', { authorName, authorReference });
       
       setCarePlan(prev => {
+        // Only update if we don't already have an author set
+        const hasExistingAuthor = prev.author && prev.author.length > 0 && prev.author[0].display;
+        
         const updated = {
           ...prev,
           subject: {
             reference: patientReference,
             display: patientName
           },
-          author: [{
+          author: hasExistingAuthor ? prev.author : [{
             reference: authorReference,
             display: authorName
           }]
         };
         console.log('New care plan state:', updated);
+        console.log('Has existing author:', hasExistingAuthor);
+        console.log('Author array:', updated.author);
         return updated;
       });
     } else {
@@ -226,6 +246,55 @@ function CarePlanDetail(props) {
   }, [id]);
 
   // Handle field changes
+  function handleAddActivity() {
+    const newActivity = {
+      detail: {
+        kind: "Task",
+        code: {
+          coding: [{
+            system: "http://snomed.info/sct",
+            code: "",
+            display: ""
+          }],
+          text: ""
+        },
+        status: "not-started",
+        description: "",
+        reasonReference: [{
+          reference: "",
+          display: ""
+        }],
+        location: {
+          reference: "",
+          display: ""
+        }
+      }
+    };
+    
+    setCarePlan(prev => ({
+      ...prev,
+      activity: [...(prev.activity || []), newActivity]
+    }));
+  }
+
+  function handleRemoveActivity(index) {
+    setCarePlan(prev => ({
+      ...prev,
+      activity: prev.activity.filter((_, i) => i !== index)
+    }));
+  }
+
+  function handleActivityChange(index, path, value) {
+    setCarePlan(prev => {
+      const updatedActivities = [...prev.activity];
+      set(updatedActivities[index], path, value);
+      return {
+        ...prev,
+        activity: updatedActivities
+      };
+    });
+  }
+
   function handleChange(path, value) {
     console.log('handleChange called with path:', path, 'value:', value);
     
@@ -639,6 +708,181 @@ function CarePlanDetail(props) {
                 disabled={!isEditing}
               />
             </Grid>
+          </Grid>
+
+          {/* Activities Section */}
+          <Grid item xs={12}>
+            <Divider sx={{ my: 3 }} />
+            <Box sx={{ mb: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Typography variant="h6">Activities</Typography>
+              {isEditing && (
+                <Button
+                  startIcon={<AddIcon />}
+                  onClick={handleAddActivity}
+                  variant="outlined"
+                  size="small"
+                >
+                  Add Activity
+                </Button>
+              )}
+            </Box>
+            
+            {(!carePlan.activity || carePlan.activity.length === 0) ? (
+              <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
+                No activities defined yet. {isEditing && 'Click "Add Activity" to create one.'}
+              </Typography>
+            ) : (
+              <Stack spacing={2}>
+                {carePlan.activity.map((activity, index) => (
+                  <Paper key={index} sx={{ p: 2 }} variant="outlined">
+                    <Grid container spacing={2}>
+                      {/* Activity Header with Remove Button */}
+                      <Grid item xs={12}>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                          <Typography variant="subtitle2" color="primary">
+                            Activity {index + 1}
+                          </Typography>
+                          {isEditing && (
+                            <IconButton
+                              size="small"
+                              onClick={() => handleRemoveActivity(index)}
+                              color="error"
+                            >
+                              <DeleteIcon fontSize="small" />
+                            </IconButton>
+                          )}
+                        </Box>
+                      </Grid>
+                      
+                      {/* Description */}
+                      <Grid item xs={12}>
+                        <TextField
+                          fullWidth
+                          label="Description"
+                          value={get(activity, 'detail.description', '')}
+                          onChange={(e) => handleActivityChange(index, 'detail.description', e.target.value)}
+                          disabled={!isEditing}
+                          size="small"
+                        />
+                      </Grid>
+                      
+                      {/* Code and Display */}
+                      <Grid item xs={12} sm={6}>
+                        <TextField
+                          fullWidth
+                          label="SNOMED Code"
+                          value={get(activity, 'detail.code.coding[0].code', '')}
+                          onChange={(e) => handleActivityChange(index, 'detail.code.coding[0].code', e.target.value)}
+                          disabled={!isEditing}
+                          size="small"
+                        />
+                      </Grid>
+                      <Grid item xs={12} sm={6}>
+                        <TextField
+                          fullWidth
+                          label="Code Display"
+                          value={get(activity, 'detail.code.coding[0].display', '')}
+                          onChange={(e) => handleActivityChange(index, 'detail.code.coding[0].display', e.target.value)}
+                          disabled={!isEditing}
+                          size="small"
+                        />
+                      </Grid>
+                      
+                      {/* Status */}
+                      <Grid item xs={12} sm={6}>
+                        <FormControl fullWidth size="small">
+                          <InputLabel>Status</InputLabel>
+                          <Select
+                            value={get(activity, 'detail.status', 'not-started')}
+                            onChange={(e) => handleActivityChange(index, 'detail.status', e.target.value)}
+                            label="Status"
+                            disabled={!isEditing}
+                          >
+                            <MenuItem value="not-started">Not Started</MenuItem>
+                            <MenuItem value="scheduled">Scheduled</MenuItem>
+                            <MenuItem value="in-progress">In Progress</MenuItem>
+                            <MenuItem value="on-hold">On Hold</MenuItem>
+                            <MenuItem value="completed">Completed</MenuItem>
+                            <MenuItem value="cancelled">Cancelled</MenuItem>
+                            <MenuItem value="stopped">Stopped</MenuItem>
+                            <MenuItem value="unknown">Unknown</MenuItem>
+                            <MenuItem value="entered-in-error">Entered in Error</MenuItem>
+                          </Select>
+                        </FormControl>
+                      </Grid>
+                      
+                      {/* Kind */}
+                      <Grid item xs={12} sm={6}>
+                        <FormControl fullWidth size="small">
+                          <InputLabel>Kind</InputLabel>
+                          <Select
+                            value={get(activity, 'detail.kind', 'Task')}
+                            onChange={(e) => handleActivityChange(index, 'detail.kind', e.target.value)}
+                            label="Kind"
+                            disabled={!isEditing}
+                          >
+                            <MenuItem value="Appointment">Appointment</MenuItem>
+                            <MenuItem value="CommunicationRequest">Communication Request</MenuItem>
+                            <MenuItem value="DeviceRequest">Device Request</MenuItem>
+                            <MenuItem value="MedicationRequest">Medication Request</MenuItem>
+                            <MenuItem value="NutritionOrder">Nutrition Order</MenuItem>
+                            <MenuItem value="Task">Task</MenuItem>
+                            <MenuItem value="ServiceRequest">Service Request</MenuItem>
+                            <MenuItem value="VisionPrescription">Vision Prescription</MenuItem>
+                          </Select>
+                        </FormControl>
+                      </Grid>
+                      
+                      {/* Reason Reference */}
+                      <Grid item xs={12} sm={6}>
+                        <TextField
+                          fullWidth
+                          label="Reason Reference"
+                          value={get(activity, 'detail.reasonReference[0].reference', '')}
+                          onChange={(e) => handleActivityChange(index, 'detail.reasonReference[0].reference', e.target.value)}
+                          disabled={!isEditing}
+                          size="small"
+                          helperText="e.g., Condition/123"
+                        />
+                      </Grid>
+                      <Grid item xs={12} sm={6}>
+                        <TextField
+                          fullWidth
+                          label="Reason Display"
+                          value={get(activity, 'detail.reasonReference[0].display', '')}
+                          onChange={(e) => handleActivityChange(index, 'detail.reasonReference[0].display', e.target.value)}
+                          disabled={!isEditing}
+                          size="small"
+                        />
+                      </Grid>
+                      
+                      {/* Location */}
+                      <Grid item xs={12} sm={6}>
+                        <TextField
+                          fullWidth
+                          label="Location Reference"
+                          value={get(activity, 'detail.location.reference', '')}
+                          onChange={(e) => handleActivityChange(index, 'detail.location.reference', e.target.value)}
+                          disabled={!isEditing}
+                          size="small"
+                          helperText="e.g., Location/456"
+                        />
+                      </Grid>
+                      <Grid item xs={12} sm={6}>
+                        <TextField
+                          fullWidth
+                          label="Location Display"
+                          value={get(activity, 'detail.location.display', '')}
+                          onChange={(e) => handleActivityChange(index, 'detail.location.display', e.target.value)}
+                          disabled={!isEditing}
+                          size="small"
+                        />
+                      </Grid>
+                    </Grid>
+                  </Paper>
+                ))}
+              </Stack>
+            )}
           </Grid>
         </CardContent>
         
