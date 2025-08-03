@@ -167,18 +167,35 @@ function ConditionDetail(props) {
       let patientName = '';
       let patientReference = '';
       
-      if (selectedPatient && selectedPatientId) {
+      if (selectedPatient || selectedPatientId) {
         // Handle both FHIR and flat patient structures
-        if (typeof selectedPatient.name === 'string') {
-          patientName = selectedPatient.name;
-        } else if (selectedPatient.name && Array.isArray(selectedPatient.name)) {
-          patientName = FhirUtilities.pluckName(selectedPatient);
+        if (selectedPatient) {
+          if (typeof selectedPatient.name === 'string') {
+            patientName = selectedPatient.name;
+          } else if (selectedPatient.name && Array.isArray(selectedPatient.name)) {
+            patientName = FhirUtilities.pluckName(selectedPatient);
+          }
         }
         
-        // Use FHIR id for reference, not MongoDB _id
-        const fhirId = selectedPatient.id || selectedPatientId;
-        patientReference = `Patient/${fhirId}`;
-        console.log('Setting patient reference:', patientReference);
+        // Use FHIR id for reference
+        // Priority: selectedPatient.id > selectedPatientId > selectedPatient._id
+        let fhirId = get(selectedPatient, 'id');
+        if (!fhirId && selectedPatientId) {
+          fhirId = selectedPatientId;
+        }
+        if (!fhirId && selectedPatient && selectedPatient._id) {
+          // Fallback to MongoDB _id if no FHIR id
+          fhirId = typeof selectedPatient._id === 'object' && selectedPatient._id._str 
+            ? selectedPatient._id._str 
+            : String(selectedPatient._id);
+        }
+        
+        if (fhirId) {
+          patientReference = `Patient/${fhirId}`;
+          console.log('Setting patient reference:', patientReference);
+          console.log('Patient FHIR id:', fhirId);
+          console.log('Patient name:', patientName);
+        }
       }
       
       // Set asserter to current user
@@ -287,8 +304,18 @@ function ConditionDetail(props) {
           console.log('Previous condition in setState:', prevCondition);
           const updated = JSON.parse(JSON.stringify(prevCondition));
           
-          // Use FHIR id for reference, not MongoDB _id
-          const fhirId = patient.id || patient._id || patientId;
+          // Use FHIR id for reference
+          // Priority: patient.id > patientId > patient._id
+          let fhirId = patient.id;
+          if (!fhirId && patientId) {
+            fhirId = patientId;
+          }
+          if (!fhirId && patient._id) {
+            // Fallback to MongoDB _id if no FHIR id
+            fhirId = typeof patient._id === 'object' && patient._id._str 
+              ? patient._id._str 
+              : String(patient._id);
+          }
           console.log('Using FHIR ID for reference:', fhirId);
           
           set(updated, 'subject.reference', `Patient/${fhirId}`);

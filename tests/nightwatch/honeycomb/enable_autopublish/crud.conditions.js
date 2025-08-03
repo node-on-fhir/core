@@ -260,13 +260,31 @@ describe('Conditions CRUD Operations', function() {
     // Re-establish the patient selection after navigation
     // The Session seems to lose the patient when changing routes
     browser.execute(function() {
-      if (typeof Session !== 'undefined' && typeof Patients !== 'undefined') {
+      // Check if we have the required objects
+      console.log('Checking for required objects:');
+      console.log('- Session available:', typeof Session !== 'undefined');
+      console.log('- Patients available:', typeof Patients !== 'undefined');
+      console.log('- Meteor.Collections available:', typeof Meteor !== 'undefined' && typeof Meteor.Collections !== 'undefined');
+      
+      // Try multiple ways to access Patients collection
+      let PatientsCollection = null;
+      if (typeof Patients !== 'undefined') {
+        PatientsCollection = Patients;
+      } else if (typeof Meteor !== 'undefined' && Meteor.Collections && Meteor.Collections.Patients) {
+        PatientsCollection = Meteor.Collections.Patients;
+        console.log('Using Meteor.Collections.Patients');
+      } else if (typeof window !== 'undefined' && window.Patients) {
+        PatientsCollection = window.Patients;
+        console.log('Using window.Patients');
+      }
+      
+      if (typeof Session !== 'undefined' && PatientsCollection) {
         // Find any patient to use for testing - prefer one with a FHIR id
-        let patient = Patients.findOne({ id: { $exists: true, $ne: null } });
+        let patient = PatientsCollection.findOne({ id: { $exists: true, $ne: null } });
         
         // If no patient with FHIR id, just get any patient
         if (!patient) {
-          patient = Patients.findOne();
+          patient = PatientsCollection.findOne();
         }
         
         if (patient) {
@@ -298,13 +316,25 @@ describe('Conditions CRUD Operations', function() {
             mongoId: patient._id,
             hasFhirId: !!patient.id
           };
+        } else {
+          console.error('No patients found in database');
+          return { success: false, error: 'No patients found' };
         }
+      } else {
+        console.error('Session or Patients collection not available');
+        return { 
+          success: false, 
+          error: 'Session or Patients not available',
+          hasSession: typeof Session !== 'undefined',
+          hasPatients: !!PatientsCollection
+        };
       }
-      return { success: false };
     }, [], function(result) {
       console.log('Patient re-selection result:', result.value);
       if (result.value.success && !result.value.hasFhirId) {
         console.warn('WARNING: Selected patient has no FHIR id - this may cause filtering issues');
+      } else if (!result.value.success) {
+        console.error('Failed to select patient:', result.value.error);
       }
     });
 
