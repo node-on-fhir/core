@@ -264,18 +264,22 @@ describe('Conditions CRUD Operations', function() {
         // Find any patient to use for testing
         const patient = Patients.findOne();
         if (patient) {
-          // Handle ObjectID conversion
-          const patientId = typeof patient._id === 'object' && patient._id._str 
+          // Use FHIR id for selectedPatientId, not MongoDB _id
+          // This is critical for proper patient references in FHIR resources
+          const patientId = patient.id || (typeof patient._id === 'object' && patient._id._str 
             ? patient._id._str 
-            : patient._id;
+            : patient._id);
             
           Session.set('selectedPatientId', patientId);
           Session.set('selectedPatient', patient);
           console.log('Re-established patient selection:', patientId, patient.name?.[0]?.text);
+          console.log('Patient FHIR id:', patient.id, 'MongoDB _id:', patient._id);
           return { 
             success: true, 
             patientId: patientId,
-            patientName: patient.name?.[0]?.text || 'Unknown'
+            patientName: patient.name?.[0]?.text || 'Unknown',
+            fhirId: patient.id,
+            mongoId: patient._id
           };
         }
       }

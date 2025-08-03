@@ -938,14 +938,20 @@ describe('CarePlans CRUD Operations', function() {
         const hasErrors = errorElements.length > 0;
         
         let foundEmptyCarePlan = false;
+        let foundDefaultCarePlan = false;
         if (hasTable) {
           const rows = document.querySelectorAll('#carePlansTable tbody tr');
           for (let row of rows) {
             const cells = row.querySelectorAll('td');
             if (cells.length > 2) {
               const titleCell = cells[1];
-              if (!titleCell.textContent || titleCell.textContent.trim() === '') {
+              const titleText = titleCell.textContent.trim();
+              if (!titleText || titleText === '') {
                 foundEmptyCarePlan = true;
+                break;
+              } else if (titleText === 'Care plan') {
+                // This is the default category text when no title is provided
+                foundDefaultCarePlan = true;
                 break;
               }
             }
@@ -958,15 +964,16 @@ describe('CarePlans CRUD Operations', function() {
           hasTable: hasTable,
           hasNoDataCard: hasNoDataCard,
           hasErrors: hasErrors,
-          foundEmptyCarePlan: foundEmptyCarePlan
+          foundEmptyCarePlan: foundEmptyCarePlan,
+          foundDefaultCarePlan: foundDefaultCarePlan
         };
       }, [], function(result) {
         console.log('Form submission result:', result.value);
         
         if (result.value.isOnDetailPage && result.value.hasErrors) {
           browser.assert.ok(true, 'Form validation prevented submission (validation working correctly)');
-        } else if (result.value.isOnListPage && result.value.foundEmptyCarePlan) {
-          browser.assert.ok(true, 'Care plan created with empty fields (no validation)');
+        } else if (result.value.isOnListPage && (result.value.foundEmptyCarePlan || result.value.foundDefaultCarePlan)) {
+          browser.assert.ok(true, 'Care plan created with default/empty fields (no validation)');
         } else if (result.value.isOnListPage && result.value.hasNoDataCard) {
           browser.assert.ok(true, 'No care plans exist (validation may have prevented save)');
         } else {
