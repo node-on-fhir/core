@@ -187,6 +187,8 @@ Meteor.startup(function(){
 // 
 // Now using centralized virtual indexes for better organization and cross-resource patterns
 
+import '../ui-tables';  // Auto-registers all Tables on Meteor.Tables
+
 //===============================================================================================================
 // Data Cursors
 

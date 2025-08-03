@@ -512,7 +512,26 @@ describe('Conditions CRUD Operations', function() {
   it('05. Verify new condition appears in list', browser => {
     browser
       .waitForElementVisible('#conditionsPage', 5000)
-      .pause(1000)
+      .pause(1000);
+    
+    // Check if we have the no-data state or the table
+    browser.execute(function() {
+      const hasTable = document.querySelector('#conditionsTable') !== null;
+      const hasNoDataCard = document.querySelector('.no-data-card') !== null;
+      const pageText = document.querySelector('#conditionsPage')?.textContent || '';
+      return {
+        hasTable: hasTable,
+        hasNoDataCard: hasNoDataCard,
+        hasNoData: pageText.includes('No Data Available')
+      };
+    }, [], function(result) {
+      console.log('Page state:', result.value);
+      if (result.value.hasNoData || result.value.hasNoDataCard) {
+        browser.assert.fail('No conditions found - save operation may have failed');
+      }
+    });
+    
+    browser
       .waitForElementVisible('#conditionsTable', 5000)
       .assert.containsText('#conditionsTable', testCondition.asserterName)
       .assert.containsText('#conditionsTable', testCondition.conditionName)

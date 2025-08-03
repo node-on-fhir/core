@@ -51,6 +51,109 @@ export { default as ServiceRequestsTable } from '../ui-fhir/serviceRequests/Serv
 export { default as TasksTable } from '../ui-fhir/tasks/TasksTable';
 export { default as ValueSetsTable } from '../ui-fhir/valuesets/ValueSetsTable';
 
-// Note: Components are automatically registered on Meteor.Tables when imported in App.jsx
-// The virtual index exports allow clean imports like:
-// import { PatientsTable, ConditionsTable } from '/imports/ui-tables';
+// Import all tables to register on Meteor.Tables
+import ActivityDefinitionsTable from '../ui-fhir/activityDefinitions/ActivityDefinitionsTable';
+import AllergyIntolerancesTable from '../ui-fhir/allergyIntolerances/AllergyIntolerancesTable';
+import ArtifactAssessmentsTable from '../ui-fhir/artifactAssessments/ArtifactAssessmentsTable';
+import BasicsTable from '../ui-fhir/basics/BasicsTable';
+import BundlesTable from '../ui-fhir/bundles/BundlesTable';
+import ActivitiesTable from '../ui-fhir/carePlans/ActivitiesTable';
+import CarePlansTable from '../ui-fhir/carePlans/CarePlansTable';
+import CareTeamsTable from '../ui-fhir/careTeams/CareTeamsTable';
+import ClaimsTable from '../ui-fhir/claims/ClaimsTable';
+import CodeSystemsTable from '../ui-fhir/codeSystems/CodeSystemsTable';
+import CodeSystemsConceptsTable from '../ui-fhir/codeSystems/CodeSystemsConceptsTable';
+import CommunicationsTable from '../ui-fhir/communications/CommunicationsTable';
+import CompositionsTable from '../ui-fhir/compositions/CompositionsTable';
+import ConditionsTable from '../ui-fhir/conditions/ConditionsTable';
+import ConsentsTable from './ConsentsTable';
+import DevicesTable from '../ui-fhir/devices/DevicesTable';
+import DocumentReferencesTable from '../ui-fhir/documentReferences/DocumentReferencesTable';
+import EncountersTable from '../ui-fhir/encounters/EncountersTable';
+import EndpointsTable from './EndpointsTable';
+import EvidencesTable from '../ui-fhir/evidences/EvidencesTable';
+import GoalsTable from '../ui-fhir/goals/GoalsTable';
+import GuidanceResponsesTable from '../ui-fhir/guidanceResponses/GuidanceResponsesTable';
+import ImmunizationsTable from '../ui-fhir/immunizations/ImmunizationsTable';
+import LibrariesTable from '../ui-fhir/libraries/LibrariesTable';
+import ListsTable from '../ui-fhir/lists/ListsTable';
+import LocationsTable from '../ui-fhir/locations/LocationsTable';
+import MedicationAdministrationsTable from '../ui-fhir/medicationAdministrations/MedicationAdministrationsTable';
+import MedicationRequestsTable from '../ui-fhir/medicationRequests/MedicationRequestsTable';
+import MedicationsTable from '../ui-fhir/medications/MedicationsTable';
+import MedicationStatementsTable from '../ui-fhir/medicationStatements/MedicationStatementsTable';
+import NutritionOrdersTable from '../ui-fhir/nutritionOrders/NutritionOrdersTable';
+import ObservationsTable from '../ui-fhir/observations/ObservationsTable';
+import OperationOutcomesTable from '../ui-fhir/operationOutcomes/OperationOutcomesTable';
+import PatientsTable from './PatientsTable';
+import PersonsTable from './PersonsTable';
+import PlanDefinitionsTable from '../ui-fhir/planDefinitions/PlanDefinitionsTable';
+import PractitionersTable from '../ui-fhir/practitioners/PractitionersTable';
+import ProceduresTable from '../ui-fhir/procedures/ProceduresTable';
+import QuestionnaireResponsesTable from '../ui-fhir/questionnaireResponses/QuestionnaireResponsesTable';
+import QuestionnairesTable from '../ui-fhir/questionnaires/QuestionnairesTable';
+import ResearchStudiesTable from '../ui-fhir/researchStudies/ResearchStudiesTable';
+import ResearchSubjectsTable from '../ui-fhir/researchSubjects/ResearchSubjectsTable';
+import ServiceRequestsTable from '../ui-fhir/serviceRequests/ServiceRequestsTable';
+import TasksTable from '../ui-fhir/tasks/TasksTable';
+import ValueSetsTable from '../ui-fhir/valuesets/ValueSetsTable';
+
+// Auto-registration on Meteor.Tables when client starts up
+if (Meteor.isClient) {
+  Meteor.startup(function() {
+    if (!Meteor.Tables) {
+      Meteor.Tables = {};
+    }
+    
+    // Register all tables
+    Object.assign(Meteor.Tables, {
+      ActivityDefinitionsTable,
+      AllergyIntolerancesTable,
+      ArtifactAssessmentsTable,
+      BasicsTable,
+      BundlesTable,
+      ActivitiesTable,
+      CarePlansTable,
+      CareTeamsTable,
+      ClaimsTable,
+      CodeSystemsTable,
+      CodeSystemsConceptsTable,
+      CommunicationsTable,
+      CompositionsTable,
+      ConditionsTable,
+      ConsentsTable,
+      DevicesTable,
+      DocumentReferencesTable,
+      EncountersTable,
+      EndpointsTable,
+      EvidencesTable,
+      GoalsTable,
+      GuidanceResponsesTable,
+      ImmunizationsTable,
+      LibrariesTable,
+      ListsTable,
+      LocationsTable,
+      MedicationAdministrationsTable,
+      MedicationRequestsTable,
+      MedicationsTable,
+      MedicationStatementsTable,
+      NutritionOrdersTable,
+      ObservationsTable,
+      OperationOutcomesTable,
+      PatientsTable,
+      PersonsTable,
+      PlanDefinitionsTable,
+      PractitionersTable,
+      ProceduresTable,
+      QuestionnaireResponsesTable,
+      QuestionnairesTable,
+      ResearchStudiesTable,
+      ResearchSubjectsTable,
+      ServiceRequestsTable,
+      TasksTable,
+      ValueSetsTable
+    });
+    
+    console.log('Registered ' + Object.keys(Meteor.Tables).length + ' FHIR Table components on Meteor.Tables');
+  });
+}
