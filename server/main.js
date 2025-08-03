@@ -52,6 +52,7 @@ import '../imports/accounts/server/test-methods.js';
 // Import publications
 import './publications/autopublish.js';
 import './publications/patients.js';
+import './publications/conditions.js';
 
 // Import FHIR methods
 import '../imports/methods/fhirResourceStatistics.js';
