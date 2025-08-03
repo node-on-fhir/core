@@ -261,31 +261,51 @@ describe('Conditions CRUD Operations', function() {
     // The Session seems to lose the patient when changing routes
     browser.execute(function() {
       if (typeof Session !== 'undefined' && typeof Patients !== 'undefined') {
-        // Find any patient to use for testing
-        const patient = Patients.findOne();
+        // Find any patient to use for testing - prefer one with a FHIR id
+        let patient = Patients.findOne({ id: { $exists: true, $ne: null } });
+        
+        // If no patient with FHIR id, just get any patient
+        if (!patient) {
+          patient = Patients.findOne();
+        }
+        
         if (patient) {
-          // Use FHIR id for selectedPatientId, not MongoDB _id
-          // This is critical for proper patient references in FHIR resources
-          const patientId = patient.id || (typeof patient._id === 'object' && patient._id._str 
-            ? patient._id._str 
-            : patient._id);
-            
+          // CRITICAL: For FHIR resources, we MUST use the FHIR id field, not MongoDB _id
+          // The ConditionsPage filters by FHIR id in the patient reference
+          let patientId = patient.id;
+          
+          // If no FHIR id, generate one from MongoDB _id
+          if (!patientId) {
+            patientId = typeof patient._id === 'object' && patient._id._str 
+              ? patient._id._str 
+              : String(patient._id);
+            console.warn('Patient has no FHIR id, using MongoDB _id as fallback:', patientId);
+          }
+          
           Session.set('selectedPatientId', patientId);
           Session.set('selectedPatient', patient);
-          console.log('Re-established patient selection:', patientId, patient.name?.[0]?.text);
-          console.log('Patient FHIR id:', patient.id, 'MongoDB _id:', patient._id);
+          console.log('Re-established patient selection:');
+          console.log('- selectedPatientId set to:', patientId);
+          console.log('- Patient name:', patient.name?.[0]?.text);
+          console.log('- Patient FHIR id:', patient.id);
+          console.log('- Patient MongoDB _id:', patient._id);
+          
           return { 
             success: true, 
             patientId: patientId,
             patientName: patient.name?.[0]?.text || 'Unknown',
             fhirId: patient.id,
-            mongoId: patient._id
+            mongoId: patient._id,
+            hasFhirId: !!patient.id
           };
         }
       }
       return { success: false };
     }, [], function(result) {
       console.log('Patient re-selection result:', result.value);
+      if (result.value.success && !result.value.hasFhirId) {
+        console.warn('WARNING: Selected patient has no FHIR id - this may cause filtering issues');
+      }
     });
 
     // Click the Add Condition button - handle both "Add Condition" and "Add Your First Condition"
@@ -722,7 +742,7 @@ describe('Conditions CRUD Operations', function() {
       .pause(500)
       .saveScreenshot('tests/nightwatch/screenshots/conditions/04-filled-condition-form.png');
 
-    // Before saving, log what's in the form
+    // Before saving, log what's in the form and intercept the save
     browser
       .execute(function() {
         // Log all form field values
@@ -740,8 +760,30 @@ describe('Conditions CRUD Operations', function() {
         // Also check Session values and hidden reference field
         let patientReference = '';
         if (typeof Session !== 'undefined') {
-          console.log('Session selectedPatientId:', Session.get('selectedPatientId'));
-          console.log('Session selectedPatient:', Session.get('selectedPatient'));
+          const selectedPatientId = Session.get('selectedPatientId');
+          const selectedPatient = Session.get('selectedPatient');
+          console.log('Session selectedPatientId:', selectedPatientId);
+          console.log('Session selectedPatient:', selectedPatient);
+          console.log('Patient FHIR id:', selectedPatient?.id);
+          console.log('Patient name:', selectedPatient?.name);
+        }
+        
+        // Intercept the save method to log what's being saved
+        if (typeof Meteor !== 'undefined' && Meteor.callAsync) {
+          const originalCall = Meteor.callAsync;
+          Meteor.callAsync = async function(method, ...args) {
+            if (method === 'conditions.create') {
+              console.log('=== Intercepted conditions.create ===');
+              console.log('Method:', method);
+              console.log('Condition data:', JSON.stringify(args[0], null, 2));
+              if (args[0] && args[0].subject) {
+                console.log('Subject reference:', args[0].subject.reference);
+                console.log('Subject display:', args[0].subject.display);
+              }
+            }
+            return originalCall.apply(this, [method, ...args]);
+          };
+          window.meteorcallIntercepted = true;
         }
         
         // Check if there's a hidden field for patient reference
@@ -853,7 +895,17 @@ describe('Conditions CRUD Operations', function() {
         console.log('Found test condition:', testCondition);
         
         if (testCondition) {
-          console.log('Test condition subject:', testCondition.subject);
+          console.log('Test condition subject:', JSON.stringify(testCondition.subject, null, 2));
+          console.log('Test condition patient reference:', testCondition.subject?.reference);
+          console.log('Test condition patient display:', testCondition.subject?.display);
+        }
+        
+        // Also check what the filtered query would return
+        if (typeof FhirUtilities !== 'undefined' && selectedPatientId) {
+          const filteredQuery = FhirUtilities.addPatientFilterToQuery(selectedPatientId);
+          console.log('Filter query:', JSON.stringify(filteredQuery, null, 2));
+          const filteredConditions = Conditions.find(filteredQuery).fetch();
+          console.log('Filtered conditions count:', filteredConditions.length);
         }
       }
       
