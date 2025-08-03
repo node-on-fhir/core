@@ -578,6 +578,6 @@ let ConditionSchema = ConditionR4;
 
 BaseSchema.extend(ConditionSchema);
 DomainResourceSchema.extend(ConditionSchema);
-Conditions.attachSchema(ConditionSchema);
+// Conditions.attachSchema(ConditionSchema);
 
 export default { Condition, Conditions, ConditionSchema, ConditionStu3, ConditionDstu2 };
