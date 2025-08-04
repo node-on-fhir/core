@@ -433,34 +433,105 @@ export default function SyntheaConfigurationPage() {
             borderRadius: 3
           }}
         >
-          <Grid container spacing={3} alignItems="center">
-            <Grid item xs={12} md={8}>
+          <Grid container spacing={3}>
+            <Grid item xs={12}>
               <Typography variant="h3" gutterBottom sx={{ fontWeight: 700 }}>
                 Synthea Configuration
               </Typography>
-              <Typography variant="h6" color="text.secondary">
+              <Typography variant="h6" color="text.secondary" gutterBottom>
                 Generate synthetic patient data with a user-friendly interface
               </Typography>
             </Grid>
-            <Grid item xs={12} md={4} sx={{ textAlign: { md: 'right' } }}>
-              <Button
-                variant="contained"
-                size="large"
-                startIcon={<Code />}
-                onClick={copyToClipboard}
-                disabled={!commandGenerated}
-                sx={{ mr: 2 }}
+            
+            <Grid item xs={12}>
+              <Box 
+                sx={{ 
+                  p: 2, 
+                  backgroundColor: theme.palette.mode === 'dark' ? 'black' : 'white',
+                  borderRadius: 1,
+                  fontFamily: 'monospace',
+                  fontSize: '0.875rem',
+                  overflowX: 'auto',
+                  border: `1px solid ${theme.palette.divider}`,
+                  position: 'relative',
+                  minHeight: '60px',
+                  display: 'flex',
+                  alignItems: 'center'
+                }}
               >
-                Copy Command
-              </Button>
-              <Button
-                variant="outlined"
-                size="large"
-                startIcon={<Download />}
-                onClick={exportConfiguration}
-              >
-                Export Config
-              </Button>
+                {commandGenerated ? (
+                  <>
+                    <Typography component="pre" sx={{ margin: 0, pr: 5 }}>
+                      {generateCommand()}
+                    </Typography>
+                    <Box sx={{ 
+                      position: 'absolute',
+                      right: 8,
+                      top: 8,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 1
+                    }}>
+                      <Chip 
+                        icon={<CheckCircle />} 
+                        label="Ready" 
+                        color="success" 
+                        size="small" 
+                      />
+                      <IconButton
+                        size="small"
+                        onClick={copyToClipboard}
+                        sx={{ 
+                          backgroundColor: theme.palette.background.paper
+                        }}
+                      >
+                        <ContentCopy fontSize="small" />
+                      </IconButton>
+                    </Box>
+                  </>
+                ) : (
+                  <Typography color="text.secondary">
+                    Click "Generate Command" to see your Synthea command
+                  </Typography>
+                )}
+              </Box>
+            </Grid>
+            
+            <Grid item xs={12}>
+              <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+                <Button
+                  variant="contained"
+                  startIcon={<PlayArrow />}
+                  onClick={() => {
+                    setCommandGenerated(true);
+                  }}
+                >
+                  Generate Command
+                </Button>
+                <Button
+                  variant="outlined"
+                  startIcon={<Download />}
+                  onClick={exportConfiguration}
+                >
+                  Export Config
+                </Button>
+                <Button
+                  variant="outlined"
+                  startIcon={<Info />}
+                  href="https://github.com/synthetichealth/synthea/wiki"
+                  target="_blank"
+                >
+                  Synthea Documentation
+                </Button>
+                <Button
+                  variant="outlined"
+                  startIcon={<Info />}
+                  href="https://www.mongodb.com/docs/compass/install/"
+                  target="_blank"
+                >
+                  Mongo Compass Docs
+                </Button>
+              </Box>
             </Grid>
           </Grid>
         </Paper>
@@ -1550,89 +1621,6 @@ export default function SyntheaConfigurationPage() {
           </TabPanel>
         </CardContent>
       </Card>
-
-      <Paper 
-        elevation={0} 
-        sx={{ 
-          mt: 4, 
-          p: 3, 
-          backgroundColor: theme.palette.mode === 'dark' ? 'grey.900' : 'grey.50',
-          border: `1px solid ${theme.palette.divider}`,
-          borderRadius: 2
-        }}
-      >
-        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-          <Code sx={{ mr: 1 }} />
-          <Typography variant="h6">Generated Command</Typography>
-          {commandGenerated && (
-            <Chip 
-              icon={<CheckCircle />} 
-              label="Ready" 
-              color="success" 
-              size="small" 
-              sx={{ ml: 2 }}
-            />
-          )}
-        </Box>
-        <Box 
-          sx={{ 
-            p: 2, 
-            backgroundColor: theme.palette.mode === 'dark' ? 'black' : 'white',
-            borderRadius: 1,
-            fontFamily: 'monospace',
-            fontSize: '0.875rem',
-            overflowX: 'auto',
-            border: `1px solid ${theme.palette.divider}`,
-            position: 'relative',
-            minHeight: '60px',
-            display: 'flex',
-            alignItems: 'center'
-          }}
-        >
-          {commandGenerated ? (
-            <>
-              <Typography component="pre" sx={{ margin: 0, pr: 5 }}>
-                {generateCommand()}
-              </Typography>
-              <IconButton
-                size="small"
-                onClick={copyToClipboard}
-                sx={{ 
-                  position: 'absolute',
-                  right: 8,
-                  top: 8,
-                  backgroundColor: theme.palette.background.paper
-                }}
-              >
-                <ContentCopy fontSize="small" />
-              </IconButton>
-            </>
-          ) : (
-            <Typography color="text.secondary">
-              Click "Generate Command" to see your Synthea command
-            </Typography>
-          )}
-        </Box>
-        <Box sx={{ mt: 2, display: 'flex', gap: 2 }}>
-          <Button
-            variant="contained"
-            startIcon={<PlayArrow />}
-            onClick={() => {
-              setCommandGenerated(true);
-            }}
-          >
-            Generate Command
-          </Button>
-          <Button
-            variant="outlined"
-            startIcon={<Info />}
-            href="https://github.com/synthetichealth/synthea/wiki"
-            target="_blank"
-          >
-            Synthea Documentation
-          </Button>
-        </Box>
-      </Paper>
 
       <Snackbar
         open={showSnackbar}
