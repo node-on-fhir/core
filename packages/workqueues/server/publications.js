@@ -10,7 +10,9 @@ Meteor.publish('workqueues.myTasks', function(options = {}) {
     limit: Match.Optional(Number),
     status: Match.Optional(Match.OneOf(String, [String])),
     priority: Match.Optional(Match.OneOf(String, [String])),
-    showCompleted: Match.Optional(Boolean)
+    showCompleted: Match.Optional(Boolean),
+    sortBy: Match.Optional(String),
+    sortOrder: Match.Optional(String)
   });
 
   if (!this.userId) {
@@ -66,7 +68,10 @@ Meteor.publish('workqueues.queueTasks', function(queueId, options = {}) {
   check(options, {
     limit: Match.Optional(Number),
     status: Match.Optional(Match.OneOf(String, [String])),
-    showCompleted: Match.Optional(Boolean)
+    priority: Match.Optional(Match.OneOf(String, [String])),
+    showCompleted: Match.Optional(Boolean),
+    sortBy: Match.Optional(String),
+    sortOrder: Match.Optional(String)
   });
 
   if (!this.userId) {

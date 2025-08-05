@@ -18,6 +18,7 @@ import {
 // Main package exports
 export { WorkQueues, WorkQueueItems } from './lib/collections';
 export { WorkQueuesPage } from './ui/pages/WorkQueuesPage.jsx';
+export { WorkQueuesSimplePage } from './ui/pages/WorkQueuesSimplePage.jsx';
 export { WorkQueueList } from './ui/components/WorkQueueList.jsx';
 export { WorkItemCard } from './ui/components/WorkItemCard.jsx';
 export { WorkItemDetail } from './ui/components/WorkItemDetail.jsx';
@@ -44,9 +45,21 @@ export const SidebarWorkflows = [{
   requireAuth: true
 }];
 
+// Import the page component for the route
+import { WorkQueuesSimplePage } from './ui/pages/WorkQueuesSimplePage.jsx';
+
+// DynamicRoutes export for automatic route registration
+export const DynamicRoutes = [{
+  name: 'WorkQueues',
+  path: '/workqueues',
+  element: <WorkQueuesSimplePage />,
+  requireAuth: true
+}];
+
 // Log to verify the export is working
 if (Meteor.isClient) {
   console.log('WorkQueues package: SidebarWorkflows exported', SidebarWorkflows);
+  console.log('WorkQueues package: DynamicRoutes exported', DynamicRoutes);
 }
 
 // Alternative MenuItem export (some apps may use this pattern)

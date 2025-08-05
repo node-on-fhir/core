@@ -18,5 +18,5 @@ export { WorkQueuesSimplePage } from '../ui/pages/WorkQueuesSimplePage.jsx';
 export { useWorkQueue } from './hooks/useWorkQueue.js';
 export { useWorkQueueItem } from './hooks/useWorkQueueItem.js';
 
-// Export sidebar workflow configuration
-export { SidebarWorkflows, WorkQueuesMenuItem } from '../index.jsx';
+// Export sidebar workflow configuration and routes
+export { SidebarWorkflows, WorkQueuesMenuItem, DynamicRoutes } from '../index.jsx';

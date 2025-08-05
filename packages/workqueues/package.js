@@ -37,6 +37,8 @@ Package.onUse(function(api) {
   api.export('WorkQueueItems');
   api.export('SidebarWorkflows', 'client');
   api.export('WorkQueuesMenuItem', 'client');
+  api.export('DynamicRoutes', 'client');
+  api.export('WorkQueuesSimplePage', 'client');
 });
 
 Package.onTest(function(api) {

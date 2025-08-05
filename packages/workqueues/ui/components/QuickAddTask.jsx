@@ -54,11 +54,13 @@ export function QuickAddTask({
     const taskData = {
       text: taskText.trim(),
       priority: star ? 'urgent' : priority,
-      queueId,
-      category,
-      dueDate,
       tags
     };
+    
+    // Only add optional fields if they have values
+    if (queueId) taskData.queueId = queueId;
+    if (category) taskData.category = category;
+    if (dueDate) taskData.dueDate = dueDate;
     
     try {
       const taskId = await Meteor.callAsync('workqueues.createTask', taskData);
