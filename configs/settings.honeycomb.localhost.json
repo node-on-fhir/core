@@ -91,6 +91,7 @@
           "FhirModules": true,
           "DynamicModules": true,
           "SidebarWorkflows": true,
+          "ClinicianWorkflows": true,
           "Theme": false,
           "About": true,
           "Privacy": true,
