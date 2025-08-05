@@ -67,6 +67,8 @@ import PatientChart from '../patient/PatientChart.jsx';
 
 import PatientsDirectory from '../ui-modules/PatientsDirectory.jsx';
 
+// Optional package imports would go here when packages are added
+
 //===============================================================================================================
 // FHIR Page Components
 
@@ -513,6 +515,8 @@ if(get(Meteor, 'settings.public.modules.Theming')){
     element: <ThemingPage />
   })
 }
+
+// Optional package routes would be registered here dynamically when packages are added
 
 
 
