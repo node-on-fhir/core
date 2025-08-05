@@ -11,6 +11,7 @@ import { FhirClientContext } from "../FhirClientContext";
 import {
     Box,
     Button,
+    ButtonGroup,
     Card,
     CardContent,
     CardHeader,
@@ -27,7 +28,9 @@ import {
     Collapse,
     useTheme,
     alpha,
-    Stack
+    Stack,
+    ToggleButton,
+    ToggleButtonGroup
 } from '@mui/material';
 
 import {
@@ -49,7 +52,10 @@ import {
     Warning as WarningIcon,
     MedicalInformation as MedicalInformationIcon,
     Chat as ChatIcon,
-    Article as ArticleIcon
+    Article as ArticleIcon,
+    Person as PersonIcon,
+    Code as CodeIcon,
+    Badge as BadgeIcon
 } from '@mui/icons-material';
 
 import { useTracker } from 'meteor/react-meteor-data';
@@ -220,6 +226,11 @@ export function AutoDashboard(props){
         communications: false,
         compositions: false
     });
+
+    // State for column visibility
+    const [showPatientName, setShowPatientName] = useState(false);
+    const [showPatientReference, setShowPatientReference] = useState(false);
+    const [showSystemId, setShowSystemId] = useState(false);
 
     const toggleSection = function(section) {
         setExpandedSections(prev => ({
@@ -427,8 +438,8 @@ export function AutoDashboard(props){
             hideIdentifier={true}
             hideCheckboxes={true}
             hideActionIcons={true}
-            hideSubject={true}
-            hideBarcode={true}
+            hideSubject={!showPatientReference}
+            hideBarcode={!showSystemId}
             count={data.careTeams.length}
             page={careTeamsPage}   
             rowsPerPage={5}    
@@ -445,7 +456,8 @@ export function AutoDashboard(props){
             hideCheckboxes={true}
             hideActionIcons={true}
             hideIdentifier={true}
-            hideSubject={true}
+            hideSubject={!showPatientReference}
+            hideBarcode={!showSystemId}
             page={carePlansPage}
             rowsPerPage={5}
             onSetPage={function(newPage){
@@ -461,7 +473,8 @@ export function AutoDashboard(props){
             hidePeriodEnd={true}
             hideOrganization={true}
             hideCategory={true}
-            hidePatientName={isMobile}
+            hidePatientName={!showPatientName}
+            hideBarcode={!showSystemId}
             consents={data.consents}
             count={data.consents.length}
             page={consentsPage}
@@ -477,7 +490,9 @@ export function AutoDashboard(props){
             encounters={data.encounters}
             hideCheckboxes={true}
             hideActionIcons={true}
-            hideSubjects={true}
+            hidePatientName={!showPatientName}
+            hidePatientReference={!showPatientReference}
+            hideBarcode={!showSystemId}
             hideType={false}
             hideTypeCode={false}
             hideReason={isMobile}
@@ -499,11 +514,11 @@ export function AutoDashboard(props){
             hideCheckbox={true}
             hideActionIcons={true}
             hideIdentifier={true}
-            hidePatientName={true}
-            hidePatientReference={true}
+            hidePatientName={!showPatientName}
+            hidePatientReference={!showPatientReference}
             hideAsserterName={true}
             hideEvidence={true}
-            hideBarcode={true}
+            hideBarcode={!showSystemId}
             hideDates={false}
             count={data.conditions.length}
             page={conditionsPage}
@@ -520,7 +535,8 @@ export function AutoDashboard(props){
             hideCheckbox={true}
             hideIdentifier={true}
             hideActionIcons={true}
-            hidePatient={true}
+            hidePatient={!showPatientName}
+            hideBarcode={!showSystemId}
             hidePerformer={true}
             hideVaccineCode={false}
             hideVaccineCodeText={false}
@@ -538,10 +554,10 @@ export function AutoDashboard(props){
             observations={data.observations}
             hideCheckbox={true}
             hideActionIcons={true}
-            hideSubject={true}
+            hideSubject={!showPatientReference}
             hideDevices={true}
             hideValue={false}
-            hideBarcode={true}
+            hideBarcode={!showSystemId}
             hideDenominator={true}
             hideNumerator={true}
             multiline={true}
@@ -564,14 +580,14 @@ export function AutoDashboard(props){
             hideActionIcons={true}
             hideIdentifier={true}
             hideCategory={true}
-            hideSubject={true}
+            hideSubject={!showPatientName}
             hideBodySite={true}
             hideCode={isMobile}
             hidePerformer={isMobile}
             hidePerformedDateEnd={true}
-            hideSubjectReference={true}
+            hideSubjectReference={!showPatientReference}
             hideNotes={isMobile}
-            hideBarcode={true}
+            hideBarcode={!showSystemId}
             count={data.procedures.length}
             page={proceduresPage}
             onSetPage={function(newPage){
@@ -587,10 +603,10 @@ export function AutoDashboard(props){
             hideCheckbox={true}
             hideActionIcons={true}
             hideIdentifier={true}
-            hideSubjectDisplay={true}
-            hideSubjectReference={true}
+            hideSubjectDisplay={!showPatientName}
+            hideSubjectReference={!showPatientReference}
             hideSourceReference={true}
-            hideBarcode={true}
+            hideBarcode={!showSystemId}
             page={questionnaireResponsesPage}
             rowsPerPage={5}
             onSetPage={function(newPage){
@@ -607,7 +623,8 @@ export function AutoDashboard(props){
             hideCheckbox={true}
             hideActionIcons={true}
             hideIdentifier={true}
-            hideSubject={true}
+            hideSubject={!showPatientReference}
+            hideBarcode={!showSystemId}
             page={goalsPage}
             rowsPerPage={5}
             onSetPage={function(newPage){
@@ -640,7 +657,8 @@ export function AutoDashboard(props){
             hideCheckbox={true}
             hideActionIcons={true}
             hideIdentifier={true}
-            hidePatient={true}
+            hidePatient={!showPatientName}
+            hideBarcode={!showSystemId}
             page={medicationAdministrationsPage}
             rowsPerPage={5}
             onSetPage={function(newPage){
@@ -656,8 +674,9 @@ export function AutoDashboard(props){
             hideCheckbox={true}
             hideActionIcons={true}
             hideIdentifier={true}
-            hidePatientReference={true}
-            hidePatientName={true}
+            hidePatientReference={!showPatientReference}
+            hidePatientName={!showPatientName}
+            hideBarcode={!showSystemId}
             page={medicationRequestsPage}
             rowsPerPage={5}
             onSetPage={function(newPage){
@@ -673,10 +692,10 @@ export function AutoDashboard(props){
             hideCheckbox={true}
             hideActionIcons={true}
             hideIdentifier={true}
-            hideSubjectDisplay={true}
-            hideSubjectReference={true}
+            hideSubjectDisplay={!showPatientName}
+            hideSubjectReference={!showPatientReference}
             hideAuthor={true}
-            hideBarcode={true}
+            hideBarcode={!showSystemId}
             hideType={false}
             hideCategory={true}
             multiline={false}
@@ -695,8 +714,8 @@ export function AutoDashboard(props){
             hideCheckbox={true}
             hideActionIcons={true}
             hideIdentifier={true}
-            hidePatientDisplay={true}
-            hideBarcode={true}
+            hidePatientDisplay={!showPatientName}
+            hideBarcode={!showSystemId}
             hideVerification={true}
             hideClinicalStatus={false}
             multiline={false}
@@ -715,7 +734,8 @@ export function AutoDashboard(props){
             hideCheckbox={true}
             hideActionIcons={true}
             hideIdentifier={true}
-            hideSubject={true}
+            hideSubject={!showPatientReference}
+            hideBarcode={!showSystemId}
             hideRequestorReference={true}
             hideText={true}
             page={serviceRequestsPage}
@@ -733,7 +753,8 @@ export function AutoDashboard(props){
             hideCheckbox={true}
             hideActionIcons={true}
             hideIdentifier={true}
-            hideSubject={true}
+            hideSubject={!showPatientReference}
+            hideBarcode={!showSystemId}
             page={communicationsPage}
             rowsPerPage={5}
             onSetPage={function(newPage){
@@ -749,8 +770,9 @@ export function AutoDashboard(props){
             hideCheckbox={true}
             hideActionIcons={true}
             hideIdentifier={true}
-            hideSubject={true}
-            hideSubjectReference={true}
+            hideSubject={!showPatientName}
+            hideSubjectReference={!showPatientReference}
+            hideBarcode={!showSystemId}
             hideEncounterReference={true}
             hideType={true}
             hideCategory={true}
@@ -777,6 +799,118 @@ export function AutoDashboard(props){
                         showSummary={true}
                         showName={true}
                     />
+                </Box>
+
+                {/* Sticky Action Controls */}
+                <Box
+                    sx={{
+                        position: 'sticky',
+                        top: 0,
+                        zIndex: 100,
+                        display: 'flex',
+                        justifyContent: 'flex-end',
+                        alignItems: 'center',
+                        gap: 2,
+                        mb: 2,
+                        py: 1
+                    }}
+                >
+                    {/* Column Visibility Toggles */}
+                    <ToggleButtonGroup
+                        value={[
+                            showPatientName && 'patientName',
+                            showPatientReference && 'patientReference',
+                            showSystemId && 'systemId'
+                        ].filter(Boolean)}
+                        onChange={(event, newFormats) => {
+                            setShowPatientName(newFormats.includes('patientName'));
+                            setShowPatientReference(newFormats.includes('patientReference'));
+                            setShowSystemId(newFormats.includes('systemId'));
+                        }}
+                        aria-label="display options"
+                        size="small"
+                        sx={{
+                            '& .MuiToggleButton-root': {
+                                borderColor: 'divider',
+                                color: 'text.secondary',
+                                '&.Mui-selected': {
+                                    backgroundColor: alpha(theme.palette.primary.main, 0.08),
+                                    color: 'primary.main',
+                                    borderColor: 'primary.main',
+                                    '&:hover': {
+                                        backgroundColor: alpha(theme.palette.primary.main, 0.12)
+                                    }
+                                },
+                                '&:hover': {
+                                    backgroundColor: 'action.hover'
+                                }
+                            }
+                        }}
+                    >
+                        <ToggleButton value="patientName" aria-label="show patient name">
+                            <PersonIcon fontSize="small" />
+                        </ToggleButton>
+                        <ToggleButton value="patientReference" aria-label="show patient reference">
+                            <CodeIcon fontSize="small" />
+                        </ToggleButton>
+                        <ToggleButton value="systemId" aria-label="show system id">
+                            <BadgeIcon fontSize="small" />
+                        </ToggleButton>
+                    </ToggleButtonGroup>
+
+                    {/* Expand/Collapse Controls */}
+                    <ButtonGroup variant="outlined" size="small">
+                        <Button
+                            onClick={() => {
+                                // Expand all sections
+                                const allExpanded = Object.keys(expandedSections).reduce((acc, key) => {
+                                    acc[key] = true;
+                                    return acc;
+                                }, {});
+                                setExpandedSections(allExpanded);
+                            }}
+                            startIcon={<ExpandMoreIcon fontSize="small" />}
+                            sx={{
+                                borderRadius: '4px 0 0 4px',
+                                px: 2,
+                                textTransform: 'none',
+                                borderColor: 'divider',
+                                color: 'text.secondary',
+                                '&:hover': {
+                                    backgroundColor: 'action.hover',
+                                    borderColor: 'primary.main',
+                                    color: 'primary.main'
+                                }
+                            }}
+                        >
+                            Expand All
+                        </Button>
+                        <Button
+                            onClick={() => {
+                                // Collapse all sections
+                                const allCollapsed = Object.keys(expandedSections).reduce((acc, key) => {
+                                    acc[key] = false;
+                                    return acc;
+                                }, {});
+                                setExpandedSections(allCollapsed);
+                            }}
+                            startIcon={<ExpandLessIcon fontSize="small" />}
+                            sx={{
+                                borderRadius: '0 4px 4px 0',
+                                px: 2,
+                                textTransform: 'none',
+                                borderColor: 'divider',
+                                color: 'text.secondary',
+                                '&:hover': {
+                                    backgroundColor: 'action.hover',
+                                    borderColor: 'primary.main',
+                                    color: 'primary.main'
+                                }
+                            }}
+                        >
+                            Collapse All
+                        </Button>
+                    </ButtonGroup>
                 </Box>
 
                 {/* Clinical Data Sections */}

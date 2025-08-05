@@ -432,12 +432,15 @@ export function PatientsDirectory(props){
             
             console.log('Found patient:', patient);
             
-            // Set the _id as selectedPatientId (MongoDB ID)
+            // Set both the FHIR id and the full patient object
             if(patient) {
+              const fhirId = patient.id;
               const mongoId = patient._id && patient._id._str ? patient._id._str : patient._id;
-              Session.set('selectedPatientId', mongoId);
+              Session.set('selectedPatientId', fhirId);  // Store FHIR id for queries
+              Session.set('selectedPatientMongoId', mongoId);  // Store MongoDB id if needed
               Session.set('selectedPatient', patient);
-              console.log('Set selectedPatientId to:', mongoId);
+              console.log('Set selectedPatientId (FHIR) to:', fhirId);
+              console.log('Set selectedPatientMongoId to:', mongoId);
               console.log('Set selectedPatient to:', patient);
             } else {
               console.error('Could not find patient with id:', patientId);
