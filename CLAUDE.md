@@ -87,6 +87,18 @@ meteor-desktop
 - When adding new FHIR resources, follow the existing pattern in schemas and UI components
 - Use the FHIR dehydrator functions when transforming between FHIR and internal formats
 
+## Package Dependencies
+
+### Deprecated Packages
+- **clinical:hl7-fhir-data-infrastructure** - This package is deprecated. Do not use it in new packages or add it as a dependency.
+
+### Preferred Dependencies for Clinical Packages
+When creating clinical packages, use these dependencies:
+- `clinical:hl7-fhir-resources` - For FHIR resource definitions
+- `clinical:hl7-resource-datatypes` - For FHIR data types
+- `aldeed:collection2@2.5.0` - For schema validation (not newer versions)
+- `matb33:collection-hooks@0.7.13` - For collection hooks (not newer versions)
+
 - Style guide:  we are writing a Meteor v3 app, using React and MaterialUI app.  
 
 - Add the path and name of the file as the first line of each file (commented out)

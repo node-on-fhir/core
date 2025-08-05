@@ -33,7 +33,7 @@ import {  AddressSchema, BaseSchema, ContactPointSchema, CodeableConceptSchema, 
 // }
 
 
-export let ResearchSubjects = new Mongo.Collection('ResearchSubjects');
+let ResearchSubjects = new Mongo.Collection('ResearchSubjects');
 
 // create the object using our BaseModel
 let ResearchSubject = BaseModel.extend();

@@ -67,6 +67,10 @@ import PatientChart from '../patient/PatientChart.jsx';
 
 import PatientsDirectory from '../ui-modules/PatientsDirectory.jsx';
 
+// Import WorkQueues from the package
+import { WorkQueuesSimplePage } from 'meteor/clinical:workqueues';
+import { ChecklistManifestoPage } from 'meteor/clinical:checklist-manifesto';
+
 //===============================================================================================================
 // FHIR Page Components
 
@@ -513,6 +517,18 @@ if(get(Meteor, 'settings.public.modules.Theming')){
     element: <ThemingPage />
   })
 }
+
+// Add WorkQueues route
+dynamicRoutes.push({
+  path: "/workqueues",
+  element: <AuthenticatedRoute><WorkQueuesSimplePage /></AuthenticatedRoute>
+})
+
+// Add Checklist Manifesto route
+dynamicRoutes.push({
+  path: "/checklists",
+  element: <AuthenticatedRoute><ChecklistManifestoPage /></AuthenticatedRoute>
+})
 
 
 
