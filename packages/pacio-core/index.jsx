@@ -252,37 +252,52 @@ export const SidebarWorkflows = [
   {
     primaryText: 'Facility Dashboard',
     to: '/pacio-dashboard',
-    iconName: 'Dashboard'
+    iconName: 'dashboard'
   },
   {
     primaryText: 'Patient Fetch',
     to: '/patient-fetch',
-    iconName: 'CloudDownload'
+    iconName: 'documentIcon'
   },
   {
     primaryText: 'Patient Directory',
     to: '/patients',
-    iconName: 'Groups'
+    iconName: 'users'
   },
   {
     primaryText: 'Advance Directives',
     to: '/advance-directives',
-    iconName: 'Assignment'
+    iconName: 'notepad'
   },
   {
     primaryText: 'Transition of Care',
     to: '/transition-of-care',
-    iconName: 'SwapHoriz'
+    iconName: 'ic_transfer_within_a_station'
   },
   {
     primaryText: 'Medication Lists',
     to: '/medication-lists',
-    iconName: 'LocalPharmacy'
+    iconName: 'ic_local_pharmacy'
   },
   {
     primaryText: 'Take Vital Signs',
     to: '/take-vital-signs',
-    iconName: 'Favorite'
+    iconName: 'heartbeat'
+  },
+  {
+    primaryText: 'Structured Data Capture',
+    to: '/structured-data-capture',
+    iconName: 'notepad'
+  },
+  {
+    primaryText: 'Questionnaire Builder',
+    to: '/questionnaire-builder',
+    iconName: 'notepad'
+  },
+  {
+    primaryText: 'Questionnaire Library',
+    to: '/questionnaire-library',
+    iconName: 'list'
   }
 ];
 
@@ -291,19 +306,19 @@ export const SidebarElements = [
   {
     primaryText: 'Allergy Intolerances',
     to: '/allergy-intolerances',
-    iconName: 'Groups',
+    iconName: 'users',
     collectionName: 'AllergyIntolerances'
   },
   {
     primaryText: 'Care Plans',
     to: '/care-plans',
-    iconName: 'Groups',
+    iconName: 'users',
     collectionName: 'CarePlans'
   },
   {
     primaryText: 'Care Teams',
     to: '/care-teams',
-    iconName: 'Groups',
+    iconName: 'users',
     collectionName: 'CareTeams'
   },
   {
@@ -321,7 +336,7 @@ export const SidebarElements = [
   {
     primaryText: 'Conditions',
     to: '/conditions',
-    iconName: 'LocalHospital',
+    iconName: 'hospitalO',
     collectionName: 'Conditions'
   },
   {
@@ -333,7 +348,7 @@ export const SidebarElements = [
   {
     primaryText: 'Goals',
     to: '/goals',
-    iconName: 'Flag',
+    iconName: 'heartO',
     collectionName: 'Goals'
   },
   {
@@ -351,31 +366,31 @@ export const SidebarElements = [
   {
     primaryText: 'Medication Administrations',
     to: '/medication-administrations',
-    iconName: 'LocalPharmacy',
+    iconName: 'ic_local_pharmacy',
     collectionName: 'MedicationAdminstrations'
   },
   {
     primaryText: 'Medication Requests',
     to: '/medication-requests',
-    iconName: 'LocalPharmacy',
+    iconName: 'ic_local_pharmacy',
     collectionName: 'MedicationRequests'
   },
   {
     primaryText: 'Medications',
     to: '/medications',
-    iconName: 'LocalPharmacy',
+    iconName: 'ic_local_pharmacy',
     collectionName: 'Medications'
   },
   {
     primaryText: 'Nutrition Orders',
     to: '/nutrition-orders',
-    iconName: 'Restaurant',
+    iconName: 'dashboard',
     collectionName: 'NutritionOrders'
   },
   {
     primaryText: 'Observations',
     to: '/observations',
-    iconName: 'Visibility',
+    iconName: 'thermometer3',
     collectionName: 'Observations'
   },
   {
@@ -397,15 +412,21 @@ export const SidebarElements = [
     collectionName: 'Procedures'
   },
   {
+    primaryText: 'Questionnaires',
+    to: '/questionnaires',
+    iconName: 'notepad',
+    collectionName: 'Questionnaires'
+  },
+  {
     primaryText: 'Questionnaire Responses',
     to: '/questionnaire-responses',
-    iconName: 'Assignment',
+    iconName: 'notepad',
     collectionName: 'QuestionnaireResponses'
   },
   {
     primaryText: 'Service Requests',
     to: '/service-requests',
-    iconName: 'Build',
+    iconName: 'notepad',
     collectionName: 'ServiceRequests'
   },
   {
