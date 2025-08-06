@@ -1,6 +1,7 @@
 // /packages/workqueues/server/migrations/migrate-todos.js
 
 import { Meteor } from 'meteor/meteor';
+import { Mongo } from 'meteor/mongo';
 import { WorkQueueItems } from '../../lib/collections';
 import { Random } from 'meteor/random';
 
@@ -12,7 +13,7 @@ export async function migrateTodos() {
   
   // Check if old Todos collection exists
   const Todos = new Mongo.Collection('todos');
-  const todoCount = await Todos.countDocumentsAsync();
+  const todoCount = await Todos.countAsync();
   
   if (todoCount === 0) {
     console.log('No todos to migrate');

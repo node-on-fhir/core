@@ -12,6 +12,9 @@ import './collections';
 // Session overrides for ObjectID handling
 import './session-overrides';
 
+// Patient subscription tracking
+import './patient-subscription-tracker';
+
 // Conditional imports based on configuration
 Meteor.startup(() => {
   // Check if accounts module is enabled
