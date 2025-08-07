@@ -86,6 +86,10 @@ function PatientDetail(props) {
       postalCode: "",
       country: "USA"
     }],
+    identifier: [{
+      system: "http://hospital.example.org/identifiers/mrn",
+      value: ""
+    }],
     maritalStatus: {
       coding: [{
         system: "http://terminology.hl7.org/CodeSystem/v3-MaritalStatus",
@@ -327,7 +331,7 @@ function PatientDetail(props) {
 
   return (
     <LocalizationProvider dateAdapter={AdapterMoment}>
-      <Container maxWidth="md" sx={{ py: 4 }}>
+      <Container id="patientDetailPage" maxWidth="md" sx={{ py: 4 }}>
         <Card>
           <CardHeader
             avatar={<PersonIcon />}
@@ -343,6 +347,7 @@ function PatientDetail(props) {
                 <Grid container spacing={2}>
                   <Grid item xs={12} sm={6}>
                     <TextField
+                      id="givenNameInput"
                       fullWidth
                       label="Given Name(s)"
                       value={get(patient, 'name[0].given[0]', '')}
@@ -352,11 +357,39 @@ function PatientDetail(props) {
                   </Grid>
                   <Grid item xs={12} sm={6}>
                     <TextField
+                      id="familyNameInput"
                       fullWidth
                       label="Family Name"
                       value={get(patient, 'name[0].family', '')}
                       onChange={(e) => handleChange('name[0].family', e.target.value)}
                       required
+                    />
+                  </Grid>
+                </Grid>
+              </Box>
+
+              {/* Identifier Section */}
+              <Box>
+                <Typography variant="h6" gutterBottom>Identifier</Typography>
+                <Grid container spacing={2}>
+                  <Grid item xs={12}>
+                    <TextField
+                      id="identifierInput"
+                      fullWidth
+                      label="Medical Record Number"
+                      value={get(patient, 'identifier[0].value', '')}
+                      onChange={(e) => {
+                        const updated = { ...patient };
+                        if (!updated.identifier) {
+                          updated.identifier = [{
+                            system: 'http://hospital.example.org/identifiers/mrn',
+                            value: ''
+                          }];
+                        }
+                        set(updated, 'identifier[0].value', e.target.value);
+                        setPatient(updated);
+                      }}
+                      helperText="Medical record number or other identifier"
                     />
                   </Grid>
                 </Grid>
@@ -372,7 +405,7 @@ function PatientDetail(props) {
                       label="Birth Date"
                       value={patient.birthDate ? moment(patient.birthDate) : null}
                       onChange={(newValue) => handleChange('birthDate', newValue ? newValue.format('YYYY-MM-DD') : '')}
-                      slotProps={{ textField: { fullWidth: true } }}
+                      slotProps={{ textField: { id: 'birthDateInput', fullWidth: true } }}
                     />
                   </Grid>
                   <Grid item xs={12} sm={6}>
@@ -516,6 +549,7 @@ function PatientDetail(props) {
                     <FormControl fullWidth>
                       <InputLabel>Gender</InputLabel>
                       <Select
+                        id="genderSelect"
                         value={patient.gender || ''}
                         onChange={(e) => handleChange('gender', e.target.value)}
                         label="Gender"
@@ -565,6 +599,13 @@ function PatientDetail(props) {
                     </Grid>
                     <Grid item xs={12} sm={5}>
                       <TextField
+                        id={(() => {
+                          // Provide specific IDs for the first phone and email fields
+                          if(index === 0 && telecom.system === 'phone') return 'phoneInput';
+                          if(index === 0 && telecom.system === 'email') return 'emailInput';
+                          if(index === 1 && telecom.system === 'email') return 'emailInput';
+                          return `telecom${index}Input`;
+                        })()}
                         fullWidth
                         label={(() => {
                           switch(telecom.system) {
@@ -639,6 +680,7 @@ function PatientDetail(props) {
                 <Grid container spacing={2}>
                   <Grid item xs={12}>
                     <TextField
+                      id="addressLineInput"
                       fullWidth
                       label="Street Address"
                       value={get(patient, 'address[0].line[0]', '')}
@@ -647,6 +689,7 @@ function PatientDetail(props) {
                   </Grid>
                   <Grid item xs={12} sm={6}>
                     <TextField
+                      id="cityInput"
                       fullWidth
                       label="City"
                       value={get(patient, 'address[0].city', '')}
@@ -655,6 +698,7 @@ function PatientDetail(props) {
                   </Grid>
                   <Grid item xs={12} sm={3}>
                     <TextField
+                      id="stateInput"
                       fullWidth
                       label="State"
                       value={get(patient, 'address[0].state', '')}
@@ -663,10 +707,20 @@ function PatientDetail(props) {
                   </Grid>
                   <Grid item xs={12} sm={3}>
                     <TextField
+                      id="postalCodeInput"
                       fullWidth
                       label="ZIP Code"
                       value={get(patient, 'address[0].postalCode', '')}
                       onChange={(e) => handleChange('address[0].postalCode', e.target.value)}
+                    />
+                  </Grid>
+                  <Grid item xs={12}>
+                    <TextField
+                      id="countryInput"
+                      fullWidth
+                      label="Country"
+                      value={get(patient, 'address[0].country', '')}
+                      onChange={(e) => handleChange('address[0].country', e.target.value)}
                     />
                   </Grid>
                 </Grid>
@@ -694,6 +748,7 @@ function PatientDetail(props) {
               Cancel
             </Button>
             <Button
+              id="savePatientButton"
               variant="contained"
               startIcon={<SaveIcon />}
               onClick={handleSave}

@@ -1,6 +1,7 @@
 // /imports/api/patients/methods.js
 
 import { Meteor } from 'meteor/meteor';
+import { Mongo } from 'meteor/mongo';
 import { check } from 'meteor/check';
 import { Random } from 'meteor/random';
 import { get } from 'lodash';
@@ -22,8 +23,19 @@ Meteor.methods({
       active: patientData.active !== undefined ? patientData.active : true
     };
     
-    // Set _id to match id
-    cleanPatient._id = cleanPatient.id;
+    // Set _id based on environment variable
+    if (process.env.USE_MONGO_OBJECTID) {
+      // Use MongoDB ObjectID for consistency with existing data
+      const { Mongo } = Package.mongo;
+      const objectId = new Mongo.ObjectID();
+      // Convert to hex string for Meteor
+      cleanPatient._id = objectId.toHexString();
+      console.log('[patients.insert] Using MongoDB ObjectID (as hex string):', cleanPatient._id);
+    } else {
+      // Default: Set _id to match id (Meteor string ID)
+      cleanPatient._id = cleanPatient.id;
+      console.log('[patients.insert] Using Meteor string ID:', cleanPatient._id);
+    }
     
     // Handle name - ensure it's an array with at least one entry
     if (patientData.name && patientData.name.length > 0) {
@@ -200,6 +212,13 @@ Meteor.methods({
     // Ensure user is logged in
     if (!this.userId) {
       throw new Meteor.Error('not-authorized', 'User must be logged in to remove patients');
+    }
+    
+    // In production, only allow deletion in test mode or from specific contexts
+    // (e.g., MyProfile page would have additional checks)
+    if (!process.env.TEST_RUN && !get(Meteor, 'settings.public.defaults.allowPatientDeletion', false)) {
+      console.log('[patients.remove] Deletion blocked - not in TEST_RUN mode');
+      throw new Meteor.Error('not-allowed', 'Patient deletion is restricted in production mode');
     }
     
     try {

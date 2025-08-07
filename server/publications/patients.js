@@ -6,7 +6,7 @@ import { get } from 'lodash';
 import { Patients } from '/imports/lib/schemas/SimpleSchemas/Patients';
 
 // Main patients publication with search and filtering
-Meteor.publish('patients.search', function(query = {}, options = {}) {
+Meteor.publish('patients.search', async function(query = {}, options = {}) {
   // Check if user is authenticated
   if (!this.userId) {
     // In production, always require authentication
@@ -55,7 +55,7 @@ Meteor.publish('patients.search', function(query = {}, options = {}) {
   // - Care team members see patients they're assigned to
   
   if (this.userId) {
-    const user = Meteor.users.findOne(this.userId);
+    const user = await Meteor.users.findOneAsync(this.userId);
     
     // If user has a patientId, they can only see their own record
     if (user && user.patientId) {
@@ -106,7 +106,7 @@ Meteor.publish('patients.all', function() {
 });
 
 // Publication for a single patient by ID
-Meteor.publish('patients.byId', function(patientId) {
+Meteor.publish('patients.byId', async function(patientId) {
   check(patientId, String);
   
   if (!this.userId) {
@@ -115,7 +115,7 @@ Meteor.publish('patients.byId', function(patientId) {
   }
   
   // TODO: Check if user has access to this specific patient
-  const user = Meteor.users.findOne(this.userId);
+  const user = await Meteor.users.findOneAsync(this.userId);
   
   // Patients can only see their own record
   if (user && user.patientId && user.patientId !== patientId) {
@@ -135,7 +135,7 @@ Meteor.publish('patients.byId', function(patientId) {
 });
 
 // Publication for patients assigned to a practitioner
-Meteor.publish('patients.forPractitioner', function(practitionerId) {
+Meteor.publish('patients.forPractitioner', async function(practitionerId) {
   check(practitionerId, Match.Maybe(String));
   
   if (!this.userId) {
@@ -145,7 +145,7 @@ Meteor.publish('patients.forPractitioner', function(practitionerId) {
   
   // If no practitionerId provided, use the current user's practitionerId
   if (!practitionerId) {
-    const user = Meteor.users.findOne(this.userId);
+    const user = await Meteor.users.findOneAsync(this.userId);
     practitionerId = user && user.practitionerId;
     
     if (!practitionerId) {
