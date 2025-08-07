@@ -6,7 +6,7 @@ import { Beds } from '../../lib/collections/BedsCollection';
 export async function initializeSampleBeds() {
   try {
     // Check if beds already exist
-    const existingBeds = await Beds.find({}).countDocuments();
+    const existingBeds = await Beds.find({}).countAsync();
     
     if (existingBeds > 0) {
       console.log(`Beds collection already has ${existingBeds} beds. Skipping initialization.`);
@@ -215,7 +215,7 @@ export async function initializeSampleBeds() {
   // Insert all beds
   for (const bed of sampleBeds) {
     try {
-      await Beds.insert({
+      await Beds.insertAsync({
         ...bed,
         createdAt: new Date(),
         updatedAt: new Date()
