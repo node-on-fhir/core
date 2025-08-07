@@ -143,7 +143,7 @@ function PractitionerDetail(props) {
       if (id && id !== 'new') {
         setLoading(true);
         try {
-          const result = await Meteor.callAsync('practitioners.get', id);
+          const result = await Meteor.callAsync('practitioners.findOne', id);
           if (result) {
             setPractitioner(result);
           }
@@ -253,7 +253,7 @@ function PractitionerDetail(props) {
   ];
 
   return (
-    <Container maxWidth="md" sx={{ py: 4 }}>
+    <Container id="practitionerDetailPage" maxWidth="md" sx={{ py: 4 }}>
       <Card sx={{ boxShadow: 3 }}>
         <CardHeader 
           title={id && id !== 'new' ? 'Edit Practitioner' : 'New Practitioner'}
@@ -277,6 +277,7 @@ function PractitionerDetail(props) {
             <FormControlLabel
               control={
                 <Switch
+                  id="activeSwitch"
                   checked={get(practitioner, 'active', true)}
                   onChange={(e) => handleChange('active', e.target.checked)}
                   disabled={!isEditing}
@@ -297,6 +298,7 @@ function PractitionerDetail(props) {
             />
             
             <TextField
+              id="givenNameInput"
               fullWidth
               label="First Name"
               value={get(practitioner, 'name[0].given[0]', '')}
@@ -306,6 +308,7 @@ function PractitionerDetail(props) {
             />
             
             <TextField
+              id="familyNameInput"
               fullWidth
               label="Last Name"
               value={get(practitioner, 'name[0].family', '')}
@@ -326,6 +329,7 @@ function PractitionerDetail(props) {
             <Typography variant="h6">Contact Information</Typography>
             
             <TextField
+              id="phoneInput"
               fullWidth
               label="Phone Number"
               value={get(practitioner, 'telecom[0].value', '')}
@@ -335,6 +339,7 @@ function PractitionerDetail(props) {
             />
             
             <TextField
+              id="emailInput"
               fullWidth
               label="Email Address"
               value={get(practitioner, 'telecom[1].value', '')}
@@ -347,6 +352,7 @@ function PractitionerDetail(props) {
             <Typography variant="h6">Address</Typography>
             
             <TextField
+              id="addressLineInput"
               fullWidth
               label="Address Line"
               value={get(practitioner, 'address[0].line[0]', '')}
@@ -356,6 +362,7 @@ function PractitionerDetail(props) {
             />
             
             <TextField
+              id="cityInput"
               fullWidth
               label="City"
               value={get(practitioner, 'address[0].city', '')}
@@ -364,6 +371,7 @@ function PractitionerDetail(props) {
             />
             
             <TextField
+              id="stateInput"
               fullWidth
               label="State"
               value={get(practitioner, 'address[0].state', '')}
@@ -372,6 +380,7 @@ function PractitionerDetail(props) {
             />
             
             <TextField
+              id="postalCodeInput"
               fullWidth
               label="Postal Code"
               value={get(practitioner, 'address[0].postalCode', '')}
@@ -380,6 +389,7 @@ function PractitionerDetail(props) {
             />
             
             <TextField
+              id="countryInput"
               fullWidth
               label="Country"
               value={get(practitioner, 'address[0].country', 'USA')}
@@ -420,6 +430,7 @@ function PractitionerDetail(props) {
             <Typography variant="h6">Professional Information</Typography>
             
             <TextField
+              id="npiInput"
               fullWidth
               label="NPI Number"
               value={get(practitioner, 'identifier[0].value', '')}
@@ -431,6 +442,7 @@ function PractitionerDetail(props) {
             <FormControl fullWidth disabled={!isEditing}>
               <InputLabel>Qualification</InputLabel>
               <Select
+                id="qualificationInput"
                 value={get(practitioner, 'qualification[0].code.coding[0].code', '')}
                 onChange={(e) => {
                   const option = qualificationOptions.find(o => o.code === e.target.value);
@@ -479,6 +491,28 @@ function PractitionerDetail(props) {
               value={get(practitioner, 'qualification[0].period.end', '')}
               onChange={(e) => handleChange('qualification[0].period.end', e.target.value)}
               InputLabelProps={{ shrink: true }}
+              disabled={!isEditing}
+            />
+            
+            <Typography variant="h6">Specialty</Typography>
+            
+            <TextField
+              id="specialtyCodeInput"
+              fullWidth
+              label="Specialty Code"
+              value={get(practitioner, 'practitionerRole[0].specialty[0].coding[0].code', '')}
+              onChange={(e) => handleChange('practitionerRole[0].specialty[0].coding[0].code', e.target.value)}
+              helperText="Medical specialty code"
+              disabled={!isEditing}
+            />
+            
+            <TextField
+              id="specialtyDisplayInput"
+              fullWidth
+              label="Specialty Display"
+              value={get(practitioner, 'practitionerRole[0].specialty[0].coding[0].display', '')}
+              onChange={(e) => handleChange('practitionerRole[0].specialty[0].coding[0].display', e.target.value)}
+              helperText="Medical specialty description"
               disabled={!isEditing}
             />
             
@@ -533,7 +567,7 @@ function PractitionerDetail(props) {
                     // Reload the practitioner to discard changes
                     async function reloadPractitioner() {
                       try {
-                        const result = await Meteor.callAsync('practitioners.get', id);
+                        const result = await Meteor.callAsync('practitioners.findOne', id);
                         if (result) {
                           setPractitioner(result);
                         }
@@ -561,6 +595,7 @@ function PractitionerDetail(props) {
                 </Button>
               )}
               <Button 
+                id="savePractitionerButton"
                 onClick={handleSave}
                 variant="contained"
                 color="primary"

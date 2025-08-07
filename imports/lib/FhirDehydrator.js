@@ -4359,8 +4359,8 @@ export function flattenPractitioner(practitioner, fhirVersion){
     
         result.name = result.name + get(practitioner, 'name[0].given[0]') + ' ';
         
-        if(get(practitioner, 'name[0].family[0]')){
-          result.name = result.name + get(practitioner, 'name[0].family[0]');
+        if(get(practitioner, 'name[0].family')){
+          result.name = result.name + get(practitioner, 'name[0].family');
         } else {
           result.name = result.name + get(practitioner, 'name[0].family');
         }

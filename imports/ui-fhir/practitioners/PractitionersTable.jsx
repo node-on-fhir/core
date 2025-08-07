@@ -214,8 +214,8 @@ function PractitionersTable(props){
   function renderBarcode(id){
     if (!hideBarcode) {
       return (
-        <TableCell>
-          {/* <ReactBarcode value={id}/> */}
+        <TableCell className='barcode practitioner-id'>
+          <span className="barcode helveticas">{id}</span>
         </TableCell>
       );
     }
