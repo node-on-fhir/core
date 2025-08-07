@@ -24,6 +24,33 @@ This guide provides patterns and checklists for implementing CRUD tests in the H
   const idString = typeof id === 'object' && id._str ? id._str : String(id);
   ```
 
+#### Dynamic ID Generation Pattern
+To ensure consistent sorting with existing Synthea data, we implemented a flexible ID generation strategy:
+
+**Server-side (methods.js):**
+```javascript
+// Set _id based on environment variable
+if (process.env.USE_MONGO_OBJECTID) {
+  // Use MongoDB ObjectID for consistency with existing data
+  const { Mongo } = Package.mongo;
+  const objectId = new Mongo.ObjectID();
+  // Convert to hex string for Meteor
+  cleanPatient._id = objectId.toHexString();
+  console.log('[patients.insert] Using MongoDB ObjectID (as hex string):', cleanPatient._id);
+} else {
+  // Default: Set _id to match id (Meteor string ID)
+  cleanPatient._id = cleanPatient.id;
+  console.log('[patients.insert] Using Meteor string ID:', cleanPatient._id);
+}
+```
+
+**Why This Matters:**
+- Synthea-generated patients use MongoDB ObjectIDs (24-character hex strings)
+- New patients created via UI typically use Meteor string IDs (17-character random strings)
+- MongoDB ObjectIDs sort differently than string IDs
+- The USE_MONGO_OBJECTID environment variable allows consistent ID generation
+- This ensures new test patients appear in predictable positions in sorted lists
+
 ### 2. Patient Selection and Multi-Patient Data Scoping
 - **Context**: The application operates in a multi-user, multi-patient environment where data must be scoped to the selected patient
 - **Key Concepts**:
@@ -393,3 +420,76 @@ describe('Resource CRUD Operations', function() {
 ```
 
 This guide represents patterns refined through implementing and debugging CRUD tests. Follow these patterns for consistent, maintainable test implementations.
+
+## Search-Based Test Pattern
+
+To reliably find specific test data in large datasets (100+ records), tests now use the search functionality:
+
+### Implementation
+```javascript
+// Add ID to search field
+<TextField
+  id="patientSearchInput"
+  fullWidth
+  placeholder="Search patients by ID, name, identifier..."
+  // ...
+/>
+
+// In tests, search for specific patient
+browser
+  .waitForElementVisible('#patientSearchInput', 5000)
+  .clearValue('#patientSearchInput')
+  .setValue('#patientSearchInput', testPatient.givenName)
+  .pause(1000); // Wait for search results to update
+```
+
+### Benefits
+- Filters list to show only matching patients
+- Avoids complex row-finding logic
+- Works regardless of sort order
+- Faster and more reliable than scanning all rows
+
+## TEST_RUN Environment Variable Pattern
+
+For operations that should only be available during testing:
+
+### Server-side Protection
+```javascript
+// In methods.js
+if (!process.env.TEST_RUN && !get(Meteor, 'settings.public.defaults.allowPatientDeletion', false)) {
+  console.log('[patients.remove] Deletion blocked - not in TEST_RUN mode');
+  throw new Meteor.Error('not-allowed', 'Patient deletion is restricted in production mode');
+}
+```
+
+### Test-side Usage
+```javascript
+// Programmatic deletion in tests
+browser.executeAsync(function(patientId, done) {
+  Meteor.call('patients.remove', patientId, function(error, result) {
+    if (error) {
+      console.warn('Deletion failed:', error.message);
+      // Don't fail test - method might require TEST_RUN env var
+      done({ deleted: false, error: error.message });
+    } else {
+      done({ deleted: true });
+    }
+  });
+});
+```
+
+### Running Tests with Environment Variables
+```bash
+# Start Meteor with TEST_RUN enabled
+TEST_RUN=true meteor run --settings configs/settings.honeycomb.localhost.json
+
+# Or set in your test runner
+export TEST_RUN=true
+npm test -- tests/nightwatch/honeycomb/enable_autopublish/crud.patients.js
+```
+
+This pattern allows:
+- Safe testing of destructive operations
+- Production protection by default
+- Clear separation of test vs production behavior
+- Flexibility for different deployment environments

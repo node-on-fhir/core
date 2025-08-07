@@ -78,6 +78,8 @@ This document lists all environment variables used in the Honeycomb3 FHIR framew
 |----------|-------------|---------|----------|---------|
 | `CHROMEDRIVER_PATH` | Path to ChromeDriver executable | System PATH | No | `/nightwatch.circle.conf.js` |
 | `UDAP_TEST` | Enable UDAP testing mode | `false` | No | `/server/OAuthEndpoints.js` |
+| `TEST_RUN` | Enable test-specific operations (e.g., patient deletion) | `false` | No | `/imports/api/patients/methods.js` |
+| `USE_MONGO_OBJECTID` | Use MongoDB ObjectIDs for new records (for consistency with Synthea data) | `false` | No | `/imports/api/patients/methods.js` |
 
 ## Usage Examples
 
@@ -91,6 +93,27 @@ export DEBUG=true
 export DEV_AUTO_LOGIN=true
 export DEV_AUTO_USERNAME=testuser
 export DEV_AUTO_PASSWORD=testpass
+```
+
+### Testing Configuration
+```bash
+# Enable test-specific features (like patient deletion)
+export TEST_RUN=true
+
+# Start Meteor in test mode
+TEST_RUN=true meteor run --settings configs/settings.honeycomb.tdd.json
+
+# In another terminal, run the tests
+npx nightwatch tests/nightwatch/honeycomb/enable_autopublish/crud.patients.js
+```
+
+### Working with Synthea Data
+```bash
+# When you need new records to sort consistently with existing Synthea-generated data
+export USE_MONGO_OBJECTID=true
+
+# This ensures new patients use MongoDB ObjectIDs like Synthea data
+USE_MONGO_OBJECTID=true meteor run --settings configs/settings.synthea.json
 ```
 
 ### Production Configuration
