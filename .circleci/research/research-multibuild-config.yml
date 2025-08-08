@@ -1,0 +1,328 @@
+# /Volumes/SonicMagic/Code/honeycomb-public-release/.circleci/research-config.yml.txt
+version: 2.1
+
+orbs:
+  browser-tools: circleci/browser-tools@1.4.8
+
+# Shared configuration for all jobs
+defaults: &defaults
+  docker:
+    - image: cimg/node:20.11.0-browsers
+      environment:
+        CIRCLE_ARTIFACTS: /tmp/circleci-artifacts
+        CIRCLE_TEST_REPORTS: /tmp/circleci-test-results
+        TZ: "America/Chicago"
+        NODE_ENV: test
+        NIGHTWATCH: true
+        DISPLAY: :99.0
+        NODE_OPTIONS: --max_old_space_size=4096
+        TOOL_NODE_FLAGS: --max_old_space_size=4096
+        TEST_BROWSER_DRIVER: chrome
+        MONGO_URL: mongodb://mongo:27017/meteor_test
+        ENABLE_AUTOPUBLISH: true
+        DEV_AUTO_LOGIN: true
+        DEV_AUTO_USERNAME: "demouser"
+        DEV_AUTO_PASSWORD: "password2025"
+        TEST_RUN: true
+    - image: mongo:6.0
+      name: mongo
+  resource_class: large
+
+jobs:
+  # Shared dependency installation job
+  install-deps:
+    <<: *defaults
+    steps:
+      - checkout
+      
+      - run:
+          name: Install Meteor
+          command: |
+            echo "Installing Meteor 3.3..."
+            curl https://install.meteor.com/?release=3.3 | sh
+            echo 'export PATH="$HOME/.meteor:$PATH"' >> $BASH_ENV
+            source $BASH_ENV
+            sudo ln -sf $HOME/.meteor/meteor /usr/local/bin/meteor
+            meteor --version
+      
+      - run:
+          name: Install shared dependencies
+          command: |
+            echo "Installing NPM dependencies..."
+            meteor npm install
+            
+            echo "Installing global test tools..."
+            sudo npm install -g nightwatch@3.0.1
+          no_output_timeout: 20m
+      
+      # Save workspace for downstream jobs
+      - persist_to_workspace:
+          root: .
+          paths:
+            - .meteor/local
+            - node_modules
+            - .npm
+
+  # Build job for configuration 1 (e.g., FHIR server mode)
+  build-fhir:
+    <<: *defaults
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+      
+      - run:
+          name: Restore Meteor installation
+          command: |
+            echo 'export PATH="$HOME/.meteor:$PATH"' >> $BASH_ENV
+            source $BASH_ENV
+            sudo ln -sf $HOME/.meteor/meteor /usr/local/bin/meteor
+      
+      - run:
+          name: Build FHIR configuration
+          command: |
+            echo "Building with FHIR server packages..."
+            # Example: meteor add clinical:hl7-fhir-rest clinical:smart-on-fhir
+            meteor --extra-packages clinical:hl7-fhir-rest,clinical:smart-on-fhir --settings configs/settings.fhir.localhost.json --production
+          no_output_timeout: 30m
+      
+      - persist_to_workspace:
+          root: .
+          paths:
+            - .meteor
+            - packages
+
+  # Build job for configuration 2 (e.g., Consent engine mode)
+  build-consent:
+    <<: *defaults
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+      
+      - run:
+          name: Restore Meteor installation
+          command: |
+            echo 'export PATH="$HOME/.meteor:$PATH"' >> $BASH_ENV
+            source $BASH_ENV
+            sudo ln -sf $HOME/.meteor/meteor /usr/local/bin/meteor
+      
+      - run:
+          name: Build Consent configuration
+          command: |
+            echo "Building with Consent engine packages..."
+            # Example: meteor add clinical:privacy-consent clinical:cds-hooks
+            meteor --extra-packages clinical:privacy-consent,clinical:cds-hooks --settings configs/settings.consent.localhost.json --production
+          no_output_timeout: 30m
+      
+      - persist_to_workspace:
+          root: .
+          paths:
+            - .meteor
+            - packages
+
+  # Test job for FHIR configuration
+  test-fhir:
+    <<: *defaults
+    steps:
+      - browser-tools/install-chrome
+      - browser-tools/install-chromedriver
+      
+      - checkout
+      - attach_workspace:
+          at: .
+      
+      - run:
+          name: Setup environment
+          command: |
+            echo 'export PATH="$HOME/.meteor:$PATH"' >> $BASH_ENV
+            source $BASH_ENV
+            sudo ln -sf $HOME/.meteor/meteor /usr/local/bin/meteor
+            mkdir -p $CIRCLE_ARTIFACTS $CIRCLE_TEST_REPORTS
+      
+      - run:
+          name: Wait for MongoDB
+          command: |
+            for i in {1..60}; do
+              if nc -z mongo 27017; then
+                echo "MongoDB is ready!"
+                break
+              fi
+              echo "Waiting for MongoDB... ($i/60)"
+              sleep 5
+            done
+      
+      - run:
+          name: Start Meteor with FHIR configuration
+          command: |
+            meteor run --settings configs/settings.fhir.localhost.json --port 3000
+          background: true
+          no_output_timeout: 30m
+      
+      - run:
+          name: Wait for Meteor
+          command: |
+            for i in {1..60}; do
+              if curl -f http://localhost:3000 > /dev/null 2>&1; then
+                echo "Meteor is ready!"
+                break
+              fi
+              echo "Waiting for Meteor... ($i/60)"
+              sleep 10
+            done
+      
+      - run:
+          name: Run FHIR Nightwatch tests
+          command: |
+            # Start ChromeDriver
+            chromedriver --port=9515 --log-level=WARNING &
+            CHROMEDRIVER_PID=$!
+            sleep 5
+            
+            # Run FHIR-specific test suite
+            npx nightwatch --config nightwatch.fhir.conf.js --tag fhir
+            TEST_EXIT_CODE=$?
+            
+            # Cleanup
+            kill $CHROMEDRIVER_PID 2>/dev/null || true
+            exit $TEST_EXIT_CODE
+          no_output_timeout: 20m
+      
+      - run:
+          name: Collect artifacts
+          command: |
+            cp -r tests/output/* $CIRCLE_TEST_REPORTS/ || true
+            cp -r tests/screenshots $CIRCLE_ARTIFACTS/ || true
+          when: always
+      
+      - store_test_results:
+          path: /tmp/circleci-test-results
+      
+      - store_artifacts:
+          path: /tmp/circleci-artifacts
+
+  # Test job for Consent configuration
+  test-consent:
+    <<: *defaults
+    steps:
+      - browser-tools/install-chrome
+      - browser-tools/install-chromedriver
+      
+      - checkout
+      - attach_workspace:
+          at: .
+      
+      - run:
+          name: Setup environment
+          command: |
+            echo 'export PATH="$HOME/.meteor:$PATH"' >> $BASH_ENV
+            source $BASH_ENV
+            sudo ln -sf $HOME/.meteor/meteor /usr/local/bin/meteor
+            mkdir -p $CIRCLE_ARTIFACTS $CIRCLE_TEST_REPORTS
+      
+      - run:
+          name: Wait for MongoDB
+          command: |
+            for i in {1..60}; do
+              if nc -z mongo 27017; then
+                echo "MongoDB is ready!"
+                break
+              fi
+              echo "Waiting for MongoDB... ($i/60)"
+              sleep 5
+            done
+      
+      - run:
+          name: Start Meteor with Consent configuration
+          command: |
+            meteor run --settings configs/settings.consent.localhost.json --port 3000
+          background: true
+          no_output_timeout: 30m
+      
+      - run:
+          name: Wait for Meteor
+          command: |
+            for i in {1..60}; do
+              if curl -f http://localhost:3000 > /dev/null 2>&1; then
+                echo "Meteor is ready!"
+                break
+              fi
+              echo "Waiting for Meteor... ($i/60)"
+              sleep 10
+            done
+      
+      - run:
+          name: Run Consent Nightwatch tests
+          command: |
+            # Start ChromeDriver
+            chromedriver --port=9515 --log-level=WARNING &
+            CHROMEDRIVER_PID=$!
+            sleep 5
+            
+            # Run Consent-specific test suite
+            npx nightwatch --config nightwatch.consent.conf.js --tag consent
+            TEST_EXIT_CODE=$?
+            
+            # Cleanup
+            kill $CHROMEDRIVER_PID 2>/dev/null || true
+            exit $TEST_EXIT_CODE
+          no_output_timeout: 20m
+      
+      - run:
+          name: Collect artifacts
+          command: |
+            cp -r tests/output/* $CIRCLE_TEST_REPORTS/ || true
+            cp -r tests/screenshots $CIRCLE_ARTIFACTS/ || true
+          when: always
+      
+      - store_test_results:
+          path: /tmp/circleci-test-results
+      
+      - store_artifacts:
+          path: /tmp/circleci-artifacts
+
+workflows:
+  version: 2
+  test-multiple-configs:
+    jobs:
+      # Shared dependency installation
+      - install-deps
+      
+      # Parallel build paths
+      - build-fhir:
+          requires:
+            - install-deps
+      
+      - build-consent:
+          requires:
+            - install-deps
+      
+      # Test jobs run after their respective builds
+      - test-fhir:
+          requires:
+            - build-fhir
+      
+      - test-consent:
+          requires:
+            - build-consent
+
+# Alternative workflow: Sequential execution if resources are limited
+  test-sequential:
+    jobs:
+      - install-deps
+      
+      - build-fhir:
+          requires:
+            - install-deps
+      
+      - test-fhir:
+          requires:
+            - build-fhir
+      
+      - build-consent:
+          requires:
+            - test-fhir  # Wait for first test to complete
+      
+      - test-consent:
+          requires:
+            - build-consent
