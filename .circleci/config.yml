@@ -22,6 +22,7 @@ jobs:
           DEV_AUTO_LOGIN: true
           DEV_AUTO_USERNAME: "demouser"
           DEV_AUTO_PASSWORD: "password2025"
+          TEST_RUN: true
       - image: mongo:6.0
         name: mongo
     
