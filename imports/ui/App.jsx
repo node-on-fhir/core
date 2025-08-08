@@ -621,10 +621,23 @@ if(get(Meteor, 'settings.public.modules.fhir.Conditions')){
   })
 }
 if(get(Meteor, 'settings.public.modules.fhir.Devices')){
+  console.log('Devices module is enabled, adding routes...');
+  console.log('DevicesPage component:', DevicesPage);
   dynamicRoutes.push({
     path: "/devices",
     element: <DevicesPage />
   })
+  dynamicRoutes.push({
+    path: "/devices/new",
+    element: <DeviceDetail />
+  })
+  dynamicRoutes.push({
+    path: "/devices/:id",
+    element: <DeviceDetail />
+  })
+} else {
+  console.log('Devices module is NOT enabled in settings');
+  console.log('Setting value:', get(Meteor, 'settings.public.modules.fhir.Devices'));
 }
 if(get(Meteor, 'settings.public.modules.fhir.DocumentReferences')){
   dynamicRoutes.push({

@@ -473,6 +473,8 @@ const validState = hasTable || hasNoDataCard;
 - Verify correct settings file is loaded
 - Restart server after settings changes
 - Debug: `window.{ResourceTypes}.find().fetch()`
+- **Check patient reference**: Ensure patient is set in Session before save
+- **Verify user authentication**: Methods may fail silently if not logged in
 
 ### 3. Table Missing Columns
 - Check FhirDehydrator flatten function
@@ -483,19 +485,200 @@ const validState = hasTable || hasNoDataCard;
 - Use FHIR id, not MongoDB _id
 - Check FhirUtilities.addPatientFilterToQuery()
 - Verify patient reference format
+- **Debug with unfiltered count**: Compare total records vs filtered records
+```javascript
+console.log('Total records:', {ResourceTypes}.find({}).count());
+console.log('Filtered records:', {ResourceTypes}.find(query).count());
+```
 
 ### 5. Form Validation Errors
 - Check schema expectations
 - Transform data before save (e.g., CodeableConcepts)
 - Handle null/undefined values
+- **Empty patient reference**: Session patient may not be set
 
 ### 6. Delete Button Issues
 - Delete button visible in view mode, not edit mode
 - Handle both table and no-data states after deletion
 
+### 7. Search Not Working
+- Ensure search field has correct ID for tests
+- Pass query to subscription, not filter in tracker
+- Check that searchable fields match your schema structure
+
+### 8. Sort Order Confusion
+- Mixed ID types (ObjectID vs String) sort differently
+- Don't assume position in list without explicit sort
+- Use search to find specific records in tests
+
 ---
 
 ## Advanced Patterns
+
+### Search Functionality Implementation
+
+**Client-Side vs Server-Side Search:**
+- **Best Practice**: Implement search on the client-side when working with autopublish subscriptions
+- **Pattern**: Pass search query to subscription, let server filter the data
+
+```javascript
+// In Page component
+const [searchFilter, setSearchFilter] = useState('');
+
+const isLoading = useTracker(() => {
+  let query = {};
+  if(searchFilter && searchFilter.length > 0) {
+    query = {
+      $or: [
+        {'_id': searchFilter},
+        {'id': searchFilter},
+        {'{resourceType}Name.0.name': {$regex: searchFilter, $options: 'i'}},
+        {'manufacturer': {$regex: searchFilter, $options: 'i'}},
+        // Add other searchable fields
+      ]
+    };
+  }
+  
+  const handle = Meteor.subscribe('autopublish.{ResourceTypes}', query, { limit: 100 });
+  return !handle.ready();
+}, [searchFilter]);
+
+// Search input
+<TextField
+  id="{resourceType}SearchInput"
+  fullWidth
+  placeholder="Search {resourceTypes} by ID, name, ..."
+  value={searchFilter}
+  onChange={(e) => setSearchFilter(e.target.value)}
+/>
+```
+
+**Important Notes:**
+- Don't filter in the data tracker - let the subscription handle it
+- The autopublish subscription respects the query parameter
+- This avoids loading all data and filtering client-side
+
+### Handling Large Datasets with Pagination
+
+**Pagination Limits:**
+- Default limit: 100 records (configurable)
+- Maximum limit: 1000 records (hard cap for performance)
+- Always specify limits in subscriptions to avoid performance issues
+
+```javascript
+// In autopublish.js
+Meteor.publish('autopublish.{ResourceTypes}', function(query, options) {
+  query = query || {};
+  options = options || {};
+  
+  // Cap at reasonable limit
+  options.limit = options.limit || 100;
+  if (options.limit > 1000) {
+    options.limit = 1000;
+  }
+  
+  // Default sort by most recent first
+  if (!options.sort) {
+    options.sort = { '_id': -1 };
+  }
+  
+  return {ResourceTypes}.find(query, options);
+});
+```
+
+### MongoDB ObjectID vs Meteor String ID Sorting
+
+**The Challenge:**
+- Synthea data uses MongoDB ObjectIDs (24-char hex strings)
+- New records via UI use Meteor string IDs (17-char random strings)
+- These sort differently, causing new records to appear at unexpected positions
+
+**Solution Pattern:**
+```javascript
+// In server methods, optionally use MongoDB ObjectID
+if (process.env.USE_MONGO_OBJECTID) {
+  const { Mongo } = Package.mongo;
+  const objectId = new Mongo.ObjectID();
+  cleanResource._id = objectId.toHexString();
+} else {
+  cleanResource._id = cleanResource.id; // Default Meteor behavior
+}
+```
+
+**Testing Strategy:**
+- Don't rely on specific positions in sorted lists
+- Use search functionality to find specific test records
+- Or click the first row when sorted by _id descending (newest first)
+
+### Navigation After Save Operations
+
+**Pattern for Smooth Navigation:**
+```javascript
+// In Detail component save handler
+Meteor.call('create{ResourceType}', dataToSave, (error, result) => {
+  if (error) {
+    console.error('Error creating {resourceType}:', error);
+    // Show error to user
+  } else {
+    console.log('{ResourceType} created successfully:', result);
+    // Navigate back to list
+    navigate('/{resourceTypes}');
+  }
+});
+```
+
+**Common Navigation Issues:**
+- Staying on /new page after save indicates silent failure
+- Check for console errors or validation issues
+- Ensure user is logged in (methods may require authentication)
+
+### Material-UI Select Component Testing
+
+**Testing Limitations:**
+- Material-UI Select components use portals for dropdown rendering
+- Options appear outside the normal DOM hierarchy
+- Standard Nightwatch selectors may not work
+
+**Testing Pattern:**
+```javascript
+// Click the select to open dropdown
+browser.execute(function(value) {
+  const select = document.querySelector('#typeSelect');
+  if (select) {
+    select.click();
+    setTimeout(() => {
+      // Options render in a portal, need to search globally
+      const options = document.querySelectorAll('li[role="option"]');
+      for (let option of options) {
+        if (option.getAttribute('data-value') === value) {
+          option.click();
+          break;
+        }
+      }
+    }, 300); // Wait for portal to render
+  }
+}, [testValue]);
+```
+
+### Finding Specific Records in Large Datasets
+
+**Use Search Instead of Scanning:**
+```javascript
+// In tests, search for specific record
+browser
+  .waitForElementVisible('#{resourceType}SearchInput', 5000)
+  .clearValue('#{resourceType}SearchInput')
+  .setValue('#{resourceType}SearchInput', testResource.name)
+  .pause(1000); // Wait for search results
+
+// Then interact with filtered results
+```
+
+**Benefits:**
+- Avoids complex row-finding logic
+- Works regardless of sort order
+- Much faster than scanning all rows
+- More reliable with dynamic data
 
 ### CodeableConcept Transformation
 ```javascript

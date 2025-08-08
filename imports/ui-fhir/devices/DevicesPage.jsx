@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTracker } from 'meteor/react-meteor-data';
+import { useNavigate } from 'react-router-dom';
 import PropTypes from 'prop-types';
 
 import { 
@@ -10,11 +11,16 @@ import {
   CardHeader,
   CardContent,
   Button,
-  Tab, 
-  Tabs,
+  Box,
   Typography,
-  Box
+  ToggleButton,
+  ToggleButtonGroup,
+  TextField
 } from '@mui/material';
+import AddIcon from '@mui/icons-material/Add';
+import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
+import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
+import BadgeIcon from '@mui/icons-material/Badge';
 
 // import DeviceDetail from './DeviceDetail';
 import DevicesTable from './DevicesTable';
@@ -24,15 +30,12 @@ import { Session } from 'meteor/session';
 import { get } from 'lodash';
 
 import LayoutHelpers from '../../lib/LayoutHelpers';
+import { Devices } from '/imports/lib/schemas/SimpleSchemas/Devices';
 
 
 
 //=============================================================================================================================================
 // DATA CURSORS
-
-Meteor.startup(function(){
-  Devices = Meteor.Collections.Devices;
-})
 
 //=============================================================================================================================================
 // Session Variables
@@ -93,7 +96,10 @@ if(get(Meteor, 'settings.public.theme.palette')){
 // COMPONENTS
 
 export function DevicesPage(props){
-  if(process.env.NODE_ENV === "test") console.log('In DevicesPage render');
+  const navigate = useNavigate();
+  const [sortOrder, setSortOrder] = useState('descending');
+  const [showSystemId, setShowSystemId] = useState(false);
+  const [searchFilter, setSearchFilter] = useState('');
 
   let data = {
     selectedDeviceId: '',
@@ -104,6 +110,34 @@ export function DevicesPage(props){
     showFhirIds: false,
     devicesIndex: 0
   };
+  
+  // Subscribe to devices data with search filter
+  const isLoading = useTracker(() => {
+    let autoPublishEnabled = get(Meteor, 'settings.public.defaults.autopublish', false);
+    
+    // Build query for subscription
+    let query = {};
+    if(searchFilter && searchFilter.length > 0) {
+      query = {
+        $or: [
+          {'_id': searchFilter},
+          {'id': searchFilter},
+          {'deviceName.0.name': {$regex: searchFilter, $options: 'i'}},
+          {'manufacturer': {$regex: searchFilter, $options: 'i'}},
+          {'modelNumber': {$regex: searchFilter, $options: 'i'}},
+          {'serialNumber': {$regex: searchFilter, $options: 'i'}}
+        ]
+      };
+    }
+    
+    if(autoPublishEnabled){
+      const handle = Meteor.subscribe('autopublish.Devices', query, { limit: 100 });
+      return !handle.ready();
+    } else {
+      const handle = Meteor.subscribe('devices.all');
+      return !handle.ready();
+    }
+  }, [searchFilter]);
 
 
   data.selectedDeviceId = useTracker(function(){
@@ -113,7 +147,9 @@ export function DevicesPage(props){
     return Devices.findOne(Session.get('selectedDeviceId'));
   }, [])
   data.devices = useTracker(function(){
-    return Devices.find().fetch()
+    // Data is already sorted by the server-side publication
+    // No client-side sorting to avoid conflicts
+    return Devices.find({}).fetch()
   }, [])
   data.devicesIndex = useTracker(function(){
     return Session.get('DevicesTable.devicesIndex')
@@ -130,43 +166,193 @@ export function DevicesPage(props){
   let headerHeight = LayoutHelpers.calcHeaderHeight();
   let formFactor = LayoutHelpers.determineFormFactor();
   let paddingWidth = LayoutHelpers.calcCanvasPaddingWidth();
-  let noDataImage = get(Meteor, 'settings.public.defaults.noData.noDataImagePath', "packages/clinical_hl7-fhir-data-infrastructure/assets/NoData.png");  
   
-  let cardWidth = window.innerWidth - paddingWidth;
+  let noDataImage = get(Meteor, 'settings.public.defaults.noData.noDataImagePath', "packages/clinical_hl7-fhir-data-infrastructure/assets/NoData.png");  
+  let noDataCardStyle = {};
+
+  function handleAddDevice(){
+    console.log('Add Device button clicked');
+    navigate('/devices/new');
+  }
+
+  function handleSortOrderChange(event, newOrder){
+    if(newOrder !== null){
+      setSortOrder(newOrder);
+    }
+  }
+
+  function renderHeader() {
+    return (
+      <Box mb={2}>
+        <Grid container spacing={2} alignItems="center" justifyContent="space-between">
+          <Grid item xs={12} sm={6}>
+            <Typography variant="h4">
+              Devices
+            </Typography>
+            <Typography variant="subtitle2" color="textSecondary">
+              {data.devices.length} devices found
+            </Typography>
+          </Grid>
+          <Grid item>
+            <Box display="flex" gap={2} alignItems="center">
+              <ToggleButtonGroup
+                value={sortOrder}
+                exclusive
+                onChange={handleSortOrderChange}
+                aria-label="sort order"
+                size="small"
+              >
+                <ToggleButton value="ascending" aria-label="ascending order">
+                  <ArrowUpwardIcon />
+                </ToggleButton>
+                <ToggleButton value="descending" aria-label="descending order">
+                  <ArrowDownwardIcon />
+                </ToggleButton>
+              </ToggleButtonGroup>
+              
+              <ToggleButtonGroup
+                value={showSystemId ? ['systemId'] : []}
+                onChange={(event, newFormats) => {
+                  setShowSystemId(newFormats.includes('systemId'));
+                }}
+                aria-label="display options"
+                size="small"
+              >
+                <ToggleButton value="systemId" aria-label="show system id">
+                  <BadgeIcon />
+                </ToggleButton>
+              </ToggleButtonGroup>
+              
+              <Button
+                variant="contained"
+                color="primary"
+                startIcon={<AddIcon />}
+                onClick={handleAddDevice}
+              >
+                Add Device
+              </Button>
+            </Box>
+          </Grid>
+        </Grid>
+        <Box mt={2}>
+          <TextField
+            id="deviceSearchInput"
+            fullWidth
+            placeholder="Search devices by ID, name, manufacturer, model, or serial number..."
+            value={searchFilter}
+            onChange={(e) => setSearchFilter(e.target.value)}
+            variant="outlined"
+            size="small"
+          />
+        </Box>
+      </Box>
+    );
+  }
   
   let layoutContent;
-  if(data.devices.length > 0){
-    layoutContent = <Card height="auto" scrollable={true} margin={20} width={cardWidth + 'px'}>
-      <CardHeader title={data.devices.length + ' Devices'} />
-      <CardContent>
+  if(isLoading) {
+    layoutContent = <Box sx={{ textAlign: 'center', py: 4 }}>
+      <Typography>Loading devices...</Typography>
+    </Box>
+  } else if(data.devices.length > 0){
+    layoutContent = <Card 
+      sx={{ 
+        width: '100%',
+        borderRadius: 3,
+        boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+        border: '1px solid',
+        borderColor: 'divider',
+        overflow: 'hidden'
+      }}
+    >
+      <CardContent sx={{ p: 0 }}>
         <DevicesTable 
+          id='devicesTable'
           devices={data.devices}
           count={data.devices.length}
           formFactorLayout={formFactor}
-          rowsPerPage={LayoutHelpers.calcTableRows()}
+          rowsPerPage={10}
+          hideBarcode={!showSystemId}
+          order={sortOrder}
+          onRowClick={function(deviceId){
+            console.log('DevicesPage.onRowClick', deviceId);
+            navigate('/devices/' + deviceId);
+          }}
           onSetPage={function(index){
-            setDevicesPageIndex(index)
+            Session.set('DevicesTable.devicesIndex', index);
           }}                
           page={data.devicesIndex}
         />
       </CardContent>
     </Card>
   } else {
-    layoutContent = <Container maxWidth="sm" style={{display: 'flex', flexDirection: 'column', flexWrap: 'nowrap', height: '100%', justifyContent: 'center'}}>
-      {/* <img src={Meteor.absoluteUrl() + noDataImage} style={{width: '100%'}}  /> */}
-      <CardContent>
-        <CardHeader 
-          title={get(Meteor, 'settings.public.defaults.noData.defaultTitle', "No Data Available")} 
-          subheader={get(Meteor, 'settings.public.defaults.noData.defaultMessage', "No records were found in the client data cursor.  To debug, check the data cursor in the client console, then check subscriptions and publications, and relevant search queries.  If the data is not loaded in, use a tool like Mongo Compass to load the records directly into the Mongo database, or use the FHIR API interfaces.")} 
+    // Show empty table with message instead of hiding everything
+    layoutContent = <Card 
+      sx={{ 
+        width: '100%',
+        borderRadius: 3,
+        boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+        border: '1px solid',
+        borderColor: 'divider',
+        overflow: 'hidden'
+      }}
+    >
+      <CardContent sx={{ p: 0 }}>
+        <DevicesTable 
+          id='devicesTable'
+          devices={[]}
+          count={0}
+          formFactorLayout={formFactor}
+          rowsPerPage={10}
+          hideBarcode={!showSystemId}
+          order={sortOrder}
+          onRowClick={function(deviceId){
+            console.log('DevicesPage.onRowClick', deviceId);
+            navigate('/devices/' + deviceId);
+          }}
+          onSetPage={function(index){
+            Session.set('DevicesTable.devicesIndex', index);
+          }}                
+          page={data.devicesIndex}
         />
+        {searchFilter && (
+          <Box sx={{ p: 3, textAlign: 'center' }}>
+            <Typography variant="body1" color="text.secondary">
+              No devices found matching "{searchFilter}"
+            </Typography>
+            <Button
+              variant="text"
+              onClick={() => setSearchFilter('')}
+              sx={{ mt: 1 }}
+            >
+              Clear search
+            </Button>
+          </Box>
+        )}
+        {!searchFilter && (
+          <Box sx={{ p: 3, textAlign: 'center' }}>
+            <Typography variant="body1" color="text.secondary">
+              No devices found
+            </Typography>
+          </Box>
+        )}
       </CardContent>
-    </Container>
+    </Card>
   }
 
   return (
-    <div id="devicesPage" style={{padding: "20px"}} >
-      { layoutContent }        
-    </div>
+    <Box 
+      id="devicesPage" 
+      sx={{
+        minHeight: '100vh',
+        backgroundColor: 'background.default',
+        px: { xs: 2, sm: 3, md: 4 },
+        py: { xs: 3, sm: 4, md: 5 }
+      }}
+    >
+      { renderHeader() }
+      { layoutContent }
+    </Box>
   );
 }
 

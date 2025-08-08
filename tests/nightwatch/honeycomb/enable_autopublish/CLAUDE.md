@@ -50,6 +50,7 @@ if (process.env.USE_MONGO_OBJECTID) {
 - MongoDB ObjectIDs sort differently than string IDs
 - The USE_MONGO_OBJECTID environment variable allows consistent ID generation
 - This ensures new test patients appear in predictable positions in sorted lists
+- **Testing Impact**: Don't rely on specific positions in lists - use search instead
 
 ### 2. Patient Selection and Multi-Patient Data Scoping
 - **Context**: The application operates in a multi-user, multi-patient environment where data must be scoped to the selected patient
@@ -332,6 +333,9 @@ This comprehensive query handles various ways FHIR resources might reference a p
 5. **Don't assume specific sort order without explicitly setting it**
 6. **Don't expect manually set values for auto-populated fields**
 7. **Don't use complex search patterns when simple ones suffice**
+8. **Don't filter data client-side when you can pass queries to subscriptions**
+9. **Don't assume new records will appear at top/bottom without proper sorting**
+10. **Don't test Material-UI Select components with simple selectors - use execute blocks**
 
 ## Debugging Tips
 
@@ -493,3 +497,81 @@ This pattern allows:
 - Production protection by default
 - Clear separation of test vs production behavior
 - Flexibility for different deployment environments
+
+## Large Dataset Testing Patterns
+
+### Search-First Approach
+When dealing with datasets containing 100+ records (common with Synthea data):
+
+1. **Always implement search functionality first**
+   ```javascript
+   // Add search input with specific ID
+   <TextField
+     id="{resourceType}SearchInput"
+     fullWidth
+     placeholder="Search by ID, name, ..."
+     value={searchFilter}
+     onChange={(e) => setSearchFilter(e.target.value)}
+   />
+   ```
+
+2. **Pass search query to subscription**
+   ```javascript
+   const isLoading = useTracker(() => {
+     let query = {};
+     if(searchFilter) {
+       query = { /* search criteria */ };
+     }
+     const handle = Meteor.subscribe('autopublish.{ResourceTypes}', query, { limit: 100 });
+     return !handle.ready();
+   }, [searchFilter]);
+   ```
+
+3. **Use search in tests to find specific records**
+   ```javascript
+   browser
+     .setValue('#{resourceType}SearchInput', testResource.uniqueValue)
+     .pause(1000) // Wait for search to filter
+     .click('#{resourceTypes}Table tbody tr:first-child'); // Click filtered result
+   ```
+
+### Material-UI Component Testing
+
+**Select Components:**
+- Use execute blocks with setTimeout for portal-rendered options
+- Search for options globally with `document.querySelectorAll('li[role="option"]')`
+- Match by data-value attribute or text content
+
+**Form State Management:**
+- Check if form starts in edit mode for new resources
+- Some forms may need explicit "Edit" button click
+- Verify field enable/disable states match expected behavior
+
+### Navigation and State Management
+
+**Post-Save Navigation:**
+- Successful save should navigate from `/new` to list page
+- Staying on `/new` indicates save failure
+- Check console errors and user authentication state
+
+**Patient Context Preservation:**
+- Always verify Session patient is set before operations
+- Re-establish patient context after navigation if needed
+- Debug with console logs showing Session state
+
+### Debugging Large Datasets
+
+```javascript
+// Debug why data might be filtered out
+browser.execute(function() {
+  const total = {ResourceTypes}.find({}).count();
+  const filtered = {ResourceTypes}.find(query).count();
+  console.log(`Total: ${total}, Filtered: ${filtered}`);
+  
+  if (total > 0 && filtered === 0) {
+    console.log('Data exists but is filtered out');
+    console.log('Sample record:', {ResourceTypes}.findOne());
+    console.log('Current query:', query);
+  }
+});
+```

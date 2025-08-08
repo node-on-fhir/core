@@ -20,8 +20,18 @@ let get = _.get;
 let set = _.set;
 
 import FhirUtilities from '../../lib/FhirUtilities';
-import { FhirDehydrator } from '../../lib/FhirDehydrator';
+import { FhirDehydrator, flattenDevice } from '../../lib/FhirDehydrator';
 
+// Set up logging
+const logger = {
+  debug: console.debug.bind(console),
+  trace: console.trace.bind(console),
+  data: console.log.bind(console),
+  verbose: console.debug.bind(console),
+  info: console.info.bind(console),
+  warn: console.warn.bind(console),
+  error: console.error.bind(console)
+};
 
 //===========================================================================
 // THEMING
@@ -195,7 +205,10 @@ function DevicesTable(props){
     console.log('removeRecord')
   }
   function rowClick(id){
-    console.log('rowClick')
+    console.log('DevicesTable.rowClick', id);
+    if(typeof onRowClick === 'function'){
+      onRowClick(id);
+    }
   }
   function handleActionButtonClick(){
     console.log('handleActionButtonClick')
@@ -348,8 +361,10 @@ function DevicesTable(props){
   }
   function renderBarcode(id){
     if (!hideBarcode) {
+      // Handle MongoDB ObjectID
+      const idString = typeof id === 'object' && id._str ? id._str : String(id);
       return (
-        <TableCell><span className="barcode helveticas">{id}</span></TableCell>
+        <TableCell><span className="barcode helveticas">{idString}</span></TableCell>
       );
     }
   }
@@ -397,7 +412,7 @@ function DevicesTable(props){
 
       props.devices.forEach(function(device){
         if((count >= (page * rowsPerPage)) && (count < (page + 1) * rowsPerPage)){
-          devicesToRender.push(FhirDehydrator.dehydrateDevice(device, internalDateFormat));
+          devicesToRender.push(flattenDevice(device, internalDateFormat));
         }
         count++;
       });  
@@ -415,9 +430,9 @@ function DevicesTable(props){
       if(get(devicesToRender[i], 'modifierExtension[0]')){
         rowStyle.color = "orange";
       }
-      logger.trace('devicesToRender[i]', devicesToRender[i])
+      // logger.trace('devicesToRender[i]', devicesToRender[i])
       tableRows.push(
-        <TableRow className="deviceRow" key={i} style={rowStyle} onClick={ rowClick.bind(this, devicesToRender[i]._id)} style={{cursor: 'pointer'}} hover={true} >            
+        <TableRow className="deviceRow" key={i} style={{...rowStyle, cursor: 'pointer'}} onClick={ rowClick.bind(this, devicesToRender[i]._id)} hover={true} >            
           { renderCheckbox() }  
           { renderActionIcons() }
           { renderIdentifier(get(devicesToRender[i], 'identifier')) }

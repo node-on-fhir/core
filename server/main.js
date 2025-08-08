@@ -29,23 +29,25 @@ import './Swagger.js';
 import '../imports/startup/server/index.js';
 
 // Import API methods
-import '../imports/api/documentReferences/methods.js';
+import '../imports/api/AuditEvents/AuditEvents'; // Import the methods
+import '../imports/api/carePlans/methods.js';
 import '../imports/api/compositions/methods.js';
 import '../imports/api/conditions/methods.js';
-import '../imports/api/research-studies/methods.js';
+import '../imports/api/documentReferences/methods.js';
+import '../imports/api/devices/methods.js'; // Import the methods
 import '../imports/api/encounters/methods.js';
 import '../imports/api/locations/methods.js';
+import '../imports/api/medicationAdministrations/methods.js';
+import '../imports/api/medicationRequests/methods.js';
+import '../imports/api/medications/methods.js';
 import '../imports/api/patients/methods.js';
 import '../imports/api/practitioners/methods.js';
-import '../imports/api/carePlans/methods.js';
 import '../imports/api/procedures/methods.js';
 import '../imports/api/questionnaires/methods.js';
 import '../imports/api/questionnaireResponses/methods.js';
 import '../imports/api/researchSubjects/methods.js';
+import '../imports/api/research-studies/methods.js';
 import '../imports/api/serviceRequests/methods.js';
-import '../imports/api/medicationAdministrations/methods.js';
-import '../imports/api/medicationRequests/methods.js';
-import '../imports/api/medications/methods.js';
 
 // Import test methods (for non-production environments)
 import '../imports/accounts/server/test-methods.js';
@@ -84,7 +86,6 @@ import { ActivityDefinitions } from '../imports/lib/schemas/SimpleSchemas/Activi
 import { AllergyIntolerances } from '../imports/lib/schemas/SimpleSchemas/AllergyIntolerances';
 import { ArtifactAssessments } from '../imports/lib/schemas/SimpleSchemas/ArtifactAssessments';
 import { AuditEvents } from '../imports/lib/schemas/SimpleSchemas/AuditEvents';
-import '../imports/api/AuditEvents/AuditEvents'; // Import the methods
 import { Bundles } from '../imports/lib/schemas/SimpleSchemas/Bundles';
 import { CarePlans } from '../imports/lib/schemas/SimpleSchemas/CarePlans';
 import { CareTeams } from '../imports/lib/schemas/SimpleSchemas/CareTeams';

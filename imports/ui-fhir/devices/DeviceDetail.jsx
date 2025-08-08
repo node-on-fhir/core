@@ -1,341 +1,504 @@
-// =======================================================================
-// Using DSTU2  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-//
-// https://www.hl7.org/fhir/DSTU2/device.html
-//
-//
-// =======================================================================
+// /imports/ui-fhir/devices/DeviceDetail.jsx
 
-import React from 'react';
-import PropTypes from 'prop-types';
-
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useTracker } from 'meteor/react-meteor-data';
 
 import { 
   Button,
   Card,
-  Checkbox,
   CardActions,
   CardContent,
   CardHeader,
-  Grid,
+  Container,
   TextField,
   Select,
   MenuItem,
+  FormControl,
+  InputLabel,
+  Typography,
+  Box,
+  Stack,
+  Chip,
+  FormControlLabel,
+  Switch,
+  InputAdornment,
+  IconButton,
+  Tooltip
 } from '@mui/material';
-
+import SearchIcon from '@mui/icons-material/Search';
 
 import { get, set } from 'lodash';
+import moment from 'moment';
 
+import { Devices } from '/imports/lib/schemas/SimpleSchemas/Devices';
 import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
 
+function DeviceDetail(props) {
+  const navigate = useNavigate();
+  const { id } = useParams();
+  
+  // Get current user and patient from session
+  const currentUser = useTracker(function() {
+    return Meteor.user();
+  }, []);
+  
+  const selectedPatient = useTracker(function() {
+    return Session.get('selectedPatient');
+  }, []);
+  
+  // Initialize state with proper FHIR R4 structure
+  const [device, setDevice] = useState({
+    resourceType: "Device",
+    status: "active",
+    deviceName: [{
+      name: "",
+      type: "udi-label-name"
+    }],
+    manufacturer: "",
+    modelNumber: "",
+    serialNumber: "",
+    type: {
+      coding: [{
+        system: "http://snomed.info/sct",
+        code: "",
+        display: ""
+      }],
+      text: ""
+    },
+    lotNumber: "",
+    manufactureDate: "",
+    expirationDate: "",
+    version: [{
+      value: ""
+    }],
+    patient: {
+      reference: "",
+      display: ""
+    },
+    note: [{
+      text: ""
+    }]
+  });
 
-Session.setDefault('deviceUpsert', false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [isEditing, setIsEditing] = useState(false);
 
-export class DeviceDetail extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      deviceId: false,
-      device: {
-        resourceType: "Device",
-        identifier: [{
-          type: {
-            coding: [
-              {
-                system: "http://hl7.org/fhir/identifier-type",
-                code: "SNO"
-              }
-            ],
-            text: "Serial Number"
-          },
-          value: ""
-        }],
-        type: {
-          text: ""
-        },
-        status: "available",
-        manufacturer: "",
-        model: "",
-        lotNumber: "",
-        contact: [{
-          resourceType: "ContactPoint",
-          system: "phone",
-          value: ""
-        }]
-      },
-      form: {
-        deviceType: '',
-        manufacturer: '',
-        model: '',
-        serialNumber: ''
-      }
-    }
-  }
-  dehydrateFhirResource(device) {
-    let formData = Object.assign({}, this.state.form);
-
-    formData.deviceType = get(device, 'type.text')
-    formData.manufacturer = get(device, 'manufacturer')    
-    formData.model = get(device, 'model')
-    formData.serialNumber = get(device, 'identifier[0].value')
-
-    return formData;
-  }
-  shouldComponentUpdate(nextProps){
-    process.env.NODE_ENV === "test" && console.log('DeviceDetail.shouldComponentUpdate()', nextProps, this.state)
-    let shouldUpdate = true;
-
-    // both false; don't take any more updates
-    if(nextProps.device === this.state.device){
-      shouldUpdate = false;
-    }
-
-    // received an device from the table; okay lets update again
-    if(nextProps.deviceId !== this.state.deviceId){
-      this.setState({deviceId: nextProps.deviceId})
+  // Set default values on component mount for new devices
+  useEffect(function() {
+    if (!id || id === 'new') {
+      // Enable editing for new devices
+      setIsEditing(true);
       
-      if(nextProps.device){
-        this.setState({device: nextProps.device})     
-        this.setState({form: this.dehydrateFhirResource(nextProps.device)})       
-      }
-      shouldUpdate = true;
-    }
- 
-    return shouldUpdate;
-  }
-  getMeteorData() {
-    let data = {
-      deviceId: this.props.deviceId,
-      device: false,
-      form: this.state.form
-    };
-
-    if(this.props.device){
-      data.device = this.props.device;
-    }
-
-    return data;
-  }
-
-  render() {
-    if(process.env.NODE_ENV === "test") console.log('DeviceDetail.render()', this.state)
-    let formData = this.state.form;
-
-    return (
-      <div id={this.props.id} className="deviceDetail">
-        <CardContent>
-          <TextField
-            id='deviceTypeInput'
-            ref='deviceType'
-            name='deviceType'
-            floatingLabelText='Device Type'
-            hintText="Floor Scale"
-            value={ get(formData, 'deviceType', '') }
-            onChange={ this.changeState.bind(this, 'deviceType')}
-            floatingLabelFixed={true}
-            fullWidth
-            /><br/>
-          <TextField
-            id='manufacturerInput'
-            ref='manufacturer'
-            name='manufacturer'
-            floatingLabelText='Manufacturer'
-            hintText="Withings"
-            value={ get(formData, 'manufacturer', '') }
-            onChange={ this.changeState.bind(this, 'manufacturer')}
-            floatingLabelFixed={true}
-            fullWidth
-            /><br/>
-          <TextField
-            id='deviceModelInput'
-            ref='deviceModel'
-            name='deviceModel'
-            floatingLabelText='Model'
-            hintText='Cardio WiFi'
-            value={ get(formData, 'model', '') }
-            onChange={ this.changeState.bind(this, 'deviceModel')}
-            floatingLabelFixed={true}
-            fullWidth
-            /><br/>
-          <TextField
-            id='serialNumberInput'
-            ref='serialNumber'
-            name='serialNumber'
-            hintText='GN-23-01'
-            floatingLabelText='Serial Number'
-            value={ get(formData, 'serialNumber', '') }
-            onChange={ this.changeState.bind(this, 'serialNumber')}
-            floatingLabelFixed={true}
-            fullWidth
-            /><br/>
-        </CardContent>
-        <CardActions>
-          { this.determineButtons(this.data.deviceId) }
-        </CardActions>
-      </div>
-    );
-  }
-
-  determineButtons(deviceId){
-    if (deviceId) {
-      return (
-        <div>
-          <Button id="saveDeviceButton" label="Save" color="primary" variant="contained" onClick={this.handleSaveButton.bind(this)} style={{marginRight: '20px'}}  />
-          <Button id="deleteDeviceButton" label="Delete" color="primary" onClick={this.handleDeleteButton.bind(this)} />
-        </div>
-      );
-    } else {
-      return(
-        <Button id="saveDeviceButton" label="Save" primary={true} onClick={this.handleSaveButton.bind(this)} />
-      );
-    }
-  }
-  updateFormData(formData, field, textValue){
-    if(process.env.NODE_ENV === "test") console.log("DeviceDetail.updateFormData", formData, field, textValue);
-
-    switch (field) {
-      case "deviceType":
-        set(formData, 'deviceType', textValue)
-        break;
-      case "manufacturer":
-        set(formData, 'manufacturer', textValue)
-        break;        
-      case "deviceModel":
-        set(formData, 'model', textValue)
-        break;
-      case "serialNumber":
-        set(formData, 'serialNumber', textValue)
-        break;
-      default:
-    }
-
-    if(process.env.NODE_ENV === "test") console.log("formData", formData);
-    return formData;
-  }
-  updateDevice(deviceData, field, textValue){
-    if(process.env.NODE_ENV === "test") console.log("DeviceDetail.updateDevice", deviceData, field, textValue);
-
-    switch (field) {
-      case "deviceType":
-        set(deviceData, 'type.text', textValue)
-        break;
-      case "manufacturer":
-        set(deviceData, 'manufacturer', textValue)
-        break;
-      case "deviceModel":
-        set(deviceData, 'model', textValue)
-        break;
-      case "serialNumber":
-        set(deviceData, 'identifier[0].value', textValue)
-        break;      
-    }
-    return deviceData;
-  }
-  componentDidUpdate(props){
-    if(process.env.NODE_ENV === "test") console.log('DeviceDetail.componentDidUpdate()', props, this.state)
-  }
-  changeState(field, event, textValue){
-    if(process.env.NODE_ENV === "test") console.log("   ");
-    if(process.env.NODE_ENV === "test") console.log("DeviceDetail.changeState", field, textValue);
-    if(process.env.NODE_ENV === "test") console.log("this.state", this.state);
-
-    let formData = Object.assign({}, this.state.form);
-    let deviceData = Object.assign({}, this.state.device);
-
-    formData = this.updateFormData(formData, field, textValue);
-    deviceData = this.updateDevice(deviceData, field, textValue);
-
-    if(process.env.NODE_ENV === "test") console.log("deviceData", deviceData);
-    if(process.env.NODE_ENV === "test") console.log("formData", formData);
-
-    this.setState({device: deviceData})
-    this.setState({form: formData})
-  }
-
-  handleSaveButton(){
-    if(process.env.NODE_ENV === "test") console.log('^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^&&')
-    console.log('Saving a new Device...', this.state)
-
-    let self = this;
-    let fhirDeviceData = Object.assign({}, this.state.device);
-
-    if(process.env.NODE_ENV === "test") console.log('fhirDeviceData', fhirDeviceData);
-
-
-    let deviceValidator = DeviceSchema.newContext();
-    deviceValidator.validate(fhirDeviceData)
-
-    console.log('IsValid: ', deviceValidator.isValid())
-    console.log('ValidationErrors: ', deviceValidator.validationErrors());
-
-    if (this.data.deviceId) {
-      if(process.env.NODE_ENV === "test") console.log("Updating device...");
-      delete fhirDeviceData._id;
-
-      Devices._collection.update(
-        {_id: this.data.deviceId}, {$set: fhirDeviceData }, function(error, result) {
-          if (error) {
-            console.log("error", error);
-
-            Bert.alert(error.reason, 'danger');
+      // Set patient reference if we have a selected patient
+      if (selectedPatient) {
+        setDevice(prev => ({
+          ...prev,
+          patient: {
+            reference: `Patient/${get(selectedPatient, 'id', '')}`,
+            display: `${get(selectedPatient, 'name[0].given[0]', '')} ${get(selectedPatient, 'name[0].family', '')}`
           }
+        }));
+      }
+    } else {
+      // Viewing existing device - start in read-only mode
+      setIsEditing(false);
+    }
+  }, [id, selectedPatient]);
+
+  // Load device if editing
+  useEffect(function() {
+    async function loadDevice() {
+      if (id && id !== 'new') {
+        setLoading(true);
+        try {
+          const result = await Meteor.callAsync('devices.findOne', id);
           if (result) {
-            HipaaLogger.logEvent({eventType: "update", userId: Meteor.userId(), userName: Meteor.user().fullName(), collectionName: "Devices", recordId: self.data.deviceId});
-            Session.set('devicePageTabIndex', 1);
-            Session.set('selectedDevice', false);
-            Session.set('deviceUpsert', false);
-            Bert.alert('Device updated!', 'success');
+            setDevice(result);
           }
-        });
-    } else {
-
-      if(process.env.NODE_ENV === "test") console.log("create a new device", fhirDeviceData);
-
-      Devices._collection.insert(fhirDeviceData, function(error, result) {
-        if (error) {
-          Bert.alert(error.reason, 'danger');
+        } catch (err) {
+          console.error('Error loading device:', err);
+          setError(err.message);
+        } finally {
+          setLoading(false);
         }
-        if (result) {
-          HipaaLogger.logEvent({eventType: "create", userId: Meteor.userId(), userName: Meteor.user().fullName(), collectionName: "Devices", recordId: self.data.deviceId});
-          Session.set('devicePageTabIndex', 1);
-          Session.set('selectedDevice', false);
-          Session.set('deviceUpsert', false);
-          Bert.alert('Device added!', 'success');
-        }
-      });
+      }
+    }
+    
+    loadDevice();
+  }, [id]);
+
+  // Handle field changes
+  function handleChange(path, value) {
+    console.log('handleChange called with path:', path, 'value:', value);
+    const updatedDevice = { ...device };
+    set(updatedDevice, path, value);
+    setDevice(updatedDevice);
+  }
+
+  // Handle save
+  async function handleSave() {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      if (id && id !== 'new') {
+        // Update existing device
+        await Meteor.callAsync('devices.update', id, device);
+        console.log('Device updated successfully');
+        // Exit edit mode after successful save
+        setIsEditing(false);
+      } else {
+        // Create new device
+        console.log('Creating device with data:', JSON.stringify(device, null, 2));
+        const newId = await Meteor.callAsync('devices.create', device);
+        console.log('Device created with ID:', newId);
+        // Navigate back to devices list for new devices
+        navigate('/devices');
+      }
+    } catch (err) {
+      console.error('Error saving device:', err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
     }
   }
 
-  handleCancelButton(){
-    Session.set('devicePageTabIndex', 1);
+  // Handle delete
+  async function handleDelete() {
+    if (!id || id === 'new') return;
+    
+    if (window.confirm('Are you sure you want to delete this device?')) {
+      setLoading(true);
+      try {
+        await Meteor.callAsync('devices.remove', id);
+        console.log('Device deleted successfully');
+        navigate('/devices');
+      } catch (err) {
+        console.error('Error deleting device:', err);
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    }
   }
 
-  handleDeleteButton(){
-    let self = this;
-    Devices._collection.remove({_id: this.data.deviceId}, function(error, result){
-      if (error) {
-        Bert.alert(error.reason, 'danger');
-      }
-      if (result) {
-        HipaaLogger.logEvent({eventType: "delete", userId: Meteor.userId(), userName: Meteor.user().fullName(), collectionName: "Devices", recordId: self.data.deviceId});
-        Session.set('devicePageTabIndex', 1);
-        Session.set('selectedDevice', false);
-        Session.set('deviceUpsert', false);
-        Bert.alert('Device removed!', 'success');
-      }
-    });
+  // Handle cancel
+  function handleCancel() {
+    navigate('/devices');
   }
+
+  // Handle patient search
+  function handleSearchUser() {
+    console.log('Opening patient search dialog...');
+    // TODO: Implement patient search dialog
+  }
+
+  const statusOptions = [
+    { value: 'active', display: 'Active' },
+    { value: 'inactive', display: 'Inactive' },
+    { value: 'entered-in-error', display: 'Entered in Error' },
+    { value: 'unknown', display: 'Unknown' }
+  ];
+
+  const typeOptions = [
+    { code: 'monitoring', display: 'Monitoring Equipment' },
+    { code: 'diagnostic', display: 'Diagnostic Equipment' },
+    { code: 'therapeutic', display: 'Therapeutic Equipment' },
+    { code: 'surgical', display: 'Surgical Equipment' },
+    { code: '86184003', display: 'Electrocardiograph' },
+    { code: '38017009', display: 'Blood pressure monitor' },
+    { code: '448703006', display: 'Pulse oximeter' },
+    { code: '33894003', display: 'Glucose meter' },
+    { code: '19892000', display: 'Scale' },
+    { code: '32033000', display: 'Thermometer' },
+    { code: '336602003', display: 'Oxygen concentrator' },
+    { code: '706767009', display: 'Patient data recorder' },
+    { code: '303473007', display: 'Wheelchair' },
+    { code: '360055006', display: 'Walker' }
+  ];
+
+  return (
+    <Container id="deviceDetailPage" maxWidth="md" sx={{ py: 4 }}>
+      <Card sx={{ boxShadow: 3 }}>
+        <CardHeader 
+          title={id && id !== 'new' ? 'Edit Device' : 'New Device'}
+          sx={{ bgcolor: 'primary.main', color: 'primary.contrastText' }}
+        />
+        <CardContent>
+          {error && (
+            <Typography color="error" sx={{ mb: 2 }}>
+              Error: {error}
+            </Typography>
+          )}
+          
+          {/* System ID Barcode */}
+          {(id && id !== 'new') && (
+            <Box sx={{ mb: 3, textAlign: 'right' }}>
+              <span id="deviceBarcode" className="barcode helveticas" style={{ fontSize: '2rem' }}>{id}</span>
+            </Box>
+          )}
+          
+          <Stack spacing={3}>
+            <Typography variant="h6">Device Information</Typography>
+            
+            <TextField
+              id="deviceNameInput"
+              fullWidth
+              label="Device Name"
+              value={get(device, 'deviceName[0].name', '')}
+              onChange={(e) => handleChange('deviceName[0].name', e.target.value)}
+              required
+              disabled={!isEditing}
+            />
+            
+            <TextField
+              id="manufacturerInput"
+              fullWidth
+              label="Manufacturer"
+              value={get(device, 'manufacturer', '')}
+              onChange={(e) => handleChange('manufacturer', e.target.value)}
+              disabled={!isEditing}
+            />
+            
+            <TextField
+              id="modelNumberInput"
+              fullWidth
+              label="Model Number"
+              value={get(device, 'modelNumber', '')}
+              onChange={(e) => handleChange('modelNumber', e.target.value)}
+              disabled={!isEditing}
+            />
+            
+            <TextField
+              id="serialNumberInput"
+              fullWidth
+              label="Serial Number"
+              value={get(device, 'serialNumber', '')}
+              onChange={(e) => handleChange('serialNumber', e.target.value)}
+              disabled={!isEditing}
+            />
+            
+            <TextField
+              id="lotNumberInput"
+              fullWidth
+              label="Lot Number"
+              value={get(device, 'lotNumber', '')}
+              onChange={(e) => handleChange('lotNumber', e.target.value)}
+              disabled={!isEditing}
+            />
+            
+            <TextField
+              id="versionInput"
+              fullWidth
+              label="Version"
+              value={get(device, 'version[0].value', '')}
+              onChange={(e) => handleChange('version[0].value', e.target.value)}
+              disabled={!isEditing}
+            />
+            
+            <Typography variant="h6">Type & Status</Typography>
+            
+            <FormControl fullWidth disabled={!isEditing}>
+              <InputLabel>Device Type</InputLabel>
+              <Select
+                id="typeSelect"
+                value={get(device, 'type.coding[0].code', '')}
+                onChange={(e) => {
+                  const option = typeOptions.find(o => o.code === e.target.value);
+                  if (option) {
+                    // Use different system URLs for simple vs SNOMED codes
+                    const isSimpleCode = ['monitoring', 'diagnostic', 'therapeutic', 'surgical'].includes(option.code);
+                    const system = isSimpleCode ? 
+                      'http://hl7.org/fhir/device-category' : 
+                      'http://snomed.info/sct';
+                    
+                    // Update the entire type object at once
+                    handleChange('type', {
+                      coding: [{
+                        system: system,
+                        code: option.code,
+                        display: option.display
+                      }],
+                      text: option.display
+                    });
+                  }
+                }}
+                label="Device Type"
+              >
+                <MenuItem value="">
+                  <em>Not specified</em>
+                </MenuItem>
+                {typeOptions.map(option => (
+                  <MenuItem key={option.code} value={option.code}>
+                    {option.display}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            
+            <TextField
+              id="typeDisplayInput"
+              fullWidth
+              label="Type Display"
+              value={get(device, 'type.coding[0].display', '')}
+              onChange={(e) => handleChange('type.coding[0].display', e.target.value)}
+              disabled={!isEditing}
+            />
+            
+            <FormControl fullWidth disabled={!isEditing}>
+              <InputLabel>Status</InputLabel>
+              <Select
+                id="statusSelect"
+                value={get(device, 'status', 'active')}
+                onChange={(e) => handleChange('status', e.target.value)}
+                label="Status"
+              >
+                {statusOptions.map(option => (
+                  <MenuItem key={option.value} value={option.value}>
+                    {option.display}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            
+            <Typography variant="h6">Dates</Typography>
+            
+            <TextField
+              id="manufactureDateInput"
+              fullWidth
+              type="date"
+              label="Manufacture Date"
+              value={get(device, 'manufactureDate', '')}
+              onChange={(e) => handleChange('manufactureDate', e.target.value)}
+              InputLabelProps={{ shrink: true }}
+              disabled={!isEditing}
+            />
+            
+            <TextField
+              id="expirationDateInput"
+              fullWidth
+              type="date"
+              label="Expiration Date"
+              value={get(device, 'expirationDate', '')}
+              onChange={(e) => handleChange('expirationDate', e.target.value)}
+              InputLabelProps={{ shrink: true }}
+              disabled={!isEditing}
+            />
+            
+            <Typography variant="h6">Patient Association</Typography>
+            
+            <TextField
+              id="patientDisplay"
+              fullWidth
+              label="Patient"
+              value={get(device, 'patient.display', '')}
+              onChange={(e) => handleChange('patient.display', e.target.value)}
+              disabled={!isEditing}
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <Tooltip title="Search for patient">
+                      <IconButton
+                        onClick={handleSearchUser}
+                        edge="end"
+                        disabled={!isEditing}
+                      >
+                        <SearchIcon />
+                      </IconButton>
+                    </Tooltip>
+                  </InputAdornment>
+                ),
+              }}
+            />
+            
+            <Typography variant="h6">Notes</Typography>
+            
+            <TextField
+              id="notesTextarea"
+              fullWidth
+              multiline
+              rows={4}
+              label="Notes"
+              value={get(device, 'note[0].text', '')}
+              onChange={(e) => handleChange('note[0].text', e.target.value)}
+              disabled={!isEditing}
+            />
+          </Stack>
+        </CardContent>
+        
+        <CardActions sx={{ justifyContent: 'flex-end', p: 2 }}>
+          {!isEditing && id && id !== 'new' ? (
+            // Read-only mode buttons
+            <>
+              <Button 
+                onClick={() => navigate('/devices')}
+              >
+                Back
+              </Button>
+              <Button 
+                onClick={() => setIsEditing(true)}
+                variant="contained"
+                color="primary"
+              >
+                Edit
+              </Button>
+            </>
+          ) : (
+            // Edit mode buttons
+            <>
+              <Button 
+                onClick={() => {
+                  if (id && id !== 'new') {
+                    // Cancel editing and reload original data
+                    setIsEditing(false);
+                    // Reload the device to discard changes
+                    async function reloadDevice() {
+                      try {
+                        const result = await Meteor.callAsync('devices.findOne', id);
+                        if (result) {
+                          setDevice(result);
+                        }
+                      } catch (err) {
+                        console.error('Error reloading device:', err);
+                      }
+                    }
+                    reloadDevice();
+                  } else {
+                    // For new devices, go back
+                    navigate('/devices');
+                  }
+                }}
+                disabled={loading}
+              >
+                Cancel
+              </Button>
+              {id && id !== 'new' && (
+                <Button 
+                  onClick={handleDelete}
+                  color="error"
+                  disabled={loading}
+                >
+                  Delete
+                </Button>
+              )}
+              <Button 
+                id="saveDeviceButton"
+                onClick={handleSave}
+                variant="contained"
+                color="primary"
+                disabled={loading}
+              >
+                {loading ? 'Saving...' : 'Save'}
+              </Button>
+            </>
+          )}
+        </CardActions>
+      </Card>
+    </Container>
+  );
 }
-
-
-DeviceDetail.propTypes = {
-  id: PropTypes.string,
-  fhirVersion: PropTypes.string,
-  deviceId: PropTypes.oneOfType([PropTypes.string, PropTypes.bool]),
-  device: PropTypes.oneOfType([PropTypes.object, PropTypes.bool])
-};
-
 
 export default DeviceDetail;

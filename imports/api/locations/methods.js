@@ -2,6 +2,7 @@
 
 import { Meteor } from 'meteor/meteor';
 import { check } from 'meteor/check';
+import { Random } from 'meteor/random';
 import { get } from 'lodash';
 import moment from 'moment';
 
@@ -15,9 +16,17 @@ Meteor.methods({
       throw new Meteor.Error('not-authorized', 'User must be logged in to create locations');
     }
     
+    console.log('=== locations.create called ===');
+    console.log('User ID:', this.userId);
+    console.log('Location data received:', JSON.stringify(locationData, null, 2));
+    
+    // Generate FHIR id if not provided
+    const fhirId = locationData.id || Random.id();
+    
     // Add metadata
     const location = {
       ...locationData,
+      id: fhirId,
       resourceType: 'Location',
       meta: {
         lastUpdated: new Date(),
@@ -25,14 +34,18 @@ Meteor.methods({
       }
     };
     
+    console.log('Location to insert:', JSON.stringify(location, null, 2));
+    
     // Insert and return the new location
     const locationId = await Locations._collection.insertAsync(location);
+    console.log('Successfully inserted location with _id:', locationId);
     
     // Log for HIPAA compliance
     if (Meteor.isServer) {
       console.log('Location created', {
         userId: this.userId,
         locationId: locationId,
+        fhirId: fhirId,
         timestamp: new Date()
       });
     }
@@ -48,8 +61,11 @@ Meteor.methods({
       throw new Meteor.Error('not-authorized', 'User must be logged in to update locations');
     }
     
-    // Check if location exists
-    const existingLocation = await Locations.findOneAsync({ _id: locationId });
+    // Check if location exists - try _id first, then id
+    let existingLocation = await Locations.findOneAsync({ _id: locationId });
+    if (!existingLocation) {
+      existingLocation = await Locations.findOneAsync({ id: locationId });
+    }
     if (!existingLocation) {
       throw new Meteor.Error('not-found', 'Location not found');
     }
@@ -57,7 +73,8 @@ Meteor.methods({
     // Update metadata
     const updatedLocation = {
       ...locationData,
-      _id: locationId,
+      _id: existingLocation._id,  // Use the actual _id from the found location
+      id: existingLocation.id,    // Preserve the FHIR id
       resourceType: 'Location',
       meta: {
         ...get(locationData, 'meta', {}),
@@ -66,9 +83,9 @@ Meteor.methods({
       }
     };
     
-    // Update the location
+    // Update the location using the actual _id
     const result = await Locations._collection.updateAsync(
-      { _id: locationId },
+      { _id: existingLocation._id },
       { $set: updatedLocation }
     );
     
@@ -91,14 +108,17 @@ Meteor.methods({
       throw new Meteor.Error('not-authorized', 'User must be logged in to remove locations');
     }
     
-    // Check if location exists
-    const existingLocation = await Locations.findOneAsync({ _id: locationId });
+    // Check if location exists - try _id first, then id
+    let existingLocation = await Locations.findOneAsync({ _id: locationId });
+    if (!existingLocation) {
+      existingLocation = await Locations.findOneAsync({ id: locationId });
+    }
     if (!existingLocation) {
       throw new Meteor.Error('not-found', 'Location not found');
     }
     
-    // Remove the location
-    const result = await Locations._collection.removeAsync({ _id: locationId });
+    // Remove the location using the actual _id
+    const result = await Locations._collection.removeAsync({ _id: existingLocation._id });
     
     // Log for HIPAA compliance
     if (Meteor.isServer) {
@@ -119,12 +139,26 @@ Meteor.methods({
       throw new Meteor.Error('not-authorized', 'User must be logged in to view locations');
     }
     
-    const location = await Locations.findOneAsync({ _id: locationId });
+    console.log('=== locations.get called with locationId:', locationId);
+    
+    // Try to find by _id first, then by id
+    let location = await Locations.findOneAsync({ _id: locationId });
     
     if (!location) {
+      console.log('Not found by _id, trying by FHIR id...');
+      // Try finding by FHIR id
+      location = await Locations.findOneAsync({ id: locationId });
+    }
+    
+    if (!location) {
+      console.log('Location not found with _id or id:', locationId);
+      // Let's also log what locations exist to help debug
+      const allLocations = await Locations.find({}, { limit: 5 }).fetchAsync();
+      console.log('Sample locations in DB:', allLocations.map(l => ({ _id: l._id, id: l.id })));
       throw new Meteor.Error('not-found', 'Location not found');
     }
     
+    console.log('Found location:', { _id: location._id, id: location.id });
     return location;
   }
 });

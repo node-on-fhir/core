@@ -1478,6 +1478,7 @@ export function flattenDevice(device, internalDateFormat){
     _id: '',
     id: '',
     meta: '',
+    createdAt: '',
     status: '',
     identifier: '',
     deviceType: '',
@@ -1496,19 +1497,23 @@ export function flattenDevice(device, internalDateFormat){
     internalDateFormat = "YYYY-MM-DD";
   }
 
-  result._id = get(device, '_id', '');
+  result._id = extractIdString(get(device, '_id', ''));
   result.id = get(device, 'id', '');
   result.identifier = get(device, 'identifier[0].value', '');
+  
+  // Extract createdAt timestamp if available
+  if (get(device, 'meta.createdAt')) {
+    result.createdAt = moment(get(device, 'meta.createdAt')).format(internalDateFormat + ' HH:mm:ss');
+  }
 
   result.status = get(device, 'status', '');
   result.deviceType = get(device, 'type.text', '');
-  result.deviceModel = get(device, 'model', '');
+  result.deviceModel = get(device, 'modelNumber', '');
   result.manufacturer = get(device, 'manufacturer', '');
   result.serialNumber = get(device, 'identifier[0].value', '');
   result.lotNumber = get(device, 'lotNumber', '');
   result.note = get(device, 'note[0].text', '');
   result.deviceName = get(device, 'deviceName[0].name', '');
-
 
   if(get(device, "issue[0].details.text")){
     result.operationOutcome = get(device, "issue[0].details.text");

@@ -148,6 +148,7 @@
         "Communications": true,
         "Conditions": true,
         "Consents": true,
+        "Devices": true,
         "DocumentReferences": true,
         "Encounters": true,
         "Goals": true,
@@ -249,6 +250,17 @@
           "publication": true
         },
         "Consent": {
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "search"
+          ],
+          "search": true,
+          "publication": true
+        },
+        "Device": {
           "interactions": [
             "read",
             "create",
