@@ -122,11 +122,12 @@ Meteor.methods({
       throw new Meteor.Error('not-authorized', 'User must be logged in to remove devices');
     }
     
-    // In production, only allow deletion in test mode
-    if (!process.env.TEST_RUN && !get(Meteor, 'settings.public.defaults.allowDeviceDeletion', false)) {
-      console.log('[devices.remove] Deletion blocked - not in TEST_RUN mode');
-      throw new Meteor.Error('not-allowed', 'Device deletion is restricted in production mode');
-    }
+    // TODO: Add role-based access control (RBAC) here in the future
+    // For now, only authentication is required
+    // Example future implementation:
+    // if (!Roles.userIsInRole(this.userId, ['admin', 'device-manager'])) {
+    //   throw new Meteor.Error('not-authorized', 'User does not have permission to delete devices');
+    // }
     
     try {
       const result = await Devices.removeAsync({
