@@ -219,9 +219,37 @@ describe('Patients CRUD Operations', function() {
       .clearValue('#givenNameInput')
       .setValue('#givenNameInput', testPatient.givenName)
       .clearValue('#familyNameInput')
-      .setValue('#familyNameInput', testPatient.familyName)
-      .clearValue('#birthDateInput')
-      .setValue('#birthDateInput', testPatient.birthDate)
+      .setValue('#familyNameInput', testPatient.familyName);
+      
+    // Handle date input specially for CI environment
+    browser.execute(function(birthDate) {
+      const dateInput = document.querySelector('#birthDateInput');
+      if (dateInput) {
+        // Method 1: Set value directly and dispatch events
+        dateInput.value = birthDate;
+        dateInput.dispatchEvent(new Event('input', { bubbles: true }));
+        dateInput.dispatchEvent(new Event('change', { bubbles: true }));
+        
+        // Method 2: If that doesn't work, try using the native setter
+        if (dateInput.value !== birthDate) {
+          const nativeInputValueSetter = Object.getOwnPropertyDescriptor(
+            window.HTMLInputElement.prototype, 
+            'value'
+          ).set;
+          nativeInputValueSetter.call(dateInput, birthDate);
+          dateInput.dispatchEvent(new Event('input', { bubbles: true }));
+          dateInput.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+        
+        console.log('Set birth date to:', dateInput.value);
+        return { success: true, value: dateInput.value };
+      }
+      return { success: false, error: 'Date input not found' };
+    }, [testPatient.birthDate], function(result) {
+      console.log('Birth date set result:', result.value);
+    });
+    
+    browser
       .clearValue('#identifierInput')
       .setValue('#identifierInput', testPatient.identifier)
       .clearValue('#addressLineInput')
