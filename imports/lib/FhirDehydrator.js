@@ -3726,6 +3726,8 @@ export function flattenObservation(observation, dateFormat, numeratorCode, denom
     unit: '',
     numerator: '',
     denominator: '',
+    performer: '',
+    performerReference: '',
 
     sampledPeriod: 0,
     sampledMin: 0,
@@ -3771,6 +3773,12 @@ export function flattenObservation(observation, dateFormat, numeratorCode, denom
   result.device = get(observation, 'device.display', '');
   result.deviceReference = get(observation, 'device.reference', '');
   result.status = get(observation, 'status', '');
+  
+  // Extract performer information
+  if(Array.isArray(get(observation, 'performer'))){
+    result.performer = get(observation, 'performer[0].display', '');
+    result.performerReference = get(observation, 'performer[0].reference', '');
+  }
   
   if(get(observation, 'effectiveDateTime')){
     result.effectiveDateTime =  moment(get(observation, 'effectiveDateTime')).format(dateFormat);

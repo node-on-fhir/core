@@ -685,7 +685,7 @@ function ObservationsTable(props){
 
       } else {
         tableRows.push(
-          <TableRow className="observationRow" key={i} onClick={ rowClick.bind(this, observationsToRender[i].id)} hover={true} style={rowStyle}>            
+          <TableRow className="observationRow" key={i} onClick={ rowClick.bind(this, observationsToRender[i].id || observationsToRender[i]._id)} hover={true} style={rowStyle}>            
             { renderToggle() }
             { renderActionIcons(observationsToRender[i]) }
             { renderTextIcon(get(observationsToRender[i], "text.div", "")) }

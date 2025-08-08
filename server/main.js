@@ -37,6 +37,7 @@ import '../imports/api/documentReferences/methods.js';
 import '../imports/api/devices/methods.js'; // Import the methods
 import '../imports/api/encounters/methods.js';
 import '../imports/api/locations/methods.js';
+import '../imports/api/observations/methods.js';
 import '../imports/api/medicationAdministrations/methods.js';
 import '../imports/api/medicationRequests/methods.js';
 import '../imports/api/medications/methods.js';

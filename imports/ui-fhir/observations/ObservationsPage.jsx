@@ -19,19 +19,17 @@ import AddIcon from '@mui/icons-material/Add';
 
 import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
+import HipaaLogger from '../../lib/HipaaLogger';
 
 // import ObservationDetail from './ObservationDetail';
 import ObservationsTable from './ObservationsTable';
 import LayoutHelpers from '../../lib/LayoutHelpers';
 
 import { get, has } from 'lodash'; 
+import { Observations, ObservationSchema } from '/imports/lib/schemas/SimpleSchemas/Observations';
 
 //=============================================================================================================================================
 // DATA CURSORS
-
-Meteor.startup(function(){
-  Observations = Meteor.Collections.Observations;
-})
 
 //=============================================================================================================================================
 // COMPONENT
@@ -73,6 +71,19 @@ export function ObservationsPage(props){
   data.selectedObservation = useTracker(function(){
     return Observations.findOne({_id: Session.get('selectedObservationId')});
   }, [])
+  // Subscribe to observations data
+  const isLoading = useTracker(() => {
+    let autoPublishEnabled = get(Meteor, 'settings.public.defaults.autopublish', false);
+    
+    if(autoPublishEnabled){
+      const handle = Meteor.subscribe('autopublish.Observations', {}, { limit: 1000 });
+      return !handle.ready();
+    } else {
+      const handle = Meteor.subscribe('observations.all');
+      return !handle.ready();
+    }
+  }, []);
+  
   data.observations = useTracker(function(){
     return Observations.find().fetch();
   }, [])
@@ -166,8 +177,8 @@ export function ObservationsPage(props){
     Session.set('observationPageTabIndex', 1);
   }
   function onTableRowClick(observationId){
-    Session.set('selectedObservationId', observationId);
-    Session.set('selectedPatient', Observations.findOne({_id: observationId}));
+    console.log('ObservationsPage: Row clicked with ID:', observationId);
+    navigate('/observations/' + observationId);
   }
   function onTableCellClick(id){
     Session.set('observationsUpsert', false);
