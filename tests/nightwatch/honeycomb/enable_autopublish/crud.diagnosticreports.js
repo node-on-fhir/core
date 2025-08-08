@@ -1,0 +1,1094 @@
+// tests/nightwatch/honeycomb/enable_autopublish/crud.diagnosticreports.js
+
+const testUtils = require('./shared-test-utils');
+
+describe('DiagnosticReports CRUD Operations', function() {
+  const timestamp = Date.now();
+  const testDiagnosticReport = {
+    status: 'final',
+    code: `Lab Report ${timestamp}`,
+    codeSystem: 'http://loinc.org',
+    codeCode: '58410-2',
+    codeDisplay: 'Complete blood count (hemogram) panel',
+    effectiveDateTime: new Date().toISOString().split('T')[0],
+    issued: new Date().toISOString(),
+    performer: 'Dr. Jane Smith',
+    performerReference: `Practitioner/${timestamp}`,
+    conclusion: `Test diagnostic report conclusion ${timestamp}`,
+    patientName: 'John Doe',
+    notes: `Test diagnostic report created at ${timestamp}`
+  };
+
+  const updatedDiagnosticReport = {
+    status: 'amended',
+    code: `Updated Lab Report ${timestamp}`,
+    conclusion: `Updated test diagnostic report conclusion ${timestamp}`,
+    notes: `Test diagnostic report updated at ${timestamp}`
+  };
+
+  before(browser => {
+    console.log('Starting DiagnosticReports CRUD test suite...');
+    browser
+      .url('http://localhost:3000')
+      .waitForElementVisible('body', 5000);
+  });
+
+  beforeEach(browser => {
+    browser.pause(500);
+  });
+
+  it('01. Setup test environment', browser => {
+    browser
+      .url('http://localhost:3000')
+      .waitForElementVisible('body', 5000)
+      .pause(2000)
+      .execute(function(ts) {
+        window.testTimestamp = ts;
+      }, [timestamp]);
+
+    // Check if we're logged in
+    browser.execute(function() {
+      return {
+        isLoggedIn: typeof Meteor !== 'undefined' && !!Meteor.userId(),
+        userId: Meteor.userId ? Meteor.userId() : null,
+        username: Meteor.user ? (Meteor.user() ? Meteor.user().username : null) : null
+      };
+    }, [], function(result) {
+      console.log('Initial login state:', result.value);
+      
+      if (!result.value.isLoggedIn) {
+        console.log('Not logged in, attempting programmatic login...');
+        
+        browser.executeAsync(function(done) {
+          if (typeof Meteor !== 'undefined') {
+            Meteor.call('test.createTestUser', {
+              username: 'janedoe',
+              email: 'janedoe@test.org',
+              password: 'janedoe123'
+            }, function(err, userId) {
+              if (err) {
+                console.error('Failed to create test user:', err);
+                done({ userCreated: false, error: err.message });
+              } else {
+                console.log('Test user ready, userId:', userId);
+                Meteor.loginWithPassword('janedoe', 'janedoe123', function(loginErr) {
+                  if (loginErr) {
+                    console.error('Login failed:', loginErr);
+                    done({ userCreated: true, loginSuccess: false, error: loginErr.message });
+                  } else {
+                    console.log('Login successful');
+                    done({ 
+                      userCreated: true,
+                      loginSuccess: true, 
+                      userId: Meteor.userId(), 
+                      username: Meteor.user() ? Meteor.user().username : null 
+                    });
+                  }
+                });
+              }
+            });
+          } else {
+            done({ userCreated: false, loginSuccess: false, error: 'Meteor not available' });
+          }
+        }, [], function(result) {
+          if (result.value.loginSuccess) {
+            browser.assert.ok(true, 'Successfully created test user and logged in');
+            console.log('Logged in as:', result.value.username, 'userId:', result.value.userId);
+            
+            // Create a test patient
+            testUtils.createTestPatient(browser, {
+              name: 'John Doe',
+              family: 'Doe',
+              given: 'John',
+              identifier: 'test-patient-' + timestamp
+            }, function(result) {
+              if (result.error) {
+                console.error('Failed to create test patient:', result.error);
+                browser.assert.fail('Failed to create test patient: ' + result.error);
+              } else {
+                console.log('Test patient created with ID:', result.result);
+                browser.assert.ok(true, 'Successfully created test patient');
+                
+                // Set the patient in Session
+                browser.execute(function(patientId) {
+                  if (typeof Session !== 'undefined' && typeof Patients !== 'undefined') {
+                    const patient = Patients.findOne({_id: patientId});
+                    if (patient) {
+                      Session.set('selectedPatientId', patientId);
+                      Session.set('selectedPatient', patient);
+                      console.log('Set selected patient in Session:', patientId);
+                    }
+                  }
+                }, [result.result]);
+              }
+            });
+          } else {
+            browser.assert.fail('Setup failed: ' + result.value.error);
+          }
+        });
+        
+        browser.pause(1000);
+      } else {
+        browser.assert.ok(true, 'Already logged in (autologin enabled)');
+        console.log('Already logged in as:', result.value.username, 'userId:', result.value.userId);
+        
+        // Create a test patient even if already logged in
+        testUtils.createTestPatient(browser, {
+          name: 'John Doe',
+          family: 'Doe',
+          given: 'John',
+          identifier: 'test-patient-' + timestamp
+        }, function(result) {
+          if (result.error) {
+            console.error('Failed to create test patient:', result.error);
+            browser.assert.fail('Failed to create test patient: ' + result.error);
+          } else {
+            console.log('Test patient created with ID:', result.result);
+            browser.assert.ok(true, 'Successfully created test patient');
+            
+            // Set the patient in Session
+            browser.execute(function(patientId) {
+              if (typeof Session !== 'undefined' && typeof Patients !== 'undefined') {
+                const patient = Patients.findOne({_id: patientId});
+                if (patient) {
+                  Session.set('selectedPatientId', patientId);
+                  Session.set('selectedPatient', patient);
+                  console.log('Set selected patient in Session:', patientId);
+                }
+              }
+            }, [result.result]);
+          }
+        });
+      }
+      
+      // Clean up any existing test data
+      browser.executeAsync(function(done) {
+        if (typeof DiagnosticReports !== 'undefined') {
+          const testReports = DiagnosticReports.find({ 
+            $or: [
+              { 'code.text': { $regex: '.*Lab Report.*' } },
+              { 'conclusion': { $regex: 'Test diagnostic report.*' } },
+              { 'performer.0.display': { $regex: 'Dr\\..*' } }
+            ]
+          }).fetch();
+          testReports.forEach(function(report) {
+            DiagnosticReports.remove({ _id: report._id });
+          });
+          console.log('Cleared', testReports.length, 'test diagnostic reports');
+        }
+        done();
+      });
+      
+      browser.pause(2000);
+      
+      // Re-establish patient context
+      browser.execute(function(testIdentifier) {
+        console.log('Looking for patient with identifier:', testIdentifier);
+        
+        if (typeof Session !== 'undefined' && typeof Patients !== 'undefined') {
+          const allPatients = Patients.find({}).fetch();
+          console.log('Total patients in collection:', allPatients.length);
+          
+          let patient = Patients.findOne({
+            'identifier.value': testIdentifier
+          });
+          
+          if (!patient) {
+            console.log('Patient not found by identifier, trying by name...');
+            patient = Patients.findOne({
+              $or: [
+                { 'name.0.text': { $regex: 'John.*Doe' } },
+                { 'name.0.family': 'Doe' },
+                { 'name.0.given.0': 'John' }
+              ]
+            });
+          }
+          
+          if (!patient && allPatients.length > 0) {
+            console.log('Patient not found by name, using most recent patient');
+            patient = Patients.findOne({}, { sort: { _id: -1 } });
+          }
+          
+          if (patient) {
+            console.log('Found patient:', patient._id, patient.name?.[0]?.text);
+            Session.set('selectedPatientId', patient._id);
+            Session.set('selectedPatient', patient);
+            return { success: true, patientId: patient._id, patientName: patient.name?.[0]?.text };
+          } else {
+            console.error('Could not find any patient');
+            return { success: false, error: 'No patients found in collection' };
+          }
+        }
+        return { success: false, error: 'Session or Patients not available' };
+      }, ['test-patient-' + timestamp], function(result) {
+        console.log('Patient selection check:', result.value);
+        if (result.value.success) {
+          browser.assert.ok(true, `Patient selected: ${result.value.patientName}`);
+        } else {
+          console.error('Failed to set selected patient:', result.value.error);
+        }
+      });
+    });
+  });
+
+  it('02. Verify diagnostic reports list page loads', browser => {
+    browser
+      .url('http://localhost:3000/diagnostic-reports')
+      .waitForElementVisible('#diagnosticReportsPage', 5000)
+      .pause(2000)
+      .execute(function() {
+        const hasTable = document.querySelector('#diagnosticReportsTable') !== null;
+        const hasNoDataCard = document.querySelector('.no-data-card') !== null ||
+                            document.querySelector('.no-data-available') !== null ||
+                            document.querySelector('[id*="no-data"]') !== null ||
+                            (document.querySelector('#diagnosticReportsPage') && 
+                             document.querySelector('#diagnosticReportsPage').textContent.includes('No Data Available'));
+        return {
+          hasTable: hasTable,
+          hasNoDataCard: hasNoDataCard,
+          hasEitherElement: hasTable || hasNoDataCard
+        };
+      }, [], function(result) {
+        browser.assert.equal(result.value.hasEitherElement, true, 'Either diagnostic reports table or no-data message is present');
+      })
+      .saveScreenshot('tests/nightwatch/screenshots/diagnostic-reports/02-diagnostic-reports-list.png');
+  });
+
+  it('03. Navigate to new diagnostic report form', browser => {
+    browser
+      .waitForElementVisible('#diagnosticReportsPage', 5000)
+      .pause(500);
+
+    browser
+      .execute(function() {
+        const buttons = document.querySelectorAll('button');
+        for (let button of buttons) {
+          if (button.textContent.includes('Add Diagnostic Report') || 
+              button.textContent.includes('Add Your First Diagnostic Report')) {
+            button.click();
+            return true;
+          }
+        }
+        return false;
+      }, [], function(result) {
+        browser.assert.equal(result.value, true, 'Clicked Add Diagnostic Report button');
+      });
+
+    browser
+      .pause(1000)
+      .waitForElementVisible('#diagnosticReportDetailPage', 5000)
+      .assert.elementPresent('#statusSelect')
+      .assert.elementPresent('#codeInput')
+      .assert.elementPresent('#codeDisplayInput')
+      .assert.elementPresent('#effectiveDateTimeInput')
+      .assert.elementPresent('#issuedInput')
+      .assert.elementPresent('#performerInput')
+      .assert.elementPresent('#performerReferenceInput')
+      .assert.elementPresent('#conclusionTextarea')
+      .assert.elementPresent('#subjectDisplay')
+      .assert.elementPresent('#notesTextarea')
+      .pause(1000)
+      .execute(function() {
+        const subjectField = document.querySelector('#subjectDisplay');
+        return {
+          subjectValue: subjectField ? subjectField.value : null,
+          sessionPatientId: typeof Session !== 'undefined' ? Session.get('selectedPatientId') : null,
+          sessionPatient: typeof Session !== 'undefined' ? Session.get('selectedPatient') : null
+        };
+      }, [], function(result) {
+        console.log('Form initialization check:', result.value);
+      })
+      .saveScreenshot('tests/nightwatch/screenshots/diagnostic-reports/03-new-diagnostic-report-form.png');
+  });
+
+  it('04. Create new diagnostic report', browser => {
+    browser
+      .waitForElementVisible('#diagnosticReportDetailPage', 5000)
+      .pause(500);
+
+    // Check if we're on the new diagnostic report page
+    browser.assert.urlContains('/diagnostic-reports/new');
+
+    // Check subject field and populate if empty
+    browser.execute(function() {
+      const subjectField = document.querySelector('#subjectDisplay');
+      let subjectFieldValue = subjectField ? subjectField.value : '';
+      
+      if (subjectField && !subjectFieldValue && typeof Session !== 'undefined') {
+        const selectedPatient = Session.get('selectedPatient');
+        if (selectedPatient) {
+          let patientName = '';
+          if (selectedPatient.name) {
+            if (typeof selectedPatient.name === 'string') {
+              patientName = selectedPatient.name;
+            } else if (Array.isArray(selectedPatient.name) && selectedPatient.name[0]) {
+              patientName = selectedPatient.name[0].text || 
+                          `${selectedPatient.name[0].given?.join(' ') || ''} ${selectedPatient.name[0].family || ''}`.trim();
+            }
+          }
+          
+          if (patientName) {
+            subjectField.value = patientName;
+            subjectField.dispatchEvent(new Event('input', { bubbles: true }));
+            subjectField.dispatchEvent(new Event('change', { bubbles: true }));
+            console.log('Manually set subject field to:', patientName);
+            subjectFieldValue = patientName;
+          }
+        }
+      }
+      
+      return {
+        subjectFieldValue: subjectFieldValue,
+        subjectFieldId: subjectField ? subjectField.id : 'field not found',
+        wasEmpty: !subjectFieldValue
+      };
+    }, [], function(result) {
+      console.log('Subject field check:', result.value);
+    });
+
+    // Check if form is in edit mode
+    browser.execute(function() {
+      const codeField = document.querySelector('#codeInput');
+      if (codeField && codeField.disabled) {
+        const buttons = document.querySelectorAll('button');
+        for (let button of buttons) {
+          if (button.textContent.includes('Edit')) {
+            button.click();
+            return 'clicked_edit';
+          }
+        }
+      }
+      return 'already_editable';
+    }, [], function(result) {
+      console.log('Edit mode check:', result.value);
+    });
+
+    // Fill form fields
+    browser
+      .pause(500)
+      .clearValue('#codeInput')
+      .setValue('#codeInput', testDiagnosticReport.code)
+      .clearValue('#codeDisplayInput')
+      .setValue('#codeDisplayInput', testDiagnosticReport.codeDisplay)
+      .clearValue('#effectiveDateTimeInput')
+      .setValue('#effectiveDateTimeInput', testDiagnosticReport.effectiveDateTime)
+      .clearValue('#issuedInput')
+      .setValue('#issuedInput', testDiagnosticReport.issued.split('T')[0])
+      .clearValue('#performerInput')
+      .setValue('#performerInput', testDiagnosticReport.performer)
+      .clearValue('#performerReferenceInput')
+      .setValue('#performerReferenceInput', testDiagnosticReport.performerReference)
+      .clearValue('#conclusionTextarea')
+      .setValue('#conclusionTextarea', testDiagnosticReport.conclusion)
+      .clearValue('#notesTextarea')
+      .setValue('#notesTextarea', testDiagnosticReport.notes)
+      .pause(500);
+
+    // Also use execute method as fallback
+    browser.execute(function(report) {
+      function setFieldValue(selector, value) {
+        const field = document.querySelector(selector);
+        if (field) {
+          const nativeInputValueSetter = Object.getOwnPropertyDescriptor(
+            window.HTMLInputElement.prototype, 
+            'value'
+          ).set;
+          nativeInputValueSetter.call(field, value);
+          
+          const inputEvent = new Event('input', { bubbles: true });
+          field.dispatchEvent(inputEvent);
+          
+          const changeEvent = new Event('change', { bubbles: true });
+          field.dispatchEvent(changeEvent);
+          
+          console.log(`Set ${selector} to:`, value);
+          return true;
+        } else if (selector.includes('Textarea')) {
+          const textarea = document.querySelector(selector);
+          if (textarea) {
+            const nativeTextareaValueSetter = Object.getOwnPropertyDescriptor(
+              window.HTMLTextAreaElement.prototype, 
+              'value'
+            ).set;
+            nativeTextareaValueSetter.call(textarea, value);
+            
+            const inputEvent = new Event('input', { bubbles: true });
+            textarea.dispatchEvent(inputEvent);
+            
+            const changeEvent = new Event('change', { bubbles: true });
+            textarea.dispatchEvent(changeEvent);
+            
+            console.log(`Set ${selector} to:`, value);
+            return true;
+          }
+        }
+        console.warn(`Field ${selector} not found`);
+        return false;
+      }
+      
+      const results = {};
+      
+      // Ensure subject display is set
+      const subjectField = document.querySelector('#subjectDisplay');
+      if (subjectField && !subjectField.value) {
+        const selectedPatient = Session.get('selectedPatient');
+        if (selectedPatient && selectedPatient.name) {
+          let patientName = '';
+          if (typeof selectedPatient.name === 'string') {
+            patientName = selectedPatient.name;
+          } else if (Array.isArray(selectedPatient.name) && selectedPatient.name[0]) {
+            patientName = selectedPatient.name[0].text || 
+                        `${selectedPatient.name[0].given?.join(' ') || ''} ${selectedPatient.name[0].family || ''}`.trim();
+          }
+          if (patientName) {
+            results.subjectDisplay = setFieldValue('#subjectDisplay', patientName);
+          }
+        }
+      }
+      
+      results.code = setFieldValue('#codeInput', report.code);
+      results.codeDisplay = setFieldValue('#codeDisplayInput', report.codeDisplay);
+      results.performer = setFieldValue('#performerInput', report.performer);
+      results.performerReference = setFieldValue('#performerReferenceInput', report.performerReference);
+      results.conclusion = setFieldValue('#conclusionTextarea', report.conclusion);
+      results.notes = setFieldValue('#notesTextarea', report.notes);
+      
+      return { filled: true, results: results };
+    }, [testDiagnosticReport], function(result) {
+      console.log('Form fields filled:', result.value);
+    });
+
+    // Handle Material-UI Select components
+    browser.execute(function(status) {
+      console.log('Trying to set status to:', status);
+      const statusSelect = document.querySelector('#statusSelect');
+      if (statusSelect) {
+        console.log('Found statusSelect, current value:', statusSelect.value);
+        statusSelect.click();
+        setTimeout(() => {
+          const options = document.querySelectorAll('li[role="option"]');
+          console.log('Found', options.length, 'options');
+          let found = false;
+          for (let option of options) {
+            console.log('Option:', option.getAttribute('data-value'), option.textContent);
+            if (option.getAttribute('data-value') === status || 
+                option.textContent.toLowerCase().includes(status)) {
+              console.log('Clicking option:', option.textContent);
+              option.click();
+              found = true;
+              break;
+            }
+          }
+          if (!found) {
+            console.error('Could not find option for status:', status);
+          }
+        }, 300);
+      } else {
+        console.error('statusSelect not found!');
+      }
+    }, [testDiagnosticReport.status]);
+
+    browser
+      .pause(500)
+      .saveScreenshot('tests/nightwatch/screenshots/diagnostic-reports/04-filled-diagnostic-report-form.png');
+
+    // Log form values before save
+    browser.execute(function() {
+      const subjectField = document.querySelector('#subjectDisplay');
+      const codeField = document.querySelector('#codeInput');
+      const performerField = document.querySelector('#performerInput');
+      const conclusionField = document.querySelector('#conclusionTextarea');
+      
+      console.log('=== Form values before save ===');
+      console.log('Subject display:', subjectField ? subjectField.value : 'not found');
+      console.log('Code:', codeField ? codeField.value : 'not found');
+      console.log('Performer:', performerField ? performerField.value : 'not found');
+      console.log('Conclusion:', conclusionField ? conclusionField.value : 'not found');
+      
+      const statusSelect = document.querySelector('#statusSelect');
+      console.log('Status value:', statusSelect ? statusSelect.value : 'not found');
+      
+      // Also check what's actually in the database
+      if (typeof DiagnosticReports !== 'undefined' && window.testTimestamp) {
+        const savedReports = DiagnosticReports.find().fetch();
+        const testReport = savedReports.find(r => r.code && 
+          r.code.text && 
+          r.code.text.includes(window.testTimestamp));
+        if (testReport) {
+          console.log('Found test report in database:', testReport);
+        } else {
+          console.log('Test report not found in database');
+        }
+      }
+      
+      if (typeof Session !== 'undefined') {
+        const selectedPatientId = Session.get('selectedPatientId');
+        const selectedPatient = Session.get('selectedPatient');
+        console.log('Session selectedPatientId:', selectedPatientId);
+        console.log('Session selectedPatient:', selectedPatient);
+      }
+      
+      return { logged: true };
+    });
+
+    // Save the diagnostic report
+    browser
+      .execute(function() {
+        window.consoleErrors = [];
+        const originalError = console.error;
+        console.error = function() {
+          window.consoleErrors.push(Array.from(arguments).join(' '));
+          originalError.apply(console, arguments);
+        };
+        
+        const buttons = document.querySelectorAll('button');
+        for (let button of buttons) {
+          if (button.textContent.includes('Save')) {
+            button.click();
+            return true;
+          }
+        }
+        return false;
+      }, [], function(result) {
+        browser.assert.equal(result.value, true, 'Clicked Save button');
+      });
+
+    browser
+      .pause(2000);
+    
+    // Check if we're back on the diagnostic reports list page
+    browser.execute(function() {
+      const currentUrl = window.location.pathname;
+      const hasTable = document.querySelector('#diagnosticReportsTable') !== null;
+      const hasReportsPage = document.querySelector('#diagnosticReportsPage') !== null;
+      const hasDetailPage = document.querySelector('#diagnosticReportDetailPage') !== null;
+      
+      const errorElements = document.querySelectorAll('[color="error"], .error, [class*="error"], [class*="Error"]');
+      let errorText = '';
+      errorElements.forEach(el => {
+        if (el.textContent) errorText += el.textContent + ' ';
+      });
+      
+      const consoleErrors = window.consoleErrors || [];
+      
+      return {
+        url: currentUrl,
+        hasTable: hasTable,
+        hasReportsPage: hasReportsPage,
+        hasDetailPage: hasDetailPage,
+        hasError: errorText.length > 0,
+        errorText: errorText.trim(),
+        consoleErrors: consoleErrors,
+        userId: Meteor.userId ? Meteor.userId() : 'No Meteor.userId',
+        isLoggedIn: Meteor.userId ? !!Meteor.userId() : false
+      };
+    }, [], function(result) {
+      console.log('Post-save state:', result.value);
+      if (result.value.hasError) {
+        browser.assert.fail(`Save failed with error: ${result.value.errorText}`);
+      }
+      if (!result.value.isLoggedIn) {
+        browser.assert.fail('User is not logged in after save attempt');
+      }
+      if (result.value.url === '/diagnostic-reports/new') {
+        console.log('Still on new diagnostic report page - save may have failed silently');
+      }
+    });
+    
+    browser
+      .waitForElementVisible('#diagnosticReportsPage', 5000)
+      .saveScreenshot('tests/nightwatch/screenshots/diagnostic-reports/05-diagnostic-report-saved.png');
+  });
+
+  it('05. Verify new diagnostic report appears in list', browser => {
+    browser
+      .waitForElementVisible('#diagnosticReportsPage', 5000)
+      .pause(1000);
+    
+    // Search for our specific test report since there may be many Synthea reports
+    browser
+      .waitForElementVisible('#diagnosticReportSearchInput', 5000)
+      .clearValue('#diagnosticReportSearchInput')
+      .setValue('#diagnosticReportSearchInput', testDiagnosticReport.code.substring(0, 20))
+      .pause(1000);
+    
+    browser.execute(function() {
+      const hasTable = document.querySelector('#diagnosticReportsTable') !== null;
+      const hasNoDataCard = document.querySelector('.no-data-card') !== null;
+      const pageText = document.querySelector('#diagnosticReportsPage')?.textContent || '';
+      
+      let totalReports = 0;
+      let selectedPatientId = null;
+      let selectedPatient = null;
+      
+      if (typeof DiagnosticReports !== 'undefined') {
+        totalReports = DiagnosticReports.find({}).count();
+        console.log('Total diagnostic reports in database:', totalReports);
+        
+        const testReport = DiagnosticReports.findOne({
+          'code.text': { $regex: 'Lab Report.*' }
+        });
+        console.log('Found test report:', testReport);
+        
+        if (testReport) {
+          console.log('Test report subject:', JSON.stringify(testReport.subject, null, 2));
+          console.log('Test report subject reference:', testReport.subject?.reference);
+          console.log('Test report subject display:', testReport.subject?.display);
+        }
+      }
+      
+      if (typeof Session !== 'undefined') {
+        selectedPatientId = Session.get('selectedPatientId');
+        selectedPatient = Session.get('selectedPatient');
+        console.log('Selected patient in Session:', selectedPatientId, selectedPatient?.name);
+      }
+      
+      return {
+        hasTable: hasTable,
+        hasNoDataCard: hasNoDataCard,
+        hasNoData: pageText.includes('No Data Available'),
+        totalReports: totalReports,
+        hasSelectedPatient: !!selectedPatientId,
+        selectedPatientId: selectedPatientId
+      };
+    }, [], function(result) {
+      console.log('Page state:', result.value);
+      
+      if (result.value.totalReports > 0 && (result.value.hasNoData || result.value.hasNoDataCard)) {
+        browser.assert.fail(`Reports exist (${result.value.totalReports}) but are filtered out - patient reference may not be set correctly`);
+      } else if (result.value.hasNoData || result.value.hasNoDataCard) {
+        browser.assert.fail('No reports found - save operation may have failed');
+      }
+    });
+    
+    browser.execute(function() {
+      const table = document.querySelector('#diagnosticReportsTable');
+      if (!table) return { hasTable: false };
+      
+      const rows = table.querySelectorAll('tbody tr');
+      return {
+        hasTable: true,
+        rowCount: rows.length,
+        firstRowText: rows.length > 0 ? rows[0].textContent : ''
+      };
+    }, [], function(result) {
+      console.log('Table check:', result.value);
+      if (result.value.hasTable && result.value.rowCount > 0) {
+        browser.assert.ok(true, `Found ${result.value.rowCount} diagnostic report(s) in table`);
+      } else {
+        browser.assert.fail('No diagnostic reports table found or table is empty');
+      }
+    });
+    
+    browser
+      .saveScreenshot('tests/nightwatch/screenshots/diagnostic-reports/06-diagnostic-report-in-list.png');
+  });
+
+  it('06. View diagnostic report details', browser => {
+    browser
+      .waitForElementVisible('#diagnosticReportsPage', 5000)
+      .pause(1000);
+
+    // Search for our specific report
+    browser
+      .waitForElementVisible('#diagnosticReportSearchInput', 5000)
+      .clearValue('#diagnosticReportSearchInput')
+      .setValue('#diagnosticReportSearchInput', testDiagnosticReport.code.substring(0, 20))
+      .pause(1000);
+
+    // Now click on the report row
+    browser
+      .waitForElementVisible('#diagnosticReportsTable', 5000)
+      .execute(function(timestamp) {
+        const rows = document.querySelectorAll('#diagnosticReportsTable tbody tr');
+        console.log('Found', rows.length, 'rows in diagnostic reports table');
+        
+        // Look for our test report
+        for (let i = 0; i < rows.length; i++) {
+          const row = rows[i];
+          if (row.textContent.includes(timestamp)) {
+            console.log('Clicking row', i, 'with text:', row.textContent);
+            row.click();
+            return { clicked: true, rowText: row.textContent, rowIndex: i };
+          }
+        }
+        
+        // If not found, click the first row
+        if (rows.length > 0) {
+          rows[0].click();
+          return { clicked: true, rowText: rows[0].textContent, rowIndex: 0 };
+        }
+        
+        return { clicked: false, error: 'No rows found' };
+      }, [timestamp.toString()], function(result) {
+        console.log('Click result:', result.value);
+        browser.assert.equal(result.value.clicked, true, 'Found and clicked diagnostic report row');
+      });
+
+    browser
+      .pause(1000)
+      .waitForElementVisible('#diagnosticReportDetailPage', 5000)
+      .assert.valueContains('#codeInput', testDiagnosticReport.code)
+      .assert.valueContains('#performerInput', testDiagnosticReport.performer)
+      .assert.valueContains('#conclusionTextarea', testDiagnosticReport.conclusion)
+      .execute(function() {
+        const statusInput = document.querySelector('#statusSelect');
+        
+        // Get the value from Material-UI Select which uses hidden input
+        const getMUISelectValue = (selectId) => {
+          const select = document.querySelector(selectId);
+          if (!select) return null;
+          
+          // For MUI Select, the actual value is in a hidden input
+          const hiddenInput = select.querySelector('input[type="hidden"]');
+          if (hiddenInput) return hiddenInput.value;
+          
+          // Fallback to direct value
+          return select.value;
+        };
+        
+        // Also try to get the displayed text for Material-UI Select
+        const getSelectDisplay = (selectId) => {
+          const select = document.querySelector(selectId);
+          if (!select) return null;
+          
+          // Look for the displayed value in various MUI structures
+          const displayDiv = select.parentElement?.querySelector('[role="button"]');
+          if (displayDiv) return displayDiv.textContent;
+          
+          // Alternative: look for the selected option text
+          const selectedValue = getMUISelectValue(selectId);
+          const options = document.querySelectorAll(`${selectId} option`);
+          for (let opt of options) {
+            if (opt.value === selectedValue) return opt.textContent;
+          }
+          
+          return null;
+        };
+        
+        return {
+          status: getMUISelectValue('#statusSelect'),
+          notes: document.querySelector('#notesTextarea').value,
+          statusDisplay: getSelectDisplay('#statusSelect') || 
+                        document.querySelector('[aria-labelledby*="status"]')?.textContent || 
+                        document.querySelector('#statusSelect')?.parentElement?.textContent
+        };
+      }, [], function(result) {
+        console.log('View diagnostic report details - form values:', result.value);
+        console.log('Expected status:', testDiagnosticReport.status);
+        console.log('Actual status value:', result.value.status);
+        console.log('Status display:', result.value.statusDisplay);
+        
+        const statusOk = result.value.status === testDiagnosticReport.status || 
+                       (result.value.statusDisplay && result.value.statusDisplay.includes('Final'));
+        
+        browser.assert.ok(statusOk, 'Status matches');
+        browser.assert.ok(result.value.notes.includes(testDiagnosticReport.notes), 'Notes contain expected text');
+      })
+      .saveScreenshot('tests/nightwatch/screenshots/diagnostic-reports/07-view-diagnostic-report-details.png');
+    
+    // Navigate back to diagnostic reports list
+    browser
+      .url('http://localhost:3000/diagnostic-reports')
+      .waitForElementVisible('#diagnosticReportsPage', 5000);
+  });
+
+  it('07. Update existing diagnostic report', browser => {
+    browser
+      .waitForElementVisible('#diagnosticReportsTable', 5000)
+      .pause(1000);
+
+    // Search for our specific test report first
+    browser
+      .waitForElementVisible('#diagnosticReportSearchInput', 5000)
+      .clearValue('#diagnosticReportSearchInput')
+      .setValue('#diagnosticReportSearchInput', testDiagnosticReport.code.substring(0, 20))
+      .pause(1000);
+
+    // Now click on the report to edit
+    browser
+      .execute(function(timestamp) {
+        const rows = document.querySelectorAll('#diagnosticReportsTable tbody tr');
+        console.log('Looking for report with timestamp:', timestamp);
+        console.log('Found', rows.length, 'rows in table');
+        
+        for (let i = 0; i < rows.length; i++) {
+          console.log('Row', i, ':', rows[i].textContent.substring(0, 100));
+          if (rows[i].textContent.includes(timestamp)) {
+            console.log('Found test report in row', i);
+            rows[i].click();
+            return { success: true, found: true, rowIndex: i };
+          }
+        }
+        
+        console.error('Test report not found in table! Table only contains Synthea reports.');
+        return { success: false, found: false, error: 'Test report not in table' };
+      }, [timestamp.toString()], function(result) {
+        if (!result.value.found) {
+          browser.assert.fail('Test report not found in table - cannot update. Only Synthea reports are visible.');
+        }
+      });
+
+    browser
+      .pause(1000)
+      .waitForElementVisible('#diagnosticReportDetailPage', 5000)
+      .pause(500);
+
+    // Enter edit mode
+    browser
+      .execute(function() {
+        const lockButton = document.querySelector('button svg[data-testid="LockIcon"]')?.parentElement;
+        if (lockButton) {
+          lockButton.click();
+          return true;
+        }
+        const buttons = document.querySelectorAll('button');
+        for (let button of buttons) {
+          if (button.textContent.includes('Edit')) {
+            button.click();
+            return true;
+          }
+        }
+        return false;
+      }, [], function(result) {
+        browser.assert.equal(result.value, true, 'Clicked Edit/Lock button to enter edit mode');
+      })
+      .pause(500);
+
+    // Update report details
+    browser
+      .click('#codeInput')
+      .keys([browser.Keys.COMMAND, 'a'])
+      .keys(browser.Keys.BACK_SPACE)
+      .pause(100)
+      .setValue('#codeInput', updatedDiagnosticReport.code)
+      .click('#conclusionTextarea')
+      .keys([browser.Keys.COMMAND, 'a'])
+      .keys(browser.Keys.BACK_SPACE)
+      .pause(100)
+      .setValue('#conclusionTextarea', updatedDiagnosticReport.conclusion)
+      .click('#statusSelect')
+      .pause(300)
+      .execute(function(value) {
+        const menuItems = document.querySelectorAll('[role="option"]');
+        for (let item of menuItems) {
+          if (item.textContent.toLowerCase().includes(value.toLowerCase()) || 
+              item.getAttribute('data-value') === value) {
+            item.click();
+            return true;
+          }
+        }
+        return false;
+      }, [updatedDiagnosticReport.status], function(result) {
+        browser.assert.equal(result.value, true, 'Selected status');
+      })
+      .click('#notesTextarea')
+      .keys([browser.Keys.COMMAND, 'a'])
+      .keys(browser.Keys.BACK_SPACE)
+      .pause(100)
+      .setValue('#notesTextarea', updatedDiagnosticReport.notes)
+      .pause(500)
+      .saveScreenshot('tests/nightwatch/screenshots/diagnostic-reports/08-updated-diagnostic-report-form.png');
+
+    // Save the updated report
+    browser
+      .execute(function() {
+        const buttons = document.querySelectorAll('button');
+        for (let button of buttons) {
+          if (button.textContent.includes('Save')) {
+            button.click();
+            return true;
+          }
+        }
+        return false;
+      }, [], function(result) {
+        browser.assert.equal(result.value, true, 'Clicked Save button');
+      });
+
+    browser
+      .pause(2000)
+      .url('http://localhost:3000/diagnostic-reports')
+      .waitForElementVisible('#diagnosticReportsTable', 5000)
+      .saveScreenshot('tests/nightwatch/screenshots/diagnostic-reports/09-diagnostic-report-updated.png');
+  });
+
+  it('08. Verify updated diagnostic report in list', browser => {
+    browser
+      .waitForElementVisible('#diagnosticReportsTable', 5000)
+      .waitForElementVisible('#diagnosticReportSearchInput', 5000)
+      .clearValue('#diagnosticReportSearchInput')
+      .setValue('#diagnosticReportSearchInput', updatedDiagnosticReport.code.substring(0, 20))
+      .pause(1000)
+      .execute(function(expectedCode) {
+        const table = document.querySelector('#diagnosticReportsTable');
+        const rows = table ? table.querySelectorAll('tbody tr') : [];
+        const reportCodes = [];
+        
+        for (let row of rows) {
+          const cells = row.querySelectorAll('td');
+          for (let cell of cells) {
+            if (cell.textContent.includes('Report')) {
+              reportCodes.push(cell.textContent);
+            }
+          }
+        }
+        
+        return {
+          rowCount: rows.length,
+          reportCodes: reportCodes,
+          tableText: table ? table.textContent : 'Table not found',
+          foundExpected: table ? table.textContent.includes(expectedCode) : false
+        };
+      }, [updatedDiagnosticReport.code], function(result) {
+        console.log('Table debug info:', result.value);
+        browser.assert.ok(result.value.foundExpected, 
+          `Updated report '${updatedDiagnosticReport.code}' should be in table. Found reports: ${result.value.reportCodes.join(', ')}`);
+      })
+      .saveScreenshot('tests/nightwatch/screenshots/diagnostic-reports/10-updated-diagnostic-report-in-list.png');
+  });
+
+  it('09. Delete diagnostic report', browser => {
+    browser
+      .waitForElementVisible('#diagnosticReportsPage', 5000)
+      .pause(1000);
+
+    browser.execute(function() {
+      const hasTable = document.querySelector('#diagnosticReportsTable') !== null;
+      const hasNoData = document.querySelector('.no-data-card') !== null ||
+                       document.querySelector('#diagnosticReportsPage').textContent.includes('No Data Available');
+      return { hasTable: hasTable, hasNoData: hasNoData };
+    }, [], function(result) {
+      if (result.value.hasTable) {
+        browser
+          .execute(function(timestamp) {
+            const rows = document.querySelectorAll('#diagnosticReportsTable tbody tr');
+            for (let row of rows) {
+              if (row.textContent.includes(timestamp)) {
+                row.click();
+                return true;
+              }
+            }
+            return false;
+          }, [timestamp.toString()], function(result) {
+            browser.assert.equal(result.value, true, 'Found and clicked diagnostic report row');
+          });
+
+        browser
+          .pause(1000)
+          .waitForElementVisible('#diagnosticReportDetailPage', 5000);
+
+        // Enter edit mode
+        browser
+          .execute(function() {
+            const lockButton = document.querySelector('button svg[data-testid="LockIcon"]')?.parentElement;
+            if (lockButton) {
+              lockButton.click();
+              return true;
+            }
+            const buttons = document.querySelectorAll('button');
+            for (let button of buttons) {
+              if (button.textContent.includes('Edit')) {
+                button.click();
+                return true;
+              }
+            }
+            return false;
+          }, [], function(result) {
+            browser.assert.equal(result.value, true, 'Clicked Edit/Lock button to enter edit mode');
+          })
+          .pause(500);
+
+        // Click Delete button
+        browser
+          .execute(function() {
+            const buttons = document.querySelectorAll('button');
+            for (let button of buttons) {
+              if (button.textContent.includes('Delete')) {
+                window.__deleteButtonFound = true;
+                button.click();
+                return true;
+              }
+            }
+            return false;
+          })
+          .pause(100)
+          .acceptAlert()
+          .pause(500);
+
+        browser
+          .pause(2000)
+          .waitForElementVisible('#diagnosticReportsPage', 5000)
+          .execute(function() {
+            const hasTable = document.querySelector('#diagnosticReportsTable') !== null;
+            const hasNoDataCard = document.querySelector('.no-data-card') !== null ||
+                                document.querySelector('.no-data-available') !== null ||
+                                document.querySelector('[id*="no-data"]') !== null ||
+                                (document.querySelector('#diagnosticReportsPage') && 
+                                 document.querySelector('#diagnosticReportsPage').textContent.includes('No Data Available'));
+            return {
+              hasTable: hasTable,
+              hasNoDataCard: hasNoDataCard,
+              hasEitherElement: hasTable || hasNoDataCard
+            };
+          }, [], function(result) {
+            browser.assert.equal(result.value.hasEitherElement, true, 'Either diagnostic reports table or no-data message is present after deletion');
+          });
+      } else if (result.value.hasNoData) {
+        browser.assert.ok(true, 'No diagnostic reports to delete - No Data Available state is correct');
+      }
+    });
+    
+    browser.saveScreenshot('tests/nightwatch/screenshots/diagnostic-reports/11-diagnostic-report-deleted.png');
+  });
+
+  it('10. Verify diagnostic report removed from list', browser => {
+    browser
+      .waitForElementVisible('#diagnosticReportsPage', 5000)
+      .pause(1000)
+      .execute(function(timestamp) {
+        const table = document.querySelector('#diagnosticReportsTable');
+        if (table) {
+          const rows = document.querySelectorAll('#diagnosticReportsTable tbody tr');
+          for (let row of rows) {
+            if (row.textContent.includes(timestamp)) {
+              return { found: true, hasTable: true };
+            }
+          }
+          return { found: false, hasTable: true };
+        } else {
+          const hasNoData = document.querySelector('.no-data-card') !== null ||
+                           document.querySelector('#diagnosticReportsPage').textContent.includes('No Data Available');
+          return { found: false, hasTable: false, hasNoData: hasNoData };
+        }
+      }, [timestamp.toString()], function(result) {
+        if (result.value.hasTable) {
+          browser.assert.equal(result.value.found, false, 'Diagnostic report no longer in list');
+        } else {
+          browser.assert.equal(result.value.hasNoData, true, 'No data available shown (diagnostic report was deleted)');
+        }
+      })
+      .saveScreenshot('tests/nightwatch/screenshots/diagnostic-reports/12-diagnostic-report-not-in-list.png');
+  });
+
+  after(browser => {
+    // Clean up test data
+    browser.executeAsync(function(done) {
+      if (typeof DiagnosticReports !== 'undefined') {
+        DiagnosticReports.find({ 
+          $or: [
+            { 'code.text': { $regex: '.*Lab Report.*' } },
+            { 'conclusion': { $regex: 'Test diagnostic report.*' } },
+            { 'performer.0.display': { $regex: 'Dr\\..*' } }
+          ]
+        }).fetch().forEach(function(report) {
+          DiagnosticReports.remove({ _id: report._id });
+        });
+        done();
+      } else {
+        done();
+      }
+    });
+
+    browser.end();
+  });
+});
