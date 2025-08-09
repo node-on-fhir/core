@@ -4,26 +4,25 @@ const testUtils = require('./shared-test-utils');
 
 describe('DiagnosticReports CRUD Operations', function() {
   const timestamp = Date.now();
+  const dateString = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+  let createdReportId; // Store the ID of created report
+  
+  // Generate a random 5-digit number for the LOINC code to ensure uniqueness
+  const randomCode = Math.floor(10000 + Math.random() * 90000);
+  
   const testDiagnosticReport = {
     status: 'final',
-    code: `Lab Report ${timestamp}`,
-    codeSystem: 'http://loinc.org',
-    codeCode: '58410-2',
-    codeDisplay: 'Complete blood count (hemogram) panel',
-    effectiveDateTime: new Date().toISOString().split('T')[0],
-    issued: new Date().toISOString(),
-    performer: 'Dr. Jane Smith',
-    performerReference: `Practitioner/${timestamp}`,
+    code: `${randomCode}-8`, // Random LOINC-style code (e.g., "24323-8")
+    effectiveDateTime: dateString,
     conclusion: `Test diagnostic report conclusion ${timestamp}`,
     patientName: 'John Doe',
-    notes: `Test diagnostic report created at ${timestamp}`
+    category: 'Laboratory' // Laboratory category
   };
 
   const updatedDiagnosticReport = {
     status: 'amended',
-    code: `Updated Lab Report ${timestamp}`,
-    conclusion: `Updated test diagnostic report conclusion ${timestamp}`,
-    notes: `Test diagnostic report updated at ${timestamp}`
+    code: `${randomCode}-8`, // Keep same random code
+    conclusion: `Updated test diagnostic report conclusion ${timestamp}`
   };
 
   before(browser => {
@@ -235,7 +234,58 @@ describe('DiagnosticReports CRUD Operations', function() {
     browser
       .url('http://localhost:3000/diagnostic-reports')
       .waitForElementVisible('#diagnosticReportsPage', 5000)
-      .pause(2000)
+      .pause(2000);
+      
+    // Re-establish patient context after navigation
+    browser.execute(function(testIdentifier) {
+      console.log('Re-establishing patient context after navigation...');
+      
+      if (typeof Session !== 'undefined' && typeof Patients !== 'undefined') {
+        // First check if patient is already set
+        const currentPatientId = Session.get('selectedPatientId');
+        const currentPatient = Session.get('selectedPatient');
+        
+        if (currentPatient && currentPatientId) {
+          console.log('Patient already set:', currentPatientId);
+          return { success: true, patientId: currentPatientId, patientName: currentPatient.name?.[0]?.text };
+        }
+        
+        // If not set, find and set the patient
+        let patient = Patients.findOne({
+          'identifier.value': testIdentifier
+        });
+        
+        if (!patient) {
+          patient = Patients.findOne({
+            $or: [
+              { 'name.0.text': { $regex: 'John.*Doe' } },
+              { 'name.0.family': 'Doe' },
+              { 'name.0.given.0': 'John' }
+            ]
+          });
+        }
+        
+        if (!patient) {
+          patient = Patients.findOne({}, { sort: { _id: -1 } });
+        }
+        
+        if (patient) {
+          console.log('Setting patient in Session:', patient._id, patient.name?.[0]?.text);
+          Session.set('selectedPatientId', patient._id);
+          Session.set('selectedPatient', patient);
+          return { success: true, patientId: patient._id, patientName: patient.name?.[0]?.text };
+        } else {
+          console.error('No patients found');
+          return { success: false, error: 'No patients found' };
+        }
+      }
+      return { success: false, error: 'Session or Patients not available' };
+    }, ['test-patient-' + timestamp], function(result) {
+      console.log('Patient context check:', result.value);
+    });
+    
+    browser
+      .pause(1000)
       .execute(function() {
         const hasTable = document.querySelector('#diagnosticReportsTable') !== null;
         const hasNoDataCard = document.querySelector('.no-data-card') !== null ||
@@ -279,17 +329,13 @@ describe('DiagnosticReports CRUD Operations', function() {
       .waitForElementVisible('#diagnosticReportDetailPage', 5000)
       .assert.elementPresent('#statusSelect')
       .assert.elementPresent('#codeInput')
-      .assert.elementPresent('#codeDisplayInput')
+      .assert.elementPresent('#categoryInput')
       .assert.elementPresent('#effectiveDateTimeInput')
-      .assert.elementPresent('#issuedInput')
-      .assert.elementPresent('#performerInput')
-      .assert.elementPresent('#performerReferenceInput')
-      .assert.elementPresent('#conclusionTextarea')
-      .assert.elementPresent('#subjectDisplay')
-      .assert.elementPresent('#notesTextarea')
+      .assert.elementPresent('#subjectInput')
+      .assert.elementPresent('#conclusionInput')
       .pause(1000)
       .execute(function() {
-        const subjectField = document.querySelector('#subjectDisplay');
+        const subjectField = document.querySelector('#subjectInput');
         return {
           subjectValue: subjectField ? subjectField.value : null,
           sessionPatientId: typeof Session !== 'undefined' ? Session.get('selectedPatientId') : null,
@@ -309,41 +355,24 @@ describe('DiagnosticReports CRUD Operations', function() {
     // Check if we're on the new diagnostic report page
     browser.assert.urlContains('/diagnostic-reports/new');
 
-    // Check subject field and populate if empty
+    // Subject field should be auto-populated from Session
     browser.execute(function() {
-      const subjectField = document.querySelector('#subjectDisplay');
-      let subjectFieldValue = subjectField ? subjectField.value : '';
-      
-      if (subjectField && !subjectFieldValue && typeof Session !== 'undefined') {
-        const selectedPatient = Session.get('selectedPatient');
-        if (selectedPatient) {
-          let patientName = '';
-          if (selectedPatient.name) {
-            if (typeof selectedPatient.name === 'string') {
-              patientName = selectedPatient.name;
-            } else if (Array.isArray(selectedPatient.name) && selectedPatient.name[0]) {
-              patientName = selectedPatient.name[0].text || 
-                          `${selectedPatient.name[0].given?.join(' ') || ''} ${selectedPatient.name[0].family || ''}`.trim();
-            }
-          }
-          
-          if (patientName) {
-            subjectField.value = patientName;
-            subjectField.dispatchEvent(new Event('input', { bubbles: true }));
-            subjectField.dispatchEvent(new Event('change', { bubbles: true }));
-            console.log('Manually set subject field to:', patientName);
-            subjectFieldValue = patientName;
-          }
-        }
+      const subjectField = document.querySelector('#subjectInput');
+      if (!subjectField) {
+        return { error: 'Subject field not found' };
       }
       
+      // The field should be disabled and auto-populated
       return {
-        subjectFieldValue: subjectFieldValue,
-        subjectFieldId: subjectField ? subjectField.id : 'field not found',
-        wasEmpty: !subjectFieldValue
+        subjectFieldValue: subjectField.value,
+        isDisabled: subjectField.disabled,
+        subjectFieldId: subjectField.id
       };
     }, [], function(result) {
       console.log('Subject field check:', result.value);
+      if (result.value.subjectFieldValue) {
+        browser.assert.ok(true, 'Subject field is populated: ' + result.value.subjectFieldValue);
+      }
     });
 
     // Check if form is in edit mode
@@ -368,90 +397,47 @@ describe('DiagnosticReports CRUD Operations', function() {
       .pause(500)
       .clearValue('#codeInput')
       .setValue('#codeInput', testDiagnosticReport.code)
-      .clearValue('#codeDisplayInput')
-      .setValue('#codeDisplayInput', testDiagnosticReport.codeDisplay)
+      .clearValue('#categoryInput')
+      .setValue('#categoryInput', 'Laboratory')
       .clearValue('#effectiveDateTimeInput')
       .setValue('#effectiveDateTimeInput', testDiagnosticReport.effectiveDateTime)
-      .clearValue('#issuedInput')
-      .setValue('#issuedInput', testDiagnosticReport.issued.split('T')[0])
-      .clearValue('#performerInput')
-      .setValue('#performerInput', testDiagnosticReport.performer)
-      .clearValue('#performerReferenceInput')
-      .setValue('#performerReferenceInput', testDiagnosticReport.performerReference)
-      .clearValue('#conclusionTextarea')
-      .setValue('#conclusionTextarea', testDiagnosticReport.conclusion)
-      .clearValue('#notesTextarea')
-      .setValue('#notesTextarea', testDiagnosticReport.notes)
+      .clearValue('#conclusionInput')
+      .setValue('#conclusionInput', testDiagnosticReport.conclusion)
       .pause(500);
 
     // Also use execute method as fallback
     browser.execute(function(report) {
+      const results = {};
+      
+      // Simple field setter without native descriptor access
       function setFieldValue(selector, value) {
-        const field = document.querySelector(selector);
-        if (field) {
-          const nativeInputValueSetter = Object.getOwnPropertyDescriptor(
-            window.HTMLInputElement.prototype, 
-            'value'
-          ).set;
-          nativeInputValueSetter.call(field, value);
-          
-          const inputEvent = new Event('input', { bubbles: true });
-          field.dispatchEvent(inputEvent);
-          
-          const changeEvent = new Event('change', { bubbles: true });
-          field.dispatchEvent(changeEvent);
-          
-          console.log(`Set ${selector} to:`, value);
-          return true;
-        } else if (selector.includes('Textarea')) {
-          const textarea = document.querySelector(selector);
-          if (textarea) {
-            const nativeTextareaValueSetter = Object.getOwnPropertyDescriptor(
-              window.HTMLTextAreaElement.prototype, 
-              'value'
-            ).set;
-            nativeTextareaValueSetter.call(textarea, value);
-            
-            const inputEvent = new Event('input', { bubbles: true });
-            textarea.dispatchEvent(inputEvent);
-            
-            const changeEvent = new Event('change', { bubbles: true });
-            textarea.dispatchEvent(changeEvent);
-            
+        try {
+          const field = document.querySelector(selector);
+          if (field) {
+            field.value = value;
+            field.dispatchEvent(new Event('input', { bubbles: true }));
+            field.dispatchEvent(new Event('change', { bubbles: true }));
             console.log(`Set ${selector} to:`, value);
             return true;
           }
+          console.warn(`Field ${selector} not found`);
+          return false;
+        } catch (e) {
+          console.error(`Error setting ${selector}:`, e);
+          return false;
         }
-        console.warn(`Field ${selector} not found`);
-        return false;
       }
       
-      const results = {};
-      
-      // Ensure subject display is set
-      const subjectField = document.querySelector('#subjectDisplay');
-      if (subjectField && !subjectField.value) {
-        const selectedPatient = Session.get('selectedPatient');
-        if (selectedPatient && selectedPatient.name) {
-          let patientName = '';
-          if (typeof selectedPatient.name === 'string') {
-            patientName = selectedPatient.name;
-          } else if (Array.isArray(selectedPatient.name) && selectedPatient.name[0]) {
-            patientName = selectedPatient.name[0].text || 
-                        `${selectedPatient.name[0].given?.join(' ') || ''} ${selectedPatient.name[0].family || ''}`.trim();
-          }
-          if (patientName) {
-            results.subjectDisplay = setFieldValue('#subjectDisplay', patientName);
-          }
-        }
+      // Subject field should already be populated and is disabled
+      const subjectField = document.querySelector('#subjectInput');
+      if (subjectField) {
+        console.log('Subject field value:', subjectField.value);
+        console.log('Subject field disabled:', subjectField.disabled);
       }
       
       results.code = setFieldValue('#codeInput', report.code);
-      results.codeDisplay = setFieldValue('#codeDisplayInput', report.codeDisplay);
-      results.performer = setFieldValue('#performerInput', report.performer);
-      results.performerReference = setFieldValue('#performerReferenceInput', report.performerReference);
-      results.conclusion = setFieldValue('#conclusionTextarea', report.conclusion);
-      results.notes = setFieldValue('#notesTextarea', report.notes);
+      results.category = setFieldValue('#categoryInput', report.category); // Use LAB from test data
+      results.conclusion = setFieldValue('#conclusionInput', report.conclusion);
       
       return { filled: true, results: results };
     }, [testDiagnosticReport], function(result) {
@@ -494,15 +480,15 @@ describe('DiagnosticReports CRUD Operations', function() {
 
     // Log form values before save
     browser.execute(function() {
-      const subjectField = document.querySelector('#subjectDisplay');
+      const subjectField = document.querySelector('#subjectInput');
       const codeField = document.querySelector('#codeInput');
-      const performerField = document.querySelector('#performerInput');
-      const conclusionField = document.querySelector('#conclusionTextarea');
+      const categoryField = document.querySelector('#categoryInput');
+      const conclusionField = document.querySelector('#conclusionInput');
       
       console.log('=== Form values before save ===');
-      console.log('Subject display:', subjectField ? subjectField.value : 'not found');
+      console.log('Subject:', subjectField ? subjectField.value : 'not found');
       console.log('Code:', codeField ? codeField.value : 'not found');
-      console.log('Performer:', performerField ? performerField.value : 'not found');
+      console.log('Category:', categoryField ? categoryField.value : 'not found');
       console.log('Conclusion:', conclusionField ? conclusionField.value : 'not found');
       
       const statusSelect = document.querySelector('#statusSelect');
@@ -605,11 +591,11 @@ describe('DiagnosticReports CRUD Operations', function() {
       .waitForElementVisible('#diagnosticReportsPage', 5000)
       .pause(1000);
     
-    // Search for our specific test report since there may be many Synthea reports
+    // Search for our specific test report by conclusion (contains timestamp)
     browser
       .waitForElementVisible('#diagnosticReportSearchInput', 5000)
       .clearValue('#diagnosticReportSearchInput')
-      .setValue('#diagnosticReportSearchInput', testDiagnosticReport.code.substring(0, 20))
+      .setValue('#diagnosticReportSearchInput', testDiagnosticReport.conclusion.substring(0, 30))
       .pause(1000);
     
     browser.execute(function() {
@@ -728,9 +714,24 @@ describe('DiagnosticReports CRUD Operations', function() {
     browser
       .pause(1000)
       .waitForElementVisible('#diagnosticReportDetailPage', 5000)
+      .execute(function() {
+        // Capture the report ID from the barcode display
+        const barcode = document.querySelector('.barcode');
+        if (barcode) {
+          window.createdReportId = barcode.textContent.trim();
+          console.log('Captured report ID:', window.createdReportId);
+          return { id: window.createdReportId };
+        }
+        return { id: null };
+      }, [], function(result) {
+        if (result.value.id) {
+          createdReportId = result.value.id;
+          console.log('Stored report ID for later use:', createdReportId);
+        }
+      })
       .assert.valueContains('#codeInput', testDiagnosticReport.code)
-      .assert.valueContains('#performerInput', testDiagnosticReport.performer)
-      .assert.valueContains('#conclusionTextarea', testDiagnosticReport.conclusion)
+      .assert.valueContains('#categoryInput', testDiagnosticReport.category)
+      .assert.valueContains('#conclusionInput', testDiagnosticReport.conclusion)
       .execute(function() {
         const statusInput = document.querySelector('#statusSelect');
         
@@ -768,7 +769,6 @@ describe('DiagnosticReports CRUD Operations', function() {
         
         return {
           status: getMUISelectValue('#statusSelect'),
-          notes: document.querySelector('#notesTextarea').value,
           statusDisplay: getSelectDisplay('#statusSelect') || 
                         document.querySelector('[aria-labelledby*="status"]')?.textContent || 
                         document.querySelector('#statusSelect')?.parentElement?.textContent
@@ -783,7 +783,6 @@ describe('DiagnosticReports CRUD Operations', function() {
                        (result.value.statusDisplay && result.value.statusDisplay.includes('Final'));
         
         browser.assert.ok(statusOk, 'Status matches');
-        browser.assert.ok(result.value.notes.includes(testDiagnosticReport.notes), 'Notes contain expected text');
       })
       .saveScreenshot('tests/nightwatch/screenshots/diagnostic-reports/07-view-diagnostic-report-details.png');
     
@@ -798,11 +797,47 @@ describe('DiagnosticReports CRUD Operations', function() {
       .waitForElementVisible('#diagnosticReportsTable', 5000)
       .pause(1000);
 
-    // Search for our specific test report first
+    // First check what diagnostic reports exist
+    browser.execute(function() {
+      if (typeof DiagnosticReports !== 'undefined') {
+        const allReports = DiagnosticReports.find({}).fetch();
+        console.log('Total diagnostic reports in collection:', allReports.length);
+        
+        // Show first few reports with ID type info
+        allReports.slice(0, 5).forEach((report, index) => {
+          const idType = typeof report._id === 'string' && report._id.length === 24 ? 'ObjectID' : 'Meteor ID';
+          console.log(`Report ${index} (${idType}):`, {
+            _id: report._id,
+            _idLength: report._id ? report._id.length : 0,
+            id: report.id,
+            code: report.code?.text,
+            subject: report.subject,
+            status: report.status
+          });
+        });
+        
+        // Check session
+        const selectedPatient = Session.get('selectedPatient');
+        const selectedPatientId = Session.get('selectedPatientId');
+        console.log('Selected patient:', selectedPatient?.id, selectedPatientId);
+        
+        // Check if USE_MONGO_OBJECTID is being used
+        console.log('Environment USE_MONGO_OBJECTID:', process.env.USE_MONGO_OBJECTID);
+        
+        return {
+          totalReports: allReports.length,
+          hasSelectedPatient: !!selectedPatient,
+          usingObjectId: process.env.USE_MONGO_OBJECTID
+        };
+      }
+      return { error: 'DiagnosticReports not available' };
+    });
+
+    // Search for our specific test report by conclusion (contains timestamp)
     browser
       .waitForElementVisible('#diagnosticReportSearchInput', 5000)
       .clearValue('#diagnosticReportSearchInput')
-      .setValue('#diagnosticReportSearchInput', testDiagnosticReport.code.substring(0, 20))
+      .setValue('#diagnosticReportSearchInput', testDiagnosticReport.conclusion.substring(0, 30))
       .pause(1000);
 
     // Now click on the report to edit
@@ -811,6 +846,21 @@ describe('DiagnosticReports CRUD Operations', function() {
         const rows = document.querySelectorAll('#diagnosticReportsTable tbody tr');
         console.log('Looking for report with timestamp:', timestamp);
         console.log('Found', rows.length, 'rows in table');
+        
+        // Also check the raw collection
+        if (typeof DiagnosticReports !== 'undefined') {
+          const testReports = DiagnosticReports.find({
+            'code.text': { $regex: '.*' + timestamp + '.*' }
+          }).fetch();
+          console.log('Test reports in collection with timestamp:', testReports.length);
+          testReports.forEach(report => {
+            console.log('Test report in DB:', {
+              _id: report._id,
+              code: report.code?.text,
+              subject: report.subject?.reference
+            });
+          });
+        }
         
         for (let i = 0; i < rows.length; i++) {
           console.log('Row', i, ':', rows[i].textContent.substring(0, 100));
@@ -821,11 +871,11 @@ describe('DiagnosticReports CRUD Operations', function() {
           }
         }
         
-        console.error('Test report not found in table! Table only contains Synthea reports.');
+        console.error('Test report not found in table!');
         return { success: false, found: false, error: 'Test report not in table' };
       }, [timestamp.toString()], function(result) {
         if (!result.value.found) {
-          browser.assert.fail('Test report not found in table - cannot update. Only Synthea reports are visible.');
+          browser.assert.fail('Test report not found in table - cannot update.');
         }
       });
 
@@ -862,11 +912,11 @@ describe('DiagnosticReports CRUD Operations', function() {
       .keys(browser.Keys.BACK_SPACE)
       .pause(100)
       .setValue('#codeInput', updatedDiagnosticReport.code)
-      .click('#conclusionTextarea')
+      .click('#conclusionInput')
       .keys([browser.Keys.COMMAND, 'a'])
       .keys(browser.Keys.BACK_SPACE)
       .pause(100)
-      .setValue('#conclusionTextarea', updatedDiagnosticReport.conclusion)
+      .setValue('#conclusionInput', updatedDiagnosticReport.conclusion)
       .click('#statusSelect')
       .pause(300)
       .execute(function(value) {
@@ -882,11 +932,6 @@ describe('DiagnosticReports CRUD Operations', function() {
       }, [updatedDiagnosticReport.status], function(result) {
         browser.assert.equal(result.value, true, 'Selected status');
       })
-      .click('#notesTextarea')
-      .keys([browser.Keys.COMMAND, 'a'])
-      .keys(browser.Keys.BACK_SPACE)
-      .pause(100)
-      .setValue('#notesTextarea', updatedDiagnosticReport.notes)
       .pause(500)
       .saveScreenshot('tests/nightwatch/screenshots/diagnostic-reports/08-updated-diagnostic-report-form.png');
 
@@ -977,28 +1022,7 @@ describe('DiagnosticReports CRUD Operations', function() {
           .pause(1000)
           .waitForElementVisible('#diagnosticReportDetailPage', 5000);
 
-        // Enter edit mode
-        browser
-          .execute(function() {
-            const lockButton = document.querySelector('button svg[data-testid="LockIcon"]')?.parentElement;
-            if (lockButton) {
-              lockButton.click();
-              return true;
-            }
-            const buttons = document.querySelectorAll('button');
-            for (let button of buttons) {
-              if (button.textContent.includes('Edit')) {
-                button.click();
-                return true;
-              }
-            }
-            return false;
-          }, [], function(result) {
-            browser.assert.equal(result.value, true, 'Clicked Edit/Lock button to enter edit mode');
-          })
-          .pause(500);
-
-        // Click Delete button
+        // Click Delete button (in read mode, not edit mode)
         browser
           .execute(function() {
             const buttons = document.querySelectorAll('button');

@@ -26,7 +26,7 @@ This guide provides comprehensive instructions for implementing FHIR resource ty
 ## Prerequisites
 
 ### Settings Configuration
-Configure THREE places in `/configs/settings.{configfile}.json`:
+Configure TWO places in `/configs/settings.{configfile}.json`:
 
 1. **Enable the module**:
 ```json
@@ -464,7 +464,7 @@ const validState = hasTable || hasNoDataCard;
 ## Common Issues
 
 ### 1. Collection Not Found
-- Verify registration in all 3 places
+- Verify registration in settings file
 - Check console: `window.{ResourceTypes}`
 - Ensure direct import (no Meteor.startup)
 
@@ -719,7 +719,7 @@ import '../imports/accounts/server/test-methods.js';
 ## Implementation Checklist
 
 - [ ] **Prerequisites**
-  - [ ] Configure settings in 3 places
+  - [ ] Configure settings in settings file
   - [ ] Verify correct settings file is loaded
   
 - [ ] **Collection Setup**
@@ -772,3 +772,231 @@ import '../imports/accounts/server/test-methods.js';
 7. **Clean code** - Remove unused imports and commented code
 
 This guide represents the collective knowledge from implementing multiple FHIR resource types. Follow these patterns for consistent, maintainable implementations.
+
+---
+
+## Debugging Reference
+
+### Patient Context Management in Tests
+**Problem**: Tests were failing because patient context was lost between test steps, causing "No rows found" or "Only Synthea consents are visible" errors.
+
+**Solution**: Re-establish patient context at the beginning of each test that needs it:
+```javascript
+// Re-establish patient context in each test
+browser.execute(function(testIdentifier) {
+  if (typeof Session !== 'undefined' && typeof Patients !== 'undefined') {
+    let patient = Patients.findOne({'identifier.value': testIdentifier});
+    if (!patient) {
+      patient = Patients.findOne({
+        $or: [
+          { 'name.0.text': { $regex: 'John.*Doe' } },
+          { 'name.0.family': 'Doe' },
+          { 'name.0.given.0': 'John' }
+        ]
+      });
+    }
+    if (patient) {
+      Session.set('selectedPatientId', patient._id);
+      Session.set('selectedPatient', patient);
+      return { success: true, patientId: patient._id };
+    }
+  }
+  return { success: false };
+}, ['test-patient-' + timestamp]);
+```
+
+### Search-Based Test Pattern
+**Problem**: Complex row-finding logic was unreliable with multiple test runs and varying data.
+
+**Solution**: Use search functionality to filter the list before interacting with rows:
+```javascript
+// Search for specific test record
+browser
+  .waitForElementVisible('#consentSearchInput', 5000)
+  .clearValue('#consentSearchInput')
+  .setValue('#consentSearchInput', testConsent.patientName)
+  .pause(1000);
+
+// Then click the first row after filtering
+browser.execute(function() {
+  const rows = document.querySelectorAll('#consentsTable tbody tr');
+  if (rows.length > 0) {
+    rows[0].click();
+    return { clicked: true };
+  }
+  return { clicked: false };
+});
+```
+
+### JavaScript Closure Issues in Tables
+**Problem**: "Cannot read properties of undefined (reading '_id')" error when clicking table rows.
+
+**Solution**: Use block-scoped variables to capture values at iteration time:
+```javascript
+// Bad - closure issue
+for (var i = 0; i < consentsToRender.length; i++) {
+  rows.push(
+    <TableRow onClick={() => handleRowClick(consentsToRender[i]._id)}>
+  );
+}
+
+// Good - proper closure handling
+for (let i = 0; i < consentsToRender.length; i++) {
+  const currentConsent = consentsToRender[i];
+  const consentId = currentConsent._id;
+  rows.push(
+    <TableRow onClick={() => handleRowClick(consentId)}>
+  );
+}
+```
+
+### Subscription Pattern for Detail Components
+**Problem**: Detail page showed empty fields when navigating directly via URL.
+
+**Solution**: Add subscription in detail components to ensure data loads:
+```javascript
+// Subscribe to consents and track subscription status
+const isSubscriptionReady = useTracker(function(){
+  let autoPublishEnabled = get(Meteor, 'settings.public.defaults.autopublish', false);
+  let handle;
+  if(autoPublishEnabled){
+    handle = Meteor.subscribe('autopublish.Consents', {}, {});
+  } else {
+    handle = Meteor.subscribe('consents.all');
+  }
+  return handle.ready();
+}, []);
+
+// Load data when subscription is ready
+useEffect(() => {
+  if (id && isSubscriptionReady) {
+    const existingConsent = Consents.findOne({_id: id});
+    if (existingConsent) {
+      setConsent(existingConsent);
+      setIsEditing(false);
+    }
+  }
+}, [id, isSubscriptionReady]);
+```
+
+### Native Select Handling in Tests
+**Problem**: Material-UI Select components with native prop require different handling than non-native selects.
+
+**Solution**: Set value directly and dispatch change event:
+```javascript
+browser.execute(function(value) {
+  const selectElement = document.querySelector('#statusSelect');
+  if (selectElement) {
+    selectElement.value = value;
+    selectElement.dispatchEvent(new Event('change', { bubbles: true }));
+    return true;
+  }
+  return false;
+}, [updatedConsent.status]);
+```
+
+### Button Text Context Awareness
+**Problem**: Save button text changes based on context (new vs edit).
+
+**Solution**: Check for appropriate button text:
+```javascript
+// In ConsentDetail.jsx
+{id ? 'Update' : 'Save'} Consent
+
+// In tests, look for the right text
+if (button.textContent.includes('Update')) {
+  button.click();
+  return true;
+}
+```
+
+### Delete Button Visibility
+**Problem**: Delete button was being looked for in edit mode, but it's only visible in view mode.
+
+**Solution**: Click delete button directly without entering edit mode first:
+```javascript
+// Delete button is visible in view mode, not edit mode
+browser
+  .waitForElementVisible('#consentDetailPage', 5000)
+  .execute(function() {
+    const buttons = document.querySelectorAll('button');
+    for (let button of buttons) {
+      if (button.textContent.includes('Delete')) {
+        button.click();
+        return true;
+      }
+    }
+  })
+  .pause(500)
+  .acceptAlert(); // Handle confirmation dialog
+```
+
+### FhirDehydrator Category Display
+**Problem**: Test was looking for category code but table displays the text value.
+
+**Solution**: Understand how FhirDehydrator transforms data:
+```javascript
+// FhirDehydrator.js
+if(has(document, 'category[0].text')){
+  result.category = get(document, 'category[0].text')
+} else {
+  result.category = get(document, 'category[0].coding[0].display', '')
+}
+
+// Test expects display text, not code
+const expectedCategoryDisplay = 'Research information access';
+browser.assert.ok(result.value.tableText.includes(expectedCategoryDisplay));
+```
+
+### Search Filter in Page Component
+**Problem**: Need to add search functionality with proper query building.
+
+**Solution**: Implement search with MongoDB query operators:
+```javascript
+if(searchFilter && searchFilter.length > 0) {
+  const searchQuery = {
+    $or: [
+      {'_id': searchFilter},
+      {'id': searchFilter},
+      {'status': {$regex: searchFilter, $options: 'i'}},
+      {'category.0.coding.0.display': {$regex: searchFilter, $options: 'i'}},
+      {'category.0.coding.0.code': {$regex: searchFilter, $options: 'i'}},
+      {'patient.display': {$regex: searchFilter, $options: 'i'}}
+    ]
+  };
+}
+```
+
+### Test Data Persistence
+**Problem**: Updated test data (notes field) made it harder to find records in subsequent tests.
+
+**Solution**: Search for multiple possible values:
+```javascript
+const searchStrings = [
+  `Test consent created at ${timestamp}`,
+  `Test consent updated at ${timestamp}`
+];
+
+for (let searchString of searchStrings) {
+  const consentDoc = Consents.findOne({
+    'note.0.text': { $regex: searchString }
+  });
+  if (consentDoc) {
+    consentId = consentDoc._id;
+    break;
+  }
+}
+```
+
+### Summary of Debugging Best Practices
+
+1. **Always re-establish Session context** in tests after navigation
+2. **Use search to filter lists** before clicking rows in tests
+3. **Handle both create and update scenarios** for button text
+4. **Understand component lifecycle** - when is data available vs when is UI rendered
+5. **Use proper variable scoping** in loops to avoid closure issues
+6. **Add subscriptions in detail components** for direct URL navigation
+7. **Test native selects differently** than Material-UI portal-based selects
+8. **Know which mode (view/edit) components are in** for different operations
+9. **Build flexible search queries** that handle multiple possible values
+10. **Understand data transformations** between FHIR format and display format

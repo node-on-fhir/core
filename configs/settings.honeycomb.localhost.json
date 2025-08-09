@@ -149,6 +149,7 @@
         "Conditions": true,
         "Consents": true,
         "Devices": true,
+        "DiagnosticReports": true,
         "DocumentReferences": true,
         "Encounters": true,
         "Goals": true,
@@ -261,6 +262,17 @@
           "publication": true
         },
         "Device": {
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "search"
+          ],
+          "search": true,
+          "publication": true
+        },
+        "DiagnosticReport": {
           "interactions": [
             "read",
             "create",

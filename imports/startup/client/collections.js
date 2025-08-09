@@ -16,7 +16,9 @@ import { Communications } from '/imports/lib/schemas/SimpleSchemas/Communication
 import { CommunicationRequests } from '/imports/lib/schemas/SimpleSchemas/CommunicationRequests';
 import { Compositions } from '/imports/lib/schemas/SimpleSchemas/Compositions';
 import { Conditions } from '/imports/lib/schemas/SimpleSchemas/Conditions';
+import { Consents } from '/imports/lib/schemas/SimpleSchemas/Consents';
 import { Devices } from '/imports/lib/schemas/SimpleSchemas/Devices';
+import { DiagnosticReports } from '/imports/lib/schemas/SimpleSchemas/DiagnosticReports';
 import { DocumentReferences } from '/imports/lib/schemas/SimpleSchemas/DocumentReferences';
 import { Encounters } from '/imports/lib/schemas/SimpleSchemas/Encounters';
 import { Endpoints } from '/imports/lib/schemas/SimpleSchemas/Endpoints';
@@ -64,10 +66,12 @@ if (Meteor.isClient) {
     Claims,
     CodeSystems,
     Conditions,
+    Consents,
     Communications,
     CommunicationRequests,
     Compositions,
     Devices,
+    DiagnosticReports,
     DocumentReferences,
     Encounters,
     Endpoints,
@@ -114,10 +118,12 @@ if (Meteor.isClient) {
   window.Claims = Claims;
   window.CodeSystems = CodeSystems;
   window.Conditions = Conditions;
+  window.Consents = Consents;
   window.Communications = Communications;
   window.CommunicationRequests = CommunicationRequests;
   window.Compositions = Compositions;
   window.Devices = Devices;
+  window.DiagnosticReports = DiagnosticReports;
   window.DocumentReferences = DocumentReferences;
   window.Encounters = Encounters;
   window.Endpoints = Endpoints;

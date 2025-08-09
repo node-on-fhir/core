@@ -1534,6 +1534,7 @@ export function flattenDiagnosticReport(report, fhirVersion){
     identifier: '',
     category: '',
     effectiveDate: '',
+    conclusion: '',
     operationOutcome: ''
   };
 
@@ -1565,15 +1566,25 @@ export function flattenDiagnosticReport(report, fhirVersion){
       }      
     }
 
-    if(get(report, 'category.coding[0].code')){
-      result.category = get(report, 'category.coding[0].code');
-    } else {
+    if(get(report, 'category[0].coding[0].code')){
+      result.category = get(report, 'category[0].coding[0].code');
+    } else if(get(report, 'category[0].text')){
+      result.category = get(report, 'category[0].text');
+    } else if(get(report, 'category.text')){
       result.category = get(report, 'category.text');
     }
 
-    result.code = get(report, 'code.text', '');
+    // Extract code - handle both text and CodeableConcept formats
+    if(get(report, 'code.coding[0].display')){
+      result.code = get(report, 'code.coding[0].display');
+    } else if(get(report, 'code.text')){
+      result.code = get(report, 'code.text');
+    } else if(get(report, 'code.coding[0].code')){
+      result.code = get(report, 'code.coding[0].code');
+    }
     result.identifier = get(report, 'identifier[0].value', '');
     result.status = get(report, 'status', '');
+    result.conclusion = get(report, 'conclusion', '');
     result.effectiveDate = moment(get(report, 'effectiveDateTime')).format("YYYY-MM-DD");
     result.issued = moment(get(report, 'issued')).format("YYYY-MM-DD"); 
   } 

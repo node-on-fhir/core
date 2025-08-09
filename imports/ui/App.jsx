@@ -86,6 +86,7 @@ import {
   CodeSystemsPage,
   CompositionsPage,
   ConditionsPage,
+  ConsentsPage,
   DevicesPage,
   DocumentReferencesPage,
   EncountersPage,
@@ -116,6 +117,16 @@ import {
   CommunicationsPage
 } from '../ui-pages';
 
+// ConsentsPage is now in ui-pages export
+// TODO: Create these components
+import DiagnosticReportsPage from '../ui-fhir/diagnosticReports/DiagnosticReportsPage';
+import DiagnosticReportDetail from '../ui-fhir/diagnosticReports/DiagnosticReportDetail';
+// import ImagingStudiesPage from '../ui-fhir/imagingStudies/ImagingStudiesPage';
+// import AppointmentsPage from '../ui-fhir/appointments/AppointmentsPage';
+// import SchedulesPage from '../ui-fhir/schedules/SchedulesPage';
+// import MediasPage from '../ui-fhir/medias/MediasPage';
+// import SupplyDeliveriesPage from '../ui-fhir/supplyDeliveries/SupplyDeliveriesPage';
+
 import {
   ActivityDefinitionDetail,
   AllergyIntoleranceDetail,
@@ -129,6 +140,7 @@ import {
   CommunicationDetail,
   CompositionDetail,
   ConditionDetail,
+  ConsentDetail,
   DeviceDetail,
   DocumentReferenceDetail,
   EncounterDetail,
@@ -158,6 +170,15 @@ import {
   TaskDetail,
   ValueSetDetail
 } from '../ui-details';
+
+// ConsentDetail is now in ui-details export
+// TODO: Create these detail components
+// import DiagnosticReportDetail from '../ui-fhir/diagnosticReports/DiagnosticReportDetail';
+// import ImagingStudyDetail from '../ui-fhir/imagingStudies/ImagingStudyDetail';
+// import AppointmentDetail from '../ui-fhir/appointments/AppointmentDetail';
+// import ScheduleDetail from '../ui-fhir/schedules/ScheduleDetail';
+// import MediaDetail from '../ui-fhir/medias/MediaDetail';
+// import SupplyDeliveryDetail from '../ui-fhir/supplyDeliveries/SupplyDeliveryDetail';
 
 //===============================================================================================================
 // PACIO Pages
@@ -620,6 +641,32 @@ if(get(Meteor, 'settings.public.modules.fhir.Conditions')){
     element: <ConditionDetail />
   })
 }
+if(get(Meteor, 'settings.public.modules.fhir.DiagnosticReports')){
+  console.log('DiagnosticReports module is enabled, adding routes...');
+  console.log('DiagnosticReportsPage component:', DiagnosticReportsPage);
+  console.log('DiagnosticReportDetail component:', DiagnosticReportDetail);
+  
+  if (!DiagnosticReportsPage) {
+    console.error('DiagnosticReportsPage is undefined!');
+  }
+  if (!DiagnosticReportDetail) {
+    console.error('DiagnosticReportDetail is undefined!');
+  }
+  
+  dynamicRoutes.push({
+    path: "/diagnostic-reports",
+    element: <DiagnosticReportsPage />
+  })
+  dynamicRoutes.push({
+    path: "/diagnostic-reports/new",
+    element: <DiagnosticReportDetail />
+  })
+  dynamicRoutes.push({
+    path: "/diagnostic-reports/:id",
+    element: <DiagnosticReportDetail />
+  })
+  console.log('DiagnosticReports routes added successfully');
+}
 if(get(Meteor, 'settings.public.modules.fhir.Devices')){
   console.log('Devices module is enabled, adding routes...');
   console.log('DevicesPage component:', DevicesPage);
@@ -711,6 +758,14 @@ if(get(Meteor, 'settings.public.modules.fhir.Immunizations')){
   dynamicRoutes.push({
     path: "/immunizations",
     element: <ImmunizationsPage />
+  })
+  dynamicRoutes.push({
+    path: "/immunizations/new",
+    element: <ImmunizationDetail />
+  })
+  dynamicRoutes.push({
+    path: "/immunizations/:id",
+    element: <ImmunizationDetail />
   })
 }
 if(get(Meteor, 'settings.public.modules.fhir.Libraries')){
@@ -862,6 +917,108 @@ dynamicRoutes.push({
   path: "/tasks",
   element: <TasksPage />
 })
+
+// Add missing FHIR resource routes
+if(get(Meteor, 'settings.public.modules.fhir.Consents')){
+  dynamicRoutes.push({
+    path: "/consents",
+    element: <ConsentsPage />
+  })
+  dynamicRoutes.push({
+    path: "/consents/new",
+    element: <ConsentDetail />
+  })
+  dynamicRoutes.push({
+    path: "/consents/:id",
+    element: <ConsentDetail />
+  })
+}
+
+// TODO: Create these components before uncommenting routes
+// if(get(Meteor, 'settings.public.modules.fhir.DiagnosticReports')){
+//   dynamicRoutes.push({
+//     path: "/diagnostic-reports",
+//     element: <DiagnosticReportsPage />
+//   })
+//   dynamicRoutes.push({
+//     path: "/diagnostic-reports/new",
+//     element: <DiagnosticReportDetail />
+//   })
+//   dynamicRoutes.push({
+//     path: "/diagnostic-reports/:id",
+//     element: <DiagnosticReportDetail />
+//   })
+// }
+// if(get(Meteor, 'settings.public.modules.fhir.ImagingStudies')){
+//   dynamicRoutes.push({
+//     path: "/imaging-studies",
+//     element: <ImagingStudiesPage />
+//   })
+//   dynamicRoutes.push({
+//     path: "/imaging-studies/new",
+//     element: <ImagingStudyDetail />
+//   })
+//   dynamicRoutes.push({
+//     path: "/imaging-studies/:id",
+//     element: <ImagingStudyDetail />
+//   })
+// }
+// if(get(Meteor, 'settings.public.modules.fhir.Appointments')){
+//   dynamicRoutes.push({
+//     path: "/appointments",
+//     element: <AppointmentsPage />
+//   })
+//   dynamicRoutes.push({
+//     path: "/appointments/new",
+//     element: <AppointmentDetail />
+//   })
+//   dynamicRoutes.push({
+//     path: "/appointments/:id",
+//     element: <AppointmentDetail />
+//   })
+// }
+// if(get(Meteor, 'settings.public.modules.fhir.Schedules')){
+//   dynamicRoutes.push({
+//     path: "/schedules",
+//     element: <SchedulesPage />
+//   })
+//   dynamicRoutes.push({
+//     path: "/schedules/new",
+//     element: <ScheduleDetail />
+//   })
+//   dynamicRoutes.push({
+//     path: "/schedules/:id",
+//     element: <ScheduleDetail />
+//   })
+// }
+// if(get(Meteor, 'settings.public.modules.fhir.Medias')){
+//   dynamicRoutes.push({
+//     path: "/medias",
+//     element: <MediasPage />
+//   })
+//   dynamicRoutes.push({
+//     path: "/medias/new",
+//     element: <MediaDetail />
+//   })
+//   dynamicRoutes.push({
+//     path: "/medias/:id",
+//     element: <MediaDetail />
+//   })
+// }
+// if(get(Meteor, 'settings.public.modules.fhir.SupplyDeliveries')){
+//   dynamicRoutes.push({
+//     path: "/supply-deliveries",
+//     element: <SupplyDeliveriesPage />
+//   })
+//   dynamicRoutes.push({
+//     path: "/supply-deliveries/new",
+//     element: <SupplyDeliveryDetail />
+//   })
+//   dynamicRoutes.push({
+//     path: "/supply-deliveries/:id",
+//     element: <SupplyDeliveryDetail />
+//   })
+// }
 if(get(Meteor, 'settings.public.modules.fhir.ValueSets')){
   dynamicRoutes.push({
     path: "/value-sets",

@@ -18,7 +18,9 @@ import { Communications } from '/imports/lib/schemas/SimpleSchemas/Communication
 import { CommunicationRequests } from '/imports/lib/schemas/SimpleSchemas/CommunicationRequests';
 import { Compositions } from '/imports/lib/schemas/SimpleSchemas/Compositions';
 import { Conditions } from '/imports/lib/schemas/SimpleSchemas/Conditions';
+import { Consents } from '/imports/lib/schemas/SimpleSchemas/Consents';
 import { Devices } from '/imports/lib/schemas/SimpleSchemas/Devices';
+import { DiagnosticReports } from '/imports/lib/schemas/SimpleSchemas/DiagnosticReports';
 import { DocumentReferences } from '/imports/lib/schemas/SimpleSchemas/DocumentReferences';
 import { Encounters } from '/imports/lib/schemas/SimpleSchemas/Encounters';
 import { Endpoints } from '/imports/lib/schemas/SimpleSchemas/Endpoints';
@@ -68,7 +70,9 @@ const collectionsMap = {
   'CommunicationRequests': CommunicationRequests,
   'Compositions': Compositions,
   'Conditions': Conditions,
+  'Consents': Consents,
   'Devices': Devices,
+  'DiagnosticReports': DiagnosticReports,
   'DocumentReferences': DocumentReferences,
   'Encounters': Encounters,
   'Endpoints': Endpoints,

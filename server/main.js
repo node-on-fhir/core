@@ -33,6 +33,7 @@ import '../imports/api/AuditEvents/AuditEvents'; // Import the methods
 import '../imports/api/carePlans/methods.js';
 import '../imports/api/compositions/methods.js';
 import '../imports/api/conditions/methods.js';
+import '../imports/api/consents/methods.js';
 import '../imports/api/documentReferences/methods.js';
 import '../imports/api/devices/methods.js'; // Import the methods
 import '../imports/api/encounters/methods.js';
@@ -49,6 +50,7 @@ import '../imports/api/questionnaireResponses/methods.js';
 import '../imports/api/researchSubjects/methods.js';
 import '../imports/api/research-studies/methods.js';
 import '../imports/api/serviceRequests/methods.js';
+import '../imports/api/diagnosticReports/methods.js';
 
 // Import test methods (for non-production environments)
 import '../imports/accounts/server/test-methods.js';
@@ -93,10 +95,12 @@ import { CareTeams } from '../imports/lib/schemas/SimpleSchemas/CareTeams';
 import { Claims } from '../imports/lib/schemas/SimpleSchemas/Claims';
 import { CodeSystems } from '../imports/lib/schemas/SimpleSchemas/CodeSystems';
 import { Conditions } from '../imports/lib/schemas/SimpleSchemas/Conditions';
+import { Consents } from '../imports/lib/schemas/SimpleSchemas/Consents';
 import { Communications } from '../imports/lib/schemas/SimpleSchemas/Communications';
 import { CommunicationRequests } from '../imports/lib/schemas/SimpleSchemas/CommunicationRequests';
 import { Compositions } from '../imports/lib/schemas/SimpleSchemas/Compositions';
 import { Devices } from '../imports/lib/schemas/SimpleSchemas/Devices';
+import { DiagnosticReports } from '../imports/lib/schemas/SimpleSchemas/DiagnosticReports';
 import { DocumentReferences } from '../imports/lib/schemas/SimpleSchemas/DocumentReferences';
 import { Encounters } from '../imports/lib/schemas/SimpleSchemas/Encounters';
 import { Endpoints } from '../imports/lib/schemas/SimpleSchemas/Endpoints';
@@ -149,10 +153,12 @@ Meteor.Collections = {
   Claims,
   CodeSystems,
   Conditions,
+  Consents,
   Communications,
   CommunicationRequests,
   Compositions,
   Devices,
+  DiagnosticReports,
   DocumentReferences,
   Encounters,
   Endpoints,
@@ -204,10 +210,12 @@ global.Collections = {
   Claims,
   CodeSystems,
   Conditions,
+  Consents,
   Communications,
   CommunicationRequests,
   Compositions,
   Devices,
+  DiagnosticReports,
   DocumentReferences,
   Encounters,
   Endpoints,

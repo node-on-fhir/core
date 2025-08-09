@@ -139,6 +139,7 @@
       "fhir": {
         "AllergyIntolerances": true,
         "AuditEvents": true,
+        "Appointments": true,
         "CarePlans": true,
         "CareTeams": true,
         "Compositions": true,
@@ -146,12 +147,15 @@
         "Conditions": true,
         "Consents": true,
         "Devices": true,
+        "DiagnosticReports": true,
         "DocumentReferences": true,
         "Encounters": true,
         "Goals": true,
         "Immunizations": true,
+        "ImagingStudies": true,
         "Lists": true,
         "Locations": true,
+        "Medias": true,
         "Medications": true,
         "MedicationRequests": true,
         "MedicationAdministrations": true,
@@ -166,7 +170,9 @@
         "QuestionnaireResponses": true,
         "ResearchStudies": true,
         "ResearchSubjects": true,
-        "ServiceRequests": true
+        "Schedules": true,
+        "ServiceRequests": true,
+        "SupplyDeliveries": true
       }
     }
   },

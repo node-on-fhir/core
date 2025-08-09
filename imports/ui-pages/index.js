@@ -19,7 +19,9 @@ export { default as CodeSystemsPage } from '../ui-fhir/codeSystems/CodeSystemsPa
 export { default as CommunicationsPage } from '../ui-fhir/communications/CommunicationsPage';
 export { default as CompositionsPage } from '../ui-fhir/compositions/CompositionsPage';
 export { default as ConditionsPage } from '../ui-fhir/conditions/ConditionsPage';
+export { default as ConsentsPage } from '../ui-fhir/consents/ConsentsPage';
 export { default as DevicesPage } from '../ui-fhir/devices/DevicesPage';
+export { default as DiagnosticReportsPage } from '../ui-fhir/diagnosticReports/DiagnosticReportsPage';
 export { default as DocumentReferencesPage } from '../ui-fhir/documentReferences/DocumentReferencesPage';
 export { default as EncountersPage } from '../ui-fhir/encounters/EncountersPage';
 export { default as EvidencesPage } from '../ui-fhir/evidences/EvidencesPage';

@@ -4,7 +4,10 @@
       "Bash(sed:*)",
       "Bash(find:*)",
       "Bash(grep:*)",
-      "Bash(npx nightwatch:*)"
+      "Bash(npx nightwatch:*)",
+      "Bash(npm run nightwatch:*)",
+      "Bash(npm test:*)",
+      "Bash(./node_modules/.bin/nightwatch:*)"
     ],
     "deny": []
   }
