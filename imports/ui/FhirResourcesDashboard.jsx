@@ -46,7 +46,9 @@ import { CodeSystems } from '/imports/lib/schemas/SimpleSchemas/CodeSystems';
 import { Communications } from '/imports/lib/schemas/SimpleSchemas/Communications';
 import { Compositions } from '/imports/lib/schemas/SimpleSchemas/Compositions';
 import { Conditions } from '/imports/lib/schemas/SimpleSchemas/Conditions';
+import { Consents } from '/imports/lib/schemas/SimpleSchemas/Consents';
 import { Devices } from '/imports/lib/schemas/SimpleSchemas/Devices';
+import { DiagnosticReports } from '/imports/lib/schemas/SimpleSchemas/DiagnosticReports';
 import { DocumentReferences } from '/imports/lib/schemas/SimpleSchemas/DocumentReferences';
 import { Encounters } from '/imports/lib/schemas/SimpleSchemas/Encounters';
 import { Evidences } from '/imports/lib/schemas/SimpleSchemas/Evidences';
@@ -89,7 +91,9 @@ const collectionsMap = {
   'Communications': Communications,
   'Compositions': Compositions,
   'Conditions': Conditions,
+  'Consents': Consents,
   'Devices': Devices,
+  'DiagnosticReports': DiagnosticReports,
   'DocumentReferences': DocumentReferences,
   'Encounters': Encounters,
   'Evidences': Evidences,
@@ -216,7 +220,9 @@ export function FhirResourcesDashboard() {
     { name: 'Communications', route: '/communications', settingsKey: 'Communications', collection: 'Communications' },
     { name: 'Compositions', route: '/compositions', settingsKey: 'Compositions', collection: 'Compositions' },
     { name: 'Conditions', route: '/conditions', settingsKey: 'Conditions', collection: 'Conditions' },
+    { name: 'Consents', route: '/consents', settingsKey: 'Consents', collection: 'Consents' },
     { name: 'Devices', route: '/devices', settingsKey: 'Devices', collection: 'Devices' },
+    { name: 'Diagnostic Reports', route: '/diagnostic-reports', settingsKey: 'DiagnosticReports', collection: 'DiagnosticReports' },
     { name: 'Document References', route: '/document-references', settingsKey: 'DocumentReferences', collection: 'DocumentReferences' },
     { name: 'Encounters', route: '/encounters', settingsKey: 'Encounters', collection: 'Encounters' },
     { name: 'Evidences', route: '/evidences', settingsKey: 'Evidences', collection: 'Evidences' },

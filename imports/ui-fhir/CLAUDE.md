@@ -476,10 +476,11 @@ const validState = hasTable || hasNoDataCard;
 - **Check patient reference**: Ensure patient is set in Session before save
 - **Verify user authentication**: Methods may fail silently if not logged in
 
-### 3. Table Missing Columns
-- Check FhirDehydrator flatten function
-- Verify test expectations
-- Add missing render functions
+### 3. Table Missing Columns or Empty Values
+- **Check FhirDehydrator**: Ensure ALL fields are initialized in result object
+- **Verify render functions**: Must use flattened field names, not nested FHIR paths
+- **Common fix**: Change `get(item, 'code.text')` to `get(item, 'code')`
+- **Debug**: Log the dehydrated data to see actual field names
 
 ### 4. Patient Filtering Not Working
 - Use FHIR id, not MongoDB _id
@@ -498,8 +499,10 @@ console.log('Filtered records:', {ResourceTypes}.find(query).count());
 - **Empty patient reference**: Session patient may not be set
 
 ### 6. Delete Button Issues
-- Delete button visible in view mode, not edit mode
+- **Critical**: Delete button ONLY shows in read/view mode, NOT edit mode
+- Tests must not enter edit mode before deleting
 - Handle both table and no-data states after deletion
+- Always use window.confirm() for delete confirmations
 
 ### 7. Search Not Working
 - Ensure search field has correct ID for tests
@@ -586,22 +589,23 @@ Meteor.publish('autopublish.{ResourceTypes}', function(query, options) {
 });
 ```
 
-### MongoDB ObjectID vs Meteor String ID Sorting
+### MongoDB ObjectID vs Meteor String ID Handling
 
 **The Challenge:**
 - Synthea data uses MongoDB ObjectIDs (24-char hex strings)
 - New records via UI use Meteor string IDs (17-char random strings)
 - These sort differently, causing new records to appear at unexpected positions
+- This affects test reliability when finding created records
 
 **Solution Pattern:**
 ```javascript
-// In server methods, optionally use MongoDB ObjectID
+// In server methods.js, add support for MongoDB ObjectID
 if (process.env.USE_MONGO_OBJECTID) {
   const { Mongo } = Package.mongo;
   const objectId = new Mongo.ObjectID();
-  cleanResource._id = objectId.toHexString();
+  clean{ResourceType}._id = objectId.toHexString();
 } else {
-  cleanResource._id = cleanResource.id; // Default Meteor behavior
+  clean{ResourceType}._id = clean{ResourceType}.id; // Default Meteor behavior
 }
 ```
 
@@ -609,6 +613,7 @@ if (process.env.USE_MONGO_OBJECTID) {
 - Don't rely on specific positions in sorted lists
 - Use search functionality to find specific test records
 - Or click the first row when sorted by _id descending (newest first)
+- Generate unique identifiers (timestamps, random codes) for reliable searching
 
 ### Navigation After Save Operations
 
@@ -680,17 +685,169 @@ browser
 - Much faster than scanning all rows
 - More reliable with dynamic data
 
-### CodeableConcept Transformation
+### FHIR CodeableConcept Implementation
+
+**Important**: Any coded fields should be proper CodeableConcepts, not plain text.
+
+**Common Pattern for Methods:**
 ```javascript
-if (dataToSave.phase && typeof dataToSave.phase !== 'object') {
-  dataToSave.phase = {
+// For codes (e.g., type, category, code fields)
+if ({resourceType}Data.{fieldName}) {
+  clean{ResourceType}.{fieldName} = {
     coding: [{
-      system: 'http://hl7.org/fhir/research-study-phase',
-      code: dataToSave.phase,
-      display: phaseMap[dataToSave.phase] || dataToSave.phase
+      system: 'http://appropriate-system.org', // e.g., http://loinc.org
+      code: {resourceType}Data.{fieldName},
+      display: {resourceType}Data.{fieldName}Display || {resourceType}Data.{fieldName}
     }],
-    text: phaseMap[dataToSave.phase] || dataToSave.phase
+    text: {resourceType}Data.{fieldName}Display || {resourceType}Data.{fieldName}
   };
+}
+```
+
+**Example Systems:**
+- LOINC codes: `http://loinc.org`
+- SNOMED CT: `http://snomed.info/sct`
+- RxNorm: `http://www.nlm.nih.gov/research/umls/rxnorm`
+
+### FhirDehydrator Critical Patterns
+
+**1. Always Initialize ALL Fields:**
+```javascript
+export function flatten{ResourceType}({resourceType}) {
+  let result = {
+    _id: '',
+    id: '',
+    // Initialize EVERY field that will be displayed
+    code: '',
+    category: '',
+    status: '',
+    effectiveDate: '',
+    // ... all other fields
+  };
+  
+  // Then extract values
+  result.code = get({resourceType}, 'code.text', '');
+  // ...
+}
+```
+
+**2. Flattening Nested Structures:**
+After dehydration, nested FHIR structures become simple fields:
+- `code.text` or `code.coding[0].display` → `code`
+- `category[0].text` → `category`
+- `subject.display` → `subjectDisplay`
+
+**3. Table Components Must Use Flattened Structure:**
+```javascript
+// WRONG - uses nested FHIR path
+function renderCode({resourceType}){
+  return get({resourceType}, 'code.text', ''); // Won't work after dehydration
+}
+
+// CORRECT - uses flattened field
+function renderCode({resourceType}){
+  return get({resourceType}, 'code', ''); // Works with dehydrated data
+}
+```
+
+### UI Component Styling Pattern
+
+Copy styling from MedicationAdministrationDetail for consistency:
+
+**1. Container Structure:**
+```javascript
+return (
+  <Container id='{resourceType}DetailPage' maxWidth="md" sx={{ py: 4 }}>
+    <Card sx={{ boxShadow: 3 }}>
+      <CardHeader 
+        title={id && id !== 'new' ? 'Edit {ResourceType}' : 'New {ResourceType}'}
+        sx={{ bgcolor: 'primary.main', color: 'primary.contrastText' }}
+      />
+      <CardContent>
+        {/* Form content */}
+      </CardContent>
+      <CardActions sx={{ justifyContent: 'flex-end', p: 2 }}>
+        {/* Buttons */}
+      </CardActions>
+    </Card>
+  </Container>
+);
+```
+
+**2. Barcode Display:**
+```javascript
+{(id && id !== 'new') && (
+  <Box sx={{ mb: 3, textAlign: 'right' }}>
+    <span className="barcode helveticas" style={{ fontSize: '2rem' }}>{id}</span>
+  </Box>
+)}
+```
+
+**3. Button Visibility Rules:**
+- Read mode: Back, Delete, Edit buttons
+- Edit mode: Cancel, Save buttons
+- New mode: Cancel, Save buttons (no Delete)
+- Delete button ONLY shows in read mode
+
+### Testing Pattern Updates
+
+**1. Generate Unique Test Data:**
+```javascript
+const timestamp = Date.now();
+const randomCode = Math.floor(10000 + Math.random() * 90000);
+
+const test{ResourceType} = {
+  code: `${randomCode}-8`, // Random but realistic format
+  name: `Test {ResourceType} ${timestamp}`,
+  // ... other fields
+};
+```
+
+**2. Search Instead of Position:**
+```javascript
+// Search by unique field before clicking
+browser
+  .setValue('#{resourceType}SearchInput', test{ResourceType}.uniqueField)
+  .pause(1000) // Wait for search to filter
+  .click('#{resourceTypes}Table tbody tr:first-child');
+```
+
+**3. Capture Resource IDs:**
+```javascript
+.execute(function() {
+  const barcode = document.querySelector('.barcode');
+  if (barcode) {
+    window.created{ResourceType}Id = barcode.textContent.trim();
+    return { id: window.created{ResourceType}Id };
+  }
+})
+```
+
+### Async/Await Pattern for Meteor v3
+
+All methods must use async patterns:
+
+```javascript
+async function handleSaveButton(){
+  setLoading(true);
+  try {
+    let dataToSave = {
+      // ... prepare data
+    };
+
+    if({resourceType}Id && {resourceType}Id !== 'new'){
+      await Meteor.callAsync('update{ResourceType}', {resourceType}Id, dataToSave);
+      setIsEditing(false); // Stay on page, switch to read mode
+    } else {
+      const id = await Meteor.callAsync('create{ResourceType}', dataToSave);
+      navigate('/{resourceTypes}'); // Navigate to list after create
+    }
+  } catch(error) {
+    console.error('Error saving {resourceType}:', error);
+    setError(error.message);
+  } finally {
+    setLoading(false);
+  }
 }
 ```
 
@@ -768,8 +925,13 @@ import '../imports/accounts/server/test-methods.js';
 3. **Keep display and reference separate** - Don't fallback reference to display
 4. **Test settings file** - Always verify which settings file is active
 5. **Handle all states** - Both data and no-data scenarios
-6. **Use existing patterns** - Copy from working resources like Conditions
+6. **Use existing patterns** - Copy from working resources (especially MedicationAdministrationDetail for styling)
 7. **Clean code** - Remove unused imports and commented code
+8. **Verify table columns** - Always check that ALL columns display data correctly
+9. **Use flattened data** - Table components use dehydrated data, not nested FHIR paths
+10. **Generate unique test data** - Use timestamps and random values to avoid conflicts
+11. **Search, don't scan** - Use search functionality in tests instead of position-based selection
+12. **Proper CodeableConcepts** - Coded fields should use full FHIR structure, not plain text
 
 This guide represents the collective knowledge from implementing multiple FHIR resource types. Follow these patterns for consistent, maintainable implementations.
 
