@@ -28,6 +28,7 @@ import moment from 'moment';
 import { DocumentReferences } from '/imports/lib/schemas/SimpleSchemas/DocumentReferences';
 import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
+import { useSubscribe } from 'meteor/react-meteor-data';
 
 function DocumentReferenceDetail(props) {
   const navigate = useNavigate();
@@ -40,6 +41,12 @@ function DocumentReferenceDetail(props) {
   
   const currentUser = useTracker(function() {
     return Meteor.user();
+  }, []);
+  
+  // Subscribe to document references
+  const isSubscriptionReady = useTracker(function(){
+    const handle = Meteor.subscribe('autopublish.DocumentReferences');
+    return handle.ready();
   }, []);
   
   // Initialize state with proper FHIR R4 structure
@@ -134,7 +141,14 @@ function DocumentReferenceDetail(props) {
         // Prefer selected patient
         patientName = get(selectedPatient, 'name[0].text', '') || 
                      `${get(selectedPatient, 'name[0].given[0]', '')} ${get(selectedPatient, 'name[0].family', '')}`.trim();
-        patientReference = `Patient/${get(selectedPatient, '_id', '')}`;
+        const patientId = get(selectedPatient, 'id', '') || get(selectedPatient, '_id', '');
+        patientReference = `Patient/${patientId}`;
+        console.log('DocumentReferenceDetail - Setting patient reference:', {
+          patientName: patientName,
+          patientId: patientId,
+          patientReference: patientReference,
+          selectedPatient: selectedPatient
+        });
       } else if (currentUser) {
         // Fall back to current user
         patientName = get(currentUser, 'profile.name.text', '') ||
@@ -175,12 +189,59 @@ function DocumentReferenceDetail(props) {
   // Load document reference if editing
   useEffect(function() {
     async function loadDocumentReference() {
-      if (id && id !== 'new') {
+      console.log('DocumentReferenceDetail - loadDocumentReference called with:', {
+        id: id,
+        isNew: id === 'new',
+        isSubscriptionReady: isSubscriptionReady
+      });
+      
+      if (id && id !== 'new' && isSubscriptionReady) {
         setLoading(true);
         try {
-          const result = await Meteor.callAsync('documentReferences.get', id);
+          console.log('DocumentReferenceDetail - Attempting to load document with _id:', id);
+          const result = await DocumentReferences.findOneAsync({_id: id});
           if (result) {
-            setDocumentReference(result);
+            console.log('DocumentReferenceDetail - Loaded document:', result);
+            console.log('DocumentReferenceDetail - Type structure:', {
+              type: result.type,
+              'type.coding': get(result, 'type.coding'),
+              'type.coding[0]': get(result, 'type.coding[0]'),
+              'type.coding[0].code': get(result, 'type.coding[0].code'),
+              'type.coding[0].display': get(result, 'type.coding[0].display'),
+              'type.text': get(result, 'type.text')
+            });
+            console.log('DocumentReferenceDetail - Content structure:', {
+              content: result.content,
+              'content[0]': get(result, 'content[0]'),
+              'content[0].attachment': get(result, 'content[0].attachment'),
+              'content[0].attachment.title': get(result, 'content[0].attachment.title')
+            });
+            
+            // Ensure the data has the expected structure
+            const documentToSet = {
+              ...result,
+              // Ensure type has the expected nested structure
+              type: result.type || {
+                coding: [{
+                  system: "http://loinc.org",
+                  code: "",
+                  display: ""
+                }],
+                text: ""
+              },
+              // Ensure content has the expected nested structure
+              content: result.content || [{
+                attachment: {
+                  contentType: "text/plain",
+                  url: "",
+                  title: ""
+                }
+              }]
+            };
+            
+            setDocumentReference(documentToSet);
+          } else {
+            console.log('DocumentReferenceDetail - No document found with id:', id);
           }
         } catch (err) {
           console.error('Error loading document reference:', err);
@@ -192,7 +253,7 @@ function DocumentReferenceDetail(props) {
     }
     
     loadDocumentReference();
-  }, [id]);
+  }, [id, isSubscriptionReady]);
 
   // Handle field changes
   function handleChange(path, value) {
@@ -209,16 +270,23 @@ function DocumentReferenceDetail(props) {
     try {
       if (id && id !== 'new') {
         // Update existing document reference
+        console.log('DocumentReferenceDetail - Updating document with ID:', id);
         await Meteor.callAsync('documentReferences.update', id, documentReference);
         console.log('Document reference updated successfully');
         // Exit edit mode after successful save
         setIsEditing(false);
       } else {
         // Create new document reference
-        const newId = await Meteor.callAsync('documentReferences.create', documentReference);
+        console.log('DocumentReferenceDetail - Saving new document with data:', {
+          subject: documentReference.subject,
+          type: documentReference.type,
+          description: documentReference.description,
+          fullDocument: documentReference
+        });
+        const newId = await Meteor.callAsync('documentReferences.insert', documentReference);
         console.log('Document reference created with ID:', newId);
         // Navigate back to document references list for new document references
-        navigate('/documentReferences');
+        navigate('/document-references');
       }
     } catch (err) {
       console.error('Error saving document reference:', err);
@@ -237,7 +305,7 @@ function DocumentReferenceDetail(props) {
       try {
         await Meteor.callAsync('documentReferences.remove', id);
         console.log('Document reference deleted successfully');
-        navigate('/documentReferences');
+        navigate('/document-references');
       } catch (err) {
         console.error('Error deleting document reference:', err);
         setError(err.message);
@@ -249,7 +317,7 @@ function DocumentReferenceDetail(props) {
 
   // Handle cancel
   function handleCancel() {
-    navigate('/documentReferences');
+    navigate('/document-references');
   }
 
   const statusOptions = [
@@ -287,7 +355,7 @@ function DocumentReferenceDetail(props) {
   ];
 
   return (
-    <Container maxWidth="md" sx={{ py: 4 }}>
+    <Container id="documentReferenceDetailPage" maxWidth="md" sx={{ py: 4 }}>
       <Card sx={{ boxShadow: 3 }}>
         <CardHeader 
           title={id && id !== 'new' ? 'Edit Document Reference' : 'New Document Reference'}
@@ -309,6 +377,7 @@ function DocumentReferenceDetail(props) {
           
           <Stack spacing={3}>
             <TextField
+              id="subjectDisplay"
               fullWidth
               label="Patient Name"
               value={get(documentReference, 'subject.display', '')}
@@ -326,6 +395,7 @@ function DocumentReferenceDetail(props) {
             />
             
             <TextField
+              id="contentTitleInput"
               fullWidth
               label="Document Title"
               value={get(documentReference, 'content[0].attachment.title', '')}
@@ -335,6 +405,7 @@ function DocumentReferenceDetail(props) {
             />
             
             <TextField
+              id="descriptionInput"
               fullWidth
               label="Document Description"
               value={get(documentReference, 'description', '')}
@@ -348,6 +419,7 @@ function DocumentReferenceDetail(props) {
             <FormControl fullWidth disabled={!isEditing}>
               <InputLabel>Status</InputLabel>
               <Select
+                id="statusSelect"
                 value={get(documentReference, 'status', 'current')}
                 onChange={(e) => handleChange('status', e.target.value)}
                 label="Status"
@@ -395,6 +467,7 @@ function DocumentReferenceDetail(props) {
             </FormControl>
             
             <TextField
+              id="typeInput"
               fullWidth
               label="LOINC Code"
               value={get(documentReference, 'type.coding[0].code', '')}
@@ -404,15 +477,20 @@ function DocumentReferenceDetail(props) {
             />
             
             <TextField
+              id="typeDisplayInput"
               fullWidth
               label="Document Type"
               value={get(documentReference, 'type.coding[0].display', '')}
-              onChange={(e) => handleChange('type.coding[0].display', e.target.value)}
+              onChange={(e) => {
+                handleChange('type.coding[0].display', e.target.value);
+                handleChange('type.text', e.target.value);
+              }}
               helperText="Human-readable document type"
               disabled={!isEditing}
             />
             
             <TextField
+              id="createdInput"
               fullWidth
               type="datetime-local"
               label="Document Date"
@@ -425,6 +503,7 @@ function DocumentReferenceDetail(props) {
             <FormControl fullWidth disabled={!isEditing}>
               <InputLabel>Content Type</InputLabel>
               <Select
+                id="contentTypeInput"
                 value={get(documentReference, 'content[0].attachment.contentType', 'text/plain')}
                 onChange={(e) => handleChange('content[0].attachment.contentType', e.target.value)}
                 label="Content Type"
@@ -438,6 +517,7 @@ function DocumentReferenceDetail(props) {
             </FormControl>
             
             <TextField
+              id="contentUrlInput"
               fullWidth
               label="Document URL"
               value={get(documentReference, 'content[0].attachment.url', '')}
@@ -474,6 +554,29 @@ function DocumentReferenceDetail(props) {
               InputLabelProps={{ shrink: true }}
               disabled={!isEditing}
             />
+            
+            <TextField
+              id="contentSizeInput"
+              fullWidth
+              type="number"
+              label="Document Size (bytes)"
+              value={get(documentReference, 'content[0].attachment.size', '')}
+              onChange={(e) => handleChange('content[0].attachment.size', parseInt(e.target.value))}
+              helperText="Size of the document in bytes"
+              disabled={!isEditing}
+            />
+            
+            <TextField
+              id="notesTextarea"
+              fullWidth
+              label="Notes"
+              value={get(documentReference, 'content[0].attachment.data', '')}
+              onChange={(e) => handleChange('content[0].attachment.data', e.target.value)}
+              multiline
+              rows={4}
+              helperText="Additional notes or base64 encoded document content"
+              disabled={!isEditing}
+            />
           </Stack>
         </CardContent>
         
@@ -482,7 +585,7 @@ function DocumentReferenceDetail(props) {
             // Read-only mode buttons
             <>
               <Button 
-                onClick={() => navigate('/documentReferences')}
+                onClick={() => navigate('/document-references')}
               >
                 Back
               </Button>
@@ -505,9 +608,28 @@ function DocumentReferenceDetail(props) {
                     // Reload the document reference to discard changes
                     async function reloadDocumentReference() {
                       try {
-                        const result = await Meteor.callAsync('documentReferences.get', id);
+                        const result = await DocumentReferences.findOneAsync({_id: id});
                         if (result) {
-                          setDocumentReference(result);
+                          // Ensure the data has the expected structure
+                          const documentToSet = {
+                            ...result,
+                            type: result.type || {
+                              coding: [{
+                                system: "http://loinc.org",
+                                code: "",
+                                display: ""
+                              }],
+                              text: ""
+                            },
+                            content: result.content || [{
+                              attachment: {
+                                contentType: "text/plain",
+                                url: "",
+                                title: ""
+                              }
+                            }]
+                          };
+                          setDocumentReference(documentToSet);
                         }
                       } catch (err) {
                         console.error('Error reloading document reference:', err);
@@ -516,7 +638,7 @@ function DocumentReferenceDetail(props) {
                     reloadDocumentReference();
                   } else {
                     // For new document references, go back
-                    navigate('/documentReferences');
+                    navigate('/document-references');
                   }
                 }}
                 disabled={loading}

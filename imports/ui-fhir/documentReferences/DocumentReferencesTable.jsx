@@ -600,10 +600,6 @@ function DocumentReferencesTable(props){
     }
   }
 
-  function rowClick(id){
-    // Session.set('selectedDocumentReferenceId', id);
-    // Session.set('documentReferencePageTabIndex', 2);
-  };
 
 
     // Pagination
@@ -686,6 +682,15 @@ function DocumentReferencesTable(props){
         rowStyle.height = '32px';
       }
       logger.trace('documentReferencesToRender[i]', documentReferencesToRender[i])
+      
+      // Debug ID fields
+      if (i === 0) {
+        console.log('DocumentReferencesTable - First document IDs:', {
+          _id: documentReferencesToRender[i]._id,
+          id: documentReferencesToRender[i].id,
+          willPassToClick: documentReferencesToRender[i]._id || documentReferencesToRender[i].id
+        });
+      }
 
       if(get(documentReferencesToRender[i], "resourceType") === "OperationOutcome"){
         tableRows.push(
@@ -705,7 +710,7 @@ function DocumentReferencesTable(props){
         ); 
       } else {
         tableRows.push(
-          <TableRow className="documentReferenceRow" key={i} style={rowStyle} onClick={ handleRowClick.bind(this, documentReferencesToRender[i].id || documentReferencesToRender[i]._id)} hover={true} selected={selected} >            
+          <TableRow className="documentReferenceRow" key={i} style={rowStyle} onClick={ handleRowClick.bind(this, documentReferencesToRender[i]._id || documentReferencesToRender[i].id)} hover={true} selected={selected} >            
             { renderCheckbox(i) }
             { renderActionIcons(documentReferencesToRender[i]) }
             { renderIdentifier(get(documentReferencesToRender[i], "identifier", "")) }

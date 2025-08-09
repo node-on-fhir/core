@@ -692,11 +692,11 @@ if(get(Meteor, 'settings.public.modules.fhir.DocumentReferences')){
     element: <DocumentReferencesPage />
   })
   dynamicRoutes.push({
-    path: "/documentReferences/new",
+    path: "/document-references/new",
     element: <DocumentReferenceDetail />
   })
   dynamicRoutes.push({
-    path: "/documentReferences/:id",
+    path: "/document-references/:id",
     element: <DocumentReferenceDetail />
   })
 }
