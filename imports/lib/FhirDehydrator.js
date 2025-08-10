@@ -2498,8 +2498,20 @@ export function flattenImmunization(immunization, internalDateFormat){
     vaccineCode: '',
     vaccineDisplay: '',
     status: '',
+    primarySource: false,
     reported: '',
     date: '',
+    occurrenceDateTime: '',
+    lotNumber: '',
+    expirationDate: '',
+    manufacturer: '',
+    manufacturerDisplay: '',
+    site: '',
+    siteDisplay: '',
+    route: '',
+    routeDisplay: '',
+    doseQuantity: '',
+    doseUnit: '',
     operationOutcome: ''
   };
 
@@ -2509,10 +2521,12 @@ export function flattenImmunization(immunization, internalDateFormat){
     internalDateFormat = "YYYY-MM-DD";
   }
 
-  result._id =  get(immunization, 'id') ? get(immunization, 'id') : get(immunization, '_id');
+  // Handle MongoDB ObjectID
+  result._id = extractIdString(get(immunization, '_id', ''));
   result.id = get(immunization, 'id', '');
   result.identifier = get(immunization, 'identifier[0].value', '');
 
+  // Patient/Subject information
   if(get(immunization, 'patient')){
     result.patientDisplay = get(immunization, 'patient.display', '');
     result.patientReference = get(immunization, 'patient.reference', '');
@@ -2521,40 +2535,84 @@ export function flattenImmunization(immunization, internalDateFormat){
     result.patientReference = get(immunization, 'subject.reference', '');
   }
 
-  if(get(immunization, 'performer')){
+  // Performer information - handle R4 array structure
+  if(get(immunization, 'performer[0].actor')){
+    result.performerDisplay = get(immunization, 'performer[0].actor.display', '');
+    result.performerReference = get(immunization, 'performer[0].actor.reference', '');
+  } else if(get(immunization, 'performer')){
     result.performerDisplay = get(immunization, 'performer.display', '');
     result.performerReference = get(immunization, 'performer.reference', '');
-  } 
-
-  result.performerDisplay = get(immunization, 'asserter.display', '');
-
-  if(get(immunization, 'status.coding[0].code')){
-    result.status = get(immunization, 'status.coding[0].code', '');  //R4
-  } else {
-    result.status = get(immunization, 'status', '');                 // DSTU2
+  } else if(get(immunization, 'asserter')){
+    result.performerDisplay = get(immunization, 'asserter.display', '');
   }
 
+  // Status
+  result.status = get(immunization, 'status', '');
+
+  // Vaccine information
   result.vaccineCode = get(immunization, 'vaccineCode.coding[0].code', '');
-
   if(get(immunization, 'vaccineCode.coding[0].display')){
-    result.vaccineDisplay = get(immunization, 'vaccineCode.coding[0].display', '');  //R4
-  } else {
-    result.vaccineDisplay = get(immunization, 'vaccineCode.text', '');                 // DSTU2
+    result.vaccineDisplay = get(immunization, 'vaccineCode.coding[0].display', '');
+  } else if(get(immunization, 'vaccineCode.text')){
+    result.vaccineDisplay = get(immunization, 'vaccineCode.text', '');
   }
 
-  result.barcode = get(immunization, '_id', '');
+  // Primary source
+  result.primarySource = get(immunization, 'primarySource', false);
 
+  // Barcode
+  result.barcode = extractIdString(get(immunization, '_id', ''));
+
+  // Dates
   if(get(immunization, 'occurrenceDateTime')){
-    result.date = moment(get(immunization, 'occurrenceDateTime')).format("YYYY-MM-DD");
-  } else {
-    result.date = moment(get(immunization, 'date')).format("YYYY-MM-DD");
+    result.date = moment(get(immunization, 'occurrenceDateTime')).format(internalDateFormat);
+    result.occurrenceDateTime = moment(get(immunization, 'occurrenceDateTime')).format(internalDateFormat);
+  } else if(get(immunization, 'date')){
+    result.date = moment(get(immunization, 'date')).format(internalDateFormat);
   }
-  result.reported = moment(get(immunization, 'reported', '')).format("YYYY-MM-DD");
-
-  if(get(immunization, "issue[0].details.text")){
-    result.operationOutcome = get(immunization, "issue[0].details.text");
+  
+  if(get(immunization, 'reported')){
+    result.reported = moment(get(immunization, 'reported')).format(internalDateFormat);
+  }
+  
+  if(get(immunization, 'expirationDate')){
+    result.expirationDate = moment(get(immunization, 'expirationDate')).format(internalDateFormat);
   }
 
+  // Additional fields
+  result.lotNumber = get(immunization, 'lotNumber', '');
+  
+  // Manufacturer
+  if(get(immunization, 'manufacturer.display')){
+    result.manufacturer = get(immunization, 'manufacturer.display', '');
+    result.manufacturerDisplay = get(immunization, 'manufacturer.display', '');
+  }
+  
+  // Site
+  if(get(immunization, 'site.coding[0].display')){
+    result.site = get(immunization, 'site.coding[0].code', '');
+    result.siteDisplay = get(immunization, 'site.coding[0].display', '');
+  } else if(get(immunization, 'site.text')){
+    result.site = get(immunization, 'site.text', '');
+    result.siteDisplay = get(immunization, 'site.text', '');
+  }
+  
+  // Route
+  if(get(immunization, 'route.coding[0].display')){
+    result.route = get(immunization, 'route.coding[0].code', '');
+    result.routeDisplay = get(immunization, 'route.coding[0].display', '');
+  } else if(get(immunization, 'route.text')){
+    result.route = get(immunization, 'route.text', '');
+    result.routeDisplay = get(immunization, 'route.text', '');
+  }
+  
+  // Dose quantity
+  if(get(immunization, 'doseQuantity')){
+    result.doseQuantity = get(immunization, 'doseQuantity.value', '');
+    result.doseUnit = get(immunization, 'doseQuantity.unit', '');
+  }
+
+  // Operation outcome
   if(get(immunization, "issue[0].details.text")){
     result.operationOutcome = get(immunization, "issue[0].details.text");
   }
