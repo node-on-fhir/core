@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
-import { useTracker, useSubscribe } from 'meteor/react-meteor-data';
+// /imports/ui-fhir/nutritionOrders/NutritionOrdersPage.jsx
+
+import React, { useState, useEffect } from 'react';
+import { useTracker } from 'meteor/react-meteor-data';
 import { useNavigate } from 'react-router-dom';
 
 import { 
@@ -11,13 +13,25 @@ import {
   Tab, 
   Tabs,
   Typography,
-  Box
+  Box,
+  IconButton,
+  TextField,
+  InputAdornment,
+  ToggleButton,
+  ToggleButtonGroup
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
+import PersonIcon from '@mui/icons-material/Person';
+import CodeIcon from '@mui/icons-material/Code';
+import BadgeIcon from '@mui/icons-material/Badge';
+import SortIcon from '@mui/icons-material/Sort';
+import FilterListIcon from '@mui/icons-material/FilterList';
+import SearchIcon from '@mui/icons-material/Search';
 
 import NutritionOrdersTable from './NutritionOrdersTable';
 
 import LayoutHelpers from '../../lib/LayoutHelpers';
+import FhirUtilities from '../../lib/FhirUtilities';
 
 import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
@@ -25,22 +39,19 @@ import FhirDehydrator from '../../lib/FhirDehydrator';
 
 import { get, set } from 'lodash';
 
-//=============================================================================================================================================
-// DATA CURSORS
-
-Meteor.startup(function(){
-  NutritionOrders = Meteor.Collections.NutritionOrders;
-})
+// Direct imports - avoid timing issues
+import { NutritionOrders } from '/imports/lib/schemas/SimpleSchemas/NutritionOrders';
+import { Patients } from '/imports/lib/schemas/SimpleSchemas/Patients';
 
 //=============================================================================================================================================
 // GLOBAL THEMING
 
 // This is necessary for the Material UI component render layer
 let theme = {
-  primaryColor: "rgb(1177, 128, 13)",
+  primaryColor: "rgb(108, 183, 110)",
   primaryText: "rgba(255, 255, 255, 1) !important",
 
-  secondaryColor: "rgb(1177, 128, 13)",
+  secondaryColor: "rgb(108, 183, 110)",
   secondaryText: "rgba(255, 255, 255, 1) !important",
 
   cardColor: "rgba(255, 255, 255, 1) !important",
@@ -56,7 +67,7 @@ let theme = {
   paperTextColor: "rgba(0, 0, 0, 1) !important",
 
   backgroundCanvas: "rgba(255, 255, 255, 1) !important",
-  background: "linear-gradient(45deg, rgb(1177, 128, 13) 30%, rgb(150, 202, 144) 90%)",
+  background: "linear-gradient(45deg, rgb(108, 183, 110) 30%, rgb(150, 202, 144) 90%)",
 
   nivoTheme: "greens"
 }
@@ -77,7 +88,8 @@ Session.setDefault('nutritionOrderSearchFilter', '');
 Session.setDefault('NutritionOrdersPage.onePageLayout', true)
 Session.setDefault('NutritionOrdersPage.defaultQuery', {})
 Session.setDefault('NutritionOrdersTable.hideCheckbox', true)
-Session.setDefault('DevicesTable.nutritionOrdersIndex', 0)
+Session.setDefault('NutritionOrdersTable.sortAscending', true)
+Session.setDefault('NutritionOrdersPage.debugLogged', false)
 
 //=============================================================================================================================================
 // MAIN COMPONENT
@@ -91,6 +103,12 @@ export function NutritionOrdersPage(props){
   let noDataImage = get(Meteor, 'settings.public.defaults.noData.noDataImagePath', "packages/clinical_hl7-fhir-data-infrastructure/assets/NoData.png");  
 
   let [nutritionOrdersPageIndex, setNutritionOrdersPageIndex] = useState(0);
+  let [searchFilter, setSearchFilter] = useState('');
+  let [showPatientName, setShowPatientName] = useState(false);
+  let [showPatientReference, setShowPatientReference] = useState(false);
+  let [showSystemId, setShowSystemId] = useState(false);
+  let [page, setPage] = useState(0);
+  let [rowsPerPage, setRowsPerPage] = useState(10);
 
   let data = {
     nutritionOrders: [],
@@ -98,29 +116,140 @@ export function NutritionOrdersPage(props){
     selectedNutritionOrder: null
   };
 
-  // Subscribe to patient resources which includes NutritionOrders
-  const patientId = Session.get('selectedPatientId');
-  const isLoading = useSubscribe('pacio.patientResources', patientId);
-
-  data.nutritionOrders = useTracker(function(){
-    if (!NutritionOrders) {
-      return [];
+  // Subscribe to nutrition orders with patient filtering
+  const isLoading = useTracker(() => {
+    const selectedPatientId = Session.get('selectedPatientId');
+    const selectedPatient = Session.get('selectedPatient');
+    let autoPublishEnabled = get(Meteor, 'settings.public.defaults.autopublish', false);
+    
+    let query = {};
+    
+    if(selectedPatient || selectedPatientId) {
+      const fhirId = get(selectedPatient, 'id');
+      
+      if(fhirId) {
+        query = FhirUtilities.addPatientFilterToQuery(fhirId);
+      } else if(selectedPatientId) {
+        query = FhirUtilities.addPatientFilterToQuery(selectedPatientId);
+      }
     }
-    return NutritionOrders.find().fetch();
-  }, []);
+    
+    // Add search filter if present
+    if(searchFilter && searchFilter.length > 0) {
+      const searchQuery = {
+        $or: [
+          {'_id': searchFilter},
+          {'id': searchFilter},
+          {'status': {$regex: searchFilter, $options: 'i'}},
+          {'oralDiet.type.0.text': {$regex: searchFilter, $options: 'i'}},
+          {'oralDiet.instruction': {$regex: searchFilter, $options: 'i'}},
+          {'patient.display': {$regex: searchFilter, $options: 'i'}}
+        ]
+      };
+      
+      // Combine with patient filter if it exists
+      if(query.$or) {
+        query = {
+          $and: [
+            query,
+            searchQuery
+          ]
+        };
+      } else {
+        query = searchQuery;
+      }
+    }
+    
+    if(autoPublishEnabled){
+      const handle = Meteor.subscribe('autopublish.NutritionOrders', query, { limit: 1000 });
+      return !handle.ready();
+    } else {
+      const handle = Meteor.subscribe('nutritionorders.all');
+      return !handle.ready();
+    }
+  }, [Session.get('selectedPatientId'), searchFilter]);
+
+  // Data tracker for nutrition orders
+  data.nutritionOrders = useTracker(function(){
+    const selectedPatientId = Session.get('selectedPatientId');
+    const selectedPatient = Session.get('selectedPatient');
+    
+    const fhirId = get(selectedPatient, 'id');
+    const patientIdToUse = fhirId || selectedPatientId;
+    
+    const query = patientIdToUse ? FhirUtilities.addPatientFilterToQuery(patientIdToUse) : {};
+    
+    // Add search filter if present
+    if(searchFilter && searchFilter.length > 0) {
+      const searchQuery = {
+        $or: [
+          {'_id': searchFilter},
+          {'id': searchFilter},
+          {'status': {$regex: searchFilter, $options: 'i'}},
+          {'oralDiet.type.0.text': {$regex: searchFilter, $options: 'i'}},
+          {'oralDiet.instruction': {$regex: searchFilter, $options: 'i'}},
+          {'patient.display': {$regex: searchFilter, $options: 'i'}}
+        ]
+      };
+      
+      // Combine with patient filter if it exists
+      if(query.$or) {
+        return NutritionOrders.find({
+          $and: [
+            query,
+            searchQuery
+          ]
+        }).fetch();
+      } else {
+        return NutritionOrders.find(searchQuery).fetch();
+      }
+    }
+    
+    return NutritionOrders.find(query).fetch();
+  }, [searchFilter]);
+
   data.selectedNutritionOrderId = useTracker(function(){
     return Session.get('selectedNutritionOrderId');
   }, []);
+
   data.selectedNutritionOrder = useTracker(function(){
-    if (!NutritionOrders) {
-      return null;
-    }
     return NutritionOrders.findOne({_id: Session.get('selectedNutritionOrderId')});
   }, []);
 
+  // Debug logging
+  useEffect(() => {
+    return () => {
+      Session.set('NutritionOrdersPage.debugLogged', false);
+    };
+  }, []);
+
+  if(!Session.get('NutritionOrdersPage.debugLogged')) {
+    Session.set('NutritionOrdersPage.debugLogged', true);
+    
+    const selectedPatientId = Session.get('selectedPatientId');
+    const selectedPatient = Session.get('selectedPatient');
+    const fhirId = get(selectedPatient, 'id');
+    
+    console.log('NutritionOrders data - MongoDB _id:', selectedPatientId);
+    console.log('NutritionOrders data - FHIR id:', fhirId);
+    console.log('NutritionOrders data - count:', data.nutritionOrders.length);
+  }
+
   function handleAddNutritionOrder(){
     console.log('Add Nutrition Order button clicked');
-    navigate('/nutritionOrders/new');
+    navigate('/nutrition-orders/new');
+  }
+
+  function handleToggleColumn(event, newFormats) {
+    console.log('Toggle columns', newFormats);
+    setShowPatientName(newFormats.includes('patientName'));
+    setShowPatientReference(newFormats.includes('patientReference'));
+    setShowSystemId(newFormats.includes('systemId'));
+  }
+
+  function handleSortChange() {
+    const currentSort = Session.get('NutritionOrdersTable.sortAscending');
+    Session.set('NutritionOrdersTable.sortAscending', !currentSort);
   }
 
   function renderHeader() {
@@ -135,15 +264,57 @@ export function NutritionOrdersPage(props){
               {data.nutritionOrders.length} nutrition orders found
             </Typography>
           </Grid>
-          <Grid item>
-            <Button
-              variant="contained"
-              color="primary"
-              startIcon={<AddIcon />}
-              onClick={handleAddNutritionOrder}
-            >
-              Add Nutrition Order
-            </Button>
+          <Grid item xs={12} sm={6}>
+            <Box display="flex" gap={1} alignItems="center" justifyContent="flex-end" flexWrap="wrap">
+              <TextField
+                id="nutritionOrderSearchInput"
+                size="small"
+                placeholder="Search nutrition orders..."
+                value={searchFilter}
+                onChange={(e) => setSearchFilter(e.target.value)}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchIcon />
+                    </InputAdornment>
+                  ),
+                }}
+                sx={{ minWidth: 200 }}
+              />
+              <ToggleButtonGroup
+                value={[
+                  showPatientName && 'patientName',
+                  showPatientReference && 'patientReference',
+                  showSystemId && 'systemId'
+                ].filter(Boolean)}
+                onChange={handleToggleColumn}
+                aria-label="column visibility"
+                size="small"
+              >
+                <ToggleButton value="patientName" aria-label="show patient name">
+                  <PersonIcon />
+                </ToggleButton>
+                <ToggleButton value="patientReference" aria-label="show patient reference">
+                  <CodeIcon />
+                </ToggleButton>
+                <ToggleButton value="systemId" aria-label="show system id">
+                  <BadgeIcon />
+                </ToggleButton>
+              </ToggleButtonGroup>
+              <IconButton onClick={handleSortChange} size="small">
+                <SortIcon />
+              </IconButton>
+              <Button
+                id="addNutritionOrderButton"
+                data-testid="add-nutrition-order-button"
+                variant="contained"
+                color="primary"
+                startIcon={<AddIcon />}
+                onClick={handleAddNutritionOrder}
+              >
+                Add Nutrition Order
+              </Button>
+            </Box>
           </Grid>
         </Grid>
       </Box>
@@ -164,22 +335,36 @@ export function NutritionOrdersPage(props){
     >
       <CardContent sx={{ p: 0 }}>
         <NutritionOrdersTable 
+          id="nutritionOrdersTable"
           nutritionOrders={data.nutritionOrders}
           hideCheckbox={true} 
           hideActionIcons={true}
           hideIdentifier={true}
           hideStatus={false}
-          hideName={false}
-          paginationLimit={10}
+          hidePatientDisplay={!showPatientName}
+          hidePatientReference={!showPatientReference}
+          hideDateTime={false}
+          hideOrderer={false}
+          hideDietType={false}
+          hideSupplement={false}
+          hideInstructions={false}
+          hideBarcode={!showSystemId}
+          dateFormat="YYYY-MM-DD HH:mm"
+          count={data.nutritionOrders.length}
+          page={page}
+          rowsPerPage={rowsPerPage}
+          onSetPage={setPage}
+          onSetRowsPerPage={setRowsPerPage}
           onRowClick={function(nutritionOrderId){
             console.log('NutritionOrdersPage.onRowClick', nutritionOrderId);
-            navigate('/nutritionOrders/' + nutritionOrderId);
+            navigate('/nutrition-orders/' + nutritionOrderId);
           }}
         />
       </CardContent>
     </Card>
   } else {
     layoutContent = <Box 
+      data-testid="no-nutrition-orders"
       sx={{
         display: 'flex',
         flexDirection: 'column',
@@ -225,6 +410,8 @@ export function NutritionOrdersPage(props){
             </Typography>
           </Box>
           <Button
+            id="addNutritionOrderButton"
+            data-testid="add-nutrition-order-button"
             variant="outlined"
             startIcon={<AddIcon />}
             onClick={handleAddNutritionOrder}

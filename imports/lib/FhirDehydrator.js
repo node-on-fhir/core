@@ -3667,6 +3667,141 @@ export function flattenMedicationStatement(statement, fhirVersion){
   return result;
 }
 
+export function flattenNutritionOrder(nutritionOrder, internalDateFormat){
+  let result = {
+    _id: '',
+    id: '',
+    resourceType: 'NutritionOrder',
+    identifier: '',
+    status: '',
+    intent: '',
+    patientDisplay: '',
+    patientReference: '',
+    dateTime: '',
+    ordererDisplay: '',
+    ordererReference: '',
+    dietType: '',
+    supplement: '',
+    instructions: '',
+    allergyIntolerance: '',
+    foodPreferenceModifier: '',
+    excludeFoodModifier: ''
+  };
+
+  result.resourceType = get(nutritionOrder, 'resourceType', "NutritionOrder");
+
+  if(!internalDateFormat){
+    internalDateFormat = get(Meteor, "settings.public.defaults.internalDateFormat", "YYYY-MM-DD");
+  }
+
+  // Core identifiers
+  result._id = extractIdString(get(nutritionOrder, '_id', ''));
+  result.id = get(nutritionOrder, 'id', '');
+  result.identifier = get(nutritionOrder, 'identifier[0].value', '');
+  
+  // Status and intent
+  result.status = get(nutritionOrder, 'status', '');
+  result.intent = get(nutritionOrder, 'intent', '');
+  
+  // Patient information
+  result.patientDisplay = get(nutritionOrder, 'patient.display', '');
+  result.patientReference = get(nutritionOrder, 'patient.reference', '');
+  
+  // Date/Time
+  const dateTime = get(nutritionOrder, 'dateTime');
+  if(dateTime){
+    result.dateTime = moment(dateTime).format(internalDateFormat);
+  }
+  
+  // Orderer information
+  result.ordererDisplay = get(nutritionOrder, 'orderer.display', '');
+  result.ordererReference = get(nutritionOrder, 'orderer.reference', '');
+  
+  // Oral diet information
+  if(get(nutritionOrder, 'oralDiet')){
+    // Extract diet type
+    if(get(nutritionOrder, 'oralDiet.type')){
+      const dietTypes = [];
+      get(nutritionOrder, 'oralDiet.type', []).forEach(function(type){
+        if(get(type, 'text')){
+          dietTypes.push(get(type, 'text'));
+        } else if(get(type, 'coding[0].display')){
+          dietTypes.push(get(type, 'coding[0].display'));
+        } else if(get(type, 'coding[0].code')){
+          dietTypes.push(get(type, 'coding[0].code'));
+        }
+      });
+      result.dietType = dietTypes.join(', ');
+    }
+    
+    // If no diet type found, mark as 'Not specified'
+    if(!result.dietType){
+      result.dietType = 'Not specified';
+    }
+    
+    // Extract instructions
+    result.instructions = get(nutritionOrder, 'oralDiet.instruction', '');
+  }
+  
+  // Supplements
+  if(get(nutritionOrder, 'supplement')){
+    const supplements = [];
+    get(nutritionOrder, 'supplement', []).forEach(function(supp){
+      if(get(supp, 'type[0].text')){
+        supplements.push(get(supp, 'type[0].text'));
+      } else if(get(supp, 'type[0].coding[0].display')){
+        supplements.push(get(supp, 'type[0].coding[0].display'));
+      } else if(get(supp, 'productName')){
+        supplements.push(get(supp, 'productName'));
+      }
+    });
+    result.supplement = supplements.join(', ');
+  }
+  
+  // Allergy intolerance references
+  if(get(nutritionOrder, 'allergyIntolerance')){
+    const allergies = [];
+    get(nutritionOrder, 'allergyIntolerance', []).forEach(function(allergy){
+      if(typeof allergy === 'string'){
+        allergies.push(allergy);
+      } else if(get(allergy, 'display')){
+        allergies.push(get(allergy, 'display'));
+      } else if(get(allergy, 'reference')){
+        allergies.push(get(allergy, 'reference'));
+      }
+    });
+    result.allergyIntolerance = allergies.join(', ');
+  }
+  
+  // Food preference modifiers
+  if(get(nutritionOrder, 'foodPreferenceModifier')){
+    const preferences = [];
+    get(nutritionOrder, 'foodPreferenceModifier', []).forEach(function(pref){
+      if(get(pref, 'text')){
+        preferences.push(get(pref, 'text'));
+      } else if(get(pref, 'coding[0].display')){
+        preferences.push(get(pref, 'coding[0].display'));
+      }
+    });
+    result.foodPreferenceModifier = preferences.join(', ');
+  }
+  
+  // Exclude food modifiers
+  if(get(nutritionOrder, 'excludeFoodModifier')){
+    const excludes = [];
+    get(nutritionOrder, 'excludeFoodModifier', []).forEach(function(excl){
+      if(get(excl, 'text')){
+        excludes.push(get(excl, 'text'));
+      } else if(get(excl, 'coding[0].display')){
+        excludes.push(get(excl, 'coding[0].display'));
+      }
+    });
+    result.excludeFoodModifier = excludes.join(', ');
+  }
+  
+  return result;
+}
+
 export function flattenNetwork(organization, internalDateFormat){
     let result = {
       resourceType: 'Network',
@@ -5518,6 +5653,7 @@ export const FhirDehydrator = {
   dehydrateMedicationRequest: flattenMedicationRequest,
   dehydrateMedicationAdministration: flattenMedicationAdministration,
   dehydrateNetwork: flattenNetwork,
+  dehydrateNutritionOrder: flattenNutritionOrder,
   dehydrateObservation: flattenObservation,
   dehydrateOrganization: flattenOrganization,
   dehydrateOperationOutcome: flattenOperationOutcome,
@@ -5606,6 +5742,7 @@ export default {
   flattenMedicationStatement,
   flattenMedicationRequest,
   flattenMedicationAdministration,
+  flattenNutritionOrder,
   flattenObservation,
   flattenOperationOutcome,
   flattenOrganization,

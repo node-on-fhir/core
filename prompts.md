@@ -82,3 +82,8 @@ Claude, let's do another FHIR resource.  This time will be de-novo.  Let's creat
 ```
 Claude, let's do another FHIR resource.  Let's continue creating the FHIR Medication CRUD pattern.  First, create a /tests/nightwatch/honecomb/crud.medications.js test file, following the crud.conditions.js file as a template.  Next, follow the instructions in /imports/ui-fhir/CLAUDE.md, and try to create the entire resource CRUD pattern  Don't do anything fancy.  We'll get to that later.  For now, just follow the CRUD pattern.  Follow the TDD tests till they're green. You have permission to launch `npx nightwatch` commands and search the honeycomb-public-release code repository as needed.
 ```
+
+
+```
+Okay, let's turn our attention to completing the NutritionOrders CRUD pattern, on the /nutrition-orders route.  Use best practices and the implementation checklist and debugging info in /imports/ui-fhir/CLAUDE.md.  You have permission to run tests.  Make sure that the NutritionOrders schema is created; attached in all of the right places; wire it up in the autopublish() function, update the layout and styling of /imports/ui-fhir/nutritionOrders/* with examples from /imports/ui-fhir/devices and /imports/ui-fhir/medicationAdministrations.  Update the NutritionOrderDetails page with inputs from the NutritionOrder schema, make sure that appropriate #id elements exist on inputs; and update the crud.nutritionorders.js file to match.  Make sure that all of the columns in NutritionOrdersTable are filled out appropriately, and update the dehydration functions accordingly.  Create the nutrition order methods file.  I believe in you.  We've done a lot of these CRUD patterns already.  You can do this.
+```

@@ -42,6 +42,7 @@ import '../imports/api/observations/methods.js';
 import '../imports/api/medicationAdministrations/methods.js';
 import '../imports/api/medicationRequests/methods.js';
 import '../imports/api/medications/methods.js';
+import '../imports/api/nutritionOrders/methods.js';
 import '../imports/api/patients/methods.js';
 import '../imports/api/practitioners/methods.js';
 import '../imports/api/procedures/methods.js';

@@ -44,6 +44,18 @@ function NutritionOrderDetail(props) {
     return Meteor.user();
   }, []);
   
+  // Subscribe to nutrition orders
+  const isSubscriptionReady = useTracker(function(){
+    let autoPublishEnabled = get(Meteor, 'settings.public.defaults.autopublish', false);
+    let handle;
+    if(autoPublishEnabled){
+      handle = Meteor.subscribe('autopublish.NutritionOrders', {}, {});
+    } else {
+      handle = Meteor.subscribe('nutritionOrders.all');
+    }
+    return handle.ready();
+  }, []);
+  
   // Initialize state with proper FHIR R4 structure
   const [nutritionOrder, setNutritionOrder] = useState({
     resourceType: "NutritionOrder",
@@ -63,8 +75,22 @@ function NutritionOrderDetail(props) {
       display: ""
     },
     allergyIntolerance: [],
-    foodPreferenceModifier: [],
-    excludeFoodModifier: [],
+    foodPreferenceModifier: [{
+      coding: [{
+        system: "http://terminology.hl7.org/CodeSystem/diet",
+        code: "",
+        display: ""
+      }],
+      text: ""
+    }],
+    excludeFoodModifier: [{
+      coding: [{
+        system: "http://terminology.hl7.org/CodeSystem/diet",
+        code: "",
+        display: ""
+      }],
+      text: ""
+    }],
     oralDiet: {
       type: [{
         coding: [{
@@ -103,8 +129,86 @@ function NutritionOrderDetail(props) {
       }],
       instruction: ""
     },
-    supplement: [],
-    enteralFormula: null,
+    supplement: [{
+      type: [{
+        coding: [{
+          system: "http://snomed.info/sct",
+          code: "",
+          display: ""
+        }],
+        text: ""
+      }],
+      productName: "",
+      schedule: [{
+        repeat: {
+          frequency: 2,
+          period: 1,
+          periodUnit: "d"
+        }
+      }],
+      quantity: {
+        value: 1,
+        unit: "bottle"
+      },
+      instruction: ""
+    }],
+    enteralFormula: {
+      baseFormulaType: [{
+        coding: [{
+          system: "http://snomed.info/sct",
+          code: "",
+          display: ""
+        }],
+        text: ""
+      }],
+      baseFormulaProductName: "",
+      additiveType: [{
+        coding: [{
+          system: "http://terminology.hl7.org/CodeSystem/v3-ActCode",
+          code: "",
+          display: ""
+        }]
+      }],
+      caloricDensity: {
+        value: null,
+        unit: "kcal/mL",
+        system: "http://unitsofmeasure.org",
+        code: "kcal/mL"
+      },
+      routeOfAdministration: {
+        coding: [{
+          system: "http://terminology.hl7.org/CodeSystem/v3-RouteOfAdministration",
+          code: "",
+          display: ""
+        }]
+      },
+      administration: [{
+        schedule: {
+          repeat: {
+            frequency: 1,
+            period: 1,
+            periodUnit: "d"
+          }
+        },
+        quantity: {
+          value: null,
+          unit: "mL/hr"
+        },
+        rate: {
+          quantity: {
+            value: null,
+            unit: "mL/hr"
+          }
+        }
+      }],
+      maxVolumeToDeliver: {
+        value: null,
+        unit: "mL",
+        system: "http://unitsofmeasure.org",
+        code: "mL"
+      },
+      administrationInstruction: ""
+    },
     note: [{
       text: ""
     }]
@@ -169,12 +273,21 @@ function NutritionOrderDetail(props) {
   // Load nutrition order if editing
   useEffect(function() {
     async function loadNutritionOrder() {
-      if (id && id !== 'new') {
+      if (id && id !== 'new' && isSubscriptionReady) {
         setLoading(true);
         try {
-          const result = await Meteor.callAsync('nutritionOrders.get', id);
-          if (result) {
-            setNutritionOrder(result);
+          // First try to find in local collection
+          const existingOrder = NutritionOrders.findOne({_id: id});
+          if (existingOrder) {
+            setNutritionOrder(existingOrder);
+            setIsEditing(false);
+          } else {
+            // Fall back to method call
+            const result = await Meteor.callAsync('nutritionOrders.get', id);
+            if (result) {
+              setNutritionOrder(result);
+              setIsEditing(false);
+            }
           }
         } catch (err) {
           console.error('Error loading nutrition order:', err);
@@ -186,7 +299,7 @@ function NutritionOrderDetail(props) {
     }
     
     loadNutritionOrder();
-  }, [id]);
+  }, [id, isSubscriptionReady]);
 
   // Handle field changes
   function handleChange(path, value) {
@@ -205,6 +318,13 @@ function NutritionOrderDetail(props) {
         // Update existing nutrition order
         await Meteor.callAsync('nutritionOrders.update', id, nutritionOrder);
         console.log('Nutrition order updated successfully');
+        
+        // Reload the updated data from server
+        const updatedOrder = await Meteor.callAsync('nutritionOrders.get', id);
+        if (updatedOrder) {
+          setNutritionOrder(updatedOrder);
+        }
+        
         // Exit edit mode after successful save
         setIsEditing(false);
       } else {
@@ -212,7 +332,7 @@ function NutritionOrderDetail(props) {
         const newId = await Meteor.callAsync('nutritionOrders.create', nutritionOrder);
         console.log('Nutrition order created with ID:', newId);
         // Navigate back to nutrition orders list for new nutrition orders
-        navigate('/nutritionOrders');
+        navigate('/nutrition-orders');
       }
     } catch (err) {
       console.error('Error saving nutrition order:', err);
@@ -231,7 +351,7 @@ function NutritionOrderDetail(props) {
       try {
         await Meteor.callAsync('nutritionOrders.remove', id);
         console.log('Nutrition order deleted successfully');
-        navigate('/nutritionOrders');
+        navigate('/nutrition-orders');
       } catch (err) {
         console.error('Error deleting nutrition order:', err);
         setError(err.message);
@@ -243,7 +363,7 @@ function NutritionOrderDetail(props) {
 
   // Handle cancel
   function handleCancel() {
-    navigate('/nutritionOrders');
+    navigate('/nutrition-orders');
   }
 
   const statusOptions = [
@@ -299,7 +419,7 @@ function NutritionOrderDetail(props) {
   ];
 
   return (
-    <Container maxWidth="md" sx={{ py: 4 }}>
+    <Container id="nutritionOrderDetailPage" maxWidth="md" sx={{ py: 4 }}>
       <Card sx={{ boxShadow: 3 }}>
         <CardHeader 
           title={id && id !== 'new' ? 'Edit Nutrition Order' : 'New Nutrition Order'}
@@ -321,6 +441,7 @@ function NutritionOrderDetail(props) {
           
           <Stack spacing={3}>
             <TextField
+              id="patientDisplay"
               fullWidth
               label="Patient Name"
               value={get(nutritionOrder, 'patient.display', '')}
@@ -329,6 +450,7 @@ function NutritionOrderDetail(props) {
             />
             
             <TextField
+              id="ordererDisplay"
               fullWidth
               label="Orderer Name"
               value={get(nutritionOrder, 'orderer.display', '')}
@@ -338,8 +460,10 @@ function NutritionOrderDetail(props) {
             />
             
             <FormControl fullWidth disabled={!isEditing}>
-              <InputLabel>Status</InputLabel>
+              <InputLabel id="statusSelectLabel">Status</InputLabel>
               <Select
+                id="statusSelect"
+                labelId="statusSelectLabel"
                 value={get(nutritionOrder, 'status', 'active')}
                 onChange={(e) => handleChange('status', e.target.value)}
                 label="Status"
@@ -353,8 +477,10 @@ function NutritionOrderDetail(props) {
             </FormControl>
             
             <FormControl fullWidth disabled={!isEditing}>
-              <InputLabel>Intent</InputLabel>
+              <InputLabel id="intentSelectLabel">Intent</InputLabel>
               <Select
+                id="intentSelect"
+                labelId="intentSelectLabel"
                 value={get(nutritionOrder, 'intent', 'order')}
                 onChange={(e) => handleChange('intent', e.target.value)}
                 label="Intent"
@@ -368,6 +494,7 @@ function NutritionOrderDetail(props) {
             </FormControl>
             
             <TextField
+              id="dateTimeInput"
               fullWidth
               type="datetime-local"
               label="Order Date/Time"
@@ -382,8 +509,10 @@ function NutritionOrderDetail(props) {
             </Typography>
             
             <FormControl fullWidth disabled={!isEditing}>
-              <InputLabel>Diet Type</InputLabel>
+              <InputLabel id="dietTypeSelectLabel">Diet Type</InputLabel>
               <Select
+                id="dietTypeSelect"
+                labelId="dietTypeSelectLabel"
                 value={get(nutritionOrder, 'oralDiet.type[0].coding[0].code', '')}
                 onChange={(e) => {
                   const option = dietTypeOptions.find(o => o.code === e.target.value);
@@ -482,6 +611,7 @@ function NutritionOrderDetail(props) {
             />
             
             <TextField
+              id="instructionsInput"
               fullWidth
               multiline
               rows={3}
@@ -492,7 +622,109 @@ function NutritionOrderDetail(props) {
               disabled={!isEditing}
             />
             
+            <Typography variant="h6" sx={{ mt: 2 }}>
+              Supplement
+            </Typography>
+            
             <TextField
+              id="supplementTypeInput"
+              fullWidth
+              label="Supplement Type"
+              value={get(nutritionOrder, 'supplement[0].type[0].text', '')}
+              onChange={(e) => {
+                handleChange('supplement[0].type[0].text', e.target.value);
+                handleChange('supplement[0].type[0].coding[0].display', e.target.value);
+              }}
+              disabled={!isEditing}
+            />
+            
+            <TextField
+              id="supplementProductNameInput"
+              fullWidth
+              label="Product Name"
+              value={get(nutritionOrder, 'supplement[0].productName', '')}
+              onChange={(e) => handleChange('supplement[0].productName', e.target.value)}
+              disabled={!isEditing}
+            />
+            
+            <TextField
+              id="supplementInstructionInput"
+              fullWidth
+              multiline
+              rows={2}
+              label="Supplement Instructions"
+              value={get(nutritionOrder, 'supplement[0].instruction', '')}
+              onChange={(e) => handleChange('supplement[0].instruction', e.target.value)}
+              disabled={!isEditing}
+            />
+            
+            <Typography variant="h6" sx={{ mt: 2 }}>
+              Enteral Formula
+            </Typography>
+            
+            <TextField
+              id="enteralFormulaTypeInput"
+              fullWidth
+              label="Formula Type"
+              value={get(nutritionOrder, 'enteralFormula.baseFormulaType[0].text', '')}
+              onChange={(e) => {
+                handleChange('enteralFormula.baseFormulaType[0].text', e.target.value);
+                handleChange('enteralFormula.baseFormulaType[0].coding[0].display', e.target.value);
+              }}
+              disabled={!isEditing}
+            />
+            
+            <TextField
+              id="enteralFormulaProductNameInput"
+              fullWidth
+              label="Formula Product Name"
+              value={get(nutritionOrder, 'enteralFormula.baseFormulaProductName', '')}
+              onChange={(e) => handleChange('enteralFormula.baseFormulaProductName', e.target.value)}
+              disabled={!isEditing}
+            />
+            
+            <Typography variant="h6" sx={{ mt: 2 }}>
+              Additional Information
+            </Typography>
+            
+            <TextField
+              id="allergyIntoleranceInput"
+              fullWidth
+              label="Allergy/Intolerance"
+              value={get(nutritionOrder, 'allergyIntolerance[0]', '')}
+              onChange={(e) => handleChange('allergyIntolerance[0]', e.target.value)}
+              helperText="Known allergies or intolerances"
+              disabled={!isEditing}
+            />
+            
+            <TextField
+              id="foodPreferenceModifierInput"
+              fullWidth
+              label="Food Preference Modifier"
+              value={get(nutritionOrder, 'foodPreferenceModifier[0].text', '')}
+              onChange={(e) => {
+                handleChange('foodPreferenceModifier[0].text', e.target.value);
+                handleChange('foodPreferenceModifier[0].coding[0].display', e.target.value);
+              }}
+              helperText="e.g., Vegetarian, Kosher, Halal"
+              disabled={!isEditing}
+            />
+            
+            <TextField
+              id="excludeFoodModifierInput"
+              fullWidth
+              label="Exclude Food Modifier"
+              value={get(nutritionOrder, 'excludeFoodModifier[0].text', '')}
+              onChange={(e) => {
+                handleChange('excludeFoodModifier[0].text', e.target.value);
+                handleChange('excludeFoodModifier[0].coding[0].display', e.target.value);
+              }}
+              helperText="Foods to exclude from the diet"
+              disabled={!isEditing}
+            />
+            
+            <TextField
+              id="notesInput"
               fullWidth
               multiline
               rows={3}
@@ -510,11 +742,19 @@ function NutritionOrderDetail(props) {
             // Read-only mode buttons
             <>
               <Button 
-                onClick={() => navigate('/nutritionOrders')}
+                onClick={() => navigate('/nutrition-orders')}
               >
                 Back
               </Button>
               <Button 
+                id="deleteNutritionOrderButton"
+                onClick={handleDelete}
+                color="error"
+              >
+                Delete
+              </Button>
+              <Button 
+                id="editNutritionOrderButton"
                 onClick={() => setIsEditing(true)}
                 variant="contained"
                 color="primary"
@@ -544,7 +784,7 @@ function NutritionOrderDetail(props) {
                     reloadNutritionOrder();
                   } else {
                     // For new nutrition orders, go back
-                    navigate('/nutritionOrders');
+                    navigate('/nutrition-orders');
                   }
                 }}
                 disabled={loading}
@@ -553,6 +793,7 @@ function NutritionOrderDetail(props) {
               </Button>
               {id && id !== 'new' && (
                 <Button 
+                  id="deleteNutritionOrderButton"
                   onClick={handleDelete}
                   color="error"
                   disabled={loading}
@@ -561,6 +802,7 @@ function NutritionOrderDetail(props) {
                 </Button>
               )}
               <Button 
+                id="saveNutritionOrderButton"
                 onClick={handleSave}
                 variant="contained"
                 color="primary"

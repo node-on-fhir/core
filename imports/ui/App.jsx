@@ -1079,11 +1079,11 @@ if(get(Meteor, 'settings.public.modules.fhir.NutritionOrders')){
     element: <NutritionOrdersPage />
   })
   dynamicRoutes.push({
-    path: "/nutritionOrders/new",
+    path: "/nutrition-orders/new",
     element: <NutritionOrderDetail />
   })
   dynamicRoutes.push({
-    path: "/nutritionOrders/:id",
+    path: "/nutrition-orders/:id",
     element: <NutritionOrderDetail />
   })
 }
