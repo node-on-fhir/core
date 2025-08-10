@@ -37,6 +37,7 @@ import '../imports/api/consents/methods.js';
 import '../imports/api/documentReferences/methods.js';
 import '../imports/api/devices/methods.js'; // Import the methods
 import '../imports/api/encounters/methods.js';
+import '../imports/api/imagingStudies/methods.js';
 import '../imports/api/locations/methods.js';
 import '../imports/api/observations/methods.js';
 import '../imports/api/medicationAdministrations/methods.js';
@@ -110,6 +111,7 @@ import { ExplanationOfBenefits } from '../imports/lib/schemas/SimpleSchemas/Expl
 import { Goals } from '../imports/lib/schemas/SimpleSchemas/Goals';
 import { GuidanceResponses } from '../imports/lib/schemas/SimpleSchemas/GuidanceResponses';
 import { Immunizations } from '../imports/lib/schemas/SimpleSchemas/Immunizations';
+import { ImagingStudies } from '../imports/lib/schemas/SimpleSchemas/ImagingStudies';
 import { Libraries } from '../imports/lib/schemas/SimpleSchemas/Libraries';
 import { Lists } from '../imports/lib/schemas/SimpleSchemas/Lists';
 import { Locations } from '../imports/lib/schemas/SimpleSchemas/Locations';
@@ -168,6 +170,7 @@ Meteor.Collections = {
   Goals,
   GuidanceResponses,
   Immunizations,
+  ImagingStudies,
   Libraries,
   Lists,
   Locations,
@@ -225,6 +228,7 @@ global.Collections = {
   Goals,
   GuidanceResponses,
   Immunizations,
+  ImagingStudies,
   Libraries,
   Lists,
   Locations,

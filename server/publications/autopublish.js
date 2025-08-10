@@ -29,6 +29,7 @@ import { ExplanationOfBenefits } from '/imports/lib/schemas/SimpleSchemas/Explan
 import { Goals } from '/imports/lib/schemas/SimpleSchemas/Goals';
 import { GuidanceResponses } from '/imports/lib/schemas/SimpleSchemas/GuidanceResponses';
 import { Immunizations } from '/imports/lib/schemas/SimpleSchemas/Immunizations';
+import { ImagingStudies } from '/imports/lib/schemas/SimpleSchemas/ImagingStudies';
 import { Libraries } from '/imports/lib/schemas/SimpleSchemas/Libraries';
 import { Lists } from '/imports/lib/schemas/SimpleSchemas/Lists';
 import { Locations } from '/imports/lib/schemas/SimpleSchemas/Locations';
@@ -81,6 +82,7 @@ const collectionsMap = {
   'Goals': Goals,
   'GuidanceResponses': GuidanceResponses,
   'Immunizations': Immunizations,
+  'ImagingStudies': ImagingStudies,
   'Libraries': Libraries,
   'Lists': Lists,
   'Locations': Locations,

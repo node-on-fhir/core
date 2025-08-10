@@ -107,7 +107,6 @@
           "/bundles",
           "/contracts",
           "/devices",
-          "/imaging-studies",
           "/message-headers",
           "/risk-assessments"
         ]
@@ -154,6 +153,7 @@
         "Encounters": true,
         "Goals": true,
         "Immunizations": true,
+        "ImagingStudies": true,
         "Lists": true,
         "Locations": true,
         "Medications": true,
@@ -295,6 +295,17 @@
           "publication": true
         },
         "Goal": {
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "search"
+          ],
+          "search": true,
+          "publication": true
+        },
+        "ImagingStudy": {
           "interactions": [
             "read",
             "create",

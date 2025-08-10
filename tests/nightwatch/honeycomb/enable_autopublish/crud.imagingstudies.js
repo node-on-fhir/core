@@ -244,6 +244,28 @@ describe('ImagingStudies CRUD Operations', function() {
       .url('http://localhost:3000/imaging-studies')
       .waitForElementVisible('#imagingStudiesPage', 5000)
       .pause(2000)
+      // Re-establish patient context after navigation
+      .execute(function(testIdentifier) {
+        if (typeof Session !== 'undefined' && typeof Patients !== 'undefined') {
+          let patient = Patients.findOne({'identifier.value': testIdentifier});
+          if (!patient) {
+            patient = Patients.findOne({
+              $or: [
+                { 'name.0.text': { $regex: 'John.*Doe' } },
+                { 'name.0.family': 'Doe' },
+                { 'name.0.given.0': 'John' }
+              ]
+            });
+          }
+          if (patient) {
+            Session.set('selectedPatientId', patient._id);
+            Session.set('selectedPatient', patient);
+            console.log('Re-established patient context:', patient._id);
+            return { success: true, patientId: patient._id };
+          }
+        }
+        return { success: false };
+      }, ['test-patient-' + timestamp])
       .execute(function() {
         const hasTable = document.querySelector('#imagingStudiesTable') !== null;
         const hasNoDataCard = document.querySelector('.no-data-card') !== null ||
@@ -271,7 +293,7 @@ describe('ImagingStudies CRUD Operations', function() {
       .execute(function() {
         const buttons = document.querySelectorAll('button');
         for (let button of buttons) {
-          if (button.textContent.includes('Add Imaging Study') || 
+          if (button.textContent.includes('Add Study') || 
               button.textContent.includes('Add Your First Imaging Study')) {
             button.click();
             return true;
@@ -287,12 +309,10 @@ describe('ImagingStudies CRUD Operations', function() {
       .waitForElementVisible('#imagingStudyDetailPage', 5000)
       .assert.elementPresent('#statusSelect')
       .assert.elementPresent('#modalitySelect')
-      .assert.elementPresent('#modalityDisplayInput')
       .assert.elementPresent('#descriptionInput')
       .assert.elementPresent('#startedInput')
       .assert.elementPresent('#numberOfSeriesInput')
       .assert.elementPresent('#numberOfInstancesInput')
-      .assert.elementPresent('#procedureReferenceInput')
       .assert.elementPresent('#procedureDisplayInput')
       .assert.elementPresent('#reasonCodeInput')
       .assert.elementPresent('#reasonCodeDisplayInput')
@@ -377,10 +397,20 @@ describe('ImagingStudies CRUD Operations', function() {
     });
 
     // Fill form fields
+    // Set the modality using the select dropdown
     browser
       .pause(500)
-      .clearValue('#modalityDisplayInput')
-      .setValue('#modalityDisplayInput', testImagingStudy.modalityDisplay)
+      .execute(function(modalityCode) {
+        const select = document.querySelector('#modalitySelect');
+        if (select) {
+          // Find the native select element within Material-UI
+          const nativeSelect = select.querySelector('select') || select;
+          nativeSelect.value = modalityCode;
+          nativeSelect.dispatchEvent(new Event('change', { bubbles: true }));
+          return true;
+        }
+        return false;
+      }, [testImagingStudy.modalityCode])
       .clearValue('#descriptionInput')
       .setValue('#descriptionInput', testImagingStudy.description)
       .clearValue('#startedInput')
@@ -389,8 +419,8 @@ describe('ImagingStudies CRUD Operations', function() {
       .setValue('#numberOfSeriesInput', testImagingStudy.numberOfSeries.toString())
       .clearValue('#numberOfInstancesInput')
       .setValue('#numberOfInstancesInput', testImagingStudy.numberOfInstances.toString())
-      .clearValue('#procedureReferenceInput')
-      .setValue('#procedureReferenceInput', testImagingStudy.procedureReference)
+      .clearValue('#procedureCodeInput')
+      .setValue('#procedureCodeInput', testImagingStudy.procedureCode)
       .clearValue('#procedureDisplayInput')
       .setValue('#procedureDisplayInput', testImagingStudy.procedureDisplay)
       .clearValue('#reasonCodeInput')
@@ -512,21 +542,21 @@ describe('ImagingStudies CRUD Operations', function() {
 
     browser.pause(500);
 
-    browser.execute(function(modality) {
+    browser.execute(function(modalityCode) {
       const modalitySelect = document.querySelector('#modalitySelect');
       if (modalitySelect) {
         modalitySelect.click();
         setTimeout(() => {
           const options = document.querySelectorAll('li[role="option"]');
           for (let option of options) {
-            if (option.getAttribute('data-value') === modality) {
+            if (option.getAttribute('data-value') === modalityCode) {
               option.click();
               break;
             }
           }
         }, 300);
       }
-    }, [testImagingStudy.modality]);
+    }, [testImagingStudy.modalityCode]);
 
     browser
       .pause(500)
@@ -953,14 +983,14 @@ describe('ImagingStudies CRUD Operations', function() {
       .execute(function() {
         const buttons = document.querySelectorAll('button');
         for (let button of buttons) {
-          if (button.textContent.includes('Save')) {
+          if (button.textContent.includes('Save') || button.textContent.includes('Update')) {
             button.click();
             return true;
           }
         }
         return false;
       }, [], function(result) {
-        browser.assert.equal(result.value, true, 'Clicked Save button');
+        browser.assert.equal(result.value, true, 'Clicked Save/Update button');
       });
 
     browser
@@ -1035,30 +1065,12 @@ describe('ImagingStudies CRUD Operations', function() {
           .pause(1000)
           .waitForElementVisible('#imagingStudyDetailPage', 5000);
 
-        // Enter edit mode
+        // Click Delete button (only visible in view mode, not edit mode)
         browser
           .execute(function() {
-            const lockButton = document.querySelector('button svg[data-testid="LockIcon"]')?.parentElement;
-            if (lockButton) {
-              lockButton.click();
-              return true;
-            }
-            const buttons = document.querySelectorAll('button');
-            for (let button of buttons) {
-              if (button.textContent.includes('Edit')) {
-                button.click();
-                return true;
-              }
-            }
-            return false;
-          }, [], function(result) {
-            browser.assert.equal(result.value, true, 'Clicked Edit/Lock button to enter edit mode');
-          })
-          .pause(500);
-
-        // Click Delete button
-        browser
-          .execute(function() {
+            // Override window.confirm to automatically accept
+            window.confirm = function() { return true; };
+            
             const buttons = document.querySelectorAll('button');
             for (let button of buttons) {
               if (button.textContent.includes('Delete')) {
@@ -1067,10 +1079,14 @@ describe('ImagingStudies CRUD Operations', function() {
                 return true;
               }
             }
+            window.__deleteButtonFound = false;
+            console.error('Delete button not found. Available buttons:', Array.from(buttons).map(b => b.textContent));
             return false;
+          }, [], function(result) {
+            if (!result.value) {
+              browser.assert.fail('Delete button not found - it should be visible in view mode');
+            }
           })
-          .pause(100)
-          .acceptAlert()
           .pause(500);
 
         browser

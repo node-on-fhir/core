@@ -2562,6 +2562,126 @@ export function flattenImmunization(immunization, internalDateFormat){
   return result;
 }
 
+export function flattenImagingStudy(imagingStudy, internalDateFormat){
+  let result = {
+    _id: '',
+    id: '',
+    meta: '',
+    identifier: '',
+    status: '',
+    modality: '',
+    modalityCode: '',
+    subject: '',
+    subjectDisplay: '',
+    subjectReference: '',
+    patientDisplay: '',
+    patientReference: '',
+    encounter: '',
+    encounterDisplay: '',
+    encounterReference: '',
+    started: '',
+    basedOn: '',
+    referrer: '',
+    referrerDisplay: '',
+    referrerReference: '',
+    interpreter: '',
+    endpoint: '',
+    numberOfSeries: '',
+    numberOfInstances: '',
+    procedureReference: '',
+    procedureCode: '',
+    procedureDisplay: '',
+    location: '',
+    locationDisplay: '',
+    locationReference: '',
+    reasonCode: '',
+    reasonReference: '',
+    note: '',
+    description: '',
+    series: '',
+    barcode: ''
+  };
+
+  result.resourceType = get(imagingStudy, 'resourceType', "ImagingStudy");
+
+  if(!internalDateFormat){
+    internalDateFormat = get(Meteor, "settings.public.defaults.dateFormat", "YYYY-MM-DD");
+  }
+
+  // Extract IDs
+  result._id = extractIdString(get(imagingStudy, '_id', ''));
+  result.id = get(imagingStudy, 'id', '');
+  result.barcode = result._id;
+
+  // Basic fields
+  result.identifier = get(imagingStudy, 'identifier[0].value', '');
+  result.status = get(imagingStudy, 'status', '');
+  result.description = get(imagingStudy, 'description', '');
+  
+  // Handle modality
+  if(get(imagingStudy, 'modality[0].display')){
+    result.modality = get(imagingStudy, 'modality[0].display');
+    result.modalityCode = get(imagingStudy, 'modality[0].code', '');
+  } else if(get(imagingStudy, 'modality[0].code')){
+    result.modality = get(imagingStudy, 'modality[0].code');
+    result.modalityCode = get(imagingStudy, 'modality[0].code', '');
+  }
+
+  // Patient/Subject reference
+  if(get(imagingStudy, 'subject')){
+    result.subjectDisplay = get(imagingStudy, 'subject.display', '');
+    result.subjectReference = get(imagingStudy, 'subject.reference', '');
+    result.patientDisplay = get(imagingStudy, 'subject.display', '');
+    result.patientReference = get(imagingStudy, 'subject.reference', '');
+  }
+
+  // Encounter reference
+  if(get(imagingStudy, 'encounter')){
+    result.encounterDisplay = get(imagingStudy, 'encounter.display', '');
+    result.encounterReference = get(imagingStudy, 'encounter.reference', '');
+  }
+
+  // Date handling
+  if(get(imagingStudy, 'started')){
+    result.started = moment(get(imagingStudy, 'started')).format(internalDateFormat);
+  }
+
+  // Referrer
+  if(get(imagingStudy, 'referrer')){
+    result.referrerDisplay = get(imagingStudy, 'referrer.display', '');
+    result.referrerReference = get(imagingStudy, 'referrer.reference', '');
+  }
+
+  // Location
+  if(get(imagingStudy, 'location')){
+    result.locationDisplay = get(imagingStudy, 'location.display', '');
+    result.locationReference = get(imagingStudy, 'location.reference', '');
+  }
+
+  // Numbers
+  result.numberOfSeries = get(imagingStudy, 'numberOfSeries', '');
+  result.numberOfInstances = get(imagingStudy, 'numberOfInstances', '');
+
+  // Procedure code
+  if(get(imagingStudy, 'procedureCode[0].text')){
+    result.procedureCode = get(imagingStudy, 'procedureCode[0].text');
+    result.procedureDisplay = get(imagingStudy, 'procedureCode[0].text');
+  } else if(get(imagingStudy, 'procedureCode[0].coding[0].display')){
+    result.procedureCode = get(imagingStudy, 'procedureCode[0].coding[0].code', '');
+    result.procedureDisplay = get(imagingStudy, 'procedureCode[0].coding[0].display');
+  } else if(get(imagingStudy, 'procedureCode[0].coding[0].code')){
+    result.procedureCode = get(imagingStudy, 'procedureCode[0].coding[0].code');
+    result.procedureDisplay = get(imagingStudy, 'procedureCode[0].coding[0].code');
+  }
+
+  // Notes
+  if(get(imagingStudy, 'note[0].text')){
+    result.note = get(imagingStudy, 'note[0].text');
+  }
+
+  return result;
+}
+
 export function flattenInsurancePlan(plan, internalDateFormat){
     let result = {
       resourceType: 'InsurancePlan',
@@ -5519,7 +5639,7 @@ export function flatten(collectionName, resource){
     case "Immunizations":
       return flattenImmunization(resource);          
     case "ImagingStudies":
-      return notImplementedMessage;     
+      return flattenImagingStudy(resource);     
     case "Lists":
       return flattenList(resource);   
     case "Locations":
@@ -5641,6 +5761,7 @@ export const FhirDehydrator = {
   dehydrateGuidanceResponse: flattenGuidanceResponse,
   dehydrateHealthcareService: flattenHealthcareService,
   dehydrateImmunization: flattenImmunization,
+  dehydrateImagingStudy: flattenImagingStudy,
   dehydrateInsurancePlan: flattenInsurancePlan,
   dehydrateList: flattenList,
   dehydrateLibrary: flattenLibrary,

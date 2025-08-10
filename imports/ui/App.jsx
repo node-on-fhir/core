@@ -121,7 +121,8 @@ import {
 // TODO: Create these components
 import DiagnosticReportsPage from '../ui-fhir/diagnosticReports/DiagnosticReportsPage';
 import DiagnosticReportDetail from '../ui-fhir/diagnosticReports/DiagnosticReportDetail';
-// import ImagingStudiesPage from '../ui-fhir/imagingStudies/ImagingStudiesPage';
+import ImagingStudiesPage from '../ui-fhir/imagingStudies/ImagingStudiesPage';
+import ImagingStudyDetail from '../ui-fhir/imagingStudies/ImagingStudyDetail';
 // import AppointmentsPage from '../ui-fhir/appointments/AppointmentsPage';
 // import SchedulesPage from '../ui-fhir/schedules/SchedulesPage';
 // import MediasPage from '../ui-fhir/medias/MediasPage';
@@ -949,20 +950,20 @@ if(get(Meteor, 'settings.public.modules.fhir.Consents')){
 //     element: <DiagnosticReportDetail />
 //   })
 // }
-// if(get(Meteor, 'settings.public.modules.fhir.ImagingStudies')){
-//   dynamicRoutes.push({
-//     path: "/imaging-studies",
-//     element: <ImagingStudiesPage />
-//   })
-//   dynamicRoutes.push({
-//     path: "/imaging-studies/new",
-//     element: <ImagingStudyDetail />
-//   })
-//   dynamicRoutes.push({
-//     path: "/imaging-studies/:id",
-//     element: <ImagingStudyDetail />
-//   })
-// }
+if(get(Meteor, 'settings.public.modules.fhir.ImagingStudies')){
+  dynamicRoutes.push({
+    path: "/imaging-studies",
+    element: <ImagingStudiesPage />
+  })
+  dynamicRoutes.push({
+    path: "/imaging-studies/new",
+    element: <ImagingStudyDetail />
+  })
+  dynamicRoutes.push({
+    path: "/imaging-studies/:id",
+    element: <ImagingStudyDetail />
+  })
+}
 // if(get(Meteor, 'settings.public.modules.fhir.Appointments')){
 //   dynamicRoutes.push({
 //     path: "/appointments",
