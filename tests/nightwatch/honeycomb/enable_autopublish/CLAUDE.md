@@ -114,15 +114,35 @@ if (process.env.USE_MONGO_OBJECTID) {
 
 ### 6. React Form Input Handling
 - **Issue**: Setting values programmatically in React forms requires special handling
-- **Solution**: Use proper React event simulation
-  ```javascript
+- **Solution**: Use different approaches for different input types
+
+#### Text Input Pattern (Use setValue directly):
+```javascript
+// CORRECT - Use setValue for text inputs, textareas
+browser
+  .clearValue('#codeInput')
+  .setValue('#codeInput', testData.codeCode)
+  .clearValue('#notesTextarea')
+  .setValue('#notesTextarea', testData.notes);
+```
+
+**Important**: 
+- Use setValue directly on text inputs (like the locations test does)
+- Only use execute blocks for Material-UI Select components
+- Use the correct field values from test data (e.g., codeCode for the code field, codeDisplay for the display field)
+
+#### Why Native Setter Approach Fails:
+```javascript
+// WRONG - This causes "Illegal invocation" errors
+browser.execute(function(value) {
   const nativeInputValueSetter = Object.getOwnPropertyDescriptor(
-    window.HTMLInputElement.prototype, 
-    'value'
+    window.HTMLInputElement.prototype, 'value'
   ).set;
-  nativeInputValueSetter.call(field, value);
-  field.dispatchEvent(new Event('input', { bubbles: true }));
-  ```
+  nativeInputValueSetter.call(field, value); // Causes "Illegal invocation"
+});
+```
+
+The native setter approach causes "Illegal invocation" errors in the browser and should be avoided for standard form inputs.
 
 ## Patient Context and Data Scoping in Tests
 
@@ -324,18 +344,72 @@ This comprehensive query handles various ways FHIR resources might reference a p
 - [ ] Auto-populated fields are documented
 - [ ] Form inputs work with both user interaction and programmatic setting
 
+## Session Context and Navigation
+
+### Critical Pattern: Page Navigation vs React Router Navigation
+
+**Key Insight**: There are two types of navigation in the application that handle Session state differently:
+
+1. **Full Page Navigation (`browser.url()`)**: 
+   - Causes a complete page reload
+   - **CLEARS all Session variables**
+   - Used for initial navigation to a route
+   - Example: `browser.url('http://localhost:3000/allergy-intolerances')`
+
+2. **React Router Navigation (`navigate()`)**: 
+   - Client-side routing without page reload
+   - **PRESERVES Session variables**
+   - Used when clicking buttons/links within the app
+   - Example: Clicking "Add Allergy" button uses `navigate('/allergy-intolerances/new')`
+
+### Correct Pattern for Tests:
+```javascript
+// Step 1: Navigate to the page (causes reload, clears Session)
+browser
+  .url('http://localhost:3000/allergy-intolerances')
+  .waitForElementVisible('#allergyIntolerancesPage', 5000);
+
+// Step 2: Set patient context AFTER navigation
+browser.execute(function() {
+  const patient = Patients.findOne({...});
+  if (patient) {
+    Session.set('selectedPatientId', patient._id);
+    Session.set('selectedPatient', patient);
+  }
+});
+
+// Step 3: Further navigation within the app preserves Session
+// Clicking "Add" button uses React Router, Session variables remain
+```
+
+### Common Mistake:
+```javascript
+// WRONG: Setting Session before navigation
+browser.execute(function() {
+  Session.set('selectedPatient', patient); // This will be lost!
+});
+browser.url('http://localhost:3000/allergy-intolerances'); // Clears Session!
+```
+
+### Why This Matters:
+- Patient context is stored in Session
+- Many components filter data based on `Session.get('selectedPatient')`
+- If Session is cleared, lists appear empty even though data exists
+- This is why setting patient context must happen AFTER initial page navigation
+
 ## Common Pitfalls to Avoid
 
-1. **Don't search by identifier when you can use _id directly**
-2. **Don't assume _id === id** (especially with Synthea data)
-3. **Don't modify well-established test patterns**
-4. **Don't forget to handle the no-data state**
-5. **Don't assume specific sort order without explicitly setting it**
-6. **Don't expect manually set values for auto-populated fields**
-7. **Don't use complex search patterns when simple ones suffice**
-8. **Don't filter data client-side when you can pass queries to subscriptions**
-9. **Don't assume new records will appear at top/bottom without proper sorting**
-10. **Don't test Material-UI Select components with simple selectors - use execute blocks**
+1. **Don't set Session variables before `browser.url()`** - they will be cleared
+2. **Don't search by identifier when you can use _id directly**
+3. **Don't assume _id === id** (especially with Synthea data)
+4. **Don't modify well-established test patterns**
+5. **Don't forget to handle the no-data state**
+6. **Don't assume specific sort order without explicitly setting it**
+7. **Don't expect manually set values for auto-populated fields**
+8. **Don't use complex search patterns when simple ones suffice**
+9. **Don't filter data client-side when you can pass queries to subscriptions**
+10. **Don't assume new records will appear at top/bottom without proper sorting**
+11. **Don't test Material-UI Select components with simple selectors - use execute blocks**
 
 ## Debugging Tips
 
@@ -553,6 +627,30 @@ When dealing with datasets containing 100+ records (common with Synthea data):
 - Successful save should navigate from `/new` to list page
 - Staying on `/new` indicates save failure
 - Check console errors and user authentication state
+
+**Element Visibility and Scrolling:**
+- After navigation, the page may be scrolled to an unexpected position
+- Elements must be in the viewport to be interacted with
+- Use `window.scrollTo(0, 0)` to ensure header elements are visible
+
+```javascript
+// Ensure search input is visible after navigation
+browser.execute(function() {
+  window.scrollTo(0, 0);
+});
+browser.pause(500);
+
+// Now the search input should be accessible
+browser
+  .waitForElementVisible('#searchInput', 5000)
+  .setValue('#searchInput', 'search term');
+```
+
+**Why This Matters:**
+- After saving a record, the page often returns to the list view scrolled down
+- Search bars and headers are typically at the top of the page
+- Nightwatch cannot interact with elements outside the viewport
+- `waitForElementVisible` checks DOM visibility, not viewport visibility
 
 **Patient Context Preservation:**
 - Always verify Session patient is set before operations

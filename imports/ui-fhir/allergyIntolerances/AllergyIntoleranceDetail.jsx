@@ -1,644 +1,620 @@
-// =======================================================================
-// Using DSTU2  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-//
-// https://www.hl7.org/fhir/DSTU2/allergyintolerance.html
-//
-//
-// =======================================================================
+// /imports/ui-fhir/allergyIntolerances/AllergyIntoleranceDetail.jsx
+
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { useTracker } from 'meteor/react-meteor-data';
 
 import { 
   Button,
   Card,
-  CardHeader,
-  CardContent,
   CardActions,
+  CardContent,
+  CardHeader,
   Container,
   TextField,
-  Grid,
   Select,
   MenuItem,
   FormControl,
   InputLabel,
+  Typography,
+  Box,
   Stack,
-  Box
+  Chip,
+  InputAdornment,
+  IconButton,
+  Tooltip
 } from '@mui/material';
 
-import { get, set, setWith } from 'lodash';
+import SearchIcon from '@mui/icons-material/Search';
 
+import { get, set } from 'lodash';
+import moment from 'moment';
+
+import { AllergyIntolerances } from '/imports/lib/schemas/SimpleSchemas/AllergyIntolerances';
+import { Patients } from '/imports/lib/schemas/SimpleSchemas/Patients';
 import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
 
-import React, { Component, Fragment } from 'react';
-import { useTracker } from 'meteor/react-meteor-data';
-import PropTypes from 'prop-types';
+function AllergyIntoleranceDetail(props) {
+  const navigate = useNavigate();
+  const { id } = useParams();
+  
+  // Get selected patient and current user from session/tracker
+  const selectedPatient = useTracker(function() {
+    return Session.get('selectedPatient');
+  }, []);
+  
+  const currentUser = useTracker(function() {
+    return Meteor.user();
+  }, []);
 
-
-export class AllergyIntoleranceDetail extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      allergyIntoleranceId: false,
-      allergy: {
-        resourceType: "AllergyIntolerance",
-          identifier: [{
-            value: ''
-          }],
-          clinicalStatus: 'active',
-          verificationStatus: 'unconfirmed',
-          type: 'allergy',
-          category: ['food'],
-          code: null,
-          patient: {
-            display: ''
-          },
-          recorder: {
-            display: ''
-          },
-          onsetDateTime: null,
-          reaction: [{
-            description: ''
-          }],
-          criticality: 'low'
-      },
-      form: {
-        allergyIdentifier: '',
-        reactionDescription: '',
-        clinicalStatus: 0,
-        verificationStatus: 0,
-        category: 0,
-        type: 0,
-        criticality: 0,
-        patientDisplay: '',
-        recorderDisplay: '',
-        substance: ''
-      }
+  // Subscribe to allergy intolerances and track subscription status
+  const isSubscriptionReady = useTracker(function(){
+    let autoPublishEnabled = get(Meteor, 'settings.public.defaults.autopublish', false);
+    let handle;
+    if(autoPublishEnabled){
+      handle = Meteor.subscribe('autopublish.AllergyIntolerances', {}, {});
+    } else {
+      handle = Meteor.subscribe('allergyintolerances.all');
     }
-  }
-  dehydrateFhirResource(allergyIntolerance) {
+    return handle.ready();
+  }, []);
+  
+  // Initialize state with proper FHIR R4 structure
+  const [allergyIntolerance, setAllergyIntolerance] = useState({
+    resourceType: "AllergyIntolerance",
+    clinicalStatus: {
+      coding: [{
+        system: "http://terminology.hl7.org/CodeSystem/allergyintolerance-clinical",
+        code: "active",
+        display: "Active"
+      }]
+    },
+    verificationStatus: {
+      coding: [{
+        system: "http://terminology.hl7.org/CodeSystem/allergyintolerance-verification",
+        code: "unconfirmed",
+        display: "Unconfirmed"
+      }]
+    },
+    type: "allergy",
+    category: ["food"],
+    criticality: "low",
+    code: {
+      coding: [{
+        system: "http://snomed.info/sct",
+        code: "",
+        display: ""
+      }],
+      text: ""
+    },
+    patient: {
+      reference: "",
+      display: ""
+    },
+    onsetDateTime: moment().format('YYYY-MM-DD'),
+    recorder: {
+      reference: "",
+      display: ""
+    },
+    asserter: {
+      reference: "",
+      display: ""
+    },
+    reaction: [{
+      manifestation: [{
+        coding: [{
+          system: "http://snomed.info/sct",
+          code: "",
+          display: ""
+        }],
+        text: ""
+      }],
+      severity: "mild"
+    }],
+    note: [{
+      text: ""
+    }]
+  });
 
-    let formData = Object.assign({}, this.state.form);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [isEditing, setIsEditing] = useState(false);
 
-    formData.allergyIdentifier = get(allergyIntolerance, 'identifier[0].value')
-    formData.reactionDescription = get(allergyIntolerance, 'reaction[0].description')    
-    formData.patientDisplay = get(allergyIntolerance, 'patient.display')
-    formData.recorderDisplay = get(allergyIntolerance, 'recorder.display')
-
-    switch (get(allergyIntolerance, 'clinicalStatus')) {
-      case 'active':
-        formData.clinicalStatus = 0;  
-        break;
-      case 'inactive':
-        formData.clinicalStatus = 1;         
-        break;
-      case 'resolved':
-        formData.clinicalStatus = 2;     
-        break;      
-    }
-
-    switch (get(allergyIntolerance, 'verificationStatus')) {
-      case 'unconfirmed':
-        formData.verificationStatus = 0;  
-        break;
-      case 'confirmed':
-        formData.verificationStatus = 1;         
-        break;
-      case 'refuted':
-        formData.verificationStatus = 2;     
-        break;      
-      case 'entered-in-error':
-        formData.verificationStatus = 3;     
-        break;      
-    }
-
-    switch (get(allergyIntolerance, 'category')) {
-      case 'food':
-        formData.category = 0;  
-        break;
-      case 'medication':
-        formData.category = 1;         
-        break;
-      case 'environment':
-        formData.category = 2;     
-        break;      
-      case 'biologic':
-        formData.category = 3;     
-        break;      
-    }
-
-    switch (get(allergyIntolerance, 'type')) {
-      case 'allergy':
-        formData.type = 0;  
-        break;
-      case 'intollerance':
-        formData.type = 1;         
-        break;
-    }
-
-    switch (get(allergyIntolerance, 'criticality')) {
-      case 'low':
-        formData.criticality = 0;  
-        break;
-      case 'high':
-        formData.criticality = 1;         
-        break;
-      case 'unable-to-assess':
-        formData.criticality = 2;     
-        break;      
-    }
-    return formData;
-  }
-  shouldComponentUpdate(nextProps){
-    process.env.NODE_ENV === "test" && console.log('AllergyIntoleranceDetail.shouldComponentUpdate()', nextProps, this.state)
-    let shouldUpdate = true;
-
-    // both false; don't take any more updates
-    if(nextProps.allergy === this.state.allergy){
-      shouldUpdate = false;
-    }
-
-    // received an allergie from the table; okay lets update again
-    if(nextProps.allergyIntoleranceId !== this.state.allergyIntoleranceId){
-      this.setState({allergyIntoleranceId: nextProps.allergyIntoleranceId})     
-      this.setState({allergy: nextProps.allergy})     
-      this.setState({form: this.dehydrateFhirResource(nextProps.allergy)})     
-      shouldUpdate = true;
-    }
- 
-    return shouldUpdate;
-  }
-
-  getMeteorData() {
-    let data = {
-      allergyIntoleranceId: this.props.allergyIntoleranceId,
-      allergy: false,
-      form: this.state.form,
-      showDatePicker: false      
-    };
-
-    if(this.props.showDatePicker){
-      data.showDatePicker = this.props.showDatePicker
-    }
-    if(this.props.allergy){
-      data.allergy = this.props.allergy;
-    }
-    
-    console.log('AllergyIntoleranceDetail[data]', data);
-    return data;
-  }
-  // renderDatePicker(showDatePicker, datePickerValue){
-  //   if (typeof datePickerValue === "string"){
-  //     datePickerValue = new Date(datePickerValue);
-  //   }
-  //   if (showDatePicker) {
-  //     return (
-  //       <DatePicker 
-  //         name='datePicker'
-  //         hintText="Onset Date" 
-  //         container="inline" 
-  //         mode="landscape"
-  //         value={ datePickerValue ? datePickerValue : null}    
-  //         onChange={ this.changeState.bind(this, 'datePicker')}      
-  //         />
-  //     );
-  //   }
-  // }
-  render() {
-    if(process.env.NODE_ENV === "test") console.log('AllergyIntoleranceDetail.render()', this.state)
-    let formData = this.state.form;
-
-    return (
-      <Container maxWidth="md" sx={{ py: 4 }}>
-        <Card sx={{ boxShadow: 3 }}>
-          <CardHeader 
-            title={this.state.allergyIntoleranceId ? 'Edit Allergy/Intolerance' : 'New Allergy/Intolerance'}
-            sx={{ bgcolor: 'primary.main', color: 'primary.contrastText' }}
-          />
-          <CardContent sx={{ p: 4 }}>
-            {/* System ID Barcode */}
-            {this.state.allergyIntoleranceId && (
-              <Box sx={{ mb: 3, textAlign: 'right' }}>
-                <span className="barcode helveticas" style={{ fontSize: '2rem' }}>{this.state.allergyIntoleranceId}</span>
-              </Box>
-            )}
-            
-            <Stack spacing={3}>
-              {/* Status selects - full width */}
-              <FormControl fullWidth>
-                <InputLabel>Clinical Status</InputLabel>
-                <Select
-                  id='clinicalStatusInput'
-                  name='clinicalStatus'
-                  label="Clinical Status"
-                  value={ get(formData, 'clinicalStatus', 0) }
-                  onChange={ this.changeState.bind(this, 'clinicalStatus')}
-                >
-                  <MenuItem value={0}>Active</MenuItem>
-                  <MenuItem value={1}>Inactive</MenuItem>
-                  <MenuItem value={2}>Resolved</MenuItem>
-                </Select>
-              </FormControl>
-
-              <FormControl fullWidth>
-                <InputLabel>Verification Status</InputLabel>
-                <Select
-                  id='verificationStatusInput'
-                  name='verificationStatus'
-                  label="Verification Status"
-                  value={ get(formData, 'verificationStatus', 0) }
-                  onChange={ this.changeState.bind(this, 'verificationStatus')}
-                >
-                  <MenuItem value={0}>Unconfirmed</MenuItem>
-                  <MenuItem value={1}>Confirmed</MenuItem>
-                  <MenuItem value={2}>Refuted</MenuItem>
-                  <MenuItem value={3}>Entered in Error</MenuItem>
-                </Select>
-              </FormControl>
-
-              <FormControl fullWidth>
-                <InputLabel>Category</InputLabel>
-                <Select
-                  id='categoryInput'
-                  name='category'
-                  label="Category"
-                  value={ get(formData, 'category', 0) }
-                  onChange={ this.changeState.bind(this, 'category')}
-                >
-                  <MenuItem value={0}>Food</MenuItem>
-                  <MenuItem value={1}>Medication</MenuItem>
-                  <MenuItem value={2}>Environment</MenuItem>
-                  <MenuItem value={3}>Biologic</MenuItem>
-                </Select>
-              </FormControl>
-
-              <FormControl fullWidth>
-                <InputLabel>Type</InputLabel>
-                <Select
-                  id='typeInput'
-                  name='type'
-                  label="Type"
-                  value={ get(formData, 'type', 0) }
-                  onChange={ this.changeState.bind(this, 'type')}
-                >
-                  <MenuItem value={0}>Allergy</MenuItem>
-                  <MenuItem value={1}>Intolerance</MenuItem>
-                </Select>
-              </FormControl>
-
-              {/* Text fields - full width */}
-              <TextField
-                id='identifierInput'
-                name='identifier'
-                label='Identifier'
-                placeholder="Enter identifier"
-                value={ get(formData, 'allergyIdentifier', '') }
-                onChange={ this.changeState.bind(this, 'identifier')}
-                fullWidth
-              />
-
-              <TextField
-                id='reactionInput'
-                name='reaction'
-                label='Reaction Description'
-                placeholder="e.g., Hives, Anaphylaxis, Rash"
-                value={ get(formData, 'reactionDescription', '') }
-                onChange={ this.changeState.bind(this, 'reaction')}
-                fullWidth
-              />
-
-              <FormControl fullWidth>
-                <InputLabel>Criticality</InputLabel>
-                <Select
-                  id='criticalityInput'
-                  name='criticality'
-                  label="Criticality"
-                  value={ get(formData, 'criticality', 0) }
-                  onChange={ this.changeState.bind(this, 'criticality')}
-                >
-                  <MenuItem value={0}>Low</MenuItem>
-                  <MenuItem value={1}>High</MenuItem>
-                  <MenuItem value={2}>Unable to Assess</MenuItem>
-                </Select>
-              </FormControl>
-
-              <TextField
-                id='patientDisplayInput'
-                name='patientDisplay'
-                label='Patient Name'
-                placeholder="Patient's full name"
-                value={ get(formData, 'patientDisplay', '') }
-                onChange={ this.changeState.bind(this, 'patientDisplay')}
-                fullWidth
-                helperText="The patient who has the allergy or intolerance"
-              />
-
-              <TextField
-                id='recorderDisplayInput'
-                name='recorderDisplay'
-                label='Recorded By'
-                placeholder="Healthcare provider's name"
-                value={ get(formData, 'recorderDisplay', '') }
-                onChange={ this.changeState.bind(this, 'recorderDisplay')}
-                fullWidth
-                helperText="The person who recorded this allergy"
-              />
-
-              <TextField
-                id='substanceInput'
-                name='substance'
-                label='Allergen/Substance'
-                placeholder="e.g., Peanuts, Penicillin, Latex"
-                value={ get(formData, 'substance', '') }
-                onChange={ this.changeState.bind(this, 'substance')}
-                fullWidth
-                helperText="The specific substance that causes the allergic reaction"
-              />
-            </Stack>
-
-          {/* <br/>
-          { this.renderDatePicker(this.data.showDatePicker, get(this, 'data.allergy.onsetDateTime') ) }
-          <br/> */}
+  // Set patient name and recorder on component mount for new allergy intolerances
+  useEffect(function() {
+    if (!id || id === 'new') {
+      // Enable editing for new allergy intolerances
+      setIsEditing(true);
+      
+      // For new allergy intolerances, set the patient name
+      let patientName = '';
+      let patientReference = '';
+      
+      if (selectedPatient) {
+        // Prefer selected patient
+        patientName = get(selectedPatient, 'name[0].text', '') || 
+                     `${get(selectedPatient, 'name[0].given[0]', '')} ${get(selectedPatient, 'name[0].family', '')}`.trim();
+        // Use FHIR id for reference, NOT MongoDB _id
+        const fhirId = get(selectedPatient, 'id');
+        if (fhirId) {
+          patientReference = `Patient/${fhirId}`;
+        } else {
+          // Fallback to _id if no FHIR id
+          patientReference = `Patient/${get(selectedPatient, '_id', '')}`;
+        }
+        console.log('Setting patient from selectedPatient:', patientName, patientReference);
+        console.log('Patient FHIR id:', fhirId, 'MongoDB _id:', get(selectedPatient, '_id'));
+      } else if (currentUser) {
+        // Only use current user as fallback if they have a patient record
+        const userPatientId = get(currentUser, 'profile.patientId');
+        if (userPatientId) {
+          const userPatient = Patients.findOne({_id: userPatientId});
+          if (userPatient) {
+            patientName = get(userPatient, 'name[0].text', '') ||
+                         `${get(userPatient, 'name[0].given[0]', '')} ${get(userPatient, 'name[0].family', '')}`.trim();
+            patientReference = `Patient/${get(userPatient, 'id', userPatientId)}`;
+          }
+        }
         
-          </CardContent>
-          <CardActions sx={{ justifyContent: 'flex-end', p: 2 }}>
-            { this.determineButtons(this.state.allergyIntoleranceId ) }
-          </CardActions>
-        </Card>
-      </Container>
-    );
-  }
-
-  determineButtons(allergyId){
-    if (allergyId) {
-      return (
-        <>
-          <Button 
-            onClick={this.handleCancelButton.bind(this)}
-          >
-            Cancel
-          </Button>
-          <Button 
-            id="deleteAllergyIntoleranceButton" 
-            onClick={this.handleDeleteButton.bind(this)}
-            color="error"
-          >
-            Delete
-          </Button>
-          <Button 
-            id="updateAllergyIntoleranceButton" 
-            onClick={this.handleSaveButton.bind(this)}
-            variant="contained"
-            color="primary"
-          >
-            Save
-          </Button>
-        </>
-      );
-    } else {
-      return(
-        <>
-          <Button 
-            onClick={this.handleCancelButton.bind(this)}
-          >
-            Cancel
-          </Button>
-          <Button 
-            id="saveAllergyIntoleranceButton" 
-            onClick={this.handleSaveButton.bind(this)}
-            variant="contained"
-            color="primary"
-          >
-            Save
-          </Button>
-        </>
-      );
-    }
-  }
-  updateFormData(formData, field, textValue){
-    if(process.env.NODE_ENV === "test") console.log("AllergyIntoleranceDetail.updateFormData", formData, field, textValue);
-
-    switch (field) {
-      case "identifier":
-        set(formData, 'allergyIdentifier', textValue)
-        break;
-      case "reaction":
-        set(formData, 'reactionDescription', textValue)
-        break;        
-      case "verificationStatus":
-        set(formData, 'verificationStatus', textValue)
-        break;
-      case "clinicalStatus":
-        set(formData, 'clinicalStatus', textValue)
-        break;
-      case "type":
-        set(formData, 'type', textValue)
-        break;
-      case "category":
-        set(formData, 'category', textValue)
-        break;
-      case "patientDisplay":
-        set(formData, 'patientDisplay', textValue)
-        break;
-      case "recorderDisplay":
-        set(formData, 'recorderDisplay', textValue)
-        break;
-      case "datePicker":
-        set(formData, 'onsetDateTime', textValue)
-        set(formData, 'onset', textValue)
-        break;
-      case "criticality":
-        set(formData, 'criticality', textValue)
-        break;
-      case "substance":
-        set(formData, 'substance', textValue)
-        break;
-      default:
-    }
-
-    if(process.env.NODE_ENV === "test") console.log("formData", formData);
-
-    return formData;
-  }
-  updateAllergy(allergyData, field, textValue){
-    if(process.env.NODE_ENV === "test") console.log("AllergyIntoleranceDetail.updateAllergy", allergyData, field, textValue);
-
-    switch (field) {
-      case "identifier":
-        setWith(allergyData, 'identifier[0].value', textValue, Object)
-        break;
-      case "reaction":
-        setWith(allergyData, 'reaction[0].description', textValue, Object)
-        break;        
-      case "verificationStatus":
-        switch (textValue) {
-          case 0:
-            set(allergyData, 'verificationStatus', 'unconfirmed')
-            break;
-          case 1:
-            set(allergyData, 'verificationStatus', 'confirmed')
-            break;
-          case 2:
-            set(allergyData, 'verificationStatus', 'refuted')
-            break;
-          case 3:
-            set(allergyData, 'verificationStatus', 'entered-in-error')
-            break;
-        }       
-        break;
-      case "clinicalStatus":
-        switch (textValue) {
-          case 0:
-            set(allergyData, 'clinicalStatus', 'active')
-            break;
-          case 1:
-            set(allergyData, 'clinicalStatus', 'inactive')
-            break;
-          case 2:
-            set(allergyData, 'clinicalStatus', 'resolved')
-            break;
-        }        
-        break;
-      case "type":
-        switch (textValue) {
-          case 0:
-            set(allergyData, 'type', 'allergy')
-            break;
-          case 1:
-            set(allergyData, 'type', 'intolerance')
-            break;
-        }   
-        break;
-      case "category":
-        switch (textValue) {
-          case 0:
-            set(allergyData, 'category', ['food'])
-            break;
-          case 1:
-            set(allergyData, 'category', ['medication'])
-            break;
-          case 2:
-            set(allergyData, 'category', ['environment'])
-            break;
-          case 3:
-            set(allergyData, 'category', ['biologic'])
-            break;
-        }   
-        break;
-      case "datePicker":
-        set(allergyData, 'onsetDateTime', textValue)
-        set(allergyData, 'onset', textValue)
-        break;
-      case "criticality":
-        switch (textValue) {
-          case 0:
-            set(allergyData, 'criticality', 'low')
-            break;
-          case 1:
-            set(allergyData, 'criticality', 'high')
-            break;
-          case 2:
-            set(allergyData, 'criticality', 'unable-to-assess')
-            break;
-        }   
-        break;
-      default:
-    }
-
-    if(process.env.NODE_ENV === "test") console.log("allergyData", allergyData);
-
-    return allergyData;
-  }
-  componentDidUpdate(props){
-    if(process.env.NODE_ENV === "test") console.log('AllergyIntoleranceDetail.componentDidUpdate()', props, this.state)
-  }
-  changeState(field, event, textValue){
-    if(process.env.NODE_ENV === "test") console.log("AllergyIntoleranceDetail.changeState", field, textValue);
-    if(process.env.NODE_ENV === "test") console.log("this.state", this.state);
-
-    let formData = Object.assign({}, this.state.form);
-    let allergyData = Object.assign({}, this.state.allergy);
-
-    formData = this.updateFormData(formData, field, textValue);
-    allergyData = this.updateAllergy(allergyData, field, textValue);
-
-    if(process.env.NODE_ENV === "test") console.log("allergyData", allergyData);
-    if(process.env.NODE_ENV === "test") console.log("formData", formData);
-
-    this.setState({allergy: allergyData})
-    this.setState({form: formData})
-  }
-
-  handleSaveButton(){
-    console.log('Saving a new Allergy...', this.state)
-
-    let self = this;
-    let fhirAllergyData = Object.assign({}, this.state.allergy);
-
-    if(process.env.NODE_ENV === "test") console.log('fhirAllergyData', fhirAllergyData);
-
-    let schemaConfig = get(Meteor, 'settings.public.defaults.schemas')
-    if(process.env.NODE_ENV === "test") console.log('Meteor.settings.public.defaults.schemas', schemaConfig);
-
-    if (this.state.allergyIntoleranceId) {
-      if(process.env.NODE_ENV === "test") console.log("Updating allergyIntolerance...");
-      delete fhirAllergyData._id;
-
-      AllergyIntolerances._collection.update(
-        {_id: this.state.allergyIntoleranceId}, {$set: fhirAllergyData }, function(error, result) {
-          if (error) {
-            console.log("error", error);
-            // Bert.alert(error.reason, 'danger');
-          }
-          if (result) {
-            HipaaLogger.logEvent({eventType: "update", userId: Meteor.userId(), userName: Meteor.user().fullName(), collectionName: "AllergyIntolerances", recordId: self.data.allergyIntoleranceId});
-            Session.set('allergyIntolerancePageTabIndex', 1);
-            Session.set('selectedAllergyIntolerance', false);
-            // Bert.alert('AllergyIntolerance updated!', 'success');
-          }
-        });
-    } else {
-
-      if(process.env.NODE_ENV === "test") console.log("Create a new allergyIntolerance", fhirAllergyData);
-
-      AllergyIntolerances._collection.insert(fhirAllergyData, function(error, result) {
-        if (error) {
-          console.log("error", error);
-          // Bert.alert(error.reason, 'danger');
+        // If still no patient name, don't default to username
+        if (!patientName) {
+          console.log('No patient selected or associated with current user');
         }
-        if (result) {
-          HipaaLogger.logEvent({eventType: "create", userId: Meteor.userId(), userName: Meteor.user().fullName(), collectionName: "AllergyIntolerances", recordId: self.data.allergyIntoleranceId});
-          Session.set('allergyIntolerancePageTabIndex', 1);
-          Session.set('selectedAllergyIntolerance', false);
-          // Bert.alert('AllergyIntolerance added!', 'success');
+      }
+      
+      // Set recorder to current user
+      let recorderName = '';
+      let recorderReference = '';
+      
+      if (currentUser) {
+        recorderName = get(currentUser, 'profile.name.text', '') ||
+                       `${get(currentUser, 'profile.name.given[0]', '')} ${get(currentUser, 'profile.name.family', '')}`.trim() ||
+                       get(currentUser, 'username', '');
+        recorderReference = `Practitioner/${get(currentUser, '_id', '')}`;
+      }
+      
+      setAllergyIntolerance(prev => ({
+        ...prev,
+        patient: {
+          reference: patientReference,
+          display: patientName
+        },
+        recorder: {
+          reference: recorderReference,
+          display: recorderName
         }
-      });
+      }));
+    } else {
+      // Viewing existing allergy intolerance - start in read-only mode
+      setIsEditing(false);
     }
-  }
+  }, [id, selectedPatient, currentUser]);
 
-  handleCancelButton(){
-    Session.set('allergyIntolerancePageTabIndex', 1);
-  }
+  // Load allergy intolerance if editing
+  useEffect(() => {
+    if (id && id !== 'new' && isSubscriptionReady) {
+      const existingAllergy = AllergyIntolerances.findOne({_id: id});
+      if (existingAllergy) {
+        setAllergyIntolerance(existingAllergy);
+        setIsEditing(false);
+      }
+    }
+  }, [id, isSubscriptionReady]);
 
-  handleDeleteButton(){
-    let self = this;
-    AllergyIntolerances._collection.remove({_id: this.state.allergyIntoleranceId}, function(error, result){
-      if (error) {
-        // Bert.alert(error.reason, 'danger');
-      }
-      if (result) {
-        HipaaLogger.logEvent({eventType: "delete", userId: Meteor.userId(), userName: Meteor.user().fullName(), collectionName: "AllergyIntolerances", recordId: self.data.allergyIntoleranceId});
-        Session.set('allergyIntolerancePageTabIndex', 1);
-        Session.set('selectedAllergyIntolerance', false);
-        // Bert.alert('AllergyIntolerance removed!', 'success');
-      }
+  // Handle input changes
+  const handleChange = (path, value) => {
+    setAllergyIntolerance(prev => {
+      const updated = {...prev};
+      set(updated, path, value);
+      return updated;
     });
-  }
-}
+  };
 
-AllergyIntoleranceDetail.propTypes = {
-  id: PropTypes.string,
-  fhirVersion: PropTypes.string,
-  allergyIntoleranceId: PropTypes.oneOfType([PropTypes.string, PropTypes.bool]),
-  allergyIntolerance: PropTypes.oneOfType([PropTypes.object, PropTypes.bool])
-};
+  // Handle save
+  async function handleSaveButton() {
+    setLoading(true);
+    try {
+      // Ensure patient reference is set from session if not already set
+      let patientRef = get(allergyIntolerance, 'patient');
+      if (!patientRef || !patientRef.reference) {
+        const sessionPatient = Session.get('selectedPatient');
+        if (sessionPatient) {
+          // Use FHIR id for reference, NOT MongoDB _id
+          const fhirId = get(sessionPatient, 'id');
+          const patientIdToUse = fhirId || get(sessionPatient, '_id', '');
+          
+          patientRef = {
+            reference: `Patient/${patientIdToUse}`,
+            display: get(sessionPatient, 'name[0].text', '') || 
+                    `${get(sessionPatient, 'name[0].given[0]', '')} ${get(sessionPatient, 'name[0].family', '')}`.trim()
+          };
+        }
+      }
+      
+      // Debug patient reference
+      console.log('Patient reference being saved:', patientRef);
+      console.log('Session patient:', Session.get('selectedPatient'));
+      console.log('Session patient ID:', Session.get('selectedPatientId'));
+      
+      let dataToSave = {
+        resourceType: "AllergyIntolerance",
+        clinicalStatus: get(allergyIntolerance, 'clinicalStatus'),
+        verificationStatus: get(allergyIntolerance, 'verificationStatus'),
+        type: get(allergyIntolerance, 'type'),
+        category: get(allergyIntolerance, 'category'),
+        criticality: get(allergyIntolerance, 'criticality'),
+        code: get(allergyIntolerance, 'code'),
+        patient: patientRef,
+        onsetDateTime: get(allergyIntolerance, 'onsetDateTime'),
+        recorder: get(allergyIntolerance, 'recorder'),
+        asserter: get(allergyIntolerance, 'asserter'),
+        reaction: get(allergyIntolerance, 'reaction'),
+        note: get(allergyIntolerance, 'note')
+      };
+      
+      console.log('Saving allergy intolerance with data:', JSON.stringify(dataToSave, null, 2));
+
+      if(id && id !== 'new'){
+        await Meteor.callAsync('updateAllergyIntolerance', id, dataToSave);
+        setIsEditing(false); // Stay on page, switch to read mode
+      } else {
+        const newId = await Meteor.callAsync('createAllergyIntolerance', dataToSave);
+        navigate('/allergy-intolerances'); // Navigate to list after create
+      }
+    } catch(error) {
+      console.error('Error saving allergy intolerance:', error);
+      setError(error.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  // Handle delete
+  async function handleDeleteButton() {
+    if (window.confirm('Are you sure you want to delete this allergy intolerance?')) {
+      setLoading(true);
+      try {
+        await Meteor.callAsync('removeAllergyIntolerance', id);
+        navigate('/allergy-intolerances');
+      } catch(error) {
+        console.error('Error deleting allergy intolerance:', error);
+        setError(error.message);
+      } finally {
+        setLoading(false);
+      }
+    }
+  }
+
+  // Handle cancel/back
+  function handleCancelButton() {
+    if (isEditing && id && id !== 'new') {
+      // Cancel editing, revert to read-only mode
+      const existingAllergy = AllergyIntolerances.findOne({_id: id});
+      if (existingAllergy) {
+        setAllergyIntolerance(existingAllergy);
+      }
+      setIsEditing(false);
+    } else {
+      // Go back to list
+      navigate('/allergy-intolerances');
+    }
+  }
+
+  // Handle patient search
+  function handleSearchUser() {
+    console.log('Patient search not yet implemented');
+    // TODO: Implement patient search dialog
+  }
+
+  return (
+    <Container id="allergyIntoleranceDetailPage" maxWidth="md" sx={{ py: 4 }}>
+      <Card sx={{ boxShadow: 3 }}>
+        <CardHeader 
+          title={id && id !== 'new' ? 'Edit Allergy/Intolerance' : 'New Allergy/Intolerance'}
+          sx={{ bgcolor: 'primary.main', color: 'primary.contrastText' }}
+        />
+        <CardContent sx={{ p: 4 }}>
+          {/* System ID Barcode */}
+          {(id && id !== 'new') && (
+            <Box sx={{ mb: 3, textAlign: 'right' }}>
+              <span className="barcode helveticas" style={{ fontSize: '2rem' }}>{id}</span>
+            </Box>
+          )}
+          
+          <Stack spacing={3}>
+            {/* Patient field with search */}
+            <TextField
+              id="patientDisplay"
+              fullWidth
+              label="Patient"
+              value={get(allergyIntolerance, 'patient.display', '')}
+              onChange={(e) => handleChange('patient.display', e.target.value)}
+              disabled={!isEditing}
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <Tooltip title="Search for patient">
+                      <IconButton
+                        onClick={handleSearchUser}
+                        edge="end"
+                        disabled={!isEditing}
+                      >
+                        <SearchIcon />
+                      </IconButton>
+                    </Tooltip>
+                  </InputAdornment>
+                ),
+              }}
+            />
+
+            {/* Code fields */}
+            <TextField
+              id="codeInput"
+              fullWidth
+              label="Code"
+              placeholder="e.g., 91935009"
+              value={get(allergyIntolerance, 'code.coding[0].code', '')}
+              onChange={(e) => handleChange('code.coding[0].code', e.target.value)}
+              disabled={!isEditing}
+              helperText="SNOMED CT code for the allergen"
+            />
+            
+            <TextField
+              id="codeDisplayInput"
+              fullWidth
+              label="Code Display"
+              placeholder="e.g., Allergy to peanuts"
+              value={get(allergyIntolerance, 'code.coding[0].display', '')}
+              onChange={(e) => handleChange('code.coding[0].display', e.target.value)}
+              disabled={!isEditing}
+              helperText="Human readable name for the allergen"
+            />
+
+            {/* Status fields */}
+            <FormControl fullWidth>
+              <InputLabel>Clinical Status</InputLabel>
+              <Select
+                id="clinicalStatusSelect"
+                label="Clinical Status"
+                value={get(allergyIntolerance, 'clinicalStatus.coding[0].code', 'active')}
+                onChange={(e) => {
+                  const code = e.target.value;
+                  const display = code.charAt(0).toUpperCase() + code.slice(1);
+                  handleChange('clinicalStatus', {
+                    coding: [{
+                      system: "http://terminology.hl7.org/CodeSystem/allergyintolerance-clinical",
+                      code: code,
+                      display: display
+                    }]
+                  });
+                }}
+                disabled={!isEditing}
+              >
+                <MenuItem value="active">Active</MenuItem>
+                <MenuItem value="inactive">Inactive</MenuItem>
+                <MenuItem value="resolved">Resolved</MenuItem>
+              </Select>
+            </FormControl>
+
+            <FormControl fullWidth>
+              <InputLabel>Verification Status</InputLabel>
+              <Select
+                id="verificationStatusSelect"
+                label="Verification Status"
+                value={get(allergyIntolerance, 'verificationStatus.coding[0].code', 'unconfirmed')}
+                onChange={(e) => {
+                  const code = e.target.value;
+                  const displayMap = {
+                    'unconfirmed': 'Unconfirmed',
+                    'confirmed': 'Confirmed',
+                    'refuted': 'Refuted',
+                    'entered-in-error': 'Entered in Error'
+                  };
+                  handleChange('verificationStatus', {
+                    coding: [{
+                      system: "http://terminology.hl7.org/CodeSystem/allergyintolerance-verification",
+                      code: code,
+                      display: displayMap[code]
+                    }]
+                  });
+                }}
+                disabled={!isEditing}
+              >
+                <MenuItem value="unconfirmed">Unconfirmed</MenuItem>
+                <MenuItem value="confirmed">Confirmed</MenuItem>
+                <MenuItem value="refuted">Refuted</MenuItem>
+                <MenuItem value="entered-in-error">Entered in Error</MenuItem>
+              </Select>
+            </FormControl>
+
+            {/* Type and Category */}
+            <FormControl fullWidth>
+              <InputLabel>Type</InputLabel>
+              <Select
+                id="typeSelect"
+                label="Type"
+                value={get(allergyIntolerance, 'type', 'allergy')}
+                onChange={(e) => handleChange('type', e.target.value)}
+                disabled={!isEditing}
+              >
+                <MenuItem value="allergy">Allergy</MenuItem>
+                <MenuItem value="intolerance">Intolerance</MenuItem>
+              </Select>
+            </FormControl>
+
+            <FormControl fullWidth>
+              <InputLabel>Category</InputLabel>
+              <Select
+                id="categorySelect"
+                label="Category"
+                value={get(allergyIntolerance, 'category[0]', 'food')}
+                onChange={(e) => handleChange('category', [e.target.value])}
+                disabled={!isEditing}
+              >
+                <MenuItem value="food">Food</MenuItem>
+                <MenuItem value="medication">Medication</MenuItem>
+                <MenuItem value="environment">Environment</MenuItem>
+                <MenuItem value="biologic">Biologic</MenuItem>
+              </Select>
+            </FormControl>
+
+            {/* Criticality */}
+            <FormControl fullWidth>
+              <InputLabel>Criticality</InputLabel>
+              <Select
+                id="criticalitySelect"
+                label="Criticality"
+                value={get(allergyIntolerance, 'criticality', 'low')}
+                onChange={(e) => handleChange('criticality', e.target.value)}
+                disabled={!isEditing}
+              >
+                <MenuItem value="low">Low</MenuItem>
+                <MenuItem value="high">High</MenuItem>
+                <MenuItem value="unable-to-assess">Unable to Assess</MenuItem>
+              </Select>
+            </FormControl>
+
+            {/* Reaction */}
+            <TextField
+              id="reactionInput"
+              fullWidth
+              label="Reaction"
+              placeholder="e.g., Hives, Anaphylaxis, Rash"
+              value={get(allergyIntolerance, 'reaction[0].manifestation[0].text', '')}
+              onChange={(e) => {
+                const updated = {...allergyIntolerance};
+                set(updated, 'reaction[0].manifestation[0].text', e.target.value);
+                setAllergyIntolerance(updated);
+              }}
+              disabled={!isEditing}
+              multiline
+              rows={2}
+            />
+
+            {/* Severity */}
+            <FormControl fullWidth>
+              <InputLabel>Reaction Severity</InputLabel>
+              <Select
+                id="reactionSeveritySelect"
+                label="Reaction Severity"
+                value={get(allergyIntolerance, 'reaction[0].severity', 'mild')}
+                onChange={(e) => {
+                  const updated = {...allergyIntolerance};
+                  set(updated, 'reaction[0].severity', e.target.value);
+                  setAllergyIntolerance(updated);
+                }}
+                disabled={!isEditing}
+              >
+                <MenuItem value="mild">Mild</MenuItem>
+                <MenuItem value="moderate">Moderate</MenuItem>
+                <MenuItem value="severe">Severe</MenuItem>
+              </Select>
+            </FormControl>
+
+            {/* Onset Date */}
+            <TextField
+              id="onsetDateTimeInput"
+              fullWidth
+              label="Onset Date"
+              type="date"
+              value={moment(get(allergyIntolerance, 'onsetDateTime', '')).format('YYYY-MM-DD')}
+              onChange={(e) => handleChange('onsetDateTime', e.target.value)}
+              disabled={!isEditing}
+              InputLabelProps={{
+                shrink: true,
+              }}
+            />
+
+            {/* Recorder */}
+            <TextField
+              id="recorderInput"
+              fullWidth
+              label="Recorded By"
+              value={get(allergyIntolerance, 'recorder.display', '')}
+              onChange={(e) => handleChange('recorder.display', e.target.value)}
+              disabled={!isEditing}
+              helperText="The person who recorded this allergy"
+            />
+            
+            {/* Asserter */}
+            <TextField
+              id="asserterInput"
+              fullWidth
+              label="Asserted By"
+              value={get(allergyIntolerance, 'asserter.display', '')}
+              onChange={(e) => handleChange('asserter.display', e.target.value)}
+              disabled={!isEditing}
+              helperText="The person who asserted this allergy"
+            />
+            
+            {/* Notes */}
+            <TextField
+              id="notesTextarea"
+              fullWidth
+              label="Notes"
+              multiline
+              rows={3}
+              value={get(allergyIntolerance, 'note[0].text', '')}
+              onChange={(e) => {
+                const updated = {...allergyIntolerance};
+                set(updated, 'note[0].text', e.target.value);
+                setAllergyIntolerance(updated);
+              }}
+              disabled={!isEditing}
+              helperText="Additional notes about this allergy"
+            />
+          </Stack>
+
+          {error && (
+            <Box sx={{ mt: 2 }}>
+              <Typography color="error">{error}</Typography>
+            </Box>
+          )}
+        </CardContent>
+        <CardActions sx={{ justifyContent: 'flex-end', p: 2 }}>
+          {isEditing ? (
+            <>
+              <Button onClick={handleCancelButton}>
+                Cancel
+              </Button>
+              <Button 
+                id="saveAllergyIntoleranceButton"
+                onClick={handleSaveButton}
+                variant="contained"
+                color="primary"
+                disabled={loading}
+              >
+                {id && id !== 'new' ? 'Update' : 'Save'}
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button onClick={() => navigate('/allergy-intolerances')}>
+                Back
+              </Button>
+              {id && id !== 'new' && (
+                <Button 
+                  onClick={handleDeleteButton}
+                  color="error"
+                  disabled={loading}
+                >
+                  Delete
+                </Button>
+              )}
+              <Button 
+                onClick={() => setIsEditing(true)}
+                variant="contained"
+                color="primary"
+              >
+                Edit
+              </Button>
+            </>
+          )}
+        </CardActions>
+      </Card>
+    </Container>
+  );
+}
 
 export default AllergyIntoleranceDetail;

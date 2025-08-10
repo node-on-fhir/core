@@ -15,7 +15,8 @@ import {
   Box,
   Typography,
   ToggleButton,
-  ToggleButtonGroup
+  ToggleButtonGroup,
+  TextField
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
@@ -32,6 +33,19 @@ import AllergyIntolerancesTable from './AllergyIntolerancesTable';
 import LayoutHelpers from '../../lib/LayoutHelpers';
 
 import { get } from 'lodash';
+
+//=============================================================================================================================================
+// LOGGER
+
+const logger = {
+  debug: console.debug.bind(console),
+  trace: console.trace.bind(console),
+  data: console.log.bind(console),
+  verbose: console.debug.bind(console),
+  info: console.info.bind(console),
+  warn: console.warn.bind(console),
+  error: console.error.bind(console)
+};
 
 //=============================================================================================================================================
 // DATA CURSORS
@@ -66,13 +80,48 @@ export function AllergyIntolerancesPage(props){
   const [showPatientName, setShowPatientName] = useState(false);
   const [showPatientReference, setShowPatientReference] = useState(false);
   const [showSystemId, setShowSystemId] = useState(false);
+  const [searchFilter, setSearchFilter] = useState('');
   
-  // Clean up debug flag on unmount
+  // Subscribe to Patients data for patient context
+  const patientsReady = useTracker(() => {
+    let autoPublishEnabled = get(Meteor, 'settings.public.defaults.autopublish', false);
+    if(autoPublishEnabled){
+      const handle = Meteor.subscribe('autopublish.Patients', {}, { limit: 100 });
+      return handle.ready();
+    } else {
+      const handle = Meteor.subscribe('patients.all');
+      return handle.ready();
+    }
+  }, []);
+  
+  // Clean up debug flag on unmount and check for patient context
   useEffect(() => {
+    if (!patientsReady) return;
+    
+    // Check if we have a selected patient when component mounts
+    const selectedPatientId = Session.get('selectedPatientId');
+    const selectedPatient = Session.get('selectedPatient');
+    
+    console.log('AllergyIntolerancesPage mounted - selectedPatientId:', selectedPatientId);
+    console.log('AllergyIntolerancesPage mounted - selectedPatient:', selectedPatient);
+    console.log('Patients subscription ready:', patientsReady);
+    
+    // If we have a patient ID but no patient object, try to restore it
+    if (selectedPatientId && !selectedPatient) {
+      const patient = Patients.findOne({_id: selectedPatientId});
+      if (patient) {
+        Session.set('selectedPatient', patient);
+        console.log('Restored selectedPatient from ID:', patient);
+      } else {
+        console.log('Could not find patient with ID:', selectedPatientId);
+      }
+    }
+    
     return () => {
       Session.set('AllergyIntolerancesPage.debugLogged', false);
+      Session.set('AllergyIntolerancesPage.collectionDebugLogged', false);
     };
-  }, []);
+  }, [patientsReady]);
 
   // Subscribe to AllergyIntolerances data
   const isLoading = useTracker(() => {
@@ -97,9 +146,39 @@ export function AllergyIntolerancesPage(props){
       }
     }
     
+    // Add search filter if present
+    if(searchFilter && searchFilter.length > 0) {
+      query = {
+        $and: [
+          query,
+          {
+            $or: [
+              {'_id': searchFilter},
+              {'id': searchFilter},
+              {'code.text': {$regex: searchFilter, $options: 'i'}},
+              {'code.coding.0.display': {$regex: searchFilter, $options: 'i'}},
+              {'patient.display': {$regex: searchFilter, $options: 'i'}},
+              {'reaction.0.manifestation.0.text': {$regex: searchFilter, $options: 'i'}}
+            ]
+          }
+        ]
+      };
+    }
+    
     console.log('AllergyIntolerances subscription - selectedPatientId:', selectedPatientId);
     console.log('AllergyIntolerances subscription - FHIR id:', get(selectedPatient, 'id'));
-    console.log('AllergyIntolerances subscription query:', query);
+    console.log('AllergyIntolerances subscription - MongoDB _id:', get(selectedPatient, '_id'));
+    console.log('AllergyIntolerances subscription query:', JSON.stringify(query, null, 2));
+    
+    // Debug what's in the collection
+    if (!Session.get('AllergyIntolerancesPage.collectionDebugLogged')) {
+      Session.set('AllergyIntolerancesPage.collectionDebugLogged', true);
+      const allAllergies = AllergyIntolerances.find({}).fetch();
+      console.log('Total AllergyIntolerances in collection:', allAllergies.length);
+      if (allAllergies.length > 0) {
+        console.log('First allergy patient reference:', get(allAllergies[0], 'patient'));
+      }
+    }
     
     if(autoPublishEnabled){
       const handle = Meteor.subscribe('autopublish.AllergyIntolerances', query, { limit: 1000 });
@@ -108,7 +187,7 @@ export function AllergyIntolerancesPage(props){
       const handle = Meteor.subscribe('allergyintolerances.all');
       return !handle.ready();
     }
-  }, [Session.get('selectedPatientId')]);
+  }, [Session.get('selectedPatientId'), searchFilter]);
 
   let data = {
     currentAllergyIntoleranceId: '',
@@ -209,7 +288,7 @@ export function AllergyIntolerancesPage(props){
               {data.allergyIntolerances.length} allergy intolerances found
             </Typography>
           </Grid>
-          <Grid item>
+          <Grid item xs={12} sm={6}>
             <Box display="flex" gap={2} alignItems="center">
               <ToggleButtonGroup
                 value={sortOrder}
@@ -260,6 +339,19 @@ export function AllergyIntolerancesPage(props){
                 Add Allergy
               </Button>
             </Box>
+          </Grid>
+        </Grid>
+        <Grid container spacing={2} sx={{ mt: 2 }}>
+          <Grid item xs={12}>
+            <TextField
+              id="allergyIntoleranceSearchInput"
+              fullWidth
+              placeholder="Search allergy intolerances by ID, code, patient name, or reaction..."
+              value={searchFilter}
+              onChange={(e) => setSearchFilter(e.target.value)}
+              variant="outlined"
+              size="small"
+            />
           </Grid>
         </Grid>
       </Box>
@@ -382,7 +474,7 @@ export function AllergyIntolerancesPage(props){
         py: { xs: 3, sm: 4, md: 5 }
       }}
     >
-      { data.allergyIntolerances.length > 0 && renderHeader() }
+      { renderHeader() }
       { layoutContent }
     </Box>
   );

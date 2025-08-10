@@ -29,6 +29,7 @@ import './Swagger.js';
 import '../imports/startup/server/index.js';
 
 // Import API methods
+import '../imports/api/allergyIntolerances/methods.js';
 import '../imports/api/AuditEvents/AuditEvents'; // Import the methods
 import '../imports/api/carePlans/methods.js';
 import '../imports/api/compositions/methods.js';
