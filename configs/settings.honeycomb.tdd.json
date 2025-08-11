@@ -410,6 +410,17 @@
           ],
           "search": true,
           "publication": true
+        },
+        "Appointment": {
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "search"
+          ],
+          "search": true,
+          "publication": true
         }
       }
     }

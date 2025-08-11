@@ -7,6 +7,7 @@ import { get } from 'lodash';
 // Import all collections that might need autopublishing
 import { ActivityDefinitions } from '/imports/lib/schemas/SimpleSchemas/ActivityDefinitions';
 import { AllergyIntolerances } from '/imports/lib/schemas/SimpleSchemas/AllergyIntolerances';
+import { Appointments } from '/imports/lib/schemas/SimpleSchemas/Appointments';
 import { ArtifactAssessments } from '/imports/lib/schemas/SimpleSchemas/ArtifactAssessments';
 import { AuditEvents } from '/imports/lib/schemas/SimpleSchemas/AuditEvents';
 import { Bundles } from '/imports/lib/schemas/SimpleSchemas/Bundles';
@@ -60,6 +61,7 @@ import { ValueSets } from '/imports/lib/schemas/SimpleSchemas/ValueSets';
 const collectionsMap = {
   'ActivityDefinitions': ActivityDefinitions,
   'AllergyIntolerances': AllergyIntolerances,
+  'Appointments': Appointments,
   'ArtifactAssessments': ArtifactAssessments,
   'AuditEvents': AuditEvents,
   'Bundles': Bundles,
@@ -172,6 +174,35 @@ if (finalAutopublishEnabled) {
               }
             });
             query.$or = flattenedConditions;
+          }
+          
+          // Special handling for Appointments - they use participant.actor.reference instead of patient/subject
+          if (collectionName === 'Appointments') {
+            // Check if this is a patient filter query
+            if (query.$or && Array.isArray(query.$or)) {
+              const hasPatientOrSubjectFilter = query.$or.some(condition => 
+                condition['patient.reference'] || condition['subject.reference']
+              );
+              
+              if (hasPatientOrSubjectFilter) {
+                // Transform patient/subject filters to participant filters for appointments
+                const transformedConditions = [];
+                query.$or.forEach(condition => {
+                  if (condition['patient.reference']) {
+                    transformedConditions.push({
+                      'participant.actor.reference': condition['patient.reference']
+                    });
+                  } else if (condition['subject.reference']) {
+                    transformedConditions.push({
+                      'participant.actor.reference': condition['subject.reference']
+                    });
+                  } else {
+                    transformedConditions.push(condition);
+                  }
+                });
+                query.$or = transformedConditions;
+              }
+            }
           }
           
           // In development, we can be more permissive

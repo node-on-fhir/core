@@ -89,3 +89,19 @@ Okay, let's turn our attention to completing the Immunizations CRUD pattern, on 
 
 I believe in you.  We've done a lot of these CRUD patterns already.  You can do this.
 ```
+
+```
+Okay, let's turn our attention to the Appointments CRUD pattern, on the /appointments route.  Use best practices and the implementation checklist and debugging info in /imports/ui-fhir/CLAUDE.md.  You have permission to run tests.  
+
+- Make sure that the Appointments schema is created, and attached in all of the right places (Meteor.Tables, Meteor.Collections, etc)
+- Include Appointments in the autopublish() function.
+- Make sure we've updated the settings.honeycomb.tdd.json file
+- Create core files in /imports/ui-fhir/appointments/*, following the pattern in /imports/ui-fhir/conditions/*
+- Update the AppointmentsDetails page with inputs from the Appointments schema, making sure that appropriate #id elements exist on inputs; and update the crud.appointments.js file to match.  
+- Make sure that all of the columns in AppointmentsTable are filled out appropriately, and update the dehydration functions accordingly.  
+- Create the appointments methods file.  
+- Be sure to select the John Doe patient in step 2, AFTER you've navigated to /appointments route.  
+- When searching for records in steps 5 and 8, be sure to scroll to the top and seach by patient (John Doe). 
+
+I believe in you.  We've done a lot of these CRUD patterns already.  You can do this.
+```

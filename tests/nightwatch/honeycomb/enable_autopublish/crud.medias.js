@@ -254,7 +254,59 @@ describe('Medias CRUD Operations', function() {
     browser
       .url('http://localhost:3000/medias')
       .waitForElementVisible('#mediasPage', 5000)
-      .pause(2000)
+      .pause(1000);
+    
+    // Set patient context AFTER navigation (critical - navigation clears Session)
+    browser.execute(function(testIdentifier) {
+      console.log('Setting patient context after navigation to /medias');
+      console.log('Looking for patient with identifier:', testIdentifier);
+      
+      if (typeof Session !== 'undefined' && typeof Patients !== 'undefined') {
+        const allPatients = Patients.find({}).fetch();
+        console.log('Total patients in collection:', allPatients.length);
+        
+        let patient = Patients.findOne({
+          'identifier.value': testIdentifier
+        });
+        
+        if (!patient) {
+          console.log('Patient not found by identifier, trying by name...');
+          patient = Patients.findOne({
+            $or: [
+              { 'name.0.text': { $regex: 'John.*Doe' } },
+              { 'name.0.family': 'Doe' },
+              { 'name.0.given.0': 'John' }
+            ]
+          });
+        }
+        
+        if (!patient && allPatients.length > 0) {
+          console.log('Patient not found by name, using most recent patient');
+          patient = Patients.findOne({}, { sort: { _id: -1 } });
+        }
+        
+        if (patient) {
+          console.log('Found patient:', patient._id, patient.name?.[0]?.text);
+          Session.set('selectedPatientId', patient._id);
+          Session.set('selectedPatient', patient);
+          return { success: true, patientId: patient._id, patientName: patient.name?.[0]?.text };
+        } else {
+          console.error('Could not find any patient');
+          return { success: false, error: 'No patients found in collection' };
+        }
+      }
+      return { success: false, error: 'Session or Patients not available' };
+    }, ['test-patient-' + timestamp], function(result) {
+      console.log('Patient selection check:', result.value);
+      if (result.value.success) {
+        browser.assert.ok(true, `Patient selected: ${result.value.patientName}`);
+      } else {
+        console.error('Failed to set selected patient:', result.value.error);
+      }
+    });
+    
+    browser
+      .pause(1000)
       .execute(function() {
         const hasTable = document.querySelector('#mediasTable') !== null;
         const hasNoDataCard = document.querySelector('.no-data-card') !== null ||

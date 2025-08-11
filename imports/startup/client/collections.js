@@ -5,6 +5,7 @@ import { Meteor } from 'meteor/meteor';
 // Import all collections
 import { ActivityDefinitions } from '/imports/lib/schemas/SimpleSchemas/ActivityDefinitions';
 import { AllergyIntolerances } from '/imports/lib/schemas/SimpleSchemas/AllergyIntolerances';
+import { Appointments } from '/imports/lib/schemas/SimpleSchemas/Appointments';
 import { ArtifactAssessments } from '/imports/lib/schemas/SimpleSchemas/ArtifactAssessments';
 import { AuditEvents } from '/imports/lib/schemas/SimpleSchemas/AuditEvents';
 import { Bundles } from '/imports/lib/schemas/SimpleSchemas/Bundles';
@@ -59,6 +60,7 @@ if (Meteor.isClient) {
   Meteor.Collections = {
     ActivityDefinitions,
     AllergyIntolerances,
+    Appointments,
     ArtifactAssessments,
     AuditEvents,
     Bundles,
@@ -112,6 +114,7 @@ if (Meteor.isClient) {
   // Also make them available globally for console access
   window.ActivityDefinitions = ActivityDefinitions;
   window.AllergyIntolerances = AllergyIntolerances;
+  window.Appointments = Appointments;
   window.ArtifactAssessments = ArtifactAssessments;
   window.AuditEvents = AuditEvents;
   window.Bundles = Bundles;

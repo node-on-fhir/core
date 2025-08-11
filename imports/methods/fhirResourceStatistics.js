@@ -17,6 +17,7 @@ Meteor.methods({
     const collectionNames = [
       'ActivityDefinitions',
       'AllergyIntolerances',
+      'Appointments',
       'ArtifactAssessments',
       'Bundles',
       'CarePlans',
@@ -34,6 +35,7 @@ Meteor.methods({
       'Evidences',
       'Goals',
       'GuidanceResponses',
+      'ImagingStudies',
       'Immunizations',
       'Libraries',
       'Lists',
@@ -53,6 +55,7 @@ Meteor.methods({
       'Questionnaires',
       'ResearchStudies',
       'ResearchSubjects',
+      'Schedules',
       'ServiceRequests',
       'Tasks',
       'ValueSets'

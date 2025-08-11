@@ -30,6 +30,7 @@ import '../imports/startup/server/index.js';
 
 // Import API methods
 import '../imports/api/allergyIntolerances/methods.js';
+import '../imports/api/appointments/methods.js';
 import '../imports/api/AuditEvents/AuditEvents'; // Import the methods
 import '../imports/api/carePlans/methods.js';
 import '../imports/api/compositions/methods.js';
@@ -91,6 +92,7 @@ import { OAuthClients } from '/imports/collections/OAuthClients';
 
 import { ActivityDefinitions } from '../imports/lib/schemas/SimpleSchemas/ActivityDefinitions';
 import { AllergyIntolerances } from '../imports/lib/schemas/SimpleSchemas/AllergyIntolerances';
+import { Appointments } from '../imports/lib/schemas/SimpleSchemas/Appointments';
 import { ArtifactAssessments } from '../imports/lib/schemas/SimpleSchemas/ArtifactAssessments';
 import { AuditEvents } from '../imports/lib/schemas/SimpleSchemas/AuditEvents';
 import { Bundles } from '../imports/lib/schemas/SimpleSchemas/Bundles';
@@ -150,6 +152,7 @@ import { LayoutHelpers } from '../imports/lib/LayoutHelpers.js'
 Meteor.Collections = {
   ActivityDefinitions,
   AllergyIntolerances,
+  Appointments,
   ArtifactAssessments,
   AuditEvents,
   Bundles,
@@ -208,6 +211,7 @@ global.HipaaLogger = HipaaLogger;
 global.Collections = {
   ActivityDefinitions,
   AllergyIntolerances,
+  Appointments,
   ArtifactAssessments,
   AuditEvents,
   Bundles,
@@ -260,6 +264,7 @@ global.Collections = {
 
 
 
+global.Appointments = Appointments;
 global.AuditEvents = AuditEvents;
 global.Conditions = Conditions;
 global.Claims = Claims;

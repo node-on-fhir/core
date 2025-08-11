@@ -673,3 +673,118 @@ browser.execute(function() {
   }
 });
 ```
+
+## Best Practices for Delete Operations
+
+Based on extensive debugging of delete button issues, these patterns have proven most reliable:
+
+### 1. Delete Button Execution Pattern
+
+**DON'T use execute with callbacks - they can return null unexpectedly:**
+```javascript
+// AVOID THIS - callbacks can cause null return issues
+browser.execute(function() {
+  // ... find and click button
+  return true;
+}, [], function(result) {
+  browser.assert.equal(result.value, true, 'Clicked button');
+});
+```
+
+**DO use simple execute without callback:**
+```javascript
+// PREFERRED - simpler and more reliable
+browser
+  .execute(function() {
+    const buttons = document.querySelectorAll('button');
+    for (let button of buttons) {
+      if (button.textContent.includes('Delete')) {
+        button.click();
+        return true;
+      }
+    }
+    return false;
+  })
+  .pause(500)      // Wait for alert
+  .acceptAlert()   // Handle confirmation
+  .pause(1000);    // Wait for deletion
+```
+
+### 2. Button Detection Best Practices
+
+- Use `includes()` rather than exact match for more flexibility
+- Don't over-engineer the detection logic
+- Simple text matching usually suffices
+- If button text is known from debug output, trust it
+
+### 3. Debugging Execute Function Issues
+
+When execute returns `null` instead of expected boolean:
+1. It's an execution problem, not a logic problem
+2. Remove callbacks and try simpler approach
+3. Check if component has different button visibility rules (edit vs view mode)
+4. Look at working tests for proven patterns
+
+### 4. Component-Specific Considerations
+
+Different components may show Delete button in different modes:
+- Some show Delete only in view mode (e.g., ImmunizationDetail)
+- Others show Delete only in edit mode (e.g., some older components)
+- Always check the actual component's button rendering logic
+
+### 5. Key Learning: Simpler is Better
+
+The most frustrating bugs often aren't in the logic but in framework usage:
+- Complex detection logic wasn't the issue
+- The callback pattern was the problem
+- When something obvious should work but doesn't, question the execution mechanism
+
+### Example Working Pattern
+
+```javascript
+it('09. Delete resource', browser => {
+  browser
+    .waitForElementVisible('#resourceDetailPage', 5000)
+    .pause(500)
+    // Simple execute without callback
+    .execute(function() {
+      const buttons = document.querySelectorAll('button');
+      for (let button of buttons) {
+        if (button.textContent.includes('Delete')) {
+          window.__deleteButtonFound = true; // Optional debug flag
+          button.click();
+          return true;
+        }
+      }
+      return false;
+    })
+    .pause(500)      // Wait for confirmation dialog
+    .acceptAlert()   // Accept the confirmation
+    .pause(1000);    // Wait for deletion to complete
+
+  // Verify navigation back to list
+  browser
+    .waitForElementVisible('#resourceListPage', 5000)
+    .execute(function() {
+      // Verify either table or no-data state exists
+      const hasTable = document.querySelector('#resourceTable') !== null;
+      const hasNoData = document.querySelector('.no-data-card') !== null;
+      return { hasTable, hasNoData };
+    }, [], function(result) {
+      browser.assert.ok(
+        result.value.hasTable || result.value.hasNoData, 
+        'Either table or no-data state present after deletion'
+      );
+    });
+});
+```
+
+### Summary
+
+When dealing with delete operations in Nightwatch tests:
+1. Use execute without callbacks for clicking buttons
+2. Keep the logic simple - don't overthink it
+3. Trust debug output about button existence
+4. Check component's actual button visibility rules
+5. Look at working tests for proven patterns
+6. Remember: `null` return usually means execution issue, not logic issue

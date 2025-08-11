@@ -123,7 +123,8 @@ import DiagnosticReportsPage from '../ui-fhir/diagnosticReports/DiagnosticReport
 import DiagnosticReportDetail from '../ui-fhir/diagnosticReports/DiagnosticReportDetail';
 import ImagingStudiesPage from '../ui-fhir/imagingStudies/ImagingStudiesPage';
 import ImagingStudyDetail from '../ui-fhir/imagingStudies/ImagingStudyDetail';
-// import AppointmentsPage from '../ui-fhir/appointments/AppointmentsPage';
+import AppointmentsPage from '../ui-fhir/appointments/AppointmentsPage';
+import AppointmentDetail from '../ui-fhir/appointments/AppointmentDetail';
 // import SchedulesPage from '../ui-fhir/schedules/SchedulesPage';
 // import MediasPage from '../ui-fhir/medias/MediasPage';
 // import SupplyDeliveriesPage from '../ui-fhir/supplyDeliveries/SupplyDeliveriesPage';
@@ -176,7 +177,6 @@ import {
 // TODO: Create these detail components
 // import DiagnosticReportDetail from '../ui-fhir/diagnosticReports/DiagnosticReportDetail';
 // import ImagingStudyDetail from '../ui-fhir/imagingStudies/ImagingStudyDetail';
-// import AppointmentDetail from '../ui-fhir/appointments/AppointmentDetail';
 // import ScheduleDetail from '../ui-fhir/schedules/ScheduleDetail';
 // import MediaDetail from '../ui-fhir/medias/MediaDetail';
 // import SupplyDeliveryDetail from '../ui-fhir/supplyDeliveries/SupplyDeliveryDetail';
@@ -560,6 +560,20 @@ if(get(Meteor, 'settings.public.modules.fhir.AllergyIntolerances')){
   dynamicRoutes.push({
     path: "/allergy-intolerances/:id",
     element: <AllergyIntoleranceDetail />
+  })
+}
+if(get(Meteor, 'settings.public.modules.fhir.Appointments')){
+  dynamicRoutes.push({
+    path: "/appointments",
+    element: <AppointmentsPage />
+  })
+  dynamicRoutes.push({
+    path: "/appointments/new",
+    element: <AppointmentDetail />
+  })
+  dynamicRoutes.push({
+    path: "/appointments/:id",
+    element: <AppointmentDetail />
   })
 }
 if(get(Meteor, 'settings.public.modules.fhir.ArtifactAssessments')){

@@ -402,6 +402,139 @@ export function flattenAllergyIntolerance(allergy){
   return result;
 }
 
+export function flattenAppointment(appointment) {
+  let result = {
+    _id: '',
+    id: '',
+    identifier: '',
+    status: '',
+    type: '',
+    typeCode: '',
+    reason: '',
+    reasonCode: '',
+    priority: '',
+    description: '',
+    start: '',
+    end: '',
+    minutesDuration: '',
+    created: '',
+    comment: '',
+    patientInstruction: '',
+    serviceCategory: '',
+    serviceType: '',
+    specialty: '',
+    patientDisplay: '',
+    patientReference: '',
+    practitionerDisplay: '',
+    practitionerReference: '',
+    locationDisplay: '',
+    locationReference: '',
+    participantCount: 0,
+    operationOutcome: ''
+  };
+
+  result.resourceType = get(appointment, 'resourceType', 'Appointment');
+
+  // Basic identifiers
+  result._id = extractIdString(get(appointment, '_id', ''));
+  result.id = get(appointment, 'id', '');
+  result.identifier = get(appointment, 'identifier[0].value', '');
+  
+  // Status and priority
+  result.status = get(appointment, 'status', '');
+  result.priority = get(appointment, 'priority', '');
+  
+  // Appointment type
+  if(get(appointment, 'appointmentType.text')){
+    result.type = get(appointment, 'appointmentType.text');
+  } else if(get(appointment, 'appointmentType.coding[0].display')){
+    result.type = get(appointment, 'appointmentType.coding[0].display');
+  }
+  result.typeCode = get(appointment, 'appointmentType.coding[0].code', '');
+  
+  // Reason
+  if(get(appointment, 'reasonCode[0].text')){
+    result.reason = get(appointment, 'reasonCode[0].text');
+  } else if(get(appointment, 'reasonCode[0].coding[0].display')){
+    result.reason = get(appointment, 'reasonCode[0].coding[0].display');
+  }
+  result.reasonCode = get(appointment, 'reasonCode[0].coding[0].code', '');
+  
+  // Description and instructions
+  result.description = get(appointment, 'description', '');
+  result.comment = get(appointment, 'comment', '');
+  result.patientInstruction = get(appointment, 'patientInstruction', '');
+  
+  // Timing
+  if(get(appointment, 'start')){
+    result.start = moment(get(appointment, 'start')).format('YYYY-MM-DD HH:mm');
+  }
+  if(get(appointment, 'end')){
+    result.end = moment(get(appointment, 'end')).format('YYYY-MM-DD HH:mm');
+  }
+  result.minutesDuration = get(appointment, 'minutesDuration', '');
+  
+  if(get(appointment, 'created')){
+    result.created = moment(get(appointment, 'created')).format('YYYY-MM-DD HH:mm');
+  }
+  
+  // Service categories
+  if(get(appointment, 'serviceCategory[0].text')){
+    result.serviceCategory = get(appointment, 'serviceCategory[0].text');
+  } else if(get(appointment, 'serviceCategory[0].coding[0].display')){
+    result.serviceCategory = get(appointment, 'serviceCategory[0].coding[0].display');
+  }
+  
+  if(get(appointment, 'serviceType[0].text')){
+    result.serviceType = get(appointment, 'serviceType[0].text');
+  } else if(get(appointment, 'serviceType[0].coding[0].display')){
+    result.serviceType = get(appointment, 'serviceType[0].coding[0].display');
+  }
+  
+  if(get(appointment, 'specialty[0].text')){
+    result.specialty = get(appointment, 'specialty[0].text');
+  } else if(get(appointment, 'specialty[0].coding[0].display')){
+    result.specialty = get(appointment, 'specialty[0].coding[0].display');
+  }
+  
+  // Check subject field first (consistent with other FHIR resources)
+  if(get(appointment, 'subject.reference')){
+    result.patientReference = get(appointment, 'subject.reference', '');
+    result.patientDisplay = get(appointment, 'subject.display', '');
+  }
+  
+  // Extract participants
+  if(Array.isArray(get(appointment, 'participant'))){
+    result.participantCount = appointment.participant.length;
+    
+    appointment.participant.forEach(function(participant){
+      const actorRef = get(participant, 'actor.reference', '');
+      const actorDisplay = get(participant, 'actor.display', '');
+      
+      if(actorRef.startsWith('Patient/')){
+        // Only override if we didn't get patient from subject
+        if(!result.patientReference){
+          result.patientDisplay = actorDisplay;
+          result.patientReference = actorRef;
+        }
+      } else if(actorRef.startsWith('Practitioner/')){
+        result.practitionerDisplay = actorDisplay;
+        result.practitionerReference = actorRef;
+      } else if(actorRef.startsWith('Location/')){
+        result.locationDisplay = actorDisplay;
+        result.locationReference = actorRef;
+      }
+    });
+  }
+  
+  // Operation outcome
+  if(get(appointment, 'issue[0].details.text')){
+    result.operationOutcome = get(appointment, 'issue[0].details.text');
+  }
+  
+  return result;
+}
+
 export function flattenArtifactAssessment(assessment) {
   let result = {
     _id: '',
@@ -5654,6 +5787,8 @@ export function flatten(collectionName, resource){
   switch (collectionName) {    
     case "AllergyIntollerances":
       return flattenAllergyIntolerance(resource);
+    case "Appointments":
+      return flattenAppointment(resource);
     case "AuditEvents":
       return flattenAuditEvent(resource);
     case "Bundles":
@@ -5794,6 +5929,7 @@ export function lookupReferenceName(referenceString){
 export const FhirDehydrator = {
   dehydrateActivityDefinition: flattenActivityDefinition,
   dehydrateAllergyIntolerance: flattenAllergyIntolerance,
+  dehydrateAppointment: flattenAppointment,
   dehydrateArtifactAssessment: flattenArtifactAssessment,
   dehydrateAuditEvent: flattenAuditEvent,
   dehydrateBundle: flattenBundle,
@@ -5885,6 +6021,7 @@ export default {
   lookupReferenceName,
   flattenActivityDefinition,
   flattenAllergyIntolerance,
+  flattenAppointment,
   flattenArtifactAssessment,
   flattenAuditEvent,
   flattenBundle,
