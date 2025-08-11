@@ -318,6 +318,17 @@
           "search": true,
           "publication": true
         },
+        "Media": {
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "search"
+          ],
+          "search": true,
+          "publication": true
+        },
         "NutritionOrder": {
           "interactions": [
             "read",
@@ -390,6 +401,17 @@
           "publication": true
         },
         "ResearchSubject": {
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "search"
+          ],
+          "search": true,
+          "publication": true
+        },
+        "Schedule": {
           "interactions": [
             "read",
             "create",

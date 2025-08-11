@@ -125,8 +125,10 @@ import ImagingStudiesPage from '../ui-fhir/imagingStudies/ImagingStudiesPage';
 import ImagingStudyDetail from '../ui-fhir/imagingStudies/ImagingStudyDetail';
 import AppointmentsPage from '../ui-fhir/appointments/AppointmentsPage';
 import AppointmentDetail from '../ui-fhir/appointments/AppointmentDetail';
-// import SchedulesPage from '../ui-fhir/schedules/SchedulesPage';
-// import MediasPage from '../ui-fhir/medias/MediasPage';
+import SchedulesPage from '../ui-fhir/schedules/SchedulesPage';
+import ScheduleDetail from '../ui-fhir/schedules/ScheduleDetail';
+import MediasPage from '../ui-fhir/medias/MediasPage';
+import MediaDetail from '../ui-fhir/medias/MediaDetail';
 // import SupplyDeliveriesPage from '../ui-fhir/supplyDeliveries/SupplyDeliveriesPage';
 
 import {
@@ -978,48 +980,48 @@ if(get(Meteor, 'settings.public.modules.fhir.ImagingStudies')){
     element: <ImagingStudyDetail />
   })
 }
-// if(get(Meteor, 'settings.public.modules.fhir.Appointments')){
-//   dynamicRoutes.push({
-//     path: "/appointments",
-//     element: <AppointmentsPage />
-//   })
-//   dynamicRoutes.push({
-//     path: "/appointments/new",
-//     element: <AppointmentDetail />
-//   })
-//   dynamicRoutes.push({
-//     path: "/appointments/:id",
-//     element: <AppointmentDetail />
-//   })
-// }
-// if(get(Meteor, 'settings.public.modules.fhir.Schedules')){
-//   dynamicRoutes.push({
-//     path: "/schedules",
-//     element: <SchedulesPage />
-//   })
-//   dynamicRoutes.push({
-//     path: "/schedules/new",
-//     element: <ScheduleDetail />
-//   })
-//   dynamicRoutes.push({
-//     path: "/schedules/:id",
-//     element: <ScheduleDetail />
-//   })
-// }
-// if(get(Meteor, 'settings.public.modules.fhir.Medias')){
-//   dynamicRoutes.push({
-//     path: "/medias",
-//     element: <MediasPage />
-//   })
-//   dynamicRoutes.push({
-//     path: "/medias/new",
-//     element: <MediaDetail />
-//   })
-//   dynamicRoutes.push({
-//     path: "/medias/:id",
-//     element: <MediaDetail />
-//   })
-// }
+if(get(Meteor, 'settings.public.modules.fhir.Appointments')){
+  dynamicRoutes.push({
+    path: "/appointments",
+    element: <AppointmentsPage />
+  })
+  dynamicRoutes.push({
+    path: "/appointments/new",
+    element: <AppointmentDetail />
+  })
+  dynamicRoutes.push({
+    path: "/appointments/:id",
+    element: <AppointmentDetail />
+  })
+}
+if(get(Meteor, 'settings.public.modules.fhir.Schedules')){
+  dynamicRoutes.push({
+    path: "/schedules",
+    element: <SchedulesPage />
+  })
+  dynamicRoutes.push({
+    path: "/schedules/new",
+    element: <ScheduleDetail />
+  })
+  dynamicRoutes.push({
+    path: "/schedules/:id",
+    element: <ScheduleDetail />
+  })
+}
+if(get(Meteor, 'settings.public.modules.fhir.Medias')){
+  dynamicRoutes.push({
+    path: "/medias",
+    element: <MediasPage />
+  })
+  dynamicRoutes.push({
+    path: "/medias/new",
+    element: <MediaDetail />
+  })
+  dynamicRoutes.push({
+    path: "/medias/:id",
+    element: <MediaDetail />
+  })
+}
 // if(get(Meteor, 'settings.public.modules.fhir.SupplyDeliveries')){
 //   dynamicRoutes.push({
 //     path: "/supply-deliveries",
@@ -1058,6 +1060,20 @@ if(get(Meteor, 'settings.public.modules.fhir.Medications')){
   dynamicRoutes.push({
     path: "/medications/:id",
     element: <MedicationDetail />
+  })
+}
+if(get(Meteor, 'settings.public.modules.fhir.Medias')){
+  dynamicRoutes.push({
+    path: "/medias",
+    element: <MediasPage />
+  })
+  dynamicRoutes.push({
+    path: "/medias/new",
+    element: <MediaDetail />
+  })
+  dynamicRoutes.push({
+    path: "/medias/:id",
+    element: <MediaDetail />
   })
 }
 if(get(Meteor, 'settings.public.modules.fhir.MedicationRequests')){

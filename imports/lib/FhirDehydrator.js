@@ -3780,6 +3780,149 @@ export function flattenMedicationAdministration(medicationAdministration, intern
   return result;
 }
 
+export function flattenMedia(media, internalDateFormat){
+  let result = {
+    _id: '',
+    id: '',
+    identifier: '',
+    status: '',
+    type: '',
+    modality: '',
+    view: '',
+    subjectDisplay: '',
+    subjectReference: '',
+    operator: '',
+    reasonCode: '',
+    bodySite: '',
+    deviceName: '',
+    deviceReference: '',
+    height: '',
+    width: '',
+    frames: '',
+    duration: '',
+    created: '',
+    issued: '',
+    contentType: '',
+    contentUrl: '',
+    contentSize: '',
+    contentTitle: '',
+    notes: ''
+  };
+
+  result.resourceType = get(media, 'resourceType', "Unknown");
+
+  if(!internalDateFormat){
+    internalDateFormat = "YYYY-MM-DD";
+  }
+
+  result._id = extractIdString(get(media, '_id', ''));
+  result.id = get(media, 'id', '');
+
+  if(get(media, 'identifier[0].value')){
+    result.identifier = get(media, 'identifier[0].value');
+  }
+
+  result.status = get(media, 'status', '');
+  
+  // Handle type CodeableConcept
+  if(get(media, 'type.text')){
+    result.type = get(media, 'type.text');
+  } else if(get(media, 'type.coding[0].display')){
+    result.type = get(media, 'type.coding[0].display');
+  } else if(get(media, 'type.coding[0].code')){
+    result.type = get(media, 'type.coding[0].code');
+  }
+
+  // Handle modality CodeableConcept
+  if(get(media, 'modality.text')){
+    result.modality = get(media, 'modality.text');
+  } else if(get(media, 'modality.coding[0].display')){
+    result.modality = get(media, 'modality.coding[0].display');
+  } else if(get(media, 'modality.coding[0].code')){
+    result.modality = get(media, 'modality.coding[0].code');
+  }
+
+  // Handle view CodeableConcept
+  if(get(media, 'view.text')){
+    result.view = get(media, 'view.text');
+  } else if(get(media, 'view.coding[0].display')){
+    result.view = get(media, 'view.coding[0].display');
+  } else if(get(media, 'view.coding[0].code')){
+    result.view = get(media, 'view.coding[0].code');
+  }
+
+  // Handle subject Reference
+  if(get(media, 'subject.display')){
+    result.subjectDisplay = get(media, 'subject.display');
+  }
+  if(get(media, 'subject.reference')){
+    result.subjectReference = get(media, 'subject.reference');
+  }
+
+  // Handle operator array
+  if(Array.isArray(get(media, 'operator'))){
+    result.operator = get(media, 'operator[0].display', '');
+  }
+
+  // Handle reasonCode array of CodeableConcepts
+  if(Array.isArray(get(media, 'reasonCode'))){
+    if(get(media, 'reasonCode[0].text')){
+      result.reasonCode = get(media, 'reasonCode[0].text');
+    } else if(get(media, 'reasonCode[0].coding[0].display')){
+      result.reasonCode = get(media, 'reasonCode[0].coding[0].display');
+    }
+  }
+
+  // Handle bodySite CodeableConcept
+  if(get(media, 'bodySite.text')){
+    result.bodySite = get(media, 'bodySite.text');
+  } else if(get(media, 'bodySite.coding[0].display')){
+    result.bodySite = get(media, 'bodySite.coding[0].display');
+  }
+
+  // Handle device
+  result.deviceName = get(media, 'deviceName', '');
+  if(get(media, 'device.display')){
+    result.deviceReference = get(media, 'device.display');
+  } else if(get(media, 'device.reference')){
+    result.deviceReference = get(media, 'device.reference');
+  }
+
+  // Handle dimensions
+  result.height = get(media, 'height', '');
+  result.width = get(media, 'width', '');
+  result.frames = get(media, 'frames', '');
+  result.duration = get(media, 'duration', '');
+
+  // Handle dates
+  if(get(media, 'created')){
+    result.created = moment(get(media, 'created')).format(internalDateFormat);
+  } else if(get(media, 'createdDateTime')){
+    result.created = moment(get(media, 'createdDateTime')).format(internalDateFormat);
+  } else if(get(media, 'createdPeriod.start')){
+    result.created = moment(get(media, 'createdPeriod.start')).format(internalDateFormat);
+  }
+
+  if(get(media, 'issued')){
+    result.issued = moment(get(media, 'issued')).format(internalDateFormat);
+  }
+
+  // Handle content
+  if(get(media, 'content')){
+    result.contentType = get(media, 'content.contentType', '');
+    result.contentUrl = get(media, 'content.url', '');
+    result.contentSize = get(media, 'content.size', '');
+    result.contentTitle = get(media, 'content.title', '');
+  }
+
+  // Handle notes
+  if(Array.isArray(get(media, 'note'))){
+    result.notes = get(media, 'note[0].text', '');
+  }
+
+  return result;
+}
+
 export function flattenMedicationRequest(medicationRequest, internalDateFormat){
   let result = {
     _id: '',
@@ -5398,6 +5541,84 @@ export function flattenResearchSubject(researchSubject, internalDateFormat){
   return result;
 }
 
+export function flattenSchedule(schedule, internalDateFormat){
+  let result = {
+    resourceType: 'Schedule',
+    _id: '',
+    id: '',
+    identifier: '',
+    active: false,
+    serviceCategoryDisplay: '',
+    serviceTypeDisplay: '',
+    specialtyDisplay: '',
+    actorDisplay: '',
+    planningHorizonStart: '',
+    planningHorizonEnd: '',
+    comment: '',
+    notes: ''
+  };
+
+  result.resourceType = get(schedule, 'resourceType', "Unknown");
+  result._id = get(schedule, '_id');
+  result.id = get(schedule, 'id', '');
+
+  if(!internalDateFormat){
+    internalDateFormat = get(Meteor, "settings.public.defaults.dateFormat", "YYYY-MM-DD");
+  }
+
+  // Identifier
+  if (get(schedule, 'identifier[0].value')) {
+    result.identifier = get(schedule, 'identifier[0].value');
+  }
+
+  // Active status
+  result.active = get(schedule, 'active', false);
+
+  // Service Category
+  if (get(schedule, 'serviceCategory[0].coding[0].display')) {
+    result.serviceCategoryDisplay = get(schedule, 'serviceCategory[0].coding[0].display');
+  } else if (get(schedule, 'serviceCategory[0].text')) {
+    result.serviceCategoryDisplay = get(schedule, 'serviceCategory[0].text');
+  }
+
+  // Service Type
+  if (get(schedule, 'serviceType[0].coding[0].display')) {
+    result.serviceTypeDisplay = get(schedule, 'serviceType[0].coding[0].display');
+  } else if (get(schedule, 'serviceType[0].text')) {
+    result.serviceTypeDisplay = get(schedule, 'serviceType[0].text');
+  }
+
+  // Specialty
+  if (get(schedule, 'specialty[0].coding[0].display')) {
+    result.specialtyDisplay = get(schedule, 'specialty[0].coding[0].display');
+  } else if (get(schedule, 'specialty[0].text')) {
+    result.specialtyDisplay = get(schedule, 'specialty[0].text');
+  }
+
+  // Actor
+  if (get(schedule, 'actor[0].display')) {
+    result.actorDisplay = get(schedule, 'actor[0].display');
+  } else if (get(schedule, 'actor[0].reference')) {
+    result.actorDisplay = get(schedule, 'actor[0].reference');
+  }
+
+  // Planning Horizon
+  if (get(schedule, 'planningHorizon.start')) {
+    result.planningHorizonStart = moment(get(schedule, 'planningHorizon.start')).format(internalDateFormat);
+  }
+  if (get(schedule, 'planningHorizon.end')) {
+    result.planningHorizonEnd = moment(get(schedule, 'planningHorizon.end')).format(internalDateFormat);
+  }
+
+  // Comment
+  result.comment = get(schedule, 'comment', '');
+
+  // Custom field for testing
+  result.notes = get(schedule, 'notes', '');
+
+  return result;
+}
+
 export function flattenRestriction(restriction, internalDateFormat){
     let result = {
         resourceType: 'Restriction',
@@ -5843,6 +6064,8 @@ export function flatten(collectionName, resource){
       return flattenMeasure(resource);
     case "MeasureReports":
       return flattenMeasureReport(resource);
+    case "Medias":
+      return flattenMedia(resource);
     case "Medications":
       return flattenMedication(resource);    
     case "MedicationOrders":
@@ -5962,6 +6185,7 @@ export const FhirDehydrator = {
   dehydrateLocation: flattenLocation,
   dehydrateMeasureReport: flattenMeasureReport,
   dehydrateMeasure: flattenMeasure,
+  dehydrateMedia: flattenMedia,
   dehydrateMedication: flattenMedication,
   dehydrateMedicationOrder: flattenMedicationOrder,
   dehydrateMedicationStatement: flattenMedicationStatement,
@@ -6005,6 +6229,7 @@ export const FhirDehydrator = {
   dehydrateResearchSubject: flattenResearchSubject,
   dehydrateRestriction: flattenRestriction,
   dehydrateRiskAssessment: flattenRiskAssessment,
+  dehydrateSchedule: flattenSchedule,
   dehydrateSearchParameter: flattenSearchParameter,
   dehydrateServiceRequest: flattenServiceRequest,
   dehydrateStructureDefinition: flattenStructureDefinition,
@@ -6053,6 +6278,7 @@ export default {
   flattenLocation,
   flattenMeasureReport,
   flattenMeasure,
+  flattenMedia,
   flattenMedication,
   flattenMedicationOrder,
   flattenMedicationStatement,
@@ -6075,6 +6301,7 @@ export default {
   flattenResearchSubject,
   flattenRestriction,
   flattenRiskAssessment,
+  flattenSchedule,
   flattenSearchParameter,
   flattenServiceRequest,
   flattenStructureDefinition,

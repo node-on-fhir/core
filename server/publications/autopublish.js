@@ -40,6 +40,7 @@ import { MedicationRequests } from '/imports/lib/schemas/SimpleSchemas/Medicatio
 import { MedicationStatements } from '/imports/lib/schemas/SimpleSchemas/MedicationStatements';
 import { Measures } from '/imports/lib/schemas/SimpleSchemas/Measures';
 import { MeasureReports } from '/imports/lib/schemas/SimpleSchemas/MeasureReports';
+import { Medias } from '/imports/lib/schemas/SimpleSchemas/Medias';
 import { MessageHeaders } from '/imports/lib/schemas/SimpleSchemas/MessageHeaders';
 import { NutritionOrders } from '/imports/lib/schemas/SimpleSchemas/NutritionOrders';
 import { OperationOutcomes } from '/imports/lib/schemas/SimpleSchemas/OperationOutcomes';
@@ -53,6 +54,7 @@ import { Questionnaires } from '/imports/lib/schemas/SimpleSchemas/Questionnaire
 import { QuestionnaireResponses } from '/imports/lib/schemas/SimpleSchemas/QuestionnaireResponses';
 import { ResearchStudies } from '/imports/lib/schemas/SimpleSchemas/ResearchStudies';
 import { ResearchSubjects } from '/imports/lib/schemas/SimpleSchemas/ResearchSubjects';
+import { Schedules } from '/imports/lib/schemas/SimpleSchemas/Schedules';
 import { ServiceRequests } from '/imports/lib/schemas/SimpleSchemas/ServiceRequests';
 import { Tasks } from '/imports/lib/schemas/SimpleSchemas/Tasks';
 import { ValueSets } from '/imports/lib/schemas/SimpleSchemas/ValueSets';
@@ -94,6 +96,7 @@ const collectionsMap = {
   'MedicationStatements': MedicationStatements,
   'Measures': Measures,
   'MeasureReports': MeasureReports,
+  'Medias': Medias,
   'MessageHeaders': MessageHeaders,
   'NutritionOrders': NutritionOrders,
   'OperationOutcomes': OperationOutcomes,
@@ -107,6 +110,7 @@ const collectionsMap = {
   'QuestionnaireResponses': QuestionnaireResponses,
   'ResearchStudies': ResearchStudies,
   'ResearchSubjects': ResearchSubjects,
+  'Schedules': Schedules,
   'ServiceRequests': ServiceRequests,
   'Tasks': Tasks,
   'ValueSets': ValueSets
@@ -195,6 +199,35 @@ if (finalAutopublishEnabled) {
                   } else if (condition['subject.reference']) {
                     transformedConditions.push({
                       'participant.actor.reference': condition['subject.reference']
+                    });
+                  } else {
+                    transformedConditions.push(condition);
+                  }
+                });
+                query.$or = transformedConditions;
+              }
+            }
+          }
+          
+          // Special handling for Schedules - they use actor.reference instead of patient/subject
+          if (collectionName === 'Schedules') {
+            // Check if this is a patient filter query
+            if (query.$or && Array.isArray(query.$or)) {
+              const hasPatientOrSubjectFilter = query.$or.some(condition => 
+                condition['patient.reference'] || condition['subject.reference']
+              );
+              
+              if (hasPatientOrSubjectFilter) {
+                // Transform patient/subject filters to actor filters for schedules
+                const transformedConditions = [];
+                query.$or.forEach(condition => {
+                  if (condition['patient.reference']) {
+                    transformedConditions.push({
+                      'actor.0.reference': condition['patient.reference']
+                    });
+                  } else if (condition['subject.reference']) {
+                    transformedConditions.push({
+                      'actor.0.reference': condition['subject.reference']
                     });
                   } else {
                     transformedConditions.push(condition);

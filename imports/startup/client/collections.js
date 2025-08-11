@@ -38,6 +38,7 @@ import { MedicationRequests } from '/imports/lib/schemas/SimpleSchemas/Medicatio
 import { MedicationStatements } from '/imports/lib/schemas/SimpleSchemas/MedicationStatements';
 import { Measures } from '/imports/lib/schemas/SimpleSchemas/Measures';
 import { MeasureReports } from '/imports/lib/schemas/SimpleSchemas/MeasureReports';
+import { Medias } from '/imports/lib/schemas/SimpleSchemas/Medias';
 import { MessageHeaders } from '/imports/lib/schemas/SimpleSchemas/MessageHeaders';
 import { NutritionOrders } from '/imports/lib/schemas/SimpleSchemas/NutritionOrders';
 import { OperationOutcomes } from '/imports/lib/schemas/SimpleSchemas/OperationOutcomes';
@@ -51,6 +52,7 @@ import { Questionnaires } from '/imports/lib/schemas/SimpleSchemas/Questionnaire
 import { QuestionnaireResponses } from '/imports/lib/schemas/SimpleSchemas/QuestionnaireResponses';
 import { ResearchStudies } from '/imports/lib/schemas/SimpleSchemas/ResearchStudies';
 import { ResearchSubjects } from '/imports/lib/schemas/SimpleSchemas/ResearchSubjects';
+import { Schedules } from '/imports/lib/schemas/SimpleSchemas/Schedules';
 import { ServiceRequests } from '/imports/lib/schemas/SimpleSchemas/ServiceRequests';
 import { Tasks } from '/imports/lib/schemas/SimpleSchemas/Tasks';
 import { ValueSets } from '/imports/lib/schemas/SimpleSchemas/ValueSets';
@@ -94,6 +96,7 @@ if (Meteor.isClient) {
     MessageHeaders,
     Measures,
     MeasureReports,
+    Medias,
     NutritionOrders,
     OperationOutcomes,
     Organizations,
@@ -106,6 +109,7 @@ if (Meteor.isClient) {
     QuestionnaireResponses,
     ResearchStudies,
     ResearchSubjects,
+    Schedules,
     ServiceRequests,
     Tasks,
     ValueSets
@@ -148,6 +152,7 @@ if (Meteor.isClient) {
   window.MessageHeaders = MessageHeaders;
   window.Measures = Measures;
   window.MeasureReports = MeasureReports;
+  window.Medias = Medias;
   window.NutritionOrders = NutritionOrders;
   window.OperationOutcomes = OperationOutcomes;
   window.Organizations = Organizations;
@@ -160,6 +165,7 @@ if (Meteor.isClient) {
   window.QuestionnaireResponses = QuestionnaireResponses;
   window.ResearchStudies = ResearchStudies;
   window.ResearchSubjects = ResearchSubjects;
+  window.Schedules = Schedules;
   window.ServiceRequests = ServiceRequests;
   window.Tasks = Tasks;
   window.ValueSets = ValueSets;

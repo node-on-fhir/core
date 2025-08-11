@@ -46,6 +46,7 @@ import '../imports/methods/immunizations.js';
 import '../imports/api/medicationAdministrations/methods.js';
 import '../imports/api/medicationRequests/methods.js';
 import '../imports/api/medications/methods.js';
+import '../imports/api/medias/methods.js';
 import '../imports/api/nutritionOrders/methods.js';
 import '../imports/api/patients/methods.js';
 import '../imports/api/practitioners/methods.js';
@@ -54,6 +55,7 @@ import '../imports/api/questionnaires/methods.js';
 import '../imports/api/questionnaireResponses/methods.js';
 import '../imports/api/researchSubjects/methods.js';
 import '../imports/api/research-studies/methods.js';
+import '../imports/api/schedules/methods.js';
 import '../imports/api/serviceRequests/methods.js';
 import '../imports/api/diagnosticReports/methods.js';
 
@@ -125,6 +127,7 @@ import { MedicationRequests } from '../imports/lib/schemas/SimpleSchemas/Medicat
 import { MedicationStatements } from '../imports/lib/schemas/SimpleSchemas/MedicationStatements';
 import { Measures } from '../imports/lib/schemas/SimpleSchemas/Measures';
 import { MeasureReports } from '../imports/lib/schemas/SimpleSchemas/MeasureReports';
+import { Medias } from '../imports/lib/schemas/SimpleSchemas/Medias';
 import { MessageHeaders } from '../imports/lib/schemas/SimpleSchemas/MessageHeaders';
 import { NutritionOrders } from '../imports/lib/schemas/SimpleSchemas/NutritionOrders';
 import { OperationOutcomes } from '../imports/lib/schemas/SimpleSchemas/OperationOutcomes';
@@ -138,6 +141,7 @@ import { Questionnaires } from '../imports/lib/schemas/SimpleSchemas/Questionnai
 import { QuestionnaireResponses } from '../imports/lib/schemas/SimpleSchemas/QuestionnaireResponses';
 import { ResearchStudies } from '../imports/lib/schemas/SimpleSchemas/ResearchStudies';
 import { ResearchSubjects } from '../imports/lib/schemas/SimpleSchemas/ResearchSubjects';
+import { Schedules } from '../imports/lib/schemas/SimpleSchemas/Schedules';
 import { ServiceRequests } from '../imports/lib/schemas/SimpleSchemas/ServiceRequests';
 import { Tasks } from '../imports/lib/schemas/SimpleSchemas/Tasks';
 import { ValueSets } from '../imports/lib/schemas/SimpleSchemas/ValueSets';
@@ -186,6 +190,7 @@ Meteor.Collections = {
   MessageHeaders,
   Measures,
   MeasureReports,
+  Medias,
   NutritionOrders,
   OperationOutcomes,
   Organizations,
@@ -198,6 +203,7 @@ Meteor.Collections = {
   QuestionnaireResponses,
   ResearchStudies,
   ResearchSubjects,
+  Schedules,
   ServiceRequests,
   Tasks,
   ValueSets
@@ -245,6 +251,7 @@ global.Collections = {
   MessageHeaders,
   Measures,
   MeasureReports,
+  Medias,
   NutritionOrders,
   OperationOutcomes,
   Organizations,
@@ -257,6 +264,7 @@ global.Collections = {
   QuestionnaireResponses,
   ResearchStudies,
   ResearchSubjects,
+  Schedules,
   ServiceRequests,
   Tasks,
   ValueSets
@@ -278,9 +286,11 @@ global.Procedures = Procedures;
 global.MedicationRequests = MedicationRequests;
 global.Medications = Medications;
 global.MeasureReports = MeasureReports;
+global.Medias = Medias;
 global.Patients = Patients;
 global.Questionnaires = Questionnaires;
 global.QuestionnaireResponses = QuestionnaireResponses;
+global.Schedules = Schedules;
 global.LinksCollection = LinksCollection;
 
 //===============================================================================================================

@@ -251,8 +251,53 @@ describe('Medias CRUD Operations', function() {
   });
 
   it('02. Verify medias list page loads', browser => {
+    // First navigate to home page to ensure React app loads
     browser
+      .url('http://localhost:3000')
+      .waitForElementVisible('body', 5000)
+      .pause(1000)
       .url('http://localhost:3000/medias')
+      .pause(3000)
+      .execute(function() {
+        // Debug: Check if we're on the right page
+        const currentUrl = window.location.href;
+        const pageTitle = document.title;
+        const hasMediasPage = document.querySelector('#mediasPage') !== null;
+        const reactRoot = document.querySelector('#react-target');
+        const reactRendered = reactRoot && reactRoot.innerHTML.length > 100;
+        
+        // Check for any content on the page
+        const pageContent = document.body.innerText || '';
+        const hasNotFound = pageContent.includes('Page not found') || pageContent.includes('404');
+        
+        // Check if Meteor settings are loaded
+        const mediasEnabled = Meteor.settings && Meteor.settings.public && 
+                             Meteor.settings.public.modules && 
+                             Meteor.settings.public.modules.fhir && 
+                             Meteor.settings.public.modules.fhir.Medias;
+        
+        // Check console for errors
+        let consoleErrors = [];
+        if (window.__consoleErrors) {
+          consoleErrors = window.__consoleErrors;
+        }
+        
+        return {
+          currentUrl: currentUrl,
+          pageTitle: pageTitle,
+          hasMediasPage: hasMediasPage,
+          mediasEnabled: mediasEnabled,
+          reactRendered: reactRendered,
+          hasNotFound: hasNotFound,
+          pageContentPreview: pageContent.substring(0, 200),
+          consoleErrors: consoleErrors
+        };
+      }, [], function(result) {
+        console.log('Page debug info:', JSON.stringify(result.value, null, 2));
+        browser.assert.ok(result.value.currentUrl.includes('/medias'), 'URL contains /medias');
+        browser.assert.ok(result.value.mediasEnabled, 'Medias module is enabled in settings');
+        browser.assert.ok(!result.value.hasNotFound, 'Page is not showing 404 error');
+      })
       .waitForElementVisible('#mediasPage', 5000)
       .pause(1000);
     
