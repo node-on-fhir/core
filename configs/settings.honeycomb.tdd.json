@@ -443,6 +443,17 @@
           ],
           "search": true,
           "publication": true
+        },
+        "SupplyDelivery": {
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "search"
+          ],
+          "search": true,
+          "publication": true
         }
       }
     }

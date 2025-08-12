@@ -254,7 +254,9 @@ let MediaR4 = new SimpleSchema({
 
 let MediaSchema = MediaR4;
 
-BaseSchema.extend(MediaSchema);
-DomainResourceSchema.extend(MediaSchema);
+// Note: In Meteor v3, we're not using Collection2, so we don't attach schemas
+// BaseSchema.extend(MediaSchema);
+// DomainResourceSchema.extend(MediaSchema);
+// Medias.attachSchema(MediaSchema);
 
 export default { Media, Medias, MediaSchema, MediaR4 };

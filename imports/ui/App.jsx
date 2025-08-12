@@ -129,7 +129,7 @@ import SchedulesPage from '../ui-fhir/schedules/SchedulesPage';
 import ScheduleDetail from '../ui-fhir/schedules/ScheduleDetail';
 import MediasPage from '../ui-fhir/medias/MediasPage';
 import MediaDetail from '../ui-fhir/medias/MediaDetail';
-// import SupplyDeliveriesPage from '../ui-fhir/supplyDeliveries/SupplyDeliveriesPage';
+import SupplyDeliveriesPage from '../ui-fhir/supplyDeliveries/SupplyDeliveriesPage';
 
 import {
   ActivityDefinitionDetail,
@@ -181,7 +181,7 @@ import {
 // import ImagingStudyDetail from '../ui-fhir/imagingStudies/ImagingStudyDetail';
 // import ScheduleDetail from '../ui-fhir/schedules/ScheduleDetail';
 // import MediaDetail from '../ui-fhir/medias/MediaDetail';
-// import SupplyDeliveryDetail from '../ui-fhir/supplyDeliveries/SupplyDeliveryDetail';
+import SupplyDeliveryDetail from '../ui-fhir/supplyDeliveries/SupplyDeliveryDetail';
 
 //===============================================================================================================
 // PACIO Pages
@@ -1022,20 +1022,20 @@ if(get(Meteor, 'settings.public.modules.fhir.Medias')){
     element: <MediaDetail />
   })
 }
-// if(get(Meteor, 'settings.public.modules.fhir.SupplyDeliveries')){
-//   dynamicRoutes.push({
-//     path: "/supply-deliveries",
-//     element: <SupplyDeliveriesPage />
-//   })
-//   dynamicRoutes.push({
-//     path: "/supply-deliveries/new",
-//     element: <SupplyDeliveryDetail />
-//   })
-//   dynamicRoutes.push({
-//     path: "/supply-deliveries/:id",
-//     element: <SupplyDeliveryDetail />
-//   })
-// }
+if(get(Meteor, 'settings.public.modules.fhir.SupplyDeliveries')){
+  dynamicRoutes.push({
+    path: "/supply-deliveries",
+    element: <SupplyDeliveriesPage />
+  })
+  dynamicRoutes.push({
+    path: "/supply-deliveries/new",
+    element: <SupplyDeliveryDetail />
+  })
+  dynamicRoutes.push({
+    path: "/supply-deliveries/:id",
+    element: <SupplyDeliveryDetail />
+  })
+}
 if(get(Meteor, 'settings.public.modules.fhir.ValueSets')){
   dynamicRoutes.push({
     path: "/value-sets",

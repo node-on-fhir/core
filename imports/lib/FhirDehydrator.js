@@ -5619,6 +5619,140 @@ export function flattenSchedule(schedule, internalDateFormat){
   return result;
 }
 
+export function flattenSupplyDelivery(supplyDelivery, internalDateFormat){
+  let result = {
+    resourceType: 'SupplyDelivery',
+    _id: '',
+    id: '',
+    identifier: '',
+    status: '',
+    type: '',
+    typeCode: '',
+    occurrenceDateTime: '',
+    occurrencePeriodStart: '',
+    occurrencePeriodEnd: '',
+    supplierDisplay: '',
+    supplierReference: '',
+    destinationDisplay: '',
+    destinationReference: '',
+    receiverDisplay: '',
+    receiverReference: '',
+    quantity: '',
+    quantityUnit: '',
+    itemCodeableConceptDisplay: '',
+    itemCodeableConceptCode: '',
+    itemReference: '',
+    basedOn: '',
+    partOf: '',
+    patientDisplay: '',
+    patientReference: '',
+    notes: '',
+    operationOutcome: ''
+  };
+
+  result.resourceType = get(supplyDelivery, 'resourceType', "Unknown");
+  result._id = get(supplyDelivery, '_id');
+  result.id = get(supplyDelivery, 'id', '');
+
+  if(!internalDateFormat){
+    internalDateFormat = get(Meteor, "settings.public.defaults.dateFormat", "YYYY-MM-DD");
+  }
+
+  // Identifier
+  if (get(supplyDelivery, 'identifier[0].value')) {
+    result.identifier = get(supplyDelivery, 'identifier[0].value');
+  }
+
+  // Status
+  result.status = get(supplyDelivery, 'status', '');
+
+  // Type
+  if (get(supplyDelivery, 'type.coding[0].display')) {
+    result.type = get(supplyDelivery, 'type.coding[0].display');
+    result.typeCode = get(supplyDelivery, 'type.coding[0].code', '');
+  } else if (get(supplyDelivery, 'type.text')) {
+    result.type = get(supplyDelivery, 'type.text');
+  }
+
+  // Occurrence
+  if (get(supplyDelivery, 'occurrenceDateTime')) {
+    result.occurrenceDateTime = moment(get(supplyDelivery, 'occurrenceDateTime')).format(internalDateFormat);
+  }
+  if (get(supplyDelivery, 'occurrencePeriod.start')) {
+    result.occurrencePeriodStart = moment(get(supplyDelivery, 'occurrencePeriod.start')).format(internalDateFormat);
+  }
+  if (get(supplyDelivery, 'occurrencePeriod.end')) {
+    result.occurrencePeriodEnd = moment(get(supplyDelivery, 'occurrencePeriod.end')).format(internalDateFormat);
+  }
+
+  // Supplier
+  if (get(supplyDelivery, 'supplier.display')) {
+    result.supplierDisplay = get(supplyDelivery, 'supplier.display');
+  }
+  if (get(supplyDelivery, 'supplier.reference')) {
+    result.supplierReference = get(supplyDelivery, 'supplier.reference');
+  }
+
+  // Destination
+  if (get(supplyDelivery, 'destination.display')) {
+    result.destinationDisplay = get(supplyDelivery, 'destination.display');
+  }
+  if (get(supplyDelivery, 'destination.reference')) {
+    result.destinationReference = get(supplyDelivery, 'destination.reference');
+  }
+
+  // Receiver
+  if (get(supplyDelivery, 'receiver[0].display')) {
+    result.receiverDisplay = get(supplyDelivery, 'receiver[0].display');
+  }
+  if (get(supplyDelivery, 'receiver[0].reference')) {
+    result.receiverReference = get(supplyDelivery, 'receiver[0].reference');
+  }
+
+  // Supplied Item
+  if (get(supplyDelivery, 'suppliedItem.quantity.value')) {
+    result.quantity = get(supplyDelivery, 'suppliedItem.quantity.value');
+    result.quantityUnit = get(supplyDelivery, 'suppliedItem.quantity.unit', '');
+  }
+  if (get(supplyDelivery, 'suppliedItem.itemCodeableConcept.coding[0].display')) {
+    result.itemCodeableConceptDisplay = get(supplyDelivery, 'suppliedItem.itemCodeableConcept.coding[0].display');
+    result.itemCodeableConceptCode = get(supplyDelivery, 'suppliedItem.itemCodeableConcept.coding[0].code', '');
+  } else if (get(supplyDelivery, 'suppliedItem.itemCodeableConcept.text')) {
+    result.itemCodeableConceptDisplay = get(supplyDelivery, 'suppliedItem.itemCodeableConcept.text');
+  }
+  if (get(supplyDelivery, 'suppliedItem.itemReference.reference')) {
+    result.itemReference = get(supplyDelivery, 'suppliedItem.itemReference.reference');
+  }
+
+  // References
+  if (get(supplyDelivery, 'basedOn[0].reference')) {
+    result.basedOn = get(supplyDelivery, 'basedOn[0].reference');
+  }
+  if (get(supplyDelivery, 'partOf[0].reference')) {
+    result.partOf = get(supplyDelivery, 'partOf[0].reference');
+  }
+
+  // Patient
+  if (get(supplyDelivery, 'patient.display')) {
+    result.patientDisplay = get(supplyDelivery, 'patient.display');
+  }
+  if (get(supplyDelivery, 'patient.reference')) {
+    result.patientReference = get(supplyDelivery, 'patient.reference');
+  }
+
+  // Notes
+  if (get(supplyDelivery, 'note[0].text')) {
+    result.notes = get(supplyDelivery, 'note[0].text');
+  }
+
+  // Operation Outcome
+  if(get(supplyDelivery, "issue[0].details.text")){
+    result.operationOutcome = get(supplyDelivery, "issue[0].details.text");
+  }
+
+  return result;
+}
+
 export function flattenRestriction(restriction, internalDateFormat){
     let result = {
         resourceType: 'Restriction',
@@ -6106,6 +6240,8 @@ export function flatten(collectionName, resource){
       return flattenStructureDefinition(resource);  
     case "Subscriptions":
       return flattenSubscription(resource);        
+    case "SupplyDeliveries":
+      return flattenSupplyDelivery(resource);
     case "Tasks":
       return flattenTask(resource);
     case "ValueSets":
@@ -6234,6 +6370,7 @@ export const FhirDehydrator = {
   dehydrateServiceRequest: flattenServiceRequest,
   dehydrateStructureDefinition: flattenStructureDefinition,
   dehydrateSubscription: flattenSubscription,
+  dehydrateSupplyDelivery: flattenSupplyDelivery,
   dehydrateTask: flattenTask,
   dehydrateValueSet: flattenValueSet,
   dehydrateVerificationResult: flattenVerificationResult,
@@ -6306,6 +6443,7 @@ export default {
   flattenServiceRequest,
   flattenStructureDefinition,
   flattenSubscription,
+  flattenSupplyDelivery,
   flattenTask,
   flattenValueSet,
   flattenVerificationResult,

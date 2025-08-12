@@ -56,6 +56,7 @@ import { ResearchStudies } from '/imports/lib/schemas/SimpleSchemas/ResearchStud
 import { ResearchSubjects } from '/imports/lib/schemas/SimpleSchemas/ResearchSubjects';
 import { Schedules } from '/imports/lib/schemas/SimpleSchemas/Schedules';
 import { ServiceRequests } from '/imports/lib/schemas/SimpleSchemas/ServiceRequests';
+import { SupplyDeliveries } from '/imports/lib/schemas/SimpleSchemas/SupplyDeliveries';
 import { Tasks } from '/imports/lib/schemas/SimpleSchemas/Tasks';
 import { ValueSets } from '/imports/lib/schemas/SimpleSchemas/ValueSets';
 
@@ -112,6 +113,7 @@ const collectionsMap = {
   'ResearchSubjects': ResearchSubjects,
   'Schedules': Schedules,
   'ServiceRequests': ServiceRequests,
+  'SupplyDeliveries': SupplyDeliveries,
   'Tasks': Tasks,
   'ValueSets': ValueSets
 };

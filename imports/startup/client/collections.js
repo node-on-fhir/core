@@ -54,6 +54,7 @@ import { ResearchStudies } from '/imports/lib/schemas/SimpleSchemas/ResearchStud
 import { ResearchSubjects } from '/imports/lib/schemas/SimpleSchemas/ResearchSubjects';
 import { Schedules } from '/imports/lib/schemas/SimpleSchemas/Schedules';
 import { ServiceRequests } from '/imports/lib/schemas/SimpleSchemas/ServiceRequests';
+import { SupplyDeliveries } from '/imports/lib/schemas/SimpleSchemas/SupplyDeliveries';
 import { Tasks } from '/imports/lib/schemas/SimpleSchemas/Tasks';
 import { ValueSets } from '/imports/lib/schemas/SimpleSchemas/ValueSets';
 
@@ -111,6 +112,7 @@ if (Meteor.isClient) {
     ResearchSubjects,
     Schedules,
     ServiceRequests,
+    SupplyDeliveries,
     Tasks,
     ValueSets
   };
@@ -167,6 +169,7 @@ if (Meteor.isClient) {
   window.ResearchSubjects = ResearchSubjects;
   window.Schedules = Schedules;
   window.ServiceRequests = ServiceRequests;
+  window.SupplyDeliveries = SupplyDeliveries;
   window.Tasks = Tasks;
   window.ValueSets = ValueSets;
 
