@@ -20,7 +20,7 @@ module.exports = {
   page_objects_path: ['nightwatch/page-objects'],
 
   // See https://nightwatchjs.org/guide/extending-nightwatch/adding-custom-commands.html
-  custom_commands_path: ['nightwatch/custom-commands'],
+  custom_commands_path: ['nightwatch/custom-commands', 'tests/nightwatch/commands'],
 
   // See https://nightwatchjs.org/guide/extending-nightwatch/adding-custom-assertions.html
   custom_assertions_path: ['nightwatch/custom-assertions'],
