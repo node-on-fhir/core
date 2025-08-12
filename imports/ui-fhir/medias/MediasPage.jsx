@@ -472,3 +472,5 @@ export function MediasPage(props){
     </Box>
   );
 }
+
+export default MediasPage;

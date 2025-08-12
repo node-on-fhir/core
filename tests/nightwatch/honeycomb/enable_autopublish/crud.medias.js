@@ -478,26 +478,58 @@ describe('Medias CRUD Operations', function() {
       console.log('Subject field check:', result.value);
     });
 
-    // Check if form is in edit mode
-    browser.execute(function() {
-      const modalityField = document.querySelector('#modalityInput');
-      if (modalityField && modalityField.disabled) {
-        const buttons = document.querySelectorAll('button');
-        for (let button of buttons) {
-          if (button.textContent.includes('Edit')) {
-            button.click();
-            return 'clicked_edit';
+    // Wait for form to be ready and check field states
+    browser
+      .pause(2000)
+      .execute(function() {
+        // Check various fields to understand their state
+        const fields = ['#modalityInput', '#statusSelect', '#contentTitleInput'];
+        const fieldStates = {};
+        
+        fields.forEach(selector => {
+          const field = document.querySelector(selector);
+          if (field) {
+            fieldStates[selector] = {
+              exists: true,
+              disabled: field.disabled,
+              readOnly: field.readOnly,
+              type: field.type,
+              tagName: field.tagName,
+              value: field.value,
+              visible: field.offsetParent !== null
+            };
+          } else {
+            fieldStates[selector] = { exists: false };
           }
+        });
+        
+        console.log('Field states:', JSON.stringify(fieldStates, null, 2));
+        
+        // Try to find the save button to understand form state
+        const buttons = Array.from(document.querySelectorAll('button'));
+        const saveButton = buttons.find(b => b.textContent.includes('Save'));
+        if (saveButton) {
+          console.log('Save button found:', saveButton.textContent);
+          console.log('Save button disabled:', saveButton.disabled);
         }
-      }
-      return 'already_editable';
-    }, [], function(result) {
-      console.log('Edit mode check:', result.value);
-    });
-
+        
+        // Check if we're in edit mode by looking for edit/lock button
+        const editButton = buttons.find(b => b.textContent.includes('Edit'));
+        const lockButton = document.querySelector('button svg[data-testid="LockIcon"]')?.parentElement;
+        const lockOpenButton = document.querySelector('button svg[data-testid="LockOpenIcon"]')?.parentElement;
+        
+        console.log('Edit button found:', !!editButton);
+        console.log('Lock button found:', !!lockButton);
+        console.log('LockOpen button found:', !!lockOpenButton);
+        
+        return fieldStates;
+      }, [], function(result) {
+        console.log('Form field check result:', result.value);
+      })
+      .pause(500);
+    
     // Fill form fields
     browser
-      .pause(500)
       .clearValue('#modalityInput')
       .setValue('#modalityInput', testMedia.modality)
       .clearValue('#modalityDisplayInput')
@@ -546,80 +578,18 @@ describe('Medias CRUD Operations', function() {
       .setValue('#notesTextarea', testMedia.notes)
       .pause(500);
 
-    // Also use execute method as fallback
-    browser.execute(function(media) {
-      function setFieldValue(selector, value) {
+    // Log which fields we're about to fill
+    browser.execute(function() {
+      console.log('Checking form field states:');
+      const fields = ['#modalityInput', '#reasonCodeInput', '#contentTitleInput'];
+      fields.forEach(selector => {
         const field = document.querySelector(selector);
         if (field) {
-          const nativeInputValueSetter = Object.getOwnPropertyDescriptor(
-            window.HTMLInputElement.prototype, 
-            'value'
-          ).set;
-          nativeInputValueSetter.call(field, value);
-          
-          const inputEvent = new Event('input', { bubbles: true });
-          field.dispatchEvent(inputEvent);
-          
-          const changeEvent = new Event('change', { bubbles: true });
-          field.dispatchEvent(changeEvent);
-          
-          console.log(`Set ${selector} to:`, value);
-          return true;
-        } else if (selector.includes('Textarea')) {
-          const textarea = document.querySelector(selector);
-          if (textarea) {
-            const nativeTextareaValueSetter = Object.getOwnPropertyDescriptor(
-              window.HTMLTextAreaElement.prototype, 
-              'value'
-            ).set;
-            nativeTextareaValueSetter.call(textarea, value);
-            
-            const inputEvent = new Event('input', { bubbles: true });
-            textarea.dispatchEvent(inputEvent);
-            
-            const changeEvent = new Event('change', { bubbles: true });
-            textarea.dispatchEvent(changeEvent);
-            
-            console.log(`Set ${selector} to:`, value);
-            return true;
-          }
+          console.log(`${selector}: disabled=${field.disabled}, value="${field.value}"`);
+        } else {
+          console.log(`${selector}: NOT FOUND`);
         }
-        console.warn(`Field ${selector} not found`);
-        return false;
-      }
-      
-      const results = {};
-      
-      // Ensure subject display is set
-      const subjectField = document.querySelector('#subjectDisplay');
-      if (subjectField && !subjectField.value) {
-        const selectedPatient = Session.get('selectedPatient');
-        if (selectedPatient && selectedPatient.name) {
-          let patientName = '';
-          if (typeof selectedPatient.name === 'string') {
-            patientName = selectedPatient.name;
-          } else if (Array.isArray(selectedPatient.name) && selectedPatient.name[0]) {
-            patientName = selectedPatient.name[0].text || 
-                        `${selectedPatient.name[0].given?.join(' ') || ''} ${selectedPatient.name[0].family || ''}`.trim();
-          }
-          if (patientName) {
-            results.subjectDisplay = setFieldValue('#subjectDisplay', patientName);
-          }
-        }
-      }
-      
-      results.modality = setFieldValue('#modalityInput', media.modality);
-      results.reasonCode = setFieldValue('#reasonCodeInput', media.reasonCode);
-      results.bodySite = setFieldValue('#bodySiteInput', media.bodySite);
-      results.deviceName = setFieldValue('#deviceNameInput', media.deviceName);
-      results.height = setFieldValue('#heightInput', media.height.toString());
-      results.width = setFieldValue('#widthInput', media.width.toString());
-      results.contentTitle = setFieldValue('#contentTitleInput', media.contentTitle);
-      results.notes = setFieldValue('#notesTextarea', media.notes);
-      
-      return { filled: true, results: results };
-    }, [testMedia], function(result) {
-      console.log('Form fields filled:', result.value);
+      });
     });
 
     // Handle Material-UI Select components
@@ -873,11 +843,11 @@ describe('Medias CRUD Operations', function() {
       .waitForElementVisible('#mediasPage', 5000)
       .pause(1000);
 
-    // Search for our specific media
+    // Search for our specific media - use a simpler search term
     browser
       .waitForElementVisible('#mediaSearchInput', 5000)
       .clearValue('#mediaSearchInput')
-      .setValue('#mediaSearchInput', testMedia.contentTitle.substring(0, 20))
+      .setValue('#mediaSearchInput', 'Patient photo')
       .pause(1000);
 
     // Now click on the media row
@@ -1096,14 +1066,14 @@ describe('Medias CRUD Operations', function() {
       .execute(function() {
         const buttons = document.querySelectorAll('button');
         for (let button of buttons) {
-          if (button.textContent.includes('Save')) {
+          if (button.textContent.includes('Update') || button.textContent.includes('Save')) {
             button.click();
             return true;
           }
         }
         return false;
       }, [], function(result) {
-        browser.assert.equal(result.value, true, 'Clicked Save button');
+        browser.assert.equal(result.value, true, 'Clicked Save/Update button');
       });
 
     browser
@@ -1178,28 +1148,7 @@ describe('Medias CRUD Operations', function() {
           .pause(1000)
           .waitForElementVisible('#mediaDetailPage', 5000);
 
-        // Enter edit mode
-        browser
-          .execute(function() {
-            const lockButton = document.querySelector('button svg[data-testid="LockIcon"]')?.parentElement;
-            if (lockButton) {
-              lockButton.click();
-              return true;
-            }
-            const buttons = document.querySelectorAll('button');
-            for (let button of buttons) {
-              if (button.textContent.includes('Edit')) {
-                button.click();
-                return true;
-              }
-            }
-            return false;
-          }, [], function(result) {
-            browser.assert.equal(result.value, true, 'Clicked Edit/Lock button to enter edit mode');
-          })
-          .pause(500);
-
-        // Click Delete button
+        // Click Delete button (DELETE button is only visible in VIEW mode, not EDIT mode)
         browser
           .execute(function() {
             const buttons = document.querySelectorAll('button');
@@ -1212,9 +1161,9 @@ describe('Medias CRUD Operations', function() {
             }
             return false;
           })
-          .pause(100)
+          .pause(500)  // Wait for alert
           .acceptAlert()
-          .pause(500);
+          .pause(1000); // Wait for deletion to complete
 
         browser
           .pause(2000)

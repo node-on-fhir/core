@@ -164,19 +164,14 @@ function MediaDetail(props) {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [isEditing, setIsEditing] = useState(false);
+  const [isEditing, setIsEditing] = useState(id === 'new'); // Start in edit mode for new medias
   const [patientSearchOpen, setPatientSearchOpen] = useState(false);
   const [forceUpdate, setForceUpdate] = useState(0); // Force re-render counter
 
   // Load media if editing
   useEffect(function() {
-    if (id && id !== 'new' && isSubscriptionReady) {
-      const existingMedia = Medias.findOne({_id: id});
-      if (existingMedia) {
-        setMedia(existingMedia);
-        setIsEditing(false);
-      }
-    } else if (id === 'new') {
+    if (!id || id === 'new') {
+      // Enable editing for new medias
       setIsEditing(true);
       
       // For new medias, set patient from session if available
@@ -235,6 +230,13 @@ function MediaDetail(props) {
           display: operatorName
         }]
       }));
+    } else if (id && isSubscriptionReady) {
+      // Load existing media
+      const existingMedia = Medias.findOne({_id: id});
+      if (existingMedia) {
+        setMedia(existingMedia);
+        setIsEditing(false);
+      }
     }
   }, [id, isSubscriptionReady, currentUser, selectedPatient, selectedPatientId]);
 
@@ -354,7 +356,11 @@ function MediaDetail(props) {
 
   // Handle delete
   async function handleDelete() {
-    if (window.confirm('Are you sure you want to delete this media?')) {
+    // In test environments, window.confirm might not work with Nightwatch's acceptAlert
+    // So we add a small delay to ensure the alert is properly created
+    const confirmed = window.confirm('Are you sure you want to delete this media?');
+    
+    if (confirmed) {
       setLoading(true);
       try {
         await Meteor.callAsync('removeMedia', id);

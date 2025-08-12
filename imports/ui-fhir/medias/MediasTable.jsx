@@ -19,7 +19,7 @@ import moment from 'moment';
 import { get, reverse } from 'lodash';
 
 import { FhirUtilities } from '../../lib/FhirUtilities';
-import { FhirDehydrator } from '../../lib/FhirDehydrator';
+import FhirDehydrator from '../../lib/FhirDehydrator';
 
 // Logger definition
 const logger = {
