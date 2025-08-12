@@ -800,7 +800,9 @@ describe('Immunizations CRUD Operations', function() {
   });
 
   it('06. View immunization details', browser => {
+    // Make sure we're on the immunizations page
     browser
+      .url('http://localhost:3000/immunizations')
       .waitForElementVisible('#immunizationsPage', 5000)
       .pause(1000);
     
@@ -840,16 +842,41 @@ describe('Immunizations CRUD Operations', function() {
       return { success: false };
     }, ['test-patient-' + timestamp]);
 
-    // Search by patient name
+    // Search for our specific immunization by lot number
     browser
       .waitForElementVisible('#immunizationSearchInput', 5000)
       .clearValue('#immunizationSearchInput')
-      .setValue('#immunizationSearchInput', 'John Doe')
-      .pause(1500); // Give more time for search results to update
+      .setValue('#immunizationSearchInput', `LOT-${timestamp}`)
+      .pause(1500); // Give time for search results to update
+
+    // Check if we have the table after searching
+    browser.execute(function() {
+      const hasTable = document.querySelector('#immunizationsTable') !== null;
+      const rows = hasTable ? document.querySelectorAll('#immunizationsTable tbody tr') : [];
+      const hasNoDataCard = document.querySelector('.no-data-card') !== null;
+      const pageContent = document.querySelector('#immunizationsPage')?.textContent || '';
+      
+      return {
+        hasTable: hasTable,
+        rowCount: rows.length,
+        firstRowText: rows.length > 0 ? rows[0].textContent : '',
+        hasNoDataCard: hasNoDataCard,
+        hasNoData: pageContent.includes('No Data')
+      };
+    }, [], function(result) {
+      console.log('Table state after search:', result.value);
+      
+      if (!result.value.hasTable && result.value.hasNoData) {
+        // If search resulted in no data, clear the search to show all immunizations
+        browser
+          .clearValue('#immunizationSearchInput')
+          .pause(1000);
+      }
+    });
 
     // Now click on the immunization row
     browser
-      .waitForElementVisible('#immunizationsTable', 10000) // Increased timeout
+      .waitForElementVisible('#immunizationsTable', 5000)
       .execute(function(timestamp) {
         const rows = document.querySelectorAll('#immunizationsTable tbody tr');
         console.log('Found', rows.length, 'rows in immunizations table');

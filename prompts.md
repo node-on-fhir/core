@@ -91,7 +91,7 @@ I believe in you.  We've done a lot of these CRUD patterns already.  You can do 
 ```
 
 ```
-Okay, let's turn our attention to the SupplyDeliveries CRUD pattern, on the /medias route.  Use best practices and the implementation checklist and debugging info in /imports/ui-fhir/CLAUDE.md.  You have permission to run tests.  
+Okay, let's turn our attention to the SupplyDeliveries CRUD pattern, on the /supply-deliveries route.  Use best practices and the implementation checklist and debugging info in /imports/ui-fhir/CLAUDE.md.  You have permission to run tests.  
 
 - Make sure that the SupplyDeliveries schema is created, and attached in all of the right places (Meteor.Tables, Meteor.Collections, etc)
 - Include SupplyDeliveries in the autopublish() function.

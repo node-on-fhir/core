@@ -12,6 +12,7 @@ import {
   Button,
   Box,
   Typography,
+  TextField,
   ToggleButton,
   ToggleButtonGroup
 } from '@mui/material';
@@ -61,6 +62,7 @@ export function ConditionsPage(props){
   const navigate = useNavigate();
   const [sortOrder, setSortOrder] = useState('descending');
   const [searchParams] = useSearchParams();
+  const [searchFilter, setSearchFilter] = useState('');
   const [showPatientName, setShowPatientName] = useState(false);
   const [showPatientReference, setShowPatientReference] = useState(false);
   const [showSystemId, setShowSystemId] = useState(false);
@@ -95,6 +97,26 @@ export function ConditionsPage(props){
       }
     }
     
+    // Add search filter if present
+    if(searchFilter && searchFilter.length > 0) {
+      query = {
+        $and: [
+          query,
+          {
+            $or: [
+              {'_id': searchFilter},
+              {'id': searchFilter},
+              {'code.text': {$regex: searchFilter, $options: 'i'}},
+              {'code.coding.0.display': {$regex: searchFilter, $options: 'i'}},
+              {'patient.display': {$regex: searchFilter, $options: 'i'}},
+              {'asserter.display': {$regex: searchFilter, $options: 'i'}},
+              {'notes': {$regex: searchFilter, $options: 'i'}}
+            ]
+          }
+        ]
+      };
+    }
+    
     console.log('Conditions subscription - selectedPatientId:', selectedPatientId);
     console.log('Conditions subscription - FHIR id:', get(selectedPatient, 'id'));
     console.log('Conditions subscription query:', query);
@@ -106,7 +128,7 @@ export function ConditionsPage(props){
       const handle = Meteor.subscribe('conditions.all');
       return !handle.ready();
     }
-  }, [Session.get('selectedPatientId')]);
+  }, [Session.get('selectedPatientId'), searchFilter]);
 
   let data = {
     currentConditionId: '',
@@ -260,6 +282,19 @@ export function ConditionsPage(props){
                 Add Condition
               </Button>
             </Box>
+          </Grid>
+        </Grid>
+        <Grid container spacing={2} sx={{ mt: 2 }}>
+          <Grid item xs={12}>
+            <TextField
+              id="conditionSearchInput"
+              fullWidth
+              placeholder="Search conditions by ID, code, patient name, asserter, or notes..."
+              value={searchFilter}
+              onChange={(e) => setSearchFilter(e.target.value)}
+              variant="outlined"
+              size="small"
+            />
           </Grid>
         </Grid>
       </Box>
