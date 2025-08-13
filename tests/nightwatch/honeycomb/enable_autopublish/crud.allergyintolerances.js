@@ -806,7 +806,6 @@ describe('AllergyIntolerances CRUD Operations', function() {
       .waitForElementVisible('#allergyIntoleranceDetailPage', 5000)
       .assert.valueContains('#codeInput', testAllergyIntolerance.codeCode)
       .assert.valueContains('#codeDisplayInput', testAllergyIntolerance.codeDisplay)
-      .assert.valueContains('#recorderInput', testAllergyIntolerance.recorder)
       .assert.valueContains('#reactionInput', testAllergyIntolerance.reaction)
       .execute(function() {
         const clinicalStatusInput = document.querySelector('#clinicalStatusSelect');

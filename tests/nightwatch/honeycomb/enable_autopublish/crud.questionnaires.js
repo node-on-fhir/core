@@ -1,7 +1,6 @@
 // tests/nightwatch/honeycomb/crud.questionnaires.js
 
 const testUtils = require('./shared-test-utils');
-const { TIMEOUTS } = require('../../config/timeouts');
 
 describe('Questionnaires CRUD Operations', function() {
   const timestamp = Date.now();
@@ -35,7 +34,7 @@ describe('Questionnaires CRUD Operations', function() {
     console.log('Starting Questionnaires CRUD test suite...');
     browser
       .url('http://localhost:3000')
-      .waitForElementVisible('body', TIMEOUTS.normal);
+      .waitForElementVisible('body', 5000);
   });
 
   beforeEach(browser => {
@@ -45,7 +44,7 @@ describe('Questionnaires CRUD Operations', function() {
   it('01. Setup test environment', browser => {
     browser
       .url('http://localhost:3000')
-      .waitForElementVisible('body', TIMEOUTS.normal);
+      .waitForElementVisible('body', 5000);
 
     // Check if we're logged in
     browser.execute(function() {
@@ -122,7 +121,7 @@ describe('Questionnaires CRUD Operations', function() {
   it('02. Verify questionnaires list page loads', browser => {
     browser
       .url('http://localhost:3000/questionnaires')
-      .waitForElementVisible('#questionnairesPage', TIMEOUTS.normal)
+      .waitForElementVisible('#questionnairesPage', 5000)
       .execute(function() {
         const hasTable = document.querySelector('#questionnairesTable') !== null;
         const hasNoDataCard = document.querySelector('.no-data-card') !== null ||
@@ -143,7 +142,7 @@ describe('Questionnaires CRUD Operations', function() {
 
   it('03. Navigate to new questionnaire form', browser => {
     browser
-      .waitForElementVisible('#questionnairesPage', TIMEOUTS.normal)
+      .waitForElementVisible('#questionnairesPage', 5000)
       .execute(function() {
         const buttons = document.querySelectorAll('button');
         for (let button of buttons) {
@@ -159,7 +158,7 @@ describe('Questionnaires CRUD Operations', function() {
       });
 
     browser
-      .waitForElementVisible('#questionnaireDetailPage', TIMEOUTS.normal)
+      .waitForElementVisible('#questionnaireDetailPage', 5000)
       .assert.elementPresent('#title')
       .assert.elementPresent('#name')
       .assert.elementPresent('#publisher')
@@ -180,7 +179,7 @@ describe('Questionnaires CRUD Operations', function() {
 
   it('04. Create new questionnaire', browser => {
     browser
-      .waitForElementVisible('#questionnaireDetailPage', TIMEOUTS.normal);
+      .waitForElementVisible('#questionnaireDetailPage', 5000);
 
     browser.execute(function() {
       return {
@@ -250,20 +249,20 @@ describe('Questionnaires CRUD Operations', function() {
 
     browser
       .waitForLoadingComplete()
-      .waitForElementVisible('#questionnairesTable', TIMEOUTS.extended)
+      .waitForElementVisible('#questionnairesTable', 10000)
       .saveScreenshot('tests/nightwatch/screenshots/questionnaires/05-questionnaire-created.png');
   });
 
   it('05. Verify new questionnaire appears in list', browser => {
     browser
-      .waitForElementVisible('#questionnairesTable', TIMEOUTS.normal)
+      .waitForElementVisible('#questionnairesTable', 5000)
       .assert.containsText('#questionnairesTable', testQuestionnaire.title)
       .saveScreenshot('tests/nightwatch/screenshots/questionnaires/06-new-questionnaire-in-list.png');
   });
 
   it('06. View questionnaire details', browser => {
     browser
-      .waitForElementVisible('#questionnairesTable', TIMEOUTS.normal)
+      .waitForElementVisible('#questionnairesTable', 5000)
       .execute(function(title) {
         const rows = document.querySelectorAll('#questionnairesTable tbody tr');
         for (let row of rows) {
@@ -278,7 +277,7 @@ describe('Questionnaires CRUD Operations', function() {
       });
 
     browser
-      .waitForElementVisible('#questionnaireDetailPage', TIMEOUTS.normal)
+      .waitForElementVisible('#questionnaireDetailPage', 5000)
       .assert.valueContains('#title', testQuestionnaire.title)
       .assert.valueContains('#name', testQuestionnaire.name)
       .assert.valueContains('#publisher', testQuestionnaire.publisher)
@@ -288,13 +287,13 @@ describe('Questionnaires CRUD Operations', function() {
 
   it('07. Edit questionnaire', browser => {
     browser
-      .waitForElementVisible('#questionnaireDetailPage', TIMEOUTS.normal);
+      .waitForElementVisible('#questionnaireDetailPage', 5000);
 
     // Navigate to the questionnaire if not already there
     if (!browser.currentTest.results.errors) {
       browser
         .url('http://localhost:3000/questionnaires')
-        .waitForElementVisible('#questionnairesTable', TIMEOUTS.normal)
+        .waitForElementVisible('#questionnairesTable', 5000)
         .execute(function(title) {
           const rows = document.querySelectorAll('#questionnairesTable tbody tr');
           for (let row of rows) {
@@ -308,7 +307,7 @@ describe('Questionnaires CRUD Operations', function() {
     }
 
     browser
-      .waitForElementVisible('#questionnaireDetailPage', TIMEOUTS.normal)
+      .waitForElementVisible('#questionnaireDetailPage', 5000)
       .execute(function() {
         const lockButton = document.querySelector('button svg[data-testid="LockIcon"]')?.parentElement;
         if (lockButton) {
@@ -352,20 +351,20 @@ describe('Questionnaires CRUD Operations', function() {
     browser
       .waitForLoadingComplete()
       .url('http://localhost:3000/questionnaires')
-      .waitForElementVisible('#questionnairesTable', TIMEOUTS.normal)
+      .waitForElementVisible('#questionnairesTable', 5000)
       .saveScreenshot('tests/nightwatch/screenshots/questionnaires/09-questionnaire-updated.png');
   });
 
   it('08. Verify updated questionnaire in list', browser => {
     browser
-      .waitForElementVisible('#questionnairesTable', TIMEOUTS.normal)
+      .waitForElementVisible('#questionnairesTable', 5000)
       .assert.containsText('#questionnairesTable', updatedQuestionnaire.title)
       .saveScreenshot('tests/nightwatch/screenshots/questionnaires/10-updated-questionnaire-in-list.png');
   });
 
   it('09. Delete questionnaire', browser => {
     browser
-      .waitForElementVisible('#questionnairesPage', TIMEOUTS.normal)
+      .waitForElementVisible('#questionnairesPage', 5000)
       .execute(function(title) {
         const rows = document.querySelectorAll('#questionnairesTable tbody tr');
         for (let row of rows) {
@@ -380,7 +379,7 @@ describe('Questionnaires CRUD Operations', function() {
       });
 
     browser
-      .waitForElementVisible('#questionnaireDetailPage', TIMEOUTS.normal)
+      .waitForElementVisible('#questionnaireDetailPage', 5000)
       .execute(function() {
         // Debug: log all available buttons
         const buttons = document.querySelectorAll('button');
@@ -451,12 +450,12 @@ describe('Questionnaires CRUD Operations', function() {
     }, [], function(result) {
       if (result.value) {
         // We navigated, wait for the page to load
-        browser.waitForElementVisible('#questionnairesPage', TIMEOUTS.normal);
+        browser.waitForElementVisible('#questionnairesPage', 5000);
       }
     });
 
     browser
-      .waitForElementVisible('#questionnairesPage', TIMEOUTS.normal)
+      .waitForElementVisible('#questionnairesPage', 5000)
       .execute(function() {
         const hasTable = document.querySelector('#questionnairesTable') !== null;
         const hasNoData = document.querySelector('.no-data-card') !== null ||
