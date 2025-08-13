@@ -617,73 +617,103 @@ describe('DiagnosticReports CRUD Operations', function() {
       .setValue('#diagnosticReportSearchInput', testDiagnosticReport.conclusion.substring(0, 30))
       .pause(1000);
     
-    browser.execute(function() {
-      const hasTable = document.querySelector('#diagnosticReportsTable') !== null;
-      const hasNoDataCard = document.querySelector('.no-data-card') !== null;
-      const pageText = document.querySelector('#diagnosticReportsPage')?.textContent || '';
-      
-      let totalReports = 0;
-      let selectedPatientId = null;
-      let selectedPatient = null;
-      
-      if (typeof DiagnosticReports !== 'undefined') {
-        totalReports = DiagnosticReports.find({}).count();
-        console.log('Total diagnostic reports in database:', totalReports);
-        
-        const testReport = DiagnosticReports.findOne({
-          'code.text': { $regex: 'Lab Report.*' }
-        });
-        console.log('Found test report:', testReport);
-        
-        if (testReport) {
-          console.log('Test report subject:', JSON.stringify(testReport.subject, null, 2));
-          console.log('Test report subject reference:', testReport.subject?.reference);
-          console.log('Test report subject display:', testReport.subject?.display);
-        }
-      }
-      
-      if (typeof Session !== 'undefined') {
-        selectedPatientId = Session.get('selectedPatientId');
-        selectedPatient = Session.get('selectedPatient');
-        console.log('Selected patient in Session:', selectedPatientId, selectedPatient?.name);
-      }
-      
-      return {
-        hasTable: hasTable,
-        hasNoDataCard: hasNoDataCard,
-        hasNoData: pageText.includes('No Data Available'),
-        totalReports: totalReports,
-        hasSelectedPatient: !!selectedPatientId,
-        selectedPatientId: selectedPatientId
-      };
-    }, [], function(result) {
-      console.log('Page state:', result.value);
-      
-      if (result.value.totalReports > 0 && (result.value.hasNoData || result.value.hasNoDataCard)) {
-        browser.assert.fail(`Reports exist (${result.value.totalReports}) but are filtered out - patient reference may not be set correctly`);
-      } else if (result.value.hasNoData || result.value.hasNoDataCard) {
-        browser.assert.fail('No reports found - save operation may have failed');
-      }
-    });
+    // Wait for loading to complete by checking multiple times
+    let attempts = 0;
+    const maxAttempts = 10;
     
-    browser.execute(function() {
-      const table = document.querySelector('#diagnosticReportsTable');
-      if (!table) return { hasTable: false };
-      
-      const rows = table.querySelectorAll('tbody tr');
-      return {
-        hasTable: true,
-        rowCount: rows.length,
-        firstRowText: rows.length > 0 ? rows[0].textContent : ''
-      };
-    }, [], function(result) {
-      console.log('Table check:', result.value);
-      if (result.value.hasTable && result.value.rowCount > 0) {
-        browser.assert.ok(true, `Found ${result.value.rowCount} diagnostic report(s) in table`);
-      } else {
-        browser.assert.fail('No diagnostic reports table found or table is empty');
-      }
-    });
+    function waitForDataToLoad() {
+      browser.execute(function() {
+        // Check if page is showing loading message
+        const pageContent = document.body.textContent || '';
+        const isLoading = pageContent.includes('Loading diagnostic reports...');
+        const hasTable = document.querySelector('#diagnosticReportsTable') !== null;
+        const hasNoDataCard = document.querySelector('.no-data-card') !== null;
+        
+        if (isLoading) {
+          return { isLoading: true };
+        }
+        
+        // Get table rows if table exists
+        let rowCount = 0;
+        let firstRowText = '';
+        if (hasTable) {
+          const rows = document.querySelectorAll('#diagnosticReportsTable tbody tr');
+          rowCount = rows.length;
+          firstRowText = rows.length > 0 ? rows[0].textContent : '';
+        }
+        
+        return {
+          isLoading: false,
+          hasTable: hasTable,
+          hasNoDataCard: hasNoDataCard,
+          rowCount: rowCount,
+          firstRowText: firstRowText
+        };
+      }, [], function(result) {
+        console.log(`Loading check attempt ${attempts + 1}:`, result.value);
+        
+        if (result.value.isLoading && attempts < maxAttempts) {
+          // Still loading, wait and try again
+          attempts++;
+          browser.pause(1000);
+          waitForDataToLoad();
+        } else if (result.value.hasTable && result.value.rowCount > 0) {
+          // Data loaded successfully
+          browser.assert.ok(true, `Found ${result.value.rowCount} diagnostic report(s) in table`);
+          
+          // Additional verification of the content
+          browser.execute(function() {
+            const hasTable = document.querySelector('#diagnosticReportsTable') !== null;
+            const hasNoDataCard = document.querySelector('.no-data-card') !== null;
+            const pageText = document.querySelector('#diagnosticReportsPage')?.textContent || '';
+            
+            let totalReports = 0;
+            let selectedPatientId = null;
+            let selectedPatient = null;
+            
+            if (typeof DiagnosticReports !== 'undefined') {
+              totalReports = DiagnosticReports.find({}).count();
+              console.log('Total diagnostic reports in database:', totalReports);
+              
+              const testReport = DiagnosticReports.findOne({
+                'code.text': { $regex: 'Lab Report.*' }
+              });
+              console.log('Found test report:', testReport);
+              
+              if (testReport) {
+                console.log('Test report subject:', JSON.stringify(testReport.subject, null, 2));
+                console.log('Test report subject reference:', testReport.subject?.reference);
+                console.log('Test report subject display:', testReport.subject?.display);
+              }
+            }
+            
+            if (typeof Session !== 'undefined') {
+              selectedPatientId = Session.get('selectedPatientId');
+              selectedPatient = Session.get('selectedPatient');
+              console.log('Selected patient in Session:', selectedPatientId, selectedPatient?.name);
+            }
+            
+            return {
+              hasTable: hasTable,
+              hasNoDataCard: hasNoDataCard,
+              hasNoData: pageText.includes('No Data Available'),
+              totalReports: totalReports,
+              hasSelectedPatient: !!selectedPatientId,
+              selectedPatientId: selectedPatientId
+            };
+          }, [], function(result) {
+            console.log('Page state after loading:', result.value);
+          });
+        } else if (attempts >= maxAttempts) {
+          browser.assert.fail('Timed out waiting for diagnostic reports to load');
+        } else {
+          // No data found
+          browser.assert.fail('No diagnostic reports table found or table is empty after loading');
+        }
+      });
+    }
+    
+    waitForDataToLoad();
     
     browser
       .saveScreenshot('tests/nightwatch/screenshots/diagnostic-reports/06-diagnostic-report-in-list.png');

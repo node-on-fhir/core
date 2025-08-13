@@ -255,6 +255,18 @@ describe('ServiceRequests CRUD Operations', function() {
       .waitForElementVisible('body', 10000)
       .pause(1000);  // Allow React to render
 
+    // Check if we're already on the new form
+    browser.execute(function() {
+      const isOnNewForm = window.location.pathname === '/service-requests/new' ||
+                         document.querySelector('#serviceRequestDetailPage') !== null ||
+                         (document.body.textContent || '').includes('New Service Request');
+      return { isOnNewForm };
+    }, [], function(result) {
+      if (result.value.isOnNewForm) {
+        console.log('Already on new service request form, skipping button click');
+      }
+    });
+
     // Now save a screenshot to see what's on the page
     browser.saveScreenshot('tests/nightwatch/screenshots/servicerequests/03-before-click.png');
     

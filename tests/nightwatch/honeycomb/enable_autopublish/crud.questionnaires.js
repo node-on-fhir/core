@@ -371,12 +371,63 @@ describe('Questionnaires CRUD Operations', function() {
         browser.assert.equal(result.value, true, 'Clicked Edit/Lock button to enter edit mode');
       });
 
+    // Wait for form to be editable after clicking edit
+    browser
+      .pause(1000);
+    
+    // Verify form is in edit mode
+    browser.execute(function() {
+      const titleField = document.querySelector('#title');
+      const isDisabled = titleField ? titleField.disabled : true;
+      return {
+        titleFound: !!titleField,
+        isDisabled: isDisabled,
+        isEditable: !isDisabled
+      };
+    }, [], function(result) {
+      console.log('Edit mode check:', result.value);
+      if (!result.value.isEditable) {
+        console.log('Form is not in edit mode yet, trying to click edit button again');
+        // Try clicking edit button again
+        browser.execute(function() {
+          const buttons = document.querySelectorAll('button');
+          for (let button of buttons) {
+            if (button.textContent.includes('Edit')) {
+              button.click();
+              return true;
+            }
+          }
+          return false;
+        });
+        browser.pause(1000);
+      }
+    });
+    
     browser
       .clearValue('#title')
       .setValue('#title', updatedQuestionnaire.title)
-      .click('#status')
-      .pause(100)
-      .click(`option[value="${updatedQuestionnaire.status}"]`)
+      
+      // Handle Material-UI Select for status
+      .execute(function(status) {
+        const statusSelect = document.querySelector('#status');
+        if (statusSelect) {
+          // Click to open dropdown
+          statusSelect.click();
+          
+          // Wait for dropdown to render and select option
+          setTimeout(function() {
+            const options = document.querySelectorAll('li[role="option"]');
+            for (let option of options) {
+              if (option.getAttribute('data-value') === status || option.textContent === status) {
+                option.click();
+                break;
+              }
+            }
+          }, 300);
+        }
+      }, [updatedQuestionnaire.status])
+      .pause(500) // Wait for select to close
+      
       .clearValue('#version')
       .setValue('#version', updatedQuestionnaire.version)
       .clearValue('#lastReviewDate')

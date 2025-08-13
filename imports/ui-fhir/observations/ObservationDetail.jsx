@@ -118,7 +118,8 @@ function ObservationDetail(props) {
         // Prefer selected patient
         patientName = get(selectedPatient, 'name[0].text', '') || 
                      `${get(selectedPatient, 'name[0].given[0]', '')} ${get(selectedPatient, 'name[0].family', '')}`.trim();
-        patientReference = `Patient/${get(selectedPatient, '_id', '')}`;
+        // Use FHIR id for patient reference, not MongoDB _id
+        patientReference = `Patient/${get(selectedPatient, 'id', get(selectedPatient, '_id', ''))}`;
       } else if (currentUser) {
         // Fall back to current user
         patientName = get(currentUser, 'profile.name.text', '') ||
