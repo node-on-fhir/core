@@ -198,52 +198,58 @@ jobs:
             done
       
       - run:
-          name: "Setup and run test group: << parameters.group-name >>"
+          name: Run Nightwatch tests - << parameters.group-name >>
           command: |
+            # Debug information
+            echo "Starting test execution at: $(date)"
+            echo "Current directory: $(pwd)"
+            echo "Node version: $(node --version)"
+            echo "NPM version: $(npm --version)"
+            
+            # Verify Meteor is still running
+            echo "Checking Meteor status..."
+            if ! curl -f http://localhost:3000 > /dev/null 2>&1; then
+              echo "ERROR: Meteor is not responding on port 3000"
+              echo "Checking processes:"
+              ps aux | grep meteor || true
+              exit 1
+            fi
+            echo "Meteor is running"
+            
             echo "========================================"
             echo "Running test group: << parameters.group-name >>"
             echo "Test files: << parameters.test-files >>"
             echo "========================================"
             
-            # Start ChromeDriver
+            # Start ChromeDriver in background
             echo "Starting ChromeDriver..."
-            pkill -f chromedriver || true
-            
-            /usr/local/bin/chromedriver \
-              --port=9515 \
-              --allowed-ips= \
-              --log-level=WARNING \
-              > /tmp/chromedriver.log 2>&1 &
-            
+            /usr/local/bin/chromedriver --port=9515 --log-level=WARNING &> /tmp/chromedriver.log &
             CHROMEDRIVER_PID=$!
-            echo "ChromeDriver started with PID: $CHROMEDRIVER_PID"
             
             # Wait for ChromeDriver
-            for i in {1..10}; do
-              if curl -s http://localhost:9515/status > /dev/null 2>&1; then
-                echo "ChromeDriver is ready!"
-                break
-              fi
-              echo "Waiting for ChromeDriver... ($i/10)"
-              sleep 2
-            done
+            sleep 5
+            
+            # Check if ChromeDriver is running
+            if ! ps -p $CHROMEDRIVER_PID > /dev/null; then
+              echo "ChromeDriver failed to start"
+              cat /tmp/chromedriver.log
+              exit 1
+            fi
+            
+            echo "ChromeDriver is running with PID: $CHROMEDRIVER_PID"
             
             # Run tests
-            echo "Running Nightwatch tests..."
+            echo "Starting Nightwatch tests..."
             export NIGHTWATCH_EXTERNAL_CHROMEDRIVER=true
             
-            # Run tests and capture exit code
-            set +e
-            npx nightwatch --config nightwatch.circle.conf.js << parameters.test-files >>
-            TEST_EXIT_CODE=$?
-            set -e
+            # Run tests without timeout command (might be causing the termination)
+            npx nightwatch --config nightwatch.circle.conf.js << parameters.test-files >> || TEST_EXIT_CODE=$?
             
-            # Stop ChromeDriver
-            echo "Stopping ChromeDriver..."
-            kill $CHROMEDRIVER_PID || true
+            # Cleanup
+            kill $CHROMEDRIVER_PID 2>/dev/null || true
             
-            # Exit with test exit code
-            exit $TEST_EXIT_CODE
+            echo "Test execution completed at: $(date)"
+            exit ${TEST_EXIT_CODE:-0}
           no_output_timeout: 20m
       
       
