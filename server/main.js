@@ -62,6 +62,7 @@ import '../imports/methods/supplyDeliveries.js';
 
 // Import test methods (for non-production environments)
 import '../imports/accounts/server/test-methods.js';
+import '../imports/accounts/server/methods.js';
 
 // Import publications
 import './publications/autopublish.js';

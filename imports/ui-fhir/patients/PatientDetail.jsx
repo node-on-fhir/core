@@ -213,39 +213,52 @@ function PatientDetail(props) {
 
   // Handle save
   const handleSave = async () => {
+    console.log('[PatientDetail] Starting save operation...');
+    console.log('[PatientDetail] Patient data to save:', patient);
+    console.log('[PatientDetail] Current ID:', id);
+    
     try {
       let result;
       
       if (id && id !== 'new') {
         // Update existing patient
         const patientId = patient._id || patient.id;
+        console.log('[PatientDetail] Updating patient with ID:', patientId);
         result = await Meteor.callAsync('patients.update', 
           { $or: [{ id: patientId }, { _id: patientId }] },
           { $set: patient }
         );
+        console.log('[PatientDetail] Update result:', result);
       } else {
         // Create new patient
+        console.log('[PatientDetail] Creating new patient...');
         result = await Meteor.callAsync('patients.insert', patient);
+        console.log('[PatientDetail] Insert result:', result);
         
         // If this is the current user's patient, update the user record
         if (currentUser && !currentUser.patientId) {
+          console.log('[PatientDetail] Linking patient to user...');
           await Meteor.callAsync('users.linkPatient', patient.id);
         }
       }
       
       setSuccessMessage('Patient saved successfully');
+      console.log('[PatientDetail] Save successful, navigating in 1.5s...');
       
       // Navigate back to profile or patients list
       setTimeout(() => {
+        console.log('[PatientDetail] Navigating back to list...');
         if (currentUser && patient.id === currentUser.patientId) {
+          console.log('[PatientDetail] Navigating to /my-profile');
           navigate('/my-profile');
         } else {
+          console.log('[PatientDetail] Navigating to /patients');
           navigate('/patients');
         }
       }, 1500);
       
     } catch (error) {
-      console.error('Error saving patient:', error);
+      console.error('[PatientDetail] Error saving patient:', error);
       setErrors({ save: error.message || 'Failed to save patient' });
     }
   };

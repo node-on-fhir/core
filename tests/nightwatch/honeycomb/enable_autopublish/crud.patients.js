@@ -292,20 +292,61 @@ describe('Patients CRUD Operations', function() {
     // Save the patient
     browser
       .execute(function() {
+        // Capture console output
+        const originalLog = console.log;
+        const originalError = console.error;
+        const logs = [];
+        const errors = [];
+        
+        console.log = function(...args) {
+          logs.push(args.join(' '));
+          originalLog.apply(console, args);
+        };
+        console.error = function(...args) {
+          errors.push(args.join(' '));
+          originalError.apply(console, args);
+        };
+        
+        // Click save button
         const buttons = document.querySelectorAll('button');
+        let clicked = false;
         for (let button of buttons) {
           if (button.textContent.includes('Save')) {
             button.click();
-            return true;
+            clicked = true;
+            break;
           }
         }
-        return false;
+        
+        // Restore console after a brief delay
+        setTimeout(() => {
+          console.log = originalLog;
+          console.error = originalError;
+          
+          // Store captured logs for retrieval
+          window.__saveLogs = logs;
+          window.__saveErrors = errors;
+        }, 100);
+        
+        return clicked;
       }, [], function(result) {
         browser.assert.equal(result.value, true, 'Clicked Save button');
       });
 
     browser
-      .pause(3000);  // Wait longer for async save and navigation (component has 1.5s delay)
+      .pause(3000)  // Wait longer for async save and navigation (component has 1.5s delay)
+      .execute(function() {
+        // Retrieve captured logs
+        return {
+          logs: window.__saveLogs || [],
+          errors: window.__saveErrors || []
+        };
+      }, [], function(result) {
+        console.log('Captured save logs:', result.value.logs);
+        if (result.value.errors.length > 0) {
+          console.log('Captured save errors:', result.value.errors);
+        }
+      })
     
     // Check if save was successful
     browser.execute(function() {
