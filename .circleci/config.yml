@@ -133,6 +133,7 @@ jobs:
         name: mongo
     
     resource_class: medium  # Can use medium for parallel execution
+    parallelism: 1  # Ensure we're not trying to parallelize within the job
     
     steps:
       - browser-tools/install-chrome
@@ -197,97 +198,54 @@ jobs:
             done
       
       - run:
-          name: Start ChromeDriver
+          name: "Setup and run test group: << parameters.group-name >>"
           command: |
-            echo "Starting ChromeDriver..."
-            # Kill any existing ChromeDriver processes
-            pkill -f chromedriver || true
-            sleep 1
+            echo "========================================"
+            echo "Running test group: << parameters.group-name >>"
+            echo "Test files: << parameters.test-files >>"
+            echo "========================================"
             
-            # Start ChromeDriver in background with nohup to keep it running
-            nohup /usr/local/bin/chromedriver \
+            # Start ChromeDriver
+            echo "Starting ChromeDriver..."
+            pkill -f chromedriver || true
+            
+            /usr/local/bin/chromedriver \
               --port=9515 \
               --allowed-ips= \
-              --whitelisted-ips= \
               --log-level=WARNING \
-              --silent \
-              --disable-dev-shm-usage \
               > /tmp/chromedriver.log 2>&1 &
             
-            echo "ChromeDriver PID: $!"
-            echo $! > /tmp/chromedriver.pid
+            CHROMEDRIVER_PID=$!
+            echo "ChromeDriver started with PID: $CHROMEDRIVER_PID"
             
-            # Wait for ChromeDriver to be ready
-            echo "Waiting for ChromeDriver to start..."
-            for i in {1..30}; do
-              if curl -s http://localhost:9515/status | grep -q "ready"; then
+            # Wait for ChromeDriver
+            for i in {1..10}; do
+              if curl -s http://localhost:9515/status > /dev/null 2>&1; then
                 echo "ChromeDriver is ready!"
-                curl -s http://localhost:9515/status | jq .
                 break
               fi
-              echo "Waiting for ChromeDriver... ($i/30)"
+              echo "Waiting for ChromeDriver... ($i/10)"
               sleep 2
             done
             
-            # Final check
-            if ! curl -s http://localhost:9515/status | grep -q "ready"; then
-              echo "ERROR: ChromeDriver failed to start"
-              echo "ChromeDriver log:"
-              cat /tmp/chromedriver.log || true
-              exit 1
-            fi
-            
-            # Verify ChromeDriver is still running
-            if [ -f /tmp/chromedriver.pid ]; then
-              PID=$(cat /tmp/chromedriver.pid)
-              if ps -p $PID > /dev/null; then
-                echo "ChromeDriver is running with PID $PID"
-              else
-                echo "ERROR: ChromeDriver process died"
-                cat /tmp/chromedriver.log || true
-                exit 1
-              fi
-            fi
-      
-      - run:
-          name: "Run test group: << parameters.group-name >>"
-          command: |
-            echo "Running test group: << parameters.group-name >>"
-            echo "Test files: << parameters.test-files >>"
-            
-            # Verify ChromeDriver is still running
-            echo "Checking ChromeDriver status..."
-            if curl -s http://localhost:9515/status | grep -q "ready"; then
-              echo "ChromeDriver is ready and responding"
-            else
-              echo "ERROR: ChromeDriver is not responding!"
-              echo "Checking process..."
-              ps aux | grep chromedriver || true
-              echo "ChromeDriver log:"
-              tail -n 50 /tmp/chromedriver.log || true
-              exit 1
-            fi
-            
-            # Set environment variable to use external ChromeDriver
+            # Run tests
+            echo "Running Nightwatch tests..."
             export NIGHTWATCH_EXTERNAL_CHROMEDRIVER=true
             
-            # Use the existing nightwatch.circle.conf.js
+            # Run tests and capture exit code
+            set +e
             npx nightwatch --config nightwatch.circle.conf.js << parameters.test-files >>
-          no_output_timeout: 15m
+            TEST_EXIT_CODE=$?
+            set -e
+            
+            # Stop ChromeDriver
+            echo "Stopping ChromeDriver..."
+            kill $CHROMEDRIVER_PID || true
+            
+            # Exit with test exit code
+            exit $TEST_EXIT_CODE
+          no_output_timeout: 20m
       
-      - run:
-          name: Stop ChromeDriver
-          command: |
-            if [ -f /tmp/chromedriver.pid ]; then
-              PID=$(cat /tmp/chromedriver.pid)
-              echo "Stopping ChromeDriver (PID: $PID)"
-              kill $PID || true
-              rm /tmp/chromedriver.pid
-            else
-              echo "No ChromeDriver PID file found, using pkill"
-              pkill -f chromedriver || true
-            fi
-          when: always
       
       - store_test_results:
           path: tests/output
