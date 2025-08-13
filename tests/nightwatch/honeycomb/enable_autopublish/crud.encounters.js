@@ -393,6 +393,27 @@ describe('Encounters CRUD Operations', function() {
       .pause(500)
       .saveScreenshot('tests/nightwatch/screenshots/encounters/04-filled-encounter-form.png');
 
+    // Debug: Log form values before saving
+    browser.execute(function() {
+      const practitionerField = document.querySelector('#practitionerDisplay');
+      const encounterTypeField = document.querySelector('#encounterType');
+      const statusSelect = document.querySelector('#status');
+      const classSelect = document.querySelector('#classCode');
+      
+      console.log('Form values before save:');
+      console.log('- Practitioner:', practitionerField ? practitionerField.value : 'Not found');
+      console.log('- Encounter Type:', encounterTypeField ? encounterTypeField.value : 'Not found');
+      console.log('- Status:', statusSelect ? statusSelect.value : 'Not found');
+      console.log('- Class:', classSelect ? classSelect.value : 'Not found');
+      
+      return {
+        practitioner: practitionerField ? practitionerField.value : null,
+        encounterType: encounterTypeField ? encounterTypeField.value : null
+      };
+    }, [], function(result) {
+      console.log('Form debug info:', result.value);
+    });
+    
     browser
       .execute(function() {
         window.consoleErrors = [];
@@ -464,7 +485,48 @@ describe('Encounters CRUD Operations', function() {
     browser
       .waitForElementVisible('#encountersPage', 5000)
       .pause(500)
-      .waitForElementVisible('#encountersTable', 5000)
+      .waitForElementVisible('#encountersTable', 5000);
+    
+    // Debug: Check what's actually in the table
+    browser.execute(function() {
+      const table = document.querySelector('#encountersTable');
+      const rows = table ? table.querySelectorAll('tbody tr') : [];
+      console.log('Table rows found:', rows.length);
+      let tableContent = [];
+      for (let i = 0; i < Math.min(rows.length, 5); i++) {
+        tableContent.push(rows[i].textContent.trim());
+      }
+      
+      // Also check if there are any encounters in the collection
+      let totalEncounters = 0;
+      if (typeof Encounters !== 'undefined') {
+        totalEncounters = Encounters.find().count();
+        console.log('Total encounters in collection:', totalEncounters);
+        
+        // Get the most recent encounter
+        const mostRecent = Encounters.findOne({}, {sort: {_id: -1}});
+        if (mostRecent) {
+          console.log('Most recent encounter:', mostRecent);
+          console.log('Has participant:', !!mostRecent.participant);
+          if (mostRecent.participant && mostRecent.participant[0]) {
+            console.log('Participant display:', mostRecent.participant[0].individual?.display);
+          }
+        }
+      }
+      
+      return {
+        rowCount: rows.length,
+        firstFiveRows: tableContent,
+        hasTable: !!table,
+        totalEncounters: totalEncounters
+      };
+    }, [], function(result) {
+      console.log('Table debug info:', result.value);
+    });
+    
+    // The table displays practitionerDisplay which comes from participant[0].individual.display
+    // We need to check for the practitioner name we set
+    browser
       .assert.containsText('#encountersTable', testEncounter.practitionerName)
       .assert.containsText('#encountersTable', testEncounter.encounterTypeDisplay)
       .saveScreenshot('tests/nightwatch/screenshots/encounters/06-encounter-in-list.png');

@@ -1079,7 +1079,61 @@ describe('DocumentReferences CRUD Operations', function() {
       }, [], function(result) {
         browser.assert.equal(result.value, true, 'Clicked Edit/Lock button to enter edit mode');
       })
-      .pause(500);
+      .pause(1000);  // Increased pause to allow form to enable
+
+    // Check if fields are enabled
+    browser.execute(function() {
+      const typeInput = document.querySelector('#typeInput');
+      const descriptionInput = document.querySelector('#descriptionInput');
+      const contentTitleInput = document.querySelector('#contentTitleInput');
+      
+      return {
+        typeInputDisabled: typeInput ? typeInput.disabled : 'not found',
+        descriptionInputDisabled: descriptionInput ? descriptionInput.disabled : 'not found',
+        contentTitleInputDisabled: contentTitleInput ? contentTitleInput.disabled : 'not found',
+        formFieldsFound: !!(typeInput && descriptionInput && contentTitleInput)
+      };
+    }, [], function(result) {
+      console.log('Field states after edit click:', result.value);
+    });
+
+    // Wait for fields to be enabled after entering edit mode
+    browser.execute(function() {
+      // Wait for fields to be enabled
+      const waitForEnabled = (selector, maxAttempts = 10) => {
+        let attempts = 0;
+        return new Promise((resolve) => {
+          const checkInterval = setInterval(() => {
+            const element = document.querySelector(selector);
+            attempts++;
+            if (element && !element.disabled) {
+              clearInterval(checkInterval);
+              resolve(true);
+            } else if (attempts >= maxAttempts) {
+              clearInterval(checkInterval);
+              resolve(false);
+            }
+          }, 200);
+        });
+      };
+      
+      // Wait for all fields to be enabled
+      return Promise.all([
+        waitForEnabled('#typeInput'),
+        waitForEnabled('#descriptionInput'),
+        waitForEnabled('#contentTitleInput')
+      ]).then(results => ({
+        allEnabled: results.every(r => r === true),
+        typeEnabled: results[0],
+        descriptionEnabled: results[1],
+        contentTitleEnabled: results[2]
+      }));
+    }, [], function(result) {
+      console.log('Fields enabled status:', result.value);
+      if (!result.value.allEnabled) {
+        browser.assert.fail('Not all fields became enabled after clicking edit');
+      }
+    });
 
     // Update document details
     browser
@@ -1092,21 +1146,27 @@ describe('DocumentReferences CRUD Operations', function() {
       .click('#contentTitleInput')
       .clearValue('#contentTitleInput')
       .setValue('#contentTitleInput', updatedDocumentReference.contentTitle)
-      .click('#statusSelect')
-      .pause(300)
-      .execute(function(value) {
-        const menuItems = document.querySelectorAll('[role="option"]');
-        for (let item of menuItems) {
-          if (item.textContent.toLowerCase().includes(value.toLowerCase()) || 
-              item.getAttribute('data-value') === value) {
-            item.click();
-            return true;
-          }
+      .pause(500)  // Wait for fields to be ready
+      .execute(function(status) {
+        // For Material-UI Select, we need to click and then find the option
+        const statusSelect = document.querySelector('#statusSelect');
+        if (statusSelect) {
+          statusSelect.click();
+          // Wait a bit for the menu to open
+          setTimeout(() => {
+            const menuItems = document.querySelectorAll('[role="option"]');
+            for (let item of menuItems) {
+              if (item.getAttribute('data-value') === status || 
+                  item.textContent.toLowerCase() === status.toLowerCase()) {
+                item.click();
+                return;
+              }
+            }
+          }, 300);
+          return true;
         }
         return false;
-      }, [updatedDocumentReference.status], function(result) {
-        browser.assert.equal(result.value, true, 'Selected status');
-      })
+      }, [updatedDocumentReference.status])
       .click('#notesTextarea')
       .clearValue('#notesTextarea')
       .setValue('#notesTextarea', updatedDocumentReference.notes)

@@ -56,7 +56,8 @@ describe('Procedures CRUD Operations', function() {
     }, [], function(result) {
       console.log('Initial login state:', result.value);
       
-      if (!result.value.isLoggedIn) {
+      // Check if result.value exists before accessing its properties
+      if (!result.value || !result.value.isLoggedIn) {
         console.log('Not logged in, attempting programmatic login...');
         
         browser.executeAsync(function(done) {
