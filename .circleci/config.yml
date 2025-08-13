@@ -198,36 +198,55 @@ jobs:
       
       - run:
           name: Start ChromeDriver
-          background: true
           command: |
             echo "Starting ChromeDriver..."
             # Kill any existing ChromeDriver processes
             pkill -f chromedriver || true
             sleep 1
             
-            # Start ChromeDriver with explicit options
-            /usr/local/bin/chromedriver \
+            # Start ChromeDriver in background with nohup to keep it running
+            nohup /usr/local/bin/chromedriver \
               --port=9515 \
               --allowed-ips= \
               --whitelisted-ips= \
               --log-level=WARNING \
               --silent \
-              --disable-dev-shm-usage &
+              --disable-dev-shm-usage \
+              > /tmp/chromedriver.log 2>&1 &
+            
+            echo "ChromeDriver PID: $!"
+            echo $! > /tmp/chromedriver.pid
             
             # Wait for ChromeDriver to be ready
+            echo "Waiting for ChromeDriver to start..."
             for i in {1..30}; do
               if curl -s http://localhost:9515/status | grep -q "ready"; then
-                echo "ChromeDriver is ready"
+                echo "ChromeDriver is ready!"
+                curl -s http://localhost:9515/status | jq .
                 break
               fi
               echo "Waiting for ChromeDriver... ($i/30)"
-              sleep 1
+              sleep 2
             done
             
             # Final check
             if ! curl -s http://localhost:9515/status | grep -q "ready"; then
               echo "ERROR: ChromeDriver failed to start"
+              echo "ChromeDriver log:"
+              cat /tmp/chromedriver.log || true
               exit 1
+            fi
+            
+            # Verify ChromeDriver is still running
+            if [ -f /tmp/chromedriver.pid ]; then
+              PID=$(cat /tmp/chromedriver.pid)
+              if ps -p $PID > /dev/null; then
+                echo "ChromeDriver is running with PID $PID"
+              else
+                echo "ERROR: ChromeDriver process died"
+                cat /tmp/chromedriver.log || true
+                exit 1
+              fi
             fi
       
       - run:
@@ -235,6 +254,19 @@ jobs:
           command: |
             echo "Running test group: << parameters.group-name >>"
             echo "Test files: << parameters.test-files >>"
+            
+            # Verify ChromeDriver is still running
+            echo "Checking ChromeDriver status..."
+            if curl -s http://localhost:9515/status | grep -q "ready"; then
+              echo "ChromeDriver is ready and responding"
+            else
+              echo "ERROR: ChromeDriver is not responding!"
+              echo "Checking process..."
+              ps aux | grep chromedriver || true
+              echo "ChromeDriver log:"
+              tail -n 50 /tmp/chromedriver.log || true
+              exit 1
+            fi
             
             # Set environment variable to use external ChromeDriver
             export NIGHTWATCH_EXTERNAL_CHROMEDRIVER=true
@@ -246,7 +278,15 @@ jobs:
       - run:
           name: Stop ChromeDriver
           command: |
-            pkill -f chromedriver || true
+            if [ -f /tmp/chromedriver.pid ]; then
+              PID=$(cat /tmp/chromedriver.pid)
+              echo "Stopping ChromeDriver (PID: $PID)"
+              kill $PID || true
+              rm /tmp/chromedriver.pid
+            else
+              echo "No ChromeDriver PID file found, using pkill"
+              pkill -f chromedriver || true
+            fi
           when: always
       
       - store_test_results:
