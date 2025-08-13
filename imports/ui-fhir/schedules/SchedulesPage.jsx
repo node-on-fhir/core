@@ -59,12 +59,15 @@ Session.setDefault('SchedulesTable.schedulesIndex', 0)
 // MAIN COMPONENT
 
 export function SchedulesPage(props){
-  const navigate = useNavigate();
-  const [sortOrder, setSortOrder] = useState('descending');
-  const [showPatientName, setShowPatientName] = useState(false);
-  const [showPatientReference, setShowPatientReference] = useState(false);
-  const [showSystemId, setShowSystemId] = useState(false);
-  const [searchFilter, setSearchFilter] = useState('');
+  console.log('SchedulesPage component rendering');
+  
+  try {
+    const navigate = useNavigate();
+    const [sortOrder, setSortOrder] = useState('descending');
+    const [showPatientName, setShowPatientName] = useState(false);
+    const [showPatientReference, setShowPatientReference] = useState(false);
+    const [showSystemId, setShowSystemId] = useState(false);
+    const [searchFilter, setSearchFilter] = useState('');
   
   // Clean up debug flag on unmount
   useEffect(() => {
@@ -108,6 +111,10 @@ export function SchedulesPage(props){
   // Data trackers
   const schedules = useTracker(() => {
     // Data is already filtered by the subscription
+    if (!Schedules || typeof Schedules.find !== 'function') {
+      console.error('Schedules collection not available');
+      return [];
+    }
     return Schedules.find({}).fetch();
   }, []);
   
@@ -340,6 +347,14 @@ export function SchedulesPage(props){
       { layoutContent }
     </Box>
   );
+  } catch (error) {
+    console.error('Error rendering SchedulesPage:', error);
+    return (
+      <Box id="schedulesPage" sx={{ p: 4 }}>
+        <Typography color="error">Error loading schedules page: {error.message}</Typography>
+      </Box>
+    );
+  }
 }
 
 export default SchedulesPage;

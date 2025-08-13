@@ -183,7 +183,7 @@ jobs:
           name: Start Meteor
           background: true
           command: |
-            meteor run --settings configs/settings.honeycomb.localhost.json
+            meteor run --settings configs/settings.honeycomb.tdd.json
       
       - run:
           name: Wait for Meteor

@@ -143,33 +143,55 @@ describe('Schedules CRUD Operations', function() {
   it('02. Verify schedules list page loads', browser => {
     browser
       .url('http://localhost:3000/schedules')
-      .pause(2000) // Give page time to load
+      .waitForElementVisible('body', 10000)
+      .pause(2000) // Give React time to render
       .execute(function() {
         // Check if the page loaded at all
-        console.log('Document body:', document.body.innerHTML.substring(0, 200));
-        console.log('Checking for schedulesPage element:', document.querySelector('#schedulesPage'));
+        console.log('Document body length:', document.body.innerHTML.length);
+        console.log('Document title:', document.title);
         
-        // Check for any React errors
-        const errorElement = document.querySelector('#react-error-overlay');
-        if (errorElement) {
-          console.error('React error found:', errorElement.textContent);
+        // Check for React root
+        const reactRoot = document.querySelector('#react-target');
+        console.log('React root found:', reactRoot !== null);
+        
+        // Check for any error overlay
+        const errorOverlay = document.querySelector('[id*="error"]');
+        if (errorOverlay) {
+          console.error('Error element found:', errorOverlay.id, errorOverlay.textContent);
         }
+        
+        // Check if we're on the right page
+        console.log('Current URL:', window.location.href);
+        
+        // Check for the schedulesPage element
+        const schedulesPage = document.querySelector('#schedulesPage');
+        console.log('schedulesPage element:', schedulesPage);
         
         // Check if Schedules collection exists
         if (typeof Schedules !== 'undefined') {
-          console.log('Schedules collection exists');
+          console.log('Schedules collection exists, count:', Schedules.find({}).count());
         } else {
           console.error('Schedules collection is undefined');
         }
         
+        // Check for any console errors
+        if (window.__errorLog) {
+          console.error('Console errors found:', window.__errorLog);
+        }
+        
         // Return debug info
         return {
-          hasSchedulesPage: document.querySelector('#schedulesPage') !== null,
+          hasSchedulesPage: schedulesPage !== null,
           bodyLength: document.body.innerHTML.length,
-          hasReactRoot: document.querySelector('#react-target') !== null
+          hasReactRoot: reactRoot !== null,
+          url: window.location.href,
+          title: document.title
         };
       }, [], function(result) {
         console.log('Page debug info:', result.value);
+        if (!result.value.hasSchedulesPage && result.value.bodyLength < 1000) {
+          browser.saveScreenshot('tests/nightwatch/screenshots/schedules/debug-blank-page.png');
+        }
       })
       .waitForElementVisible('#schedulesPage', 5000)
       .pause(500)
