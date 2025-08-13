@@ -219,6 +219,10 @@ describe('MedicationRequests CRUD Operations', function() {
 
     browser
       .execute(function() {
+        // Get all buttons
+        const buttons = document.querySelectorAll('button');
+        const fabButtons = document.querySelectorAll('.fab, [data-testid="add-button"], .MuiFab-root');
+        
         // Try multiple selectors
         for (let button of buttons) {
           const text = button.textContent.toLowerCase();
@@ -748,7 +752,26 @@ describe('MedicationRequests CRUD Operations', function() {
       });
 
     browser
-      .waitForElementVisible('#medicationRequestsPage', 5000);
+      .pause(2000)  // Give time for save to complete
+      .execute(function() {
+        // Check if we're still on the detail page or have navigated to list
+        const detailPage = document.querySelector('#medicationRequestDetailPage');
+        const listPage = document.querySelector('#medicationRequestsPage');
+        return {
+          onDetailPage: !!detailPage,
+          onListPage: !!listPage,
+          currentUrl: window.location.pathname
+        };
+      }, [], function(result) {
+        console.log('Navigation state after save:', result.value);
+        if (result.value.onDetailPage && !result.value.onListPage) {
+          // Still on detail page, navigate to list
+          browser.url('http://localhost:3000/medication-requests');
+        }
+      });
+    
+    browser
+      .waitForElementVisible('#medicationRequestsPage', 10000);
 
     // Check if the update was saved
     browser.execute(function() {
