@@ -36,14 +36,13 @@ describe('QuestionnaireResponses CRUD Operations', function() {
   });
 
   beforeEach(browser => {
-    browser.pause(500);
+    // Removed unnecessary pause
   });
 
   it('01. Setup test environment', browser => {
     browser
       .url('http://localhost:3000')
-      .waitForElementVisible('body', 5000)
-      .pause(2000);
+      .waitForElementVisible('body', 5000);
 
     // Check if we're logged in
     browser.execute(function() {
@@ -113,7 +112,7 @@ describe('QuestionnaireResponses CRUD Operations', function() {
           }
         });
         
-        browser.pause(1000);
+        browser.pause(500);
       } else {
         browser.assert.ok(true, 'Already logged in (autologin enabled)');
         console.log('Already logged in as:', result.value.username, 'userId:', result.value.userId);
@@ -159,8 +158,7 @@ describe('QuestionnaireResponses CRUD Operations', function() {
         done();
       });
       
-      browser.pause(1000)
-        .execute(function(testIdentifier) {
+      browser.execute(function(testIdentifier) {
           if (typeof Session !== 'undefined' && typeof Patients !== 'undefined') {
             const patient = Patients.findOne({
               'identifier.value': testIdentifier
@@ -189,7 +187,7 @@ describe('QuestionnaireResponses CRUD Operations', function() {
   it('02. Verify questionnaire responses list page loads', browser => {
     browser
       .url('http://localhost:3000/questionnaire-responses')
-      .pause(3000)
+      .pause(1000)
       .execute(function() {
         // Capture any console errors
         window.consoleErrors = [];
@@ -210,9 +208,7 @@ describe('QuestionnaireResponses CRUD Operations', function() {
       }, [], function(result) {
         console.log('Page load state:', result.value);
       })
-      .pause(2000)
       .waitForElementVisible('#questionnaireResponsesPage', 10000)
-      .pause(2000)
       .execute(function() {
         const hasTable = document.querySelector('#questionnaireResponsesTable') !== null;
         const hasNoDataCard = document.querySelector('.no-data-card') !== null ||
@@ -252,7 +248,6 @@ describe('QuestionnaireResponses CRUD Operations', function() {
       });
 
     browser
-      .pause(1000)
       .waitForElementVisible('#questionnaireResponseDetailPage', 5000)
       .assert.elementPresent('#subjectDisplay')
       .assert.elementPresent('#authorDisplay')
@@ -289,7 +284,7 @@ describe('QuestionnaireResponses CRUD Operations', function() {
       .assert.urlContains('/questionnaire-responses/new');
 
     browser
-      .pause(1000);
+      .pause(500);
 
     browser.execute(function() {
       const authorField = document.querySelector('#authorDisplay');
@@ -324,7 +319,6 @@ describe('QuestionnaireResponses CRUD Operations', function() {
           authorField.dispatchEvent(inputEvent);
         }
       })
-      .pause(100)
       .setValue('#authorDisplay', testQuestionnaireResponse.authorName)
       .click('#questionnaire')
       .execute(function() {
@@ -341,7 +335,6 @@ describe('QuestionnaireResponses CRUD Operations', function() {
           questionnaireField.dispatchEvent(inputEvent);
         }
       })
-      .pause(100)
       .setValue('#questionnaire', testQuestionnaireResponse.questionnaire)
       .click('#questionnaireDisplay')
       .execute(function() {
@@ -358,7 +351,6 @@ describe('QuestionnaireResponses CRUD Operations', function() {
           questionnaireDisplayField.dispatchEvent(inputEvent);
         }
       })
-      .pause(100)
       .setValue('#questionnaireDisplay', testQuestionnaireResponse.questionnaireDisplay);
 
     // Handle Material-UI Select component for status
@@ -381,44 +373,28 @@ describe('QuestionnaireResponses CRUD Operations', function() {
     browser
       .pause(500)
       .click('#authored')
-      .keys([browser.Keys.COMMAND, 'a'])
-      .keys(browser.Keys.BACK_SPACE)
-      .pause(100)
+      .clearValue('#authored')
       .setValue('#authored', testQuestionnaireResponse.authored)
       .click('#source')
-      .keys([browser.Keys.COMMAND, 'a'])
-      .keys(browser.Keys.BACK_SPACE)
-      .pause(100)
+      .clearValue('#source')
       .setValue('#source', testQuestionnaireResponse.source)
       .click('#basedOn')
-      .keys([browser.Keys.COMMAND, 'a'])
-      .keys(browser.Keys.BACK_SPACE)
-      .pause(100)
+      .clearValue('#basedOn')
       .setValue('#basedOn', testQuestionnaireResponse.basedOn)
       .click('#partOf')
-      .keys([browser.Keys.COMMAND, 'a'])
-      .keys(browser.Keys.BACK_SPACE)
-      .pause(100)
+      .clearValue('#partOf')
       .setValue('#partOf', testQuestionnaireResponse.partOf)
       .click('#identifier')
-      .keys([browser.Keys.COMMAND, 'a'])
-      .keys(browser.Keys.BACK_SPACE)
-      .pause(100)
+      .clearValue('#identifier')
       .setValue('#identifier', testQuestionnaireResponse.identifier)
       .click('#reasonCode')
-      .keys([browser.Keys.COMMAND, 'a'])
-      .keys(browser.Keys.BACK_SPACE)
-      .pause(100)
+      .clearValue('#reasonCode')
       .setValue('#reasonCode', testQuestionnaireResponse.reasonCode)
       .click('#reasonDisplay')
-      .keys([browser.Keys.COMMAND, 'a'])
-      .keys(browser.Keys.BACK_SPACE)
-      .pause(100)
+      .clearValue('#reasonDisplay')
       .setValue('#reasonDisplay', testQuestionnaireResponse.reasonDisplay)
       .click('#notesTextarea')
-      .keys([browser.Keys.COMMAND, 'a'])
-      .keys(browser.Keys.BACK_SPACE)
-      .pause(100)
+      .clearValue('#notesTextarea')
       .setValue('#notesTextarea', testQuestionnaireResponse.notes)
       .pause(500)
       .saveScreenshot('tests/nightwatch/screenshots/questionnaireresponses/04-filled-questionnaireresponse-form.png');
@@ -445,7 +421,7 @@ describe('QuestionnaireResponses CRUD Operations', function() {
       });
 
     browser
-      .pause(2000);
+      .waitForElementVisible('#questionnaireResponsesPage', 5000);
     
     browser.execute(function() {
       const currentUrl = window.location.pathname;
@@ -493,7 +469,6 @@ describe('QuestionnaireResponses CRUD Operations', function() {
   it('05. Verify new questionnaire response appears in list', browser => {
     browser
       .waitForElementVisible('#questionnaireResponsesPage', 5000)
-      .pause(1000)
       .waitForElementVisible('#questionnaireResponsesTable', 5000)
       .assert.containsText('#questionnaireResponsesTable', testQuestionnaireResponse.authorName)
       .assert.containsText('#questionnaireResponsesTable', testQuestionnaireResponse.questionnaireDisplay)
@@ -504,7 +479,7 @@ describe('QuestionnaireResponses CRUD Operations', function() {
     browser
       .url('http://localhost:3000/questionnaire-responses')
       .waitForElementVisible('#questionnaireResponsesTable', 5000)
-      .pause(1000);
+      .pause(500);
 
     browser
       .execute(function(authorName) {
@@ -521,7 +496,6 @@ describe('QuestionnaireResponses CRUD Operations', function() {
       });
 
     browser
-      .pause(1000)
       .waitForElementVisible('#questionnaireResponseDetailPage', 5000)
       .assert.valueContains('#authorDisplay', testQuestionnaireResponse.authorName)
       .assert.valueContains('#questionnaire', testQuestionnaireResponse.questionnaire)
@@ -553,7 +527,7 @@ describe('QuestionnaireResponses CRUD Operations', function() {
   it('07. Update existing questionnaire response', browser => {
     browser
       .waitForElementVisible('#questionnaireResponsesTable', 5000)
-      .pause(1000);
+      .pause(500);
 
     browser
       .execute(function(authorName) {
@@ -570,7 +544,6 @@ describe('QuestionnaireResponses CRUD Operations', function() {
       });
 
     browser
-      .pause(1000)
       .waitForElementVisible('#questionnaireResponseDetailPage', 5000)
       .pause(500);
 
@@ -596,9 +569,7 @@ describe('QuestionnaireResponses CRUD Operations', function() {
 
     browser
       .click('#authorDisplay')
-      .keys([browser.Keys.COMMAND, 'a'])
-      .keys(browser.Keys.BACK_SPACE)
-      .pause(100)
+      .clearValue('#authorDisplay')
       .setValue('#authorDisplay', updatedQuestionnaireResponse.authorName)
       .click('#status')
       .pause(300)
@@ -616,14 +587,10 @@ describe('QuestionnaireResponses CRUD Operations', function() {
         browser.assert.equal(result.value, true, 'Selected status');
       })
       .click('#authored')
-      .keys([browser.Keys.COMMAND, 'a'])
-      .keys(browser.Keys.BACK_SPACE)
-      .pause(100)
+      .clearValue('#authored')
       .setValue('#authored', updatedQuestionnaireResponse.authored)
       .click('#notesTextarea')
-      .keys([browser.Keys.COMMAND, 'a'])
-      .keys(browser.Keys.BACK_SPACE)
-      .pause(100)
+      .clearValue('#notesTextarea')
       .setValue('#notesTextarea', updatedQuestionnaireResponse.notes)
       .pause(500)
       .saveScreenshot('tests/nightwatch/screenshots/questionnaireresponses/08-updated-questionnaireresponse-form.png');
@@ -643,7 +610,7 @@ describe('QuestionnaireResponses CRUD Operations', function() {
       });
 
     browser
-      .pause(2000)
+      .pause(1000)
       .url('http://localhost:3000/questionnaire-responses')
       .waitForElementVisible('#questionnaireResponsesTable', 5000)
       .saveScreenshot('tests/nightwatch/screenshots/questionnaireresponses/09-questionnaireresponse-updated.png');
@@ -652,7 +619,6 @@ describe('QuestionnaireResponses CRUD Operations', function() {
   it('08. Verify updated questionnaire response in list', browser => {
     browser
       .waitForElementVisible('#questionnaireResponsesTable', 5000)
-      .pause(1000)
       .assert.containsText('#questionnaireResponsesTable', updatedQuestionnaireResponse.authorName)
       .saveScreenshot('tests/nightwatch/screenshots/questionnaireresponses/10-updated-questionnaireresponse-in-list.png');
   });
@@ -660,7 +626,7 @@ describe('QuestionnaireResponses CRUD Operations', function() {
   it('09. Delete questionnaire response', browser => {
     browser
       .waitForElementVisible('#questionnaireResponsesPage', 5000)
-      .pause(1000);
+      .pause(500);
 
     // First check if we have a table or no data state
     browser.execute(function() {
@@ -686,7 +652,6 @@ describe('QuestionnaireResponses CRUD Operations', function() {
           });
 
         browser
-          .pause(1000)
           .waitForElementVisible('#questionnaireResponseDetailPage', 5000);
 
         browser
@@ -738,7 +703,6 @@ describe('QuestionnaireResponses CRUD Operations', function() {
           .pause(500);
 
         browser
-          .pause(2000)
           .waitForElementVisible('#questionnaireResponsesPage', 5000)
           .execute(function() {
             const hasTable = document.querySelector('#questionnaireResponsesTable') !== null;
@@ -767,7 +731,6 @@ describe('QuestionnaireResponses CRUD Operations', function() {
   it('10. Verify questionnaire response removed from list', browser => {
     browser
       .waitForElementVisible('#questionnaireResponsesPage', 5000)
-      .pause(1000)
       .execute(function(timestamp) {
         // Check if table exists first
         const table = document.querySelector('#questionnaireResponsesTable');
@@ -819,7 +782,6 @@ describe('QuestionnaireResponses CRUD Operations', function() {
       });
 
     browser
-      .pause(1000)
       .waitForElementVisible('#questionnaireResponseDetailPage', 5000);
 
     browser
@@ -837,7 +799,7 @@ describe('QuestionnaireResponses CRUD Operations', function() {
       });
 
     browser
-      .pause(2000);
+      .waitForElementVisible('#questionnaireResponsesPage', 5000);
 
     // Check where we are after save
     browser.execute(function() {
@@ -886,7 +848,7 @@ describe('QuestionnaireResponses CRUD Operations', function() {
       
       browser
         .waitForElementVisible('#questionnaireResponsesPage', 10000, 'Form submitted and returned to questionnaire responses list')
-        .pause(1000) // Wait for table to update
+        .pause(500) // Wait for table to update
       .execute(function() {
         const rows = document.querySelectorAll('#questionnaireResponsesTable tbody tr');
         let foundMinimalQuestionnaireResponse = false;

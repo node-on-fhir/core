@@ -38,14 +38,13 @@ describe('Procedures CRUD Operations', function() {
   });
 
   beforeEach(browser => {
-    browser.pause(500);
+    // Removed unnecessary pause
   });
 
   it('01. Setup test environment', browser => {
     browser
       .url('http://localhost:3000')
-      .waitForElementVisible('body', 5000)
-      .pause(2000);
+      .waitForElementVisible('body', 5000);
 
     // Check if we're logged in
     browser.execute(function() {
@@ -196,8 +195,7 @@ describe('Procedures CRUD Operations', function() {
     browser
       .url('http://localhost:3000/procedures')
       .waitForElementVisible('#proceduresPage', 5000)
-      .pause(2000)
-      .execute(function() {
+            .execute(function() {
         const hasTable = document.querySelector('#proceduresTable') !== null;
         const hasNoDataCard = document.querySelector('.no-data-card') !== null ||
                             document.querySelector('.no-data-available') !== null ||
@@ -236,7 +234,7 @@ describe('Procedures CRUD Operations', function() {
       });
 
     browser
-      .pause(1000)
+      .pause(500)
       .waitForElementVisible('#procedureDetailPage', 5000)
       .assert.elementPresent('#subjectDisplay')
       .assert.elementPresent('#performerDisplay')
@@ -275,7 +273,7 @@ describe('Procedures CRUD Operations', function() {
       .assert.urlContains('/procedures/new');
 
     browser
-      .pause(1000);
+      .pause(500);
 
     browser.execute(function() {
       const performerField = document.querySelector('#performerDisplay');
@@ -310,7 +308,6 @@ describe('Procedures CRUD Operations', function() {
           performerField.dispatchEvent(inputEvent);
         }
       })
-      .pause(100)
       .setValue('#performerDisplay', testProcedure.performerName)
       .click('#codeCode')
       .execute(function() {
@@ -327,7 +324,6 @@ describe('Procedures CRUD Operations', function() {
           codeField.dispatchEvent(inputEvent);
         }
       })
-      .pause(100)
       .setValue('#codeCode', testProcedure.code)
       .click('#codeDisplay')
       .execute(function() {
@@ -344,7 +340,6 @@ describe('Procedures CRUD Operations', function() {
           displayField.dispatchEvent(inputEvent);
         }
       })
-      .pause(100)
       .setValue('#codeDisplay', testProcedure.display);
 
     // Handle Material-UI Select component for status
@@ -367,54 +362,34 @@ describe('Procedures CRUD Operations', function() {
     browser
       .pause(500)
       .click('#categoryCode')
-      .keys([browser.Keys.COMMAND, 'a'])
-      .keys(browser.Keys.BACK_SPACE)
-      .pause(100)
+      .clearValue('#categoryCode')
       .setValue('#categoryCode', testProcedure.category)
       .click('#categoryDisplay')
-      .keys([browser.Keys.COMMAND, 'a'])
-      .keys(browser.Keys.BACK_SPACE)
-      .pause(100)
+      .clearValue('#categoryDisplay')
       .setValue('#categoryDisplay', testProcedure.categoryDisplay)
       .click('#performedDateTime')
-      .keys([browser.Keys.COMMAND, 'a'])
-      .keys(browser.Keys.BACK_SPACE)
-      .pause(100)
+      .clearValue('#performedDateTime')
       .setValue('#performedDateTime', testProcedure.performedDateTime)
       .click('#bodySiteCode')
-      .keys([browser.Keys.COMMAND, 'a'])
-      .keys(browser.Keys.BACK_SPACE)
-      .pause(100)
+      .clearValue('#bodySiteCode')
       .setValue('#bodySiteCode', testProcedure.bodySiteCode)
       .click('#bodySiteDisplay')
-      .keys([browser.Keys.COMMAND, 'a'])
-      .keys(browser.Keys.BACK_SPACE)
-      .pause(100)
+      .clearValue('#bodySiteDisplay')
       .setValue('#bodySiteDisplay', testProcedure.bodySiteDisplay)
       .click('#outcome')
-      .keys([browser.Keys.COMMAND, 'a'])
-      .keys(browser.Keys.BACK_SPACE)
-      .pause(100)
+      .clearValue('#outcome')
       .setValue('#outcome', testProcedure.outcome)
       .click('#reasonCode')
-      .keys([browser.Keys.COMMAND, 'a'])
-      .keys(browser.Keys.BACK_SPACE)
-      .pause(100)
+      .clearValue('#reasonCode')
       .setValue('#reasonCode', testProcedure.reasonCode)
       .click('#reasonDisplay')
-      .keys([browser.Keys.COMMAND, 'a'])
-      .keys(browser.Keys.BACK_SPACE)
-      .pause(100)
+      .clearValue('#reasonDisplay')
       .setValue('#reasonDisplay', testProcedure.reasonDisplay)
       .click('#locationDisplay')
-      .keys([browser.Keys.COMMAND, 'a'])
-      .keys(browser.Keys.BACK_SPACE)
-      .pause(100)
+      .clearValue('#locationDisplay')
       .setValue('#locationDisplay', testProcedure.location)
       .click('#notesTextarea')
-      .keys([browser.Keys.COMMAND, 'a'])
-      .keys(browser.Keys.BACK_SPACE)
-      .pause(100)
+      .clearValue('#notesTextarea')
       .setValue('#notesTextarea', testProcedure.notes)
       .pause(500)
       .saveScreenshot('tests/nightwatch/screenshots/procedures/04-filled-procedure-form.png');
@@ -441,7 +416,7 @@ describe('Procedures CRUD Operations', function() {
       });
 
     browser
-      .pause(2000);
+      .waitForElementVisible('#proceduresPage', 5000);
     
     browser.execute(function() {
       const currentUrl = window.location.pathname;
@@ -483,7 +458,7 @@ describe('Procedures CRUD Operations', function() {
     
     browser
       .waitForElementVisible('#proceduresPage', 5000)
-      .pause(2000);
+      .waitForElementVisible('#proceduresPage', 5000);
     
     // Wait for the procedure to appear in the database with retries
     browser.executeAsync(function(done) {
@@ -539,7 +514,7 @@ describe('Procedures CRUD Operations', function() {
           browser.assert.fail('Not redirected to procedures list after save');
         }
       })
-      .pause(1000);
+      .pause(500);
     
     // Wait for either the table or no-data message to appear
     browser.executeAsync(function(done) {
@@ -769,7 +744,7 @@ describe('Procedures CRUD Operations', function() {
         // Click on table row
         browser
           .waitForElementVisible('#proceduresTable', 5000)
-          .pause(1000)
+          .pause(500)
           .execute(function() {
             const rows = document.querySelectorAll('#proceduresTable tbody tr');
             let clicked = false;
@@ -805,7 +780,7 @@ describe('Procedures CRUD Operations', function() {
     });
 
     browser
-      .pause(1000)
+      .pause(500)
       .waitForElementVisible('#procedureDetailPage', 5000)
       .execute(function() {
         // Get all the field values to check what we're actually viewing
@@ -859,7 +834,7 @@ describe('Procedures CRUD Operations', function() {
   it('07. Update existing procedure', browser => {
     browser
       .waitForElementVisible('#proceduresTable', 5000)
-      .pause(1000);
+      .pause(500);
 
     browser
       .execute(function(notes) {
@@ -878,7 +853,7 @@ describe('Procedures CRUD Operations', function() {
       });
 
     browser
-      .pause(1000)
+      .pause(500)
       .waitForElementVisible('#procedureDetailPage', 5000)
       .pause(500);
 
@@ -904,9 +879,7 @@ describe('Procedures CRUD Operations', function() {
 
     browser
       .click('#performerDisplay')
-      .keys([browser.Keys.COMMAND, 'a'])
-      .keys(browser.Keys.BACK_SPACE)
-      .pause(100)
+      .clearValue('#performerDisplay')
       .setValue('#performerDisplay', updatedProcedure.performerName)
       .click('#status')
       .pause(300)
@@ -924,14 +897,10 @@ describe('Procedures CRUD Operations', function() {
         browser.assert.equal(result.value, true, 'Selected status');
       })
       .click('#performedDateTime')
-      .keys([browser.Keys.COMMAND, 'a'])
-      .keys(browser.Keys.BACK_SPACE)
-      .pause(100)
+      .clearValue('#performedDateTime')
       .setValue('#performedDateTime', updatedProcedure.performedDateTime)
       .click('#notesTextarea')
-      .keys([browser.Keys.COMMAND, 'a'])
-      .keys(browser.Keys.BACK_SPACE)
-      .pause(100)
+      .clearValue('#notesTextarea')
       .setValue('#notesTextarea', updatedProcedure.notes)
       .pause(500)
       .saveScreenshot('tests/nightwatch/screenshots/procedures/08-updated-procedure-form.png');
@@ -951,8 +920,7 @@ describe('Procedures CRUD Operations', function() {
       });
 
     browser
-      .pause(2000)
-      .url('http://localhost:3000/procedures')
+            .url('http://localhost:3000/procedures')
       .waitForElementVisible('#proceduresTable', 5000)
       .saveScreenshot('tests/nightwatch/screenshots/procedures/09-procedure-updated.png');
   });
@@ -960,7 +928,7 @@ describe('Procedures CRUD Operations', function() {
   it('08. Verify updated procedure in list', browser => {
     browser
       .waitForElementVisible('#proceduresTable', 5000)
-      .pause(1000)
+      .pause(500)
       // TODO: Fix performer display in table - currently not working
       // .assert.containsText('#proceduresTable', updatedProcedure.performerName)
       .saveScreenshot('tests/nightwatch/screenshots/procedures/10-updated-procedure-in-list.png');
@@ -970,7 +938,7 @@ describe('Procedures CRUD Operations', function() {
     // TODO: Fix delete test - button visibility issue
     browser
       .waitForElementVisible('#proceduresPage', 5000)
-      .pause(1000);
+      .pause(500);
 
     // First check if we have a table or no data state
     browser.execute(function() {
@@ -998,7 +966,7 @@ describe('Procedures CRUD Operations', function() {
           });
 
         browser
-          .pause(1000)
+          .pause(500)
           .waitForElementVisible('#procedureDetailPage', 5000);
 
         // Delete button is only visible when NOT in edit mode
@@ -1022,8 +990,7 @@ describe('Procedures CRUD Operations', function() {
           });
 
         browser
-          .pause(2000)
-          .waitForElementVisible('#proceduresPage', 5000)
+                    .waitForElementVisible('#proceduresPage', 5000)
           .execute(function() {
             const hasTable = document.querySelector('#proceduresTable') !== null;
             const hasNoDataCard = document.querySelector('.no-data-card') !== null ||
@@ -1052,7 +1019,7 @@ describe('Procedures CRUD Operations', function() {
     // TODO: Fix after delete test is fixed
     browser
       .waitForElementVisible('#proceduresPage', 5000)
-      .pause(1000)
+      .pause(500)
       .execute(function() {
         // Check if table exists first
         const table = document.querySelector('#proceduresTable');
@@ -1100,7 +1067,7 @@ describe('Procedures CRUD Operations', function() {
       });
 
     browser
-      .pause(1000)
+      .pause(500)
       .waitForElementVisible('#procedureDetailPage', 5000);
 
     browser
@@ -1118,7 +1085,7 @@ describe('Procedures CRUD Operations', function() {
       });
 
     browser
-      .pause(1000);
+      .pause(500);
 
     browser
       .waitForElementVisible('#proceduresPage', 5000, 'Form submitted and returned to procedures list')

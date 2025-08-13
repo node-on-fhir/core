@@ -38,15 +38,14 @@ describe('ResearchStudy CRUD Operations', function() {
   });
 
   beforeEach(browser => {
-    // Just a small pause between tests
-    browser.pause(500);
+    // Removed unnecessary pause
   });
 
   it('01. Setup test environment', browser => {
     browser
       .url('http://localhost:3000')
       .waitForElementVisible('body', 5000)
-      .pause(2000); // Give autologin time to work if enabled
+      .waitForElementVisible('body', 5000); // Give autologin time to work if enabled
 
     // Check if we're logged in (either via autologin or need to login manually)
     browser.execute(function() {
@@ -141,7 +140,7 @@ describe('ResearchStudy CRUD Operations', function() {
           }
         });
         
-        browser.pause(1000); // Wait for login to settle
+        browser.pause(500); // Wait for login to settle
       } else {
         browser.assert.ok(true, 'Already logged in (autologin enabled)');
         console.log('Already logged in as:', result.value.username, 'userId:', result.value.userId);
@@ -165,7 +164,7 @@ describe('ResearchStudy CRUD Operations', function() {
     browser
       .url('http://localhost:3000/research-studies')
       .waitForElementVisible('#researchStudiesPage', 5000)
-      .pause(2000)  // Increased pause to allow data to load
+      .pause(500)  // Allow data to load
       .execute(function() {
         // Check if we have either the table or the no-data card
         const hasTable = document.querySelector('#researchStudiesTable') !== null;
@@ -207,7 +206,6 @@ describe('ResearchStudy CRUD Operations', function() {
       });
 
     browser
-      .pause(1000)
       .waitForElementVisible('#researchStudyDetailPage', 5000)
       .assert.elementPresent('#title')
       .assert.elementPresent('#principalInvestigatorDisplay')
@@ -237,7 +235,7 @@ describe('ResearchStudy CRUD Operations', function() {
 
     // Fill in research study details using the id selectors
     browser
-      .pause(1000); // Give form time to initialize in edit mode
+      .pause(500); // Give form time to initialize in edit mode
 
     // Check if form is in edit mode, if not, click edit button
     browser.execute(function() {
@@ -276,7 +274,6 @@ describe('ResearchStudy CRUD Operations', function() {
           titleField.dispatchEvent(inputEvent);
         }
       })
-      .pause(100)
       .setValue('#title', testResearchStudy.title)
       // Clear and set principal investigator
       .click('#principalInvestigatorDisplay')
@@ -294,7 +291,6 @@ describe('ResearchStudy CRUD Operations', function() {
           piField.dispatchEvent(inputEvent);
         }
       })
-      .pause(100)
       .setValue('#principalInvestigatorDisplay', testResearchStudy.principalInvestigator);
 
     // Handle Material-UI Select components
@@ -372,45 +368,31 @@ describe('ResearchStudy CRUD Operations', function() {
       .pause(500)
       // Clear and set focus code
       .click('#focusCode')
-      .keys([browser.Keys.COMMAND, 'a'])
-      .keys(browser.Keys.BACK_SPACE)
-      .pause(100)
+      .clearValue('#focusCode')
       .setValue('#focusCode', testResearchStudy.focusCode)
       // Clear and set focus display
       .click('#focusDisplay')
-      .keys([browser.Keys.COMMAND, 'a'])
-      .keys(browser.Keys.BACK_SPACE)
-      .pause(100)
+      .clearValue('#focusDisplay')
       .setValue('#focusDisplay', testResearchStudy.focusDisplay)
       // Clear and set description
       .click('#descriptionTextarea')
-      .keys([browser.Keys.COMMAND, 'a'])
-      .keys(browser.Keys.BACK_SPACE)
-      .pause(100)
+      .clearValue('#descriptionTextarea')
       .setValue('#descriptionTextarea', testResearchStudy.description)
       // Clear and set period start
       .click('#periodStart')
-      .keys([browser.Keys.COMMAND, 'a'])
-      .keys(browser.Keys.BACK_SPACE)
-      .pause(100)
+      .clearValue('#periodStart')
       .setValue('#periodStart', testResearchStudy.period.start)
       // Clear and set period end
       .click('#periodEnd')
-      .keys([browser.Keys.COMMAND, 'a'])
-      .keys(browser.Keys.BACK_SPACE)
-      .pause(100)
+      .clearValue('#periodEnd')
       .setValue('#periodEnd', testResearchStudy.period.end)
       // Clear and set enrollment target
       .click('#enrollmentTarget')
-      .keys([browser.Keys.COMMAND, 'a'])
-      .keys(browser.Keys.BACK_SPACE)
-      .pause(100)
+      .clearValue('#enrollmentTarget')
       .setValue('#enrollmentTarget', testResearchStudy.enrollmentTarget)
       // Clear and set enrollment actual
       .click('#enrollmentActual')
-      .keys([browser.Keys.COMMAND, 'a'])
-      .keys(browser.Keys.BACK_SPACE)
-      .pause(100)
+      .clearValue('#enrollmentActual')
       .setValue('#enrollmentActual', testResearchStudy.enrollmentActual)
       .pause(500)
       .saveScreenshot('tests/nightwatch/screenshots/research-studies/04-filled-research-study-form.png');
@@ -439,7 +421,7 @@ describe('ResearchStudy CRUD Operations', function() {
       });
 
     browser
-      .pause(2000);
+      .waitForElementVisible('#researchStudiesPage', 5000);
     
     // Check if we're back on the research studies list page or if there's an error
     browser.execute(function() {
@@ -490,7 +472,6 @@ describe('ResearchStudy CRUD Operations', function() {
   it('05. Verify new research study appears in list', browser => {
     browser
       .waitForElementVisible('#researchStudiesPage', 5000)
-      .pause(1000)
       .waitForElementVisible('#researchStudiesTable', 5000)
       .assert.containsText('#researchStudiesTable', testResearchStudy.title)
       .assert.containsText('#researchStudiesTable', testResearchStudy.principalInvestigator)
@@ -499,8 +480,7 @@ describe('ResearchStudy CRUD Operations', function() {
 
   it('06. View research study details', browser => {
     browser
-      .waitForElementVisible('#researchStudiesTable', 5000)
-      .pause(1000);
+      .waitForElementVisible('#researchStudiesTable', 5000);
 
     // Click on the first research study row containing our test data
     browser
@@ -518,7 +498,6 @@ describe('ResearchStudy CRUD Operations', function() {
       });
 
     browser
-      .pause(1000)
       .waitForElementVisible('#researchStudyDetailPage', 5000)
       .assert.valueContains('#title', testResearchStudy.title)
       .assert.valueContains('#principalInvestigatorDisplay', testResearchStudy.principalInvestigator)
@@ -560,8 +539,7 @@ describe('ResearchStudy CRUD Operations', function() {
 
   it('07. Update existing research study', browser => {
     browser
-      .waitForElementVisible('#researchStudiesTable', 5000)
-      .pause(1000);
+      .waitForElementVisible('#researchStudiesTable', 5000);
 
     // Click on the research study to edit
     browser
@@ -579,7 +557,6 @@ describe('ResearchStudy CRUD Operations', function() {
       });
 
     browser
-      .pause(1000)
       .waitForElementVisible('#researchStudyDetailPage', 5000)
       .pause(500);
 
@@ -609,9 +586,7 @@ describe('ResearchStudy CRUD Operations', function() {
     // Update research study details
     browser
       .click('#principalInvestigatorDisplay')
-      .keys([browser.Keys.COMMAND, 'a'])
-      .keys(browser.Keys.BACK_SPACE)
-      .pause(100)
+      .clearValue('#principalInvestigatorDisplay')
       .setValue('#principalInvestigatorDisplay', updatedResearchStudy.principalInvestigator)
       .click('#status')
       .pause(300)
@@ -630,14 +605,10 @@ describe('ResearchStudy CRUD Operations', function() {
         browser.assert.equal(result.value, true, 'Selected status');
       })
       .click('#enrollmentActual')
-      .keys([browser.Keys.COMMAND, 'a'])
-      .keys(browser.Keys.BACK_SPACE)
-      .pause(100)
+      .clearValue('#enrollmentActual')
       .setValue('#enrollmentActual', updatedResearchStudy.enrollmentActual)
       .click('#descriptionTextarea')
-      .keys([browser.Keys.COMMAND, 'a'])
-      .keys(browser.Keys.BACK_SPACE)
-      .pause(100)
+      .clearValue('#descriptionTextarea')
       .setValue('#descriptionTextarea', updatedResearchStudy.description)
       .pause(500)
       .saveScreenshot('tests/nightwatch/screenshots/research-studies/08-updated-research-study-form.png');
@@ -658,7 +629,7 @@ describe('ResearchStudy CRUD Operations', function() {
       });
 
     browser
-      .pause(2000)
+      .pause(1000)
       // Navigate back to research studies list
       .url('http://localhost:3000/research-studies')
       .waitForElementVisible('#researchStudiesTable', 5000)
@@ -668,7 +639,6 @@ describe('ResearchStudy CRUD Operations', function() {
   it('08. Verify updated research study in list', browser => {
     browser
       .waitForElementVisible('#researchStudiesTable', 5000)
-      .pause(1000)
       .assert.containsText('#researchStudiesTable', updatedResearchStudy.principalInvestigator)
       // Note: Status may be hidden in the table, so we can't verify it here
       .saveScreenshot('tests/nightwatch/screenshots/research-studies/10-updated-research-study-in-list.png');
@@ -676,8 +646,7 @@ describe('ResearchStudy CRUD Operations', function() {
 
   it('09. Delete research study', browser => {
     browser
-      .waitForElementVisible('#researchStudiesPage', 5000)
-      .pause(1000);
+      .waitForElementVisible('#researchStudiesPage', 5000);
 
     // First check if we have a table or no data state
     browser.execute(function() {
@@ -722,13 +691,11 @@ describe('ResearchStudy CRUD Operations', function() {
             }
             return false;
           })
-          .pause(100)
           // Accept the confirmation alert
           .acceptAlert()
-          .pause(500);
+          .pause(100);
 
         browser
-          .pause(2000)
           .waitForElementVisible('#researchStudiesPage', 5000)
           .execute(function() {
             const hasTable = document.querySelector('#researchStudiesTable') !== null;
@@ -757,7 +724,6 @@ describe('ResearchStudy CRUD Operations', function() {
   it('10. Verify research study removed from list', browser => {
     browser
       .waitForElementVisible('#researchStudiesPage', 5000)
-      .pause(1000)
       .execute(function(timestamp) {
         // Check if table exists first
         const table = document.querySelector('#researchStudiesTable');
@@ -807,7 +773,6 @@ describe('ResearchStudy CRUD Operations', function() {
       });
 
     browser
-      .pause(1000)
       .waitForElementVisible('#researchStudyDetailPage', 5000);
 
     // Try to save without required fields
@@ -826,7 +791,7 @@ describe('ResearchStudy CRUD Operations', function() {
       });
 
     browser
-      .pause(1000);
+      .pause(500);
 
     // Note: Currently the form allows submission with empty fields
     // This could be enhanced in the future with client-side validation

@@ -47,14 +47,14 @@ describe('Schedules CRUD Operations', function() {
   });
 
   beforeEach(browser => {
-    browser.pause(500);
+    // Removed unnecessary pause
   });
 
   it('01. Setup test environment', browser => {
     browser
       .url('http://localhost:3000')
       .waitForElementVisible('body', 5000)
-      .pause(2000)
+      .pause(1000)
       .execute(function(ts) {
         window.testTimestamp = ts;
       }, [timestamp]);
@@ -144,7 +144,7 @@ describe('Schedules CRUD Operations', function() {
     browser
       .url('http://localhost:3000/schedules')
       .waitForElementVisible('#schedulesPage', 5000)
-      .pause(2000)
+      .pause(500)
       .execute(function() {
         const hasTable = document.querySelector('#schedulesTable') !== null;
         const pageContent = document.querySelector('#schedulesPage')?.textContent || '';

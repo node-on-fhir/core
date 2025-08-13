@@ -53,14 +53,14 @@ describe('Medias CRUD Operations', function() {
   });
 
   beforeEach(browser => {
-    browser.pause(500);
+    // Removed unnecessary pause
   });
 
   it('01. Setup test environment', browser => {
     browser
       .url('http://localhost:3000')
       .waitForElementVisible('body', 5000)
-      .pause(2000)
+      .pause(1000)
       .execute(function(ts) {
         window.testTimestamp = ts;
       }, [timestamp]);
@@ -198,7 +198,7 @@ describe('Medias CRUD Operations', function() {
         done();
       });
       
-      browser.pause(2000);
+      browser.pause(1000);
       
       // Re-establish patient context
       browser.execute(function(testIdentifier) {
@@ -255,9 +255,8 @@ describe('Medias CRUD Operations', function() {
     browser
       .url('http://localhost:3000')
       .waitForElementVisible('body', 5000)
-      .pause(1000)
       .url('http://localhost:3000/medias')
-      .pause(3000)
+      .pause(1000)
       .execute(function() {
         // Debug: Check if we're on the right page
         const currentUrl = window.location.href;
@@ -463,7 +462,7 @@ describe('Medias CRUD Operations', function() {
             subjectField.value = patientName;
             subjectField.dispatchEvent(new Event('input', { bubbles: true }));
             subjectField.dispatchEvent(new Event('change', { bubbles: true }));
-            console.log('Manually set subject field to:', patientName);
+            // Set subject field
             subjectFieldValue = patientName;
           }
         }
@@ -578,19 +577,7 @@ describe('Medias CRUD Operations', function() {
       .setValue('#notesTextarea', testMedia.notes)
       .pause(500);
 
-    // Log which fields we're about to fill
-    browser.execute(function() {
-      console.log('Checking form field states:');
-      const fields = ['#modalityInput', '#reasonCodeInput', '#contentTitleInput'];
-      fields.forEach(selector => {
-        const field = document.querySelector(selector);
-        if (field) {
-          console.log(`${selector}: disabled=${field.disabled}, value="${field.value}"`);
-        } else {
-          console.log(`${selector}: NOT FOUND`);
-        }
-      });
-    });
+    // Form fields populated
 
     // Handle Material-UI Select components
     browser.execute(function(status) {
@@ -1028,15 +1015,9 @@ describe('Medias CRUD Operations', function() {
 
     // Update media details
     browser
-      .click('#reasonCodeInput')
-      .keys([browser.Keys.COMMAND, 'a'])
-      .keys(browser.Keys.BACK_SPACE)
-      .pause(100)
+      .clearValue('#reasonCodeInput')
       .setValue('#reasonCodeInput', updatedMedia.reasonCode)
-      .click('#contentTitleInput')
-      .keys([browser.Keys.COMMAND, 'a'])
-      .keys(browser.Keys.BACK_SPACE)
-      .pause(100)
+      .clearValue('#contentTitleInput')
       .setValue('#contentTitleInput', updatedMedia.contentTitle)
       .click('#statusSelect')
       .pause(300)
@@ -1053,10 +1034,7 @@ describe('Medias CRUD Operations', function() {
       }, [updatedMedia.status], function(result) {
         browser.assert.equal(result.value, true, 'Selected status');
       })
-      .click('#notesTextarea')
-      .keys([browser.Keys.COMMAND, 'a'])
-      .keys(browser.Keys.BACK_SPACE)
-      .pause(100)
+      .clearValue('#notesTextarea')
       .setValue('#notesTextarea', updatedMedia.notes)
       .pause(500)
       .saveScreenshot('tests/nightwatch/screenshots/medias/08-updated-media-form.png');
