@@ -140,6 +140,16 @@ jobs:
       - checkout
       
       - run:
+          name: Verify Chrome and ChromeDriver
+          command: |
+            echo "Chrome version:"
+            google-chrome --version || echo "Chrome not found"
+            echo "ChromeDriver version:"
+            chromedriver --version || echo "ChromeDriver not found"
+            echo "ChromeDriver location:"
+            which chromedriver || echo "ChromeDriver not in PATH"
+      
+      - run:
           name: Create directories
           command: |
             mkdir -p $CIRCLE_ARTIFACTS $CIRCLE_TEST_REPORTS
@@ -187,14 +197,54 @@ jobs:
             done
       
       - run:
+          name: Start ChromeDriver
+          background: true
+          command: |
+            echo "Starting ChromeDriver..."
+            # Kill any existing ChromeDriver processes
+            pkill -f chromedriver || true
+            sleep 1
+            
+            # Start ChromeDriver with explicit options
+            /usr/local/bin/chromedriver \
+              --port=9515 \
+              --allowed-ips= \
+              --whitelisted-ips= \
+              --log-level=WARNING \
+              --silent \
+              --disable-dev-shm-usage &
+            
+            # Wait for ChromeDriver to be ready
+            for i in {1..30}; do
+              if curl -s http://localhost:9515/status | grep -q "ready"; then
+                echo "ChromeDriver is ready"
+                break
+              fi
+              echo "Waiting for ChromeDriver... ($i/30)"
+              sleep 1
+            done
+            
+            # Final check
+            if ! curl -s http://localhost:9515/status | grep -q "ready"; then
+              echo "ERROR: ChromeDriver failed to start"
+              exit 1
+            fi
+      
+      - run:
           name: "Run test group: << parameters.group-name >>"
           command: |
             echo "Running test group: << parameters.group-name >>"
             echo "Test files: << parameters.test-files >>"
             
-            # Use the existing nightwatch.circle.conf.js with the test files
-            npx nightwatch --config nightwatch.circle.conf.js << parameters.test-files >>
+            # Use the parallel config that doesn't start ChromeDriver
+            npx nightwatch --config nightwatch.parallel.conf.js << parameters.test-files >>
           no_output_timeout: 15m
+      
+      - run:
+          name: Stop ChromeDriver
+          command: |
+            pkill -f chromedriver || true
+          when: always
       
       - store_test_results:
           path: tests/output
