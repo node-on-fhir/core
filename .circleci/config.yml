@@ -32,10 +32,16 @@ parameters:
           "tests": [
             "tests/nightwatch/honeycomb/enable_autopublish/crud.observations.js",
             "tests/nightwatch/honeycomb/enable_autopublish/crud.conditions.js",
-            "tests/nightwatch/honeycomb/enable_autopublish/crud.allergyintolerances.js",
-            "tests/nightwatch/honeycomb/enable_autopublish/crud.immunizations.js",
             "tests/nightwatch/honeycomb/enable_autopublish/crud.encounters.js",
-            "tests/nightwatch/honeycomb/enable_autopublish/crud.procedures.js",
+            "tests/nightwatch/honeycomb/enable_autopublish/crud.procedures.js"
+
+          ]
+        },
+        {
+          "name": "autoimmune",
+          "tests": [
+            "tests/nightwatch/honeycomb/enable_autopublish/crud.allergyintolerances.js",
+            "tests/nightwatch/honeycomb/enable_autopublish/crud.immunizations.js"
 
           ]
         },
@@ -70,7 +76,7 @@ parameters:
           ]
         },
         {
-          "name": "structured data capture",
+          "name": "structured-data-capture",
           "tests": [
             "tests/nightwatch/honeycomb/enable_autopublish/crud.questionnaires.js",
             "tests/nightwatch/honeycomb/enable_autopublish/crud.questionnaireresponses.js",
@@ -83,10 +89,15 @@ parameters:
           "tests": [
             "tests/nightwatch/honeycomb/enable_autopublish/crud.locations.js"
             "tests/nightwatch/honeycomb/enable_autopublish/crud.devices.js",
-            "tests/nightwatch/honeycomb/enable_autopublish/crud.medias.js",
             "tests/nightwatch/honeycomb/enable_autopublish/crud.consents.js",
-            "tests/nightwatch/honeycomb/enable_autopublish/crud.documentreferences.js",
             "tests/nightwatch/honeycomb/enable_autopublish/crud.supplydeliveries.js"
+          ]
+        },
+        {
+          "name": "library-sciences",
+          "tests": [
+            "tests/nightwatch/honeycomb/enable_autopublish/crud.medias.js",
+            "tests/nightwatch/honeycomb/enable_autopublish/crud.documentreferences.js"
           ]
         },
         {
@@ -284,8 +295,13 @@ workflows:
       - test-group:
           name: clinical-history
           group-name: clinical-history
-          test-files: "tests/nightwatch/honeycomb/enable_autopublish/crud.observations.js tests/nightwatch/honeycomb/enable_autopublish/crud.conditions.js tests/nightwatch/honeycomb/enable_autopublish/crud.allergyintolerances.js tests/nightwatch/honeycomb/enable_autopublish/crud.immunizations.js tests/nightwatch/honeycomb/enable_autopublish/crud.encounters.js tests/nightwatch/honeycomb/enable_autopublish/crud.procedures.js"
-      
+          test-files: "tests/nightwatch/honeycomb/enable_autopublish/crud.observations.js tests/nightwatch/honeycomb/enable_autopublish/crud.conditions.js tests/nightwatch/honeycomb/enable_autopublish/crud.encounters.js tests/nightwatch/honeycomb/enable_autopublish/crud.procedures.js"
+
+      - test-group:
+          name: autoimmune
+          group-name: autoimmune
+          test-files: "tests/nightwatch/honeycomb/enable_autopublish/crud.allergyintolerances.js tests/nightwatch/honeycomb/enable_autopublish/crud.immunizations.js"
+
       - test-group:
           name: pharmacy
           group-name: pharmacy
@@ -314,8 +330,13 @@ workflows:
       - test-group:
           name: administrative
           group-name: administrative
-          test-files: "tests/nightwatch/honeycomb/enable_autopublish/crud.devices.js tests/nightwatch/honeycomb/enable_autopublish/crud.medias.js tests/nightwatch/honeycomb/enable_autopublish/crud.consents.js tests/nightwatch/honeycomb/enable_autopublish/crud.locations.js tests/nightwatch/honeycomb/enable_autopublish/crud.documentreferences.js tests/nightwatch/honeycomb/enable_autopublish/crud.supplydeliveries.js"
-      
+          test-files: "tests/nightwatch/honeycomb/enable_autopublish/crud.devices.js tests/nightwatch/honeycomb/enable_autopublish/crud.consents.js tests/nightwatch/honeycomb/enable_autopublish/crud.locations.js tests/nightwatch/honeycomb/enable_autopublish/crud.supplydeliveries.js"
+
+      - test-group:
+          name: library-sciences
+          group-name: library-sciences
+          test-files: "tests/nightwatch/honeycomb/enable_autopublish/crud.medias.js tests/nightwatch/honeycomb/enable_autopublish/crud.documentreferences.js"
+
       - test-group:
           name: other-tests
           group-name: other-tests
