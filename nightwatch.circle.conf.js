@@ -6,6 +6,14 @@ const baseConfig = require('./nightwatch.conf.js');
 // Use environment variable if set by CircleCI
 const chromeDriverPath = process.env.CHROMEDRIVER_PATH || '/usr/local/bin/chromedriver';
 
+// Check if we're using external ChromeDriver (for parallel tests)
+const useExternalChromeDriver = process.env.NIGHTWATCH_EXTERNAL_CHROMEDRIVER === 'true';
+console.log('Nightwatch CircleCI Config:', {
+  chromeDriverPath,
+  useExternalChromeDriver,
+  willStartChromeDriver: !useExternalChromeDriver
+});
+
 module.exports = {
   ...baseConfig,
   
@@ -77,7 +85,8 @@ module.exports = {
       },
       
       webdriver: {
-        start_process: true,
+        // Check if we should use external ChromeDriver (for parallel tests)
+        start_process: !useExternalChromeDriver,
         // ChromeDriver will be installed by CircleCI orb
         server_path: chromeDriverPath,
         log_path: false,  // Disable webdriver HTTP request logging

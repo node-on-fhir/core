@@ -236,8 +236,11 @@ jobs:
             echo "Running test group: << parameters.group-name >>"
             echo "Test files: << parameters.test-files >>"
             
-            # Use the parallel config that doesn't start ChromeDriver
-            npx nightwatch --config nightwatch.parallel.conf.js << parameters.test-files >>
+            # Set environment variable to use external ChromeDriver
+            export NIGHTWATCH_EXTERNAL_CHROMEDRIVER=true
+            
+            # Use the existing nightwatch.circle.conf.js
+            npx nightwatch --config nightwatch.circle.conf.js << parameters.test-files >>
           no_output_timeout: 15m
       
       - run:
