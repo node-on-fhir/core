@@ -16,6 +16,11 @@ Meteor.startup(function(){
 // Only register test methods in test/development environments
 if (get(Meteor, 'settings.public.environment') !== 'production') {
   Meteor.methods({
+  'test.ping': function() {
+    // Simple ping method for connectivity testing
+    console.log('[test.ping] Received ping from client');
+    return 'pong';
+  },
     // Clear all test users (be careful with this!)
     async 'test.clearUsers'() {
       // Only allow in test environments

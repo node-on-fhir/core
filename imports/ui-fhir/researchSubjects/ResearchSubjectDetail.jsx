@@ -164,7 +164,7 @@ function ResearchSubjectDetail(props) {
   };
 
   // Handle save
-  const handleSave = () => {
+  const handleSave = async () => {
     console.log('handleSave called with id:', id, 'id === "new":', id === 'new', 'typeof id:', typeof id);
     setError(null);
 
@@ -225,35 +225,43 @@ function ResearchSubjectDetail(props) {
       console.log('study object:', dataToSave.study);
       
       if (!id || id === 'new') {
-        // Create new research subject
-        Meteor.call('researchSubjects.create', {
-          researchSubject: dataToSave
-        }, (error, result) => {
+        // Create new research subject using async/await
+        try {
+          const result = await Meteor.callAsync('researchSubjects.create', {
+            researchSubject: dataToSave
+          });
+          console.log('Created research subject:', result);
           setLoading(false);
-          if (error) {
-            console.error('Create error:', error);
-            setError(error.reason || 'Failed to create research subject');
-          } else {
-            console.log('Created research subject:', result);
+          
+          // Add a small delay before navigation to ensure save completes
+          setTimeout(() => {
             navigate('/research-subjects');
-          }
-        });
+          }, 500);
+        } catch (error) {
+          console.error('Create error:', error);
+          setLoading(false);
+          setError(error.reason || 'Failed to create research subject');
+        }
       } else {
-        // Update existing research subject
-        Meteor.call('researchSubjects.update', {
-          _id: id,
-          researchSubject: dataToSave
-        }, (error, result) => {
+        // Update existing research subject using async/await
+        try {
+          const result = await Meteor.callAsync('researchSubjects.update', {
+            _id: id,
+            researchSubject: dataToSave
+          });
+          console.log('Updated research subject');
           setLoading(false);
-          if (error) {
-            console.error('Update error:', error);
-            setError(error.reason || 'Failed to update research subject');
-          } else {
-            console.log('Updated research subject');
-            setIsEditing(false);
+          setIsEditing(false);
+          
+          // Add a small delay before navigation
+          setTimeout(() => {
             navigate('/research-subjects');
-          }
-        });
+          }, 500);
+        } catch (error) {
+          console.error('Update error:', error);
+          setLoading(false);
+          setError(error.reason || 'Failed to update research subject');
+        }
       }
     } catch (err) {
       setLoading(false);
@@ -263,23 +271,27 @@ function ResearchSubjectDetail(props) {
   };
 
   // Handle delete
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (id && id !== 'new') {
       if (window.confirm('Are you sure you want to delete this research subject?')) {
         setLoading(true);
         
-        Meteor.call('researchSubjects.remove', {
-          _id: id
-        }, (error) => {
+        try {
+          await Meteor.callAsync('researchSubjects.remove', {
+            _id: id
+          });
+          console.log('Deleted research subject');
           setLoading(false);
-          if (error) {
-            console.error('Delete error:', error);
-            setError(error.reason || 'Failed to delete research subject');
-          } else {
-            console.log('Deleted research subject');
+          
+          // Add a small delay before navigation
+          setTimeout(() => {
             navigate('/research-subjects');
-          }
-        });
+          }, 500);
+        } catch (error) {
+          console.error('Delete error:', error);
+          setLoading(false);
+          setError(error.reason || 'Failed to delete research subject');
+        }
       }
     }
   };

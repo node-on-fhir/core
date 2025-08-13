@@ -108,13 +108,22 @@ Meteor.methods({
     }
     
     try {
-      console.log('[patients.insert] Inserting patient:', cleanPatient);
+      console.log('[patients.insert] Inserting patient:', JSON.stringify(cleanPatient, null, 2));
       const result = await Patients.insertAsync(cleanPatient);
-      console.log('[patients.insert] Created patient:', result);
+      console.log('[patients.insert] Created patient with ID:', result);
       return result;
     } catch (error) {
-      console.error('[patients.insert] Error:', error);
-      throw new Meteor.Error('insert-failed', error.message);
+      console.error('[patients.insert] Error details:', {
+        message: error.message,
+        stack: error.stack,
+        details: error.details,
+        reason: error.reason
+      });
+      // If it's a validation error, include more details
+      if (error.validationErrors) {
+        console.error('[patients.insert] Validation errors:', error.validationErrors);
+      }
+      throw new Meteor.Error('insert-failed', error.message || 'Failed to insert patient', error.details);
     }
   },
   

@@ -232,13 +232,40 @@ function PatientDetail(props) {
       } else {
         // Create new patient
         console.log('[PatientDetail] Creating new patient...');
-        result = await Meteor.callAsync('patients.insert', patient);
-        console.log('[PatientDetail] Insert result:', result);
+        console.log('[PatientDetail] Calling patients.insert with data:', JSON.stringify(patient, null, 2));
+        
+        try {
+          // Add a timeout wrapper for the method call
+          const timeoutPromise = new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Method call timeout after 10s')), 10000)
+          );
+          
+          const methodPromise = Meteor.callAsync('patients.insert', patient);
+          
+          result = await Promise.race([methodPromise, timeoutPromise]);
+          console.log('[PatientDetail] Insert result:', result);
+        } catch (methodError) {
+          console.error('[PatientDetail] Method call error:', methodError);
+          console.error('[PatientDetail] Error details:', {
+            error: methodError.error,
+            reason: methodError.reason,
+            details: methodError.details,
+            message: methodError.message,
+            stack: methodError.stack
+          });
+          throw methodError;
+        }
         
         // If this is the current user's patient, update the user record
         if (currentUser && !currentUser.patientId) {
           console.log('[PatientDetail] Linking patient to user...');
-          await Meteor.callAsync('users.linkPatient', patient.id);
+          try {
+            await Meteor.callAsync('users.linkPatient', patient.id);
+            console.log('[PatientDetail] User link successful');
+          } catch (linkError) {
+            console.error('[PatientDetail] User link error:', linkError);
+            // Don't throw here - patient was created successfully
+          }
         }
       }
       

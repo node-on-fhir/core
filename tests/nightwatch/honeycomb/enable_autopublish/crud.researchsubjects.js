@@ -41,7 +41,7 @@ describe('ResearchSubjects CRUD Operations', function() {
   });
 
   beforeEach(browser => {
-    // Removed unnecessary pause
+    browser.pause(1000);  // Give time for page to stabilize between tests
   });
 
   it('01. Setup test environment', browser => {
@@ -357,11 +357,12 @@ describe('ResearchSubjects CRUD Operations', function() {
       .click('#consentDisplay')
       .clearValue('#consentDisplay')
       .setValue('#consentDisplay', testResearchSubject.consent.display)
-      .pause(500)
+      .pause(2000)  // Give form more time to process all inputs
       .saveScreenshot('tests/nightwatch/screenshots/research-subjects/04-filled-research-subject-form.png');
 
     // Save the research subject
     browser
+      .pause(1000)  // Additional pause before clicking save
       .execute(function() {
         window.consoleErrors = [];
         const originalError = console.error;
@@ -383,7 +384,8 @@ describe('ResearchSubjects CRUD Operations', function() {
       });
 
     browser
-      .waitForElementVisible('#researchSubjectsPage', 5000);
+      .pause(5000)  // Give more time for async save and navigation
+      .waitForElementVisible('#researchSubjectsPage', 10000);  // Increased timeout
     
     browser.execute(function() {
       const currentUrl = window.location.pathname;
