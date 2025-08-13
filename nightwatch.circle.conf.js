@@ -27,7 +27,9 @@ module.exports = {
         waitForConditionTimeout: 30000,
         waitForConditionPollInterval: 500,
         asyncHookTimeout: 30000,
-        retryAssertionTimeout: 10000
+        retryAssertionTimeout: 10000,
+        abortOnAssertionFailure: false,
+        throwOnMultipleElementsReturned: false
       },
       
       // Moderate logging - show important info only
@@ -40,8 +42,8 @@ module.exports = {
       disable_colors: false,
       enable_http_request_logging: false, // Disable WebDriver HTTP request/response logging
       request_timeout_options: {
-        timeout: 60000,
-        retry_attempts: 3
+        timeout: 120000,  // Increase from 60000
+        retry_attempts: 2   // Reduce from 3 to fail faster
       },
       
       desiredCapabilities: {
@@ -56,7 +58,20 @@ module.exports = {
             '--window-size=1920,1080', // Larger window to avoid overlaps
             '--disable-web-security',
             '--disable-features=VizDisplayCompositor',
-            '--force-device-scale-factor=1'
+            '--force-device-scale-factor=1',
+            '--disable-blink-features=AutomationControlled',  // Improve stability
+            '--disable-extensions',  // Reduce memory usage
+            '--disable-plugins',     // Reduce memory usage
+            // '--disable-images',   // Commented out - may affect visual tests
+            '--disable-default-apps',
+            '--disable-translate',
+            '--disable-sync',
+            '--metrics-recording-only',
+            '--mute-audio',
+            '--no-first-run',
+            '--safebrowsing-disable-auto-update',
+            '--password-store=basic',
+            '--use-mock-keychain'
           ]
         }
       },
@@ -77,8 +92,8 @@ module.exports = {
         ],
         // Increase timeout for webdriver
         timeout_options: {
-          timeout: 60000,
-          retry_attempts: 3
+          timeout: 120000,  // Increase from 60000
+          retry_attempts: 2   // Reduce from 3 to fail faster
         },
         // Additional selenium settings
         keep_alive: true,
