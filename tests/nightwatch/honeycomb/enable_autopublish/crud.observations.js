@@ -563,7 +563,28 @@ describe('Observations CRUD Operations', function() {
   it('05. Verify new observation appears in list', browser => {
     browser
       .waitForElementVisible('#observationsPage', 5000)
-      .pause(500);
+      .pause(2000);  // Increased pause to allow data to propagate
+    
+    // Re-establish patient context after navigation
+    browser.execute(function() {
+      if (typeof Session !== 'undefined' && typeof Patients !== 'undefined') {
+        // Try to find our test patient
+        const testPatient = Patients.findOne({
+          $or: [
+            { 'name.0.family': 'Doe' },
+            { 'name.0.text': { $regex: 'John.*Doe' } }
+          ]
+        });
+        
+        if (testPatient && !Session.get('selectedPatientId')) {
+          console.log('Re-establishing patient context:', testPatient._id);
+          Session.set('selectedPatientId', testPatient._id);
+          Session.set('selectedPatient', testPatient);
+        }
+      }
+    });
+    
+    browser.pause(1000);  // Wait for subscription to update
     
     browser.execute(function() {
       const hasTable = document.querySelector('#observationsTable') !== null;

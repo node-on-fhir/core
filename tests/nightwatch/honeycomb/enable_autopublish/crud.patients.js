@@ -305,7 +305,39 @@ describe('Patients CRUD Operations', function() {
       });
 
     browser
-      .pause(2000)
+      .pause(2000);
+    
+    // Check if save was successful
+    browser.execute(function() {
+      const currentUrl = window.location.pathname;
+      const hasPatientsPage = document.querySelector('#patientsPage') !== null;
+      const hasDetailPage = document.querySelector('#patientDetailPage') !== null;
+      
+      // Check for any error messages
+      const errorElements = document.querySelectorAll('[color="error"], .error, [class*="error"], [class*="Error"]');
+      let errorText = '';
+      errorElements.forEach(el => {
+        if (el.textContent) errorText += el.textContent + ' ';
+      });
+      
+      return {
+        url: currentUrl,
+        hasPatientsPage: hasPatientsPage,
+        hasDetailPage: hasDetailPage,
+        hasError: errorText.length > 0,
+        errorText: errorText.trim()
+      };
+    }, [], function(result) {
+      console.log('Post-save state:', result.value);
+      if (result.value.hasError) {
+        browser.assert.fail(`Save failed with error: ${result.value.errorText}`);
+      }
+      if (result.value.url === '/patients/new') {
+        browser.assert.fail('Still on new patient page - save may have failed');
+      }
+    });
+    
+    browser
       .waitForElementVisible('#patientsPage', 5000)
       .execute(function(familyName) {
         // Check if the patient was actually saved

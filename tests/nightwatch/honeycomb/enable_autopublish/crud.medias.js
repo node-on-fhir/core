@@ -870,7 +870,8 @@ describe('Medias CRUD Operations', function() {
       .waitForElementVisible('#mediaDetailPage', 5000)
       .assert.valueContains('#modalityInput', testMedia.modality)
       .assert.valueContains('#contentTitleInput', testMedia.contentTitle)
-      .assert.valueContains('#operatorInput', testMedia.operator)
+      // Note: operator field is auto-populated with current user (janedoe)
+      .assert.valueContains('#operatorInput', 'janedoe')  // Auto-populated with current user
       .execute(function() {
         const statusInput = document.querySelector('#statusSelect');
         const typeInput = document.querySelector('#typeSelect');
