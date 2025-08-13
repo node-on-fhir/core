@@ -33,15 +33,14 @@ describe('Conditions CRUD Operations', function() {
   });
 
   beforeEach(browser => {
-    // Just a small pause between tests
-    browser.pause(500);
+    // Removed unnecessary pause
   });
 
   it('01. Setup test environment', browser => {
     browser
       .url('http://localhost:3000')
       .waitForElementVisible('body', 5000)
-      .pause(2000) // Give autologin time to work if enabled
+      .pause(1000) // Give autologin time to work if enabled
       .execute(function(ts) {
         // Store timestamp globally for use in later tests
         window.testTimestamp = ts;
@@ -188,7 +187,7 @@ describe('Conditions CRUD Operations', function() {
       });
       
       // Give time for the patient creation and session setting to complete
-      browser.pause(2000); // Increased pause to ensure patient is indexed
+      browser.pause(1000); // Ensure patient is indexed
       
       // Following the CarePlans pattern: find patient by identifier and set in Session again
       browser.execute(function(testIdentifier) {
@@ -260,7 +259,7 @@ describe('Conditions CRUD Operations', function() {
       .waitForElementVisible('#conditionsPage', 5000);
       
     // Add a pause to ensure subscriptions are ready
-    browser.pause(2000);
+    browser.pause(1000);
     
     // NOW set patient context after navigation (following AllergyIntolerances pattern)
     browser.execute(function(testIdentifier) {
@@ -885,7 +884,7 @@ describe('Conditions CRUD Operations', function() {
       });
 
     browser
-      .pause(2000);
+      .pause(1000);
     
     // Check if we're back on the conditions list page or if there's an error
     browser.execute(function() {
@@ -1227,10 +1226,7 @@ describe('Conditions CRUD Operations', function() {
 
     // Update condition details
     browser
-      .click('#asserterDisplay')
-      .keys([browser.Keys.COMMAND, 'a'])
-      .keys(browser.Keys.BACK_SPACE)
-      .pause(100)
+      .clearValue('#asserterDisplay')
       .setValue('#asserterDisplay', updatedCondition.asserterName)
       .click('#clinicalStatus')
       .pause(300)
@@ -1264,10 +1260,7 @@ describe('Conditions CRUD Operations', function() {
       }, [updatedCondition.verificationStatus], function(result) {
         browser.assert.equal(result.value, true, 'Selected verification status');
       })
-      .click('#notesTextarea')
-      .keys([browser.Keys.COMMAND, 'a'])
-      .keys(browser.Keys.BACK_SPACE)
-      .pause(100)
+      .clearValue('#notesTextarea')
       .setValue('#notesTextarea', updatedCondition.notes)
       .pause(500)
       .saveScreenshot('tests/nightwatch/screenshots/conditions/08-updated-condition-form.png');
@@ -1288,7 +1281,7 @@ describe('Conditions CRUD Operations', function() {
       });
 
     browser
-      .pause(2000)
+      .pause(1000)
       // Navigate back to conditions list
       .url('http://localhost:3000/conditions')
       .waitForElementVisible('#conditionsTable', 5000)
@@ -1421,7 +1414,7 @@ describe('Conditions CRUD Operations', function() {
           .pause(500);
 
         browser
-          .pause(2000)
+          .pause(1000)
           .waitForElementVisible('#conditionsPage', 5000)
           .execute(function() {
             const hasTable = document.querySelector('#conditionsTable') !== null;

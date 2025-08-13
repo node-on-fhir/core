@@ -35,14 +35,14 @@ describe('Devices CRUD Operations', function() {
   });
 
   beforeEach(browser => {
-    browser.pause(500);
+    // Removed unnecessary pause
   });
 
   it('01. Setup test environment', browser => {
     browser
       .url('http://localhost:3000')
       .waitForElementVisible('body', 5000)
-      .pause(2000)
+      .pause(1000)
       .execute(function(ts) {
         window.testTimestamp = ts;
       }, [timestamp]);
@@ -180,7 +180,7 @@ describe('Devices CRUD Operations', function() {
         done();
       });
       
-      browser.pause(2000);
+      browser.pause(1000);
       
       // Re-establish patient context
       browser.execute(function(testIdentifier) {
@@ -238,7 +238,7 @@ describe('Devices CRUD Operations', function() {
       .waitForElementVisible('#devicesPage', 5000);
       
     // Re-establish patient context after navigation
-    browser.pause(2000);
+    browser.pause(1000);
     
     browser.execute(function(testIdentifier) {
       console.log('Setting patient context after navigation to /devices');
@@ -574,7 +574,7 @@ describe('Devices CRUD Operations', function() {
       });
 
     browser
-      .pause(2000);
+      .pause(1000);
     
     // Check if we're back on the devices list page
     browser.execute(function() {
@@ -894,15 +894,9 @@ describe('Devices CRUD Operations', function() {
 
     // Update device details
     browser
-      .click('#deviceNameInput')
-      .keys([browser.Keys.COMMAND, 'a'])
-      .keys(browser.Keys.BACK_SPACE)
-      .pause(100)
+      .clearValue('#deviceNameInput')
       .setValue('#deviceNameInput', updatedDevice.deviceName)
-      .click('#versionInput')
-      .keys([browser.Keys.COMMAND, 'a'])
-      .keys(browser.Keys.BACK_SPACE)
-      .pause(100)
+      .clearValue('#versionInput')
       .setValue('#versionInput', updatedDevice.version)
       .click('#statusSelect')
       .pause(300)
@@ -919,10 +913,7 @@ describe('Devices CRUD Operations', function() {
       }, [updatedDevice.status], function(result) {
         browser.assert.equal(result.value, true, 'Selected status');
       })
-      .click('#notesTextarea')
-      .keys([browser.Keys.COMMAND, 'a'])
-      .keys(browser.Keys.BACK_SPACE)
-      .pause(100)
+      .clearValue('#notesTextarea')
       .setValue('#notesTextarea', updatedDevice.notes)
       .pause(500)
       .saveScreenshot('tests/nightwatch/screenshots/devices/08-updated-device-form.png');
@@ -943,7 +934,7 @@ describe('Devices CRUD Operations', function() {
       });
 
     browser
-      .pause(2000)
+      .pause(1000)
       .url('http://localhost:3000/devices')
       .waitForElementVisible('#devicesTable', 5000)
       .saveScreenshot('tests/nightwatch/screenshots/devices/09-device-updated.png');
@@ -1147,7 +1138,7 @@ describe('Devices CRUD Operations', function() {
           .pause(500);
 
         browser
-          .pause(2000)
+          .pause(1000)
           .waitForElementVisible('#devicesPage', 5000)
           .execute(function() {
             const hasTable = document.querySelector('#devicesTable') !== null;

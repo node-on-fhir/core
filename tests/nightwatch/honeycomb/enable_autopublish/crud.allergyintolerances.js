@@ -42,14 +42,13 @@ describe('AllergyIntolerances CRUD Operations', function() {
   });
 
   beforeEach(browser => {
-    browser.pause(500);
+    // Removed unnecessary pause
   });
 
   it('01. Setup test environment', browser => {
     browser
       .url('http://localhost:3000')
       .waitForElementVisible('body', 5000)
-      .pause(2000)
       .execute(function(ts) {
         window.testTimestamp = ts;
       }, [timestamp]);
@@ -135,7 +134,7 @@ describe('AllergyIntolerances CRUD Operations', function() {
           }
         });
         
-        browser.pause(1000);
+        browser.pause(500);
       } else {
         browser.assert.ok(true, 'Already logged in (autologin enabled)');
         console.log('Already logged in as:', result.value.username, 'userId:', result.value.userId);
@@ -187,7 +186,7 @@ describe('AllergyIntolerances CRUD Operations', function() {
         done();
       });
       
-      browser.pause(2000);
+      browser.pause(500);
     });
   });
 
@@ -195,7 +194,7 @@ describe('AllergyIntolerances CRUD Operations', function() {
     browser
       .url('http://localhost:3000/allergy-intolerances')
       .waitForElementVisible('#allergyIntolerancesPage', 5000)
-      .pause(2000);
+      .pause(500);
       
     // NOW set patient context after navigation
     browser.execute(function(testIdentifier) {
@@ -232,7 +231,7 @@ describe('AllergyIntolerances CRUD Operations', function() {
       }
     });
     
-    browser.pause(1000);
+    browser.pause(500);
     
     browser.execute(function() {
         const hasTable = document.querySelector('#allergyIntolerancesTable') !== null;
@@ -273,7 +272,7 @@ describe('AllergyIntolerances CRUD Operations', function() {
       });
 
     browser
-      .pause(1000)
+      .pause(500)
       .waitForElementVisible('#allergyIntoleranceDetailPage', 5000)
       .assert.elementPresent('#clinicalStatusSelect')
       .assert.elementPresent('#verificationStatusSelect')
@@ -289,7 +288,7 @@ describe('AllergyIntolerances CRUD Operations', function() {
       .assert.elementPresent('#reactionSeveritySelect')
       .assert.elementPresent('#patientDisplay')
       .assert.elementPresent('#notesTextarea')
-      .pause(1000)
+      .pause(500)
       .execute(function() {
         const patientField = document.querySelector('#patientDisplay');
         return {
@@ -619,7 +618,7 @@ describe('AllergyIntolerances CRUD Operations', function() {
   it('05. Verify new allergy intolerance appears in list', browser => {
     browser
       .waitForElementVisible('#allergyIntolerancesPage', 5000)
-      .pause(1000);
+      .pause(500);
     
     // First check if we have any allergies at all before searching
     browser.execute(function() {
@@ -688,7 +687,7 @@ describe('AllergyIntolerances CRUD Operations', function() {
       .waitForElementVisible('#allergyIntoleranceSearchInput', 5000)
       .clearValue('#allergyIntoleranceSearchInput')
       .setValue('#allergyIntoleranceSearchInput', 'John Doe')
-      .pause(1000); // Wait for search results to update
+      .pause(500); // Wait for search results to update
     
     browser.execute(function() {
       const hasTable = document.querySelector('#allergyIntolerancesTable') !== null;
@@ -765,13 +764,13 @@ describe('AllergyIntolerances CRUD Operations', function() {
   it('06. View allergy intolerance details', browser => {
     browser
       .waitForElementVisible('#allergyIntolerancesPage', 5000)
-      .pause(1000);
+      .pause(500);
 
     // Clear the search to show all allergies for this patient
     browser
       .waitForElementVisible('#allergyIntoleranceSearchInput', 5000)
       .clearValue('#allergyIntoleranceSearchInput')
-      .pause(1000);
+      .pause(500);
 
     // Now click on the allergy row
     browser
@@ -803,7 +802,7 @@ describe('AllergyIntolerances CRUD Operations', function() {
       });
 
     browser
-      .pause(1000)
+      .pause(500)
       .waitForElementVisible('#allergyIntoleranceDetailPage', 5000)
       .assert.valueContains('#codeInput', testAllergyIntolerance.codeCode)
       .assert.valueContains('#codeDisplayInput', testAllergyIntolerance.codeDisplay)
@@ -918,11 +917,11 @@ describe('AllergyIntolerances CRUD Operations', function() {
       return { success: false };
     }, ['test-patient-' + timestamp]);
     
-    browser.pause(1000);
+    browser.pause(500);
     
     browser
       .waitForElementVisible('#allergyIntolerancesTable', 5000)
-      .pause(1000);
+      .pause(500);
 
     // Scroll to top to ensure search input is visible
     browser.execute(function() {
@@ -936,7 +935,7 @@ describe('AllergyIntolerances CRUD Operations', function() {
       .waitForElementVisible('#allergyIntoleranceSearchInput', 5000)
       .clearValue('#allergyIntoleranceSearchInput')
       .setValue('#allergyIntoleranceSearchInput', 'John Doe')
-      .pause(1000);
+      .pause(500);
 
     // Now click on the allergy to edit
     browser
@@ -963,7 +962,7 @@ describe('AllergyIntolerances CRUD Operations', function() {
       });
 
     browser
-      .pause(1000)
+      .pause(500)
       .waitForElementVisible('#allergyIntoleranceDetailPage', 5000)
       .pause(500);
 
@@ -991,14 +990,10 @@ describe('AllergyIntolerances CRUD Operations', function() {
     // Update allergy details
     browser
       .click('#codeInput')
-      .keys([browser.Keys.COMMAND, 'a'])
-      .keys(browser.Keys.BACK_SPACE)
-      .pause(100)
+      .clearValue('#codeInput')
       .setValue('#codeInput', updatedAllergyIntolerance.code)
       .click('#reactionInput')
-      .keys([browser.Keys.COMMAND, 'a'])
-      .keys(browser.Keys.BACK_SPACE)
-      .pause(100)
+      .clearValue('#reactionInput')
       .setValue('#reactionInput', updatedAllergyIntolerance.reaction)
       .click('#clinicalStatusSelect')
       .pause(300)
@@ -1048,9 +1043,7 @@ describe('AllergyIntolerances CRUD Operations', function() {
         browser.assert.equal(result.value, true, 'Selected criticality');
       })
       .click('#notesTextarea')
-      .keys([browser.Keys.COMMAND, 'a'])
-      .keys(browser.Keys.BACK_SPACE)
-      .pause(100)
+      .clearValue('#notesTextarea')
       .setValue('#notesTextarea', updatedAllergyIntolerance.notes)
       .pause(500)
       .saveScreenshot('tests/nightwatch/screenshots/allergy-intolerances/08-updated-allergy-intolerance-form.png');
@@ -1092,7 +1085,7 @@ describe('AllergyIntolerances CRUD Operations', function() {
       .waitForElementVisible('#allergyIntoleranceSearchInput', 5000)
       .clearValue('#allergyIntoleranceSearchInput')
       .setValue('#allergyIntoleranceSearchInput', 'John Doe')
-      .pause(1000)
+      .pause(500)
       .execute(function() {
         const table = document.querySelector('#allergyIntolerancesTable');
         const rows = table ? table.querySelectorAll('tbody tr') : [];
@@ -1114,7 +1107,7 @@ describe('AllergyIntolerances CRUD Operations', function() {
   it('09. Delete allergy intolerance', browser => {
     browser
       .waitForElementVisible('#allergyIntolerancesPage', 5000)
-      .pause(1000);
+      .pause(500);
 
     browser.execute(function() {
       const hasTable = document.querySelector('#allergyIntolerancesTable') !== null;
@@ -1138,7 +1131,7 @@ describe('AllergyIntolerances CRUD Operations', function() {
           });
 
         browser
-          .pause(1000)
+          .pause(500)
           .waitForElementVisible('#allergyIntoleranceDetailPage', 5000);
 
         // DO NOT enter edit mode - delete button is only visible in read mode
@@ -1203,7 +1196,7 @@ describe('AllergyIntolerances CRUD Operations', function() {
   it('10. Verify allergy intolerance removed from list', browser => {
     browser
       .waitForElementVisible('#allergyIntolerancesPage', 5000)
-      .pause(1000)
+      .pause(500)
       .execute(function(timestamp) {
         const table = document.querySelector('#allergyIntolerancesTable');
         if (table) {

@@ -38,14 +38,14 @@ describe('Practitioners CRUD Operations', function() {
   });
 
   beforeEach(browser => {
-    browser.pause(500);
+    // Removed unnecessary pause
   });
 
   it('01. Setup test environment', browser => {
     browser
       .url('http://localhost:3000')
       .waitForElementVisible('body', 5000)
-      .pause(2000)
+      .pause(1000)
       .execute(function(ts) {
         window.testTimestamp = ts;
       }, [timestamp]);
@@ -150,7 +150,7 @@ describe('Practitioners CRUD Operations', function() {
         }
       });
       
-      browser.pause(2000);
+      browser.pause(1000);
     });
   });
 
@@ -158,7 +158,7 @@ describe('Practitioners CRUD Operations', function() {
     browser
       .url('http://localhost:3000/practitioners')
       .waitForElementVisible('#practitionersPage', 5000)
-      .pause(2000)
+      .pause(1000)
       .execute(function() {
         const hasTable = document.querySelector('#practitionersTable') !== null;
         const hasNoDataCard = document.querySelector('.no-data-card') !== null ||
@@ -320,7 +320,7 @@ describe('Practitioners CRUD Operations', function() {
       });
 
     browser
-      .pause(2000)
+      .pause(1000)
       .waitForElementVisible('#practitionersPage', 5000)
       .saveScreenshot('tests/nightwatch/screenshots/practitioners/05-practitioner-saved.png');
     
@@ -496,25 +496,13 @@ describe('Practitioners CRUD Operations', function() {
 
     // Update practitioner details
     browser
-      .click('#givenNameInput')
-      .keys([browser.Keys.COMMAND, 'a'])
-      .keys(browser.Keys.BACK_SPACE)
-      .pause(100)
+      .clearValue('#givenNameInput')
       .setValue('#givenNameInput', updatedPractitioner.givenName)
-      .click('#phoneInput')
-      .keys([browser.Keys.COMMAND, 'a'])
-      .keys(browser.Keys.BACK_SPACE)
-      .pause(100)
+      .clearValue('#phoneInput')
       .setValue('#phoneInput', updatedPractitioner.phone)
-      .click('#emailInput')
-      .keys([browser.Keys.COMMAND, 'a'])
-      .keys(browser.Keys.BACK_SPACE)
-      .pause(100)
+      .clearValue('#emailInput')
       .setValue('#emailInput', updatedPractitioner.email)
-      .click('#specialtyDisplayInput')
-      .keys([browser.Keys.COMMAND, 'a'])
-      .keys(browser.Keys.BACK_SPACE)
-      .pause(100)
+      .clearValue('#specialtyDisplayInput')
       .setValue('#specialtyDisplayInput', updatedPractitioner.specialtyDisplay)
       .pause(500)
       .saveScreenshot('tests/nightwatch/screenshots/practitioners/08-updated-practitioner-form.png');
@@ -535,7 +523,7 @@ describe('Practitioners CRUD Operations', function() {
       });
 
     browser
-      .pause(2000)
+      .pause(1000)
       .url('http://localhost:3000/practitioners')
       .waitForElementVisible('#practitionersTable', 5000)
       .saveScreenshot('tests/nightwatch/screenshots/practitioners/09-practitioner-updated.png');
@@ -663,7 +651,7 @@ describe('Practitioners CRUD Operations', function() {
                   console.log('Delete button not found');
                   return false;
                 })
-                .pause(2000);
+                .pause(1000);
 
               browser
                 .waitForElementVisible('#practitionersPage', 5000);

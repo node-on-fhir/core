@@ -136,7 +136,7 @@ describe('Schedules CRUD Operations', function() {
         done();
       });
       
-      browser.pause(2000);
+      browser.pause(1000);
     });
   });
 
@@ -188,7 +188,7 @@ describe('Schedules CRUD Operations', function() {
       }, [], function(result) {
         console.log('Button click result:', result.value);
       })
-      .pause(2000);
+      .pause(1000);
     
     // Verify we're on the new schedule page
     browser
@@ -365,7 +365,7 @@ describe('Schedules CRUD Operations', function() {
         console.error('Save button not found');
         return false;
       })
-      .pause(3000) // Give time for save to complete
+      .pause(2000) // Give time for save to complete
       .execute(function() {
         return {
           saveAttempted: window.saveAttempted,
@@ -434,7 +434,7 @@ describe('Schedules CRUD Operations', function() {
       .waitForElementVisible('#schedulesPage', 5000)
       .refresh() // Force page refresh to ensure data loads
       .waitForElementVisible('#schedulesPage', 5000)
-      .pause(2000); // Give autopublish time to sync
+      .pause(1000); // Give autopublish time to sync
     
     // First check what ID was saved in the previous test
     browser.execute(function() {
@@ -653,7 +653,7 @@ describe('Schedules CRUD Operations', function() {
         }
         return false;
       })
-      .pause(2000);
+      .pause(1000);
     
     // Verify we're back on the list page
     browser

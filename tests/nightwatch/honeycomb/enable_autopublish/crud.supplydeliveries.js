@@ -51,14 +51,13 @@ describe('SupplyDeliveries CRUD Operations', function() {
   });
 
   beforeEach(browser => {
-    browser.pause(500);
+    // Removed unnecessary pause
   });
 
   it('01. Setup test environment', browser => {
     browser
       .url('http://localhost:3000')
       .waitForElementVisible('body', 5000)
-      .pause(2000)
       .execute(function(ts) {
         window.testTimestamp = ts;
       }, [timestamp]);
@@ -157,7 +156,7 @@ describe('SupplyDeliveries CRUD Operations', function() {
       console.log('[Test] Cleaned up', testDeliveries.length, 'test supply deliveries');
     }, [timestamp]);
 
-    browser.pause(1000);
+    browser.pause(500);
   });
 
   it('02. Navigate to supply deliveries list page', browser => {
@@ -201,13 +200,11 @@ describe('SupplyDeliveries CRUD Operations', function() {
         // Click the Add button using a more flexible selector
         browser
           .click('[data-testid="add-supply-delivery-button"], #addSupplyDeliveryButton, button[title="Add Supply Delivery"]')
-          .pause(2000)
           .waitForElementVisible('#supplyDeliveryDetailsPage', 5000);
       } else {
         console.log('Add button not found, attempting direct navigation');
         browser
           .url('http://localhost:3000/supply-deliveries/new')
-          .pause(2000)
           .waitForElementVisible('#supplyDeliveryDetailsPage', 5000);
       }
     });
@@ -325,7 +322,7 @@ describe('SupplyDeliveries CRUD Operations', function() {
     // Click save button
     browser
       .click('#saveSupplyDeliveryButton')
-      .pause(2000);
+      .pause(1000);
 
     // Verify navigation back to list
     browser.execute(function() {
@@ -398,14 +395,14 @@ describe('SupplyDeliveries CRUD Operations', function() {
       return { searchPerformed: false };
     }, [timestamp], function(result) {
       if (result.value.searchPerformed) {
-        browser.pause(1000); // Wait for search to filter results
+        browser.pause(500); // Wait for search to filter results
       }
     });
 
     // Click on the first row (should be our newest supply delivery if sorted properly)
     browser
       .click('#supplyDeliveriesTable tbody tr:first-child')
-      .pause(2000)
+      .pause(1000)
       .waitForElementVisible('#supplyDeliveryDetailsPage', 5000);
 
     // Verify we can see the details
@@ -456,7 +453,7 @@ describe('SupplyDeliveries CRUD Operations', function() {
       console.log('Edit mode:', result.value);
     });
 
-    browser.pause(1000);
+    browser.pause(500);
 
     // Update status
     browser.execute(function(newStatus) {
@@ -490,7 +487,7 @@ describe('SupplyDeliveries CRUD Operations', function() {
     // Save changes
     browser
       .click('#saveSupplyDeliveryButton')
-      .pause(2000);
+      .pause(1000);
 
     // Verify updates were saved
     browser.execute(function() {
@@ -521,7 +518,7 @@ describe('SupplyDeliveries CRUD Operations', function() {
           .url('http://localhost:3000/supply-deliveries')
           .pause(1000)
           .click('#supplyDeliveriesTable tbody tr:first-child')
-          .pause(2000);
+          .pause(1000);
       }
     });
 
@@ -536,7 +533,7 @@ describe('SupplyDeliveries CRUD Operations', function() {
       .click('#deleteSupplyDeliveryButton')
       .pause(500)
       .acceptAlert()
-      .pause(2000);
+      .pause(1000);
 
     // Verify we're back on the list page
     browser.execute(function() {
@@ -583,7 +580,7 @@ describe('SupplyDeliveries CRUD Operations', function() {
       });
     }, [timestamp]);
 
-    browser.pause(1000);
+    browser.pause(500);
   });
 
   after(browser => {

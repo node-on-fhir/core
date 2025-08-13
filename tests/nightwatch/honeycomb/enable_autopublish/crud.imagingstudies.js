@@ -42,14 +42,13 @@ describe('ImagingStudies CRUD Operations', function() {
   });
 
   beforeEach(browser => {
-    browser.pause(500);
+    // Removed unnecessary pause
   });
 
   it('01. Setup test environment', browser => {
     browser
       .url('http://localhost:3000')
       .waitForElementVisible('body', 5000)
-      .pause(2000)
       .execute(function(ts) {
         window.testTimestamp = ts;
       }, [timestamp]);
@@ -135,7 +134,7 @@ describe('ImagingStudies CRUD Operations', function() {
           }
         });
         
-        browser.pause(1000);
+        browser.pause(500);
       } else {
         browser.assert.ok(true, 'Already logged in (autologin enabled)');
         console.log('Already logged in as:', result.value.username, 'userId:', result.value.userId);
@@ -187,7 +186,7 @@ describe('ImagingStudies CRUD Operations', function() {
         done();
       });
       
-      browser.pause(2000);
+      browser.pause(500);
       
       // Re-establish patient context
       browser.execute(function(testIdentifier) {
@@ -243,7 +242,7 @@ describe('ImagingStudies CRUD Operations', function() {
     browser
       .url('http://localhost:3000/imaging-studies')
       .waitForElementVisible('#imagingStudiesPage', 5000)
-      .pause(2000)
+      .pause(500)
       // Re-establish patient context after navigation
       .execute(function(testIdentifier) {
         if (typeof Session !== 'undefined' && typeof Patients !== 'undefined') {
@@ -625,7 +624,7 @@ describe('ImagingStudies CRUD Operations', function() {
       });
 
     browser
-      .pause(2000);
+      .pause(500);
     
     // Check if we're back on the imaging studies list page
     browser.execute(function() {
@@ -946,14 +945,10 @@ describe('ImagingStudies CRUD Operations', function() {
     // Update study details
     browser
       .click('#descriptionInput')
-      .keys([browser.Keys.COMMAND, 'a'])
-      .keys(browser.Keys.BACK_SPACE)
-      .pause(100)
+      .clearValue('#descriptionInput')
       .setValue('#descriptionInput', updatedImagingStudy.description)
       .click('#reasonCodeInput')
-      .keys([browser.Keys.COMMAND, 'a'])
-      .keys(browser.Keys.BACK_SPACE)
-      .pause(100)
+      .clearValue('#reasonCodeInput')
       .setValue('#reasonCodeInput', updatedImagingStudy.reasonCode)
       .click('#statusSelect')
       .pause(300)
@@ -971,9 +966,7 @@ describe('ImagingStudies CRUD Operations', function() {
         browser.assert.equal(result.value, true, 'Selected status');
       })
       .click('#notesTextarea')
-      .keys([browser.Keys.COMMAND, 'a'])
-      .keys(browser.Keys.BACK_SPACE)
-      .pause(100)
+      .clearValue('#notesTextarea')
       .setValue('#notesTextarea', updatedImagingStudy.notes)
       .pause(500)
       .saveScreenshot('tests/nightwatch/screenshots/imaging-studies/08-updated-imaging-study-form.png');
@@ -994,7 +987,7 @@ describe('ImagingStudies CRUD Operations', function() {
       });
 
     browser
-      .pause(2000)
+      .pause(500)
       .url('http://localhost:3000/imaging-studies')
       .waitForElementVisible('#imagingStudiesTable', 5000)
       .saveScreenshot('tests/nightwatch/screenshots/imaging-studies/09-imaging-study-updated.png');
@@ -1090,7 +1083,7 @@ describe('ImagingStudies CRUD Operations', function() {
           .pause(500);
 
         browser
-          .pause(2000)
+          .pause(500)
           .waitForElementVisible('#imagingStudiesPage', 5000)
           .execute(function() {
             const hasTable = document.querySelector('#imagingStudiesTable') !== null;

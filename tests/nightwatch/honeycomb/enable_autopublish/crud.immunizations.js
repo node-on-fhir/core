@@ -41,14 +41,14 @@ describe('Immunizations CRUD Operations', function() {
   });
 
   beforeEach(browser => {
-    browser.pause(500);
+    // Removed unnecessary pause
   });
 
   it('01. Setup test environment', browser => {
     browser
       .url('http://localhost:3000')
       .waitForElementVisible('body', 5000)
-      .pause(2000)
+      .pause(1000)
       .execute(function(ts) {
         window.testTimestamp = ts;
       }, [timestamp]);
@@ -186,7 +186,7 @@ describe('Immunizations CRUD Operations', function() {
         done();
       });
       
-      browser.pause(2000);
+      browser.pause(1000);
       
       // Re-establish patient context
       browser.execute(function(testIdentifier) {
@@ -633,7 +633,7 @@ describe('Immunizations CRUD Operations', function() {
       });
 
     browser
-      .pause(2000);
+      .pause(1000);
     
     // Check if we're back on the immunizations list page
     browser.execute(function() {
@@ -1130,7 +1130,7 @@ describe('Immunizations CRUD Operations', function() {
       });
 
     browser
-      .pause(2000)
+      .pause(1000)
       .url('http://localhost:3000/immunizations')
       .waitForElementVisible('#immunizationsTable', 5000)
       .saveScreenshot('tests/nightwatch/screenshots/immunizations/09-immunization-updated.png');
@@ -1306,7 +1306,7 @@ describe('Immunizations CRUD Operations', function() {
           .pause(1000); // Wait for deletion to complete
 
         browser
-          .pause(2000)
+          .pause(1000)
           .waitForElementVisible('#immunizationsPage', 5000)
           .execute(function() {
             const hasTable = document.querySelector('#immunizationsTable') !== null;
