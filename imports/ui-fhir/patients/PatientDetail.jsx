@@ -754,7 +754,7 @@ function PatientDetail(props) {
               onClick={handleSave}
               disabled={!get(patient, 'name[0].family') || !get(patient, 'name[0].given[0]')}
             >
-              Save Patient
+              Save
             </Button>
           </CardActions>
         </Card>
