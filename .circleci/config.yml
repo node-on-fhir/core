@@ -21,23 +21,26 @@ parameters:
           ]
         },
         {
-          "name": "patient-management",
+          "name": "actors",
           "tests": [
             "tests/nightwatch/honeycomb/enable_autopublish/crud.patients.js",
-            "tests/nightwatch/honeycomb/enable_autopublish/crud.practitioners.js",
-            "tests/nightwatch/honeycomb/enable_autopublish/crud.locations.js"
+            "tests/nightwatch/honeycomb/enable_autopublish/crud.practitioners.js"
           ]
         },
         {
-          "name": "clinical-resources-1",
+          "name": "clinical-history",
           "tests": [
             "tests/nightwatch/honeycomb/enable_autopublish/crud.observations.js",
             "tests/nightwatch/honeycomb/enable_autopublish/crud.conditions.js",
-            "tests/nightwatch/honeycomb/enable_autopublish/crud.allergyintolerances.js"
+            "tests/nightwatch/honeycomb/enable_autopublish/crud.allergyintolerances.js",
+            "tests/nightwatch/honeycomb/enable_autopublish/crud.immunizations.js",
+            "tests/nightwatch/honeycomb/enable_autopublish/crud.encounters.js",
+            "tests/nightwatch/honeycomb/enable_autopublish/crud.procedures.js",
+
           ]
         },
         {
-          "name": "clinical-resources-2",
+          "name": "pharmacy",
           "tests": [
             "tests/nightwatch/honeycomb/enable_autopublish/crud.medications.js",
             "tests/nightwatch/honeycomb/enable_autopublish/crud.medicationrequests.js",
@@ -45,9 +48,8 @@ parameters:
           ]
         },
         {
-          "name": "clinical-resources-3",
+          "name": "radiology",
           "tests": [
-            "tests/nightwatch/honeycomb/enable_autopublish/crud.immunizations.js",
             "tests/nightwatch/honeycomb/enable_autopublish/crud.diagnosticreports.js",
             "tests/nightwatch/honeycomb/enable_autopublish/crud.imagingstudies.js"
           ]
@@ -56,8 +58,7 @@ parameters:
           "name": "care-management",
           "tests": [
             "tests/nightwatch/honeycomb/enable_autopublish/crud.careplans.js",
-            "tests/nightwatch/honeycomb/enable_autopublish/crud.encounters.js",
-            "tests/nightwatch/honeycomb/enable_autopublish/crud.procedures.js",
+            "tests/nightwatch/honeycomb/enable_autopublish/crud.nutritionorders.js",
             "tests/nightwatch/honeycomb/enable_autopublish/crud.servicerequests.js"
           ]
         },
@@ -69,7 +70,7 @@ parameters:
           ]
         },
         {
-          "name": "research-questionnaires",
+          "name": "structured data capture",
           "tests": [
             "tests/nightwatch/honeycomb/enable_autopublish/crud.questionnaires.js",
             "tests/nightwatch/honeycomb/enable_autopublish/crud.questionnaireresponses.js",
@@ -80,16 +81,11 @@ parameters:
         {
           "name": "administrative",
           "tests": [
+            "tests/nightwatch/honeycomb/enable_autopublish/crud.locations.js"
             "tests/nightwatch/honeycomb/enable_autopublish/crud.devices.js",
             "tests/nightwatch/honeycomb/enable_autopublish/crud.medias.js",
-            "tests/nightwatch/honeycomb/enable_autopublish/crud.consents.js"
-          ]
-        },
-        {
-          "name": "additional-clinical",
-          "tests": [
+            "tests/nightwatch/honeycomb/enable_autopublish/crud.consents.js",
             "tests/nightwatch/honeycomb/enable_autopublish/crud.documentreferences.js",
-            "tests/nightwatch/honeycomb/enable_autopublish/crud.nutritionorders.js",
             "tests/nightwatch/honeycomb/enable_autopublish/crud.supplydeliveries.js"
           ]
         },
@@ -275,58 +271,53 @@ workflows:
     jobs:
       # Run each test group in parallel
       - test-group:
-          name: test-accounts
+          name: accounts
           group-name: accounts
           test-files: "tests/nightwatch/honeycomb/default/accounts.login.js tests/nightwatch/honeycomb/default/accounts.signup.js tests/nightwatch/honeycomb/default/accounts.viewports.js"
           disable-auto-login: true
       
       - test-group:
-          name: test-patient-management
-          group-name: patient-management
-          test-files: "tests/nightwatch/honeycomb/enable_autopublish/crud.patients.js tests/nightwatch/honeycomb/enable_autopublish/crud.practitioners.js tests/nightwatch/honeycomb/enable_autopublish/crud.locations.js"
+          name: actors
+          group-name: actors
+          test-files: "tests/nightwatch/honeycomb/enable_autopublish/crud.patients.js tests/nightwatch/honeycomb/enable_autopublish/crud.practitioners.js"
       
       - test-group:
-          name: test-clinical-resources-1
-          group-name: clinical-resources-1
-          test-files: "tests/nightwatch/honeycomb/enable_autopublish/crud.observations.js tests/nightwatch/honeycomb/enable_autopublish/crud.conditions.js tests/nightwatch/honeycomb/enable_autopublish/crud.allergyintolerances.js"
+          name: clinical-history
+          group-name: clinical-history
+          test-files: "tests/nightwatch/honeycomb/enable_autopublish/crud.observations.js tests/nightwatch/honeycomb/enable_autopublish/crud.conditions.js tests/nightwatch/honeycomb/enable_autopublish/crud.allergyintolerances.js tests/nightwatch/honeycomb/enable_autopublish/crud.immunizations.js tests/nightwatch/honeycomb/enable_autopublish/crud.encounters.js tests/nightwatch/honeycomb/enable_autopublish/crud.procedures.js"
       
       - test-group:
-          name: test-clinical-resources-2
-          group-name: clinical-resources-2
+          name: pharmacy
+          group-name: pharmacy
           test-files: "tests/nightwatch/honeycomb/enable_autopublish/crud.medications.js tests/nightwatch/honeycomb/enable_autopublish/crud.medicationrequests.js tests/nightwatch/honeycomb/enable_autopublish/crud.medicationadministrations.js"
       
       - test-group:
-          name: test-clinical-resources-3
-          group-name: clinical-resources-3
-          test-files: "tests/nightwatch/honeycomb/enable_autopublish/crud.immunizations.js tests/nightwatch/honeycomb/enable_autopublish/crud.diagnosticreports.js tests/nightwatch/honeycomb/enable_autopublish/crud.imagingstudies.js"
+          name: radiology
+          group-name: radiology
+          test-files: "tests/nightwatch/honeycomb/enable_autopublish/crud.diagnosticreports.js tests/nightwatch/honeycomb/enable_autopublish/crud.imagingstudies.js"
       
       - test-group:
-          name: test-care-management
+          name: care-management
           group-name: care-management
-          test-files: "tests/nightwatch/honeycomb/enable_autopublish/crud.careplans.js tests/nightwatch/honeycomb/enable_autopublish/crud.encounters.js tests/nightwatch/honeycomb/enable_autopublish/crud.procedures.js tests/nightwatch/honeycomb/enable_autopublish/crud.servicerequests.js"
+          test-files: "tests/nightwatch/honeycomb/enable_autopublish/crud.careplans.js tests/nightwatch/honeycomb/enable_autopublish/crud.nutritionorders.js tests/nightwatch/honeycomb/enable_autopublish/crud.servicerequests.js"
       
       - test-group:
-          name: test-scheduling
+          name: scheduling
           group-name: scheduling
           test-files: "tests/nightwatch/honeycomb/enable_autopublish/crud.appointments.js tests/nightwatch/honeycomb/enable_autopublish/crud.schedules.js"
       
       - test-group:
-          name: test-research-questionnaires
-          group-name: research-questionnaires
+          name: structured-data-capture
+          group-name: structured-data-capture
           test-files: "tests/nightwatch/honeycomb/enable_autopublish/crud.questionnaires.js tests/nightwatch/honeycomb/enable_autopublish/crud.questionnaireresponses.js tests/nightwatch/honeycomb/enable_autopublish/crud.researchstudy.js tests/nightwatch/honeycomb/enable_autopublish/crud.researchsubjects.js"
       
       - test-group:
-          name: test-administrative
+          name: administrative
           group-name: administrative
-          test-files: "tests/nightwatch/honeycomb/enable_autopublish/crud.devices.js tests/nightwatch/honeycomb/enable_autopublish/crud.medias.js tests/nightwatch/honeycomb/enable_autopublish/crud.consents.js"
+          test-files: "tests/nightwatch/honeycomb/enable_autopublish/crud.devices.js tests/nightwatch/honeycomb/enable_autopublish/crud.medias.js tests/nightwatch/honeycomb/enable_autopublish/crud.consents.js tests/nightwatch/honeycomb/enable_autopublish/crud.locations.js tests/nightwatch/honeycomb/enable_autopublish/crud.documentreferences.js tests/nightwatch/honeycomb/enable_autopublish/crud.supplydeliveries.js"
       
       - test-group:
-          name: test-additional-clinical
-          group-name: additional-clinical
-          test-files: "tests/nightwatch/honeycomb/enable_autopublish/crud.documentreferences.js tests/nightwatch/honeycomb/enable_autopublish/crud.nutritionorders.js tests/nightwatch/honeycomb/enable_autopublish/crud.supplydeliveries.js"
-      
-      - test-group:
-          name: test-other
+          name: other-tests
           group-name: other-tests
           test-files: "tests/nightwatch/honeycomb/enable_autopublish/simple-sorting-test.js tests/nightwatch/honeycomb/dev_auto_login/my.profile.js tests/nightwatch/honeycomb/default/localhost.js"
 
