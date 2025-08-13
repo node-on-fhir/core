@@ -104,6 +104,16 @@ function PractitionerDetail(props) {
         code: "en",
         display: "English"
       }]
+    }],
+    practitionerRole: [{
+      specialty: [{
+        coding: [{
+          system: "http://nucc.org/provider-taxonomy",
+          code: "",
+          display: ""
+        }],
+        text: ""
+      }]
     }]
   });
 
