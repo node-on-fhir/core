@@ -40,17 +40,7 @@ import { get } from 'lodash';
 import { Schedules } from '/imports/lib/schemas/SimpleSchemas/Schedules';
 import { FhirUtilities } from '/imports/lib/FhirUtilities';
 
-// Get the Schedules collection - prefer global if available, otherwise use imported
-function getSchedulesCollection() {
-  // Check different possible locations for the collection
-  if (typeof window !== 'undefined' && window.Schedules) {
-    return window.Schedules;
-  }
-  if (Meteor.Collections?.Schedules) {
-    return Meteor.Collections.Schedules;
-  }
-  return Schedules;
-}
+// Use the imported Schedules collection directly
 
 //=============================================================================================================================================
 // SESSION VARIABLES

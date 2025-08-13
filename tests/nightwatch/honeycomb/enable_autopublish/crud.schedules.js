@@ -143,6 +143,34 @@ describe('Schedules CRUD Operations', function() {
   it('02. Verify schedules list page loads', browser => {
     browser
       .url('http://localhost:3000/schedules')
+      .pause(2000) // Give page time to load
+      .execute(function() {
+        // Check if the page loaded at all
+        console.log('Document body:', document.body.innerHTML.substring(0, 200));
+        console.log('Checking for schedulesPage element:', document.querySelector('#schedulesPage'));
+        
+        // Check for any React errors
+        const errorElement = document.querySelector('#react-error-overlay');
+        if (errorElement) {
+          console.error('React error found:', errorElement.textContent);
+        }
+        
+        // Check if Schedules collection exists
+        if (typeof Schedules !== 'undefined') {
+          console.log('Schedules collection exists');
+        } else {
+          console.error('Schedules collection is undefined');
+        }
+        
+        // Return debug info
+        return {
+          hasSchedulesPage: document.querySelector('#schedulesPage') !== null,
+          bodyLength: document.body.innerHTML.length,
+          hasReactRoot: document.querySelector('#react-target') !== null
+        };
+      }, [], function(result) {
+        console.log('Page debug info:', result.value);
+      })
       .waitForElementVisible('#schedulesPage', 5000)
       .pause(500)
       .execute(function() {
