@@ -88,14 +88,13 @@ describe('NutritionOrders CRUD Operations', function() {
   });
 
   beforeEach(browser => {
-    browser.pause(500);
+    // Removed unnecessary pause
   });
 
   it('01. Setup test environment', browser => {
     browser
       .url('http://localhost:3000')
       .waitForElementVisible('body', 5000)
-      .pause(2000)
       .execute(function(ts) {
         window.testTimestamp = ts;
       }, [timestamp]);
@@ -195,7 +194,7 @@ describe('NutritionOrders CRUD Operations', function() {
       console.log('[Test] Cleaned up', testOrders.length, 'test nutrition orders');
     }, [timestamp]);
 
-    browser.pause(1000);
+    browser.pause(500);
   });
 
   it('02. Navigate to nutrition orders list page', browser => {
@@ -347,13 +346,13 @@ describe('NutritionOrders CRUD Operations', function() {
         // Click the Add button using a more flexible selector
         browser
           .click('[data-testid="add-nutrition-order-button"], #addNutritionOrderButton, button[title="Add Nutrition Order"]')
-          .pause(2000)
+          .pause(500)
           .waitForElementVisible('#nutritionOrderDetailPage', 5000);
       } else {
         console.log('Add button not found, attempting direct navigation');
         browser
           .url('http://localhost:3000/nutrition-orders/new')
-          .pause(2000)
+          .pause(500)
           .waitForElementVisible('#nutritionOrderDetailPage', 5000);
       }
     });
@@ -548,7 +547,7 @@ describe('NutritionOrders CRUD Operations', function() {
       .waitForElementVisible('#saveNutritionOrderButton', 5000)
       .assert.visible('#saveNutritionOrderButton', 'Save button should be visible')
       .click('#saveNutritionOrderButton')
-      .pause(2000);
+      .pause(500);
 
     // Verify navigation back to list
     browser.execute(function() {
@@ -692,7 +691,7 @@ describe('NutritionOrders CRUD Operations', function() {
       return { searchPerformed: false };
     }, [timestamp], function(result) {
       if (result.value.searchPerformed) {
-        browser.pause(1000); // Wait for search to filter results
+        browser.pause(500); // Wait for search to filter results
       }
     });
 
@@ -739,7 +738,7 @@ describe('NutritionOrders CRUD Operations', function() {
     });
     
     browser
-      .pause(2000)
+      .pause(500)
       .waitForElementVisible('#nutritionOrderDetailPage', 5000);
 
     // Verify we're on the detail page
@@ -961,7 +960,7 @@ describe('NutritionOrders CRUD Operations', function() {
       browser.assert.ok(result.value.dietTypeUpdated, 'Diet type select should be found and clicked');
     });
 
-    browser.pause(1000);
+    browser.pause(500);
 
     // Get original values before updating
     browser.execute(function() {
@@ -1068,7 +1067,7 @@ describe('NutritionOrders CRUD Operations', function() {
       .pause(3000);
 
     // Wait for form to return to read-only mode and data to reload
-    browser.pause(2000);
+    browser.pause(500);
     
     // Verify we're back in read-only mode
     browser.execute(function() {
@@ -1238,7 +1237,7 @@ describe('NutritionOrders CRUD Operations', function() {
       .click('#deleteNutritionOrderButton')
       .pause(500)
       .acceptAlert() // Accept the window.confirm dialog
-      .pause(2000);
+      .pause(500);
 
     // Verify we're back on the list page
     browser.execute(function() {
@@ -1255,7 +1254,7 @@ describe('NutritionOrders CRUD Operations', function() {
     });
 
     // Wait a moment for the deletion to propagate
-    browser.pause(1000);
+    browser.pause(500);
 
     // Verify the nutrition order was deleted
     browser.execute(function(ts) {
@@ -1355,7 +1354,7 @@ describe('NutritionOrders CRUD Operations', function() {
       });
     }, [timestamp]);
 
-    browser.pause(1000);
+    browser.pause(500);
   });
 
   after(browser => {

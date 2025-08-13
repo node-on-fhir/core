@@ -36,14 +36,13 @@ describe('DocumentReferences CRUD Operations', function() {
   });
 
   beforeEach(browser => {
-    browser.pause(500);
+    // Removed unnecessary pause
   });
 
   it('01. Setup test environment', browser => {
     browser
       .url('http://localhost:3000')
       .waitForElementVisible('body', 5000)
-      .pause(2000)
       .execute(function(ts) {
         window.testTimestamp = ts;
       }, [timestamp]);
@@ -129,7 +128,7 @@ describe('DocumentReferences CRUD Operations', function() {
           }
         });
         
-        browser.pause(1000);
+        browser.pause(500);
       } else {
         browser.assert.ok(true, 'Already logged in (autologin enabled)');
         console.log('Already logged in as:', result.value.username, 'userId:', result.value.userId);
@@ -181,7 +180,7 @@ describe('DocumentReferences CRUD Operations', function() {
         done();
       });
       
-      browser.pause(2000);
+      browser.pause(500);
       
       // Re-establish patient context
       browser.execute(function(testIdentifier) {
@@ -1085,19 +1084,13 @@ describe('DocumentReferences CRUD Operations', function() {
     // Update document details
     browser
       .click('#typeInput')
-      .keys([browser.Keys.COMMAND, 'a'])
-      .keys(browser.Keys.BACK_SPACE)
-      .pause(100)
+      .clearValue('#typeInput')
       .setValue('#typeInput', updatedDocumentReference.type)
       .click('#descriptionInput')
-      .keys([browser.Keys.COMMAND, 'a'])
-      .keys(browser.Keys.BACK_SPACE)
-      .pause(100)
+      .clearValue('#descriptionInput')
       .setValue('#descriptionInput', updatedDocumentReference.description)
       .click('#contentTitleInput')
-      .keys([browser.Keys.COMMAND, 'a'])
-      .keys(browser.Keys.BACK_SPACE)
-      .pause(100)
+      .clearValue('#contentTitleInput')
       .setValue('#contentTitleInput', updatedDocumentReference.contentTitle)
       .click('#statusSelect')
       .pause(300)
@@ -1115,9 +1108,7 @@ describe('DocumentReferences CRUD Operations', function() {
         browser.assert.equal(result.value, true, 'Selected status');
       })
       .click('#notesTextarea')
-      .keys([browser.Keys.COMMAND, 'a'])
-      .keys(browser.Keys.BACK_SPACE)
-      .pause(100)
+      .clearValue('#notesTextarea')
       .setValue('#notesTextarea', updatedDocumentReference.notes)
       .pause(500)
       .saveScreenshot('tests/nightwatch/screenshots/document-references/08-updated-document-reference-form.png');

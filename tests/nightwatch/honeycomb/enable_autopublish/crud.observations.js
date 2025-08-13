@@ -32,14 +32,13 @@ describe('Observations CRUD Operations', function() {
   });
 
   beforeEach(browser => {
-    browser.pause(500);
+    // Removed unnecessary pause
   });
 
   it('01. Setup test environment', browser => {
     browser
       .url('http://localhost:3000')
       .waitForElementVisible('body', 5000)
-      .pause(2000)
       .execute(function(ts) {
         window.testTimestamp = ts;
       }, [timestamp]);
@@ -232,7 +231,6 @@ describe('Observations CRUD Operations', function() {
     browser
       .url('http://localhost:3000/observations')
       .waitForElementVisible('#observationsPage', 5000)
-      .pause(2000)
       .execute(function() {
         const hasTable = document.querySelector('#observationsTable') !== null;
         const hasNoDataCard = document.querySelector('.no-data-card') !== null ||
@@ -272,7 +270,7 @@ describe('Observations CRUD Operations', function() {
       });
 
     browser
-      .pause(1000)
+      .pause(500)
       .waitForElementVisible('#observationDetailPage', 5000)
       .assert.elementPresent('#patientDisplay')
       .assert.elementPresent('#performerDisplay')
@@ -284,7 +282,7 @@ describe('Observations CRUD Operations', function() {
       .assert.elementPresent('#category')
       .assert.elementPresent('#effectiveDate')
       .assert.elementPresent('#notesTextarea')
-      .pause(1000)
+      .pause(500)
       .execute(function() {
         const patientField = document.querySelector('#patientDisplay');
         const performerField = document.querySelector('#performerDisplay');
@@ -593,7 +591,7 @@ describe('Observations CRUD Operations', function() {
   it('05. Verify new observation appears in list', browser => {
     browser
       .waitForElementVisible('#observationsPage', 5000)
-      .pause(1000);
+      .pause(500);
     
     browser.execute(function() {
       const hasTable = document.querySelector('#observationsTable') !== null;
@@ -670,7 +668,7 @@ describe('Observations CRUD Operations', function() {
   it('06. View observation details', browser => {
     browser
       .waitForElementVisible('#observationsTable', 5000)
-      .pause(1000);
+      .pause(500);
 
     // Click on the first observation row
     browser
@@ -704,7 +702,7 @@ describe('Observations CRUD Operations', function() {
       });
 
     browser
-      .pause(1000)
+      .pause(500)
       .waitForElementVisible('#observationDetailPage', 5000)
       // Skip performer assertion - performer not being saved/displayed correctly
       // .assert.valueContains('#performerDisplay', 'janedoe')
@@ -750,7 +748,7 @@ describe('Observations CRUD Operations', function() {
   it('07. Update existing observation', browser => {
     browser
       .waitForElementVisible('#observationsTable', 5000)
-      .pause(1000);
+      .pause(500);
 
     // Click on the observation to edit - look for our specific test data
     browser
@@ -787,7 +785,7 @@ describe('Observations CRUD Operations', function() {
       });
 
     browser
-      .pause(1000)
+      .pause(500)
       .waitForElementVisible('#observationDetailPage', 5000)
       .pause(500);
 
@@ -828,9 +826,7 @@ describe('Observations CRUD Operations', function() {
     // Note: performerDisplay is disabled, so we skip updating it
     browser
       .click('#valueQuantity')
-      .keys([browser.Keys.COMMAND, 'a'])
-      .keys(browser.Keys.BACK_SPACE)
-      .pause(100)
+      .clearValue('#valueQuantity')
       .setValue('#valueQuantity', updatedObservation.valueQuantity)
       .click('#status')
       .pause(300)
@@ -848,9 +844,7 @@ describe('Observations CRUD Operations', function() {
         browser.assert.equal(result.value, true, 'Selected status');
       })
       .click('#notesTextarea')
-      .keys([browser.Keys.COMMAND, 'a'])
-      .keys(browser.Keys.BACK_SPACE)
-      .pause(100)
+      .clearValue('#notesTextarea')
       .setValue('#notesTextarea', updatedObservation.notes)
       .pause(500)
       .saveScreenshot('tests/nightwatch/screenshots/observations/08-updated-observation-form.png');
@@ -871,7 +865,6 @@ describe('Observations CRUD Operations', function() {
       });
 
     browser
-      .pause(2000)
       .url('http://localhost:3000/observations')
       .waitForElementVisible('#observationsTable', 5000)
       .saveScreenshot('tests/nightwatch/screenshots/observations/09-observation-updated.png');
@@ -880,7 +873,7 @@ describe('Observations CRUD Operations', function() {
   it('08. Verify updated observation in list', browser => {
     browser
       .waitForElementVisible('#observationsTable', 5000)
-      .pause(1000)
+      .pause(500)
       // Verify the updated value is shown (performer is not editable)
       .assert.containsText('#observationsTable', updatedObservation.valueQuantity)
       .saveScreenshot('tests/nightwatch/screenshots/observations/10-updated-observation-in-list.png');
@@ -891,7 +884,7 @@ describe('Observations CRUD Operations', function() {
   it('09. Delete observation', browser => {
     browser
       .waitForElementVisible('#observationsPage', 5000)
-      .pause(1000);
+      .pause(500);
 
     browser.execute(function() {
       const hasTable = document.querySelector('#observationsTable') !== null;
@@ -944,7 +937,7 @@ describe('Observations CRUD Operations', function() {
           });
 
         browser
-          .pause(1000)
+          .pause(500)
           .waitForElementVisible('#observationDetailPage', 5000);
 
         // Enter edit mode if needed
@@ -985,13 +978,11 @@ describe('Observations CRUD Operations', function() {
             }
             return false;
           })
-          .pause(100)
-          .acceptAlert()
+              .acceptAlert()
           .pause(500);
 
         browser
-          .pause(2000)
-          .waitForElementVisible('#observationsPage', 5000)
+              .waitForElementVisible('#observationsPage', 5000)
           .execute(function() {
             const hasTable = document.querySelector('#observationsTable') !== null;
             const hasNoDataCard = document.querySelector('.no-data-card') !== null ||
@@ -1021,7 +1012,7 @@ describe('Observations CRUD Operations', function() {
   it('10. Verify observation removed from list', browser => {
     browser
       .waitForElementVisible('#observationsPage', 5000)
-      .pause(1000)
+      .pause(500)
       .execute(function() {
         const table = document.querySelector('#observationsTable');
         if (table) {

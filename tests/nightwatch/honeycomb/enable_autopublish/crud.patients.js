@@ -38,14 +38,13 @@ describe('Patients CRUD Operations', function() {
   });
 
   beforeEach(browser => {
-    browser.pause(500);
+    // Removed unnecessary pause
   });
 
   it('01. Setup test environment', browser => {
     browser
       .url('http://localhost:3000')
       .waitForElementVisible('body', 5000)
-      .pause(2000)
       .execute(function(ts) {
         window.testTimestamp = ts;
       }, [timestamp]);
@@ -103,7 +102,7 @@ describe('Patients CRUD Operations', function() {
           }
         });
         
-        browser.pause(1000);
+        browser.pause(500);
       } else {
         browser.assert.ok(true, 'Already logged in (autologin enabled)');
         console.log('Already logged in as:', result.value.username, 'userId:', result.value.userId);
@@ -126,7 +125,7 @@ describe('Patients CRUD Operations', function() {
         done();
       });
       
-      browser.pause(1000);
+      browser.pause(500);
     });
   });
 
@@ -134,7 +133,7 @@ describe('Patients CRUD Operations', function() {
     browser
       .url('http://localhost:3000/patients')
       .waitForElementVisible('#patientsPage', 5000)
-      .pause(5000)  // Give plenty of time for subscriptions and React to render
+      .pause(1000)  // Give time for subscriptions and React to render
       .execute(function() {
         const hasTable = document.querySelector('#patientsTable') !== null;
         const hasNoDataCard = document.querySelector('.no-data-card') !== null ||
@@ -174,7 +173,7 @@ describe('Patients CRUD Operations', function() {
       });
 
     browser
-      .pause(1000)
+      .pause(500)
       .waitForElementVisible('#patientDetailPage', 5000)
       .assert.elementPresent('#givenNameInput')
       .assert.elementPresent('#familyNameInput')
@@ -528,19 +527,13 @@ describe('Patients CRUD Operations', function() {
     // Update patient details
     browser
       .click('#givenNameInput')
-      .keys([browser.Keys.COMMAND, 'a'])
-      .keys(browser.Keys.BACK_SPACE)
-      .pause(100)
+      .clearValue('#givenNameInput')
       .setValue('#givenNameInput', updatedPatient.givenName)
       .click('#phoneInput')
-      .keys([browser.Keys.COMMAND, 'a'])
-      .keys(browser.Keys.BACK_SPACE)
-      .pause(100)
+      .clearValue('#phoneInput')
       .setValue('#phoneInput', updatedPatient.phone)
       .click('#emailInput')
-      .keys([browser.Keys.COMMAND, 'a'])
-      .keys(browser.Keys.BACK_SPACE)
-      .pause(100)
+      .clearValue('#emailInput')
       .setValue('#emailInput', updatedPatient.email)
       .pause(500)
       .saveScreenshot('tests/nightwatch/screenshots/patients/08-updated-patient-form.png');

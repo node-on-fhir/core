@@ -39,14 +39,13 @@ describe('Locations CRUD Operations', function() {
   });
 
   beforeEach(browser => {
-    browser.pause(500);
+    // Removed unnecessary pause
   });
 
   it('01. Setup test environment', browser => {
     browser
       .url('http://localhost:3000')
       .waitForElementVisible('body', 5000)
-      .pause(2000)
       .execute(function(ts) {
         window.testTimestamp = ts;
       }, [timestamp]);
@@ -135,7 +134,6 @@ describe('Locations CRUD Operations', function() {
     browser
       .url('http://localhost:3000/locations')
       .waitForElementVisible('#locationsPage', 5000)
-      .pause(2000)
       .execute(function() {
         const hasTable = document.querySelector('#locationsTable') !== null;
         const hasNoDataCard = document.querySelector('.no-data-card') !== null ||
@@ -175,7 +173,7 @@ describe('Locations CRUD Operations', function() {
       });
 
     browser
-      .pause(1000)
+      .pause(500)
       .waitForElementVisible('#locationDetailPage', 5000)
       .assert.elementPresent('#nameInput')
       .assert.elementPresent('#identifierInput')
@@ -322,7 +320,6 @@ describe('Locations CRUD Operations', function() {
       });
 
     browser
-      .pause(2000)
       .waitForElementVisible('#locationsPage', 5000)
       .saveScreenshot('tests/nightwatch/screenshots/locations/05-location-saved.png');
   });
@@ -330,7 +327,7 @@ describe('Locations CRUD Operations', function() {
   it('05. Verify new location appears in list', browser => {
     browser
       .waitForElementVisible('#locationsPage', 5000)
-      .pause(1000);
+      .pause(500);
     
     browser.execute(function(timestamp) {
       const hasTable = document.querySelector('#locationsTable') !== null;
@@ -362,7 +359,7 @@ describe('Locations CRUD Operations', function() {
   it('06. View location details', browser => {
     browser
       .waitForElementVisible('#locationsTable', 5000)
-      .pause(1000);
+      .pause(500);
 
     // Click on the first location row
     browser
@@ -393,7 +390,7 @@ describe('Locations CRUD Operations', function() {
       });
 
     browser
-      .pause(1000)
+      .pause(500)
       .waitForElementVisible('#locationDetailPage', 5000)
       .assert.valueContains('#nameInput', testLocation.name)
       .assert.valueContains('#identifierInput', testLocation.identifier)
@@ -409,7 +406,7 @@ describe('Locations CRUD Operations', function() {
   it('07. Update existing location', browser => {
     browser
       .waitForElementVisible('#locationsTable', 5000)
-      .pause(1000);
+      .pause(500);
 
     // Click on the location to edit
     browser
@@ -431,7 +428,7 @@ describe('Locations CRUD Operations', function() {
       });
 
     browser
-      .pause(1000)
+      .pause(500)
       .waitForElementVisible('#locationDetailPage', 5000)
       .pause(500);
 
@@ -459,24 +456,16 @@ describe('Locations CRUD Operations', function() {
     // Update location details
     browser
       .click('#nameInput')
-      .keys([browser.Keys.COMMAND, 'a'])
-      .keys(browser.Keys.BACK_SPACE)
-      .pause(100)
+      .clearValue('#nameInput')
       .setValue('#nameInput', updatedLocation.name)
       .click('#phoneInput')
-      .keys([browser.Keys.COMMAND, 'a'])
-      .keys(browser.Keys.BACK_SPACE)
-      .pause(100)
+      .clearValue('#phoneInput')
       .setValue('#phoneInput', updatedLocation.phone)
       .click('#emailInput')
-      .keys([browser.Keys.COMMAND, 'a'])
-      .keys(browser.Keys.BACK_SPACE)
-      .pause(100)
+      .clearValue('#emailInput')
       .setValue('#emailInput', updatedLocation.email)
       .click('#descriptionTextarea')
-      .keys([browser.Keys.COMMAND, 'a'])
-      .keys(browser.Keys.BACK_SPACE)
-      .pause(100)
+      .clearValue('#descriptionTextarea')
       .setValue('#descriptionTextarea', updatedLocation.description)
       .pause(500);
 
@@ -518,7 +507,6 @@ describe('Locations CRUD Operations', function() {
       });
 
     browser
-      .pause(2000)
       .url('http://localhost:3000/locations')
       .waitForElementVisible('#locationsTable', 5000)
       .saveScreenshot('tests/nightwatch/screenshots/locations/09-location-updated.png');
@@ -527,7 +515,7 @@ describe('Locations CRUD Operations', function() {
   it('08. Verify updated location in list', browser => {
     browser
       .waitForElementVisible('#locationsTable', 5000)
-      .pause(1000)
+      .pause(500)
       .assert.containsText('#locationsTable', updatedLocation.name)
       .saveScreenshot('tests/nightwatch/screenshots/locations/10-updated-location-in-list.png');
   });
@@ -535,7 +523,7 @@ describe('Locations CRUD Operations', function() {
   it('09. Delete location', browser => {
     browser
       .waitForElementVisible('#locationsPage', 5000)
-      .pause(1000);
+      .pause(500);
 
     browser.execute(function() {
       const hasTable = document.querySelector('#locationsTable') !== null;
@@ -559,7 +547,7 @@ describe('Locations CRUD Operations', function() {
           });
 
         browser
-          .pause(1000)
+          .pause(500)
           .waitForElementVisible('#locationDetailPage', 5000);
 
         // Enter edit mode
@@ -596,13 +584,11 @@ describe('Locations CRUD Operations', function() {
             }
             return false;
           })
-          .pause(100)
-          .acceptAlert()
+              .acceptAlert()
           .pause(500);
 
         browser
-          .pause(2000)
-          .waitForElementVisible('#locationsPage', 5000);
+              .waitForElementVisible('#locationsPage', 5000);
       } else if (result.value.hasNoData) {
         browser.assert.ok(true, 'No locations to delete - No Data Available state is correct');
       }
@@ -614,7 +600,7 @@ describe('Locations CRUD Operations', function() {
   it('10. Verify location removed from list', browser => {
     browser
       .waitForElementVisible('#locationsPage', 5000)
-      .pause(1000)
+      .pause(500)
       .execute(function(timestamp) {
         const table = document.querySelector('#locationsTable');
         if (table) {

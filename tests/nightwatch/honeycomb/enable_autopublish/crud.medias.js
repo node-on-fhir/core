@@ -60,7 +60,6 @@ describe('Medias CRUD Operations', function() {
     browser
       .url('http://localhost:3000')
       .waitForElementVisible('body', 5000)
-      .pause(1000)
       .execute(function(ts) {
         window.testTimestamp = ts;
       }, [timestamp]);
@@ -146,7 +145,7 @@ describe('Medias CRUD Operations', function() {
           }
         });
         
-        browser.pause(1000);
+        browser.pause(500);
       } else {
         browser.assert.ok(true, 'Already logged in (autologin enabled)');
         console.log('Already logged in as:', result.value.username, 'userId:', result.value.userId);
@@ -198,7 +197,7 @@ describe('Medias CRUD Operations', function() {
         done();
       });
       
-      browser.pause(1000);
+      browser.pause(500);
       
       // Re-establish patient context
       browser.execute(function(testIdentifier) {
@@ -256,7 +255,7 @@ describe('Medias CRUD Operations', function() {
       .url('http://localhost:3000')
       .waitForElementVisible('body', 5000)
       .url('http://localhost:3000/medias')
-      .pause(1000)
+      .pause(500)
       .execute(function() {
         // Debug: Check if we're on the right page
         const currentUrl = window.location.href;

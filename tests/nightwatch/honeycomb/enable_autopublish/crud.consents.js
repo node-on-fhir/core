@@ -32,14 +32,13 @@ describe('Consents CRUD Operations', function() {
   });
 
   beforeEach(browser => {
-    browser.pause(500);
+    // Removed unnecessary pause
   });
 
   it('01. Setup test environment', browser => {
     browser
       .url('http://localhost:3000')
       .waitForElementVisible('body', 5000)
-      .pause(2000)
       .execute(function(ts) {
         window.testTimestamp = ts;
       }, [timestamp]);
@@ -125,7 +124,7 @@ describe('Consents CRUD Operations', function() {
           }
         });
         
-        browser.pause(1000);
+        browser.pause(500);
       } else {
         browser.assert.ok(true, 'Already logged in (autologin enabled)');
         console.log('Already logged in as:', result.value.username, 'userId:', result.value.userId);
@@ -177,7 +176,7 @@ describe('Consents CRUD Operations', function() {
         done();
       });
       
-      browser.pause(2000);
+      browser.pause(500);
       
       // Re-establish patient context
       browser.execute(function(testIdentifier) {
@@ -1118,9 +1117,7 @@ describe('Consents CRUD Operations', function() {
         browser.assert.equal(result.value, true, 'Selected category');
       })
       .click('#policyRuleInput')
-      .keys([browser.Keys.COMMAND, 'a'])
-      .keys(browser.Keys.BACK_SPACE)
-      .pause(100)
+      .clearValue('#policyRuleInput')
       .setValue('#policyRuleInput', updatedConsent.policyRule)
       .execute(function(value) {
         // Handle native select element
@@ -1135,9 +1132,7 @@ describe('Consents CRUD Operations', function() {
         browser.assert.equal(result.value, true, 'Selected status');
       })
       .click('#notesTextarea')
-      .keys([browser.Keys.COMMAND, 'a'])
-      .keys(browser.Keys.BACK_SPACE)
-      .pause(100)
+      .clearValue('#notesTextarea')
       .setValue('#notesTextarea', updatedConsent.notes)
       .pause(500)
       .saveScreenshot('tests/nightwatch/screenshots/consents/08-updated-consent-form.png');

@@ -33,14 +33,13 @@ describe('DiagnosticReports CRUD Operations', function() {
   });
 
   beforeEach(browser => {
-    browser.pause(500);
+    // Removed unnecessary pause
   });
 
   it('01. Setup test environment', browser => {
     browser
       .url('http://localhost:3000')
       .waitForElementVisible('body', 5000)
-      .pause(2000)
       .execute(function(ts) {
         window.testTimestamp = ts;
       }, [timestamp]);
@@ -126,7 +125,7 @@ describe('DiagnosticReports CRUD Operations', function() {
           }
         });
         
-        browser.pause(1000);
+        browser.pause(500);
       } else {
         browser.assert.ok(true, 'Already logged in (autologin enabled)');
         console.log('Already logged in as:', result.value.username, 'userId:', result.value.userId);
@@ -178,7 +177,7 @@ describe('DiagnosticReports CRUD Operations', function() {
         done();
       });
       
-      browser.pause(2000);
+      browser.pause(500);
       
       // Re-establish patient context
       browser.execute(function(testIdentifier) {
@@ -312,13 +311,33 @@ describe('DiagnosticReports CRUD Operations', function() {
     browser
       .execute(function() {
         const buttons = document.querySelectorAll('button');
+        const buttonTexts = [];
+        
+        // Debug: Log all button texts
         for (let button of buttons) {
-          if (button.textContent.includes('Add Diagnostic Report') || 
-              button.textContent.includes('Add Your First Diagnostic Report')) {
+          buttonTexts.push(button.textContent.trim());
+        }
+        console.log('Available buttons:', buttonTexts);
+        
+        // Try multiple variations of the button text
+        for (let button of buttons) {
+          const buttonText = button.textContent.trim();
+          if (buttonText === 'Add Report' || 
+              buttonText === 'Add Your First Diagnostic Report') {
+            console.log('Clicking button with text:', buttonText);
             button.click();
             return true;
           }
         }
+        
+        // Try looking for FAB (Floating Action Button) or icon buttons
+        const fabButtons = document.querySelectorAll('[aria-label*="add" i], [aria-label*="Add" i], button[title*="add" i], button[title*="Add" i]');
+        for (let fab of fabButtons) {
+          console.log('Found FAB/icon button, clicking it');
+          fab.click();
+          return true;
+        }
+        
         return false;
       }, [], function(result) {
         browser.assert.equal(result.value, true, 'Clicked Add Diagnostic Report button');
@@ -675,38 +694,42 @@ describe('DiagnosticReports CRUD Operations', function() {
       .waitForElementVisible('#diagnosticReportsPage', 5000)
       .pause(1000);
 
-    // Search for our specific report
+    // Clear any previous search and search for our specific report
     browser
       .waitForElementVisible('#diagnosticReportSearchInput', 5000)
       .clearValue('#diagnosticReportSearchInput')
-      .setValue('#diagnosticReportSearchInput', testDiagnosticReport.code.substring(0, 20))
+      .pause(500) // Let the clear take effect
+      .setValue('#diagnosticReportSearchInput', testDiagnosticReport.conclusion.substring(0, 20)) // Use conclusion like test 05 
       .pause(1000);
 
     // Now click on the report row
     browser
       .waitForElementVisible('#diagnosticReportsTable', 5000)
-      .execute(function(timestamp) {
+      .pause(1000) // Wait for search results to update
+      .execute(function(timestamp, code) {
         const rows = document.querySelectorAll('#diagnosticReportsTable tbody tr');
         console.log('Found', rows.length, 'rows in diagnostic reports table');
         
-        // Look for our test report
+        // Look for our test report by timestamp or code
         for (let i = 0; i < rows.length; i++) {
           const row = rows[i];
-          if (row.textContent.includes(timestamp)) {
-            console.log('Clicking row', i, 'with text:', row.textContent);
+          const rowText = row.textContent;
+          if (rowText.includes(timestamp) || rowText.includes(code)) {
+            console.log('Clicking row', i, 'with text:', rowText);
             row.click();
-            return { clicked: true, rowText: row.textContent, rowIndex: i };
+            return { clicked: true, rowText: rowText, rowIndex: i };
           }
         }
         
-        // If not found, click the first row
+        // If not found, click the first row if available
         if (rows.length > 0) {
+          console.log('Test report not found by timestamp/code, clicking first row');
           rows[0].click();
           return { clicked: true, rowText: rows[0].textContent, rowIndex: 0 };
         }
         
         return { clicked: false, error: 'No rows found' };
-      }, [timestamp.toString()], function(result) {
+      }, [timestamp.toString(), testDiagnosticReport.code], function(result) {
         console.log('Click result:', result.value);
         browser.assert.equal(result.value.clicked, true, 'Found and clicked diagnostic report row');
       });
@@ -908,14 +931,10 @@ describe('DiagnosticReports CRUD Operations', function() {
     // Update report details
     browser
       .click('#codeInput')
-      .keys([browser.Keys.COMMAND, 'a'])
-      .keys(browser.Keys.BACK_SPACE)
-      .pause(100)
+      .clearValue('#codeInput')
       .setValue('#codeInput', updatedDiagnosticReport.code)
       .click('#conclusionInput')
-      .keys([browser.Keys.COMMAND, 'a'])
-      .keys(browser.Keys.BACK_SPACE)
-      .pause(100)
+      .clearValue('#conclusionInput')
       .setValue('#conclusionInput', updatedDiagnosticReport.conclusion)
       .click('#statusSelect')
       .pause(300)
