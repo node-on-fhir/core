@@ -1,6 +1,3 @@
-# CircleCI configuration with parallel test execution
-# Based on testrunner-visibility-config.yml but with parallelization
-
 version: 2.1
 
 orbs:
