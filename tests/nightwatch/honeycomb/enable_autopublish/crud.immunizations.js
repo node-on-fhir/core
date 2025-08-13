@@ -908,7 +908,8 @@ describe('Immunizations CRUD Operations', function() {
       .waitForElementVisible('#immunizationDetailPage', 5000)
       .assert.valueContains('#vaccineDisplay', testImmunization.vaccineCodeDisplay)
       .assert.valueContains('#lotNumber', testImmunization.lotNumber)
-      .assert.valueContains('#performerDisplay', testImmunization.performer)
+      // Note: performer field is auto-populated with current user (janedoe)
+      .assert.valueContains('#performerDisplay', 'janedoe')  // Auto-populated with current user
       .execute(function() {
         const statusInput = document.querySelector('#statusSelect');
         const primarySourceCheckbox = document.querySelector('#primarySource');

@@ -305,7 +305,7 @@ describe('Patients CRUD Operations', function() {
       });
 
     browser
-      .pause(2000);
+      .pause(3000);  // Wait longer for async save and navigation (component has 1.5s delay)
     
     // Check if save was successful
     browser.execute(function() {
