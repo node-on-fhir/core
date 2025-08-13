@@ -1,10 +1,13 @@
+import { Meteor } from 'meteor/meteor';
+import { check } from 'meteor/check';
 import { get } from 'lodash';
+import { Locations } from '/imports/lib/schemas/SimpleSchemas/Locations';
 
 Meteor.methods({
     createLocation:function(locationObject){
         check(locationObject, Object);
 
-        if (process.env.NODE_ENV === 'test') {
+        if (process.env.NODE_ENV === 'test' || process.env.TEST_RUN === 'true') {
             console.log('Creating Location...');
             Locations.insert(locationObject, function(error, result){
             if (error) {
@@ -16,7 +19,7 @@ Meteor.methods({
             });
         } else {
             console.log('This command can only be run in a test environment.');
-            console.log('Try setting NODE_ENV=test');
+            console.log('Try setting NODE_ENV=test or TEST_RUN=true');
         }
     },  
     removeLocationById: function(locationId){

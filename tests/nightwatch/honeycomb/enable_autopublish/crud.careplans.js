@@ -39,15 +39,14 @@ describe('CarePlans CRUD Operations', function() {
   });
 
   beforeEach(browser => {
-    browser.pause(500);
+    // Removed unnecessary pause
   });
 
   it('01. Setup test environment', browser => {
     browser
       .windowSize('current', 1400, 900)  // Ensure landscape mode
       .url('http://localhost:3000')
-      .waitForElementVisible('body', 5000)
-      .pause(2000);
+      .waitForElementVisible('body', 5000);
 
     // Check if we're logged in
     browser.execute(function() {
@@ -194,7 +193,6 @@ describe('CarePlans CRUD Operations', function() {
     browser
       .url('http://localhost:3000/careplans')
       .waitForElementVisible('#carePlansPage', 5000)
-      .pause(2000)
       .execute(function() {
         const hasTable = document.querySelector('#carePlansTable') !== null;
         const hasNoDataCard = document.querySelector('.no-data-card') !== null ||
@@ -234,7 +232,7 @@ describe('CarePlans CRUD Operations', function() {
       });
 
     browser
-      .pause(1000)
+      .pause(500)
       .waitForElementVisible('#carePlanDetailPage', 5000)
       .assert.elementPresent('#subjectDisplay')
       .assert.elementPresent('#authorDisplay')
@@ -269,7 +267,7 @@ describe('CarePlans CRUD Operations', function() {
       .assert.urlContains('/care-plans/new');
 
     browser
-      .pause(1000);
+      .pause(500);
 
     browser.execute(function() {
       const authorField = document.querySelector('#authorDisplay');
@@ -315,7 +313,6 @@ describe('CarePlans CRUD Operations', function() {
           titleField.dispatchEvent(inputEvent);
         }
       })
-      .pause(100)
       .setValue('#title', testCarePlan.title);
 
     // Handle Material-UI Select components
@@ -356,34 +353,22 @@ describe('CarePlans CRUD Operations', function() {
     browser
       .pause(500)
       .click('#categoryCode')
-      .keys([browser.Keys.COMMAND, 'a'])
-      .keys(browser.Keys.BACK_SPACE)
-      .pause(100)
+      .clearValue('#categoryCode')
       .setValue('#categoryCode', testCarePlan.category)
       .click('#categoryDisplay')
-      .keys([browser.Keys.COMMAND, 'a'])
-      .keys(browser.Keys.BACK_SPACE)
-      .pause(100)
+      .clearValue('#categoryDisplay')
       .setValue('#categoryDisplay', testCarePlan.categoryDisplay)
       .click('#description')
-      .keys([browser.Keys.COMMAND, 'a'])
-      .keys(browser.Keys.BACK_SPACE)
-      .pause(100)
+      .clearValue('#description')
       .setValue('#description', testCarePlan.description)
       .click('#periodStart')
-      .keys([browser.Keys.COMMAND, 'a'])
-      .keys(browser.Keys.BACK_SPACE)
-      .pause(100)
+      .clearValue('#periodStart')
       .setValue('#periodStart', testCarePlan.startDate)
       .click('#periodEnd')
-      .keys([browser.Keys.COMMAND, 'a'])
-      .keys(browser.Keys.BACK_SPACE)
-      .pause(100)
+      .clearValue('#periodEnd')
       .setValue('#periodEnd', testCarePlan.endDate)
       .click('#notesTextarea')
-      .keys([browser.Keys.COMMAND, 'a'])
-      .keys(browser.Keys.BACK_SPACE)
-      .pause(100)
+      .clearValue('#notesTextarea')
       .setValue('#notesTextarea', testCarePlan.notes)
       .pause(500)
       .saveScreenshot('tests/nightwatch/screenshots/careplans/04-filled-careplan-form.png');
@@ -410,7 +395,7 @@ describe('CarePlans CRUD Operations', function() {
       });
 
     browser
-      .pause(2000);
+      .waitForElementVisible('#carePlansPage', 5000);
     
     browser.execute(function() {
       const currentUrl = window.location.pathname;
@@ -458,7 +443,7 @@ describe('CarePlans CRUD Operations', function() {
   it('05. Verify new care plan appears in list', browser => {
     browser
       .waitForElementVisible('#carePlansPage', 5000)
-      .pause(3000)  // Give subscription more time to update
+      .pause(1000)  // Give subscription time to update
       .waitForElementVisible('#carePlansTable', 5000)
       .execute(function() {
         // Debug: Log what's in the table and check for author column
@@ -501,7 +486,7 @@ describe('CarePlans CRUD Operations', function() {
       }, [], function(result) {
         console.log('Table debug info:', result.value);
       })
-      .pause(1000)  // Additional pause before assertion
+      .pause(500)  // Additional pause before assertion
       .assert.containsText('#carePlansTable', testCarePlan.title)
       .assert.containsText('#carePlansTable', expectedAuthor)  // Should show logged-in user
       .saveScreenshot('tests/nightwatch/screenshots/careplans/06-careplan-in-list.png');
@@ -536,7 +521,7 @@ describe('CarePlans CRUD Operations', function() {
   it('06. View care plan details', browser => {
     browser
       .waitForElementVisible('#carePlansTable', 5000)
-      .pause(1000);
+      .pause(500);
 
     // First, let's see what's actually in the table
     browser.execute(function() {
@@ -651,7 +636,7 @@ describe('CarePlans CRUD Operations', function() {
   it('07. Update existing care plan', browser => {
     browser
       .waitForElementVisible('#carePlansTable', 5000)
-      .pause(1000);
+      .pause(500);
 
     browser
       .execute(function(title) {
@@ -669,7 +654,7 @@ describe('CarePlans CRUD Operations', function() {
       });
 
     browser
-      .pause(1000)
+      .pause(500)
       .waitForElementVisible('#carePlanDetailPage', 5000)
       .pause(500);
 
@@ -696,9 +681,7 @@ describe('CarePlans CRUD Operations', function() {
     // Update the author field - this tests that the field is editable
     browser
       .click('#authorDisplay')
-      .keys([browser.Keys.COMMAND, 'a'])
-      .keys(browser.Keys.BACK_SPACE)
-      .pause(100)
+      .clearValue('#authorDisplay')
       .setValue('#authorDisplay', updatedCarePlan.authorName)
       .click('#status')
       .pause(300)
@@ -716,14 +699,10 @@ describe('CarePlans CRUD Operations', function() {
         browser.assert.equal(result.value, true, 'Selected status');
       })
       .click('#periodEnd')
-      .keys([browser.Keys.COMMAND, 'a'])
-      .keys(browser.Keys.BACK_SPACE)
-      .pause(100)
+      .clearValue('#periodEnd')
       .setValue('#periodEnd', updatedCarePlan.endDate)
       .click('#notesTextarea')
-      .keys([browser.Keys.COMMAND, 'a'])
-      .keys(browser.Keys.BACK_SPACE)
-      .pause(100)
+      .clearValue('#notesTextarea')
       .setValue('#notesTextarea', updatedCarePlan.notes)
       .pause(500)
       .saveScreenshot('tests/nightwatch/screenshots/careplans/08-updated-careplan-form.png');
@@ -743,7 +722,6 @@ describe('CarePlans CRUD Operations', function() {
       });
 
     browser
-      .pause(2000)
       .url('http://localhost:3000/careplans')
       .waitForElementVisible('#carePlansTable', 5000)
       .saveScreenshot('tests/nightwatch/screenshots/careplans/09-careplan-updated.png');
@@ -752,7 +730,7 @@ describe('CarePlans CRUD Operations', function() {
   it('08. Verify updated care plan in list', browser => {
     browser
       .waitForElementVisible('#carePlansTable', 5000)
-      .pause(1000)
+      .pause(500)
       .assert.containsText('#carePlansTable', updatedCarePlan.authorName)
       .saveScreenshot('tests/nightwatch/screenshots/careplans/10-updated-careplan-in-list.png');
   });
@@ -760,7 +738,7 @@ describe('CarePlans CRUD Operations', function() {
   it('09. Delete care plan', browser => {
     browser
       .waitForElementVisible('#carePlansPage', 5000)
-      .pause(1000);
+      .pause(500);
 
     // First check if we have a table or no data state
     browser.execute(function() {
@@ -786,7 +764,7 @@ describe('CarePlans CRUD Operations', function() {
           });
 
         browser
-          .pause(1000)
+          .pause(500)
           .waitForElementVisible('#carePlanDetailPage', 5000);
 
         browser
@@ -821,13 +799,11 @@ describe('CarePlans CRUD Operations', function() {
             }
             return false;
           })
-          .pause(100)
-          .acceptAlert()
+              .acceptAlert()
           .pause(500);
 
         browser
-          .pause(2000)
-          .waitForElementVisible('#carePlansPage', 5000)
+              .waitForElementVisible('#carePlansPage', 5000)
           .execute(function() {
             const hasTable = document.querySelector('#carePlansTable') !== null;
             const hasNoDataCard = document.querySelector('.no-data-card') !== null ||
@@ -855,7 +831,7 @@ describe('CarePlans CRUD Operations', function() {
   it('10. Verify care plan removed from list', browser => {
     browser
       .waitForElementVisible('#carePlansPage', 5000)
-      .pause(1000)
+      .pause(500)
       .execute(function(timestamp) {
         // Check if table exists first
         const table = document.querySelector('#carePlansTable');
@@ -904,7 +880,7 @@ describe('CarePlans CRUD Operations', function() {
       });
 
     browser
-      .pause(1000)
+      .pause(500)
       .waitForElementVisible('#carePlanDetailPage', 5000);
 
     browser
@@ -922,7 +898,7 @@ describe('CarePlans CRUD Operations', function() {
       });
 
     browser
-      .pause(1000);
+      .pause(500);
 
     browser
       .pause(2000) // Give time for navigation

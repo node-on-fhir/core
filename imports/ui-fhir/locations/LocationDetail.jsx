@@ -260,26 +260,41 @@ function LocationDetail(props) {
 
   // Handle save
   async function handleSave() {
+    console.log('=== handleSave called ===');
+    console.log('Location data to save:', JSON.stringify(location, null, 2));
+    console.log('Current user:', Meteor.userId());
+    
     setLoading(true);
     setError(null);
     
     try {
       if (id && id !== 'new') {
         // Update existing location
+        console.log('Updating existing location with id:', id);
         await Meteor.callAsync('locations.update', id, location);
         console.log('Location updated successfully');
         // Exit edit mode after successful save
         setIsEditing(false);
       } else {
         // Create new location
+        console.log('Creating new location...');
         const newId = await Meteor.callAsync('locations.create', location);
         console.log('Location created with ID:', newId);
+        
+        // Check if location was actually saved
+        if (typeof Locations !== 'undefined') {
+          const savedLocation = Locations.findOne({_id: newId});
+          console.log('Verification - saved location:', savedLocation);
+          console.log('Total locations in collection:', Locations.find().count());
+        }
+        
         // Navigate back to locations list for new locations
         navigate('/locations');
       }
     } catch (err) {
       console.error('Error saving location:', err);
-      setError(err.message);
+      console.error('Error details:', err.error, err.reason, err.details);
+      setError(err.message || err.reason || 'Failed to save location');
     } finally {
       setLoading(false);
     }
@@ -313,7 +328,7 @@ function LocationDetail(props) {
   const modeOptions = ['instance', 'kind'];
 
   return (
-    <Container maxWidth="md" sx={{ py: 4 }}>
+    <Container id="locationDetailPage" maxWidth="md" sx={{ py: 4 }}>
       <Card sx={{ boxShadow: 3 }}>
         <CardHeader 
           title={id && id !== 'new' ? 'Edit Location' : 'New Location'}
@@ -335,6 +350,7 @@ function LocationDetail(props) {
           
           <Stack spacing={3}>
             <TextField
+              id="nameInput"
               fullWidth
               label="Name"
               value={get(location, 'name', '')}
@@ -343,9 +359,45 @@ function LocationDetail(props) {
               disabled={!isEditing}
             />
             
+            <TextField
+              id="identifierInput"
+              fullWidth
+              label="Identifier"
+              value={get(location, 'identifier[0].value', '')}
+              onChange={(e) => handleChange('identifier[0].value', e.target.value)}
+              helperText="Unique identifier for the location"
+              disabled={!isEditing}
+            />
+            
+            <TextField
+              id="descriptionTextarea"
+              fullWidth
+              multiline
+              rows={3}
+              label="Description"
+              value={get(location, 'description', '')}
+              onChange={(e) => handleChange('description', e.target.value)}
+              helperText="Description of the location"
+              disabled={!isEditing}
+            />
+            
+            <TextField
+              id="emailInput"
+              fullWidth
+              label="Email"
+              value={get(location, 'telecom[1].value', '')}
+              onChange={(e) => {
+                handleChange('telecom[1].system', 'email');
+                handleChange('telecom[1].value', e.target.value);
+              }}
+              helperText="Contact email address"
+              disabled={!isEditing}
+            />
+            
             <FormControl fullWidth disabled={!isEditing}>
               <InputLabel>Status</InputLabel>
               <Select
+                id="statusSelect"
                 value={get(location, 'status', 'active')}
                 onChange={(e) => handleChange('status', e.target.value)}
                 label="Status"
@@ -355,6 +407,23 @@ function LocationDetail(props) {
                     {status.charAt(0).toUpperCase() + status.slice(1)}
                   </MenuItem>
                 ))}
+              </Select>
+            </FormControl>
+            
+            <FormControl fullWidth disabled={!isEditing}>
+              <InputLabel>Operational Status</InputLabel>
+              <Select
+                id="operationalStatusSelect"
+                value={get(location, 'operationalStatus.code', '')}
+                onChange={(e) => handleChange('operationalStatus.code', e.target.value)}
+                label="Operational Status"
+              >
+                <MenuItem value="operational">Operational</MenuItem>
+                <MenuItem value="housekeeping">Housekeeping</MenuItem>
+                <MenuItem value="overflow">Overflow</MenuItem>
+                <MenuItem value="contaminated">Contaminated</MenuItem>
+                <MenuItem value="decontamination">Decontamination</MenuItem>
+                <MenuItem value="underway">Underway</MenuItem>
               </Select>
             </FormControl>
             
@@ -374,6 +443,7 @@ function LocationDetail(props) {
             </FormControl>
             
             <TextField
+              id="typeSelect"
               fullWidth
               label="Type Code"
               value={get(location, 'type.coding[0].code', '')}
@@ -383,6 +453,7 @@ function LocationDetail(props) {
             />
             
             <TextField
+              id="typeDisplayInput"
               fullWidth
               label="Type Display"
               value={get(location, 'type.coding[0].display', '')}
@@ -412,6 +483,7 @@ function LocationDetail(props) {
             <Typography variant="h6" sx={{ mt: 2 }}>Address</Typography>
             
             <TextField
+              id="addressLineInput"
               fullWidth
               label="Address Line"
               value={get(location, 'address.line[0]', '')}
@@ -422,6 +494,7 @@ function LocationDetail(props) {
             
             <Stack direction="row" spacing={2}>
               <TextField
+                id="cityInput"
                 fullWidth
                 label="City"
                 value={get(location, 'address.city', '')}
@@ -430,6 +503,7 @@ function LocationDetail(props) {
               />
               
               <TextField
+                id="stateInput"
                 fullWidth
                 label="State"
                 value={get(location, 'address.state', '')}
@@ -440,6 +514,7 @@ function LocationDetail(props) {
             
             <Stack direction="row" spacing={2}>
               <TextField
+                id="postalCodeInput"
                 fullWidth
                 label="Postal Code"
                 value={get(location, 'address.postalCode', '')}
@@ -448,6 +523,7 @@ function LocationDetail(props) {
               />
               
               <TextField
+                id="countryInput"
                 fullWidth
                 label="Country"
                 value={get(location, 'address.country', '')}
@@ -457,6 +533,7 @@ function LocationDetail(props) {
             </Stack>
             
             <TextField
+              id="phoneInput"
               fullWidth
               label="Phone"
               value={get(location, 'telecom[0].value', '')}
@@ -683,6 +760,7 @@ function LocationDetail(props) {
             <Typography variant="h6" sx={{ mt: 2 }}>Organization</Typography>
             
             <TextField
+              id="managingOrgInput"
               fullWidth
               label="Managing Organization"
               value={get(location, 'managingOrganization.display', '')}
@@ -768,6 +846,7 @@ function LocationDetail(props) {
                 </Button>
               )}
               <Button 
+                id="saveLocationButton"
                 onClick={handleSave}
                 variant="contained"
                 color="primary"

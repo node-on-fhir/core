@@ -54,10 +54,7 @@ import DynamicSpacer from './DynamicSpacer';
 
 let configArray = get(Meteor, 'settings.public.smartOnFhir', []);
 
-let EndpointsTable;
-Meteor.startup(function(){
-  EndpointsTable = Meteor.Tables.EndpointsTable;
-})
+import { EndpointsTable } from '../ui-tables';
 
 
 

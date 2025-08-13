@@ -230,6 +230,11 @@
   },
   "private": {
     "debug": true,
+    "mcp": {
+      "enabled": true,
+      "transport": ["http"],
+      "authentication": "none"
+    },
     "fhir": {
       "disableOauth": false,
       "schemaValidation": {

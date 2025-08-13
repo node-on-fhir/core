@@ -197,8 +197,11 @@ function LocationsTable(props){
     console.log('removeRecord')
   }
   function handleRowClick(id){
+    console.log('LocationsTable handleRowClick called with id:', id);
     if(props && (typeof onRowClick === "function")){
       onRowClick(id);
+    } else {
+      console.log('No onRowClick handler provided');
     }
   }
   function handleActionButtonClick(_id){

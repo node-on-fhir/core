@@ -78,6 +78,19 @@ export function LocationsPage(props){
   data.selectedLocation = useTracker(function(){
     return Locations.findOne({_id: Session.get('selectedLocationId')});
   }, [])
+  // Subscribe to locations data
+  const isLoading = useTracker(() => {
+    let autoPublishEnabled = get(Meteor, 'settings.public.defaults.autopublish', false);
+    
+    if(autoPublishEnabled){
+      const handle = Meteor.subscribe('autopublish.Locations', {}, { limit: 1000 });
+      return !handle.ready();
+    } else {
+      const handle = Meteor.subscribe('locations.all');
+      return !handle.ready();
+    }
+  }, []);
+  
   data.locations = useTracker(function(){
     return Locations.find().fetch();
   }, [])
@@ -159,6 +172,10 @@ export function LocationsPage(props){
             setLocationsPageIndex(index)
           }}        
           page={data.locationsIndex}
+          onRowClick={function(locationId){
+            console.log('LocationsPage: Row clicked with ID:', locationId);
+            navigate('/locations/' + locationId);
+          }}
         />
       </CardContent>
     </Card>

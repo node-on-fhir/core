@@ -94,7 +94,7 @@ export function PatientsDirectory(props){
     let autoPublishEnabled = get(Meteor, 'settings.public.defaults.autopublish', false);
     
     // Check if PatientDirectory module is enabled
-    const patientDirectoryEnabled = get(Meteor, 'settings.public.modules.patientDirectory.enabled', true);
+    const patientDirectoryEnabled = get(Meteor, 'settings.public.modules.PatientDirectory', true);
     if (!patientDirectoryEnabled) {
       console.log('PatientDirectory module is disabled');
       return false;
@@ -203,9 +203,25 @@ export function PatientsDirectory(props){
     let autoPublishEnabled = get(Meteor, 'settings.public.defaults.autopublish', false);
     
     if(autoPublishEnabled){
-      // Get all patients from collection
-      let results = Patients.find().fetch();
+      // Get all patients from collection, sorted by most recent first
+      let results = Patients.find({}, { sort: { _id: -1 } }).fetch();
       console.log('Autopublish patients found:', results.length);
+      
+      // Debug: Check the first few patient IDs to understand sort order
+      if (results.length > 0 && !Session.get('PatientsDirectory.debugLogged')) {
+        Session.set('PatientsDirectory.debugLogged', true);
+        console.log('First 3 patients in sort order:');
+        results.slice(0, 3).forEach((p, i) => {
+          console.log(`Patient ${i}:`, {
+            name: p.name?.[0]?.text || `${p.name?.[0]?.given?.[0]} ${p.name?.[0]?.family}`,
+            _id: p._id,
+            _idType: typeof p._id,
+            _idIsObjectID: p._id && p._id._str ? 'ObjectID' : 'String',
+            _idString: p._id && p._id._str ? p._id._str : String(p._id),
+            id: p.id
+          });
+        });
+      }
       
       // If we have a search filter and server-side filtering didn't work, 
       // apply client-side filtering as fallback
@@ -292,7 +308,7 @@ export function PatientsDirectory(props){
         }
       }
       
-      return Patients.find(query).fetch();
+      return Patients.find(query, { sort: { _id: -1 } }).fetch();
     }
   }, [debouncedSearchFilter])
   data.patientsIndex = useTracker(function(){
@@ -319,7 +335,8 @@ export function PatientsDirectory(props){
       setSearchFilter('');
       setDebouncedSearchFilter('');
     }
-    // Add logic for adding a new patient
+    // Navigate to new patient form
+    navigate('/patients/new');
   }
 
   function renderHeader() {
@@ -358,6 +375,7 @@ export function PatientsDirectory(props){
         
         <Box mt={3}>
           <TextField
+            id="patientSearchInput"
             fullWidth
             variant="outlined"
             placeholder="Search patients by ID, name, identifier, phone, city, state, or postal code..."
@@ -479,6 +497,7 @@ export function PatientsDirectory(props){
       }}
     >
       <Card 
+        className="no-data-card"
         sx={{ 
           maxWidth: '600px',
           width: '100%',
@@ -540,7 +559,7 @@ export function PatientsDirectory(props){
   
   return (
     <Box 
-      id="patientsDirectory" 
+      id="patientsPage" 
       sx={{
         minHeight: '100vh',
         backgroundColor: 'background.default',

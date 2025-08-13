@@ -41,14 +41,13 @@ describe('MedicationRequests CRUD Operations', function() {
   });
 
   beforeEach(browser => {
-    browser.pause(500);
+    // Removed unnecessary pause
   });
 
   it('01. Setup test environment', browser => {
     browser
       .url('http://localhost:3000')
-      .waitForElementVisible('body', 5000)
-      .pause(2000);
+      .waitForElementVisible('body', 5000);
 
     // Check if we're logged in
     browser.execute(function() {
@@ -195,8 +194,7 @@ describe('MedicationRequests CRUD Operations', function() {
     browser
       .url('http://localhost:3000/medication-requests')
       .waitForElementVisible('#medicationRequestsPage', 5000)
-      .pause(2000)
-      .execute(function() {
+            .execute(function() {
         const hasTable = document.querySelector('#medicationRequestsTable') !== null;
         const hasNoDataCard = document.querySelector('.no-data-card') !== null ||
                             document.querySelector('.no-data-available') !== null ||
@@ -221,15 +219,9 @@ describe('MedicationRequests CRUD Operations', function() {
 
     browser
       .execute(function() {
-        // Debug: log all button texts
+        // Get all buttons
         const buttons = document.querySelectorAll('button');
-        const buttonTexts = Array.from(buttons).map(b => b.textContent.trim());
-        console.log('Available buttons:', buttonTexts);
-        
-        // Also check for FAB buttons or icon buttons
-        const fabButtons = document.querySelectorAll('[aria-label*="add"], [aria-label*="Add"], button[title*="add"], button[title*="Add"]');
-        const fabLabels = Array.from(fabButtons).map(b => b.getAttribute('aria-label') || b.getAttribute('title') || b.textContent);
-        console.log('FAB/Icon buttons:', fabLabels);
+        const fabButtons = document.querySelectorAll('.fab, [data-testid="add-button"], .MuiFab-root');
         
         // Try multiple selectors
         for (let button of buttons) {
@@ -257,8 +249,7 @@ describe('MedicationRequests CRUD Operations', function() {
       });
 
     browser
-      .pause(2000)
-      .waitForElementVisible('#medicationRequestDetailPage', 10000)
+            .waitForElementVisible('#medicationRequestDetailPage', 10000)
       .assert.elementPresent('#subjectDisplay')
       .assert.elementPresent('#requesterDisplay')
       .assert.elementPresent('#medicationCode')
@@ -299,7 +290,7 @@ describe('MedicationRequests CRUD Operations', function() {
       .assert.urlContains('/medication-requests/new');
 
     browser
-      .pause(1000);
+      .pause(500);
 
     browser.execute(function() {
       const requesterField = document.querySelector('#requesterDisplay');
@@ -334,7 +325,6 @@ describe('MedicationRequests CRUD Operations', function() {
           requesterField.dispatchEvent(inputEvent);
         }
       })
-      .pause(100)
       .setValue('#requesterDisplay', testMedicationRequest.requesterName)
       .click('#medicationCode')
       .execute(function() {
@@ -351,7 +341,6 @@ describe('MedicationRequests CRUD Operations', function() {
           medicationCodeField.dispatchEvent(inputEvent);
         }
       })
-      .pause(100)
       .setValue('#medicationCode', testMedicationRequest.medicationCode)
       .click('#medicationDisplay')
       .execute(function() {
@@ -368,7 +357,6 @@ describe('MedicationRequests CRUD Operations', function() {
           medicationDisplayField.dispatchEvent(inputEvent);
         }
       })
-      .pause(100)
       .setValue('#medicationDisplay', testMedicationRequest.medicationDisplay);
 
     // Handle Material-UI Select components
@@ -427,54 +415,34 @@ describe('MedicationRequests CRUD Operations', function() {
     browser
       .pause(500)
       .click('#dosageInstruction')
-      .keys([browser.Keys.COMMAND, 'a'])
-      .keys(browser.Keys.BACK_SPACE)
-      .pause(100)
+      .clearValue('#dosageInstruction')
       .setValue('#dosageInstruction', testMedicationRequest.dosageInstruction)
       .click('#dosageRouteCode')
-      .keys([browser.Keys.COMMAND, 'a'])
-      .keys(browser.Keys.BACK_SPACE)
-      .pause(100)
+      .clearValue('#dosageRouteCode')
       .setValue('#dosageRouteCode', testMedicationRequest.dosageRoute)
       .click('#dosageRouteDisplay')
-      .keys([browser.Keys.COMMAND, 'a'])
-      .keys(browser.Keys.BACK_SPACE)
-      .pause(100)
+      .clearValue('#dosageRouteDisplay')
       .setValue('#dosageRouteDisplay', testMedicationRequest.dosageRouteDisplay)
       .click('#dosageTiming')
-      .keys([browser.Keys.COMMAND, 'a'])
-      .keys(browser.Keys.BACK_SPACE)
-      .pause(100)
+      .clearValue('#dosageTiming')
       .setValue('#dosageTiming', testMedicationRequest.dosageTiming)
       .click('#dispenseQuantity')
-      .keys([browser.Keys.COMMAND, 'a'])
-      .keys(browser.Keys.BACK_SPACE)
-      .pause(100)
+      .clearValue('#dispenseQuantity')
       .setValue('#dispenseQuantity', testMedicationRequest.dispenseQuantity)
       .click('#dispenseUnit')
-      .keys([browser.Keys.COMMAND, 'a'])
-      .keys(browser.Keys.BACK_SPACE)
-      .pause(100)
+      .clearValue('#dispenseUnit')
       .setValue('#dispenseUnit', testMedicationRequest.dispenseUnit)
       .click('#numberOfRepeats')
-      .keys([browser.Keys.COMMAND, 'a'])
-      .keys(browser.Keys.BACK_SPACE)
-      .pause(100)
+      .clearValue('#numberOfRepeats')
       .setValue('#numberOfRepeats', testMedicationRequest.numberOfRepeats)
       .click('#authoredOn')
-      .keys([browser.Keys.COMMAND, 'a'])
-      .keys(browser.Keys.BACK_SPACE)
-      .pause(100)
+      .clearValue('#authoredOn')
       .setValue('#authoredOn', testMedicationRequest.authoredOn)
       .click('#reasonCode')
-      .keys([browser.Keys.COMMAND, 'a'])
-      .keys(browser.Keys.BACK_SPACE)
-      .pause(100)
+      .clearValue('#reasonCode')
       .setValue('#reasonCode', testMedicationRequest.reasonCode)
       .click('#reasonDisplay')
-      .keys([browser.Keys.COMMAND, 'a'])
-      .keys(browser.Keys.BACK_SPACE)
-      .pause(100)
+      .clearValue('#reasonDisplay')
       .setValue('#reasonDisplay', testMedicationRequest.reasonDisplay)
       .execute(function() {
         // Scroll the textarea into view before interacting with it
@@ -485,9 +453,7 @@ describe('MedicationRequests CRUD Operations', function() {
       })
       .pause(500)
       .click('#notesTextarea')
-      .keys([browser.Keys.COMMAND, 'a'])
-      .keys(browser.Keys.BACK_SPACE)
-      .pause(100)
+      .clearValue('#notesTextarea')
       .setValue('#notesTextarea', testMedicationRequest.notes)
       .pause(500)
       .saveScreenshot('tests/nightwatch/screenshots/medicationrequests/04-filled-medicationrequest-form.png');
@@ -514,7 +480,7 @@ describe('MedicationRequests CRUD Operations', function() {
       });
 
     browser
-      .pause(2000);
+      .waitForElementVisible('#medicationRequestsPage', 5000);
 
     // Check if the medication request was actually saved
     browser.execute(function() {
@@ -579,7 +545,7 @@ describe('MedicationRequests CRUD Operations', function() {
   it('05. Verify new medication request appears in list', browser => {
     browser
       .waitForElementVisible('#medicationRequestsPage', 5000)
-      .pause(1000)
+      .pause(500)
       .waitForElementVisible('#medicationRequestsTable', 5000);
 
     // Debug what's in the table
@@ -626,7 +592,7 @@ describe('MedicationRequests CRUD Operations', function() {
   it('06. View medication request details', browser => {
     browser
       .waitForElementVisible('#medicationRequestsTable', 5000)
-      .pause(1000);
+      .pause(500);
 
     // Click the first row in the table since we have many records
     browser
@@ -642,7 +608,7 @@ describe('MedicationRequests CRUD Operations', function() {
       });
 
     browser
-      .pause(1000)
+      .pause(500)
       .waitForElementVisible('#medicationRequestDetailPage', 5000)
       .assert.elementPresent('#requesterDisplay')
       .assert.elementPresent('#medicationCode')
@@ -688,7 +654,7 @@ describe('MedicationRequests CRUD Operations', function() {
   it('07. Update existing medication request', browser => {
     browser
       .waitForElementVisible('#medicationRequestsTable', 5000)
-      .pause(1000);
+      .pause(500);
 
     // Click the first row since we have many existing records
     browser
@@ -704,7 +670,7 @@ describe('MedicationRequests CRUD Operations', function() {
       });
 
     browser
-      .pause(1000)
+      .pause(500)
       .waitForElementVisible('#medicationRequestDetailPage', 5000)
       .pause(500);
 
@@ -730,9 +696,7 @@ describe('MedicationRequests CRUD Operations', function() {
 
     browser
       .click('#requesterDisplay')
-      .keys([browser.Keys.COMMAND, 'a'])
-      .keys(browser.Keys.BACK_SPACE)
-      .pause(100)
+      .clearValue('#requesterDisplay')
       .setValue('#requesterDisplay', updatedMedicationRequest.requesterName)
       .click('#status')
       .pause(300)
@@ -765,14 +729,10 @@ describe('MedicationRequests CRUD Operations', function() {
         browser.assert.equal(result.value, true, 'Selected priority');
       })
       .click('#dosageInstruction')
-      .keys([browser.Keys.COMMAND, 'a'])
-      .keys(browser.Keys.BACK_SPACE)
-      .pause(100)
+      .clearValue('#dosageInstruction')
       .setValue('#dosageInstruction', updatedMedicationRequest.dosageInstruction)
       .click('#notesTextarea')
-      .keys([browser.Keys.COMMAND, 'a'])
-      .keys(browser.Keys.BACK_SPACE)
-      .pause(100)
+      .clearValue('#notesTextarea')
       .setValue('#notesTextarea', updatedMedicationRequest.notes)
       .pause(500)
       .saveScreenshot('tests/nightwatch/screenshots/medicationrequests/08-updated-medicationrequest-form.png');
@@ -792,7 +752,26 @@ describe('MedicationRequests CRUD Operations', function() {
       });
 
     browser
-      .pause(2000);
+      .pause(2000)  // Give time for save to complete
+      .execute(function() {
+        // Check if we're still on the detail page or have navigated to list
+        const detailPage = document.querySelector('#medicationRequestDetailPage');
+        const listPage = document.querySelector('#medicationRequestsPage');
+        return {
+          onDetailPage: !!detailPage,
+          onListPage: !!listPage,
+          currentUrl: window.location.pathname
+        };
+      }, [], function(result) {
+        console.log('Navigation state after save:', result.value);
+        if (result.value.onDetailPage && !result.value.onListPage) {
+          // Still on detail page, navigate to list
+          browser.url('http://localhost:3000/medication-requests');
+        }
+      });
+    
+    browser
+      .waitForElementVisible('#medicationRequestsPage', 10000);
 
     // Check if the update was saved
     browser.execute(function() {
@@ -819,7 +798,7 @@ describe('MedicationRequests CRUD Operations', function() {
   it('08. Verify updated medication request in list', browser => {
     browser
       .waitForElementVisible('#medicationRequestsTable', 5000)
-      .pause(1000)
+      .pause(500)
       // Just verify the table still has data after update
       .execute(function() {
         const rows = document.querySelectorAll('#medicationRequestsTable tbody tr');
@@ -833,7 +812,7 @@ describe('MedicationRequests CRUD Operations', function() {
   it('09. Delete medication request', browser => {
     browser
       .waitForElementVisible('#medicationRequestsPage', 5000)
-      .pause(1000);
+      .pause(500);
 
     // First check if we have a table or no data state
     browser.execute(function() {
@@ -859,7 +838,7 @@ describe('MedicationRequests CRUD Operations', function() {
           });
 
         browser
-          .pause(1000)
+          .pause(500)
           .waitForElementVisible('#medicationRequestDetailPage', 5000);
 
         browser
@@ -894,13 +873,11 @@ describe('MedicationRequests CRUD Operations', function() {
             }
             return false;
           })
-          .pause(100)
-          .acceptAlert()
+              .acceptAlert()
           .pause(500);
 
         browser
-          .pause(2000)
-          .waitForElementVisible('#medicationRequestsPage', 5000)
+                    .waitForElementVisible('#medicationRequestsPage', 5000)
           .execute(function() {
             const hasTable = document.querySelector('#medicationRequestsTable') !== null;
             const hasNoDataCard = document.querySelector('.no-data-card') !== null ||
@@ -928,7 +905,7 @@ describe('MedicationRequests CRUD Operations', function() {
   it('10. Verify medication request removed from list', browser => {
     browser
       .waitForElementVisible('#medicationRequestsPage', 5000)
-      .pause(1000)
+      .pause(500)
       .execute(function() {
         // Check if table exists first
         const table = document.querySelector('#medicationRequestsTable');
@@ -980,7 +957,7 @@ describe('MedicationRequests CRUD Operations', function() {
       });
 
     browser
-      .pause(1000)
+      .pause(500)
       .waitForElementVisible('#medicationRequestDetailPage', 5000);
 
     browser
@@ -998,11 +975,11 @@ describe('MedicationRequests CRUD Operations', function() {
       });
 
     browser
-      .pause(1000);
+      .pause(500);
 
     // Check if we returned to the list page (form allowed submission) or stayed on form (validation prevented it)
     browser
-      .pause(1000)
+      .pause(500)
       .execute(function() {
         const isOnListPage = !!document.querySelector('#medicationRequestsPage');
         const isOnDetailPage = !!document.querySelector('#medicationRequestDetailPage');

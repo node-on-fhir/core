@@ -33,14 +33,13 @@ describe('Encounters CRUD Operations', function() {
   });
 
   beforeEach(browser => {
-    browser.pause(500);
+    // Removed unnecessary pause
   });
 
   it('01. Setup test environment', browser => {
     browser
       .url('http://localhost:3000')
-      .waitForElementVisible('body', 5000)
-      .pause(2000);
+      .waitForElementVisible('body', 5000);
 
     // Check if we're logged in
     browser.execute(function() {
@@ -191,8 +190,7 @@ describe('Encounters CRUD Operations', function() {
     browser
       .url('http://localhost:3000/encounters')
       .waitForElementVisible('#encountersPage', 5000)
-      .pause(2000)
-      .execute(function() {
+            .execute(function() {
         const hasTable = document.querySelector('#encountersTable') !== null;
         const hasNoDataCard = document.querySelector('.no-data-card') !== null ||
                             document.querySelector('.no-data-available') !== null ||
@@ -231,7 +229,7 @@ describe('Encounters CRUD Operations', function() {
       });
 
     browser
-      .pause(1000)
+      .pause(500)
       .waitForElementVisible('#encounterDetailPage', 5000)
       .assert.elementPresent('#subjectDisplay')
       .assert.elementPresent('#practitionerDisplay')
@@ -266,7 +264,7 @@ describe('Encounters CRUD Operations', function() {
       .assert.urlContains('/encounters/new');
 
     browser
-      .pause(1000);
+      .pause(500);
 
     browser.execute(function() {
       const practitionerField = document.querySelector('#practitionerDisplay');
@@ -301,7 +299,6 @@ describe('Encounters CRUD Operations', function() {
           practitionerField.dispatchEvent(inputEvent);
         }
       })
-      .pause(100)
       .setValue('#practitionerDisplay', testEncounter.practitionerName)
       .click('#encounterType')
       .execute(function() {
@@ -318,7 +315,6 @@ describe('Encounters CRUD Operations', function() {
           encounterTypeField.dispatchEvent(inputEvent);
         }
       })
-      .pause(100)
       .setValue('#encounterType', testEncounter.encounterType)
       .click('#encounterTypeDisplay')
       .execute(function() {
@@ -335,7 +331,6 @@ describe('Encounters CRUD Operations', function() {
           encounterTypeDisplayField.dispatchEvent(inputEvent);
         }
       })
-      .pause(100)
       .setValue('#encounterTypeDisplay', testEncounter.encounterTypeDisplay);
 
     // Handle Material-UI Select components
@@ -378,31 +373,47 @@ describe('Encounters CRUD Operations', function() {
       .click('#reasonCode')
       .keys([browser.Keys.COMMAND, 'a'])
       .keys(browser.Keys.BACK_SPACE)
-      .pause(100)
       .setValue('#reasonCode', testEncounter.reasonCode)
       .click('#reasonDisplay')
       .keys([browser.Keys.COMMAND, 'a'])
       .keys(browser.Keys.BACK_SPACE)
-      .pause(100)
       .setValue('#reasonDisplay', testEncounter.reasonDisplay)
       .click('#startDateTime')
       .keys([browser.Keys.COMMAND, 'a'])
       .keys(browser.Keys.BACK_SPACE)
-      .pause(100)
       .setValue('#startDateTime', testEncounter.startDate)
       .click('#endDateTime')
       .keys([browser.Keys.COMMAND, 'a'])
       .keys(browser.Keys.BACK_SPACE)
-      .pause(100)
       .setValue('#endDateTime', testEncounter.endDate)
       .click('#notesTextarea')
       .keys([browser.Keys.COMMAND, 'a'])
       .keys(browser.Keys.BACK_SPACE)
-      .pause(100)
       .setValue('#notesTextarea', testEncounter.notes)
       .pause(500)
       .saveScreenshot('tests/nightwatch/screenshots/encounters/04-filled-encounter-form.png');
 
+    // Debug: Log form values before saving
+    browser.execute(function() {
+      const practitionerField = document.querySelector('#practitionerDisplay');
+      const encounterTypeField = document.querySelector('#encounterType');
+      const statusSelect = document.querySelector('#status');
+      const classSelect = document.querySelector('#classCode');
+      
+      console.log('Form values before save:');
+      console.log('- Practitioner:', practitionerField ? practitionerField.value : 'Not found');
+      console.log('- Encounter Type:', encounterTypeField ? encounterTypeField.value : 'Not found');
+      console.log('- Status:', statusSelect ? statusSelect.value : 'Not found');
+      console.log('- Class:', classSelect ? classSelect.value : 'Not found');
+      
+      return {
+        practitioner: practitionerField ? practitionerField.value : null,
+        encounterType: encounterTypeField ? encounterTypeField.value : null
+      };
+    }, [], function(result) {
+      console.log('Form debug info:', result.value);
+    });
+    
     browser
       .execute(function() {
         window.consoleErrors = [];
@@ -425,7 +436,7 @@ describe('Encounters CRUD Operations', function() {
       });
 
     browser
-      .pause(2000);
+      .waitForElementVisible('#encountersPage', 5000);
     
     browser.execute(function() {
       const currentUrl = window.location.pathname;
@@ -473,8 +484,49 @@ describe('Encounters CRUD Operations', function() {
   it('05. Verify new encounter appears in list', browser => {
     browser
       .waitForElementVisible('#encountersPage', 5000)
-      .pause(1000)
-      .waitForElementVisible('#encountersTable', 5000)
+      .pause(500)
+      .waitForElementVisible('#encountersTable', 5000);
+    
+    // Debug: Check what's actually in the table
+    browser.execute(function() {
+      const table = document.querySelector('#encountersTable');
+      const rows = table ? table.querySelectorAll('tbody tr') : [];
+      console.log('Table rows found:', rows.length);
+      let tableContent = [];
+      for (let i = 0; i < Math.min(rows.length, 5); i++) {
+        tableContent.push(rows[i].textContent.trim());
+      }
+      
+      // Also check if there are any encounters in the collection
+      let totalEncounters = 0;
+      if (typeof Encounters !== 'undefined') {
+        totalEncounters = Encounters.find().count();
+        console.log('Total encounters in collection:', totalEncounters);
+        
+        // Get the most recent encounter
+        const mostRecent = Encounters.findOne({}, {sort: {_id: -1}});
+        if (mostRecent) {
+          console.log('Most recent encounter:', mostRecent);
+          console.log('Has participant:', !!mostRecent.participant);
+          if (mostRecent.participant && mostRecent.participant[0]) {
+            console.log('Participant display:', mostRecent.participant[0].individual?.display);
+          }
+        }
+      }
+      
+      return {
+        rowCount: rows.length,
+        firstFiveRows: tableContent,
+        hasTable: !!table,
+        totalEncounters: totalEncounters
+      };
+    }, [], function(result) {
+      console.log('Table debug info:', result.value);
+    });
+    
+    // The table displays practitionerDisplay which comes from participant[0].individual.display
+    // We need to check for the practitioner name we set
+    browser
       .assert.containsText('#encountersTable', testEncounter.practitionerName)
       .assert.containsText('#encountersTable', testEncounter.encounterTypeDisplay)
       .saveScreenshot('tests/nightwatch/screenshots/encounters/06-encounter-in-list.png');
@@ -483,7 +535,7 @@ describe('Encounters CRUD Operations', function() {
   it('06. View encounter details', browser => {
     browser
       .waitForElementVisible('#encountersTable', 5000)
-      .pause(1000);
+      .pause(500);
 
     browser
       .execute(function(practitionerName) {
@@ -500,7 +552,7 @@ describe('Encounters CRUD Operations', function() {
       });
 
     browser
-      .pause(1000)
+      .pause(500)
       .waitForElementVisible('#encounterDetailPage', 5000)
       .assert.valueContains('#practitionerDisplay', testEncounter.practitionerName)
       .assert.valueContains('#encounterType', testEncounter.encounterType)
@@ -538,7 +590,7 @@ describe('Encounters CRUD Operations', function() {
   it('07. Update existing encounter', browser => {
     browser
       .waitForElementVisible('#encountersTable', 5000)
-      .pause(1000);
+      .pause(500);
 
     browser
       .execute(function(practitionerName) {
@@ -555,7 +607,7 @@ describe('Encounters CRUD Operations', function() {
       });
 
     browser
-      .pause(1000)
+      .pause(500)
       .waitForElementVisible('#encounterDetailPage', 5000)
       .pause(500);
 
@@ -583,7 +635,6 @@ describe('Encounters CRUD Operations', function() {
       .click('#practitionerDisplay')
       .keys([browser.Keys.COMMAND, 'a'])
       .keys(browser.Keys.BACK_SPACE)
-      .pause(100)
       .setValue('#practitionerDisplay', updatedEncounter.practitionerName)
       .click('#status')
       .pause(300)
@@ -603,12 +654,10 @@ describe('Encounters CRUD Operations', function() {
       .click('#endDateTime')
       .keys([browser.Keys.COMMAND, 'a'])
       .keys(browser.Keys.BACK_SPACE)
-      .pause(100)
       .setValue('#endDateTime', updatedEncounter.endDate)
       .click('#notesTextarea')
       .keys([browser.Keys.COMMAND, 'a'])
       .keys(browser.Keys.BACK_SPACE)
-      .pause(100)
       .setValue('#notesTextarea', updatedEncounter.notes)
       .pause(500)
       .saveScreenshot('tests/nightwatch/screenshots/encounters/08-updated-encounter-form.png');
@@ -628,8 +677,7 @@ describe('Encounters CRUD Operations', function() {
       });
 
     browser
-      .pause(2000)
-      .url('http://localhost:3000/encounters')
+            .url('http://localhost:3000/encounters')
       .waitForElementVisible('#encountersTable', 5000)
       .saveScreenshot('tests/nightwatch/screenshots/encounters/09-encounter-updated.png');
   });
@@ -637,7 +685,7 @@ describe('Encounters CRUD Operations', function() {
   it('08. Verify updated encounter in list', browser => {
     browser
       .waitForElementVisible('#encountersTable', 5000)
-      .pause(1000)
+      .pause(500)
       .assert.containsText('#encountersTable', updatedEncounter.practitionerName)
       .saveScreenshot('tests/nightwatch/screenshots/encounters/10-updated-encounter-in-list.png');
   });
@@ -645,7 +693,7 @@ describe('Encounters CRUD Operations', function() {
   it('09. Delete encounter', browser => {
     browser
       .waitForElementVisible('#encountersPage', 5000)
-      .pause(1000);
+      .pause(500);
 
     // First check if we have a table or no data state
     browser.execute(function() {
@@ -671,7 +719,7 @@ describe('Encounters CRUD Operations', function() {
           });
 
         browser
-          .pause(1000)
+          .pause(500)
           .waitForElementVisible('#encounterDetailPage', 5000);
 
         browser
@@ -706,13 +754,11 @@ describe('Encounters CRUD Operations', function() {
             }
             return false;
           })
-          .pause(100)
-          .acceptAlert()
+              .acceptAlert()
           .pause(500);
 
         browser
-          .pause(2000)
-          .waitForElementVisible('#encountersPage', 5000)
+                    .waitForElementVisible('#encountersPage', 5000)
           .execute(function() {
             const hasTable = document.querySelector('#encountersTable') !== null;
             const hasNoDataCard = document.querySelector('.no-data-card') !== null ||
@@ -740,7 +786,7 @@ describe('Encounters CRUD Operations', function() {
   it('10. Verify encounter removed from list', browser => {
     browser
       .waitForElementVisible('#encountersPage', 5000)
-      .pause(1000)
+      .pause(500)
       .execute(function(timestamp) {
         // Check if table exists first
         const table = document.querySelector('#encountersTable');
@@ -789,7 +835,7 @@ describe('Encounters CRUD Operations', function() {
       });
 
     browser
-      .pause(1000)
+      .pause(500)
       .waitForElementVisible('#encounterDetailPage', 5000);
 
     browser
@@ -807,7 +853,7 @@ describe('Encounters CRUD Operations', function() {
       });
 
     browser
-      .pause(1000);
+      .pause(500);
 
     // Check if we're still on the detail page or moved to the list
     browser

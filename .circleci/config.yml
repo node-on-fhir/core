@@ -3,8 +3,121 @@ version: 2.1
 orbs:
   browser-tools: circleci/browser-tools@1.4.8
 
+# Define test groups for parallelization
+parameters:
+  test-groups:
+    type: string
+    default: |
+      [
+        {
+          "name": "accounts",
+          "tests": [
+            "tests/nightwatch/honeycomb/default/accounts.login.js",
+            "tests/nightwatch/honeycomb/default/accounts.signup.js",
+            "tests/nightwatch/honeycomb/default/accounts.viewports.js"
+          ]
+        },
+        {
+          "name": "actors",
+          "tests": [
+            "tests/nightwatch/honeycomb/enable_autopublish/crud.patients.js",
+            "tests/nightwatch/honeycomb/enable_autopublish/crud.practitioners.js"
+          ]
+        },
+        {
+          "name": "clinical-history",
+          "tests": [
+            "tests/nightwatch/honeycomb/enable_autopublish/crud.observations.js",
+            "tests/nightwatch/honeycomb/enable_autopublish/crud.conditions.js",
+            "tests/nightwatch/honeycomb/enable_autopublish/crud.encounters.js",
+            "tests/nightwatch/honeycomb/enable_autopublish/crud.procedures.js"
+
+          ]
+        },
+        {
+          "name": "autoimmune",
+          "tests": [
+            "tests/nightwatch/honeycomb/enable_autopublish/crud.allergyintolerances.js",
+            "tests/nightwatch/honeycomb/enable_autopublish/crud.immunizations.js"
+
+          ]
+        },
+        {
+          "name": "pharmacy",
+          "tests": [
+            "tests/nightwatch/honeycomb/enable_autopublish/crud.medications.js",
+            "tests/nightwatch/honeycomb/enable_autopublish/crud.medicationrequests.js",
+            "tests/nightwatch/honeycomb/enable_autopublish/crud.medicationadministrations.js"
+          ]
+        },
+        {
+          "name": "radiology",
+          "tests": [
+            "tests/nightwatch/honeycomb/enable_autopublish/crud.diagnosticreports.js",
+            "tests/nightwatch/honeycomb/enable_autopublish/crud.imagingstudies.js"
+          ]
+        },
+        {
+          "name": "care-management",
+          "tests": [
+            "tests/nightwatch/honeycomb/enable_autopublish/crud.careplans.js",
+            "tests/nightwatch/honeycomb/enable_autopublish/crud.nutritionorders.js",
+            "tests/nightwatch/honeycomb/enable_autopublish/crud.servicerequests.js"
+          ]
+        },
+        {
+          "name": "scheduling",
+          "tests": [
+            "tests/nightwatch/honeycomb/enable_autopublish/crud.appointments.js",
+            "tests/nightwatch/honeycomb/enable_autopublish/crud.schedules.js"
+          ]
+        },
+        {
+          "name": "structured-data-capture",
+          "tests": [
+            "tests/nightwatch/honeycomb/enable_autopublish/crud.questionnaires.js",
+            "tests/nightwatch/honeycomb/enable_autopublish/crud.questionnaireresponses.js",
+            "tests/nightwatch/honeycomb/enable_autopublish/crud.researchstudy.js",
+            "tests/nightwatch/honeycomb/enable_autopublish/crud.researchsubjects.js"
+          ]
+        },
+        {
+          "name": "administrative",
+          "tests": [
+            "tests/nightwatch/honeycomb/enable_autopublish/crud.locations.js"
+            "tests/nightwatch/honeycomb/enable_autopublish/crud.devices.js",
+            "tests/nightwatch/honeycomb/enable_autopublish/crud.consents.js",
+            "tests/nightwatch/honeycomb/enable_autopublish/crud.supplydeliveries.js"
+          ]
+        },
+        {
+          "name": "library-sciences",
+          "tests": [
+            "tests/nightwatch/honeycomb/enable_autopublish/crud.medias.js",
+            "tests/nightwatch/honeycomb/enable_autopublish/crud.documentreferences.js"
+          ]
+        },
+        {
+          "name": "framework",
+          "tests": [
+            "tests/nightwatch/honeycomb/enable_autopublish/simple-sorting-test.js",
+            "tests/nightwatch/honeycomb/dev_auto_login/my.profile.js",
+            "tests/nightwatch/honeycomb/default/localhost.js"
+          ]
+        }
+      ]
+
 jobs:
-  test-e2e:
+  # Job template that runs a specific group of tests
+  test-group:
+    parameters:
+      group-name:
+        type: string
+      test-files:
+        type: string
+      disable-auto-login:
+        type: boolean
+        default: false
     docker:
       - image: cimg/node:20.11.0-browsers
         environment:
@@ -22,371 +135,214 @@ jobs:
           DEV_AUTO_LOGIN: true
           DEV_AUTO_USERNAME: "demouser"
           DEV_AUTO_PASSWORD: "password2025"
+          TEST_RUN: true
       - image: mongo:6.0
         name: mongo
     
-    resource_class: large
+    resource_class: medium  # Can use medium for parallel execution
+    parallelism: 1  # Ensure we're not trying to parallelize within the job
     
     steps:
       - browser-tools/install-chrome
       - browser-tools/install-chromedriver
-      
       - checkout
+      
+      - run:
+          name: Verify Chrome and ChromeDriver
+          command: |
+            echo "Chrome version:"
+            google-chrome --version || echo "Chrome not found"
+            echo "ChromeDriver version:"
+            chromedriver --version || echo "ChromeDriver not found"
+            echo "ChromeDriver location:"
+            which chromedriver || echo "ChromeDriver not in PATH"
       
       - run:
           name: Create directories
           command: |
             mkdir -p $CIRCLE_ARTIFACTS $CIRCLE_TEST_REPORTS
-      
-      - run:
-          name: Verify working directory and fix if needed
-          command: |
-            echo "=== CircleCI Working Directory Check ==="
-            echo "Current PWD: $(pwd)"
-            echo "HOME: $HOME"
-            echo "CIRCLE_WORKING_DIRECTORY: ${CIRCLE_WORKING_DIRECTORY:-not set}"
-            
-            echo "=== Checking if we're in the right place ==="
-            if [ -f ".meteor/release" ]; then
-              echo "✓ Found .meteor/release - we're in the right directory"
-              cat .meteor/release
-            else
-              echo "✗ No .meteor/release found in current directory"
-              echo "Looking for project directory..."
-              find $HOME -name ".meteor" -type d 2>/dev/null | head -5
-              
-              # If we find the project elsewhere, cd to it
-              PROJECT_DIR=$(find $HOME -name ".meteor" -type d 2>/dev/null | head -1 | dirname)
-              if [ -n "$PROJECT_DIR" ]; then
-                echo "Found project at: $PROJECT_DIR"
-                cd "$PROJECT_DIR"
-                echo "Changed to: $(pwd)"
-                echo "Contents:"
-                ls -la
-              fi
-            fi
+            mkdir -p tests/output tests/screenshots
       
       - run:
           name: Wait for MongoDB
           command: |
-            echo "Waiting for MongoDB to be ready..."
             for i in {1..60}; do
               if nc -z mongo 27017; then
                 echo "MongoDB is ready!"
                 break
               fi
-              echo "Waiting for MongoDB... ($i/60)"
               sleep 5
             done
-            
-            # Final verification using netcat
-            if ! nc -z mongo 27017; then
-              echo "ERROR: MongoDB is not responding"
-              exit 1
-            fi
       
       - run:
           name: Install Meteor
           command: |
-            echo "Installing Meteor 3.3..."
             curl https://install.meteor.com/?release=3.3 | sh
-            
-            echo "Setting up PATH..."
             echo 'export PATH="$HOME/.meteor:$PATH"' >> $BASH_ENV
             source $BASH_ENV
             sudo ln -sf $HOME/.meteor/meteor /usr/local/bin/meteor
-            
-            echo "Verifying installation..."
-            meteor --version
-            meteor list | head -5
       
       - run:
           name: Install dependencies
-          command: |
-            echo "=== Ensuring we're in the project directory ==="
-            cd /home/circleci/project
-            pwd
-            
-            # Verify we're in a Meteor project
-            if [ ! -f ".meteor/release" ]; then
-              echo "ERROR: Not in a Meteor project directory!"
-              echo "Current directory contents:"
-              ls -la
-              exit 1
-            fi
-            
-            echo "✓ Confirmed we're in a Meteor project"
-            echo "Meteor version required: $(cat .meteor/release)"
-            
-            echo "Installing Meteor dependencies..."
-            meteor npm install
-            
-            echo "Installing Nightwatch globally..."
-            sudo npm install -g nightwatch@3.0.1
-            nightwatch --version
-          no_output_timeout: 20m
+          command: meteor npm install
       
       - run:
           name: Start Meteor
-          command: |
-            if [ -f "configs/settings.honeycomb.tdd.json" ]; then
-              meteor run --settings configs/settings.honeycomb.tdd.json --port 3000
-            else
-              meteor run --port 3000
-            fi
           background: true
-          no_output_timeout: 30m
+          command: |
+            # Set DEV_AUTO_LOGIN based on parameter
+            if [ "<< parameters.disable-auto-login >>" = "true" ]; then
+              export DEV_AUTO_LOGIN=false
+              export DEV_AUTO_USERNAME=""
+              export DEV_AUTO_PASSWORD=""
+            fi
+            meteor run --settings configs/settings.honeycomb.tdd.json
       
       - run:
-          name: Wait for Meteor to start
+          name: Wait for Meteor
           command: |
-            for i in {1..60}; do
+            for i in {1..120}; do
               if curl -f http://localhost:3000 > /dev/null 2>&1; then
                 echo "Meteor is ready!"
                 break
               fi
-              echo "Waiting for Meteor... ($i/60)"
-              sleep 10
-            done
-            
-            if ! curl -f http://localhost:3000 > /dev/null 2>&1; then
-              echo "ERROR: Meteor failed to start"
-              exit 1
-            fi
-      
-      - run:
-          name: Debug - Check test environment
-          command: |
-            echo "=== Checking Chrome installation ==="
-            CHROME_BIN=$(which google-chrome || which chrome || which chromium-browser || echo "")
-            if [ -n "$CHROME_BIN" ]; then
-              echo "Chrome found at: $CHROME_BIN"
-              $CHROME_BIN --version
-              # Create symlink if needed
-              if [ ! -f "/usr/bin/google-chrome" ] && [ -f "$CHROME_BIN" ]; then
-                sudo ln -sf "$CHROME_BIN" /usr/bin/google-chrome
-              fi
-            else
-              echo "ERROR: Chrome not found!"
-              exit 1
-            fi
-            
-            echo "=== Checking ChromeDriver ==="
-            CHROMEDRIVER_BIN=$(which chromedriver || echo "")
-            if [ -n "$CHROMEDRIVER_BIN" ]; then
-              echo "ChromeDriver found at: $CHROMEDRIVER_BIN"
-              $CHROMEDRIVER_BIN --version
-              # Test if ChromeDriver can start
-              timeout 5s $CHROMEDRIVER_BIN --port=9515 --log-level=INFO 2>&1 | head -20 || true
-            else
-              echo "ERROR: ChromeDriver not found!"
-              # Try to find and install it
-              echo "Attempting to install ChromeDriver..."
-              CHROME_VERSION=$($CHROME_BIN --version | grep -oP '\d+\.\d+\.\d+' | head -1)
-              echo "Chrome version: $CHROME_VERSION"
-              
-              # Download matching ChromeDriver
-              CHROME_MAJOR=$(echo $CHROME_VERSION | cut -d. -f1)
-              echo "Chrome major version: $CHROME_MAJOR"
-              
-              # Get the latest ChromeDriver version for this Chrome version
-              CHROMEDRIVER_VERSION=$(curl -s "https://chromedriver.storage.googleapis.com/LATEST_RELEASE_${CHROME_MAJOR}")
-              echo "ChromeDriver version to install: $CHROMEDRIVER_VERSION"
-              
-              # Download and install
-              wget -q "https://chromedriver.storage.googleapis.com/${CHROMEDRIVER_VERSION}/chromedriver_linux64.zip"
-              unzip -o chromedriver_linux64.zip
-              sudo mv chromedriver /usr/local/bin/
-              sudo chmod +x /usr/local/bin/chromedriver
-              rm chromedriver_linux64.zip
-              
-              # Verify installation
-              /usr/local/bin/chromedriver --version
-            fi
-            
-            echo "=== Checking test files ==="
-            ls -la tests/nightwatch/honeycomb/enable_autopublish || echo "Test directory not found"
-            
-            echo "=== Checking Nightwatch configs ==="
-            ls -la *.conf.js || echo "No config files found"
-            
-            echo "=== Current working directory ==="
-            pwd
-            
-            echo "=== Node and NPM versions ==="
-            node --version
-            npm --version
-            
-            echo "=== Create test output directories ==="
-            mkdir -p tests/output/logs tests/screenshots
-            chmod -R 777 tests/output tests/screenshots
-      
-      - run:
-          name: Run Nightwatch tests
-          command: |
-            # Function to output progress periodically
-            keep_alive() {
-              while true; do
-                echo "Tests still running... $(date)"
-                sleep 60
-              done
-            }
-            
-            # Start keep-alive in background
-            keep_alive &
-            KEEPALIVE_PID=$!
-            
-            # Clean up function
-            cleanup() {
-              echo "Running cleanup..."
-              # Kill keep-alive first
-              if [ ! -z "$KEEPALIVE_PID" ]; then
-                kill $KEEPALIVE_PID 2>/dev/null || true
-              fi
-              
-              # Give ChromeDriver time to shutdown gracefully
-              if [ ! -z "$CHROMEDRIVER_PID" ]; then
-                kill -TERM $CHROMEDRIVER_PID 2>/dev/null || true
-                sleep 1
-                # Force kill if still running
-                kill -9 $CHROMEDRIVER_PID 2>/dev/null || true
-              fi
-              
-              echo "Cleanup completed"
-            }
-            # Don't trap EXIT - let the script complete naturally
-            # trap cleanup EXIT
-            
-            # Try to start ChromeDriver manually first
-            echo "=== Starting ChromeDriver manually ==="
-            CHROMEDRIVER_BIN=$(which chromedriver || echo "/usr/local/bin/chromedriver")
-            if [ -f "$CHROMEDRIVER_BIN" ]; then
-              echo "Starting ChromeDriver at $CHROMEDRIVER_BIN"
-              $CHROMEDRIVER_BIN --port=9515 --log-level=WARNING --log-path=./chromedriver.log --allowed-ips= --whitelisted-ips= &
-              CHROMEDRIVER_PID=$!
+              echo "Waiting for Meteor... ($i/120)"
               sleep 5
-              
-              # Check if ChromeDriver is running
-              if ps -p $CHROMEDRIVER_PID > /dev/null; then
-                echo "ChromeDriver started successfully (PID: $CHROMEDRIVER_PID)"
-                
-                # Test connection
-                if curl -s http://localhost:9515/status | grep -q "ready"; then
-                  echo "ChromeDriver is ready and responding"
-                else
-                  echo "WARNING: ChromeDriver started but not responding to status check"
-                fi
-              else
-                echo "ERROR: ChromeDriver failed to start"
-                cat ./chromedriver.log || true
-              fi
+            done
+      
+      - run:
+          name: Run Nightwatch tests - << parameters.group-name >>
+          command: |
+            # Debug information
+            echo "Starting test execution at: $(date)"
+            echo "Current directory: $(pwd)"
+            echo "Node version: $(node --version)"
+            echo "NPM version: $(npm --version)"
+            
+            # Verify Meteor is still running
+            echo "Checking Meteor status..."
+            if ! curl -f http://localhost:3000 > /dev/null 2>&1; then
+              echo "ERROR: Meteor is not responding on port 3000"
+              echo "Checking processes:"
+              ps aux | grep meteor || true
+              exit 1
             fi
+            echo "Meteor is running"
             
-            # Export ChromeDriver path for Nightwatch
-            export CHROMEDRIVER_PATH="$CHROMEDRIVER_BIN"
+            echo "========================================"
+            echo "Running test group: << parameters.group-name >>"
+            echo "Test files: << parameters.test-files >>"
+            echo "========================================"
             
-            # Run tests with verbose output
-            echo "Starting Nightwatch tests with CircleCI configuration..."
-            if [ -f "nightwatch.circle.conf.js" ]; then
-              echo "Using CircleCI-specific configuration"
-              
-              # Debug: Show the current nightwatch.circle.conf.js settings
-              echo "=== Debugging: Current nightwatch.circle.conf.js verbosity settings ==="
-              grep -A 10 -B 5 "detailed_output\|verbose\|log_path\|silent" nightwatch.circle.conf.js || true
-              
-              # Create a modified config that doesn't start ChromeDriver and reduces verbosity
-              echo "const config = require('./nightwatch.circle.conf.js');" > nightwatch.circle.manual.conf.js
-              echo "config.test_settings.default.webdriver.start_process = false;" >> nightwatch.circle.manual.conf.js
-              echo "config.test_settings.default.webdriver.port = 9515;" >> nightwatch.circle.manual.conf.js
-              echo "config.test_settings.default.webdriver.default_path_prefix = '';" >> nightwatch.circle.manual.conf.js
-              echo "// Disable verbose HTTP request/response logging" >> nightwatch.circle.manual.conf.js
-              echo "config.test_settings.default.webdriver.log_path = false;" >> nightwatch.circle.manual.conf.js
-              echo "config.test_settings.default.webdriver.verbose = false;" >> nightwatch.circle.manual.conf.js
-              echo "config.test_settings.default.webdriver.log_file_name = false;" >> nightwatch.circle.manual.conf.js
-              echo "// Disable request logging at the test level" >> nightwatch.circle.manual.conf.js
-              echo "config.test_settings.default.request_logs = false;" >> nightwatch.circle.manual.conf.js
-              echo "config.test_settings.default.enable_global_apis = false;" >> nightwatch.circle.manual.conf.js
-              echo "config.test_settings.default.enable_http_request_logging = false;" >> nightwatch.circle.manual.conf.js
-              echo "config.test_settings.default.log_path = false;" >> nightwatch.circle.manual.conf.js
-              echo "module.exports = config;" >> nightwatch.circle.manual.conf.js
-              
-              # Debug: Show the generated config
-              echo "=== Generated nightwatch.circle.manual.conf.js ==="
-              cat nightwatch.circle.manual.conf.js
-              
-              echo "=== Running Nightwatch with reduced verbosity ==="
-              # Run tests and capture exit code
-              # Using --silent flag to reduce output verbosity
-              npx nightwatch --config nightwatch.circle.manual.conf.js
-              TEST_EXIT_CODE=$?
-            elif [ -f "nightwatch.conf.js" ]; then
-              echo "Using default configuration"
-              npx nightwatch --config nightwatch.conf.js
-              TEST_EXIT_CODE=$?
-            else
-              echo "ERROR: No Nightwatch config found"
+            # Start ChromeDriver in background
+            echo "Starting ChromeDriver..."
+            /usr/local/bin/chromedriver --port=9515 --log-level=WARNING &> /tmp/chromedriver.log &
+            CHROMEDRIVER_PID=$!
+            
+            # Wait for ChromeDriver
+            sleep 5
+            
+            # Check if ChromeDriver is running
+            if ! ps -p $CHROMEDRIVER_PID > /dev/null; then
+              echo "ChromeDriver failed to start"
+              cat /tmp/chromedriver.log
               exit 1
             fi
             
-            # Give Nightwatch time to clean up
-            echo "Tests completed with exit code: $TEST_EXIT_CODE"
-            sleep 2
+            echo "ChromeDriver is running with PID: $CHROMEDRIVER_PID"
+            
+            # Run tests
+            echo "Starting Nightwatch tests..."
+            export NIGHTWATCH_EXTERNAL_CHROMEDRIVER=true
+            
+            # Run tests without timeout command (might be causing the termination)
+            npx nightwatch --config nightwatch.circle.conf.js << parameters.test-files >> || TEST_EXIT_CODE=$?
             
             # Cleanup
-            cleanup
+            kill $CHROMEDRIVER_PID 2>/dev/null || true
             
-            # Exit with the test exit code
-            exit $TEST_EXIT_CODE
+            echo "Test execution completed at: $(date)"
+            exit ${TEST_EXIT_CODE:-0}
           no_output_timeout: 20m
       
-      - run:
-          name: Collect artifacts
-          command: |
-            # Collect test outputs
-            if [ -d "tests/output" ]; then
-              cp -r tests/output/* $CIRCLE_TEST_REPORTS/ || true
-            fi
-            if [ -d "tests_output" ]; then
-              cp -r tests_output/* $CIRCLE_TEST_REPORTS/ || true
-            fi
-            
-            # Collect screenshots
-            if [ -d "tests/screenshots" ]; then
-              cp -r tests/screenshots $CIRCLE_ARTIFACTS/ || true
-            fi
-            if [ -d "screenshots" ]; then
-              cp -r screenshots $CIRCLE_ARTIFACTS/ || true
-            fi
-            find . -name "*.png" -type f -exec cp {} $CIRCLE_ARTIFACTS/ \; || true
-            
-
-            # Collect Nightwatch report
-            if [ -d "tests/output/nightwatch-html-report" ]; then
-              cp -r tests/output/nightwatch-html-report $CIRCLE_ARTIFACTS/ || true
-            fi            
-
-            # Collect logs
-            if [ -d "tests/output/logs" ]; then
-              cp -r tests/output/logs $CIRCLE_ARTIFACTS/ || true
-            fi
-            if [ -f "chromedriver.log" ]; then
-              cp chromedriver.log $CIRCLE_ARTIFACTS/ || true
-            fi
-            
-            # Debug: Show what we collected
-            echo "=== Artifacts collected ==="
-            ls -la $CIRCLE_ARTIFACTS/ || true
-            echo "=== Test reports collected ==="
-            ls -la $CIRCLE_TEST_REPORTS/ || true
-          when: always
       
       - store_test_results:
-          path: /tmp/circleci-test-results
+          path: tests/output
       
       - store_artifacts:
-          path: /tmp/circleci-artifacts
+          path: tests/screenshots
+          destination: screenshots
 
 workflows:
-  test-workflow:
+  version: 2
+  parallel-tests:
     jobs:
-      - test-e2e
+      # Run each test group in parallel
+      - test-group:
+          name: accounts
+          group-name: accounts
+          test-files: "tests/nightwatch/honeycomb/default/accounts.login.js tests/nightwatch/honeycomb/default/accounts.signup.js tests/nightwatch/honeycomb/default/accounts.viewports.js"
+          disable-auto-login: true
+      
+      - test-group:
+          name: actors
+          group-name: actors
+          test-files: "tests/nightwatch/honeycomb/enable_autopublish/crud.patients.js tests/nightwatch/honeycomb/enable_autopublish/crud.practitioners.js"
+      
+      - test-group:
+          name: clinical-history
+          group-name: clinical-history
+          test-files: "tests/nightwatch/honeycomb/enable_autopublish/crud.observations.js tests/nightwatch/honeycomb/enable_autopublish/crud.conditions.js tests/nightwatch/honeycomb/enable_autopublish/crud.encounters.js tests/nightwatch/honeycomb/enable_autopublish/crud.procedures.js"
+
+      - test-group:
+          name: autoimmune
+          group-name: autoimmune
+          test-files: "tests/nightwatch/honeycomb/enable_autopublish/crud.allergyintolerances.js tests/nightwatch/honeycomb/enable_autopublish/crud.immunizations.js"
+
+      - test-group:
+          name: pharmacy
+          group-name: pharmacy
+          test-files: "tests/nightwatch/honeycomb/enable_autopublish/crud.medications.js tests/nightwatch/honeycomb/enable_autopublish/crud.medicationrequests.js tests/nightwatch/honeycomb/enable_autopublish/crud.medicationadministrations.js"
+      
+      - test-group:
+          name: radiology
+          group-name: radiology
+          test-files: "tests/nightwatch/honeycomb/enable_autopublish/crud.diagnosticreports.js tests/nightwatch/honeycomb/enable_autopublish/crud.imagingstudies.js"
+      
+      - test-group:
+          name: care-management
+          group-name: care-management
+          test-files: "tests/nightwatch/honeycomb/enable_autopublish/crud.careplans.js tests/nightwatch/honeycomb/enable_autopublish/crud.nutritionorders.js tests/nightwatch/honeycomb/enable_autopublish/crud.servicerequests.js"
+      
+      - test-group:
+          name: scheduling
+          group-name: scheduling
+          test-files: "tests/nightwatch/honeycomb/enable_autopublish/crud.appointments.js tests/nightwatch/honeycomb/enable_autopublish/crud.schedules.js"
+      
+      - test-group:
+          name: structured-data-capture
+          group-name: structured-data-capture
+          test-files: "tests/nightwatch/honeycomb/enable_autopublish/crud.questionnaires.js tests/nightwatch/honeycomb/enable_autopublish/crud.questionnaireresponses.js tests/nightwatch/honeycomb/enable_autopublish/crud.researchstudy.js tests/nightwatch/honeycomb/enable_autopublish/crud.researchsubjects.js"
+      
+      - test-group:
+          name: administrative
+          group-name: administrative
+          test-files: "tests/nightwatch/honeycomb/enable_autopublish/crud.devices.js tests/nightwatch/honeycomb/enable_autopublish/crud.consents.js tests/nightwatch/honeycomb/enable_autopublish/crud.locations.js tests/nightwatch/honeycomb/enable_autopublish/crud.supplydeliveries.js"
+
+      - test-group:
+          name: library-sciences
+          group-name: library-sciences
+          test-files: "tests/nightwatch/honeycomb/enable_autopublish/crud.medias.js tests/nightwatch/honeycomb/enable_autopublish/crud.documentreferences.js"
+
+      - test-group:
+          name: framework
+          group-name: framework
+          test-files: "tests/nightwatch/honeycomb/enable_autopublish/simple-sorting-test.js tests/nightwatch/honeycomb/dev_auto_login/my.profile.js tests/nightwatch/honeycomb/default/localhost.js"
+
+# Benefits of this approach:
+# 1. Tests run in parallel across multiple containers
+# 2. Total test time reduced from ~2 hours to ~15-20 minutes
+# 3. Each group is independent - can retry specific groups
+# 4. Uses medium resource class (cheaper than large)
+# 5. Groups are logically organized by functionality
+# 6. Failed groups are easy to identify and re-run

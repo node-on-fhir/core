@@ -19,7 +19,9 @@ export { default as CodeSystemsPage } from '../ui-fhir/codeSystems/CodeSystemsPa
 export { default as CommunicationsPage } from '../ui-fhir/communications/CommunicationsPage';
 export { default as CompositionsPage } from '../ui-fhir/compositions/CompositionsPage';
 export { default as ConditionsPage } from '../ui-fhir/conditions/ConditionsPage';
+export { default as ConsentsPage } from '../ui-fhir/consents/ConsentsPage';
 export { default as DevicesPage } from '../ui-fhir/devices/DevicesPage';
+export { default as DiagnosticReportsPage } from '../ui-fhir/diagnosticReports/DiagnosticReportsPage';
 export { default as DocumentReferencesPage } from '../ui-fhir/documentReferences/DocumentReferencesPage';
 export { default as EncountersPage } from '../ui-fhir/encounters/EncountersPage';
 export { default as EvidencesPage } from '../ui-fhir/evidences/EvidencesPage';
@@ -45,6 +47,7 @@ export { default as QuestionnairesPage } from '../ui-fhir/questionnaires/Questio
 export { default as ResearchStudiesPage } from '../ui-fhir/researchStudies/ResearchStudiesPage';
 export { default as ResearchSubjectsPage } from '../ui-fhir/researchSubjects/ResearchSubjectsPage';
 export { default as ServiceRequestsPage } from '../ui-fhir/serviceRequests/ServiceRequestsPage';
+export { default as SupplyDeliveriesPage } from '../ui-fhir/supplyDeliveries/SupplyDeliveriesPage';
 export { default as TasksPage } from '../ui-fhir/tasks/TasksPage';
 export { default as ValueSetsPage } from '../ui-fhir/valuesets/ValueSetsPage';
 

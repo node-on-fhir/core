@@ -1,6 +1,7 @@
 // /imports/api/patients/methods.js
 
 import { Meteor } from 'meteor/meteor';
+import { Mongo } from 'meteor/mongo';
 import { check } from 'meteor/check';
 import { Random } from 'meteor/random';
 import { get } from 'lodash';
@@ -22,8 +23,19 @@ Meteor.methods({
       active: patientData.active !== undefined ? patientData.active : true
     };
     
-    // Set _id to match id
-    cleanPatient._id = cleanPatient.id;
+    // Set _id based on environment variable
+    if (process.env.USE_MONGO_OBJECTID) {
+      // Use MongoDB ObjectID for consistency with existing data
+      const { Mongo } = Package.mongo;
+      const objectId = new Mongo.ObjectID();
+      // Convert to hex string for Meteor
+      cleanPatient._id = objectId.toHexString();
+      console.log('[patients.insert] Using MongoDB ObjectID (as hex string):', cleanPatient._id);
+    } else {
+      // Default: Set _id to match id (Meteor string ID)
+      cleanPatient._id = cleanPatient.id;
+      console.log('[patients.insert] Using Meteor string ID:', cleanPatient._id);
+    }
     
     // Handle name - ensure it's an array with at least one entry
     if (patientData.name && patientData.name.length > 0) {
@@ -96,13 +108,22 @@ Meteor.methods({
     }
     
     try {
-      console.log('[patients.insert] Inserting patient:', cleanPatient);
+      console.log('[patients.insert] Inserting patient:', JSON.stringify(cleanPatient, null, 2));
       const result = await Patients.insertAsync(cleanPatient);
-      console.log('[patients.insert] Created patient:', result);
+      console.log('[patients.insert] Created patient with ID:', result);
       return result;
     } catch (error) {
-      console.error('[patients.insert] Error:', error);
-      throw new Meteor.Error('insert-failed', error.message);
+      console.error('[patients.insert] Error details:', {
+        message: error.message,
+        stack: error.stack,
+        details: error.details,
+        reason: error.reason
+      });
+      // If it's a validation error, include more details
+      if (error.validationErrors) {
+        console.error('[patients.insert] Validation errors:', error.validationErrors);
+      }
+      throw new Meteor.Error('insert-failed', error.message || 'Failed to insert patient', error.details);
     }
   },
   
@@ -200,6 +221,13 @@ Meteor.methods({
     // Ensure user is logged in
     if (!this.userId) {
       throw new Meteor.Error('not-authorized', 'User must be logged in to remove patients');
+    }
+    
+    // In production, only allow deletion in test mode or from specific contexts
+    // (e.g., MyProfile page would have additional checks)
+    if (!process.env.TEST_RUN && !get(Meteor, 'settings.public.defaults.allowPatientDeletion', false)) {
+      console.log('[patients.remove] Deletion blocked - not in TEST_RUN mode');
+      throw new Meteor.Error('not-allowed', 'Patient deletion is restricted in production mode');
     }
     
     try {

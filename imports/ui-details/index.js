@@ -17,7 +17,9 @@ export { default as CodeSystemDetail } from '../ui-fhir/codeSystems/CodeSystemDe
 export { default as CommunicationDetail } from '../ui-fhir/communications/CommunicationDetail';
 export { default as CompositionDetail } from '../ui-fhir/compositions/CompositionDetail';
 export { default as ConditionDetail } from '../ui-fhir/conditions/ConditionDetail';
+export { default as ConsentDetail } from '../ui-fhir/consents/ConsentDetail';
 export { default as DeviceDetail } from '../ui-fhir/devices/DeviceDetail';
+export { default as DiagnosticReportDetail } from '../ui-fhir/diagnosticReports/DiagnosticReportDetail';
 export { default as DocumentReferenceDetail } from '../ui-fhir/documentReferences/DocumentReferenceDetail';
 export { default as EncounterDetail } from '../ui-fhir/encounters/EncounterDetail';
 export { default as EvidenceDetail } from '../ui-fhir/evidences/EvidenceDetail';
@@ -43,6 +45,7 @@ export { default as QuestionnaireDetail } from '../ui-fhir/questionnaires/Questi
 export { default as ResearchStudyDetail } from '../ui-fhir/researchStudies/ResearchStudyDetail';
 export { default as ResearchSubjectDetail } from '../ui-fhir/researchSubjects/ResearchSubjectDetail';
 export { default as ServiceRequestDetail } from '../ui-fhir/serviceRequests/ServiceRequestDetail';
+export { default as SupplyDeliveryDetail } from '../ui-fhir/supplyDeliveries/SupplyDeliveryDetail';
 export { default as TaskDetail } from '../ui-fhir/tasks/TaskDetail';
 export { default as ValueSetDetail } from '../ui-fhir/valuesets/ValueSetDetail';
 

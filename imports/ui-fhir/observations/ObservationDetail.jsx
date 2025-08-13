@@ -77,6 +77,7 @@ function ObservationDetail(props) {
       reference: "",
       display: ""
     },
+    status: 'preliminary',
     effectiveDateTime: moment().format('YYYY-MM-DDTHH:mm'),
     issued: moment().format('YYYY-MM-DDTHH:mm:ss'),
     performer: [{
@@ -84,7 +85,7 @@ function ObservationDetail(props) {
       display: ""
     }],
     valueQuantity: {
-      value: null,
+      value: "",
       unit: "",
       system: "http://unitsofmeasure.org",
       code: ""
@@ -117,7 +118,8 @@ function ObservationDetail(props) {
         // Prefer selected patient
         patientName = get(selectedPatient, 'name[0].text', '') || 
                      `${get(selectedPatient, 'name[0].given[0]', '')} ${get(selectedPatient, 'name[0].family', '')}`.trim();
-        patientReference = `Patient/${get(selectedPatient, '_id', '')}`;
+        // Use FHIR id for patient reference, not MongoDB _id
+        patientReference = `Patient/${get(selectedPatient, 'id', get(selectedPatient, '_id', ''))}`;
       } else if (currentUser) {
         // Fall back to current user
         patientName = get(currentUser, 'profile.name.text', '') ||
@@ -159,10 +161,15 @@ function ObservationDetail(props) {
   useEffect(function() {
     async function loadObservation() {
       if (id && id !== 'new') {
+        console.log('Loading observation with id:', id);
         setLoading(true);
         try {
           const result = await Meteor.callAsync('observations.get', id);
           if (result) {
+            console.log('Loaded observation:', result);
+            console.log('Performer data:', result.performer);
+            console.log('Performer display value:', get(result, 'performer[0].display', ''));
+            console.log('Performer reference:', get(result, 'performer[0].reference', ''));
             setObservation(result);
           }
         } catch (err) {
@@ -279,16 +286,18 @@ function ObservationDetail(props) {
   // Clear all value fields
   const clearAllValues = () => {
     const updates = {
-      'valueQuantity': null,
+      'valueQuantity.value': '',
+      'valueQuantity.unit': '',
+      'valueQuantity.code': '',
       'valueCodeableConcept': null,
-      'valueString': null,
+      'valueString': '',
       'valueBoolean': null,
-      'valueInteger': null,
+      'valueInteger': '',
       'valueRange': null,
       'valueRatio': null,
-      'valueSampledData': null,
-      'valueTime': null,
-      'valueDateTime': null,
+      'valueSampledData': '',
+      'valueTime': '',
+      'valueDateTime': '',
       'valuePeriod': null,
       'valueAttachment': null
     };
@@ -298,7 +307,7 @@ function ObservationDetail(props) {
   };
 
   return (
-    <Container maxWidth="md" sx={{ py: 4 }}>
+    <Container id="observationDetailPage" maxWidth="md" sx={{ py: 4 }}>
       <Card sx={{ boxShadow: 3 }}>
         <CardHeader 
           title={id && id !== 'new' ? 'Edit Observation' : 'New Observation'}
@@ -322,6 +331,7 @@ function ObservationDetail(props) {
             {props.showPatientInputs !== false && (
               <Stack direction="row" spacing={2}>
                 <TextField
+                  id="patientDisplay"
                   fullWidth
                   label="Patient Name"
                   value={get(observation, 'subject.display', '')}
@@ -330,6 +340,7 @@ function ObservationDetail(props) {
                 />
                 
                 <TextField
+                  id="patientReference"
                   fullWidth
                   label="Patient ID"
                   value={get(observation, 'subject.reference', '')}
@@ -338,10 +349,20 @@ function ObservationDetail(props) {
               </Stack>
             )}
             
+            <TextField
+              id="performerDisplay"
+              fullWidth
+              label="Performer"
+              value={get(observation, 'performer[0].display', '')}
+              helperText={get(observation, 'performer[0].reference', '') || 'Performer reference will be assigned'}
+              disabled // Always disabled - set automatically from current user
+            />
+            
             <Stack direction="row" spacing={2}>
               <FormControl fullWidth disabled={!isEditing}>
                 <InputLabel>Category</InputLabel>
                 <Select
+                  id="category"
                   value={get(observation, 'category[0].coding[0].code', 'vital-signs')}
                   onChange={(e) => {
                     const option = categoryOptions.find(o => o.code === e.target.value);
@@ -362,6 +383,7 @@ function ObservationDetail(props) {
               <FormControl fullWidth disabled={!isEditing}>
                 <InputLabel>Status</InputLabel>
                 <Select
+                  id="status"
                   value={get(observation, 'status', 'preliminary')}
                   onChange={(e) => handleChange('status', e.target.value)}
                   label="Status"
@@ -375,10 +397,11 @@ function ObservationDetail(props) {
               </FormControl>
               
               <TextField
+                id="effectiveDate"
                 fullWidth
                 type="datetime-local"
                 label="Effective Date/Time"
-                value={moment(get(observation, 'effectiveDateTime', '')).format('YYYY-MM-DDTHH:mm')}
+                value={get(observation, 'effectiveDateTime') ? moment(get(observation, 'effectiveDateTime')).format('YYYY-MM-DDTHH:mm') : ''}
                 onChange={(e) => handleChange('effectiveDateTime', e.target.value)}
                 InputLabelProps={{ shrink: true }}
                 disabled={!isEditing}
@@ -387,6 +410,7 @@ function ObservationDetail(props) {
             
             <Stack direction="row" spacing={2}>
               <TextField
+                id="loincCode"
                 fullWidth
                 label="LOINC Code"
                 value={get(observation, 'code.coding[0].code', '')}
@@ -411,6 +435,7 @@ function ObservationDetail(props) {
               />
               
               <TextField
+                id="loincDisplay"
                 fullWidth
                 label="LOINC Display"
                 value={get(observation, 'code.coding[0].display', '') || get(observation, 'code.text', '')}
@@ -453,6 +478,7 @@ function ObservationDetail(props) {
             {valueType === 'valueQuantity' && (
               <Stack direction="row" spacing={2}>
                 <TextField
+                  id="valueQuantity"
                   fullWidth
                   type="number"
                   label="Quantity Value"
@@ -462,6 +488,7 @@ function ObservationDetail(props) {
                 />
                 
                 <TextField
+                  id="unit"
                   fullWidth
                   label="Unit"
                   value={get(observation, 'valueQuantity.unit', '')}
@@ -630,7 +657,7 @@ function ObservationDetail(props) {
                 fullWidth
                 type="datetime-local"
                 label="Date/Time Value"
-                value={moment(get(observation, 'valueDateTime', '')).format('YYYY-MM-DDTHH:mm')}
+                value={get(observation, 'valueDateTime') ? moment(get(observation, 'valueDateTime')).format('YYYY-MM-DDTHH:mm') : ''}
                 onChange={(e) => handleChange('valueDateTime', e.target.value)}
                 InputLabelProps={{ shrink: true }}
                 disabled={!isEditing}
@@ -643,7 +670,7 @@ function ObservationDetail(props) {
                   fullWidth
                   type="datetime-local"
                   label="Period Start"
-                  value={moment(get(observation, 'valuePeriod.start', '')).format('YYYY-MM-DDTHH:mm')}
+                  value={get(observation, 'valuePeriod.start') ? moment(get(observation, 'valuePeriod.start')).format('YYYY-MM-DDTHH:mm') : ''}
                   onChange={(e) => handleChange('valuePeriod.start', e.target.value)}
                   InputLabelProps={{ shrink: true }}
                   disabled={!isEditing}
@@ -652,7 +679,7 @@ function ObservationDetail(props) {
                   fullWidth
                   type="datetime-local"
                   label="Period End"
-                  value={moment(get(observation, 'valuePeriod.end', '')).format('YYYY-MM-DDTHH:mm')}
+                  value={get(observation, 'valuePeriod.end') ? moment(get(observation, 'valuePeriod.end')).format('YYYY-MM-DDTHH:mm') : ''}
                   onChange={(e) => handleChange('valuePeriod.end', e.target.value)}
                   InputLabelProps={{ shrink: true }}
                   disabled={!isEditing}
@@ -711,6 +738,7 @@ function ObservationDetail(props) {
             )}
             
             <TextField
+              id="notesTextarea"
               fullWidth
               multiline
               rows={3}
@@ -779,6 +807,7 @@ function ObservationDetail(props) {
                 </Button>
               )}
               <Button 
+                id="saveObservationButton"
                 onClick={handleSave}
                 variant="contained"
                 color="primary"

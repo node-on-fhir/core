@@ -33,6 +33,19 @@ import { FhirDehydrator } from '../../lib/FhirDehydrator';
 
 
 //===========================================================================
+// LOGGER
+
+const logger = {
+  debug: console.debug.bind(console),
+  trace: console.trace.bind(console),
+  data: console.log.bind(console),
+  verbose: console.debug.bind(console),
+  info: console.info.bind(console),
+  warn: console.warn.bind(console),
+  error: console.error.bind(console)
+};
+
+//===========================================================================
 // THEMING
 
 
@@ -48,28 +61,28 @@ function AllergyIntolerancesTable(props){
   let { 
     id,
     children, 
-    allergyIntolerances,
-    selectedAllergyIntoleranceId,
+    allergyIntolerances = [],
+    selectedAllergyIntoleranceId = '',
     dateFormat,
     showMinutes,
 
-    hideCheckbox,
-    hideIdentifier,
-    hideActionIcons,
-    hidePatientDisplay,
-    hidePatientReference,
-    hideReaction,
-    hideCriticality,
-    hideSeverity,
-    hideRecorder,
-    hideOnset,
-    hideVerification,
-    hideClinical,
-    hideSubstance,
-    hideCategory,
-    hideType,
-    hideRecordedDate,
-    hideBarcode,
+    hideCheckbox = true,
+    hideIdentifier = true,
+    hideActionIcons = true,
+    hidePatientDisplay = false,
+    hidePatientReference = true,
+    hideReaction = false,
+    hideCriticality = false,
+    hideSeverity = true,
+    hideRecorder = true,
+    hideOnset = false,
+    hideVerification = false,
+    hideClinical = false,
+    hideSubstance = false,
+    hideCategory = true,
+    hideType = true,
+    hideRecordedDate = true,
+    hideBarcode = true,
     
     onRowClick,
     onMetaClick,
@@ -80,10 +93,10 @@ function AllergyIntolerancesTable(props){
 
     query,
     paginationLimit,
-    disablePagination,
+    disablePagination = false,
     hideEnteredInError,
-    rowsPerPage,
-    tableRowSize,
+    rowsPerPage = 5,
+    tableRowSize = "medium",
 
     count,
     formFactorLayout,
@@ -586,9 +599,16 @@ function AllergyIntolerancesTable(props){
     }
   }
 
+  // Extract props that shouldn't be passed to DOM elements
+  const { 
+    hideActionButton,
+    autoColumns,
+    ...tableProps 
+  } = otherProps;
+
   return(
     <div id={id} className="tableWithPagination">
-      <Table className='allergiessTable'  size={tableRowSize} aria-label="a dense table" { ...otherProps }>
+      <Table className='allergiessTable'  size={tableRowSize} aria-label="a dense table" { ...tableProps }>
         <TableHead>
           <TableRow>
             { renderToggleHeader() }
@@ -672,33 +692,7 @@ AllergyIntolerancesTable.propTypes = {
   formFactorLayout: PropTypes.string
 };
 
-AllergyIntolerancesTable.defaultProps = {
-  allergyIntolerances: [],
-  selectedAllergyIntoleranceId: '',
-  
-  hideCheckbox: true,
-  hideActionIcons: true,
-  hideIdentifier: true,
-  hidePatientDisplay: false,
-  hidePatientReference: true,
-  hideReaction: false,
-  hideCriticality: false,
-  hideSeverity: true,
-  hideRecorder: true,
-  hideOnset: false,
-  hideSubstance: false,
-  hideCategory: true,
-  hideVerification: false,
-  hideClinical: false,
-  hideType: true,
-  hideRecordedDate: true,
-
-  hideBarcode: true,
-  disablePagination: false,
-  autoColumns: true,
-  rowsPerPage: 5,
-  tableRowSize: "medium"  // small | normal
-}
+// Default values are now handled via ES6 default parameters in the function declaration
 
 
 export default AllergyIntolerancesTable;

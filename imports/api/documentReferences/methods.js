@@ -58,7 +58,7 @@ Meteor.methods({
       throw new Meteor.Error('not-authorized', 'You must be logged in to delete documents');
     }
 
-    const documentReference = await DocumentReferences.findOneAsync(documentReferenceId);
+    const documentReference = await DocumentReferences.findOneAsync({_id: documentReferenceId});
     
     if (!documentReference) {
       throw new Meteor.Error('not-found', 'Document not found');
@@ -68,10 +68,40 @@ Meteor.methods({
     // For example, check if user is the author
 
     try {
-      return await DocumentReferences.removeAsync(documentReferenceId);
+      return await DocumentReferences.removeAsync({_id: documentReferenceId});
     } catch (error) {
       console.error('Error removing DocumentReference:', error);
       throw new Meteor.Error('remove-failed', 'Failed to delete document: ' + error.message);
+    }
+  },
+
+  'documentReferences.update': async function(documentReferenceId, updateData) {
+    check(documentReferenceId, String);
+    check(updateData, Object);
+    
+    if (!this.userId) {
+      throw new Meteor.Error('not-authorized', 'You must be logged in to update documents');
+    }
+
+    const documentReference = await DocumentReferences.findOneAsync({_id: documentReferenceId});
+    
+    if (!documentReference) {
+      throw new Meteor.Error('not-found', 'Document not found');
+    }
+
+    // Additional authorization check could go here
+    // For example, check if user is the author
+
+    // Update metadata
+    updateData.meta = updateData.meta || {};
+    updateData.meta.lastUpdated = new Date();
+    updateData.meta.versionId = String(parseInt(updateData.meta.versionId || '1') + 1);
+
+    try {
+      return await DocumentReferences.updateAsync({_id: documentReferenceId}, { $set: updateData });
+    } catch (error) {
+      console.error('Error updating DocumentReference:', error);
+      throw new Meteor.Error('update-failed', 'Failed to update document: ' + error.message);
     }
   },
 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTracker } from 'meteor/react-meteor-data';
 import { useNavigate } from 'react-router-dom';
 
@@ -11,9 +11,12 @@ import {
   CardContent,
   Button,
   Box,
-  Typography
+  Typography,
+  TextField,
+  InputAdornment
 } from '@mui/material';
-import AddIcon from '@mui/icons-material/Add'; 
+import AddIcon from '@mui/icons-material/Add';
+import SearchIcon from '@mui/icons-material/Search'; 
 
 import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
@@ -24,6 +27,7 @@ import LayoutHelpers from '../../lib/LayoutHelpers';
 
 import { get } from 'lodash';
 import { useSubscribe } from 'meteor/react-meteor-data';
+import FhirUtilities from '../../lib/FhirUtilities';
 
  
 //=============================================================================================================================================
@@ -54,9 +58,7 @@ Session.setDefault('DocumentReferencesTable.documentReferencesIndex', 0)
 
 export function DocumentReferencesPage(props){
   const navigate = useNavigate();
-
-  // Subscribe to document references
-  const isLoading = useSubscribe('pacio.documentReferences');
+  const [searchFilter, setSearchFilter] = useState('');
 
   let data = {
     currentDocumentReferenceId: '',
@@ -65,7 +67,9 @@ export function DocumentReferencesPage(props){
     onePageLayout: true,
     showSystemIds: false,
     showFhirIds: false,
-    documentReferencesIndex: 0
+    documentReferencesIndex: 0,
+    selectedPatientId: '',
+    selectedPatient: null
   };
 
   data.onePageLayout = useTracker(function(){
@@ -80,8 +84,47 @@ export function DocumentReferencesPage(props){
   data.selectedDocumentReference = useTracker(function(){
     return DocumentReferences.findOne({_id: Session.get('selectedDocumentReferenceId')});
   }, [])
+  data.selectedPatientId = useTracker(function(){
+    return Session.get('selectedPatientId');
+  }, []);
+  data.selectedPatient = useTracker(function(){
+    return Session.get('selectedPatient');
+  }, []);
+  
+  // Subscribe to document references with patient filter
+  const isLoading = useTracker(() => {
+    const selectedPatientId = Session.get('selectedPatientId');
+    const selectedPatient = Session.get('selectedPatient');
+    
+    let query = {};
+    if(selectedPatient || selectedPatientId) {
+      const fhirId = get(selectedPatient, 'id');
+      if(fhirId) {
+        query = FhirUtilities.addPatientFilterToQuery(fhirId);
+      } else if(selectedPatientId) {
+        query = FhirUtilities.addPatientFilterToQuery(selectedPatientId);
+      }
+    }
+    
+    const handle = Meteor.subscribe('autopublish.DocumentReferences', query, { limit: 1000 });
+    return !handle.ready();
+  }, [Session.get('selectedPatientId')]);
+  
   data.documentReferences = useTracker(function(){
-    return DocumentReferences.find().fetch();
+    const selectedPatientId = Session.get('selectedPatientId');
+    const selectedPatient = Session.get('selectedPatient');
+    
+    let query = {};
+    if(selectedPatient || selectedPatientId) {
+      const fhirId = get(selectedPatient, 'id');
+      if(fhirId) {
+        query = FhirUtilities.addPatientFilterToQuery(fhirId);
+      } else if(selectedPatientId) {
+        query = FhirUtilities.addPatientFilterToQuery(selectedPatientId);
+      }
+    }
+    
+    return DocumentReferences.find(query).fetch();
   }, [])
   data.documentReferencesIndex = useTracker(function(){
     return Session.get('DocumentReferencesTable.documentReferencesIndex')
@@ -94,6 +137,44 @@ export function DocumentReferencesPage(props){
   }, [])
 
 
+  // Filter document references based on search
+  let filteredDocumentReferences = data.documentReferences;
+  if (searchFilter && searchFilter.length > 0) {
+    const filterLower = searchFilter.toLowerCase();
+    filteredDocumentReferences = data.documentReferences.filter(documentReference => {
+      // Search by ID
+      if (documentReference._id && documentReference._id.toLowerCase().includes(filterLower)) return true;
+      if (documentReference.id && documentReference.id.toLowerCase().includes(filterLower)) return true;
+      
+      // Search by type
+      if (get(documentReference, 'type.coding[0].display', '').toLowerCase().includes(filterLower)) return true;
+      if (get(documentReference, 'type.coding[0].code', '').toLowerCase().includes(filterLower)) return true;
+      if (get(documentReference, 'type.text', '').toLowerCase().includes(filterLower)) return true;
+      
+      // Search by description
+      if (get(documentReference, 'description', '').toLowerCase().includes(filterLower)) return true;
+      
+      // Search by patient name
+      if (get(documentReference, 'subject.display', '').toLowerCase().includes(filterLower)) return true;
+      
+      // Search by content title
+      if (get(documentReference, 'content[0].attachment.title', '').toLowerCase().includes(filterLower)) return true;
+      
+      return false;
+    });
+  }
+
+  // Debug logging
+  useEffect(() => {
+    console.log('DocumentReferencesPage - Patient context:', {
+      selectedPatientId: data.selectedPatientId,
+      selectedPatient: data.selectedPatient,
+      patientFhirId: get(data.selectedPatient, 'id'),
+      totalDocuments: data.documentReferences.length,
+      filteredDocuments: filteredDocumentReferences.length
+    });
+  }, [data.selectedPatientId, data.documentReferences.length]);
+
   let headerHeight = LayoutHelpers.calcHeaderHeight();
   let formFactor = LayoutHelpers.determineFormFactor();
   let paddingWidth = LayoutHelpers.calcCanvasPaddingWidth();
@@ -103,7 +184,7 @@ export function DocumentReferencesPage(props){
 
   function handleAddDocumentReference(){
     console.log('Add DocumentReference button clicked');
-    navigate('/documentReferences/new');
+    navigate('/document-references/new');
   }
 
   function renderHeader() {
@@ -115,7 +196,7 @@ export function DocumentReferencesPage(props){
               Document References
             </Typography>
             <Typography variant="subtitle2" color="textSecondary">
-              {data.documentReferences.length} document references found
+              {filteredDocumentReferences.length} document references found
             </Typography>
           </Grid>
           <Grid item>
@@ -129,12 +210,30 @@ export function DocumentReferencesPage(props){
             </Button>
           </Grid>
         </Grid>
+        <Box mt={2}>
+          <TextField
+            id="documentReferenceSearchInput"
+            fullWidth
+            placeholder="Search document references by ID, type, description, or patient name..."
+            value={searchFilter}
+            onChange={(e) => setSearchFilter(e.target.value)}
+            variant="outlined"
+            size="small"
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon />
+                </InputAdornment>
+              ),
+            }}
+          />
+        </Box>
       </Box>
     );
   }
 
   let layoutContent;
-  if(data.documentReferences.length > 0){
+  if(filteredDocumentReferences.length > 0){
     layoutContent = <Card 
       sx={{ 
         width: '100%',
@@ -148,8 +247,8 @@ export function DocumentReferencesPage(props){
       <CardContent sx={{ p: 0 }}>
         <DocumentReferencesTable 
           id='documentReferencesTable'
-          documentReferences={data.documentReferences}
-          count={data.documentReferences.length}  
+          documentReferences={filteredDocumentReferences}
+          count={filteredDocumentReferences.length}  
           formFactorLayout={formFactor}
           rowsPerPage={LayoutHelpers.calcTableRows()} 
           actionButtonLabel="Remove"
@@ -163,7 +262,7 @@ export function DocumentReferencesPage(props){
           page={data.documentReferencesIndex}
           onRowClick={function(documentReferenceId){
             console.log('DocumentReferencesPage.onRowClick', documentReferenceId);
-            navigate('/documentReferences/' + documentReferenceId);
+            navigate('/document-references/' + documentReferenceId);
           }}
         />
       </CardContent>
@@ -246,7 +345,7 @@ export function DocumentReferencesPage(props){
         py: { xs: 3, sm: 4, md: 5 }
       }}
     >
-      { data.documentReferences.length > 0 && renderHeader() }
+      { filteredDocumentReferences.length > 0 && renderHeader() }
       { layoutContent }
     </Box>
   );

@@ -46,7 +46,9 @@ import { CodeSystems } from '/imports/lib/schemas/SimpleSchemas/CodeSystems';
 import { Communications } from '/imports/lib/schemas/SimpleSchemas/Communications';
 import { Compositions } from '/imports/lib/schemas/SimpleSchemas/Compositions';
 import { Conditions } from '/imports/lib/schemas/SimpleSchemas/Conditions';
+import { Consents } from '/imports/lib/schemas/SimpleSchemas/Consents';
 import { Devices } from '/imports/lib/schemas/SimpleSchemas/Devices';
+import { DiagnosticReports } from '/imports/lib/schemas/SimpleSchemas/DiagnosticReports';
 import { DocumentReferences } from '/imports/lib/schemas/SimpleSchemas/DocumentReferences';
 import { Encounters } from '/imports/lib/schemas/SimpleSchemas/Encounters';
 import { Evidences } from '/imports/lib/schemas/SimpleSchemas/Evidences';
@@ -89,7 +91,9 @@ const collectionsMap = {
   'Communications': Communications,
   'Compositions': Compositions,
   'Conditions': Conditions,
+  'Consents': Consents,
   'Devices': Devices,
+  'DiagnosticReports': DiagnosticReports,
   'DocumentReferences': DocumentReferences,
   'Encounters': Encounters,
   'Evidences': Evidences,
@@ -207,6 +211,7 @@ export function FhirResourcesDashboard() {
   const fhirResources = [
     { name: 'Activity Definitions', route: '/activity-definitions', settingsKey: 'ActivityDefinitions', collection: 'ActivityDefinitions' },
     { name: 'Allergy Intolerances', route: '/allergy-intolerances', settingsKey: 'AllergyIntolerances', collection: 'AllergyIntolerances' },
+    { name: 'Appointments', route: '/appointments', settingsKey: 'Appointments', collection: 'Appointments' },
     { name: 'Artifact Assessments', route: '/artifact-assessments', settingsKey: 'ArtifactAssessments', collection: 'ArtifactAssessments' },
     { name: 'Bundles', route: '/bundles', settingsKey: 'Bundles', collection: 'Bundles' },
     { name: 'Care Plans', route: '/careplans', settingsKey: 'CarePlans', collection: 'CarePlans' },
@@ -216,12 +221,15 @@ export function FhirResourcesDashboard() {
     { name: 'Communications', route: '/communications', settingsKey: 'Communications', collection: 'Communications' },
     { name: 'Compositions', route: '/compositions', settingsKey: 'Compositions', collection: 'Compositions' },
     { name: 'Conditions', route: '/conditions', settingsKey: 'Conditions', collection: 'Conditions' },
+    { name: 'Consents', route: '/consents', settingsKey: 'Consents', collection: 'Consents' },
     { name: 'Devices', route: '/devices', settingsKey: 'Devices', collection: 'Devices' },
+    { name: 'Diagnostic Reports', route: '/diagnostic-reports', settingsKey: 'DiagnosticReports', collection: 'DiagnosticReports' },
     { name: 'Document References', route: '/document-references', settingsKey: 'DocumentReferences', collection: 'DocumentReferences' },
     { name: 'Encounters', route: '/encounters', settingsKey: 'Encounters', collection: 'Encounters' },
     { name: 'Evidences', route: '/evidences', settingsKey: 'Evidences', collection: 'Evidences' },
     { name: 'Goals', route: '/goals', settingsKey: 'Goals', collection: 'Goals' },
     { name: 'Guidance Responses', route: '/guidance-responses', settingsKey: 'GuidanceResponses', collection: 'GuidanceResponses' },
+    { name: 'Imaging Studies', route: '/imaging-studies', settingsKey: 'ImagingStudies', collection: 'ImagingStudies' },
     { name: 'Immunizations', route: '/immunizations', settingsKey: 'Immunizations', collection: 'Immunizations' },
     { name: 'Libraries', route: '/libraries', settingsKey: 'Libraries', collection: 'Libraries' },
     { name: 'Lists', route: '/lists', settingsKey: 'Lists', collection: 'Lists' },
@@ -241,6 +249,7 @@ export function FhirResourcesDashboard() {
     { name: 'Questionnaires', route: '/questionnaires', settingsKey: 'Questionnaires', collection: 'Questionnaires' },
     { name: 'Research Studies', route: '/research-studies', settingsKey: 'ResearchStudies', collection: 'ResearchStudies' },
     { name: 'Research Subjects', route: '/research-subjects', settingsKey: 'ResearchSubjects', collection: 'ResearchSubjects' },
+    { name: 'Schedules', route: '/schedules', settingsKey: 'Schedules', collection: 'Schedules' },
     { name: 'Service Requests', route: '/service-requests', settingsKey: 'ServiceRequests', collection: 'ServiceRequests' },
     { name: 'Tasks', route: '/tasks', settingsKey: 'Tasks', collection: 'Tasks' },
     { name: 'Value Sets', route: '/value-sets', settingsKey: 'ValueSets', collection: 'ValueSets' }

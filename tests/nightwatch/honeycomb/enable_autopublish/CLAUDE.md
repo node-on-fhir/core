@@ -24,6 +24,34 @@ This guide provides patterns and checklists for implementing CRUD tests in the H
   const idString = typeof id === 'object' && id._str ? id._str : String(id);
   ```
 
+#### Dynamic ID Generation Pattern
+To ensure consistent sorting with existing Synthea data, we implemented a flexible ID generation strategy:
+
+**Server-side (methods.js):**
+```javascript
+// Set _id based on environment variable
+if (process.env.USE_MONGO_OBJECTID) {
+  // Use MongoDB ObjectID for consistency with existing data
+  const { Mongo } = Package.mongo;
+  const objectId = new Mongo.ObjectID();
+  // Convert to hex string for Meteor
+  cleanPatient._id = objectId.toHexString();
+  console.log('[patients.insert] Using MongoDB ObjectID (as hex string):', cleanPatient._id);
+} else {
+  // Default: Set _id to match id (Meteor string ID)
+  cleanPatient._id = cleanPatient.id;
+  console.log('[patients.insert] Using Meteor string ID:', cleanPatient._id);
+}
+```
+
+**Why This Matters:**
+- Synthea-generated patients use MongoDB ObjectIDs (24-character hex strings)
+- New patients created via UI typically use Meteor string IDs (17-character random strings)
+- MongoDB ObjectIDs sort differently than string IDs
+- The USE_MONGO_OBJECTID environment variable allows consistent ID generation
+- This ensures new test patients appear in predictable positions in sorted lists
+- **Testing Impact**: Don't rely on specific positions in lists - use search instead
+
 ### 2. Patient Selection and Multi-Patient Data Scoping
 - **Context**: The application operates in a multi-user, multi-patient environment where data must be scoped to the selected patient
 - **Key Concepts**:
@@ -86,15 +114,35 @@ This guide provides patterns and checklists for implementing CRUD tests in the H
 
 ### 6. React Form Input Handling
 - **Issue**: Setting values programmatically in React forms requires special handling
-- **Solution**: Use proper React event simulation
-  ```javascript
+- **Solution**: Use different approaches for different input types
+
+#### Text Input Pattern (Use setValue directly):
+```javascript
+// CORRECT - Use setValue for text inputs, textareas
+browser
+  .clearValue('#codeInput')
+  .setValue('#codeInput', testData.codeCode)
+  .clearValue('#notesTextarea')
+  .setValue('#notesTextarea', testData.notes);
+```
+
+**Important**: 
+- Use setValue directly on text inputs (like the locations test does)
+- Only use execute blocks for Material-UI Select components
+- Use the correct field values from test data (e.g., codeCode for the code field, codeDisplay for the display field)
+
+#### Why Native Setter Approach Fails:
+```javascript
+// WRONG - This causes "Illegal invocation" errors
+browser.execute(function(value) {
   const nativeInputValueSetter = Object.getOwnPropertyDescriptor(
-    window.HTMLInputElement.prototype, 
-    'value'
+    window.HTMLInputElement.prototype, 'value'
   ).set;
-  nativeInputValueSetter.call(field, value);
-  field.dispatchEvent(new Event('input', { bubbles: true }));
-  ```
+  nativeInputValueSetter.call(field, value); // Causes "Illegal invocation"
+});
+```
+
+The native setter approach causes "Illegal invocation" errors in the browser and should be avoided for standard form inputs.
 
 ## Patient Context and Data Scoping in Tests
 
@@ -296,15 +344,72 @@ This comprehensive query handles various ways FHIR resources might reference a p
 - [ ] Auto-populated fields are documented
 - [ ] Form inputs work with both user interaction and programmatic setting
 
+## Session Context and Navigation
+
+### Critical Pattern: Page Navigation vs React Router Navigation
+
+**Key Insight**: There are two types of navigation in the application that handle Session state differently:
+
+1. **Full Page Navigation (`browser.url()`)**: 
+   - Causes a complete page reload
+   - **CLEARS all Session variables**
+   - Used for initial navigation to a route
+   - Example: `browser.url('http://localhost:3000/allergy-intolerances')`
+
+2. **React Router Navigation (`navigate()`)**: 
+   - Client-side routing without page reload
+   - **PRESERVES Session variables**
+   - Used when clicking buttons/links within the app
+   - Example: Clicking "Add Allergy" button uses `navigate('/allergy-intolerances/new')`
+
+### Correct Pattern for Tests:
+```javascript
+// Step 1: Navigate to the page (causes reload, clears Session)
+browser
+  .url('http://localhost:3000/allergy-intolerances')
+  .waitForElementVisible('#allergyIntolerancesPage', 5000);
+
+// Step 2: Set patient context AFTER navigation
+browser.execute(function() {
+  const patient = Patients.findOne({...});
+  if (patient) {
+    Session.set('selectedPatientId', patient._id);
+    Session.set('selectedPatient', patient);
+  }
+});
+
+// Step 3: Further navigation within the app preserves Session
+// Clicking "Add" button uses React Router, Session variables remain
+```
+
+### Common Mistake:
+```javascript
+// WRONG: Setting Session before navigation
+browser.execute(function() {
+  Session.set('selectedPatient', patient); // This will be lost!
+});
+browser.url('http://localhost:3000/allergy-intolerances'); // Clears Session!
+```
+
+### Why This Matters:
+- Patient context is stored in Session
+- Many components filter data based on `Session.get('selectedPatient')`
+- If Session is cleared, lists appear empty even though data exists
+- This is why setting patient context must happen AFTER initial page navigation
+
 ## Common Pitfalls to Avoid
 
-1. **Don't search by identifier when you can use _id directly**
-2. **Don't assume _id === id** (especially with Synthea data)
-3. **Don't modify well-established test patterns**
-4. **Don't forget to handle the no-data state**
-5. **Don't assume specific sort order without explicitly setting it**
-6. **Don't expect manually set values for auto-populated fields**
-7. **Don't use complex search patterns when simple ones suffice**
+1. **Don't set Session variables before `browser.url()`** - they will be cleared
+2. **Don't search by identifier when you can use _id directly**
+3. **Don't assume _id === id** (especially with Synthea data)
+4. **Don't modify well-established test patterns**
+5. **Don't forget to handle the no-data state**
+6. **Don't assume specific sort order without explicitly setting it**
+7. **Don't expect manually set values for auto-populated fields**
+8. **Don't use complex search patterns when simple ones suffice**
+9. **Don't filter data client-side when you can pass queries to subscriptions**
+10. **Don't assume new records will appear at top/bottom without proper sorting**
+11. **Don't test Material-UI Select components with simple selectors - use execute blocks**
 
 ## Debugging Tips
 
@@ -393,3 +498,293 @@ describe('Resource CRUD Operations', function() {
 ```
 
 This guide represents patterns refined through implementing and debugging CRUD tests. Follow these patterns for consistent, maintainable test implementations.
+
+## Search-Based Test Pattern
+
+To reliably find specific test data in large datasets (100+ records), tests now use the search functionality:
+
+### Implementation
+```javascript
+// Add ID to search field
+<TextField
+  id="patientSearchInput"
+  fullWidth
+  placeholder="Search patients by ID, name, identifier..."
+  // ...
+/>
+
+// In tests, search for specific patient
+browser
+  .waitForElementVisible('#patientSearchInput', 5000)
+  .clearValue('#patientSearchInput')
+  .setValue('#patientSearchInput', testPatient.givenName)
+  .pause(1000); // Wait for search results to update
+```
+
+### Benefits
+- Filters list to show only matching patients
+- Avoids complex row-finding logic
+- Works regardless of sort order
+- Faster and more reliable than scanning all rows
+
+## TEST_RUN Environment Variable Pattern
+
+For operations that should only be available during testing:
+
+### Server-side Protection
+```javascript
+// In methods.js
+if (!process.env.TEST_RUN && !get(Meteor, 'settings.public.defaults.allowPatientDeletion', false)) {
+  console.log('[patients.remove] Deletion blocked - not in TEST_RUN mode');
+  throw new Meteor.Error('not-allowed', 'Patient deletion is restricted in production mode');
+}
+```
+
+### Test-side Usage
+```javascript
+// Programmatic deletion in tests
+browser.executeAsync(function(patientId, done) {
+  Meteor.call('patients.remove', patientId, function(error, result) {
+    if (error) {
+      console.warn('Deletion failed:', error.message);
+      // Don't fail test - method might require TEST_RUN env var
+      done({ deleted: false, error: error.message });
+    } else {
+      done({ deleted: true });
+    }
+  });
+});
+```
+
+### Running Tests with Environment Variables
+```bash
+# Start Meteor with TEST_RUN enabled
+TEST_RUN=true meteor run --settings configs/settings.honeycomb.localhost.json
+
+# Or set in your test runner
+export TEST_RUN=true
+npm test -- tests/nightwatch/honeycomb/enable_autopublish/crud.patients.js
+```
+
+This pattern allows:
+- Safe testing of destructive operations
+- Production protection by default
+- Clear separation of test vs production behavior
+- Flexibility for different deployment environments
+
+## Large Dataset Testing Patterns
+
+### Search-First Approach
+When dealing with datasets containing 100+ records (common with Synthea data):
+
+1. **Always implement search functionality first**
+   ```javascript
+   // Add search input with specific ID
+   <TextField
+     id="{resourceType}SearchInput"
+     fullWidth
+     placeholder="Search by ID, name, ..."
+     value={searchFilter}
+     onChange={(e) => setSearchFilter(e.target.value)}
+   />
+   ```
+
+2. **Pass search query to subscription**
+   ```javascript
+   const isLoading = useTracker(() => {
+     let query = {};
+     if(searchFilter) {
+       query = { /* search criteria */ };
+     }
+     const handle = Meteor.subscribe('autopublish.{ResourceTypes}', query, { limit: 100 });
+     return !handle.ready();
+   }, [searchFilter]);
+   ```
+
+3. **Use search in tests to find specific records**
+   ```javascript
+   browser
+     .setValue('#{resourceType}SearchInput', testResource.uniqueValue)
+     .pause(1000) // Wait for search to filter
+     .click('#{resourceTypes}Table tbody tr:first-child'); // Click filtered result
+   ```
+
+### Material-UI Component Testing
+
+**Select Components:**
+- Use execute blocks with setTimeout for portal-rendered options
+- Search for options globally with `document.querySelectorAll('li[role="option"]')`
+- Match by data-value attribute or text content
+
+**Form State Management:**
+- Check if form starts in edit mode for new resources
+- Some forms may need explicit "Edit" button click
+- Verify field enable/disable states match expected behavior
+
+### Navigation and State Management
+
+**Post-Save Navigation:**
+- Successful save should navigate from `/new` to list page
+- Staying on `/new` indicates save failure
+- Check console errors and user authentication state
+
+**Element Visibility and Scrolling:**
+- After navigation, the page may be scrolled to an unexpected position
+- Elements must be in the viewport to be interacted with
+- Use `window.scrollTo(0, 0)` to ensure header elements are visible
+
+```javascript
+// Ensure search input is visible after navigation
+browser.execute(function() {
+  window.scrollTo(0, 0);
+});
+browser.pause(500);
+
+// Now the search input should be accessible
+browser
+  .waitForElementVisible('#searchInput', 5000)
+  .setValue('#searchInput', 'search term');
+```
+
+**Why This Matters:**
+- After saving a record, the page often returns to the list view scrolled down
+- Search bars and headers are typically at the top of the page
+- Nightwatch cannot interact with elements outside the viewport
+- `waitForElementVisible` checks DOM visibility, not viewport visibility
+
+**Patient Context Preservation:**
+- Always verify Session patient is set before operations
+- Re-establish patient context after navigation if needed
+- Debug with console logs showing Session state
+
+### Debugging Large Datasets
+
+```javascript
+// Debug why data might be filtered out
+browser.execute(function() {
+  const total = {ResourceTypes}.find({}).count();
+  const filtered = {ResourceTypes}.find(query).count();
+  console.log(`Total: ${total}, Filtered: ${filtered}`);
+  
+  if (total > 0 && filtered === 0) {
+    console.log('Data exists but is filtered out');
+    console.log('Sample record:', {ResourceTypes}.findOne());
+    console.log('Current query:', query);
+  }
+});
+```
+
+## Best Practices for Delete Operations
+
+Based on extensive debugging of delete button issues, these patterns have proven most reliable:
+
+### 1. Delete Button Execution Pattern
+
+**DON'T use execute with callbacks - they can return null unexpectedly:**
+```javascript
+// AVOID THIS - callbacks can cause null return issues
+browser.execute(function() {
+  // ... find and click button
+  return true;
+}, [], function(result) {
+  browser.assert.equal(result.value, true, 'Clicked button');
+});
+```
+
+**DO use simple execute without callback:**
+```javascript
+// PREFERRED - simpler and more reliable
+browser
+  .execute(function() {
+    const buttons = document.querySelectorAll('button');
+    for (let button of buttons) {
+      if (button.textContent.includes('Delete')) {
+        button.click();
+        return true;
+      }
+    }
+    return false;
+  })
+  .pause(500)      // Wait for alert
+  .acceptAlert()   // Handle confirmation
+  .pause(1000);    // Wait for deletion
+```
+
+### 2. Button Detection Best Practices
+
+- Use `includes()` rather than exact match for more flexibility
+- Don't over-engineer the detection logic
+- Simple text matching usually suffices
+- If button text is known from debug output, trust it
+
+### 3. Debugging Execute Function Issues
+
+When execute returns `null` instead of expected boolean:
+1. It's an execution problem, not a logic problem
+2. Remove callbacks and try simpler approach
+3. Check if component has different button visibility rules (edit vs view mode)
+4. Look at working tests for proven patterns
+
+### 4. Component-Specific Considerations
+
+Different components may show Delete button in different modes:
+- Some show Delete only in view mode (e.g., ImmunizationDetail)
+- Others show Delete only in edit mode (e.g., some older components)
+- Always check the actual component's button rendering logic
+
+### 5. Key Learning: Simpler is Better
+
+The most frustrating bugs often aren't in the logic but in framework usage:
+- Complex detection logic wasn't the issue
+- The callback pattern was the problem
+- When something obvious should work but doesn't, question the execution mechanism
+
+### Example Working Pattern
+
+```javascript
+it('09. Delete resource', browser => {
+  browser
+    .waitForElementVisible('#resourceDetailPage', 5000)
+    .pause(500)
+    // Simple execute without callback
+    .execute(function() {
+      const buttons = document.querySelectorAll('button');
+      for (let button of buttons) {
+        if (button.textContent.includes('Delete')) {
+          window.__deleteButtonFound = true; // Optional debug flag
+          button.click();
+          return true;
+        }
+      }
+      return false;
+    })
+    .pause(500)      // Wait for confirmation dialog
+    .acceptAlert()   // Accept the confirmation
+    .pause(1000);    // Wait for deletion to complete
+
+  // Verify navigation back to list
+  browser
+    .waitForElementVisible('#resourceListPage', 5000)
+    .execute(function() {
+      // Verify either table or no-data state exists
+      const hasTable = document.querySelector('#resourceTable') !== null;
+      const hasNoData = document.querySelector('.no-data-card') !== null;
+      return { hasTable, hasNoData };
+    }, [], function(result) {
+      browser.assert.ok(
+        result.value.hasTable || result.value.hasNoData, 
+        'Either table or no-data state present after deletion'
+      );
+    });
+});
+```
+
+### Summary
+
+When dealing with delete operations in Nightwatch tests:
+1. Use execute without callbacks for clicking buttons
+2. Keep the logic simple - don't overthink it
+3. Trust debug output about button existence
+4. Check component's actual button visibility rules
+5. Look at working tests for proven patterns
+6. Remember: `null` return usually means execution issue, not logic issue

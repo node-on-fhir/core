@@ -13,9 +13,12 @@ import {
   CardContent,
   Button,
   Box,
-  Typography
+  Typography,
+  TextField,
+  InputAdornment
 } from '@mui/material';
-import AddIcon from '@mui/icons-material/Add'; 
+import AddIcon from '@mui/icons-material/Add';
+import SearchIcon from '@mui/icons-material/Search'; 
 
 import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
@@ -23,19 +26,13 @@ import { Session } from 'meteor/session';
 // import PractitionerDetail from './PractitionerDetail';
 import PractitionersTable from './PractitionersTable';
 import LayoutHelpers from '../../lib/LayoutHelpers';
+import { Practitioners } from '/imports/lib/schemas/SimpleSchemas/Practitioners';
 
 import { get } from 'lodash';
 
  
 //=============================================================================================================================================
 // DATA CURSORS
-
-let Practitioners;
-Meteor.startup(async function(){
-  if(Meteor.isClient){
-    Practitioners = await global.Collections.Practitioners;
-  }
-})
 
 //=============================================================================================================================================
 // SESSION VARIABLES
@@ -58,6 +55,7 @@ Session.setDefault('PractitionersTable.practitionersIndex', 0)
 
 export function PractitionersPage(props){
   const navigate = useNavigate();
+  const [searchFilter, setSearchFilter] = useState('');
 
   let data = {
     currentPractitionerId: '',
@@ -68,6 +66,19 @@ export function PractitionersPage(props){
     showFhirIds: false,
     practitionersIndex: 0
   };
+  
+  // Subscribe to practitioners
+  const isLoading = useTracker(() => {
+    let autoPublishEnabled = get(Meteor, 'settings.public.defaults.autopublish', false);
+    
+    if(autoPublishEnabled){
+      const handle = Meteor.subscribe('autopublish.Practitioners', {}, { limit: 1000 });
+      return !handle.ready();
+    } else {
+      const handle = Meteor.subscribe('practitioners.all');
+      return !handle.ready();
+    }
+  }, []);
 
   data.onePageLayout = useTracker(function(){
     return Session.get('PractitionersPage.onePageLayout');
@@ -90,6 +101,41 @@ export function PractitionersPage(props){
     }
     return [];
   }, [])
+  
+  // Filter practitioners based on search
+  const filteredPractitioners = data.practitioners.filter(practitioner => {
+    if (!searchFilter) return true;
+    
+    const searchLower = searchFilter.toLowerCase();
+    
+    // Search in name
+    const name = get(practitioner, 'name[0]', {});
+    const fullName = `${get(name, 'given[0]', '')} ${get(name, 'family', '')}`.toLowerCase();
+    if (fullName.includes(searchLower)) return true;
+    
+    // Search in NPI
+    const npi = String(get(practitioner, 'identifier[0].value', '')).toLowerCase();
+    if (npi.includes(searchLower)) return true;
+    
+    // Search in email
+    const email = String(get(practitioner, 'telecom', []).find(t => t.system === 'email')?.value || '').toLowerCase();
+    if (email.includes(searchLower)) return true;
+    
+    // Search in specialty
+    const specialty = String(get(practitioner, 'practitionerRole[0].specialty[0].coding[0].display', '')).toLowerCase();
+    if (specialty.includes(searchLower)) return true;
+    
+    // Search in ID (handle both string and ObjectID)
+    if (practitioner._id) {
+      const idString = typeof practitioner._id === 'object' && practitioner._id._str 
+        ? practitioner._id._str 
+        : String(practitioner._id);
+      if (idString.toLowerCase().includes(searchLower)) return true;
+    }
+    if (practitioner.id && practitioner.id.toLowerCase().includes(searchLower)) return true;
+    
+    return false;
+  })
   data.practitionersIndex = useTracker(function(){
     return Session.get('PractitionersTable.practitionersIndex')
   }, [])
@@ -123,7 +169,7 @@ export function PractitionersPage(props){
               Practitioners
             </Typography>
             <Typography variant="subtitle2" color="textSecondary">
-              {data.practitioners.length} practitioners found
+              {filteredPractitioners.length} of {data.practitioners.length} practitioners
             </Typography>
           </Grid>
           <Grid item>
@@ -137,12 +183,32 @@ export function PractitionersPage(props){
             </Button>
           </Grid>
         </Grid>
+        <Box mt={2}>
+          <TextField
+            id="practitionerSearchInput"
+            fullWidth
+            placeholder="Search practitioners by ID, name, NPI, email, specialty..."
+            value={searchFilter}
+            onChange={(e) => setSearchFilter(e.target.value)}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon />
+                </InputAdornment>
+              ),
+            }}
+          />
+        </Box>
       </Box>
     );
   }
 
   let layoutContent;
-  if(data.practitioners.length > 0){
+  if(isLoading) {
+    layoutContent = <Box sx={{ textAlign: 'center', py: 4 }}>
+      <Typography>Loading practitioners...</Typography>
+    </Box>
+  } else if(filteredPractitioners.length > 0){
     layoutContent = <Card 
       sx={{ 
         width: '100%',
@@ -156,8 +222,8 @@ export function PractitionersPage(props){
       <CardContent sx={{ p: 0 }}>
         <PractitionersTable 
           id='practitionersTable'
-          practitioners={data.practitioners}
-          count={data.practitioners.length}  
+          practitioners={filteredPractitioners}
+          count={filteredPractitioners.length}  
           formFactorLayout={formFactor}
           rowsPerPage={LayoutHelpers.calcTableRows()} 
           actionButtonLabel="Remove"
@@ -254,7 +320,7 @@ export function PractitionersPage(props){
         py: { xs: 3, sm: 4, md: 5 }
       }}
     >
-      { data.practitioners.length > 0 && renderHeader() }
+      { renderHeader() }
       { layoutContent }
     </Box>
   );

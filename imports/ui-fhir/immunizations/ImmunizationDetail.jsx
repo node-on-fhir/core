@@ -1,475 +1,639 @@
-import { 
-  Grid,
-  Card,
-  Button,
-  CardHeader,
-  CardContent,
-  CardActions,
-  Typography,
-  TextField,
-  DatePicker
-} from '@mui/material';
+// /Volumes/SonicMagic/Code/honeycomb-public-release/imports/ui-fhir/immunizations/ImmunizationDetail.jsx
 
-
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useTracker } from 'meteor/react-meteor-data';
 
+import { 
+  Button,
+  Card,
+  CardActions,
+  CardContent,
+  CardHeader,
+  Container,
+  TextField,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
+  Typography,
+  Box,
+  Stack,
+  InputAdornment,
+  IconButton,
+  Tooltip,
+  FormControlLabel,
+  Checkbox
+} from '@mui/material';
+
+import SearchIcon from '@mui/icons-material/Search';
+import DateRangeIcon from '@mui/icons-material/DateRange';
+
 import { get, set } from 'lodash';
-import PropTypes from 'prop-types';
+import moment from 'moment';
 
+import { Immunizations } from '/imports/lib/schemas/SimpleSchemas/Immunizations';
+import { Patients } from '/imports/lib/schemas/SimpleSchemas/Patients';
+import { Meteor } from 'meteor/meteor';
+import { Session } from 'meteor/session';
 
-Session.setDefault('selectedImmunization', false);
-
-export class ImmunizationDetail extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      immunizationId: false,
-      immunization: {
-        resourceType: "Immunization",
-        status: 'completed',
-        wasNotGiven: false,
-        identifier: [{
-          use: 'official',
-          value: ''
-        }],
-        vaccineCode: {
-          text: ''
-        },
-        date: null,
-        patient: {
-          reference: "",
-          display: ""
-        }
-      },
-      form: {
-        patientDisplay: '',
-        patientReference: '',
-        performerDisplay: '',
-        performerReference: '',
-        identifier: '',
-        status: '',
-        vaccineCode: '',
-        reported: true,
-        date: ''
+function ImmunizationDetail(props) {
+  const navigate = useNavigate();
+  const { id } = useParams();
+  const immunizationId = id;
+  
+  // Subscribe to immunizations data
+  const isSubscriptionReady = useTracker(function(){
+    let autoPublishEnabled = get(Meteor, 'settings.public.defaults.autopublish', false);
+    let handle;
+    if(autoPublishEnabled){
+      handle = Meteor.subscribe('autopublish.Immunizations', {}, {});
+    } else {
+      handle = Meteor.subscribe('immunizations.all');
+    }
+    return handle.ready();
+  }, []);
+  
+  // Get selected patient and current user from session/tracker
+  const selectedPatient = useTracker(function() {
+    return Session.get('selectedPatient');
+  }, []);
+  
+  const currentUser = useTracker(function() {
+    return Meteor.user();
+  }, []);
+  
+  // Initialize state with proper FHIR R4 structure
+  const [immunization, setImmunization] = useState({
+    resourceType: "Immunization",
+    status: "completed",
+    vaccineCode: {
+      coding: [{
+        system: "http://hl7.org/fhir/sid/cvx",
+        code: "",
+        display: ""
+      }],
+      text: ""
+    },
+    patient: {
+      reference: "",
+      display: ""
+    },
+    occurrenceDateTime: moment().format('YYYY-MM-DDTHH:mm'),
+    primarySource: true,
+    lotNumber: "",
+    expirationDate: "",
+    site: {
+      coding: [{
+        system: "http://terminology.hl7.org/CodeSystem/v3-ActSite",
+        code: "",
+        display: ""
+      }],
+      text: ""
+    },
+    route: {
+      coding: [{
+        system: "http://terminology.hl7.org/CodeSystem/v3-RouteOfAdministration",
+        code: "",
+        display: ""
+      }],
+      text: ""
+    },
+    doseQuantity: {
+      value: null,
+      unit: "",
+      system: "http://unitsofmeasure.org",
+      code: ""
+    },
+    performer: [{
+      actor: {
+        reference: "",
+        display: ""
       }
-    }
-  }
-  dehydrateFhirResource(immunization) {
-    let formData = Object.assign({}, this.state.form);
+    }],
+    manufacturer: {
+      reference: "",
+      display: ""
+    },
+    note: [{
+      text: ""
+    }]
+  });
 
-    formData.patientDisplay = get(immunization, 'patient.display')
-    formData.patientReference = get(immunization, 'patient.reference')
-    formData.performerDisplay = get(immunization, 'performer.display')    
-    formData.performerReference = get(immunization, 'performer.reference')    
-    formData.identifier = get(immunization, 'identifier[0].value')
-    formData.status = get(immunization, 'status')
-    formData.vaccineCode = get(immunization, 'vaccineCode.text')
-    formData.reported = get(immunization, 'reported')
-    formData.date = get(immunization, 'date')
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [searchPatientOpen, setSearchPatientOpen] = useState(false);
 
-    return formData;
-  }
-  shouldComponentUpdate(nextProps){
-    process.env.NODE_ENV === "test" && console.log('ImmunizationDetail.shouldComponentUpdate()', nextProps, this.state)
-    let shouldUpdate = true;
-
-    // both false; don't take any more updates
-    if(nextProps.immunization === this.state.immunization){
-      shouldUpdate = false;
-    }
-
-    // received an allergie from the table; okay lets update again
-    if(nextProps.immunizationId !== this.state.immunizationId){
-      this.setState({immunizationId: nextProps.immunizationId})    
+  // Set patient name and performer on component mount for new immunizations
+  useEffect(function() {
+    if (!immunizationId || immunizationId === 'new') {
+      // Enable editing for new immunizations
+      setIsEditing(true);
       
-      if(nextProps.immunization){
-        this.setState({immunization: nextProps.immunization})     
-        this.setState({form: this.dehydrateFhirResource(nextProps.immunization)})       
+      // For new immunizations, set the patient name
+      let patientName = '';
+      let patientReference = '';
+      
+      if (selectedPatient) {
+        // Prefer selected patient
+        patientName = get(selectedPatient, 'name[0].text', '') || 
+                     `${get(selectedPatient, 'name[0].given[0]', '')} ${get(selectedPatient, 'name[0].family', '')}`.trim();
+        patientReference = `Patient/${get(selectedPatient, 'id', get(selectedPatient, '_id', ''))}`;
       }
-      shouldUpdate = true;
-    }
- 
-    return shouldUpdate;
-  }
-  getMeteorData() {
-    let data = {
-      immunizationId: this.props.immunizationId,
-      immunization: false,
-      form: this.state.form,
-      showDatePicker: false
-    };
-
-    if(this.props.showDatePicker){
-      data.showDatePicker = this.props.showDatePicker
-    }
-
-    if(this.props.immunization){
-      data.immunization = this.props.immunization;
-      data.form = this.dehydrateFhirResource(this.props.immunization);
-    }
-
-    console.log('ImmunizationDetail[data]', data);
-    return data;
-  }
-  renderDatePicker(showDatePicker, effectiveDateTime){
-    if (typeof effectiveDateTime === "string"){
-      effectiveDateTime = moment(effectiveDateTime);
-    }
-    if (showDatePicker) {
-      return(<div></div>)
-      // return (
-      //   <DatePicker 
-      //     name='datePicker'
-      //     hintText={this.setHint("Date of Administration" )}
-      //     container="inline" 
-      //     mode="landscape"
-      //     value={ effectiveDateTime ? effectiveDateTime : ''}    
-      //     onChange={ this.changeState.bind(this, 'date')}      
-      //     />
-      // );
-    }
-  }
-  setHint(text){
-    if(this.props.showHints !== false){
-      return text;
+      
+      // Set performer to current user
+      let performerName = '';
+      let performerReference = '';
+      
+      if (currentUser) {
+        performerName = get(currentUser, 'profile.name.text', '') ||
+                       `${get(currentUser, 'profile.name.given[0]', '')} ${get(currentUser, 'profile.name.family', '')}`.trim() ||
+                       get(currentUser, 'username', '');
+        performerReference = `Practitioner/${get(currentUser, '_id', '')}`;
+      }
+      
+      setImmunization(prev => ({
+        ...prev,
+        patient: {
+          reference: patientReference,
+          display: patientName
+        },
+        performer: [{
+          actor: {
+            reference: performerReference,
+            display: performerName
+          }
+        }]
+      }));
     } else {
-      return '';
+      // Viewing existing immunization - start in read-only mode
+      setIsEditing(false);
+    }
+  }, [immunizationId, selectedPatient, currentUser]);
+
+  // Load immunization if editing
+  useEffect(function() {
+    if (immunizationId && immunizationId !== 'new' && isSubscriptionReady) {
+      const existingImmunization = Immunizations.findOne({_id: immunizationId});
+      if (existingImmunization) {
+        setImmunization(existingImmunization);
+        setIsEditing(false);
+      }
+    }
+  }, [immunizationId, isSubscriptionReady]);
+
+  // Handle field changes
+  function handleChange(path, value) {
+    const updatedImmunization = { ...immunization };
+    set(updatedImmunization, path, value);
+    
+    // Special handling for patient display to ensure reference is set
+    if (path === 'patient.display' && selectedPatient) {
+      const patientReference = `Patient/${get(selectedPatient, 'id', get(selectedPatient, '_id', ''))}`;
+      set(updatedImmunization, 'patient.reference', patientReference);
+    }
+    
+    setImmunization(updatedImmunization);
+  }
+
+  // Handle search for patient
+  function handleSearchUser() {
+    console.log('Search for patient - to be implemented');
+    // TODO: Implement patient search modal
+  }
+
+  // Handle save
+  async function handleSaveButton() {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const dataToSave = {
+        resourceType: "Immunization",
+        status: get(immunization, 'status', 'completed'),
+        vaccineCode: get(immunization, 'vaccineCode'),
+        patient: get(immunization, 'patient'),
+        occurrenceDateTime: get(immunization, 'occurrenceDateTime'),
+        primarySource: get(immunization, 'primarySource', true),
+        lotNumber: get(immunization, 'lotNumber'),
+        expirationDate: get(immunization, 'expirationDate'),
+        site: get(immunization, 'site'),
+        route: get(immunization, 'route'),
+        doseQuantity: get(immunization, 'doseQuantity'),
+        performer: get(immunization, 'performer'),
+        manufacturer: get(immunization, 'manufacturer'),
+        note: get(immunization, 'note')
+      };
+      
+      // Ensure patient reference is set if we have a selected patient
+      if (!dataToSave.patient?.reference && selectedPatient) {
+        const patientReference = `Patient/${get(selectedPatient, 'id', get(selectedPatient, '_id', ''))}`;
+        dataToSave.patient = {
+          reference: patientReference,
+          display: get(dataToSave, 'patient.display', '') || 
+                  get(selectedPatient, 'name[0].text', '') || 
+                  `${get(selectedPatient, 'name[0].given[0]', '')} ${get(selectedPatient, 'name[0].family', '')}`.trim()
+        };
+      }
+      
+      // Ensure we have proper CodeableConcepts
+      if (dataToSave.vaccineCode && !dataToSave.vaccineCode.coding) {
+        dataToSave.vaccineCode = {
+          coding: [{
+            system: "http://hl7.org/fhir/sid/cvx",
+            code: dataToSave.vaccineCode,
+            display: dataToSave.vaccineCode
+          }],
+          text: dataToSave.vaccineCode
+        };
+      }
+      
+      if (immunizationId && immunizationId !== 'new') {
+        // Update existing immunization
+        await Meteor.callAsync('updateImmunization', immunizationId, dataToSave);
+        console.log('Immunization updated successfully');
+        // Exit edit mode after successful save
+        setIsEditing(false);
+      } else {
+        // Create new immunization
+        const newId = await Meteor.callAsync('createImmunization', dataToSave);
+        console.log('Immunization created with ID:', newId);
+        // Navigate back to immunizations list for new immunizations
+        navigate('/immunizations');
+      }
+    } catch (err) {
+      console.error('Error saving immunization:', err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
     }
   }
-  render() {
-    if(process.env.NODE_ENV === "test") console.log('ImmunizationDetail.render()', this.state)
-    let formData = this.data.form;
 
-    return (
-      <div id={this.props.id} className="immunizationDetail">
+  // Handle delete
+  async function handleDeleteButton() {
+    if (!immunizationId || immunizationId === 'new') return;
+    
+    if (window.confirm('Are you sure you want to delete this immunization record?')) {
+      setLoading(true);
+      try {
+        await Meteor.callAsync('removeImmunization', immunizationId);
+        console.log('Immunization deleted successfully');
+        navigate('/immunizations');
+      } catch (err) {
+        console.error('Error deleting immunization:', err);
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    }
+  }
+
+  // Handle cancel
+  function handleCancelButton() {
+    if (immunizationId && immunizationId !== 'new') {
+      // Cancel editing and reload original data
+      setIsEditing(false);
+      const existingImmunization = Immunizations.findOne({_id: immunizationId});
+      if (existingImmunization) {
+        setImmunization(existingImmunization);
+      }
+    } else {
+      // For new immunizations, go back
+      navigate('/immunizations');
+    }
+  }
+
+  const statusOptions = [
+    { value: 'completed', label: 'Completed' },
+    { value: 'entered-in-error', label: 'Entered in Error' },
+    { value: 'not-done', label: 'Not Done' }
+  ];
+
+  const siteOptions = [
+    { value: 'LA', code: 'LA', label: 'Left arm' },
+    { value: 'RA', code: 'RA', label: 'Right arm' },
+    { value: 'LD', code: 'LD', label: 'Left deltoid' },
+    { value: 'RD', code: 'RD', label: 'Right deltoid' },
+    { value: 'LT', code: 'LT', label: 'Left thigh' },
+    { value: 'RT', code: 'RT', label: 'Right thigh' },
+    { value: 'LG', code: 'LG', label: 'Left gluteus medius' },
+    { value: 'RG', code: 'RG', label: 'Right gluteus medius' }
+  ];
+
+  const routeOptions = [
+    { value: 'IM', code: 'IM', label: 'Intramuscular' },
+    { value: 'PO', code: 'PO', label: 'Oral' },
+    { value: 'SC', code: 'SC', label: 'Subcutaneous' },
+    { value: 'ID', code: 'ID', label: 'Intradermal' },
+    { value: 'IN', code: 'IN', label: 'Intranasal' }
+  ];
+
+  return (
+    <Container id="immunizationDetailPage" maxWidth="md" sx={{ py: 4 }}>
+      <Card sx={{ boxShadow: 3 }}>
+        <CardHeader 
+          title={immunizationId && immunizationId !== 'new' ? 'Edit Immunization' : 'New Immunization'}
+          sx={{ bgcolor: 'primary.main', color: 'primary.contrastText' }}
+        />
         <CardContent>
-          <Row>
-            <Col md={6}>
+          {error && (
+            <Typography color="error" sx={{ mb: 2 }}>
+              Error: {error}
+            </Typography>
+          )}
+          
+          {/* System ID Barcode */}
+          {(immunizationId && immunizationId !== 'new') && (
+            <Box sx={{ mb: 3, textAlign: 'right' }}>
+              <span className="barcode helveticas" style={{ fontSize: '2rem' }}>{immunizationId}</span>
+            </Box>
+          )}
+          
+          <Stack spacing={3}>
+            <TextField
+              id="subjectDisplay"
+              fullWidth
+              label="Patient"
+              value={get(immunization, 'patient.display', '')}
+              onChange={(e) => handleChange('patient.display', e.target.value)}
+              helperText={get(immunization, 'patient.reference', '') || 'Patient reference will be assigned'}
+              disabled={!isEditing}
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <Tooltip title="Search for patient">
+                      <IconButton
+                        onClick={handleSearchUser}
+                        edge="end"
+                        disabled={!isEditing}
+                      >
+                        <SearchIcon />
+                      </IconButton>
+                    </Tooltip>
+                  </InputAdornment>
+                ),
+              }}
+            />
+            
+            <Stack direction="row" spacing={2}>
               <TextField
-                id='identifierInput'
-                ref='identifier'
-                name='identifier'
-                floatingLabelText='Identifier'
-                value={ get(formData, 'identifier', '') }
-                onChange={ this.changeState.bind(this, 'identifier')}
-                floatingLabelFixed={true}
-                hintText={this.setHint('Measles, Mumps, and Rubella')}
+                id="vaccineDisplay"
                 fullWidth
-                /><br/>
-            </Col>
-            <Col md={2}>
+                label="Vaccine Name"
+                value={get(immunization, 'vaccineCode.text', '') || 
+                       get(immunization, 'vaccineCode.coding[0].display', '')}
+                onChange={(e) => {
+                  handleChange('vaccineCode.text', e.target.value);
+                  handleChange('vaccineCode.coding[0].display', e.target.value);
+                }}
+                helperText="Name of the vaccine administered"
+                disabled={!isEditing}
+              />
+              
               <TextField
-                id='vaccineCodeInput'
-                ref='vaccineCode'
-                name='vaccineCode'ß
-                floatingLabelText='Vaccine Code'
-                value={ get(formData, 'vaccineCode', '') }
-                onChange={ this.changeState.bind(this, 'vaccineCode')}
-                floatingLabelFixed={true}
-                hintText={this.setHint('MMR')}
+                id="vaccineCode"
                 fullWidth
-                /><br/>
-            </Col>
-            <Col md={4}>
+                label="CVX Code"
+                value={get(immunization, 'vaccineCode.coding[0].code', '')}
+                onChange={(e) => handleChange('vaccineCode.coding[0].code', e.target.value)}
+                helperText="CVX vaccine code"
+                disabled={!isEditing}
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <Tooltip title="Lookup CVX codes">
+                        <IconButton
+                          onClick={() => window.open('https://www2a.cdc.gov/vaccines/iis/iisstandards/vaccines.asp?rpt=cvx', '_blank')}
+                          edge="end"
+                          disabled={!isEditing}
+                        >
+                          <SearchIcon />
+                        </IconButton>
+                      </Tooltip>
+                    </InputAdornment>
+                  ),
+                }}
+              />
+            </Stack>
+            
+            <Stack direction="row" spacing={2}>
+              <FormControl fullWidth disabled={!isEditing}>
+                <InputLabel id="statusSelect-label">Status</InputLabel>
+                <Select
+                  labelId="statusSelect-label"
+                  id="statusSelect"
+                  value={get(immunization, 'status', 'completed')}
+                  onChange={(e) => handleChange('status', e.target.value)}
+                  label="Status"
+                >
+                  {statusOptions.map(option => (
+                    <MenuItem key={option.value} value={option.value}>
+                      {option.label}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              
               <TextField
-                id='statusInput'
-                ref='status'
-                name='status'
-                floatingLabelText='Status'
-                value={ get(formData, 'status', '') }
-                onChange={ this.changeState.bind(this, 'status')}
-                floatingLabelFixed={true}
-                hintText={this.setHint('in-progress | on-hold | completed')}
+                id="occurrenceDateTime"
                 fullWidth
-                /><br/>
-            </Col>
-          </Row>
-          <Row>
-            <Col md={3}>
+                type="datetime-local"
+                label="Administration Date/Time"
+                value={moment(get(immunization, 'occurrenceDateTime', '')).format('YYYY-MM-DDTHH:mm')}
+                onChange={(e) => handleChange('occurrenceDateTime', e.target.value)}
+                InputLabelProps={{ shrink: true }}
+                disabled={!isEditing}
+              />
+            </Stack>
+            
+            <FormControlLabel
+              control={
+                <Checkbox
+                  id="primarySource"
+                  checked={get(immunization, 'primarySource', true)}
+                  onChange={(e) => handleChange('primarySource', e.target.checked)}
+                  disabled={!isEditing}
+                />
+              }
+              label="Primary Source (indicates information obtained from the person who administered the vaccine)"
+            />
+            
+            <Stack direction="row" spacing={2}>
               <TextField
-                id='patientDisplayInput'
-                ref='patientDisplay'
-                name='patientDisplay'
-                floatingLabelText='Patient Name'
-                value={ get(formData, 'patientDisplay', '') }
-                onChange={ this.changeState.bind(this, 'patientDisplay')}
-                floatingLabelFixed={true}
-                hintText={this.setHint('Jane Doe')}
+                id="lotNumber"
                 fullWidth
-                /><br/>
-            </Col>
-            <Col md={3}>
+                label="Lot Number"
+                value={get(immunization, 'lotNumber', '')}
+                onChange={(e) => handleChange('lotNumber', e.target.value)}
+                disabled={!isEditing}
+              />
+              
               <TextField
-                id='patientReferenceInput'
-                ref='patientReference'
-                name='patientReference'
-                floatingLabelText='Patient Reference'
-                value={ get(formData, 'patientReference', '') }
-                onChange={ this.changeState.bind(this, 'patientReference')}
-                floatingLabelFixed={true}
-                hintText={this.setHint('Patient/1234567890')}
+                id="expirationDate"
                 fullWidth
-                /><br/>
-            </Col>
-            <Col md={3}>
+                type="date"
+                label="Expiration Date"
+                value={moment(get(immunization, 'expirationDate', '')).format('YYYY-MM-DD')}
+                onChange={(e) => handleChange('expirationDate', e.target.value)}
+                InputLabelProps={{ shrink: true }}
+                disabled={!isEditing}
+              />
+            </Stack>
+            
+            <TextField
+              id="manufacturerDisplay"
+              fullWidth
+              label="Manufacturer"
+              value={get(immunization, 'manufacturer.display', '')}
+              onChange={(e) => handleChange('manufacturer.display', e.target.value)}
+              helperText="e.g., Pfizer, Moderna, Johnson & Johnson"
+              disabled={!isEditing}
+            />
+            
+            <Stack direction="row" spacing={2}>
+              <FormControl fullWidth disabled={!isEditing}>
+                <InputLabel id="siteSelect-label">Injection Site</InputLabel>
+                <Select
+                  labelId="siteSelect-label"
+                  id="siteSelect"
+                  value={get(immunization, 'site.coding[0].code', '')}
+                  onChange={(e) => {
+                    const selectedSite = siteOptions.find(opt => opt.code === e.target.value);
+                    handleChange('site.coding[0].code', e.target.value);
+                    handleChange('site.coding[0].display', selectedSite?.label || '');
+                    handleChange('site.text', selectedSite?.label || '');
+                  }}
+                  label="Injection Site"
+                >
+                  {siteOptions.map(option => (
+                    <MenuItem key={option.code} value={option.code}>
+                      {option.label}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              
+              <FormControl fullWidth disabled={!isEditing}>
+                <InputLabel id="routeSelect-label">Route</InputLabel>
+                <Select
+                  labelId="routeSelect-label"
+                  id="routeSelect"
+                  value={get(immunization, 'route.coding[0].code', '')}
+                  onChange={(e) => {
+                    const selectedRoute = routeOptions.find(opt => opt.code === e.target.value);
+                    handleChange('route.coding[0].code', e.target.value);
+                    handleChange('route.coding[0].display', selectedRoute?.label || '');
+                    handleChange('route.text', selectedRoute?.label || '');
+                  }}
+                  label="Route"
+                >
+                  {routeOptions.map(option => (
+                    <MenuItem key={option.code} value={option.code}>
+                      {option.label}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Stack>
+            
+            <Stack direction="row" spacing={2}>
               <TextField
-                id='performerDisplayInput'
-                ref='performerDisplay'
-                name='performerDisplay'
-                floatingLabelText='Performer Name'
-                value={ get(formData, 'performerDisplay', '') }
-                onChange={ this.changeState.bind(this, 'performerDisplay')}
-                floatingLabelFixed={true}
-                hintText={this.setHint('Nurse Jackie')}
+                id="doseQuantityValue"
                 fullWidth
-                /><br/>
-            </Col>
-            <Col md={3}>
+                type="number"
+                label="Dose Amount"
+                value={get(immunization, 'doseQuantity.value', '')}
+                onChange={(e) => handleChange('doseQuantity.value', parseFloat(e.target.value) || null)}
+                disabled={!isEditing}
+              />
+              
               <TextField
-                id='performerReferenceInput'
-                ref='performerReference'
-                name='performerReference'
-                floatingLabelText='Performer Reference'
-                value={ get(formData, 'performerReference', '') }
-                onChange={ this.changeState.bind(this, 'performerReference')}
-                floatingLabelFixed={true}
-                hintText={this.setHint('Practitioner/555')}
+                id="doseQuantityUnit"
                 fullWidth
-                /><br/>
-            </Col>
-          </Row>
-
-            <br/>
-            { this.renderDatePicker(this.data.showDatePicker, get(this, 'data.immunizationForm.datePicker') ) }
-            <br/>
-
+                label="Dose Unit"
+                value={get(immunization, 'doseQuantity.unit', '')}
+                onChange={(e) => {
+                  handleChange('doseQuantity.unit', e.target.value);
+                  handleChange('doseQuantity.code', e.target.value);
+                }}
+                helperText="e.g., mL, mg"
+                disabled={!isEditing}
+              />
+            </Stack>
+            
+            <TextField
+              id="performerDisplay"
+              fullWidth
+              label="Administered By"
+              value={get(immunization, 'performer[0].actor.display', '')}
+              onChange={(e) => handleChange('performer[0].actor.display', e.target.value)}
+              helperText={get(immunization, 'performer[0].actor.reference', '') || 'Practitioner reference will be assigned'}
+              disabled={!isEditing}
+            />
+            
+            <TextField
+              id="noteText"
+              fullWidth
+              multiline
+              rows={3}
+              label="Notes"
+              value={get(immunization, 'note[0].text', '')}
+              onChange={(e) => handleChange('note[0].text', e.target.value)}
+              helperText="Additional notes about this immunization"
+              disabled={!isEditing}
+            />
+          </Stack>
         </CardContent>
-        <CardActions>
-          { this.determineButtons(this.data.immunizationId) }
+        
+        <CardActions sx={{ justifyContent: 'flex-end', p: 2 }}>
+          {!isEditing && immunizationId && immunizationId !== 'new' ? (
+            // Read-only mode buttons
+            <>
+              <Button 
+                onClick={() => navigate('/immunizations')}
+              >
+                Back
+              </Button>
+              <Button 
+                onClick={handleDeleteButton}
+                color="error"
+                disabled={loading}
+              >
+                Delete
+              </Button>
+              <Button 
+                onClick={() => setIsEditing(true)}
+                variant="contained"
+                color="primary"
+              >
+                Edit
+              </Button>
+            </>
+          ) : (
+            // Edit mode buttons
+            <>
+              <Button 
+                onClick={handleCancelButton}
+                disabled={loading}
+              >
+                Cancel
+              </Button>
+              <Button 
+                id="saveImmunizationButton"
+                onClick={handleSaveButton}
+                variant="contained"
+                color="primary"
+                disabled={loading}
+              >
+                {loading ? 'Saving...' : (immunizationId && immunizationId !== 'new' ? 'Update' : 'Save')}
+              </Button>
+            </>
+          )}
         </CardActions>
-      </div>
-    );
-  }
-
-  determineButtons(immunizationId){
-    if (immunizationId) {
-      return (
-        <div>
-          <Button id="updateImmunizationButton" primary={true} onClick={this.handleSaveButton.bind(this)} style={{marginRight: '20px'}} >Save</Button>
-          <Button id="deleteImmunizationButton" onClick={this.handleDeleteButton.bind(this)} >Delete</Button>
-        </div>
-      );
-    } else {
-      return(
-        <Button id="saveImmunizationButton" primary={true} onClick={this.handleSaveButton.bind(this)} >Save</Button>
-      );
-    }
-  }
-
-  updateFormData(formData, field, textValue){
-    if(process.env.NODE_ENV === "test") console.log("ImmunizationDetail.updateFormData", formData, field, textValue);
-
-    switch (field) {
-      case "patientDisplay":
-        set(formData, 'patientDisplay', textValue)
-        break;
-      case "patientReference":
-        set(formData, 'patientReference', textValue)
-        break;
-      case "performerDisplay":
-        set(formData, 'performerDisplay', textValue)
-        break;        
-      case "performerReference":
-        set(formData, 'performerReference', textValue)
-        break;        
-      case "identifier":
-        set(formData, 'identifier', textValue)
-        break;
-      case "status":
-        set(formData, 'status', textValue)
-        break;
-      case "vaccineCode":
-        set(formData, 'vaccineCode', textValue)
-        break;
-      case "reported":
-        set(formData, 'reported', textValue)
-        break;
-      case "date":
-        set(formData, 'date', textValue)
-        break;
-      default:
-    }
-
-    if(process.env.NODE_ENV === "test") console.log("formData", formData);
-    return formData;
-  }
-  updateImmunization(immunizationData, field, textValue){
-    if(process.env.NODE_ENV === "test") console.log("ImmunizationDetail.updateImmunization", immunizationData, field, textValue);
-
-    switch (field) {
-      case "patientDisplay":
-        set(immunizationData, 'patient.display', textValue)
-        break;
-      case "patientReference":
-        set(immunizationData, 'patient.reference', textValue)
-        break;
-      case "performerDisplay":
-        set(immunizationData, 'performer.display', textValue)
-        break;        
-      case "performerReference":
-        set(immunizationData, 'performer.reference', textValue)
-        break;        
-      case "identifier":
-        set(immunizationData, 'identifier[0].value', textValue)
-        break;
-      case "status":
-        set(immunizationData, 'status', textValue)
-        break;
-      case "vaccineCode":
-        set(immunizationData, 'vaccineCode.text', textValue)
-        break;
-      case "reported":
-        set(immunizationData, 'reported', textValue)
-        break;
-      case "date":
-        set(immunizationData, 'date', textValue)
-        break;    
-    }
-    return immunizationData;
-  }
-  componentDidUpdate(props){
-    if(process.env.NODE_ENV === "test") console.log('ImmunizationDetail.componentDidUpdate()', props, this.state)
-  }
-
-  // this could be a mixin
-  changeState(field, event, textValue){
-    if(process.env.NODE_ENV === "test") console.log("   ");
-    if(process.env.NODE_ENV === "test") console.log("ImmunizationDetail.changeState", field, textValue);
-    if(process.env.NODE_ENV === "test") console.log("this.state", this.state);
-
-    let formData = Object.assign({}, this.state.form);
-    let immunizationData = Object.assign({}, this.state.immunization);
-
-    formData = this.updateFormData(formData, field, textValue);
-    immunizationData = this.updateImmunization(immunizationData, field, textValue);
-
-    if(process.env.NODE_ENV === "test") console.log("immunizationData", immunizationData);
-    if(process.env.NODE_ENV === "test") console.log("formData", formData);
-
-    this.setState({immunization: immunizationData})
-    this.setState({form: formData})
-  }
-
-  handleSaveButton(){
-    if(process.env.NODE_ENV === "test") console.log('^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^&&')
-    console.log('Saving a new Immunization...', this.state)
-
-    let self = this;
-    let fhirImmunizationData = Object.assign({}, this.state.immunization);
-
-    if(process.env.NODE_ENV === "test") console.log('fhirImmunizationData', fhirImmunizationData);
-
-
-    let immunizationValidator = ImmunizationSchema.newContext();
-    immunizationValidator.validate(fhirImmunizationData)
-
-    console.log('IsValid: ', immunizationValidator.isValid())
-    console.log('ValidationErrors: ', immunizationValidator.validationErrors());
-
-
-    if (this.props.immunizationId) {
-      if(process.env.NODE_ENV === "test") console.log("Updating immunization...");
-      delete fhirImmunizationData._id;
-
-      Immunizations._collection.update(
-        {_id: this.props.immunizationId}, {$set: fhirImmunizationData }, function(error, result) {
-          if (error) {
-            console.log("error", error);
-
-            // Bert.alert(error.reason, 'danger');
-          }
-          if (result) {
-            HipaaLogger.logEvent({eventType: "update", userId: Meteor.userId(), userName: Meteor.user().fullName(), collectionName: "Immunizations", recordId: self.props.immunizationId});
-            Session.set('immunizationPageTabIndex', 1);
-            Session.set('selectedImmunization', false);
-            Session.set('immunizationUpsert', false);
-            // Bert.alert('Immunization updated!', 'success');
-          }
-        });
-    } else {
-
-      if(process.env.NODE_ENV === "test") console.log("Create a new Immunization", fhirImmunizationData);
-
-      // var fhirImmunizationData = {
-      //   "resourceType": "Immunization",
-      //   'notGiven': true,
-      //   'identifier': [],
-      //   'vaccineCode': {
-      //     'text': fhirImmunizationData.vaccineCode
-      //   }
-      // };
-
-      // fhirImmunizationData.identifier.push({
-      //   'use': 'official',
-      //   'type': {
-      //     'text': fhirImmunizationData.identifier
-      //   }
-      // });
-      // fhirImmunizationData.identifier.push({
-      //   'use': 'secondary',
-      //   'type': {
-      //     'text': fhirImmunizationData.vaccine
-      //   }
-      // });
-
-      Immunizations._collection.insert(fhirImmunizationData, function(error, result) {
-        if (error) {
-          console.log("error", error);
-          // Bert.alert(error.reason, 'danger');
-        }
-        if (result) {
-          HipaaLogger.logEvent({eventType: "create", userId: Meteor.userId(), userName: Meteor.user().fullName(), collectionName: "Immunizations", recordId: result});
-          Session.set('immunizationPageTabIndex', 1);
-          Session.set('selectedImmunization', false);
-          // Bert.alert('Immunization added!', 'success');
-        }
-      });
-    }
-  }
-
-  handleCancelButton(){
-    Session.set('immunizationPageTabIndex', 1);
-  }
-
-  handleDeleteButton(){
-    let self = this;
-    Immunizations._collection.remove({_id: this.props.immunizationId}, function(error, result){
-      if (error) {
-        // Bert.alert(error.reason, 'danger');
-      }
-      if (result) {
-        HipaaLogger.logEvent({eventType: "delete", userId: Meteor.userId(), userName: Meteor.user().fullName(), collectionName: "Immunizations", recordId: self.props.immunizationId});
-        Session.set('immunizationPageTabIndex', 1);
-        Session.set('selectedImmunization', false);
-        // Bert.alert('Immunization removed!', 'success');
-      }
-    });
-  }
+      </Card>
+    </Container>
+  );
 }
-
-ImmunizationDetail.propTypes = {
-  id: PropTypes.string,
-  fhirVersion: PropTypes.string,
-  immunizationId: PropTypes.oneOfType([PropTypes.string, PropTypes.bool]),
-  immunization: PropTypes.oneOfType([PropTypes.object, PropTypes.bool]),
-  showPatientInputs: PropTypes.bool,
-  showHints: PropTypes.bool,
-  onInsert: PropTypes.func,
-  onUpdate: PropTypes.func,
-  onRemove: PropTypes.func,
-  onCancel: PropTypes.func
-};
-
 
 export default ImmunizationDetail;

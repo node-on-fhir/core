@@ -136,21 +136,29 @@
     "modules": {
       "PatientDirectory": true,
       "apps": {},
+      "accounts": {
+        "enabled": true
+      },
       "fhir": {
         "AllergyIntolerances": true,
         "AuditEvents": true,
+        "Appointments": true,
         "CarePlans": true,
         "CareTeams": true,
         "Compositions": true,
         "Communications": true,
         "Conditions": true,
         "Consents": true,
+        "Devices": true,
+        "DiagnosticReports": true,
         "DocumentReferences": true,
         "Encounters": true,
         "Goals": true,
         "Immunizations": true,
+        "ImagingStudies": true,
         "Lists": true,
         "Locations": true,
+        "Medias": true,
         "Medications": true,
         "MedicationRequests": true,
         "MedicationAdministrations": true,
@@ -165,7 +173,9 @@
         "QuestionnaireResponses": true,
         "ResearchStudies": true,
         "ResearchSubjects": true,
-        "ServiceRequests": true
+        "Schedules": true,
+        "ServiceRequests": true,
+        "SupplyDeliveries": true
       }
     }
   },
@@ -256,6 +266,17 @@
           "search": true,
           "publication": true
         },
+        "Device": {
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "search"
+          ],
+          "search": true,
+          "publication": true
+        },
         "DocumentReference": {
           "interactions": [
             "read",
@@ -290,6 +311,17 @@
           "publication": true
         },
         "Location": {
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "search"
+          ],
+          "search": true,
+          "publication": true
+        },
+        "Media": {
           "interactions": [
             "read",
             "create",
@@ -382,7 +414,40 @@
           "search": true,
           "publication": true
         },
+        "Schedule": {
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "search"
+          ],
+          "search": true,
+          "publication": true
+        },
         "Encounter": {
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "search"
+          ],
+          "search": true,
+          "publication": true
+        },
+        "Appointment": {
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "search"
+          ],
+          "search": true,
+          "publication": true
+        },
+        "SupplyDelivery": {
           "interactions": [
             "read",
             "create",

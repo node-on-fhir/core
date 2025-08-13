@@ -82,3 +82,33 @@ Claude, let's do another FHIR resource.  This time will be de-novo.  Let's creat
 ```
 Claude, let's do another FHIR resource.  Let's continue creating the FHIR Medication CRUD pattern.  First, create a /tests/nightwatch/honecomb/crud.medications.js test file, following the crud.conditions.js file as a template.  Next, follow the instructions in /imports/ui-fhir/CLAUDE.md, and try to create the entire resource CRUD pattern  Don't do anything fancy.  We'll get to that later.  For now, just follow the CRUD pattern.  Follow the TDD tests till they're green. You have permission to launch `npx nightwatch` commands and search the honeycomb-public-release code repository as needed.
 ```
+
+
+```
+Okay, let's turn our attention to completing the Immunizations CRUD pattern, on the /immunizations route.  Use best practices and the implementation checklist and debugging info in /imports/ui-fhir/CLAUDE.md.  You have permission to run tests.  Make sure that the Immunizations schema is created; attached in all of the right places; wire it up in the autopublish() function, update the layout and styling of /imports/ui-fhir/Immunizations/* with examples from /imports/ui-fhir/Immunizations and /imports/ui-fhir/medicationAdministrations.  Update the ImmunizationsDetails page with inputs from the NutritionOrder schema, make sure that appropriate #id elements exist on inputs; and update the crud.Immunizations.js file to match.  Make sure that all of the columns in ImmunizationsTable are filled out appropriately, and update the dehydration functions accordingly.  Create the nutrition order methods file.  Be sure to set the John Doe patient and step 2, AFTER you've navigated to /immunizations route.  When searching for records in steps 5 and 8, be sure to scroll to the top and seach by patient (John Doe). 
+
+I believe in you.  We've done a lot of these CRUD patterns already.  You can do this.
+```
+
+```
+Okay, let's turn our attention to the SupplyDeliveries CRUD pattern, on the /supply-deliveries route.  Use best practices and the implementation checklist and debugging info in /imports/ui-fhir/CLAUDE.md.  You have permission to run tests.  
+
+- Make sure that the SupplyDeliveries schema is created, and attached in all of the right places (Meteor.Tables, Meteor.Collections, etc)
+- Include SupplyDeliveries in the autopublish() function.
+- Make sure we've updated the settings.honeycomb.tdd.json file
+- Create core files in /imports/ui-fhir/supplyDeliveries/*, following the pattern in /imports/ui-fhir/conditions/*
+- Update the SupplyDeliveriesDetails page with inputs from the SupplyDeliveries schema, making sure that appropriate #id elements exist on inputs; and update the crud.supplydeliveries.js file to match.  
+- Make sure that all of the columns in SupplyDeliveriesTable are filled out appropriately, and update the dehydration functions accordingly.  
+- Create the medias methods file.  
+- Be sure to select the John Doe patient in step 2, AFTER you've navigated to /supply-deliveries route.  
+- When searching for records in steps 5 and 8, be sure to scroll to the top and seach by patient (John Doe). 
+
+I believe in you.  We've done a lot of these CRUD patterns already.  You can do this.
+```
+
+
+```
+> I'm noticing that we didn't search for the patient John Doe.  Please do the following:  in crud.condtions.js, we want to follow the crud.allergyintolerances.js pattern, and inject the test patient John Doe in step #2 AFTER we navigate to /conditions; we then want to search for the patient John Doe in steps #5 and #8.
+
+  Then, we want to go to the files, and add a search bar on the ConditionsPage, which ties to the subscription, and updates the server side publication, to search for the patient.reference or subject.reference.  Refer to the AllergyIntolerances or Procedures pattern as needed.  There is a FhirUtilities.addPatientFilterToQuery() function that we use for this.
+```

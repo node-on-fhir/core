@@ -402,6 +402,139 @@ export function flattenAllergyIntolerance(allergy){
   return result;
 }
 
+export function flattenAppointment(appointment) {
+  let result = {
+    _id: '',
+    id: '',
+    identifier: '',
+    status: '',
+    type: '',
+    typeCode: '',
+    reason: '',
+    reasonCode: '',
+    priority: '',
+    description: '',
+    start: '',
+    end: '',
+    minutesDuration: '',
+    created: '',
+    comment: '',
+    patientInstruction: '',
+    serviceCategory: '',
+    serviceType: '',
+    specialty: '',
+    patientDisplay: '',
+    patientReference: '',
+    practitionerDisplay: '',
+    practitionerReference: '',
+    locationDisplay: '',
+    locationReference: '',
+    participantCount: 0,
+    operationOutcome: ''
+  };
+
+  result.resourceType = get(appointment, 'resourceType', 'Appointment');
+
+  // Basic identifiers
+  result._id = extractIdString(get(appointment, '_id', ''));
+  result.id = get(appointment, 'id', '');
+  result.identifier = get(appointment, 'identifier[0].value', '');
+  
+  // Status and priority
+  result.status = get(appointment, 'status', '');
+  result.priority = get(appointment, 'priority', '');
+  
+  // Appointment type
+  if(get(appointment, 'appointmentType.text')){
+    result.type = get(appointment, 'appointmentType.text');
+  } else if(get(appointment, 'appointmentType.coding[0].display')){
+    result.type = get(appointment, 'appointmentType.coding[0].display');
+  }
+  result.typeCode = get(appointment, 'appointmentType.coding[0].code', '');
+  
+  // Reason
+  if(get(appointment, 'reasonCode[0].text')){
+    result.reason = get(appointment, 'reasonCode[0].text');
+  } else if(get(appointment, 'reasonCode[0].coding[0].display')){
+    result.reason = get(appointment, 'reasonCode[0].coding[0].display');
+  }
+  result.reasonCode = get(appointment, 'reasonCode[0].coding[0].code', '');
+  
+  // Description and instructions
+  result.description = get(appointment, 'description', '');
+  result.comment = get(appointment, 'comment', '');
+  result.patientInstruction = get(appointment, 'patientInstruction', '');
+  
+  // Timing
+  if(get(appointment, 'start')){
+    result.start = moment(get(appointment, 'start')).format('YYYY-MM-DD HH:mm');
+  }
+  if(get(appointment, 'end')){
+    result.end = moment(get(appointment, 'end')).format('YYYY-MM-DD HH:mm');
+  }
+  result.minutesDuration = get(appointment, 'minutesDuration', '');
+  
+  if(get(appointment, 'created')){
+    result.created = moment(get(appointment, 'created')).format('YYYY-MM-DD HH:mm');
+  }
+  
+  // Service categories
+  if(get(appointment, 'serviceCategory[0].text')){
+    result.serviceCategory = get(appointment, 'serviceCategory[0].text');
+  } else if(get(appointment, 'serviceCategory[0].coding[0].display')){
+    result.serviceCategory = get(appointment, 'serviceCategory[0].coding[0].display');
+  }
+  
+  if(get(appointment, 'serviceType[0].text')){
+    result.serviceType = get(appointment, 'serviceType[0].text');
+  } else if(get(appointment, 'serviceType[0].coding[0].display')){
+    result.serviceType = get(appointment, 'serviceType[0].coding[0].display');
+  }
+  
+  if(get(appointment, 'specialty[0].text')){
+    result.specialty = get(appointment, 'specialty[0].text');
+  } else if(get(appointment, 'specialty[0].coding[0].display')){
+    result.specialty = get(appointment, 'specialty[0].coding[0].display');
+  }
+  
+  // Check subject field first (consistent with other FHIR resources)
+  if(get(appointment, 'subject.reference')){
+    result.patientReference = get(appointment, 'subject.reference', '');
+    result.patientDisplay = get(appointment, 'subject.display', '');
+  }
+  
+  // Extract participants
+  if(Array.isArray(get(appointment, 'participant'))){
+    result.participantCount = appointment.participant.length;
+    
+    appointment.participant.forEach(function(participant){
+      const actorRef = get(participant, 'actor.reference', '');
+      const actorDisplay = get(participant, 'actor.display', '');
+      
+      if(actorRef.startsWith('Patient/')){
+        // Only override if we didn't get patient from subject
+        if(!result.patientReference){
+          result.patientDisplay = actorDisplay;
+          result.patientReference = actorRef;
+        }
+      } else if(actorRef.startsWith('Practitioner/')){
+        result.practitionerDisplay = actorDisplay;
+        result.practitionerReference = actorRef;
+      } else if(actorRef.startsWith('Location/')){
+        result.locationDisplay = actorDisplay;
+        result.locationReference = actorRef;
+      }
+    });
+  }
+  
+  // Operation outcome
+  if(get(appointment, 'issue[0].details.text')){
+    result.operationOutcome = get(appointment, 'issue[0].details.text');
+  }
+  
+  return result;
+}
+
 export function flattenArtifactAssessment(assessment) {
   let result = {
     _id: '',
@@ -1478,6 +1611,7 @@ export function flattenDevice(device, internalDateFormat){
     _id: '',
     id: '',
     meta: '',
+    createdAt: '',
     status: '',
     identifier: '',
     deviceType: '',
@@ -1496,19 +1630,23 @@ export function flattenDevice(device, internalDateFormat){
     internalDateFormat = "YYYY-MM-DD";
   }
 
-  result._id = get(device, '_id', '');
+  result._id = extractIdString(get(device, '_id', ''));
   result.id = get(device, 'id', '');
   result.identifier = get(device, 'identifier[0].value', '');
+  
+  // Extract createdAt timestamp if available
+  if (get(device, 'meta.createdAt')) {
+    result.createdAt = moment(get(device, 'meta.createdAt')).format(internalDateFormat + ' HH:mm:ss');
+  }
 
   result.status = get(device, 'status', '');
   result.deviceType = get(device, 'type.text', '');
-  result.deviceModel = get(device, 'model', '');
+  result.deviceModel = get(device, 'modelNumber', '');
   result.manufacturer = get(device, 'manufacturer', '');
   result.serialNumber = get(device, 'identifier[0].value', '');
   result.lotNumber = get(device, 'lotNumber', '');
   result.note = get(device, 'note[0].text', '');
   result.deviceName = get(device, 'deviceName[0].name', '');
-
 
   if(get(device, "issue[0].details.text")){
     result.operationOutcome = get(device, "issue[0].details.text");
@@ -1529,6 +1667,7 @@ export function flattenDiagnosticReport(report, fhirVersion){
     identifier: '',
     category: '',
     effectiveDate: '',
+    conclusion: '',
     operationOutcome: ''
   };
 
@@ -1560,15 +1699,25 @@ export function flattenDiagnosticReport(report, fhirVersion){
       }      
     }
 
-    if(get(report, 'category.coding[0].code')){
-      result.category = get(report, 'category.coding[0].code');
-    } else {
+    if(get(report, 'category[0].coding[0].code')){
+      result.category = get(report, 'category[0].coding[0].code');
+    } else if(get(report, 'category[0].text')){
+      result.category = get(report, 'category[0].text');
+    } else if(get(report, 'category.text')){
       result.category = get(report, 'category.text');
     }
 
-    result.code = get(report, 'code.text', '');
+    // Extract code - handle both text and CodeableConcept formats
+    if(get(report, 'code.coding[0].display')){
+      result.code = get(report, 'code.coding[0].display');
+    } else if(get(report, 'code.text')){
+      result.code = get(report, 'code.text');
+    } else if(get(report, 'code.coding[0].code')){
+      result.code = get(report, 'code.coding[0].code');
+    }
     result.identifier = get(report, 'identifier[0].value', '');
     result.status = get(report, 'status', '');
+    result.conclusion = get(report, 'conclusion', '');
     result.effectiveDate = moment(get(report, 'effectiveDateTime')).format("YYYY-MM-DD");
     result.issued = moment(get(report, 'issued')).format("YYYY-MM-DD"); 
   } 
@@ -2482,8 +2631,20 @@ export function flattenImmunization(immunization, internalDateFormat){
     vaccineCode: '',
     vaccineDisplay: '',
     status: '',
+    primarySource: false,
     reported: '',
     date: '',
+    occurrenceDateTime: '',
+    lotNumber: '',
+    expirationDate: '',
+    manufacturer: '',
+    manufacturerDisplay: '',
+    site: '',
+    siteDisplay: '',
+    route: '',
+    routeDisplay: '',
+    doseQuantity: '',
+    doseUnit: '',
     operationOutcome: ''
   };
 
@@ -2493,10 +2654,12 @@ export function flattenImmunization(immunization, internalDateFormat){
     internalDateFormat = "YYYY-MM-DD";
   }
 
-  result._id =  get(immunization, 'id') ? get(immunization, 'id') : get(immunization, '_id');
+  // Handle MongoDB ObjectID
+  result._id = extractIdString(get(immunization, '_id', ''));
   result.id = get(immunization, 'id', '');
   result.identifier = get(immunization, 'identifier[0].value', '');
 
+  // Patient/Subject information
   if(get(immunization, 'patient')){
     result.patientDisplay = get(immunization, 'patient.display', '');
     result.patientReference = get(immunization, 'patient.reference', '');
@@ -2505,42 +2668,206 @@ export function flattenImmunization(immunization, internalDateFormat){
     result.patientReference = get(immunization, 'subject.reference', '');
   }
 
-  if(get(immunization, 'performer')){
+  // Performer information - handle R4 array structure
+  if(get(immunization, 'performer[0].actor')){
+    result.performerDisplay = get(immunization, 'performer[0].actor.display', '');
+    result.performerReference = get(immunization, 'performer[0].actor.reference', '');
+  } else if(get(immunization, 'performer')){
     result.performerDisplay = get(immunization, 'performer.display', '');
     result.performerReference = get(immunization, 'performer.reference', '');
-  } 
-
-  result.performerDisplay = get(immunization, 'asserter.display', '');
-
-  if(get(immunization, 'status.coding[0].code')){
-    result.status = get(immunization, 'status.coding[0].code', '');  //R4
-  } else {
-    result.status = get(immunization, 'status', '');                 // DSTU2
+  } else if(get(immunization, 'asserter')){
+    result.performerDisplay = get(immunization, 'asserter.display', '');
   }
 
+  // Status
+  result.status = get(immunization, 'status', '');
+
+  // Vaccine information
   result.vaccineCode = get(immunization, 'vaccineCode.coding[0].code', '');
-
   if(get(immunization, 'vaccineCode.coding[0].display')){
-    result.vaccineDisplay = get(immunization, 'vaccineCode.coding[0].display', '');  //R4
-  } else {
-    result.vaccineDisplay = get(immunization, 'vaccineCode.text', '');                 // DSTU2
+    result.vaccineDisplay = get(immunization, 'vaccineCode.coding[0].display', '');
+  } else if(get(immunization, 'vaccineCode.text')){
+    result.vaccineDisplay = get(immunization, 'vaccineCode.text', '');
   }
 
-  result.barcode = get(immunization, '_id', '');
+  // Primary source
+  result.primarySource = get(immunization, 'primarySource', false);
 
+  // Barcode
+  result.barcode = extractIdString(get(immunization, '_id', ''));
+
+  // Dates
   if(get(immunization, 'occurrenceDateTime')){
-    result.date = moment(get(immunization, 'occurrenceDateTime')).format("YYYY-MM-DD");
-  } else {
-    result.date = moment(get(immunization, 'date')).format("YYYY-MM-DD");
+    result.date = moment(get(immunization, 'occurrenceDateTime')).format(internalDateFormat);
+    result.occurrenceDateTime = moment(get(immunization, 'occurrenceDateTime')).format(internalDateFormat);
+  } else if(get(immunization, 'date')){
+    result.date = moment(get(immunization, 'date')).format(internalDateFormat);
   }
-  result.reported = moment(get(immunization, 'reported', '')).format("YYYY-MM-DD");
+  
+  if(get(immunization, 'reported')){
+    result.reported = moment(get(immunization, 'reported')).format(internalDateFormat);
+  }
+  
+  if(get(immunization, 'expirationDate')){
+    result.expirationDate = moment(get(immunization, 'expirationDate')).format(internalDateFormat);
+  }
 
+  // Additional fields
+  result.lotNumber = get(immunization, 'lotNumber', '');
+  
+  // Manufacturer
+  if(get(immunization, 'manufacturer.display')){
+    result.manufacturer = get(immunization, 'manufacturer.display', '');
+    result.manufacturerDisplay = get(immunization, 'manufacturer.display', '');
+  }
+  
+  // Site
+  if(get(immunization, 'site.coding[0].display')){
+    result.site = get(immunization, 'site.coding[0].code', '');
+    result.siteDisplay = get(immunization, 'site.coding[0].display', '');
+  } else if(get(immunization, 'site.text')){
+    result.site = get(immunization, 'site.text', '');
+    result.siteDisplay = get(immunization, 'site.text', '');
+  }
+  
+  // Route
+  if(get(immunization, 'route.coding[0].display')){
+    result.route = get(immunization, 'route.coding[0].code', '');
+    result.routeDisplay = get(immunization, 'route.coding[0].display', '');
+  } else if(get(immunization, 'route.text')){
+    result.route = get(immunization, 'route.text', '');
+    result.routeDisplay = get(immunization, 'route.text', '');
+  }
+  
+  // Dose quantity
+  if(get(immunization, 'doseQuantity')){
+    result.doseQuantity = get(immunization, 'doseQuantity.value', '');
+    result.doseUnit = get(immunization, 'doseQuantity.unit', '');
+  }
+
+  // Operation outcome
   if(get(immunization, "issue[0].details.text")){
     result.operationOutcome = get(immunization, "issue[0].details.text");
   }
 
-  if(get(immunization, "issue[0].details.text")){
-    result.operationOutcome = get(immunization, "issue[0].details.text");
+  return result;
+}
+
+export function flattenImagingStudy(imagingStudy, internalDateFormat){
+  let result = {
+    _id: '',
+    id: '',
+    meta: '',
+    identifier: '',
+    status: '',
+    modality: '',
+    modalityCode: '',
+    subject: '',
+    subjectDisplay: '',
+    subjectReference: '',
+    patientDisplay: '',
+    patientReference: '',
+    encounter: '',
+    encounterDisplay: '',
+    encounterReference: '',
+    started: '',
+    basedOn: '',
+    referrer: '',
+    referrerDisplay: '',
+    referrerReference: '',
+    interpreter: '',
+    endpoint: '',
+    numberOfSeries: '',
+    numberOfInstances: '',
+    procedureReference: '',
+    procedureCode: '',
+    procedureDisplay: '',
+    location: '',
+    locationDisplay: '',
+    locationReference: '',
+    reasonCode: '',
+    reasonReference: '',
+    note: '',
+    description: '',
+    series: '',
+    barcode: ''
+  };
+
+  result.resourceType = get(imagingStudy, 'resourceType', "ImagingStudy");
+
+  if(!internalDateFormat){
+    internalDateFormat = get(Meteor, "settings.public.defaults.dateFormat", "YYYY-MM-DD");
+  }
+
+  // Extract IDs
+  result._id = extractIdString(get(imagingStudy, '_id', ''));
+  result.id = get(imagingStudy, 'id', '');
+  result.barcode = result._id;
+
+  // Basic fields
+  result.identifier = get(imagingStudy, 'identifier[0].value', '');
+  result.status = get(imagingStudy, 'status', '');
+  result.description = get(imagingStudy, 'description', '');
+  
+  // Handle modality
+  if(get(imagingStudy, 'modality[0].display')){
+    result.modality = get(imagingStudy, 'modality[0].display');
+    result.modalityCode = get(imagingStudy, 'modality[0].code', '');
+  } else if(get(imagingStudy, 'modality[0].code')){
+    result.modality = get(imagingStudy, 'modality[0].code');
+    result.modalityCode = get(imagingStudy, 'modality[0].code', '');
+  }
+
+  // Patient/Subject reference
+  if(get(imagingStudy, 'subject')){
+    result.subjectDisplay = get(imagingStudy, 'subject.display', '');
+    result.subjectReference = get(imagingStudy, 'subject.reference', '');
+    result.patientDisplay = get(imagingStudy, 'subject.display', '');
+    result.patientReference = get(imagingStudy, 'subject.reference', '');
+  }
+
+  // Encounter reference
+  if(get(imagingStudy, 'encounter')){
+    result.encounterDisplay = get(imagingStudy, 'encounter.display', '');
+    result.encounterReference = get(imagingStudy, 'encounter.reference', '');
+  }
+
+  // Date handling
+  if(get(imagingStudy, 'started')){
+    result.started = moment(get(imagingStudy, 'started')).format(internalDateFormat);
+  }
+
+  // Referrer
+  if(get(imagingStudy, 'referrer')){
+    result.referrerDisplay = get(imagingStudy, 'referrer.display', '');
+    result.referrerReference = get(imagingStudy, 'referrer.reference', '');
+  }
+
+  // Location
+  if(get(imagingStudy, 'location')){
+    result.locationDisplay = get(imagingStudy, 'location.display', '');
+    result.locationReference = get(imagingStudy, 'location.reference', '');
+  }
+
+  // Numbers
+  result.numberOfSeries = get(imagingStudy, 'numberOfSeries', '');
+  result.numberOfInstances = get(imagingStudy, 'numberOfInstances', '');
+
+  // Procedure code
+  if(get(imagingStudy, 'procedureCode[0].text')){
+    result.procedureCode = get(imagingStudy, 'procedureCode[0].text');
+    result.procedureDisplay = get(imagingStudy, 'procedureCode[0].text');
+  } else if(get(imagingStudy, 'procedureCode[0].coding[0].display')){
+    result.procedureCode = get(imagingStudy, 'procedureCode[0].coding[0].code', '');
+    result.procedureDisplay = get(imagingStudy, 'procedureCode[0].coding[0].display');
+  } else if(get(imagingStudy, 'procedureCode[0].coding[0].code')){
+    result.procedureCode = get(imagingStudy, 'procedureCode[0].coding[0].code');
+    result.procedureDisplay = get(imagingStudy, 'procedureCode[0].coding[0].code');
+  }
+
+  // Notes
+  if(get(imagingStudy, 'note[0].text')){
+    result.note = get(imagingStudy, 'note[0].text');
   }
 
   return result;
@@ -3453,6 +3780,149 @@ export function flattenMedicationAdministration(medicationAdministration, intern
   return result;
 }
 
+export function flattenMedia(media, internalDateFormat){
+  let result = {
+    _id: '',
+    id: '',
+    identifier: '',
+    status: '',
+    type: '',
+    modality: '',
+    view: '',
+    subjectDisplay: '',
+    subjectReference: '',
+    operator: '',
+    reasonCode: '',
+    bodySite: '',
+    deviceName: '',
+    deviceReference: '',
+    height: '',
+    width: '',
+    frames: '',
+    duration: '',
+    created: '',
+    issued: '',
+    contentType: '',
+    contentUrl: '',
+    contentSize: '',
+    contentTitle: '',
+    notes: ''
+  };
+
+  result.resourceType = get(media, 'resourceType', "Unknown");
+
+  if(!internalDateFormat){
+    internalDateFormat = "YYYY-MM-DD";
+  }
+
+  result._id = extractIdString(get(media, '_id', ''));
+  result.id = get(media, 'id', '');
+
+  if(get(media, 'identifier[0].value')){
+    result.identifier = get(media, 'identifier[0].value');
+  }
+
+  result.status = get(media, 'status', '');
+  
+  // Handle type CodeableConcept
+  if(get(media, 'type.text')){
+    result.type = get(media, 'type.text');
+  } else if(get(media, 'type.coding[0].display')){
+    result.type = get(media, 'type.coding[0].display');
+  } else if(get(media, 'type.coding[0].code')){
+    result.type = get(media, 'type.coding[0].code');
+  }
+
+  // Handle modality CodeableConcept
+  if(get(media, 'modality.text')){
+    result.modality = get(media, 'modality.text');
+  } else if(get(media, 'modality.coding[0].display')){
+    result.modality = get(media, 'modality.coding[0].display');
+  } else if(get(media, 'modality.coding[0].code')){
+    result.modality = get(media, 'modality.coding[0].code');
+  }
+
+  // Handle view CodeableConcept
+  if(get(media, 'view.text')){
+    result.view = get(media, 'view.text');
+  } else if(get(media, 'view.coding[0].display')){
+    result.view = get(media, 'view.coding[0].display');
+  } else if(get(media, 'view.coding[0].code')){
+    result.view = get(media, 'view.coding[0].code');
+  }
+
+  // Handle subject Reference
+  if(get(media, 'subject.display')){
+    result.subjectDisplay = get(media, 'subject.display');
+  }
+  if(get(media, 'subject.reference')){
+    result.subjectReference = get(media, 'subject.reference');
+  }
+
+  // Handle operator array
+  if(Array.isArray(get(media, 'operator'))){
+    result.operator = get(media, 'operator[0].display', '');
+  }
+
+  // Handle reasonCode array of CodeableConcepts
+  if(Array.isArray(get(media, 'reasonCode'))){
+    if(get(media, 'reasonCode[0].text')){
+      result.reasonCode = get(media, 'reasonCode[0].text');
+    } else if(get(media, 'reasonCode[0].coding[0].display')){
+      result.reasonCode = get(media, 'reasonCode[0].coding[0].display');
+    }
+  }
+
+  // Handle bodySite CodeableConcept
+  if(get(media, 'bodySite.text')){
+    result.bodySite = get(media, 'bodySite.text');
+  } else if(get(media, 'bodySite.coding[0].display')){
+    result.bodySite = get(media, 'bodySite.coding[0].display');
+  }
+
+  // Handle device
+  result.deviceName = get(media, 'deviceName', '');
+  if(get(media, 'device.display')){
+    result.deviceReference = get(media, 'device.display');
+  } else if(get(media, 'device.reference')){
+    result.deviceReference = get(media, 'device.reference');
+  }
+
+  // Handle dimensions
+  result.height = get(media, 'height', '');
+  result.width = get(media, 'width', '');
+  result.frames = get(media, 'frames', '');
+  result.duration = get(media, 'duration', '');
+
+  // Handle dates
+  if(get(media, 'created')){
+    result.created = moment(get(media, 'created')).format(internalDateFormat);
+  } else if(get(media, 'createdDateTime')){
+    result.created = moment(get(media, 'createdDateTime')).format(internalDateFormat);
+  } else if(get(media, 'createdPeriod.start')){
+    result.created = moment(get(media, 'createdPeriod.start')).format(internalDateFormat);
+  }
+
+  if(get(media, 'issued')){
+    result.issued = moment(get(media, 'issued')).format(internalDateFormat);
+  }
+
+  // Handle content
+  if(get(media, 'content')){
+    result.contentType = get(media, 'content.contentType', '');
+    result.contentUrl = get(media, 'content.url', '');
+    result.contentSize = get(media, 'content.size', '');
+    result.contentTitle = get(media, 'content.title', '');
+  }
+
+  // Handle notes
+  if(Array.isArray(get(media, 'note'))){
+    result.notes = get(media, 'note[0].text', '');
+  }
+
+  return result;
+}
+
 export function flattenMedicationRequest(medicationRequest, internalDateFormat){
   let result = {
     _id: '',
@@ -3651,6 +4121,141 @@ export function flattenMedicationStatement(statement, fhirVersion){
   return result;
 }
 
+export function flattenNutritionOrder(nutritionOrder, internalDateFormat){
+  let result = {
+    _id: '',
+    id: '',
+    resourceType: 'NutritionOrder',
+    identifier: '',
+    status: '',
+    intent: '',
+    patientDisplay: '',
+    patientReference: '',
+    dateTime: '',
+    ordererDisplay: '',
+    ordererReference: '',
+    dietType: '',
+    supplement: '',
+    instructions: '',
+    allergyIntolerance: '',
+    foodPreferenceModifier: '',
+    excludeFoodModifier: ''
+  };
+
+  result.resourceType = get(nutritionOrder, 'resourceType', "NutritionOrder");
+
+  if(!internalDateFormat){
+    internalDateFormat = get(Meteor, "settings.public.defaults.internalDateFormat", "YYYY-MM-DD");
+  }
+
+  // Core identifiers
+  result._id = extractIdString(get(nutritionOrder, '_id', ''));
+  result.id = get(nutritionOrder, 'id', '');
+  result.identifier = get(nutritionOrder, 'identifier[0].value', '');
+  
+  // Status and intent
+  result.status = get(nutritionOrder, 'status', '');
+  result.intent = get(nutritionOrder, 'intent', '');
+  
+  // Patient information
+  result.patientDisplay = get(nutritionOrder, 'patient.display', '');
+  result.patientReference = get(nutritionOrder, 'patient.reference', '');
+  
+  // Date/Time
+  const dateTime = get(nutritionOrder, 'dateTime');
+  if(dateTime){
+    result.dateTime = moment(dateTime).format(internalDateFormat);
+  }
+  
+  // Orderer information
+  result.ordererDisplay = get(nutritionOrder, 'orderer.display', '');
+  result.ordererReference = get(nutritionOrder, 'orderer.reference', '');
+  
+  // Oral diet information
+  if(get(nutritionOrder, 'oralDiet')){
+    // Extract diet type
+    if(get(nutritionOrder, 'oralDiet.type')){
+      const dietTypes = [];
+      get(nutritionOrder, 'oralDiet.type', []).forEach(function(type){
+        if(get(type, 'text')){
+          dietTypes.push(get(type, 'text'));
+        } else if(get(type, 'coding[0].display')){
+          dietTypes.push(get(type, 'coding[0].display'));
+        } else if(get(type, 'coding[0].code')){
+          dietTypes.push(get(type, 'coding[0].code'));
+        }
+      });
+      result.dietType = dietTypes.join(', ');
+    }
+    
+    // If no diet type found, mark as 'Not specified'
+    if(!result.dietType){
+      result.dietType = 'Not specified';
+    }
+    
+    // Extract instructions
+    result.instructions = get(nutritionOrder, 'oralDiet.instruction', '');
+  }
+  
+  // Supplements
+  if(get(nutritionOrder, 'supplement')){
+    const supplements = [];
+    get(nutritionOrder, 'supplement', []).forEach(function(supp){
+      if(get(supp, 'type[0].text')){
+        supplements.push(get(supp, 'type[0].text'));
+      } else if(get(supp, 'type[0].coding[0].display')){
+        supplements.push(get(supp, 'type[0].coding[0].display'));
+      } else if(get(supp, 'productName')){
+        supplements.push(get(supp, 'productName'));
+      }
+    });
+    result.supplement = supplements.join(', ');
+  }
+  
+  // Allergy intolerance references
+  if(get(nutritionOrder, 'allergyIntolerance')){
+    const allergies = [];
+    get(nutritionOrder, 'allergyIntolerance', []).forEach(function(allergy){
+      if(typeof allergy === 'string'){
+        allergies.push(allergy);
+      } else if(get(allergy, 'display')){
+        allergies.push(get(allergy, 'display'));
+      } else if(get(allergy, 'reference')){
+        allergies.push(get(allergy, 'reference'));
+      }
+    });
+    result.allergyIntolerance = allergies.join(', ');
+  }
+  
+  // Food preference modifiers
+  if(get(nutritionOrder, 'foodPreferenceModifier')){
+    const preferences = [];
+    get(nutritionOrder, 'foodPreferenceModifier', []).forEach(function(pref){
+      if(get(pref, 'text')){
+        preferences.push(get(pref, 'text'));
+      } else if(get(pref, 'coding[0].display')){
+        preferences.push(get(pref, 'coding[0].display'));
+      }
+    });
+    result.foodPreferenceModifier = preferences.join(', ');
+  }
+  
+  // Exclude food modifiers
+  if(get(nutritionOrder, 'excludeFoodModifier')){
+    const excludes = [];
+    get(nutritionOrder, 'excludeFoodModifier', []).forEach(function(excl){
+      if(get(excl, 'text')){
+        excludes.push(get(excl, 'text'));
+      } else if(get(excl, 'coding[0].display')){
+        excludes.push(get(excl, 'coding[0].display'));
+      }
+    });
+    result.excludeFoodModifier = excludes.join(', ');
+  }
+  
+  return result;
+}
+
 export function flattenNetwork(organization, internalDateFormat){
     let result = {
       resourceType: 'Network',
@@ -3721,6 +4326,8 @@ export function flattenObservation(observation, dateFormat, numeratorCode, denom
     unit: '',
     numerator: '',
     denominator: '',
+    performer: '',
+    performerReference: '',
 
     sampledPeriod: 0,
     sampledMin: 0,
@@ -3766,6 +4373,12 @@ export function flattenObservation(observation, dateFormat, numeratorCode, denom
   result.device = get(observation, 'device.display', '');
   result.deviceReference = get(observation, 'device.reference', '');
   result.status = get(observation, 'status', '');
+  
+  // Extract performer information
+  if(Array.isArray(get(observation, 'performer'))){
+    result.performer = get(observation, 'performer[0].display', '');
+    result.performerReference = get(observation, 'performer[0].reference', '');
+  }
   
   if(get(observation, 'effectiveDateTime')){
     result.effectiveDateTime =  moment(get(observation, 'effectiveDateTime')).format(dateFormat);
@@ -4359,8 +4972,8 @@ export function flattenPractitioner(practitioner, fhirVersion){
     
         result.name = result.name + get(practitioner, 'name[0].given[0]') + ' ';
         
-        if(get(practitioner, 'name[0].family[0]')){
-          result.name = result.name + get(practitioner, 'name[0].family[0]');
+        if(get(practitioner, 'name[0].family')){
+          result.name = result.name + get(practitioner, 'name[0].family');
         } else {
           result.name = result.name + get(practitioner, 'name[0].family');
         }
@@ -4928,6 +5541,218 @@ export function flattenResearchSubject(researchSubject, internalDateFormat){
   return result;
 }
 
+export function flattenSchedule(schedule, internalDateFormat){
+  let result = {
+    resourceType: 'Schedule',
+    _id: '',
+    id: '',
+    identifier: '',
+    active: false,
+    serviceCategoryDisplay: '',
+    serviceTypeDisplay: '',
+    specialtyDisplay: '',
+    actorDisplay: '',
+    planningHorizonStart: '',
+    planningHorizonEnd: '',
+    comment: '',
+    notes: ''
+  };
+
+  result.resourceType = get(schedule, 'resourceType', "Unknown");
+  result._id = get(schedule, '_id');
+  result.id = get(schedule, 'id', '');
+
+  if(!internalDateFormat){
+    internalDateFormat = get(Meteor, "settings.public.defaults.dateFormat", "YYYY-MM-DD");
+  }
+
+  // Identifier
+  if (get(schedule, 'identifier[0].value')) {
+    result.identifier = get(schedule, 'identifier[0].value');
+  }
+
+  // Active status
+  result.active = get(schedule, 'active', false);
+
+  // Service Category
+  if (get(schedule, 'serviceCategory[0].coding[0].display')) {
+    result.serviceCategoryDisplay = get(schedule, 'serviceCategory[0].coding[0].display');
+  } else if (get(schedule, 'serviceCategory[0].text')) {
+    result.serviceCategoryDisplay = get(schedule, 'serviceCategory[0].text');
+  }
+
+  // Service Type
+  if (get(schedule, 'serviceType[0].coding[0].display')) {
+    result.serviceTypeDisplay = get(schedule, 'serviceType[0].coding[0].display');
+  } else if (get(schedule, 'serviceType[0].text')) {
+    result.serviceTypeDisplay = get(schedule, 'serviceType[0].text');
+  }
+
+  // Specialty
+  if (get(schedule, 'specialty[0].coding[0].display')) {
+    result.specialtyDisplay = get(schedule, 'specialty[0].coding[0].display');
+  } else if (get(schedule, 'specialty[0].text')) {
+    result.specialtyDisplay = get(schedule, 'specialty[0].text');
+  }
+
+  // Actor
+  if (get(schedule, 'actor[0].display')) {
+    result.actorDisplay = get(schedule, 'actor[0].display');
+  } else if (get(schedule, 'actor[0].reference')) {
+    result.actorDisplay = get(schedule, 'actor[0].reference');
+  }
+
+  // Planning Horizon
+  if (get(schedule, 'planningHorizon.start')) {
+    result.planningHorizonStart = moment(get(schedule, 'planningHorizon.start')).format(internalDateFormat);
+  }
+  if (get(schedule, 'planningHorizon.end')) {
+    result.planningHorizonEnd = moment(get(schedule, 'planningHorizon.end')).format(internalDateFormat);
+  }
+
+  // Comment
+  result.comment = get(schedule, 'comment', '');
+
+  // Custom field for testing
+  result.notes = get(schedule, 'notes', '');
+
+  return result;
+}
+
+export function flattenSupplyDelivery(supplyDelivery, internalDateFormat){
+  let result = {
+    resourceType: 'SupplyDelivery',
+    _id: '',
+    id: '',
+    identifier: '',
+    status: '',
+    type: '',
+    typeCode: '',
+    occurrenceDateTime: '',
+    occurrencePeriodStart: '',
+    occurrencePeriodEnd: '',
+    supplierDisplay: '',
+    supplierReference: '',
+    destinationDisplay: '',
+    destinationReference: '',
+    receiverDisplay: '',
+    receiverReference: '',
+    quantity: '',
+    quantityUnit: '',
+    itemCodeableConceptDisplay: '',
+    itemCodeableConceptCode: '',
+    itemReference: '',
+    basedOn: '',
+    partOf: '',
+    patientDisplay: '',
+    patientReference: '',
+    notes: '',
+    operationOutcome: ''
+  };
+
+  result.resourceType = get(supplyDelivery, 'resourceType', "Unknown");
+  result._id = get(supplyDelivery, '_id');
+  result.id = get(supplyDelivery, 'id', '');
+
+  if(!internalDateFormat){
+    internalDateFormat = get(Meteor, "settings.public.defaults.dateFormat", "YYYY-MM-DD");
+  }
+
+  // Identifier
+  if (get(supplyDelivery, 'identifier[0].value')) {
+    result.identifier = get(supplyDelivery, 'identifier[0].value');
+  }
+
+  // Status
+  result.status = get(supplyDelivery, 'status', '');
+
+  // Type
+  if (get(supplyDelivery, 'type.coding[0].display')) {
+    result.type = get(supplyDelivery, 'type.coding[0].display');
+    result.typeCode = get(supplyDelivery, 'type.coding[0].code', '');
+  } else if (get(supplyDelivery, 'type.text')) {
+    result.type = get(supplyDelivery, 'type.text');
+  }
+
+  // Occurrence
+  if (get(supplyDelivery, 'occurrenceDateTime')) {
+    result.occurrenceDateTime = moment(get(supplyDelivery, 'occurrenceDateTime')).format(internalDateFormat);
+  }
+  if (get(supplyDelivery, 'occurrencePeriod.start')) {
+    result.occurrencePeriodStart = moment(get(supplyDelivery, 'occurrencePeriod.start')).format(internalDateFormat);
+  }
+  if (get(supplyDelivery, 'occurrencePeriod.end')) {
+    result.occurrencePeriodEnd = moment(get(supplyDelivery, 'occurrencePeriod.end')).format(internalDateFormat);
+  }
+
+  // Supplier
+  if (get(supplyDelivery, 'supplier.display')) {
+    result.supplierDisplay = get(supplyDelivery, 'supplier.display');
+  }
+  if (get(supplyDelivery, 'supplier.reference')) {
+    result.supplierReference = get(supplyDelivery, 'supplier.reference');
+  }
+
+  // Destination
+  if (get(supplyDelivery, 'destination.display')) {
+    result.destinationDisplay = get(supplyDelivery, 'destination.display');
+  }
+  if (get(supplyDelivery, 'destination.reference')) {
+    result.destinationReference = get(supplyDelivery, 'destination.reference');
+  }
+
+  // Receiver
+  if (get(supplyDelivery, 'receiver[0].display')) {
+    result.receiverDisplay = get(supplyDelivery, 'receiver[0].display');
+  }
+  if (get(supplyDelivery, 'receiver[0].reference')) {
+    result.receiverReference = get(supplyDelivery, 'receiver[0].reference');
+  }
+
+  // Supplied Item
+  if (get(supplyDelivery, 'suppliedItem.quantity.value')) {
+    result.quantity = get(supplyDelivery, 'suppliedItem.quantity.value');
+    result.quantityUnit = get(supplyDelivery, 'suppliedItem.quantity.unit', '');
+  }
+  if (get(supplyDelivery, 'suppliedItem.itemCodeableConcept.coding[0].display')) {
+    result.itemCodeableConceptDisplay = get(supplyDelivery, 'suppliedItem.itemCodeableConcept.coding[0].display');
+    result.itemCodeableConceptCode = get(supplyDelivery, 'suppliedItem.itemCodeableConcept.coding[0].code', '');
+  } else if (get(supplyDelivery, 'suppliedItem.itemCodeableConcept.text')) {
+    result.itemCodeableConceptDisplay = get(supplyDelivery, 'suppliedItem.itemCodeableConcept.text');
+  }
+  if (get(supplyDelivery, 'suppliedItem.itemReference.reference')) {
+    result.itemReference = get(supplyDelivery, 'suppliedItem.itemReference.reference');
+  }
+
+  // References
+  if (get(supplyDelivery, 'basedOn[0].reference')) {
+    result.basedOn = get(supplyDelivery, 'basedOn[0].reference');
+  }
+  if (get(supplyDelivery, 'partOf[0].reference')) {
+    result.partOf = get(supplyDelivery, 'partOf[0].reference');
+  }
+
+  // Patient
+  if (get(supplyDelivery, 'patient.display')) {
+    result.patientDisplay = get(supplyDelivery, 'patient.display');
+  }
+  if (get(supplyDelivery, 'patient.reference')) {
+    result.patientReference = get(supplyDelivery, 'patient.reference');
+  }
+
+  // Notes
+  if (get(supplyDelivery, 'note[0].text')) {
+    result.notes = get(supplyDelivery, 'note[0].text');
+  }
+
+  // Operation Outcome
+  if(get(supplyDelivery, "issue[0].details.text")){
+    result.operationOutcome = get(supplyDelivery, "issue[0].details.text");
+  }
+
+  return result;
+}
+
 export function flattenRestriction(restriction, internalDateFormat){
     let result = {
         resourceType: 'Restriction',
@@ -5317,6 +6142,8 @@ export function flatten(collectionName, resource){
   switch (collectionName) {    
     case "AllergyIntollerances":
       return flattenAllergyIntolerance(resource);
+    case "Appointments":
+      return flattenAppointment(resource);
     case "AuditEvents":
       return flattenAuditEvent(resource);
     case "Bundles":
@@ -5360,7 +6187,7 @@ export function flatten(collectionName, resource){
     case "Immunizations":
       return flattenImmunization(resource);          
     case "ImagingStudies":
-      return notImplementedMessage;     
+      return flattenImagingStudy(resource);     
     case "Lists":
       return flattenList(resource);   
     case "Locations":
@@ -5371,6 +6198,8 @@ export function flatten(collectionName, resource){
       return flattenMeasure(resource);
     case "MeasureReports":
       return flattenMeasureReport(resource);
+    case "Medias":
+      return flattenMedia(resource);
     case "Medications":
       return flattenMedication(resource);    
     case "MedicationOrders":
@@ -5411,6 +6240,8 @@ export function flatten(collectionName, resource){
       return flattenStructureDefinition(resource);  
     case "Subscriptions":
       return flattenSubscription(resource);        
+    case "SupplyDeliveries":
+      return flattenSupplyDelivery(resource);
     case "Tasks":
       return flattenTask(resource);
     case "ValueSets":
@@ -5457,6 +6288,7 @@ export function lookupReferenceName(referenceString){
 export const FhirDehydrator = {
   dehydrateActivityDefinition: flattenActivityDefinition,
   dehydrateAllergyIntolerance: flattenAllergyIntolerance,
+  dehydrateAppointment: flattenAppointment,
   dehydrateArtifactAssessment: flattenArtifactAssessment,
   dehydrateAuditEvent: flattenAuditEvent,
   dehydrateBundle: flattenBundle,
@@ -5482,18 +6314,21 @@ export const FhirDehydrator = {
   dehydrateGuidanceResponse: flattenGuidanceResponse,
   dehydrateHealthcareService: flattenHealthcareService,
   dehydrateImmunization: flattenImmunization,
+  dehydrateImagingStudy: flattenImagingStudy,
   dehydrateInsurancePlan: flattenInsurancePlan,
   dehydrateList: flattenList,
   dehydrateLibrary: flattenLibrary,
   dehydrateLocation: flattenLocation,
   dehydrateMeasureReport: flattenMeasureReport,
   dehydrateMeasure: flattenMeasure,
+  dehydrateMedia: flattenMedia,
   dehydrateMedication: flattenMedication,
   dehydrateMedicationOrder: flattenMedicationOrder,
   dehydrateMedicationStatement: flattenMedicationStatement,
   dehydrateMedicationRequest: flattenMedicationRequest,
   dehydrateMedicationAdministration: flattenMedicationAdministration,
   dehydrateNetwork: flattenNetwork,
+  dehydrateNutritionOrder: flattenNutritionOrder,
   dehydrateObservation: flattenObservation,
   dehydrateOrganization: flattenOrganization,
   dehydrateOperationOutcome: flattenOperationOutcome,
@@ -5530,10 +6365,12 @@ export const FhirDehydrator = {
   dehydrateResearchSubject: flattenResearchSubject,
   dehydrateRestriction: flattenRestriction,
   dehydrateRiskAssessment: flattenRiskAssessment,
+  dehydrateSchedule: flattenSchedule,
   dehydrateSearchParameter: flattenSearchParameter,
   dehydrateServiceRequest: flattenServiceRequest,
   dehydrateStructureDefinition: flattenStructureDefinition,
   dehydrateSubscription: flattenSubscription,
+  dehydrateSupplyDelivery: flattenSupplyDelivery,
   dehydrateTask: flattenTask,
   dehydrateValueSet: flattenValueSet,
   dehydrateVerificationResult: flattenVerificationResult,
@@ -5546,6 +6383,7 @@ export default {
   lookupReferenceName,
   flattenActivityDefinition,
   flattenAllergyIntolerance,
+  flattenAppointment,
   flattenArtifactAssessment,
   flattenAuditEvent,
   flattenBundle,
@@ -5577,11 +6415,13 @@ export default {
   flattenLocation,
   flattenMeasureReport,
   flattenMeasure,
+  flattenMedia,
   flattenMedication,
   flattenMedicationOrder,
   flattenMedicationStatement,
   flattenMedicationRequest,
   flattenMedicationAdministration,
+  flattenNutritionOrder,
   flattenObservation,
   flattenOperationOutcome,
   flattenOrganization,
@@ -5598,10 +6438,12 @@ export default {
   flattenResearchSubject,
   flattenRestriction,
   flattenRiskAssessment,
+  flattenSchedule,
   flattenSearchParameter,
   flattenServiceRequest,
   flattenStructureDefinition,
   flattenSubscription,
+  flattenSupplyDelivery,
   flattenTask,
   flattenValueSet,
   flattenVerificationResult,

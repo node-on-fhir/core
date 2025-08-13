@@ -29,7 +29,8 @@ import {
   Share as ShareIcon,
   Print as PrintIcon,
   LocalHospital as HospitalIcon,
-  Assessment as AuditIcon
+  Assessment as AuditIcon,
+  Person as PersonIcon
 } from '@mui/icons-material';
 
 
@@ -172,7 +173,7 @@ TablePaginationActions.propTypes = {
 //===========================================================================
 // MAIN COMPONENT  
 
-export function PatientsTable(props){
+export function PatientsTable(props = {}){
   // logger.log('PatientsTable', props)
 
   const navigate = useNavigate();
@@ -210,50 +211,56 @@ export function PatientsTable(props){
     selectedPatientId,
 
     hideCheckbox,
-    hideActionIcons,
-    hideIdentifier,
-    hideActive,
-    hideName,
-    hideGender,
-    hideBirthSex,
-    hideBirthDate,
-    hideMaritalStatus,
-    hideLanguage,
-    hideSpecies,
-    hideAddress,
-    hideCity,
-    hideState,
-    hidePostalCode,
-    hideCountry,
-    hideSystemBarcode,
-    hideFhirBarcode,
+    hideActionIcons = false,
+    hideIdentifier = false,
+    hideActive = false,
+    hideName = false,
+    hideGender = false,
+    hideBirthSex = false,
+    hideBirthDate = false,
+    hideMaritalStatus = false,
+    hideLanguage = false,
+    hideSpecies = true,
+    hideAddress = false,
+    hideCity = false,
+    hideState = false,
+    hidePostalCode = false,
+    hideCountry = false,
+    hideSystemBarcode = false,
+    hideFhirBarcode = false,
     showActionButton,
+    hideActionButton,
     
     noDataMessagePadding,
-    rowsPerPage,
+    rowsPerPage = 5,
     onCellClick,
     onRowClick,
     onMetaClick, 
     onActionButtonClick,
+    onFhirOperations,
+    onSetPage,
+    onChangeRowsPerPage,
     actionButtonLabel,
 
     defaultAvatar,
     disablePagination,
     paginationLimit,
-    paginationCount,
-    dateFormat,
-    hideCounts,
+    paginationCount = 100,
+    dateFormat = "YYYY-MM-DD",
+    hideCounts = true,
     cursors, 
-    font3of9,
+    font3of9 = true,
 
     formFactorLayout,
-    multiline,
+    multiline = false,
 
     count,
-    tableRowSize,
-    logger,
+    tableRowSize = 'medium',
+    logger = null,
 
-    rowClickMode,
+    rowClickMode = 'index',
+    page: initialPage = 0,  // Rename to avoid conflict with state
+    size,
 
     ...otherProps 
   } = props;
@@ -369,7 +376,7 @@ export function PatientsTable(props){
   let tableRows = [];
   let footer;
 
-  const [page, setPage] = useState(0);
+  const [page, setPage] = useState(initialPage);
   const [rowsPerPageToRender, setRowsPerPageToRender] = useState(rowsPerPage);
   const [rows, setRows] = useState([]);
 
@@ -1081,6 +1088,31 @@ export function PatientsTable(props){
                   </Button>
                   
                   <Button
+                    id="viewPatientButton"
+                    variant="outlined"
+                    size="small"
+                    startIcon={<PersonIcon />}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      
+                      // Get the patient's FHIR id (not MongoDB _id)
+                      const selectedPatient = patientsToRender.find(p => (p.id === patientId || p._id === patientId));
+                      const fhirId = selectedPatient?.id;
+                      
+                      console.log('View patient details:', patientId, 'FHIR ID:', fhirId);
+                      
+                      // Navigate to patient detail page using FHIR id
+                      if (fhirId) {
+                        navigate(`/patients/${fhirId}`);
+                      } else {
+                        console.error('No FHIR ID found for patient');
+                      }
+                    }}
+                  >
+                    View Patient
+                  </Button>
+                  
+                  <Button
                     variant="outlined"
                     size="small"
                     startIcon={<AuditIcon />}
@@ -1169,7 +1201,7 @@ export function PatientsTable(props){
 
   return(
     <div>
-      <Table size="small" aria-label="a dense table" { ...otherProps } >
+      <Table id={id} size="small" aria-label="a dense table" { ...otherProps } >
         <TableHead>
           <TableRow>
             <TableCell padding="checkbox" />
@@ -1264,35 +1296,5 @@ PatientsTable.propTypes = {
   logger: PropTypes.object,
   rowClickMode: PropTypes.string
 };
-PatientsTable.defaultProps = {
-  tableRowSize: 'medium',
-  rowsPerPage: 5,
-  dateFormat: "YYYY-MM-DD",
-  paginationCount: 100,
-  hideName: false,
-  hideGender: false,
-  hideBirthSex: false,
-  hideBirthDate: false,
-
-  hideMaritalStatus: false,
-  hideLanguage: false,
-  hideSpecies: true,
-  hideAddress: false,
-  hideCity: false,
-  hideState: false,
-  hidePostalCode: false,
-  hideCountry: false,
-  hideFhirBarcode: false,
-  hideSystemBarcode: false,
-  hideCounts: true,
-  
-  rowClickMode: 'index',
-
-  font3of9: true,
-  hideFhirBarcode: false,
-  multiline: false,
-
-  logger: null
-}
 
 export default PatientsTable;

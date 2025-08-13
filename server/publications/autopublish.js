@@ -7,6 +7,7 @@ import { get } from 'lodash';
 // Import all collections that might need autopublishing
 import { ActivityDefinitions } from '/imports/lib/schemas/SimpleSchemas/ActivityDefinitions';
 import { AllergyIntolerances } from '/imports/lib/schemas/SimpleSchemas/AllergyIntolerances';
+import { Appointments } from '/imports/lib/schemas/SimpleSchemas/Appointments';
 import { ArtifactAssessments } from '/imports/lib/schemas/SimpleSchemas/ArtifactAssessments';
 import { AuditEvents } from '/imports/lib/schemas/SimpleSchemas/AuditEvents';
 import { Bundles } from '/imports/lib/schemas/SimpleSchemas/Bundles';
@@ -18,7 +19,9 @@ import { Communications } from '/imports/lib/schemas/SimpleSchemas/Communication
 import { CommunicationRequests } from '/imports/lib/schemas/SimpleSchemas/CommunicationRequests';
 import { Compositions } from '/imports/lib/schemas/SimpleSchemas/Compositions';
 import { Conditions } from '/imports/lib/schemas/SimpleSchemas/Conditions';
+import { Consents } from '/imports/lib/schemas/SimpleSchemas/Consents';
 import { Devices } from '/imports/lib/schemas/SimpleSchemas/Devices';
+import { DiagnosticReports } from '/imports/lib/schemas/SimpleSchemas/DiagnosticReports';
 import { DocumentReferences } from '/imports/lib/schemas/SimpleSchemas/DocumentReferences';
 import { Encounters } from '/imports/lib/schemas/SimpleSchemas/Encounters';
 import { Endpoints } from '/imports/lib/schemas/SimpleSchemas/Endpoints';
@@ -27,6 +30,7 @@ import { ExplanationOfBenefits } from '/imports/lib/schemas/SimpleSchemas/Explan
 import { Goals } from '/imports/lib/schemas/SimpleSchemas/Goals';
 import { GuidanceResponses } from '/imports/lib/schemas/SimpleSchemas/GuidanceResponses';
 import { Immunizations } from '/imports/lib/schemas/SimpleSchemas/Immunizations';
+import { ImagingStudies } from '/imports/lib/schemas/SimpleSchemas/ImagingStudies';
 import { Libraries } from '/imports/lib/schemas/SimpleSchemas/Libraries';
 import { Lists } from '/imports/lib/schemas/SimpleSchemas/Lists';
 import { Locations } from '/imports/lib/schemas/SimpleSchemas/Locations';
@@ -36,6 +40,7 @@ import { MedicationRequests } from '/imports/lib/schemas/SimpleSchemas/Medicatio
 import { MedicationStatements } from '/imports/lib/schemas/SimpleSchemas/MedicationStatements';
 import { Measures } from '/imports/lib/schemas/SimpleSchemas/Measures';
 import { MeasureReports } from '/imports/lib/schemas/SimpleSchemas/MeasureReports';
+import { Medias } from '/imports/lib/schemas/SimpleSchemas/Medias';
 import { MessageHeaders } from '/imports/lib/schemas/SimpleSchemas/MessageHeaders';
 import { NutritionOrders } from '/imports/lib/schemas/SimpleSchemas/NutritionOrders';
 import { OperationOutcomes } from '/imports/lib/schemas/SimpleSchemas/OperationOutcomes';
@@ -49,7 +54,9 @@ import { Questionnaires } from '/imports/lib/schemas/SimpleSchemas/Questionnaire
 import { QuestionnaireResponses } from '/imports/lib/schemas/SimpleSchemas/QuestionnaireResponses';
 import { ResearchStudies } from '/imports/lib/schemas/SimpleSchemas/ResearchStudies';
 import { ResearchSubjects } from '/imports/lib/schemas/SimpleSchemas/ResearchSubjects';
+import { Schedules } from '/imports/lib/schemas/SimpleSchemas/Schedules';
 import { ServiceRequests } from '/imports/lib/schemas/SimpleSchemas/ServiceRequests';
+import { SupplyDeliveries } from '/imports/lib/schemas/SimpleSchemas/SupplyDeliveries';
 import { Tasks } from '/imports/lib/schemas/SimpleSchemas/Tasks';
 import { ValueSets } from '/imports/lib/schemas/SimpleSchemas/ValueSets';
 
@@ -57,6 +64,7 @@ import { ValueSets } from '/imports/lib/schemas/SimpleSchemas/ValueSets';
 const collectionsMap = {
   'ActivityDefinitions': ActivityDefinitions,
   'AllergyIntolerances': AllergyIntolerances,
+  'Appointments': Appointments,
   'ArtifactAssessments': ArtifactAssessments,
   'AuditEvents': AuditEvents,
   'Bundles': Bundles,
@@ -68,7 +76,9 @@ const collectionsMap = {
   'CommunicationRequests': CommunicationRequests,
   'Compositions': Compositions,
   'Conditions': Conditions,
+  'Consents': Consents,
   'Devices': Devices,
+  'DiagnosticReports': DiagnosticReports,
   'DocumentReferences': DocumentReferences,
   'Encounters': Encounters,
   'Endpoints': Endpoints,
@@ -77,6 +87,7 @@ const collectionsMap = {
   'Goals': Goals,
   'GuidanceResponses': GuidanceResponses,
   'Immunizations': Immunizations,
+  'ImagingStudies': ImagingStudies,
   'Libraries': Libraries,
   'Lists': Lists,
   'Locations': Locations,
@@ -86,6 +97,7 @@ const collectionsMap = {
   'MedicationStatements': MedicationStatements,
   'Measures': Measures,
   'MeasureReports': MeasureReports,
+  'Medias': Medias,
   'MessageHeaders': MessageHeaders,
   'NutritionOrders': NutritionOrders,
   'OperationOutcomes': OperationOutcomes,
@@ -99,7 +111,9 @@ const collectionsMap = {
   'QuestionnaireResponses': QuestionnaireResponses,
   'ResearchStudies': ResearchStudies,
   'ResearchSubjects': ResearchSubjects,
+  'Schedules': Schedules,
   'ServiceRequests': ServiceRequests,
+  'SupplyDeliveries': SupplyDeliveries,
   'Tasks': Tasks,
   'ValueSets': ValueSets
 };
@@ -166,6 +180,64 @@ if (finalAutopublishEnabled) {
               }
             });
             query.$or = flattenedConditions;
+          }
+          
+          // Special handling for Appointments - they use participant.actor.reference instead of patient/subject
+          if (collectionName === 'Appointments') {
+            // Check if this is a patient filter query
+            if (query.$or && Array.isArray(query.$or)) {
+              const hasPatientOrSubjectFilter = query.$or.some(condition => 
+                condition['patient.reference'] || condition['subject.reference']
+              );
+              
+              if (hasPatientOrSubjectFilter) {
+                // Transform patient/subject filters to participant filters for appointments
+                const transformedConditions = [];
+                query.$or.forEach(condition => {
+                  if (condition['patient.reference']) {
+                    transformedConditions.push({
+                      'participant.actor.reference': condition['patient.reference']
+                    });
+                  } else if (condition['subject.reference']) {
+                    transformedConditions.push({
+                      'participant.actor.reference': condition['subject.reference']
+                    });
+                  } else {
+                    transformedConditions.push(condition);
+                  }
+                });
+                query.$or = transformedConditions;
+              }
+            }
+          }
+          
+          // Special handling for Schedules - they use actor.reference instead of patient/subject
+          if (collectionName === 'Schedules') {
+            // Check if this is a patient filter query
+            if (query.$or && Array.isArray(query.$or)) {
+              const hasPatientOrSubjectFilter = query.$or.some(condition => 
+                condition['patient.reference'] || condition['subject.reference']
+              );
+              
+              if (hasPatientOrSubjectFilter) {
+                // Transform patient/subject filters to actor filters for schedules
+                const transformedConditions = [];
+                query.$or.forEach(condition => {
+                  if (condition['patient.reference']) {
+                    transformedConditions.push({
+                      'actor.0.reference': condition['patient.reference']
+                    });
+                  } else if (condition['subject.reference']) {
+                    transformedConditions.push({
+                      'actor.0.reference': condition['subject.reference']
+                    });
+                  } else {
+                    transformedConditions.push(condition);
+                  }
+                });
+                query.$or = transformedConditions;
+              }
+            }
           }
           
           // In development, we can be more permissive

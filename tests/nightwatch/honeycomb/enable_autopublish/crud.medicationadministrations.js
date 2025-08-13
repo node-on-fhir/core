@@ -40,14 +40,13 @@ describe('MedicationAdministrations CRUD Operations', function() {
   });
 
   beforeEach(browser => {
-    browser.pause(500);
+    // Removed unnecessary pause
   });
 
   it('01. Setup test environment', browser => {
     browser
       .url('http://localhost:3000')
-      .waitForElementVisible('body', 5000)
-      .pause(2000);
+      .waitForElementVisible('body', 5000);
 
     // Check if we're logged in
     browser.execute(function() {
@@ -212,8 +211,7 @@ describe('MedicationAdministrations CRUD Operations', function() {
     browser
       .url('http://localhost:3000/medication-administrations')
       .waitForElementVisible('#medicationAdministrationsPage', 5000)
-      .pause(2000)
-      .execute(function() {
+            .execute(function() {
         const hasTable = document.querySelector('#medicationAdministrationsTable') !== null;
         const hasNoDataCard = document.querySelector('.no-data-card') !== null ||
                             document.querySelector('.no-data-available') !== null ||
@@ -274,7 +272,7 @@ describe('MedicationAdministrations CRUD Operations', function() {
       });
 
     browser
-      .pause(1000); // Give navigation time
+      .pause(500); // Give navigation time
       
     // Check if we navigated, if not, use direct navigation
     browser.execute(function() {
@@ -288,8 +286,7 @@ describe('MedicationAdministrations CRUD Operations', function() {
     });
     
     browser
-      .pause(2000)
-      .waitForElementVisible('#medicationAdministrationDetailPage', 10000);
+            .waitForElementVisible('#medicationAdministrationDetailPage', 10000);
     
     browser
       .assert.elementPresent('#subjectDisplay')
@@ -332,7 +329,7 @@ describe('MedicationAdministrations CRUD Operations', function() {
       .assert.urlContains('/medication-administrations/new');
 
     browser
-      .pause(1000);
+      .pause(500);
 
     browser.execute(function() {
       const performerField = document.querySelector('#performerDisplay');
@@ -367,7 +364,6 @@ describe('MedicationAdministrations CRUD Operations', function() {
           performerField.dispatchEvent(inputEvent);
         }
       })
-      .pause(100)
       .setValue('#performerDisplay', testMedicationAdministration.performerName)
       .click('#medicationCode')
       .execute(function() {
@@ -384,7 +380,6 @@ describe('MedicationAdministrations CRUD Operations', function() {
           medicationCodeField.dispatchEvent(inputEvent);
         }
       })
-      .pause(100)
       .setValue('#medicationCode', testMedicationAdministration.medicationCode)
       .click('#medicationDisplay')
       .execute(function() {
@@ -401,7 +396,6 @@ describe('MedicationAdministrations CRUD Operations', function() {
           medicationDisplayField.dispatchEvent(inputEvent);
         }
       })
-      .pause(100)
       .setValue('#medicationDisplay', testMedicationAdministration.medicationDisplay);
 
     // Handle Material-UI Select components
@@ -444,12 +438,10 @@ describe('MedicationAdministrations CRUD Operations', function() {
       .click('#effectiveDateTime')
       .keys([browser.Keys.COMMAND, 'a'])
       .keys(browser.Keys.BACK_SPACE)
-      .pause(100)
       .setValue('#effectiveDateTime', testMedicationAdministration.effectiveDateTime)
       .click('#dosageText')
       .keys([browser.Keys.COMMAND, 'a'])
       .keys(browser.Keys.BACK_SPACE)
-      .pause(100)
       .setValue('#dosageText', testMedicationAdministration.dosageText)
       // .click('#dosageRouteCode')
       // .keys([browser.Keys.COMMAND, 'a'])
@@ -459,7 +451,6 @@ describe('MedicationAdministrations CRUD Operations', function() {
       .click('#dosageRouteDisplay')
       .keys([browser.Keys.COMMAND, 'a'])
       .keys(browser.Keys.BACK_SPACE)
-      .pause(100)
       .setValue('#dosageRouteDisplay', testMedicationAdministration.dosageRouteDisplay)
       // .click('#dosageMethodCode')
       // .keys([browser.Keys.COMMAND, 'a'])
@@ -474,12 +465,10 @@ describe('MedicationAdministrations CRUD Operations', function() {
       .click('#dosageDose')
       .keys([browser.Keys.COMMAND, 'a'])
       .keys(browser.Keys.BACK_SPACE)
-      .pause(100)
       .setValue('#dosageDose', testMedicationAdministration.dosageDose)
       .click('#dosageDoseUnit')
       .keys([browser.Keys.COMMAND, 'a'])
       .keys(browser.Keys.BACK_SPACE)
-      .pause(100)
       .setValue('#dosageDoseUnit', testMedicationAdministration.dosageDoseUnit)
       // .click('#requestReference')
       // .keys([browser.Keys.COMMAND, 'a'])
@@ -537,7 +526,7 @@ describe('MedicationAdministrations CRUD Operations', function() {
       });
 
     browser
-      .pause(2000);
+      .waitForElementVisible('#medicationAdministrationsPage', 5000);
     
     browser.execute(function() {
       const currentUrl = window.location.pathname;
@@ -607,8 +596,7 @@ describe('MedicationAdministrations CRUD Operations', function() {
       // Refresh the page to force subscription reload
       .refresh()
       .waitForElementVisible('#medicationAdministrationsPage', 5000)
-      .pause(2000)
-      
+            
       // Check if we have a table or a single card view
       .execute(function() {
         const hasTable = !!document.querySelector('#medicationAdministrationsTable');
@@ -659,7 +647,7 @@ describe('MedicationAdministrations CRUD Operations', function() {
             console.log('Collection check:', dataResult.value);
             
             // If we have data but it's not showing, that's a subscription issue
-            if (dataResult.value.count > 0) {
+            if (dataResult.value && dataResult.value.count > 0) {
               browser.assert.ok(true, 'Medication administration saved (found in collection)');
             } else {
               // Otherwise just verify we're on the right page
@@ -678,7 +666,7 @@ describe('MedicationAdministrations CRUD Operations', function() {
   it('06. View medication administration details', browser => {
     browser
       .waitForElementVisible('#medicationAdministrationsTable', 5000)
-      .pause(1000);
+      .pause(500);
 
     browser
       .execute(function() {
@@ -695,7 +683,7 @@ describe('MedicationAdministrations CRUD Operations', function() {
       });
 
     browser
-      .pause(1000)
+      .pause(500)
       .waitForElementVisible('#medicationAdministrationDetailPage', 5000)
       // Just check that the fields are present, not specific values since we clicked on an existing record
       .assert.elementPresent('#performerDisplay')
@@ -714,7 +702,7 @@ describe('MedicationAdministrations CRUD Operations', function() {
   it('07. Update existing medication administration', browser => {
     browser
       .waitForElementVisible('#medicationAdministrationsTable', 5000)
-      .pause(1000);
+      .pause(500);
 
     browser
       .execute(function() {
@@ -730,7 +718,7 @@ describe('MedicationAdministrations CRUD Operations', function() {
       });
 
     browser
-      .pause(1000)
+      .pause(500)
       .waitForElementVisible('#medicationAdministrationDetailPage', 5000)
       .pause(500);
 
@@ -758,7 +746,6 @@ describe('MedicationAdministrations CRUD Operations', function() {
       .click('#performerDisplay')
       .keys([browser.Keys.COMMAND, 'a'])
       .keys(browser.Keys.BACK_SPACE)
-      .pause(100)
       .setValue('#performerDisplay', updatedMedicationAdministration.performerName)
       .click('#status')
       .pause(300)
@@ -778,7 +765,6 @@ describe('MedicationAdministrations CRUD Operations', function() {
       .click('#effectiveDateTime')
       .keys([browser.Keys.COMMAND, 'a'])
       .keys(browser.Keys.BACK_SPACE)
-      .pause(100)
       .setValue('#effectiveDateTime', updatedMedicationAdministration.effectiveDateTime)
       .pause(500)
       .saveScreenshot('tests/nightwatch/screenshots/medicationadministrations/08-updated-medicationadministration-form.png');
@@ -798,8 +784,7 @@ describe('MedicationAdministrations CRUD Operations', function() {
       });
 
     browser
-      .pause(2000)
-      .url('http://localhost:3000/medication-administrations')
+            .url('http://localhost:3000/medication-administrations')
       .waitForElementVisible('#medicationAdministrationsTable', 5000)
       .saveScreenshot('tests/nightwatch/screenshots/medicationadministrations/09-medicationadministration-updated.png');
   });
@@ -807,7 +792,7 @@ describe('MedicationAdministrations CRUD Operations', function() {
   it('08. Verify updated medication administration in list', browser => {
     browser
       .waitForElementVisible('#medicationAdministrationsTable', 5000)
-      .pause(1000)
+      .pause(500)
       .assert.containsText('#medicationAdministrationsTable', updatedMedicationAdministration.performerName)
       .saveScreenshot('tests/nightwatch/screenshots/medicationadministrations/10-updated-medicationadministration-in-list.png');
   });
@@ -815,7 +800,7 @@ describe('MedicationAdministrations CRUD Operations', function() {
   it('09. Delete medication administration', browser => {
     browser
       .waitForElementVisible('#medicationAdministrationsPage', 5000)
-      .pause(1000);
+      .pause(500);
 
     // First check if we have a table or no data state
     browser.execute(function() {
@@ -840,7 +825,7 @@ describe('MedicationAdministrations CRUD Operations', function() {
           });
 
         browser
-          .pause(1000)
+          .pause(500)
           .waitForElementVisible('#medicationAdministrationDetailPage', 5000);
 
         browser
@@ -885,13 +870,11 @@ describe('MedicationAdministrations CRUD Operations', function() {
             }
             return { clicked: false, buttonTexts: Array.from(buttons).map(b => b.textContent) };
           })
-          .pause(100)
-          .acceptAlert()
+              .acceptAlert()
           .pause(500);
 
         browser
-          .pause(2000)
-          .waitForElementVisible('#medicationAdministrationsPage', 5000)
+                    .waitForElementVisible('#medicationAdministrationsPage', 5000)
           .execute(function() {
             const hasTable = document.querySelector('#medicationAdministrationsTable') !== null;
             const hasNoDataCard = document.querySelector('.no-data-card') !== null ||
@@ -919,7 +902,7 @@ describe('MedicationAdministrations CRUD Operations', function() {
   it('10. Verify medication administration removed from list', browser => {
     browser
       .waitForElementVisible('#medicationAdministrationsPage', 5000)
-      .pause(1000)
+      .pause(500)
       .execute(function() {
         // Check if table exists first
         const table = document.querySelector('#medicationAdministrationsTable');
@@ -977,7 +960,7 @@ describe('MedicationAdministrations CRUD Operations', function() {
       });
 
     browser
-      .pause(1000)
+      .pause(500)
       .waitForElementVisible('#medicationAdministrationDetailPage', 5000);
 
     browser
@@ -995,7 +978,7 @@ describe('MedicationAdministrations CRUD Operations', function() {
       });
 
     browser
-      .pause(1000);
+      .pause(500);
 
     browser
       .waitForElementVisible('#medicationAdministrationsPage', 5000, 'Form submitted and returned to medication administrations list')

@@ -29,25 +29,40 @@ import './Swagger.js';
 import '../imports/startup/server/index.js';
 
 // Import API methods
-import '../imports/api/documentReferences/methods.js';
+import '../imports/api/allergyIntolerances/methods.js';
+import '../imports/api/appointments/methods.js';
+import '../imports/api/AuditEvents/AuditEvents'; // Import the methods
+import '../imports/api/carePlans/methods.js';
 import '../imports/api/compositions/methods.js';
 import '../imports/api/conditions/methods.js';
-import '../imports/api/research-studies/methods.js';
+import '../imports/api/consents/methods.js';
+import '../imports/api/documentReferences/methods.js';
+import '../imports/api/devices/methods.js'; // Import the methods
 import '../imports/api/encounters/methods.js';
+import '../imports/api/imagingStudies/methods.js';
 import '../imports/api/locations/methods.js';
+import '../imports/api/observations/methods.js';
+import '../imports/methods/immunizations.js';
+import '../imports/api/medicationAdministrations/methods.js';
+import '../imports/api/medicationRequests/methods.js';
+import '../imports/api/medications/methods.js';
+import '../imports/api/medias/methods.js';
+import '../imports/api/nutritionOrders/methods.js';
 import '../imports/api/patients/methods.js';
-import '../imports/api/carePlans/methods.js';
+import '../imports/api/practitioners/methods.js';
 import '../imports/api/procedures/methods.js';
 import '../imports/api/questionnaires/methods.js';
 import '../imports/api/questionnaireResponses/methods.js';
 import '../imports/api/researchSubjects/methods.js';
+import '../imports/api/research-studies/methods.js';
+import '../imports/api/schedules/methods.js';
 import '../imports/api/serviceRequests/methods.js';
-import '../imports/api/medicationAdministrations/methods.js';
-import '../imports/api/medicationRequests/methods.js';
-import '../imports/api/medications/methods.js';
+import '../imports/api/diagnosticReports/methods.js';
+import '../imports/methods/supplyDeliveries.js';
 
 // Import test methods (for non-production environments)
 import '../imports/accounts/server/test-methods.js';
+import '../imports/accounts/server/methods.js';
 
 // Import publications
 import './publications/autopublish.js';
@@ -81,19 +96,21 @@ import { OAuthClients } from '/imports/collections/OAuthClients';
 
 import { ActivityDefinitions } from '../imports/lib/schemas/SimpleSchemas/ActivityDefinitions';
 import { AllergyIntolerances } from '../imports/lib/schemas/SimpleSchemas/AllergyIntolerances';
+import { Appointments } from '../imports/lib/schemas/SimpleSchemas/Appointments';
 import { ArtifactAssessments } from '../imports/lib/schemas/SimpleSchemas/ArtifactAssessments';
 import { AuditEvents } from '../imports/lib/schemas/SimpleSchemas/AuditEvents';
-import '../imports/api/AuditEvents/AuditEvents'; // Import the methods
 import { Bundles } from '../imports/lib/schemas/SimpleSchemas/Bundles';
 import { CarePlans } from '../imports/lib/schemas/SimpleSchemas/CarePlans';
 import { CareTeams } from '../imports/lib/schemas/SimpleSchemas/CareTeams';
 import { Claims } from '../imports/lib/schemas/SimpleSchemas/Claims';
 import { CodeSystems } from '../imports/lib/schemas/SimpleSchemas/CodeSystems';
 import { Conditions } from '../imports/lib/schemas/SimpleSchemas/Conditions';
+import { Consents } from '../imports/lib/schemas/SimpleSchemas/Consents';
 import { Communications } from '../imports/lib/schemas/SimpleSchemas/Communications';
 import { CommunicationRequests } from '../imports/lib/schemas/SimpleSchemas/CommunicationRequests';
 import { Compositions } from '../imports/lib/schemas/SimpleSchemas/Compositions';
 import { Devices } from '../imports/lib/schemas/SimpleSchemas/Devices';
+import { DiagnosticReports } from '../imports/lib/schemas/SimpleSchemas/DiagnosticReports';
 import { DocumentReferences } from '../imports/lib/schemas/SimpleSchemas/DocumentReferences';
 import { Encounters } from '../imports/lib/schemas/SimpleSchemas/Encounters';
 import { Endpoints } from '../imports/lib/schemas/SimpleSchemas/Endpoints';
@@ -102,6 +119,7 @@ import { ExplanationOfBenefits } from '../imports/lib/schemas/SimpleSchemas/Expl
 import { Goals } from '../imports/lib/schemas/SimpleSchemas/Goals';
 import { GuidanceResponses } from '../imports/lib/schemas/SimpleSchemas/GuidanceResponses';
 import { Immunizations } from '../imports/lib/schemas/SimpleSchemas/Immunizations';
+import { ImagingStudies } from '../imports/lib/schemas/SimpleSchemas/ImagingStudies';
 import { Libraries } from '../imports/lib/schemas/SimpleSchemas/Libraries';
 import { Lists } from '../imports/lib/schemas/SimpleSchemas/Lists';
 import { Locations } from '../imports/lib/schemas/SimpleSchemas/Locations';
@@ -111,6 +129,7 @@ import { MedicationRequests } from '../imports/lib/schemas/SimpleSchemas/Medicat
 import { MedicationStatements } from '../imports/lib/schemas/SimpleSchemas/MedicationStatements';
 import { Measures } from '../imports/lib/schemas/SimpleSchemas/Measures';
 import { MeasureReports } from '../imports/lib/schemas/SimpleSchemas/MeasureReports';
+import { Medias } from '../imports/lib/schemas/SimpleSchemas/Medias';
 import { MessageHeaders } from '../imports/lib/schemas/SimpleSchemas/MessageHeaders';
 import { NutritionOrders } from '../imports/lib/schemas/SimpleSchemas/NutritionOrders';
 import { OperationOutcomes } from '../imports/lib/schemas/SimpleSchemas/OperationOutcomes';
@@ -124,6 +143,7 @@ import { Questionnaires } from '../imports/lib/schemas/SimpleSchemas/Questionnai
 import { QuestionnaireResponses } from '../imports/lib/schemas/SimpleSchemas/QuestionnaireResponses';
 import { ResearchStudies } from '../imports/lib/schemas/SimpleSchemas/ResearchStudies';
 import { ResearchSubjects } from '../imports/lib/schemas/SimpleSchemas/ResearchSubjects';
+import { Schedules } from '../imports/lib/schemas/SimpleSchemas/Schedules';
 import { ServiceRequests } from '../imports/lib/schemas/SimpleSchemas/ServiceRequests';
 import { Tasks } from '../imports/lib/schemas/SimpleSchemas/Tasks';
 import { ValueSets } from '../imports/lib/schemas/SimpleSchemas/ValueSets';
@@ -138,6 +158,7 @@ import { LayoutHelpers } from '../imports/lib/LayoutHelpers.js'
 Meteor.Collections = {
   ActivityDefinitions,
   AllergyIntolerances,
+  Appointments,
   ArtifactAssessments,
   AuditEvents,
   Bundles,
@@ -146,10 +167,12 @@ Meteor.Collections = {
   Claims,
   CodeSystems,
   Conditions,
+  Consents,
   Communications,
   CommunicationRequests,
   Compositions,
   Devices,
+  DiagnosticReports,
   DocumentReferences,
   Encounters,
   Endpoints,
@@ -158,6 +181,7 @@ Meteor.Collections = {
   Goals,
   GuidanceResponses,
   Immunizations,
+  ImagingStudies,
   Libraries,
   Lists,
   Locations,
@@ -168,6 +192,7 @@ Meteor.Collections = {
   MessageHeaders,
   Measures,
   MeasureReports,
+  Medias,
   NutritionOrders,
   OperationOutcomes,
   Organizations,
@@ -180,6 +205,7 @@ Meteor.Collections = {
   QuestionnaireResponses,
   ResearchStudies,
   ResearchSubjects,
+  Schedules,
   ServiceRequests,
   Tasks,
   ValueSets
@@ -193,6 +219,7 @@ global.HipaaLogger = HipaaLogger;
 global.Collections = {
   ActivityDefinitions,
   AllergyIntolerances,
+  Appointments,
   ArtifactAssessments,
   AuditEvents,
   Bundles,
@@ -201,10 +228,12 @@ global.Collections = {
   Claims,
   CodeSystems,
   Conditions,
+  Consents,
   Communications,
   CommunicationRequests,
   Compositions,
   Devices,
+  DiagnosticReports,
   DocumentReferences,
   Encounters,
   Endpoints,
@@ -213,6 +242,7 @@ global.Collections = {
   Goals,
   GuidanceResponses,
   Immunizations,
+  ImagingStudies,
   Libraries,
   Lists,
   Locations,
@@ -223,6 +253,7 @@ global.Collections = {
   MessageHeaders,
   Measures,
   MeasureReports,
+  Medias,
   NutritionOrders,
   OperationOutcomes,
   Organizations,
@@ -235,6 +266,7 @@ global.Collections = {
   QuestionnaireResponses,
   ResearchStudies,
   ResearchSubjects,
+  Schedules,
   ServiceRequests,
   Tasks,
   ValueSets
@@ -242,6 +274,7 @@ global.Collections = {
 
 
 
+global.Appointments = Appointments;
 global.AuditEvents = AuditEvents;
 global.Conditions = Conditions;
 global.Claims = Claims;
@@ -255,9 +288,11 @@ global.Procedures = Procedures;
 global.MedicationRequests = MedicationRequests;
 global.Medications = Medications;
 global.MeasureReports = MeasureReports;
+global.Medias = Medias;
 global.Patients = Patients;
 global.Questionnaires = Questionnaires;
 global.QuestionnaireResponses = QuestionnaireResponses;
+global.Schedules = Schedules;
 global.LinksCollection = LinksCollection;
 
 //===============================================================================================================

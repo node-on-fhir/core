@@ -1,5 +1,12 @@
 // tests/nightwatch/honeycomb/accounts.login.js
 // Nightwatch tests for the Login page components with new progressive flow
+//
+// IMPORTANT: These tests require:
+// 1. accounts.enabled: true in settings (added to settings.honeycomb.tdd.json)
+// 2. DEV_AUTO_LOGIN: false (currently true in CircleCI, which bypasses login page)
+// 
+// When DEV_AUTO_LOGIN is enabled, users are automatically logged in and
+// the login page is not accessible, causing these tests to fail.
 
 const { get } = require('lodash');
 

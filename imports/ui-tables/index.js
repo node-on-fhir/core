@@ -19,8 +19,9 @@ export { default as CodeSystemsConceptsTable } from '../ui-fhir/codeSystems/Code
 export { default as CommunicationsTable } from '../ui-fhir/communications/CommunicationsTable';
 export { default as CompositionsTable } from '../ui-fhir/compositions/CompositionsTable';
 export { default as ConditionsTable } from '../ui-fhir/conditions/ConditionsTable';
-export { default as ConsentsTable } from './ConsentsTable'; // TODO: Move to ui-fhir
+export { default as ConsentsTable } from '../ui-fhir/consents/ConsentsTable';
 export { default as DevicesTable } from '../ui-fhir/devices/DevicesTable';
+export { default as DiagnosticReportsTable } from '../ui-fhir/diagnosticReports/DiagnosticReportsTable';
 export { default as DocumentReferencesTable } from '../ui-fhir/documentReferences/DocumentReferencesTable';
 export { default as EncountersTable } from '../ui-fhir/encounters/EncountersTable';
 export { default as EndpointsTable } from './EndpointsTable'; // TODO: Move to ui-fhir
@@ -66,8 +67,9 @@ import CodeSystemsConceptsTable from '../ui-fhir/codeSystems/CodeSystemsConcepts
 import CommunicationsTable from '../ui-fhir/communications/CommunicationsTable';
 import CompositionsTable from '../ui-fhir/compositions/CompositionsTable';
 import ConditionsTable from '../ui-fhir/conditions/ConditionsTable';
-import ConsentsTable from './ConsentsTable';
+import ConsentsTable from '../ui-fhir/consents/ConsentsTable';
 import DevicesTable from '../ui-fhir/devices/DevicesTable';
+import DiagnosticReportsTable from '../ui-fhir/diagnosticReports/DiagnosticReportsTable';
 import DocumentReferencesTable from '../ui-fhir/documentReferences/DocumentReferencesTable';
 import EncountersTable from '../ui-fhir/encounters/EncountersTable';
 import EndpointsTable from './EndpointsTable';
@@ -123,6 +125,7 @@ if (Meteor.isClient) {
       ConditionsTable,
       ConsentsTable,
       DevicesTable,
+      DiagnosticReportsTable,
       DocumentReferencesTable,
       EncountersTable,
       EndpointsTable,

@@ -10,7 +10,8 @@ import SimpleSchema from 'simpl-schema';
 // REFACTOR:  we want to deprecate meteor/clinical:hl7-resource-datatypes
 // so please remove references from the following line
 // and replace with import from ../../datatypes/*
-import {  AddressSchema, BaseSchema, ContactPointSchema, CodeableConceptSchema, DomainResourceSchema, IdentifierSchema,  MoneySchema, PeriodSchema, QuantitySchema, ReferenceSchema, SignatureSchema } from 'meteor/clinical:hl7-resource-datatypes';
+// NOTE: Temporarily removed all imports from clinical:hl7-resource-datatypes due to validation conflicts
+// import {  AddressSchema, BaseSchema, ContactPointSchema, CodeableConceptSchema, DomainResourceSchema, IdentifierSchema,  MoneySchema, PeriodSchema, QuantitySchema, ReferenceSchema, SignatureSchema } from 'meteor/clinical:hl7-resource-datatypes';
 
 
 // if(Package['clinical:autopublish']){
@@ -47,10 +48,59 @@ ResearchSubjects._transform = function (document) {
   return new ResearchSubject(document);
 };
 
-let ResearchSubjectSchema = DomainResourceSchema.extend({
+let ResearchSubjectSchema = new SimpleSchema({
+  "id" : {
+    type: String,
+    optional: true
+  },
   "resourceType" : {
     type: String,
     defaultValue: "ResearchSubject"
+  },
+  "meta" : {
+    optional: true,
+    blackbox: true,
+    type: Object
+  },
+  "implicitRules" : {
+    optional: true,
+    type: String
+  },
+  "language" : {
+    optional: true,
+    type: String
+  },
+  "text" : {
+    optional: true,
+    blackbox: true,
+    type: Object
+  },
+  "contained" : {
+    optional: true,
+    type: Array
+  },
+  "contained.$" : {
+    optional: true,
+    blackbox: true,
+    type: Object
+  },
+  "extension" : {
+    optional: true,
+    type: Array
+  },
+  "extension.$" : {
+    optional: true,
+    blackbox: true,
+    type: Object
+  },
+  "modifierExtension" : {
+    optional: true,
+    type: Array
+  },
+  "modifierExtension.$" : {
+    optional: true,
+    blackbox: true,
+    type: Object
   },
   "identifier" : {
     optional: true,
@@ -58,7 +108,8 @@ let ResearchSubjectSchema = DomainResourceSchema.extend({
   },
   "identifier.$" : {
     optional: true,
-    type: IdentifierSchema
+    blackbox: true,
+    type: Object
   },
   "status" : {
     type: String,
@@ -66,13 +117,16 @@ let ResearchSubjectSchema = DomainResourceSchema.extend({
   },
   "period" : {
     optional: true,
-    type: PeriodSchema
+    blackbox: true,
+    type: Object
   },
   "study" : {
-    type: ReferenceSchema
+    blackbox: true,
+    type: Object
   },
   "subject" : {
-    type: ReferenceSchema
+    blackbox: true,
+    type: Object
   },
   "assignedArm" : {
     optional: true,
@@ -84,9 +138,13 @@ let ResearchSubjectSchema = DomainResourceSchema.extend({
   },
   "consent" : {
     optional: true,
-    type: ReferenceSchema
+    blackbox: true,
+    type: Object
   }
 });
+
+// Temporarily disable DomainResourceSchema extension due to status field validation conflict
+// ResearchSubjectSchema = DomainResourceSchema.extend(ResearchSubjectSchema);
 
 // Note: attachSchema is not available in Meteor v3 without aldeed:collection2 package
 // ResearchSubjects.attachSchema(ResearchSubjectSchema);

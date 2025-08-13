@@ -19,8 +19,8 @@ let get = _.get;
 let set = _.set;
 let has = _.has;
 
-import { FhirUtilities } from '../lib/FhirUtilities';
-import { FhirDehydrator } from '../lib/FhirDehydrator';
+import { FhirUtilities } from '../../lib/FhirUtilities';
+import { FhirDehydrator } from '../../lib/FhirDehydrator';
 
 import { Session } from 'meteor/session';
 
@@ -51,6 +51,7 @@ export function ConsentsTable(props){
 
 
     selectedPatientId,
+    defaultCheckboxValue,
 
     hideCheckbox,
     hideActionIcons,
@@ -77,6 +78,7 @@ export function ConsentsTable(props){
     
 
     onRevoke,
+    onRowClick,
 
     page, 
     onSetPage,
@@ -610,46 +612,53 @@ export function ConsentsTable(props){
     //   footer = <TableNoData noDataPadding={ noDataMessagePadding } />
     // }
   } else {
-    for (var i = 0; i < consentsToRender.length; i++) {
+    for (let i = 0; i < consentsToRender.length; i++) {
+      const currentConsent = consentsToRender[i];
+      const consentId = currentConsent._id;
+      
       let selected = false;
-      if(consentsToRender[i].id === selectedConsentId){
+      if(currentConsent.id === selectedConsentId){
         selected = true;
       }
-      if(get(consentsToRender[i], 'modifierExtension[0]')){
+      if(get(currentConsent, 'modifierExtension[0]')){
         rowStyle.color = "orange";
       }
       if(tableRowSize === "small"){
         rowStyle.height = '32px';
       }
-      logger.trace('consentsToRender[i]', consentsToRender[i])
+      logger.trace('consentsToRender[i]', currentConsent)
       tableRows.push(
         <TableRow className="consentRow" 
-          key={i} style={rowStyle} 
-          // onClick={ rowClick.bind(this, consentsToRender[i]._id)} 
+          key={i} 
           style={rowStyle} 
+          onClick={() => {
+            console.log('ConsentsTable row clicked, _id:', consentId);
+            if(typeof onRowClick === 'function'){
+              onRowClick(consentId);
+            }
+          }} 
           hover={true} 
-          // selected={selected} 
           >            
-          {renderSelected(get(consentsToRender[i], '_id'))}
-          {renderIdentifier(get(consentsToRender[i], 'identifier', ''))}
-          {renderDate(get(consentsToRender[i], '_id'), get(consentsToRender[i], 'dateTime'))}
-          {renderPeriodStart(get(consentsToRender[i], '_id'), get(consentsToRender[i], 'start'))}
-          {renderPeriodEnd(get(consentsToRender[i], '_id'), get(consentsToRender[i], 'end'))}
-          {renderStatus(get(consentsToRender[i], 'status'))}
-          {renderPatientName(get(consentsToRender[i], 'patientName')) }
-          {renderOrganization(get(consentsToRender[i], 'organization')) }
-          {renderType( get(consentsToRender[i], 'provisionType')) }
-          {renderClass( get(consentsToRender[i], 'provisionClass')) }
-          {renderCategory( get(consentsToRender[i], 'category')) }
-          {renderScope( get(consentsToRender[i], 'scope')) }
+          {renderSelected(get(currentConsent, '_id'))}
+          {renderIdentifier(get(currentConsent, 'identifier', ''))}
+          {renderDate(get(currentConsent, '_id'), get(currentConsent, 'dateTime'))}
+          {renderPeriodStart(get(currentConsent, '_id'), get(currentConsent, 'start'))}
+          {renderPeriodEnd(get(currentConsent, '_id'), get(currentConsent, 'end'))}
+          {renderStatus(get(currentConsent, 'status'))}
+          {renderPatientName(get(currentConsent, 'patientName')) }
+          {renderOrganization(get(currentConsent, 'organization')) }
+          {renderType( get(currentConsent, 'provisionType')) }
+          {renderClass( get(currentConsent, 'provisionClass')) }
+          {renderCategory( get(currentConsent, 'category')) }
+          {renderScope( get(currentConsent, 'scope')) }
 
-          {renderActorRole( get(consentsToRender[i], 'actorRole')) }
-          {renderActorReference( get(consentsToRender[i], 'actorReference')) }
+          {renderActorRole( get(currentConsent, 'actorRole')) }
+          {renderActorReference( get(currentConsent, 'actorReference')) }
 
-          {renderSource(get(consentsToRender[i], 'sourceReference')) }
-          {renderRevoke(get(consentsToRender[i], '_id'))}
+          {renderSource(get(currentConsent, 'sourceReference')) }
+          {renderRevoke(get(currentConsent, '_id'))}
 
-          {renderBarcode(get(consentsToRender[i], 'id', ''))}
+          {renderBarcode(get(currentConsent, 'id', ''))}
         </TableRow>
       );    
     }
@@ -657,7 +666,7 @@ export function ConsentsTable(props){
 
   return(
     <div>
-      <Table className='consentsTable' size="small" aria-label="a dense table">
+      <Table id={props.id || 'consentsTable'} className='consentsTable' size="small" aria-label="a dense table">
         <TableHead>
           <TableRow>
             {renderSelectedHeader() }
@@ -704,6 +713,7 @@ ConsentsTable.propTypes = {
   sort: PropTypes.string,
 
 
+  defaultCheckboxValue: PropTypes.bool,
   hideCheckbox: PropTypes.bool,
   hideActionIcons: PropTypes.bool,
   hideBarcode: PropTypes.bool,
@@ -758,43 +768,44 @@ ConsentsTable.propTypes = {
 
   selectedPatientId: PropTypes.string
 };
-// ConsentsTable.defaultProps = {
-//   tableRowSize: 'medium',
-//   rowsPerPage: 5,
-//   dateFormat: "YYYY-MM-DD hh:mm:ss",
-//   selectedConsentId: '',
+ConsentsTable.defaultProps = {
+  tableRowSize: 'medium',
+  rowsPerPage: 5,
+  dateFormat: "YYYY-MM-DD hh:mm:ss",
+  selectedConsentId: '',
+  defaultCheckboxValue: false,
 
-//   hideCheckbox: true,
-//   hideActionIcons: true,
-//   hideStatus: false,
-//   hideTitle: false,
-//   hideItemCount: false,
-//   hidePatientName: false,
-//   hidePatientReference: false,
-//   hideBarcode: true,
-//   hideScope: false,
-//   hideClass: false,
-//   hideActorRole: false,
-//   hideActorReference: true,
-//   hideType: true,
-//   hideSource: true,
-//   hideRevoke: true,
-//   hidePeriodStart: true,
-//   hidePeriodEnd: true,
+  hideCheckbox: true,
+  hideActionIcons: true,
+  hideStatus: false,
+  hideTitle: false,
+  hideItemCount: false,
+  hidePatientName: false,
+  hidePatientReference: false,
+  hideBarcode: true,
+  hideScope: false,
+  hideClass: false,
+  hideActorRole: false,
+  hideActorReference: true,
+  hideType: true,
+  hideSource: true,
+  hideRevoke: true,
+  hidePeriodStart: true,
+  hidePeriodEnd: true,
 
-//   disablePagination: false,
-//   selectedListId: '',
+  disablePagination: false,
+  selectedListId: '',
 
-//   consents: [],
-//   query: {},
-//   selectedPatientId: '',
-//   sort: '',
-//   revokeButtonType: 'text',
-//   revokeColor: '',
+  consents: [],
+  query: {},
+  selectedPatientId: '',
+  sort: '',
+  revokeButtonType: 'text',
+  revokeColor: '',
 
-//   noDataMessage: true,
-//   noDataMessagePadding: 100
-// }
+  noDataMessage: true,
+  noDataMessagePadding: 100
+}
 
 export default ConsentsTable;
 

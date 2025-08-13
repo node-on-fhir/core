@@ -107,7 +107,6 @@
           "/bundles",
           "/contracts",
           "/devices",
-          "/imaging-studies",
           "/message-headers",
           "/risk-assessments"
         ]
@@ -148,10 +147,13 @@
         "Communications": true,
         "Conditions": true,
         "Consents": true,
+        "Devices": true,
+        "DiagnosticReports": true,
         "DocumentReferences": true,
         "Encounters": true,
         "Goals": true,
         "Immunizations": true,
+        "ImagingStudies": true,
         "Lists": true,
         "Locations": true,
         "Medications": true,
@@ -259,6 +261,28 @@
           "search": true,
           "publication": true
         },
+        "Device": {
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "search"
+          ],
+          "search": true,
+          "publication": true
+        },
+        "DiagnosticReport": {
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "search"
+          ],
+          "search": true,
+          "publication": true
+        },
         "DocumentReference": {
           "interactions": [
             "read",
@@ -271,6 +295,17 @@
           "publication": true
         },
         "Goal": {
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "search"
+          ],
+          "search": true,
+          "publication": true
+        },
+        "ImagingStudy": {
           "interactions": [
             "read",
             "create",

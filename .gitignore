@@ -6,6 +6,9 @@ version.desktop
 .desktop
 .desktop/*
 
+logs
+logs/*
+
 test
 tests_output
 tests/output

@@ -26,7 +26,7 @@ This guide provides comprehensive instructions for implementing FHIR resource ty
 ## Prerequisites
 
 ### Settings Configuration
-Configure THREE places in `/configs/settings.{configfile}.json`:
+Configure TWO places in `/configs/settings.{configfile}.json`:
 
 1. **Enable the module**:
 ```json
@@ -464,7 +464,7 @@ const validState = hasTable || hasNoDataCard;
 ## Common Issues
 
 ### 1. Collection Not Found
-- Verify registration in all 3 places
+- Verify registration in settings file
 - Check console: `window.{ResourceTypes}`
 - Ensure direct import (no Meteor.startup)
 
@@ -473,41 +473,381 @@ const validState = hasTable || hasNoDataCard;
 - Verify correct settings file is loaded
 - Restart server after settings changes
 - Debug: `window.{ResourceTypes}.find().fetch()`
+- **Check patient reference**: Ensure patient is set in Session before save
+- **Verify user authentication**: Methods may fail silently if not logged in
 
-### 3. Table Missing Columns
-- Check FhirDehydrator flatten function
-- Verify test expectations
-- Add missing render functions
+### 3. Table Missing Columns or Empty Values
+- **Check FhirDehydrator**: Ensure ALL fields are initialized in result object
+- **Verify render functions**: Must use flattened field names, not nested FHIR paths
+- **Common fix**: Change `get(item, 'code.text')` to `get(item, 'code')`
+- **Debug**: Log the dehydrated data to see actual field names
 
 ### 4. Patient Filtering Not Working
 - Use FHIR id, not MongoDB _id
 - Check FhirUtilities.addPatientFilterToQuery()
 - Verify patient reference format
+- **Debug with unfiltered count**: Compare total records vs filtered records
+```javascript
+console.log('Total records:', {ResourceTypes}.find({}).count());
+console.log('Filtered records:', {ResourceTypes}.find(query).count());
+```
 
 ### 5. Form Validation Errors
 - Check schema expectations
 - Transform data before save (e.g., CodeableConcepts)
 - Handle null/undefined values
+- **Empty patient reference**: Session patient may not be set
 
 ### 6. Delete Button Issues
-- Delete button visible in view mode, not edit mode
+- **Critical**: Delete button ONLY shows in read/view mode, NOT edit mode
+- Tests must not enter edit mode before deleting
 - Handle both table and no-data states after deletion
+- Always use window.confirm() for delete confirmations
+
+### 7. Search Not Working
+- Ensure search field has correct ID for tests
+- Pass query to subscription, not filter in tracker
+- Check that searchable fields match your schema structure
+
+### 8. Sort Order Confusion
+- Mixed ID types (ObjectID vs String) sort differently
+- Don't assume position in list without explicit sort
+- Use search to find specific records in tests
 
 ---
 
 ## Advanced Patterns
 
-### CodeableConcept Transformation
+### Search Functionality Implementation
+
+**Client-Side vs Server-Side Search:**
+- **Best Practice**: Implement search on the client-side when working with autopublish subscriptions
+- **Pattern**: Pass search query to subscription, let server filter the data
+
 ```javascript
-if (dataToSave.phase && typeof dataToSave.phase !== 'object') {
-  dataToSave.phase = {
+// In Page component
+const [searchFilter, setSearchFilter] = useState('');
+
+const isLoading = useTracker(() => {
+  let query = {};
+  if(searchFilter && searchFilter.length > 0) {
+    query = {
+      $or: [
+        {'_id': searchFilter},
+        {'id': searchFilter},
+        {'{resourceType}Name.0.name': {$regex: searchFilter, $options: 'i'}},
+        {'manufacturer': {$regex: searchFilter, $options: 'i'}},
+        // Add other searchable fields
+      ]
+    };
+  }
+  
+  const handle = Meteor.subscribe('autopublish.{ResourceTypes}', query, { limit: 100 });
+  return !handle.ready();
+}, [searchFilter]);
+
+// Search input
+<TextField
+  id="{resourceType}SearchInput"
+  fullWidth
+  placeholder="Search {resourceTypes} by ID, name, ..."
+  value={searchFilter}
+  onChange={(e) => setSearchFilter(e.target.value)}
+/>
+```
+
+**Important Notes:**
+- Don't filter in the data tracker - let the subscription handle it
+- The autopublish subscription respects the query parameter
+- This avoids loading all data and filtering client-side
+
+### Handling Large Datasets with Pagination
+
+**Pagination Limits:**
+- Default limit: 100 records (configurable)
+- Maximum limit: 1000 records (hard cap for performance)
+- Always specify limits in subscriptions to avoid performance issues
+
+```javascript
+// In autopublish.js
+Meteor.publish('autopublish.{ResourceTypes}', function(query, options) {
+  query = query || {};
+  options = options || {};
+  
+  // Cap at reasonable limit
+  options.limit = options.limit || 100;
+  if (options.limit > 1000) {
+    options.limit = 1000;
+  }
+  
+  // Default sort by most recent first
+  if (!options.sort) {
+    options.sort = { '_id': -1 };
+  }
+  
+  return {ResourceTypes}.find(query, options);
+});
+```
+
+### MongoDB ObjectID vs Meteor String ID Handling
+
+**The Challenge:**
+- Synthea data uses MongoDB ObjectIDs (24-char hex strings)
+- New records via UI use Meteor string IDs (17-char random strings)
+- These sort differently, causing new records to appear at unexpected positions
+- This affects test reliability when finding created records
+
+**Solution Pattern:**
+```javascript
+// In server methods.js, add support for MongoDB ObjectID
+if (process.env.USE_MONGO_OBJECTID) {
+  const { Mongo } = Package.mongo;
+  const objectId = new Mongo.ObjectID();
+  clean{ResourceType}._id = objectId.toHexString();
+} else {
+  clean{ResourceType}._id = clean{ResourceType}.id; // Default Meteor behavior
+}
+```
+
+**Testing Strategy:**
+- Don't rely on specific positions in sorted lists
+- Use search functionality to find specific test records
+- Or click the first row when sorted by _id descending (newest first)
+- Generate unique identifiers (timestamps, random codes) for reliable searching
+
+### Navigation After Save Operations
+
+**Pattern for Smooth Navigation:**
+```javascript
+// In Detail component save handler
+Meteor.call('create{ResourceType}', dataToSave, (error, result) => {
+  if (error) {
+    console.error('Error creating {resourceType}:', error);
+    // Show error to user
+  } else {
+    console.log('{ResourceType} created successfully:', result);
+    // Navigate back to list
+    navigate('/{resourceTypes}');
+  }
+});
+```
+
+**Common Navigation Issues:**
+- Staying on /new page after save indicates silent failure
+- Check for console errors or validation issues
+- Ensure user is logged in (methods may require authentication)
+
+### Material-UI Select Component Testing
+
+**Testing Limitations:**
+- Material-UI Select components use portals for dropdown rendering
+- Options appear outside the normal DOM hierarchy
+- Standard Nightwatch selectors may not work
+
+**Testing Pattern:**
+```javascript
+// Click the select to open dropdown
+browser.execute(function(value) {
+  const select = document.querySelector('#typeSelect');
+  if (select) {
+    select.click();
+    setTimeout(() => {
+      // Options render in a portal, need to search globally
+      const options = document.querySelectorAll('li[role="option"]');
+      for (let option of options) {
+        if (option.getAttribute('data-value') === value) {
+          option.click();
+          break;
+        }
+      }
+    }, 300); // Wait for portal to render
+  }
+}, [testValue]);
+```
+
+### Finding Specific Records in Large Datasets
+
+**Use Search Instead of Scanning:**
+```javascript
+// In tests, search for specific record
+browser
+  .waitForElementVisible('#{resourceType}SearchInput', 5000)
+  .clearValue('#{resourceType}SearchInput')
+  .setValue('#{resourceType}SearchInput', testResource.name)
+  .pause(1000); // Wait for search results
+
+// Then interact with filtered results
+```
+
+**Benefits:**
+- Avoids complex row-finding logic
+- Works regardless of sort order
+- Much faster than scanning all rows
+- More reliable with dynamic data
+
+### FHIR CodeableConcept Implementation
+
+**Important**: Any coded fields should be proper CodeableConcepts, not plain text.
+
+**Common Pattern for Methods:**
+```javascript
+// For codes (e.g., type, category, code fields)
+if ({resourceType}Data.{fieldName}) {
+  clean{ResourceType}.{fieldName} = {
     coding: [{
-      system: 'http://hl7.org/fhir/research-study-phase',
-      code: dataToSave.phase,
-      display: phaseMap[dataToSave.phase] || dataToSave.phase
+      system: 'http://appropriate-system.org', // e.g., http://loinc.org
+      code: {resourceType}Data.{fieldName},
+      display: {resourceType}Data.{fieldName}Display || {resourceType}Data.{fieldName}
     }],
-    text: phaseMap[dataToSave.phase] || dataToSave.phase
+    text: {resourceType}Data.{fieldName}Display || {resourceType}Data.{fieldName}
   };
+}
+```
+
+**Example Systems:**
+- LOINC codes: `http://loinc.org`
+- SNOMED CT: `http://snomed.info/sct`
+- RxNorm: `http://www.nlm.nih.gov/research/umls/rxnorm`
+
+### FhirDehydrator Critical Patterns
+
+**1. Always Initialize ALL Fields:**
+```javascript
+export function flatten{ResourceType}({resourceType}) {
+  let result = {
+    _id: '',
+    id: '',
+    // Initialize EVERY field that will be displayed
+    code: '',
+    category: '',
+    status: '',
+    effectiveDate: '',
+    // ... all other fields
+  };
+  
+  // Then extract values
+  result.code = get({resourceType}, 'code.text', '');
+  // ...
+}
+```
+
+**2. Flattening Nested Structures:**
+After dehydration, nested FHIR structures become simple fields:
+- `code.text` or `code.coding[0].display` → `code`
+- `category[0].text` → `category`
+- `subject.display` → `subjectDisplay`
+
+**3. Table Components Must Use Flattened Structure:**
+```javascript
+// WRONG - uses nested FHIR path
+function renderCode({resourceType}){
+  return get({resourceType}, 'code.text', ''); // Won't work after dehydration
+}
+
+// CORRECT - uses flattened field
+function renderCode({resourceType}){
+  return get({resourceType}, 'code', ''); // Works with dehydrated data
+}
+```
+
+### UI Component Styling Pattern
+
+Copy styling from MedicationAdministrationDetail for consistency:
+
+**1. Container Structure:**
+```javascript
+return (
+  <Container id='{resourceType}DetailPage' maxWidth="md" sx={{ py: 4 }}>
+    <Card sx={{ boxShadow: 3 }}>
+      <CardHeader 
+        title={id && id !== 'new' ? 'Edit {ResourceType}' : 'New {ResourceType}'}
+        sx={{ bgcolor: 'primary.main', color: 'primary.contrastText' }}
+      />
+      <CardContent>
+        {/* Form content */}
+      </CardContent>
+      <CardActions sx={{ justifyContent: 'flex-end', p: 2 }}>
+        {/* Buttons */}
+      </CardActions>
+    </Card>
+  </Container>
+);
+```
+
+**2. Barcode Display:**
+```javascript
+{(id && id !== 'new') && (
+  <Box sx={{ mb: 3, textAlign: 'right' }}>
+    <span className="barcode helveticas" style={{ fontSize: '2rem' }}>{id}</span>
+  </Box>
+)}
+```
+
+**3. Button Visibility Rules:**
+- Read mode: Back, Delete, Edit buttons
+- Edit mode: Cancel, Save buttons
+- New mode: Cancel, Save buttons (no Delete)
+- Delete button ONLY shows in read mode
+
+### Testing Pattern Updates
+
+**1. Generate Unique Test Data:**
+```javascript
+const timestamp = Date.now();
+const randomCode = Math.floor(10000 + Math.random() * 90000);
+
+const test{ResourceType} = {
+  code: `${randomCode}-8`, // Random but realistic format
+  name: `Test {ResourceType} ${timestamp}`,
+  // ... other fields
+};
+```
+
+**2. Search Instead of Position:**
+```javascript
+// Search by unique field before clicking
+browser
+  .setValue('#{resourceType}SearchInput', test{ResourceType}.uniqueField)
+  .pause(1000) // Wait for search to filter
+  .click('#{resourceTypes}Table tbody tr:first-child');
+```
+
+**3. Capture Resource IDs:**
+```javascript
+.execute(function() {
+  const barcode = document.querySelector('.barcode');
+  if (barcode) {
+    window.created{ResourceType}Id = barcode.textContent.trim();
+    return { id: window.created{ResourceType}Id };
+  }
+})
+```
+
+### Async/Await Pattern for Meteor v3
+
+All methods must use async patterns:
+
+```javascript
+async function handleSaveButton(){
+  setLoading(true);
+  try {
+    let dataToSave = {
+      // ... prepare data
+    };
+
+    if({resourceType}Id && {resourceType}Id !== 'new'){
+      await Meteor.callAsync('update{ResourceType}', {resourceType}Id, dataToSave);
+      setIsEditing(false); // Stay on page, switch to read mode
+    } else {
+      const id = await Meteor.callAsync('create{ResourceType}', dataToSave);
+      navigate('/{resourceTypes}'); // Navigate to list after create
+    }
+  } catch(error) {
+    console.error('Error saving {resourceType}:', error);
+    setError(error.message);
+  } finally {
+    setLoading(false);
+  }
 }
 ```
 
@@ -536,7 +876,7 @@ import '../imports/accounts/server/test-methods.js';
 ## Implementation Checklist
 
 - [ ] **Prerequisites**
-  - [ ] Configure settings in 3 places
+  - [ ] Configure settings in settings file
   - [ ] Verify correct settings file is loaded
   
 - [ ] **Collection Setup**
@@ -585,7 +925,240 @@ import '../imports/accounts/server/test-methods.js';
 3. **Keep display and reference separate** - Don't fallback reference to display
 4. **Test settings file** - Always verify which settings file is active
 5. **Handle all states** - Both data and no-data scenarios
-6. **Use existing patterns** - Copy from working resources like Conditions
+6. **Use existing patterns** - Copy from working resources (especially MedicationAdministrationDetail for styling)
 7. **Clean code** - Remove unused imports and commented code
+8. **Verify table columns** - Always check that ALL columns display data correctly
+9. **Use flattened data** - Table components use dehydrated data, not nested FHIR paths
+10. **Generate unique test data** - Use timestamps and random values to avoid conflicts
+11. **Search, don't scan** - Use search functionality in tests instead of position-based selection
+12. **Proper CodeableConcepts** - Coded fields should use full FHIR structure, not plain text
 
 This guide represents the collective knowledge from implementing multiple FHIR resource types. Follow these patterns for consistent, maintainable implementations.
+
+---
+
+## Debugging Reference
+
+### Patient Context Management in Tests
+**Problem**: Tests were failing because patient context was lost between test steps, causing "No rows found" or "Only Synthea consents are visible" errors.
+
+**Solution**: Re-establish patient context at the beginning of each test that needs it:
+```javascript
+// Re-establish patient context in each test
+browser.execute(function(testIdentifier) {
+  if (typeof Session !== 'undefined' && typeof Patients !== 'undefined') {
+    let patient = Patients.findOne({'identifier.value': testIdentifier});
+    if (!patient) {
+      patient = Patients.findOne({
+        $or: [
+          { 'name.0.text': { $regex: 'John.*Doe' } },
+          { 'name.0.family': 'Doe' },
+          { 'name.0.given.0': 'John' }
+        ]
+      });
+    }
+    if (patient) {
+      Session.set('selectedPatientId', patient._id);
+      Session.set('selectedPatient', patient);
+      return { success: true, patientId: patient._id };
+    }
+  }
+  return { success: false };
+}, ['test-patient-' + timestamp]);
+```
+
+### Search-Based Test Pattern
+**Problem**: Complex row-finding logic was unreliable with multiple test runs and varying data.
+
+**Solution**: Use search functionality to filter the list before interacting with rows:
+```javascript
+// Search for specific test record
+browser
+  .waitForElementVisible('#consentSearchInput', 5000)
+  .clearValue('#consentSearchInput')
+  .setValue('#consentSearchInput', testConsent.patientName)
+  .pause(1000);
+
+// Then click the first row after filtering
+browser.execute(function() {
+  const rows = document.querySelectorAll('#consentsTable tbody tr');
+  if (rows.length > 0) {
+    rows[0].click();
+    return { clicked: true };
+  }
+  return { clicked: false };
+});
+```
+
+### JavaScript Closure Issues in Tables
+**Problem**: "Cannot read properties of undefined (reading '_id')" error when clicking table rows.
+
+**Solution**: Use block-scoped variables to capture values at iteration time:
+```javascript
+// Bad - closure issue
+for (var i = 0; i < consentsToRender.length; i++) {
+  rows.push(
+    <TableRow onClick={() => handleRowClick(consentsToRender[i]._id)}>
+  );
+}
+
+// Good - proper closure handling
+for (let i = 0; i < consentsToRender.length; i++) {
+  const currentConsent = consentsToRender[i];
+  const consentId = currentConsent._id;
+  rows.push(
+    <TableRow onClick={() => handleRowClick(consentId)}>
+  );
+}
+```
+
+### Subscription Pattern for Detail Components
+**Problem**: Detail page showed empty fields when navigating directly via URL.
+
+**Solution**: Add subscription in detail components to ensure data loads:
+```javascript
+// Subscribe to consents and track subscription status
+const isSubscriptionReady = useTracker(function(){
+  let autoPublishEnabled = get(Meteor, 'settings.public.defaults.autopublish', false);
+  let handle;
+  if(autoPublishEnabled){
+    handle = Meteor.subscribe('autopublish.Consents', {}, {});
+  } else {
+    handle = Meteor.subscribe('consents.all');
+  }
+  return handle.ready();
+}, []);
+
+// Load data when subscription is ready
+useEffect(() => {
+  if (id && isSubscriptionReady) {
+    const existingConsent = Consents.findOne({_id: id});
+    if (existingConsent) {
+      setConsent(existingConsent);
+      setIsEditing(false);
+    }
+  }
+}, [id, isSubscriptionReady]);
+```
+
+### Native Select Handling in Tests
+**Problem**: Material-UI Select components with native prop require different handling than non-native selects.
+
+**Solution**: Set value directly and dispatch change event:
+```javascript
+browser.execute(function(value) {
+  const selectElement = document.querySelector('#statusSelect');
+  if (selectElement) {
+    selectElement.value = value;
+    selectElement.dispatchEvent(new Event('change', { bubbles: true }));
+    return true;
+  }
+  return false;
+}, [updatedConsent.status]);
+```
+
+### Button Text Context Awareness
+**Problem**: Save button text changes based on context (new vs edit).
+
+**Solution**: Check for appropriate button text:
+```javascript
+// In ConsentDetail.jsx
+{id ? 'Update' : 'Save'} Consent
+
+// In tests, look for the right text
+if (button.textContent.includes('Update')) {
+  button.click();
+  return true;
+}
+```
+
+### Delete Button Visibility
+**Problem**: Delete button was being looked for in edit mode, but it's only visible in view mode.
+
+**Solution**: Click delete button directly without entering edit mode first:
+```javascript
+// Delete button is visible in view mode, not edit mode
+browser
+  .waitForElementVisible('#consentDetailPage', 5000)
+  .execute(function() {
+    const buttons = document.querySelectorAll('button');
+    for (let button of buttons) {
+      if (button.textContent.includes('Delete')) {
+        button.click();
+        return true;
+      }
+    }
+  })
+  .pause(500)
+  .acceptAlert(); // Handle confirmation dialog
+```
+
+### FhirDehydrator Category Display
+**Problem**: Test was looking for category code but table displays the text value.
+
+**Solution**: Understand how FhirDehydrator transforms data:
+```javascript
+// FhirDehydrator.js
+if(has(document, 'category[0].text')){
+  result.category = get(document, 'category[0].text')
+} else {
+  result.category = get(document, 'category[0].coding[0].display', '')
+}
+
+// Test expects display text, not code
+const expectedCategoryDisplay = 'Research information access';
+browser.assert.ok(result.value.tableText.includes(expectedCategoryDisplay));
+```
+
+### Search Filter in Page Component
+**Problem**: Need to add search functionality with proper query building.
+
+**Solution**: Implement search with MongoDB query operators:
+```javascript
+if(searchFilter && searchFilter.length > 0) {
+  const searchQuery = {
+    $or: [
+      {'_id': searchFilter},
+      {'id': searchFilter},
+      {'status': {$regex: searchFilter, $options: 'i'}},
+      {'category.0.coding.0.display': {$regex: searchFilter, $options: 'i'}},
+      {'category.0.coding.0.code': {$regex: searchFilter, $options: 'i'}},
+      {'patient.display': {$regex: searchFilter, $options: 'i'}}
+    ]
+  };
+}
+```
+
+### Test Data Persistence
+**Problem**: Updated test data (notes field) made it harder to find records in subsequent tests.
+
+**Solution**: Search for multiple possible values:
+```javascript
+const searchStrings = [
+  `Test consent created at ${timestamp}`,
+  `Test consent updated at ${timestamp}`
+];
+
+for (let searchString of searchStrings) {
+  const consentDoc = Consents.findOne({
+    'note.0.text': { $regex: searchString }
+  });
+  if (consentDoc) {
+    consentId = consentDoc._id;
+    break;
+  }
+}
+```
+
+### Summary of Debugging Best Practices
+
+1. **Always re-establish Session context** in tests after navigation
+2. **Use search to filter lists** before clicking rows in tests
+3. **Handle both create and update scenarios** for button text
+4. **Understand component lifecycle** - when is data available vs when is UI rendered
+5. **Use proper variable scoping** in loops to avoid closure issues
+6. **Add subscriptions in detail components** for direct URL navigation
+7. **Test native selects differently** than Material-UI portal-based selects
+8. **Know which mode (view/edit) components are in** for different operations
+9. **Build flexible search queries** that handle multiple possible values
+10. **Understand data transformations** between FHIR format and display format
