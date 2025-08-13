@@ -211,23 +211,39 @@ describe('Questionnaires CRUD Operations', function() {
       console.log('Edit mode check:', result.value);
     });
 
-    // Fill form fields using helper functions
+    // Fill form fields directly
     browser
-      .fillMaterialUIField('#title', testQuestionnaire.title)
-      .fillMaterialUIField('#name', testQuestionnaire.name)
-      .fillMaterialUIField('#publisher', testQuestionnaire.publisher)
-      .selectMaterialUIOption('#status', testQuestionnaire.status)
-      .fillMaterialUIField('#version', testQuestionnaire.version)
-      .fillMaterialUIField('#description', testQuestionnaire.description)
-      .fillMaterialUIField('#purpose', testQuestionnaire.purpose)
-      .fillMaterialUIField('#approvalDate', testQuestionnaire.approvalDate)
-      .fillMaterialUIField('#lastReviewDate', testQuestionnaire.lastReviewDate)
-      .fillMaterialUIField('#effectivePeriodStart', testQuestionnaire.effectiveStart)
-      .fillMaterialUIField('#effectivePeriodEnd', testQuestionnaire.effectiveEnd)
-      .fillMaterialUIField('#subjectType', testQuestionnaire.subjectType)
-      .fillMaterialUIField('#codeCode', testQuestionnaire.code)
-      .fillMaterialUIField('#codeDisplay', testQuestionnaire.codeDisplay)
-      .fillMaterialUIField('#notesTextarea', testQuestionnaire.notes)
+      .clearValue('#title')
+      .setValue('#title', testQuestionnaire.title)
+      .clearValue('#name')
+      .setValue('#name', testQuestionnaire.name)
+      .clearValue('#publisher')
+      .setValue('#publisher', testQuestionnaire.publisher)
+      .click('#status')
+      .pause(100)
+      .click(`option[value="${testQuestionnaire.status}"]`)
+      .clearValue('#version')
+      .setValue('#version', testQuestionnaire.version)
+      .clearValue('#description')
+      .setValue('#description', testQuestionnaire.description)
+      .clearValue('#purpose')
+      .setValue('#purpose', testQuestionnaire.purpose)
+      .clearValue('#approvalDate')
+      .setValue('#approvalDate', testQuestionnaire.approvalDate)
+      .clearValue('#lastReviewDate')
+      .setValue('#lastReviewDate', testQuestionnaire.lastReviewDate)
+      .clearValue('#effectivePeriodStart')
+      .setValue('#effectivePeriodStart', testQuestionnaire.effectiveStart)
+      .clearValue('#effectivePeriodEnd')
+      .setValue('#effectivePeriodEnd', testQuestionnaire.effectiveEnd)
+      .clearValue('#subjectType')
+      .setValue('#subjectType', testQuestionnaire.subjectType)
+      .clearValue('#codeCode')
+      .setValue('#codeCode', testQuestionnaire.code)
+      .clearValue('#codeDisplay')
+      .setValue('#codeDisplay', testQuestionnaire.codeDisplay)
+      .clearValue('#notesTextarea')
+      .setValue('#notesTextarea', testQuestionnaire.notes)
       .saveScreenshot('tests/nightwatch/screenshots/questionnaires/04-questionnaire-form-filled.png');
 
     // Click Save button
@@ -248,7 +264,7 @@ describe('Questionnaires CRUD Operations', function() {
       });
 
     browser
-      .waitForLoadingComplete()
+      .pause(2000)
       .waitForElementVisible('#questionnairesTable', 10000)
       .saveScreenshot('tests/nightwatch/screenshots/questionnaires/05-questionnaire-created.png');
   });
@@ -327,11 +343,17 @@ describe('Questionnaires CRUD Operations', function() {
       });
 
     browser
-      .clearAndSetValue('#title', updatedQuestionnaire.title)
-      .selectMaterialUIOption('#status', updatedQuestionnaire.status)
-      .clearAndSetValue('#version', updatedQuestionnaire.version)
-      .clearAndSetValue('#lastReviewDate', updatedQuestionnaire.lastReviewDate)
-      .clearAndSetValue('#notesTextarea', updatedQuestionnaire.notes)
+      .clearValue('#title')
+      .setValue('#title', updatedQuestionnaire.title)
+      .click('#status')
+      .pause(100)
+      .click(`option[value="${updatedQuestionnaire.status}"]`)
+      .clearValue('#version')
+      .setValue('#version', updatedQuestionnaire.version)
+      .clearValue('#lastReviewDate')
+      .setValue('#lastReviewDate', updatedQuestionnaire.lastReviewDate)
+      .clearValue('#notesTextarea')
+      .setValue('#notesTextarea', updatedQuestionnaire.notes)
       .saveScreenshot('tests/nightwatch/screenshots/questionnaires/08-updated-questionnaire-form.png');
 
     browser
@@ -349,7 +371,7 @@ describe('Questionnaires CRUD Operations', function() {
       });
 
     browser
-      .waitForLoadingComplete()
+      .pause(2000)
       .url('http://localhost:3000/questionnaires')
       .waitForElementVisible('#questionnairesTable', 5000)
       .saveScreenshot('tests/nightwatch/screenshots/questionnaires/09-questionnaire-updated.png');
@@ -432,12 +454,10 @@ describe('Questionnaires CRUD Operations', function() {
       });
 
     // Accept the delete confirmation alert
-    // We know from the error message that an alert appears, so we can accept it directly
+    // Accept the delete confirmation alert
     browser
-      .acceptAlert();
-
-    // Wait for any loading to complete
-    browser.waitForLoadingComplete();
+      .acceptAlert()
+      .pause(2000);
 
     // Navigate back to list if we're still on detail page
     browser.execute(function() {

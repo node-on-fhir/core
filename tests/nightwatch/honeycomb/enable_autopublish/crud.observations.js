@@ -378,34 +378,11 @@ describe('Observations CRUD Operations', function() {
       .setValue('#notesTextarea', testObservation.notes)
       .pause(500);
 
-    // Also use execute method as fallback
-    browser.execute(function(observation) {
-      function setFieldValue(selector, value) {
-        const field = document.querySelector(selector);
-        if (field) {
-          const nativeInputValueSetter = Object.getOwnPropertyDescriptor(
-            window.HTMLInputElement.prototype, 
-            'value'
-          ).set;
-          nativeInputValueSetter.call(field, value);
-          
-          const inputEvent = new Event('input', { bubbles: true });
-          field.dispatchEvent(inputEvent);
-          
-          const changeEvent = new Event('change', { bubbles: true });
-          field.dispatchEvent(changeEvent);
-          
-          console.log(`Set ${selector} to:`, value);
-          return true;
-        } else {
-          console.warn(`Field ${selector} not found`);
-          return false;
-        }
-      }
-      
-      const results = {};
-      
-      // Ensure patient display is set
+    // Removed the native setter approach as it causes "Illegal invocation" errors
+    // The setValue calls above are sufficient for setting form values
+    
+    // Just ensure patient display is set if needed
+    browser.execute(function() {
       const patientField = document.querySelector('#patientDisplay');
       if (patientField && !patientField.value) {
         const selectedPatient = Session.get('selectedPatient');
@@ -418,21 +395,16 @@ describe('Observations CRUD Operations', function() {
                         `${selectedPatient.name[0].given?.join(' ') || ''} ${selectedPatient.name[0].family || ''}`.trim();
           }
           if (patientName) {
-            results.patientDisplay = setFieldValue('#patientDisplay', patientName);
+            patientField.value = patientName;
+            patientField.dispatchEvent(new Event('input', { bubbles: true }));
+            patientField.dispatchEvent(new Event('change', { bubbles: true }));
+            return { patientSet: true, patientName: patientName };
           }
         }
       }
-      
-      results.loincCode = setFieldValue('#loincCode', observation.loincCode);
-      results.loincDisplay = setFieldValue('#loincDisplay', observation.loincDisplay);
-      results.valueQuantity = setFieldValue('#valueQuantity', observation.valueQuantity);
-      results.unit = setFieldValue('#unit', observation.unit);
-      results.effectiveDate = setFieldValue('#effectiveDate', observation.effectiveDate);
-      results.notesTextarea = setFieldValue('#notesTextarea', observation.notes);
-      
-      return { filled: true, results: results };
-    }, [testObservation], function(result) {
-      console.log('Form fields filled:', result.value);
+      return { patientSet: false };
+    }, [], function(result) {
+      console.log('Patient field check:', result.value);
     });
 
     // Handle Material-UI Select components
