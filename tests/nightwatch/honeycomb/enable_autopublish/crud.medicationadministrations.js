@@ -647,7 +647,7 @@ describe('MedicationAdministrations CRUD Operations', function() {
             console.log('Collection check:', dataResult.value);
             
             // If we have data but it's not showing, that's a subscription issue
-            if (dataResult.value.count > 0) {
+            if (dataResult.value && dataResult.value.count > 0) {
               browser.assert.ok(true, 'Medication administration saved (found in collection)');
             } else {
               // Otherwise just verify we're on the right page

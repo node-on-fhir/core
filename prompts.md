@@ -105,3 +105,10 @@ Okay, let's turn our attention to the SupplyDeliveries CRUD pattern, on the /sup
 
 I believe in you.  We've done a lot of these CRUD patterns already.  You can do this.
 ```
+
+
+```
+> I'm noticing that we didn't search for the patient John Doe.  Please do the following:  in crud.condtions.js, we want to follow the crud.allergyintolerances.js pattern, and inject the test patient John Doe in step #2 AFTER we navigate to /conditions; we then want to search for the patient John Doe in steps #5 and #8.
+
+  Then, we want to go to the files, and add a search bar on the ConditionsPage, which ties to the subscription, and updates the server side publication, to search for the patient.reference or subject.reference.  Refer to the AllergyIntolerances or Procedures pattern as needed.  There is a FhirUtilities.addPatientFilterToQuery() function that we use for this.
+```

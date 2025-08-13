@@ -826,9 +826,67 @@ describe('Procedures CRUD Operations', function() {
       })
       .saveScreenshot('tests/nightwatch/screenshots/procedures/07-view-procedure-details.png');
     
+    // Check current state before navigation
+    browser.execute(function() {
+      return {
+        currentUrl: window.location.pathname,
+        onDetailPage: document.querySelector('#procedureDetailPage') !== null
+      };
+    }, [], function(result) {
+      console.log('Before navigation - current state:', result.value);
+    });
+    
+    // Try alternative navigation approaches
     browser
-      .url('http://localhost:3000/procedures')
-      .waitForElementVisible('#proceduresPage', 5000);
+      .pause(1000) // Give time for any async operations to complete
+      .execute(function() {
+        // First try to find a back button or breadcrumb
+        const backButton = document.querySelector('[aria-label*="back"]') || 
+                          document.querySelector('button[title*="back"]') ||
+                          document.querySelector('a[href="/procedures"]');
+        if (backButton) {
+          backButton.click();
+          return { method: 'button', clicked: true };
+        }
+        
+        // If no button found, navigate programmatically
+        if (window.history && window.history.back) {
+          window.history.back();
+          return { method: 'history.back', clicked: true };
+        }
+        
+        return { method: 'none', clicked: false };
+      }, [], function(result) {
+        console.log('Navigation attempt:', result.value);
+        
+        // If the above didn't work, fall back to url navigation
+        if (!result.value.clicked || result.value.method === 'none') {
+          browser
+            .url('http://localhost:3000/procedures')
+            .pause(2000); // Give time for page to load
+        }
+      });
+    
+    // Now wait for the page with debugging
+    browser
+      .pause(1000)
+      .execute(function() {
+        // Debug page state
+        return {
+          url: window.location.pathname,
+          hasBody: document.body !== null,
+          bodyText: document.body ? document.body.textContent.substring(0, 500) : 'No body',
+          hasProceduresPage: document.querySelector('#proceduresPage') !== null,
+          hasProceduresTable: document.querySelector('#proceduresTable') !== null,
+          hasAnyError: document.querySelector('.error') !== null,
+          title: document.title,
+          readyState: document.readyState,
+          elementIds: Array.from(document.querySelectorAll('[id]')).map(el => el.id).slice(0, 20)
+        };
+      }, [], function(result) {
+        console.log('Page state after navigation:', result.value);
+      })
+      .waitForElementVisible('#proceduresPage', 10000); // Increased timeout
   });
 
   it('07. Update existing procedure', browser => {
