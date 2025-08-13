@@ -111,6 +111,9 @@ jobs:
         type: string
       test-files:
         type: string
+      disable-auto-login:
+        type: boolean
+        default: false
     docker:
       - image: cimg/node:20.11.0-browsers
         environment:
@@ -183,6 +186,12 @@ jobs:
           name: Start Meteor
           background: true
           command: |
+            # Set DEV_AUTO_LOGIN based on parameter
+            if [ "<< parameters.disable-auto-login >>" = "true" ]; then
+              export DEV_AUTO_LOGIN=false
+              export DEV_AUTO_USERNAME=""
+              export DEV_AUTO_PASSWORD=""
+            fi
             meteor run --settings configs/settings.honeycomb.tdd.json
       
       - run:
@@ -269,6 +278,7 @@ workflows:
           name: test-accounts
           group-name: accounts
           test-files: "tests/nightwatch/honeycomb/default/accounts.login.js tests/nightwatch/honeycomb/default/accounts.signup.js tests/nightwatch/honeycomb/default/accounts.viewports.js"
+          disable-auto-login: true
       
       - test-group:
           name: test-patient-management

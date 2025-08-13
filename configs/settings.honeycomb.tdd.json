@@ -136,6 +136,9 @@
     "modules": {
       "PatientDirectory": true,
       "apps": {},
+      "accounts": {
+        "enabled": true
+      },
       "fhir": {
         "AllergyIntolerances": true,
         "AuditEvents": true,

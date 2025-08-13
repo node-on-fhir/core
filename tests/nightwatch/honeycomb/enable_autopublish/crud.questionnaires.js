@@ -4,10 +4,15 @@ const testUtils = require('./shared-test-utils');
 
 describe('Questionnaires CRUD Operations', function() {
   const timestamp = Date.now();
+  
+  // IMPORTANT: The publisher field is automatically populated with the logged-in user
+  // when creating a new questionnaire. In our test environment, this is 'janedoe'.
+  // The publisher in testQuestionnaire is what we would attempt to enter, but it will
+  // be overridden by the application.
   const testQuestionnaire = {
     title: `Health Assessment Form ${timestamp}`,
     name: `health-assessment-${timestamp}`,
-    publisher: `Test Publisher ${timestamp}`,
+    publisher: `Test Publisher ${timestamp}`, // This will be overridden by 'janedoe'
     status: 'active',
     version: '1.0.0',
     description: 'A comprehensive health assessment questionnaire',
@@ -211,17 +216,40 @@ describe('Questionnaires CRUD Operations', function() {
       console.log('Edit mode check:', result.value);
     });
 
+    // Wait for form to become editable
+    browser
+      .pause(1000);
+
     // Fill form fields directly
     browser
       .clearValue('#title')
       .setValue('#title', testQuestionnaire.title)
       .clearValue('#name')
       .setValue('#name', testQuestionnaire.name)
-      .clearValue('#publisher')
-      .setValue('#publisher', testQuestionnaire.publisher)
-      .click('#status')
-      .pause(100)
-      .click(`option[value="${testQuestionnaire.status}"]`)
+      // Skip publisher field - it's auto-populated with the logged-in user
+      // .clearValue('#publisher')
+      // .setValue('#publisher', testQuestionnaire.publisher)
+      
+      // Handle Material-UI Select for status
+      .execute(function(status) {
+        const statusSelect = document.querySelector('#status');
+        if (statusSelect) {
+          // Click to open dropdown
+          statusSelect.click();
+          
+          // Wait for dropdown to render and select option
+          setTimeout(function() {
+            const options = document.querySelectorAll('li[role="option"]');
+            for (let option of options) {
+              if (option.getAttribute('data-value') === status || option.textContent === status) {
+                option.click();
+                break;
+              }
+            }
+          }, 300);
+        }
+      }, [testQuestionnaire.status])
+      .pause(500) // Wait for select to close
       .clearValue('#version')
       .setValue('#version', testQuestionnaire.version)
       .clearValue('#description')
@@ -296,7 +324,8 @@ describe('Questionnaires CRUD Operations', function() {
       .waitForElementVisible('#questionnaireDetailPage', 5000)
       .assert.valueContains('#title', testQuestionnaire.title)
       .assert.valueContains('#name', testQuestionnaire.name)
-      .assert.valueContains('#publisher', testQuestionnaire.publisher)
+      // IMPORTANT: The publisher is automatically set to the current logged-in user
+      .assert.valueContains('#publisher', 'janedoe') // Auto-populated publisher
       .assert.valueContains('#version', testQuestionnaire.version)
       .saveScreenshot('tests/nightwatch/screenshots/questionnaires/07-questionnaire-details.png');
   });
