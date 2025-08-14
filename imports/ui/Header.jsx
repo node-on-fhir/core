@@ -30,6 +30,7 @@ import { FhirUtilities } from '../FhirUtilities';
 import { logger } from '../Logger';
 
 import { useNavigate } from "react-router-dom";
+import { useTheme as useMuiTheme } from '@mui/material/styles';
 // import { history, useTheme } from './App';
 
 // import { useNavigation } from './NavigationContext';
@@ -81,6 +82,7 @@ function Header({ drawerIsOpen, handleDrawerOpen, lastUpdated }) {
 
   const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
+  const muiTheme = useMuiTheme();
 
   // if(typeof logger === "undefined"){
   //   logger = logger;
@@ -439,9 +441,9 @@ function Header({ drawerIsOpen, handleDrawerOpen, lastUpdated }) {
             sx={{ mr: 2 }}
             onClick={handleClickHomeButton}
           >
-            <MenuIcon color="standard" />
+            <MenuIcon sx={{ color: muiTheme.palette.text.primary }} />
           </IconButton>
-          <Typography id="headerTitle" variant="h6" component="div" sx={{ flexGrow: 1 }} color="standard.main">
+          <Typography id="headerTitle" variant="h6" component="div" sx={{ flexGrow: 1, color: muiTheme.palette.text.primary }}>
           { parseTitle() || get(Meteor, 'settings.public.title', 'Honeycomb') }
           </Typography>
           <IconButton  
@@ -449,18 +451,20 @@ function Header({ drawerIsOpen, handleDrawerOpen, lastUpdated }) {
             aria-label="Toggle theme"
             title={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
           >
-            {theme === 'light' ? <Brightness4Icon color="standard" /> : <Brightness7Icon color="standard" />}
+            {theme === 'light' ? <Brightness4Icon sx={{ color: muiTheme.palette.text.primary }} /> : <Brightness7Icon sx={{ color: muiTheme.palette.text.primary }} />}
           </IconButton>
           {/* Clear patient button for testing */}
           {selectedPatient && (
             <Button 
-              color="standard" 
+              sx={{ 
+                color: muiTheme.palette.text.primary,
+                mx: 1 
+              }} 
               onClick={() => {
                 console.log('Clearing selected patient');
                 Session.set('selectedPatient', null);
                 Session.set('selectedPatientId', null);
               }}
-              sx={{ mx: 1 }}
             >
               Clear Patient
             </Button>
@@ -476,7 +480,7 @@ function Header({ drawerIsOpen, handleDrawerOpen, lastUpdated }) {
                 {currentUser.username || currentUser.emails?.[0]?.address}
               </Typography>
               <Button 
-                color="standard" 
+                sx={{ color: muiTheme.palette.text.primary }} 
                 name="logout"
                 id="logout"
                 onClick={() => {
@@ -495,7 +499,7 @@ function Header({ drawerIsOpen, handleDrawerOpen, lastUpdated }) {
               </Button>
             </>
           ) : (
-            <Button color="standard" onClick={() => navigate('/login')}>Login</Button>
+            <Button sx={{ color: muiTheme.palette.text.primary }} onClick={() => navigate('/login')}>Login</Button>
           )}
         </Toolbar>
       </AppBar>

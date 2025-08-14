@@ -121,14 +121,17 @@ const InvisibleCard = styled(Card)({
 // Helper Components
 
 let DynamicSpacer;
+let useTheme;
 Meteor.startup(function(){
   DynamicSpacer = Meteor.DynamicSpacer;
+  useTheme = Meteor.useTheme;
 })
 
 
 
 function GettingStartedPage(props){
   const navigate = useNavigate();
+  const { theme } = useTheme();
   
   // Track if accounts are enabled
   const accountsEnabled = useTracker(() => {
@@ -508,7 +511,7 @@ function GettingStartedPage(props){
               
               <AceEditor
                 mode="json"
-                theme={get(Meteor, 'settings.public.defaults.darkroom', false) ? "monokai" : "github"}
+                theme={theme === 'dark' ? "monokai" : "github"}
                 name="settings-editor"
                 value={JSON.stringify(settings, null, 2)}
                 onChange={(newValue) => {

@@ -12,7 +12,8 @@ import {
   Divider,
   Alert,
   IconButton,
-  InputAdornment
+  InputAdornment,
+  useTheme
 } from '@mui/material';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 
@@ -36,6 +37,7 @@ function MyProfilePage(props) {
   const [error, setError] = useState();
   const [successMessage, setSuccessMessage] = useState('');
   const navigate = useNavigate();
+  const theme = useTheme();
   
   // Subscribe to current user data
   useTracker(() => {
@@ -328,7 +330,7 @@ function MyProfilePage(props) {
           />
         </Box>
       ) : (
-        <Paper elevation={3} sx={{ p: 2, mb: 3, textAlign: 'center', backgroundColor: 'grey.50' }}>
+        <Paper elevation={3} sx={{ p: 2, mb: 3, textAlign: 'center', backgroundColor: theme.palette.mode === 'dark' ? 'background.paper' : 'grey.50' }}>
           <Typography variant="body2" color="text.secondary">
             No patient record linked to your account. 
             <Button 
@@ -404,8 +406,8 @@ function MyProfilePage(props) {
           <Typography variant="h6" gutterBottom>
             API Usage Example
           </Typography>
-          <Box sx={{ backgroundColor: 'grey.100', p: 2, borderRadius: 1, fontFamily: 'monospace' }}>
-            <Typography variant="body2" component="pre" sx={{ whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
+          <Box sx={{ backgroundColor: theme.palette.mode === 'dark' ? 'grey.900' : 'grey.100', p: 2, borderRadius: 1, fontFamily: 'monospace' }}>
+            <Typography variant="body2" component="pre" sx={{ whiteSpace: 'pre-wrap', wordBreak: 'break-all', color: theme.palette.mode === 'dark' ? 'grey.100' : 'inherit' }}>
 {`# Get a specific Patient record:
 curl -H "session:${accountsAccessToken}" \\
   http://localhost:3000/baseR4/Patient/${get(currentUser, 'patientId', 'patient-id')}
