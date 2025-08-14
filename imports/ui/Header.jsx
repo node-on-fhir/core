@@ -431,7 +431,14 @@ function Header({ drawerIsOpen, handleDrawerOpen, lastUpdated }) {
 
   return (
     <Box id="header" sx={{ flexShrink: 0, zIndex: 1000 }}>
-      <AppBar id="headerContent" position="static" >
+      <AppBar 
+        id="headerContent" 
+        position="static" 
+        sx={{ 
+          backgroundColor: muiTheme.palette.appbar?.main || muiTheme.palette.primary.main,
+          color: muiTheme.palette.appbar?.contrastText || muiTheme.palette.primary.contrastText
+        }}
+      >
         <Toolbar>
           <IconButton
             id="sidebarMenuButton"
@@ -441,9 +448,9 @@ function Header({ drawerIsOpen, handleDrawerOpen, lastUpdated }) {
             sx={{ mr: 2 }}
             onClick={handleClickHomeButton}
           >
-            <MenuIcon sx={{ color: muiTheme.palette.text.primary }} />
+            <MenuIcon sx={{ color: muiTheme.palette.appbar?.contrastText || muiTheme.palette.primary.contrastText }} />
           </IconButton>
-          <Typography id="headerTitle" variant="h6" component="div" sx={{ flexGrow: 1, color: muiTheme.palette.text.primary }}>
+          <Typography id="headerTitle" variant="h6" component="div" sx={{ flexGrow: 1, color: muiTheme.palette.appbar?.contrastText || muiTheme.palette.primary.contrastText }}>
           { parseTitle() || get(Meteor, 'settings.public.title', 'Honeycomb') }
           </Typography>
           <IconButton  
@@ -451,13 +458,13 @@ function Header({ drawerIsOpen, handleDrawerOpen, lastUpdated }) {
             aria-label="Toggle theme"
             title={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
           >
-            {theme === 'light' ? <Brightness4Icon sx={{ color: muiTheme.palette.text.primary }} /> : <Brightness7Icon sx={{ color: muiTheme.palette.text.primary }} />}
+            {theme === 'light' ? <Brightness4Icon sx={{ color: muiTheme.palette.appbar?.contrastText || muiTheme.palette.primary.contrastText }} /> : <Brightness7Icon sx={{ color: muiTheme.palette.appbar?.contrastText || muiTheme.palette.primary.contrastText }} />}
           </IconButton>
           {/* Clear patient button for testing */}
           {selectedPatient && (
             <Button 
               sx={{ 
-                color: muiTheme.palette.text.primary,
+                color: muiTheme.palette.appbar?.contrastText || muiTheme.palette.primary.contrastText,
                 mx: 1 
               }} 
               onClick={() => {
@@ -476,11 +483,11 @@ function Header({ drawerIsOpen, handleDrawerOpen, lastUpdated }) {
           */}
           {(console.log('currentUser in render:', currentUser), currentUser) ? (
             <>
-              <Typography variant="body2" sx={{ mr: 2 }}>
+              <Typography variant="body2" sx={{ mr: 2, color: muiTheme.palette.appbar?.contrastText || muiTheme.palette.primary.contrastText }}>
                 {currentUser.username || currentUser.emails?.[0]?.address}
               </Typography>
               <Button 
-                sx={{ color: muiTheme.palette.text.primary }} 
+                sx={{ color: muiTheme.palette.appbar?.contrastText || muiTheme.palette.primary.contrastText }} 
                 name="logout"
                 id="logout"
                 onClick={() => {
