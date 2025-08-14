@@ -1357,10 +1357,6 @@ function GettingStartedPage(props){
     }}>
       <Grid container spacing={3} justify="center" style={{paddingBottom: '80px'}}>
           <Grid item xs={12} justify="center">
-            <br />
-            <h2 >
-              Welcome!  Let's get building some sort of space-aged healthcare app.
-            </h2>
           </Grid>
 
           { setupChecklistElements }

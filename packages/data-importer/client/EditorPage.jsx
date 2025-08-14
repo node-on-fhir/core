@@ -1,3 +1,4 @@
+// /Volumes/SonicMagic/Code/honeycomb-public-release/packages/data-importer/client/EditorPage.jsx
 // https://www.npmjs.com/package/react-dropzone-component
 // http://www.dropzonejs.com/import { 
 
@@ -155,7 +156,7 @@ let defaultResource = {
 
 export function EditorPage(props){
 
-  const { theme, toggleTheme } = useTheme();
+  const { theme } = useTheme();
 
   const [showPreviewData, setShowPreviewData] = useState(false);
 
@@ -563,7 +564,7 @@ export function EditorPage(props){
     }, null, 2))
   }
   return(
-    <div id="EditorPage" style={{height: window.innerHeight, "paddingBottom": "128px", "overflow": "scroll" }}>
+    <div id="EditorPage" style={{height: window.innerHeight, paddingBottom: "128px", overflow: "scroll", backgroundColor: theme.palette.mode === 'dark' ? theme.palette.background.default : '#f6f6f6' }}>
 
         <Grid container spacing={8} justify="center">
           <Grid item md={3}>
@@ -591,10 +592,10 @@ export function EditorPage(props){
           </Grid>
           <Grid item md={6} style={{width: '100%'}}>
             <CardHeader title="Data Editor" style={{cursor: 'pointer'}}  />
-            <Card style={{height: window.innerHeight - 300}} width={cardWidth + 'px'}>
+            <Card style={{height: window.innerHeight - 300, backgroundColor: theme.palette.mode === 'dark' ? theme.palette.background.paper : '#ffffff'}} width={cardWidth + 'px'}>
               <AceEditor
                 mode="json"
-                theme={theme === 'light' ? "tomorrow" : "monokai"}
+                theme={theme.palette.mode === 'light' ? "tomorrow" : "monokai"}
                 wrapEnabled={true}
                 onChange={onChange}
                 name="aceEditor"
