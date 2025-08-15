@@ -133,6 +133,14 @@ export function PatientSidebar(props){
   // }
   
   const navigate = useNavigate();
+  
+  // Make the sidebar reactive to settings changes
+  const reactiveSettings = useTracker(() => {
+    // This will cause re-render when settings are updated
+    Session.get('settingsRefreshRequest');
+    // Return reactive settings from Session, or fall back to Meteor.settings
+    return Session.get('Meteor.settings.public') || get(Meteor, 'settings.public', {});
+  });
   // let styles = useStyles();
 
   let collectionCounts = {
@@ -893,7 +901,7 @@ export function PatientSidebar(props){
   let drawDataMgmDivider = false;
   
   // Patient Chart
-  if(get(Meteor, 'settings.public.defaults.sidebar.menuItems.PatientChart', true)){
+  if(get(Meteor, 'settings.public.defaults.sidebar.menuItems.PatientChart', false)){
     drawDataMgmDivider = true;
     dataManagementElements.push(<ListItem id='patientChartItem' key='patientChartItem' button onClick={function(){ openPage('/patient-chart'); }} >
       <ListItemIcon >
@@ -987,7 +995,7 @@ export function PatientSidebar(props){
   // About
 
   let aboutElements = [];
-  if(get(Meteor, 'settings.public.defaults.sidebar.menuItems.About')){
+  if(get(reactiveSettings, 'defaults.sidebar.menuItems.About', true) && get(reactiveSettings, 'businessPages.about.enabled', false)){
       aboutElements.push(<ListItem id='aboutItem' key='aboutItem' button onClick={function(){ openPage('/about'); }} >
         <ListItemIcon >
           <Icon icon={info} />
@@ -1029,7 +1037,7 @@ export function PatientSidebar(props){
   // Privacy
 
   let privacyElements = [];
-  if(get(Meteor, 'settings.public.defaults.sidebar.menuItems.Privacy')){
+  if(get(reactiveSettings, 'defaults.sidebar.menuItems.Privacy', true) && get(reactiveSettings, 'businessPages.privacy.enabled', false)){
       privacyElements.push(<ListItem id='privacyItem' key='privacyItem' button onClick={function(){ openPage('/privacy'); }} >
         <ListItemIcon >
           <Icon icon={documentIcon} />
@@ -1043,8 +1051,8 @@ export function PatientSidebar(props){
   // TermsAndConditions
 
   let termsAndConditionElements = [];
-  if(get(Meteor, 'settings.public.defaults.sidebar.menuItems.TermsAndConditions')){
-    termsAndConditionElements.push(<ListItem id='termsItem' key='termsItem' button onClick={function(){ openPage('/terms-and-conditions'); }} >
+  if(get(reactiveSettings, 'defaults.sidebar.menuItems.TermsAndConditions', true) && get(reactiveSettings, 'businessPages.terms.enabled', false)){
+    termsAndConditionElements.push(<ListItem id='termsItem' key='termsItem' button onClick={function(){ openPage('/terms'); }} >
       <ListItemIcon >
         <Icon icon={documentIcon} />
       </ListItemIcon>

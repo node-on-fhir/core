@@ -53,6 +53,28 @@ import OAuthClientsPage from '../ui-vault-server/OAuthClientsPage.jsx';
 import FhirBasePage from './pages/FhirBasePage.jsx';
 import SwaggerPage from '../ui-vault-server/SwaggerPage.jsx';
 
+// Business page components - with package override support
+let AboutPage, EulaPage, PrivacyPage, SupportPage, TermsPage;
+
+// Check if the static-pages package is installed and exports override components
+if (Package['myorg:static-pages']) {
+  // Use package-provided pages if available
+  const staticPages = Package['myorg:static-pages'];
+  AboutPage = staticPages.AboutPage || require('./pages/AboutPage.jsx').default;
+  EulaPage = staticPages.EulaPage || require('./pages/EulaPage.jsx').default;
+  PrivacyPage = staticPages.PrivacyPage || require('./pages/PrivacyPage.jsx').default;
+  SupportPage = staticPages.SupportPage || require('./pages/SupportPage.jsx').default;
+  TermsPage = staticPages.TermsPage || require('./pages/TermsPage.jsx').default;
+} else {
+  // Use default pages
+  const businessPages = require('./pages/index.business.js');
+  AboutPage = businessPages.AboutPage;
+  EulaPage = businessPages.EulaPage;
+  PrivacyPage = businessPages.PrivacyPage;
+  SupportPage = businessPages.SupportPage;
+  TermsPage = businessPages.TermsPage;
+}
+
 // Account components (conditionally loaded)
 import { LoginPage } from '../accounts/client/pages/LoginPage';
 import { RegisterPage } from '../accounts/client/pages/RegisterPage';
@@ -489,6 +511,43 @@ let dynamicRoutes = [
     element: <SwaggerPage />
   }  
 ]
+
+// Business/Legal page routes
+if(get(Meteor, 'settings.public.businessPages.privacy.enabled')){
+  dynamicRoutes.push({
+    path: "/privacy",
+    element: <PrivacyPage />
+  })
+}
+if(get(Meteor, 'settings.public.businessPages.terms.enabled')){
+  dynamicRoutes.push({
+    path: "/terms",
+    element: <TermsPage />
+  })
+  // Also support the legacy route
+  dynamicRoutes.push({
+    path: "/terms-and-conditions",
+    element: <TermsPage />
+  })
+}
+if(get(Meteor, 'settings.public.businessPages.eula.enabled')){
+  dynamicRoutes.push({
+    path: "/eula",
+    element: <EulaPage />
+  })
+}
+if(get(Meteor, 'settings.public.businessPages.support.enabled')){
+  dynamicRoutes.push({
+    path: "/support",
+    element: <SupportPage />
+  })
+}
+if(get(Meteor, 'settings.public.businessPages.about.enabled')){
+  dynamicRoutes.push({
+    path: "/about",
+    element: <AboutPage />
+  })
+}
 
 
 
@@ -1438,7 +1497,7 @@ export const CustomThemeProvider = ({ children }) => {
     const isDark = mode === 'dark';
     
     // Get core color settings - let MUI handle the dark/light variants
-    const primaryColor = get(Meteor, "settings.public.theme.palette.primaryColor", "rgb(108, 183, 110)");
+    const primaryColor = get(Meteor, "settings.public.theme.palette.primaryColor", "rgb(158, 158, 158)");
     const secondaryColor = get(Meteor, "settings.public.theme.palette.secondaryColor", "#fdb813");
     const errorColor = get(Meteor, "settings.public.theme.palette.errorColor", "rgb(128,20,60)");
     

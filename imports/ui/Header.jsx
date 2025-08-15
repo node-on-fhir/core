@@ -102,6 +102,11 @@ function Header({ drawerIsOpen, handleDrawerOpen, lastUpdated }) {
   // ------------------------------------------------------------
   // Trackers
 
+  // Make the header reactive to settings changes
+  const settingsRefresh = useTracker(() => {
+    return Session.get('settingsRefreshRequest');
+  });
+
   let selectedStartDate;
   let selectedEndDate;
   let useDateRangeInQueries;
