@@ -271,6 +271,8 @@ jobs:
             # Clear local Meteor build cache
             rm -rf .meteor/local
             echo "Cleared .meteor/local directory"
+            # Also clear npm cache to ensure fresh packages
+            npm cache clean --force
       
       - run:
           name: Verify code changes
@@ -286,7 +288,10 @@ jobs:
       
       - run:
           name: Install dependencies
-          command: meteor npm install
+          command: |
+            echo "Installing npm dependencies..."
+            meteor npm install --verbose
+            echo "npm install completed successfully"
       
       - run:
           name: Start Meteor
@@ -302,9 +307,7 @@ jobs:
             echo "Starting Meteor at $(date)..."
             # Add signal handling and verbose output
             trap 'echo "Received signal at $(date)"; exit' SIGTERM SIGINT
-            meteor run --settings configs/settings.honeycomb.tdd.json --verbose 2>&1 | while read line; do 
-              echo "[$(date +%H:%M:%S)] $line"
-            done
+            meteor run --settings configs/settings.honeycomb.tdd.json 2>&1 | tee meteor.log
       
       - run:
           name: Wait for Meteor
