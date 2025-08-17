@@ -190,7 +190,7 @@ export function CarePlansPage(props){
 
   function handleAddCarePlan(){
     console.log('Add Care Plan button clicked');
-    navigate('/care-plans/new');
+    navigate('/careplans/new');
   }
 
   function handleSortOrderChange(event, newOrder){
@@ -303,7 +303,7 @@ export function CarePlansPage(props){
             CarePlans._collection.remove({_id: selectedId})
           }}
           onRowClick={function(carePlanId){
-            navigate('/care-plans/' + carePlanId);
+            navigate('/careplans/' + carePlanId);
           }}
           onSetPage={function(index){
             Session.set('CarePlansTable.carePlansIndex', index)

@@ -1002,7 +1002,9 @@ describe('Consents CRUD Operations', function() {
   });
 
   it('07. Update existing consent', browser => {
+    // Navigate back to consents list page first
     browser
+      .url('http://localhost:3000/consents')
       .waitForElementVisible('#consentsPage', 5000)
       .pause(1000);
 
