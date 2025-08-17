@@ -29,6 +29,53 @@ let defaultSearchParams = [
   }]
 
 const MetadataServerMethods = {
+  getJwkSet: function(){
+    console.log('getJwkSet()');
+    
+    // Check if we have JWK configuration in settings
+    let jwkConfig = get(Meteor, 'settings.private.jwk');
+    
+    if (jwkConfig && jwkConfig.keys) {
+      // If JWK keys are directly configured
+      return {
+        keys: jwkConfig.keys
+      };
+    }
+    
+    // Generate JWK from X.509 certificate if available
+    let x509privateKey = get(Meteor, 'settings.private.x509.privateKey');
+    let x509publicCert = get(Meteor, 'settings.private.x509.publicCertPem');
+    
+    if (x509privateKey && x509publicCert) {
+      try {
+        // Parse the certificate
+        let certDer = forge.util.decode64(x509publicCert.replace(/-----BEGIN CERTIFICATE-----/, '').replace(/-----END CERTIFICATE-----/, '').replace(/\s/g, ''));
+        let cert = pki.certificateFromAsn1(forge.asn1.fromDer(certDer));
+        let publicKey = cert.publicKey;
+        
+        // Convert to JWK format
+        let jwk = {
+          kty: "RSA",
+          use: "sig",
+          kid: get(Meteor, 'settings.private.jwk.keyId', Random.id()),
+          alg: "RS256",
+          n: forge.util.encode64(publicKey.n.toByteArray(), true),
+          e: forge.util.encode64(publicKey.e.toByteArray(), true)
+        };
+        
+        return {
+          keys: [jwk]
+        };
+      } catch (error) {
+        console.error('Error converting certificate to JWK:', error);
+      }
+    }
+    
+    // Return empty key set if no keys available
+    return {
+      keys: []
+    };
+  },
   getCapabilityStatement: function(){
     console.log('getCapabilityStatement()');
 
@@ -193,6 +240,9 @@ const MetadataServerMethods = {
       "introspection_endpoint": Meteor.absoluteUrl() + get(Meteor, 'settings.private.fhir.security.revokeEndpoint', "authorizations/introspect"),
       "registration_endpoint": Meteor.absoluteUrl() + get(Meteor, 'settings.private.fhir.security.registrationEndpoint', "oauth/registration"),
       "revocation_endpoint": Meteor.absoluteUrl() + get(Meteor, 'settings.private.fhir.security.revokeEndpoint', "authorizations/revoke"),
+      
+      // JWK Set URL for Epic SMART v2
+      "jwks_uri": Meteor.absoluteUrl() + ".well-known/jwks.json",
 
       // custom fields
       "message": "smart config!"
@@ -329,6 +379,22 @@ WebApp.handlers.get("/.well-known/udap", async (req, res) => {
   let returnPayload = MetadataServerMethods.getWellKnownUdapConfiguration()
   if(process.env.TRACE){
     console.log('return payload', returnPayload);
+  }
+
+  res.json(returnPayload);
+});
+
+// JWK Set endpoint for Epic SMART v2
+WebApp.handlers.get("/.well-known/jwks.json", async (req, res) => {
+
+  console.log("GET /.well-known/jwks.json");
+
+  res.setHeader('Content-type', 'application/json');
+  res.setHeader("Access-Control-Allow-Origin", "*");
+
+  let returnPayload = MetadataServerMethods.getJwkSet()
+  if(process.env.TRACE || process.env.DEBUG_OAUTH){
+    console.log('JWK Set return payload:', JSON.stringify(returnPayload, null, 2));
   }
 
   res.json(returnPayload);

@@ -611,18 +611,22 @@ WebApp.handlers.get("/oauth/authorize", async (req, res) => {
 
   console.log("GET /oauth/authorize");
 
+  if (process.env.DEBUG_OAUTH) {
+    console.log("===================== OAUTH DEBUG START =====================");
+    console.log("Headers:", JSON.stringify(req.headers, null, 2));
+    console.log("Query Params:", JSON.stringify(req.query, null, 2));
+    console.log("Body:", JSON.stringify(req.body, null, 2));
+    console.log("State:", get(req.query, 'state'));
+    console.log("Response Type:", get(req.query, 'response_type'));
+    console.log("Code Challenge:", get(req.query, 'code_challenge'));
+    console.log("Code Challenge Method:", get(req.query, 'code_challenge_method'));
+    console.log("===================== OAUTH DEBUG END =====================");
+  }
+
   saveToInboundTrafficLog(req);
 
   res.setHeader('Content-type', 'application/json');
   res.setHeader("Access-Control-Allow-Origin", "*");
-
-  console.log("")
-  console.log("Query")
-  console.log(req.query)
-  console.log("")
-  console.log("Body")
-  console.log(req.body)
-  console.log("")
 
   let redirectUri = get(req, 'query.redirect_uri') || get(req, 'body.redirect_uri');
   let clientId = get(req, 'query.client_id') || get(req, 'body.client_id');
@@ -686,6 +690,18 @@ WebApp.handlers.get("/oauth/authorize", async (req, res) => {
 
 WebApp.handlers.post("/oauth/token", async (req, res) => {
   console.log("POST /oauth/token");
+  
+  if (process.env.DEBUG_OAUTH) {
+    console.log("===================== OAUTH DEBUG START =====================");
+    console.log("Headers:", JSON.stringify(req.headers, null, 2));
+    console.log("Query Params:", JSON.stringify(req.query, null, 2));
+    console.log("Body:", JSON.stringify(req.body, null, 2));
+    console.log("Grant Type:", get(req.body, 'grant_type'));
+    console.log("Client Assertion Type:", get(req.body, 'client_assertion_type'));
+    console.log("Client Assertion present:", !!get(req.body, 'client_assertion'));
+    console.log("Authorization Code:", get(req.query, 'code') || get(req.body, 'code'));
+    console.log("===================== OAUTH DEBUG END =====================");
+  }
 
   saveToInboundTrafficLog(req);
 
