@@ -84,7 +84,7 @@ parameters:
         {
           "name": "administrative",
           "tests": [
-            "tests/nightwatch/honeycomb/enable_autopublish/crud.locations.js"
+            "tests/nightwatch/honeycomb/enable_autopublish/crud.locations.js",
             "tests/nightwatch/honeycomb/enable_autopublish/crud.devices.js",
             "tests/nightwatch/honeycomb/enable_autopublish/crud.consents.js",
             "tests/nightwatch/honeycomb/enable_autopublish/crud.supplydeliveries.js"
