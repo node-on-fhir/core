@@ -140,7 +140,6 @@ import {
 } from '../ui-pages';
 
 // ConsentsPage is now in ui-pages export
-// TODO: Create these components
 import DiagnosticReportsPage from '../ui-fhir/diagnosticReports/DiagnosticReportsPage';
 import DiagnosticReportDetail from '../ui-fhir/diagnosticReports/DiagnosticReportDetail';
 import ImagingStudiesPage from '../ui-fhir/imagingStudies/ImagingStudiesPage';
@@ -199,9 +198,6 @@ import {
 
 // ConsentDetail is now in ui-details export
 // TODO: Create these detail components
-// import DiagnosticReportDetail from '../ui-fhir/diagnosticReports/DiagnosticReportDetail';
-// import ImagingStudyDetail from '../ui-fhir/imagingStudies/ImagingStudyDetail';
-// import ScheduleDetail from '../ui-fhir/schedules/ScheduleDetail';
 // import MediaDetail from '../ui-fhir/medias/MediaDetail';
 import SupplyDeliveryDetail from '../ui-fhir/supplyDeliveries/SupplyDeliveryDetail';
 
@@ -715,16 +711,6 @@ if(get(Meteor, 'settings.public.modules.fhir.Conditions')){
   })
 }
 if(get(Meteor, 'settings.public.modules.fhir.DiagnosticReports')){
-  console.log('DiagnosticReports module is enabled, adding routes...');
-  console.log('DiagnosticReportsPage component:', DiagnosticReportsPage);
-  console.log('DiagnosticReportDetail component:', DiagnosticReportDetail);
-  
-  if (!DiagnosticReportsPage) {
-    console.error('DiagnosticReportsPage is undefined!');
-  }
-  if (!DiagnosticReportDetail) {
-    console.error('DiagnosticReportDetail is undefined!');
-  }
   
   dynamicRoutes.push({
     path: "/diagnostic-reports",
@@ -738,7 +724,6 @@ if(get(Meteor, 'settings.public.modules.fhir.DiagnosticReports')){
     path: "/diagnostic-reports/:id",
     element: <DiagnosticReportDetail />
   })
-  console.log('DiagnosticReports routes added successfully');
 }
 if(get(Meteor, 'settings.public.modules.fhir.Devices')){
   console.log('Devices module is enabled, adding routes...');
@@ -1008,21 +993,6 @@ if(get(Meteor, 'settings.public.modules.fhir.Consents')){
   })
 }
 
-// TODO: Create these components before uncommenting routes
-// if(get(Meteor, 'settings.public.modules.fhir.DiagnosticReports')){
-//   dynamicRoutes.push({
-//     path: "/diagnostic-reports",
-//     element: <DiagnosticReportsPage />
-//   })
-//   dynamicRoutes.push({
-//     path: "/diagnostic-reports/new",
-//     element: <DiagnosticReportDetail />
-//   })
-//   dynamicRoutes.push({
-//     path: "/diagnostic-reports/:id",
-//     element: <DiagnosticReportDetail />
-//   })
-// }
 if(get(Meteor, 'settings.public.modules.fhir.ImagingStudies')){
   dynamicRoutes.push({
     path: "/imaging-studies",
