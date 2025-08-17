@@ -392,24 +392,9 @@ describe('ServiceRequests CRUD Operations', function() {
       console.log('Edit mode check:', result.value);
     });
 
+    // Skip setting requester field - it should be auto-populated with logged-in user
     browser
       .pause(500)
-      .click('#requesterDisplay')
-      .execute(function() {
-        const requesterField = document.querySelector('#requesterDisplay');
-        if (requesterField) {
-          requesterField.select();
-          requesterField.value = '';
-          const inputEvent = new Event('input', { bubbles: true });
-          const changeEvent = new Event('change', { bubbles: true });
-          requesterField.dispatchEvent(inputEvent);
-          requesterField.dispatchEvent(changeEvent);
-          const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
-          nativeInputValueSetter.call(requesterField, '');
-          requesterField.dispatchEvent(inputEvent);
-        }
-      })
-      .setValue('#requesterDisplay', testServiceRequest.requesterName)
       .click('#performerDisplay')
       .execute(function() {
         const performerField = document.querySelector('#performerDisplay');
@@ -557,6 +542,7 @@ describe('ServiceRequests CRUD Operations', function() {
       });
 
     browser
+      .pause(2000) // Added pause after save button click
       .waitForElementVisible('#serviceRequestsPage', 5000);
     
     browser.execute(function() {

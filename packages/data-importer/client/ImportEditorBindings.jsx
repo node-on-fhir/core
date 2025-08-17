@@ -23,7 +23,8 @@ import {
   TablePagination,
   Select,
   MenuItem,
-  InputLabel
+  InputLabel,
+  useTheme as useMuiTheme
 } from '@mui/material';
 
 // import DropzoneComponent from 'react-dropzone-component';
@@ -73,8 +74,10 @@ import PapaParse from 'papaparse';
 
 
 let DynamicSpacer;
+let useTheme;
 Meteor.startup(function(){
   DynamicSpacer = Meteor.DynamicSpacer;
+  useTheme = Meteor.useTheme;
 })
 
 var myDropzone;
@@ -281,6 +284,8 @@ Session.setDefault('mappingAlgorithm', 1);
 // MAIN COMPONENT
 
 export function ImportEditorBindings(props){
+  const { theme: themeMode } = useTheme();
+  const muiTheme = useMuiTheme();
 
   const navigate = useNavigate();
 
@@ -1596,7 +1601,7 @@ export function ImportEditorBindings(props){
     position: 'relative', 
     top: '-8px', 
     cursor: 'pointer', 
-    color: theme.primaryColor
+    color: muiTheme.palette.primary.main
   }
 
 
@@ -1658,7 +1663,7 @@ export function ImportEditorBindings(props){
     columnWidth = 3;
     previewDataContent = <Grid item md={12} lg={columnWidth} style={{width: '100%'}}>
       <CardHeader title="Step 2.1 - Preview Data" style={{cursor: 'pointer'}} onClick={ setShowPreviewData.bind(this, false)} />
-      <Card style={{height: window.innerHeight - 300}} width={cardWidth + 'px'}>
+      <Card style={{height: window.innerHeight - 300, backgroundColor: muiTheme.palette.mode === 'dark' ? muiTheme.palette.background.paper : '#ffffff'}} width={cardWidth + 'px'}>
         <PreviewDataCard
           readyToImport={readyToImport}
           progressMax={importQueueLength}
@@ -1722,7 +1727,7 @@ export function ImportEditorBindings(props){
           <Grid item md={12} lg={columnWidth} style={{width: '100%'}}>
             <CardHeader title="Step 1 - File Scanner" />
           
-            <Card width={cardWidth + 'px'}>              
+            <Card width={cardWidth + 'px'} style={{backgroundColor: muiTheme.palette.mode === 'dark' ? muiTheme.palette.background.paper : '#ffffff'}}>              
               <CardContent>        
                 <Button 
                   id='selectFileButton'
@@ -1770,7 +1775,7 @@ export function ImportEditorBindings(props){
           </Grid>
           <Grid item md={12} lg={columnWidth} style={{width: '100%'}}>
             <CardHeader title="Step 2 - Raw Data" style={{cursor: 'pointer'}} onClick={ setShowPreviewData.bind(this, true)} />
-            <Card style={{height: window.innerHeight - 300}} width={cardWidth + 'px'}>
+            <Card style={{height: window.innerHeight - 300, backgroundColor: muiTheme.palette.mode === 'dark' ? muiTheme.palette.background.paper : '#ffffff'}} width={cardWidth + 'px'}>
               <DataEditor
                 previewMode={showPreviewData}
                 readyToImport={readyToImport}
@@ -1791,7 +1796,7 @@ export function ImportEditorBindings(props){
           { previewDataContent }
           <Grid item md={12} lg={columnWidth} style={{width: '100%'}} key="last-grid-item">
             <CardHeader title="Step 3 - Collection Preview" />
-            <Card style={{marginBottom: '20px'}} width={cardWidth + 'px'}>
+            <Card style={{marginBottom: '20px', backgroundColor: muiTheme.palette.mode === 'dark' ? muiTheme.palette.background.paper : '#ffffff'}} width={cardWidth + 'px'}>
                 <CardContent>
                   <InputLabel id="import-algorithm-label">Import Algorithm</InputLabel>
                   <Select

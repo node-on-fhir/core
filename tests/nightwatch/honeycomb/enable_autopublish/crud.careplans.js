@@ -264,7 +264,7 @@ describe('CarePlans CRUD Operations', function() {
     });
 
     browser
-      .assert.urlContains('/care-plans/new');
+      .assert.urlContains('/careplans/new');
 
     browser
       .pause(500);

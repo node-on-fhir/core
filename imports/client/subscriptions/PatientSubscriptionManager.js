@@ -7,41 +7,50 @@ import { get } from 'lodash';
 import FhirUtilities from '../../lib/FhirUtilities';
 
 // Define all FHIR resources that contain PHI and need patient-specific subscriptions
+// Ordered by priority - most critical resources first
 const PHI_RESOURCES = [
-  // Clinical Resources
-  'AllergyIntolerances',
-  'CarePlans', 
-  'CareTeams',
+  // Critical Clinical Resources (load first)
   'Conditions',
-  'Encounters',
-  'Goals',
-  'Immunizations',
+  'AllergyIntolerances',
   'Medications',
+  'MedicationRequests',
+  
+  // Important Clinical Resources
+  'Procedures',
+  'Encounters',
+  'Immunizations',
+  'DiagnosticReports',
+  'CarePlans',
+  
+  // Care Coordination
+  'CareTeams',
+  'Goals',
+  'ServiceRequests',
+  'Appointments',
+  
+  // Medication Management
   'MedicationStatements',
   'MedicationAdministrations',
-  'MedicationRequests',
-  'Observations',
-  'Procedures',
   
-  // Documents
+  // Documents (can be large, load later)
   'DocumentReferences',
   'Compositions',
   'QuestionnaireResponses',
   
-  // Other PHI Resources
-  'ServiceRequests',
+  // Other Resources (lowest priority)
   'Communications',
   'Consents',
-  'DiagnosticReports',
   'ImagingStudies',
   'FamilyMemberHistories',
   'DeviceRequests',
   'DeviceUsageStatements',
   'ClinicalImpressions',
   'RiskAssessments',
-  'Appointments',
   'AppointmentResponses',
-  'Tasks'
+  'Tasks',
+  
+  // Observations (can be very large, load last)
+  'Observations'
 ];
 
 class PatientSubscriptionManager {
@@ -75,15 +84,22 @@ class PatientSubscriptionManager {
       const patientQuery = FhirUtilities.addPatientFilterToQuery(patientId);
       console.log('PatientSubscriptionManager: Patient query:', patientQuery);
       
-      // Subscribe to each PHI resource
-      PHI_RESOURCES.forEach(resourceName => {
+      // Subscribe to each PHI resource in an orderly fashion
+      const subscribeToResources = (resources, index = 0) => {
+        if (index >= resources.length) {
+          console.log(`PatientSubscriptionManager: Completed activating ${this.subscriptions.size} subscriptions`);
+          return;
+        }
+        
+        const resourceName = resources[index];
+        
         try {
           let handle;
           
           if (autoPublishEnabled) {
             // Use autopublish pattern
             const publicationName = `autopublish.${resourceName}`;
-            console.log(`PatientSubscriptionManager: Subscribing to ${publicationName}`);
+            console.log(`PatientSubscriptionManager: Subscribing to ${publicationName} (${index + 1}/${resources.length})`);
             
             handle = Meteor.subscribe(publicationName, patientQuery, { 
               limit: 1000,
@@ -109,20 +125,34 @@ class PatientSubscriptionManager {
           if (handle) {
             this.subscriptions.set(resourceName, handle);
             
-            // Log when subscription is ready
-            Tracker.autorun(() => {
+            // Wait for subscription to be ready before proceeding to next
+            Tracker.autorun((computation) => {
               if (handle.ready()) {
                 console.log(`PatientSubscriptionManager: ${resourceName} subscription ready`);
+                computation.stop();
+                
+                // Small delay before next subscription to avoid overwhelming the server
+                Meteor.setTimeout(() => {
+                  subscribeToResources(resources, index + 1);
+                }, 50); // 50ms delay between subscriptions
               }
             });
+          } else {
+            // If no handle, continue to next resource
+            subscribeToResources(resources, index + 1);
           }
           
         } catch (error) {
           console.error(`PatientSubscriptionManager: Error subscribing to ${resourceName}:`, error);
+          // Continue with next resource even if this one fails
+          Meteor.setTimeout(() => {
+            subscribeToResources(resources, index + 1);
+          }, 50);
         }
-      });
+      };
       
-      console.log(`PatientSubscriptionManager: Activated ${this.subscriptions.size} subscriptions`);
+      // Start the subscription chain
+      subscribeToResources(PHI_RESOURCES);
     });
   }
 

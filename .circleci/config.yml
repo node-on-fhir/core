@@ -84,7 +84,7 @@ parameters:
         {
           "name": "administrative",
           "tests": [
-            "tests/nightwatch/honeycomb/enable_autopublish/crud.locations.js"
+            "tests/nightwatch/honeycomb/enable_autopublish/crud.locations.js",
             "tests/nightwatch/honeycomb/enable_autopublish/crud.devices.js",
             "tests/nightwatch/honeycomb/enable_autopublish/crud.consents.js",
             "tests/nightwatch/honeycomb/enable_autopublish/crud.supplydeliveries.js"
@@ -143,9 +143,89 @@ jobs:
     parallelism: 1  # Ensure we're not trying to parallelize within the job
     
     steps:
-      - browser-tools/install-chrome
-      - browser-tools/install-chromedriver
       - checkout
+      
+      - run:
+          name: Install Chrome with retry
+          command: |
+            # Update package lists with retry
+            for i in {1..3}; do
+              echo "Attempt $i to update package lists..."
+              sudo apt-get update && break || sleep 10
+            done
+            
+            # Install Chrome dependencies and tools
+            sudo apt-get install -y wget gnupg jq unzip curl
+            
+            # Add Chrome repository
+            wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
+            echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" | sudo tee /etc/apt/sources.list.d/google-chrome.list
+            
+            # Update again and install Chrome with retry
+            for i in {1..3}; do
+              echo "Attempt $i to install Chrome..."
+              sudo apt-get update && sudo apt-get install -y google-chrome-stable && break || {
+                echo "Failed attempt $i, cleaning apt cache..."
+                sudo apt-get clean
+                sudo rm -rf /var/lib/apt/lists/*
+                sleep 10
+              }
+            done
+            
+            # Verify installation
+            google-chrome --version || {
+              echo "Chrome installation failed!"
+              exit 1
+            }
+      
+      - run:
+          name: Install ChromeDriver
+          command: |
+            # Get Chrome version
+            CHROME_VERSION=$(google-chrome --version | awk '{print $3}')
+            echo "Chrome version: $CHROME_VERSION"
+            
+            # Use Chrome for Testing endpoints for newer Chrome versions
+            CHROME_MAJOR=$(echo $CHROME_VERSION | cut -d'.' -f1)
+            
+            if [ "$CHROME_MAJOR" -ge "115" ]; then
+              # Use new Chrome for Testing API
+              echo "Using Chrome for Testing API for Chrome $CHROME_MAJOR"
+              
+              # Get the latest ChromeDriver version for this Chrome version
+              CHROMEDRIVER_URL=$(curl -s "https://googlechromelabs.github.io/chrome-for-testing/known-good-versions-with-downloads.json" | \
+                jq -r ".versions[] | select(.version | startswith(\"$CHROME_VERSION\")) | .downloads.chromedriver[] | select(.platform==\"linux64\") | .url" | \
+                head -n 1)
+              
+              if [ -z "$CHROMEDRIVER_URL" ]; then
+                # Fallback to latest stable
+                echo "Exact version not found, using latest stable ChromeDriver"
+                CHROMEDRIVER_URL=$(curl -s "https://googlechromelabs.github.io/chrome-for-testing/last-known-good-versions-with-downloads.json" | \
+                  jq -r '.channels.Stable.downloads.chromedriver[] | select(.platform=="linux64") | .url')
+              fi
+              
+              echo "Downloading ChromeDriver from: $CHROMEDRIVER_URL"
+              wget -q "$CHROMEDRIVER_URL" -O chromedriver.zip
+              unzip -q chromedriver.zip
+              sudo mv chromedriver-linux64/chromedriver /usr/local/bin/
+            else
+              # Use old API for older Chrome versions
+              echo "Using legacy ChromeDriver API for Chrome $CHROME_MAJOR"
+              CHROMEDRIVER_VERSION=$(curl -s "https://chromedriver.storage.googleapis.com/LATEST_RELEASE_$CHROME_MAJOR")
+              echo "Installing ChromeDriver version: $CHROMEDRIVER_VERSION"
+              
+              wget -q "https://chromedriver.storage.googleapis.com/$CHROMEDRIVER_VERSION/chromedriver_linux64.zip"
+              unzip -q chromedriver_linux64.zip
+              sudo mv chromedriver /usr/local/bin/
+            fi
+            
+            sudo chmod +x /usr/local/bin/chromedriver
+            
+            # Verify installation
+            chromedriver --version || {
+              echo "ChromeDriver installation failed!"
+              exit 1
+            }
       
       - run:
           name: Verify Chrome and ChromeDriver
@@ -177,18 +257,55 @@ jobs:
       - run:
           name: Install Meteor
           command: |
+            # Clear any existing Meteor installation
+            rm -rf ~/.meteor
+            # Install fresh Meteor
             curl https://install.meteor.com/?release=3.3 | sh
             echo 'export PATH="$HOME/.meteor:$PATH"' >> $BASH_ENV
             source $BASH_ENV
             sudo ln -sf $HOME/.meteor/meteor /usr/local/bin/meteor
       
       - run:
+          name: Clear Meteor build cache
+          command: |
+            # Clear local Meteor build cache
+            rm -rf .meteor/local
+            echo "Cleared .meteor/local directory"
+            # Also clear npm cache to ensure fresh packages
+            npm cache clean --force
+      
+      - run:
+          name: Verify code changes
+          command: |
+            echo "Checking for @uiw/color-convert in package.json..."
+            grep -q "@uiw/color-convert" package.json && echo "✓ Found @uiw/color-convert" || echo "✗ Missing @uiw/color-convert"
+            
+            echo "Checking for business pages import in App.jsx..."
+            grep -q "from './pages/index.business.js'" imports/ui/App.jsx && echo "✓ Found business pages import" || echo "✗ Missing business pages import"
+            
+            echo "Checking DiagnosticReport REST config..."
+            grep -A5 '"DiagnosticReport"' configs/settings.honeycomb.tdd.json | grep -q '"interactions"' && echo "✓ Found DiagnosticReport REST config" || echo "✗ Missing DiagnosticReport REST config"
+      
+      - run:
           name: Install dependencies
-          command: meteor npm install
+          command: |
+            echo "Installing npm dependencies..."
+            meteor npm install --verbose
+            echo "npm install completed successfully"
+      
+      - run:
+          name: Pre-build Meteor packages
+          command: |
+            echo "Pre-building Meteor packages..."
+            # This will download and compile packages without starting the server
+            timeout 600 meteor build --directory /tmp/build-test || true
+            rm -rf /tmp/build-test
+            echo "Pre-build completed"
       
       - run:
           name: Start Meteor
           background: true
+          no_output_timeout: 30m
           command: |
             # Set DEV_AUTO_LOGIN based on parameter
             if [ "<< parameters.disable-auto-login >>" = "true" ]; then
@@ -196,7 +313,11 @@ jobs:
               export DEV_AUTO_USERNAME=""
               export DEV_AUTO_PASSWORD=""
             fi
-            meteor run --settings configs/settings.honeycomb.tdd.json
+            echo "Starting Meteor at $(date)..."
+            # Add signal handling and verbose output
+            trap 'echo "Received signal at $(date)"; exit' SIGTERM SIGINT
+            # Run Meteor with explicit settings
+            exec meteor run --settings configs/settings.honeycomb.tdd.json --port 3000
       
       - run:
           name: Wait for Meteor

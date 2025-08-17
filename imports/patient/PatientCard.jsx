@@ -249,7 +249,7 @@ function PatientCard({
       sx={{ 
         width: '100%',
         background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.05)} 0%, ${alpha(theme.palette.primary.main, 0.02)} 100%)`,
-        backgroundColor: 'rgba(255, 255, 255, 0.95)',
+        backgroundColor: theme.palette.mode === 'dark' ? alpha(theme.palette.background.paper, 0.95) : 'rgba(255, 255, 255, 0.95)',
         border: `1px solid ${theme.palette.divider}`,
         boxShadow: theme.shadows[1],
         mb: 0,

@@ -53,6 +53,15 @@ import OAuthClientsPage from '../ui-vault-server/OAuthClientsPage.jsx';
 import FhirBasePage from './pages/FhirBasePage.jsx';
 import SwaggerPage from '../ui-vault-server/SwaggerPage.jsx';
 
+// Business page components
+import { 
+  AboutPage, 
+  EulaPage, 
+  PrivacyPage, 
+  SupportPage, 
+  TermsPage 
+} from './pages/index.business.js';
+
 // Account components (conditionally loaded)
 import { LoginPage } from '../accounts/client/pages/LoginPage';
 import { RegisterPage } from '../accounts/client/pages/RegisterPage';
@@ -118,7 +127,6 @@ import {
 } from '../ui-pages';
 
 // ConsentsPage is now in ui-pages export
-// TODO: Create these components
 import DiagnosticReportsPage from '../ui-fhir/diagnosticReports/DiagnosticReportsPage';
 import DiagnosticReportDetail from '../ui-fhir/diagnosticReports/DiagnosticReportDetail';
 import ImagingStudiesPage from '../ui-fhir/imagingStudies/ImagingStudiesPage';
@@ -177,9 +185,6 @@ import {
 
 // ConsentDetail is now in ui-details export
 // TODO: Create these detail components
-// import DiagnosticReportDetail from '../ui-fhir/diagnosticReports/DiagnosticReportDetail';
-// import ImagingStudyDetail from '../ui-fhir/imagingStudies/ImagingStudyDetail';
-// import ScheduleDetail from '../ui-fhir/schedules/ScheduleDetail';
 // import MediaDetail from '../ui-fhir/medias/MediaDetail';
 import SupplyDeliveryDetail from '../ui-fhir/supplyDeliveries/SupplyDeliveryDetail';
 
@@ -201,11 +206,8 @@ import FhirResourcesDashboard from './FhirResourcesDashboard.jsx';
 import { ThemeProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 
-import { lightTheme, darkTheme } from './Themes';
-Meteor.startup(function(){
-  Meteor.lightTheme = lightTheme;
-  Meteor.darkTheme = darkTheme;  
-})
+import { createTheme } from '@mui/material/styles';
+import { Tracker } from 'meteor/tracker';
 
 
 //===============================================================================================================
@@ -493,6 +495,43 @@ let dynamicRoutes = [
   }  
 ]
 
+// Business/Legal page routes
+if(get(Meteor, 'settings.public.businessPages.privacy.enabled')){
+  dynamicRoutes.push({
+    path: "/privacy",
+    element: <PrivacyPage />
+  })
+}
+if(get(Meteor, 'settings.public.businessPages.terms.enabled')){
+  dynamicRoutes.push({
+    path: "/terms",
+    element: <TermsPage />
+  })
+  // Also support the legacy route
+  dynamicRoutes.push({
+    path: "/terms-and-conditions",
+    element: <TermsPage />
+  })
+}
+if(get(Meteor, 'settings.public.businessPages.eula.enabled')){
+  dynamicRoutes.push({
+    path: "/eula",
+    element: <EulaPage />
+  })
+}
+if(get(Meteor, 'settings.public.businessPages.support.enabled')){
+  dynamicRoutes.push({
+    path: "/support",
+    element: <SupportPage />
+  })
+}
+if(get(Meteor, 'settings.public.businessPages.about.enabled')){
+  dynamicRoutes.push({
+    path: "/about",
+    element: <AboutPage />
+  })
+}
+
 
 
 // Account routes
@@ -659,16 +698,6 @@ if(get(Meteor, 'settings.public.modules.fhir.Conditions')){
   })
 }
 if(get(Meteor, 'settings.public.modules.fhir.DiagnosticReports')){
-  console.log('DiagnosticReports module is enabled, adding routes...');
-  console.log('DiagnosticReportsPage component:', DiagnosticReportsPage);
-  console.log('DiagnosticReportDetail component:', DiagnosticReportDetail);
-  
-  if (!DiagnosticReportsPage) {
-    console.error('DiagnosticReportsPage is undefined!');
-  }
-  if (!DiagnosticReportDetail) {
-    console.error('DiagnosticReportDetail is undefined!');
-  }
   
   dynamicRoutes.push({
     path: "/diagnostic-reports",
@@ -682,11 +711,8 @@ if(get(Meteor, 'settings.public.modules.fhir.DiagnosticReports')){
     path: "/diagnostic-reports/:id",
     element: <DiagnosticReportDetail />
   })
-  console.log('DiagnosticReports routes added successfully');
 }
 if(get(Meteor, 'settings.public.modules.fhir.Devices')){
-  console.log('Devices module is enabled, adding routes...');
-  console.log('DevicesPage component:', DevicesPage);
   dynamicRoutes.push({
     path: "/devices",
     element: <DevicesPage />
@@ -951,21 +977,6 @@ if(get(Meteor, 'settings.public.modules.fhir.Consents')){
   })
 }
 
-// TODO: Create these components before uncommenting routes
-// if(get(Meteor, 'settings.public.modules.fhir.DiagnosticReports')){
-//   dynamicRoutes.push({
-//     path: "/diagnostic-reports",
-//     element: <DiagnosticReportsPage />
-//   })
-//   dynamicRoutes.push({
-//     path: "/diagnostic-reports/new",
-//     element: <DiagnosticReportDetail />
-//   })
-//   dynamicRoutes.push({
-//     path: "/diagnostic-reports/:id",
-//     element: <DiagnosticReportDetail />
-//   })
-// }
 if(get(Meteor, 'settings.public.modules.fhir.ImagingStudies')){
   dynamicRoutes.push({
     path: "/imaging-studies",
@@ -1154,31 +1165,6 @@ dynamicRoutes.push({
 dynamicRoutes.push({
   path: "/communications/:id",
   element: <CommunicationDetail />
-})
-// Additional FHIR resources for pacio-core
-dynamicRoutes.push({
-  path: "/allergy-intolerances",
-  element: <AllergyIntolerancesPage />
-})
-dynamicRoutes.push({
-  path: "/care-plans", 
-  element: <CarePlansPage />
-})
-dynamicRoutes.push({
-  path: "/care-plans/new",
-  element: <CarePlanDetail />
-})
-dynamicRoutes.push({
-  path: "/care-plans/:id",
-  element: <CarePlanDetail />
-})
-dynamicRoutes.push({
-  path: "/conditions",
-  element: <ConditionsPage />
-})
-dynamicRoutes.push({
-  path: "/procedures",
-  element: <ProceduresPage />
 })
 
 
@@ -1434,15 +1420,114 @@ Meteor.useTheme = useTheme;
 // this Provider components enables the useTheme() hook in child components 
 export const CustomThemeProvider = ({ children }) => {
   const [theme, setTheme] = useState('light');
+  const [themeRefreshCounter, setThemeRefreshCounter] = useState(0);
 
-  const muiTheme = theme === 'light' ? lightTheme : darkTheme;
+  // Create themes dynamically based on current Meteor.settings
+  const createDynamicTheme = (mode) => {
+    const isDark = mode === 'dark';
+    
+    // Get core color settings - let MUI handle the dark/light variants
+    const primaryColor = get(Meteor, "settings.public.theme.palette.primaryColor", "rgb(158, 158, 158)");
+    const secondaryColor = get(Meteor, "settings.public.theme.palette.secondaryColor", "#fdb813");
+    const errorColor = get(Meteor, "settings.public.theme.palette.errorColor", "rgb(128,20,60)");
+    
+    // Get AppBar colors with dark mode support
+    // Light mode: defaults to primary color if not specified
+    const appBarColorLight = get(Meteor, "settings.public.theme.palette.appBarColor", primaryColor);
+    const appBarTextColorLight = get(Meteor, "settings.public.theme.palette.appBarTextColor", "#ffffff");
+    
+    // Dark mode: defaults to light mode values if not specified
+    const appBarColorDark = get(Meteor, "settings.public.theme.palette.appBarColorDark", appBarColorLight);
+    const appBarTextColorDark = get(Meteor, "settings.public.theme.palette.appBarTextColorDark", appBarTextColorLight);
+    
+    // Select the appropriate colors based on current mode
+    const appBarColor = isDark ? appBarColorDark : appBarColorLight;
+    const appBarTextColor = isDark ? appBarTextColorDark : appBarTextColorLight;
+    
+    // Get background page color with dark mode support
+    const backgroundPageColorLight = get(Meteor, "settings.public.theme.palette.backgroundPageColor", "");
+    const backgroundPageColorDark = get(Meteor, "settings.public.theme.palette.backgroundPageColorDark", backgroundPageColorLight);
+    const backgroundPageColor = isDark ? backgroundPageColorDark : backgroundPageColorLight;
+    
+    const themeConfig = {
+      palette: {
+        mode: mode,
+        primary: {
+          main: primaryColor
+        },
+        secondary: {
+          main: secondaryColor
+        },
+        error: {
+          main: errorColor
+        },
+        // Custom appbar palette
+        appbar: {
+          main: appBarColor,
+          contrastText: appBarTextColor
+        }
+      },
+      components: {
+        MuiAppBar: {
+          styleOverrides: {
+            root: {
+              backgroundColor: appBarColor,
+              color: appBarTextColor
+            },
+            colorPrimary: {
+              backgroundColor: appBarColor,
+              color: appBarTextColor
+            }
+          }
+        }
+      },
+      typography: {
+        fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
+      }
+    };
+    
+    // Add background color if specified
+    if (backgroundPageColor) {
+      themeConfig.palette.background = {
+        default: backgroundPageColor,
+        paper: isDark ? '#424242' : '#ffffff'
+      };
+    }
+    
+    return createTheme(themeConfig);
+  };
+
+  // Create theme based on current mode and settings
+  const muiTheme = useMemo(() => {
+    return createDynamicTheme(theme);
+  }, [theme, themeRefreshCounter]);
 
   const toggleTheme = () => {
     setTheme((prevTheme) => (prevTheme === 'light' ? 'dark' : 'light'));
   };
 
+  // Function to force theme refresh when settings change
+  const refreshTheme = () => {
+    setThemeRefreshCounter(prev => prev + 1);
+  };
+
+  // Listen for theme refresh requests via Session
+  useEffect(() => {
+    if(Meteor.isClient){
+      const handle = Tracker.autorun(() => {
+        const refreshRequest = Session.get('themeRefreshRequest');
+        if (refreshRequest) {
+          refreshTheme();
+          Session.set('themeRefreshRequest', false);
+        }
+      });
+      
+      return () => handle.stop();
+    }
+  }, []);
+
   return (
-    <ThemeContext.Provider value={{ theme, setTheme, toggleTheme }}>
+    <ThemeContext.Provider value={{ theme, setTheme, toggleTheme, refreshTheme }}>
       <ThemeProvider theme={muiTheme}>
         <CssBaseline />
         {children}

@@ -18,7 +18,8 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  LinearProgress
+  LinearProgress,
+  useTheme
 } from '@mui/material';
 import PropTypes from 'prop-types';
 
@@ -80,6 +81,8 @@ function PreviewDataCard(props){
   logger.debug('Rendering the PreviewDataCard');
   logger.verbose('symptomatic:data-management.client.PreviewDataCard');
   logger.data('PreviewDataCard.props', {data: props}, {source: "PreviewDataCard.jsx"});
+  
+  const theme = useTheme();
 
 
   
@@ -220,11 +223,14 @@ function PreviewDataCard(props){
           position: 'relative', 
           minHeight: '200px', 
           height: window.innerHeight - 400, 
-          backgroundColor: '#f5f5f5', 
-          borderColor: '#ccc', 
+          backgroundColor: theme.palette.mode === 'dark' ? theme.palette.grey[900] : '#f5f5f5', 
+          borderColor: theme.palette.mode === 'dark' ? theme.palette.divider : '#ccc', 
           borderRadius: '4px', 
           lineHeight: '16px', 
-          overflow: 'scroll'
+          overflow: 'scroll',
+          color: theme.palette.text.primary,
+          border: `1px solid ${theme.palette.mode === 'dark' ? theme.palette.divider : '#ccc'}`,
+          padding: '12px'
         }} 
       >
         { previewBufferContents }
