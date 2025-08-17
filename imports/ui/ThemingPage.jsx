@@ -183,13 +183,23 @@ export function ThemingPage(){
     
     // Ensure all nested paths exist
     for (let i = 0; i < pathParts.length - 1; i++) {
-      if (!current[pathParts[i]]) {
-        current[pathParts[i]] = {};
+      const part = pathParts[i];
+      if (part === "__proto__" || part === "constructor" || part === "prototype") {
+        console.error("Prototype pollution attempt blocked:", part);
+        return;
       }
-      current = current[pathParts[i]];
+      if (!current[part]) {
+        current[part] = {};
+      }
+      current = current[part];
     }
     
-    current[pathParts[pathParts.length - 1]] = value;
+    const lastPart = pathParts[pathParts.length - 1];
+    if (lastPart === "__proto__" || lastPart === "constructor" || lastPart === "prototype") {
+      console.error("Prototype pollution attempt blocked:", lastPart);
+      return;
+    }
+    current[lastPart] = value;
     console.log('New settings:', newSettings);
     setSettings(newSettings);
     
