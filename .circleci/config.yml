@@ -294,6 +294,15 @@ jobs:
             echo "npm install completed successfully"
       
       - run:
+          name: Pre-build Meteor packages
+          command: |
+            echo "Pre-building Meteor packages..."
+            # This will download and compile packages without starting the server
+            timeout 600 meteor build --directory /tmp/build-test || true
+            rm -rf /tmp/build-test
+            echo "Pre-build completed"
+      
+      - run:
           name: Start Meteor
           background: true
           no_output_timeout: 30m
@@ -307,7 +316,8 @@ jobs:
             echo "Starting Meteor at $(date)..."
             # Add signal handling and verbose output
             trap 'echo "Received signal at $(date)"; exit' SIGTERM SIGINT
-            meteor run --settings configs/settings.honeycomb.tdd.json 2>&1 | tee meteor.log
+            # Run Meteor with explicit settings
+            exec meteor run --settings configs/settings.honeycomb.tdd.json --port 3000
       
       - run:
           name: Wait for Meteor
