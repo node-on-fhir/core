@@ -944,6 +944,7 @@ if(get(Meteor, 'settings.public.modules.fhir.QuestionnaireResponses')){
   })
 }
 if(get(Meteor, 'settings.public.modules.fhir.ResearchSubjects')){
+  console.log('ResearchSubjects enabled, adding routes. ResearchSubjectsPage:', ResearchSubjectsPage);
   dynamicRoutes.push({
     path: "/research-subjects",
     element: <ResearchSubjectsPage />

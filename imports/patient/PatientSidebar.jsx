@@ -520,17 +520,17 @@ export function PatientSidebar(props){
 
 
   //----------------------------------------------------------------------
-  // FHIR Resources Page
+  // FHIR Resources Dashboard
     
   let fhirResourcesPage = [];
-  if(get(Meteor, 'settings.public.defaults.sidebar.menuItems.FhirResources')){
+  if(get(Meteor, 'settings.public.defaults.sidebar.menuItems.FhirResourcesDashboard')){
     //if(!['iPhone'].includes(window.navigator.platform)){      
       fhirResourcesPage.push(
-        <ListItem id='fhirResourcesPageItem' key='fhirResourcesPageItem' button onClick={function(){ openPage('/fhir-resources-index'); }} >
+        <ListItem id='fhirResourcesDashboardItem' key='fhirResourcesDashboardItem' button onClick={function(){ openPage('/fhir-resources-index'); }} >
           <ListItemIcon >
-            <Icon icon={fire} />
+            <Icon icon={dashboard} />
           </ListItemIcon>
-          <ListItemText primary='FHIR Resources'  />
+          <ListItemText primary='FHIR Resources Dashboard'  />
         </ListItem>
       );
 
@@ -784,6 +784,101 @@ export function PatientSidebar(props){
     logger.trace('client.app.patient.PatientSidebar.dynamicElements: ' + dynamicElements.length);
   }
 
+  //----------------------------------------------------------------------
+  // FHIR Auto Links
+  // Automatically generate links for enabled FHIR resources
+  
+  let fhirAutoLinks = [];
+  if(get(Meteor, 'settings.public.defaults.sidebar.menuItems.FhirAutoLinks')){
+    const fhirResourceMappings = {
+      AllergyIntolerances: { route: '/allergy-intolerances', icon: 'ic_fingerprint', label: 'Allergy Intolerances' },
+      Appointments: { route: '/appointments', icon: 'ic_devices', label: 'Appointments' },
+      AuditEvents: { route: '/audit-events', icon: 'documentIcon', label: 'Audit Events' },
+      Bundles: { route: '/bundles', icon: 'suitcase', label: 'Bundles' },
+      CarePlans: { route: '/care-plans', icon: 'notepad', label: 'Care Plans' },
+      CareTeams: { route: '/care-teams', icon: 'users', label: 'Care Teams' },
+      Claims: { route: '/claims', icon: 'ic_account_balance_wallet', label: 'Claims' },
+      CodeSystems: { route: '/code-systems', icon: 'list', label: 'Code Systems' },
+      Communications: { route: '/communications', icon: 'envelopeO', label: 'Communications' },
+      CommunicationRequests: { route: '/communication-requests', icon: 'envelopeO', label: 'Communication Requests' },
+      Compositions: { route: '/compositions', icon: 'documentIcon', label: 'Compositions' },
+      Conditions: { route: '/conditions', icon: 'heartbeat', label: 'Conditions' },
+      Consents: { route: '/consents', icon: 'balanceScale', label: 'Consents' },
+      Devices: { route: '/devices', icon: 'ic_devices', label: 'Devices' },
+      DiagnosticReports: { route: '/diagnostic-reports', icon: 'documentIcon', label: 'Diagnostic Reports' },
+      DocumentReferences: { route: '/document-references', icon: 'documentIcon', label: 'Document References' },
+      Encounters: { route: '/encounters', icon: 'ic_transfer_within_a_station', label: 'Encounters' },
+      Endpoints: { route: '/endpoints', icon: 'location', label: 'Endpoints' },
+      Goals: { route: '/goals', icon: 'dotCircle', label: 'Goals' },
+      HealthcareServices: { route: '/healthcare-services', icon: 'hospitalO', label: 'Healthcare Services' },
+      ImagingStudies: { route: '/imaging-studies', icon: 'erlenmeyerFlask', label: 'Imaging Studies' },
+      Immunizations: { route: '/immunizations', icon: 'eyedropper', label: 'Immunizations' },
+      InsurancePlans: { route: '/insurance-plans', icon: 'umbrella', label: 'Insurance Plans' },
+      Lists: { route: '/lists', icon: 'list', label: 'Lists' },
+      Locations: { route: '/locations', icon: 'location', label: 'Locations' },
+      Measures: { route: '/measures', icon: 'ic_playlist_add_check', label: 'Measures' },
+      MeasureReports: { route: '/measure-reports', icon: 'ic_playlist_add_check', label: 'Measure Reports' },
+      Medications: { route: '/medications', icon: 'ic_local_pharmacy', label: 'Medications' },
+      MedicationAdministrations: { route: '/medication-administrations', icon: 'ic_local_pharmacy', label: 'Medication Administrations' },
+      MedicationOrders: { route: '/medication-orders', icon: 'ic_local_pharmacy', label: 'Medication Orders' },
+      MedicationRequests: { route: '/medication-requests', icon: 'ic_local_pharmacy', label: 'Medication Requests' },
+      MedicationStatements: { route: '/medication-statements', icon: 'ic_local_pharmacy', label: 'Medication Statements' },
+      Medias: { route: '/medias', icon: 'documentIcon', label: 'Medias' },
+      Networks: { route: '/networks', icon: 'fire', label: 'Networks' },
+      NutritionOrders: { route: '/nutrition-orders', icon: 'iosNutrition', label: 'Nutrition Orders' },
+      Observations: { route: '/observations', icon: 'thermometer3', label: 'Observations' },
+      Organizations: { route: '/organizations', icon: 'hospitalO', label: 'Organizations' },
+      OrganizationAffiliations: { route: '/organization-affiliations', icon: 'hospitalO', label: 'Organization Affiliations' },
+      Patients: { route: '/patients', icon: 'user', label: 'Patients' },
+      Persons: { route: '/persons', icon: 'users', label: 'Persons' },
+      Practitioners: { route: '/practitioners', icon: 'userMd', label: 'Practitioners' },
+      PractitionerRoles: { route: '/practitioner-roles', icon: 'userMd', label: 'Practitioner Roles' },
+      Procedures: { route: '/procedures', icon: 'bath', label: 'Procedures' },
+      Provenances: { route: '/provenances', icon: 'documentIcon', label: 'Provenances' },
+      Questionnaires: { route: '/questionnaires', icon: 'ic_question_answer', label: 'Questionnaires' },
+      QuestionnaireResponses: { route: '/questionnaire-responses', icon: 'ic_question_answer', label: 'Questionnaire Responses' },
+      ResearchStudies: { route: '/research-studies', icon: 'erlenmeyerFlask', label: 'Research Studies' },
+      ResearchSubjects: { route: '/research-subjects', icon: 'users', label: 'Research Subjects' },
+      Restrictions: { route: '/restrictions', icon: 'fire', label: 'Restrictions' },
+      RiskAssessments: { route: '/risk-assessments', icon: 'ic_hearing', label: 'Risk Assessments' },
+      SearchParameters: { route: '/search-parameters', icon: 'fire', label: 'Search Parameters' },
+      ServiceRequests: { route: '/service-requests', icon: 'fire', label: 'Service Requests' },
+      StructureDefinitions: { route: '/structure-definitions', icon: 'fire', label: 'Structure Definitions' },
+      Subscriptions: { route: '/subscriptions', icon: 'fire', label: 'Subscriptions' },
+      Tasks: { route: '/tasks', icon: 'ic_playlist_add_check', label: 'Tasks' },
+      ValueSets: { route: '/value-sets', icon: 'list', label: 'Value Sets' },
+      VerificationResults: { route: '/verification-results', icon: 'ic_playlist_add_check', label: 'Verification Results' }
+    };
+
+    // Get enabled FHIR modules from settings
+    const fhirModules = get(Meteor, 'settings.public.modules.fhir', {});
+    
+    Object.keys(fhirModules).forEach(function(resourceName){
+      if(fhirModules[resourceName] && fhirResourceMappings[resourceName]){
+        const mapping = fhirResourceMappings[resourceName];
+        const icon = parseIcon(mapping.icon);
+        
+        let elementCount = 0;
+        if(collectionCounts[resourceName]){
+          elementCount = collectionCounts[resourceName];
+        }
+        
+        fhirAutoLinks.push(
+          <ListItem key={'fhir-auto-' + resourceName} button onClick={function(){ openPage(mapping.route); }} >
+            <ListItemIcon>
+              { icon }
+            </ListItemIcon>
+            <ListItemText primary={mapping.label} />
+            <Badge badgeContent={elementCount} variant="standard" max={10000} color="primary" style={{marginRight: '15px'}} />
+          </ListItem>
+        );
+      }
+    });
+    
+    if(fhirAutoLinks.length > 0){
+      fhirAutoLinks.push(<Divider key="fhir-auto-links-hr" />);
+    }
+  }
 
   //----------------------------------------------------------------------
   // Workflow Modules  
@@ -1202,6 +1297,9 @@ export function PatientSidebar(props){
       </div>
       <div id='patientDynamicElements' key='patientDynamicElements'>
         { dynamicElements }   
+      </div>
+      <div id='fhirAutoLinks' key='fhirAutoLinks'>
+        { fhirAutoLinks }   
       </div>
 
 

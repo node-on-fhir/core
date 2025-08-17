@@ -1854,16 +1854,16 @@ function GettingStartedPage(props){
                   </TableCell>
                 </TableRow>
                 
-                {/* FHIR Resources */}
+                {/* FHIR Resources Dashboard */}
                 <TableRow>
-                  <TableCell rowSpan={2} sx={{ fontWeight: 'bold', verticalAlign: 'top', backgroundColor: 'action.hover' }}>FHIR Resources</TableCell>
-                  <TableCell>FHIR Resources</TableCell>
+                  <TableCell rowSpan={3} sx={{ fontWeight: 'bold', verticalAlign: 'top', backgroundColor: 'action.hover' }}>FHIR Resources</TableCell>
+                  <TableCell>FHIR Resources Dashboard</TableCell>
                   <TableCell>FHIR resource management dashboard</TableCell>
                   <TableCell align="center">
                     <Checkbox
                       size="small"
-                      checked={get(settings, 'public.defaults.sidebar.menuItems.FhirResources', false)}
-                      onChange={(e) => updateSetting('public.defaults.sidebar.menuItems.FhirResources', e.target.checked)}
+                      checked={get(settings, 'public.defaults.sidebar.menuItems.FhirResourcesDashboard', false)}
+                      onChange={(e) => updateSetting('public.defaults.sidebar.menuItems.FhirResourcesDashboard', e.target.checked)}
                     />
                   </TableCell>
                 </TableRow>
@@ -1875,6 +1875,17 @@ function GettingStartedPage(props){
                       size="small"
                       checked={get(settings, 'public.defaults.sidebar.menuItems.FhirModules', false)}
                       onChange={(e) => updateSetting('public.defaults.sidebar.menuItems.FhirModules', e.target.checked)}
+                    />
+                  </TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell>FHIR Auto Links</TableCell>
+                  <TableCell>Auto-generate sidebar links for enabled FHIR resources</TableCell>
+                  <TableCell align="center">
+                    <Checkbox
+                      size="small"
+                      checked={get(settings, 'public.defaults.sidebar.menuItems.FhirAutoLinks', false)}
+                      onChange={(e) => updateSetting('public.defaults.sidebar.menuItems.FhirAutoLinks', e.target.checked)}
                     />
                   </TableCell>
                 </TableRow>

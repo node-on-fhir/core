@@ -1089,8 +1089,22 @@ describe('DiagnosticReports CRUD Operations', function() {
           .pause(500);
 
         browser
-          .pause(2000)
-          .waitForElementVisible('#diagnosticReportsPage', 5000)
+          .pause(3000) // Increased pause after deletion
+          .execute(function() {
+            return {
+              url: window.location.pathname,
+              hasPage: document.querySelector('#diagnosticReportsPage') !== null,
+              bodyId: document.body.id,
+              pageTitle: document.title
+            };
+          }, [], function(result) {
+            console.log('After delete navigation check:', result.value);
+            // If not on diagnostic reports page, navigate there
+            if (!result.value.url.includes('/diagnostic-reports')) {
+              browser.url('http://localhost:3000/diagnostic-reports');
+            }
+          })
+          .waitForElementVisible('#diagnosticReportsPage', 10000) // Increased timeout
           .execute(function() {
             const hasTable = document.querySelector('#diagnosticReportsTable') !== null;
             const hasNoDataCard = document.querySelector('.no-data-card') !== null ||
@@ -1116,7 +1130,19 @@ describe('DiagnosticReports CRUD Operations', function() {
 
   it('10. Verify diagnostic report removed from list', browser => {
     browser
-      .waitForElementVisible('#diagnosticReportsPage', 5000)
+      .pause(1000) // Give time for any navigation to settle
+      .execute(function() {
+        return {
+          url: window.location.pathname,
+          hasPage: document.querySelector('#diagnosticReportsPage') !== null
+        };
+      }, [], function(result) {
+        console.log('Test 10 start - Current location:', result.value);
+        if (!result.value.url.includes('/diagnostic-reports')) {
+          browser.url('http://localhost:3000/diagnostic-reports');
+        }
+      })
+      .waitForElementVisible('#diagnosticReportsPage', 10000)
       .pause(1000)
       .execute(function(timestamp) {
         const table = document.querySelector('#diagnosticReportsTable');

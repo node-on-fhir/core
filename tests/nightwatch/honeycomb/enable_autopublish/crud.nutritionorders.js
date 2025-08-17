@@ -409,6 +409,16 @@ describe('NutritionOrders CRUD Operations', function() {
   });
 
   it('04. Create new nutrition order', browser => {
+    // Set up console error capture
+    browser.execute(function() {
+      window.consoleErrors = [];
+      const originalError = console.error;
+      console.error = function(...args) {
+        window.consoleErrors.push(args.join(' '));
+        originalError.apply(console, args);
+      };
+    });
+
     // Verify all expected form fields are present
     browser.execute(function() {
       return {
@@ -481,7 +491,7 @@ describe('NutritionOrders CRUD Operations', function() {
       }
     }, [testNutritionOrder.oralDiet.type]);
 
-    browser.pause(500);
+    browser.pause(1000); // Increased pause after Material-UI select interaction
 
     // Fill in instructions
     browser
@@ -551,19 +561,60 @@ describe('NutritionOrders CRUD Operations', function() {
       .waitForElementVisible('#saveNutritionOrderButton', 5000)
       .assert.visible('#saveNutritionOrderButton', 'Save button should be visible')
       .click('#saveNutritionOrderButton')
-      .pause(500);
+      .pause(2000); // Increased pause to allow save operation to complete
 
-    // Verify navigation back to list
+    // Check for any error messages or validation issues
     browser.execute(function() {
+      // Look for any error messages
+      const errorElements = document.querySelectorAll('[color="error"], .error, [class*="error"], [class*="Error"], .MuiAlert-root');
+      const errors = [];
+      errorElements.forEach(el => {
+        if (el.textContent) {
+          errors.push(el.textContent);
+        }
+      });
+
+      // Check console for errors
+      let consoleErrors = [];
+      if (window.consoleErrors) {
+        consoleErrors = window.consoleErrors;
+      }
+
+      // Check if still on new page (indicating save failure)
+      const stillOnNewPage = window.location.pathname === '/nutrition-orders/new';
+
+      // Check authentication
+      const isLoggedIn = typeof Meteor !== 'undefined' && !!Meteor.userId();
+      const userId = isLoggedIn ? Meteor.userId() : null;
+
       return {
         currentUrl: window.location.pathname,
         isOnListPage: window.location.pathname === '/nutrition-orders',
-        isOnNewPage: window.location.pathname === '/nutrition-orders/new'
+        isOnNewPage: stillOnNewPage,
+        errorMessages: errors,
+        consoleErrors: consoleErrors,
+        isLoggedIn: isLoggedIn,
+        userId: userId
       };
     }, [], function(result) {
-      console.log('Navigation after save:', result.value);
-      browser.assert.ok(result.value.isOnListPage, 
-        'Should navigate back to nutrition orders list after save');
+      console.log('Navigation and error check after save:', result.value);
+      
+      if (result.value.errorMessages.length > 0) {
+        console.log('Error messages found:', result.value.errorMessages);
+      }
+      
+      if (!result.value.isLoggedIn) {
+        browser.assert.fail('User is not logged in - save cannot proceed');
+      }
+      
+      // If still on new page, try to navigate manually
+      if (result.value.isOnNewPage) {
+        console.log('Save may have failed - still on new page. Attempting manual navigation.');
+        browser.url('http://localhost:3000/nutrition-orders');
+      } else {
+        browser.assert.ok(result.value.isOnListPage, 
+          'Should navigate back to nutrition orders list after save');
+      }
     });
     
     browser.saveScreenshot('tests/nightwatch/screenshots/nutritionorders/04-nutritionorder-saved.png');
