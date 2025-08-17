@@ -53,27 +53,14 @@ import OAuthClientsPage from '../ui-vault-server/OAuthClientsPage.jsx';
 import FhirBasePage from './pages/FhirBasePage.jsx';
 import SwaggerPage from '../ui-vault-server/SwaggerPage.jsx';
 
-// Business page components - with package override support
-let AboutPage, EulaPage, PrivacyPage, SupportPage, TermsPage;
-
-// Check if the static-pages package is installed and exports override components
-if (Package['myorg:static-pages']) {
-  // Use package-provided pages if available
-  const staticPages = Package['myorg:static-pages'];
-  AboutPage = staticPages.AboutPage || require('./pages/AboutPage.jsx').default;
-  EulaPage = staticPages.EulaPage || require('./pages/EulaPage.jsx').default;
-  PrivacyPage = staticPages.PrivacyPage || require('./pages/PrivacyPage.jsx').default;
-  SupportPage = staticPages.SupportPage || require('./pages/SupportPage.jsx').default;
-  TermsPage = staticPages.TermsPage || require('./pages/TermsPage.jsx').default;
-} else {
-  // Use default pages
-  const businessPages = require('./pages/index.business.js');
-  AboutPage = businessPages.AboutPage;
-  EulaPage = businessPages.EulaPage;
-  PrivacyPage = businessPages.PrivacyPage;
-  SupportPage = businessPages.SupportPage;
-  TermsPage = businessPages.TermsPage;
-}
+// Business page components
+import { 
+  AboutPage, 
+  EulaPage, 
+  PrivacyPage, 
+  SupportPage, 
+  TermsPage 
+} from './pages/index.business.js';
 
 // Account components (conditionally loaded)
 import { LoginPage } from '../accounts/client/pages/LoginPage';
@@ -726,8 +713,6 @@ if(get(Meteor, 'settings.public.modules.fhir.DiagnosticReports')){
   })
 }
 if(get(Meteor, 'settings.public.modules.fhir.Devices')){
-  console.log('Devices module is enabled, adding routes...');
-  console.log('DevicesPage component:', DevicesPage);
   dynamicRoutes.push({
     path: "/devices",
     element: <DevicesPage />
@@ -929,7 +914,6 @@ if(get(Meteor, 'settings.public.modules.fhir.QuestionnaireResponses')){
   })
 }
 if(get(Meteor, 'settings.public.modules.fhir.ResearchSubjects')){
-  console.log('ResearchSubjects enabled, adding routes. ResearchSubjectsPage:', ResearchSubjectsPage);
   dynamicRoutes.push({
     path: "/research-subjects",
     element: <ResearchSubjectsPage />
@@ -1181,31 +1165,6 @@ dynamicRoutes.push({
 dynamicRoutes.push({
   path: "/communications/:id",
   element: <CommunicationDetail />
-})
-// Additional FHIR resources for pacio-core
-dynamicRoutes.push({
-  path: "/allergy-intolerances",
-  element: <AllergyIntolerancesPage />
-})
-dynamicRoutes.push({
-  path: "/care-plans", 
-  element: <CarePlansPage />
-})
-dynamicRoutes.push({
-  path: "/care-plans/new",
-  element: <CarePlanDetail />
-})
-dynamicRoutes.push({
-  path: "/care-plans/:id",
-  element: <CarePlanDetail />
-})
-dynamicRoutes.push({
-  path: "/conditions",
-  element: <ConditionsPage />
-})
-dynamicRoutes.push({
-  path: "/procedures",
-  element: <ProceduresPage />
 })
 
 

@@ -190,6 +190,17 @@
       "autopublishSubscriptions": true,
       "autoGenerateSubscriptions": true,
       "rest": {
+        "AllergyIntolerance": {
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "search"
+          ],
+          "search": true,
+          "publication": true
+        },
         "Binary": {
           "interactions": [
             "read",
@@ -321,6 +332,17 @@
           "search": true,
           "publication": true
         },
+        "Immunization": {
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "search"
+          ],
+          "search": true,
+          "publication": true
+        },
         "List": {
           "interactions": [
             "read",
@@ -354,6 +376,50 @@
           "search": true,
           "publication": true
         },
+        "Medication": {
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "search"
+          ],
+          "search": true,
+          "publication": true
+        },
+        "MedicationAdministration": {
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "search"
+          ],
+          "search": true,
+          "publication": true
+        },
+        "MedicationRequest": {
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "search"
+          ],
+          "search": true,
+          "publication": true
+        },
+        "MedicationStatement": {
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "search"
+          ],
+          "search": true,
+          "publication": true
+        },
         "NutritionOrder": {
           "interactions": [
             "read",
@@ -366,6 +432,17 @@
           "publication": true
         },
         "Observation": {
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "search"
+          ],
+          "search": true,
+          "publication": true
+        },
+        "Organization": {
           "interactions": [
             "read",
             "create",
@@ -393,6 +470,28 @@
           "publication": true
         },
         "Procedure": {
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "search"
+          ],
+          "search": true,
+          "publication": true
+        },
+        "Questionnaire": {
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "search"
+          ],
+          "search": true,
+          "publication": true
+        },
+        "QuestionnaireResponse": {
           "interactions": [
             "read",
             "create",
@@ -459,6 +558,17 @@
           "publication": true
         },
         "Appointment": {
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "search"
+          ],
+          "search": true,
+          "publication": true
+        },
+        "AuditEvent": {
           "interactions": [
             "read",
             "create",
