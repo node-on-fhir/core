@@ -257,10 +257,32 @@ jobs:
       - run:
           name: Install Meteor
           command: |
+            # Clear any existing Meteor installation
+            rm -rf ~/.meteor
+            # Install fresh Meteor
             curl https://install.meteor.com/?release=3.3 | sh
             echo 'export PATH="$HOME/.meteor:$PATH"' >> $BASH_ENV
             source $BASH_ENV
             sudo ln -sf $HOME/.meteor/meteor /usr/local/bin/meteor
+      
+      - run:
+          name: Clear Meteor build cache
+          command: |
+            # Clear local Meteor build cache
+            rm -rf .meteor/local
+            echo "Cleared .meteor/local directory"
+      
+      - run:
+          name: Verify code changes
+          command: |
+            echo "Checking for @uiw/color-convert in package.json..."
+            grep -q "@uiw/color-convert" package.json && echo "✓ Found @uiw/color-convert" || echo "✗ Missing @uiw/color-convert"
+            
+            echo "Checking for business pages import in App.jsx..."
+            grep -q "from './pages/index.business.js'" imports/ui/App.jsx && echo "✓ Found business pages import" || echo "✗ Missing business pages import"
+            
+            echo "Checking DiagnosticReport REST config..."
+            grep -A5 '"DiagnosticReport"' configs/settings.honeycomb.tdd.json | grep -q '"interactions"' && echo "✓ Found DiagnosticReport REST config" || echo "✗ Missing DiagnosticReport REST config"
       
       - run:
           name: Install dependencies
@@ -278,7 +300,11 @@ jobs:
               export DEV_AUTO_PASSWORD=""
             fi
             echo "Starting Meteor at $(date)..."
-            meteor run --settings configs/settings.honeycomb.tdd.json
+            # Add signal handling and verbose output
+            trap 'echo "Received signal at $(date)"; exit' SIGTERM SIGINT
+            meteor run --settings configs/settings.honeycomb.tdd.json --verbose 2>&1 | while read line; do 
+              echo "[$(date +%H:%M:%S)] $line"
+            done
       
       - run:
           name: Wait for Meteor
