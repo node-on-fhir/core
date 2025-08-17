@@ -119,6 +119,43 @@ if(Meteor.isServer){
 
 
     Meteor.methods({
+        getJwkFromCertificate: function(){
+            // This method converts the server's X.509 certificate to JWK format
+            // Used by the ServerConfigurationPage to display the JWK
+            
+            let x509publicCert = get(Meteor, 'settings.private.x509.publicCertPem');
+            
+            if (!x509publicCert) {
+                return null;
+            }
+            
+            try {
+                // Parse the certificate
+                let certDer = forge.util.decode64(
+                    x509publicCert
+                        .replace(/-----BEGIN CERTIFICATE-----/, '')
+                        .replace(/-----END CERTIFICATE-----/, '')
+                        .replace(/\s/g, '')
+                );
+                let cert = pki.certificateFromAsn1(forge.asn1.fromDer(certDer));
+                let publicKey = cert.publicKey;
+                
+                // Convert to JWK format
+                let jwk = {
+                    kty: "RSA",
+                    use: "sig",
+                    kid: get(Meteor, 'settings.private.jwk.keyId', Random.id()),
+                    alg: "RS256",
+                    n: forge.util.encode64(publicKey.n.toByteArray(), true),
+                    e: forge.util.encode64(publicKey.e.toByteArray(), true)
+                };
+                
+                return jwk;
+            } catch (error) {
+                console.error('Error converting certificate to JWK:', error);
+                return null;
+            }
+        },
         syncTefcaEndpoints: function(){
 
             console.log('Synchronizing TEFCA endpoints...')
@@ -299,6 +336,57 @@ if(Meteor.isServer){
             console.log("decoded", decoded)
             console.log("--------------------------------------------------------------")
             return decoded;
+        },
+        generateClientAssertionJwt: function(clientId, audience, privateKeyPem, expiresIn = 300){
+            // Generates a JWT assertion for OAuth2 client_credentials flow
+            // Used when Node On FHIR acts as a client connecting to external FHIR servers (Epic, Cerner, etc.)
+            // This is for backend service-to-service authentication without user interaction
+            
+            console.log("--------------------------------------------------------------")
+            console.log("Generating Client Assertion JWT...")
+            console.log("Client ID:", clientId);
+            console.log("Audience:", audience);
+            console.log("Expires In:", expiresIn, "seconds");
+            
+            const jwtPayload = {
+                iss: clientId,        // Issuer is our client ID
+                sub: clientId,        // Subject must equal issuer for client_credentials
+                aud: audience,        // The token endpoint URL we're authenticating to
+                exp: Math.floor(Date.now() / 1000) + expiresIn,  // Expiration (default 5 minutes)
+                iat: Math.floor(Date.now() / 1000),              // Issued at
+                jti: Random.id()      // JWT ID - unique identifier for this JWT
+            };
+            
+            const jwtOptions = {
+                algorithm: 'RS256',
+                header: {
+                    typ: 'JWT',
+                    alg: 'RS256',
+                    kid: get(Meteor, 'settings.private.jwk.keyId', Random.id())  // Key ID from our JWK
+                }
+            };
+            
+            try {
+                // Use the provided private key or fallback to settings
+                let privateKey = privateKeyPem || get(Meteor, 'settings.private.x509.privateKey');
+                
+                if (!privateKey) {
+                    throw new Meteor.Error('no-private-key', 'No private key available for JWT signing');
+                }
+                
+                const signedJwt = jwt.sign(jwtPayload, privateKey.trim(), jwtOptions);
+                console.log("Generated JWT:", signedJwt);
+                console.log("--------------------------------------------------------------")
+                
+                return {
+                    jwt: signedJwt,
+                    payload: jwtPayload,
+                    header: jwtOptions.header
+                };
+            } catch (error) {
+                console.error('Error generating client assertion JWT:', error);
+                throw new Meteor.Error('jwt-generation-failed', 'Failed to generate client assertion JWT: ' + error.message);
+            }
         },
         decodeCertificate: function(encodedCertificate){
             console.log("--------------------------------------------------------------")
