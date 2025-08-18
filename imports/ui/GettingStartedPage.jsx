@@ -173,6 +173,7 @@ function GettingStartedPage(props){
   const [cryptographyExpanded, setCryptographyExpanded] = React.useState(false);
   const [deployExpanded, setDeployExpanded] = React.useState(false);
   const [customWorkflowsExpanded, setCustomWorkflowsExpanded] = React.useState(false);
+  const [databaseExpanded, setDatabaseExpanded] = React.useState(false);
   
   // State for color picker
   const [colorPickerOpen, setColorPickerOpen] = React.useState(false);
@@ -185,9 +186,19 @@ function GettingStartedPage(props){
   const [moduleCommand, setModuleCommand] = React.useState('meteor add');
   const [deployCommand, setDeployCommand] = React.useState('meteor deploy');
   const [workflowCommand, setWorkflowCommand] = React.useState('cd packages && meteor create --package myorg:mypkg');
+  const [deploymentOption, setDeploymentOption] = React.useState('');
   
   // State for download filename
   const [downloadFilename, setDownloadFilename] = React.useState('settings.honeycomb.json');
+  
+  // State for database configuration
+  const [mongoUrl, setMongoUrl] = React.useState('');
+  const [dbUsername, setDbUsername] = React.useState('');
+  const [dbPassword, setDbPassword] = React.useState('');
+  const [dbName, setDbName] = React.useState('');
+  const [mongoOplogUrl, setMongoOplogUrl] = React.useState('');
+  const [oplogUsername, setOplogUsername] = React.useState('');
+  const [oplogPassword, setOplogPassword] = React.useState('');
   
   // State for cryptography keys
   const [publicKeyText, setPublicKeyText] = React.useState('');
@@ -243,32 +254,83 @@ function GettingStartedPage(props){
     'Synthea': 'clinical:synthea'
   };
   
-  // Helper function to build deploy command
-  const buildDeployCommand = (currentSettings) => {
-    let command = 'meteor deploy';
+  // Helper function to build MongoDB URLs
+  const buildMongoUrl = (template, username, password, databaseName) => {
+    if (!template || !username || !password) return template;
+    let url = template
+      .replace('<db_username>', encodeURIComponent(username))
+      .replace('<db_password>', encodeURIComponent(password));
     
-    // Add app name (use title as subdomain)
-    const appName = get(currentSettings, 'public.title', 'myapp')
-      .toLowerCase()
-      .replace(/[^a-z0-9]/g, '-')
-      .replace(/-+/g, '-')
-      .replace(/^-|-$/g, '');
-    
-    command += ` ${appName}.meteorapp.com`;
-    
-    // Add settings file
-    command += ` --settings ${downloadFilename}`;
-    
-    // Add extra packages if modules are enabled
-    const enabledPackages = [];
-    Object.keys(modulePackageMap).forEach(moduleName => {
-      if (get(currentSettings, `public.modules.${moduleName}`, false)) {
-        enabledPackages.push(modulePackageMap[moduleName]);
+    // Add database name if provided
+    if (databaseName) {
+      // Check if URL has a query string
+      const queryIndex = url.indexOf('?');
+      if (queryIndex !== -1) {
+        // Insert database name before the query string
+        const baseUrl = url.substring(0, queryIndex);
+        const queryString = url.substring(queryIndex);
+        // Remove any trailing slash from baseUrl
+        const cleanBaseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
+        url = `${cleanBaseUrl}/${databaseName}${queryString}`;
+      } else {
+        // No query string, just append database name
+        const cleanUrl = url.endsWith('/') ? url.slice(0, -1) : url;
+        url = `${cleanUrl}/${databaseName}`;
       }
-    });
+    }
     
-    if (enabledPackages.length > 0) {
-      command += ` --extra-packages ${enabledPackages.join(',')}`;
+    return url;
+  };
+  
+  // Update shell command when database config changes
+  React.useEffect(() => {
+    const updatedShellCommand = buildShellCommand(settings);
+    setShellCommand(updatedShellCommand);
+  }, [mongoUrl, dbUsername, dbPassword, dbName, mongoOplogUrl, oplogUsername, oplogPassword, settings]);
+  
+  // Helper function to build deploy command
+  const buildDeployCommand = (currentSettings, option = deploymentOption) => {
+    let command = '';
+    
+    switch (option) {
+      case 'galaxy':
+        command = 'meteor deploy';
+        
+        // Add app name (use title as subdomain)
+        const appName = get(currentSettings, 'public.title', 'myapp')
+          .toLowerCase()
+          .replace(/[^a-z0-9]/g, '-')
+          .replace(/-+/g, '-')
+          .replace(/^-|-$/g, '');
+        
+        command += ` ${appName}.meteorapp.com`;
+        
+        // Add settings file
+        command += ` --settings ${downloadFilename}`;
+        
+        // Add extra packages if modules are enabled
+        const enabledPackages = [];
+        Object.keys(modulePackageMap).forEach(moduleName => {
+          if (get(currentSettings, `public.modules.${moduleName}`, false)) {
+            enabledPackages.push(modulePackageMap[moduleName]);
+          }
+        });
+        
+        if (enabledPackages.length > 0) {
+          command += ` --extra-packages ${enabledPackages.join(',')}`;
+        }
+        break;
+        
+      case 'docker':
+        command = 'meteor build --directory ../output && cd ../output && docker build -t honeycomb .';
+        break;
+        
+      case 'baremetal':
+        command = 'meteor build --directory ../output';
+        break;
+        
+      default:
+        command = '';
     }
     
     return command;
@@ -278,6 +340,17 @@ function GettingStartedPage(props){
   const buildShellCommand = (currentSettings, currentShellCommand = null) => {
     const envVars = [];
     const envSettings = get(currentSettings, 'private.env', {});
+    
+    // Add MongoDB URLs if configured
+    if (mongoUrl && dbUsername && dbPassword) {
+      const fullMongoUrl = buildMongoUrl(mongoUrl, dbUsername, dbPassword, dbName);
+      envVars.push(`MONGO_URL="${fullMongoUrl}"`);
+    }
+    
+    if (mongoOplogUrl && oplogUsername && oplogPassword) {
+      const fullOplogUrl = buildMongoUrl(mongoOplogUrl, oplogUsername, oplogPassword, dbName);
+      envVars.push(`MONGO_OPLOG_URL="${fullOplogUrl}"`);
+    }
     
     // Add defined environment variables
     Object.keys(envSettings).forEach(key => {
@@ -404,6 +477,54 @@ function GettingStartedPage(props){
     updateCapabilityStatement(settings);
     setDeployCommand(buildDeployCommand(settings));
   }, []); // Run once on mount
+  
+  // Update deploy command when deployment option or settings change
+  React.useEffect(() => {
+    const newCommand = buildDeployCommand(settings, deploymentOption);
+    setDeployCommand(newCommand);
+    
+    // Update galaxy.meteor.com settings if Meteor Galaxy is selected
+    if (deploymentOption === 'galaxy') {
+      // Build environment variables for Galaxy
+      const galaxyEnv = {};
+      
+      // Add MongoDB URLs if configured
+      if (mongoUrl && dbUsername && dbPassword) {
+        galaxyEnv.MONGO_URL = buildMongoUrl(mongoUrl, dbUsername, dbPassword, dbName);
+      }
+      
+      // Add NODE_ENV
+      galaxyEnv.NODE_ENV = get(settings, 'private.env.NODE_ENV', 'production');
+      
+      // Add ROOT_URL (construct from app name)
+      const appName = get(settings, 'public.title', 'myapp')
+        .toLowerCase()
+        .replace(/[^a-z0-9]/g, '-')
+        .replace(/-+/g, '-')
+        .replace(/^-|-$/g, '');
+      galaxyEnv.ROOT_URL = `https://${appName}.meteorapp.com`;
+      
+      // Add other environment variables from settings
+      const envSettings = get(settings, 'private.env', {});
+      Object.keys(envSettings).forEach(key => {
+        const value = envSettings[key];
+        if (value && value !== '' && value !== 'false' && value !== 'No Value') {
+          if (key !== 'NODE_ENV') { // Skip NODE_ENV as we already set it
+            galaxyEnv[key] = value === 'Enabled' ? 'true' : value;
+          }
+        }
+      });
+      
+      // Update settings with galaxy.meteor.com section
+      // Need to set this as a single key, not nested
+      const newSettings = { ...settings };
+      if (!newSettings['galaxy.meteor.com']) {
+        newSettings['galaxy.meteor.com'] = {};
+      }
+      newSettings['galaxy.meteor.com'].env = galaxyEnv;
+      setSettings(newSettings);
+    }
+  }, [deploymentOption, settings, mongoUrl, dbUsername, dbPassword, dbName]);
   
   // Check for server keys on mount
   React.useEffect(() => {
@@ -3241,7 +3362,178 @@ function GettingStartedPage(props){
       );
     }
     
-    // 9. Server FHIR APIs (with collapse)
+    // 9. Database (with collapse)
+    const hasDatabase = !!(mongoUrl && dbUsername && dbPassword);
+    
+    checklistItemsArray.push(
+      <React.Fragment key="database-section">
+        <Alert 
+          severity={hasDatabase ? "success" : "info"}
+          icon={hasDatabase ? <CheckCircle /> : <Storage />}
+          sx={{ 
+            backgroundColor: hasDatabase ? undefined : 'action.hover',
+            color: hasDatabase ? undefined : 'text.primary',
+            cursor: 'pointer',
+            '& .MuiAlert-icon': {
+              color: hasDatabase ? undefined : 'text.secondary'
+            },
+            '&:hover': {
+              backgroundColor: hasDatabase ? undefined : 'action.selected'
+            }
+          }}
+          onClick={() => setDatabaseExpanded(!databaseExpanded)}
+          action={
+            <IconButton 
+              size="small"
+              onClick={(e) => {
+                e.stopPropagation();
+                setDatabaseExpanded(!databaseExpanded);
+              }}
+            >
+              {databaseExpanded ? <ExpandLess /> : <ExpandMore />}
+            </IconButton>
+          }
+        >
+          <Stack direction="row" alignItems="center" spacing={1}>
+            <span>Database</span>
+          </Stack>
+        </Alert>
+        <Collapse in={databaseExpanded} timeout="auto" unmountOnExit>
+          <Box sx={{ pl: 2, pr: 2, pb: 2, pt: 1 }}>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+              Configure MongoDB Atlas connection for production deployment. Copy the connection string from MongoDB Atlas and paste it below.
+            </Typography>
+            
+            {/* MongoDB URL Configuration */}
+            <Typography variant="subtitle2" gutterBottom sx={{ mt: 2 }}>
+              Primary Database Connection
+            </Typography>
+            <Grid container spacing={2} sx={{ mb: 3 }}>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  label="MONGO_URL Template"
+                  value={mongoUrl}
+                  onChange={(e) => setMongoUrl(e.target.value)}
+                  placeholder="mongodb+srv://<db_username>:<db_password>@cluster.mongodb.net/..."
+                  variant="outlined"
+                  size="small"
+                  helperText="Paste the connection string from MongoDB Atlas"
+                />
+              </Grid>
+              <Grid item xs={12} sm={4}>
+                <TextField
+                  fullWidth
+                  label="Database Username"
+                  value={dbUsername}
+                  onChange={(e) => setDbUsername(e.target.value)}
+                  variant="outlined"
+                  size="small"
+                />
+              </Grid>
+              <Grid item xs={12} sm={4}>
+                <TextField
+                  fullWidth
+                  label="Database Password"
+                  type="password"
+                  value={dbPassword}
+                  onChange={(e) => setDbPassword(e.target.value)}
+                  variant="outlined"
+                  size="small"
+                />
+              </Grid>
+              <Grid item xs={12} sm={4}>
+                <TextField
+                  fullWidth
+                  label="Database Name"
+                  value={dbName}
+                  onChange={(e) => setDbName(e.target.value)}
+                  placeholder="meteor"
+                  variant="outlined"
+                  size="small"
+                  helperText="e.g., meteor, test, myapp"
+                />
+              </Grid>
+              {mongoUrl && dbUsername && dbPassword && (
+                <Grid item xs={12}>
+                  <TextField
+                    fullWidth
+                    label="Generated MONGO_URL"
+                    value={buildMongoUrl(mongoUrl, dbUsername, dbPassword, dbName)}
+                    variant="outlined"
+                    size="small"
+                    disabled
+                    multiline
+                    rows={2}
+                  />
+                </Grid>
+              )}
+            </Grid>
+            
+            {/* MongoDB Oplog Configuration */}
+            <Typography variant="subtitle2" gutterBottom>
+              Oplog Connection (for real-time updates)
+            </Typography>
+            <Grid container spacing={2}>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  label="MONGO_OPLOG_URL Template"
+                  value={mongoOplogUrl}
+                  onChange={(e) => setMongoOplogUrl(e.target.value)}
+                  placeholder="mongodb+srv://<oplog_username>:<oplog_password>@cluster.mongodb.net/local..."
+                  variant="outlined"
+                  size="small"
+                  helperText="Usually points to the 'local' database for oplog access"
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label="Oplog Username"
+                  value={oplogUsername}
+                  onChange={(e) => setOplogUsername(e.target.value)}
+                  variant="outlined"
+                  size="small"
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label="Oplog Password"
+                  type="password"
+                  value={oplogPassword}
+                  onChange={(e) => setOplogPassword(e.target.value)}
+                  variant="outlined"
+                  size="small"
+                />
+              </Grid>
+              {mongoOplogUrl && oplogUsername && oplogPassword && (
+                <Grid item xs={12}>
+                  <TextField
+                    fullWidth
+                    label="Generated MONGO_OPLOG_URL"
+                    value={buildMongoUrl(mongoOplogUrl, oplogUsername, oplogPassword, dbName)}
+                    variant="outlined"
+                    size="small"
+                    disabled
+                    multiline
+                    rows={2}
+                  />
+                </Grid>
+              )}
+            </Grid>
+            
+            <Typography variant="caption" color="text.secondary" sx={{ mt: 2, display: 'block' }}>
+              Note: These credentials are used for runtime connection only. They are not saved to the settings file.
+              The generated URLs will be added as environment variables when running the application.
+            </Typography>
+          </Box>
+        </Collapse>
+      </React.Fragment>
+    );
+    
+    // 10. Server FHIR APIs (with collapse)
     // Check if any FHIR resources are enabled
     const fhirResources = [
       'AllergyIntolerance', 'CarePlan', 'CareTeam', 'Condition', 'Consent',
@@ -5018,40 +5310,86 @@ openssl req -new -x509 -key private.pem -out certificate.pem -days 365`}
                 Deploy your Honeycomb application to Meteor's free hosting service or your own infrastructure.
               </Typography>
               
-              <TextField
-                fullWidth
-                label="Deploy Command"
-                value={deployCommand}
-                variant="outlined"
-                sx={{ mb: 2 }}
-                InputProps={{
-                  readOnly: true,
-                  sx: {
-                    fontFamily: 'monospace',
-                    backgroundColor: 'action.hover',
-                    '& .MuiOutlinedInput-input': {
-                      fontSize: '0.9rem',
-                      letterSpacing: '0.05em'
-                    }
-                  }
-                }}
-                helperText="Deploy to Meteor's free hosting service (requires Meteor account)"
-              />
+              <FormControl fullWidth sx={{ mb: 3 }}>
+                <InputLabel>Deployment Option</InputLabel>
+                <Select
+                  value={deploymentOption}
+                  onChange={(e) => setDeploymentOption(e.target.value)}
+                  label="Deployment Option"
+                >
+                  <MenuItem value="">Select deployment target...</MenuItem>
+                  <MenuItem value="galaxy">Meteor Galaxy</MenuItem>
+                  <MenuItem value="docker">Docker</MenuItem>
+                  <MenuItem value="baremetal">Bare Metal</MenuItem>
+                  <MenuItem value="aws" disabled>AWS (Coming Soon)</MenuItem>
+                  <MenuItem value="digitalocean" disabled>Digital Ocean (Coming Soon)</MenuItem>
+                  <MenuItem value="heroku" disabled>Heroku (Coming Soon)</MenuItem>
+                </Select>
+                <FormHelperText>Choose where to deploy your application</FormHelperText>
+              </FormControl>
               
-              <Alert severity="info" sx={{ mb: 2 }}>
-                <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 1 }}>
-                  Deployment Options:
-                </Typography>
-                <Typography variant="body2" component="div">
-                  <ul style={{ margin: '8px 0', paddingLeft: '20px' }}>
-                    <li><strong>Meteor Galaxy:</strong> meteor deploy (free subdomain.meteorapp.com)</li>
-                    <li><strong>Docker:</strong> meteor build --directory ../output && docker build</li>
-                    <li><strong>AWS:</strong> Use Meteor Up (mup) for EC2 deployment</li>
-                    <li><strong>Digital Ocean:</strong> Deploy with Meteor Up or Docker</li>
-                    <li><strong>Heroku:</strong> Use buildpack-meteor for deployment</li>
-                  </ul>
-                </Typography>
-              </Alert>
+              {deploymentOption && (
+                <TextField
+                  fullWidth
+                  label="Deploy Command"
+                  value={deployCommand}
+                  variant="outlined"
+                  sx={{ mb: 2 }}
+                  InputProps={{
+                    readOnly: true,
+                    sx: {
+                      fontFamily: 'monospace',
+                      backgroundColor: 'action.hover',
+                      '& .MuiOutlinedInput-input': {
+                        fontSize: '0.9rem',
+                        letterSpacing: '0.05em'
+                      }
+                    }
+                  }}
+                  helperText={
+                    deploymentOption === 'galaxy' ? 'Deploy to Meteor\'s free hosting service (requires Meteor account)' :
+                    deploymentOption === 'docker' ? 'Build and containerize your application' :
+                    deploymentOption === 'baremetal' ? 'Build application bundle for manual deployment' :
+                    ''
+                  }
+                />
+              )}
+              
+              {deploymentOption && (
+                <Alert severity="info" sx={{ mb: 2 }}>
+                  <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 1 }}>
+                    {deploymentOption === 'galaxy' && 'Meteor Galaxy Deployment:'}
+                    {deploymentOption === 'docker' && 'Docker Deployment:'}
+                    {deploymentOption === 'baremetal' && 'Bare Metal Deployment:'}
+                  </Typography>
+                  <Typography variant="body2" component="div">
+                    {deploymentOption === 'galaxy' && (
+                      <ul style={{ margin: '8px 0', paddingLeft: '20px' }}>
+                        <li>Free subdomain at yourapp.meteorapp.com</li>
+                        <li>Automatic SSL certificates</li>
+                        <li>Zero-downtime deployments</li>
+                        <li>Environment variables configured in settings file</li>
+                      </ul>
+                    )}
+                    {deploymentOption === 'docker' && (
+                      <ul style={{ margin: '8px 0', paddingLeft: '20px' }}>
+                        <li>Creates production bundle in ../output directory</li>
+                        <li>Builds Docker image tagged as 'honeycomb'</li>
+                        <li>Requires Dockerfile in output directory</li>
+                        <li>Ready for container orchestration (K8s, ECS, etc.)</li>
+                      </ul>
+                    )}
+                    {deploymentOption === 'baremetal' && (
+                      <ul style={{ margin: '8px 0', paddingLeft: '20px' }}>
+                        <li>Creates production bundle in ../output directory</li>
+                        <li>Includes Node.js application and dependencies</li>
+                        <li>Deploy to any Node.js hosting environment</li>
+                        <li>Configure environment variables on target server</li>
+                      </ul>
+                    )}
+                  </Typography>
+                </Alert>
+              )}
               
               <Stack direction="row" spacing={2}>
                 <Button 
@@ -5082,29 +5420,24 @@ openssl req -new -x509 -key private.pem -out certificate.pem -days 365`}
     const publicSettingsItems = [];
     if (checklistItemsArray[2]) publicSettingsItems.push(checklistItemsArray[2]); // App Configuration
     if (checklistItemsArray[3]) publicSettingsItems.push(checklistItemsArray[3]); // Theme and Color Palette  
-    if (checklistItemsArray[5]) publicSettingsItems.push(checklistItemsArray[5]); // Default App Modules
-    if (checklistItemsArray[4]) publicSettingsItems.push(checklistItemsArray[4]); // Sidebar Configuration
-    if (checklistItemsArray[9]) publicSettingsItems.push(checklistItemsArray[9]); // Business & Legal Pages
-    if (checklistItemsArray[10]) publicSettingsItems.push(checklistItemsArray[10]); // Upstream Tether (SMART on FHIR)
-    if (checklistItemsArray[11]) publicSettingsItems.push(checklistItemsArray[11]); // Custom Workflows
+    if (checklistItemsArray[4]) publicSettingsItems.push(checklistItemsArray[4]); // Default App Modules
+    if (checklistItemsArray[5]) publicSettingsItems.push(checklistItemsArray[5]); // Sidebar Configuration
+    if (checklistItemsArray[10]) publicSettingsItems.push(checklistItemsArray[10]); // Business & Legal Pages
+    if (checklistItemsArray[11]) publicSettingsItems.push(checklistItemsArray[11]); // Upstream Tether (SMART on FHIR)
+    if (checklistItemsArray[12]) publicSettingsItems.push(checklistItemsArray[12]); // Custom Workflows
     
     // Private Settings (Server)
     const privateSettingsItems = [];
-    if (checklistItemsArray[8]) privateSettingsItems.push(checklistItemsArray[8]); // Server FHIR APIs
-    if (checklistItemsArray[6]) privateSettingsItems.push(checklistItemsArray[6]); // User Accounts (Register a New User)
-    if (checklistItemsArray[13]) privateSettingsItems.push(checklistItemsArray[13]); // Cryptography Keys
-    // Security - placeholder for future implementation
-    const securityItem = null; // TODO: Add security configuration item
-    if (securityItem) privateSettingsItems.push(securityItem);
-    // Database - placeholder for future implementation  
-    const databaseItem = null; // TODO: Add database configuration item
-    if (databaseItem) privateSettingsItems.push(databaseItem);
-    if (checklistItemsArray[12]) privateSettingsItems.push(checklistItemsArray[12]); // Environment Variables
-    if (checklistItemsArray[7]) privateSettingsItems.push(checklistItemsArray[7]); // Interfaces
+    if (checklistItemsArray[9]) privateSettingsItems.push(checklistItemsArray[9]); // Server FHIR APIs
+    if (checklistItemsArray[7]) privateSettingsItems.push(checklistItemsArray[7]); // User Accounts
+    if (checklistItemsArray[8]) privateSettingsItems.push(checklistItemsArray[8]); // Database
+    if (checklistItemsArray[14]) privateSettingsItems.push(checklistItemsArray[14]); // Cryptography Keys
+    if (checklistItemsArray[13]) privateSettingsItems.push(checklistItemsArray[13]); // Environment Variables
+    if (checklistItemsArray[6]) privateSettingsItems.push(checklistItemsArray[6]); // Interfaces
     
     // Settings File and Deploy
     const settingsFileItem = checklistItemsArray[1]; // Initialize Settings File
-    const deployAppItem = checklistItemsArray[14]; // Deploy App (Hosting)
+    const deployAppItem = checklistItemsArray[15]; // Deploy App (Hosting)
     
     setupChecklistElements = <Grid item xs={12}>
       <Card sx={{ mb: 3 }}>

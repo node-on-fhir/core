@@ -48,19 +48,47 @@ const MetadataServerMethods = {
     
     if (x509privateKey && x509publicCert) {
       try {
-        // Parse the certificate
-        let certDer = forge.util.decode64(x509publicCert.replace(/-----BEGIN CERTIFICATE-----/, '').replace(/-----END CERTIFICATE-----/, '').replace(/\s/g, ''));
+        // Parse the certificate - handle different line ending formats
+        let certPem = x509publicCert
+          .replace(/-----BEGIN CERTIFICATE-----/g, '')
+          .replace(/-----END CERTIFICATE-----/g, '')
+          .replace(/[\r\n]/g, '');
+          
+        let certDer = forge.util.decode64(certPem);
         let cert = pki.certificateFromAsn1(forge.asn1.fromDer(certDer));
         let publicKey = cert.publicKey;
         
-        // Convert to JWK format
+        // Convert RSA public key components to base64url format
+        // Get hex representation of modulus and exponent
+        let nHex = publicKey.n.toString(16);
+        let eHex = publicKey.e.toString(16);
+        
+        // Ensure even number of hex digits
+        if (nHex.length % 2 !== 0) nHex = '0' + nHex;
+        if (eHex.length % 2 !== 0) eHex = '0' + eHex;
+        
+        // Convert to base64url using Node.js Buffer
+        let nBuffer = Buffer.from(nHex, 'hex');
+        let eBuffer = Buffer.from(eHex, 'hex');
+        
+        // Base64url encode (base64 with URL-safe characters and no padding)
+        let nBase64url = nBuffer.toString('base64')
+          .replace(/\+/g, '-')
+          .replace(/\//g, '_')
+          .replace(/=/g, '');
+          
+        let eBase64url = eBuffer.toString('base64')
+          .replace(/\+/g, '-')
+          .replace(/\//g, '_')
+          .replace(/=/g, '');
+        
         let jwk = {
           kty: "RSA",
           use: "sig",
           kid: get(Meteor, 'settings.private.jwk.keyId', Random.id()),
           alg: "RS256",
-          n: forge.util.encode64(publicKey.n.toByteArray(), true),
-          e: forge.util.encode64(publicKey.e.toByteArray(), true)
+          n: nBase64url,
+          e: eBase64url
         };
         
         return {

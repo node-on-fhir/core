@@ -139,6 +139,47 @@ export function Launcher(props){
         setEndpoints(Meteor.Collections.Endpoints.find().fetch());
       }
       fetchData();
+      
+      // Check if we have launch parameters from Epic or other EHR
+      const urlParams = new URLSearchParams(window.location.search);
+      const iss = urlParams.get('iss');
+      const launch = urlParams.get('launch');
+      
+      if (iss && launch) {
+        console.log('Smart Launch detected with ISS:', iss, 'and launch token:', launch);
+        
+        // Find matching configuration based on ISS
+        const matchingConfig = configArray.find(config => {
+          // Check if the ISS matches either the fhirServiceUrl or iss field
+          return config.iss === iss || config.fhirServiceUrl === iss;
+        });
+        
+        if (matchingConfig) {
+          console.log('Found matching SMART config:', matchingConfig);
+          
+          // Create authorization parameters
+          const authParams = {
+            clientId: matchingConfig.client_id,
+            scope: matchingConfig.scope,
+            redirectUri: matchingConfig.redirect_uri,
+            iss: iss,
+            launch: launch,
+            completeInTarget: true
+          };
+          
+          // If Epic is using JWT bearer method, we might need special handling
+          if (get(matchingConfig, 'tokenExchange.method') === 'jwt_bearer') {
+            authParams.pkceMode = 'required';  // Force PKCE for Epic
+          }
+          
+          console.log('Initiating SMART authorization with params:', authParams);
+          
+          // Initiate SMART authorization
+          SMART.authorize(authParams);
+        } else {
+          console.error('No matching SMART configuration found for ISS:', iss);
+        }
+      }
     }, []);
 
     useTracker(function(){
