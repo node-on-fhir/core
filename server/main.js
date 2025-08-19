@@ -301,6 +301,9 @@ global.LinksCollection = LinksCollection;
 // Handle SyncedCron startup control
 import { SyncedCron } from 'meteor/quave:synced-cron';
 
+// IMMEDIATELY stop SyncedCron to prevent auto-start behavior
+SyncedCron.stop();
+
 // Control SyncedCron startup based on environment variables and settings
 Meteor.startup(() => {
   // Check multiple conditions for whether to start SyncedCron
@@ -317,7 +320,7 @@ Meteor.startup(() => {
     SyncedCron.start();
   } else {
     console.log('[SyncedCron] Cron scheduler disabled (set ENABLE_SYNCED_CRON=true or configure settings to enable)');
-    // Ensure SyncedCron is stopped if it was started by the package
+    // Make sure it stays stopped
     SyncedCron.stop();
   }
 });
