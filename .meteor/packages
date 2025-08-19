@@ -33,4 +33,3 @@ accounts-base
 mdg:validated-method
 fetch
 quave:synced-cron
-trialx:epic-data-fetch
