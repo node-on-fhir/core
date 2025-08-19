@@ -1,3 +1,10 @@
+// Log immediately to see if we're reaching this point
+console.log('==========================================================================================');
+console.log('[server/main.js] Starting server initialization...');
+console.log('[server/main.js] TEST_RUN:', process.env.TEST_RUN);
+console.log('[server/main.js] ENABLE_SYNCED_CRON:', process.env.ENABLE_SYNCED_CRON);
+console.log('==========================================================================================');
+
 // import './ServerSideRendering.js';
 // import './AccountsServer.js';
 // import './SmartHealthCards.js';
@@ -299,7 +306,7 @@ global.LinksCollection = LinksCollection;
 //===============================================================================================================
 
 // Handle SyncedCron startup control
-import { SyncedCron } from 'meteor/quave:synced-cron';
+import { SyncedCron } from './SyncedCron.js';
 
 // Control SyncedCron startup based on environment variables and settings
 Meteor.startup(() => {
