@@ -4601,11 +4601,11 @@ function GettingStartedPage(props){
               </Grid>
               <Grid item xs={12} md={6}>
                 <FormControl fullWidth size="small">
-                  <InputLabel>Force SSL</InputLabel>
+                  <InputLabel>FORCE_SSL</InputLabel>
                   <Select
                     value={get(settings, 'private.env.FORCE_SSL', 'No Value')}
                     onChange={(e) => updateSetting('private.env.FORCE_SSL', e.target.value)}
-                    label="Force SSL"
+                    label="FORCE_SSL"
                   >
                     <MenuItem value="No Value">No Value</MenuItem>
                     <MenuItem value="Enabled">Enabled</MenuItem>
@@ -4615,11 +4615,11 @@ function GettingStartedPage(props){
               </Grid>
               <Grid item xs={12} md={6}>
                 <FormControl fullWidth size="small">
-                  <InputLabel>Use MongoDB ObjectIDs</InputLabel>
+                  <InputLabel>USE_MONGO_OBJECTID</InputLabel>
                   <Select
                     value={get(settings, 'private.env.USE_MONGO_OBJECTID', 'No Value')}
                     onChange={(e) => updateSetting('private.env.USE_MONGO_OBJECTID', e.target.value)}
-                    label="Use MongoDB ObjectIDs"
+                    label="USE_MONGO_OBJECTID"
                   >
                     <MenuItem value="No Value">No Value</MenuItem>
                     <MenuItem value="Enabled">Enabled</MenuItem>
@@ -4665,11 +4665,11 @@ function GettingStartedPage(props){
               </Grid>
               <Grid item xs={12} md={4}>
                 <FormControl fullWidth size="small">
-                  <InputLabel>Enable Accounts</InputLabel>
+                  <InputLabel>ENABLE_ACCOUNTS</InputLabel>
                   <Select
                     value={get(settings, 'private.env.ENABLE_ACCOUNTS', 'No Value')}
                     onChange={(e) => updateSetting('private.env.ENABLE_ACCOUNTS', e.target.value)}
-                    label="Enable Accounts"
+                    label="ENABLE_ACCOUNTS"
                   >
                     <MenuItem value="No Value">No Value</MenuItem>
                     <MenuItem value="Enabled">Enabled</MenuItem>
@@ -4679,11 +4679,11 @@ function GettingStartedPage(props){
               </Grid>
               <Grid item xs={12} md={4}>
                 <FormControl fullWidth size="small">
-                  <InputLabel>Enable Autopublish</InputLabel>
+                  <InputLabel>ENABLE_AUTOPUBLISH</InputLabel>
                   <Select
                     value={get(settings, 'private.env.ENABLE_AUTOPUBLISH', 'No Value')}
                     onChange={(e) => updateSetting('private.env.ENABLE_AUTOPUBLISH', e.target.value)}
-                    label="Enable Autopublish"
+                    label="ENABLE_AUTOPUBLISH"
                   >
                     <MenuItem value="No Value">No Value</MenuItem>
                     <MenuItem value="Enabled">Enabled</MenuItem>
@@ -4693,11 +4693,11 @@ function GettingStartedPage(props){
               </Grid>
               <Grid item xs={12} md={4}>
                 <FormControl fullWidth size="small">
-                  <InputLabel>Enable HIPAA</InputLabel>
+                  <InputLabel>ENABLE_HIPAA</InputLabel>
                   <Select
                     value={get(settings, 'private.env.ENABLE_HIPAA', 'No Value')}
                     onChange={(e) => updateSetting('private.env.ENABLE_HIPAA', e.target.value)}
-                    label="Enable HIPAA"
+                    label="ENABLE_HIPAA"
                   >
                     <MenuItem value="No Value">No Value</MenuItem>
                     <MenuItem value="Enabled">Enabled</MenuItem>
@@ -4707,11 +4707,11 @@ function GettingStartedPage(props){
               </Grid>
               <Grid item xs={12} md={4}>
                 <FormControl fullWidth size="small">
-                  <InputLabel>Enable IPFS</InputLabel>
+                  <InputLabel>ENABLE_IPFS</InputLabel>
                   <Select
                     value={get(settings, 'private.env.ENABLE_IPFS', 'No Value')}
                     onChange={(e) => updateSetting('private.env.ENABLE_IPFS', e.target.value)}
-                    label="Enable IPFS"
+                    label="ENABLE_IPFS"
                   >
                     <MenuItem value="No Value">No Value</MenuItem>
                     <MenuItem value="Enabled">Enabled</MenuItem>
@@ -4721,11 +4721,11 @@ function GettingStartedPage(props){
               </Grid>
               <Grid item xs={12} md={4}>
                 <FormControl fullWidth size="small">
-                  <InputLabel>Initialize Consent Engine</InputLabel>
+                  <InputLabel>INITIALIZE_CONSENT_ENGINE</InputLabel>
                   <Select
                     value={get(settings, 'private.env.INITIALIZE_CONSENT_ENGINE', 'No Value')}
                     onChange={(e) => updateSetting('private.env.INITIALIZE_CONSENT_ENGINE', e.target.value)}
-                    label="Initialize Consent Engine"
+                    label="INITIALIZE_CONSENT_ENGINE"
                   >
                     <MenuItem value="No Value">No Value</MenuItem>
                     <MenuItem value="Enabled">Enabled</MenuItem>
@@ -4735,16 +4735,31 @@ function GettingStartedPage(props){
               </Grid>
               <Grid item xs={12} md={4}>
                 <FormControl fullWidth size="small">
-                  <InputLabel>Proxy Relay Enabled</InputLabel>
+                  <InputLabel>PROXY_RELAY_ENABLED</InputLabel>
                   <Select
                     value={get(settings, 'private.env.PROXY_RELAY_ENABLED', 'No Value')}
                     onChange={(e) => updateSetting('private.env.PROXY_RELAY_ENABLED', e.target.value)}
-                    label="Proxy Relay Enabled"
+                    label="PROXY_RELAY_ENABLED"
                   >
                     <MenuItem value="No Value">No Value</MenuItem>
                     <MenuItem value="Enabled">Enabled</MenuItem>
                     <MenuItem value="Disabled">Disabled</MenuItem>
                   </Select>
+                </FormControl>
+              </Grid>
+              <Grid item xs={12} md={4}>
+                <FormControl fullWidth size="small">
+                  <InputLabel>ENABLE_SYNCED_CRON</InputLabel>
+                  <Select
+                    value={get(settings, 'private.env.ENABLE_SYNCED_CRON', 'No Value')}
+                    onChange={(e) => updateSetting('private.env.ENABLE_SYNCED_CRON', e.target.value)}
+                    label="ENABLE_SYNCED_CRON"
+                  >
+                    <MenuItem value="No Value">No Value</MenuItem>
+                    <MenuItem value="true">true</MenuItem>
+                    <MenuItem value="false">false</MenuItem>
+                  </Select>
+                  <FormHelperText>Enable scheduled cron jobs</FormHelperText>
                 </FormControl>
               </Grid>
               
