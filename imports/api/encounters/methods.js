@@ -37,6 +37,17 @@ Meteor.methods({
       }
     };
     
+    // Debug logging
+    if (Meteor.isServer) {
+      console.log('encounters.create - Creating encounter with data:', JSON.stringify(encounter, null, 2));
+      if (encounter.participant && encounter.participant[0]) {
+        console.log('encounters.create - Participant data:', encounter.participant[0]);
+        console.log('encounters.create - Practitioner display:', encounter.participant[0].individual?.display);
+      } else {
+        console.log('encounters.create - No participant data found');
+      }
+    }
+    
     // Insert and return the new encounter
     const Encounters = getEncounters();
     const encounterId = await Encounters.insertAsync(encounter);

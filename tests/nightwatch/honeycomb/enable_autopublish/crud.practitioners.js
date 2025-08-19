@@ -319,8 +319,34 @@ describe('Practitioners CRUD Operations', function() {
         browser.assert.equal(result.value, true, 'Clicked Save button');
       });
 
+    // Debug: Check current URL and page state after save
     browser
-      .pause(1000)
+      .pause(2000)  // Give more time for navigation
+      .execute(function() {
+        const currentUrl = window.location.pathname;
+        const hasPractitionersPage = document.querySelector('#practitionersPage') !== null;
+        const hasPractitionerDetail = document.querySelector('#practitionerDetailPage') !== null;
+        const errorElements = document.querySelectorAll('[class*="error"], [color="error"]');
+        let errorText = '';
+        errorElements.forEach(el => {
+          if (el.textContent) errorText += el.textContent + ' ';
+        });
+        
+        return {
+          url: currentUrl,
+          hasPractitionersPage: hasPractitionersPage,
+          hasPractitionerDetail: hasPractitionerDetail,
+          hasError: errorText.length > 0,
+          errorText: errorText.trim()
+        };
+      }, [], function(result) {
+        console.log('Post-save state:', result.value);
+        if (result.value.hasError) {
+          browser.assert.fail(`Save failed with error: ${result.value.errorText}`);
+        }
+      });
+
+    browser
       .waitForElementVisible('#practitionersPage', 5000)
       .saveScreenshot('tests/nightwatch/screenshots/practitioners/05-practitioner-saved.png');
     
