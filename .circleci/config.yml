@@ -330,8 +330,20 @@ jobs:
             export TEST_RUN=true
             # Add signal handling and verbose output
             trap 'echo "Received signal at $(date)"; exit' SIGTERM SIGINT
-            # Run Meteor with explicit settings
-            exec meteor run --settings configs/settings.honeycomb.tdd.json --port 3000
+            # Run Meteor with explicit settings and verbose output
+            # Add periodic output to prevent timeout
+            (
+              meteor run --settings configs/settings.honeycomb.tdd.json --port 3000 &
+              METEOR_PID=$!
+              
+              # Output progress every 30 seconds to prevent timeout
+              while kill -0 $METEOR_PID 2>/dev/null; do
+                echo "[$(date)] Meteor is still starting up..."
+                sleep 30
+              done
+              
+              wait $METEOR_PID
+            )
       
       - run:
           name: Wait for Meteor

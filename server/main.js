@@ -299,10 +299,17 @@ global.LinksCollection = LinksCollection;
 //===============================================================================================================
 
 // Handle SyncedCron startup control
-import { SyncedCron } from 'meteor/littledata:synced-cron';
+import { SyncedCron } from 'meteor/quave:synced-cron';
 
 // Control SyncedCron startup based on environment variables and settings
 Meteor.startup(() => {
+  console.log('==========================================================================================');
+  console.log('[SyncedCron] Checking cron configuration...');
+  console.log('[SyncedCron] TEST_RUN:', process.env.TEST_RUN);
+  console.log('[SyncedCron] ENABLE_SYNCED_CRON:', process.env.ENABLE_SYNCED_CRON);
+  console.log('[SyncedCron] enableCronAutomation:', Meteor.settings?.private?.enableCronAutomation);
+  console.log('[SyncedCron] enableTaskManager:', Meteor.settings?.private?.enableTaskManager);
+  
   // Check multiple conditions for whether to start SyncedCron
   const shouldStartCron = 
     // Explicitly enabled via environment variable
@@ -316,9 +323,10 @@ Meteor.startup(() => {
     console.log('[SyncedCron] Starting cron scheduler...');
     SyncedCron.start();
   } else {
-    console.log('[SyncedCron] Cron scheduler disabled (set ENABLE_SYNCED_CRON=true or configure settings to enable)');
-    // littledata:synced-cron doesn't auto-start, so we don't need to stop it
+    console.log('[SyncedCron] Cron scheduler DISABLED - will not start');
+    // quave:synced-cron doesn't auto-start, so we don't need to stop it
   }
+  console.log('==========================================================================================');
 });
 
 //===============================================================================================================
