@@ -43,8 +43,12 @@ const MetadataServerMethods = {
     }
     
     // Generate JWK from X.509 certificate if available
-    let x509privateKey = get(Meteor, 'settings.private.x509.privateKey');
-    let x509publicCert = get(Meteor, 'settings.private.x509.publicCertPem');
+    let x509privateKeyRaw = get(Meteor, 'settings.private.x509.privateKey');
+    let x509publicCertRaw = get(Meteor, 'settings.private.x509.publicCertPem');
+    
+    // Convert \r\n escape sequences to actual line breaks
+    let x509privateKey = x509privateKeyRaw ? x509privateKeyRaw.replace(/\\r\\n/g, '\n') : '';
+    let x509publicCert = x509publicCertRaw ? x509publicCertRaw.replace(/\\r\\n/g, '\n') : '';
     
     if (x509privateKey && x509publicCert) {
       try {
@@ -85,8 +89,8 @@ const MetadataServerMethods = {
         let jwk = {
           kty: "RSA",
           use: "sig",
-          kid: get(Meteor, 'settings.private.jwk.keyId', Random.id()),
-          alg: "RS256",
+          kid: get(Meteor, 'settings.private.jwk.keyId', 'trialx-data-fetch-key-001'),
+          alg: "RS384",
           n: nBase64url,
           e: eBase64url
         };

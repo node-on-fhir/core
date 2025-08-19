@@ -63,6 +63,7 @@ mongo-id@1.0.9
 npm-mongo@6.10.2
 ordered-dict@1.2.0
 promise@1.0.0
+quave:synced-cron@2.2.1
 random@1.2.2
 rate-limit@1.1.2
 react-fast-refresh@0.2.9
@@ -84,6 +85,7 @@ static-html-tools@1.0.0
 symptomatic:mcp@0.1.0
 symptomatic:timelines@0.7.1
 tracker@1.3.4
+trialx:epic-data-fetch@0.1.0
 typescript@5.6.4
 underscore@1.6.4
 url@1.3.5
