@@ -87,6 +87,41 @@ meteor-desktop
 - When adding new FHIR resources, follow the existing pattern in schemas and UI components
 - Use the FHIR dehydrator functions when transforming between FHIR and internal formats
 
+## SyncedCron Control
+
+The application uses `meteor/quave:synced-cron` for scheduled tasks. By default, SyncedCron is **disabled** to prevent interference with tests and development.
+
+### Enabling SyncedCron
+
+You can enable SyncedCron in three ways:
+
+1. **Environment Variable** (highest priority):
+   ```bash
+   ENABLE_SYNCED_CRON=true meteor run --settings configs/settings.honeycomb.localhost.json
+   ```
+
+2. **Settings Configuration**:
+   ```json
+   {
+     "private": {
+       "enableCronAutomation": true
+     }
+   }
+   ```
+
+3. **Legacy Setting** (for backward compatibility):
+   ```json
+   {
+     "private": {
+       "enableTaskManager": true
+     }
+   }
+   ```
+
+### Test Environment
+
+SyncedCron is automatically disabled when `TEST_RUN=true` is set, regardless of settings configuration. This prevents cron jobs from interfering with test execution.
+
 ## Package Dependencies
 
 ### Deprecated Packages

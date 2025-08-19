@@ -11,6 +11,31 @@
 // then we can re-enable
 // import './FhirSchemaImporter.js';
 
+// Handle SyncedCron startup control
+import { Meteor } from 'meteor/meteor';
+import { SyncedCron } from 'meteor/quave:synced-cron';
+
+// Control SyncedCron startup based on environment variables and settings
+Meteor.startup(() => {
+  // Check multiple conditions for whether to start SyncedCron
+  const shouldStartCron = 
+    // Explicitly enabled via environment variable
+    process.env.ENABLE_SYNCED_CRON === 'true' ||
+    // Enabled in settings but NOT in test mode
+    (Meteor.settings?.private?.enableCronAutomation && !process.env.TEST_RUN) ||
+    // Legacy check for enableTaskManager
+    (Meteor.settings?.private?.enableTaskManager && !process.env.TEST_RUN);
+
+  if (shouldStartCron) {
+    console.log('[SyncedCron] Starting cron scheduler...');
+    SyncedCron.start();
+  } else {
+    console.log('[SyncedCron] Cron scheduler disabled (set ENABLE_SYNCED_CRON=true or configure settings to enable)');
+    // Ensure SyncedCron is stopped if it was started by the package
+    SyncedCron.stop();
+  }
+});
+
 import './Cron.js';
 import './ConsentEngineMethods.js';
 import './ConsentEngineHttp.js';
