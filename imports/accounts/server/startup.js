@@ -130,15 +130,15 @@ function setupAccountsMethods() {
     },
 
     // Record user activity
-    'accounts.recordActivity': function() {
+    'accounts.recordActivity': async function() {
       if (!this.userId) return;
 
       // Throttled activity recording
-      const user = Meteor.users.findOne(this.userId);
+      const user = await Meteor.users.findOneAsync(this.userId);
       const lastActivity = user?.lastActivityAt;
       
       if (!lastActivity || (new Date() - lastActivity) > 60000) { // 1 minute
-        Meteor.users.update(this.userId, {
+        await Meteor.users.updateAsync(this.userId, {
           $set: { lastActivityAt: new Date() }
         });
       }

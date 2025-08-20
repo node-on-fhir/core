@@ -38,6 +38,7 @@ import SmartLauncher from './SmartLauncher.jsx';
 import SmartLaunchDebugger from './SmartLaunchDebugger.jsx';
 import SmartAppDebugger from './SmartAppDebugger.jsx';
 import SmartSampleApp from './SmartSampleApp.jsx';
+import BackendAuthPage from './BackendAuthPage.jsx';
 import ThemingPage from './ThemingPage.jsx';
 
 import CdsHooksDebugger from './CdsHooksDebugger.jsx';
@@ -459,6 +460,9 @@ let dynamicRoutes = [
   }, {
     path: "/smart-app-debugger",
     element: <SmartAppDebugger />
+  }, {
+    path: "/backend-auth",
+    element: <BackendAuthPage />
   }, {
     path: "/theming",
     element: <ThemingPage />

@@ -235,11 +235,8 @@ export default function SyntheaConfigurationPage() {
       if (isDifferentFromDefault('exporter.fhir.us_core_version', config.usCoreVersion)) {
         configOverrides.push(`exporter.fhir.us_core_version=${config.usCoreVersion}`);
       }
-      // Check bulk data setting - bulk is now default (true)
-      const bulkDataValue = config.fhirExportMode === 'bulk';
-      if (isDifferentFromDefault('exporter.fhir.bulk_data', bulkDataValue)) {
-        configOverrides.push(`exporter.fhir.bulk_data=${bulkDataValue}`);
-      }
+      // Handle bulk data mode explicitly - don't add anything for bundle mode
+      // The bulk data flag will be added separately as a direct command line flag
     } else {
       // If not FHIR, we need to disable FHIR and enable the other format
       configOverrides.push('exporter.fhir.export=false');
@@ -391,9 +388,14 @@ export default function SyntheaConfigurationPage() {
       configOverrides.push(`generate.max_attempts_to_keep_patient=${config.maxAttemptsToKeepPatient}`);
     }
     
-    // Append all config overrides
+    // Add bulk data flag directly if in bulk mode
+    if (config.exportFormat === 'fhir' && config.fhirExportMode === 'bulk') {
+      command += ` --exporter.fhir.bulk_data=true`;
+    }
+    
+    // Append all config overrides as direct flags
     configOverrides.forEach(override => {
-      command += ` --config="${override}"`;
+      command += ` --${override}`;
     });
     
     return command;

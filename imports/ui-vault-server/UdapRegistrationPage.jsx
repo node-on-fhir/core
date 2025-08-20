@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+// /imports/ui-vault-server/UdapRegistrationPage.jsx
+import React, { useState, useEffect } from 'react';
 
 import { useFormik, FormikErrors } from 'formik';
 
@@ -20,7 +21,10 @@ import {
   TableRow,
   Image,
   Typography,
-  Alert
+  Alert,
+  FormControlLabel,
+  Switch,
+  Chip
 } from '@mui/material';
 
 
@@ -68,6 +72,8 @@ function UdapRegistrationPage(props){
   let [ decodedJwt, setDecodedJwt ] = useState("");
 
   let [ resultsMessage, setResultsMessage ] = useState("");
+  let [ isSmartMode, setIsSmartMode ] = useState(false);
+  let [ hasPublicKey, setHasPublicKey ] = useState(false);
 
   // Example: Set expiration time to 1 hour from now
   const expirationTime = moment().add(1, 'year');
@@ -249,6 +255,24 @@ function UdapRegistrationPage(props){
   });
 
 
+  // Check for public key on mount
+  useEffect(function(){
+    if(Meteor.isClient){
+      Meteor.call('getJwkFromCertificate', function(error, result){
+        if(error){
+          console.error('Error checking for public key:', error);
+          setHasPublicKey(false);
+        } else if(result){
+          console.log('Public key found');
+          setHasPublicKey(true);
+        } else {
+          console.log('No public key configured');
+          setHasPublicKey(false);
+        }
+      });
+    }
+  }, []);
+
   //----------------------------------------------------------------------
   // Carousel  
 
@@ -275,6 +299,39 @@ function UdapRegistrationPage(props){
     logger.debug('client.app.layout.UdapRegistrationPage.openExternalPage', url);
     window.open(url);
     // navigate(url, { replace: true });
+  }
+  
+  function handleSmartModeToggle(event){
+    setIsSmartMode(event.target.checked);
+    
+    if(event.target.checked){
+      // Pre-fill for SMART client assertion
+      const smartConfig = get(Meteor, 'settings.public.smartOnFhir[0]', {});
+      const clientId = get(smartConfig, 'client_id', 'my-client-id');
+      const tokenEndpoint = get(smartConfig, 'token_endpoint') || 
+                           get(smartConfig, 'fhirServiceUrl', '') + '/oauth2/token';
+      
+      // Update form values for SMART
+      formik.setValues({
+        iss: clientId,
+        sub: clientId,
+        aud: tokenEndpoint,
+        exp: Math.floor(Date.now() / 1000) + 300, // 5 minutes
+        iat: Math.floor(Date.now() / 1000),
+        jti: 'smart-' + Date.now() + '-' + Math.random().toString(36).substring(7),
+        client_name: 'SMART on FHIR Client',
+        redirect_uris: get(smartConfig, 'redirect_uri', './patient-quickchart'),
+        contacts: '',
+        logo_uri: '',
+        grant_types: "authorization_code",
+        response_types: "code",
+        token_endpoint_auth_method: "private_key_jwt",
+        scope: get(smartConfig, 'scope', 'launch launch/patient patient/*.read')
+      });
+    } else {
+      // Reset to UDAP defaults
+      formik.resetForm();
+    }
   }
 
   //----------------------------------------------------------------------
@@ -475,6 +532,21 @@ function UdapRegistrationPage(props){
             <Card margin={20} style={{width: '100%', marginBottom: '20px'}}  >
               <CardHeader title="Public Key"/>
               <CardContent>
+                {!hasPublicKey && (
+                  <Alert severity="error" style={{marginBottom: '10px'}}>
+                    <Typography variant="body2">
+                      No public key configured on the server. 
+                      <Button 
+                        size="small" 
+                        onClick={() => navigate('/server-configuration')}
+                        style={{marginLeft: '10px'}}
+                      >
+                        Go to Server Configuration
+                      </Button>
+                      to generate keys and certificates.
+                    </Typography>
+                  </Alert>
+                )}
                 <TextField
                   fullWidth={true}
                   id="x509Certificate"
@@ -504,7 +576,35 @@ function UdapRegistrationPage(props){
             
             <Card margin={20} style={{width: '100%'}}  >
               <form onSubmit={formik.handleSubmit} style={{width: '100%'}}>
-                <CardHeader title="Create Registration Token"/>
+                <CardHeader 
+                  title="Create Registration Token"
+                  action={
+                    <FormControlLabel
+                      control={
+                        <Switch
+                          checked={isSmartMode}
+                          onChange={handleSmartModeToggle}
+                          color="primary"
+                        />
+                      }
+                      label={
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          {isSmartMode ? (
+                            <>
+                              <Chip label="SMART" size="small" color="primary" />
+                              <Typography variant="body2">Client Assertion</Typography>
+                            </>
+                          ) : (
+                            <>
+                              <Chip label="UDAP" size="small" />
+                              <Typography variant="body2">Registration</Typography>
+                            </>
+                          )}
+                        </div>
+                      }
+                    />
+                  }
+                />
                 <CardContent>
                   
                   <TextField
@@ -689,12 +789,19 @@ function UdapRegistrationPage(props){
                     style={{marginBottom: '10px'}}
                   />
 
+                  {isSmartMode && (
+                    <Alert severity="info" style={{marginBottom: '10px', marginTop: '10px'}}>
+                      <strong>SMART Mode:</strong> This JWT will be used for client authentication during token exchange. 
+                      The "aud" should be the token endpoint URL.
+                    </Alert>
+                  )}
+
                   <Button
                     variant="contained"
                     color="primary"
                     type="submit"
                     disabled={formik.isSubmitting}
-                  >Sign Software Statement</Button>
+                  >{isSmartMode ? 'Generate Client Assertion' : 'Sign Software Statement'}</Button>
 
                 </CardContent>
               </form>

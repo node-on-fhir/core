@@ -63,23 +63,8 @@ Meteor.startup(() => {
     );
   }
 
-  // Custom account creation validation
-  Accounts.validateNewUser((user) => {
-    // Check if email domain is allowed
-    const allowedDomains = get(Meteor, 'settings.public.accounts.allowedDomains', []);
-    if (allowedDomains.length > 0) {
-      const email = user.emails?.[0]?.address;
-      const domain = email?.split('@')[1];
-      
-      if (!allowedDomains.includes(domain)) {
-        throw new Meteor.Error('forbidden-domain', 
-          `Email domain @${domain} is not allowed`);
-      }
-    }
-
-    // Additional validation rules can be added here
-    return true;
-  });
+  // Note: Account validation is handled on the server side
+  // Client-side validation can be done in the UI before submission
 
   // Handle account enrollment (for invited users)
   Accounts.onEnrollmentLink((token, done) => {

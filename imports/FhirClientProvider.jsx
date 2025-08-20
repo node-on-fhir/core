@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 
 import { oauth2 as SMART } from "fhirclient";
 import { FhirClientContext } from "./FhirClientContext";
+import { SmartAuthManager } from './lib/SmartAuthManager';
 
 import { useLocation, useNavigate } from "react-router-dom";
 
@@ -278,6 +279,209 @@ export function FhirClientProvider(props){
     }
   }
 
+  // Shared initialization logic for both standard and custom auth flows
+  const handleClientInitialization = (smartClient) => {
+    const token = smartClient.getAuthorizationHeader();
+    console.debug('FhirClientProvider.token: ' + token);
+
+    const patientId = smartClient.getPatientId();
+    console.debug('FhirClientProvider.patientId: ' + patientId);
+
+    const userId = smartClient.getUserId();
+    console.debug('FhirClientProvider.userId: ' + userId);
+
+    const userType = smartClient.getUserType();
+    console.debug('FhirClientProvider.userType: ' + userType);
+
+    const fhirUser = smartClient.getFhirUser();
+    console.debug('FhirClientProvider.fhirUser: ' + fhirUser);
+
+    const state = smartClient.getState();
+    console.debug('FhirClientProvider.state: ' + JSON.stringify(state));
+    Session.set('fhirclient.state', state);
+
+    if(state){
+      let metadataUrl = "";
+      let patientUrl = "";
+      let practitionerUrl = "";
+      let accessToken = "";
+
+      metadataUrl = state.serverUrl + "/metadata?_format=json";
+      console.debug('FhirClientProvider.metadataUrl:   ', metadataUrl);
+
+      if(state.tokenResponse){
+        accessToken = get(state, 'tokenResponse.access_token');
+        console.debug('FhirClientProvider.accessToken:   ', accessToken);
+      }
+
+      var httpHeaders = { headers: {
+        'Accept': "application/json,application/fhir+json",
+        "Authorization": "Bearer " + accessToken
+      }}
+
+      if(has(Meteor, 'settings.private.fhir.fhirServer.auth.bearerToken')){
+        accessToken = get(Meteor, 'settings.private.fhir.fhirServer.auth.bearerToken');
+      }
+
+      console.debug('FhirClientProvider.httpHeaders', httpHeaders);
+
+      if(accessToken){
+        if(metadataUrl){            
+          fetch(metadataUrl, httpHeaders)
+            .then(response => response.text())
+            .then(content => {
+              let parsedCapabilityStatement = JSON.parse(content || "{}");
+              console.log('Received a conformance statement for the server.', parsedCapabilityStatement);
+      
+              let ehrLaunchCapabilities = FhirUtilities.parseCapabilityStatement(parsedCapabilityStatement);
+              console.log("Result of parsing CapabilityStatement. ResourceTypes we can search for:", ehrLaunchCapabilities);
+              Session.set('FhirClientProvider.ehrLaunchCapabilities', ehrLaunchCapabilities)
+  
+              fetchPatientData(ehrLaunchCapabilities, smartClient, accessToken);
+
+              if(get(Meteor, 'settings.private.accessControl.enableHipaaLogging')){
+                let newAuditEvent = { 
+                  "resourceType" : "AuditEvent",
+                  "type" : { 
+                    'code': 'Fetch Patient Data',
+                    'display': 'Fetch Patient Data',
+                    }, 
+                  "action" : 'Fetch Chart',
+                  "recorded" : new Date(), 
+                  "outcome" : "Success",
+                  "outcomeDesc" : 'Medical records fetched from hospital electronic medical record system.',
+                  "agent" : [{ 
+                    "name" : FhirUtilities.pluckName(Session.get('selectedPatient')),
+                    "who": {
+                      "display": FhirUtilities.pluckName(Session.get('selectedPatient')),
+                      "reference": "Patient/" + get(Session.get('selectedPatient'), 'id')
+                    },
+                    "requestor" : false
+                  }],
+                  "source" : { 
+                    "site" : Meteor.absoluteUrl(),
+                    "identifier": {
+                      "value": Meteor.absoluteUrl(),
+                    }
+                  },
+                  "entity": [{
+                    "reference": {
+                      "reference": ''
+                    }
+                  }]
+                };
+
+                console.log('Logging a hipaa event...', newAuditEvent)
+                let hipaaEventId = Meteor.call("logAuditEvent", newAuditEvent);            
+              }
+            })
+            .catch(error => {
+              console.error('fetch().metadataUrl.error', error);
+            });    
+        }
+
+        if(patientId){
+          patientUrl = state.serverUrl + "/Patient?_id=" + patientId;
+          console.log('FhirClientProvider.patientUrl:    ', patientUrl);
+
+          if(patientUrl){        
+            fetch(patientUrl, httpHeaders)
+              .then(response => response.text())
+              .then(content => {
+                let parsedPatientBundle = JSON.parse(content || "{}");
+                console.log('FhirClientProvider.parsedPatientBundle', parsedPatientBundle);                      
+
+                if(parsedPatientBundle.resourceType === "Patient"){
+                  if(!Patients.findOne({id: parsedPatientBundle.id})){
+                    Patients._collection.insert(parsedPatientBundle, function(){})
+                    Session.set('selectedPatient', parsedPatientBundle)                                  
+                    Session.set('selectedPatientId', get(parsedPatientBundle, 'id'))
+                  }
+                } else if (parsedPatientBundle.resourceType === "Bundle"){
+                  parsedPatientBundle.entry.forEach(function(entry){
+                    if(get(entry, 'resource.resourceType') === "Patient"){
+                      if(!Patients.findOne({id: get(entry, 'resource.id')})){
+                        Patients._collection.insert(get(entry, 'resource'), function(){})
+                        Session.set('selectedPatient', get(entry, 'resource'))                                  
+                        Session.set('selectedPatientId', get(entry, 'resource.id'))
+                      }
+                    } 
+                  }) 
+                }
+
+                if(get(Meteor, 'settings.private.accessControl.enableHipaaLogging')){
+                  let newAuditEvent = { 
+                    "resourceType" : "AuditEvent",
+                    "type" : { 
+                      'code': 'Fetch Patient Demographics',
+                      'display': 'Fetch Patient Demographics',
+                      }, 
+                    "action" : 'Fetch Chart',
+                    "recorded" : new Date(), 
+                    "outcome" : "Success",
+                    "outcomeDesc" : 'Medical records fetched from hospital electronic medical record system.',
+                    "agent" : [{ 
+                      "name" : FhirUtilities.pluckName(Session.get('selectedPatient')),
+                      "who": {
+                        "display": FhirUtilities.pluckName(Session.get('selectedPatient')),
+                        "reference": "Patient/" + get(Session.get('selectedPatient'), 'id')
+                      },
+                      "requestor" : false
+                    }],
+                    "source" : { 
+                      "site" : Meteor.absoluteUrl(),
+                      "identifier": {
+                        "value": Meteor.absoluteUrl(),
+                      }
+                    },
+                    "entity": [{
+                      "reference": {
+                        "reference": ''
+                      }
+                    }]
+                  };
+
+                  console.log('Logging a hipaa event...', newAuditEvent)
+                  let hipaaEventId = Meteor.call("logAuditEvent", newAuditEvent)            
+                }
+              })
+              .catch(httpError => {
+                console.error('FhirClientProvider.patientUrl.get().httpError', httpError);
+              });
+          }
+        } else {
+          console.log('FhirClientProvider.patientId not found. Please check scopes and permissions.')
+        }
+
+        if(fhirUser){
+          practitionerUrl = state.serverUrl + "/" + fhirUser;
+          console.log('FhirClientProvider.practitionerUrl:    ', practitionerUrl);
+
+          if(practitionerUrl){            
+            fetch(practitionerUrl, httpHeaders)
+              .then(response => response.text())
+              .then(content => {
+                let parsedPractitionerBundle = JSON.parse(content || "{}");
+                console.log('FhirClientProvider.parsedPractitionerBundle', parsedPractitionerBundle);     
+
+                if(parsedPractitionerBundle.resourceType === "Practitioner"){
+                  if(!Practitioners.findOne({id: parsedPractitionerBundle.id})){
+                    Practitioners._collection.insert(parsedPractitionerBundle, function(){})
+                    Session.set('currentUser', parsedPractitionerBundle);
+                  }
+                }  
+              })
+              .catch(httpError => {
+                console.error('FhirClientProvider.practitionerUrl.get().error', httpError);
+              });    
+          }
+        } else {
+          console.warn('FhirClientProvider.fhirUser not found. Please check scopes and permissions.')
+        }
+      }
+    }
+  };
+
   return (
     <FhirClientContext.Provider
       value={{
@@ -290,8 +494,89 @@ export function FhirClientProvider(props){
                 if (client) {
                   return children;
                 } else {
+                  // Custom Token Exchange Flow
+                  //
+                  // The fhirclient library handles standard SMART on FHIR flows well, but some FHIR servers
+                  // require specific OAuth2 authentication methods that aren't supported by the library:
+                  // - JWT Bearer Assertions (RFC 7523) for backend services
+                  // - Client authentication variations (Basic Auth vs POST body)
+                  // - Custom token endpoint behaviors
+                  //
+                  // This block checks if we need to use our SmartAuthManager for custom token exchange
+                  // based on the server's configuration. If custom auth is needed, we handle the token
+                  // exchange ourselves and create a client object that mimics fhirclient's interface.
+                  // Otherwise, we fall back to the standard fhirclient library flow.
+                  
+                  // Check if we need custom token exchange
+                  const urlParams = new URLSearchParams(window.location.search);
+                  const authCode = urlParams.get('code');
+                  const iss = urlParams.get('iss') || Session.get('smartOnFhir_iss');
+                  
+                  // Find the matching SMART config
+                  const smartConfig = get(Meteor, 'settings.public.smartOnFhir', []).find(config => {
+                    return iss && iss.includes(get(config, 'fhirServiceUrl', '').replace(/https?:\/\//, ''));
+                  });
+                  
+                  // Check if we should use custom auth
+                  if (authCode && smartConfig && SmartAuthManager.shouldUseCustomAuth(smartConfig)) {
+                    console.log('Using custom SmartAuthManager for token exchange');
+                    
+                    // Get PKCE verifier from storage
+                    const codeVerifier = localStorage.getItem('pkce_code_verifier');
+                    const redirectUri = get(smartConfig, 'redirect_uri', window.location.origin + '/patient-quickchart');
+                    
+                    // Use our custom token exchange
+                    const authManager = new SmartAuthManager(smartConfig);
+                    authManager.exchangeCodeForToken(authCode, codeVerifier, redirectUri)
+                      .then(tokenResponse => {
+                        console.log('Custom token exchange successful');
+                        
+                        // Create a minimal client object that mimics fhirclient
+                        const customClient = {
+                          getState: () => ({
+                            serverUrl: get(smartConfig, 'fhirServiceUrl'),
+                            tokenResponse: tokenResponse,
+                            clientId: get(smartConfig, 'client_id')
+                          }),
+                          getAuthorizationHeader: () => `Bearer ${tokenResponse.access_token}`,
+                          getPatientId: () => tokenResponse.patient,
+                          getUserId: () => tokenResponse.user,
+                          getUserType: () => tokenResponse.user ? tokenResponse.user.split('/')[0] : null,
+                          getFhirUser: () => tokenResponse.user,
+                          request: (url, options = {}) => {
+                            // Implement basic FHIR request functionality
+                            const absoluteUrl = url.startsWith('http') ? url : `${get(smartConfig, 'fhirServiceUrl')}${url}`;
+                            return fetch(absoluteUrl, {
+                              ...options,
+                              headers: {
+                                ...options.headers,
+                                'Authorization': `Bearer ${tokenResponse.access_token}`,
+                                'Accept': 'application/json'
+                              }
+                            }).then(res => res.json());
+                          }
+                        };
+                        
+                        setError(null);
+                        setClient(customClient);
+                        
+                        // Continue with the rest of the initialization
+                        const state = customClient.getState();
+                        console.debug('FhirClientProvider.SMART.ready().state: ' + JSON.stringify(state));
+                        Session.set('fhirclient.state', state);
+                        
+                        // Run the same initialization as standard flow
+                        handleClientInitialization(customClient);
+                      })
+                      .catch(error => {
+                        console.error('Custom token exchange failed:', error);
+                        setError(error);
+                      });
+                    
+                    return null; // Return early, we're handling auth ourselves
+                  }
 
-
+                  // Fall back to standard fhirclient for other cases
                   SMART.ready()
                     .then(smartClient => {
                       console.debug("===========================================================================")
@@ -300,218 +585,8 @@ export function FhirClientProvider(props){
                       setError(null);
                       setClient(smartClient);
 
-                      
-                      const token = smartClient.getAuthorizationHeader();
-                      console.debug('FhirClientProvider.SMART.ready().token: ' + token);
-
-                      const patientId = smartClient.getPatientId();
-                      console.debug('FhirClientProvider.SMART.ready().patientId: ' + patientId);
-
-                      const userId = smartClient.getUserId();
-                      console.debug('FhirClientProvider.SMART.ready().userId: ' + userId);
-
-                      const userType = smartClient.getUserType();
-                      console.debug('FhirClientProvider.SMART.ready().userType: ' + userType);
-
-                      const fhirUser = smartClient.getFhirUser();
-                      console.debug('FhirClientProvider.SMART.ready().fhirUser: ' + fhirUser);
-
-                      const state = smartClient.getState();
-                      console.debug('FhirClientProvider.SMART.ready().state: ' + JSON.stringify(state));
-                      Session.set('fhirclient.state', state);
-
-                      if(state){
-                        let metadataUrl = "";
-                        let patientUrl = "";
-                        let practitionerUrl = "";
-                        let accessToken = "";
-
-                        metadataUrl = state.serverUrl + "/metadata?_format=json";
-                        console.debug('FhirClientProvider.metadataUrl:   ', metadataUrl);
-
-
-                        if(state.tokenResponse){
-                          accessToken = get(state, 'tokenResponse.access_token');
-                          console.debug('FhirClientProvider.accessToken:   ', accessToken);
-                        }
-
-                        var httpHeaders = { headers: {
-                          'Accept': "application/json,application/fhir+json",
-                          "Authorization": "Bearer " + accessToken
-                          // the following doesn't work with Epic; but was needed by some other system
-                          // 'Access-Control-Allow-Origin': '*'        
-                        }}
-
-                        // if(has(smartOnFhirConfig, 'client_secret')){
-                        //   httpHeaders.headers["Authorization"] = "Basic " + atob(get(smartOnFhirConfig, 'client_id') + ":" + get(smartOnFhirConfig, 'client_secret'));
-                        // } 
-                
-                        if(has(Meteor, 'settings.private.fhir.fhirServer.auth.bearerToken')){
-                          accessToken = get(Meteor, 'settings.private.fhir.fhirServer.auth.bearerToken');
-                        }
-
-                        console.debug('FhirClientProvider.patientUrl.httpHeaders', httpHeaders);
-
-                        if(accessToken){
-                          if(metadataUrl){            
-                            fetch(metadataUrl, httpHeaders)
-                              .then(response => response.text())
-                              .then(content => {
-                                let parsedCapabilityStatement = JSON.parse(content || "{}");
-                                console.log('Received a conformance statement for the server received via iss URL parameter.', parsedCapabilityStatement);
-                        
-                                let ehrLaunchCapabilities = FhirUtilities.parseCapabilityStatement(parsedCapabilityStatement);
-                                console.log("Result of parsing through the CapabilityStatement.  These are the ResourceTypes we can search for", ehrLaunchCapabilities);
-                                Session.set('FhirClientProvider.ehrLaunchCapabilities', ehrLaunchCapabilities)
-                    
-                                fetchPatientData(ehrLaunchCapabilities, smartClient, accessToken);
-
-                                if(get(Meteor, 'settings.private.accessControl.enableHipaaLogging')){
-                                  let newAuditEvent = { 
-                                    "resourceType" : "AuditEvent",
-                                    "type" : { 
-                                      'code': 'Fetch Patient Data',
-                                      'display': 'Fetch Patient Data',
-                                      }, 
-                                    "action" : 'Fetch Chart',
-                                    "recorded" : new Date(), 
-                                    "outcome" : "Success",
-                                    "outcomeDesc" : 'Medical records fetched from hospital electronic medical record system.',
-                                    "agent" : [{ 
-                                      "name" : FhirUtilities.pluckName(Session.get('selectedPatient')),
-                                      "who": {
-                                        "display": FhirUtilities.pluckName(Session.get('selectedPatient')),
-                                        "reference": "Patient/" + get(Session.get('selectedPatient'), 'id')
-                                      },
-                                      "requestor" : false
-                                    }],
-                                    "source" : { 
-                                      "site" : Meteor.absoluteUrl(),
-                                      "identifier": {
-                                        "value": Meteor.absoluteUrl(),
-
-                                      }
-                                    },
-                                    "entity": [{
-                                      "reference": {
-                                        "reference": ''
-                                      }
-                                    }]
-                                  };
-
-                                  console.log('Logging a hipaa event...', newAuditEvent)
-                                  let hipaaEventId = Meteor.call("logAuditEvent", newAuditEvent);            
-                                }
-                              })
-                              .catch(error => {
-                                console.error('fetch().metadataUrl.error', error);
-                              });    
-                          }
-
-                          if(patientId){
-                            patientUrl = state.serverUrl + "/Patient?_id=" + patientId;
-                            // patientUrl = state.serverUrl + "/Patient/" + patientId;
-                            console.log('FhirClientProvider.patientUrl:    ', patientUrl);
-
-                            if(patientUrl){        
-                              // need to reconcile with client.request() syntax above    
-                              fetch(patientUrl, httpHeaders)
-                                .then(response => response.text())
-                                .then(content => {
-                                  let parsedPatientBundle = JSON.parse(content || "{}");
-                                  console.log('FhirClientProvider.parsedPatientBundle', parsedPatientBundle);                      
-    
-                                  if(parsedPatientBundle.resourceType === "Patient"){
-                                    if(!Patients.findOne({id: parsedPatientBundle.id})){
-                                      Patients._collection.insert(parsedPatientBundle, function(){})
-                                      Session.set('selectedPatient', parsedPatientBundle)                                  
-                                      Session.set('selectedPatientId', get(parsedPatientBundle, 'id'))
-                                    }
-                                  } else if (parsedPatientBundle.resourceType === "Bundle"){
-                                    parsedPatientBundle.entry.forEach(function(entry){
-                                      if(get(entry, 'resource.resourceType') === "Patient"){
-                                        if(!Patients.findOne({id: get(entry, 'resource.id')})){
-                                          Patients._collection.insert(get(entry, 'resource'), function(){})
-                                          Session.set('selectedPatient', get(entry, 'resource'))                                  
-                                          Session.set('selectedPatientId', get(entry, 'resource.id'))
-                                        }
-                                      } 
-                                    }) 
-                                  }
-
-                                  if(get(Meteor, 'settings.private.accessControl.enableHipaaLogging')){
-                                    let newAuditEvent = { 
-                                      "resourceType" : "AuditEvent",
-                                      "type" : { 
-                                        'code': 'Fetch Patient Demographics',
-                                        'display': 'Fetch Patient Demographics',
-                                        }, 
-                                      "action" : 'Fetch Chart',
-                                      "recorded" : new Date(), 
-                                      "outcome" : "Success",
-                                      "outcomeDesc" : 'Medical records fetched from hospital electronic medical record system.',
-                                      "agent" : [{ 
-                                        "name" : FhirUtilities.pluckName(Session.get('selectedPatient')),
-                                        "who": {
-                                          "display": FhirUtilities.pluckName(Session.get('selectedPatient')),
-                                          "reference": "Patient/" + get(Session.get('selectedPatient'), 'id')
-                                        },
-                                        "requestor" : false
-                                      }],
-                                      "source" : { 
-                                        "site" : Meteor.absoluteUrl(),
-                                        "identifier": {
-                                          "value": Meteor.absoluteUrl(),
-
-                                        }
-                                      },
-                                      "entity": [{
-                                        "reference": {
-                                          "reference": ''
-                                        }
-                                      }]
-                                    };
-
-                                    console.log('Logging a hipaa event...', newAuditEvent)
-                                    let hipaaEventId = Meteor.call("logAuditEvent", newAuditEvent)            
-                                  }
-                                })
-                                .catch(httpError => {
-                                  console.error('FhirClientProvider.patientUrl.get().httpError', httpError);
-                                });
-                            }
-                          } else {
-                            console.log('FhirClientProvider.SMART.ready().patientId not found.  Please check scopes and permissions.')
-                          }
-
-                          if(fhirUser){
-                            practitionerUrl = state.serverUrl + "/" + fhirUser;
-                            console.log('FhirClientProvider.practitionerUrl:    ', practitionerUrl);
-
-                            if(practitionerUrl){            
-                              // need to reconcile with client.request() syntax above
-                              fetch(practitionerUrl, httpHeaders)
-                                .then(response => response.text())
-                                .then(content => {
-                                  let parsedPractitionerBundle = JSON.parse(content || "{}");
-                                  console.log('FhirClientProvider.parsedPractitionerBundle', parsedPractitionerBundle);     
-    
-                                  if(parsedPractitionerBundle.resourceType === "Practitioner"){
-                                    if(!Practitioners.findOne({id: parsedPractitionerBundle.id})){
-                                      Practitioners._collection.insert(parsedPractitionerBundle, function(){})
-                                      Session.set('currentUser', parsedPractitionerBundle);
-                                    }
-                                  }  
-                                })
-                                .catch(httpError => {
-                                  console.error('FhirClientProvider.practitionerUrl.get().error', httpError);
-                                });    
-                            }
-                          } else {
-                            console.warn('FhirClientProvider.SMART.ready().fhirUser not found.  Please check scopes and permissions.')
-                          }
-                        }
-                      }
+                      // Use shared initialization logic
+                      handleClientInitialization(smartClient);
                     })
                     .catch(smartError => {
                       setError(smartError);

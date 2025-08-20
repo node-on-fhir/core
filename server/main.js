@@ -1,3 +1,10 @@
+// Log immediately to see if we're reaching this point
+console.log('==========================================================================================');
+console.log('[server/main.js] Starting server initialization...');
+console.log('[server/main.js] TEST_RUN:', process.env.TEST_RUN);
+console.log('[server/main.js] ENABLE_SYNCED_CRON:', process.env.ENABLE_SYNCED_CRON);
+console.log('==========================================================================================');
+
 // import './ServerSideRendering.js';
 // import './AccountsServer.js';
 // import './SmartHealthCards.js';
@@ -33,6 +40,7 @@ import '../imports/api/allergyIntolerances/methods.js';
 import '../imports/api/appointments/methods.js';
 import '../imports/api/AuditEvents/AuditEvents'; // Import the methods
 import '../imports/api/carePlans/methods.js';
+import '../imports/api/rfc7523/methods.js';
 import '../imports/api/compositions/methods.js';
 import '../imports/api/conditions/methods.js';
 import '../imports/api/consents/methods.js';
@@ -294,6 +302,39 @@ global.Questionnaires = Questionnaires;
 global.QuestionnaireResponses = QuestionnaireResponses;
 global.Schedules = Schedules;
 global.LinksCollection = LinksCollection;
+
+//===============================================================================================================
+
+// Handle SyncedCron startup control
+import { SyncedCron } from './SyncedCron.js';
+
+// Control SyncedCron startup based on environment variables and settings
+Meteor.startup(() => {
+  console.log('==========================================================================================');
+  console.log('[SyncedCron] Checking cron configuration...');
+  console.log('[SyncedCron] TEST_RUN:', process.env.TEST_RUN);
+  console.log('[SyncedCron] ENABLE_SYNCED_CRON:', process.env.ENABLE_SYNCED_CRON);
+  console.log('[SyncedCron] enableCronAutomation:', Meteor.settings?.private?.enableCronAutomation);
+  console.log('[SyncedCron] enableTaskManager:', Meteor.settings?.private?.enableTaskManager);
+  
+  // Check multiple conditions for whether to start SyncedCron
+  const shouldStartCron = 
+    // Explicitly enabled via environment variable
+    process.env.ENABLE_SYNCED_CRON === 'true' ||
+    // Enabled in settings but NOT in test mode
+    (Meteor.settings?.private?.enableCronAutomation && !process.env.TEST_RUN) ||
+    // Legacy check for enableTaskManager
+    (Meteor.settings?.private?.enableTaskManager && !process.env.TEST_RUN);
+
+  if (shouldStartCron) {
+    console.log('[SyncedCron] Starting cron scheduler...');
+    SyncedCron.start();
+  } else {
+    console.log('[SyncedCron] Cron scheduler DISABLED - will not start');
+    // quave:synced-cron doesn't auto-start, so we don't need to stop it
+  }
+  console.log('==========================================================================================');
+});
 
 //===============================================================================================================
 

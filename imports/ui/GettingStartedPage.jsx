@@ -39,7 +39,7 @@ import {
   Divider,
   Checkbox,
   FormGroup,
-  Snackbar
+  FormHelperText
 } from '@mui/material';
 
 import { get } from 'lodash';
@@ -47,6 +47,7 @@ import { useNavigate } from 'react-router-dom';
 import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
 import { useTracker } from 'meteor/react-meteor-data';
+import forge from 'node-forge';
 
 // import { Icon } from 'react-icons-kit';
 // import {lightbulbO} from 'react-icons-kit/fa/lightbulbO'
@@ -106,7 +107,8 @@ import {
   Download,                 // for download settings
   Business,                 // for business pages
   Article,                  // for legal/content pages
-  Palette as PaletteIcon    // for color picker buttons
+  Palette as PaletteIcon,   // for color picker buttons
+  Key                       // for key/security configuration
 } from '@mui/icons-material';
 
 import InputAdornment from '@mui/material/InputAdornment';
@@ -136,6 +138,8 @@ const InvisibleCard = styled(Card)({
 
 let DynamicSpacer;
 let useTheme;
+let pki = forge.pki;
+
 Meteor.startup(function(){
   DynamicSpacer = Meteor.DynamicSpacer;
   useTheme = Meteor.useTheme;
@@ -166,21 +170,49 @@ function GettingStartedPage(props){
   const [registerExpanded, setRegisterExpanded] = React.useState(false);
   const [upstreamTetherExpanded, setUpstreamTetherExpanded] = React.useState(false);
   const [environmentVarsExpanded, setEnvironmentVarsExpanded] = React.useState(false);
+  const [cryptographyExpanded, setCryptographyExpanded] = React.useState(false);
+  const [deployExpanded, setDeployExpanded] = React.useState(false);
+  const [customWorkflowsExpanded, setCustomWorkflowsExpanded] = React.useState(false);
+  const [databaseExpanded, setDatabaseExpanded] = React.useState(false);
   
   // State for color picker
   const [colorPickerOpen, setColorPickerOpen] = React.useState(false);
   const [colorPickerField, setColorPickerField] = React.useState('');
   const [tempColor, setTempColor] = React.useState({ h: 214, s: 43, v: 90, a: 1 });
   
-  // State for success message
-  const [showSuccessMessage, setShowSuccessMessage] = React.useState(false);
   
   // State for shell commands
   const [shellCommand, setShellCommand] = React.useState('meteor run');
   const [moduleCommand, setModuleCommand] = React.useState('meteor add');
+  const [deployCommand, setDeployCommand] = React.useState('meteor deploy');
+  const [workflowCommand, setWorkflowCommand] = React.useState('cd packages && meteor create --package myorg:mypkg');
+  const [deploymentOption, setDeploymentOption] = React.useState('');
   
   // State for download filename
   const [downloadFilename, setDownloadFilename] = React.useState('settings.honeycomb.json');
+  
+  // State for database configuration
+  const [mongoUrl, setMongoUrl] = React.useState('');
+  const [dbUsername, setDbUsername] = React.useState('');
+  const [dbPassword, setDbPassword] = React.useState('');
+  const [dbName, setDbName] = React.useState('');
+  const [mongoOplogUrl, setMongoOplogUrl] = React.useState('');
+  const [oplogUsername, setOplogUsername] = React.useState('');
+  const [oplogPassword, setOplogPassword] = React.useState('');
+  
+  // State for cryptography keys
+  const [publicKeyText, setPublicKeyText] = React.useState('');
+  const [privateKeyText, setPrivateKeyText] = React.useState('');
+  const [publicCertPem, setPublicCertPem] = React.useState('');
+  const [serverHasKeys, setServerHasKeys] = React.useState({
+    publicKey: false,
+    privateKey: false,
+    publicCert: false
+  });
+  
+  // Security state - detect if we're on HTTPS
+  const [isSecureConnection, setIsSecureConnection] = React.useState(false);
+  const [showSecurityWarning, setShowSecurityWarning] = React.useState(false);
   
   // State for settings (initialized from Meteor.settings)
   const [settings, setSettings] = React.useState(() => {
@@ -189,6 +221,9 @@ function GettingStartedPage(props){
     if (!initialSettings.private) initialSettings.private = {};
     if (!initialSettings.private.fhir) initialSettings.private.fhir = {};
     if (!initialSettings.private.fhir.rest) initialSettings.private.fhir.rest = {};
+    
+    // Ensure private.x509 structure exists for cryptography keys
+    if (!initialSettings.private.x509) initialSettings.private.x509 = {};
     
     // Ensure public.defaults.sidebar.menuItems structure exists with HomePage default
     if (!initialSettings.public) initialSettings.public = {};
@@ -219,10 +254,103 @@ function GettingStartedPage(props){
     'Synthea': 'clinical:synthea'
   };
   
+  // Helper function to build MongoDB URLs
+  const buildMongoUrl = (template, username, password, databaseName) => {
+    if (!template || !username || !password) return template;
+    let url = template
+      .replace('<db_username>', encodeURIComponent(username))
+      .replace('<db_password>', encodeURIComponent(password));
+    
+    // Add database name if provided
+    if (databaseName) {
+      // Check if URL has a query string
+      const queryIndex = url.indexOf('?');
+      if (queryIndex !== -1) {
+        // Insert database name before the query string
+        const baseUrl = url.substring(0, queryIndex);
+        const queryString = url.substring(queryIndex);
+        // Remove any trailing slash from baseUrl
+        const cleanBaseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
+        url = `${cleanBaseUrl}/${databaseName}${queryString}`;
+      } else {
+        // No query string, just append database name
+        const cleanUrl = url.endsWith('/') ? url.slice(0, -1) : url;
+        url = `${cleanUrl}/${databaseName}`;
+      }
+    }
+    
+    return url;
+  };
+  
+  // Update shell command when database config changes
+  React.useEffect(() => {
+    const updatedShellCommand = buildShellCommand(settings);
+    setShellCommand(updatedShellCommand);
+  }, [mongoUrl, dbUsername, dbPassword, dbName, mongoOplogUrl, oplogUsername, oplogPassword, settings]);
+  
+  // Helper function to build deploy command
+  const buildDeployCommand = (currentSettings, option = deploymentOption) => {
+    let command = '';
+    
+    switch (option) {
+      case 'galaxy':
+        command = 'meteor deploy';
+        
+        // Add app name (use title as subdomain)
+        const appName = get(currentSettings, 'public.title', 'myapp')
+          .toLowerCase()
+          .replace(/[^a-z0-9]/g, '-')
+          .replace(/-+/g, '-')
+          .replace(/^-|-$/g, '');
+        
+        command += ` ${appName}.meteorapp.com`;
+        
+        // Add settings file
+        command += ` --settings ${downloadFilename}`;
+        
+        // Add extra packages if modules are enabled
+        const enabledPackages = [];
+        Object.keys(modulePackageMap).forEach(moduleName => {
+          if (get(currentSettings, `public.modules.${moduleName}`, false)) {
+            enabledPackages.push(modulePackageMap[moduleName]);
+          }
+        });
+        
+        if (enabledPackages.length > 0) {
+          command += ` --extra-packages ${enabledPackages.join(',')}`;
+        }
+        break;
+        
+      case 'docker':
+        command = 'meteor build --directory ../output && cd ../output && docker build -t honeycomb .';
+        break;
+        
+      case 'baremetal':
+        command = 'meteor build --directory ../output';
+        break;
+        
+      default:
+        command = '';
+    }
+    
+    return command;
+  };
+  
   // Helper function to build shell command with environment variables
   const buildShellCommand = (currentSettings, currentShellCommand = null) => {
     const envVars = [];
     const envSettings = get(currentSettings, 'private.env', {});
+    
+    // Add MongoDB URLs if configured
+    if (mongoUrl && dbUsername && dbPassword) {
+      const fullMongoUrl = buildMongoUrl(mongoUrl, dbUsername, dbPassword, dbName);
+      envVars.push(`MONGO_URL="${fullMongoUrl}"`);
+    }
+    
+    if (mongoOplogUrl && oplogUsername && oplogPassword) {
+      const fullOplogUrl = buildMongoUrl(mongoOplogUrl, oplogUsername, oplogPassword, dbName);
+      envVars.push(`MONGO_OPLOG_URL="${fullOplogUrl}"`);
+    }
     
     // Add defined environment variables
     Object.keys(envSettings).forEach(key => {
@@ -347,7 +475,128 @@ function GettingStartedPage(props){
   React.useEffect(() => {
     updateModuleCommand(settings);
     updateCapabilityStatement(settings);
+    setDeployCommand(buildDeployCommand(settings));
   }, []); // Run once on mount
+  
+  // Update deploy command when deployment option or settings change
+  React.useEffect(() => {
+    const newCommand = buildDeployCommand(settings, deploymentOption);
+    setDeployCommand(newCommand);
+    
+    // Update galaxy.meteor.com settings if Meteor Galaxy is selected
+    if (deploymentOption === 'galaxy') {
+      // Build environment variables for Galaxy
+      const galaxyEnv = {};
+      
+      // Add MongoDB URLs if configured
+      if (mongoUrl && dbUsername && dbPassword) {
+        galaxyEnv.MONGO_URL = buildMongoUrl(mongoUrl, dbUsername, dbPassword, dbName);
+      }
+      
+      // Add NODE_ENV
+      galaxyEnv.NODE_ENV = get(settings, 'private.env.NODE_ENV', 'production');
+      
+      // Add ROOT_URL (construct from app name)
+      const appName = get(settings, 'public.title', 'myapp')
+        .toLowerCase()
+        .replace(/[^a-z0-9]/g, '-')
+        .replace(/-+/g, '-')
+        .replace(/^-|-$/g, '');
+      galaxyEnv.ROOT_URL = `https://${appName}.meteorapp.com`;
+      
+      // Add other environment variables from settings
+      const envSettings = get(settings, 'private.env', {});
+      Object.keys(envSettings).forEach(key => {
+        const value = envSettings[key];
+        if (value && value !== '' && value !== 'false' && value !== 'No Value') {
+          if (key !== 'NODE_ENV') { // Skip NODE_ENV as we already set it
+            galaxyEnv[key] = value === 'Enabled' ? 'true' : value;
+          }
+        }
+      });
+      
+      // Update settings with galaxy.meteor.com section
+      // Need to set this as a single key, not nested
+      const newSettings = { ...settings };
+      if (!newSettings['galaxy.meteor.com']) {
+        newSettings['galaxy.meteor.com'] = {};
+      }
+      newSettings['galaxy.meteor.com'].env = galaxyEnv;
+      setSettings(newSettings);
+    }
+  }, [deploymentOption, settings, mongoUrl, dbUsername, dbPassword, dbName]);
+  
+  // Check for server keys on mount
+  React.useEffect(() => {
+    if(Meteor.isClient){
+      Meteor.call('hasServerKeys', function(error, result){
+        if(result){
+          setServerHasKeys({
+            publicKey: get(result, 'x509.publicKey', false),
+            privateKey: get(result, 'x509.privateKey', false),
+            publicCert: get(result, 'x509.publicCertPem', false)
+          });
+          
+          // If server has keys, populate them into the display fields
+          if(get(result, 'x509.publicKey')){
+            const publicKey = get(result, 'x509.publicKey', '');
+            setPublicKeyText(publicKey);
+          }
+          
+          if(get(result, 'x509.privateKey')){
+            const privateKey = get(result, 'x509.privateKey', '');
+            setPrivateKeyText(privateKey);
+          }
+          
+          if(get(result, 'x509.publicCertPem')){
+            const publicCert = get(result, 'x509.publicCertPem', '');
+            setPublicCertPem(publicCert);
+          }
+          
+          // Update settings with all keys from server in one batch
+          setSettings(prevSettings => {
+            const newSettings = JSON.parse(JSON.stringify(prevSettings));
+            
+            // Ensure private.x509 structure exists
+            if (!newSettings.private) newSettings.private = {};
+            if (!newSettings.private.x509) newSettings.private.x509 = {};
+            
+            // Update keys if they exist on server
+            if(get(result, 'x509.publicKey')){
+              newSettings.private.x509.publicKey = get(result, 'x509.publicKey', '');
+            }
+            if(get(result, 'x509.privateKey')){
+              newSettings.private.x509.privateKey = get(result, 'x509.privateKey', '');
+            }
+            if(get(result, 'x509.publicCertPem')){
+              newSettings.private.x509.publicCertPem = get(result, 'x509.publicCertPem', '');
+            }
+            
+            return newSettings;
+          });
+        }
+      });
+    }
+  }, []);
+  
+  // Check for HTTPS connection on mount
+  React.useEffect(() => {
+    if(Meteor.isClient){
+      // Check if we're on a secure connection
+      const isHttps = window.location.protocol === 'https:';
+      const isLocalhost = window.location.hostname === 'localhost' || 
+                         window.location.hostname === '127.0.0.1' || 
+                         window.location.hostname === '0.0.0.0';
+      
+      // Only consider connection secure if HTTPS (localhost is still vulnerable to network logging)
+      setIsSecureConnection(isHttps);
+      
+      // Show warning if not secure and cryptography section is expanded
+      if (!isHttps && cryptographyExpanded) {
+        setShowSecurityWarning(true);
+      }
+    }
+  }, [cryptographyExpanded]);
   
   // Check completion status for configuration sections
   // App config is complete when title is set (fhirVersion and loggingThreshold have defaults)
@@ -433,6 +682,11 @@ function GettingStartedPage(props){
     // Update shell command when environment variables change
     if (path.startsWith('private.env.')) {
       setShellCommand(buildShellCommand(newSettings));
+    }
+    
+    // Update deploy command when relevant settings change
+    if (path.startsWith('public.title') || path.startsWith('public.modules.')) {
+      setDeployCommand(buildDeployCommand(newSettings));
     }
     
     // Special handling for Patient Portal
@@ -855,6 +1109,106 @@ function GettingStartedPage(props){
     setColorPickerOpen(false);
   };
   
+  // Key generation functions
+  const generateKeys = () => {
+    // SECURITY WARNING: Check if we're on a secure connection before generating keys
+    // This prevents private keys from being transmitted over unencrypted connections
+    // if a team accidentally sets up the server before switching to HTTPS
+    if (!isSecureConnection) {
+      // Show security warning but continue with key generation for development
+      setShowSecurityWarning(true);
+      console.warn('SECURITY WARNING: Generating keys over insecure connection - use HTTPS in production!');
+    }
+    
+    // Generate the keys locally in the browser
+    // Note: These keys are generated client-side for initial setup purposes
+    // In production, keys should be generated server-side or in a secure environment
+    let keys = pki.rsa.generateKeyPair(2048);
+    console.log('keys', keys);
+
+    var publicKeyPem = pki.publicKeyToPem(keys.publicKey);
+    console.log('publicKeyPem', publicKeyPem);
+    setPublicKeyText(publicKeyPem);
+
+    var privateKeyPem = pki.privateKeyToPem(keys.privateKey);
+    console.log('privateKeyPem', privateKeyPem);
+    setPrivateKeyText(privateKeyPem);
+    
+    // Generate certificate automatically
+    try {
+      const cert = pki.createCertificate();
+      cert.publicKey = keys.publicKey;
+      cert.serialNumber = '01';
+      cert.validity.notBefore = new Date();
+      cert.validity.notAfter = new Date();
+      cert.validity.notAfter.setFullYear(cert.validity.notBefore.getFullYear() + 1);
+      
+      // Set certificate attributes
+      const attrs = [{
+        name: 'commonName',
+        value: get(settings, 'public.title', 'Honeycomb FHIR Server')
+      }, {
+        name: 'countryName',
+        value: 'US'
+      }, {
+        shortName: 'ST',
+        value: 'State'
+      }, {
+        name: 'localityName',
+        value: 'City'
+      }, {
+        name: 'organizationName',
+        value: get(settings, 'public.title', 'Honeycomb')
+      }, {
+        shortName: 'OU',
+        value: 'FHIR Server'
+      }];
+      
+      cert.setSubject(attrs);
+      cert.setIssuer(attrs);
+      
+      // Self-sign the certificate
+      cert.sign(keys.privateKey, forge.md.sha256.create());
+      
+      // Convert to PEM
+      const certPem = pki.certificateToPem(cert);
+      console.log('Generated certificate:', certPem);
+      setPublicCertPem(certPem);
+      
+      // Update settings with the new keys and certificate
+      // WARNING: These keys will be part of the settings file that gets downloaded
+      // Ensure the settings file is kept secure and not committed to version control
+      setSettings(prevSettings => {
+        const newSettings = JSON.parse(JSON.stringify(prevSettings));
+        
+        // Ensure private.x509 structure exists
+        if (!newSettings.private) newSettings.private = {};
+        if (!newSettings.private.x509) newSettings.private.x509 = {};
+        
+        // Update keys and certificate at once
+        newSettings.private.x509.publicKey = publicKeyPem;
+        newSettings.private.x509.privateKey = privateKeyPem;
+        newSettings.private.x509.publicCertPem = certPem;
+        
+        return newSettings;
+      });
+    } catch (error) {
+      console.error('Error generating certificate:', error);
+      // Still save the keys even if certificate generation fails
+      setSettings(prevSettings => {
+        const newSettings = JSON.parse(JSON.stringify(prevSettings));
+        
+        if (!newSettings.private) newSettings.private = {};
+        if (!newSettings.private.x509) newSettings.private.x509 = {};
+        
+        newSettings.private.x509.publicKey = publicKeyPem;
+        newSettings.private.x509.privateKey = privateKeyPem;
+        
+        return newSettings;
+      });
+    }
+  };
+  
   // Simple color field component
   const ColorField = ({ label, fieldPath, helperText, placeholder }) => {
     const value = get(settings, fieldPath, '');
@@ -1221,7 +1575,7 @@ function GettingStartedPage(props){
               
               <Box sx={{ mt: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <Typography variant="caption" color="text.secondary">
-                  Note: Private settings are shown but cannot be applied to the client environment.
+                  Note: Private settings are shown but cannot be applied to the client environment. Download the settings file, and run with the shell command shown at the top of the page.
                 </Typography>
                 <Stack direction="row" spacing={1} alignItems="center">
                   <TextField
@@ -1301,7 +1655,7 @@ function GettingStartedPage(props){
         </Alert>
         <Collapse in={appConfigExpanded} timeout="auto" unmountOnExit>
           <Box sx={{ pl: 2, pr: 2, mt: -1, mb: 0 }}>
-            <Grid container spacing={2}>
+            <Grid container spacing={2} sx={{ pt: '20px' }}>
               <Grid item xs={12}>
                 <TextField
                   fullWidth
@@ -1746,7 +2100,7 @@ function GettingStartedPage(props){
         </Alert>
         <Collapse in={sidebarConfigExpanded} timeout="auto" unmountOnExit>
           <Box sx={{ pl: 2, pr: 2, mt: -1, mb: 0 }}>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 2, pt: '20px' }}>
               Configure which items appear in the sidebar menu. Changes take effect immediately.
             </Typography>
             
@@ -3008,7 +3362,178 @@ function GettingStartedPage(props){
       );
     }
     
-    // 9. Server FHIR APIs (with collapse)
+    // 9. Database (with collapse)
+    const hasDatabase = !!(mongoUrl && dbUsername && dbPassword);
+    
+    checklistItemsArray.push(
+      <React.Fragment key="database-section">
+        <Alert 
+          severity={hasDatabase ? "success" : "info"}
+          icon={hasDatabase ? <CheckCircle /> : <Storage />}
+          sx={{ 
+            backgroundColor: hasDatabase ? undefined : 'action.hover',
+            color: hasDatabase ? undefined : 'text.primary',
+            cursor: 'pointer',
+            '& .MuiAlert-icon': {
+              color: hasDatabase ? undefined : 'text.secondary'
+            },
+            '&:hover': {
+              backgroundColor: hasDatabase ? undefined : 'action.selected'
+            }
+          }}
+          onClick={() => setDatabaseExpanded(!databaseExpanded)}
+          action={
+            <IconButton 
+              size="small"
+              onClick={(e) => {
+                e.stopPropagation();
+                setDatabaseExpanded(!databaseExpanded);
+              }}
+            >
+              {databaseExpanded ? <ExpandLess /> : <ExpandMore />}
+            </IconButton>
+          }
+        >
+          <Stack direction="row" alignItems="center" spacing={1}>
+            <span>Database</span>
+          </Stack>
+        </Alert>
+        <Collapse in={databaseExpanded} timeout="auto" unmountOnExit>
+          <Box sx={{ pl: 2, pr: 2, pb: 2, pt: 1 }}>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+              Configure MongoDB Atlas connection for production deployment. Copy the connection string from MongoDB Atlas and paste it below.
+            </Typography>
+            
+            {/* MongoDB URL Configuration */}
+            <Typography variant="subtitle2" gutterBottom sx={{ mt: 2 }}>
+              Primary Database Connection
+            </Typography>
+            <Grid container spacing={2} sx={{ mb: 3 }}>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  label="MONGO_URL Template"
+                  value={mongoUrl}
+                  onChange={(e) => setMongoUrl(e.target.value)}
+                  placeholder="mongodb+srv://<db_username>:<db_password>@cluster.mongodb.net/..."
+                  variant="outlined"
+                  size="small"
+                  helperText="Paste the connection string from MongoDB Atlas"
+                />
+              </Grid>
+              <Grid item xs={12} sm={4}>
+                <TextField
+                  fullWidth
+                  label="Database Username"
+                  value={dbUsername}
+                  onChange={(e) => setDbUsername(e.target.value)}
+                  variant="outlined"
+                  size="small"
+                />
+              </Grid>
+              <Grid item xs={12} sm={4}>
+                <TextField
+                  fullWidth
+                  label="Database Password"
+                  type="password"
+                  value={dbPassword}
+                  onChange={(e) => setDbPassword(e.target.value)}
+                  variant="outlined"
+                  size="small"
+                />
+              </Grid>
+              <Grid item xs={12} sm={4}>
+                <TextField
+                  fullWidth
+                  label="Database Name"
+                  value={dbName}
+                  onChange={(e) => setDbName(e.target.value)}
+                  placeholder="meteor"
+                  variant="outlined"
+                  size="small"
+                  helperText="e.g., meteor, test, myapp"
+                />
+              </Grid>
+              {mongoUrl && dbUsername && dbPassword && (
+                <Grid item xs={12}>
+                  <TextField
+                    fullWidth
+                    label="Generated MONGO_URL"
+                    value={buildMongoUrl(mongoUrl, dbUsername, dbPassword, dbName)}
+                    variant="outlined"
+                    size="small"
+                    disabled
+                    multiline
+                    rows={2}
+                  />
+                </Grid>
+              )}
+            </Grid>
+            
+            {/* MongoDB Oplog Configuration */}
+            <Typography variant="subtitle2" gutterBottom>
+              Oplog Connection (for real-time updates)
+            </Typography>
+            <Grid container spacing={2}>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  label="MONGO_OPLOG_URL Template"
+                  value={mongoOplogUrl}
+                  onChange={(e) => setMongoOplogUrl(e.target.value)}
+                  placeholder="mongodb+srv://<oplog_username>:<oplog_password>@cluster.mongodb.net/local..."
+                  variant="outlined"
+                  size="small"
+                  helperText="Usually points to the 'local' database for oplog access"
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label="Oplog Username"
+                  value={oplogUsername}
+                  onChange={(e) => setOplogUsername(e.target.value)}
+                  variant="outlined"
+                  size="small"
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label="Oplog Password"
+                  type="password"
+                  value={oplogPassword}
+                  onChange={(e) => setOplogPassword(e.target.value)}
+                  variant="outlined"
+                  size="small"
+                />
+              </Grid>
+              {mongoOplogUrl && oplogUsername && oplogPassword && (
+                <Grid item xs={12}>
+                  <TextField
+                    fullWidth
+                    label="Generated MONGO_OPLOG_URL"
+                    value={buildMongoUrl(mongoOplogUrl, oplogUsername, oplogPassword, dbName)}
+                    variant="outlined"
+                    size="small"
+                    disabled
+                    multiline
+                    rows={2}
+                  />
+                </Grid>
+              )}
+            </Grid>
+            
+            <Typography variant="caption" color="text.secondary" sx={{ mt: 2, display: 'block' }}>
+              Note: These credentials are used for runtime connection only. They are not saved to the settings file.
+              The generated URLs will be added as environment variables when running the application.
+            </Typography>
+          </Box>
+        </Collapse>
+      </React.Fragment>
+    );
+    
+    // 10. Server FHIR APIs (with collapse)
     // Check if any FHIR resources are enabled
     const fhirResources = [
       'AllergyIntolerance', 'CarePlan', 'CareTeam', 'Condition', 'Consent',
@@ -3067,7 +3592,7 @@ function GettingStartedPage(props){
         </Alert>
         <Collapse in={serverApisExpanded} timeout="auto" unmountOnExit>
           <Box sx={{ pl: 2, pr: 2, mt: -1, mb: 0 }}>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 2, pt: '20px' }}>
               Configure FHIR resources for your server. These settings will be saved in the private section of your settings file.
             </Typography>
             
@@ -3283,7 +3808,7 @@ function GettingStartedPage(props){
         </Alert>
         <Collapse in={businessPagesExpanded} timeout="auto" unmountOnExit>
           <Box sx={{ pl: 2, pr: 2, mt: -1, mb: 0 }}>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 2, pt: '20px' }}>
               Configure business and legal pages for your application. Enable pages and customize their content.
             </Typography>
             
@@ -3556,7 +4081,7 @@ function GettingStartedPage(props){
         </Alert>
         <Collapse in={upstreamTetherExpanded} unmountOnExit timeout="auto">
           <Box sx={{ pl: 2, pr: 2, mt: -1, mb: 0 }}>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 2, pt: '20px' }}>
               Configure SMART on FHIR connection to upstream EHR systems
             </Typography>
             <Grid container spacing={2}>
@@ -3676,19 +4201,309 @@ function GettingStartedPage(props){
                     />
                   </Grid>
                   <Grid item xs={12}>
-                    <Button
-                      variant="outlined"
-                      color="primary"
-                      onClick={() => navigate('/smart-launcher-debugger')}
-                      startIcon={<Launch />}
-                      sx={{ mt: 1 }}
-                    >
-                      Open SMART Launcher Debugger
-                    </Button>
+                    <FormControl fullWidth size="small">
+                      <InputLabel>Token Exchange Method</InputLabel>
+                      <Select
+                        value={get(settings, 'public.smartOnFhir[0].tokenExchange.method', 'standard')}
+                        label="Token Exchange Method"
+                        onChange={(e) => {
+                          const smartConfig = get(settings, 'public.smartOnFhir', [{}]);
+                          if (!smartConfig[0].tokenExchange) {
+                            smartConfig[0].tokenExchange = {};
+                          }
+                          smartConfig[0] = { 
+                            ...smartConfig[0], 
+                            tokenExchange: {
+                              ...smartConfig[0].tokenExchange,
+                              method: e.target.value
+                            }
+                          };
+                          updateSetting('public.smartOnFhir', smartConfig);
+                        }}
+                      >
+                        <MenuItem value="standard">
+                          RFC 6749 - Standard SMART (Authorization Code)
+                        </MenuItem>
+                        <MenuItem value="pkce_only">
+                          RFC 7636 - PKCE Only (Public Client/SPA)
+                        </MenuItem>
+                        <MenuItem value="jwt_bearer">
+                          RFC 7523 - JWT Bearer Assertion (Backend Services)
+                        </MenuItem>
+                        <MenuItem value="client_secret_post">
+                          RFC 6749 - Client Secret in POST Body
+                        </MenuItem>
+                        <MenuItem value="client_secret_basic">
+                          RFC 6749 - Client Secret via Basic Auth
+                        </MenuItem>
+                        <MenuItem value="client_credentials">
+                          RFC 6749 - Client Credentials (System-to-System)
+                        </MenuItem>
+                        <MenuItem value="refresh_token">
+                          RFC 6749 - Refresh Token Exchange
+                        </MenuItem>
+                      </Select>
+                      <FormHelperText>
+                        {(() => {
+                          const method = get(settings, 'public.smartOnFhir[0].tokenExchange.method', 'standard');
+                          const methodDescriptions = {
+                            'standard': 'Traditional flow where client exchanges authorization code for token using client_id only',
+                            'pkce_only': 'Modern secure flow for browser-based apps without client secrets. Uses code verifier/challenge',
+                            'jwt_bearer': 'Backend services authenticate with signed JWT assertions. No user interaction required',
+                            'client_secret_post': 'Client authenticates by including client_id and client_secret in request body',
+                            'client_secret_basic': 'Client authenticates using HTTP Basic Auth header with client_id:client_secret',
+                            'client_credentials': 'Direct machine-to-machine authentication for batch jobs and system integrations',
+                            'refresh_token': 'Exchange a refresh token for a new access token when the current one expires'
+                          };
+                          return methodDescriptions[method] || 'Select a token exchange method';
+                        })()}
+                      </FormHelperText>
+                      {get(settings, 'public.smartOnFhir[0].tokenExchange.method') === 'jwt_bearer' && (
+                        <Alert severity="info" sx={{ mt: 1 }}>
+                          This method requires a private key for signing JWTs and a public key hosted at /.well-known/jwks.json
+                        </Alert>
+                      )}
+                      {(get(settings, 'public.smartOnFhir[0].tokenExchange.method') === 'client_secret_post' || 
+                        get(settings, 'public.smartOnFhir[0].tokenExchange.method') === 'client_secret_basic') && (
+                        <Alert severity="warning" sx={{ mt: 1 }}>
+                          Client secrets must be kept secure. Only use for confidential clients running on secure servers.
+                        </Alert>
+                      )}
+                    </FormControl>
+                  </Grid>
+                  {get(settings, 'public.smartOnFhir[0].tokenExchange.method') === 'jwt_bearer' && (
+                    <>
+                      <Grid item xs={12} md={6}>
+                        <TextField
+                          fullWidth
+                          label="Key ID (optional)"
+                          value={get(settings, 'public.smartOnFhir[0].tokenExchange.keyId', '')}
+                          onChange={(e) => {
+                            const smartConfig = get(settings, 'public.smartOnFhir', [{}]);
+                            smartConfig[0] = { 
+                              ...smartConfig[0], 
+                              tokenExchange: {
+                                ...smartConfig[0].tokenExchange,
+                                keyId: e.target.value
+                              }
+                            };
+                            updateSetting('public.smartOnFhir', smartConfig);
+                          }}
+                          variant="outlined"
+                          size="small"
+                          helperText="Leave blank to auto-generate"
+                        />
+                      </Grid>
+                      <Grid item xs={12} md={6}>
+                        <TextField
+                          fullWidth
+                          label="JWT Expiration (seconds)"
+                          type="number"
+                          value={get(settings, 'public.smartOnFhir[0].tokenExchange.jwtExpiresIn', 300)}
+                          onChange={(e) => {
+                            const smartConfig = get(settings, 'public.smartOnFhir', [{}]);
+                            smartConfig[0] = { 
+                              ...smartConfig[0], 
+                              tokenExchange: {
+                                ...smartConfig[0].tokenExchange,
+                                jwtExpiresIn: parseInt(e.target.value) || 300
+                              }
+                            };
+                            updateSetting('public.smartOnFhir', smartConfig);
+                          }}
+                          variant="outlined"
+                          size="small"
+                          helperText="Default: 300 seconds (5 minutes)"
+                        />
+                      </Grid>
+                    </>
+                  )}
+                  {(get(settings, 'public.smartOnFhir[0].tokenExchange.method') === 'client_secret_post' || 
+                    get(settings, 'public.smartOnFhir[0].tokenExchange.method') === 'client_secret_basic') && (
+                    <Grid item xs={12}>
+                      <TextField
+                        fullWidth
+                        label="Client Secret"
+                        type="password"
+                        value={get(settings, 'public.smartOnFhir[0].client_secret', '')}
+                        onChange={(e) => {
+                          const smartConfig = get(settings, 'public.smartOnFhir', [{}]);
+                          smartConfig[0] = { ...smartConfig[0], client_secret: e.target.value };
+                          updateSetting('public.smartOnFhir', smartConfig);
+                        }}
+                        variant="outlined"
+                        size="small"
+                        helperText="Keep this secure - never commit to version control"
+                      />
+                    </Grid>
+                  )}
+                  <Grid item xs={12}>
+                    <Stack direction="row" spacing={2}>
+                      <Button
+                        variant="outlined"
+                        color="primary"
+                        onClick={() => navigate('/smart-launcher-debugger')}
+                        startIcon={<Launch />}
+                        sx={{ mt: 1 }}
+                      >
+                        Open SMART Launcher Debugger
+                      </Button>
+                      <Button
+                        variant="outlined"
+                        color="primary"
+                        onClick={() => navigate('/udap-registration')}
+                        startIcon={<Key />}
+                        sx={{ mt: 1 }}
+                      >
+                        UDAP/JWK Configuration
+                      </Button>
+                    </Stack>
                   </Grid>
                 </>
               )}
             </Grid>
+          </Box>
+        </Collapse>
+      </React.Fragment>
+    );
+    
+    // 11.5 Custom Workflows
+    checklistItemsArray.push(
+      <React.Fragment key="custom-workflows-section">
+        <Alert 
+          severity="info"
+          icon={<ViewModule />}
+          sx={{ 
+            backgroundColor: 'action.hover',
+            color: 'text.primary',
+            cursor: 'pointer',
+            '& .MuiAlert-icon': {
+              color: 'text.secondary'
+            },
+            '&:hover': {
+              backgroundColor: 'action.selected'
+            }
+          }}
+          onClick={() => setCustomWorkflowsExpanded(!customWorkflowsExpanded)}
+          action={
+            <IconButton 
+              size="small"
+              onClick={(e) => {
+                e.stopPropagation();
+                setCustomWorkflowsExpanded(!customWorkflowsExpanded);
+              }}
+            >
+              {customWorkflowsExpanded ? <ExpandLess /> : <ExpandMore />}
+            </IconButton>
+          }
+        >
+          <Stack direction="row" alignItems="center" spacing={1}>
+            <span>Custom Workflows</span>
+          </Stack>
+        </Alert>
+        <Collapse in={customWorkflowsExpanded} unmountOnExit timeout="auto">
+          <Box sx={{ pl: 2, pr: 2, mt: -1, mb: 0 }}>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 2, pt: '20px' }}>
+              Create custom workflow packages to extend Honeycomb functionality with domain-specific features.
+            </Typography>
+            
+            <TextField
+              fullWidth
+              label="Create Package Command"
+              value={workflowCommand}
+              variant="outlined"
+              sx={{ mb: 2 }}
+              InputProps={{
+                readOnly: true,
+                sx: {
+                  fontFamily: 'monospace',
+                  backgroundColor: 'action.hover',
+                  '& .MuiOutlinedInput-input': {
+                    fontSize: '0.9rem',
+                    letterSpacing: '0.05em'
+                  }
+                }
+              }}
+              helperText="Create a new Atmosphere package for custom workflows"
+            />
+            
+            <Alert severity="info" sx={{ mb: 2 }}>
+              <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 1 }}>
+                Package Development Guidelines:
+              </Typography>
+              <Typography variant="body2" component="div">
+                <ul style={{ margin: '8px 0', paddingLeft: '20px' }}>
+                  <li>Replace <code>myorg</code> with your organization namespace</li>
+                  <li>Replace <code>mypkg</code> with your package name</li>
+                  <li>Follow the existing package patterns in the <code>/packages</code> directory</li>
+                  <li>Export workflow components via <code>package.js</code></li>
+                  <li>Register routes in <code>index.jsx</code></li>
+                </ul>
+              </Typography>
+            </Alert>
+            
+            <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 1 }}>
+              Common Workflow Types:
+            </Typography>
+            <Grid container spacing={2} sx={{ mb: 2 }}>
+              <Grid item xs={12} md={6}>
+                <Card variant="outlined">
+                  <CardContent>
+                    <Typography variant="subtitle2" gutterBottom>Clinical Workflows</Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Patient intake, appointment scheduling, care coordination, medication management
+                    </Typography>
+                  </CardContent>
+                </Card>
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <Card variant="outlined">
+                  <CardContent>
+                    <Typography variant="subtitle2" gutterBottom>Research Workflows</Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Study enrollment, data collection, cohort analysis, reporting
+                    </Typography>
+                  </CardContent>
+                </Card>
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <Card variant="outlined">
+                  <CardContent>
+                    <Typography variant="subtitle2" gutterBottom>Administrative Workflows</Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      User management, billing, compliance reporting, quality measures
+                    </Typography>
+                  </CardContent>
+                </Card>
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <Card variant="outlined">
+                  <CardContent>
+                    <Typography variant="subtitle2" gutterBottom>Integration Workflows</Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Data import/export, API connectors, device integration, third-party services
+                    </Typography>
+                  </CardContent>
+                </Card>
+              </Grid>
+            </Grid>
+            
+            <Stack direction="row" spacing={2}>
+              <Button 
+                variant="outlined" 
+                color="primary"
+                onClick={() => window.open('https://guide.meteor.com/writing-atmosphere-packages.html', '_blank')}
+              >
+                Package Development Guide
+              </Button>
+              <Button 
+                variant="outlined" 
+                color="primary"
+                onClick={() => navigate('/workflow-builder')}
+              >
+                Workflow Builder (Coming Soon)
+              </Button>
+            </Stack>
           </Box>
         </Collapse>
       </React.Fragment>
@@ -3739,7 +4554,7 @@ function GettingStartedPage(props){
         </Alert>
         <Collapse in={environmentVarsExpanded} unmountOnExit timeout="auto">
           <Box sx={{ pl: 2, pr: 2, mt: -1, mb: 0 }}>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 2, pt: '20px' }}>
               Set environment variables for server configuration. These values will be available as process.env variables.
             </Typography>
             <Grid container spacing={2}>
@@ -3786,11 +4601,11 @@ function GettingStartedPage(props){
               </Grid>
               <Grid item xs={12} md={6}>
                 <FormControl fullWidth size="small">
-                  <InputLabel>Force SSL</InputLabel>
+                  <InputLabel>FORCE_SSL</InputLabel>
                   <Select
                     value={get(settings, 'private.env.FORCE_SSL', 'No Value')}
                     onChange={(e) => updateSetting('private.env.FORCE_SSL', e.target.value)}
-                    label="Force SSL"
+                    label="FORCE_SSL"
                   >
                     <MenuItem value="No Value">No Value</MenuItem>
                     <MenuItem value="Enabled">Enabled</MenuItem>
@@ -3800,11 +4615,11 @@ function GettingStartedPage(props){
               </Grid>
               <Grid item xs={12} md={6}>
                 <FormControl fullWidth size="small">
-                  <InputLabel>Use MongoDB ObjectIDs</InputLabel>
+                  <InputLabel>USE_MONGO_OBJECTID</InputLabel>
                   <Select
                     value={get(settings, 'private.env.USE_MONGO_OBJECTID', 'No Value')}
                     onChange={(e) => updateSetting('private.env.USE_MONGO_OBJECTID', e.target.value)}
-                    label="Use MongoDB ObjectIDs"
+                    label="USE_MONGO_OBJECTID"
                   >
                     <MenuItem value="No Value">No Value</MenuItem>
                     <MenuItem value="Enabled">Enabled</MenuItem>
@@ -3850,11 +4665,11 @@ function GettingStartedPage(props){
               </Grid>
               <Grid item xs={12} md={4}>
                 <FormControl fullWidth size="small">
-                  <InputLabel>Enable Accounts</InputLabel>
+                  <InputLabel>ENABLE_ACCOUNTS</InputLabel>
                   <Select
                     value={get(settings, 'private.env.ENABLE_ACCOUNTS', 'No Value')}
                     onChange={(e) => updateSetting('private.env.ENABLE_ACCOUNTS', e.target.value)}
-                    label="Enable Accounts"
+                    label="ENABLE_ACCOUNTS"
                   >
                     <MenuItem value="No Value">No Value</MenuItem>
                     <MenuItem value="Enabled">Enabled</MenuItem>
@@ -3864,11 +4679,11 @@ function GettingStartedPage(props){
               </Grid>
               <Grid item xs={12} md={4}>
                 <FormControl fullWidth size="small">
-                  <InputLabel>Enable Autopublish</InputLabel>
+                  <InputLabel>ENABLE_AUTOPUBLISH</InputLabel>
                   <Select
                     value={get(settings, 'private.env.ENABLE_AUTOPUBLISH', 'No Value')}
                     onChange={(e) => updateSetting('private.env.ENABLE_AUTOPUBLISH', e.target.value)}
-                    label="Enable Autopublish"
+                    label="ENABLE_AUTOPUBLISH"
                   >
                     <MenuItem value="No Value">No Value</MenuItem>
                     <MenuItem value="Enabled">Enabled</MenuItem>
@@ -3878,11 +4693,11 @@ function GettingStartedPage(props){
               </Grid>
               <Grid item xs={12} md={4}>
                 <FormControl fullWidth size="small">
-                  <InputLabel>Enable HIPAA</InputLabel>
+                  <InputLabel>ENABLE_HIPAA</InputLabel>
                   <Select
                     value={get(settings, 'private.env.ENABLE_HIPAA', 'No Value')}
                     onChange={(e) => updateSetting('private.env.ENABLE_HIPAA', e.target.value)}
-                    label="Enable HIPAA"
+                    label="ENABLE_HIPAA"
                   >
                     <MenuItem value="No Value">No Value</MenuItem>
                     <MenuItem value="Enabled">Enabled</MenuItem>
@@ -3892,11 +4707,11 @@ function GettingStartedPage(props){
               </Grid>
               <Grid item xs={12} md={4}>
                 <FormControl fullWidth size="small">
-                  <InputLabel>Enable IPFS</InputLabel>
+                  <InputLabel>ENABLE_IPFS</InputLabel>
                   <Select
                     value={get(settings, 'private.env.ENABLE_IPFS', 'No Value')}
                     onChange={(e) => updateSetting('private.env.ENABLE_IPFS', e.target.value)}
-                    label="Enable IPFS"
+                    label="ENABLE_IPFS"
                   >
                     <MenuItem value="No Value">No Value</MenuItem>
                     <MenuItem value="Enabled">Enabled</MenuItem>
@@ -3906,11 +4721,11 @@ function GettingStartedPage(props){
               </Grid>
               <Grid item xs={12} md={4}>
                 <FormControl fullWidth size="small">
-                  <InputLabel>Initialize Consent Engine</InputLabel>
+                  <InputLabel>INITIALIZE_CONSENT_ENGINE</InputLabel>
                   <Select
                     value={get(settings, 'private.env.INITIALIZE_CONSENT_ENGINE', 'No Value')}
                     onChange={(e) => updateSetting('private.env.INITIALIZE_CONSENT_ENGINE', e.target.value)}
-                    label="Initialize Consent Engine"
+                    label="INITIALIZE_CONSENT_ENGINE"
                   >
                     <MenuItem value="No Value">No Value</MenuItem>
                     <MenuItem value="Enabled">Enabled</MenuItem>
@@ -3920,16 +4735,31 @@ function GettingStartedPage(props){
               </Grid>
               <Grid item xs={12} md={4}>
                 <FormControl fullWidth size="small">
-                  <InputLabel>Proxy Relay Enabled</InputLabel>
+                  <InputLabel>PROXY_RELAY_ENABLED</InputLabel>
                   <Select
                     value={get(settings, 'private.env.PROXY_RELAY_ENABLED', 'No Value')}
                     onChange={(e) => updateSetting('private.env.PROXY_RELAY_ENABLED', e.target.value)}
-                    label="Proxy Relay Enabled"
+                    label="PROXY_RELAY_ENABLED"
                   >
                     <MenuItem value="No Value">No Value</MenuItem>
                     <MenuItem value="Enabled">Enabled</MenuItem>
                     <MenuItem value="Disabled">Disabled</MenuItem>
                   </Select>
+                </FormControl>
+              </Grid>
+              <Grid item xs={12} md={4}>
+                <FormControl fullWidth size="small">
+                  <InputLabel>ENABLE_SYNCED_CRON</InputLabel>
+                  <Select
+                    value={get(settings, 'private.env.ENABLE_SYNCED_CRON', 'No Value')}
+                    onChange={(e) => updateSetting('private.env.ENABLE_SYNCED_CRON', e.target.value)}
+                    label="ENABLE_SYNCED_CRON"
+                  >
+                    <MenuItem value="No Value">No Value</MenuItem>
+                    <MenuItem value="true">true</MenuItem>
+                    <MenuItem value="false">false</MenuItem>
+                  </Select>
+                  <FormHelperText>Enable scheduled cron jobs</FormHelperText>
                 </FormControl>
               </Grid>
               
@@ -4249,35 +5079,352 @@ function GettingStartedPage(props){
       </React.Fragment>
     );
 
-    // 13. Deploy App (Hosting)
+    // 13. Cryptography Keys
+    // Determine if server has complete cryptography configuration
+    const hasCompleteCrypto = serverHasKeys.privateKey && serverHasKeys.publicKey && serverHasKeys.publicCert;
+    const cryptoSeverity = hasCompleteCrypto ? "success" : "info";
+    const cryptoIcon = hasCompleteCrypto ? <CheckCircle /> : <Key />;
+    
+    checklistItemsArray.push(
+      <React.Fragment key="cryptography-keys-section">
+        <Alert 
+          severity={cryptoSeverity}
+          icon={cryptoIcon}
+          sx={{ 
+            backgroundColor: cryptoSeverity === 'success' ? undefined : 'action.hover',
+            color: cryptoSeverity === 'success' ? undefined : 'text.primary',
+            cursor: 'pointer',
+            '& .MuiAlert-icon': {
+              color: cryptoSeverity === 'success' ? undefined : 'text.secondary'
+            },
+            '&:hover': {
+              backgroundColor: cryptoSeverity === 'success' ? undefined : 'action.selected'
+            }
+          }}
+          onClick={() => setCryptographyExpanded(!cryptographyExpanded)}
+          action={
+            <IconButton 
+              size="small"
+              onClick={(e) => {
+                e.stopPropagation();
+                setCryptographyExpanded(!cryptographyExpanded);
+              }}
+            >
+              {cryptographyExpanded ? <ExpandLess /> : <ExpandMore />}
+            </IconButton>
+          }
+        >
+          <Stack direction="row" alignItems="center" spacing={1}>
+            <span>Cryptography Keys</span>
+          </Stack>
+        </Alert>
+        <Collapse in={cryptographyExpanded} unmountOnExit timeout="auto">
+          <Box sx={{ pl: 2, pr: 2, mt: -1, mb: 0 }}>
+            
+            {/* General Security Best Practices Alert */}
+            <Alert severity="warning" sx={{ mb: 2 }}>
+              <Grid container spacing={3} sx={{ width: '100%' }}>
+                <Grid item xs={12} lg={6}>
+                  <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 1 }}>
+                    Security Best Practices
+                  </Typography>
+                  <Typography variant="body2" component="div">
+                    <ul style={{ margin: '8px 0', paddingLeft: '20px' }}>
+                      <li>Generate keys in a secure, local development environment</li>
+                      <li>Never commit private keys to version control</li>
+                      <li>Use separate keys for development and production</li>
+                      <li>Store production keys in secure key management systems</li>
+                      <li>Rotate keys periodically according to your security policy</li>
+                    </ul>
+                  </Typography>
+                </Grid>
+                <Grid item xs={12} lg={6}>
+                  <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 1 }}>
+                    Alternative: Generate keys from command line
+                  </Typography>
+                  <Typography variant="body2" component="div" sx={{ mt: 1 }}>
+                    <code style={{ 
+                      display: 'block', 
+                      backgroundColor: 'rgba(0,0,0,0.05)', 
+                      padding: '12px', 
+                      borderRadius: '4px',
+                      fontFamily: 'monospace',
+                      fontSize: '0.85rem',
+                      whiteSpace: 'pre',
+                      overflowX: 'auto'
+                    }}>
+{`# Generate RSA private key
+openssl genrsa -out private.pem 2048
+
+# Extract public key
+openssl rsa -in private.pem -pubout -out public.pem
+
+# Generate self-signed certificate
+openssl req -new -x509 -key private.pem -out certificate.pem -days 365`}
+                    </code>
+                  </Typography>
+                </Grid>
+              </Grid>
+            </Alert>
+            
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+              Generate X.509 keys and certificates for SMART on FHIR JWT authentication and UDAP registration.
+              These keys will be added to your settings file for deployment.
+            </Typography>
+            
+            
+            {/* Generate Keys Section */}
+            <Card variant="outlined" sx={{ mb: 2 }}>
+              <CardContent>
+                <Typography variant="h6" gutterBottom>Generate Keys</Typography>
+                
+                {/* Private Key Security Warning - Context Sensitive */}
+                {!isSecureConnection ? (
+                  <Alert severity="error" sx={{ mb: 2 }}>
+                    <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
+                      Danger! This connection is using unsecure HTTP.
+                    </Typography>
+                    <Typography variant="body2">
+                      Private keys generated may be recorded by network logging utilities.
+                    </Typography>
+                  </Alert>
+                ) : (
+                  <Alert severity="warning" sx={{ mb: 2 }}>
+                    <Typography variant="body2">
+                      Be sure to keep your private keys secure. Never share or commit to version control. 
+                      This section may transmit private keys to the client via HTTPS.
+                    </Typography>
+                  </Alert>
+                )}
+                {(!serverHasKeys.publicKey || !serverHasKeys.privateKey) ? (
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                    No X.509 keys detected. Generate RSA key pair for JWT signing and authentication.
+                  </Typography>
+                ) : (
+                  <Alert severity="success" sx={{ mb: 2 }}>
+                    <Typography variant="body2">
+                      X.509 keys are configured. They are included in your settings file.
+                    </Typography>
+                  </Alert>
+                )}
+                
+                {(publicKeyText || get(settings, 'private.x509.publicKey')) && (
+                  <TextField
+                    label="Public Key"
+                    fullWidth
+                    multiline
+                    rows={6}
+                    value={publicKeyText || get(settings, 'private.x509.publicKey', '')}
+                    variant="outlined"
+                    sx={{ mb: 2 }}
+                    InputProps={{
+                      readOnly: true,
+                      sx: { fontFamily: 'monospace', fontSize: '0.85rem' }
+                    }}
+                  />
+                )}
+                
+                {(privateKeyText || get(settings, 'private.x509.privateKey')) && (
+                  <TextField
+                    label="Private Key (KEEP SECURE!)"
+                    fullWidth
+                    multiline
+                    rows={6}
+                    value={privateKeyText || get(settings, 'private.x509.privateKey', '')}
+                    variant="outlined"
+                    sx={{ mb: 2 }}
+                    InputProps={{
+                      readOnly: true,
+                      sx: { fontFamily: 'monospace', fontSize: '0.85rem' }
+                    }}
+                  />
+                )}
+                
+                {(publicCertPem || get(settings, 'private.x509.publicCertPem')) && (
+                  <TextField
+                    label="X.509 Public Certificate"
+                    fullWidth
+                    multiline
+                    rows={8}
+                    value={publicCertPem || get(settings, 'private.x509.publicCertPem', '')}
+                    variant="outlined"
+                    sx={{ mb: 2 }}
+                    InputProps={{
+                      readOnly: true,
+                      sx: { fontFamily: 'monospace', fontSize: '0.85rem' }
+                    }}
+                  />
+                )}
+                
+                {(!serverHasKeys.publicKey || !serverHasKeys.privateKey) && (
+                  <>
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      onClick={generateKeys}
+                      startIcon={<Key />}
+                    >
+                      Generate Keys
+                    </Button>
+                  </>
+                )}
+              </CardContent>
+            </Card>
+            
+            {/* Additional Security Reminder */}
+            <Alert severity="info" sx={{ mt: 2 }}>
+              <Typography variant="body2">
+                After generating keys, download the settings file and store it securely. 
+                The private key in the settings file is required for JWT signing and should be protected.
+              </Typography>
+            </Alert>
+          </Box>
+        </Collapse>
+      </React.Fragment>
+    );
+
+    // 14. Deploy App (Hosting)
     const deployItem = checklistItems.find(item => item.id === 'deploy' && item.visible !== false);
     if (deployItem) {
       checklistItemsArray.push(
-        <Alert 
-          key={deployItem.id}
-          severity={deployItem.completed ? "success" : "info"}
-          icon={deployItem.completed ? <CheckCircle /> : <deployItem.icon />}
-          sx={{ 
-            backgroundColor: deployItem.completed ? undefined : 'action.hover',
-            color: deployItem.completed ? undefined : 'text.primary',
-            '& .MuiAlert-icon': {
-              color: deployItem.completed ? undefined : 'text.secondary'
-            }
-          }}
-          action={
-            !deployItem.completed && (
-              <Button 
-                color="inherit" 
+        <React.Fragment key="deploy-section">
+          <Alert 
+            severity={deployItem.completed ? "success" : "info"}
+            icon={deployItem.completed ? <CheckCircle /> : <CloudUpload />}
+            sx={{ 
+              backgroundColor: deployItem.completed ? undefined : 'action.hover',
+              color: deployItem.completed ? undefined : 'text.primary',
+              cursor: 'pointer',
+              '& .MuiAlert-icon': {
+                color: deployItem.completed ? undefined : 'text.secondary'
+              },
+              '&:hover': {
+                backgroundColor: deployItem.completed ? undefined : 'action.selected'
+              }
+            }}
+            onClick={() => setDeployExpanded(!deployExpanded)}
+            action={
+              <IconButton 
                 size="small"
-                onClick={deployItem.action}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setDeployExpanded(!deployExpanded);
+                }}
               >
-                Learn More
-              </Button>
-            )
-          }
-        >
-          <span>{deployItem.label}</span>
-        </Alert>
+                {deployExpanded ? <ExpandLess /> : <ExpandMore />}
+              </IconButton>
+            }
+          >
+            <Stack direction="row" alignItems="center" spacing={1}>
+              <span>{deployItem.label}</span>
+            </Stack>
+          </Alert>
+          <Collapse in={deployExpanded} unmountOnExit timeout="auto">
+            <Box sx={{ pl: 2, pr: 2, mt: -1, mb: 0 }}>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2, pt: '20px' }}>
+                Deploy your Honeycomb application to Meteor's free hosting service or your own infrastructure.
+              </Typography>
+              
+              <FormControl fullWidth sx={{ mb: 3 }}>
+                <InputLabel>Deployment Option</InputLabel>
+                <Select
+                  value={deploymentOption}
+                  onChange={(e) => setDeploymentOption(e.target.value)}
+                  label="Deployment Option"
+                >
+                  <MenuItem value="">Select deployment target...</MenuItem>
+                  <MenuItem value="galaxy">Meteor Galaxy</MenuItem>
+                  <MenuItem value="docker">Docker</MenuItem>
+                  <MenuItem value="baremetal">Bare Metal</MenuItem>
+                  <MenuItem value="aws" disabled>AWS (Coming Soon)</MenuItem>
+                  <MenuItem value="digitalocean" disabled>Digital Ocean (Coming Soon)</MenuItem>
+                  <MenuItem value="heroku" disabled>Heroku (Coming Soon)</MenuItem>
+                </Select>
+                <FormHelperText>Choose where to deploy your application</FormHelperText>
+              </FormControl>
+              
+              {deploymentOption && (
+                <TextField
+                  fullWidth
+                  label="Deploy Command"
+                  value={deployCommand}
+                  variant="outlined"
+                  sx={{ mb: 2 }}
+                  InputProps={{
+                    readOnly: true,
+                    sx: {
+                      fontFamily: 'monospace',
+                      backgroundColor: 'action.hover',
+                      '& .MuiOutlinedInput-input': {
+                        fontSize: '0.9rem',
+                        letterSpacing: '0.05em'
+                      }
+                    }
+                  }}
+                  helperText={
+                    deploymentOption === 'galaxy' ? 'Deploy to Meteor\'s free hosting service (requires Meteor account)' :
+                    deploymentOption === 'docker' ? 'Build and containerize your application' :
+                    deploymentOption === 'baremetal' ? 'Build application bundle for manual deployment' :
+                    ''
+                  }
+                />
+              )}
+              
+              {deploymentOption && (
+                <Alert severity="info" sx={{ mb: 2 }}>
+                  <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 1 }}>
+                    {deploymentOption === 'galaxy' && 'Meteor Galaxy Deployment:'}
+                    {deploymentOption === 'docker' && 'Docker Deployment:'}
+                    {deploymentOption === 'baremetal' && 'Bare Metal Deployment:'}
+                  </Typography>
+                  <Typography variant="body2" component="div">
+                    {deploymentOption === 'galaxy' && (
+                      <ul style={{ margin: '8px 0', paddingLeft: '20px' }}>
+                        <li>Free subdomain at yourapp.meteorapp.com</li>
+                        <li>Automatic SSL certificates</li>
+                        <li>Zero-downtime deployments</li>
+                        <li>Environment variables configured in settings file</li>
+                      </ul>
+                    )}
+                    {deploymentOption === 'docker' && (
+                      <ul style={{ margin: '8px 0', paddingLeft: '20px' }}>
+                        <li>Creates production bundle in ../output directory</li>
+                        <li>Builds Docker image tagged as 'honeycomb'</li>
+                        <li>Requires Dockerfile in output directory</li>
+                        <li>Ready for container orchestration (K8s, ECS, etc.)</li>
+                      </ul>
+                    )}
+                    {deploymentOption === 'baremetal' && (
+                      <ul style={{ margin: '8px 0', paddingLeft: '20px' }}>
+                        <li>Creates production bundle in ../output directory</li>
+                        <li>Includes Node.js application and dependencies</li>
+                        <li>Deploy to any Node.js hosting environment</li>
+                        <li>Configure environment variables on target server</li>
+                      </ul>
+                    )}
+                  </Typography>
+                </Alert>
+              )}
+              
+              <Stack direction="row" spacing={2}>
+                <Button 
+                  variant="outlined" 
+                  color="primary"
+                  onClick={() => window.open('https://www.meteor.com/cloud', '_blank')}
+                >
+                  Meteor Cloud Docs
+                </Button>
+                <Button 
+                  variant="outlined" 
+                  color="primary"
+                  onClick={() => window.open('https://guide.meteor.com/deployment.html', '_blank')}
+                >
+                  Deployment Guide
+                </Button>
+              </Stack>
+            </Box>
+          </Collapse>
+        </React.Fragment>
       );
     }
     
@@ -4288,27 +5435,24 @@ function GettingStartedPage(props){
     const publicSettingsItems = [];
     if (checklistItemsArray[2]) publicSettingsItems.push(checklistItemsArray[2]); // App Configuration
     if (checklistItemsArray[3]) publicSettingsItems.push(checklistItemsArray[3]); // Theme and Color Palette  
-    if (checklistItemsArray[5]) publicSettingsItems.push(checklistItemsArray[5]); // Default App Modules
-    if (checklistItemsArray[4]) publicSettingsItems.push(checklistItemsArray[4]); // Sidebar Configuration
-    if (checklistItemsArray[9]) publicSettingsItems.push(checklistItemsArray[9]); // Business & Legal Pages
-    if (checklistItemsArray[10]) publicSettingsItems.push(checklistItemsArray[10]); // Upstream Tether (SMART on FHIR)
+    if (checklistItemsArray[4]) publicSettingsItems.push(checklistItemsArray[4]); // Default App Modules
+    if (checklistItemsArray[5]) publicSettingsItems.push(checklistItemsArray[5]); // Sidebar Configuration
+    if (checklistItemsArray[10]) publicSettingsItems.push(checklistItemsArray[10]); // Business & Legal Pages
+    if (checklistItemsArray[11]) publicSettingsItems.push(checklistItemsArray[11]); // Upstream Tether (SMART on FHIR)
+    if (checklistItemsArray[12]) publicSettingsItems.push(checklistItemsArray[12]); // Custom Workflows
     
     // Private Settings (Server)
     const privateSettingsItems = [];
-    if (checklistItemsArray[8]) privateSettingsItems.push(checklistItemsArray[8]); // Server FHIR APIs
-    if (checklistItemsArray[6]) privateSettingsItems.push(checklistItemsArray[6]); // User Accounts (Register a New User)
-    // Security - placeholder for future implementation
-    const securityItem = null; // TODO: Add security configuration item
-    if (securityItem) privateSettingsItems.push(securityItem);
-    // Database - placeholder for future implementation  
-    const databaseItem = null; // TODO: Add database configuration item
-    if (databaseItem) privateSettingsItems.push(databaseItem);
-    if (checklistItemsArray[11]) privateSettingsItems.push(checklistItemsArray[11]); // Environment Variables
-    if (checklistItemsArray[7]) privateSettingsItems.push(checklistItemsArray[7]); // Interfaces
+    if (checklistItemsArray[9]) privateSettingsItems.push(checklistItemsArray[9]); // Server FHIR APIs
+    if (checklistItemsArray[7]) privateSettingsItems.push(checklistItemsArray[7]); // User Accounts
+    if (checklistItemsArray[8]) privateSettingsItems.push(checklistItemsArray[8]); // Database
+    if (checklistItemsArray[14]) privateSettingsItems.push(checklistItemsArray[14]); // Cryptography Keys
+    if (checklistItemsArray[13]) privateSettingsItems.push(checklistItemsArray[13]); // Environment Variables
+    if (checklistItemsArray[6]) privateSettingsItems.push(checklistItemsArray[6]); // Interfaces
     
     // Settings File and Deploy
     const settingsFileItem = checklistItemsArray[1]; // Initialize Settings File
-    const deployAppItem = checklistItemsArray[12]; // Deploy App (Hosting)
+    const deployAppItem = checklistItemsArray[15]; // Deploy App (Hosting)
     
     setupChecklistElements = <Grid item xs={12}>
       <Card sx={{ mb: 3 }}>
@@ -4343,8 +5487,6 @@ function GettingStartedPage(props){
                   // Trigger theme refresh specifically (following ThemingPage pattern)
                   Session.set('themeRefreshRequest', true);
                   
-                  // Show success message
-                  setShowSuccessMessage(true);
                 }
               }}
             >
@@ -4491,21 +5633,6 @@ function GettingStartedPage(props){
         </DialogActions>
       </Dialog>
       
-      {/* Success Snackbar */}
-      <Snackbar
-        open={showSuccessMessage}
-        autoHideDuration={6000}
-        onClose={() => setShowSuccessMessage(false)}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-      >
-        <Alert 
-          onClose={() => setShowSuccessMessage(false)} 
-          severity="success" 
-          sx={{ width: '100%' }}
-        >
-          Settings applied successfully! Theme updated.
-        </Alert>
-      </Snackbar>
     </Box>      
   );
 }

@@ -484,7 +484,7 @@ describe('Encounters CRUD Operations', function() {
   it('05. Verify new encounter appears in list', browser => {
     browser
       .waitForElementVisible('#encountersPage', 5000)
-      .pause(500)
+      .pause(1000)  // Increased pause to allow data to fully render
       .waitForElementVisible('#encountersTable', 5000);
     
     // Debug: Check what's actually in the table

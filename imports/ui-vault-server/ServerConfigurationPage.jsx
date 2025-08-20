@@ -85,6 +85,10 @@ import forge from 'node-forge';
 
 let pki = forge.pki;
 
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+import Snackbar from '@mui/material/Snackbar';
+import Alert from '@mui/material/Alert';
+
 import { Endpoints } from '../lib/schemas/SimpleSchemas/Endpoints';
 import { SubscriptionsTable } from './SubscriptionsTable';
 
@@ -118,6 +122,10 @@ function ServerConfigurationPage(props){
   let [ publicKeyText, setPublicKeyText ] = useState("");
   let [ privateKeyText, setPrivateKeyText ] = useState("");
   let [ publicCertPem, setPublicCertPem ] = useState("");
+  
+  let [ publicKeyJwk, setPublicKeyJwk ] = useState(null);
+  let [ copySuccess, setCopySuccess ] = useState(false);
+  let [ copyMessage, setCopyMessage ] = useState("");
 
   let [checked, setChecked] = React.useState(true);
   let [defaultDirectoryQuery, setDefaultDirectoryQuery] = React.useState(get(Meteor, 'settings.public.interfaces.upstreamDirectory.channel.path', ""));
@@ -145,6 +153,15 @@ function ServerConfigurationPage(props){
           setServerHasPublicCert(get(result, 'x509.publicCertPem'))
           setPublicKeyText(get(result, 'x509.publicKey'))
           setPublicCertPem(get(result, 'x509.publicCertPem'))
+          
+          // Fetch JWK representation
+          if(get(result, 'x509.publicCertPem')){
+            Meteor.call('getJwkFromCertificate', function(error, jwkResult){
+              if(jwkResult){
+                setPublicKeyJwk(jwkResult);
+              }
+            });
+          }
         }
       })  
     }    
@@ -190,6 +207,15 @@ function ServerConfigurationPage(props){
 
   function openPage(url){
     navigate(url, { replace: true });
+  }
+  
+  function copyToClipboard(text, message){
+    navigator.clipboard.writeText(text).then(function() {
+      setCopyMessage(message || "Copied to clipboard!");
+      setCopySuccess(true);
+    }, function(err) {
+      console.error('Could not copy text: ', err);
+    });
   }
 
   function handelUpdateWellKnownUdapUrl(event){
@@ -443,6 +469,74 @@ function ServerConfigurationPage(props){
       </CardContent>
     </Card>);
     serverPublicKeyElems.push(<DynamicSpacer />);
+    
+    // Add JWK display if available
+    if(publicKeyJwk){
+      serverPublicKeyElems.push(<Card key="jwk-display" margin={20} style={{width: '100%', fontSize: '80%'}}  >      
+        <CardHeader 
+          avatar={<Icon icon={key} size={32} />} 
+          title="JSON Web Key (JWK)" 
+          subheader="Public key in JWK format for SMART on FHIR JWT authentication"
+          action={
+            <IconButton onClick={() => copyToClipboard(JSON.stringify(publicKeyJwk, null, 2), "JWK copied to clipboard!")}>
+              <ContentCopyIcon />
+            </IconButton>
+          }
+        />    
+        <CardContent>
+          <AceEditor
+            mode="json"
+            theme={theme === 'light' ? "tomorrow" : "monokai"}
+            wrapEnabled={true}
+            readOnly={true}
+            name="jwkEditor"
+            editorProps={{ $blockScrolling: true }}
+            value={JSON.stringify(publicKeyJwk, null, 2)}
+            style={{width: '100%', height: '200px', borderRadius: '4px'}}
+            setOptions={{
+              showLineNumbers: true,
+              tabSize: 2,
+            }}
+          />
+          <Typography variant="body2" style={{marginTop: '10px', marginBottom: '10px'}}>
+            JWK Set URL: <code>{Meteor.absoluteUrl()}.well-known/jwks.json</code>
+            <IconButton 
+              size="small" 
+              onClick={() => copyToClipboard(Meteor.absoluteUrl() + '.well-known/jwks.json', "JWK Set URL copied!")}
+              style={{marginLeft: '10px'}}
+            >
+              <ContentCopyIcon fontSize="small" />
+            </IconButton>
+          </Typography>
+          <Button
+            variant="outlined"
+            color="primary"
+            style={{marginRight: '10px'}}
+            onClick={openExternalPage.bind(this, Meteor.absoluteUrl() + ".well-known/jwks.json")}
+          >View JWK Set Endpoint</Button>
+          <Button
+            variant="outlined"
+            color="primary"
+            onClick={() => {
+              Meteor.call('generateClientAssertionJwt', 
+                get(Meteor, 'settings.public.smartOnFhir[0].client_id', 'test-client'),
+                get(Meteor, 'settings.public.smartOnFhir[0].fhirServiceUrl', '') + '/oauth2/token',
+                null,
+                300,
+                function(error, result){
+                  if(error){
+                    alert('Error generating test JWT: ' + error.message);
+                  } else {
+                    copyToClipboard(result.jwt, "Test JWT copied to clipboard!");
+                  }
+                }
+              );
+            }}
+          >Generate Test JWT</Button>
+        </CardContent>
+      </Card>);
+      serverPublicKeyElems.push(<DynamicSpacer />);
+    }
   }
 
   let serverPublicCertElems =[];
@@ -847,6 +941,17 @@ function ServerConfigurationPage(props){
           </Grid>
         </Grid>
       </Container>
+      
+      <Snackbar
+        open={copySuccess}
+        autoHideDuration={3000}
+        onClose={() => setCopySuccess(false)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert onClose={() => setCopySuccess(false)} severity="success" sx={{ width: '100%' }}>
+          {copyMessage}
+        </Alert>
+      </Snackbar>
 
     </div>
   );

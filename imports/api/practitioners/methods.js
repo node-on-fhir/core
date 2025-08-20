@@ -100,12 +100,13 @@ Meteor.methods({
     }
     
     try {
-      console.log('[practitioners.create] Inserting practitioner:', cleanPractitioner);
+      console.log('[practitioners.create] Inserting practitioner:', JSON.stringify(cleanPractitioner, null, 2));
       const result = await Practitioners.insertAsync(cleanPractitioner);
-      console.log('[practitioners.create] Created practitioner:', result);
+      console.log('[practitioners.create] Created practitioner with ID:', result);
       return result;
     } catch (error) {
       console.error('[practitioners.create] Error:', error);
+      console.error('[practitioners.create] Error details:', error.details);
       throw new Meteor.Error('insert-failed', error.message);
     }
   },

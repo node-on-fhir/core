@@ -29,6 +29,85 @@ let defaultSearchParams = [
   }]
 
 const MetadataServerMethods = {
+  getJwkSet: function(){
+    console.log('getJwkSet()');
+    
+    // Check if we have JWK configuration in settings
+    let jwkConfig = get(Meteor, 'settings.private.jwk');
+    
+    if (jwkConfig && jwkConfig.keys) {
+      // If JWK keys are directly configured
+      return {
+        keys: jwkConfig.keys
+      };
+    }
+    
+    // Generate JWK from X.509 certificate if available
+    let x509privateKeyRaw = get(Meteor, 'settings.private.x509.privateKey');
+    let x509publicCertRaw = get(Meteor, 'settings.private.x509.publicCertPem');
+    
+    // Convert \r\n escape sequences to actual line breaks
+    let x509privateKey = x509privateKeyRaw ? x509privateKeyRaw.replace(/\\r\\n/g, '\n') : '';
+    let x509publicCert = x509publicCertRaw ? x509publicCertRaw.replace(/\\r\\n/g, '\n') : '';
+    
+    if (x509privateKey && x509publicCert) {
+      try {
+        // Parse the certificate - handle different line ending formats
+        let certPem = x509publicCert
+          .replace(/-----BEGIN CERTIFICATE-----/g, '')
+          .replace(/-----END CERTIFICATE-----/g, '')
+          .replace(/[\r\n]/g, '');
+          
+        let certDer = forge.util.decode64(certPem);
+        let cert = pki.certificateFromAsn1(forge.asn1.fromDer(certDer));
+        let publicKey = cert.publicKey;
+        
+        // Convert RSA public key components to base64url format
+        // Get hex representation of modulus and exponent
+        let nHex = publicKey.n.toString(16);
+        let eHex = publicKey.e.toString(16);
+        
+        // Ensure even number of hex digits
+        if (nHex.length % 2 !== 0) nHex = '0' + nHex;
+        if (eHex.length % 2 !== 0) eHex = '0' + eHex;
+        
+        // Convert to base64url using Node.js Buffer
+        let nBuffer = Buffer.from(nHex, 'hex');
+        let eBuffer = Buffer.from(eHex, 'hex');
+        
+        // Base64url encode (base64 with URL-safe characters and no padding)
+        let nBase64url = nBuffer.toString('base64')
+          .replace(/\+/g, '-')
+          .replace(/\//g, '_')
+          .replace(/=/g, '');
+          
+        let eBase64url = eBuffer.toString('base64')
+          .replace(/\+/g, '-')
+          .replace(/\//g, '_')
+          .replace(/=/g, '');
+        
+        let jwk = {
+          kty: "RSA",
+          use: "sig",
+          kid: get(Meteor, 'settings.private.jwk.keyId', 'trialx-data-fetch-key-001'),
+          alg: "RS384",
+          n: nBase64url,
+          e: eBase64url
+        };
+        
+        return {
+          keys: [jwk]
+        };
+      } catch (error) {
+        console.error('Error converting certificate to JWK:', error);
+      }
+    }
+    
+    // Return empty key set if no keys available
+    return {
+      keys: []
+    };
+  },
   getCapabilityStatement: function(){
     console.log('getCapabilityStatement()');
 
@@ -193,6 +272,9 @@ const MetadataServerMethods = {
       "introspection_endpoint": Meteor.absoluteUrl() + get(Meteor, 'settings.private.fhir.security.revokeEndpoint', "authorizations/introspect"),
       "registration_endpoint": Meteor.absoluteUrl() + get(Meteor, 'settings.private.fhir.security.registrationEndpoint', "oauth/registration"),
       "revocation_endpoint": Meteor.absoluteUrl() + get(Meteor, 'settings.private.fhir.security.revokeEndpoint', "authorizations/revoke"),
+      
+      // JWK Set URL for Epic SMART v2
+      "jwks_uri": Meteor.absoluteUrl() + ".well-known/jwks.json",
 
       // custom fields
       "message": "smart config!"
@@ -329,6 +411,22 @@ WebApp.handlers.get("/.well-known/udap", async (req, res) => {
   let returnPayload = MetadataServerMethods.getWellKnownUdapConfiguration()
   if(process.env.TRACE){
     console.log('return payload', returnPayload);
+  }
+
+  res.json(returnPayload);
+});
+
+// JWK Set endpoint for Epic SMART v2
+WebApp.handlers.get("/.well-known/jwks.json", async (req, res) => {
+
+  console.log("GET /.well-known/jwks.json");
+
+  res.setHeader('Content-type', 'application/json');
+  res.setHeader("Access-Control-Allow-Origin", "*");
+
+  let returnPayload = MetadataServerMethods.getJwkSet()
+  if(process.env.TRACE || process.env.DEBUG_OAUTH){
+    console.log('JWK Set return payload:', JSON.stringify(returnPayload, null, 2));
   }
 
   res.json(returnPayload);
