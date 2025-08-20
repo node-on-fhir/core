@@ -84,7 +84,7 @@ This package includes optional database utilities for converting MongoDB ObjectI
 To enable the ObjectID conversion feature, set the environment variable when starting Meteor:
 
 ```bash
-ENABLE_SYNTHEA_DB_UTILS=true meteor run --settings settings.json
+ENABLE_SYNTHEA_DB_UTILS=true meteor run --settings settings.json --extra-packages clinical:synthea
 ```
 
 When enabled:
