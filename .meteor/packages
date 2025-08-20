@@ -32,3 +32,10 @@ accounts-base
 
 mdg:validated-method
 fetch
+
+
+clinical:data-importer
+clinical:data-exporter
+clinical:synthea
+symptomatic:timelines
+clinical:pacio-core

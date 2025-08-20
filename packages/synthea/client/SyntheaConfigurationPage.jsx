@@ -42,13 +42,16 @@ import {
   Info,
   CheckCircle,
   Download,
-  Code
+  Code,
+  Storage
 } from '@mui/icons-material';
 
 import { useTheme } from '@mui/material/styles';
 import { get } from 'lodash';
+import { useTracker } from 'meteor/react-meteor-data';
 import { SYNTHEA_DEFAULTS, isDifferentFromDefault } from './syntheaDefaults';
 import { generatePropertiesFile } from './generatePropertiesFile';
+import ObjectIdConversionModal from './ObjectIdConversionModal';
 
 function TabPanel(props) {
   const { children, value, index, ...other } = props;
@@ -75,6 +78,12 @@ export default function SyntheaConfigurationPage() {
   const [showSnackbar, setShowSnackbar] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [commandGenerated, setCommandGenerated] = useState(false);
+  const [showObjectIdModal, setShowObjectIdModal] = useState(false);
+  
+  // Check if database utilities are enabled
+  const dbUtilsEnabled = useTracker(() => {
+    return get(Meteor, 'settings.public.enableSyntheaDbUtils', false);
+  });
   
   // Configuration state
   const [config, setConfig] = useState({
@@ -533,6 +542,16 @@ export default function SyntheaConfigurationPage() {
                 >
                   Mongo Compass Docs
                 </Button>
+                {dbUtilsEnabled && (
+                  <Button
+                    variant="outlined"
+                    startIcon={<Storage />}
+                    onClick={() => setShowObjectIdModal(true)}
+                    color="secondary"
+                  >
+                    Convert ObjectIDs
+                  </Button>
+                )}
               </Box>
             </Grid>
           </Grid>
@@ -1638,6 +1657,11 @@ export default function SyntheaConfigurationPage() {
           {snackbarMessage}
         </Alert>
       </Snackbar>
+      
+      <ObjectIdConversionModal 
+        open={showObjectIdModal}
+        onClose={() => setShowObjectIdModal(false)}
+      />
     </Container>
   );
 }

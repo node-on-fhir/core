@@ -32,7 +32,11 @@ import { HumanNameSchema, BaseSchema, DomainResourceSchema } from 'meteor/clinic
 let Practitioner = BaseModel.extend();
 
 
-export let Practitioners = new Mongo.Collection('Practitioners');
+export let Practitioners = new Mongo.Collection('Practitioners', {
+  transform: function (document) {
+    return new Practitioner(document);
+  }
+});
 
 //Assign a collection so the object knows how to perform CRUD operations
 Practitioner.prototype._collection = Practitioners;
@@ -40,10 +44,7 @@ Practitioner.prototype._collection = Practitioners;
 
 
 
-//Add the transform to the collection since Meteor.users is pre-defined by the accounts package
-Practitioners._transform = function (document) {
-  return new Practitioner(document);
-};
+// Transform is now applied in the collection constructor above
 
 
 let PractitionerR4 = new SimpleSchema({

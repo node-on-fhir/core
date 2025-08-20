@@ -40,12 +40,12 @@ import {
   ListItem,
   ListItemText,
   ListItemIcon,
-  ListItemSecondaryAction
+  ListItemSecondaryAction,
+  Menu
 } from '@mui/material';
 import {
   People as PeopleIcon,
   LocalHospital as LocalHospitalIcon,
-  Bed as BedIcon,
   TrendingUp as TrendingUpIcon,
   TrendingDown as TrendingDownIcon,
   LocationOn as LocationOnIcon,
@@ -74,15 +74,56 @@ import { Beds } from '../../lib/collections/BedsCollection';
 import { SearchPatientsModalDialog } from '../components/SearchPatientsModalDialog';
 import LocationMap from '../components/LocationMap';
 
+// Inspirational quotes for healthcare
+const inspirationalQuotes = [
+  {
+    text: "Wherever the art of medicine is loved, there is also a love of humanity.",
+    author: "Hippocrates"
+  },
+  {
+    text: "The best way to find yourself is to lose yourself in the service of others.",
+    author: "Mahatma Gandhi"
+  },
+  {
+    text: "To cure sometimes, to relieve often, to comfort always.",
+    author: "Edward Trudeau"
+  },
+  {
+    text: "The good physician treats the disease; the great physician treats the patient who has the disease.",
+    author: "William Osler"
+  },
+  {
+    text: "Medicine is not only a science; it is also an art. It does not consist of compounding pills and plasters; it deals with the very processes of life.",
+    author: "Paracelsus"
+  },
+  {
+    text: "The secret of patient care is caring for the patient.",
+    author: "Francis Peabody"
+  },
+  {
+    text: "It is more important to know what sort of person has a disease than to know what sort of disease a person has.",
+    author: "Hippocrates"
+  },
+  {
+    text: "In nothing do men more nearly approach the gods than in giving health to men.",
+    author: "Cicero"
+  }
+];
+
 export function MainPage() {
+  const navigate = useNavigate();
   const [selectedFilter, setSelectedFilter] = useState('all');
   const [bedStatusHeight, setBedStatusHeight] = useState(600);
   const [patientModalOpen, setPatientModalOpen] = useState(false);
   const [selectedBedId, setSelectedBedId] = useState(null);
   const [hasMapApiKey, setHasMapApiKey] = useState(false);
+  const [currentQuoteIndex, setCurrentQuoteIndex] = useState(0);
+  const [anchorEl, setAnchorEl] = useState(null);
+  const [menuBedId, setMenuBedId] = useState(null);
   
   // Track authentication status
   const userId = useTracker(() => Meteor.userId());
+  const user = useTracker(() => Meteor.user());
 
   // Check if Google Maps API key is available
   useEffect(() => {
@@ -107,6 +148,18 @@ export function MainPage() {
     checkApiKey();
   }, []);
 
+  // Rotate through quotes
+  useEffect(() => {
+    // Only rotate quotes when user is not logged in
+    if (!userId) {
+      const interval = setInterval(() => {
+        setCurrentQuoteIndex((prevIndex) => (prevIndex + 1) % inspirationalQuotes.length);
+      }, 15000); // Change quote every 15 seconds
+
+      return () => clearInterval(interval);
+    }
+  }, [userId]);
+
   // Calculate dynamic height for bed status area
   useEffect(() => {
     const calculateHeight = () => {
@@ -126,25 +179,32 @@ export function MainPage() {
   // Subscribe to beds and patients data
   const bedsLoading = useSubscribe('pacio.beds');
   const patientsLoading = useSubscribe('pacio.patients');
-
-  // Check if user is logged in
-  const user = useTracker(() => Meteor.user());
   
   // Fetch data from collections - trust the cursor
   const facilityData = useTracker(() => {
     // Simply get beds from the collection - all data is already there
     const beds = Beds.find({}).fetch();
     
+    // Ensure beds is always an array
+    const validBeds = Array.isArray(beds) ? beds : [];
+    
+    // Debug log to check beds data
+    if (validBeds.length > 0) {
+      console.log('Sample bed data:', validBeds[0]);
+    } else {
+      console.log('No beds found in collection');
+    }
+    
     // Calculate occupied beds
-    const occupiedBeds = beds.filter(bed => bed.status === 'occupied').length;
-    const totalBeds = beds.length || 16;
+    const occupiedBeds = validBeds.filter(bed => bed && bed.status === 'occupied').length;
+    const totalBeds = validBeds.length || 16;
     
     return {
       facility: {
         id: 'mh-001',
-        name: "Rainbow's End Medical Home",
+        name: get(Meteor, 'settings.public.pacio.facilityName', "Rainbow's End Medical Home"),
         type: 'Medical Home',
-        address: '789 Healing Way, Springfield, IL 62704',
+        address: get(Meteor, 'settings.public.pacio.facilityAddress', '789 Healing Way, Springfield, IL 62704'),
         lat: 39.7895,
         lng: -89.6387,
         totalBeds: totalBeds,
@@ -156,7 +216,7 @@ export function MainPage() {
           other: 2
         }
       },
-      beds: beds,
+      beds: validBeds,
       recentAlerts: [
         { id: 1, bedId: 'B03', type: 'medical', message: 'Abnormal vitals detected - Bed 3', time: moment().subtract(8, 'minutes'), priority: 'high' },
         { id: 2, bedId: 'B07', type: 'call', message: 'Call button activated - Bed 7', time: moment().subtract(15, 'minutes'), priority: 'medium' },
@@ -164,12 +224,15 @@ export function MainPage() {
         { id: 4, bedId: 'B01', type: 'fall', message: 'Fall prevention protocol - Bed 1', time: moment().subtract(45, 'minutes'), priority: 'high' }
       ]
     };
-  }, [bedsLoading, patientsLoading]);
+  });
 
 
 
   // Filter beds based on selection
-  const filteredBeds = facilityData.beds.filter(bed => {
+  const filteredBeds = (facilityData.beds || []).filter(bed => {
+    // Ensure bed object exists and has required properties
+    if (!bed || typeof bed !== 'object') return false;
+    
     if (selectedFilter === 'occupied' && bed.status !== 'occupied') return false;
     if (selectedFilter === 'vacant' && bed.status === 'occupied') return false;
     if (selectedFilter === 'critical' && bed.patient?.acuityLevel !== 'Critical') return false;
@@ -235,8 +298,62 @@ export function MainPage() {
     }
   };
 
+  // Handle marking a bed as fixed
+  const handleMarkFixed = async (bedId) => {
+    try {
+      await Meteor.callAsync('pacio.updateBedStatus', bedId, 'available');
+      console.log('Bed marked as fixed');
+    } catch (error) {
+      console.error('Error marking bed as fixed:', error);
+    }
+  };
+
+  // Handle menu open
+  const handleMenuOpen = (event, bedId) => {
+    setAnchorEl(event.currentTarget);
+    setMenuBedId(bedId);
+  };
+
+  // Handle menu close
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+    setMenuBedId(null);
+  };
+
+  // Handle discharge patient
+  const handleDischargePatient = async () => {
+    if (!menuBedId) return;
+    
+    try {
+      await Meteor.callAsync('pacio.releaseBed', menuBedId);
+      console.log('Patient discharged from bed');
+      handleMenuClose();
+    } catch (error) {
+      console.error('Error discharging patient:', error);
+    }
+  };
+
+  // Handle edit patient
+  const handleEditPatient = () => {
+    const bed = facilityData.beds.find(b => b._id === menuBedId);
+    if (bed && bed.patientId) {
+      navigate(`/patients/${bed.patientId}`);
+    }
+    handleMenuClose();
+  };
+
+  // Handle transfer patient
+  const handleTransferPatient = () => {
+    // TODO: Implement transfer functionality
+    console.log('Transfer patient functionality not yet implemented');
+    handleMenuClose();
+  };
+
   // Show loading state while data is being fetched
-  if (bedsLoading() || patientsLoading()) {
+  const isLoadingBeds = bedsLoading && bedsLoading();
+  const isLoadingPatients = patientsLoading && patientsLoading();
+  
+  if (isLoadingBeds || isLoadingPatients) {
     return (
       <Box sx={{ p: 2, height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <Box textAlign="center">
@@ -303,7 +420,7 @@ export function MainPage() {
                     Occupied Beds
                   </Typography>
                 </Box>
-                <BedIcon color="primary" />
+                <HotelIcon color="primary" />
               </Box>
             </CardContent>
           </Card>
@@ -370,14 +487,14 @@ export function MainPage() {
           <Paper sx={{ p: 2, height: `${bedStatusHeight}px`, overflow: 'auto' }}>
             <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
               <Typography variant="h6">
-                Bed Status ({filteredBeds.length} beds)
+                Bed Status {userId && filteredBeds ? `(${filteredBeds.length} beds)` : ''}
               </Typography>
               <Typography variant="body2" color="textSecondary">
                 {/* Remove dynamic timestamp to prevent re-renders */}
               </Typography>
             </Box>
             
-            {!user ? (
+            {!userId ? (
               <Box 
                 display="flex" 
                 flexDirection="column" 
@@ -395,15 +512,19 @@ export function MainPage() {
                 </Typography>
                 <Button 
                   variant="contained" 
-                  onClick={() => window.location.href = '/signin'}
+                  onClick={() => navigate('/signin')}
                   sx={{ mt: 2 }}
                 >
                   Sign In
                 </Button>
               </Box>
-            ) : (
+            ) : filteredBeds && filteredBeds.length > 0 ? (
             <Grid container spacing={2}>
-              {filteredBeds.map(bed => (
+              {filteredBeds.map(bed => {
+                // Skip invalid bed objects
+                if (!bed || !bed._id) return null;
+                
+                return (
                 <Grid item xs={12} key={bed._id || bed.bedId}>
                   <Card 
                     variant="outlined" 
@@ -446,7 +567,10 @@ export function MainPage() {
                                 {bed.patientMRN} • Admitted {bed.admissionDate ? moment(bed.admissionDate).fromNow() : 'N/A'}
                               </Typography>
                             </Box>
-                            <IconButton size="small">
+                            <IconButton 
+                              size="small"
+                              onClick={(e) => handleMenuOpen(e, bed._id)}
+                            >
                               <MoreVertIcon />
                             </IconButton>
                           </Box>
@@ -575,8 +699,9 @@ export function MainPage() {
                                       bed.status === 'cleaning' ? 'warning.light' : 
                                       bed.status === 'maintenance' ? 'error.light' : 'grey.300' 
                             }}>
-                              {bed.status === 'cleaning' ? <CleaningIcon /> : 
-                               bed.status === 'maintenance' ? <BuildIcon /> : <BedIcon />}
+                              {bed.status === 'cleaning' && CleaningIcon ? <CleaningIcon /> : 
+                               bed.status === 'maintenance' && BuildIcon ? <BuildIcon /> : 
+                               HotelIcon ? <HotelIcon /> : null}
                             </Avatar>
                             <Box>
                               <Typography variant="h6">
@@ -616,8 +741,15 @@ export function MainPage() {
                     </CardContent>
                   </Card>
                 </Grid>
-              ))}
+                );
+              })}
             </Grid>
+            ) : (
+              <Box sx={{ p: 4, textAlign: 'center' }}>
+                <Typography variant="h6" color="text.secondary">
+                  No beds available
+                </Typography>
+              </Box>
             )}
           </Paper>
         </Grid>
@@ -670,6 +802,48 @@ export function MainPage() {
               </Paper>
             </Grid>
             )}
+            
+            {/* Placeholder when not logged in */}
+            {!userId && (
+              <Grid item xs={12}>
+                <Box sx={{ 
+                  p: 4, 
+                  height: hasMapApiKey ? `${(bedStatusHeight - 10) / 2}px` : `${bedStatusHeight}px`, 
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}>
+                  <Typography 
+                    variant="h6" 
+                    sx={{ 
+                      fontStyle: 'italic',
+                      color: 'text.secondary',
+                      textAlign: 'center',
+                      maxWidth: 500,
+                      mb: 2,
+                      fontWeight: 300,
+                      lineHeight: 1.6,
+                      transition: 'opacity 0.5s ease-in-out',
+                      opacity: 1
+                    }}
+                  >
+                    "{inspirationalQuotes[currentQuoteIndex].text}"
+                  </Typography>
+                  <Typography 
+                    variant="body2" 
+                    sx={{ 
+                      color: 'text.disabled',
+                      textAlign: 'center',
+                      transition: 'opacity 0.5s ease-in-out',
+                      opacity: 1
+                    }}
+                  >
+                    — {inspirationalQuotes[currentQuoteIndex].author}
+                  </Typography>
+                </Box>
+              </Grid>
+            )}
           </Grid>
         </Grid>
 
@@ -685,8 +859,35 @@ export function MainPage() {
         onSelectPatient={handlePatientSelected}
         bedId={selectedBedId}
       />
+      
+      {/* Bed Actions Menu */}
+      <Menu
+        anchorEl={anchorEl}
+        open={Boolean(anchorEl)}
+        onClose={handleMenuClose}
+      >
+        <MenuItem onClick={handleEditPatient}>
+          <ListItemIcon>
+            <PeopleIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText>View Patient Details</ListItemText>
+        </MenuItem>
+        <MenuItem onClick={handleTransferPatient}>
+          <ListItemIcon>
+            <SwapHorizIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText>Transfer Patient</ListItemText>
+        </MenuItem>
+        <Divider />
+        <MenuItem onClick={handleDischargePatient}>
+          <ListItemIcon>
+            <PersonOffIcon fontSize="small" color="error" />
+          </ListItemIcon>
+          <ListItemText>Discharge Patient</ListItemText>
+        </MenuItem>
+      </Menu>
     </Box>
   );
 }
 
-export { MainPage };
+// Component is exported as part of the function declaration above

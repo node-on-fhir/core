@@ -71,6 +71,50 @@ run_synthea -p 100 -s 12345 Massachusetts Boston -g M -a 25-65 --config="generat
 - React 18+
 - Material-UI v5
 
+## Database Utilities (Advanced Feature)
+
+This package includes optional database utilities for converting MongoDB ObjectIDs to strings. This feature is useful when importing Synthea data using MongoDB native tools.
+
+### Security Notice
+
+**These utilities are DISABLED by default** as they can modify your database. Only enable them in development or sandbox environments.
+
+### Enabling Database Utilities
+
+To enable the ObjectID conversion feature, set the environment variable when starting Meteor:
+
+```bash
+ENABLE_SYNTHEA_DB_UTILS=true meteor run --settings settings.json
+```
+
+When enabled:
+- A "Convert ObjectIDs" button appears on the Synthea configuration page
+- Server methods for database conversion become available
+- Console warnings indicate the feature is active
+
+### ObjectID Conversion Feature
+
+When enabled, you can:
+1. Click "Convert ObjectIDs" on the `/synthea-configuration` page
+2. Select which collections to process
+3. Choose dry-run mode to test without changes
+4. Enable automatic backups before conversion
+5. Monitor progress in real-time
+
+### Important Warnings
+
+- **Never enable in production** - This feature can modify your entire database
+- **Always backup first** - Use the backup option or manually backup your database
+- **Test with dry-run** - Always test with dry-run mode first
+- **Restricted access** - Only logged-in users can access these utilities
+
+### Disabling
+
+To disable (default), simply don't set the environment variable or set:
+```bash
+ENABLE_SYNTHEA_DB_UTILS=false
+```
+
 ## License
 
 See Honeycomb license.

@@ -511,7 +511,7 @@ function Header({ drawerIsOpen, handleDrawerOpen, lastUpdated }) {
               </Button>
             </>
           ) : (
-            <Button sx={{ color: muiTheme.palette.text.primary }} onClick={() => navigate('/login')}>Login</Button>
+            <Button sx={{ color: muiTheme.palette.appbar?.contrastText || muiTheme.palette.primary.contrastText }} onClick={() => navigate('/login')}>Login</Button>
           )}
         </Toolbar>
       </AppBar>
