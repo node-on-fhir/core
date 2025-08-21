@@ -77,6 +77,9 @@ import './publications/autopublish.js';
 import './publications/patients.js';
 import './publications/conditions.js';
 
+// Import practitioner startup (includes methods and publications)
+import './startup/practitionerStartup.js';
+
 // Import FHIR methods
 import '../imports/methods/fhirResourceStatistics.js';
 

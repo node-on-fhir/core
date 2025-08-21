@@ -1,0 +1,83 @@
+{
+  "resourceType" : "ValueSet",
+  "id" : "pfe-example-obs-vs",
+  "text" : {
+    "status" : "generated",
+    "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p class=\"res-header-id\"><b>Generated Narrative: ValueSet pfe-example-obs-vs</b></p><a name=\"pfe-example-obs-vs\"> </a><a name=\"hcpfe-example-obs-vs\"> </a><a name=\"pfe-example-obs-vs-en-US\"> </a><ul><li>Include these codes as defined in <a href=\"http://loinc.org\"><code>http://loinc.org</code></a><table class=\"none\"><tr><td style=\"white-space:nowrap\"><b>Code</b></td><td><b>Display</b></td></tr><tr><td><a href=\"https://loinc.org/101265-7/\">101265-7</a></td><td>MDS v3.0 - RAI v1.18.11 - Functional Abilities and Goals - Admission [CMS Assessment]</td></tr><tr><td><a href=\"https://loinc.org/95019-6/\">95019-6</a></td><td>Eating - usual functional ability during assessment period [CMS Assessment]</td></tr><tr><td><a href=\"https://loinc.org/79532-8/\">79532-8</a></td><td>Daily activity score [AM-PAC]</td></tr><tr><td><a href=\"https://loinc.org/99828-6/\">99828-6</a></td><td>Functional Communication Measure - Multi-Modal Functional Communication panel [ASHA NOMS]</td></tr><tr><td><a href=\"https://loinc.org/99831-0/\">99831-0</a></td><td>Frequency of conveying meaningful complex messages in low demand situations</td></tr><tr><td><a href=\"https://loinc.org/99835-1/\">99835-1</a></td><td>Functional Communication Measure - Multi-Modal Functional Communication score [ASHA NOMS]</td></tr><tr><td><a href=\"https://loinc.org/91375-6/\">91375-6</a></td><td>Hearing threshold Ear - left --250 Hz</td></tr></table></li></ul></div>"
+  },
+  "extension" : [{
+    "url" : "http://hl7.org/fhir/StructureDefinition/structuredefinition-wg",
+    "valueCode" : "pc"
+  }],
+  "url" : "http://hl7.org/fhir/us/pacio-pfe/ValueSet/pfe-example-obs-vs",
+  "version" : "2.0.0-ballot",
+  "name" : "PFEExampleObservationsVS",
+  "title" : "Personal Functioning and Engagement Example Observations Value Set",
+  "status" : "active",
+  "experimental" : false,
+  "date" : "2024-08-13T14:51:10+00:00",
+  "publisher" : "HL7 International / Patient Care",
+  "contact" : [{
+    "name" : "HL7 International / Patient Care",
+    "telecom" : [{
+      "system" : "url",
+      "value" : "http://www.hl7.org/Special/committees/patientcare"
+    },
+    {
+      "system" : "email",
+      "value" : "patientcare@lists.HL7.org"
+    }]
+  },
+  {
+    "name" : "PACIO project",
+    "telecom" : [{
+      "system" : "url",
+      "value" : "http://www.hl7.org/Special/committees/patientcare"
+    },
+    {
+      "system" : "email",
+      "value" : "info@pacioproject.org"
+    }]
+  }],
+  "description" : "This value set includes LOINC codes that provide examples of observations within the scope of the Personal Functioning and Engagement IG.",
+  "jurisdiction" : [{
+    "coding" : [{
+      "system" : "urn:iso:std:iso:3166",
+      "code" : "US"
+    }]
+  }],
+  "copyright" : "This material contains content from LOINC (http://loinc.org). LOINC is copyright © 1995-2020, Regenstrief Institute, Inc. and the Logical Observation Identifiers Names and Codes (LOINC) Committee and is available at no cost under the license at http://loinc.org/license. LOINC® is a registered United States trademark of Regenstrief Institute, Inc.",
+  "compose" : {
+    "include" : [{
+      "system" : "http://loinc.org",
+      "concept" : [{
+        "code" : "101265-7",
+        "display" : "MDS v3.0 - RAI v1.18.11 - Functional Abilities and Goals - Admission [CMS Assessment]"
+      },
+      {
+        "code" : "95019-6",
+        "display" : "Eating - usual functional ability during assessment period [CMS Assessment]"
+      },
+      {
+        "code" : "79532-8",
+        "display" : "Daily activity score [AM-PAC]"
+      },
+      {
+        "code" : "99828-6",
+        "display" : "Functional Communication Measure - Multi-Modal Functional Communication panel [ASHA NOMS]"
+      },
+      {
+        "code" : "99831-0",
+        "display" : "Frequency of conveying meaningful complex messages in low demand situations"
+      },
+      {
+        "code" : "99835-1",
+        "display" : "Functional Communication Measure - Multi-Modal Functional Communication score [ASHA NOMS]"
+      },
+      {
+        "code" : "91375-6",
+        "display" : "Hearing threshold Ear - left --250 Hz"
+      }]
+    }]
+  }
+}

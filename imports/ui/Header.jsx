@@ -550,19 +550,19 @@ function Header({ drawerIsOpen, handleDrawerOpen, lastUpdated }) {
               <Divider orientation="vertical" flexItem />
               <Box>
                 <Typography variant="caption" sx={{ opacity: 0.7 }}>ID</Typography>
-                <Typography variant="body2">{patientIdentifier || parseId()}</Typography>
+                <Typography variant="body2">{patientIdentifier || parseId() || 'Unknown'}</Typography>
               </Box>
               <Box>
                 <Typography variant="caption" sx={{ opacity: 0.7 }}>Birth Date</Typography>
-                <Typography variant="body2">{patientBirthDate ? moment(patientBirthDate).format('MMM DD, YYYY') : 'N/A'}</Typography>
+                <Typography variant="body2">{patientBirthDate ? moment(patientBirthDate).format('MMM DD, YYYY') : 'Unknown'}</Typography>
               </Box>
               <Box>
                 <Typography variant="caption" sx={{ opacity: 0.7 }}>Gender</Typography>
-                <Typography variant="body2">{patientGender || 'N/A'}</Typography>
+                <Typography variant="body2">{patientGender || 'Unknown'}</Typography>
               </Box>
               <Box>
                 <Typography variant="caption" sx={{ opacity: 0.7 }}>Phone</Typography>
-                <Typography variant="body2">{patientPhone || 'N/A'}</Typography>
+                <Typography variant="body2">{patientPhone || 'Unknown'}</Typography>
               </Box>
             </Box>
           </Toolbar>

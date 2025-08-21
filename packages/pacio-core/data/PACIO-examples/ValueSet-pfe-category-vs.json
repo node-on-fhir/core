@@ -1,0 +1,54 @@
+{
+  "resourceType" : "ValueSet",
+  "id" : "pfe-category-vs",
+  "text" : {
+    "status" : "generated",
+    "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p class=\"res-header-id\"><b>Generated Narrative: ValueSet pfe-category-vs</b></p><a name=\"pfe-category-vs\"> </a><a name=\"hcpfe-category-vs\"> </a><a name=\"pfe-category-vs-en-US\"> </a><ul><li>Include all codes defined in <a href=\"CodeSystem-pfe-category-cs.html\"><code>http://hl7.org/fhir/us/pacio-pfe/CodeSystem/pfe-category-cs</code></a></li></ul></div>"
+  },
+  "extension" : [{
+    "url" : "http://hl7.org/fhir/StructureDefinition/structuredefinition-wg",
+    "valueCode" : "pc"
+  }],
+  "url" : "http://hl7.org/fhir/us/pacio-pfe/ValueSet/pfe-category-vs",
+  "version" : "2.0.0-ballot",
+  "name" : "PFECategoryVS",
+  "title" : "Personal Functioning and Engagement Category Value Set",
+  "status" : "active",
+  "experimental" : false,
+  "date" : "2024-08-13T14:51:10+00:00",
+  "publisher" : "HL7 International / Patient Care",
+  "contact" : [{
+    "name" : "HL7 International / Patient Care",
+    "telecom" : [{
+      "system" : "url",
+      "value" : "http://www.hl7.org/Special/committees/patientcare"
+    },
+    {
+      "system" : "email",
+      "value" : "patientcare@lists.HL7.org"
+    }]
+  },
+  {
+    "name" : "PACIO project",
+    "telecom" : [{
+      "system" : "url",
+      "value" : "http://www.hl7.org/Special/committees/patientcare"
+    },
+    {
+      "system" : "email",
+      "value" : "info@pacioproject.org"
+    }]
+  }],
+  "description" : "This value set includes codes representing health and health-related domains into which functioning observations can be further categorized.",
+  "jurisdiction" : [{
+    "coding" : [{
+      "system" : "urn:iso:std:iso:3166",
+      "code" : "US"
+    }]
+  }],
+  "compose" : {
+    "include" : [{
+      "system" : "http://hl7.org/fhir/us/pacio-pfe/CodeSystem/pfe-category-cs"
+    }]
+  }
+}

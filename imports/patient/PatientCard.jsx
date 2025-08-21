@@ -222,7 +222,7 @@ function PatientCard({
       case 'female':
         return { icon: '♀', color: theme.palette.error.main };
       default:
-        return { icon: '⚥', color: theme.palette.grey[600] };
+        return { icon: '•', color: theme.palette.grey[600] };
     }
   };
 
@@ -315,21 +315,23 @@ function PatientCard({
                   </Typography>
                 </Box>
 
-                <Box display="flex" alignItems="center" gap={0.5}>
-                  <Typography 
-                    variant="body2" 
-                    sx={{ 
-                      color: genderDisplay.color,
-                      fontWeight: 'bold',
-                      fontSize: '1.1rem'
-                    }}
-                  >
-                    {genderDisplay.icon}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary" sx={{ textTransform: 'capitalize' }}>
-                    {patientData.gender}
-                  </Typography>
-                </Box>
+                {patientData.gender && (
+                  <Box display="flex" alignItems="center" gap={0.5}>
+                    <Typography 
+                      variant="body2" 
+                      sx={{ 
+                        color: genderDisplay.color,
+                        fontWeight: 'bold',
+                        fontSize: '1.1rem'
+                      }}
+                    >
+                      {genderDisplay.icon}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary" sx={{ textTransform: 'capitalize' }}>
+                      {patientData.gender}
+                    </Typography>
+                  </Box>
+                )}
 
                 {patientData.maritalStatus && (
                   <Box display="flex" alignItems="center" gap={0.5}>

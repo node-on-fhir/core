@@ -1,0 +1,55 @@
+{
+  "resourceType" : "Condition",
+  "id" : "PFEIG-Condition-KidneyDisease",
+  "meta" : {
+    "profile" : ["http://hl7.org/fhir/us/pacio-pfe/StructureDefinition/pfe-condition-encounter-diagnosis"]
+  },
+  "text" : {
+    "status" : "generated",
+    "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p class=\"res-header-id\"><b>Generated Narrative: Condition PFEIG-Condition-KidneyDisease</b></p><a name=\"PFEIG-Condition-KidneyDisease\"> </a><a name=\"hcPFEIG-Condition-KidneyDisease\"> </a><a name=\"PFEIG-Condition-KidneyDisease-en-US\"> </a><p><b>clinicalStatus</b>: <span title=\"Codes:{http://terminology.hl7.org/CodeSystem/condition-clinical active}\">Active</span></p><p><b>verificationStatus</b>: <span title=\"Codes:{http://terminology.hl7.org/CodeSystem/condition-ver-status confirmed}\">Confirmed</span></p><p><b>category</b>: <span title=\"Codes:{http://terminology.hl7.org/CodeSystem/condition-category encounter-diagnosis}\">Encounter Diagnosis</span></p><p><b>code</b>: <span title=\"Codes:{http://snomed.info/sct 731000119105}\">Chronic kidney disease stage 3 due to type 2 diabetes mellitus (disorder)</span></p><p><b>bodySite</b>: <span title=\"Codes:{http://snomed.info/sct 17373004}\">Both kidneys</span></p><p><b>subject</b>: <a href=\"Patient-PFEIG-patientBSJ1.html\">Betsy Smith-Johnson Female, DoB Unknown ( http://example.org/identifiers/patient#10A3D58WH1600)</a></p><p><b>recordedDate</b>: 2021-04-10 15:00:00-0400</p><p><b>asserter</b>: <a href=\"PractitionerRole-PFEIG-Role-IMMD-AnitaChu.html\">PractitionerRole Internal Medicine Physician</a></p></div>"
+  },
+  "extension" : [{
+    "url" : "http://hl7.org/fhir/StructureDefinition/condition-assertedDate",
+    "valueDateTime" : "2021-04-10"
+  }],
+  "clinicalStatus" : {
+    "coding" : [{
+      "system" : "http://terminology.hl7.org/CodeSystem/condition-clinical",
+      "code" : "active"
+    }]
+  },
+  "verificationStatus" : {
+    "coding" : [{
+      "system" : "http://terminology.hl7.org/CodeSystem/condition-ver-status",
+      "code" : "confirmed"
+    }]
+  },
+  "category" : [{
+    "coding" : [{
+      "system" : "http://terminology.hl7.org/CodeSystem/condition-category",
+      "code" : "encounter-diagnosis",
+      "display" : "Encounter Diagnosis"
+    }]
+  }],
+  "code" : {
+    "coding" : [{
+      "system" : "http://snomed.info/sct",
+      "code" : "731000119105",
+      "display" : "Chronic kidney disease stage 3 due to type 2 diabetes mellitus (disorder)"
+    }]
+  },
+  "bodySite" : [{
+    "coding" : [{
+      "system" : "http://snomed.info/sct",
+      "code" : "17373004",
+      "display" : "Both kidneys"
+    }]
+  }],
+  "subject" : {
+    "reference" : "Patient/PFEIG-patientBSJ1"
+  },
+  "recordedDate" : "2021-04-10T15:00:00-04:00",
+  "asserter" : {
+    "reference" : "PractitionerRole/PFEIG-Role-IMMD-AnitaChu"
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "resourceType" : "Organization",
+  "id" : "PFEIG-Org-Primary-Care-Michigan",
+  "text" : {
+    "status" : "generated",
+    "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p class=\"res-header-id\"><b>Generated Narrative: Organization PFEIG-Org-Primary-Care-Michigan</b></p><a name=\"PFEIG-Org-Primary-Care-Michigan\"> </a><a name=\"hcPFEIG-Org-Primary-Care-Michigan\"> </a><a name=\"PFEIG-Org-Primary-Care-Michigan-en-US\"> </a><p><b>name</b>: Michigan Primary Health Care Associates</p></div>"
+  },
+  "name" : "Michigan Primary Health Care Associates"
+}

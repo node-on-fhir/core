@@ -1,0 +1,13 @@
+{
+  "resourceType" : "Location",
+  "id" : "PFEIG-Org-Loc-02",
+  "text" : {
+    "status" : "generated",
+    "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p class=\"res-header-id\"><b>Generated Narrative: Location PFEIG-Org-Loc-02</b></p><a name=\"PFEIG-Org-Loc-02\"> </a><a name=\"hcPFEIG-Org-Loc-02\"> </a><a name=\"PFEIG-Org-Loc-02-en-US\"> </a><p><b>status</b>: Active</p><p><b>name</b>: Happy Nursing Facility</p><p><b>address</b>: 8100 Pinebrook Dr, San Antonio, TX, 78230</p></div>"
+  },
+  "status" : "active",
+  "name" : "Happy Nursing Facility",
+  "address" : {
+    "text" : "8100 Pinebrook Dr, San Antonio, TX, 78230"
+  }
+}

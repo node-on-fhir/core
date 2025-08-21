@@ -1,0 +1,18 @@
+{
+  "resourceType" : "Practitioner",
+  "id" : "PFEIG-Practitioner-LunaBaskins",
+  "text" : {
+    "status" : "generated",
+    "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p class=\"res-header-id\"><b>Generated Narrative: Practitioner PFEIG-Practitioner-LunaBaskins</b></p><a name=\"PFEIG-Practitioner-LunaBaskins\"> </a><a name=\"hcPFEIG-Practitioner-LunaBaskins\"> </a><a name=\"PFEIG-Practitioner-LunaBaskins-en-US\"> </a><p><b>active</b>: true</p><p><b>name</b>: Luna Baskins</p><p><b>telecom</b>: ph: -unknown-</p><p><b>gender</b>: Female</p></div>"
+  },
+  "active" : true,
+  "name" : [{
+    "text" : "Luna Baskins",
+    "family" : "Baskins",
+    "given" : ["Luna"]
+  }],
+  "telecom" : [{
+    "system" : "phone"
+  }],
+  "gender" : "female"
+}

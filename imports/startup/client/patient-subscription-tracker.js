@@ -33,9 +33,23 @@ Meteor.startup(() => {
   
   if (autoPublishEnabled) {
     console.log('Global tracker: Subscribing to all patients via autopublish');
-    Meteor.subscribe('autopublish.Patients', {}, { limit: 1000 });
+    const handle = Meteor.subscribe('autopublish.Patients', {}, { limit: 1000 }, {
+      onReady: function() {
+        console.log('Global tracker: autopublish.Patients ready');
+      },
+      onError: function(error) {
+        console.error('Global tracker: autopublish.Patients error:', error);
+      }
+    });
   } else {
     console.log('Global tracker: Subscribing to all patients via patients.search');
-    Meteor.subscribe('patients.search', {}, { limit: 1000 });
+    const handle = Meteor.subscribe('patients.search', {}, { limit: 1000 }, {
+      onReady: function() {
+        console.log('Global tracker: patients.search ready');
+      },
+      onError: function(error) {
+        console.error('Global tracker: patients.search error:', error);
+      }
+    });
   }
 });

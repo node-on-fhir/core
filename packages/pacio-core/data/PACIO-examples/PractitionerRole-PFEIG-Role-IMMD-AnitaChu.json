@@ -1,0 +1,27 @@
+{
+  "resourceType" : "PractitionerRole",
+  "id" : "PFEIG-Role-IMMD-AnitaChu",
+  "text" : {
+    "status" : "generated",
+    "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p class=\"res-header-id\"><b>Generated Narrative: PractitionerRole PFEIG-Role-IMMD-AnitaChu</b></p><a name=\"PFEIG-Role-IMMD-AnitaChu\"> </a><a name=\"hcPFEIG-Role-IMMD-AnitaChu\"> </a><a name=\"PFEIG-Role-IMMD-AnitaChu-en-US\"> </a><p><b>active</b>: true</p><p><b>practitioner</b>: <a href=\"Practitioner-PFEIG-Practitioner-AnitaChu.html\">Dr. Anita Chu</a></p><p><b>organization</b>: <a href=\"Organization-PFEIG-Org-Primary-Care-Michigan.html\">Michigan Primary Health Care Associates</a></p><p><b>code</b>: <span title=\"Codes:{http://nucc.org/provider-taxonomy 207R00000X}\">Internal Medicine Physician</span></p><p><b>location</b>: <a href=\"Location-PFEIG-Org-Loc-Primary-Care-Michigan.html\">Location Michigan Primary Health Care Associates</a></p></div>"
+  },
+  "active" : true,
+  "practitioner" : {
+    "reference" : "Practitioner/PFEIG-Practitioner-AnitaChu",
+    "display" : "Dr. Anita Chu"
+  },
+  "organization" : {
+    "reference" : "Organization/PFEIG-Org-Primary-Care-Michigan",
+    "display" : "Michigan Primary Health Care Associates"
+  },
+  "code" : [{
+    "coding" : [{
+      "system" : "http://nucc.org/provider-taxonomy",
+      "code" : "207R00000X",
+      "display" : "Internal Medicine Physician"
+    }]
+  }],
+  "location" : [{
+    "reference" : "Location/PFEIG-Org-Loc-Primary-Care-Michigan"
+  }]
+}

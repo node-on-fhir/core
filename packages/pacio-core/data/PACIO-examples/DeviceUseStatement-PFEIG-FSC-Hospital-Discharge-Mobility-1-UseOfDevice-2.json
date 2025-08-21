@@ -1,0 +1,25 @@
+{
+  "resourceType" : "DeviceUseStatement",
+  "id" : "PFEIG-FSC-Hospital-Discharge-Mobility-1-UseOfDevice-2",
+  "meta" : {
+    "profile" : ["http://hl7.org/fhir/us/pacio-pfe/StructureDefinition/pfe-use-of-device"]
+  },
+  "text" : {
+    "status" : "generated",
+    "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p class=\"res-header-id\"><b>Generated Narrative: DeviceUseStatement PFEIG-FSC-Hospital-Discharge-Mobility-1-UseOfDevice-2</b></p><a name=\"PFEIG-FSC-Hospital-Discharge-Mobility-1-UseOfDevice-2\"> </a><a name=\"hcPFEIG-FSC-Hospital-Discharge-Mobility-1-UseOfDevice-2\"> </a><a name=\"PFEIG-FSC-Hospital-Discharge-Mobility-1-UseOfDevice-2-en-US\"> </a><p><b>status</b>: Active</p><p><b>subject</b>: <a href=\"Patient-PFEIG-patientBSJ1.html\">Betsy Smith-Johnson Female, DoB Unknown ( http://example.org/identifiers/patient#10A3D58WH1600)</a></p><p><b>derivedFrom</b>: <a href=\"Observation-PFEIG-FSC-Hospital-Discharge-Mobility-1.html\">Observation Mobility - discharge performance during 3 day assessment period [CMS Assessment]</a></p><p><b>recordedOn</b>: 2020-07-10 14:34:00-0500</p><p><b>source</b>: <a href=\"Practitioner-PFEIG-Practitioner-RonMarble.html\">Practitioner Ron Marble</a></p><p><b>device</b>: <a href=\"Device-PFEIG-CMS-Device-RollingWalker.html\">Device</a></p></div>"
+  },
+  "status" : "active",
+  "subject" : {
+    "reference" : "Patient/PFEIG-patientBSJ1"
+  },
+  "derivedFrom" : [{
+    "reference" : "Observation/PFEIG-FSC-Hospital-Discharge-Mobility-1"
+  }],
+  "recordedOn" : "2020-07-10T14:34:00-05:00",
+  "source" : {
+    "reference" : "Practitioner/PFEIG-Practitioner-RonMarble"
+  },
+  "device" : {
+    "reference" : "Device/PFEIG-CMS-Device-RollingWalker"
+  }
+}

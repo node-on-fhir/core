@@ -1,0 +1,18 @@
+{
+  "resourceType" : "Practitioner",
+  "id" : "PFEIG-Practitioner-JohnSmith",
+  "text" : {
+    "status" : "generated",
+    "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p class=\"res-header-id\"><b>Generated Narrative: Practitioner PFEIG-Practitioner-JohnSmith</b></p><a name=\"PFEIG-Practitioner-JohnSmith\"> </a><a name=\"hcPFEIG-Practitioner-JohnSmith\"> </a><a name=\"PFEIG-Practitioner-JohnSmith-en-US\"> </a><p><b>active</b>: true</p><p><b>name</b>: John Smith</p><p><b>telecom</b>: ph: -unknown-</p><p><b>gender</b>: Male</p></div>"
+  },
+  "active" : true,
+  "name" : [{
+    "text" : "John Smith",
+    "family" : "Smith",
+    "given" : ["John"]
+  }],
+  "telecom" : [{
+    "system" : "phone"
+  }],
+  "gender" : "male"
+}

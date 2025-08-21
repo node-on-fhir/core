@@ -1,0 +1,12 @@
+{
+  "resourceType" : "Device",
+  "id" : "PFEIG-CMS-Device-Walker",
+  "text" : {
+    "status" : "generated",
+    "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p class=\"res-header-id\"><b>Generated Narrative: Device PFEIG-CMS-Device-Walker</b></p><a name=\"PFEIG-CMS-Device-Walker\"> </a><a name=\"hcPFEIG-CMS-Device-Walker\"> </a><a name=\"PFEIG-CMS-Device-Walker-en-US\"> </a><h3>DeviceNames</h3><table class=\"grid\"><tr><td style=\"display: none\">-</td><td><b>Name</b></td><td><b>Type</b></td></tr><tr><td style=\"display: none\">*</td><td>Walker</td><td>User Friendly name</td></tr></table></div>"
+  },
+  "deviceName" : [{
+    "name" : "Walker",
+    "type" : "user-friendly-name"
+  }]
+}

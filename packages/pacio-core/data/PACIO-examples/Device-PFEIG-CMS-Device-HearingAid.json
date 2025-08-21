@@ -1,0 +1,12 @@
+{
+  "resourceType" : "Device",
+  "id" : "PFEIG-CMS-Device-HearingAid",
+  "text" : {
+    "status" : "generated",
+    "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p class=\"res-header-id\"><b>Generated Narrative: Device PFEIG-CMS-Device-HearingAid</b></p><a name=\"PFEIG-CMS-Device-HearingAid\"> </a><a name=\"hcPFEIG-CMS-Device-HearingAid\"> </a><a name=\"PFEIG-CMS-Device-HearingAid-en-US\"> </a><h3>DeviceNames</h3><table class=\"grid\"><tr><td style=\"display: none\">-</td><td><b>Name</b></td><td><b>Type</b></td></tr><tr><td style=\"display: none\">*</td><td>Hearing aid</td><td>User Friendly name</td></tr></table></div>"
+  },
+  "deviceName" : [{
+    "name" : "Hearing aid",
+    "type" : "user-friendly-name"
+  }]
+}

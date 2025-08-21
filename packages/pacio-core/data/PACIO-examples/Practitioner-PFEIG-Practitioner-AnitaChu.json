@@ -1,0 +1,15 @@
+{
+  "resourceType" : "Practitioner",
+  "id" : "PFEIG-Practitioner-AnitaChu",
+  "text" : {
+    "status" : "generated",
+    "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p class=\"res-header-id\"><b>Generated Narrative: Practitioner PFEIG-Practitioner-AnitaChu</b></p><a name=\"PFEIG-Practitioner-AnitaChu\"> </a><a name=\"hcPFEIG-Practitioner-AnitaChu\"> </a><a name=\"PFEIG-Practitioner-AnitaChu-en-US\"> </a><p><b>active</b>: true</p><p><b>name</b>: Anita Chu</p><p><b>gender</b>: Female</p></div>"
+  },
+  "active" : true,
+  "name" : [{
+    "text" : "Anita Chu",
+    "family" : "Chu",
+    "given" : ["Anita"]
+  }],
+  "gender" : "female"
+}

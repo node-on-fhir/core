@@ -1,0 +1,25 @@
+{
+  "resourceType" : "PractitionerRole",
+  "id" : "PFEIG-Role-SLP-LunaBaskins",
+  "text" : {
+    "status" : "generated",
+    "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p class=\"res-header-id\"><b>Generated Narrative: PractitionerRole PFEIG-Role-SLP-LunaBaskins</b></p><a name=\"PFEIG-Role-SLP-LunaBaskins\"> </a><a name=\"hcPFEIG-Role-SLP-LunaBaskins\"> </a><a name=\"PFEIG-Role-SLP-LunaBaskins-en-US\"> </a><p><b>active</b>: true</p><p><b>practitioner</b>: <a href=\"Practitioner-PFEIG-Practitioner-LunaBaskins.html\">Practitioner Luna Baskins</a></p><p><b>organization</b>: <a href=\"Organization-PFEIG-Org-03.html\">Organization Sky Harbor Home Health Services</a></p><p><b>code</b>: <span title=\"Codes:{http://snomed.info/sct 159026005}\">Speech and language therapist</span></p><p><b>location</b>: <a href=\"Location-PFEIG-Org-Loc-03.html\">Location Sky Harbor Home Health Services</a></p></div>"
+  },
+  "active" : true,
+  "practitioner" : {
+    "reference" : "Practitioner/PFEIG-Practitioner-LunaBaskins"
+  },
+  "organization" : {
+    "reference" : "Organization/PFEIG-Org-03"
+  },
+  "code" : [{
+    "coding" : [{
+      "system" : "http://snomed.info/sct",
+      "code" : "159026005",
+      "display" : "Speech and language therapist"
+    }]
+  }],
+  "location" : [{
+    "reference" : "Location/PFEIG-Org-Loc-03"
+  }]
+}

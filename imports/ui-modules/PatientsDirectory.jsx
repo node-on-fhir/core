@@ -110,7 +110,7 @@ export function PatientsDirectory(props){
       const isFhirId = /^[a-f\d]{8}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{12}$/i.test(trimmedFilter);
       
       if(isObjectId || isFhirId){
-        // Exact match for IDs - use string matching only
+        // Exact match for IDs - handle both string and ObjectID formats
         query = {
           $or: [
             {'id': trimmedFilter},
@@ -235,26 +235,81 @@ export function PatientsDirectory(props){
         if(isObjectId || isFhirId) {
           // Exact match for IDs
           results = results.filter(p => {
-            const idStr = p._id && p._id._str ? p._id._str : String(p._id);
-            return p.id === trimmedFilter || idStr === trimmedFilter;
+            // Handle different ID storage formats
+            let matches = false;
+            
+            // Check FHIR id field
+            if (p.id === trimmedFilter) {
+              matches = true;
+            }
+            
+            // Check MongoDB _id field (could be string or ObjectID)
+            if (p._id) {
+              // If _id is an ObjectID with ._str property
+              if (p._id._str && p._id._str === trimmedFilter) {
+                matches = true;
+              }
+              // If _id is an ObjectID with .toString() method
+              else if (typeof p._id.toString === 'function' && p._id.toString() === trimmedFilter) {
+                matches = true;
+              }
+              // If _id is already a string
+              else if (typeof p._id === 'string' && p._id === trimmedFilter) {
+                matches = true;
+              }
+            }
+            
+            return matches;
           });
           console.log('Filtered to exact matches:', results.length);
         } else {
           // Regex search for other fields
           const searchRegex = new RegExp(debouncedSearchFilter, 'i');
           results = results.filter(p => {
-            return (
-              searchRegex.test(p.id || '') ||
-              searchRegex.test(p._id || '') ||
-              searchRegex.test(get(p, 'name[0].text', '')) ||
-              searchRegex.test(get(p, 'name[0].given[0]', '')) ||
-              searchRegex.test(get(p, 'name[0].family', '')) ||
-              searchRegex.test(get(p, 'identifier[0].value', '')) ||
-              searchRegex.test(get(p, 'telecom[0].value', '')) ||
-              searchRegex.test(get(p, 'address[0].city', '')) ||
-              searchRegex.test(get(p, 'address[0].state', '')) ||
-              searchRegex.test(get(p, 'address[0].postalCode', ''))
-            );
+            // Search in IDs
+            if (searchRegex.test(p.id || '')) return true;
+            if (p._id) {
+              const idStr = p._id._str || p._id.toString() || p._id;
+              if (searchRegex.test(idStr)) return true;
+            }
+            
+            // Search in names (handle array of names)
+            if (p.name && Array.isArray(p.name)) {
+              for (let name of p.name) {
+                if (searchRegex.test(name.text || '')) return true;
+                if (searchRegex.test(name.family || '')) return true;
+                if (name.given && Array.isArray(name.given)) {
+                  for (let given of name.given) {
+                    if (searchRegex.test(given)) return true;
+                  }
+                }
+              }
+            }
+            
+            // Search in identifiers
+            if (p.identifier && Array.isArray(p.identifier)) {
+              for (let id of p.identifier) {
+                if (searchRegex.test(id.value || '')) return true;
+              }
+            }
+            
+            // Search in telecom
+            if (p.telecom && Array.isArray(p.telecom)) {
+              for (let tel of p.telecom) {
+                if (searchRegex.test(tel.value || '')) return true;
+              }
+            }
+            
+            // Search in addresses
+            if (p.address && Array.isArray(p.address)) {
+              for (let addr of p.address) {
+                if (searchRegex.test(addr.city || '')) return true;
+                if (searchRegex.test(addr.state || '')) return true;
+                if (searchRegex.test(addr.postalCode || '')) return true;
+              }
+            }
+            
+            return false;
           });
           console.log('Filtered by regex search:', results.length);
         }
@@ -273,7 +328,7 @@ export function PatientsDirectory(props){
         const isFhirId = /^[a-f\d]{8}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{12}$/i.test(trimmedFilter);
         
         if(isObjectId || isFhirId){
-          // Exact match for IDs - use string matching only
+          // Exact match for IDs - handle both string and ObjectID formats
           query = {
             $or: [
               {'id': trimmedFilter},

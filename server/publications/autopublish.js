@@ -4,6 +4,43 @@ import { Meteor } from 'meteor/meteor';
 import { Mongo } from 'meteor/mongo';
 import { get } from 'lodash';
 
+// Helper function to build improved regex queries for patient search
+function buildImprovedPatientQuery(searchRegex) {
+  return {
+    $or: [
+      // ID fields
+      {'id': {$regex: searchRegex}},
+      {'_id': {$regex: searchRegex}},
+      
+      // Name fields - handle both direct and array access
+      {'name.text': {$regex: searchRegex}},
+      {'name.0.text': {$regex: searchRegex}},
+      {'name.family': {$regex: searchRegex}},
+      {'name.0.family': {$regex: searchRegex}},
+      {'name.given': {$regex: searchRegex}},
+      {'name.0.given': {$regex: searchRegex}},
+      {'name.0.given.0': {$regex: searchRegex}},
+      {'name.given.0': {$regex: searchRegex}},
+      
+      // Identifier fields
+      {'identifier.value': {$regex: searchRegex}},
+      {'identifier.0.value': {$regex: searchRegex}},
+      
+      // Telecom fields
+      {'telecom.value': {$regex: searchRegex}},
+      {'telecom.0.value': {$regex: searchRegex}},
+      
+      // Address fields
+      {'address.city': {$regex: searchRegex}},
+      {'address.0.city': {$regex: searchRegex}},
+      {'address.state': {$regex: searchRegex}},
+      {'address.0.state': {$regex: searchRegex}},
+      {'address.postalCode': {$regex: searchRegex}},
+      {'address.0.postalCode': {$regex: searchRegex}}
+    ]
+  };
+}
+
 // Import all collections that might need autopublishing
 import { ActivityDefinitions } from '/imports/lib/schemas/SimpleSchemas/ActivityDefinitions';
 import { AllergyIntolerances } from '/imports/lib/schemas/SimpleSchemas/AllergyIntolerances';
@@ -157,29 +194,27 @@ if (finalAutopublishEnabled) {
           
           // Handle ObjectID conversion in queries
           if (query.$or && Array.isArray(query.$or)) {
-            query.$or = query.$or.map(condition => {
+            const expandedConditions = [];
+            
+            query.$or.forEach(condition => {
+              // Always add the original condition
+              expandedConditions.push(condition);
+              
               // Check if any condition has _id as a string that looks like an ObjectID
               if (condition._id && typeof condition._id === 'string' && /^[a-f\d]{24}$/i.test(condition._id)) {
-                // Create both string and ObjectID versions of the query
-                return {
-                  $or: [
-                    condition, // Keep the string version
-                    { ...condition, _id: new Mongo.ObjectID(condition._id) } // Add ObjectID version
-                  ]
-                };
+                // Also search for ObjectID version
+                expandedConditions.push({ ...condition, _id: new Mongo.ObjectID(condition._id) });
               }
-              return condition;
-            });
-            // Flatten nested $or conditions
-            const flattenedConditions = [];
-            query.$or.forEach(condition => {
-              if (condition.$or) {
-                flattenedConditions.push(...condition.$or);
-              } else {
-                flattenedConditions.push(condition);
+              
+              // Check if searching by id field with an ObjectID-like string
+              if (condition.id && typeof condition.id === 'string' && /^[a-f\d]{24}$/i.test(condition.id)) {
+                // Also search _id field with both string and ObjectID versions
+                expandedConditions.push({ _id: condition.id });
+                expandedConditions.push({ _id: new Mongo.ObjectID(condition.id) });
               }
             });
-            query.$or = flattenedConditions;
+            
+            query.$or = expandedConditions;
           }
           
           // Special handling for Appointments - they use participant.actor.reference instead of patient/subject

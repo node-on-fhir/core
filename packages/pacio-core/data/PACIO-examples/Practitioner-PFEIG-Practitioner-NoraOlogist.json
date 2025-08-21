@@ -1,0 +1,26 @@
+{
+  "resourceType" : "Practitioner",
+  "id" : "PFEIG-Practitioner-NoraOlogist",
+  "text" : {
+    "status" : "generated",
+    "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p class=\"res-header-id\"><b>Generated Narrative: Practitioner PFEIG-Practitioner-NoraOlogist</b></p><a name=\"PFEIG-Practitioner-NoraOlogist\"> </a><a name=\"hcPFEIG-Practitioner-NoraOlogist\"> </a><a name=\"PFEIG-Practitioner-NoraOlogist-en-US\"> </a><p><b>identifier</b>: <a href=\"http://terminology.hl7.org/5.0.0/NamingSystem-npi.html\" title=\"National Provider Identifier\">NPI</a>/3668788925</p><p><b>active</b>: true</p><p><b>name</b>: Nora Ologist</p><p><b>telecom</b>: ph: (210) 555 7632</p><p><b>address</b>: 26022 Meadowlark Bay, San Antonio, TX 78260</p><p><b>gender</b>: Female</p></div>"
+  },
+  "identifier" : [{
+    "system" : "http://hl7.org/fhir/sid/us-npi",
+    "value" : "3668788925"
+  }],
+  "active" : true,
+  "name" : [{
+    "text" : "Nora Ologist",
+    "family" : "Ologist",
+    "given" : ["Nora"]
+  }],
+  "telecom" : [{
+    "system" : "phone",
+    "value" : "(210) 555 7632"
+  }],
+  "address" : [{
+    "text" : "26022 Meadowlark Bay, San Antonio, TX 78260"
+  }],
+  "gender" : "female"
+}

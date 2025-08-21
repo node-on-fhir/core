@@ -1,0 +1,56 @@
+{
+  "resourceType" : "SearchParameter",
+  "id" : "NutritionOrder-subject",
+  "text" : {
+    "status" : "generated",
+    "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p class=\"res-header-id\"><b>Generated Narrative: SearchParameter NutritionOrder-subject</b></p><a name=\"NutritionOrder-subject\"> </a><a name=\"hcNutritionOrder-subject\"> </a><a name=\"NutritionOrder-subject-en-US\"> </a><h2>NutritionOrderSubjectSearchParameter</h2><p>Parameter <code>name</code>:<code>string</code></p><div><p>Select NutritionOrders with the specified subject</p>\n</div><table class=\"grid\"><tr><td>Resource</td><td><a href=\"http://hl7.org/fhir/R4/nutritionorder.html\">NutritionOrder</a></td></tr><tr><td>Expression</td><td><code>NutritionOrder.patient</code></td></tr><tr><td>Processing Mode</td><td>Normal</td></tr><tr><td>Multiples</td><td><ul><li>multipleAnd: The parameter may repeat in order to specify multiple values that must all be true</li><li>multipleOr: The parameter may have multiple values (separated by comma) where at least one must be true</li></ul></td></tr><tr><td>Modifiers</td><td>Allowed: exact, contains</td></tr></table></div>"
+  },
+  "extension" : [{
+    "url" : "http://hl7.org/fhir/StructureDefinition/structuredefinition-wg",
+    "valueCode" : "pc"
+  }],
+  "url" : "http://hl7.org/fhir/us/pacio-pfe/SearchParameter/NutritionOrder-subject",
+  "version" : "2.0.0-ballot",
+  "name" : "NutritionOrderSubjectSearchParameter",
+  "status" : "active",
+  "date" : "2024-09-01T18:06:11+00:00",
+  "publisher" : "HL7 International / Patient Care",
+  "contact" : [{
+    "name" : "HL7 International / Patient Care",
+    "telecom" : [{
+      "system" : "url",
+      "value" : "http://www.hl7.org/Special/committees/patientcare"
+    },
+    {
+      "system" : "email",
+      "value" : "patientcare@lists.HL7.org"
+    }]
+  },
+  {
+    "name" : "PACIO project",
+    "telecom" : [{
+      "system" : "url",
+      "value" : "http://www.hl7.org/Special/committees/patientcare"
+    },
+    {
+      "system" : "email",
+      "value" : "info@pacioproject.org"
+    }]
+  }],
+  "description" : "Select NutritionOrders with the specified subject",
+  "jurisdiction" : [{
+    "coding" : [{
+      "system" : "urn:iso:std:iso:3166",
+      "code" : "US"
+    }]
+  }],
+  "code" : "name",
+  "base" : ["NutritionOrder"],
+  "type" : "string",
+  "expression" : "NutritionOrder.patient",
+  "xpathUsage" : "normal",
+  "multipleOr" : true,
+  "multipleAnd" : true,
+  "modifier" : ["exact",
+  "contains"]
+}
