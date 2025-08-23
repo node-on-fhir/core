@@ -24,6 +24,7 @@ import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 import BadgeIcon from '@mui/icons-material/Badge';
 import PersonIcon from '@mui/icons-material/Person';
 import CodeIcon from '@mui/icons-material/Code';
+import BusinessIcon from '@mui/icons-material/Business';
 
 import ConsentsTable from './ConsentsTable';
 
@@ -54,6 +55,7 @@ export function ConsentsPage(props){
   const [showSystemId, setShowSystemId] = useState(false);
   const [showPatientName, setShowPatientName] = useState(false);
   const [showPatientReference, setShowPatientReference] = useState(false);
+  const [showOrganization, setShowOrganization] = useState(false);
   const [searchFilter, setSearchFilter] = useState('');
 
   let data = {
@@ -178,15 +180,11 @@ export function ConsentsPage(props){
   }
 
   function handleToggleChange(event, newFormats) {
-    if (newFormats.includes('patientName')) {
-      setShowPatientName(!showPatientName);
-    }
-    if (newFormats.includes('patientReference')) {
-      setShowPatientReference(!showPatientReference);
-    }
-    if (newFormats.includes('systemId')) {
-      setShowSystemId(!showSystemId);
-    }
+    // newFormats is the array of currently selected values
+    setShowPatientName(newFormats.includes('patientName'));
+    setShowPatientReference(newFormats.includes('patientReference'));
+    setShowSystemId(newFormats.includes('systemId'));
+    setShowOrganization(newFormats.includes('organization'));
   }
 
   function renderHeader() {
@@ -222,7 +220,8 @@ export function ConsentsPage(props){
                 value={[
                   ...(showPatientName ? ['patientName'] : []),
                   ...(showPatientReference ? ['patientReference'] : []),
-                  ...(showSystemId ? ['systemId'] : [])
+                  ...(showSystemId ? ['systemId'] : []),
+                  ...(showOrganization ? ['organization'] : [])
                 ]}
                 onChange={handleToggleChange}
                 aria-label="display options"
@@ -236,6 +235,9 @@ export function ConsentsPage(props){
                 </ToggleButton>
                 <ToggleButton value="systemId" aria-label="show system id">
                   <BadgeIcon />
+                </ToggleButton>
+                <ToggleButton value="organization" aria-label="show organization">
+                  <BusinessIcon />
                 </ToggleButton>
               </ToggleButtonGroup>
               
@@ -285,8 +287,9 @@ export function ConsentsPage(props){
           formFactorLayout={formFactor}
           rowsPerPage={10}
           hideBarcode={!showSystemId}
-          hidePatientDisplay={!showPatientName}
+          hidePatientName={!showPatientName}
           hidePatientReference={!showPatientReference}
+          hideOrganization={!showOrganization}
           order={sortOrder}
           onRowClick={function(consentId){
             console.log('ConsentsPage.onRowClick', consentId);

@@ -12,7 +12,9 @@
       "Bash(mkdir:*)",
       "Bash(curl:*)",
       "Bash(npm run test:nightwatch:*)",
-      "Bash(lsof:*)"
+      "Bash(lsof:*)",
+      "Bash(rg:*)",
+      "Bash(meteor --version)"
     ],
     "deny": []
   }

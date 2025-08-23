@@ -92,6 +92,7 @@ import { QuestionnaireResponses } from '/imports/lib/schemas/SimpleSchemas/Quest
 import { ResearchStudies } from '/imports/lib/schemas/SimpleSchemas/ResearchStudies';
 import { ResearchSubjects } from '/imports/lib/schemas/SimpleSchemas/ResearchSubjects';
 import { Schedules } from '/imports/lib/schemas/SimpleSchemas/Schedules';
+import { SearchParameters } from '/imports/lib/schemas/SimpleSchemas/SearchParameters';
 import { ServiceRequests } from '/imports/lib/schemas/SimpleSchemas/ServiceRequests';
 import { SupplyDeliveries } from '/imports/lib/schemas/SimpleSchemas/SupplyDeliveries';
 import { Tasks } from '/imports/lib/schemas/SimpleSchemas/Tasks';
@@ -149,6 +150,7 @@ const collectionsMap = {
   'ResearchStudies': ResearchStudies,
   'ResearchSubjects': ResearchSubjects,
   'Schedules': Schedules,
+  'SearchParameters': SearchParameters,
   'ServiceRequests': ServiceRequests,
   'SupplyDeliveries': SupplyDeliveries,
   'Tasks': Tasks,

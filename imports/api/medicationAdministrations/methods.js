@@ -56,6 +56,22 @@ Meteor.methods({
     }
   },
 
+  async 'medicationAdministrations.get'(medicationAdministrationId) {
+    check(medicationAdministrationId, String);
+    
+    try {
+      const result = await MedicationAdministrations.findOneAsync({ _id: medicationAdministrationId });
+      if (!result) {
+        throw new Meteor.Error('not-found', 'Medication administration not found');
+      }
+      console.log('Retrieved medication administration:', result._id);
+      return result;
+    } catch (error) {
+      console.error('Error getting medication administration:', error);
+      throw new Meteor.Error('get-failed', error.message);
+    }
+  },
+
   async 'medicationAdministrations.remove'(medicationAdministrationId) {
     check(medicationAdministrationId, String);
     

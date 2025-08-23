@@ -19,23 +19,60 @@ import {
   Typography,
   Box,
   Stack,
-  Chip
+  Chip,
+  Grid,
+  InputAdornment,
+  IconButton,
+  Tooltip,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  List,
+  ListItem,
+  ListItemText,
+  FormHelperText
 } from '@mui/material';
+
+import EditIcon from '@mui/icons-material/Edit';
+import LockIcon from '@mui/icons-material/Lock';
+import DeleteIcon from '@mui/icons-material/Delete';
+import SearchIcon from '@mui/icons-material/Search';
 
 import { get, set } from 'lodash';
 import moment from 'moment';
 
 import { Communications } from '/imports/lib/schemas/SimpleSchemas/Communications';
+import { Patients } from '/imports/lib/schemas/SimpleSchemas/Patients';
+import { Practitioners } from '/imports/lib/schemas/SimpleSchemas/Practitioners';
 import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
+import { FhirUtilities } from '/imports/lib/FhirUtilities';
 
 function CommunicationDetail(props) {
   const navigate = useNavigate();
-  const { id } = useParams();
+  const { id: communicationId } = useParams();
   
-  // Get selected patient and current user from session/tracker
+  console.log('CommunicationDetail - communicationId from params:', communicationId);
+  console.log('Is new communication?', communicationId === 'new');
+  
+  // Subscribe to Communications collection
+  const isSubscriptionReady = useTracker(function(){
+    let autoPublishEnabled = get(Meteor, 'settings.public.defaults.autopublish', false);
+    let handle;
+    if(autoPublishEnabled){
+      handle = Meteor.subscribe('autopublish.Communications', {}, {});
+    } else {
+      handle = Meteor.subscribe('communications.all');
+    }
+    return handle.ready();
+  }, []);
+  
+  // Get selected patient from session
   const selectedPatient = useTracker(function() {
-    return Session.get('selectedPatient');
+    const patient = Session.get('selectedPatient');
+    console.log('Selected patient from Session:', patient);
+    return patient;
   }, []);
   
   const currentUser = useTracker(function() {
@@ -45,28 +82,28 @@ function CommunicationDetail(props) {
   // Initialize state with proper FHIR R4 structure
   const [communication, setCommunication] = useState({
     resourceType: "Communication",
-    status: "completed",
+    status: "in-progress",
     category: [{
       coding: [{
-        system: "http://terminology.hl7.org/CodeSystem/communication-category",
-        code: "notification",
-        display: "Notification"
-      }]
+        system: "http://snomed.info/sct",
+        code: "185347001",
+        display: "Encounter documentation"
+      }],
+      text: "Encounter documentation"
     }],
-    priority: "routine",
     subject: {
       reference: "",
       display: ""
     },
-    topic: {
-      text: ""
-    },
-    encounter: {
-      reference: "",
-      display: ""
-    },
+    topic: [{
+      coding: [{
+        system: "http://snomed.info/sct",
+        code: "409073007",
+        display: "Education"
+      }],
+      text: "Education"
+    }],
     sent: moment().format('YYYY-MM-DDTHH:mm:ss'),
-    received: moment().format('YYYY-MM-DDTHH:mm:ss'),
     recipient: [{
       reference: "",
       display: ""
@@ -76,349 +113,497 @@ function CommunicationDetail(props) {
       display: ""
     },
     reasonCode: [{
-      text: ""
+      coding: [{
+        system: "http://snomed.info/sct",
+        code: "444971000124105",
+        display: "Annual health maintenance"
+      }],
+      text: "Annual health maintenance"
     }],
     payload: [{
       contentString: ""
     }],
     note: [{
       text: ""
+    }],
+    medium: [{
+      coding: [{
+        system: "http://terminology.hl7.org/CodeSystem/v3-ParticipationMode",
+        code: "WRITTEN",
+        display: "written"
+      }],
+      text: "Written communication"
     }]
   });
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [searchDialogOpen, setSearchDialogOpen] = useState(false);
+  const [searchType, setSearchType] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
 
-  // Set patient name and sender on component mount for new communications
-  useEffect(function() {
-    if (!id || id === 'new') {
+  // Load existing communication
+  useEffect(() => {
+    if (communicationId && communicationId !== 'new' && isSubscriptionReady) {
+      const existingCommunication = Communications.findOne({_id: communicationId});
+      if (existingCommunication) {
+        setCommunication(existingCommunication);
+        setIsEditing(false);
+      }
+    }
+  }, [communicationId, isSubscriptionReady]);
+
+  // Set default values for new communications
+  useEffect(() => {
+    if (!communicationId || communicationId === 'new') {
       // Enable editing for new communications
       setIsEditing(true);
       
-      // For new communications, set the patient name
-      let patientName = '';
-      let patientReference = '';
-      
+      // Set patient if selected
       if (selectedPatient) {
-        // Prefer selected patient
-        patientName = get(selectedPatient, 'name[0].text', '') || 
-                     `${get(selectedPatient, 'name[0].given[0]', '')} ${get(selectedPatient, 'name[0].family', '')}`.trim();
-        patientReference = `Patient/${get(selectedPatient, '_id', '')}`;
-      } else if (currentUser) {
-        // Fall back to current user
-        patientName = get(currentUser, 'profile.name.text', '') ||
-                     `${get(currentUser, 'profile.name.given[0]', '')} ${get(currentUser, 'profile.name.family', '')}`.trim() ||
-                     get(currentUser, 'username', '');
-        // You might need to look up the Patient resource for the current user
-        patientReference = `Patient/${get(currentUser, 'profile.patientId', '')}`;
+        // Get patient name - similar to ServiceRequestDetail pattern
+        const patientName = get(selectedPatient, 'name[0].text', '') || 
+                          `${get(selectedPatient, 'name[0].given[0]', '')} ${get(selectedPatient, 'name[0].family', '')}`.trim() ||
+                          FhirUtilities.pluckName(selectedPatient);
+        
+        // Use MongoDB _id for reference - consistent with ServiceRequestDetail
+        const patientReference = `Patient/${get(selectedPatient, '_id', '')}`;
+        
+        console.log('Setting patient in communication:', { patientReference, patientName });
+        
+        setCommunication(prev => ({
+          ...prev,
+          subject: {
+            reference: patientReference,
+            display: patientName
+          }
+        }));
+      } else {
+        console.log('No selected patient found in Session');
       }
       
-      // Set sender to current user
-      let senderName = '';
-      let senderReference = '';
-      
+      // Set sender as current user
       if (currentUser) {
-        senderName = get(currentUser, 'profile.name.text', '') ||
-                    `${get(currentUser, 'profile.name.given[0]', '')} ${get(currentUser, 'profile.name.family', '')}`.trim() ||
-                    get(currentUser, 'username', '');
-        senderReference = `Practitioner/${get(currentUser, '_id', '')}`;
+        setCommunication(prev => ({
+          ...prev,
+          sender: {
+            reference: `Practitioner/${currentUser._id}`,
+            display: currentUser.username || 'Current User'
+          }
+        }));
       }
-      
-      setCommunication(prev => ({
-        ...prev,
-        subject: {
-          reference: patientReference,
-          display: patientName
-        },
-        sender: {
-          reference: senderReference,
-          display: senderName
-        }
-      }));
     } else {
       // Viewing existing communication - start in read-only mode
       setIsEditing(false);
     }
-  }, [id, selectedPatient, currentUser]);
+  }, [communicationId, selectedPatient, currentUser]);
 
-  // Load communication if editing
-  useEffect(function() {
-    async function loadCommunication() {
-      if (id && id !== 'new') {
-        setLoading(true);
-        try {
-          const result = await Meteor.callAsync('communications.get', id);
-          if (result) {
-            setCommunication(result);
-          }
-        } catch (err) {
-          console.error('Error loading communication:', err);
-          setError(err.message);
-        } finally {
-          setLoading(false);
-        }
-      }
-    }
+  // Handler functions
+  const handleChange = (path, value) => {
+    const newCommunication = {...communication};
+    set(newCommunication, path, value);
+    setCommunication(newCommunication);
+  };
+
+  const handleSearchUser = (type) => {
+    setSearchType(type);
+    setSearchDialogOpen(true);
     
-    loadCommunication();
-  }, [id]);
+    // Load search results based on type
+    if (type === 'subject') {
+      const patients = Patients.find({}).fetch();
+      setSearchResults(patients.map(p => ({
+        id: p._id,
+        display: get(p, 'name[0].text', '') || 
+                 `${get(p, 'name[0].given[0]', '')} ${get(p, 'name[0].family', '')}`.trim() ||
+                 FhirUtilities.pluckName(p),
+        reference: `Patient/${p._id}`
+      })));
+    } else if (type === 'sender' || type === 'recipient') {
+      const practitioners = Practitioners.find({}).fetch();
+      setSearchResults(practitioners.map(p => ({
+        id: p._id,
+        display: FhirUtilities.pluckName(p),
+        reference: `Practitioner/${p.id || p._id}`
+      })));
+    }
+  };
 
-  // Handle field changes
-  function handleChange(path, value) {
-    const updatedCommunication = { ...communication };
-    set(updatedCommunication, path, value);
-    setCommunication(updatedCommunication);
-  }
+  const handleSelectSearchResult = (result) => {
+    if (searchType === 'subject') {
+      handleChange('subject', {
+        reference: result.reference,
+        display: result.display
+      });
+    } else if (searchType === 'sender') {
+      handleChange('sender', {
+        reference: result.reference,
+        display: result.display
+      });
+    } else if (searchType === 'recipient') {
+      handleChange('recipient.0', {
+        reference: result.reference,
+        display: result.display
+      });
+    }
+    setSearchDialogOpen(false);
+  };
 
-  // Handle save
-  async function handleSave() {
+  const handleSaveButton = async () => {
     setLoading(true);
     setError(null);
     
     try {
-      if (id && id !== 'new') {
-        // Update existing communication
-        await Meteor.callAsync('communications.update', id, communication);
+      // Prepare data for save - only include fields that the validated method accepts
+      const dataToSave = {
+        resourceType: 'Communication',
+        status: get(communication, 'status', 'in-progress'),
+        subject: get(communication, 'subject'),
+        sender: get(communication, 'sender'),
+        recipient: get(communication, 'recipient'),
+        sent: get(communication, 'sent'),
+        received: get(communication, 'received'),
+        payload: get(communication, 'payload'),
+        category: get(communication, 'category'),
+        medium: get(communication, 'medium'),
+        identifier: get(communication, 'identifier'),
+        note: get(communication, 'note')
+      };
+      
+      console.log('Data being saved:', dataToSave);
+      console.log('Subject reference:', get(dataToSave, 'subject.reference'));
+      console.log('Subject display:', get(dataToSave, 'subject.display'));
+
+      if (communicationId && communicationId !== 'new') {
+        await Meteor.callAsync('communications.update', { _id: communicationId, update: dataToSave });
         console.log('Communication updated successfully');
         // Exit edit mode after successful save
         setIsEditing(false);
       } else {
-        // Create new communication
-        const newId = await Meteor.callAsync('communications.create', communication);
-        console.log('Communication created with ID:', newId);
+        const newId = await Meteor.callAsync('communications.insert', dataToSave);
+        console.log('Communication created successfully:', newId);
         // Navigate back to communications list for new communications
         navigate('/communications');
       }
-    } catch (err) {
-      console.error('Error saving communication:', err);
-      setError(err.message);
+    } catch (error) {
+      console.error('Error saving communication:', error);
+      setError(error.message);
     } finally {
       setLoading(false);
     }
-  }
+  };
 
-  // Handle delete
-  async function handleDelete() {
-    if (!id || id === 'new') return;
-    
+  const handleDeleteButton = async () => {
     if (window.confirm('Are you sure you want to delete this communication?')) {
       setLoading(true);
       try {
-        await Meteor.callAsync('communications.remove', id);
+        await Meteor.callAsync('communications.removeById', { _id: communicationId });
         console.log('Communication deleted successfully');
         navigate('/communications');
-      } catch (err) {
-        console.error('Error deleting communication:', err);
-        setError(err.message);
-      } finally {
+      } catch (error) {
+        console.error('Error deleting communication:', error);
+        setError(error.message);
         setLoading(false);
       }
     }
-  }
+  };
 
-  // Handle cancel
-  function handleCancel() {
-    navigate('/communications');
-  }
-
-  const statusOptions = [
-    { code: 'preparation', display: 'Preparation' },
-    { code: 'in-progress', display: 'In Progress' },
-    { code: 'not-done', display: 'Not Done' },
-    { code: 'on-hold', display: 'On Hold' },
-    { code: 'stopped', display: 'Stopped' },
-    { code: 'completed', display: 'Completed' },
-    { code: 'entered-in-error', display: 'Entered in Error' },
-    { code: 'unknown', display: 'Unknown' }
-  ];
-
-  const priorityOptions = [
-    { code: 'routine', display: 'Routine' },
-    { code: 'urgent', display: 'Urgent' },
-    { code: 'asap', display: 'ASAP' },
-    { code: 'stat', display: 'STAT' }
-  ];
-
-  const categoryOptions = [
-    { code: 'alert', display: 'Alert' },
-    { code: 'notification', display: 'Notification' },
-    { code: 'reminder', display: 'Reminder' },
-    { code: 'instruction', display: 'Instruction' }
-  ];
+  const handleCancelButton = () => {
+    if (communicationId === 'new') {
+      navigate('/communications');
+    } else {
+      // Reload original data
+      const existingCommunication = Communications.findOne({_id: communicationId});
+      if (existingCommunication) {
+        setCommunication(existingCommunication);
+      }
+      setIsEditing(false);
+    }
+  };
 
   return (
-    <Container maxWidth="md" sx={{ py: 4 }}>
+    <Container id="communicationDetailPage" maxWidth="md" sx={{ py: 4 }}>
       <Card sx={{ boxShadow: 3 }}>
         <CardHeader 
-          title={id && id !== 'new' ? 'Edit Communication' : 'New Communication'}
+          title={(!communicationId || communicationId === 'new') ? 'New Communication' : 'Edit Communication'}
           sx={{ bgcolor: 'primary.main', color: 'primary.contrastText' }}
         />
         <CardContent>
+          {(communicationId && communicationId !== 'new') && (
+            <Box sx={{ mb: 3, textAlign: 'right' }}>
+              <span className="barcode helveticas" style={{ fontSize: '2rem' }}>{communicationId}</span>
+            </Box>
+          )}
+
           {error && (
             <Typography color="error" sx={{ mb: 2 }}>
               Error: {error}
             </Typography>
           )}
-          
-          {/* System ID Barcode */}
-          {(id && id !== 'new') && (
-            <Box sx={{ mb: 3, textAlign: 'right' }}>
-              <span className="barcode helveticas" style={{ fontSize: '2rem' }}>{id}</span>
-            </Box>
-          )}
-          
-          <Stack spacing={3}>
-            <TextField
-              fullWidth
-              label="Patient Name"
-              value={get(communication, 'subject.display', '')}
-              helperText={get(communication, 'subject.reference', '') || 'Patient reference will be assigned'}
-              disabled // Always disabled to prevent editing
-            />
-            
-            <TextField
-              fullWidth
-              label="Sender Name"
-              value={get(communication, 'sender.display', '')}
-              onChange={(e) => handleChange('sender.display', e.target.value)}
-              helperText={get(communication, 'sender.reference', '') || 'Sender reference will be assigned'}
-              disabled={!isEditing}
-            />
-            
-            <TextField
-              fullWidth
-              label="Recipient Name"
-              value={get(communication, 'recipient[0].display', '')}
-              onChange={(e) => handleChange('recipient[0].display', e.target.value)}
-              helperText="Who should receive this communication"
-              disabled={!isEditing}
-            />
-            
-            <FormControl fullWidth disabled={!isEditing}>
-              <InputLabel>Status</InputLabel>
-              <Select
-                value={get(communication, 'status', 'completed')}
-                onChange={(e) => handleChange('status', e.target.value)}
-                label="Status"
-              >
-                {statusOptions.map(option => (
-                  <MenuItem key={option.code} value={option.code}>
-                    {option.display}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-            
-            <FormControl fullWidth disabled={!isEditing}>
-              <InputLabel>Priority</InputLabel>
-              <Select
-                value={get(communication, 'priority', 'routine')}
-                onChange={(e) => handleChange('priority', e.target.value)}
-                label="Priority"
-              >
-                {priorityOptions.map(option => (
-                  <MenuItem key={option.code} value={option.code}>
-                    {option.display}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-            
-            <FormControl fullWidth disabled={!isEditing}>
-              <InputLabel>Category</InputLabel>
-              <Select
-                value={get(communication, 'category[0].coding[0].code', 'notification')}
-                onChange={(e) => {
-                  const option = categoryOptions.find(o => o.code === e.target.value);
-                  handleChange('category[0].coding[0].code', option.code);
-                  handleChange('category[0].coding[0].display', option.display);
+
+          <Grid container spacing={3}>
+            {/* Subject (Patient) */}
+            <Grid item xs={12}>
+              <TextField
+                id="subjectDisplay"
+                fullWidth
+                label="Patient"
+                value={get(communication, 'subject.display', '')}
+                onChange={(e) => handleChange('subject.display', e.target.value)}
+                disabled={!isEditing}
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <Tooltip title="Search for patient">
+                        <IconButton
+                          onClick={() => handleSearchUser('subject')}
+                          edge="end"
+                          disabled={!isEditing}
+                        >
+                          <SearchIcon />
+                        </IconButton>
+                      </Tooltip>
+                    </InputAdornment>
+                  ),
                 }}
-                label="Category"
-              >
-                {categoryOptions.map(option => (
-                  <MenuItem key={option.code} value={option.code}>
-                    {option.display}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-            
-            <TextField
-              fullWidth
-              label="Topic"
-              value={get(communication, 'topic.text', '')}
-              onChange={(e) => handleChange('topic.text', e.target.value)}
-              helperText="What this communication is about"
-              disabled={!isEditing}
-            />
-            
-            <TextField
-              fullWidth
-              type="datetime-local"
-              label="Sent Date/Time"
-              value={moment(get(communication, 'sent', '')).format('YYYY-MM-DDTHH:mm')}
-              onChange={(e) => handleChange('sent', e.target.value)}
-              InputLabelProps={{ shrink: true }}
-              disabled={!isEditing}
-            />
-            
-            <TextField
-              fullWidth
-              type="datetime-local"
-              label="Received Date/Time"
-              value={moment(get(communication, 'received', '')).format('YYYY-MM-DDTHH:mm')}
-              onChange={(e) => handleChange('received', e.target.value)}
-              InputLabelProps={{ shrink: true }}
-              disabled={!isEditing}
-            />
-            
-            <TextField
-              fullWidth
-              multiline
-              rows={4}
-              label="Message"
-              value={get(communication, 'payload[0].contentString', '')}
-              onChange={(e) => handleChange('payload[0].contentString', e.target.value)}
-              helperText="The actual message content"
-              disabled={!isEditing}
-            />
-            
-            <TextField
-              fullWidth
-              label="Reason"
-              value={get(communication, 'reasonCode[0].text', '')}
-              onChange={(e) => handleChange('reasonCode[0].text', e.target.value)}
-              helperText="Why this communication was sent"
-              disabled={!isEditing}
-            />
-            
-            <TextField
-              fullWidth
-              multiline
-              rows={3}
-              label="Notes"
-              value={get(communication, 'note[0].text', '')}
-              onChange={(e) => handleChange('note[0].text', e.target.value)}
-              helperText="Additional notes about the communication"
-              disabled={!isEditing}
-            />
-          </Stack>
+              />
+            </Grid>
+
+            {/* Sender */}
+            <Grid item xs={12} md={6}>
+              <TextField
+                id="senderDisplay"
+                fullWidth
+                label="Sender"
+                value={get(communication, 'sender.display', '')}
+                onChange={(e) => handleChange('sender.display', e.target.value)}
+                disabled={!isEditing}
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <Tooltip title="Search for sender">
+                        <IconButton
+                          onClick={() => handleSearchUser('sender')}
+                          edge="end"
+                          disabled={!isEditing}
+                        >
+                          <SearchIcon />
+                        </IconButton>
+                      </Tooltip>
+                    </InputAdornment>
+                  ),
+                }}
+              />
+            </Grid>
+
+            {/* Recipient */}
+            <Grid item xs={12} md={6}>
+              <TextField
+                id="recipientDisplay"
+                fullWidth
+                label="Recipient"
+                value={get(communication, 'recipient.0.display', '')}
+                onChange={(e) => handleChange('recipient.0.display', e.target.value)}
+                disabled={!isEditing}
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <Tooltip title="Search for recipient">
+                        <IconButton
+                          onClick={() => handleSearchUser('recipient')}
+                          edge="end"
+                          disabled={!isEditing}
+                        >
+                          <SearchIcon />
+                        </IconButton>
+                      </Tooltip>
+                    </InputAdornment>
+                  ),
+                }}
+              />
+            </Grid>
+
+            {/* Category */}
+            <Grid item xs={12} md={6}>
+              <TextField
+                id="categoryCode"
+                fullWidth
+                label="Category Code"
+                value={get(communication, 'category.0.coding.0.code', '')}
+                onChange={(e) => handleChange('category.0.coding.0.code', e.target.value)}
+                disabled={!isEditing}
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                id="categoryDisplay"
+                fullWidth
+                label="Category Display"
+                value={get(communication, 'category.0.coding.0.display', '')}
+                onChange={(e) => handleChange('category.0.coding.0.display', e.target.value)}
+                disabled={!isEditing}
+              />
+            </Grid>
+
+            {/* Status */}
+            <Grid item xs={12}>
+              <FormControl fullWidth disabled={!isEditing}>
+                <InputLabel id="status-label">Status</InputLabel>
+                <Select
+                  id="status"
+                  labelId="status-label"
+                  value={get(communication, 'status', 'in-progress')}
+                  label="Status"
+                  onChange={(e) => handleChange('status', e.target.value)}
+                >
+                  <MenuItem value="preparation">Preparation</MenuItem>
+                  <MenuItem value="in-progress">In Progress</MenuItem>
+                  <MenuItem value="not-done">Not Done</MenuItem>
+                  <MenuItem value="on-hold">On Hold</MenuItem>
+                  <MenuItem value="stopped">Stopped</MenuItem>
+                  <MenuItem value="completed">Completed</MenuItem>
+                  <MenuItem value="entered-in-error">Entered in Error</MenuItem>
+                  <MenuItem value="unknown">Unknown</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+
+            {/* Medium */}
+            <Grid item xs={12} md={6}>
+              <TextField
+                id="mediumCode"
+                fullWidth
+                label="Medium Code"
+                value={get(communication, 'medium.0.coding.0.code', '')}
+                onChange={(e) => handleChange('medium.0.coding.0.code', e.target.value)}
+                disabled={!isEditing}
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                id="mediumDisplay"
+                fullWidth
+                label="Medium Display"
+                value={get(communication, 'medium.0.coding.0.display', '')}
+                onChange={(e) => handleChange('medium.0.coding.0.display', e.target.value)}
+                disabled={!isEditing}
+              />
+            </Grid>
+
+            {/* Topic */}
+            <Grid item xs={12} md={6}>
+              <TextField
+                id="topicCode"
+                fullWidth
+                label="Topic Code"
+                value={get(communication, 'topic.0.coding.0.code', '')}
+                onChange={(e) => handleChange('topic.0.coding.0.code', e.target.value)}
+                disabled={!isEditing}
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                id="topicDisplay"
+                fullWidth
+                label="Topic Display"
+                value={get(communication, 'topic.0.coding.0.display', '')}
+                onChange={(e) => handleChange('topic.0.coding.0.display', e.target.value)}
+                disabled={!isEditing}
+              />
+            </Grid>
+
+            {/* Sent DateTime */}
+            <Grid item xs={12}>
+              <TextField
+                id="sentDateTime"
+                fullWidth
+                label="Sent Date/Time"
+                type="datetime-local"
+                value={moment(get(communication, 'sent', '')).format('YYYY-MM-DDTHH:mm')}
+                onChange={(e) => handleChange('sent', moment(e.target.value).format('YYYY-MM-DDTHH:mm:ss'))}
+                disabled={!isEditing}
+                InputLabelProps={{
+                  shrink: true,
+                }}
+              />
+            </Grid>
+
+            {/* Reason */}
+            <Grid item xs={12} md={6}>
+              <TextField
+                id="reasonCode"
+                fullWidth
+                label="Reason Code"
+                value={get(communication, 'reasonCode.0.coding.0.code', '')}
+                onChange={(e) => handleChange('reasonCode.0.coding.0.code', e.target.value)}
+                disabled={!isEditing}
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                id="reasonDisplay"
+                fullWidth
+                label="Reason Display"
+                value={get(communication, 'reasonCode.0.coding.0.display', '')}
+                onChange={(e) => handleChange('reasonCode.0.coding.0.display', e.target.value)}
+                disabled={!isEditing}
+              />
+            </Grid>
+
+            {/* Payload Content */}
+            <Grid item xs={12}>
+              <TextField
+                id="payloadContent"
+                fullWidth
+                multiline
+                rows={4}
+                label="Message Content"
+                value={get(communication, 'payload.0.contentString', '')}
+                onChange={(e) => handleChange('payload.0.contentString', e.target.value)}
+                disabled={!isEditing}
+              />
+            </Grid>
+
+            {/* Notes */}
+            <Grid item xs={12}>
+              <TextField
+                id="notesTextarea"
+                fullWidth
+                multiline
+                rows={3}
+                label="Additional Notes"
+                value={get(communication, 'note.0.text', '')}
+                onChange={(e) => handleChange('note.0.text', e.target.value)}
+                disabled={!isEditing}
+              />
+            </Grid>
+          </Grid>
         </CardContent>
         
         <CardActions sx={{ justifyContent: 'flex-end', p: 2 }}>
-          {!isEditing && id && id !== 'new' ? (
+          {!isEditing && communicationId && communicationId !== 'new' ? (
             // Read-only mode buttons
             <>
-              <Button 
+              <Button
+                variant="outlined"
                 onClick={() => navigate('/communications')}
               >
                 Back
               </Button>
-              <Button 
-                onClick={() => setIsEditing(true)}
+              <Button
+                variant="outlined"
+                color="error"
+                onClick={handleDeleteButton}
+                disabled={loading}
+                startIcon={<DeleteIcon />}
+              >
+                Delete
+              </Button>
+              <Button
                 variant="contained"
-                color="primary"
+                onClick={() => setIsEditing(true)}
+                startIcon={<EditIcon />}
               >
                 Edit
               </Button>
@@ -426,45 +611,28 @@ function CommunicationDetail(props) {
           ) : (
             // Edit mode buttons
             <>
-              <Button 
-                onClick={() => {
-                  if (id && id !== 'new') {
-                    // Cancel editing and reload original data
-                    setIsEditing(false);
-                    // Reload the communication to discard changes
-                    async function reloadCommunication() {
-                      try {
-                        const result = await Meteor.callAsync('communications.get', id);
-                        if (result) {
-                          setCommunication(result);
-                        }
-                      } catch (err) {
-                        console.error('Error reloading communication:', err);
-                      }
-                    }
-                    reloadCommunication();
-                  } else {
-                    // For new communications, go back
-                    navigate('/communications');
-                  }
-                }}
+              <Button
+                variant="outlined"
+                onClick={handleCancelButton}
                 disabled={loading}
               >
                 Cancel
               </Button>
-              {id && id !== 'new' && (
-                <Button 
-                  onClick={handleDelete}
+              {communicationId && communicationId !== 'new' && (
+                <Button
+                  variant="outlined"
                   color="error"
+                  onClick={handleDeleteButton}
                   disabled={loading}
+                  startIcon={<DeleteIcon />}
                 >
                   Delete
                 </Button>
               )}
-              <Button 
-                onClick={handleSave}
+              <Button
+                id="saveCommunicationButton"
                 variant="contained"
-                color="primary"
+                onClick={handleSaveButton}
                 disabled={loading}
               >
                 {loading ? 'Saving...' : 'Save'}
@@ -473,6 +641,34 @@ function CommunicationDetail(props) {
           )}
         </CardActions>
       </Card>
+
+      {/* Search Dialog */}
+      <Dialog
+        open={searchDialogOpen}
+        onClose={() => setSearchDialogOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>
+          Select {searchType === 'subject' ? 'Patient' : searchType === 'sender' ? 'Sender' : 'Recipient'}
+        </DialogTitle>
+        <DialogContent>
+          <List>
+            {searchResults.map((result) => (
+              <ListItem
+                key={result.id}
+                button
+                onClick={() => handleSelectSearchResult(result)}
+              >
+                <ListItemText primary={result.display} secondary={result.reference} />
+              </ListItem>
+            ))}
+          </List>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setSearchDialogOpen(false)}>Cancel</Button>
+        </DialogActions>
+      </Dialog>
     </Container>
   );
 }

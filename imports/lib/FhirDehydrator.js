@@ -1329,21 +1329,35 @@ export function flattenCondition(condition, internalDateFormat){
 export function flattenCommunication(communication, internalDateFormat){
   let result = {
     _id: communication._id,
+    id: '',
     subject: '',
     subjectReference: '',
+    sender: '',
+    senderReference: '',
     recipient: '',
+    recipientReference: '',
     identifier: '',
     telecom: '',
     sent: '',
     received: '',
     category: '',
+    categoryCode: '',
+    priority: '',
+    medium: '',
+    topic: '',
+    reasonCode: '',
+    reasonCodeDisplay: '',
     payload: '',
+    payloadContent: '',
     status: '',
+    notes: '',
     operationOutcome: ''
   };
 
   result.resourceType = get(communication, 'resourceType', "Unknown");
+  result.id = get(communication, 'id', '');
 
+  // Date fields
   if(get(communication, 'sent')){
     result.sent = moment(get(communication, 'sent')).add(1, 'days').format("YYYY-MM-DD hh:mm")
   }
@@ -1351,6 +1365,24 @@ export function flattenCommunication(communication, internalDateFormat){
     result.received = moment(get(communication, 'received')).add(1, 'days').format("YYYY-MM-DD")
   }
 
+  // Subject
+  result.subject = get(communication, 'subject.display', get(communication, 'subject.reference', ''));
+  result.subjectReference = get(communication, 'subject.reference', '');
+
+  // Sender
+  result.sender = get(communication, 'sender.display', get(communication, 'sender.reference', ''));
+  result.senderReference = get(communication, 'sender.reference', '');
+
+  // Recipients - handle array or single recipient
+  if(get(communication, 'recipient[0]')){
+    result.recipient = get(communication, 'recipient[0].display', get(communication, 'recipient[0].reference', ''));
+    result.recipientReference = get(communication, 'recipient[0].reference', '');
+  } else if(get(communication, 'recipient')){
+    result.recipient = get(communication, 'recipient.display', get(communication, 'recipient.reference', ''));
+    result.recipientReference = get(communication, 'recipient.reference', '');
+  }
+
+  // Telecom handling
   let telecomString = "";
   let communicationString = "";
 
@@ -1372,13 +1404,73 @@ export function flattenCommunication(communication, internalDateFormat){
     result.telecom = get(communication, 'telecom[0].value', '');
   }
 
-  result.subject = get(communication, 'subject.display') ? get(communication, 'subject.display') : get(communication, 'subject.reference')
-  result.recipient = get(communication, 'recipient[0].display') ? get(communication, 'recipient[0].display') : get(communication, 'recipient[0].reference')
-  result.identifier = get(communication, 'identifier[0].type.text');
-  result.category = get(communication, 'category[0].text');
-  result.payload = get(communication, 'payload[0].contentString');
-  result.status = get(communication, 'status');
+  // Identifier
+  result.identifier = get(communication, 'identifier[0].type.text', get(communication, 'identifier[0].value', ''));
 
+  // Category - handle both text and coding
+  if(get(communication, 'category[0].text')){
+    result.category = get(communication, 'category[0].text');
+  } else if(get(communication, 'category[0].coding[0].display')){
+    result.category = get(communication, 'category[0].coding[0].display');
+  }
+  result.categoryCode = get(communication, 'category[0].coding[0].code', '');
+
+  // Priority
+  result.priority = get(communication, 'priority', '');
+  
+  // Extract message content from payload
+  result.payloadContent = get(communication, 'payload[0].contentString', '');
+
+  // Medium - handle array
+  if(get(communication, 'medium[0].text')){
+    result.medium = get(communication, 'medium[0].text');
+  } else if(get(communication, 'medium[0].coding[0].display')){
+    result.medium = get(communication, 'medium[0].coding[0].display');
+  }
+
+  // Topic
+  if(get(communication, 'topic.text')){
+    result.topic = get(communication, 'topic.text');
+  } else if(get(communication, 'topic.coding[0].display')){
+    result.topic = get(communication, 'topic.coding[0].display');
+  }
+
+  // Reason Code
+  if(get(communication, 'reasonCode[0].text')){
+    result.reasonCodeDisplay = get(communication, 'reasonCode[0].text');
+  } else if(get(communication, 'reasonCode[0].coding[0].display')){
+    result.reasonCodeDisplay = get(communication, 'reasonCode[0].coding[0].display');
+  }
+  result.reasonCode = get(communication, 'reasonCode[0].coding[0].code', '');
+
+  // Payload - handle multiple payload items
+  let payloadContent = '';
+  if(get(communication, 'payload[0].contentString')){
+    payloadContent = get(communication, 'payload[0].contentString');
+  } else if(get(communication, 'payload[0].contentAttachment.title')){
+    payloadContent = get(communication, 'payload[0].contentAttachment.title');
+  } else if(get(communication, 'payload[0].contentReference.display')){
+    payloadContent = get(communication, 'payload[0].contentReference.display');
+  }
+  result.payload = payloadContent;
+  result.payloadContent = payloadContent;
+
+  // Status
+  result.status = get(communication, 'status', '');
+
+  // Notes - handle array of annotations
+  let notesArray = [];
+  if(get(communication, 'note')){
+    const notes = get(communication, 'note', []);
+    notes.forEach(function(note){
+      if(get(note, 'text')){
+        notesArray.push(get(note, 'text'));
+      }
+    });
+  }
+  result.notes = notesArray.join('; ');
+
+  // Operation outcome
   if(get(communication, "issue[0].details.text")){
     result.operationOutcome = get(communication, "issue[0].details.text");
   }
@@ -1538,9 +1630,10 @@ export function flattenConsent(document){
     policyUri: get(document, 'policy[0].uri', ''),
     policyRule: get(document, 'policyRule.text', ''),
     provisionType: get(document, 'provision.type', ''),
-    provisionAction: get(document, 'provision.action[0].text', ''),
-    provisionClass: get(document, 'provision.class', ''),
+    provisionAction: '',  // Will be processed below to handle nested structure
+    provisionClass: '',  // Initialize as empty string, will be processed below
     provisionActor: get(document, 'provision.actor[0].reference.display', ''),
+    securityLabel: '',  // New field for security labels
     start: '',
     end: '',
     sourceReference: get(document, 'sourceReference.reference', ''),
@@ -1576,23 +1669,36 @@ export function flattenConsent(document){
     result.patientReference = get(document, 'patient.reference', '');
   }
 
-  if(get(document, 'provision[0].class')){
+  // Handle provision.class - could be at various nested levels
+  let provisionClasses = get(document, 'provision.class') || 
+                        get(document, 'provision[0].class') ||
+                        get(document, 'provision.provision[0].class');
+  
+  if(provisionClasses && Array.isArray(provisionClasses)){
     result.provisionClass = "";
-    document.provision[0].class.forEach(function(provision){   
+    provisionClasses.forEach(function(provision){   
       if(result.provisionClass == ''){
-        result.provisionClass = provision.code;
+        result.provisionClass = provision.code || provision;
       }  else {
-        result.provisionClass = result.provisionClass + ' - ' + provision.code;
+        result.provisionClass = result.provisionClass + ' - ' + (provision.code || provision);
       }      
     });
+  } else if(provisionClasses) {
+    // If it's not an array, just convert to string
+    result.provisionClass = String(provisionClasses);
   }
 
   if(get(document, "issue[0].details.text")){
     result.operationOutcome = get(document, "issue[0].details.text");
   }
 
-  if(get(document, "provision[0].actor[0].role.coding[0].display")){
+  // Handle actor role - check multiple possible paths
+  if(get(document, "provision.actor[0].role.coding[0].display")){
+    result.actorRole = get(document, "provision.actor[0].role.coding[0].display");
+  } else if(get(document, "provision[0].actor[0].role.coding[0].display")){
     result.actorRole = get(document, "provision[0].actor[0].role.coding[0].display");
+  } else if (get(document, "provision.provision[0].actor[0].role.coding[0].display")){
+    result.actorRole = get(document, "provision.provision[0].actor[0].role.coding[0].display");
   } else if (get(document, "provision[0].provision[0].actor[0].role.coding[0].display")){
     result.actorRole = get(document, "provision[0].provision[0].actor[0].role.coding[0].display");
   }
@@ -1601,6 +1707,38 @@ export function flattenConsent(document){
     result.provisionClass = get(document, "provision[0].class[0].display");
   } else if (get(document, "provision[0].provision[0].class[0].display")){
     result.provisionClass = get(document, "provision[0].provision[0].class[0].display");
+  }
+
+  // Handle provision actions - check multiple possible paths and combine them
+  let actions = get(document, 'provision.action') || 
+                get(document, 'provision[0].action') ||
+                get(document, 'provision.provision[0].action') ||
+                get(document, 'provision[0].provision[0].action');
+  
+  if(actions && Array.isArray(actions)){
+    result.provisionAction = actions.map(action => {
+      if(action.coding && Array.isArray(action.coding)){
+        return action.coding.map(code => code.display || code.code).join(', ');
+      }
+      return action.text || action.display || action.code || '';
+    }).join('; ');
+  }
+
+  // Handle security labels - check multiple possible paths
+  let securityLabels = get(document, 'provision.securityLabel') || 
+                      get(document, 'provision[0].securityLabel') ||
+                      get(document, 'provision.provision[0].securityLabel') ||
+                      get(document, 'provision[0].provision[0].securityLabel');
+  
+  if(securityLabels && Array.isArray(securityLabels)){
+    result.securityLabel = securityLabels.map(label => {
+      if(label.display){
+        return label.display;
+      } else if(label.code){
+        return label.code;
+      }
+      return '';
+    }).filter(l => l).join(', ');
   }
 
   return result;

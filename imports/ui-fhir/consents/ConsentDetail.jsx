@@ -7,6 +7,7 @@ import {
   Card,
   CardContent,
   CardHeader,
+  CardActions,
   Button,
   Typography,
   Box,
@@ -77,7 +78,7 @@ export function ConsentDetail(props) {
     if (id && isSubscriptionReady) {
       console.log('ConsentDetail - Looking for consent with id:', id);
       console.log('ConsentDetail - Subscription ready:', isSubscriptionReady);
-      const existingConsent = Consents.findOne({_id: id});
+      const existingConsent = Consents.findOne({id: id});  // Use FHIR id field
       console.log('ConsentDetail - Found consent:', existingConsent);
       if (existingConsent) {
         console.log('ConsentDetail - Loading consent data:', JSON.stringify(existingConsent, null, 2));
@@ -222,16 +223,19 @@ export function ConsentDetail(props) {
   };
 
   return (
-    <Container maxWidth="md" sx={{ py: 4 }} id="consentDetailPage">
-      <Card>
+    <Container id="consentDetailPage" maxWidth="md" sx={{ py: 4 }}>
+      <Card sx={{ boxShadow: 3 }}>
         <CardHeader 
-          title={
-            <Typography variant="h4">
-              {id ? 'Edit Consent' : 'New Consent'}
-            </Typography>
-          }
+          title={id && id !== 'new' ? 'Edit Consent' : 'New Consent'}
+          sx={{ bgcolor: 'primary.main', color: 'primary.contrastText' }}
         />
         <CardContent>
+          {/* System ID Barcode */}
+          {(id && id !== 'new') && (
+            <Box sx={{ mb: 3, textAlign: 'right' }}>
+              <span className="barcode helveticas" style={{ fontSize: '2rem' }}>{id}</span>
+            </Box>
+          )}
           <Grid container spacing={3}>
             {/* Status */}
             <Grid item xs={12} sm={6}>
@@ -386,6 +390,155 @@ export function ConsentDetail(props) {
               />
             </Grid>
 
+            {/* Security Label */}
+            <Grid item xs={12} sm={6}>
+              <TextField
+                id="securityLabelSelect"
+                fullWidth
+                select
+                SelectProps={{ native: true }}
+                label="Security Label"
+                value={get(consent, 'provision.securityLabel.0.code', '') || get(consent, 'provision.provision.0.securityLabel.0.code', '')}
+                onChange={(e) => {
+                  const securityLabelMap = {
+                    'N': 'normal',
+                    'R': 'restricted',
+                    'V': 'very restricted'
+                  };
+                  // Try to set at the most nested provision level
+                  if (get(consent, 'provision.provision.0')) {
+                    handleChange('provision.provision.0.securityLabel.0', {
+                      system: 'http://terminology.hl7.org/CodeSystem/v3-Confidentiality',
+                      code: e.target.value,
+                      display: securityLabelMap[e.target.value] || e.target.value
+                    });
+                  } else {
+                    handleChange('provision.securityLabel.0', {
+                      system: 'http://terminology.hl7.org/CodeSystem/v3-Confidentiality',
+                      code: e.target.value,
+                      display: securityLabelMap[e.target.value] || e.target.value
+                    });
+                  }
+                }}
+                disabled={!isEditing}
+              >
+                <option value="">Select security label</option>
+                <option value="N">Normal</option>
+                <option value="R">Restricted</option>
+                <option value="V">Very Restricted</option>
+              </TextField>
+            </Grid>
+
+            {/* Class */}
+            <Grid item xs={12} sm={6}>
+              <TextField
+                id="classInput"
+                fullWidth
+                label="Resource Classes"
+                value={(() => {
+                  const classes = get(consent, 'provision.class') || 
+                                get(consent, 'provision.provision.0.class') || [];
+                  return classes.map(c => c.code || c.display || c).join(', ');
+                })()}
+                onChange={(e) => {
+                  const classValues = e.target.value.split(',').map(v => v.trim()).filter(v => v);
+                  const classes = classValues.map(code => ({
+                    code: code,
+                    display: code
+                  }));
+                  // Try to set at the most nested provision level
+                  if (get(consent, 'provision.provision.0')) {
+                    handleChange('provision.provision.0.class', classes);
+                  } else {
+                    handleChange('provision.class', classes);
+                  }
+                }}
+                disabled={!isEditing}
+                helperText="Comma-separated resource types (e.g., Patient, Observation, Procedure)"
+              />
+            </Grid>
+
+            {/* Actor Role */}
+            <Grid item xs={12} sm={6}>
+              <TextField
+                id="actorRoleSelect"
+                fullWidth
+                select
+                SelectProps={{ native: true }}
+                label="Actor Role"
+                value={get(consent, 'provision.actor.0.role.coding.0.code', '') || 
+                       get(consent, 'provision.provision.0.actor.0.role.coding.0.code', '')}
+                onChange={(e) => {
+                  const roleMap = {
+                    'PAT': 'patient',
+                    'PROV': 'provider',
+                    'DELEGATEE': 'delegatee',
+                    'GUAR': 'guarantor',
+                    'CONSENTER': 'consenter',
+                    'CONSENTEE': 'consentee',
+                    'SUBJECT': 'subject of consent',
+                    'DELEGATOR': 'delegator',
+                    'SYSTEM': 'system'
+                  };
+                  // Try to set at the most nested provision level
+                  const path = get(consent, 'provision.provision.0') ? 'provision.provision.0' : 'provision';
+                  handleChange(`${path}.actor.0.role`, {
+                    coding: [{
+                      system: 'http://terminology.hl7.org/CodeSystem/v3-RoleClass',
+                      code: e.target.value,
+                      display: roleMap[e.target.value] || e.target.value
+                    }]
+                  });
+                }}
+                disabled={!isEditing}
+              >
+                <option value="">Select actor role</option>
+                <option value="PAT">Patient</option>
+                <option value="PROV">Provider</option>
+                <option value="DELEGATEE">Delegatee</option>
+                <option value="GUAR">Guarantor</option>
+                <option value="CONSENTER">Consenter</option>
+                <option value="CONSENTEE">Consentee</option>
+                <option value="SUBJECT">Subject of Consent</option>
+                <option value="DELEGATOR">Delegator</option>
+                <option value="SYSTEM">System</option>
+              </TextField>
+            </Grid>
+
+            {/* Actor Reference */}
+            <Grid item xs={12} sm={6}>
+              <TextField
+                id="actorReferenceInput"
+                fullWidth
+                label="Actor Reference"
+                value={get(consent, 'provision.actor.0.reference.reference', '') || 
+                       get(consent, 'provision.provision.0.actor.0.reference.reference', '')}
+                onChange={(e) => {
+                  const path = get(consent, 'provision.provision.0') ? 'provision.provision.0' : 'provision';
+                  handleChange(`${path}.actor.0.reference.reference`, e.target.value);
+                }}
+                disabled={!isEditing}
+                helperText="Reference to the actor (e.g., Patient/123, Practitioner/456)"
+              />
+            </Grid>
+
+            {/* Actor Display */}
+            <Grid item xs={12}>
+              <TextField
+                id="actorDisplayInput"
+                fullWidth
+                label="Actor Display Name"
+                value={get(consent, 'provision.actor.0.reference.display', '') || 
+                       get(consent, 'provision.provision.0.actor.0.reference.display', '')}
+                onChange={(e) => {
+                  const path = get(consent, 'provision.provision.0') ? 'provision.provision.0' : 'provision';
+                  handleChange(`${path}.actor.0.reference.display`, e.target.value);
+                }}
+                disabled={!isEditing}
+                helperText="Display name for the actor"
+              />
+            </Grid>
+
             {/* Organization */}
             <Grid item xs={12}>
               <TextField
@@ -439,52 +592,56 @@ export function ConsentDetail(props) {
               />
             </Grid>
           </Grid>
-
-          {/* Action Buttons */}
-          <Box sx={{ mt: 3, display: 'flex', gap: 2 }}>
-            {isEditing ? (
-              <>
-                <Button
-                  id="saveConsentButton"
-                  variant="contained"
-                  color="primary"
-                  onClick={handleSave}
-                >
-                  {id ? 'Update' : 'Save'} Consent
-                </Button>
-                <Button
-                  variant="outlined"
-                  onClick={() => id ? setIsEditing(false) : navigate('/consents')}
-                >
-                  Cancel
-                </Button>
-              </>
-            ) : (
-              <>
-                <Button
-                  variant="contained"
-                  color="primary"
-                  onClick={() => setIsEditing(true)}
-                >
-                  Edit
-                </Button>
-                <Button
-                  variant="outlined"
-                  color="error"
-                  onClick={handleDelete}
-                >
-                  Delete
-                </Button>
-                <Button
-                  variant="outlined"
-                  onClick={() => navigate('/consents')}
-                >
-                  Back to List
-                </Button>
-              </>
-            )}
-          </Box>
         </CardContent>
+        
+        <CardActions sx={{ justifyContent: 'flex-end', p: 2 }}>
+          {!isEditing && id && id !== 'new' ? (
+            // Read-only mode buttons
+            <>
+              <Button 
+                onClick={() => navigate('/consents')}
+              >
+                Back to List
+              </Button>
+              <Button
+                onClick={handleDelete}
+                color="error"
+              >
+                Delete
+              </Button>
+              <Button 
+                onClick={() => setIsEditing(true)}
+                variant="contained"
+                color="primary"
+              >
+                Edit
+              </Button>
+            </>
+          ) : (
+            // Edit mode buttons
+            <>
+              <Button 
+                onClick={() => {
+                  if (id && id !== 'new') {
+                    setIsEditing(false);
+                  } else {
+                    navigate('/consents');
+                  }
+                }}
+              >
+                Cancel
+              </Button>
+              <Button 
+                id="saveConsentButton"
+                onClick={handleSave}
+                variant="contained"
+                color="primary"
+              >
+                {id && id !== 'new' ? 'Update' : 'Save'} Consent
+              </Button>
+            </>
+          )}
+        </CardActions>
       </Card>
     </Container>
   );

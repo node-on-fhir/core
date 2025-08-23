@@ -1,59 +1,123 @@
 
+// /Volumes/SonicMagic/Code/honeycomb-public-release/imports/lib/validatedMethods/communications.js
+
 import { Meteor } from 'meteor/meteor';
-import { Roles } from 'meteor/alanning:roles';
-import { Accounts } from 'meteor/accounts-base';
-import { SimpleSchema } from 'meteor/aldeed:simple-schema';
+import SimpleSchema from 'simpl-schema';
 import { ValidatedMethod } from 'meteor/mdg:validated-method';
+import { get } from 'lodash';
+import moment from 'moment';
+import { Communications } from '../schemas/SimpleSchemas/Communications';
 
-convertDatesToValidDate = function(document){
-  // we need to check if the birthdate is a valid string
-  let newDate = moment(document.birthDate).toDate();
-
-  // moment() is a champ for doing this, but will return an Invalid Date object
-  // which we have to check for with this wacky function
-  if ( Object.prototype.toString.call(newDate) === "[object Date]" ) {
-    // it is a date
-    if ( isNaN( newDate.getTime() ) ) {  // d.valueOf() could also work
-      // date is not valid
-      delete document.birthDate;
+// Helper function to convert date strings to valid Date objects
+const convertCommunicationDates = function(document){
+  // Convert sent date if present
+  if (document.sent) {
+    // Check if it's already a valid date string or Date object
+    let sentDate;
+    
+    // Handle moment objects
+    if (moment.isMoment(document.sent)) {
+      sentDate = document.sent.toDate();
+    } else if (typeof document.sent === 'string' && document.sent.trim() !== '') {
+      // Only try to parse if it's a non-empty string
+      const momentDate = moment(document.sent);
+      if (momentDate.isValid()) {
+        sentDate = momentDate.toDate();
+      }
+    } else if (document.sent instanceof Date) {
+      sentDate = document.sent;
     }
-    else {
-      // date is valid
-      document.birthDate = newDate;
+    
+    if (sentDate && Object.prototype.toString.call(sentDate) === "[object Date]" && !isNaN(sentDate.getTime())) {
+      document.sent = sentDate;
+    } else {
+      console.log('Invalid sent date, removing:', document.sent);
+      delete document.sent;
     }
   }
-  else {
-    // not a date
-    delete document.birthDate;
+
+  // Convert received date if present
+  if (document.received) {
+    // Check if it's already a valid date string or Date object
+    let receivedDate;
+    
+    // Handle moment objects
+    if (moment.isMoment(document.received)) {
+      receivedDate = document.received.toDate();
+    } else if (typeof document.received === 'string' && document.received.trim() !== '') {
+      // Only try to parse if it's a non-empty string
+      const momentDate = moment(document.received);
+      if (momentDate.isValid()) {
+        receivedDate = momentDate.toDate();
+      }
+    } else if (document.received instanceof Date) {
+      receivedDate = document.received;
+    }
+    
+    if (receivedDate && Object.prototype.toString.call(receivedDate) === "[object Date]" && !isNaN(receivedDate.getTime())) {
+      document.received = receivedDate;
+    } else {
+      console.log('Invalid received date, removing:', document.received);
+      delete document.received;
+    }
   }
+
   return document;
 };
 
 export const insertCommunication = new ValidatedMethod({
   name: 'communications.insert',
   validate: new SimpleSchema({
-    'name.$.text': { type: String },
-    'identifier': { type: [ String ], optional: true },
-    'gender': { type: String, optional: true },
-    'active': { type: Boolean, optional: true },
-    'birthDate': { type: String, optional: true },
-    'photo.$.url': { type: String, optional: true }
+    'resourceType': { type: String, optional: true, defaultValue: 'Communication' },
+    'status': { 
+      type: String, 
+      allowedValues: ["preparation", "in-progress", "not-done", "on-hold", "stopped", "completed", "entered-in-error", "unknown"],
+      defaultValue: 'completed'
+    },
+    'subject': { type: Object, optional: true, blackbox: true },
+    'subject.reference': { type: String, optional: true },
+    'subject.display': { type: String, optional: true },
+    'sender': { type: Object, optional: true, blackbox: true },
+    'sender.reference': { type: String, optional: true },
+    'sender.display': { type: String, optional: true },
+    'recipient': { type: Array, optional: true },
+    'recipient.$': { type: Object, blackbox: true },
+    'sent': { type: String, optional: true },
+    'received': { type: String, optional: true },
+    'payload': { type: Array, optional: true },
+    'payload.$': { type: Object, blackbox: true },
+    'payload.$.contentString': { type: String, optional: true },
+    'category': { type: Array, optional: true },
+    'category.$': { type: Object, blackbox: true },
+    'medium': { type: Array, optional: true },
+    'medium.$': { type: Object, blackbox: true },
+    'identifier': { type: Array, optional: true },
+    'identifier.$': { type: Object, blackbox: true },
+    'note': { type: Array, optional: true },
+    'note.$': { type: Object, blackbox: true },
+    'note.$.text': { type: String, optional: true }
   }).validator(),
-  run(document) {
-
+  async run(document) {
     console.log("insertCommunication", document);
 
-    document = convertDatesToValidDate(document);
-    console.log("convertDatesToValidDate", document);
+    // Ensure resourceType is set
+    if (!document.resourceType) {
+      document.resourceType = 'Communication';
+    }
 
+    // Convert date strings to Date objects
+    document = convertCommunicationDates(document);
+    console.log("convertCommunicationDates", document);
+
+    // Set test flag based on environment
     if (process.env.NODE_ENV === "test") {
       document.test = true;
     } else {
       document.test = false;
     }
 
-    // now that's all done, we can insert the document
-    return Communications.insert(document);
+    // Insert the document using async method for Meteor v3
+    return await Communications.insertAsync(document);
   }
 });
 
@@ -61,43 +125,76 @@ export const updateCommunication = new ValidatedMethod({
   name: 'communications.update',
   validate: new SimpleSchema({
     _id: { type: String },
-    'update': { type: Object, blackbox: true, optional: true}
+    'update': { type: Object, blackbox: true, optional: true }
   }).validator(),
-  run({ _id, update }) {
+  async run({ _id, update }) {
     console.log("updateCommunication");
     console.log("_id", _id);
     console.log("update", update);
 
-    update = convertDatesToValidDate(update);
+    // Convert date strings in the update
+    update = convertCommunicationDates(update);
 
-    let communication = Communications.findOne({_id: _id});
+    // Find the existing communication
+    let communication = await Communications.findOneAsync({_id: _id});
+    
+    if (!communication) {
+      throw new Meteor.Error('communication-not-found', 'Communication not found');
+    }
 
+    // Remove internal Meteor properties
     delete communication._id;
     delete communication._document;
     delete communication._super_;
     delete communication._collection;
 
-    console.log("update.name", update.name);
-    update.name[0].resourceType = 'HumanName';
-
-
-
-    communication.name = [];
-    communication.name.push(update.name[0]);
-    communication.gender = update.gender;
-    communication.photo = [];
-
-    if (update.birthDate) {
-      communication.birthDate = update.birthDate;
+    // Update fields that are provided
+    if (update.status) {
+      communication.status = update.status;
     }
-    if (update && update.photo && update.photo[0] && update.photo[0].url) {
-      communication.photo.push({
-        url: update.photo[0].url
-      });
+    
+    if (update.subject) {
+      communication.subject = update.subject;
+    }
+    
+    if (update.sender) {
+      communication.sender = update.sender;
+    }
+    
+    if (update.recipient) {
+      communication.recipient = update.recipient;
+    }
+    
+    if (update.sent !== undefined) {
+      communication.sent = update.sent;
+    }
+    
+    if (update.received !== undefined) {
+      communication.received = update.received;
+    }
+    
+    if (update.payload) {
+      communication.payload = update.payload;
+    }
+    
+    if (update.category) {
+      communication.category = update.category;
+    }
+    
+    if (update.medium) {
+      communication.medium = update.medium;
+    }
+    
+    if (update.identifier) {
+      communication.identifier = update.identifier;
+    }
+    
+    if (update.note) {
+      communication.note = update.note;
     }
 
-    console.log("diffedCommunication", communication);
-    return Communications.update({_id: _id}, { $set: communication });
+    console.log("updatedCommunication", communication);
+    return await Communications.updateAsync({_id: _id}, { $set: communication });
   }
 });
 
@@ -106,9 +203,49 @@ export const removeCommunicationById = new ValidatedMethod({
   validate: new SimpleSchema({
     _id: { type: String }
   }).validator(),
-  run({ _id }) {
-    console.log("Removing user " + _id);
-    return Communications.remove({_id: _id});
+  async run({ _id }) {
+    console.log("Removing communication " + _id);
+    return await Communications.removeAsync({_id: _id});
+  }
+});
+
+export const getCommunication = new ValidatedMethod({
+  name: 'communications.get',
+  validate: new SimpleSchema({
+    _id: { type: String }
+  }).validator(),
+  async run({ _id }) {
+    console.log("Getting communication " + _id);
+    
+    const communication = await Communications.findOneAsync({_id: _id});
+    
+    if (!communication) {
+      throw new Meteor.Error('communication-not-found', 'Communication not found');
+    }
+    
+    return communication;
+  }
+});
+
+export const searchCommunications = new ValidatedMethod({
+  name: 'communications.search',
+  validate: new SimpleSchema({
+    query: { type: Object, blackbox: true, optional: true },
+    options: { type: Object, blackbox: true, optional: true }
+  }).validator(),
+  async run({ query = {}, options = {} }) {
+    console.log("Searching communications", query, options);
+    
+    // Default options
+    const defaultOptions = {
+      limit: 100,
+      sort: { sent: -1 }
+    };
+    
+    const finalOptions = Object.assign({}, defaultOptions, options);
+    
+    const cursor = Communications.find(query, finalOptions);
+    return await cursor.fetchAsync();
   }
 });
 

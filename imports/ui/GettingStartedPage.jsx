@@ -361,9 +361,9 @@ function GettingStartedPage(props){
         if (!key.startsWith('temp.')) {
           // For boolean flags, only include if true
           if (key.startsWith('ENABLE_') || key === 'NOAUTH' || key === 'DEV_AUTO_LOGIN' || 
-              key === 'INITIALIZE_CONSENT_ENGINE' || key === 'PROXY_RELAY_ENABLED' || 
-              key === 'FORCE_SSL' || key.endsWith('_TEST') || key === 'TEST_RUN' || 
-              key === 'USE_MONGO_OBJECTID') {
+              key === 'INITIALIZE_CONSENT_ENGINE' || key === 'INITIALIZE_SEARCH_PARAMETERS' || 
+              key === 'PROXY_RELAY_ENABLED' || key === 'FORCE_SSL' || key.endsWith('_TEST') || 
+              key === 'TEST_RUN' || key === 'USE_MONGO_OBJECTID') {
             if (value === 'true' || value === 'Enabled') {
               envVars.push(`${key}=true`);
             }
@@ -618,6 +618,7 @@ function GettingStartedPage(props){
 
   // Helper function to update nested settings
   const updateSetting = (path, value) => {
+    console.log('[GettingStartedPage] updateSetting:', path, '=', value);
     const newSettings = JSON.parse(JSON.stringify(settings));
     const pathParts = path.split('.');
     let current = newSettings;
@@ -652,6 +653,7 @@ function GettingStartedPage(props){
     }
     
     setSettings(newSettings);
+    console.log('[GettingStartedPage] Updated settings:', newSettings);
     
     // Update Meteor.settings as well (for client-side settings only)
     if (path.startsWith('public.')) {
@@ -3618,6 +3620,53 @@ function GettingStartedPage(props){
                   label="Disable OAuth"
                 />
               </Grid>
+              <Grid item xs={12}>
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={
+                        get(settings, 'private.env.INITIALIZE_CONSENT_ENGINE') === 'Enabled' &&
+                        get(settings, 'private.env.INITIALIZE_SEARCH_PARAMETERS') === 'Enabled'
+                      }
+                      onChange={(e) => {
+                        const newValue = e.target.checked ? 'Enabled' : 'No Value';
+                        
+                        // Update both settings in a single state update
+                        const newSettings = JSON.parse(JSON.stringify(settings));
+                        
+                        // Ensure the path exists
+                        if (!newSettings.private) newSettings.private = {};
+                        if (!newSettings.private.env) newSettings.private.env = {};
+                        
+                        // Set both values
+                        newSettings.private.env.INITIALIZE_CONSENT_ENGINE = newValue;
+                        newSettings.private.env.INITIALIZE_SEARCH_PARAMETERS = newValue;
+                        
+                        console.log('[Initialize Server Toggle] Updating both to:', newValue);
+                        setSettings(newSettings);
+                      }}
+                    />
+                  }
+                  label="Initialize Server on Startup"
+                />
+                <FormHelperText>
+                  Initializes consent infrastructure and search parameters when the server starts
+                </FormHelperText>
+              </Grid>
+              <Grid item xs={12}>
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={get(settings, 'private.enableCronAutomation', false)}
+                      onChange={(e) => updateSetting('private.enableCronAutomation', e.target.checked)}
+                    />
+                  }
+                  label="Enable Cron Automation"
+                />
+                <FormHelperText>
+                  Enables scheduled tasks and automated processes using SyncedCron
+                </FormHelperText>
+              </Grid>
             </Grid>
             
             <Typography variant="subtitle2" sx={{ mt: 3, mb: 2 }}>FHIR Resource Configuration</Typography>
@@ -4726,6 +4775,20 @@ function GettingStartedPage(props){
                     value={get(settings, 'private.env.INITIALIZE_CONSENT_ENGINE', 'No Value')}
                     onChange={(e) => updateSetting('private.env.INITIALIZE_CONSENT_ENGINE', e.target.value)}
                     label="INITIALIZE_CONSENT_ENGINE"
+                  >
+                    <MenuItem value="No Value">No Value</MenuItem>
+                    <MenuItem value="Enabled">Enabled</MenuItem>
+                    <MenuItem value="Disabled">Disabled</MenuItem>
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid item xs={12} md={4}>
+                <FormControl fullWidth size="small">
+                  <InputLabel>INITIALIZE_SEARCH_PARAMETERS</InputLabel>
+                  <Select
+                    value={get(settings, 'private.env.INITIALIZE_SEARCH_PARAMETERS', 'No Value')}
+                    onChange={(e) => updateSetting('private.env.INITIALIZE_SEARCH_PARAMETERS', e.target.value)}
+                    label="INITIALIZE_SEARCH_PARAMETERS"
                   >
                     <MenuItem value="No Value">No Value</MenuItem>
                     <MenuItem value="Enabled">Enabled</MenuItem>

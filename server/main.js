@@ -20,6 +20,7 @@ console.log('===================================================================
 
 import './Cron.js';
 import './ConsentEngineMethods.js';
+import './SearchParameterMethods.js';
 import './ConsentEngineHttp.js';
 import './CdsHooksEndpoints.js';
 import './Methods.js';
@@ -41,6 +42,7 @@ import '../imports/api/appointments/methods.js';
 import '../imports/api/AuditEvents/AuditEvents'; // Import the methods
 import '../imports/api/carePlans/methods.js';
 import '../imports/api/rfc7523/methods.js';
+import '../imports/api/communications/methods.js';
 import '../imports/api/compositions/methods.js';
 import '../imports/api/conditions/methods.js';
 import '../imports/api/consents/methods.js';
@@ -76,6 +78,7 @@ import '../imports/accounts/server/methods.js';
 import './publications/autopublish.js';
 import './publications/patients.js';
 import './publications/conditions.js';
+import './publications/communications.js';
 
 // Import practitioner startup (includes methods and publications)
 import './startup/practitionerStartup.js';
@@ -155,6 +158,7 @@ import { QuestionnaireResponses } from '../imports/lib/schemas/SimpleSchemas/Que
 import { ResearchStudies } from '../imports/lib/schemas/SimpleSchemas/ResearchStudies';
 import { ResearchSubjects } from '../imports/lib/schemas/SimpleSchemas/ResearchSubjects';
 import { Schedules } from '../imports/lib/schemas/SimpleSchemas/Schedules';
+import { SearchParameters } from '../imports/lib/schemas/SimpleSchemas/SearchParameters';
 import { ServiceRequests } from '../imports/lib/schemas/SimpleSchemas/ServiceRequests';
 import { Tasks } from '../imports/lib/schemas/SimpleSchemas/Tasks';
 import { ValueSets } from '../imports/lib/schemas/SimpleSchemas/ValueSets';
@@ -217,6 +221,7 @@ Meteor.Collections = {
   ResearchStudies,
   ResearchSubjects,
   Schedules,
+  SearchParameters,
   ServiceRequests,
   Tasks,
   ValueSets
@@ -278,6 +283,7 @@ global.Collections = {
   ResearchStudies,
   ResearchSubjects,
   Schedules,
+  SearchParameters,
   ServiceRequests,
   Tasks,
   ValueSets
@@ -304,6 +310,7 @@ global.Patients = Patients;
 global.Questionnaires = Questionnaires;
 global.QuestionnaireResponses = QuestionnaireResponses;
 global.Schedules = Schedules;
+global.SearchParameters = SearchParameters;
 global.LinksCollection = LinksCollection;
 
 //===============================================================================================================
