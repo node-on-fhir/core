@@ -1,0 +1,29 @@
+{
+  "resourceType": "SearchParameter",
+  "id": "documentreference-patient",
+  "url": "http://github.com/node-on-fhir/honeycomb/private/SearchParameters/SearchParameter-documentreference-patient",
+  "version": "1.0.0",
+  "name": "HoneycombDocumentReferencePatient",
+  "status": "active",
+  "date": "2024-08-21",
+  "publisher": "github.com/node-on-fhir",
+  "contact": [
+    {
+      "telecom": [
+        {
+          "system": "url",
+          "value": "http://github.com/node-on-fhir/honeycomb"
+        }
+      ]
+    }
+  ],
+  "description": "Search for document references by patient",
+  "code": "patient",
+  "base": ["DocumentReference"],
+  "type": "reference",
+  "expression": "DocumentReference.subject.where(resolve() is Patient)",
+  "xpath": "subject.reference",
+  "target": ["Patient"],
+  "multipleOr": true,
+  "multipleAnd": false
+}

@@ -1,0 +1,29 @@
+{
+  "resourceType": "SearchParameter",
+  "id": "patient-birthdate",
+  "url": "http://github.com/node-on-fhir/honeycomb/private/SearchParameters/SearchParameter-patient-birthdate",
+  "version": "1.0.0",
+  "name": "HoneycombPatientBirthdate",
+  "status": "active",
+  "date": "2024-08-21",
+  "publisher": "github.com/node-on-fhir",
+  "contact": [
+    {
+      "telecom": [
+        {
+          "system": "url",
+          "value": "http://github.com/node-on-fhir/honeycomb"
+        }
+      ]
+    }
+  ],
+  "description": "Search for patients by birth date",
+  "code": "birthdate",
+  "base": ["Patient"],
+  "type": "date",
+  "expression": "Patient.birthDate",
+  "xpath": "birthDate",
+  "multipleOr": false,
+  "multipleAnd": false,
+  "comparator": ["eq", "ne", "gt", "lt", "ge", "le", "sa", "eb", "ap"]
+}

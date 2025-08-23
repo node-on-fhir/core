@@ -1,0 +1,29 @@
+{
+  "resourceType": "SearchParameter",
+  "id": "supplydelivery-patient",
+  "url": "http://github.com/node-on-fhir/honeycomb/private/SearchParameters/SearchParameter-supplydelivery-patient",
+  "version": "1.0.0",
+  "name": "HoneycombSupplyDeliveryPatient",
+  "status": "active",
+  "date": "2024-08-21",
+  "publisher": "github.com/node-on-fhir",
+  "contact": [
+    {
+      "telecom": [
+        {
+          "system": "url",
+          "value": "http://github.com/node-on-fhir/honeycomb"
+        }
+      ]
+    }
+  ],
+  "description": "Search for supply deliveries by patient",
+  "code": "patient",
+  "base": ["SupplyDelivery"],
+  "type": "reference",
+  "expression": "SupplyDelivery.patient",
+  "xpath": "patient.reference",
+  "target": ["Patient"],
+  "multipleOr": true,
+  "multipleAnd": false
+}

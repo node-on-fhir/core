@@ -1,0 +1,29 @@
+{
+  "resourceType": "SearchParameter",
+  "id": "medicationrequest-patient",
+  "url": "http://github.com/node-on-fhir/honeycomb/private/SearchParameters/SearchParameter-medicationrequest-patient",
+  "version": "1.0.0",
+  "name": "HoneycombMedicationRequestPatient",
+  "status": "active",
+  "date": "2024-08-21",
+  "publisher": "github.com/node-on-fhir",
+  "contact": [
+    {
+      "telecom": [
+        {
+          "system": "url",
+          "value": "http://github.com/node-on-fhir/honeycomb"
+        }
+      ]
+    }
+  ],
+  "description": "Search for medication requests by patient",
+  "code": "patient",
+  "base": ["MedicationRequest"],
+  "type": "reference",
+  "expression": "MedicationRequest.subject.where(resolve() is Patient)",
+  "xpath": "subject.reference",
+  "target": ["Patient"],
+  "multipleOr": true,
+  "multipleAnd": false
+}

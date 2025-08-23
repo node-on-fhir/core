@@ -1,0 +1,29 @@
+{
+  "resourceType": "SearchParameter",
+  "id": "patient-name",
+  "url": "http://github.com/node-on-fhir/honeycomb/private/SearchParameters/SearchParameter-patient-name",
+  "version": "1.0.0",
+  "name": "HoneycombPatientName",
+  "status": "active",
+  "date": "2024-08-21",
+  "publisher": "github.com/node-on-fhir",
+  "contact": [
+    {
+      "telecom": [
+        {
+          "system": "url",
+          "value": "http://github.com/node-on-fhir/honeycomb"
+        }
+      ]
+    }
+  ],
+  "description": "Search for patients by any part of their name (given, family, text)",
+  "code": "name",
+  "base": ["Patient"],
+  "type": "string",
+  "expression": "Patient.name.given | Patient.name.family | Patient.name.text",
+  "xpath": "name",
+  "multipleOr": true,
+  "multipleAnd": false,
+  "modifier": ["exact", "contains"]
+}

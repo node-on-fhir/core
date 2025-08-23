@@ -1,0 +1,29 @@
+{
+  "resourceType": "SearchParameter",
+  "id": "observation-patient",
+  "url": "http://github.com/node-on-fhir/honeycomb/private/SearchParameters/SearchParameter-observation-patient",
+  "version": "1.0.0",
+  "name": "HoneycombObservationPatient",
+  "status": "active",
+  "date": "2024-08-21",
+  "publisher": "github.com/node-on-fhir",
+  "contact": [
+    {
+      "telecom": [
+        {
+          "system": "url",
+          "value": "http://github.com/node-on-fhir/honeycomb"
+        }
+      ]
+    }
+  ],
+  "description": "Search for observations by patient",
+  "code": "patient",
+  "base": ["Observation"],
+  "type": "reference",
+  "expression": "Observation.subject.where(resolve() is Patient)",
+  "xpath": "subject.reference",
+  "target": ["Patient"],
+  "multipleOr": true,
+  "multipleAnd": false
+}
