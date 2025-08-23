@@ -956,8 +956,8 @@ describe('Communications CRUD Operations', function() {
   it('08. Verify updated communication in list', browser => {
     browser
       .waitForElementVisible('#communicationsTable', 5000)
-      // IMPORTANT: The sender cannot be updated - it remains as the logged-in user 'janedoe'
-      .assert.containsText('#communicationsTable', 'janedoe') // Sender stays the same
+      // The sender CAN be updated in communications
+      .assert.containsText('#communicationsTable', updatedCommunication.senderName) // Updated sender name
       .assert.containsText('#communicationsTable', updatedCommunication.status) // Status should be updated
       .saveScreenshot('tests/nightwatch/screenshots/communications/10-updated-communication-in-list.png');
   });

@@ -26,6 +26,9 @@ Meteor.methods({
         lastUpdated: new Date()
       }
     };
+    
+    // Debug logging for policyRule
+    console.log('Creating consent with policyRule:', get(cleanConsent, 'policyRule'));
 
     // Set default status if not provided
     if (!cleanConsent.status) {

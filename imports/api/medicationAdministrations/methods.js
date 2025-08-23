@@ -42,6 +42,11 @@ Meteor.methods({
 
     // Update metadata
     updates['meta.lastUpdated'] = new Date();
+    
+    // Debug logging
+    console.log('Updating medication administration:', medicationAdministrationId);
+    console.log('Full updates object:', JSON.stringify(updates, null, 2));
+    console.log('Performer data:', get(updates, 'performer[0].actor'));
 
     try {
       const result = await MedicationAdministrations.updateAsync(
@@ -49,6 +54,12 @@ Meteor.methods({
         { $set: updates }
       );
       console.log('Updated medication administration:', result);
+      
+      // Verify the update
+      const updated = await MedicationAdministrations.findOneAsync({ _id: medicationAdministrationId });
+      console.log('Updated document:', JSON.stringify(updated, null, 2));
+      console.log('Updated performer:', get(updated, 'performer[0].actor'));
+      
       return result;
     } catch (error) {
       console.error('Error updating medication administration:', error);
