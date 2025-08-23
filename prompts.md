@@ -91,19 +91,19 @@ I believe in you.  We've done a lot of these CRUD patterns already.  You can do 
 ```
 
 ```
-Okay, let's turn our attention to the SupplyDeliveries CRUD pattern, on the /supply-deliveries route.  Use best practices and the implementation checklist and debugging info in /imports/ui-fhir/CLAUDE.md.  You have permission to run tests.  
+Okay, let's turn our attention to the Communications CRUD pattern, on the /communications route.  Use best practices and the implementation checklist and debugging info in /imports/ui-fhir/CLAUDE.md.  You have permission to run tests.  
 
-- Make sure that the SupplyDeliveries schema is created, and attached in all of the right places (Meteor.Tables, Meteor.Collections, etc)
-- Include SupplyDeliveries in the autopublish() function.
+- Make sure that the Communications schema is created, and attached in all of the right places (Meteor.Tables, Meteor.Collections, etc)
+- Include Communications in the autopublish() function.
 - Make sure we've updated the settings.honeycomb.tdd.json file
 - Create core files in /imports/ui-fhir/supplyDeliveries/*, following the pattern in /imports/ui-fhir/conditions/*
-- Update the SupplyDeliveriesDetails page with inputs from the SupplyDeliveries schema, making sure that appropriate #id elements exist on inputs; and update the crud.supplydeliveries.js file to match.  
-- Make sure that all of the columns in SupplyDeliveriesTable are filled out appropriately, and update the dehydration functions accordingly.  
+- Update the CommunicationsDetails page with inputs from the Communications schema, making sure that appropriate #id elements exist on inputs; and update the crud.supplydeliveries.js file to match.  
+- Make sure that all of the columns in CommunicationsTable are filled out appropriately, and update the dehydration functions accordingly.  
 - Create the medias methods file.  
-- Be sure to select the John Doe patient in step 2, AFTER you've navigated to /supply-deliveries route.  
+- Be sure to select the John Doe patient in step 2, AFTER you've navigated to /communications route.  
 - When searching for records in steps 5 and 8, be sure to scroll to the top and seach by patient (John Doe). 
 
-I believe in you.  We've done a lot of these CRUD patterns already.  You can do this.
+I believe in you.  We've done a lot of these CRUD patterns already.  I've got to go run some errands that will take a few hours; I'd like you to go through the entire pattern and implementation without me.  I've check out a new branch, so if you really foul things up, we can revert.  I'll ask for a full report of changes made when you're done, and cross reference with the pull request.  But generally speaking... I want you to follow existing patterns, and create the entire Communications CRUD pattern on your own.  We'll debug when I get home.  
 ```
 
 
