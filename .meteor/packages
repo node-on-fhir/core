@@ -34,12 +34,3 @@ mdg:validated-method
 fetch
 
 
-# clinical:data-importer
-# clinical:data-exporter
-# clinical:synthea
-# symptomatic:timelines
-# symptomatic:mcp
-# clinical:pacio-core
-
-# clinical:symptom-tracking
-# clinical:hermes-tooling
