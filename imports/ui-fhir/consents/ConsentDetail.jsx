@@ -78,7 +78,14 @@ export function ConsentDetail(props) {
     if (id && isSubscriptionReady) {
       console.log('ConsentDetail - Looking for consent with id:', id);
       console.log('ConsentDetail - Subscription ready:', isSubscriptionReady);
-      const existingConsent = Consents.findOne({id: id});  // Use FHIR id field
+      // Try finding by MongoDB _id first (which is what the route uses)
+      let existingConsent = Consents.findOne({_id: id});
+      
+      // If not found, try by FHIR id
+      if (!existingConsent) {
+        existingConsent = Consents.findOne({id: id});
+      }
+      
       console.log('ConsentDetail - Found consent:', existingConsent);
       if (existingConsent) {
         console.log('ConsentDetail - Loading consent data:', JSON.stringify(existingConsent, null, 2));
@@ -90,7 +97,7 @@ export function ConsentDetail(props) {
         const allConsents = Consents.find().fetch();
         console.log('ConsentDetail - Total consents in collection:', allConsents.length);
         if (allConsents.length > 0) {
-          console.log('ConsentDetail - First consent id:', allConsents[0]._id);
+          console.log('ConsentDetail - First consent _id:', allConsents[0]._id, 'FHIR id:', allConsents[0].id);
         }
       }
     }

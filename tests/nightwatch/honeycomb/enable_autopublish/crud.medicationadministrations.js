@@ -784,15 +784,21 @@ describe('MedicationAdministrations CRUD Operations', function() {
       });
 
     browser
-            .url('http://localhost:3000/medication-administrations')
+      .url('http://localhost:3000/medication-administrations')
+      .waitForElementVisible('#medicationAdministrationsPage', 10000)
+      .pause(2000) // Give time for data to load after navigation
       .waitForElementVisible('#medicationAdministrationsTable', 5000)
       .saveScreenshot('tests/nightwatch/screenshots/medicationadministrations/09-medicationadministration-updated.png');
   });
 
   it('08. Verify updated medication administration in list', browser => {
+    // Use search to find the specific updated record
     browser
+      .waitForElementVisible('#medicationAdministrationSearchInput', 10000)
+      .clearValue('#medicationAdministrationSearchInput')
+      .setValue('#medicationAdministrationSearchInput', updatedMedicationAdministration.performerName)
+      .pause(2000) // Give time for search to filter results
       .waitForElementVisible('#medicationAdministrationsTable', 5000)
-      .pause(500)
       .assert.containsText('#medicationAdministrationsTable', updatedMedicationAdministration.performerName)
       .saveScreenshot('tests/nightwatch/screenshots/medicationadministrations/10-updated-medicationadministration-in-list.png');
   });
