@@ -108,7 +108,10 @@ export function MedicationAdministrationsPage(props){
           {'id': searchFilter},
           {'medicationCodeableConcept.text': {$regex: searchFilter, $options: 'i'}},
           {'performer.0.actor.display': {$regex: searchFilter, $options: 'i'}},
-          {'subject.display': {$regex: searchFilter, $options: 'i'}}
+          {'performerDisplay': {$regex: searchFilter, $options: 'i'}},  // Also search flattened field
+          {'performer.0.display': {$regex: searchFilter, $options: 'i'}},  // Alternative structure
+          {'subject.display': {$regex: searchFilter, $options: 'i'}},
+          {'status': {$regex: searchFilter, $options: 'i'}}
         ]
       };
       
@@ -163,7 +166,10 @@ export function MedicationAdministrationsPage(props){
           {'id': searchFilter},
           {'medicationCodeableConcept.text': {$regex: searchFilter, $options: 'i'}},
           {'performer.0.actor.display': {$regex: searchFilter, $options: 'i'}},
-          {'subject.display': {$regex: searchFilter, $options: 'i'}}
+          {'performerDisplay': {$regex: searchFilter, $options: 'i'}},  // Also search flattened field
+          {'performer.0.display': {$regex: searchFilter, $options: 'i'}},  // Alternative structure
+          {'subject.display': {$regex: searchFilter, $options: 'i'}},
+          {'status': {$regex: searchFilter, $options: 'i'}}
         ]
       };
       
