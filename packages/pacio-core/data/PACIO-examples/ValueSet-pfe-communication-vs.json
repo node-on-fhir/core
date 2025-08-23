@@ -1,0 +1,91 @@
+{
+  "resourceType" : "ValueSet",
+  "id" : "pfe-communication-vs",
+  "text" : {
+    "status" : "generated",
+    "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p class=\"res-header-id\"><b>Generated Narrative: ValueSet pfe-communication-vs</b></p><a name=\"pfe-communication-vs\"> </a><a name=\"hcpfe-communication-vs\"> </a><a name=\"pfe-communication-vs-en-US\"> </a><ul><li>Include these codes as defined in <a href=\"http://loinc.org\"><code>http://loinc.org</code></a><table class=\"none\"><tr><td style=\"white-space:nowrap\"><b>Code</b></td><td><b>Display</b></td></tr><tr><td><a href=\"https://loinc.org/54602-8/\">54602-8</a></td><td style=\"color: #cccccc\">Understanding verbal content during assessment period [CMS Assessment]</td></tr><tr><td><a href=\"https://loinc.org/83250-1/\">83250-1</a></td><td style=\"color: #cccccc\">Expression of ideas and wants during 3 day assessment period [CMS Assessment]</td></tr><tr><td><a href=\"https://loinc.org/87503-9/\">87503-9</a></td><td style=\"color: #cccccc\">Understanding verbal and non-verbal content during 3 day assessment period [CMS Assessment]</td></tr><tr><td><a href=\"https://loinc.org/95737-3/\">95737-3</a></td><td style=\"color: #cccccc\">Expression of ideas and wants during assessment period [CMS Assessment]</td></tr><tr><td><a href=\"https://loinc.org/95740-7/\">95740-7</a></td><td style=\"color: #cccccc\">Understanding verbal and non-verbal content during assessment period [CMS Assessment]</td></tr><tr><td><a href=\"https://loinc.org/99829-4/\">99829-4</a></td><td style=\"color: #cccccc\">Frequency of conveying meaningful simple messages in routine low demand situations</td></tr><tr><td><a href=\"https://loinc.org/99830-2/\">99830-2</a></td><td style=\"color: #cccccc\">Frequency of participating in meaningful short structured conversations in low demand situations</td></tr><tr><td><a href=\"https://loinc.org/99831-0/\">99831-0</a></td><td style=\"color: #cccccc\">Frequency of conveying meaningful complex messages in low demand situations</td></tr><tr><td><a href=\"https://loinc.org/99832-8/\">99832-8</a></td><td style=\"color: #cccccc\">Frequency of conveying meaningful simple messages in routine high demand situations</td></tr><tr><td><a href=\"https://loinc.org/99833-6/\">99833-6</a></td><td style=\"color: #cccccc\">Frequency of participating in meaningful short structured conversations in high demand situations</td></tr><tr><td><a href=\"https://loinc.org/99834-4/\">99834-4</a></td><td style=\"color: #cccccc\">Frequency of conveying meaningful complex messages in high demand situations</td></tr><tr><td><a href=\"https://loinc.org/99835-1/\">99835-1</a></td><td style=\"color: #cccccc\">Functional Communication Measure - Multi-Modal Functional Communication score [ASHA NOMS]</td></tr></table></li></ul></div>"
+  },
+  "extension" : [{
+    "url" : "http://hl7.org/fhir/StructureDefinition/structuredefinition-wg",
+    "valueCode" : "pc"
+  }],
+  "url" : "http://hl7.org/fhir/us/pacio-pfe/ValueSet/pfe-communication-vs",
+  "version" : "2.0.0-ballot",
+  "name" : "PFECommunicationVS",
+  "title" : "Personal Functioning and Engagement Communication Value Set",
+  "status" : "active",
+  "experimental" : false,
+  "date" : "2024-08-13T14:51:10+00:00",
+  "publisher" : "HL7 International / Patient Care",
+  "contact" : [{
+    "name" : "HL7 International / Patient Care",
+    "telecom" : [{
+      "system" : "url",
+      "value" : "http://www.hl7.org/Special/committees/patientcare"
+    },
+    {
+      "system" : "email",
+      "value" : "patientcare@lists.HL7.org"
+    }]
+  },
+  {
+    "name" : "PACIO project",
+    "telecom" : [{
+      "system" : "url",
+      "value" : "http://www.hl7.org/Special/committees/patientcare"
+    },
+    {
+      "system" : "email",
+      "value" : "info@pacioproject.org"
+    }]
+  }],
+  "description" : "This value set includes LOINC codes that represent patient observations regarding individual's communication.",
+  "jurisdiction" : [{
+    "coding" : [{
+      "system" : "urn:iso:std:iso:3166",
+      "code" : "US"
+    }]
+  }],
+  "copyright" : "This material contains content from LOINC (http://loinc.org). LOINC is copyright © 1995-2020, Regenstrief Institute, Inc. and the Logical Observation Identifiers Names and Codes (LOINC) Committee and is available at no cost under the license at http://loinc.org/license. LOINC® is a registered United States trademark of Regenstrief Institute, Inc.",
+  "compose" : {
+    "include" : [{
+      "system" : "http://loinc.org",
+      "concept" : [{
+        "code" : "54602-8"
+      },
+      {
+        "code" : "83250-1"
+      },
+      {
+        "code" : "87503-9"
+      },
+      {
+        "code" : "95737-3"
+      },
+      {
+        "code" : "95740-7"
+      },
+      {
+        "code" : "99829-4"
+      },
+      {
+        "code" : "99830-2"
+      },
+      {
+        "code" : "99831-0"
+      },
+      {
+        "code" : "99832-8"
+      },
+      {
+        "code" : "99833-6"
+      },
+      {
+        "code" : "99834-4"
+      },
+      {
+        "code" : "99835-1"
+      }]
+    }]
+  }
+}

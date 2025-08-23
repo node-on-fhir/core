@@ -113,7 +113,7 @@ const MainPageLazy = React.lazy(() =>
 
 const MainPageComponent = withSuspense(MainPageLazy);
 
-const MainPage = {
+export const MainPage = {
   'name': 'PACIO Dashboard',
   'path': '/',
   'element': <MainPageComponent />
@@ -552,14 +552,5 @@ export const PatientsDirectoryButtons = [
   }
 ];
 
-export { 
-  DynamicRoutes,
-  SidebarElements,
-  SidebarWorkflows,
-  FooterElements,
-  ModuleConfig,
-  AdvanceDirectiveUtils,
-  PdfUtils,
-  MainPage,
-  PatientsDirectoryButtons
-};
+// Note: All exports are defined above using export const
+// No additional export block needed

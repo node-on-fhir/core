@@ -1,0 +1,25 @@
+{
+  "resourceType" : "PractitionerRole",
+  "id" : "PFEIG-Role-PT-SallySmith",
+  "text" : {
+    "status" : "generated",
+    "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p class=\"res-header-id\"><b>Generated Narrative: PractitionerRole PFEIG-Role-PT-SallySmith</b></p><a name=\"PFEIG-Role-PT-SallySmith\"> </a><a name=\"hcPFEIG-Role-PT-SallySmith\"> </a><a name=\"PFEIG-Role-PT-SallySmith-en-US\"> </a><p><b>active</b>: true</p><p><b>practitioner</b>: <a href=\"Practitioner-PFEIG-Practitioner-SallySmith.html\">Practitioner Sally Smith</a></p><p><b>organization</b>: <a href=\"Organization-PFEIG-Org-01.html\">Organization San Antonio General Hospital</a></p><p><b>code</b>: <span title=\"Codes:{http://snomed.info/sct 36682004}\">Physiotherapist</span></p><p><b>location</b>: <a href=\"Location-PFEIG-Org-Loc-01.html\">Location San Antonio General Hospital</a></p></div>"
+  },
+  "active" : true,
+  "practitioner" : {
+    "reference" : "Practitioner/PFEIG-Practitioner-SallySmith"
+  },
+  "organization" : {
+    "reference" : "Organization/PFEIG-Org-01"
+  },
+  "code" : [{
+    "coding" : [{
+      "system" : "http://snomed.info/sct",
+      "code" : "36682004",
+      "display" : "Physiotherapist"
+    }]
+  }],
+  "location" : [{
+    "reference" : "Location/PFEIG-Org-Loc-01"
+  }]
+}

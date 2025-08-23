@@ -1,0 +1,160 @@
+{
+  "resourceType" : "ValueSet",
+  "id" : "pfe-goals-mobility-vs",
+  "text" : {
+    "status" : "generated",
+    "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p class=\"res-header-id\"><b>Generated Narrative: ValueSet pfe-goals-mobility-vs</b></p><a name=\"pfe-goals-mobility-vs\"> </a><a name=\"hcpfe-goals-mobility-vs\"> </a><a name=\"pfe-goals-mobility-vs-en-US\"> </a><ul><li>Include these codes as defined in <a href=\"http://loinc.org\"><code>http://loinc.org</code></a><table class=\"none\"><tr><td style=\"white-space:nowrap\"><b>Code</b></td><td><b>Display</b></td></tr><tr><td><a href=\"https://loinc.org/83187-5/\">83187-5</a></td><td style=\"color: #cccccc\">Wheel 50 feet with two turns - functional goal during 3 day assessment period [CMS Assessment]</td></tr><tr><td><a href=\"https://loinc.org/83189-1/\">83189-1</a></td><td style=\"color: #cccccc\">Picking up object - functional goal during 3 day assessment period [CMS Assessment]</td></tr><tr><td><a href=\"https://loinc.org/83191-7/\">83191-7</a></td><td style=\"color: #cccccc\">12 steps - functional goal during 3 day assessment period [CMS Assessment]</td></tr><tr><td><a href=\"https://loinc.org/83193-3/\">83193-3</a></td><td style=\"color: #cccccc\">4 steps - functional goal during 3 day assessment period [CMS Assessment]</td></tr><tr><td><a href=\"https://loinc.org/83195-8/\">83195-8</a></td><td style=\"color: #cccccc\">1 step (curb) - functional goal during 3 day assessment period [CMS Assessment]</td></tr><tr><td><a href=\"https://loinc.org/83197-4/\">83197-4</a></td><td style=\"color: #cccccc\">Walking 10 feet on uneven surfaces - functional goal during 3 day assessment period [CMS Assessment]</td></tr><tr><td><a href=\"https://loinc.org/83199-0/\">83199-0</a></td><td style=\"color: #cccccc\">Walk 150 feet - functional goal during 3 day assessment period [CMS Assessment]</td></tr><tr><td><a href=\"https://loinc.org/83201-4/\">83201-4</a></td><td style=\"color: #cccccc\">Walk 50 feet with two turns - functional goal during 3 day assessment period [CMS Assessment]</td></tr><tr><td><a href=\"https://loinc.org/83203-0/\">83203-0</a></td><td style=\"color: #cccccc\">Walk 10 feet - functional goal during 3 day assessment period [CMS Assessment]</td></tr><tr><td><a href=\"https://loinc.org/83205-5/\">83205-5</a></td><td style=\"color: #cccccc\">Car transfer - functional goal during 3 day assessment period [CMS Assessment]</td></tr><tr><td><a href=\"https://loinc.org/83207-1/\">83207-1</a></td><td style=\"color: #cccccc\">Toilet transfer - functional goal during 3 day assessment period [CMS Assessment]</td></tr><tr><td><a href=\"https://loinc.org/83209-7/\">83209-7</a></td><td style=\"color: #cccccc\">Bed-to-chair transfer - functional goal during 3 day assessment period [CMS Assessment]</td></tr><tr><td><a href=\"https://loinc.org/83211-3/\">83211-3</a></td><td style=\"color: #cccccc\">Sit to stand - functional goal during 3 day assessment period [CMS Assessment]</td></tr><tr><td><a href=\"https://loinc.org/83213-9/\">83213-9</a></td><td style=\"color: #cccccc\">Lying to sitting on side of bed - functional goal during 3 day assessment period [CMS Assessment]</td></tr><tr><td><a href=\"https://loinc.org/83215-4/\">83215-4</a></td><td style=\"color: #cccccc\">Sit to lying - functional goal during 3 day assessment period [CMS Assessment]</td></tr><tr><td><a href=\"https://loinc.org/83217-0/\">83217-0</a></td><td style=\"color: #cccccc\">Roll left and right - functional goal during 3 day assessment period [CMS Assessment]</td></tr><tr><td><a href=\"https://loinc.org/83236-0/\">83236-0</a></td><td style=\"color: #cccccc\">Wheel 150 feet - functional goal during 3 day assessment period [CMS Assessment]</td></tr><tr><td><a href=\"https://loinc.org/85927-2/\">85927-2</a></td><td style=\"color: #cccccc\">Lying to sitting on side of bed - functional goal during assessment period [CMS Assessment]</td></tr><tr><td><a href=\"https://loinc.org/89375-0/\">89375-0</a></td><td style=\"color: #cccccc\">Wheel 50 feet with two turns - functional goal during assessment period [CMS Assessment]</td></tr><tr><td><a href=\"https://loinc.org/89377-6/\">89377-6</a></td><td style=\"color: #cccccc\">Wheel 150 feet - functional goal during assessment period [CMS Assessment]</td></tr><tr><td><a href=\"https://loinc.org/89379-2/\">89379-2</a></td><td style=\"color: #cccccc\">Walking 10 feet on uneven surfaces - functional goal during assessment period [CMS Assessment]</td></tr><tr><td><a href=\"https://loinc.org/89381-8/\">89381-8</a></td><td style=\"color: #cccccc\">Walk 50 feet with two turns - functional goal during assessment period [CMS Assessment]</td></tr><tr><td><a href=\"https://loinc.org/89383-4/\">89383-4</a></td><td style=\"color: #cccccc\">Walk 150 feet - functional goal during assessment period [CMS Assessment]</td></tr><tr><td><a href=\"https://loinc.org/89385-9/\">89385-9</a></td><td style=\"color: #cccccc\">Walk 10 feet - functional goal during assessment period [CMS Assessment]</td></tr><tr><td><a href=\"https://loinc.org/89390-9/\">89390-9</a></td><td style=\"color: #cccccc\">Toilet transfer - functional goal during assessment period [CMS Assessment]</td></tr><tr><td><a href=\"https://loinc.org/89392-5/\">89392-5</a></td><td style=\"color: #cccccc\">Sit to stand - functional goal during assessment period [CMS Assessment]</td></tr><tr><td><a href=\"https://loinc.org/89394-1/\">89394-1</a></td><td style=\"color: #cccccc\">Sit to lying - functional goal during assessment period [CMS Assessment]</td></tr><tr><td><a href=\"https://loinc.org/89398-2/\">89398-2</a></td><td style=\"color: #cccccc\">Roll left and right - functional goal during assessment period [CMS Assessment]</td></tr><tr><td><a href=\"https://loinc.org/89402-2/\">89402-2</a></td><td style=\"color: #cccccc\">Picking up object - functional goal during assessment period [CMS Assessment]</td></tr><tr><td><a href=\"https://loinc.org/89412-1/\">89412-1</a></td><td style=\"color: #cccccc\">Car transfer - functional goal during assessment period [CMS Assessment]</td></tr><tr><td><a href=\"https://loinc.org/89414-7/\">89414-7</a></td><td style=\"color: #cccccc\">Chair/bed-to-chair transfer - functional goal during assessment period [CMS Assessment]</td></tr><tr><td><a href=\"https://loinc.org/89416-2/\">89416-2</a></td><td style=\"color: #cccccc\">Go up and down 4 steps - functional goal during assessment period [CMS Assessment]</td></tr><tr><td><a href=\"https://loinc.org/89418-8/\">89418-8</a></td><td style=\"color: #cccccc\">Go up and down 12 steps - functional goal during assessment period [CMS Assessment]</td></tr><tr><td><a href=\"https://loinc.org/89420-4/\">89420-4</a></td><td style=\"color: #cccccc\">Go up and down a curb/step - functional goal during assessment period [CMS Assessment]</td></tr><tr><td><a href=\"https://loinc.org/95862-9/\">95862-9</a></td><td style=\"color: #cccccc\">LCDS v4.00 - Mobility - discharge goal during assessment period [CMS Assessment]</td></tr></table></li></ul></div>"
+  },
+  "extension" : [{
+    "url" : "http://hl7.org/fhir/StructureDefinition/structuredefinition-wg",
+    "valueCode" : "pc"
+  }],
+  "url" : "http://hl7.org/fhir/us/pacio-pfe/ValueSet/pfe-goals-mobility-vs",
+  "version" : "2.0.0-ballot",
+  "name" : "PFEGoalsMobilityVS",
+  "title" : "Personal Functioning and Engagement Goals Mobility Value Set",
+  "status" : "active",
+  "experimental" : false,
+  "date" : "2024-08-13T14:51:10+00:00",
+  "publisher" : "HL7 International / Patient Care",
+  "contact" : [{
+    "name" : "HL7 International / Patient Care",
+    "telecom" : [{
+      "system" : "url",
+      "value" : "http://www.hl7.org/Special/committees/patientcare"
+    },
+    {
+      "system" : "email",
+      "value" : "patientcare@lists.HL7.org"
+    }]
+  },
+  {
+    "name" : "PACIO project",
+    "telecom" : [{
+      "system" : "url",
+      "value" : "http://www.hl7.org/Special/committees/patientcare"
+    },
+    {
+      "system" : "email",
+      "value" : "info@pacioproject.org"
+    }]
+  }],
+  "description" : "This value set includes LOINC codes that represent patient goals regarding individual's mobility.",
+  "jurisdiction" : [{
+    "coding" : [{
+      "system" : "urn:iso:std:iso:3166",
+      "code" : "US"
+    }]
+  }],
+  "copyright" : "This material contains content from LOINC (http://loinc.org). LOINC is copyright © 1995-2020, Regenstrief Institute, Inc. and the Logical Observation Identifiers Names and Codes (LOINC) Committee and is available at no cost under the license at http://loinc.org/license. LOINC® is a registered United States trademark of Regenstrief Institute, Inc.",
+  "compose" : {
+    "include" : [{
+      "system" : "http://loinc.org",
+      "concept" : [{
+        "code" : "83187-5"
+      },
+      {
+        "code" : "83189-1"
+      },
+      {
+        "code" : "83191-7"
+      },
+      {
+        "code" : "83193-3"
+      },
+      {
+        "code" : "83195-8"
+      },
+      {
+        "code" : "83197-4"
+      },
+      {
+        "code" : "83199-0"
+      },
+      {
+        "code" : "83201-4"
+      },
+      {
+        "code" : "83203-0"
+      },
+      {
+        "code" : "83205-5"
+      },
+      {
+        "code" : "83207-1"
+      },
+      {
+        "code" : "83209-7"
+      },
+      {
+        "code" : "83211-3"
+      },
+      {
+        "code" : "83213-9"
+      },
+      {
+        "code" : "83215-4"
+      },
+      {
+        "code" : "83217-0"
+      },
+      {
+        "code" : "83236-0"
+      },
+      {
+        "code" : "85927-2"
+      },
+      {
+        "code" : "89375-0"
+      },
+      {
+        "code" : "89377-6"
+      },
+      {
+        "code" : "89379-2"
+      },
+      {
+        "code" : "89381-8"
+      },
+      {
+        "code" : "89383-4"
+      },
+      {
+        "code" : "89385-9"
+      },
+      {
+        "code" : "89390-9"
+      },
+      {
+        "code" : "89392-5"
+      },
+      {
+        "code" : "89394-1"
+      },
+      {
+        "code" : "89398-2"
+      },
+      {
+        "code" : "89402-2"
+      },
+      {
+        "code" : "89412-1"
+      },
+      {
+        "code" : "89414-7"
+      },
+      {
+        "code" : "89416-2"
+      },
+      {
+        "code" : "89418-8"
+      },
+      {
+        "code" : "89420-4"
+      },
+      {
+        "code" : "95862-9"
+      }]
+    }]
+  }
+}

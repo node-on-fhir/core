@@ -1,0 +1,29 @@
+{
+  "resourceType": "SearchParameter",
+  "id": "encounter-patient",
+  "url": "http://github.com/node-on-fhir/honeycomb/private/SearchParameters/SearchParameter-encounter-patient",
+  "version": "1.0.0",
+  "name": "HoneycombEncounterPatient",
+  "status": "active",
+  "date": "2024-08-21",
+  "publisher": "github.com/node-on-fhir",
+  "contact": [
+    {
+      "telecom": [
+        {
+          "system": "url",
+          "value": "http://github.com/node-on-fhir/honeycomb"
+        }
+      ]
+    }
+  ],
+  "description": "Search for encounters by patient",
+  "code": "patient",
+  "base": ["Encounter"],
+  "type": "reference",
+  "expression": "Encounter.subject.where(resolve() is Patient)",
+  "xpath": "subject.reference",
+  "target": ["Patient"],
+  "multipleOr": true,
+  "multipleAnd": false
+}

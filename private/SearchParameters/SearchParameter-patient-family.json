@@ -1,0 +1,29 @@
+{
+  "resourceType": "SearchParameter",
+  "id": "patient-family",
+  "url": "http://github.com/node-on-fhir/honeycomb/private/SearchParameters/SearchParameter-patient-family",
+  "version": "1.0.0",
+  "name": "HoneycombPatientFamily",
+  "status": "active",
+  "date": "2024-08-21",
+  "publisher": "github.com/node-on-fhir",
+  "contact": [
+    {
+      "telecom": [
+        {
+          "system": "url",
+          "value": "http://github.com/node-on-fhir/honeycomb"
+        }
+      ]
+    }
+  ],
+  "description": "Search for patients by family (last) name",
+  "code": "family",
+  "base": ["Patient"],
+  "type": "string",
+  "expression": "Patient.name.family",
+  "xpath": "name.family",
+  "multipleOr": true,
+  "multipleAnd": true,
+  "modifier": ["exact", "contains"]
+}

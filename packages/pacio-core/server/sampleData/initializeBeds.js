@@ -2,18 +2,44 @@
 
 import { Meteor } from 'meteor/meteor';
 import { Beds } from '../../lib/collections/BedsCollection';
+import { get } from 'lodash';
 
 export async function initializeSampleBeds() {
   try {
+    // Get facility information from settings
+    const facilityName = get(Meteor, 'settings.public.pacio.facilityName', "Rainbow's End Medical Home");
+    const facilityAddress = get(Meteor, 'settings.public.pacio.facilityAddress', '789 Healing Way, Springfield, IL 62704');
+    
     // Check if beds already exist
     const existingBeds = await Beds.find({}).countAsync();
     
     if (existingBeds > 0) {
-      console.log(`Beds collection already has ${existingBeds} beds. Skipping initialization.`);
+      console.log(`Beds collection already has ${existingBeds} beds.`);
+      
+      // Update facility name if it's different from settings
+      const outdatedBeds = await Beds.find({ 
+        facilityName: { $ne: facilityName } 
+      }).countAsync();
+      
+      if (outdatedBeds > 0) {
+        console.log(`Updating facility name for ${outdatedBeds} beds to: ${facilityName}`);
+        await Beds.updateAsync(
+          {},
+          { 
+            $set: { 
+              facilityName: facilityName,
+              updatedAt: new Date()
+            }
+          },
+          { multi: true }
+        );
+      }
+      
       return;
     }
 
   console.log('Initializing sample bed data...');
+  console.log(`Creating beds for facility: ${facilityName} at ${facilityAddress}`);
 
   const sampleBeds = [
     // Occupied beds (14 out of 16)
@@ -24,7 +50,7 @@ export async function initializeSampleBeds() {
       floor: '1',
       building: 'Main',
       facilityId: 'mh-001',
-      facilityName: "Rainbow's End Medical Home",
+      facilityName: facilityName,
       status: 'occupied',
       bedType: 'standard',
       features: ['adjustable', 'call button', 'oxygen port']
@@ -36,7 +62,7 @@ export async function initializeSampleBeds() {
       floor: '1',
       building: 'Main',
       facilityId: 'mh-001',
-      facilityName: "Rainbow's End Medical Home",
+      facilityName: facilityName,
       status: 'occupied',
       bedType: 'standard',
       features: ['adjustable', 'call button', 'oxygen port']
@@ -48,7 +74,7 @@ export async function initializeSampleBeds() {
       floor: '1',
       building: 'Main',
       facilityId: 'mh-001',
-      facilityName: "Rainbow's End Medical Home",
+      facilityName: facilityName,
       status: 'occupied',
       bedType: 'standard',
       features: ['adjustable', 'call button', 'oxygen port', 'cardiac monitor']
@@ -60,7 +86,7 @@ export async function initializeSampleBeds() {
       floor: '1',
       building: 'Main',
       facilityId: 'mh-001',
-      facilityName: "Rainbow's End Medical Home",
+      facilityName: facilityName,
       status: 'occupied',
       bedType: 'standard',
       features: ['adjustable', 'call button']
@@ -72,7 +98,7 @@ export async function initializeSampleBeds() {
       floor: '1',
       building: 'Main',
       facilityId: 'mh-001',
-      facilityName: "Rainbow's End Medical Home",
+      facilityName: facilityName,
       status: 'occupied',
       bedType: 'bariatric',
       features: ['adjustable', 'call button', 'reinforced frame']
@@ -84,7 +110,7 @@ export async function initializeSampleBeds() {
       floor: '1',
       building: 'Main',
       facilityId: 'mh-001',
-      facilityName: "Rainbow's End Medical Home",
+      facilityName: facilityName,
       status: 'occupied',
       bedType: 'standard',
       features: ['adjustable', 'call button']
@@ -96,7 +122,7 @@ export async function initializeSampleBeds() {
       floor: '1',
       building: 'Main',
       facilityId: 'mh-001',
-      facilityName: "Rainbow's End Medical Home",
+      facilityName: facilityName,
       status: 'occupied',
       bedType: 'standard',
       features: ['adjustable', 'call button', 'oxygen port']
@@ -108,7 +134,7 @@ export async function initializeSampleBeds() {
       floor: '1',
       building: 'Main',
       facilityId: 'mh-001',
-      facilityName: "Rainbow's End Medical Home",
+      facilityName: facilityName,
       status: 'occupied',
       bedType: 'standard',
       features: ['adjustable', 'call button']
@@ -120,7 +146,7 @@ export async function initializeSampleBeds() {
       floor: '2',
       building: 'Main',
       facilityId: 'mh-001',
-      facilityName: "Rainbow's End Medical Home",
+      facilityName: facilityName,
       status: 'occupied',
       bedType: 'standard',
       features: ['adjustable', 'call button', 'trapeze bar']
@@ -132,7 +158,7 @@ export async function initializeSampleBeds() {
       floor: '2',
       building: 'Main',
       facilityId: 'mh-001',
-      facilityName: "Rainbow's End Medical Home",
+      facilityName: facilityName,
       status: 'occupied',
       bedType: 'standard',
       features: ['adjustable', 'call button', 'trapeze bar']
@@ -144,7 +170,7 @@ export async function initializeSampleBeds() {
       floor: '2',
       building: 'Main',
       facilityId: 'mh-001',
-      facilityName: "Rainbow's End Medical Home",
+      facilityName: facilityName,
       status: 'occupied',
       bedType: 'standard',
       features: ['adjustable', 'call button']
@@ -156,7 +182,7 @@ export async function initializeSampleBeds() {
       floor: '2',
       building: 'Main',
       facilityId: 'mh-001',
-      facilityName: "Rainbow's End Medical Home",
+      facilityName: facilityName,
       status: 'occupied',
       bedType: 'standard',
       features: ['adjustable', 'call button', 'oxygen port']
@@ -168,7 +194,7 @@ export async function initializeSampleBeds() {
       floor: '2',
       building: 'Main',
       facilityId: 'mh-001',
-      facilityName: "Rainbow's End Medical Home",
+      facilityName: facilityName,
       status: 'occupied',
       bedType: 'standard',
       features: ['adjustable', 'call button']
@@ -180,7 +206,7 @@ export async function initializeSampleBeds() {
       floor: '2',
       building: 'Main',
       facilityId: 'mh-001',
-      facilityName: "Rainbow's End Medical Home",
+      facilityName: facilityName,
       status: 'occupied',
       bedType: 'standard',
       features: ['adjustable', 'call button']
@@ -193,7 +219,7 @@ export async function initializeSampleBeds() {
       floor: '2',
       building: 'Main',
       facilityId: 'mh-001',
-      facilityName: "Rainbow's End Medical Home",
+      facilityName: facilityName,
       status: 'available',
       bedType: 'standard',
       features: ['adjustable', 'call button']
@@ -205,7 +231,7 @@ export async function initializeSampleBeds() {
       floor: '2',
       building: 'Main',
       facilityId: 'mh-001',
-      facilityName: "Rainbow's End Medical Home",
+      facilityName: facilityName,
       status: 'cleaning',
       bedType: 'standard',
       features: ['adjustable', 'call button', 'oxygen port']

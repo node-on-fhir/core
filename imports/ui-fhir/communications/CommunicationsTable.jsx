@@ -26,6 +26,16 @@ import { FhirDehydrator } from '../../lib/FhirDehydrator';
 //===========================================================================
 // THEMING
 
+// Simplified logger that uses standard console methods
+const logger = {
+  debug: console.debug.bind(console),
+  trace: console.trace.bind(console),
+  data: console.log.bind(console),
+  verbose: console.debug.bind(console),
+  info: console.info.bind(console),
+  warn: console.warn.bind(console),
+  error: console.error.bind(console)
+};
 
 
 
@@ -59,6 +69,7 @@ function CommunicationsTable(props){
     hideSent,
     hideReceived,
     hideBarcode,
+    hideMessageContent,
     hideTextIcon,
   
     onCellClick,
@@ -90,12 +101,16 @@ function CommunicationsTable(props){
 
     // ------------------------------------------------------------------------
   // Form Factors
+  
+  // Store original prop values to respect user preferences
+  const hideBarcodeFromProp = hideBarcode;
+  const hideCategoryFromProp = hideCategory;
 
   if(formFactorLayout){
     logger.verbose('formFactorLayout', formFactorLayout + ' ' + window.innerWidth);
     switch (formFactorLayout) {
       case "phone":
-        hideCategory = false;
+        hideCategory = true;
         hideStatus = true;
         hidePriority = true;
         hideSubject = false;
@@ -107,7 +122,7 @@ function CommunicationsTable(props){
         hideTextIcon = false;
         break;
       case "tablet":
-        hideCategory = false;
+        hideCategory = (hideCategoryFromProp !== undefined) ? hideCategoryFromProp : true;
         hideStatus = false;
         hidePriority = true;
         hideSubject = false;
@@ -119,7 +134,7 @@ function CommunicationsTable(props){
         hideTextIcon = false;
         break;
       case "desktop":
-        hideCategory = false;
+        hideCategory = (hideCategoryFromProp !== undefined) ? hideCategoryFromProp : true;
         hideStatus = false;
         hidePriority = false;
         hideSubject = false;
@@ -127,11 +142,11 @@ function CommunicationsTable(props){
         hideSender = false;
         hideSent = false;
         hideReceived = false;
-        hideBarcode = false;
+        hideBarcode = (hideBarcodeFromProp !== undefined) ? hideBarcodeFromProp : false;
         hideTextIcon = true;
         break;
       case "hdmi":
-        hideCategory = false;
+        hideCategory = (hideCategoryFromProp !== undefined) ? hideCategoryFromProp : true;
         hideStatus = false;
         hidePriority = false;
         hideSubject = false;
@@ -139,7 +154,7 @@ function CommunicationsTable(props){
         hideSender = false;
         hideSent = false;
         hideReceived = false;
-        hideBarcode = false;
+        hideBarcode = (hideBarcodeFromProp !== undefined) ? hideBarcodeFromProp : false;
         hideTextIcon = true;
         break;            
     }
@@ -363,6 +378,25 @@ function CommunicationsTable(props){
       );
     }
   }
+  function renderMessageContent(messageContent){
+    if (!hideMessageContent) {
+      // Truncate long messages for table display
+      let displayContent = messageContent || '';
+      if (displayContent.length > 50) {
+        displayContent = displayContent.substring(0, 47) + '...';
+      }
+      return (
+        <TableCell className='messageContent'>{ displayContent }</TableCell>
+      );
+    }
+  }
+  function renderMessageContentHeader(){
+    if (!hideMessageContent) {
+      return (
+        <TableCell className='messageContent'>{get(labels, 'messageContent', 'Message Content')}</TableCell>
+      );
+    }
+  }
 
   //---------------------------------------------------------------------
   // Table Rows
@@ -386,15 +420,15 @@ function CommunicationsTable(props){
               <TableRow key={count} className="communicationRow" style={{cursor: 'pointer'}} onClick={ handleRowClick.bind(this, communication._id)}>
                 { renderCheckbox(count) }
                 { renderActionIcons(communication) }
-                { renderIdentifier(row.identifier) }
-                { renderCategory(row.category) }
                 { renderStatus(row.status) }
                 { renderPriority(row.priority) }
-                { renderSubject(row.subject) }
-                { renderRecipient(row.recipient) }
                 { renderSender(row.sender) }
                 { renderSent(row.sent) }
+                { renderSubject(row.subject) }
+                { renderMessageContent(row.messageContent || row.payloadContent) }
+                { renderRecipient(row.recipient) }
                 { renderReceived(row.received) }
+                { renderCategory(row.category) }
                 { renderBarcode(row.id) }
               </TableRow>
             )
@@ -412,8 +446,14 @@ function CommunicationsTable(props){
   };
 
   const handleChangeRowsPerPage = (event) => {
+    // This should be handled by the parent component
+    // The parent needs to pass an onSetRowsPerPage function
+    if(typeof props.onSetRowsPerPage === "function"){
+      props.onSetRowsPerPage(parseInt(event.target.value, 10));
+    }
+    // Reset to first page when changing rows per page
     if(typeof onSetPage === "function"){
-      onSetPage(parseInt(event.target.value, 10));
+      onSetPage(0);
     }
   };
 
@@ -426,15 +466,15 @@ function CommunicationsTable(props){
           <TableRow>
             { renderCheckboxHeader() }
             { renderActionIconsHeader() }
-            { renderIdentifierHeader() }
-            { renderCategoryHeader() }
             { renderStatusHeader() }
             { renderPriorityHeader() }
-            { renderSubjectHeader() }
-            { renderRecipientHeader() }
             { renderSenderHeader() }
             { renderSentHeader() }
+            { renderSubjectHeader() }
+            { renderMessageContentHeader() }
+            { renderRecipientHeader() }
             { renderReceivedHeader() }
+            { renderCategoryHeader() }
             { renderBarcodeHeader() }
           </TableRow>
         </TableHead>
@@ -445,7 +485,7 @@ function CommunicationsTable(props){
       <TablePagination
         component="div"
         rowsPerPageOptions={[5, 10, 25, 100]}
-        count={count}
+        count={communications ? communications.length : 0}
         rowsPerPage={rowsPerPage}
         page={page}
         onPageChange={handleChangePage}
@@ -474,6 +514,7 @@ CommunicationsTable.propTypes = {
   hideSent: PropTypes.bool,
   hideReceived: PropTypes.bool,
   hideBarcode: PropTypes.bool,
+  hideMessageContent: PropTypes.bool,
 
   onCellClick: PropTypes.func,
   onRowClick: PropTypes.func,
@@ -504,7 +545,7 @@ CommunicationsTable.defaultProps = {
   hideActionIcons: true,
   hideActionButton: true,
   hideIdentifier: false,
-  hideCategory: false,
+  hideCategory: true,
   hideStatus: false,
   hidePriority: false,
   hideSubject: false,
@@ -513,6 +554,7 @@ CommunicationsTable.defaultProps = {
   hideSent: false,
   hideReceived: false,
   hideBarcode: true,
+  hideMessageContent: false,
   defaultCheckboxValue: false,
   autoColumns: true,
   rowsPerPageOptions: [5, 10, 25, 100],

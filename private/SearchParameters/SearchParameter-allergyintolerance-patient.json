@@ -1,0 +1,29 @@
+{
+  "resourceType": "SearchParameter",
+  "id": "allergyintolerance-patient",
+  "url": "http://github.com/node-on-fhir/honeycomb/private/SearchParameters/SearchParameter-allergyintolerance-patient",
+  "version": "1.0.0",
+  "name": "HoneycombAllergyIntolerancePatient",
+  "status": "active",
+  "date": "2024-08-21",
+  "publisher": "github.com/node-on-fhir",
+  "contact": [
+    {
+      "telecom": [
+        {
+          "system": "url",
+          "value": "http://github.com/node-on-fhir/honeycomb"
+        }
+      ]
+    }
+  ],
+  "description": "Search for allergy intolerances by patient",
+  "code": "patient",
+  "base": ["AllergyIntolerance"],
+  "type": "reference",
+  "expression": "AllergyIntolerance.patient",
+  "xpath": "patient.reference",
+  "target": ["Patient"],
+  "multipleOr": true,
+  "multipleAnd": false
+}

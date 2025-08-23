@@ -1,0 +1,13 @@
+{
+  "resourceType" : "Location",
+  "id" : "PFEIG-Org-Loc-03",
+  "text" : {
+    "status" : "generated",
+    "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p class=\"res-header-id\"><b>Generated Narrative: Location PFEIG-Org-Loc-03</b></p><a name=\"PFEIG-Org-Loc-03\"> </a><a name=\"hcPFEIG-Org-Loc-03\"> </a><a name=\"PFEIG-Org-Loc-03-en-US\"> </a><p><b>status</b>: Active</p><p><b>name</b>: Sky Harbor Home Health Services</p><p><b>address</b>: 8810 Old Sky Harbor, San Antonio, TX 78242</p></div>"
+  },
+  "status" : "active",
+  "name" : "Sky Harbor Home Health Services",
+  "address" : {
+    "text" : "8810 Old Sky Harbor, San Antonio, TX 78242"
+  }
+}

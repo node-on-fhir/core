@@ -24,6 +24,15 @@ import { FhirDehydrator } from '../../lib/FhirDehydrator';
 
 import { Session } from 'meteor/session';
 
+// Logger for debugging
+const logger = {
+  trace: console.log.bind(console),
+  debug: console.debug.bind(console),
+  info: console.info.bind(console),
+  warn: console.warn.bind(console),
+  error: console.error.bind(console)
+};
+
 //===========================================================================
 // SESSION VARIABLES
 
@@ -72,6 +81,8 @@ export function ConsentsTable(props){
     hideActorRole,
     hideActorReference,
     hideSource,
+    hideActions,
+    hideSecurityLabel,
 
     revokeButtonType,
     revokeColor,
@@ -318,8 +329,13 @@ export function ConsentsTable(props){
   }
   function renderType(provisionType){
     if (!hideType) {
+      // Handle provisionType as an object or string
+      let typeDisplay = provisionType;
+      if (typeof provisionType === 'object' && provisionType !== null) {
+        typeDisplay = provisionType.display || provisionType.code || JSON.stringify(provisionType);
+      }
       return (
-        <TableCell className='provisionType' style={data.style.cell} >{ provisionType }</TableCell>
+        <TableCell className='provisionType' style={data.style.cell} >{ typeDisplay }</TableCell>
       );
     }
   }
@@ -332,8 +348,18 @@ export function ConsentsTable(props){
   }
   function renderClass(provisionClass){
     if (!hideClass) {
+      // Handle provisionClass as an object or string  
+      let classDisplay = provisionClass;
+      if (typeof provisionClass === 'object' && provisionClass !== null) {
+        if (Array.isArray(provisionClass)) {
+          // If it's an array, join the codes
+          classDisplay = provisionClass.map(item => item.code || item.display || item).join(' - ');
+        } else {
+          classDisplay = provisionClass.display || provisionClass.code || JSON.stringify(provisionClass);
+        }
+      }
       return (
-        <TableCell className='provisionClass' style={data.style.cell} >{ provisionClass }</TableCell>
+        <TableCell className='provisionClass' style={data.style.cell} >{ classDisplay }</TableCell>
       );
     }
   }
@@ -346,8 +372,13 @@ export function ConsentsTable(props){
   }
   function renderCategory(category){
     if (!hideCategory) {
+      // Handle category as an object with code/display or as a string
+      let categoryDisplay = category;
+      if (typeof category === 'object' && category !== null) {
+        categoryDisplay = category.display || category.code || JSON.stringify(category);
+      }
       return (
-        <TableCell className='category' style={data.style.cell} >{ category }</TableCell>
+        <TableCell className='category' style={data.style.cell} >{ categoryDisplay }</TableCell>
       );
     }
   }
@@ -498,8 +529,13 @@ export function ConsentsTable(props){
   }
   function renderScope(scope){
     if (!hideScope) {
+      // Handle scope as an object or string
+      let scopeDisplay = scope;
+      if (typeof scope === 'object' && scope !== null) {
+        scopeDisplay = scope.display || scope.code || JSON.stringify(scope);
+      }
       return (
-        <TableCell className='scope' style={{minWidth: '140px'}}>{ scope }</TableCell>
+        <TableCell className='scope' style={{minWidth: '140px'}}>{ scopeDisplay }</TableCell>
       );
     }
   }
@@ -513,8 +549,13 @@ export function ConsentsTable(props){
   }
   function renderActorRole(actorRole){
     if (!hideActorRole) {
+      // Handle actorRole as an object or string
+      let actorRoleDisplay = actorRole;
+      if (typeof actorRole === 'object' && actorRole !== null) {
+        actorRoleDisplay = actorRole.display || actorRole.code || JSON.stringify(actorRole);
+      }
       return (
-        <TableCell className='actorRole' style={{minWidth: '140px'}}>{ actorRole }</TableCell>
+        <TableCell className='actorRole' style={{minWidth: '140px'}}>{ actorRoleDisplay }</TableCell>
       );
     }
   }
@@ -531,6 +572,36 @@ export function ConsentsTable(props){
     if (!hideActorReference) {
       return (
         <TableCell className='actorReference' style={{minWidth: '140px'}}>{ actorReference }</TableCell>
+      );
+    }
+  }
+
+  function renderActionsHeader(){
+    if (!hideActions) {
+      return (
+        <TableCell className='actions'>Actions</TableCell>
+      );
+    }
+  }
+  function renderActions(actions){
+    if (!hideActions) {
+      return (
+        <TableCell className='actions' style={{minWidth: '200px'}}>{ actions }</TableCell>
+      );
+    }
+  }
+
+  function renderSecurityLabelHeader(){
+    if (!hideSecurityLabel) {
+      return (
+        <TableCell className='securityLabel'>Security Label</TableCell>
+      );
+    }
+  }
+  function renderSecurityLabel(securityLabel){
+    if (!hideSecurityLabel) {
+      return (
+        <TableCell className='securityLabel' style={{minWidth: '120px'}}>{ securityLabel }</TableCell>
       );
     }
   }
@@ -585,10 +656,26 @@ export function ConsentsTable(props){
     if(consents.length > 0){     
       let count = 0;    
 
-      consents.forEach(function(condition){
+      consents.forEach(function(consent){
         if((count >= (page * rowsPerPage)) && (count < (page + 1) * rowsPerPage)){
-          // consentsToRender.push(FhirDehydrator.dehydrateConsent(condition, internalDateFormat));
-          consentsToRender.push(FhirDehydrator.dehydrateConsent(condition, internalDateFormat));
+          // Dehydrate the consent
+          const dehydratedConsent = FhirDehydrator.dehydrateConsent(consent, internalDateFormat);
+          
+          // Debug: Check if category was properly dehydrated
+          if (typeof dehydratedConsent.category === 'object') {
+            console.warn('FhirDehydrator did not properly process category:', {
+              original: consent.category,
+              dehydrated: dehydratedConsent.category
+            });
+            // Fix it here as a workaround
+            if (dehydratedConsent.category && typeof dehydratedConsent.category === 'object') {
+              dehydratedConsent.category = dehydratedConsent.category.display || 
+                                         dehydratedConsent.category.code || 
+                                         JSON.stringify(dehydratedConsent.category);
+            }
+          }
+          
+          consentsToRender.push(dehydratedConsent);
         }
         count++;
       });  
@@ -614,7 +701,7 @@ export function ConsentsTable(props){
   } else {
     for (let i = 0; i < consentsToRender.length; i++) {
       const currentConsent = consentsToRender[i];
-      const consentId = currentConsent._id;
+      const consentId = currentConsent.id;  // Use FHIR id instead of MongoDB _id
       
       let selected = false;
       if(currentConsent.id === selectedConsentId){
@@ -627,6 +714,16 @@ export function ConsentsTable(props){
         rowStyle.height = '32px';
       }
       logger.trace('consentsToRender[i]', currentConsent)
+      
+      // Debug: Check all fields for objects
+      const fieldsToCheck = ['category', 'scope', 'actorRole', 'provisionType', 'provisionClass'];
+      fieldsToCheck.forEach(field => {
+        const value = get(currentConsent, field);
+        if (typeof value === 'object' && value !== null) {
+          console.warn(`ConsentsTable: ${field} is an object:`, value);
+        }
+      });
+      
       tableRows.push(
         <TableRow className="consentRow" 
           key={i} 
@@ -645,18 +742,20 @@ export function ConsentsTable(props){
           {renderPeriodStart(get(currentConsent, '_id'), get(currentConsent, 'start'))}
           {renderPeriodEnd(get(currentConsent, '_id'), get(currentConsent, 'end'))}
           {renderStatus(get(currentConsent, 'status'))}
+          {renderCategory( get(currentConsent, 'category')) }
+          {renderScope( get(currentConsent, 'scope')) }
           {renderPatientName(get(currentConsent, 'patientName')) }
           {renderOrganization(get(currentConsent, 'organization')) }
           {renderType( get(currentConsent, 'provisionType')) }
-          {renderClass( get(currentConsent, 'provisionClass')) }
-          {renderCategory( get(currentConsent, 'category')) }
-          {renderScope( get(currentConsent, 'scope')) }
 
           {renderActorRole( get(currentConsent, 'actorRole')) }
           {renderActorReference( get(currentConsent, 'actorReference')) }
+          {renderActions( get(currentConsent, 'provisionAction', '')) }
+          {renderSecurityLabel( get(currentConsent, 'securityLabel', '')) }
 
           {renderSource(get(currentConsent, 'sourceReference')) }
           {renderRevoke(get(currentConsent, '_id'))}
+          {renderClass( get(currentConsent, 'provisionClass')) }
 
           {renderBarcode(get(currentConsent, 'id', ''))}
         </TableRow>
@@ -675,17 +774,19 @@ export function ConsentsTable(props){
             {renderPeriodStartHeader() }
             {renderPeriodEndHeader() }
             {renderStatusHeader() }
+            {renderCategoryHeader() }
+            {renderScopeHeader() }
             {renderPatientNameHeader() }
             {renderOrganizationHeader() }
             {renderTypeHeader() }
-            {renderClassHeader() }
-            {renderCategoryHeader() }
-            {renderScopeHeader() }
             {renderActorRoleHeader() }
             {renderActorReferenceHeader() }
+            {renderActionsHeader() }
+            {renderSecurityLabelHeader() }
  
             {renderSourceHeader() }
             {renderRevokeHeader() }
+            {renderClassHeader() }
 
             {renderBarcodeHeader() }
           </TableRow>
@@ -734,6 +835,8 @@ ConsentsTable.propTypes = {
   hideSource: PropTypes.bool,
   hideActorRole: PropTypes.bool,
   hideActorReference: PropTypes.bool,
+  hideActions: PropTypes.bool,
+  hideSecurityLabel: PropTypes.bool,
 
   revokeButtonType: PropTypes.string,
   revokeColor: PropTypes.string,
@@ -792,6 +895,8 @@ ConsentsTable.defaultProps = {
   hideRevoke: true,
   hidePeriodStart: true,
   hidePeriodEnd: true,
+  hideActions: false,
+  hideSecurityLabel: false,
 
   disablePagination: false,
   selectedListId: '',

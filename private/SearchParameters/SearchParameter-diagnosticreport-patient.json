@@ -1,0 +1,29 @@
+{
+  "resourceType": "SearchParameter",
+  "id": "diagnosticreport-patient",
+  "url": "http://github.com/node-on-fhir/honeycomb/private/SearchParameters/SearchParameter-diagnosticreport-patient",
+  "version": "1.0.0",
+  "name": "HoneycombDiagnosticReportPatient",
+  "status": "active",
+  "date": "2024-08-21",
+  "publisher": "github.com/node-on-fhir",
+  "contact": [
+    {
+      "telecom": [
+        {
+          "system": "url",
+          "value": "http://github.com/node-on-fhir/honeycomb"
+        }
+      ]
+    }
+  ],
+  "description": "Search for diagnostic reports by patient",
+  "code": "patient",
+  "base": ["DiagnosticReport"],
+  "type": "reference",
+  "expression": "DiagnosticReport.subject.where(resolve() is Patient)",
+  "xpath": "subject.reference",
+  "target": ["Patient"],
+  "multipleOr": true,
+  "multipleAnd": false
+}

@@ -1,6 +1,7 @@
 // server/publications/patients.js
 
 import { Meteor } from 'meteor/meteor';
+import { Mongo } from 'meteor/mongo';
 import { check, Match } from 'meteor/check';
 import { get } from 'lodash';
 import { Patients } from '/imports/lib/schemas/SimpleSchemas/Patients';
@@ -43,8 +44,46 @@ Meteor.publish('patients.search', async function(query = {}, options = {}) {
     options.limit = 1000;
   }
   
+  // Transform query to handle ObjectID and improve search
+  if (query.$or && Array.isArray(query.$or)) {
+    const expandedConditions = [];
+    
+    query.$or.forEach(condition => {
+      // Always add the original condition
+      expandedConditions.push(condition);
+      
+      // Handle _id ObjectID conversion
+      if (condition._id && typeof condition._id === 'string' && /^[a-f\d]{24}$/i.test(condition._id)) {
+        // Also search for ObjectID version
+        expandedConditions.push({ ...condition, _id: new Mongo.ObjectID(condition._id) });
+      }
+      
+      // Handle id field that might be stored as _id
+      if (condition.id && typeof condition.id === 'string' && /^[a-f\d]{24}$/i.test(condition.id)) {
+        // Also search _id field with both string and ObjectID versions
+        expandedConditions.push({ _id: condition.id });
+        expandedConditions.push({ _id: new Mongo.ObjectID(condition.id) });
+      }
+      
+      // Improve name search to handle nested arrays
+      if (condition['name.text'] && condition['name.text'].$regex) {
+        // Add variations for array access
+        expandedConditions.push({ 'name.0.text': condition['name.text'] });
+      }
+      if (condition['name.family'] && condition['name.family'].$regex) {
+        expandedConditions.push({ 'name.0.family': condition['name.family'] });
+      }
+      if (condition['name.given'] && condition['name.given'].$regex) {
+        expandedConditions.push({ 'name.0.given': condition['name.given'] });
+        expandedConditions.push({ 'name.0.given.0': condition['name.given'] });
+      }
+    });
+    
+    query.$or = expandedConditions;
+  }
+  
   // Log the publication request
-  console.log('Publishing patients.search with query:', JSON.stringify(query), 'options:', options);
+  console.log('Publishing patients.search with transformed query:', JSON.stringify(query), 'options:', options);
   
   // TODO: Add patient access control based on user roles and permissions
   // For now, authenticated users can see all patients
@@ -125,12 +164,20 @@ Meteor.publish('patients.byId', async function(patientId) {
   
   console.log('Publishing patient by ID:', patientId);
   
-  // Try to find by _id or id field
+  // Build query to handle different ID formats
+  const conditions = [
+    { _id: patientId },
+    { id: patientId }
+  ];
+  
+  // If patientId looks like an ObjectID, also search with ObjectID type
+  if (/^[a-f\d]{24}$/i.test(patientId)) {
+    conditions.push({ _id: new Mongo.ObjectID(patientId) });
+  }
+  
+  // Try to find by _id or id field with different formats
   return Patients.find({
-    $or: [
-      { _id: patientId },
-      { id: patientId }
-    ]
+    $or: conditions
   }, { limit: 1 });
 });
 

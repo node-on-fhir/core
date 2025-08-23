@@ -63,23 +63,22 @@ export function AssignToBedModal({ open, onClose, patient }) {
         return;
       }
 
-      // Update the bed with patient assignment
-      const updateData = {
-        status: 'occupied',
-        patientId: get(patient, 'id') || get(patient, '_id'),
-        patientName: get(patient, 'name[0].text') || `${get(patient, 'name[0].given[0]', '')} ${get(patient, 'name[0].family', '')}`.trim(),
-        patientMRN: get(patient, 'identifier[0].value', ''),
+      // Extract the patient ID, handling both regular strings and ObjectIDs
+      const patientId = get(patient, 'id') || get(patient, '_id');
+      
+      // Prepare additional info for bed assignment
+      const additionalInfo = {
         admissionDate: new Date(admissionDate),
         attendingPhysician,
         primaryNurse
       };
 
       if (expectedDischargeDate) {
-        updateData.expectedDischargeDate = new Date(expectedDischargeDate);
+        additionalInfo.expectedDischargeDate = new Date(expectedDischargeDate);
       }
 
       // Call method to update bed assignment
-      Meteor.call('pacio.assignPatientToBed', selectedBed, updateData, (error, result) => {
+      Meteor.call('pacio.assignPatientToBed', selectedBed, patientId, additionalInfo, (error, result) => {
         if (error) {
           console.error('Error assigning bed:', error);
           setError(error.message || 'Failed to assign bed');

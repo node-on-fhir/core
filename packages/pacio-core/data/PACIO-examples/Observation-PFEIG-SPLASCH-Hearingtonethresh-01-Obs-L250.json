@@ -1,0 +1,45 @@
+{
+  "resourceType" : "Observation",
+  "id" : "PFEIG-SPLASCH-Hearingtonethresh-01-Obs-L250",
+  "meta" : {
+    "profile" : ["http://hl7.org/fhir/us/pacio-pfe/StructureDefinition/pfe-observation-clinicaltest"]
+  },
+  "text" : {
+    "status" : "generated",
+    "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p class=\"res-header-id\"><b>Generated Narrative: Observation PFEIG-SPLASCH-Hearingtonethresh-01-Obs-L250</b></p><a name=\"PFEIG-SPLASCH-Hearingtonethresh-01-Obs-L250\"> </a><a name=\"hcPFEIG-SPLASCH-Hearingtonethresh-01-Obs-L250\"> </a><a name=\"PFEIG-SPLASCH-Hearingtonethresh-01-Obs-L250-en-US\"> </a><p><b>status</b>: Final</p><p><b>category</b>: <span title=\"Codes:{http://terminology.hl7.org/CodeSystem/observation-category exam}\">Exam</span>, <span title=\"Codes:{http://hl7.org/fhir/us/pacio-pfe/CodeSystem/pfe-category-cs BlockL2-b21}\">Sensory functions and pain</span></p><p><b>code</b>: <span title=\"Codes:{http://loinc.org 91375-6}\">Hearing threshold Ear - left --250 Hz</span></p><p><b>subject</b>: <a href=\"Patient-PFEIG-patientBSJ1.html\">Betsy Smith-Johnson Female, DoB Unknown ( http://example.org/identifiers/patient#10A3D58WH1600)</a></p><p><b>effective</b>: 2020-11-06 10:45:00-0500</p><p><b>performer</b>: <a href=\"PractitionerRole-PFEIG-Role-Audio-JillBradley.html\">PractitionerRole Audiologist</a></p><p><b>value</b>: 45 dB<span style=\"background: LightGoldenRodYellow\"> (Details: UCUM  codedB = 'dB')</span></p></div>"
+  },
+  "status" : "final",
+  "category" : [{
+    "coding" : [{
+      "system" : "http://terminology.hl7.org/CodeSystem/observation-category",
+      "code" : "exam",
+      "display" : "Exam"
+    }]
+  },
+  {
+    "coding" : [{
+      "system" : "http://hl7.org/fhir/us/pacio-pfe/CodeSystem/pfe-category-cs",
+      "code" : "BlockL2-b21",
+      "display" : "Sensory functions and pain"
+    }]
+  }],
+  "code" : {
+    "coding" : [{
+      "system" : "http://loinc.org",
+      "code" : "91375-6",
+      "display" : "Hearing threshold Ear - left --250 Hz"
+    }]
+  },
+  "subject" : {
+    "reference" : "Patient/PFEIG-patientBSJ1"
+  },
+  "effectiveDateTime" : "2020-11-06T10:45:00-05:00",
+  "performer" : [{
+    "reference" : "PractitionerRole/PFEIG-Role-Audio-JillBradley"
+  }],
+  "valueQuantity" : {
+    "value" : 45,
+    "system" : "http://unitsofmeasure.org",
+    "code" : "dB"
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "resourceType" : "Practitioner",
+  "id" : "PFEIG-Practitioner-ScottDumble",
+  "text" : {
+    "status" : "generated",
+    "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p class=\"res-header-id\"><b>Generated Narrative: Practitioner PFEIG-Practitioner-ScottDumble</b></p><a name=\"PFEIG-Practitioner-ScottDumble\"> </a><a name=\"hcPFEIG-Practitioner-ScottDumble\"> </a><a name=\"PFEIG-Practitioner-ScottDumble-en-US\"> </a><p><b>active</b>: true</p><p><b>name</b>: Scott Dumble</p><p><b>telecom</b>: ph: -unknown-</p><p><b>gender</b>: Male</p></div>"
+  },
+  "active" : true,
+  "name" : [{
+    "text" : "Scott Dumble",
+    "family" : "Dumble",
+    "given" : ["Scott"]
+  }],
+  "telecom" : [{
+    "system" : "phone"
+  }],
+  "gender" : "male"
+}

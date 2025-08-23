@@ -1,0 +1,38 @@
+{
+  "resourceType" : "ServiceRequest",
+  "id" : "PFEIG-ServiceRequest-SNFDischargeCallSLPRefer",
+  "meta" : {
+    "profile" : ["http://hl7.org/fhir/us/pacio-pfe/StructureDefinition/pfe-service-request"]
+  },
+  "text" : {
+    "status" : "generated",
+    "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p class=\"res-header-id\"><b>Generated Narrative: ServiceRequest PFEIG-ServiceRequest-SNFDischargeCallSLPRefer</b></p><a name=\"PFEIG-ServiceRequest-SNFDischargeCallSLPRefer\"> </a><a name=\"hcPFEIG-ServiceRequest-SNFDischargeCallSLPRefer\"> </a><a name=\"PFEIG-ServiceRequest-SNFDischargeCallSLPRefer-en-US\"> </a><p><b>status</b>: Active</p><p><b>intent</b>: Order</p><p><b>category</b>: <span title=\"Codes:{http://snomed.info/sct 386053000}\">Evaluation procedure (procedure)</span></p><p><b>priority</b>: Routine</p><p><b>code</b>: <span title=\"Codes:{http://snomed.info/sct 410161005}\">Speech therapy assessment (procedure)</span></p><p><b>subject</b>: <a href=\"Patient-PFEIG-patientBSJ1.html\">Betsy Smith-Johnson Female, DoB Unknown ( http://example.org/identifiers/patient#10A3D58WH1600)</a></p><p><b>occurrence</b>: 2024-07-18 --&gt; (ongoing)</p><p><b>authoredOn</b>: 2024-07-17</p><p><b>requester</b>: <a href=\"PractitionerRole-PFEIG-Role-SNFDoc-GeraldPark.html\">PractitionerRole Geriatric Medicine (Family Medicine) Physician</a></p></div>"
+  },
+  "status" : "active",
+  "intent" : "order",
+  "category" : [{
+    "coding" : [{
+      "system" : "http://snomed.info/sct",
+      "code" : "386053000",
+      "display" : "Evaluation procedure (procedure)"
+    }]
+  }],
+  "priority" : "routine",
+  "code" : {
+    "coding" : [{
+      "system" : "http://snomed.info/sct",
+      "code" : "410161005",
+      "display" : "Speech therapy assessment (procedure)"
+    }]
+  },
+  "subject" : {
+    "reference" : "Patient/PFEIG-patientBSJ1"
+  },
+  "occurrencePeriod" : {
+    "start" : "2024-07-18"
+  },
+  "authoredOn" : "2024-07-17",
+  "requester" : {
+    "reference" : "PractitionerRole/PFEIG-Role-SNFDoc-GeraldPark"
+  }
+}

@@ -1,7 +1,7 @@
 // /imports/ui-fhir/practitioners/PractitionerDetail.jsx
 
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useTracker } from 'meteor/react-meteor-data';
 
 import { 
@@ -33,7 +33,13 @@ import { Session } from 'meteor/session';
 
 function PractitionerDetail(props) {
   const navigate = useNavigate();
+  const location = useLocation();
   const { id } = useParams();
+  
+  // Parse URL parameters
+  const searchParams = new URLSearchParams(location.search);
+  const saveDestination = searchParams.get('save');
+  const cancelDestination = searchParams.get('cancel');
   
   // Get current user from session/tracker
   const currentUser = useTracker(function() {
@@ -182,17 +188,44 @@ function PractitionerDetail(props) {
     setError(null);
     
     try {
+      let practitionerId;
+      
       if (id && id !== 'new') {
         // Update existing practitioner
         await Meteor.callAsync('practitioners.update', id, practitioner);
         console.log('Practitioner updated successfully');
+        practitionerId = id;
         // Exit edit mode after successful save
         setIsEditing(false);
       } else {
         // Create new practitioner
-        const newId = await Meteor.callAsync('practitioners.create', practitioner);
-        console.log('Practitioner created with ID:', newId);
-        // Navigate back to practitioners list for new practitioners
+        practitionerId = await Meteor.callAsync('practitioners.create', practitioner);
+        console.log('Practitioner created with ID:', practitionerId);
+      }
+      
+      // If coming from my-profile, link the practitioner to the user
+      if (saveDestination === 'my-profile' && practitionerId) {
+        try {
+          await Meteor.callAsync('users.linkPractitionerId', practitionerId);
+          console.log('Practitioner linked to user profile');
+          // Navigate to my-profile
+          navigate('/my-profile');
+          return;
+        } catch (linkError) {
+          console.error('Error linking practitioner to user:', linkError);
+          // Still navigate but show error
+          setError('Practitioner saved but could not link to your profile: ' + linkError.message);
+        }
+      }
+      
+      // Navigate based on save destination or default
+      if (saveDestination) {
+        navigate('/' + saveDestination);
+      } else if (id && id !== 'new') {
+        // Stay on same page if updating
+        // Already exited edit mode above
+      } else {
+        // Default navigation for new practitioners
         navigate('/practitioners');
       }
     } catch (err) {
@@ -224,7 +257,11 @@ function PractitionerDetail(props) {
 
   // Handle cancel
   function handleCancel() {
-    navigate('/practitioners');
+    if (cancelDestination) {
+      navigate('/' + cancelDestination);
+    } else {
+      navigate('/practitioners');
+    }
   }
 
   const genderOptions = [
@@ -235,6 +272,7 @@ function PractitionerDetail(props) {
   ];
 
   const qualificationOptions = [
+    // Medical
     { code: 'MD', display: 'Doctor of Medicine' },
     { code: 'DO', display: 'Doctor of Osteopathic Medicine' },
     { code: 'RN', display: 'Registered Nurse' },
@@ -244,7 +282,18 @@ function PractitionerDetail(props) {
     { code: 'PhD', display: 'Doctor of Philosophy' },
     { code: 'DDS', display: 'Doctor of Dental Surgery' },
     { code: 'PT', display: 'Physical Therapist' },
-    { code: 'OT', display: 'Occupational Therapist' }
+    { code: 'OT', display: 'Occupational Therapist' },
+    // Transportation
+    { code: 'CDL', display: 'Commercial Driver\'s License' },
+    { code: 'ATP', display: 'Airline Transport Pilot License' },
+    { code: 'CPL', display: 'Commercial Pilot License' },
+    { code: 'PPL', display: 'Private Pilot License' },
+    // Other Professional
+    { code: 'PE', display: 'Professional Engineer' },
+    { code: 'CPA', display: 'Certified Public Accountant' },
+    { code: 'PMP', display: 'Project Management Professional' },
+    { code: 'CERT', display: 'Professional Certification' },
+    { code: 'OTHER', display: 'Other Professional License' }
   ];
 
   const languageOptions = [

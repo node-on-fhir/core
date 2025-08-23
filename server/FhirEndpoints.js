@@ -115,6 +115,7 @@ Meteor.startup(async function(){
 
 //------------------------------------------------------------------------------------------
 import { AccessControl } from 'role-acl';
+import { SafeNoAuth } from './SafeNoAuth';
 
 let accessControlList = [];
 let accessControlListsInitialized = false;
@@ -157,16 +158,27 @@ function initializeAccessControl() {
   });
 
   // Always grant noauth role full access when NOAUTH is enabled
-  if(process.env.NOAUTH) {
-    console.log('NOAUTH mode enabled - granting full access to noauth role');
+  if(SafeNoAuth.hasRequiredEnvironmentVars()) {
+    console.log('NOAUTH mode enabled via SafeNoAuth - granting full access to noauth role');
     // Grant access to all common FHIR resources
     const fhirResources = ['Patient', 'Practitioner', 'Organization', 'Observation', 'Condition', 
                           'Procedure', 'Medication', 'MedicationRequest', 'AllergyIntolerance', 
-                          'Immunization', 'DiagnosticReport', 'DocumentReference'];
+                          'Immunization', 'DiagnosticReport', 'DocumentReference', 'SearchParameter',
+                          'Bundle', 'CareTeam', 'CodeSystem', 'Communication', 'CommunicationRequest',
+                          'Endpoint', 'HealthcareService', 'InsurancePlan', 'Location', 'OrganizationAffiliation',
+                          'PractitionerRole', 'Provenance', 'Subscription', 'Task', 'StructureDefinition',
+                          'ValueSet', 'VerificationResult'];
     fhirResources.forEach(function(resource) {
       acl.grant('noauth').execute('access').on(resource, ['*']);
     });
   }
+  
+  // Grant citizen role basic read access to public resources
+  // This allows public directory searches without full patient access
+  const publicResources = ['Practitioner', 'PractitionerRole', 'Organization', 'Location', 'HealthcareService', 'Endpoint'];
+  publicResources.forEach(function(resource) {
+    acl.grant('citizen').execute('access').on(resource, ['*']);
+  });
   
   // For development with auto-login, grant the user role access
   if(process.env.DEV_AUTO_LOGIN === "true") {
@@ -178,6 +190,24 @@ function initializeAccessControl() {
       acl.grant('user').execute('access').on(resource, ['*']);
     });
   }
+
+  // Grant SYSTEM role full access to all resources
+  // SYSTEM role is used for internal services and administrative access
+  console.log('Granting SYSTEM role full access to all resources');
+  const allFhirResources = ['Patient', 'Practitioner', 'Organization', 'Observation', 'Condition', 
+                            'Procedure', 'Medication', 'MedicationRequest', 'MedicationStatement',
+                            'AllergyIntolerance', 'Immunization', 'DiagnosticReport', 'DocumentReference', 
+                            'SearchParameter', 'Bundle', 'CareTeam', 'CarePlan', 'CodeSystem', 
+                            'Communication', 'CommunicationRequest', 'Composition', 'Consent',
+                            'Encounter', 'Endpoint', 'Goal', 'Group', 'HealthcareService', 
+                            'InsurancePlan', 'List', 'Location', 'MeasureReport', 'Measure',
+                            'NutritionOrder', 'OrganizationAffiliation', 'PractitionerRole', 
+                            'Provenance', 'Questionnaire', 'QuestionnaireResponse', 'RelatedPerson',
+                            'RiskAssessment', 'ServiceRequest', 'StructureDefinition', 'Subscription', 
+                            'Task', 'ValueSet', 'VerificationResult'];
+  allFhirResources.forEach(function(resource) {
+    acl.grant('SYSTEM').execute('access').on(resource, ['*']);
+  });
 
   console.log('ACL initialized with ' + accessControlList.length + ' access control records');
   console.log('Available roles:', acl.getRoles());
@@ -359,17 +389,33 @@ async function parseUserAuthorization(req){
           console.log('Basic Auth successful for dev user:', authParts[0]);
         }
       } 
+      // Check for direct system credentials (for internal services)
+      // TODO: SECURITY - Replace Basic Auth with JWT/JWK tokens for System access (RFC 7523)
+      // See docs/SYSTEM_AUTH_JWT_MIGRATION.md for implementation plan
+      else if(authParts[0] === "system" && authParts[1] === get(Meteor, 'settings.private.accessControl.systemSecret', 'change-me-in-production')) {
+        authorizationContext = {
+          role: "SYSTEM",
+          userId: "system",
+          isSystemAccount: true
+        };
+        console.log('System role authenticated via Basic Auth with direct credentials');
+        console.warn('WARNING: Basic Auth for system accounts is deprecated. Migrate to JWT/JWK authentication.');
+      }
       // Then check OAuth clients
       else if(authParts[0] && Collections["OAuthClients"]){
         let clientRegistration = await Collections["OAuthClients"].findOneAsync({client_id: authParts[0]})
         console.log('clientRegistration', clientRegistration)
         if(clientRegistration && authParts[1]){
           if(get(clientRegistration, 'client_secret') === authParts[1]){
+            // Check if this is a system-level OAuth client
+            const clientRole = get(clientRegistration, 'role', 'healthcare provider');
             authorizationContext = {
-              role: "healthcare provider",
-              userId: authParts[0]
-            };;
-            console.log('User presented registered client_secret via Basic Auth. Granting system access.');
+              role: clientRole === 'system' ? 'SYSTEM' : clientRole,
+              userId: authParts[0],
+              isOAuthClient: true,
+              clientId: authParts[0]
+            };
+            console.log(`User presented registered client_secret via Basic Auth. Granting ${clientRole} access.`);
           }          
         }
       } else {
@@ -476,7 +522,7 @@ async function parseUserAuthorization(req){
     };;
   }
 
-  if (process.env.NOAUTH) {
+  if (SafeNoAuth.isEnabled(req)) {
     authorizationContext = {
       role: 'noauth',
       userId: null
@@ -486,7 +532,8 @@ async function parseUserAuthorization(req){
   return authorizationContext;
 }
 async function isAuthorized(authorizationContext){
-  if(['noauth', 'system', 'patient', 'healthcare practitioner'].includes(get(authorizationContext, 'role'))){
+  const authorizedRoles = ['noauth', 'system', 'SYSTEM', 'patient', 'healthcare practitioner', 'healthcare provider'];
+  if(authorizedRoles.includes(get(authorizationContext, 'role'))){
     return true;
   } else {
     return false;
@@ -726,7 +773,7 @@ if(typeof serverRouteManifest === "object"){
               if(get(Meteor, 'settings.private.debug') === true) { console.log('Security checks completed'); }
 
               // the person is authorized and known; but do they have permission to access?
-              let userRole = get(authorizationContext, 'role', 'citizen');
+              let userRole = get(authorizationContext, 'role', 'PAT');
               
               // TODO:  if logged in, user role becomes 'healthcare provider' etc.
 
@@ -957,10 +1004,7 @@ if(typeof serverRouteManifest === "object"){
             res.status(429).json({message: "429 Too Many Requests - your IP is being rate limited"});
           } else {
 
-            let mongoQuery = {$and: [
-              {'meta.security.display': {$eq: 'unrestricted'}}
-              // {'meta.security.display': {$ne: 'restricted'}}
-            ]}
+            let mongoQuery = {}
             let chainedIds;
 
             // first scan the query for any chained queries
@@ -1020,7 +1064,8 @@ if(typeof serverRouteManifest === "object"){
             process.env.TRACE && console.log('chainedIds', chainedIds);
 
             // now search through the query for regular run-of-the-mill queries
-            SearchParameters.find({base: routeResourceType}).forEach(function(searchParameter){
+            const searchParametersList = await SearchParameters.find({base: routeResourceType}).fetchAsync();
+            searchParametersList.forEach(function(searchParameter){
               process.env.DEBUG && console.log('------------------------------------------------------')
               // process.env.DEBUG && console.log('req.query', req.query);
               process.env.DEBUG && console.log('SearchParameter');
@@ -1048,6 +1093,12 @@ if(typeof serverRouteManifest === "object"){
               if(get(Meteor, 'settings.private.debug') === true) { console.log('SearchParameters::mongoQuery', JSON.stringify(mongoQuery)); }
             }) 
 
+            // Log the final mongoQuery after ALL SearchParameters have been processed
+            console.log('========== AFTER SearchParameters Processing ==========');
+            console.log('Final mongoQuery after SearchParameters:', JSON.stringify(mongoQuery, null, 2)); 
+            console.log('mongoQuery keys:', Object.keys(mongoQuery));
+            console.log('=====================================================');
+
             process.env.DEBUG && console.log('Original Url:  ' + req.originalUrl)
             process.env.DEBUG && console.log('Generated Mongo query: ', mongoQuery);
             process.env.DEBUG && console.log('--------------------------------------')
@@ -1058,17 +1109,25 @@ if(typeof serverRouteManifest === "object"){
             res.setHeader('Content-type', 'application/fhir+json;charset=utf-8');
             res.setHeader("ETag", fhirVersion);
             
-            let authorizationContext = {
-              role: 'citizen',
-              userId: null
-            };
-
-
-            authorizationContext = await parseUserAuthorization(req);
+            let authorizationContext = await parseUserAuthorization(req);
+            
+            // If no valid auth context but OAuth is disabled, use default
+            if (!authorizationContext && get(Meteor, 'settings.private.fhir.disableOauth') === true) {
+              authorizationContext = {
+                role: 'noauth',
+                userId: null
+              };
+            } else if (!authorizationContext) {
+              // Default to citizen for public access
+              authorizationContext = {
+                role: 'citizen',
+                userId: null
+              };
+            }
 
             if (isAuthorized(authorizationContext)){
               
-              let userRole = get(authorizationContext, 'role', 'citizen');
+              let userRole = get(authorizationContext, 'role', 'PAT');
 
 
               if(get(Meteor, 'settings.private.debug') === true) { console.log('authorizationContext', authorizationContext); }
@@ -1079,59 +1138,133 @@ if(typeof serverRouteManifest === "object"){
 
               if(userRole){
                 let hipaaAccess = {};
-                if(accessControlList.length > 0){
-                  if(userRole === "noauth"){
-                    // authorization is disabled; grant access
+                
+                // Handle noauth, SYSTEM, and citizen roles even when no consent records exist
+                if(userRole === "noauth" || userRole === "SYSTEM"){
+                  // authorization is disabled or system access; grant access
+                  hipaaAccess = {
+                    granted: true
+                  }
+                } else if(userRole === "citizen"){
+                  // citizen role - check if resource is public
+                  const publicResources = ['Practitioner', 'PractitionerRole', 'Organization', 
+                                          'Location', 'HealthcareService', 'Endpoint'];
+                  if(publicResources.includes(routeResourceType)){
                     hipaaAccess = {
                       granted: true
                     }
                   } else {
-                    hipaaAccess = acl.can(userRole).execute('access').with({securityLabel: 'normal'}).sync().on(routeResourceType);    
+                    hipaaAccess = {
+                      granted: false
+                    }
                   }
+                } else if(accessControlList.length > 0){
+                  // For other roles, check ACL permissions
+                  hipaaAccess = acl.can(userRole).execute('access').with({securityLabel: 'normal'}).sync().on(routeResourceType);    
                 } else {
                   // console.log('acl', acl)
                   // console.log('Access Control List initialized with ' + accessControlList.length + ' records.')
                   res.status(501).json({message: 'Access control lists not initialized.  Have the administrator initialize some Consent records to allow access to the repository.  INITIALIZE_CONSENT_ENGINE environment variable may be of help.'})
+                  return;
                 }
                 
                 console.log(routeResourceType + '.publish().permission', hipaaAccess)
                 console.log(routeResourceType + '.publish().permission.granted', hipaaAccess.granted)
+                
+                // Store the search query built from SearchParameters before applying authorization filters
+                let searchQuery = Object.assign({}, mongoQuery);
+                
+                if(get(Meteor, 'settings.private.debug') === true) { 
+                  console.log('========== STORING SearchQuery ==========');
+                  console.log('searchQuery (copy of mongoQuery):', JSON.stringify(searchQuery, null, 2));
+                  console.log('searchQuery keys:', Object.keys(searchQuery));
+                  console.log('=========================================');
+                }
+                
                 if(hipaaAccess.granted){
-                  mongoQuery = {$or: [
+                  let authQuery = {$or: [
                     // {'meta.security.display': {$ne: 'restricted'}}
                     {'meta.security.display': {$eq: 'unrestricted'}}
                   ]}
                   if(routeResourceType === "Patient"){
                     if(get(authorizationContext, 'patientId')){
-                      mongoQuery.$or.push({'id': get(authorizationContext, 'patientId')})
+                      authQuery.$or.push({'id': get(authorizationContext, 'patientId')})
                     }  
                     if(get(authorizationContext, 'practitionerId')){
-                      mongoQuery.$or.push({'generalPractitioner.reference': {$regex: get(authorizationContext, 'practitionerId')}})
+                      authQuery.$or.push({'generalPractitioner.reference': {$regex: get(authorizationContext, 'practitionerId')}})
                     }
                   } else {
                     if(get(authorizationContext, 'patientId')){
-                      mongoQuery.$or.push({'subject.reference': 'Patient/' + get(authorizationContext, 'patientId')})
+                      authQuery.$or.push({'subject.reference': 'Patient/' + get(authorizationContext, 'patientId')})
                     }  
+                  }
+                  
+                  // Merge authorization query with search query
+                  if(get(Meteor, 'settings.private.debug') === true) { 
+                    console.log('========== MERGING AUTH WITH SEARCH ==========');
+                    console.log('searchQuery keys:', Object.keys(searchQuery));
+                    console.log('searchQuery:', JSON.stringify(searchQuery, null, 2));
+                    console.log('authQuery:', JSON.stringify(authQuery, null, 2));
+                  }
+                  
+                  if(Object.keys(searchQuery).length > 0){
+                    // If we have search criteria, combine it with auth criteria using $and
+                    mongoQuery = {
+                      $and: [searchQuery, authQuery]
+                    }
+                    if(get(Meteor, 'settings.private.debug') === true) { 
+                      console.log('MERGED with $and - mongoQuery:', JSON.stringify(mongoQuery, null, 2));
+                    }
+                  } else {
+                    // No search criteria, just use auth query
+                    mongoQuery = authQuery
+                    if(get(Meteor, 'settings.private.debug') === true) { 
+                      console.log('NO SEARCH QUERY - using authQuery only');
+                    }
+                  }
+                  
+                  if(get(Meteor, 'settings.private.debug') === true) { 
+                    console.log('==============================================');
                   }
                 }    
 
-                if(userRole === "noauth"){
-                  mongoQuery = {}
+                if(userRole === "noauth" || userRole === "SYSTEM"){
+                  // For noauth/SYSTEM, use the search query as-is (no auth restrictions)
+                  mongoQuery = searchQuery
+                  console.log('========== NOAUTH/SYSTEM OVERRIDE ==========');
+                  console.log('Using searchQuery as-is for noauth/SYSTEM role');
+                  console.log('mongoQuery:', JSON.stringify(mongoQuery, null, 2));
+                  console.log('============================================');
                 }
                 
                 let databaseOptions = RestHelpers.generateMongoSearchOptions(req.query, routeResourceType);
 
                 let payload = [];
     
-                if(get(Meteor, 'settings.private.debug') === true) { console.log('mongoQuery', JSON.stringify(mongoQuery, null, 2)); }
-                if(get(Meteor, 'settings.private.debug') === true) { console.log('mongoQuery.compressed', JSON.stringify(mongoQuery)); }
-                if(get(Meteor, 'settings.private.debug') === true) { console.log('databaseOptions', databaseOptions); }
+                console.log('mongoQuery', JSON.stringify(mongoQuery, null, 2));
+                console.log('mongoQuery.compressed', JSON.stringify(mongoQuery));
+                console.log('databaseOptions', databaseOptions);
                 // time to use the generated mongo query and go fetch actual records
                 if(Collections[collectionName]){
     
                   let selectedPatientId = get(authorizationContext, 'userId');
                   // let totalMatches = await Collections[collectionName].find(mongoQuery).countAsync();
-                  let records;                  
+                  let records;
+                  
+                  console.log('========== BEFORE DATABASE QUERY ==========');
+                  console.log('Collection:', collectionName);
+                  console.log('Final mongoQuery being passed to find():', JSON.stringify(mongoQuery, null, 2));
+                  console.log('mongoQuery type:', typeof mongoQuery);
+                  console.log('mongoQuery keys:', Object.keys(mongoQuery));
+                  if(mongoQuery.$and) {
+                    console.log('$and array length:', mongoQuery.$and.length);
+                    mongoQuery.$and.forEach((condition, index) => {
+                      console.log(`$and[${index}]:`, JSON.stringify(condition));
+                    });
+                  }
+                  console.log('databaseOptions:', JSON.stringify(databaseOptions, null, 2));
+                  console.log('==========================================');
+                  
                   records = await Collections[collectionName].find(mongoQuery, databaseOptions).fetch();
 
                   process.env.DEBUG && console.log('records', records)
@@ -1150,20 +1283,24 @@ if(typeof serverRouteManifest === "object"){
     
                     // check for security labels; otherwise assume normal access patterns
                     let recordSecurityLabel = get(record, 'meta.security[0].display', 'normal');
-                    console.log('---------------------------------------------------')
-                    console.log('routeResourceType:   ' + routeResourceType)
-                    console.log('authorization.role:  ' + get(authorizationContext, 'role'))
-                    console.log('recordSecurityLabel: ' + recordSecurityLabel)
+                    if(process.env.TRACE){
+                      console.log('---------------------------------------------------')
+                      console.log('routeResourceType:   ' + routeResourceType)
+                      console.log('authorization.role:  ' + get(authorizationContext, 'role'))
+                      console.log('recordSecurityLabel: ' + recordSecurityLabel)
+                    }
     
                     
                     let accessGranted = false;
                     let permission;
     
-                    if (get(authorizationContext, 'role') === 'noauth') { 
+                    if (get(authorizationContext, 'role') === 'noauth' || get(authorizationContext, 'role') === 'SYSTEM') { 
                       accessGranted = true;
                     } else {
                       permission = acl.can(get(authorizationContext, 'role', 'citizen')).execute('access').with({'securityLabel': recordSecurityLabel}).sync().on(routeResourceType);
-                      console.log('permission.granted:  ' + permission.granted);
+                      if(process.env.TRACE){
+                        console.log('permission.granted:  ' + permission.granted);
+                      }
     
                       accessGranted = permission.granted;
                     }
@@ -2204,17 +2341,87 @@ if(typeof serverRouteManifest === "object"){
       const userPatientId = get(authorizationContext, 'patientId');
       
       // Access control: user can only access their own patient record unless they have elevated privileges
-      if (userRole !== 'noauth' && userRole !== 'healthcare provider' && userRole !== 'admin') {
-        if (userPatientId !== patientId) {
-          res.status(403).json({
-            resourceType: "OperationOutcome",
-            issue: [{
-              severity: "error",
-              code: "forbidden",
-              diagnostics: "You can only access your own patient record"
+      const elevatedRoles = ['noauth', 'healthcare provider', 'healthcare practitioner', 'SYSTEM', 'admin'];
+      const hasElevatedAccess = elevatedRoles.includes(userRole);
+      
+      if (!hasElevatedAccess && userPatientId !== patientId) {
+        res.status(403).json({
+          resourceType: "OperationOutcome",
+          issue: [{
+            severity: "error",
+            code: "forbidden",
+            diagnostics: "You can only access your own patient record"
+          }]
+        });
+        return;
+      }
+      
+      // Log HIPAA audit event for non-patient access
+      if (hasElevatedAccess && userPatientId !== patientId) {
+        const practitionerId = get(authorizationContext, 'practitionerId');
+        console.log(`[HIPAA AUDIT] $everything access: User ${userId} (role: ${userRole}, practitioner: ${practitionerId}) accessed Patient/${patientId}`);
+        
+        // Create formal AuditEvent record
+        try {
+          const auditEvent = {
+            resourceType: "AuditEvent",
+            type: {
+              system: "http://terminology.hl7.org/CodeSystem/audit-event-type",
+              code: "rest",
+              display: "RESTful Operation"
+            },
+            subtype: [{
+              system: "http://hl7.org/fhir/restful-interaction",
+              code: "operation",
+              display: "$everything"
+            }],
+            action: "R", // Read
+            recorded: new Date().toISOString(),
+            outcome: "0", // Success
+            agent: [{
+              type: {
+                coding: [{
+                  system: "http://terminology.hl7.org/CodeSystem/v3-ParticipationType",
+                  code: userRole === 'healthcare practitioner' ? "PROV" : "CST",
+                  display: userRole === 'healthcare practitioner' ? "Provider" : "Custodian"
+                }]
+              },
+              who: {
+                reference: practitionerId ? `Practitioner/${practitionerId}` : `User/${userId}`,
+                display: `${userRole} user`
+              },
+              requestor: true
+            }],
+            source: {
+              observer: {
+                display: "Honeycomb FHIR Server"
+              }
+            },
+            entity: [{
+              what: {
+                reference: `Patient/${patientId}`
+              },
+              type: {
+                system: "http://terminology.hl7.org/CodeSystem/audit-entity-type",
+                code: "1",
+                display: "Person"
+              },
+              role: {
+                system: "http://terminology.hl7.org/CodeSystem/object-role",
+                code: "1",
+                display: "Patient"
+              }
             }]
-          });
-          return;
+          };
+          
+          // Store audit event asynchronously (don't block the response)
+          if (AuditEvents) {
+            AuditEvents.insertAsync(auditEvent).catch(err => {
+              console.error('[HIPAA AUDIT] Failed to store AuditEvent:', err);
+            });
+          }
+        } catch (error) {
+          console.error('[HIPAA AUDIT] Error creating AuditEvent:', error);
         }
       }
 
@@ -2333,6 +2540,37 @@ if(typeof serverRouteManifest === "object"){
         }]
       });
     }
+  });
+
+  // Catch-all handler for unmatched FHIR routes
+  // This prevents falling through to the Meteor app HTML
+  WebApp.handlers.use("/" + fhirPath + "/", async (req, res, next) => {
+    // Check if this request has already been handled
+    if (res.headersSent) {
+      return next();
+    }
+    
+    // Extract the resource type from the URL
+    const urlParts = req.url.split('/').filter(part => part);
+    const resourceType = urlParts[0]?.split('?')[0]; // Remove query params
+    
+    console.log(`Unhandled FHIR request: ${req.method} ${req.url}`);
+    
+    res.setHeader('Content-Type', 'application/fhir+json;charset=utf-8');
+    res.statusCode = 404;
+    res.end(JSON.stringify({
+      resourceType: "OperationOutcome",
+      issue: [{
+        severity: "error",
+        code: "not-found",
+        details: {
+          text: resourceType 
+            ? `Resource type '${resourceType}' is not supported or not configured on this server`
+            : `Invalid FHIR endpoint: ${req.url}`
+        },
+        diagnostics: "This endpoint is not available. Check the server's CapabilityStatement for supported resources and operations."
+      }]
+    }, null, 2));
   });
 
   console.log('FHIR Server is online.');

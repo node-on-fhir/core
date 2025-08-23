@@ -1,0 +1,54 @@
+{
+  "resourceType" : "Goal",
+  "id" : "PFEIG-Goal-DressingGoal",
+  "meta" : {
+    "profile" : ["http://hl7.org/fhir/us/pacio-pfe/StructureDefinition/pfe-goal"]
+  },
+  "text" : {
+    "status" : "generated",
+    "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p class=\"res-header-id\"><b>Generated Narrative: Goal PFEIG-Goal-DressingGoal</b></p><a name=\"PFEIG-Goal-DressingGoal\"> </a><a name=\"hcPFEIG-Goal-DressingGoal\"> </a><a name=\"PFEIG-Goal-DressingGoal-en-US\"> </a><p><b>lifecycleStatus</b>: Active</p><p><b>achievementStatus</b>: <span title=\"Codes:{http://terminology.hl7.org/CodeSystem/goal-achievement in-progress}\">In Progress</span></p><p><b>description</b>: <span title=\"Codes:{http://snomed.info/sct 284968001}\">Able to perform dressing activity (finding)</span></p><p><b>subject</b>: <a href=\"Patient-PFEIG-patientBSJ1.html\">Betsy Smith-Johnson Female, DoB Unknown ( http://example.org/identifiers/patient#10A3D58WH1600)</a></p><p><b>start</b>: 2024-01-18</p><p><b>expressedBy</b>: <a href=\"Practitioner-PFEIG-Practitioner-JenCadbury.html\">Practitioner Jen Cadbury</a></p><p><b>addresses</b>: </p><ul><li><a href=\"Condition-PFEIG-Condition-DressingConcern.html\">Condition Difficulty performing dressing activity (finding)</a></li><li><a href=\"Condition-PFEIG-Condition-UndressingConcern.html\">Condition Difficulty undressing (finding)</a></li><li><a href=\"Observation-PFEIG-FSC-SNF-Admission-Mobility-SelfCare-1-Ob-Question-19.html\">Observation Upper body dressing - functional ability during 3 day assessment period [CMS Assessment]</a></li><li><a href=\"Observation-PFEIG-FSC-SNF-Admission-Mobility-SelfCare-1-Ob-Question-23.html\">Observation Lower body dressing - functional ability during 3 day assessment period [CMS Assessment]</a></li></ul><p><b>note</b>: Betsy reports wanting to &quot;get back to the way I was&quot; specifying that completing upper body and lower body dressing is her top priority for therapy. (By Practitioner/PFEIG-Practitioner-JenCadbury @2024-01-18)</p></div>"
+  },
+  "lifecycleStatus" : "active",
+  "achievementStatus" : {
+    "coding" : [{
+      "system" : "http://terminology.hl7.org/CodeSystem/goal-achievement",
+      "code" : "in-progress",
+      "display" : "In Progress"
+    }],
+    "text" : "In Progress"
+  },
+  "description" : {
+    "coding" : [{
+      "system" : "http://snomed.info/sct",
+      "code" : "284968001",
+      "display" : "Able to perform dressing activity (finding)"
+    }],
+    "text" : "Able to perform dressing activity (finding)"
+  },
+  "subject" : {
+    "reference" : "Patient/PFEIG-patientBSJ1"
+  },
+  "startDate" : "2024-01-18",
+  "expressedBy" : {
+    "reference" : "Practitioner/PFEIG-Practitioner-JenCadbury"
+  },
+  "addresses" : [{
+    "reference" : "Condition/PFEIG-Condition-DressingConcern"
+  },
+  {
+    "reference" : "Condition/PFEIG-Condition-UndressingConcern"
+  },
+  {
+    "reference" : "Observation/PFEIG-FSC-SNF-Admission-Mobility-SelfCare-1-Ob-Question-19"
+  },
+  {
+    "reference" : "Observation/PFEIG-FSC-SNF-Admission-Mobility-SelfCare-1-Ob-Question-23"
+  }],
+  "note" : [{
+    "authorReference" : {
+      "reference" : "Practitioner/PFEIG-Practitioner-JenCadbury"
+    },
+    "time" : "2024-01-18",
+    "text" : "Betsy reports wanting to \"get back to the way I was\" specifying that completing upper body and lower body dressing is her top priority for therapy."
+  }]
+}

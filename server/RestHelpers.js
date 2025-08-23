@@ -11,7 +11,7 @@ export const RestHelpers = {
     disableOauth: true,
     isDebug: process.env.DEBUG || true,
     isTrace: process.env.TRACE,
-    noAuth: process.env.NOAUTH,
+    noAuth: false, // Use SafeNoAuth.isEnabled() instead
     logging: function(req, route){
         if(this.isDebug){
             console.log(route + get(req, 'params.id'));
@@ -629,7 +629,7 @@ export const RestHelpers = {
         }
         
         if(isFuzzy){
-          queryComponent[trimmedExpression] = {$regex: get(req.query, get(searchParameter, 'code')), $options: '-i'};                
+          queryComponent[trimmedExpression] = {$regex: get(req.query, get(searchParameter, 'code')), $options: 'i'};                
         } else {
           // queryComponent[trimmedExpression] = get(req.query, get(searchParameter, 'code'));
           
@@ -662,12 +662,12 @@ export const RestHelpers = {
   
           if(Array.isArray(expressionArray)){
             if(expressionArray.length === 1){
-              mongoQueryObj = parseQueryComponent(searchParameter, req, resourceType, expresionString);
+              mongoQueryObj = RestHelpers.parseQueryComponent(searchParameter, req, resourceType, expresionString);
             } else if (expressionArray.length > 1){
               
               let componentArray = [];
               expressionArray.forEach(function(expression){
-                componentArray.push(parseQueryComponent(searchParameter, req, resourceType, expression));
+                componentArray.push(RestHelpers.parseQueryComponent(searchParameter, req, resourceType, expression));
               })
               mongoQueryObj = {$or: componentArray }
             }

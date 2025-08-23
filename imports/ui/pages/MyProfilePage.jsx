@@ -13,9 +13,15 @@ import {
   Alert,
   IconButton,
   InputAdornment,
-  useTheme
+  useTheme,
+  Dialog,
+  DialogTitle,
+  DialogActions,
+  Collapse
 } from '@mui/material';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 
 import { get } from 'lodash';
 import { useTracker } from 'meteor/react-meteor-data';
@@ -26,7 +32,11 @@ import { Meteor } from 'meteor/meteor';
 import { Accounts } from 'meteor/accounts-base';
 
 import PatientCard from '../../patient/PatientCard.jsx';
+import PractitionerCard from '../../practitioner/PractitionerCard.jsx';
+import PractitionerSearchDialog from '../../components/PractitionerSearchDialog.jsx';
 import { Patients } from '../../lib/schemas/SimpleSchemas/Patients';
+import { Practitioners } from '../../lib/schemas/SimpleSchemas/Practitioners';
+import { PractitionerRoles } from '../../lib/schemas/SimpleSchemas/PractitionerRoles';
 
 function MyProfilePage(props) {
   console.info('Rendering the MyProfilePage');
@@ -36,13 +46,19 @@ function MyProfilePage(props) {
 
   const [error, setError] = useState();
   const [successMessage, setSuccessMessage] = useState('');
+  const [openPractitionerSearch, setOpenPractitionerSearch] = useState(false);
+  const [showApiExample, setShowApiExample] = useState(false);
   const navigate = useNavigate();
   const theme = useTheme();
   
   // Subscribe to current user data
   useTracker(() => {
-    const handle = Meteor.subscribe('accounts.currentUser');
-    return handle.ready();
+    const handles = [
+      Meteor.subscribe('accounts.currentUser'),
+      Meteor.subscribe('practitioners.current'),
+      Meteor.subscribe('practitionerRoles.current')
+    ];
+    return handles.every(h => h.ready());
   }, []);
 
   let currentUser = useTracker(function(){
@@ -81,6 +97,36 @@ function MyProfilePage(props) {
     return null;
   }, [currentUser])
 
+  // Get the practitioner record for the current user
+  let currentPractitioner = useTracker(function(){
+    const practitionerId = get(currentUser, 'practitionerId');
+    if(practitionerId){
+      // Try both id and _id fields
+      return Practitioners.findOne({
+        $or: [
+          { id: practitionerId },
+          { _id: practitionerId }
+        ]
+      });
+    }
+    return null;
+  }, [currentUser])
+
+  // Get the practitioner role for the current user
+  let currentPractitionerRole = useTracker(function(){
+    const practitionerRoleId = get(currentUser, 'practitionerRoleId');
+    if(practitionerRoleId){
+      // Try both id and _id fields
+      return PractitionerRoles.findOne({
+        $or: [
+          { id: practitionerRoleId },
+          { _id: practitionerRoleId }
+        ]
+      });
+    }
+    return null;
+  }, [currentUser])
+
   let headerHeight = 64;
   if(get(Meteor, 'settings.public.defaults.prominentHeader')){
     headerHeight = 128;
@@ -92,6 +138,24 @@ function MyProfilePage(props) {
   console.log('MyProfilePage render - currentUser.id:', get(currentUser, 'id'));
   console.log('MyProfilePage render - currentUser.emails:', get(currentUser, 'emails'));
   console.log('MyProfilePage render - accountsAccessToken:', accountsAccessToken);
+
+  // Handle practitioner selection from search dialog
+  async function handlePractitionerSelect(practitionerId, practitioner) {
+    console.log('Selected practitioner:', practitionerId, practitioner);
+    
+    try {
+      await Meteor.callAsync('users.linkPractitionerId', practitionerId);
+      setSuccessMessage('Practitioner record linked successfully!');
+      setOpenPractitionerSearch(false);
+      
+      // No need to reload - the reactive data will update automatically
+      // The useTracker hooks will detect the change and re-render
+      
+    } catch (error) {
+      console.error('Error linking practitioner:', error);
+      setError(error.message || 'Failed to link practitioner record');
+    }
+  }
 
   async function handleDeleteAccount(){
     console.log('Deleting account...');
@@ -319,6 +383,7 @@ function MyProfilePage(props) {
         My Profile
       </Typography>
 
+      {/* Patient Record Link Card - Swap entire card when patient is linked */}
       {currentPatient ? (
         <Box sx={{ mb: 3 }}>
           <PatientCard 
@@ -330,22 +395,116 @@ function MyProfilePage(props) {
           />
         </Box>
       ) : (
-        <Paper elevation={3} sx={{ p: 2, mb: 3, textAlign: 'center', backgroundColor: theme.palette.mode === 'dark' ? 'background.paper' : 'grey.50' }}>
-          <Typography variant="body2" color="text.secondary">
-            No patient record linked to your account. 
-            <Button 
-              size="small"
-              sx={{ ml: 1 }}
-              onClick={() => {
-                Session.set('selectedPatientId', get(currentUser, 'patientId') || get(currentUser, 'id'));
-                navigate('/patients/new');
-              }}
-            >
-              Create Patient Record
-            </Button>
+        <Paper elevation={3} sx={{ p: 3, mb: 3 }}>
+          <Typography variant="h6" gutterBottom>
+            Patient Record Link
           </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            Link your patient record to access personal health information, medical history, and enable patient-specific features.
+          </Typography>
+          <Alert severity="info" sx={{ mb: 2 }}>
+            No patient record linked to your account. Create one to access patient-specific features and health records.
+          </Alert>
+          <Button 
+            variant="contained"
+            color="primary"
+            onClick={() => {
+              Session.set('selectedPatientId', get(currentUser, 'patientId') || get(currentUser, 'id'));
+              navigate('/patients/new');
+            }}
+          >
+            Create Patient Record
+          </Button>
         </Paper>
       )}
+
+      {/* Practitioner Record Link Card */}
+      <Paper elevation={3} sx={{ p: 3, mb: 3 }}>
+        <Typography variant="h6" gutterBottom>
+          Professional License
+        </Typography>
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+          Link your professional credentials such as physician license, nursing license, commercial driver's license, pilot's license, or other professional certifications.
+        </Typography>
+        
+        {currentPractitioner ? (
+          <Box sx={{ mb: 2 }}>
+            <PractitionerCard 
+              practitioner={currentPractitioner}
+              practitionerRole={currentPractitionerRole}
+              showBarcode={false}
+              showDetails={true}
+              showSummary={false}
+              showHeader={false}
+              showName={false}
+              showAvatar={false}
+              showActiveStatus={false}
+              showLanguages={false}
+              showLicenses={true}
+            />
+          </Box>
+        ) : (
+          <Alert severity="info" sx={{ mb: 2 }}>
+            No practitioner record linked to your account. Create one to enable professional communication features.
+          </Alert>
+        )}
+        
+        <Box sx={{ display: 'flex', gap: 2 }}>
+          {!currentPractitioner && (
+            <>
+              <Button 
+                variant="contained"
+                color="primary"
+                onClick={() => {
+                  Session.set('selectedPractitionerId', get(currentUser, 'practitionerId') || get(currentUser, 'id'));
+                  // Navigate with return URL
+                  navigate('/practitioners/new?save=my-profile&cancel=my-profile');
+                }}
+              >
+                Create Practitioner Record
+              </Button>
+              <Button 
+                variant="outlined"
+                onClick={() => {
+                  setOpenPractitionerSearch(true);
+                }}
+              >
+                Link Existing License
+              </Button>
+            </>
+          )}
+          {currentPractitioner && (
+            <>
+              <Button 
+                variant="outlined"
+                onClick={() => {
+                  Session.set('selectedPractitionerId', get(currentPractitioner, 'id'));
+                  navigate('/practitioners/' + get(currentPractitioner, 'id'));
+                }}
+              >
+                Edit Practitioner Details
+              </Button>
+              <Button 
+                variant="outlined"
+                color="error"
+                onClick={async () => {
+                  if (confirm('Are you sure you want to unlink your practitioner records?')) {
+                    try {
+                      await Meteor.callAsync('users.unlinkPractitionerRecords');
+                      setSuccessMessage('Practitioner records unlinked successfully!');
+                      // No need to reload - the reactive data will update automatically
+                    } catch (error) {
+                      setError(error.message || 'Failed to unlink practitioner records');
+                    }
+                  }
+                }}
+              >
+                Unlink License
+              </Button>
+            </>
+          )}
+        </Box>
+      </Paper>
 
       <Paper elevation={3} sx={{ p: 3, mb: 3 }}>
         <Typography variant="h6" gutterBottom>
@@ -398,16 +557,21 @@ function MyProfilePage(props) {
             rows={2}
             helperText="Use this token as your API key by including it in the 'session' header when making API requests"
           />
-        </Box>
-      </Paper>
-
-      {accountsAccessToken && (
-        <Paper elevation={3} sx={{ p: 3, mb: 3 }}>
-          <Typography variant="h6" gutterBottom>
-            API Usage Example
-          </Typography>
-          <Box sx={{ backgroundColor: theme.palette.mode === 'dark' ? 'grey.900' : 'grey.100', p: 2, borderRadius: 1, fontFamily: 'monospace' }}>
-            <Typography variant="body2" component="pre" sx={{ whiteSpace: 'pre-wrap', wordBreak: 'break-all', color: theme.palette.mode === 'dark' ? 'grey.100' : 'inherit' }}>
+          {accountsAccessToken && (
+            <>
+              <Box sx={{ mt: 2 }}>
+                <Button
+                  variant="outlined"
+                  onClick={() => setShowApiExample(!showApiExample)}
+                  endIcon={showApiExample ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+                >
+                  API Usage Example
+                </Button>
+              </Box>
+              <Collapse in={showApiExample} timeout="auto" unmountOnExit>
+                <Box sx={{ mt: 2 }}>
+                  <Box sx={{ backgroundColor: theme.palette.mode === 'dark' ? 'grey.900' : 'grey.100', p: 2, borderRadius: 1, fontFamily: 'monospace' }}>
+                    <Typography variant="body2" component="pre" sx={{ whiteSpace: 'pre-wrap', wordBreak: 'break-all', color: theme.palette.mode === 'dark' ? 'grey.100' : 'inherit' }}>
 {`# Get a specific Patient record:
 curl -H "session:${accountsAccessToken}" \\
   http://localhost:3000/baseR4/Patient/${get(currentUser, 'patientId', 'patient-id')}
@@ -419,15 +583,19 @@ curl -H "session:${accountsAccessToken}" \\
 # Get Observations for a Patient:
 curl -H "session:${accountsAccessToken}" \\
   http://localhost:3000/baseR4/Observation?patient=${get(currentUser, 'patientId', 'patient-id')}`}
-            </Typography>
-          </Box>
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
-            Your User ID is: <strong>{get(currentUser, '_id', 'not available')}</strong><br/>
-            Your linked Patient ID is: <strong>{get(currentUser, 'patientId', 'not linked')}</strong><br/>
-            Use your session token to authenticate API requests to access FHIR resources.
-          </Typography>
-        </Paper>
-      )}
+                    </Typography>
+                  </Box>
+                  <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
+                    Your User ID is: <strong>{get(currentUser, '_id', 'not available')}</strong><br/>
+                    Your linked Patient ID is: <strong>{get(currentUser, 'patientId', 'not linked')}</strong><br/>
+                    Use your session token to authenticate API requests to access FHIR resources.
+                  </Typography>
+                </Box>
+              </Collapse>
+            </>
+          )}
+        </Box>
+      </Paper>
 
       <Paper elevation={3} sx={{ p: 3, mb: 3 }}>
         <Typography variant="h6" gutterBottom>
@@ -464,6 +632,28 @@ curl -H "session:${accountsAccessToken}" \\
               readOnly: true,
             }}
           />
+          <TextField 
+            fullWidth
+            type="text"
+            label="Practitioner Role ID"
+            value={get(currentUser, 'practitionerRoleId', '')}
+            InputLabelProps={{shrink: true}}
+            InputProps={{
+              readOnly: true,
+            }}
+          />
+          {currentPractitionerRole && (
+            <TextField 
+              fullWidth
+              type="text"
+              label="Professional Role"
+              value={get(currentPractitionerRole, 'code[0].text', get(currentPractitionerRole, 'code[0].coding[0].display', ''))}
+              InputLabelProps={{shrink: true}}
+              InputProps={{
+                readOnly: true,
+              }}
+            />
+          )}
         </Box>
       </Paper>
 
@@ -494,6 +684,24 @@ curl -H "session:${accountsAccessToken}" \\
           Delete Account
         </Button>
       </Paper>
+      {/* Practitioner Search Dialog */}
+      <Dialog
+        open={openPractitionerSearch}
+        onClose={() => setOpenPractitionerSearch(false)}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle>Search for Practitioner License</DialogTitle>
+        <PractitionerSearchDialog
+          onSelect={handlePractitionerSelect}
+          hideFhirBarcode={true}
+        />
+        <DialogActions>
+          <Button onClick={() => setOpenPractitionerSearch(false)}>
+            Cancel
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Container>
   );
 }

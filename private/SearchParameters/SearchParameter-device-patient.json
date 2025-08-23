@@ -1,0 +1,29 @@
+{
+  "resourceType": "SearchParameter",
+  "id": "device-patient",
+  "url": "http://github.com/node-on-fhir/honeycomb/private/SearchParameters/SearchParameter-device-patient",
+  "version": "1.0.0",
+  "name": "HoneycombDevicePatient",
+  "status": "active",
+  "date": "2024-08-21",
+  "publisher": "github.com/node-on-fhir",
+  "contact": [
+    {
+      "telecom": [
+        {
+          "system": "url",
+          "value": "http://github.com/node-on-fhir/honeycomb"
+        }
+      ]
+    }
+  ],
+  "description": "Search for devices by patient",
+  "code": "patient",
+  "base": ["Device"],
+  "type": "reference",
+  "expression": "Device.patient",
+  "xpath": "patient.reference",
+  "target": ["Patient"],
+  "multipleOr": true,
+  "multipleAnd": false
+}

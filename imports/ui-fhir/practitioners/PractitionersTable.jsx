@@ -22,6 +22,17 @@ import { get } from 'lodash';
 import { FhirUtilities } from '../../lib/FhirUtilities';
 import { FhirDehydrator } from '../../lib/FhirDehydrator';
 
+// Logger setup
+const logger = {
+  debug: console.debug.bind(console),
+  trace: console.trace.bind(console),
+  data: console.log.bind(console),
+  verbose: console.debug.bind(console),
+  info: console.info.bind(console),
+  warn: console.warn.bind(console),
+  error: console.error.bind(console)
+};
+
 
 //===========================================================================
 // THEMING
@@ -150,11 +161,11 @@ function PractitionersTable(props){
   function removeRecord(_id){
     console.log('removeRecord')
   }
-  function handleRowClick(id){
-    
+  function handleRowClick(id, practitioner){
+    logger.debug('PractitionersTable.handleRowClick', id, practitioner);
 
     if(props && (typeof onRowClick === "function")){
-      onRowClick(id);
+      onRowClick(id, practitioner);
     }
   }
   function handleActionButtonClick(_id){
@@ -351,7 +362,7 @@ function PractitionersTable(props){
             let row = FhirDehydrator.dehydratePractitioner(practitioner);
             
             tableRows.push(
-              <TableRow key={count} className="practitionerRow" style={{cursor: 'pointer'}} onClick={ handleRowClick.bind(this, practitioner._id)}>
+              <TableRow key={count} className="practitionerRow" style={{cursor: 'pointer'}} onClick={ handleRowClick.bind(this, practitioner._id, practitioner)}>
                 { renderCheckbox(count) }
                 { renderActionIcons(practitioner) }
                 { renderIdentifier(row.identifier) }

@@ -1,0 +1,12 @@
+{
+  "resourceType" : "Device",
+  "id" : "PFEIG-CMS-Device-HandleBars",
+  "text" : {
+    "status" : "generated",
+    "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p class=\"res-header-id\"><b>Generated Narrative: Device PFEIG-CMS-Device-HandleBars</b></p><a name=\"PFEIG-CMS-Device-HandleBars\"> </a><a name=\"hcPFEIG-CMS-Device-HandleBars\"> </a><a name=\"PFEIG-CMS-Device-HandleBars-en-US\"> </a><h3>DeviceNames</h3><table class=\"grid\"><tr><td style=\"display: none\">-</td><td><b>Name</b></td><td><b>Type</b></td></tr><tr><td style=\"display: none\">*</td><td>Handle bars</td><td>User Friendly name</td></tr></table></div>"
+  },
+  "deviceName" : [{
+    "name" : "Handle bars",
+    "type" : "user-friendly-name"
+  }]
+}

@@ -1,0 +1,25 @@
+{
+  "resourceType" : "PractitionerRole",
+  "id" : "PFEIG-Role-SLP-JennyGlass",
+  "text" : {
+    "status" : "generated",
+    "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p class=\"res-header-id\"><b>Generated Narrative: PractitionerRole PFEIG-Role-SLP-JennyGlass</b></p><a name=\"PFEIG-Role-SLP-JennyGlass\"> </a><a name=\"hcPFEIG-Role-SLP-JennyGlass\"> </a><a name=\"PFEIG-Role-SLP-JennyGlass-en-US\"> </a><p><b>active</b>: true</p><p><b>practitioner</b>: <a href=\"Practitioner-PFEIG-Practitioner-JennyGlass.html\">Practitioner Jenny Glass</a></p><p><b>organization</b>: <a href=\"Organization-PFEIG-Org-01.html\">Organization San Antonio General Hospital</a></p><p><b>code</b>: <span title=\"Codes:{http://snomed.info/sct 159026005}\">Speech and language therapist</span></p><p><b>location</b>: <a href=\"Location-PFEIG-Org-Loc-01.html\">Location San Antonio General Hospital</a></p></div>"
+  },
+  "active" : true,
+  "practitioner" : {
+    "reference" : "Practitioner/PFEIG-Practitioner-JennyGlass"
+  },
+  "organization" : {
+    "reference" : "Organization/PFEIG-Org-01"
+  },
+  "code" : [{
+    "coding" : [{
+      "system" : "http://snomed.info/sct",
+      "code" : "159026005",
+      "display" : "Speech and language therapist"
+    }]
+  }],
+  "location" : [{
+    "reference" : "Location/PFEIG-Org-Loc-01"
+  }]
+}

@@ -1,6 +1,6 @@
 // imports/ui-fhir/medicationAdministrations/MedicationAdministrationsPage.jsx
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTracker } from 'meteor/react-meteor-data';
 import { useNavigate } from 'react-router-dom';
 
@@ -15,7 +15,8 @@ import {
   Box,
   Typography,
   ToggleButton,
-  ToggleButtonGroup
+  ToggleButtonGroup,
+  TextField
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
@@ -27,15 +28,17 @@ import { Session } from 'meteor/session';
 // import MedicationAdministrationDetail from './MedicationAdministrationDetail';
 import MedicationAdministrationsTable from './MedicationAdministrationsTable';
 import LayoutHelpers from '../../lib/LayoutHelpers';
+import { FhirUtilities } from '../../lib/FhirUtilities';
 
 import { get } from 'lodash';
 
+// Direct imports to avoid timing issues
+import { MedicationAdministrations } from '/imports/lib/schemas/SimpleSchemas/MedicationAdministrations';
+import { Patients } from '/imports/lib/schemas/SimpleSchemas/Patients';
+
 //=============================================================================================================================================
 // DATA CURSORS
-
-Meteor.startup(function(){
-  MedicationAdministrations = Meteor.Collections.MedicationAdministrations;
-})
+// Using direct imports instead of Meteor.startup for better reliability
 
 //=============================================================================================================================================
 // SESSION VARIABLES
@@ -58,6 +61,7 @@ Session.setDefault('MedicationAdministrationsTable.medicationAdministrationsInde
 export function MedicationAdministrationsPage(props){
   const navigate = useNavigate();
   const [sortOrder, setSortOrder] = useState('descending');
+  const [searchFilter, setSearchFilter] = useState('');
 
   let data = {
     currentMedicationAdministrationId: '',
@@ -82,8 +86,50 @@ export function MedicationAdministrationsPage(props){
     return MedicationAdministrations.findOne({_id: Session.get('selectedMedicationAdministrationId')});
   }, [])
   data.medicationAdministrations = useTracker(function(){
-    return MedicationAdministrations.find().fetch();
-  }, [])
+    const selectedPatientId = Session.get('selectedPatientId');
+    const selectedPatient = Session.get('selectedPatient');
+    
+    let query = {};
+    
+    // Add patient filter
+    if(selectedPatient || selectedPatientId) {
+      const fhirId = get(selectedPatient, 'id');
+      const patientIdToUse = fhirId || selectedPatientId;
+      if(patientIdToUse) {
+        query = FhirUtilities.addPatientFilterToQuery(patientIdToUse);
+      }
+    }
+    
+    // Add search filter
+    if(searchFilter && searchFilter.length > 0) {
+      const searchQuery = {
+        $or: [
+          {'_id': searchFilter},
+          {'id': searchFilter},
+          {'medicationCodeableConcept.text': {$regex: searchFilter, $options: 'i'}},
+          {'performer.0.actor.display': {$regex: searchFilter, $options: 'i'}},
+          {'performerDisplay': {$regex: searchFilter, $options: 'i'}},  // Also search flattened field
+          {'performer.0.display': {$regex: searchFilter, $options: 'i'}},  // Alternative structure
+          {'subject.display': {$regex: searchFilter, $options: 'i'}},
+          {'status': {$regex: searchFilter, $options: 'i'}}
+        ]
+      };
+      
+      // Merge queries
+      if(query.$or) {
+        query = {
+          $and: [
+            query,
+            searchQuery
+          ]
+        };
+      } else {
+        query = searchQuery;
+      }
+    }
+    
+    return MedicationAdministrations.find(query).fetch();
+  }, [searchFilter])
   data.medicationAdministrationsIndex = useTracker(function(){
     return Session.get('MedicationAdministrationsTable.medicationAdministrationsIndex')
   }, [])
@@ -94,15 +140,60 @@ export function MedicationAdministrationsPage(props){
     return Session.get('showFhirIds');
   }, [])
 
-  // Subscribe to MedicationAdministrations
-  useTracker(function(){
+  // Subscribe to MedicationAdministrations with patient filtering
+  const isLoading = useTracker(function(){
+    const selectedPatientId = Session.get('selectedPatientId');
+    const selectedPatient = Session.get('selectedPatient');
     let autoPublishEnabled = get(Meteor, 'settings.public.defaults.autopublish', false);
-    if(autoPublishEnabled){
-      return Meteor.subscribe('autopublish.MedicationAdministrations', {}, {});
-    } else {
-      return Meteor.subscribe('medicationAdministrations.all');
+    
+    let query = {};
+    
+    // Add patient filter if a patient is selected
+    if(selectedPatient || selectedPatientId) {
+      const fhirId = get(selectedPatient, 'id');
+      if(fhirId) {
+        query = FhirUtilities.addPatientFilterToQuery(fhirId);
+      } else if(selectedPatientId) {
+        query = FhirUtilities.addPatientFilterToQuery(selectedPatientId);
+      }
     }
-  }, []);
+    
+    // Add search filter if present
+    if(searchFilter && searchFilter.length > 0) {
+      const searchQuery = {
+        $or: [
+          {'_id': searchFilter},
+          {'id': searchFilter},
+          {'medicationCodeableConcept.text': {$regex: searchFilter, $options: 'i'}},
+          {'performer.0.actor.display': {$regex: searchFilter, $options: 'i'}},
+          {'performerDisplay': {$regex: searchFilter, $options: 'i'}},  // Also search flattened field
+          {'performer.0.display': {$regex: searchFilter, $options: 'i'}},  // Alternative structure
+          {'subject.display': {$regex: searchFilter, $options: 'i'}},
+          {'status': {$regex: searchFilter, $options: 'i'}}
+        ]
+      };
+      
+      // Merge with patient query if exists
+      if(query.$or) {
+        query = {
+          $and: [
+            query,
+            searchQuery
+          ]
+        };
+      } else {
+        query = searchQuery;
+      }
+    }
+    
+    if(autoPublishEnabled){
+      const handle = Meteor.subscribe('autopublish.MedicationAdministrations', query, { limit: 1000 });
+      return !handle.ready();
+    } else {
+      const handle = Meteor.subscribe('medicationAdministrations.all');
+      return !handle.ready();
+    }
+  }, [Session.get('selectedPatientId'), searchFilter]);
 
 
   let headerHeight = LayoutHelpers.calcHeaderHeight();
@@ -135,8 +226,20 @@ export function MedicationAdministrationsPage(props){
               {data.medicationAdministrations.length} administrations found
             </Typography>
           </Grid>
-          <Grid item>
-            <Box display="flex" gap={2} alignItems="center">
+          <Grid item xs={12} sm={6}>
+            <TextField
+              id="medicationAdministrationSearchInput"
+              fullWidth
+              variant="outlined"
+              size="small"
+              placeholder="Search by medication, performer, or patient..."
+              value={searchFilter}
+              onChange={(e) => setSearchFilter(e.target.value)}
+              sx={{ mb: 2 }}
+            />
+          </Grid>
+          <Grid item xs={12}>
+            <Box display="flex" gap={2} alignItems="center" justifyContent="flex-end">
               <ToggleButtonGroup
                 value={sortOrder}
                 exclusive

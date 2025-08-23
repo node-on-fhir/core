@@ -1,0 +1,70 @@
+{
+  "resourceType" : "DiagnosticReport",
+  "id" : "PFEIG-Narrative-History-Functional-Status-1",
+  "meta" : {
+    "profile" : ["http://hl7.org/fhir/us/pacio-pfe/StructureDefinition/pfe-narrative-history-of-status"]
+  },
+  "text" : {
+    "status" : "generated",
+    "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p class=\"res-header-id\"><b>Generated Narrative: DiagnosticReport PFEIG-Narrative-History-Functional-Status-1</b></p><a name=\"PFEIG-Narrative-History-Functional-Status-1\"> </a><a name=\"hcPFEIG-Narrative-History-Functional-Status-1\"> </a><a name=\"PFEIG-Narrative-History-Functional-Status-1-en-US\"> </a><h2><span title=\"Codes:{http://loinc.org 10158-4}\">History of Functional status Narrative</span> (<span title=\"Codes:{http://loinc.org LP7839-6}\">Pathology</span>, <span title=\"Codes:{http://hl7.org/fhir/us/pacio-pfe/CodeSystem/pfe-category-cs BlockL2-d41}\">Mobility</span>, <span title=\"Codes:{http://hl7.org/fhir/us/pacio-pfe/CodeSystem/pfe-category-cs BlockL2-d51}\">Self-care</span>) </h2><table class=\"grid\"><tr><td>Subject</td><td>Betsy Smith-Johnson Female, DoB Unknown ( http://example.org/identifiers/patient#10A3D58WH1600)</td></tr><tr><td>When For</td><td>2019-07-01 --&gt; 2020-11-30</td></tr><tr><td>Performer</td><td> <a href=\"PractitionerRole-PFEIG-provider-role-pcp.html\">PractitionerRole Primary Care Clinic/Center</a></td></tr></table><p><b>Report Details</b></p></div>"
+  },
+  "extension" : [{
+    "url" : "http://hl7.org/fhir/StructureDefinition/event-location",
+    "valueReference" : {
+      "reference" : "Location/PFEIG-provider-org-loc-01"
+    }
+  },
+  {
+    "url" : "http://hl7.org/fhir/us/pacio-pfe/StructureDefinition/assistance-required",
+    "valueCodeableConcept" : {
+      "coding" : [{
+        "system" : "http://loinc.org",
+        "code" : "LA11539-6",
+        "display" : "Independent - Patient completed all the activities by themself, with or without an assistive device, with no assistance from a helper."
+      }]
+    }
+  }],
+  "status" : "final",
+  "category" : [{
+    "coding" : [{
+      "system" : "http://loinc.org",
+      "code" : "LP7839-6",
+      "display" : "Pathology"
+    }]
+  },
+  {
+    "coding" : [{
+      "system" : "http://hl7.org/fhir/us/pacio-pfe/CodeSystem/pfe-category-cs",
+      "code" : "BlockL2-d41",
+      "display" : "Mobility"
+    }]
+  },
+  {
+    "coding" : [{
+      "system" : "http://hl7.org/fhir/us/pacio-pfe/CodeSystem/pfe-category-cs",
+      "code" : "BlockL2-d51",
+      "display" : "Self-care"
+    }]
+  }],
+  "code" : {
+    "coding" : [{
+      "system" : "http://loinc.org",
+      "code" : "10158-4",
+      "display" : "History of Functional status Narrative"
+    }]
+  },
+  "subject" : {
+    "reference" : "Patient/PFEIG-patientBSJ1"
+  },
+  "effectivePeriod" : {
+    "start" : "2019-07-01",
+    "end" : "2020-11-30"
+  },
+  "performer" : [{
+    "reference" : "PractitionerRole/PFEIG-provider-role-pcp"
+  }],
+  "presentedForm" : [{
+    "contentType" : "text/plain",
+    "data" : "UHJpb3IgdG8gdGhlIGN1cnJlbnQgYWRtaXNzaW9uLCBwYXRpZW50IHdhcyBhIGNvbW11bml0eSBhbWJ1bGF0b3IsIGFibGUgdG8gYXR0ZW5kIGRlc2lyZWQgYWN0aXZpdGVzIGFuZCBjYXJlIGZvciBoZXJzZWxmIGluZGVwZW5kZW50bHku"
+  }]
+}

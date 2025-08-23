@@ -1,0 +1,18 @@
+{
+  "resourceType" : "Practitioner",
+  "id" : "PFEIG-Practitioner-HoneyJones",
+  "text" : {
+    "status" : "generated",
+    "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p class=\"res-header-id\"><b>Generated Narrative: Practitioner PFEIG-Practitioner-HoneyJones</b></p><a name=\"PFEIG-Practitioner-HoneyJones\"> </a><a name=\"hcPFEIG-Practitioner-HoneyJones\"> </a><a name=\"PFEIG-Practitioner-HoneyJones-en-US\"> </a><p><b>active</b>: true</p><p><b>name</b>: Honey Jones</p><p><b>telecom</b>: ph: -unknown-</p><p><b>gender</b>: Female</p></div>"
+  },
+  "active" : true,
+  "name" : [{
+    "text" : "Honey Jones",
+    "family" : "Jones",
+    "given" : ["Honey"]
+  }],
+  "telecom" : [{
+    "system" : "phone"
+  }],
+  "gender" : "female"
+}

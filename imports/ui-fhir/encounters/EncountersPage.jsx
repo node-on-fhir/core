@@ -13,7 +13,8 @@ import {
   Box,
   Typography,
   ToggleButton,
-  ToggleButtonGroup
+  ToggleButtonGroup,
+  TextField
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
@@ -27,9 +28,11 @@ import EncountersTable from './EncountersTable';
 import LayoutHelpers from '../../lib/LayoutHelpers';
 
 import { get } from 'lodash';
+import { FhirUtilities } from '../../lib/FhirUtilities';
 
 // Import the Encounters collection directly
 import { Encounters } from '/imports/lib/schemas/SimpleSchemas/Encounters';
+import { Patients } from '/imports/lib/schemas/SimpleSchemas/Patients';
 
 //=============================================================================================================================================
 // SESSION VARIABLES
@@ -53,16 +56,60 @@ Session.setDefault('EncountersTable.encountersIndex', 0)
 export function EncountersPage(props){
   const navigate = useNavigate();
   const [sortOrder, setSortOrder] = useState('descending');
+  const [searchFilter, setSearchFilter] = useState('');
 
-  // Subscribe to encounters data
-  useTracker(function(){
+  // Subscribe to encounters with patient filtering
+  const isLoading = useTracker(function(){
+    const selectedPatientId = Session.get('selectedPatientId');
+    const selectedPatient = Session.get('selectedPatient');
     let autoPublishEnabled = get(Meteor, 'settings.public.defaults.autopublish', false);
-    if(autoPublishEnabled){
-      return Meteor.subscribe('autopublish.Encounters', {}, {});
-    } else {
-      return Meteor.subscribe('encounters.all');
+    
+    let query = {};
+    
+    // Add patient filter if a patient is selected
+    if(selectedPatient || selectedPatientId) {
+      const fhirId = get(selectedPatient, 'id');
+      if(fhirId) {
+        query = FhirUtilities.addPatientFilterToQuery(fhirId);
+      } else if(selectedPatientId) {
+        query = FhirUtilities.addPatientFilterToQuery(selectedPatientId);
+      }
     }
-  }, []);
+    
+    // Add search filter if present
+    if(searchFilter && searchFilter.length > 0) {
+      const searchQuery = {
+        $or: [
+          {'_id': searchFilter},
+          {'id': searchFilter},
+          {'participant.0.individual.display': {$regex: searchFilter, $options: 'i'}},
+          {'type.0.text': {$regex: searchFilter, $options: 'i'}},
+          {'reasonCode.0.text': {$regex: searchFilter, $options: 'i'}},
+          {'subject.display': {$regex: searchFilter, $options: 'i'}}
+        ]
+      };
+      
+      // Merge with patient query if exists
+      if(query.$or) {
+        query = {
+          $and: [
+            query,
+            searchQuery
+          ]
+        };
+      } else {
+        query = searchQuery;
+      }
+    }
+    
+    if(autoPublishEnabled){
+      const handle = Meteor.subscribe('autopublish.Encounters', query, { limit: 1000 });
+      return !handle.ready();
+    } else {
+      const handle = Meteor.subscribe('encounters.all');
+      return !handle.ready();
+    }
+  }, [Session.get('selectedPatientId'), searchFilter]);
 
   let data = {
     currentEncounterId: '',
@@ -87,8 +134,48 @@ export function EncountersPage(props){
     return Encounters ? Encounters.findOne({_id: Session.get('selectedEncounterId')}) : null;
   }, [])
   data.encounters = useTracker(function(){
-    return Encounters ? Encounters.find().fetch() : [];
-  }, [])
+    const selectedPatientId = Session.get('selectedPatientId');
+    const selectedPatient = Session.get('selectedPatient');
+    
+    let query = {};
+    
+    // Add patient filter
+    if(selectedPatient || selectedPatientId) {
+      const fhirId = get(selectedPatient, 'id');
+      const patientIdToUse = fhirId || selectedPatientId;
+      if(patientIdToUse) {
+        query = FhirUtilities.addPatientFilterToQuery(patientIdToUse);
+      }
+    }
+    
+    // Add search filter
+    if(searchFilter && searchFilter.length > 0) {
+      const searchQuery = {
+        $or: [
+          {'_id': searchFilter},
+          {'id': searchFilter},
+          {'participant.0.individual.display': {$regex: searchFilter, $options: 'i'}},
+          {'type.0.text': {$regex: searchFilter, $options: 'i'}},
+          {'reasonCode.0.text': {$regex: searchFilter, $options: 'i'}},
+          {'subject.display': {$regex: searchFilter, $options: 'i'}}
+        ]
+      };
+      
+      // Merge queries
+      if(query.$or) {
+        query = {
+          $and: [
+            query,
+            searchQuery
+          ]
+        };
+      } else {
+        query = searchQuery;
+      }
+    }
+    
+    return Encounters ? Encounters.find(query).fetch() : [];
+  }, [searchFilter])
   data.encountersIndex = useTracker(function(){
     return Session.get('EncountersTable.encountersIndex')
   }, [])
@@ -130,8 +217,20 @@ export function EncountersPage(props){
               {data.encounters.length} encounters found
             </Typography>
           </Grid>
-          <Grid item>
-            <Box display="flex" gap={2} alignItems="center">
+          <Grid item xs={12} sm={6}>
+            <TextField
+              id="encounterSearchInput"
+              fullWidth
+              variant="outlined"
+              size="small"
+              placeholder="Search by practitioner, type, or patient..."
+              value={searchFilter}
+              onChange={(e) => setSearchFilter(e.target.value)}
+              sx={{ mb: 2 }}
+            />
+          </Grid>
+          <Grid item xs={12}>
+            <Box display="flex" gap={2} alignItems="center" justifyContent="flex-end">
               <ToggleButtonGroup
                 value={sortOrder}
                 exclusive

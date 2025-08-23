@@ -1,0 +1,30 @@
+{
+  "resourceType": "SearchParameter",
+  "id": "patient-organization",
+  "url": "http://github.com/node-on-fhir/honeycomb/private/SearchParameters/SearchParameter-patient-organization",
+  "version": "1.0.0",
+  "name": "HoneycombPatientOrganization",
+  "status": "active",
+  "date": "2024-08-21",
+  "publisher": "github.com/node-on-fhir",
+  "contact": [
+    {
+      "telecom": [
+        {
+          "system": "url",
+          "value": "http://github.com/node-on-fhir/honeycomb"
+        }
+      ]
+    }
+  ],
+  "description": "Search for patients by managing organization",
+  "code": "organization",
+  "base": ["Patient"],
+  "type": "reference",
+  "expression": "Patient.managingOrganization",
+  "xpath": "managingOrganization.reference",
+  "target": ["Organization"],
+  "multipleOr": true,
+  "multipleAnd": false,
+  "modifier": ["exact", "missing", "type", "identifier"]
+}

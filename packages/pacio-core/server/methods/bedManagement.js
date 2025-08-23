@@ -34,9 +34,15 @@ Meteor.methods({
     }).fetchAsync();
   },
 
-  'pacio.assignPatientToBed': async function(bedId, patientId) {
+  'pacio.assignPatientToBed': async function(bedId, patientId, additionalInfo) {
     check(bedId, String);
     check(patientId, String);
+    check(additionalInfo, Match.Maybe({
+      attendingPhysician: Match.Maybe(String),
+      primaryNurse: Match.Maybe(String),
+      expectedDischargeDate: Match.Maybe(Date),
+      admissionDate: Match.Maybe(Date)
+    }));
 
     if (!this.userId) {
       throw new Meteor.Error('unauthorized', 'User must be logged in');
@@ -72,20 +78,31 @@ Meteor.methods({
 
     // Update the bed
     try {
+      const updateFields = {
+        status: 'occupied',
+        patientId: patientId,
+        patientName: patientName,
+        patientMRN: patientMRN,
+        patientAge: patientAge,
+        admissionDate: additionalInfo?.admissionDate || new Date(),
+        updatedBy: this.userId,
+        updatedAt: new Date()
+      };
+
+      // Add optional fields if provided
+      if (additionalInfo?.attendingPhysician) {
+        updateFields.attendingPhysician = additionalInfo.attendingPhysician;
+      }
+      if (additionalInfo?.primaryNurse) {
+        updateFields.primaryNurse = additionalInfo.primaryNurse;
+      }
+      if (additionalInfo?.expectedDischargeDate) {
+        updateFields.expectedDischargeDate = additionalInfo.expectedDischargeDate;
+      }
+
       await Beds.updateAsync(
         { _id: bedId },
-        { 
-          $set: {
-            status: 'occupied',
-            patientId: patientId,
-            patientName: patientName,
-            patientMRN: patientMRN,
-            patientAge: patientAge,
-            admissionDate: new Date(),
-            updatedBy: this.userId,
-            updatedAt: new Date()
-          }
-        }
+        { $set: updateFields }
       );
 
       console.log(`Bed ${bed.bedId} assigned to patient ${patientName} (${patientId})`);
@@ -232,5 +249,50 @@ Meteor.methods({
 
     console.log('Google Maps API key retrieved successfully');
     return apiKey;
+  },
+
+  'pacio.updateFacilityName': async function() {
+    if (!this.userId) {
+      throw new Meteor.Error('unauthorized', 'User must be logged in');
+    }
+
+    const facilityName = Meteor.settings?.public?.pacio?.facilityName || "Rainbow's End Medical Home";
+    
+    try {
+      const result = await Beds.updateAsync(
+        {},
+        { 
+          $set: {
+            facilityName: facilityName,
+            updatedAt: new Date(),
+            updatedBy: this.userId
+          }
+        },
+        { multi: true }
+      );
+
+      console.log(`Updated facility name to "${facilityName}" for ${result} beds`);
+      return { success: true, bedsUpdated: result };
+    } catch (error) {
+      console.error('Error updating facility name:', error);
+      throw new Meteor.Error('update-failed', 'Failed to update facility name');
+    }
+  },
+
+  'pacio.checkBeds': async function() {
+    // No auth required - for debugging
+    const count = await Beds.countAsync();
+    console.log(`Total beds in collection: ${count}`);
+    
+    if (count === 0) {
+      console.log('No beds found, triggering initialization...');
+      const { initializeSampleBeds } = await import('../sampleData/initializeBeds');
+      await initializeSampleBeds();
+      const newCount = await Beds.countAsync();
+      return { message: `Initialized ${newCount} beds`, count: newCount };
+    }
+    
+    const beds = await Beds.find({}, { limit: 5 }).fetchAsync();
+    return { count, sampleBeds: beds };
   }
 });

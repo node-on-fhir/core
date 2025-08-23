@@ -1,0 +1,15 @@
+{
+  "resourceType" : "Practitioner",
+  "id" : "PFEIG-Practitioner-JillBradley",
+  "text" : {
+    "status" : "generated",
+    "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p class=\"res-header-id\"><b>Generated Narrative: Practitioner PFEIG-Practitioner-JillBradley</b></p><a name=\"PFEIG-Practitioner-JillBradley\"> </a><a name=\"hcPFEIG-Practitioner-JillBradley\"> </a><a name=\"PFEIG-Practitioner-JillBradley-en-US\"> </a><p><b>active</b>: true</p><p><b>name</b>: Jill Bradley</p><p><b>gender</b>: Female</p></div>"
+  },
+  "active" : true,
+  "name" : [{
+    "text" : "Jill Bradley",
+    "family" : "Bradley",
+    "given" : ["Jill"]
+  }],
+  "gender" : "female"
+}

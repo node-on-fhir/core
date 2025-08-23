@@ -1,0 +1,29 @@
+{
+  "resourceType": "SearchParameter",
+  "id": "patient-language",
+  "url": "http://github.com/node-on-fhir/honeycomb/private/SearchParameters/SearchParameter-patient-language",
+  "version": "1.0.0",
+  "name": "HoneycombPatientLanguage",
+  "status": "active",
+  "date": "2024-08-21",
+  "publisher": "github.com/node-on-fhir",
+  "contact": [
+    {
+      "telecom": [
+        {
+          "system": "url",
+          "value": "http://github.com/node-on-fhir/honeycomb"
+        }
+      ]
+    }
+  ],
+  "description": "Search for patients by preferred language",
+  "code": "language",
+  "base": ["Patient"],
+  "type": "token",
+  "expression": "Patient.communication.language",
+  "xpath": "communication.language.coding.code",
+  "multipleOr": true,
+  "multipleAnd": false,
+  "modifier": ["exact", "text"]
+}

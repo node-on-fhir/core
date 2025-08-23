@@ -484,7 +484,7 @@ describe('Encounters CRUD Operations', function() {
   it('05. Verify new encounter appears in list', browser => {
     browser
       .waitForElementVisible('#encountersPage', 5000)
-      .pause(1000)  // Increased pause to allow data to fully render
+      .pause(3000)  // Increased pause to allow data to fully render and sync
       .waitForElementVisible('#encountersTable', 5000);
     
     // Debug: Check what's actually in the table
@@ -526,7 +526,13 @@ describe('Encounters CRUD Operations', function() {
     
     // The table displays practitionerDisplay which comes from participant[0].individual.display
     // We need to check for the practitioner name we set
+    // Use search to find the specific record
     browser
+      .waitForElementVisible('#encounterSearchInput', 10000)
+      .clearValue('#encounterSearchInput')
+      .setValue('#encounterSearchInput', testEncounter.practitionerName)
+      .pause(2000) // Give time for search to filter results
+      .waitForElementVisible('#encountersTable', 5000)
       .assert.containsText('#encountersTable', testEncounter.practitionerName)
       .assert.containsText('#encountersTable', testEncounter.encounterTypeDisplay)
       .saveScreenshot('tests/nightwatch/screenshots/encounters/06-encounter-in-list.png');

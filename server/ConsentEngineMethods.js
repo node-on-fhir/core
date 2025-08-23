@@ -79,6 +79,7 @@ Meteor.methods({
       let ConsentClinicianPatient = JSON.parse(await Assets.getTextAsync('AccessControlListDefaults/ConsentClinicianPatient.json'));
       let ConsentPatientOwner = JSON.parse(await Assets.getTextAsync('AccessControlListDefaults/ConsentPatientOwner.json'));
       let ConsentSystemPatient = JSON.parse(await Assets.getTextAsync('AccessControlListDefaults/ConsentSystemPatient.json'));
+      let ConsentCitizenPublic = JSON.parse(await Assets.getTextAsync('AccessControlListDefaults/ConsentCitizenPublic.json'));
 
       let consentsArray = [
           ConsentAnonOrg,
@@ -87,7 +88,8 @@ Meteor.methods({
           ConsentClinicianOrg,
           ConsentClinicianPatient,
           ConsentPatientOwner,
-          ConsentSystemPatient   
+          ConsentSystemPatient,
+          ConsentCitizenPublic   
       ];
       
       consentsArray.forEach(async function(consent){

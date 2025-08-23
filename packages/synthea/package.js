@@ -16,7 +16,11 @@ Package.onUse(function(api) {
     api.use('react-meteor-data');
     api.use('session');
     api.use('mongo');    
-    api.use('http');    
+    api.use('http');
+    api.use('check');    
     
     api.mainModule('index.jsx', 'client');
+    
+    api.addFiles('server/startup.js', 'server');
+    api.addFiles('server/methods.js', 'server');
 });

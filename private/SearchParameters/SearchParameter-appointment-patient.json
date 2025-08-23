@@ -1,0 +1,29 @@
+{
+  "resourceType": "SearchParameter",
+  "id": "appointment-patient",
+  "url": "http://github.com/node-on-fhir/honeycomb/private/SearchParameters/SearchParameter-appointment-patient",
+  "version": "1.0.0",
+  "name": "HoneycombAppointmentPatient",
+  "status": "active",
+  "date": "2024-08-21",
+  "publisher": "github.com/node-on-fhir",
+  "contact": [
+    {
+      "telecom": [
+        {
+          "system": "url",
+          "value": "http://github.com/node-on-fhir/honeycomb"
+        }
+      ]
+    }
+  ],
+  "description": "Search for appointments by patient",
+  "code": "patient",
+  "base": ["Appointment"],
+  "type": "reference",
+  "expression": "Appointment.participant.actor.where(resolve() is Patient)",
+  "xpath": "participant.actor.reference",
+  "target": ["Patient"],
+  "multipleOr": true,
+  "multipleAnd": false
+}

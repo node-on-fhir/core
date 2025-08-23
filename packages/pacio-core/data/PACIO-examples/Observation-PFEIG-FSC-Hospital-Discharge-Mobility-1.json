@@ -1,0 +1,137 @@
+{
+  "resourceType" : "Observation",
+  "id" : "PFEIG-FSC-Hospital-Discharge-Mobility-1",
+  "meta" : {
+    "profile" : ["http://hl7.org/fhir/us/pacio-pfe/StructureDefinition/pfe-collection"]
+  },
+  "text" : {
+    "status" : "generated",
+    "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p class=\"res-header-id\"><b>Generated Narrative: Observation PFEIG-FSC-Hospital-Discharge-Mobility-1</b></p><a name=\"PFEIG-FSC-Hospital-Discharge-Mobility-1\"> </a><a name=\"hcPFEIG-FSC-Hospital-Discharge-Mobility-1\"> </a><a name=\"PFEIG-FSC-Hospital-Discharge-Mobility-1-en-US\"> </a><p><b>status</b>: Final</p><p><b>category</b>: <span title=\"Codes:{http://hl7.org/fhir/us/core/CodeSystem/us-core-category functional-status}\">Functional Status</span>, <span title=\"Codes:{http://terminology.hl7.org/CodeSystem/observation-category survey}\">Survey</span>, <span title=\"Codes:{http://hl7.org/fhir/us/pacio-pfe/CodeSystem/pfe-category-cs BlockL2-d41}\">Mobility</span></p><p><b>code</b>: <span title=\"Codes:{http://loinc.org 88331-4}\">Mobility - discharge performance during 3 day assessment period [CMS Assessment]</span></p><p><b>subject</b>: <a href=\"Patient-PFEIG-patientBSJ1.html\">Betsy Smith-Johnson Female, DoB Unknown ( http://example.org/identifiers/patient#10A3D58WH1600)</a></p><p><b>effective</b>: 2020-07-10 14:34:00-0500</p><p><b>performer</b>: <a href=\"PractitionerRole-PFEIG-Role-PT-RonMarble.html\">PractitionerRole Physiotherapist</a></p><p><b>hasMember</b>: </p><ul><li><a href=\"Observation-PFEIG-FSC-Hospital-Discharge-Mobility-1-Ob-Question-2.html\">Observation Roll left and right - functional ability during 3 day assessment period [CMS Assessment]</a></li><li><a href=\"Observation-PFEIG-FSC-Hospital-Discharge-Mobility-1-Ob-Question-4.html\">Observation Sit to lying - functional ability during 3 day assessment period [CMS Assessment]</a></li><li><a href=\"Observation-PFEIG-FSC-Hospital-Discharge-Mobility-1-Ob-Question-6.html\">Observation Lying to sitting on side of bed - functional ability during 3 day assessment period [CMS Assessment]</a></li><li><a href=\"Observation-PFEIG-FSC-Hospital-Discharge-Mobility-1-Ob-Question-8.html\">Observation Sit to stand - functional ability during 3 day assessment period [CMS Assessment]</a></li><li><a href=\"Observation-PFEIG-FSC-Hospital-Discharge-Mobility-1-Ob-Question-10.html\">Observation Bed-to-chair transfer - functional ability during 3 day assessment period [CMS Assessment]</a></li><li><a href=\"Observation-PFEIG-FSC-Hospital-Discharge-Mobility-1-Ob-Question-12.html\">Observation Toilet transfer - functional ability during 3 day assessment period [CMS Assessment]</a></li><li><a href=\"Observation-PFEIG-FSC-Hospital-Discharge-Mobility-1-Ob-Question-14.html\">Observation Car transfer - functional ability during 3 day assessment period [CMS Assessment]</a></li><li><a href=\"Observation-PFEIG-FSC-Hospital-Discharge-Mobility-1-Ob-Question-16.html\">Observation Walk 10 feet - functional ability during 3 day assessment period [CMS Assessment]</a></li><li><a href=\"Observation-PFEIG-FSC-Hospital-Discharge-Mobility-1-Ob-Question-18.html\">Observation Walk 50 feet with two turns - functional ability during 3 day assessment period [CMS Assessment]</a></li><li><a href=\"Observation-PFEIG-FSC-Hospital-Discharge-Mobility-1-Ob-Question-20.html\">Observation Walk 150 feet - functional ability during 3 day assessment period [CMS Assessment]</a></li><li><a href=\"Observation-PFEIG-FSC-Hospital-Discharge-Mobility-1-Ob-Question-22.html\">Observation Walking 10 feet on uneven surfaces - functional ability during 3 day assessment period [CMS Assessment]</a></li><li><a href=\"Observation-PFEIG-FSC-Hospital-Discharge-Mobility-1-Ob-Question-24.html\">Observation 1 step (curb) - functional ability during 3 day assessment period [CMS Assessment]</a></li><li><a href=\"Observation-PFEIG-FSC-Hospital-Discharge-Mobility-1-Ob-Question-26.html\">Observation 4 steps - functional ability during 3 day assessment period [CMS Assessment]</a></li><li><a href=\"Observation-PFEIG-FSC-Hospital-Discharge-Mobility-1-Ob-Question-28.html\">Observation 12 steps - functional ability during 3 day assessment period [CMS Assessment]</a></li><li><a href=\"Observation-PFEIG-FSC-Hospital-Discharge-Mobility-1-Ob-Question-30.html\">Observation Picking up object - functional ability during 3 day assessment period [CMS Assessment]</a></li><li><a href=\"Observation-PFEIG-FSC-Hospital-Discharge-Mobility-1-Ob-Question-32.html\">Observation Wheel 50 feet with two turns - functional ability during 3 day assessment period [CMS Assessment]</a></li><li><a href=\"Observation-PFEIG-FSC-Hospital-Discharge-Mobility-1-Ob-Question-34.html\">Observation Wheel 150 feet - functional ability during 3 day assessment period [CMS Assessment]</a></li></ul><p><b>derivedFrom</b>: <a href=\"QuestionnaireResponse-PFEIG-QResponse-Hospital-Discharge-Mobility-1.html\">Response to Questionnaire 'http://example.org/Questionnaire/MDS3.0-NC-1.17' about '-&gt;Betsy Smith-Johnson Female, DoB Unknown ( http://example.org/identifiers/patient#10A3D58WH1600)'</a></p></div>"
+  },
+  "extension" : [{
+    "url" : "http://hl7.org/fhir/StructureDefinition/event-location",
+    "valueReference" : {
+      "reference" : "Location/PFEIG-Org-Loc-01"
+    }
+  },
+  {
+    "url" : "http://hl7.org/fhir/us/pacio-pfe/StructureDefinition/device-patient-used",
+    "valueReference" : {
+      "reference" : "DeviceUseStatement/PFEIG-FSC-Hospital-Discharge-Mobility-1-UseOfDevice-1"
+    }
+  },
+  {
+    "url" : "http://hl7.org/fhir/us/pacio-pfe/StructureDefinition/device-patient-used",
+    "valueReference" : {
+      "reference" : "DeviceUseStatement/PFEIG-FSC-Hospital-Discharge-Mobility-1-UseOfDevice-2"
+    }
+  },
+  {
+    "url" : "http://hl7.org/fhir/us/pacio-pfe/StructureDefinition/device-patient-used",
+    "valueReference" : {
+      "reference" : "DeviceUseStatement/PFEIG-FSC-Hospital-Discharge-Mobility-1-UseOfDevice-3"
+    }
+  },
+  {
+    "url" : "http://hl7.org/fhir/us/pacio-pfe/StructureDefinition/device-patient-used",
+    "valueReference" : {
+      "reference" : "DeviceUseStatement/PFEIG-FSC-Hospital-Discharge-Mobility-1-UseOfDevice-4"
+    }
+  },
+  {
+    "url" : "http://hl7.org/fhir/us/pacio-pfe/StructureDefinition/device-patient-used",
+    "valueReference" : {
+      "reference" : "DeviceUseStatement/PFEIG-FSC-Hospital-Discharge-Mobility-1-UseOfDevice-5"
+    }
+  }],
+  "status" : "final",
+  "category" : [{
+    "coding" : [{
+      "system" : "http://hl7.org/fhir/us/core/CodeSystem/us-core-category",
+      "code" : "functional-status",
+      "display" : "Functional Status"
+    }]
+  },
+  {
+    "coding" : [{
+      "system" : "http://terminology.hl7.org/CodeSystem/observation-category",
+      "code" : "survey"
+    }]
+  },
+  {
+    "coding" : [{
+      "system" : "http://hl7.org/fhir/us/pacio-pfe/CodeSystem/pfe-category-cs",
+      "code" : "BlockL2-d41",
+      "display" : "Mobility"
+    }]
+  }],
+  "code" : {
+    "coding" : [{
+      "system" : "http://loinc.org",
+      "code" : "88331-4",
+      "display" : "Mobility - discharge performance during 3 day assessment period [CMS Assessment]"
+    }],
+    "text" : "Mobility - discharge performance during 3 day assessment period [CMS Assessment]"
+  },
+  "subject" : {
+    "reference" : "Patient/PFEIG-patientBSJ1"
+  },
+  "effectiveDateTime" : "2020-07-10T14:34:00-05:00",
+  "performer" : [{
+    "reference" : "PractitionerRole/PFEIG-Role-PT-RonMarble"
+  }],
+  "hasMember" : [{
+    "reference" : "Observation/PFEIG-FSC-Hospital-Discharge-Mobility-1-Ob-Question-2"
+  },
+  {
+    "reference" : "Observation/PFEIG-FSC-Hospital-Discharge-Mobility-1-Ob-Question-4"
+  },
+  {
+    "reference" : "Observation/PFEIG-FSC-Hospital-Discharge-Mobility-1-Ob-Question-6"
+  },
+  {
+    "reference" : "Observation/PFEIG-FSC-Hospital-Discharge-Mobility-1-Ob-Question-8"
+  },
+  {
+    "reference" : "Observation/PFEIG-FSC-Hospital-Discharge-Mobility-1-Ob-Question-10"
+  },
+  {
+    "reference" : "Observation/PFEIG-FSC-Hospital-Discharge-Mobility-1-Ob-Question-12"
+  },
+  {
+    "reference" : "Observation/PFEIG-FSC-Hospital-Discharge-Mobility-1-Ob-Question-14"
+  },
+  {
+    "reference" : "Observation/PFEIG-FSC-Hospital-Discharge-Mobility-1-Ob-Question-16"
+  },
+  {
+    "reference" : "Observation/PFEIG-FSC-Hospital-Discharge-Mobility-1-Ob-Question-18"
+  },
+  {
+    "reference" : "Observation/PFEIG-FSC-Hospital-Discharge-Mobility-1-Ob-Question-20"
+  },
+  {
+    "reference" : "Observation/PFEIG-FSC-Hospital-Discharge-Mobility-1-Ob-Question-22"
+  },
+  {
+    "reference" : "Observation/PFEIG-FSC-Hospital-Discharge-Mobility-1-Ob-Question-24"
+  },
+  {
+    "reference" : "Observation/PFEIG-FSC-Hospital-Discharge-Mobility-1-Ob-Question-26"
+  },
+  {
+    "reference" : "Observation/PFEIG-FSC-Hospital-Discharge-Mobility-1-Ob-Question-28"
+  },
+  {
+    "reference" : "Observation/PFEIG-FSC-Hospital-Discharge-Mobility-1-Ob-Question-30"
+  },
+  {
+    "reference" : "Observation/PFEIG-FSC-Hospital-Discharge-Mobility-1-Ob-Question-32"
+  },
+  {
+    "reference" : "Observation/PFEIG-FSC-Hospital-Discharge-Mobility-1-Ob-Question-34"
+  }],
+  "derivedFrom" : [{
+    "reference" : "QuestionnaireResponse/PFEIG-QResponse-Hospital-Discharge-Mobility-1"
+  }]
+}
