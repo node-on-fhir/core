@@ -79,6 +79,7 @@ import './publications/autopublish.js';
 import './publications/patients.js';
 import './publications/conditions.js';
 import './publications/communications.js';
+import './publications/serviceRequests.js';
 
 // Import practitioner startup (includes methods and publications)
 import './startup/practitionerStartup.js';

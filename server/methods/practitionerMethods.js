@@ -151,5 +151,121 @@ Meteor.methods({
     }
     
     return result;
+  },
+  
+  /**
+   * Get the current user's practitioner ID
+   */
+  'users.getCurrentPractitionerId': async function() {
+    if (!this.userId) {
+      return null;
+    }
+    
+    const user = await Meteor.users.findOneAsync(this.userId);
+    console.log('getCurrentPractitionerId - user:', user?.username, 'practitionerId:', user?.practitionerId);
+    
+    return user?.practitionerId || null;
+  },
+  
+  /**
+   * Dev helper: Link house user to Chief Medical Officer
+   * Run in browser console: Meteor.call('dev.linkHouseToCMO')
+   */
+  'dev.linkHouseToCMO': async function() {
+    if (Meteor.isProduction) {
+      throw new Meteor.Error('not-allowed', 'This method is only available in development');
+    }
+    
+    const houseUser = await Meteor.users.findOneAsync({ username: 'house' });
+    if (!houseUser) {
+      throw new Meteor.Error('not-found', 'House user not found');
+    }
+    
+    const chiefMedicalOfficerId = get(Meteor.settings, 'private.pacio.chiefMedicalOfficer.reference', '').replace('Practitioner/', '');
+    
+    if (!chiefMedicalOfficerId) {
+      throw new Meteor.Error('not-configured', 'Chief Medical Officer not configured in settings');
+    }
+    
+    const result = await Meteor.users.updateAsync(
+      { _id: houseUser._id },
+      { 
+        $set: { 
+          practitionerId: chiefMedicalOfficerId,
+          'profile.isPractitioner': true
+        } 
+      }
+    );
+    
+    console.log(`Linked house user to Chief Medical Officer (${chiefMedicalOfficerId})`);
+    return { success: true, practitionerId: chiefMedicalOfficerId };
+  },
+  
+  /**
+   * Set user as practitioner without requiring a linked practitioner record
+   * This allows users to see intervention approvals and other practitioner-specific content
+   */
+  'users.setAsPractitioner': async function(isPractitioner = true) {
+    check(isPractitioner, Boolean);
+    
+    if (!this.userId) {
+      throw new Meteor.Error('not-authorized', 'You must be logged in');
+    }
+    
+    const result = await Meteor.users.updateAsync(
+      { _id: this.userId },
+      { 
+        $set: { 
+          'profile.isPractitioner': isPractitioner
+        } 
+      }
+    );
+    
+    console.log(`Set user ${this.userId} isPractitioner to ${isPractitioner}`);
+    
+    return result;
+  },
+  
+  /**
+   * Debug method: Link current user to Chief Medical Officer
+   * This is for development/testing purposes only
+   */
+  'debug.linkCurrentUserToCMO': async function() {
+    if (!this.userId) {
+      throw new Meteor.Error('not-authorized', 'You must be logged in');
+    }
+    
+    const chiefMedicalOfficerId = get(Meteor.settings, 'private.pacio.chiefMedicalOfficer.reference', '').replace('Practitioner/', '');
+    
+    if (!chiefMedicalOfficerId) {
+      // Create a default CMO practitioner ID if not configured
+      const defaultCMOId = 'chief-medical-officer';
+      
+      await Meteor.users.updateAsync(
+        { _id: this.userId },
+        { 
+          $set: { 
+            practitionerId: defaultCMOId,
+            'profile.isPractitioner': true
+          } 
+        }
+      );
+      
+      console.log(`Linked user ${this.userId} to default Chief Medical Officer (${defaultCMOId})`);
+      return { success: true, practitionerId: defaultCMOId, message: 'Linked to default Chief Medical Officer' };
+    }
+    
+    const result = await Meteor.users.updateAsync(
+      { _id: this.userId },
+      { 
+        $set: { 
+          practitionerId: chiefMedicalOfficerId,
+          'profile.isPractitioner': true
+        } 
+      }
+    );
+    
+    console.log(`Linked user ${this.userId} to Chief Medical Officer (${chiefMedicalOfficerId})`);
+    return { success: true, practitionerId: chiefMedicalOfficerId, message: `Linked to Chief Medical Officer (${chiefMedicalOfficerId})` };
   }
 });

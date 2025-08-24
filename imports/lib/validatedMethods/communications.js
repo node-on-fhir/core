@@ -116,8 +116,32 @@ export const insertCommunication = new ValidatedMethod({
       document.test = false;
     }
 
+    // Check if this is an intervention approval communication and set recipient from settings
+    if (Meteor.isServer) {
+      console.log('Server-side check for intervention approval communication');
+      console.log('Category code:', document.category?.[0]?.coding?.[0]?.code);
+      console.log('Recipient reference:', document.recipient?.[0]?.reference);
+      
+      if (document.category?.[0]?.coding?.[0]?.code === 'intervention-approval' &&
+          document.recipient?.[0]?.reference === 'Practitioner/chief-medical-officer') {
+        const chiefMedicalOfficer = get(Meteor.settings, 'private.pacio.chiefMedicalOfficer', {
+          reference: 'Practitioner/chief-medical-officer',
+          display: 'Chief Medical Officer'
+        });
+        console.log('Setting Chief Medical Officer recipient from private settings:', chiefMedicalOfficer);
+        document.recipient = [chiefMedicalOfficer];
+      }
+    }
+
     // Insert the document using async method for Meteor v3
-    return await Communications.insertAsync(document);
+    const result = await Communications.insertAsync(document);
+    console.log('Communication inserted with ID:', result);
+    
+    // Verify it was inserted
+    const inserted = await Communications.findOneAsync(result);
+    console.log('Verified communication in database:', inserted);
+    
+    return result;
   }
 });
 
