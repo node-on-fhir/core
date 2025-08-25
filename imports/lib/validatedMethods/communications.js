@@ -228,8 +228,44 @@ export const removeCommunicationById = new ValidatedMethod({
     _id: { type: String }
   }).validator(),
   async run({ _id }) {
-    console.log("Removing communication " + _id);
-    return await Communications.removeAsync({_id: _id});
+    console.log("[Server] Attempting to remove communication:", _id);
+    
+    // First, check if the communication exists
+    const existingComm = await Communications.findOneAsync({
+      $or: [
+        { _id: _id },
+        { id: _id }
+      ]
+    });
+    
+    if (!existingComm) {
+      console.error("[Server] Communication not found for deletion:", _id);
+      throw new Meteor.Error('communication-not-found', `Communication ${_id} not found for deletion`);
+    }
+    
+    console.log("[Server] Found communication to delete:", {
+      _id: existingComm._id,
+      id: existingComm.id,
+      category: existingComm.category?.[0]?.coding?.[0]?.code,
+      status: existingComm.status
+    });
+    
+    // Use the actual _id for deletion
+    const actualId = existingComm._id;
+    const result = await Communications.removeAsync({ _id: actualId });
+    
+    console.log("[Server] Communication removal result:", result);
+    
+    // Verify it was deleted
+    const stillExists = await Communications.findOneAsync({ _id: actualId });
+    if (stillExists) {
+      console.error("[Server] Communication still exists after deletion attempt!");
+      throw new Meteor.Error('deletion-failed', 'Communication was not deleted');
+    } else {
+      console.log("[Server] Verified communication was successfully deleted");
+    }
+    
+    return result;
   }
 });
 

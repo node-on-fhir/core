@@ -79,11 +79,28 @@ Meteor.methods({
     
     // Get current service request to increment version
     const ServiceRequests = getServiceRequests();
-    const currentServiceRequest = await ServiceRequests.findOneAsync(_id);
+    
+    console.log('updateServiceRequest - looking for ID:', _id);
+    
+    // Try both _id and id fields
+    const currentServiceRequest = await ServiceRequests.findOneAsync({
+      $or: [
+        { _id: _id },
+        { id: _id }
+      ]
+    });
     
     if (!currentServiceRequest) {
+      console.error('ServiceRequest not found for ID:', _id);
+      // Try to see what's in the collection
+      const sample = await ServiceRequests.findOneAsync({ 'category.0.coding.0.code': 'intervention-approval' });
+      if (sample) {
+        console.log('Sample approval request IDs:', { _id: sample._id, id: sample.id });
+      }
       throw new Meteor.Error('not-found', 'Service request not found');
     }
+    
+    console.log('Found ServiceRequest:', { _id: currentServiceRequest._id, id: currentServiceRequest.id, status: currentServiceRequest.status });
     
     // Update metadata
     const now = new Date();
@@ -97,8 +114,24 @@ Meteor.methods({
     // Ensure resourceType is maintained
     update.resourceType = 'ServiceRequest';
     
-    // Perform the update
-    const result = await ServiceRequests.updateAsync(_id, { $set: update });
+    // Perform the update using the actual _id from the found document
+    const actualId = currentServiceRequest._id;
+    console.log('Updating ServiceRequest with _id:', actualId);
+    console.log('Update data:', update);
+    
+    const result = await ServiceRequests.updateAsync(actualId, { $set: update });
+    
+    console.log('Update result:', result);
+    
+    // Verify the update
+    if (Meteor.isServer) {
+      const updated = await ServiceRequests.findOneAsync(actualId);
+      console.log('Verified updated ServiceRequest:', { 
+        _id: updated?._id, 
+        status: updated?.status,
+        category: updated?.category?.[0]?.coding?.[0]?.code 
+      });
+    }
     
     // Log for HIPAA compliance
     if (Meteor.isServer) {
