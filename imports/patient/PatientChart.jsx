@@ -15,7 +15,7 @@ import { Meteor } from 'meteor/meteor';
 import { useTracker } from 'meteor/react-meteor-data';
 
 
-import { LayoutHelpers } from '../lib/LayoutHelpers';
+import { LayoutHelpers } from '../lib/LayoutHelpers.jsx';
 
 import NotSignedInWrapper from "../ui/NotSignedInWrapper";
 

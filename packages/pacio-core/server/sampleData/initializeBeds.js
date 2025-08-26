@@ -328,7 +328,7 @@ export async function assignSamplePatientsToBeds() {
         overdue: Math.random() > 0.7 ? Math.floor(Math.random() * 2) + 1 : 0
       };
       
-      await Beds.update(
+      await Beds.updateAsync(
         { _id: bed._id },
         {
           $set: {

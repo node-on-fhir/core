@@ -24,7 +24,7 @@ import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
 
 import { PatientsTable } from '../ui-tables';
-import LayoutHelpers from '../lib/LayoutHelpers';
+import LayoutHelpers from '../lib/LayoutHelpers.jsx';
 import { Patients } from '../lib/schemas/SimpleSchemas/Patients';
 
 import { get, has, set } from 'lodash';

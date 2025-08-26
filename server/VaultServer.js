@@ -56,71 +56,74 @@ Meteor.startup(function(){
   if(Package['browser-policy-common']){
     console.log('Configuring content-security-policy.');
 
-    import { BrowserPolicy } from 'meteor/browser-policy-common';
+    // import { BrowserPolicy } from 'meteor/browser-policy-common';
+    import('meteor/browser-policy-common').then(({ BrowserPolicy }) => {
+      // Use BrowserPolicy here
 
-    BrowserPolicy.content.allowSameOriginForAll();
-    BrowserPolicy.content.allowDataUrlForAll()
-    BrowserPolicy.content.allowOriginForAll('self');
-    BrowserPolicy.content.allowObjectOrigin('self')
-    BrowserPolicy.content.allowOriginForAll('font src');
-    BrowserPolicy.content.allowOriginForAll('*.wikipedia.com');
-    BrowserPolicy.content.allowOriginForAll('*.wikipedia.org');
-    BrowserPolicy.content.allowOriginForAll('fonts.googleapis.com');
-    BrowserPolicy.content.allowOriginForAll('fonts.gstatic.com');
-    BrowserPolicy.content.allowImageOrigin("* data:")
-    BrowserPolicy.content.allowOriginForAll('blob:');
-    BrowserPolicy.content.allowImageOrigin("blob:")
-    BrowserPolicy.content.allowEval();
-    BrowserPolicy.content.allowInlineScripts()
-    BrowserPolicy.content.allowInlineStyles()  
-  
-    BrowserPolicy.content.allowObjectOrigin( 'zygotebody.com' );
-    BrowserPolicy.content.allowFrameOrigin('zygotebody.com');
-    BrowserPolicy.content.allowObjectDataUrl('zygotebody.com');
-    BrowserPolicy.content.allowOriginForAll('zygotebody.com');
-    BrowserPolicy.content.allowConnectOrigin("zygotebody.com")
-    BrowserPolicy.content.allowImageOrigin("zygotebody.com")   
+      BrowserPolicy.content.allowSameOriginForAll();
+      BrowserPolicy.content.allowDataUrlForAll()
+      BrowserPolicy.content.allowOriginForAll('self');
+      BrowserPolicy.content.allowObjectOrigin('self')
+      BrowserPolicy.content.allowOriginForAll('font src');
+      BrowserPolicy.content.allowOriginForAll('*.wikipedia.com');
+      BrowserPolicy.content.allowOriginForAll('*.wikipedia.org');
+      BrowserPolicy.content.allowOriginForAll('fonts.googleapis.com');
+      BrowserPolicy.content.allowOriginForAll('fonts.gstatic.com');
+      BrowserPolicy.content.allowImageOrigin("* data:")
+      BrowserPolicy.content.allowOriginForAll('blob:');
+      BrowserPolicy.content.allowImageOrigin("blob:")
+      BrowserPolicy.content.allowEval();
+      BrowserPolicy.content.allowInlineScripts()
+      BrowserPolicy.content.allowInlineStyles()  
+    
+      BrowserPolicy.content.allowObjectOrigin( 'zygotebody.com' );
+      BrowserPolicy.content.allowFrameOrigin('zygotebody.com');
+      BrowserPolicy.content.allowObjectDataUrl('zygotebody.com');
+      BrowserPolicy.content.allowOriginForAll('zygotebody.com');
+      BrowserPolicy.content.allowConnectOrigin("zygotebody.com")
+      BrowserPolicy.content.allowImageOrigin("zygotebody.com")   
 
-    BrowserPolicy.content.allowConnectOrigin('http://localhost:3000');
-    BrowserPolicy.content.allowConnectOrigin('ws://localhost:3000');
-    BrowserPolicy.content.allowConnectOrigin('wss://localhost:3000');
+      BrowserPolicy.content.allowConnectOrigin('http://localhost:3000');
+      BrowserPolicy.content.allowConnectOrigin('ws://localhost:3000');
+      BrowserPolicy.content.allowConnectOrigin('wss://localhost:3000');
 
-    BrowserPolicy.content.allowConnectOrigin('http://localhost:12072');
-    BrowserPolicy.content.allowConnectOrigin('ws://localhost:12072');
-    BrowserPolicy.content.allowConnectOrigin('wss://localhost:12072');
+      BrowserPolicy.content.allowConnectOrigin('http://localhost:12072');
+      BrowserPolicy.content.allowConnectOrigin('ws://localhost:12072');
+      BrowserPolicy.content.allowConnectOrigin('wss://localhost:12072');
 
-    BrowserPolicy.content.allowOriginForAll("http://meteor.local");
+      BrowserPolicy.content.allowOriginForAll("http://meteor.local");
 
-    BrowserPolicy.content.allowOriginForAll("https://fhir.epic.com");
-    BrowserPolicy.content.allowOriginForAll("https://fhir-ehr-code.cerner.com");
+      BrowserPolicy.content.allowOriginForAll("https://fhir.epic.com");
+      BrowserPolicy.content.allowOriginForAll("https://fhir-ehr-code.cerner.com");
 
 
-    // CORS Support
-    if(get(Meteor, 'settings.public.cors')){
-      if(Array.isArray(get(Meteor, 'settings.public.cors'))){
-        Meteor.settings.public.cors.forEach(function(corsDomain){
-          BrowserPolicy.content.allowOriginForAll(corsDomain);
-          BrowserPolicy.content.allowConnectOrigin(corsDomain);
-          BrowserPolicy.content.allowImageOrigin(corsDomain);          
-        })
-      }
-    } 
+      // CORS Support
+      if(get(Meteor, 'settings.public.cors')){
+        if(Array.isArray(get(Meteor, 'settings.public.cors'))){
+          Meteor.settings.public.cors.forEach(function(corsDomain){
+            BrowserPolicy.content.allowOriginForAll(corsDomain);
+            BrowserPolicy.content.allowConnectOrigin(corsDomain);
+            BrowserPolicy.content.allowImageOrigin(corsDomain);          
+          })
+        }
+      } 
 
-    // BrowserPolicy.content.allowOriginForAll('fhir-timeline.meteorapp.com');
-    // BrowserPolicy.content.allowFrameOrigin('fhir-timeline.meteorapp.com');
-    // BrowserPolicy.content.allowObjectDataUrl('fhir-timeline.meteorapp.com');
-    // BrowserPolicy.content.allowOriginForAll('fhir-timeline.meteorapp.com');
-    // BrowserPolicy.content.allowConnectOrigin("fhir-timeline.meteorapp.com")
-    // BrowserPolicy.content.allowImageOrigin("fhir-timeline.meteorapp.com")  
-    // BrowserPolicy.content.allowObjectOrigin('fhir-timeline.meteorapp.com')
+      // BrowserPolicy.content.allowOriginForAll('fhir-timeline.meteorapp.com');
+      // BrowserPolicy.content.allowFrameOrigin('fhir-timeline.meteorapp.com');
+      // BrowserPolicy.content.allowObjectDataUrl('fhir-timeline.meteorapp.com');
+      // BrowserPolicy.content.allowOriginForAll('fhir-timeline.meteorapp.com');
+      // BrowserPolicy.content.allowConnectOrigin("fhir-timeline.meteorapp.com")
+      // BrowserPolicy.content.allowImageOrigin("fhir-timeline.meteorapp.com")  
+      // BrowserPolicy.content.allowObjectOrigin('fhir-timeline.meteorapp.com')
 
-    // BrowserPolicy.content.allowOriginForAll('open-ic-epic.com');
-    // BrowserPolicy.content.allowFrameOrigin('open-ic-epic.com');
-    // BrowserPolicy.content.allowObjectDataUrl('open-ic-epic.com');
-    // BrowserPolicy.content.allowOriginForAll('open-ic-epic.com');
-    // BrowserPolicy.content.allowConnectOrigin("open-ic-epic.com")
-    // BrowserPolicy.content.allowImageOrigin("open-ic-epic.com")  
-    // BrowserPolicy.content.allowObjectOrigin('open-ic-epic.com')
+      // BrowserPolicy.content.allowOriginForAll('open-ic-epic.com');
+      // BrowserPolicy.content.allowFrameOrigin('open-ic-epic.com');
+      // BrowserPolicy.content.allowObjectDataUrl('open-ic-epic.com');
+      // BrowserPolicy.content.allowOriginForAll('open-ic-epic.com');
+      // BrowserPolicy.content.allowConnectOrigin("open-ic-epic.com")
+      // BrowserPolicy.content.allowImageOrigin("open-ic-epic.com")  
+      // BrowserPolicy.content.allowObjectOrigin('open-ic-epic.com')
+    });
   }
 
 
