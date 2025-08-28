@@ -6106,24 +6106,27 @@ export function flattenSubscription(document){
 export function flattenTask(task, internalDateFormat){
   let result = {
     _id: '',
+    id: '',
     meta: '',
     identifier: '',
-    publisher: '',
     status: '',
-    title: '',
-    authoredOn: '',
-    lastModified: '',
-    focus: '',
-    for: '',
     intent: '',
     priority: '',
     code: '',
-    requester: '',
+    description: '',
+    authoredOn: '',
+    lastModified: '',
+    businessStatus: '',
+    executionStart: '',
+    executionEnd: '',
+    patientDisplay: '',
+    patientReference: '',
+    requesterDisplay: '',
     requesterReference: '',
-    encounter: '',
-    encounterReference: '',
-    owner: '',
+    ownerDisplay: '',
     ownerReference: '',
+    encounterDisplay: '',
+    encounterReference: '',
     operationOutcome: ''
   };
 
@@ -6133,10 +6136,18 @@ export function flattenTask(task, internalDateFormat){
     internalDateFormat = get(Meteor, "settings.public.defaults.internalDateFormat", "YYYY-MM-DD");
   }
 
-  result._id =  get(task, 'id') ? get(task, 'id') : get(task, '_id');
+  // Extract IDs
+  result._id = extractIdString(get(task, '_id', ''));
   result.id = get(task, 'id', '');
   result.identifier = get(task, 'identifier[0].value', '');
 
+  // Basic fields
+  result.status = get(task, 'status', '');
+  result.intent = get(task, 'intent', '');
+  result.priority = get(task, 'priority', '');
+  result.description = get(task, 'description', '');
+
+  // Dates
   if(get(task, 'authoredOn')){
     result.authoredOn = moment(get(task, 'authoredOn', '')).format(internalDateFormat);
   }
@@ -6144,23 +6155,49 @@ export function flattenTask(task, internalDateFormat){
     result.lastModified = moment(get(task, 'lastModified', '')).format(internalDateFormat);
   }
 
-  result.description = get(task, 'description', '');
-  result.status = get(task, 'status', '');
-  result.businessStatus = get(task, 'businessStatus.coding[0].display', '');
-  result.intent = get(task, 'intent', '');
-  result.priority = get(task, 'priority', '');
-  result.focus = get(task, 'focus.display', '');
-  result.for = get(task, 'for.display', '');
-  result.requester = get(task, 'requester.display', '');
-  result.code = get(task, 'code.text', '');
+  // Execution period
+  if(get(task, 'executionPeriod.start')){
+    result.executionStart = moment(get(task, 'executionPeriod.start', '')).format(internalDateFormat);
+  }
+  if(get(task, 'executionPeriod.end')){
+    result.executionEnd = moment(get(task, 'executionPeriod.end', '')).format(internalDateFormat);
+  }
 
-  result.requester = get(task, 'requester.display', '');
+  // Business status
+  if(has(task, 'businessStatus.text')){
+    result.businessStatus = get(task, 'businessStatus.text');
+  } else if(has(task, 'businessStatus.coding[0].display')){
+    result.businessStatus = get(task, 'businessStatus.coding[0].display');
+  } else if(has(task, 'businessStatus.coding[0].code')){
+    result.businessStatus = get(task, 'businessStatus.coding[0].code');
+  }
+
+  // Code/CodeableConcept
+  if(has(task, 'code.text')){
+    result.code = get(task, 'code.text');
+  } else if(has(task, 'code.coding[0].display')){
+    result.code = get(task, 'code.coding[0].display');
+  } else if(has(task, 'code.coding[0].code')){
+    result.code = get(task, 'code.coding[0].code');
+  }
+
+  // Patient (for field)
+  result.patientDisplay = get(task, 'for.display', '');
+  result.patientReference = get(task, 'for.reference', '');
+
+  // Requester
+  result.requesterDisplay = get(task, 'requester.display', '');
   result.requesterReference = get(task, 'requester.reference', '');
-  result.encounter = get(task, 'encounter.display', '');
-  result.encounterReference = get(task, 'encounter.reference', '');
-  result.owner = get(task, 'owner.display', '');
+
+  // Owner
+  result.ownerDisplay = get(task, 'owner.display', '');
   result.ownerReference = get(task, 'owner.reference', '');
 
+  // Encounter
+  result.encounterDisplay = get(task, 'encounter.display', '');
+  result.encounterReference = get(task, 'encounter.reference', '');
+
+  // Operation outcome
   if(get(task, "issue[0].details.text")){
     result.operationOutcome = get(task, "issue[0].details.text");
   }

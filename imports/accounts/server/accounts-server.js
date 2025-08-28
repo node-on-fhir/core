@@ -8,6 +8,9 @@ import { ServiceConfiguration } from 'meteor/service-configuration';
 import { get, set } from 'lodash';
 import { logger } from '../lib/AccountsLogger';
 
+// Track if hooks have been initialized to prevent duplicates
+let hooksInitialized = false;
+
 // Server-side accounts configuration
 export const AccountsServer = {
   // Initialize server-side accounts settings
@@ -137,6 +140,13 @@ export const AccountsServer = {
   // Setup account creation and modification hooks
   setupAccountHooks() {
     logger.info('Setting up account hooks...');
+    
+    // Prevent duplicate hook registration
+    if (hooksInitialized) {
+      logger.warn('Account hooks already initialized, skipping...');
+      return;
+    }
+    
     logger.debug('Accounts object:', Object.keys(Accounts || {}));
     
     // Validate new users
@@ -341,6 +351,10 @@ export const AccountsServer = {
     } else {
       logger.warn('Accounts.onLoginFailure is not available in Meteor 3');
     }
+    
+    // Mark hooks as initialized to prevent duplicate registration
+    hooksInitialized = true;
+    logger.info('Account hooks initialized successfully');
   },
 
   // Configure password policy

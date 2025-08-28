@@ -71,6 +71,7 @@ import '../imports/api/schedules/methods.js';
 import '../imports/api/serviceRequests/methods.js';
 import '../imports/api/diagnosticReports/methods.js';
 import '../imports/methods/supplyDeliveries.js';
+import '../imports/methods/tasks.js';
 
 // Import test methods (for non-production environments)
 import '../imports/accounts/server/test-methods.js';

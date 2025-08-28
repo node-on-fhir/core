@@ -80,7 +80,9 @@ Claude, let's do another FHIR resource.  This time will be de-novo.  Let's creat
 ```
 
 ```
-Claude, let's do another FHIR resource.  Let's continue creating the FHIR Medication CRUD pattern.  First, create a /tests/nightwatch/honecomb/crud.medications.js test file, following the crud.conditions.js file as a template.  Next, follow the instructions in /imports/ui-fhir/CLAUDE.md, and try to create the entire resource CRUD pattern  Don't do anything fancy.  We'll get to that later.  For now, just follow the CRUD pattern.  Follow the TDD tests till they're green. You have permission to launch `npx nightwatch` commands and search the honeycomb-public-release code repository as needed.
+Claude, let's do another FHIR resource.  Let's continue creating the FHIR Task CRUD pattern.  First, create a /tests/nightwatch/honecomb/crud.tasks.js test file, following the crud.servicerequests.js file as a template.  
+
+Next, follow the instructions in /imports/ui-fhir/CLAUDE.md, and try to create the entire resource CRUD pattern  Don't do anything fancy.  We'll get to that later.  For now, just follow the CRUD pattern.  Follow the TDD tests till they're green. You have permission to launch `npx nightwatch` commands and search the honeycomb-public-release code repository as needed.
 ```
 
 
@@ -91,19 +93,19 @@ I believe in you.  We've done a lot of these CRUD patterns already.  You can do 
 ```
 
 ```
-Okay, let's turn our attention to the Communications CRUD pattern, on the /communications route.  Use best practices and the implementation checklist and debugging info in /imports/ui-fhir/CLAUDE.md.  You have permission to run tests.  
+Okay, let's turn our attention to the Tasks CRUD pattern, on the /tasks route.  Use best practices and the implementation checklist and debugging info in /imports/ui-fhir/CLAUDE.md.  You have permission to run tests.  
 
-- Make sure that the Communications schema is created, and attached in all of the right places (Meteor.Tables, Meteor.Collections, etc)
-- Include Communications in the autopublish() function.
+- Make sure that the Tasks schema is created, and attached in all of the right places (Meteor.Tables, Meteor.Collections, etc)
+- Include Tasks in the autopublish() function.
 - Make sure we've updated the settings.honeycomb.tdd.json file
-- Create core files in /imports/ui-fhir/supplyDeliveries/*, following the pattern in /imports/ui-fhir/conditions/*
-- Update the CommunicationsDetails page with inputs from the Communications schema, making sure that appropriate #id elements exist on inputs; and update the crud.supplydeliveries.js file to match.  
-- Make sure that all of the columns in CommunicationsTable are filled out appropriately, and update the dehydration functions accordingly.  
+- Create core files in /imports/ui-fhir/tasks/*, following the pattern in /imports/ui-fhir/tasks/*
+- Update the TasksDetails page with inputs from the Tasks schema, making sure that appropriate #id elements exist on inputs; and update the crud.supplydeliveries.js file to match.  
+- Make sure that all of the columns in TasksTable are filled out appropriately, and update the dehydration functions accordingly.  
 - Create the medias methods file.  
-- Be sure to select the John Doe patient in step 2, AFTER you've navigated to /communications route.  
+- Be sure to select the John Doe patient in step 2, AFTER you've navigated to /tasks route.  
 - When searching for records in steps 5 and 8, be sure to scroll to the top and seach by patient (John Doe). 
 
-I believe in you.  We've done a lot of these CRUD patterns already.  I've got to go run some errands that will take a few hours; I'd like you to go through the entire pattern and implementation without me.  I've check out a new branch, so if you really foul things up, we can revert.  I'll ask for a full report of changes made when you're done, and cross reference with the pull request.  But generally speaking... I want you to follow existing patterns, and create the entire Communications CRUD pattern on your own.  We'll debug when I get home.  
+I believe in you.  We've done a lot of these CRUD patterns already.  I've got to go run some errands that will take a few hours; I'd like you to go through the entire pattern and implementation without me.  I've check out a new branch, so if you really foul things up, we can revert.  I'll ask for a full report of changes made when you're done, and cross reference with the pull request.  But generally speaking... I want you to follow existing patterns, and create the entire Tasks CRUD pattern on your own.  We'll debug when I get home.  
 ```
 
 

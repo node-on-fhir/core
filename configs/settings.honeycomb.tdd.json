@@ -64,7 +64,8 @@
         "Procedure",
         "Questionnaire",
         "QuestionnaireResponse",
-        "ServiceRequest"
+        "ServiceRequest",
+        "Task"
       ]
     },
     "defaults": {
@@ -175,7 +176,8 @@
         "ResearchSubjects": true,
         "Schedules": true,
         "ServiceRequests": true,
-        "SupplyDeliveries": true
+        "SupplyDeliveries": true,
+        "Tasks": true
       }
     }
   },
@@ -580,6 +582,17 @@
           "publication": true
         },
         "SupplyDelivery": {
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "search"
+          ],
+          "search": true,
+          "publication": true
+        },
+        "Task": {
           "interactions": [
             "read",
             "create",

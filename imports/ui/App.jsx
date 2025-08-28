@@ -964,6 +964,14 @@ dynamicRoutes.push({
   path: "/tasks",
   element: <TasksPage />
 })
+dynamicRoutes.push({
+  path: "/tasks/new",
+  element: <TaskDetail />
+})
+dynamicRoutes.push({
+  path: "/tasks/:id",
+  element: <TaskDetail />
+})
 
 // Add missing FHIR resource routes
 if(get(Meteor, 'settings.public.modules.fhir.Consents')){
@@ -1213,6 +1221,23 @@ Object.keys(Package).forEach(function(packageName){
   if(Package[packageName].DynamicRoutes){
     // we try to build up a route from what's specified in the package
     Package[packageName].DynamicRoutes.forEach(function(route){
+      // If route has component instead of element, create the element
+      if(route.component && !route.element) {
+        console.log(`[APP] Creating element for ${route.path} from component:`, route.component);
+        route.element = React.createElement(route.component);
+        console.log(`[APP] Created element:`, route.element);
+      }
+      
+      // Debug logging for swarm route
+      if(route.path === '/swarm') {
+        console.log('[APP] Swarm route found:', route);
+        console.log('[APP] Swarm route element:', route.element);
+        console.log('[APP] Swarm route element type:', typeof route.element);
+        if(route.element && route.element.$$typeof) {
+          console.log('[APP] Swarm element $$typeof:', route.element.$$typeof.toString());
+        }
+      }
+      
       dynamicRoutes.push(route);      
     });    
     if(Package[packageName].MainPage){
@@ -1237,25 +1262,17 @@ console.log('All routes:', dynamicRoutes.map(r => r.path));
 
 const router = createBrowserRouter(dynamicRoutes);
 
-const CustomRouter = ({ children }) => {
-  // Debug: Log routes to check for issues
+// Router debugging - check for problematic routes
+if (Meteor.isDevelopment) {
   dynamicRoutes.forEach((route, index) => {
-    if (route.path === '/pacio-dashboard' || route.path === '/' || route.path === '/research-studies') {
-      console.log(`Route ${index}: path="${route.path}", element=`, route.element);
+    if (route.element && typeof route.element === 'object' && route.element.$$typeof) {
+      // Check if this might be a problematic element
+      if (route.element.$$typeof.toString() !== 'Symbol(react.element)') {
+        console.warn(`Route ${index}: path="${route.path}" has unusual element type:`, route.element.$$typeof.toString(), route.element);
+      }
     }
   });
-  
-  return (
-    <Routes>
-      {dynamicRoutes.map((route, index) => (
-        <Route key={index} path={route.path} element={route.element} />
-      ))}
-      {/* Optionally, add a fallback route for 404 Not Found */}
-      {/* <Route path="*" element={<NotFound />} /> */}
-      <Route path="*" />
-    </Routes>
-  );
-};
+}
 
 // ==============================================================================
 // Security Based Routing
@@ -1816,6 +1833,12 @@ function StyledMainRouter(props){
   }
 
   return (<main id='mainAppRouter' style={mainAppStyle}>
-    <CustomRouter />
+    <Routes>
+      {dynamicRoutes.map((route, index) => (
+        <Route key={index} path={route.path} element={route.element} />
+      ))}
+      {/* Fallback route for 404 Not Found */}
+      <Route path="*" />
+    </Routes>
   </main>)
 }
