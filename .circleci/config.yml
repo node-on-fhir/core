@@ -21,7 +21,8 @@ parameters:
           "name": "actors",
           "tests": [
             "tests/nightwatch/honeycomb/enable_autopublish/crud.patients.js",
-            "tests/nightwatch/honeycomb/enable_autopublish/crud.practitioners.js"
+            "tests/nightwatch/honeycomb/enable_autopublish/crud.practitioners.js",
+            "tests/nightwatch/honeycomb/enable_autopublish/crud.careteams.js"
           ]
         },
         {
@@ -88,7 +89,8 @@ parameters:
             "tests/nightwatch/honeycomb/enable_autopublish/crud.locations.js",
             "tests/nightwatch/honeycomb/enable_autopublish/crud.devices.js",
             "tests/nightwatch/honeycomb/enable_autopublish/crud.consents.js",
-            "tests/nightwatch/honeycomb/enable_autopublish/crud.supplydeliveries.js"
+            "tests/nightwatch/honeycomb/enable_autopublish/crud.supplydeliveries.js",
+            "tests/nightwatch/honeycomb/enable_autopublish/crud.tasks.js"
           ]
         },
         {
@@ -435,7 +437,7 @@ workflows:
       - test-group:
           name: actors
           group-name: actors
-          test-files: "tests/nightwatch/honeycomb/enable_autopublish/crud.patients.js tests/nightwatch/honeycomb/enable_autopublish/crud.practitioners.js"
+          test-files: "tests/nightwatch/honeycomb/enable_autopublish/crud.patients.js tests/nightwatch/honeycomb/enable_autopublish/crud.practitioners.js tests/nightwatch/honeycomb/enable_autopublish/crud.careteams.js"
       
       - test-group:
           name: clinical-history
@@ -475,7 +477,7 @@ workflows:
       - test-group:
           name: administrative
           group-name: administrative
-          test-files: "tests/nightwatch/honeycomb/enable_autopublish/crud.devices.js tests/nightwatch/honeycomb/enable_autopublish/crud.consents.js tests/nightwatch/honeycomb/enable_autopublish/crud.locations.js tests/nightwatch/honeycomb/enable_autopublish/crud.supplydeliveries.js"
+          test-files: "tests/nightwatch/honeycomb/enable_autopublish/crud.devices.js tests/nightwatch/honeycomb/enable_autopublish/crud.consents.js tests/nightwatch/honeycomb/enable_autopublish/crud.locations.js tests/nightwatch/honeycomb/enable_autopublish/crud.supplydeliveries.js tests/nightwatch/honeycomb/enable_autopublish/crud.tasks.js"
 
       - test-group:
           name: library-sciences
