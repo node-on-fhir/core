@@ -43,6 +43,7 @@ import '../imports/api/allergyIntolerances/methods.js';
 import '../imports/api/appointments/methods.js';
 import '../imports/api/AuditEvents/AuditEvents'; // Import the methods
 import '../imports/api/carePlans/methods.js';
+import '../imports/api/careTeams/methods.js';
 import '../imports/api/rfc7523/methods.js';
 import '../imports/api/communications/methods.js';
 import '../imports/api/compositions/methods.js';

@@ -1,4 +1,6 @@
-import React, { useState } from 'react';
+// /Volumes/SonicMagic/Code/honeycomb-public-release/imports/ui-fhir/careTeams/CareTeamsPage.jsx
+
+import React, { useState, useEffect } from 'react';
 import { useTracker } from 'meteor/react-meteor-data';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
@@ -12,7 +14,9 @@ import {
   Typography,
   Button,
   ToggleButton,
-  ToggleButtonGroup
+  ToggleButtonGroup,
+  TextField,
+  InputAdornment
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
@@ -20,6 +24,7 @@ import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 import PersonIcon from '@mui/icons-material/Person';
 import CodeIcon from '@mui/icons-material/Code';
 import BadgeIcon from '@mui/icons-material/Badge';
+import SearchIcon from '@mui/icons-material/Search';
 
 import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
@@ -33,7 +38,8 @@ import FhirDehydrator from '../../lib/FhirDehydrator';
 import LayoutHelpers from '../../lib/LayoutHelpers';
 
 import { get, cloneDeep } from 'lodash';
-import { CareTeams } from '../../lib/schemas/SimpleSchemas/CareTeams';
+import { CareTeams } from '/imports/lib/schemas/SimpleSchemas/CareTeams';
+import { Patients } from '/imports/lib/schemas/SimpleSchemas/Patients';
 import { FhirUtilities } from '/imports/lib/FhirUtilities';
 
 
@@ -83,6 +89,7 @@ Session.setDefault('selectedCareTeamId', '');
 Session.setDefault('selectedCareTeam', false);
 Session.setDefault('CareTeamsPage.onePageLayout', true)
 Session.setDefault('CareTeamsTable.hideCheckbox', true)
+Session.setDefault('CareTeamsTable.careTeamsIndex', 0)
 
 
 
@@ -96,6 +103,14 @@ function CareTeamsPage(props){
   const [showPatientName, setShowPatientName] = useState(false);
   const [showPatientReference, setShowPatientReference] = useState(false);
   const [showSystemId, setShowSystemId] = useState(false);
+  const [searchFilter, setSearchFilter] = useState('');
+  
+  // Clean up debug flag on unmount
+  useEffect(() => {
+    return () => {
+      Session.set('CareTeamsPage.debugLogged', false);
+    };
+  }, []);
 
   let headerHeight = LayoutHelpers.calcHeaderHeight();
   let formFactor = LayoutHelpers.determineFormFactor();
@@ -107,17 +122,48 @@ function CareTeamsPage(props){
   // Subscribe to CareTeams data
   const isLoading = useTracker(() => {
     const selectedPatientId = Session.get('selectedPatientId');
+    const selectedPatient = Session.get('selectedPatient');
     let autoPublishEnabled = get(Meteor, 'settings.public.defaults.autopublish', false);
     
-    // Build query to filter by patient
-    const query = selectedPatientId ? {
-      $or: [
-        {"patient.reference": "Patient/" + selectedPatientId},
-        {"subject.reference": "Patient/" + selectedPatientId},
-        {"patient.reference": { $regex: ".*Patient/" + selectedPatientId}}, 
-        {"subject.reference": { $regex: ".*Patient/" + selectedPatientId}}
-      ]
-    } : {};
+    // Build search and patient filter query
+    let query = {};
+    
+    // Add search filter if present
+    if(searchFilter && searchFilter.length > 0) {
+      query = {
+        $or: [
+          {'_id': searchFilter},
+          {'id': searchFilter},
+          {'name': {$regex: searchFilter, $options: 'i'}},
+          {'category.0.coding.0.display': {$regex: searchFilter, $options: 'i'}},
+          {'category.0.text': {$regex: searchFilter, $options: 'i'}},
+          {'participant.0.member.display': {$regex: searchFilter, $options: 'i'}},
+          {'subject.display': {$regex: searchFilter, $options: 'i'}}
+        ]
+      };
+    }
+    
+    // Apply patient filter if a patient is selected
+    if(selectedPatient || selectedPatientId) {
+      const fhirId = get(selectedPatient, 'id');
+      const patientQuery = FhirUtilities.addPatientFilterToQuery(fhirId || selectedPatientId);
+      
+      // Combine search and patient queries
+      if(query.$or) {
+        query = {
+          $and: [
+            query,
+            patientQuery
+          ]
+        };
+      } else {
+        query = patientQuery;
+      }
+    }
+    
+    console.log('CareTeams subscription - selectedPatientId:', selectedPatientId);
+    console.log('CareTeams subscription - FHIR id:', get(selectedPatient, 'id'));
+    console.log('CareTeams subscription query:', query);
     
     if(autoPublishEnabled){
       const handle = Meteor.subscribe('autopublish.CareTeams', query, { limit: 1000 });
@@ -126,7 +172,7 @@ function CareTeamsPage(props){
       const handle = Meteor.subscribe('careteams.all');
       return !handle.ready();
     }
-  }, [Session.get('selectedPatientId')]);
+  }, [Session.get('selectedPatientId'), searchFilter]);
 
   let data = {    
     selectedCareTeam: null,
@@ -152,9 +198,50 @@ function CareTeamsPage(props){
   }, [])
   data.careTeams = useTracker(function(){
     const selectedPatientId = Session.get('selectedPatientId');
-    const query = FhirUtilities.addPatientFilterToQuery(selectedPatientId);
-    return CareTeams.find(query).fetch();
-  }, [])
+    const selectedPatient = Session.get('selectedPatient');
+    
+    // Use FHIR id for filtering, as that's what FHIR resources reference
+    const fhirId = get(selectedPatient, 'id');
+    const patientIdToUse = fhirId || selectedPatientId;
+    
+    let query = {};
+    
+    // Apply patient filter if needed
+    if(patientIdToUse) {
+      query = FhirUtilities.addPatientFilterToQuery(patientIdToUse);
+    }
+    
+    // Apply search filter on client side if not using autopublish
+    let filteredTeams = CareTeams.find(query, {sort: {_id: sortOrder === 'ascending' ? 1 : -1}}).fetch();
+    
+    if(searchFilter && searchFilter.length > 0 && !get(Meteor, 'settings.public.defaults.autopublish', false)) {
+      filteredTeams = filteredTeams.filter(team => {
+        const searchLower = searchFilter.toLowerCase();
+        return (
+          (team._id && team._id.includes(searchFilter)) ||
+          (team.id && team.id.includes(searchFilter)) ||
+          (team.name && team.name.toLowerCase().includes(searchLower)) ||
+          (get(team, 'category[0].text', '').toLowerCase().includes(searchLower)) ||
+          (get(team, 'category[0].coding[0].display', '').toLowerCase().includes(searchLower)) ||
+          (get(team, 'participant[0].member.display', '').toLowerCase().includes(searchLower)) ||
+          (get(team, 'subject.display', '').toLowerCase().includes(searchLower))
+        );
+      });
+    }
+    
+    // Only do debug logging once when component mounts
+    if(!Session.get('CareTeamsPage.debugLogged')) {
+      Session.set('CareTeamsPage.debugLogged', true);
+      
+      console.log('CareTeams data - MongoDB _id:', selectedPatientId);
+      console.log('CareTeams data - FHIR id:', fhirId);
+      console.log('CareTeams data - Using ID for query:', patientIdToUse);
+      console.log('CareTeams data - query:', query);
+      console.log('CareTeams data - Total found:', filteredTeams.length);
+    }
+    
+    return filteredTeams;
+  }, [searchFilter, sortOrder])
   data.careTeamsIndex = useTracker(function(){
     return Session.get('CareTeamsTable.careTeamsIndex', 0)
   }, [])
@@ -162,23 +249,19 @@ function CareTeamsPage(props){
   function handleRowClick(careTeamId){
     console.log('CareTeamsPage.handleRowClick', careTeamId)
     let careTeam = CareTeams.findOne({id: careTeamId});
+    
+    if(!careTeam) {
+      // Try finding by _id as fallback
+      careTeam = CareTeams.findOne({_id: careTeamId});
+    }
 
     if(careTeam){
       Session.set('selectedCareTeamId', get(careTeam, 'id'));
       Session.set('selectedCareTeam', careTeam);
       Session.set('CareTeam.Current', careTeam);
       
-      let showModals = true;
-      if(showModals){
-        Session.set('mainAppDialogOpen', true);
-        Session.set('mainAppDialogComponent', "CareTeamDetail");
-        Session.set('mainAppDialogMaxWidth', "sm");
-        if(Meteor.currentUserId()){
-          Session.set('mainAppDialogTitle', "Edit Team");
-        } else {
-          Session.set('mainAppDialogTitle', "View Team");
-        }
-      }      
+      // Navigate to detail page
+      navigate('/care-teams/' + get(careTeam, 'id', careTeamId));
     } else {
       console.log('No careteam found...')
     }
@@ -207,8 +290,25 @@ function CareTeamsPage(props){
               {data.careTeams.length} care teams found
             </Typography>
           </Grid>
-          <Grid item>
-            <Box display="flex" gap={2} alignItems="center">
+          <Grid item xs={12} sm={6}>
+            <TextField
+              id="careTeamSearchInput"
+              fullWidth
+              placeholder="Search care teams by name, category, participant..."
+              value={searchFilter}
+              onChange={(e) => setSearchFilter(e.target.value)}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon />
+                  </InputAdornment>
+                ),
+              }}
+              sx={{ mb: 2 }}
+            />
+          </Grid>
+          <Grid item xs={12}>
+            <Box display="flex" gap={2} alignItems="center" justifyContent="flex-end">
               <ToggleButtonGroup
                 value={sortOrder}
                 exclusive

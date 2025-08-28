@@ -942,6 +942,7 @@ export function flattenCareTeam(team){
     reasonDisplay: '',
     reasonCode: '',
     participantCount: 0,
+    participantMember: '',
     managingOrganization: '',
     telecom: '',
     note: '',
@@ -979,6 +980,10 @@ export function flattenCareTeam(team){
 
   if(Array.isArray(team.participant)){
     result.participantCount = team.participant.length;
+    // Get first participant member display
+    if(team.participant.length > 0){
+      result.participantMember = get(team.participant[0], 'member.display', '');
+    }
   }
   if(Array.isArray(team.note)){
     result.noteCount = team.note.length;

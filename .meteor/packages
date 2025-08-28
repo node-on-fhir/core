@@ -34,15 +34,4 @@ mdg:validated-method
 fetch
 
 
-clinical:data-importer
-clinical:data-exporter
-clinical:synthea
-clinical:pacio-core
-clinical:symptom-tracking
-clinical:structured-data-capture
-
-symptomatic:timelines
-symptomatic:mcp
-
-trialx:hermes-tooling
 
