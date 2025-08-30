@@ -36,6 +36,7 @@ export { default as MedicationAdministrationsTable } from '../ui-fhir/medication
 export { default as MedicationRequestsTable } from '../ui-fhir/medicationRequests/MedicationRequestsTable';
 export { default as MedicationsTable } from '../ui-fhir/medications/MedicationsTable';
 export { default as MedicationStatementsTable } from '../ui-fhir/medicationStatements/MedicationStatementsTable';
+export { default as MessageHeadersTable } from '../ui-fhir/messageHeaders/MessageHeadersTable';
 export { default as NutritionOrdersTable } from '../ui-fhir/nutritionOrders/NutritionOrdersTable';
 export { default as ObservationsTable } from '../ui-fhir/observations/ObservationsTable';
 export { default as OperationOutcomesTable } from '../ui-fhir/operationOutcomes/OperationOutcomesTable';
@@ -84,6 +85,7 @@ import MedicationAdministrationsTable from '../ui-fhir/medicationAdministrations
 import MedicationRequestsTable from '../ui-fhir/medicationRequests/MedicationRequestsTable';
 import MedicationsTable from '../ui-fhir/medications/MedicationsTable';
 import MedicationStatementsTable from '../ui-fhir/medicationStatements/MedicationStatementsTable';
+import MessageHeadersTable from '../ui-fhir/messageHeaders/MessageHeadersTable';
 import NutritionOrdersTable from '../ui-fhir/nutritionOrders/NutritionOrdersTable';
 import ObservationsTable from '../ui-fhir/observations/ObservationsTable';
 import OperationOutcomesTable from '../ui-fhir/operationOutcomes/OperationOutcomesTable';
@@ -140,6 +142,7 @@ if (Meteor.isClient) {
       MedicationRequestsTable,
       MedicationsTable,
       MedicationStatementsTable,
+      MessageHeadersTable,
       NutritionOrdersTable,
       ObservationsTable,
       OperationOutcomesTable,

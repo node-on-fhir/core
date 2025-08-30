@@ -138,6 +138,8 @@ import SchedulesPage from '../ui-fhir/schedules/SchedulesPage';
 import ScheduleDetail from '../ui-fhir/schedules/ScheduleDetail';
 import MediasPage from '../ui-fhir/medias/MediasPage';
 import MediaDetail from '../ui-fhir/medias/MediaDetail';
+import MessageHeadersPage from '../ui-fhir/messageHeaders/MessageHeadersPage';
+import MessageHeaderDetail from '../ui-fhir/messageHeaders/MessageHeaderDetail';
 import SupplyDeliveriesPage from '../ui-fhir/supplyDeliveries/SupplyDeliveriesPage';
 
 import {
@@ -659,6 +661,10 @@ if(get(Meteor, 'settings.public.modules.fhir.CarePlans')){
     element: <CarePlansPage />
   })
   dynamicRoutes.push({
+    path: "/care-plans",
+    element: <CarePlansPage />
+  })
+  dynamicRoutes.push({
     path: "/careplans/new",
     element: <CarePlanDetail />
   })
@@ -1125,6 +1131,20 @@ if(get(Meteor, 'settings.public.modules.fhir.MedicationAdministrations')){
   dynamicRoutes.push({
     path: "/medication-administrations/:id",
     element: <MedicationAdministrationDetail />
+  })
+}
+if(get(Meteor, 'settings.public.modules.fhir.MessageHeaders')){
+  dynamicRoutes.push({
+    path: "/message-headers",
+    element: <MessageHeadersPage />
+  })
+  dynamicRoutes.push({
+    path: "/message-headers/new",
+    element: <MessageHeaderDetail />
+  })
+  dynamicRoutes.push({
+    path: "/message-headers/:id",
+    element: <MessageHeaderDetail />
   })
 }
 if(get(Meteor, 'settings.public.modules.fhir.NutritionOrders')){

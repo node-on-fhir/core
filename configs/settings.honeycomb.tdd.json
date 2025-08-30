@@ -55,6 +55,7 @@
         "List",
         "Location",
         "Medication",
+        "MessageHeader",
         "MedicationRequest",
         "MedicationStatement",
         "NutritionOrder",
@@ -106,7 +107,6 @@
           "/contracts",
           "/devices",
           "/imaging-studies",
-          "/message-headers",
           "/risk-assessments"
         ]
       },
@@ -164,6 +164,7 @@
         "MedicationRequests": true,
         "MedicationAdministrations": true,
         "MedicationStatements": true,
+        "MessageHeaders": true,
         "NutritionOrders": true,
         "Organizations": true,
         "Observations": true,
@@ -390,6 +391,17 @@
           "publication": true
         },
         "MedicationAdministration": {
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "search"
+          ],
+          "search": true,
+          "publication": true
+        },
+        "MessageHeader": {
           "interactions": [
             "read",
             "create",

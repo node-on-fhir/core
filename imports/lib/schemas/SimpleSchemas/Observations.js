@@ -24,7 +24,7 @@ import SimpleSchema from 'simpl-schema';
 // REFACTOR:  we want to deprecate meteor/clinical:hl7-resource-datatypes
 // so please remove references from the following line
 // and replace with import from ../../datatypes/*
-import { BaseSchema, DomainResourceSchema, IdentifierSchema, ContactPointSchema, AddressSchema, ReferenceSchema, SignatureSchema } from 'meteor/clinical:hl7-resource-datatypes';
+import { BaseSchema, DomainResourceSchema, IdentifierSchema, ContactPointSchema, AddressSchema, ReferenceSchema, SignatureSchema, CodeableConceptSchema, QuantitySchema, PeriodSchema, RangeSchema, RatioSchema, SampledDataSchema, AttachmentSchema, Code } from 'meteor/clinical:hl7-resource-datatypes';
 
 
 // create the object using our BaseModel
@@ -851,4 +851,5 @@ BaseSchema.extend(ObservationSchema);
 DomainResourceSchema.extend(ObservationSchema);
 // Observations.attachSchema(ObservationSchema);
 
-export default { Observation, Observations, ObservationSchema, ObservationDstu2, ObservationStu3 };
+export default { Observation, Observations, ObservationSchema, ObservationDstu2, ObservationStu3, ObservationR4 };
+export { Observation, Observations, ObservationSchema, ObservationDstu2, ObservationStu3, ObservationR4 };

@@ -114,3 +114,12 @@ I believe in you.  We've done a lot of these CRUD patterns already.  I've got to
 
   Then, we want to go to the files, and add a search bar on the ConditionsPage, which ties to the subscription, and updates the server side publication, to search for the patient.reference or subject.reference.  Refer to the AllergyIntolerances or Procedures pattern as needed.  There is a FhirUtilities.addPatientFilterToQuery() function that we use for this.
 ```
+
+
+
+```
+Claude, we're sketching out some new packages based on HL7 FHIR IGs.  I've loaded a new implementation guide into workzone/vital-signs, and we're going to build it out in packages/vital-signs.  In particular, I want you to scan the workzone/vital-signs/input/fsh and input/pagecontent directories, and sketch out a file directory layout for the packages/vital-signs atmosphere.js package.  No coding yet.  Just planning and directory layout.
+
+```
+
+

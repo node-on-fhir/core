@@ -4194,6 +4194,100 @@ export function flattenMedicationRequest(medicationRequest, internalDateFormat){
   return result;
 }
 
+export function flattenMessageHeader(messageHeader, dateFormat){
+  let result = {
+    _id: '',
+    id: '',
+    eventCoding: '',
+    eventDisplay: '',
+    eventUri: '',
+    destinationName: '',
+    destinationEndpoint: '',
+    destinationTarget: '',
+    destinationTargetDisplay: '',
+    senderEndpoint: '',
+    senderDisplay: '',
+    senderReference: '',
+    sourceName: '',
+    sourceEndpoint: '',
+    responsibleDisplay: '',
+    responsibleReference: '',
+    reasonCode: '',
+    reasonDisplay: '',
+    responseCode: '',
+    responseIdentifier: '',
+    focusDisplay: '',
+    focusReference: '',
+    definition: '',
+    notes: ''
+  };
+
+  result.resourceType = get(messageHeader, 'resourceType', "MessageHeader");
+
+  result._id = get(messageHeader, '_id');
+  result.id = get(messageHeader, 'id', '');
+
+  // Event
+  if(get(messageHeader, 'eventCoding')){
+    result.eventCoding = get(messageHeader, 'eventCoding.code', '');
+    result.eventDisplay = get(messageHeader, 'eventCoding.display', '');
+    result.eventUri = get(messageHeader, 'eventCoding.system', '');
+  } else if(get(messageHeader, 'eventUri')){
+    result.eventUri = get(messageHeader, 'eventUri', '');
+  }
+
+  // Destination
+  if(get(messageHeader, 'destination[0]')){
+    result.destinationName = get(messageHeader, 'destination[0].name', '');
+    result.destinationEndpoint = get(messageHeader, 'destination[0].endpoint', '');
+    result.destinationTarget = get(messageHeader, 'destination[0].target.reference', '');
+    result.destinationTargetDisplay = get(messageHeader, 'destination[0].target.display', '');
+  }
+
+  // Sender
+  result.senderDisplay = get(messageHeader, 'sender.display', '');
+  result.senderReference = get(messageHeader, 'sender.reference', '');
+  
+  // Source
+  if(get(messageHeader, 'source')){
+    result.sourceName = get(messageHeader, 'source.name', '');
+    result.sourceEndpoint = get(messageHeader, 'source.endpoint', '');
+    result.senderEndpoint = get(messageHeader, 'source.endpoint', ''); // For backward compatibility
+  }
+
+  // Responsible
+  result.responsibleDisplay = get(messageHeader, 'responsible.display', '');
+  result.responsibleReference = get(messageHeader, 'responsible.reference', '');
+
+  // Reason
+  if(get(messageHeader, 'reason')){
+    result.reasonCode = get(messageHeader, 'reason.coding[0].code', '');
+    result.reasonDisplay = get(messageHeader, 'reason.text', '') || get(messageHeader, 'reason.coding[0].display', '');
+  }
+
+  // Response
+  if(get(messageHeader, 'response')){
+    result.responseCode = get(messageHeader, 'response.code', '');
+    result.responseIdentifier = get(messageHeader, 'response.identifier', '');
+  }
+
+  // Focus
+  if(get(messageHeader, 'focus[0]')){
+    result.focusDisplay = get(messageHeader, 'focus[0].display', '');
+    result.focusReference = get(messageHeader, 'focus[0].reference', '');
+  }
+
+  // Definition
+  result.definition = get(messageHeader, 'definition', '');
+
+  // Notes
+  if(get(messageHeader, 'note[0].text')){
+    result.notes = get(messageHeader, 'note[0].text', '');
+  }
+
+  return result;
+}
+
 export function flattenMedicationStatement(statement, fhirVersion){
 
   var result = {
@@ -6601,6 +6695,7 @@ export default {
   flattenMedicationStatement,
   flattenMedicationRequest,
   flattenMedicationAdministration,
+  flattenMessageHeader,
   flattenNutritionOrder,
   flattenObservation,
   flattenOperationOutcome,

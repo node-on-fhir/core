@@ -131,7 +131,10 @@ export default function TakeVitalSignsPage() {
     const [isSaving, setIsSaving] = useState(false);
     
     const selectedPatient = useTracker(() => {
-        return Session.get('ICD10_PATIENT');
+        // Check both possible session variables
+        const patient = Session.get('ICD10_PATIENT') || Session.get('selectedPatient');
+        console.log('TakeVitalSignsPage - selectedPatient:', patient);
+        return patient;
     }, []);
 
     // Calculate progress and completion status
@@ -159,7 +162,7 @@ export default function TakeVitalSignsPage() {
     };
     
     const hasAnyValue = () => {
-        return VITAL_SIGNS.some(vitalSign => {
+        const hasValue = VITAL_SIGNS.some(vitalSign => {
             if (vitalSign.pediatric && !showPediatric) return false;
             
             if (vitalSign.resourceType === 'panel') {
@@ -170,6 +173,8 @@ export default function TakeVitalSignsPage() {
                 return !!get(vitalSignValues, vitalSign.field);
             }
         });
+        console.log('TakeVitalSignsPage - hasAnyValue:', hasValue, 'vitalSignValues:', vitalSignValues);
+        return hasValue;
     };
 
     const handleValueChange = (field, value) => {
@@ -317,9 +322,12 @@ export default function TakeVitalSignsPage() {
         });
         
         // Save observations
+        console.log('TakeVitalSignsPage - Saving observations:', observations);
         for (const observation of observations) {
             try {
-                await Meteor.callAsync('observations.insert', observation);
+                console.log('TakeVitalSignsPage - Saving observation:', observation);
+                const result = await Meteor.callAsync('observations.create', observation);
+                console.log('TakeVitalSignsPage - Observation saved, result:', result);
             } catch (error) {
                 console.error('Error creating observation:', error);
                 Session.set('mainAppDialogJson', {

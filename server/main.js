@@ -60,6 +60,7 @@ import '../imports/api/medicationAdministrations/methods.js';
 import '../imports/api/medicationRequests/methods.js';
 import '../imports/api/medications/methods.js';
 import '../imports/api/medias/methods.js';
+import '../imports/api/messageHeaders/methods.js';
 import '../imports/api/nutritionOrders/methods.js';
 import '../imports/api/patients/methods.js';
 import '../imports/api/practitioners/methods.js';
@@ -87,6 +88,9 @@ import './publications/serviceRequests.js';
 
 // Import practitioner startup (includes methods and publications)
 import './startup/practitionerStartup.js';
+
+// Verify observations setup (development only)
+import './verify-observations.js';
 
 // Import FHIR methods
 import '../imports/methods/fhirResourceStatistics.js';
