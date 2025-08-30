@@ -36,7 +36,7 @@ fetch
 
 
 # clinical:checklist-manifesto
-clinical:clinical-documents
+# clinical:clinical-documents
 # clinical:consent-generator
 # clinical:cqm-reporting
 # clinical:deqm
@@ -49,5 +49,5 @@ clinical:clinical-documents
 # clinical:request-for-corrections
 # clinical:provider-directory
 # clinical:saner
-clinical:vital-signs
+# clinical:vital-signs
 # clinical:workqueues  
