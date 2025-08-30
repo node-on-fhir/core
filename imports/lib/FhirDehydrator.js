@@ -3589,18 +3589,25 @@ export function flattenMeasureReport(measureReport, measuresCursor, internalDate
     id: '',
     meta: '',
     identifier: '',
+    status: '',
     type: '',
+    measure: '',
     measureUrl: '',
     measureTitle: '',
     date: '',
     subject: '',
     reporter: '',
+    period: '',
     periodStart: '',
     periodEnd: '',
+    group: '',
     groupCode: '',
+    population: '',
     populationCode: '',
     populationCount: '',
+    score: '',
     measureScore: '',
+    improvementNotation: '',
     stratifierCount: '',
     numerator: '',
     denominator: '',
@@ -3616,8 +3623,10 @@ export function flattenMeasureReport(measureReport, measuresCursor, internalDate
   result._id = get(measureReport, '_id');
   result.id = get(measureReport, 'id', '');
   result.identifier = get(measureReport, 'identifier[0].value', '');
+  result.status = get(measureReport, 'status', '');
   result.type = get(measureReport, 'type', '');
 
+  result.measure = get(measureReport, 'measure', '');
   result.measureUrl = get(measureReport, 'measure', ''); 
 
   if(measuresCursor && result.measureUrl){
@@ -3630,6 +3639,7 @@ export function flattenMeasureReport(measureReport, measuresCursor, internalDate
   }
 
   result.date = moment(get(measureReport, 'date', '')).format(internalDateFormat);
+  
   if(get(measureReport, 'reporter.display', '')){
     result.reporter = get(measureReport, 'reporter.display', '');
   } else {
@@ -3642,13 +3652,67 @@ export function flattenMeasureReport(measureReport, measuresCursor, internalDate
     result.subject = FhirUtilities.pluckReferenceId(get(measureReport, 'subject.reference', ''));
   }
 
-  result.periodStart = moment(get(measureReport, 'period.start', '')).format(internalDateFormat);
-  result.periodEnd = moment(get(measureReport, 'period.end', '')).format(internalDateFormat);
+  // Format period for display
+  if(get(measureReport, 'period.start') && get(measureReport, 'period.end')){
+    const startMoment = moment(get(measureReport, 'period.start', ''));
+    const endMoment = moment(get(measureReport, 'period.end', ''));
+    
+    if(startMoment.isValid() && endMoment.isValid()){
+      result.period = startMoment.format(internalDateFormat) + ' - ' + endMoment.format(internalDateFormat);
+    } else {
+      result.period = get(measureReport, 'period.start', '') + ' - ' + get(measureReport, 'period.end', '');
+    }
+  }
+  const periodStartRaw = get(measureReport, 'period.start', '');
+  const periodEndRaw = get(measureReport, 'period.end', '');
+  
+  if(periodStartRaw){
+    const momentStart = moment(periodStartRaw);
+    if(momentStart.isValid()){
+      result.periodStart = momentStart.format(internalDateFormat);
+    } else {
+      result.periodStart = periodStartRaw;
+    }
+  }
+  
+  if(periodEndRaw){
+    const momentEnd = moment(periodEndRaw);
+    if(momentEnd.isValid()){
+      result.periodEnd = momentEnd.format(internalDateFormat);
+    } else {
+      result.periodEnd = periodEndRaw;
+    }
+  }
 
-  result.groupCode = get(measureReport, 'group[0].coding[0].code', '');
-  result.populationCode = get(measureReport, 'group[0].population[0].coding[0].code', '');
+  // Improvement notation
+  if(get(measureReport, 'improvementNotation.text')){
+    result.improvementNotation = get(measureReport, 'improvementNotation.text', '');
+  } else if(get(measureReport, 'improvementNotation.coding[0].display')){
+    result.improvementNotation = get(measureReport, 'improvementNotation.coding[0].display', '');
+  } else if(get(measureReport, 'improvementNotation.coding[0].code')){
+    result.improvementNotation = get(measureReport, 'improvementNotation.coding[0].code', '');
+  }
+
+  // Group information
+  if(get(measureReport, 'group[0].code.text')){
+    result.group = get(measureReport, 'group[0].code.text', '');
+    result.groupCode = get(measureReport, 'group[0].code.text', '');
+  } else if(get(measureReport, 'group[0].code.coding[0].display')){
+    result.group = get(measureReport, 'group[0].code.coding[0].display', '');
+    result.groupCode = get(measureReport, 'group[0].code.coding[0].code', '');
+  }
+
+  // Population information
+  if(get(measureReport, 'group[0].population[0].code.text')){
+    result.population = get(measureReport, 'group[0].population[0].code.text', '');
+    result.populationCode = get(measureReport, 'group[0].population[0].code.text', '');
+  } else if(get(measureReport, 'group[0].population[0].code.coding[0].display')){
+    result.population = get(measureReport, 'group[0].population[0].code.coding[0].display', '');
+    result.populationCode = get(measureReport, 'group[0].population[0].code.coding[0].code', '');
+  }
   result.populationCount = get(measureReport, 'group[0].population[0].count', '');
 
+  // Check for numerator/denominator in populations
   if(get(measureReport, 'group[0].population')){
     let population = get(measureReport, 'group[0].population');
     population.forEach(function(pop){
@@ -3661,7 +3725,9 @@ export function flattenMeasureReport(measureReport, measuresCursor, internalDate
     })
   }
 
+  // Measure score
   if(has(measureReport, 'group[0].measureScore.value')){
+    result.score = get(measureReport, 'group[0].measureScore.value', '');
     result.measureScore = get(measureReport, 'group[0].measureScore.value', '');
   } else if(has(measureReport, 'group[0].population')){
     if(Array.isArray(get(measureReport, 'group[0].population'))){
@@ -3669,6 +3735,7 @@ export function flattenMeasureReport(measureReport, measuresCursor, internalDate
         if(Array.isArray(get(pop, 'code.coding'))){
           pop.code.coding.forEach(function(coding){
             if(coding.code === measureScoreType){
+              result.score = pop.count;
               result.measureScore = pop.count;
             }
           })

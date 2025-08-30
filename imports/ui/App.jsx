@@ -140,6 +140,8 @@ import MediasPage from '../ui-fhir/medias/MediasPage';
 import MediaDetail from '../ui-fhir/medias/MediaDetail';
 import MeasuresPage from '../ui-fhir/measures/MeasuresPage';
 import MeasureDetail from '../ui-fhir/measures/MeasureDetail';
+import MeasureReportsPage from '../ui-fhir/measureReports/MeasureReportsPage';
+import MeasureReportDetail from '../ui-fhir/measureReports/MeasureReportDetail';
 import MessageHeadersPage from '../ui-fhir/messageHeaders/MessageHeadersPage';
 import MessageHeaderDetail from '../ui-fhir/messageHeaders/MessageHeaderDetail';
 import SupplyDeliveriesPage from '../ui-fhir/supplyDeliveries/SupplyDeliveriesPage';
@@ -1169,6 +1171,20 @@ if(get(Meteor, 'settings.public.modules.fhir.Measures')){
   dynamicRoutes.push({
     path: "/measures/:id",
     element: <MeasureDetail />
+  })
+}
+if(get(Meteor, 'settings.public.modules.fhir.MeasureReports')){
+  dynamicRoutes.push({
+    path: "/measure-reports",
+    element: <MeasureReportsPage />
+  })
+  dynamicRoutes.push({
+    path: "/measure-reports/new",
+    element: <MeasureReportDetail />
+  })
+  dynamicRoutes.push({
+    path: "/measure-reports/:id",
+    element: <MeasureReportDetail />
   })
 }
 if(get(Meteor, 'settings.public.modules.fhir.NutritionOrders')){
