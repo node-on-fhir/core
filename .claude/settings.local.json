@@ -16,7 +16,8 @@
       "Bash(rg:*)",
       "Bash(meteor --version)",
       "Bash(cp:*)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(echo:*)"
     ],
     "deny": []
   }

@@ -3467,6 +3467,8 @@ export function flattenMeasure(measure, internalDateFormat){
     lastReviewDate: '',
     lastEdited: '',
     author: '',
+    authorDisplay: '',
+    authorReference: '',
     reviewer: '',
     endorser: '',
     scoring: '',
@@ -3476,6 +3478,16 @@ export function flattenMeasure(measure, internalDateFormat){
     supplementalDataCount: '',
     context: '', 
     version: '',
+    description: '',
+    purpose: '',
+    usage: '',
+    copyright: '',
+    guidance: '',
+    improvementNotation: '',
+    clinicalRecommendationStatement: '',
+    disclaimer: '',
+    rationale: '',
+    effectivePeriod: '',
     operationOutcome: ''
   };
 
@@ -3485,7 +3497,7 @@ export function flattenMeasure(measure, internalDateFormat){
     internalDateFormat = get(Meteor, "settings.public.defaults.internalDateFormat", "YYYY-MM-DD");
   }
 
-  result._id =  get(measure, '_id');
+  result._id = extractIdString(get(measure, '_id'));
   result.id = get(measure, 'id', '');
   result.identifier = get(measure, 'identifier[0].value', '');
 
@@ -3499,14 +3511,38 @@ export function flattenMeasure(measure, internalDateFormat){
     result.lastEdited = moment(get(measure, 'date', '')).format(internalDateFormat);
   }
 
+  // Effective Period
+  if(get(measure, 'effectivePeriod')){
+    let periodStart = get(measure, 'effectivePeriod.start');
+    let periodEnd = get(measure, 'effectivePeriod.end');
+    
+    if(periodStart && periodEnd){
+      result.effectivePeriod = moment(periodStart).format(internalDateFormat) + ' - ' + moment(periodEnd).format(internalDateFormat);
+    } else if(periodStart){
+      result.effectivePeriod = 'From ' + moment(periodStart).format(internalDateFormat);
+    } else if(periodEnd){
+      result.effectivePeriod = 'Until ' + moment(periodEnd).format(internalDateFormat);
+    }
+  }
+
   result.publisher = get(measure, 'publisher', '');
   result.name = get(measure, 'name', '');
   result.title = get(measure, 'title', '');
   result.description = get(measure, 'description', '');
+  result.purpose = get(measure, 'purpose', '');
+  result.usage = get(measure, 'usage', '');
+  result.copyright = get(measure, 'copyright', '');
+  result.guidance = get(measure, 'guidance', '');
   result.status = get(measure, 'status', '');
   result.version = get(measure, 'version', '');
 
   result.context = get(measure, 'useContext[0].valueCodeableConcept.text', '');
+
+  // Author handling with display and reference
+  if(get(measure, 'author[0]')){
+    result.authorDisplay = get(measure, 'author[0].name', '');
+    result.authorReference = get(measure, 'author[0].reference', '');
+  }
 
   result.editor = get(measure, 'editor[0].name', '');
   result.reviewer = get(measure, 'reviewer[0].name', '');
@@ -3515,8 +3551,24 @@ export function flattenMeasure(measure, internalDateFormat){
   result.scoring = get(measure, 'scoring.coding[0].display', '');
   result.type = get(measure, 'type[0].coding[0].display', '');
 
+  // Improvement notation
+  if(get(measure, 'improvementNotation')){
+    if(get(measure, 'improvementNotation.coding[0].display')){
+      result.improvementNotation = get(measure, 'improvementNotation.coding[0].display');
+    } else if(get(measure, 'improvementNotation.text')){
+      result.improvementNotation = get(measure, 'improvementNotation.text');
+    } else if(get(measure, 'improvementNotation.coding[0].code')){
+      result.improvementNotation = get(measure, 'improvementNotation.coding[0].code');
+    } else if(typeof get(measure, 'improvementNotation') === 'string'){
+      result.improvementNotation = get(measure, 'improvementNotation');
+    }
+  }
+
   result.riskAdjustment = get(measure, 'riskAdjustment', '');
   result.rateAggregation = get(measure, 'rateAggregation', '');
+  result.clinicalRecommendationStatement = get(measure, 'clinicalRecommendationStatement', '');
+  result.disclaimer = get(measure, 'disclaimer', '');
+  result.rationale = get(measure, 'rationale', '');
   
   let supplementalData = get(measure, 'supplementalData', []);
   result.supplementalDataCount = supplementalData.length;

@@ -58,6 +58,8 @@
         "MessageHeader",
         "MedicationRequest",
         "MedicationStatement",
+        "Measure",
+        "MeasureReport",
         "NutritionOrder",
         "Observation",
         "Patient",
@@ -180,7 +182,9 @@
         "Schedules": true,
         "ServiceRequests": true,
         "SupplyDeliveries": true,
-        "Tasks": true
+        "Tasks": true,
+        "Measures": true,
+        "MeasureReports": true
       }
     }
   },
@@ -618,6 +622,28 @@
           "publication": true
         },
         "Task": {
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "search"
+          ],
+          "search": true,
+          "publication": true
+        },
+        "Measure": {
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "search"
+          ],
+          "search": true,
+          "publication": true
+        },
+        "MeasureReport": {
           "interactions": [
             "read",
             "create",
