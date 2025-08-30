@@ -61,6 +61,7 @@
         "NutritionOrder",
         "Observation",
         "Patient",
+        "PlanDefinition",
         "Practitioner",
         "Procedure",
         "Questionnaire",
@@ -169,6 +170,7 @@
         "Organizations": true,
         "Observations": true,
         "Patients": true,
+        "PlanDefinitions": true,
         "Practitioners": true,
         "Procedures": true,
         "Questionnaires": true,
@@ -470,6 +472,17 @@
         "Patient": {
           "interactions": [
             "read",
+            "search"
+          ],
+          "search": true,
+          "publication": true
+        },
+        "PlanDefinition": {
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
             "search"
           ],
           "search": true,

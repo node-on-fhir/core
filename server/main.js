@@ -63,6 +63,7 @@ import '../imports/api/medias/methods.js';
 import '../imports/api/messageHeaders/methods.js';
 import '../imports/api/nutritionOrders/methods.js';
 import '../imports/api/patients/methods.js';
+import '../imports/api/planDefinitions/methods.js';
 import '../imports/api/practitioners/methods.js';
 import '../imports/api/procedures/methods.js';
 import '../imports/api/questionnaires/methods.js';

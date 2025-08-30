@@ -5036,7 +5036,7 @@ export function flattenPatient(patient, internalDateFormat){
   return result;
 }
 
-export function flattenPlanDefinition(plan) {
+export function flattenPlanDefinition(plan, internalDateFormat) {
   let result = {
     _id: '',
     id: '',
@@ -5057,8 +5057,13 @@ export function flattenPlanDefinition(plan) {
     description: '',
     purpose: '',
     usage: '',
+    copyright: '',
+    approvalDate: '',
+    lastReviewDate: '',
+    effectivePeriod: '',
     jurisdiction: '',
     topic: '',
+    topics: '',
     author: '',
     editor: '',
     reviewer: '',
@@ -5088,7 +5093,7 @@ export function flattenPlanDefinition(plan) {
   // Basic resource identification
   result.resourceType = get(plan, 'resourceType', 'PlanDefinition');
   result.id = get(plan, 'id', '');
-  result._id = get(plan, '_id', '');
+  result._id = extractIdString(get(plan, '_id', ''));
   
   // Core fields
   result.url = get(plan, 'url', '');
@@ -5106,17 +5111,52 @@ export function flattenPlanDefinition(plan) {
   result.subjectReference = get(plan, 'subject.reference', '');
   
   // Dates and publishing info
-  result.date = moment(get(plan, 'date')).format("YYYY-MM-DD hh:mm a");
+  if(!internalDateFormat){
+    internalDateFormat = get(Meteor, "settings.public.defaults.internalDateFormat", "YYYY-MM-DD");
+  }
+  
+  if(get(plan, 'date')){
+    result.date = moment(get(plan, 'date')).format(internalDateFormat);
+  }
   result.publisher = get(plan, 'publisher', '');
   
   // Documentation
   result.description = get(plan, 'description', '');
   result.purpose = get(plan, 'purpose', '');
   result.usage = get(plan, 'usage', '');
+  result.copyright = get(plan, 'copyright', '');
+  
+  // Review dates
+  if(get(plan, 'approvalDate')){
+    result.approvalDate = moment(get(plan, 'approvalDate')).format(internalDateFormat);
+  }
+  if(get(plan, 'lastReviewDate')){
+    result.lastReviewDate = moment(get(plan, 'lastReviewDate')).format(internalDateFormat);
+  }
+  
+  // Effective period
+  if(get(plan, 'effectivePeriod')){
+    let periodStr = '';
+    if(get(plan, 'effectivePeriod.start')){
+      periodStr = moment(get(plan, 'effectivePeriod.start')).format(internalDateFormat);
+    }
+    if(get(plan, 'effectivePeriod.end')){
+      if(periodStr) periodStr += ' - ';
+      periodStr += moment(get(plan, 'effectivePeriod.end')).format(internalDateFormat);
+    }
+    result.effectivePeriod = periodStr;
+  }
   
   // Context
   result.jurisdiction = get(plan, 'jurisdiction[0].coding[0].display', '');
   result.topic = get(plan, 'topic[0].coding[0].display', '');
+  
+  // Topics (array support for table)
+  if(Array.isArray(get(plan, 'topic'))){
+    result.topics = plan.topic.map(t => get(t, 'coding[0].display', get(t, 'text', ''))).join(', ');
+  } else {
+    result.topics = result.topic;
+  }
   
   // Contributors
   result.author = get(plan, 'author[0].name', '');

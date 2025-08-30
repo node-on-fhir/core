@@ -880,6 +880,14 @@ if(get(Meteor, 'settings.public.modules.fhir.PlanDefinitions')){
     path: "/plan-definitions",
     element: <PlanDefinitionsPage />
   })
+  dynamicRoutes.push({
+    path: "/plan-definitions/new",
+    element: <PlanDefinitionDetail />
+  })
+  dynamicRoutes.push({
+    path: "/plan-definitions/:id",
+    element: <PlanDefinitionDetail />
+  })
 }
 if(get(Meteor, 'settings.public.modules.fhir.Procedures')){
   dynamicRoutes.push({
@@ -1159,6 +1167,20 @@ if(get(Meteor, 'settings.public.modules.fhir.NutritionOrders')){
   dynamicRoutes.push({
     path: "/nutrition-orders/:id",
     element: <NutritionOrderDetail />
+  })
+}
+if(get(Meteor, 'settings.public.modules.fhir.PlanDefinitions')){
+  dynamicRoutes.push({
+    path: "/plan-definitions",
+    element: <PlanDefinitionsPage />
+  })
+  dynamicRoutes.push({
+    path: "/plan-definitions/new",
+    element: <PlanDefinitionDetail />
+  })
+  dynamicRoutes.push({
+    path: "/plan-definitions/:id",
+    element: <PlanDefinitionDetail />
   })
 }
 // Always include these routes since they're in the pacio-core sidebar
