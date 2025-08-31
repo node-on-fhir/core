@@ -1,6 +1,8 @@
 // tests/nightwatch/honeycomb/crud.measurereports.js
 
 const testUtils = require('./enable_autopublish/shared-test-utils');
+const loginHelper = require('../helpers/login-helper');
+const circleHelper = require('../helpers/circleci-helper');
 
 describe('MeasureReports CRUD Operations', function() {
   const timestamp = Date.now();
@@ -40,18 +42,14 @@ describe('MeasureReports CRUD Operations', function() {
     console.log('Starting MeasureReports CRUD test suite...');
     browser
       .url('http://localhost:3000')
-      .waitForElementVisible('body', 10000) // Increased timeout for CI
-      .pause(2000) // Extra pause for app initialization
-      .execute(function() {
-        // Check if Meteor is loaded
-        return {
-          meteorReady: typeof Meteor !== 'undefined',
-          hasBody: document.body !== null,
-          bodyText: document.body ? document.body.textContent.substring(0, 200) : 'No body'
-        };
-      }, [], function(result) {
-        console.log('App initialization check:', result.value);
-      });
+      .waitForElementVisible('body', circleHelper.TIMEOUTS.EXTRA_LONG);
+    
+    // Wait for app to be fully ready
+    circleHelper.waitForAppReady(browser, function(isReady) {
+      if (!isReady) {
+        browser.assert.fail('Application failed to become ready');
+      }
+    });
   });
 
   beforeEach(browser => {
@@ -67,71 +65,12 @@ describe('MeasureReports CRUD Operations', function() {
         window.testTimestamp = ts;
       }, [timestamp]);
 
-    // Check if we're logged in
-    browser.execute(function() {
-      return {
-        isLoggedIn: typeof Meteor !== 'undefined' && !!Meteor.userId(),
-        userId: Meteor.userId ? Meteor.userId() : null,
-        username: Meteor.user ? (Meteor.user() ? Meteor.user().username : null) : null
-      };
-    }, [], function(result) {
-      console.log('Initial login state:', result.value);
-      
-      // Add null check for result.value
-      if (!result.value || result.value.error) {
-        console.error('Failed to check login state:', result.value);
-        browser.assert.fail('Failed to check login state - app may not be ready');
-        return;
-      }
-      
-      if (!result.value.isLoggedIn) {
-        console.log('Not logged in, attempting programmatic login...');
-        
-        browser.executeAsync(function(done) {
-          if (typeof Meteor !== 'undefined') {
-            Meteor.call('test.createTestUser', {
-              username: 'janedoe',
-              email: 'janedoe@test.org',
-              password: 'janedoe123'
-            }, function(err, userId) {
-              if (err) {
-                console.error('Failed to create test user:', err);
-                done({ userCreated: false, error: err.message });
-              } else {
-                console.log('Test user ready, userId:', userId);
-                Meteor.loginWithPassword('janedoe', 'janedoe123', function(loginErr) {
-                  if (loginErr) {
-                    console.error('Login failed:', loginErr);
-                    done({ userCreated: true, loginSuccess: false, error: loginErr.message });
-                  } else {
-                    console.log('Login successful');
-                    done({ 
-                      userCreated: true,
-                      loginSuccess: true, 
-                      userId: Meteor.userId(), 
-                      username: Meteor.user() ? Meteor.user().username : null 
-                    });
-                  }
-                });
-              }
-            });
-          } else {
-            done({ userCreated: false, loginSuccess: false, error: 'Meteor not available' });
-          }
-        }, [], function(result) {
-          if (result.value.loginSuccess) {
-            browser.assert.ok(true, 'Successfully created test user and logged in');
-            console.log('Logged in as:', result.value.username, 'userId:', result.value.userId);
-          } else {
-            browser.assert.fail('Setup failed: ' + result.value.error);
-          }
-        });
-        
-        browser.pause(1000);
+    // Use the login helper for robust login handling
+    loginHelper.ensureLoggedIn(browser, function(isLoggedIn) {
+      if (!isLoggedIn) {
+        browser.assert.fail('Failed to ensure user is logged in');
       } else {
-        browser.assert.ok(true, 'Already logged in (autologin enabled)');
-        console.log('Already logged in as:', result.value.username, 'userId:', result.value.userId);
-      }
+        browser.assert.ok(true, 'User is logged in');
       
       // Clean up any existing test data
       browser.executeAsync(function(done) {
@@ -407,99 +346,29 @@ describe('MeasureReports CRUD Operations', function() {
       return { logged: true };
     });
 
-    // Save the measure report
-    browser
-      .execute(function() {
-        window.consoleErrors = [];
-        const originalError = console.error;
-        console.error = function() {
-          window.consoleErrors.push(Array.from(arguments).join(' '));
-          originalError.apply(console, arguments);
-        };
-        
-        const buttons = document.querySelectorAll('button');
-        for (let button of buttons) {
-          if (button.textContent.includes('Save')) {
-            button.click();
-            return true;
-          }
-        }
-        return false;
-      }, [], function(result) {
-        browser.assert.equal(result.value, true, 'Clicked Save button');
-      });
-
-    browser
-      .pause(1000);
+    // Save the measure report with enhanced navigation handling
+    circleHelper.saveWithNavigation(
+      browser,
+      'Save',
+      '/measure-reports',
+      '#measureReportsPage'
+    );
     
-    // Check if we're back on the measure reports list page
-    browser.execute(function() {
-      const currentUrl = window.location.pathname;
-      const hasTable = document.querySelector('#measureReportsTable') !== null;
-      const hasMeasureReportsPage = document.querySelector('#measureReportsPage') !== null;
-      const hasDetailPage = document.querySelector('#measureReportDetailPage') !== null;
-      
-      const errorElements = document.querySelectorAll('[color="error"], .error, [class*="error"], [class*="Error"]');
-      let errorText = '';
-      errorElements.forEach(el => {
-        if (el.textContent) errorText += el.textContent + ' ';
-      });
-      
-      const consoleErrors = window.consoleErrors || [];
-      
-      return {
-        url: currentUrl,
-        hasTable: hasTable,
-        hasMeasureReportsPage: hasMeasureReportsPage,
-        hasDetailPage: hasDetailPage,
-        hasError: errorText.length > 0,
-        errorText: errorText.trim(),
-        consoleErrors: consoleErrors,
-        userId: Meteor.userId ? Meteor.userId() : 'No Meteor.userId',
-        isLoggedIn: Meteor.userId ? !!Meteor.userId() : false
-      };
-    }, [], function(result) {
-      console.log('Post-save state:', result.value);
-      if (result.value.hasError) {
-        browser.assert.fail(`Save failed with error: ${result.value.errorText}`);
-      }
-      if (!result.value.isLoggedIn) {
-        browser.assert.fail('User is not logged in after save attempt');
-      }
-      if (result.value.url === '/measure-reports/new') {
-        console.log('Still on new measure report page - save may have failed silently');
-      }
-    });
-    
-    // Add explicit navigation check after save
-    browser
-      .pause(2000) // Give more time for redirect
-      .execute(function() {
-        return {
-          url: window.location.pathname,
-          hasPage: document.querySelector('#measureReportsPage') !== null,
-          hasError: document.querySelector('.error-message') !== null,
-          bodyText: document.body.textContent.substring(0, 500)
-        };
-      }, [], function(result) {
-        console.log('After save navigation:', result.value);
-      });
-    
-    // Try explicit navigation if not redirected
-    browser
-      .url('http://localhost:3000/measure-reports')
-      .pause(1000)
-      .waitForElementVisible('#measureReportsPage', 10000)
-      .saveScreenshot('tests/nightwatch/screenshots/measure-reports/05-measure-report-saved.png');
+    browser.saveScreenshot('tests/nightwatch/screenshots/measure-reports/05-measure-report-saved.png');
   });
 
   it('05. Verify new measure report appears in list', browser => {
-    // Ensure we're on the measure reports page
-    browser
-      .url('http://localhost:3000/measure-reports')
-      .pause(2000)
-      .waitForElementVisible('#measureReportsPage', 10000)
-      .pause(1000);
+    // Navigate to measure reports page with retry
+    circleHelper.navigateWithRetry(
+      browser,
+      'http://localhost:3000/measure-reports',
+      '#measureReportsPage',
+      function(success) {
+        if (!success) {
+          browser.assert.fail('Failed to navigate to measure reports page');
+        }
+      }
+    );
     
     // Search for our specific test measure report
     browser
