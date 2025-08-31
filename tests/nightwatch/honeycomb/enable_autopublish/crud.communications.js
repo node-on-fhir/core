@@ -865,7 +865,23 @@ describe('Communications CRUD Operations', function() {
       }, [], function(result) {
         browser.assert.equal(result.value, true, 'Clicked Edit/Lock button to enter edit mode');
       })
-      .pause(500);
+      .pause(1000); // Give more time for edit mode to activate
+
+    // Verify we're in edit mode before proceeding
+    browser.execute(function() {
+      const payloadContent = document.querySelector('#payloadContent');
+      const notesTextarea = document.querySelector('#notesTextarea');
+      return {
+        payloadEnabled: payloadContent ? !payloadContent.disabled : false,
+        notesEnabled: notesTextarea ? !notesTextarea.disabled : false
+      };
+    }, [], function(result) {
+      console.log('Edit mode check:', result.value);
+      if (!result.value.payloadEnabled || !result.value.notesEnabled) {
+        console.log('Fields are still disabled, waiting longer...');
+        browser.pause(1000);
+      }
+    });
 
     browser
       .click('#senderDisplay')
