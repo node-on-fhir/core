@@ -1,6 +1,7 @@
 // tests/nightwatch/honeycomb/enable_autopublish/crud.immunizations.js
 
 const testUtils = require('./shared-test-utils');
+const saveNavigationHelper = require('../../helpers/save-navigation-helper');
 
 describe('Immunizations CRUD Operations', function() {
   const timestamp = Date.now();
@@ -611,72 +612,15 @@ describe('Immunizations CRUD Operations', function() {
     });
 
     // Save the immunization
-    browser
-      .execute(function() {
-        window.consoleErrors = [];
-        const originalError = console.error;
-        console.error = function() {
-          window.consoleErrors.push(Array.from(arguments).join(' '));
-          originalError.apply(console, arguments);
-        };
-        
-        const buttons = document.querySelectorAll('button');
-        for (let button of buttons) {
-          if (button.textContent.includes('Save')) {
-            button.click();
-            return true;
-          }
-        }
-        return false;
-      }, [], function(result) {
-        browser.assert.equal(result.value, true, 'Clicked Save button');
-      });
-
-    browser
-      .pause(1000);
-    
-    // Check if we're back on the immunizations list page
-    browser.execute(function() {
-      const currentUrl = window.location.pathname;
-      const hasTable = document.querySelector('#immunizationsTable') !== null;
-      const hasImmunizationsPage = document.querySelector('#immunizationsPage') !== null;
-      const hasDetailPage = document.querySelector('#immunizationDetailPage') !== null;
-      
-      const errorElements = document.querySelectorAll('[color="error"], .error, [class*="error"], [class*="Error"]');
-      let errorText = '';
-      errorElements.forEach(el => {
-        if (el.textContent) errorText += el.textContent + ' ';
-      });
-      
-      const consoleErrors = window.consoleErrors || [];
-      
-      return {
-        url: currentUrl,
-        hasTable: hasTable,
-        hasImmunizationsPage: hasImmunizationsPage,
-        hasDetailPage: hasDetailPage,
-        hasError: errorText.length > 0,
-        errorText: errorText.trim(),
-        consoleErrors: consoleErrors,
-        userId: Meteor.userId ? Meteor.userId() : 'No Meteor.userId',
-        isLoggedIn: Meteor.userId ? !!Meteor.userId() : false
-      };
-    }, [], function(result) {
-      console.log('Post-save state:', result.value);
-      if (result.value.hasError) {
-        browser.assert.fail(`Save failed with error: ${result.value.errorText}`);
+    // Use save-navigation-helper to handle save and navigation
+    saveNavigationHelper.saveAndNavigate(
+      browser, 
+      'immunizations', 
+      '#immunizationsPage',
+      function() {
+        browser.saveScreenshot('tests/nightwatch/screenshots/immunizations/05-immunization-saved.png');
       }
-      if (!result.value.isLoggedIn) {
-        browser.assert.fail('User is not logged in after save attempt');
-      }
-      if (result.value.url === '/immunizations/new') {
-        console.log('Still on new immunization page - save may have failed silently');
-      }
-    });
-    
-    browser
-      .waitForElementVisible('#immunizationsPage', 5000)
-      .saveScreenshot('tests/nightwatch/screenshots/immunizations/05-immunization-saved.png');
+    );
   });
 
   it('05. Verify new immunization appears in list', browser => {
