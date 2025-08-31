@@ -492,11 +492,3 @@ workflows:
           name: framework
           group-name: framework
           test-files: "tests/nightwatch/honeycomb/enable_autopublish/simple-sorting-test.js tests/nightwatch/honeycomb/dev_auto_login/my.profile.js tests/nightwatch/honeycomb/default/localhost.js"
-
-# Benefits of this approach:
-# 1. Tests run in parallel across multiple containers
-# 2. Total test time reduced from ~2 hours to ~15-20 minutes
-# 3. Each group is independent - can retry specific groups
-# 4. Uses medium resource class (cheaper than large)
-# 5. Groups are logically organized by functionality
-# 6. Failed groups are easy to identify and re-run
