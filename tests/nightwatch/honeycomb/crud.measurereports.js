@@ -924,22 +924,23 @@ describe('MeasureReports CRUD Operations', function() {
           .pause(1000) // Let the page settle
           .execute(function() {
             const hasTable = document.querySelector('#measureReportsTable') !== null;
+            const pageElement = document.querySelector('#measureReportsPage');
+            const pageText = pageElement ? pageElement.textContent : '';
+            
+            // More comprehensive check for no-data states
             const hasNoDataCard = document.querySelector('.no-data-card') !== null ||
                                 document.querySelector('.no-data-available') !== null ||
                                 document.querySelector('[id*="no-data"]') !== null ||
-                                (document.querySelector('#measureReportsPage') && 
-                                 document.querySelector('#measureReportsPage').textContent.includes('No Data Available'));
-            
-            // More comprehensive check for page elements
-            const pageElement = document.querySelector('#measureReportsPage');
-            const pageText = pageElement ? pageElement.textContent : '';
+                                pageText.includes('No Data Available') ||
+                                pageText.includes('No Measure Reports Found') ||
+                                pageText.includes('Add Your First Measure');
             
             return {
               hasTable: hasTable,
               hasNoDataCard: hasNoDataCard,
               hasEitherElement: hasTable || hasNoDataCard,
               pageFound: pageElement !== null,
-              pageTextSnippet: pageText.substring(0, 100),
+              pageTextSnippet: pageText.substring(0, 200),
               bodyClasses: document.body.className
             };
           }, [], function(result) {

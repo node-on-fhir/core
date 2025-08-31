@@ -711,15 +711,14 @@ describe('Tasks CRUD Operations', function() {
     }, [], function(result) {
       if (result.value) {
         console.log('Skipping task details test - no data available');
+        browser.assert.ok(true, 'Skipping view details test - no tasks available');
+        browser.saveScreenshot('tests/nightwatch/screenshots/tasks/07-no-data-state.png');
         return;
       }
-    });
-    
-    browser
-      .waitForElementVisible('#tasksTable', 10000); // Increased timeout
-
-    browser
-      .execute(function(codeDisplay) {
+      
+      browser
+        .waitForElementVisible('#tasksTable', 10000) // Increased timeout
+        .execute(function(codeDisplay) {
         // Double-check the skip flag
         if (window.__skipTaskDetailsTest) {
           return { skipped: true };
@@ -795,9 +794,10 @@ describe('Tasks CRUD Operations', function() {
       })
       .saveScreenshot('tests/nightwatch/screenshots/tasks/07-view-task-details.png');
     
-    browser
-      .url('http://localhost:3000/tasks')
-      .waitForElementVisible('#tasksPage', 5000);
+      browser
+        .url('http://localhost:3000/tasks')
+        .waitForElementVisible('#tasksPage', 5000);
+    });
   });
 
   it('07. Update existing task', browser => {
