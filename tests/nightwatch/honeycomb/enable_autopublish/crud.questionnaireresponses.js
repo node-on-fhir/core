@@ -401,11 +401,14 @@ describe('QuestionnaireResponses CRUD Operations', function() {
       .saveScreenshot('tests/nightwatch/screenshots/questionnaireresponses/04-filled-questionnaireresponse-form.png');
 
     // Use save-navigation-helper to handle save and navigation
-    saveNavigationHelper.clickSaveAndNavigate(browser, {
-      resourceType: 'questionnaireresponses',
-      expectedUrl: '/questionnaire-responses',
-      screenshot: 'tests/nightwatch/screenshots/questionnaireresponses/05-questionnaireresponse-saved.png'
-    });
+    saveNavigationHelper.saveAndNavigate(
+      browser, 
+      'questionnaireresponses', 
+      '#questionnaireResponsesPage',
+      function() {
+        browser.saveScreenshot('tests/nightwatch/screenshots/questionnaireresponses/05-questionnaireresponse-saved.png');
+      }
+    );
   });
 
   it('05. Verify new questionnaire response appears in list', browser => {
