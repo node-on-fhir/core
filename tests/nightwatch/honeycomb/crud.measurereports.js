@@ -980,8 +980,13 @@ describe('MeasureReports CRUD Operations', function() {
           }
           return { found: false, hasTable: true };
         } else {
+          const pageText = document.querySelector('#measureReportsPage')?.textContent || '';
           const hasNoData = document.querySelector('.no-data-card') !== null ||
-                           document.querySelector('#measureReportsPage').textContent.includes('No Data Available');
+                           document.querySelector('.no-data-available') !== null ||
+                           document.querySelector('[id*="no-data"]') !== null ||
+                           pageText.includes('No Data Available') ||
+                           pageText.includes('No Measure Reports Found') ||
+                           pageText.includes('Add Your First Measure');
           return { found: false, hasTable: false, hasNoData: hasNoData };
         }
       }, [timestamp.toString()], function(result) {
