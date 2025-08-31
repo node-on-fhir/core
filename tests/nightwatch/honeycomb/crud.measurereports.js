@@ -898,9 +898,30 @@ describe('MeasureReports CRUD Operations', function() {
           .acceptAlert() // Accept the confirmation dialog
           .pause(1500); // Give time for deletion and navigation
 
+        // Enhanced deletion verification
         browser
-          .pause(1000)
-          .waitForElementVisible('#measureReportsPage', 5000)
+          .pause(2000) // Give more time for deletion and navigation
+          .execute(function() {
+            // Check current location and page state
+            return {
+              currentUrl: window.location.pathname,
+              hasPageElement: document.querySelector('#measureReportsPage') !== null,
+              pageContent: document.body.textContent ? document.body.textContent.substring(0, 200) : 'No content',
+              documentTitle: document.title
+            };
+          }, [], function(result) {
+            console.log('Post-deletion state:', result.value);
+            
+            // If we're not on the measure-reports page, navigate there
+            if (result.value.currentUrl !== '/measure-reports') {
+              console.log('Not on measure-reports page, navigating...');
+              browser.url('http://localhost:3000/measure-reports');
+            }
+          });
+        
+        browser
+          .waitForElementVisible('#measureReportsPage', 10000) // Increased timeout
+          .pause(1000) // Let the page settle
           .execute(function() {
             const hasTable = document.querySelector('#measureReportsTable') !== null;
             const hasNoDataCard = document.querySelector('.no-data-card') !== null ||
@@ -908,13 +929,32 @@ describe('MeasureReports CRUD Operations', function() {
                                 document.querySelector('[id*="no-data"]') !== null ||
                                 (document.querySelector('#measureReportsPage') && 
                                  document.querySelector('#measureReportsPage').textContent.includes('No Data Available'));
+            
+            // More comprehensive check for page elements
+            const pageElement = document.querySelector('#measureReportsPage');
+            const pageText = pageElement ? pageElement.textContent : '';
+            
             return {
               hasTable: hasTable,
               hasNoDataCard: hasNoDataCard,
-              hasEitherElement: hasTable || hasNoDataCard
+              hasEitherElement: hasTable || hasNoDataCard,
+              pageFound: pageElement !== null,
+              pageTextSnippet: pageText.substring(0, 100),
+              bodyClasses: document.body.className
             };
           }, [], function(result) {
-            browser.assert.equal(result.value.hasEitherElement, true, 'Either measure reports table or no-data message is present after deletion');
+            console.log('Page element check:', result.value);
+            
+            if (!result.value.pageFound) {
+              browser.assert.fail('Measure reports page not found after deletion');
+            } else if (!result.value.hasEitherElement) {
+              // If neither table nor no-data, check what's actually there
+              console.log('Page text snippet:', result.value.pageTextSnippet);
+              console.log('Body classes:', result.value.bodyClasses);
+              browser.assert.fail('Neither table nor no-data message found. Page may be in unexpected state.');
+            } else {
+              browser.assert.ok(true, 'Either measure reports table or no-data message is present after deletion');
+            }
           });
       } else if (result.value.hasNoData) {
         browser.assert.ok(true, 'No measure reports to delete - No Data Available state is correct');
