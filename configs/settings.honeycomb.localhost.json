@@ -113,6 +113,12 @@
       },
       "autopublish": true
     },
+    "pacio": {
+      "chiefMedicalOfficer": {
+        "reference": "Practitioner/chief-medical-officer",
+        "display": "Dr. Sarah Johnson, Chief Medical Officer"
+      }
+    },
     "interfaces": {
       "default": {
         "status": "active",
@@ -175,6 +181,12 @@
     }
   },
   "private": {
+    "pacio": {
+      "chiefMedicalOfficer": {
+        "reference": "Practitioner/chief-medical-officer",
+        "display": "Dr. Sarah Johnson, Chief Medical Officer"
+      }
+    },
     "fhir": {
       "disableOauth": true,
       "schemaValidation": {

@@ -25,7 +25,7 @@ import SimpleSchema from 'simpl-schema';
 // REFACTOR:  we want to deprecate meteor/clinical:hl7-resource-datatypes
 // so please remove references from the following line
 // and replace with import from ../../datatypes/*
-import { BaseSchema, DomainResourceSchema, IdentifierSchema, ContactPointSchema, AddressSchema, ReferenceSchema, SignatureSchema } from 'meteor/clinical:hl7-resource-datatypes';
+import { BaseSchema, DomainResourceSchema, IdentifierSchema, ContactPointSchema, AddressSchema, ReferenceSchema, SignatureSchema, CodeableConceptSchema, QuantitySchema, PeriodSchema } from 'meteor/clinical:hl7-resource-datatypes';
 
 
 
@@ -91,13 +91,13 @@ let MeasureReportSchemaR4 = new SimpleSchema({
     type:  IdentifierSchema 
     },
   "status" : {
-    optional: true,
+    optional: false,
     allowedValues: ['complete', 'pending', 'error'],
     type:  String
   },
   "type" : {
-    optional: true,
-    allowedValues: ['individual', 'subject-list', 'summary', 'data-collection'],
+    optional: false,
+    allowedValues: ['individual', 'subject-list', 'summary', 'data-exchange'],
     type:  String
   },
   "measure" : {
@@ -117,7 +117,7 @@ let MeasureReportSchemaR4 = new SimpleSchema({
     type:  ReferenceSchema
   },
   "period" : {
-    optional: true,
+    optional: false,
     type: PeriodSchema
   },
   "improvementNotation" : {
@@ -175,5 +175,5 @@ let MeasureReportSchemaR4 = new SimpleSchema({
 let MeasureReportSchema = MeasureReportSchemaR4;
 // MeasureReports.attachSchema(MeasureReportSchema);
 
-export { MeasureReportSchemaDstu2, MeasureReportSchema, MeasureReportSchemaR4 }
+export { MeasureReportSchema, MeasureReportSchemaR4, MeasureReport }
 

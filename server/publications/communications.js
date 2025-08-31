@@ -53,17 +53,65 @@ Meteor.publish('communications.bySender', function(senderReference, limit = 100)
 });
 
 // Publish communications by recipient
-Meteor.publish('communications.byRecipient', function(recipientReference, limit = 100) {
-  check(recipientReference, String);
+// If no recipientReference provided, looks up the current user's practitionerId
+Meteor.publish('communications.byRecipient', async function(recipientReference, limit = 100) {
+  check(recipientReference, Match.Maybe(String));
   check(limit, Match.Optional(Number));
   
   if (!this.userId) {
     return this.ready();
   }
   
-  return Communications.find({
-    'recipient.reference': recipientReference
-  }, {
+  // If no recipient reference provided, try to get from current user
+  if (!recipientReference) {
+    const user = await Meteor.users.findOneAsync(this.userId);
+    console.log('Looking up practitionerId for user:', user?.username);
+    
+    if (user?.practitionerId) {
+      recipientReference = `Practitioner/${user.practitionerId}`;
+      console.log('Found practitionerId:', user.practitionerId);
+    } else if (user?.profile?.isPractitioner) {
+      // User is marked as practitioner but no linked ID
+      // For intervention approvals, they should still see CMO messages
+      console.log('User is practitioner without linked ID, will show intervention approvals');
+    } else {
+      console.log('User has no practitionerId and is not a practitioner');
+      return this.ready();
+    }
+  }
+  
+  // Build query based on what we have
+  let query;
+  
+  if (recipientReference) {
+    // User has a specific practitioner reference
+    query = {
+      $or: [
+        { 'recipient.0.reference': recipientReference },
+        { 
+          // Also show intervention approvals for CMO
+          'recipient.0.reference': 'Practitioner/chief-medical-officer',
+          'category.0.coding.0.code': 'intervention-approval'
+        }
+      ]
+    };
+  } else {
+    // User is a practitioner without linked ID - show intervention approvals
+    const user = await Meteor.users.findOneAsync(this.userId);
+    if (user?.profile?.isPractitioner) {
+      query = {
+        'recipient.0.reference': 'Practitioner/chief-medical-officer',
+        'category.0.coding.0.code': 'intervention-approval'
+      };
+    } else {
+      // Not a practitioner, no communications
+      return this.ready();
+    }
+  }
+  
+  console.log('Publishing communications with query:', query);
+  
+  return Communications.find(query, {
     limit: limit,
     sort: { received: -1 }
   });
@@ -131,5 +179,51 @@ Meteor.publish('communications.recent', function(limit = 50) {
   }, {
     limit: limit,
     sort: { sent: -1 }
+  });
+});
+
+// Publish recent alert communications
+Meteor.publish('communications.recentAlerts', function(recipientReference, hoursBack = 24) {
+  check(recipientReference, Match.Maybe(String));
+  check(hoursBack, Number);
+  
+  if (!this.userId) {
+    return this.ready();
+  }
+  
+  console.log('Publishing recent alerts for recipient:', recipientReference);
+  
+  const cutoffDate = new Date();
+  cutoffDate.setHours(cutoffDate.getHours() - hoursBack);
+  
+  // Query for recent alert communications
+  const query = {
+    $and: [
+      {
+        $or: [
+          { sent: { $gte: cutoffDate } },
+          { received: { $gte: cutoffDate } }
+        ]
+      },
+      {
+        $or: [
+          { 'category.0.coding.0.code': 'alert' },
+          { 'category.0.text': { $regex: 'alert', $options: 'i' } },
+          { 'priority': 'urgent' },
+          { 'priority': 'asap' },
+          { 'priority': 'stat' }
+        ]
+      }
+    ]
+  };
+  
+  // If recipient reference provided, filter by recipient
+  if (recipientReference) {
+    query['recipient.0.reference'] = recipientReference;
+  }
+  
+  return Communications.find(query, {
+    sort: { sent: -1 },
+    limit: 50
   });
 });

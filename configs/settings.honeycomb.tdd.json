@@ -55,16 +55,21 @@
         "List",
         "Location",
         "Medication",
+        "MessageHeader",
         "MedicationRequest",
         "MedicationStatement",
+        "Measure",
+        "MeasureReport",
         "NutritionOrder",
         "Observation",
         "Patient",
+        "PlanDefinition",
         "Practitioner",
         "Procedure",
         "Questionnaire",
         "QuestionnaireResponse",
-        "ServiceRequest"
+        "ServiceRequest",
+        "Task"
       ]
     },
     "defaults": {
@@ -105,7 +110,6 @@
           "/contracts",
           "/devices",
           "/imaging-studies",
-          "/message-headers",
           "/risk-assessments"
         ]
       },
@@ -163,10 +167,12 @@
         "MedicationRequests": true,
         "MedicationAdministrations": true,
         "MedicationStatements": true,
+        "MessageHeaders": true,
         "NutritionOrders": true,
         "Organizations": true,
         "Observations": true,
         "Patients": true,
+        "PlanDefinitions": true,
         "Practitioners": true,
         "Procedures": true,
         "Questionnaires": true,
@@ -175,7 +181,10 @@
         "ResearchSubjects": true,
         "Schedules": true,
         "ServiceRequests": true,
-        "SupplyDeliveries": true
+        "SupplyDeliveries": true,
+        "Tasks": true,
+        "Measures": true,
+        "MeasureReports": true
       }
     }
   },
@@ -398,6 +407,17 @@
           "search": true,
           "publication": true
         },
+        "MessageHeader": {
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "search"
+          ],
+          "search": true,
+          "publication": true
+        },
         "MedicationRequest": {
           "interactions": [
             "read",
@@ -456,6 +476,17 @@
         "Patient": {
           "interactions": [
             "read",
+            "search"
+          ],
+          "search": true,
+          "publication": true
+        },
+        "PlanDefinition": {
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
             "search"
           ],
           "search": true,
@@ -580,6 +611,39 @@
           "publication": true
         },
         "SupplyDelivery": {
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "search"
+          ],
+          "search": true,
+          "publication": true
+        },
+        "Task": {
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "search"
+          ],
+          "search": true,
+          "publication": true
+        },
+        "Measure": {
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "search"
+          ],
+          "search": true,
+          "publication": true
+        },
+        "MeasureReport": {
           "interactions": [
             "read",
             "create",

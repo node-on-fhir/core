@@ -138,6 +138,12 @@ import SchedulesPage from '../ui-fhir/schedules/SchedulesPage';
 import ScheduleDetail from '../ui-fhir/schedules/ScheduleDetail';
 import MediasPage from '../ui-fhir/medias/MediasPage';
 import MediaDetail from '../ui-fhir/medias/MediaDetail';
+import MeasuresPage from '../ui-fhir/measures/MeasuresPage';
+import MeasureDetail from '../ui-fhir/measures/MeasureDetail';
+import MeasureReportsPage from '../ui-fhir/measureReports/MeasureReportsPage';
+import MeasureReportDetail from '../ui-fhir/measureReports/MeasureReportDetail';
+import MessageHeadersPage from '../ui-fhir/messageHeaders/MessageHeadersPage';
+import MessageHeaderDetail from '../ui-fhir/messageHeaders/MessageHeaderDetail';
 import SupplyDeliveriesPage from '../ui-fhir/supplyDeliveries/SupplyDeliveriesPage';
 
 import {
@@ -659,6 +665,10 @@ if(get(Meteor, 'settings.public.modules.fhir.CarePlans')){
     element: <CarePlansPage />
   })
   dynamicRoutes.push({
+    path: "/care-plans",
+    element: <CarePlansPage />
+  })
+  dynamicRoutes.push({
     path: "/careplans/new",
     element: <CarePlanDetail />
   })
@@ -874,6 +884,14 @@ if(get(Meteor, 'settings.public.modules.fhir.PlanDefinitions')){
     path: "/plan-definitions",
     element: <PlanDefinitionsPage />
   })
+  dynamicRoutes.push({
+    path: "/plan-definitions/new",
+    element: <PlanDefinitionDetail />
+  })
+  dynamicRoutes.push({
+    path: "/plan-definitions/:id",
+    element: <PlanDefinitionDetail />
+  })
 }
 if(get(Meteor, 'settings.public.modules.fhir.Procedures')){
   dynamicRoutes.push({
@@ -963,6 +981,14 @@ if(get(Meteor, 'settings.public.modules.fhir.ServiceRequests')){
 dynamicRoutes.push({
   path: "/tasks",
   element: <TasksPage />
+})
+dynamicRoutes.push({
+  path: "/tasks/new",
+  element: <TaskDetail />
+})
+dynamicRoutes.push({
+  path: "/tasks/:id",
+  element: <TaskDetail />
 })
 
 // Add missing FHIR resource routes
@@ -1119,6 +1145,48 @@ if(get(Meteor, 'settings.public.modules.fhir.MedicationAdministrations')){
     element: <MedicationAdministrationDetail />
   })
 }
+if(get(Meteor, 'settings.public.modules.fhir.MessageHeaders')){
+  dynamicRoutes.push({
+    path: "/message-headers",
+    element: <MessageHeadersPage />
+  })
+  dynamicRoutes.push({
+    path: "/message-headers/new",
+    element: <MessageHeaderDetail />
+  })
+  dynamicRoutes.push({
+    path: "/message-headers/:id",
+    element: <MessageHeaderDetail />
+  })
+}
+if(get(Meteor, 'settings.public.modules.fhir.Measures')){
+  dynamicRoutes.push({
+    path: "/measures",
+    element: <MeasuresPage />
+  })
+  dynamicRoutes.push({
+    path: "/measures/new",
+    element: <MeasureDetail />
+  })
+  dynamicRoutes.push({
+    path: "/measures/:id",
+    element: <MeasureDetail />
+  })
+}
+if(get(Meteor, 'settings.public.modules.fhir.MeasureReports')){
+  dynamicRoutes.push({
+    path: "/measure-reports",
+    element: <MeasureReportsPage />
+  })
+  dynamicRoutes.push({
+    path: "/measure-reports/new",
+    element: <MeasureReportDetail />
+  })
+  dynamicRoutes.push({
+    path: "/measure-reports/:id",
+    element: <MeasureReportDetail />
+  })
+}
 if(get(Meteor, 'settings.public.modules.fhir.NutritionOrders')){
   dynamicRoutes.push({
     path: "/nutrition-orders",
@@ -1131,6 +1199,20 @@ if(get(Meteor, 'settings.public.modules.fhir.NutritionOrders')){
   dynamicRoutes.push({
     path: "/nutrition-orders/:id",
     element: <NutritionOrderDetail />
+  })
+}
+if(get(Meteor, 'settings.public.modules.fhir.PlanDefinitions')){
+  dynamicRoutes.push({
+    path: "/plan-definitions",
+    element: <PlanDefinitionsPage />
+  })
+  dynamicRoutes.push({
+    path: "/plan-definitions/new",
+    element: <PlanDefinitionDetail />
+  })
+  dynamicRoutes.push({
+    path: "/plan-definitions/:id",
+    element: <PlanDefinitionDetail />
   })
 }
 // Always include these routes since they're in the pacio-core sidebar
@@ -1213,6 +1295,23 @@ Object.keys(Package).forEach(function(packageName){
   if(Package[packageName].DynamicRoutes){
     // we try to build up a route from what's specified in the package
     Package[packageName].DynamicRoutes.forEach(function(route){
+      // If route has component instead of element, create the element
+      if(route.component && !route.element) {
+        console.log(`[APP] Creating element for ${route.path} from component:`, route.component);
+        route.element = React.createElement(route.component);
+        console.log(`[APP] Created element:`, route.element);
+      }
+      
+      // Debug logging for swarm route
+      if(route.path === '/swarm') {
+        console.log('[APP] Swarm route found:', route);
+        console.log('[APP] Swarm route element:', route.element);
+        console.log('[APP] Swarm route element type:', typeof route.element);
+        if(route.element && route.element.$$typeof) {
+          console.log('[APP] Swarm element $$typeof:', route.element.$$typeof.toString());
+        }
+      }
+      
       dynamicRoutes.push(route);      
     });    
     if(Package[packageName].MainPage){
@@ -1237,25 +1336,17 @@ console.log('All routes:', dynamicRoutes.map(r => r.path));
 
 const router = createBrowserRouter(dynamicRoutes);
 
-const CustomRouter = ({ children }) => {
-  // Debug: Log routes to check for issues
+// Router debugging - check for problematic routes
+if (Meteor.isDevelopment) {
   dynamicRoutes.forEach((route, index) => {
-    if (route.path === '/pacio-dashboard' || route.path === '/' || route.path === '/research-studies') {
-      console.log(`Route ${index}: path="${route.path}", element=`, route.element);
+    if (route.element && typeof route.element === 'object' && route.element.$$typeof) {
+      // Check if this might be a problematic element
+      if (route.element.$$typeof.toString() !== 'Symbol(react.element)') {
+        console.warn(`Route ${index}: path="${route.path}" has unusual element type:`, route.element.$$typeof.toString(), route.element);
+      }
     }
   });
-  
-  return (
-    <Routes>
-      {dynamicRoutes.map((route, index) => (
-        <Route key={index} path={route.path} element={route.element} />
-      ))}
-      {/* Optionally, add a fallback route for 404 Not Found */}
-      {/* <Route path="*" element={<NotFound />} /> */}
-      <Route path="*" />
-    </Routes>
-  );
-};
+}
 
 // ==============================================================================
 // Security Based Routing
@@ -1816,6 +1907,12 @@ function StyledMainRouter(props){
   }
 
   return (<main id='mainAppRouter' style={mainAppStyle}>
-    <CustomRouter />
+    <Routes>
+      {dynamicRoutes.map((route, index) => (
+        <Route key={index} path={route.path} element={route.element} />
+      ))}
+      {/* Fallback route for 404 Not Found */}
+      <Route path="*" />
+    </Routes>
   </main>)
 }

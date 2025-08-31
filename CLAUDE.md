@@ -168,3 +168,30 @@ When creating clinical packages, use these dependencies:
 
 - Always use IDE diagnostics to validate code after implementation
 
+## RSPack Migration Guide
+
+### Handling Nested Imports
+
+Nested imports are a Meteor-specific feature not supported by standard bundlers like RSPack. They must be migrated to standard JavaScript patterns.
+
+#### Dynamic Import Pattern (Recommended)
+
+When you need to conditionally import packages (e.g., optional Atmosphere.js packages), use dynamic imports:
+
+```javascript
+// Instead of nested import:
+// if (Package['browser-policy-common']) {
+//   import { BrowserPolicy } from 'meteor/browser-policy-common';
+// }
+
+// Use dynamic import:
+if (Package['browser-policy-common']) {
+  console.log('Configuring content-security-policy.');
+  import('meteor/browser-policy-common').then(({ BrowserPolicy }) => {
+    // Use BrowserPolicy here
+  });
+}
+```
+
+This pattern is standards-compliant and works with modern bundlers while maintaining the conditional loading behavior.
+

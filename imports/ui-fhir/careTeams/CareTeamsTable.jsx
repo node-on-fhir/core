@@ -1,3 +1,5 @@
+// /Volumes/SonicMagic/Code/honeycomb-public-release/imports/ui-fhir/careTeams/CareTeamsTable.jsx
+
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 
@@ -23,6 +25,17 @@ import { browserHistory } from 'react-router';
 
 import FhirUtilities from '../../lib/FhirUtilities';
 import { FhirDehydrator } from '../../lib/FhirDehydrator';
+
+// Logger
+const logger = {
+  debug: console.debug.bind(console),
+  trace: console.trace.bind(console),
+  data: console.log.bind(console),
+  verbose: console.debug.bind(console),
+  info: console.info.bind(console),
+  warn: console.warn.bind(console),
+  error: console.error.bind(console)
+};
 
 
 //===========================================================================
@@ -601,7 +614,7 @@ function CareTeamsTable(props){
           { renderGoals( careTeamsToRender[i].goals ) } 
           { renderAddresses( careTeamsToRender[i].addresses ) }  */}
 
-          { renderPeriodStart(careTeamsToRender[i].recorded) }
+          { renderPeriodStart(careTeamsToRender[i].periodStart) }
           { renderStatus(careTeamsToRender[i].status) }
           { renderParticipantCount(careTeamsToRender[i].participantCount) }
           

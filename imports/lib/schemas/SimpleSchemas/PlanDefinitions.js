@@ -8,7 +8,7 @@ import SimpleSchema from 'simpl-schema';
 // REFACTOR:  we want to deprecate meteor/clinical:hl7-resource-datatypes
 // so please remove references from the following line
 // and replace with import from ../../datatypes/*
-import {  AddressSchema, BaseSchema, ContactPointSchema, CodeableConceptSchema, DomainResourceSchema, IdentifierSchema,  MoneySchema, PeriodSchema, QuantitySchema, ReferenceSchema, SignatureSchema } from 'meteor/clinical:hl7-resource-datatypes';
+import {  AddressSchema, BaseSchema, ContactPointSchema, CodeableConceptSchema, CodingSchema, DomainResourceSchema, IdentifierSchema,  MoneySchema, PeriodSchema, QuantitySchema, ReferenceSchema, SignatureSchema, AnnotationSchema } from 'meteor/clinical:hl7-resource-datatypes';
 
 
 // if(Package['clinical:autopublish']){
@@ -95,7 +95,7 @@ let PlanDefinitionR4Schema = new SimpleSchema({
     type: CodeableConceptSchema
   },
   "status": {
-    type: Code,
+    type: String,
     allowedValues: ['draft', 'active', 'retired', 'unknown']
   },
   "experimental": {
@@ -291,7 +291,8 @@ let PlanDefinitionR4Schema = new SimpleSchema({
   },
   "goal.$.target.$.detailRange": {
     optional: true,
-    type: RangeSchema
+    type: Object,
+    blackbox: true
   },
   "goal.$.target.$.detailCodeableConcept": {
     optional: true,
@@ -328,7 +329,7 @@ let PlanDefinitionR4Schema = new SimpleSchema({
   },
   "action.$.priority": {
     optional: true,
-    type: Code,
+    type: String,
     allowedValues: ['routine', 'urgent', 'asap', 'stat']
   },
   "action.$.code": {
@@ -386,7 +387,7 @@ let PlanDefinitionR4Schema = new SimpleSchema({
     type: Object
   },
   "action.$.condition.$.kind": {
-    type: Code,
+    type: String,
     allowedValues: ['applicability', 'start', 'stop']
   },
   "action.$.condition.$.expression": {
@@ -427,7 +428,7 @@ let PlanDefinitionR4Schema = new SimpleSchema({
     type: String
   },
   "action.$.relatedAction.$.relationship": {
-    type: Code,
+    type: String,
     allowedValues: ['before-start', 'before', 'before-end', 'concurrent-with-start', 'concurrent', 'concurrent-with-end', 'after-start', 'after', 'after-end']
   },
   "action.$.relatedAction.$.offsetDuration": {
@@ -438,7 +439,8 @@ let PlanDefinitionR4Schema = new SimpleSchema({
   },
   "action.$.relatedAction.$.offsetRange": {
     optional: true,
-    type: RangeSchema
+    type: Object,
+    blackbox: true
   },
   "action.$.timingDateTime": {
     optional: true,
@@ -461,11 +463,13 @@ let PlanDefinitionR4Schema = new SimpleSchema({
   },
   "action.$.timingRange": {
     optional: true,
-    type: RangeSchema
+    type: Object,
+    blackbox: true
   },
   "action.$.timingTiming": {
     optional: true,
-    type: TimingSchema
+    type: Object,
+    blackbox: true
   },
   "action.$.participant": {
     optional: true,
@@ -475,7 +479,7 @@ let PlanDefinitionR4Schema = new SimpleSchema({
     type: Object
   },
   "action.$.participant.$.type": {
-    type: Code,
+    type: String,
     allowedValues: ['patient', 'practitioner', 'related-person', 'device']
   },
   "action.$.participant.$.role": {
@@ -488,27 +492,27 @@ let PlanDefinitionR4Schema = new SimpleSchema({
   },
   "action.$.groupingBehavior": {
     optional: true,
-    type: Code,
+    type: String,
     allowedValues: ['visual-group', 'logical-group', 'sentence-group']
   },
   "action.$.selectionBehavior": {
     optional: true,
-    type: Code,
+    type: String,
     allowedValues: ['any', 'all', 'all-or-none', 'exactly-one', 'at-most-one', 'one-or-more']
   },
   "action.$.requiredBehavior": {
     optional: true,
-    type: Code,
+    type: String,
     allowedValues: ['must', 'could', 'must-unless-documented']
   },
   "action.$.precheckBehavior": {
     optional: true,
-    type: Code,
+    type: String,
     allowedValues: ['yes', 'no']
   },
   "action.$.cardinalityBehavior": {
     optional: true,
-    type: Code,
+    type: String,
     allowedValues: ['single', 'multiple']
   },
   "action.$.definitionCanonical": {
@@ -548,6 +552,33 @@ let PlanDefinitionR4Schema = new SimpleSchema({
   }
 });
 
+let PlanDefinitionSchema = PlanDefinitionR4Schema;
+
+BaseSchema.extend(PlanDefinitionR4Schema);
+DomainResourceSchema.extend(PlanDefinitionR4Schema);
+
 // PlanDefinitions.attachSchema(PlanDefinitionR4Schema);
 
-export default { PlanDefinition, PlanDefinitions, PlanDefinitionR4Schema };
+PlanDefinition.prototype.toFhir = function(){
+  console.log('PlanDefinition.toFhir()');
+
+  return EJSON.stringify(this.name);
+}
+
+/**
+ * @summary The displayed name of the plan definition
+ * @memberOf PlanDefinition
+ * @name displayName
+ * @version 1.2.3
+ * @returns {String}
+ */
+PlanDefinition.prototype.displayName = function () {
+  if (this.title) {
+    return this.title;
+  } else if (this.name) {
+    return this.name;
+  }
+  return '';
+};
+
+export default { PlanDefinition, PlanDefinitions, PlanDefinitionR4Schema, PlanDefinitionSchema };

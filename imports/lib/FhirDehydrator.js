@@ -942,6 +942,7 @@ export function flattenCareTeam(team){
     reasonDisplay: '',
     reasonCode: '',
     participantCount: 0,
+    participantMember: '',
     managingOrganization: '',
     telecom: '',
     note: '',
@@ -979,6 +980,10 @@ export function flattenCareTeam(team){
 
   if(Array.isArray(team.participant)){
     result.participantCount = team.participant.length;
+    // Get first participant member display
+    if(team.participant.length > 0){
+      result.participantMember = get(team.participant[0], 'member.display', '');
+    }
   }
   if(Array.isArray(team.note)){
     result.noteCount = team.note.length;
@@ -3462,6 +3467,8 @@ export function flattenMeasure(measure, internalDateFormat){
     lastReviewDate: '',
     lastEdited: '',
     author: '',
+    authorDisplay: '',
+    authorReference: '',
     reviewer: '',
     endorser: '',
     scoring: '',
@@ -3471,6 +3478,16 @@ export function flattenMeasure(measure, internalDateFormat){
     supplementalDataCount: '',
     context: '', 
     version: '',
+    description: '',
+    purpose: '',
+    usage: '',
+    copyright: '',
+    guidance: '',
+    improvementNotation: '',
+    clinicalRecommendationStatement: '',
+    disclaimer: '',
+    rationale: '',
+    effectivePeriod: '',
     operationOutcome: ''
   };
 
@@ -3480,7 +3497,7 @@ export function flattenMeasure(measure, internalDateFormat){
     internalDateFormat = get(Meteor, "settings.public.defaults.internalDateFormat", "YYYY-MM-DD");
   }
 
-  result._id =  get(measure, '_id');
+  result._id = extractIdString(get(measure, '_id'));
   result.id = get(measure, 'id', '');
   result.identifier = get(measure, 'identifier[0].value', '');
 
@@ -3494,14 +3511,38 @@ export function flattenMeasure(measure, internalDateFormat){
     result.lastEdited = moment(get(measure, 'date', '')).format(internalDateFormat);
   }
 
+  // Effective Period
+  if(get(measure, 'effectivePeriod')){
+    let periodStart = get(measure, 'effectivePeriod.start');
+    let periodEnd = get(measure, 'effectivePeriod.end');
+    
+    if(periodStart && periodEnd){
+      result.effectivePeriod = moment(periodStart).format(internalDateFormat) + ' - ' + moment(periodEnd).format(internalDateFormat);
+    } else if(periodStart){
+      result.effectivePeriod = 'From ' + moment(periodStart).format(internalDateFormat);
+    } else if(periodEnd){
+      result.effectivePeriod = 'Until ' + moment(periodEnd).format(internalDateFormat);
+    }
+  }
+
   result.publisher = get(measure, 'publisher', '');
   result.name = get(measure, 'name', '');
   result.title = get(measure, 'title', '');
   result.description = get(measure, 'description', '');
+  result.purpose = get(measure, 'purpose', '');
+  result.usage = get(measure, 'usage', '');
+  result.copyright = get(measure, 'copyright', '');
+  result.guidance = get(measure, 'guidance', '');
   result.status = get(measure, 'status', '');
   result.version = get(measure, 'version', '');
 
   result.context = get(measure, 'useContext[0].valueCodeableConcept.text', '');
+
+  // Author handling with display and reference
+  if(get(measure, 'author[0]')){
+    result.authorDisplay = get(measure, 'author[0].name', '');
+    result.authorReference = get(measure, 'author[0].reference', '');
+  }
 
   result.editor = get(measure, 'editor[0].name', '');
   result.reviewer = get(measure, 'reviewer[0].name', '');
@@ -3510,8 +3551,24 @@ export function flattenMeasure(measure, internalDateFormat){
   result.scoring = get(measure, 'scoring.coding[0].display', '');
   result.type = get(measure, 'type[0].coding[0].display', '');
 
+  // Improvement notation
+  if(get(measure, 'improvementNotation')){
+    if(get(measure, 'improvementNotation.coding[0].display')){
+      result.improvementNotation = get(measure, 'improvementNotation.coding[0].display');
+    } else if(get(measure, 'improvementNotation.text')){
+      result.improvementNotation = get(measure, 'improvementNotation.text');
+    } else if(get(measure, 'improvementNotation.coding[0].code')){
+      result.improvementNotation = get(measure, 'improvementNotation.coding[0].code');
+    } else if(typeof get(measure, 'improvementNotation') === 'string'){
+      result.improvementNotation = get(measure, 'improvementNotation');
+    }
+  }
+
   result.riskAdjustment = get(measure, 'riskAdjustment', '');
   result.rateAggregation = get(measure, 'rateAggregation', '');
+  result.clinicalRecommendationStatement = get(measure, 'clinicalRecommendationStatement', '');
+  result.disclaimer = get(measure, 'disclaimer', '');
+  result.rationale = get(measure, 'rationale', '');
   
   let supplementalData = get(measure, 'supplementalData', []);
   result.supplementalDataCount = supplementalData.length;
@@ -3532,18 +3589,25 @@ export function flattenMeasureReport(measureReport, measuresCursor, internalDate
     id: '',
     meta: '',
     identifier: '',
+    status: '',
     type: '',
+    measure: '',
     measureUrl: '',
     measureTitle: '',
     date: '',
     subject: '',
     reporter: '',
+    period: '',
     periodStart: '',
     periodEnd: '',
+    group: '',
     groupCode: '',
+    population: '',
     populationCode: '',
     populationCount: '',
+    score: '',
     measureScore: '',
+    improvementNotation: '',
     stratifierCount: '',
     numerator: '',
     denominator: '',
@@ -3559,8 +3623,10 @@ export function flattenMeasureReport(measureReport, measuresCursor, internalDate
   result._id = get(measureReport, '_id');
   result.id = get(measureReport, 'id', '');
   result.identifier = get(measureReport, 'identifier[0].value', '');
+  result.status = get(measureReport, 'status', '');
   result.type = get(measureReport, 'type', '');
 
+  result.measure = get(measureReport, 'measure', '');
   result.measureUrl = get(measureReport, 'measure', ''); 
 
   if(measuresCursor && result.measureUrl){
@@ -3573,6 +3639,7 @@ export function flattenMeasureReport(measureReport, measuresCursor, internalDate
   }
 
   result.date = moment(get(measureReport, 'date', '')).format(internalDateFormat);
+  
   if(get(measureReport, 'reporter.display', '')){
     result.reporter = get(measureReport, 'reporter.display', '');
   } else {
@@ -3585,13 +3652,67 @@ export function flattenMeasureReport(measureReport, measuresCursor, internalDate
     result.subject = FhirUtilities.pluckReferenceId(get(measureReport, 'subject.reference', ''));
   }
 
-  result.periodStart = moment(get(measureReport, 'period.start', '')).format(internalDateFormat);
-  result.periodEnd = moment(get(measureReport, 'period.end', '')).format(internalDateFormat);
+  // Format period for display
+  if(get(measureReport, 'period.start') && get(measureReport, 'period.end')){
+    const startMoment = moment(get(measureReport, 'period.start', ''));
+    const endMoment = moment(get(measureReport, 'period.end', ''));
+    
+    if(startMoment.isValid() && endMoment.isValid()){
+      result.period = startMoment.format(internalDateFormat) + ' - ' + endMoment.format(internalDateFormat);
+    } else {
+      result.period = get(measureReport, 'period.start', '') + ' - ' + get(measureReport, 'period.end', '');
+    }
+  }
+  const periodStartRaw = get(measureReport, 'period.start', '');
+  const periodEndRaw = get(measureReport, 'period.end', '');
+  
+  if(periodStartRaw){
+    const momentStart = moment(periodStartRaw);
+    if(momentStart.isValid()){
+      result.periodStart = momentStart.format(internalDateFormat);
+    } else {
+      result.periodStart = periodStartRaw;
+    }
+  }
+  
+  if(periodEndRaw){
+    const momentEnd = moment(periodEndRaw);
+    if(momentEnd.isValid()){
+      result.periodEnd = momentEnd.format(internalDateFormat);
+    } else {
+      result.periodEnd = periodEndRaw;
+    }
+  }
 
-  result.groupCode = get(measureReport, 'group[0].coding[0].code', '');
-  result.populationCode = get(measureReport, 'group[0].population[0].coding[0].code', '');
+  // Improvement notation
+  if(get(measureReport, 'improvementNotation.text')){
+    result.improvementNotation = get(measureReport, 'improvementNotation.text', '');
+  } else if(get(measureReport, 'improvementNotation.coding[0].display')){
+    result.improvementNotation = get(measureReport, 'improvementNotation.coding[0].display', '');
+  } else if(get(measureReport, 'improvementNotation.coding[0].code')){
+    result.improvementNotation = get(measureReport, 'improvementNotation.coding[0].code', '');
+  }
+
+  // Group information
+  if(get(measureReport, 'group[0].code.text')){
+    result.group = get(measureReport, 'group[0].code.text', '');
+    result.groupCode = get(measureReport, 'group[0].code.text', '');
+  } else if(get(measureReport, 'group[0].code.coding[0].display')){
+    result.group = get(measureReport, 'group[0].code.coding[0].display', '');
+    result.groupCode = get(measureReport, 'group[0].code.coding[0].code', '');
+  }
+
+  // Population information
+  if(get(measureReport, 'group[0].population[0].code.text')){
+    result.population = get(measureReport, 'group[0].population[0].code.text', '');
+    result.populationCode = get(measureReport, 'group[0].population[0].code.text', '');
+  } else if(get(measureReport, 'group[0].population[0].code.coding[0].display')){
+    result.population = get(measureReport, 'group[0].population[0].code.coding[0].display', '');
+    result.populationCode = get(measureReport, 'group[0].population[0].code.coding[0].code', '');
+  }
   result.populationCount = get(measureReport, 'group[0].population[0].count', '');
 
+  // Check for numerator/denominator in populations
   if(get(measureReport, 'group[0].population')){
     let population = get(measureReport, 'group[0].population');
     population.forEach(function(pop){
@@ -3604,7 +3725,9 @@ export function flattenMeasureReport(measureReport, measuresCursor, internalDate
     })
   }
 
+  // Measure score
   if(has(measureReport, 'group[0].measureScore.value')){
+    result.score = get(measureReport, 'group[0].measureScore.value', '');
     result.measureScore = get(measureReport, 'group[0].measureScore.value', '');
   } else if(has(measureReport, 'group[0].population')){
     if(Array.isArray(get(measureReport, 'group[0].population'))){
@@ -3612,6 +3735,7 @@ export function flattenMeasureReport(measureReport, measuresCursor, internalDate
         if(Array.isArray(get(pop, 'code.coding'))){
           pop.code.coding.forEach(function(coding){
             if(coding.code === measureScoreType){
+              result.score = pop.count;
               result.measureScore = pop.count;
             }
           })
@@ -4184,6 +4308,100 @@ export function flattenMedicationRequest(medicationRequest, internalDateFormat){
 
   if(get(medicationRequest, "issue[0].details.text")){
     result.operationOutcome = get(medicationRequest, "issue[0].details.text");
+  }
+
+  return result;
+}
+
+export function flattenMessageHeader(messageHeader, dateFormat){
+  let result = {
+    _id: '',
+    id: '',
+    eventCoding: '',
+    eventDisplay: '',
+    eventUri: '',
+    destinationName: '',
+    destinationEndpoint: '',
+    destinationTarget: '',
+    destinationTargetDisplay: '',
+    senderEndpoint: '',
+    senderDisplay: '',
+    senderReference: '',
+    sourceName: '',
+    sourceEndpoint: '',
+    responsibleDisplay: '',
+    responsibleReference: '',
+    reasonCode: '',
+    reasonDisplay: '',
+    responseCode: '',
+    responseIdentifier: '',
+    focusDisplay: '',
+    focusReference: '',
+    definition: '',
+    notes: ''
+  };
+
+  result.resourceType = get(messageHeader, 'resourceType', "MessageHeader");
+
+  result._id = get(messageHeader, '_id');
+  result.id = get(messageHeader, 'id', '');
+
+  // Event
+  if(get(messageHeader, 'eventCoding')){
+    result.eventCoding = get(messageHeader, 'eventCoding.code', '');
+    result.eventDisplay = get(messageHeader, 'eventCoding.display', '');
+    result.eventUri = get(messageHeader, 'eventCoding.system', '');
+  } else if(get(messageHeader, 'eventUri')){
+    result.eventUri = get(messageHeader, 'eventUri', '');
+  }
+
+  // Destination
+  if(get(messageHeader, 'destination[0]')){
+    result.destinationName = get(messageHeader, 'destination[0].name', '');
+    result.destinationEndpoint = get(messageHeader, 'destination[0].endpoint', '');
+    result.destinationTarget = get(messageHeader, 'destination[0].target.reference', '');
+    result.destinationTargetDisplay = get(messageHeader, 'destination[0].target.display', '');
+  }
+
+  // Sender
+  result.senderDisplay = get(messageHeader, 'sender.display', '');
+  result.senderReference = get(messageHeader, 'sender.reference', '');
+  
+  // Source
+  if(get(messageHeader, 'source')){
+    result.sourceName = get(messageHeader, 'source.name', '');
+    result.sourceEndpoint = get(messageHeader, 'source.endpoint', '');
+    result.senderEndpoint = get(messageHeader, 'source.endpoint', ''); // For backward compatibility
+  }
+
+  // Responsible
+  result.responsibleDisplay = get(messageHeader, 'responsible.display', '');
+  result.responsibleReference = get(messageHeader, 'responsible.reference', '');
+
+  // Reason
+  if(get(messageHeader, 'reason')){
+    result.reasonCode = get(messageHeader, 'reason.coding[0].code', '');
+    result.reasonDisplay = get(messageHeader, 'reason.text', '') || get(messageHeader, 'reason.coding[0].display', '');
+  }
+
+  // Response
+  if(get(messageHeader, 'response')){
+    result.responseCode = get(messageHeader, 'response.code', '');
+    result.responseIdentifier = get(messageHeader, 'response.identifier', '');
+  }
+
+  // Focus
+  if(get(messageHeader, 'focus[0]')){
+    result.focusDisplay = get(messageHeader, 'focus[0].display', '');
+    result.focusReference = get(messageHeader, 'focus[0].reference', '');
+  }
+
+  // Definition
+  result.definition = get(messageHeader, 'definition', '');
+
+  // Notes
+  if(get(messageHeader, 'note[0].text')){
+    result.notes = get(messageHeader, 'note[0].text', '');
   }
 
   return result;
@@ -4937,7 +5155,7 @@ export function flattenPatient(patient, internalDateFormat){
   return result;
 }
 
-export function flattenPlanDefinition(plan) {
+export function flattenPlanDefinition(plan, internalDateFormat) {
   let result = {
     _id: '',
     id: '',
@@ -4958,8 +5176,13 @@ export function flattenPlanDefinition(plan) {
     description: '',
     purpose: '',
     usage: '',
+    copyright: '',
+    approvalDate: '',
+    lastReviewDate: '',
+    effectivePeriod: '',
     jurisdiction: '',
     topic: '',
+    topics: '',
     author: '',
     editor: '',
     reviewer: '',
@@ -4989,7 +5212,7 @@ export function flattenPlanDefinition(plan) {
   // Basic resource identification
   result.resourceType = get(plan, 'resourceType', 'PlanDefinition');
   result.id = get(plan, 'id', '');
-  result._id = get(plan, '_id', '');
+  result._id = extractIdString(get(plan, '_id', ''));
   
   // Core fields
   result.url = get(plan, 'url', '');
@@ -5007,17 +5230,52 @@ export function flattenPlanDefinition(plan) {
   result.subjectReference = get(plan, 'subject.reference', '');
   
   // Dates and publishing info
-  result.date = moment(get(plan, 'date')).format("YYYY-MM-DD hh:mm a");
+  if(!internalDateFormat){
+    internalDateFormat = get(Meteor, "settings.public.defaults.internalDateFormat", "YYYY-MM-DD");
+  }
+  
+  if(get(plan, 'date')){
+    result.date = moment(get(plan, 'date')).format(internalDateFormat);
+  }
   result.publisher = get(plan, 'publisher', '');
   
   // Documentation
   result.description = get(plan, 'description', '');
   result.purpose = get(plan, 'purpose', '');
   result.usage = get(plan, 'usage', '');
+  result.copyright = get(plan, 'copyright', '');
+  
+  // Review dates
+  if(get(plan, 'approvalDate')){
+    result.approvalDate = moment(get(plan, 'approvalDate')).format(internalDateFormat);
+  }
+  if(get(plan, 'lastReviewDate')){
+    result.lastReviewDate = moment(get(plan, 'lastReviewDate')).format(internalDateFormat);
+  }
+  
+  // Effective period
+  if(get(plan, 'effectivePeriod')){
+    let periodStr = '';
+    if(get(plan, 'effectivePeriod.start')){
+      periodStr = moment(get(plan, 'effectivePeriod.start')).format(internalDateFormat);
+    }
+    if(get(plan, 'effectivePeriod.end')){
+      if(periodStr) periodStr += ' - ';
+      periodStr += moment(get(plan, 'effectivePeriod.end')).format(internalDateFormat);
+    }
+    result.effectivePeriod = periodStr;
+  }
   
   // Context
   result.jurisdiction = get(plan, 'jurisdiction[0].coding[0].display', '');
   result.topic = get(plan, 'topic[0].coding[0].display', '');
+  
+  // Topics (array support for table)
+  if(Array.isArray(get(plan, 'topic'))){
+    result.topics = plan.topic.map(t => get(t, 'coding[0].display', get(t, 'text', ''))).join(', ');
+  } else {
+    result.topics = result.topic;
+  }
   
   // Contributors
   result.author = get(plan, 'author[0].name', '');
@@ -6106,24 +6364,27 @@ export function flattenSubscription(document){
 export function flattenTask(task, internalDateFormat){
   let result = {
     _id: '',
+    id: '',
     meta: '',
     identifier: '',
-    publisher: '',
     status: '',
-    title: '',
-    authoredOn: '',
-    lastModified: '',
-    focus: '',
-    for: '',
     intent: '',
     priority: '',
     code: '',
-    requester: '',
+    description: '',
+    authoredOn: '',
+    lastModified: '',
+    businessStatus: '',
+    executionStart: '',
+    executionEnd: '',
+    patientDisplay: '',
+    patientReference: '',
+    requesterDisplay: '',
     requesterReference: '',
-    encounter: '',
-    encounterReference: '',
-    owner: '',
+    ownerDisplay: '',
     ownerReference: '',
+    encounterDisplay: '',
+    encounterReference: '',
     operationOutcome: ''
   };
 
@@ -6133,10 +6394,18 @@ export function flattenTask(task, internalDateFormat){
     internalDateFormat = get(Meteor, "settings.public.defaults.internalDateFormat", "YYYY-MM-DD");
   }
 
-  result._id =  get(task, 'id') ? get(task, 'id') : get(task, '_id');
+  // Extract IDs
+  result._id = extractIdString(get(task, '_id', ''));
   result.id = get(task, 'id', '');
   result.identifier = get(task, 'identifier[0].value', '');
 
+  // Basic fields
+  result.status = get(task, 'status', '');
+  result.intent = get(task, 'intent', '');
+  result.priority = get(task, 'priority', '');
+  result.description = get(task, 'description', '');
+
+  // Dates
   if(get(task, 'authoredOn')){
     result.authoredOn = moment(get(task, 'authoredOn', '')).format(internalDateFormat);
   }
@@ -6144,23 +6413,49 @@ export function flattenTask(task, internalDateFormat){
     result.lastModified = moment(get(task, 'lastModified', '')).format(internalDateFormat);
   }
 
-  result.description = get(task, 'description', '');
-  result.status = get(task, 'status', '');
-  result.businessStatus = get(task, 'businessStatus.coding[0].display', '');
-  result.intent = get(task, 'intent', '');
-  result.priority = get(task, 'priority', '');
-  result.focus = get(task, 'focus.display', '');
-  result.for = get(task, 'for.display', '');
-  result.requester = get(task, 'requester.display', '');
-  result.code = get(task, 'code.text', '');
+  // Execution period
+  if(get(task, 'executionPeriod.start')){
+    result.executionStart = moment(get(task, 'executionPeriod.start', '')).format(internalDateFormat);
+  }
+  if(get(task, 'executionPeriod.end')){
+    result.executionEnd = moment(get(task, 'executionPeriod.end', '')).format(internalDateFormat);
+  }
 
-  result.requester = get(task, 'requester.display', '');
+  // Business status
+  if(has(task, 'businessStatus.text')){
+    result.businessStatus = get(task, 'businessStatus.text');
+  } else if(has(task, 'businessStatus.coding[0].display')){
+    result.businessStatus = get(task, 'businessStatus.coding[0].display');
+  } else if(has(task, 'businessStatus.coding[0].code')){
+    result.businessStatus = get(task, 'businessStatus.coding[0].code');
+  }
+
+  // Code/CodeableConcept
+  if(has(task, 'code.text')){
+    result.code = get(task, 'code.text');
+  } else if(has(task, 'code.coding[0].display')){
+    result.code = get(task, 'code.coding[0].display');
+  } else if(has(task, 'code.coding[0].code')){
+    result.code = get(task, 'code.coding[0].code');
+  }
+
+  // Patient (for field)
+  result.patientDisplay = get(task, 'for.display', '');
+  result.patientReference = get(task, 'for.reference', '');
+
+  // Requester
+  result.requesterDisplay = get(task, 'requester.display', '');
   result.requesterReference = get(task, 'requester.reference', '');
-  result.encounter = get(task, 'encounter.display', '');
-  result.encounterReference = get(task, 'encounter.reference', '');
-  result.owner = get(task, 'owner.display', '');
+
+  // Owner
+  result.ownerDisplay = get(task, 'owner.display', '');
   result.ownerReference = get(task, 'owner.reference', '');
 
+  // Encounter
+  result.encounterDisplay = get(task, 'encounter.display', '');
+  result.encounterReference = get(task, 'encounter.reference', '');
+
+  // Operation outcome
   if(get(task, "issue[0].details.text")){
     result.operationOutcome = get(task, "issue[0].details.text");
   }
@@ -6559,6 +6854,7 @@ export default {
   flattenMedicationStatement,
   flattenMedicationRequest,
   flattenMedicationAdministration,
+  flattenMessageHeader,
   flattenNutritionOrder,
   flattenObservation,
   flattenOperationOutcome,

@@ -42,6 +42,17 @@ Meteor.methods({
       }
     };
     
+    // Check if this is an intervention approval request and set performer from settings
+    if (Meteor.isServer && 
+        serviceRequest.category?.[0]?.coding?.[0]?.code === 'intervention-approval') {
+      const chiefMedicalOfficer = get(Meteor.settings, 'private.pacio.chiefMedicalOfficer', {
+        reference: 'Practitioner/chief-medical-officer',
+        display: 'Chief Medical Officer'
+      });
+      console.log('Setting Chief Medical Officer from private settings:', chiefMedicalOfficer);
+      serviceRequest.performer = [chiefMedicalOfficer];
+    }
+    
     // Insert and return the new service request
     const ServiceRequests = getServiceRequests();
     const serviceRequestId = await ServiceRequests.insertAsync(serviceRequest);
@@ -68,11 +79,28 @@ Meteor.methods({
     
     // Get current service request to increment version
     const ServiceRequests = getServiceRequests();
-    const currentServiceRequest = await ServiceRequests.findOneAsync(_id);
+    
+    console.log('updateServiceRequest - looking for ID:', _id);
+    
+    // Try both _id and id fields
+    const currentServiceRequest = await ServiceRequests.findOneAsync({
+      $or: [
+        { _id: _id },
+        { id: _id }
+      ]
+    });
     
     if (!currentServiceRequest) {
+      console.error('ServiceRequest not found for ID:', _id);
+      // Try to see what's in the collection
+      const sample = await ServiceRequests.findOneAsync({ 'category.0.coding.0.code': 'intervention-approval' });
+      if (sample) {
+        console.log('Sample approval request IDs:', { _id: sample._id, id: sample.id });
+      }
       throw new Meteor.Error('not-found', 'Service request not found');
     }
+    
+    console.log('Found ServiceRequest:', { _id: currentServiceRequest._id, id: currentServiceRequest.id, status: currentServiceRequest.status });
     
     // Update metadata
     const now = new Date();
@@ -86,8 +114,24 @@ Meteor.methods({
     // Ensure resourceType is maintained
     update.resourceType = 'ServiceRequest';
     
-    // Perform the update
-    const result = await ServiceRequests.updateAsync(_id, { $set: update });
+    // Perform the update using the actual _id from the found document
+    const actualId = currentServiceRequest._id;
+    console.log('Updating ServiceRequest with _id:', actualId);
+    console.log('Update data:', update);
+    
+    const result = await ServiceRequests.updateAsync(actualId, { $set: update });
+    
+    console.log('Update result:', result);
+    
+    // Verify the update
+    if (Meteor.isServer) {
+      const updated = await ServiceRequests.findOneAsync(actualId);
+      console.log('Verified updated ServiceRequest:', { 
+        _id: updated?._id, 
+        status: updated?.status,
+        category: updated?.category?.[0]?.coding?.[0]?.code 
+      });
+    }
     
     // Log for HIPAA compliance
     if (Meteor.isServer) {
@@ -194,5 +238,43 @@ Meteor.methods({
     const serviceRequests = await ServiceRequests.find(query, { limit: 100 }).fetchAsync();
     
     return serviceRequests;
+  },
+
+  async 'serviceRequests.getActiveInterventions'(practitionerId) {
+    check(practitionerId, Match.Maybe(String));
+    
+    try {
+      // Query for active intervention ServiceRequests
+      // These are the initial intervention requests, NOT approval requests
+      const query = {
+        status: 'active',
+        $and: [
+          {
+            $or: [
+              { 'category.0.coding.0.code': { $ne: 'intervention-approval' } },
+              { 'category.0.coding.0.code': { $exists: false } }
+            ]
+          }
+        ]
+      };
+      
+      // If practitioner ID provided, filter by performer
+      if (practitionerId) {
+        query['performer.reference'] = `Practitioner/${practitionerId}`;
+      }
+      
+      const ServiceRequests = getServiceRequests();
+      const activeInterventions = await ServiceRequests.find(query, {
+        sort: { authoredOn: -1 },
+        limit: 20
+      }).fetchAsync();
+      
+      console.log('Active interventions found:', activeInterventions.length);
+      
+      return activeInterventions;
+    } catch (error) {
+      console.error('Error finding active interventions:', error);
+      throw new Meteor.Error('query-failed', 'Failed to find active interventions');
+    }
   }
 });

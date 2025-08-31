@@ -71,6 +71,7 @@ import {
   LocalPharmacy as LocalPharmacyIcon
 } from '@mui/icons-material';
 import { Beds } from '../../lib/collections/BedsCollection';
+import { Communications } from '/imports/lib/schemas/SimpleSchemas/Communications';
 import { SearchPatientsModalDialog } from '../components/SearchPatientsModalDialog';
 import LocationMap from '../components/LocationMap';
 
@@ -180,6 +181,29 @@ export function MainPage() {
   const bedsLoading = useSubscribe('pacio.beds');
   const patientsLoading = useSubscribe('pacio.patients');
   
+  // Get practitioner ID through secure method
+  const [practitionerId, setPractitionerId] = useState(null);
+  
+  useEffect(() => {
+    if (userId) {
+      Meteor.call('users.getCurrentPractitionerId', (error, result) => {
+        if (error) {
+          console.error('Error getting practitioner ID:', error);
+        } else {
+          console.log('Fetched practitioner ID:', result);
+          setPractitionerId(result);
+        }
+      });
+    }
+  }, [userId]);
+  
+  // Subscribe to communications for the current practitioner
+  // Server will look up practitionerId if not provided
+  const communicationsLoading = useSubscribe('communications.byRecipient');
+  
+  // Also subscribe to all communications for debugging
+  const allCommunicationsLoading = useSubscribe('communications', 100);
+  
   // Fetch data from collections - trust the cursor
   const facilityData = useTracker(() => {
     // Simply get beds from the collection - all data is already there
@@ -217,12 +241,82 @@ export function MainPage() {
         }
       },
       beds: validBeds,
-      recentAlerts: [
-        { id: 1, bedId: 'B03', type: 'medical', message: 'Abnormal vitals detected - Bed 3', time: moment().subtract(8, 'minutes'), priority: 'high' },
-        { id: 2, bedId: 'B07', type: 'call', message: 'Call button activated - Bed 7', time: moment().subtract(15, 'minutes'), priority: 'medium' },
-        { id: 3, bedId: 'B12', type: 'medical', message: 'Medication due - Bed 12', time: moment().subtract(25, 'minutes'), priority: 'low' },
-        { id: 4, bedId: 'B01', type: 'fall', message: 'Fall prevention protocol - Bed 1', time: moment().subtract(45, 'minutes'), priority: 'high' }
-      ]
+      recentAlerts: (() => {
+        console.log('PractitionerId:', practitionerId);
+        console.log('User isPractitioner:', user?.profile?.isPractitioner);
+        console.log('Communications collection available:', !!Communications);
+        
+        // If Communications not available, return empty array
+        if (!Communications) {
+          console.log('Communications collection not available');
+          return [];
+        }
+        
+        // The server publication already filters based on practitioner status
+        // We just need to filter for active alerts
+        console.log('Looking for alert communications');
+        
+        // Simple query - server already filtered by recipient
+        const query = {
+          $and: [
+            { status: { $in: ['in-progress', 'preparation'] } },
+            { 'category.0.coding.0.code': { $in: ['intervention-approval', 'alert', 'notification'] } }
+          ]
+        };
+        
+        console.log('Communications query:', query);
+        
+        // Debug: Check what's in the Communications collection
+        const allComms = Communications.find({}).fetch();
+        console.log('Total communications in collection:', allComms.length);
+        console.log('All communications subscription loading:', allCommunicationsLoading.loading);
+        console.log('Practitioner communications subscription loading:', communicationsLoading.loading);
+        if (allComms.length > 0) {
+          console.log('Sample communication:', allComms[0]);
+          console.log('Communication recipients:', allComms.map(c => c.recipient));
+        }
+        
+        const communications = Communications.find(query, {
+          sort: { sent: -1 },
+          limit: 10
+        }).fetch();
+        
+        console.log('Found communications matching query:', communications);
+        
+        // Transform communications into alert format
+        return communications.map((comm, index) => {
+          // Extract patient info from subject
+          const patientName = get(comm, 'subject.display', 'Unknown Patient');
+          const bedId = get(comm, 'extension', []).find(ext => 
+            ext.url === 'http://honeycomb.ai/fhir/StructureDefinition/bed-id'
+          )?.valueString || 'N/A';
+          
+          // Determine alert type and priority based on category
+          const category = get(comm, 'category.0.coding.0.code', 'notification');
+          let type = 'medical';
+          let priority = 'medium';
+          
+          if (category === 'intervention-approval') {
+            type = 'medical';
+            priority = 'high';
+          } else if (category === 'alert') {
+            type = 'call';
+            priority = get(comm, 'priority', 'medium') === 'urgent' ? 'high' : 'medium';
+          }
+          
+          // Get message from payload
+          const message = get(comm, 'payload.0.contentString', 'New notification');
+          
+          return {
+            id: comm._id,
+            bedId: bedId,
+            type: type,
+            message: message,
+            time: moment(comm.sent),
+            priority: priority
+          };
+        });
+      })()
     };
   });
 

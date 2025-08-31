@@ -34,3 +34,20 @@ mdg:validated-method
 fetch
 
 
+
+# clinical:checklist-manifesto
+# clinical:clinical-documents
+# clinical:consent-generator
+# clinical:cqm-reporting
+# clinical:deqm
+# clinical:direct-messaging
+# clinical:drug-interactions
+# clinical:healthcare-surveys
+# clinical:lab-order-entry
+# clinical:order-catalog
+# clinical:patient-matching
+# clinical:request-for-corrections
+# clinical:provider-directory
+# clinical:saner
+# clinical:vital-signs
+# clinical:workqueues  

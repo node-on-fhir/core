@@ -62,7 +62,6 @@ Meteor.publish('communications.byPractitioner', async function(practitionerId) {
   return Communications.find({
     $or: [
       { 'sender.reference': `Practitioner/${targetPractitionerId}` },
-      { 'recipient.reference': `Practitioner/${targetPractitionerId}` },
       { 'recipient.0.reference': `Practitioner/${targetPractitionerId}` }
     ]
   });
@@ -218,14 +217,12 @@ Meteor.publish('communications.interPractitioner', async function(limit = 50) {
       {
         $or: [
           { 'sender.reference': `Practitioner/${practitionerId}` },
-          { 'recipient.reference': `Practitioner/${practitionerId}` },
           { 'recipient.0.reference': `Practitioner/${practitionerId}` }
         ]
       },
       {
         $or: [
           { 'sender.reference': { $regex: /^Practitioner\// } },
-          { 'recipient.reference': { $regex: /^Practitioner\// } },
           { 'recipient.0.reference': { $regex: /^Practitioner\// } }
         ]
       }

@@ -162,13 +162,13 @@ export const LayoutHelpers = {
     return numberOfRows;
   },
   getCardLayoutIcon: function(onePageLayout){
-    let layoutIcon;
+    // Return the icon data instead of JSX
+    // The consuming component should render the Icon component
     if(onePageLayout){
-      layoutIcon = <Icon icon={ic_filter_1}/> 
+      return ic_filter_1;
     } else {
-      layoutIcon = <Icon icon={ic_filter_2}/> 
+      return ic_filter_2;
     }  
-    return layoutIcon;
   }
 }
 

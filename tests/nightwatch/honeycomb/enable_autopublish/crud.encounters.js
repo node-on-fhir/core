@@ -1,6 +1,7 @@
 // tests/nightwatch/honeycomb/crud.encounters.js
 
 const testUtils = require('./shared-test-utils');
+const saveNavigationHelper = require('../../helpers/save-navigation-helper');
 
 describe('Encounters CRUD Operations', function() {
   const timestamp = Date.now();
@@ -414,71 +415,15 @@ describe('Encounters CRUD Operations', function() {
       console.log('Form debug info:', result.value);
     });
     
-    browser
-      .execute(function() {
-        window.consoleErrors = [];
-        const originalError = console.error;
-        console.error = function() {
-          window.consoleErrors.push(Array.from(arguments).join(' '));
-          originalError.apply(console, arguments);
-        };
-        
-        const buttons = document.querySelectorAll('button');
-        for (let button of buttons) {
-          if (button.textContent.includes('Save')) {
-            button.click();
-            return true;
-          }
-        }
-        return false;
-      }, [], function(result) {
-        browser.assert.equal(result.value, true, 'Clicked Save button');
-      });
-
-    browser
-      .waitForElementVisible('#encountersPage', 5000);
-    
-    browser.execute(function() {
-      const currentUrl = window.location.pathname;
-      const hasTable = document.querySelector('#encountersTable') !== null;
-      const hasEncountersPage = document.querySelector('#encountersPage') !== null;
-      const hasDetailPage = document.querySelector('#encounterDetailPage') !== null;
-      
-      const errorElements = document.querySelectorAll('[color="error"], .error, [class*="error"], [class*="Error"]');
-      let errorText = '';
-      errorElements.forEach(el => {
-        if (el.textContent) errorText += el.textContent + ' ';
-      });
-      
-      const consoleErrors = window.consoleErrors || [];
-      
-      return {
-        url: currentUrl,
-        hasTable: hasTable,
-        hasEncountersPage: hasEncountersPage,
-        hasDetailPage: hasDetailPage,
-        hasError: errorText.length > 0,
-        errorText: errorText.trim(),
-        consoleErrors: consoleErrors,
-        userId: Meteor.userId ? Meteor.userId() : 'No Meteor.userId',
-        isLoggedIn: Meteor.userId ? !!Meteor.userId() : false
-      };
-    }, [], function(result) {
-      console.log('Post-save state:', result.value);
-      if (result.value.hasError) {
-        browser.assert.fail(`Save failed with error: ${result.value.errorText}`);
-      }
-      if (!result.value.isLoggedIn) {
-        browser.assert.fail('User is not logged in after save attempt');
-      }
-      if (result.value.url === '/encounters/new') {
-        console.log('Still on new encounter page - save may have failed silently');
-      }
+    // Save using the helper for reliable navigation
+    saveNavigationHelper.saveWithDiagnostics(browser, {
+      resourceType: 'encounters',
+      listPageId: '#encountersPage',
+      listPagePath: '/encounters',
+      expectedRedirect: true
     });
     
-    browser
-      .waitForElementVisible('#encountersPage', 5000)
-      .saveScreenshot('tests/nightwatch/screenshots/encounters/05-encounter-saved.png');
+    browser.saveScreenshot('tests/nightwatch/screenshots/encounters/05-encounter-saved.png');
   });
 
   it('05. Verify new encounter appears in list', browser => {

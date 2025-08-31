@@ -28,6 +28,8 @@ import './Metadata.js';
 import './RestEndpoints.js';
 import './FhirEndpoints.js';
 import './OAuthEndpoints.js';
+// import './DebugCommunications.js';
+// import './DebugInterventions.js';
 import './ProxyRelay.js';
 import './VaultServer.js';
 import '../imports/lib/UdapMethods.js';
@@ -41,6 +43,7 @@ import '../imports/api/allergyIntolerances/methods.js';
 import '../imports/api/appointments/methods.js';
 import '../imports/api/AuditEvents/AuditEvents'; // Import the methods
 import '../imports/api/carePlans/methods.js';
+import '../imports/api/careTeams/methods.js';
 import '../imports/api/rfc7523/methods.js';
 import '../imports/api/communications/methods.js';
 import '../imports/api/compositions/methods.js';
@@ -57,8 +60,12 @@ import '../imports/api/medicationAdministrations/methods.js';
 import '../imports/api/medicationRequests/methods.js';
 import '../imports/api/medications/methods.js';
 import '../imports/api/medias/methods.js';
+import '../imports/api/measures/methods.js';
+import '../imports/api/measureReports/methods.js';
+import '../imports/api/messageHeaders/methods.js';
 import '../imports/api/nutritionOrders/methods.js';
 import '../imports/api/patients/methods.js';
+import '../imports/api/planDefinitions/methods.js';
 import '../imports/api/practitioners/methods.js';
 import '../imports/api/procedures/methods.js';
 import '../imports/api/questionnaires/methods.js';
@@ -69,6 +76,7 @@ import '../imports/api/schedules/methods.js';
 import '../imports/api/serviceRequests/methods.js';
 import '../imports/api/diagnosticReports/methods.js';
 import '../imports/methods/supplyDeliveries.js';
+import '../imports/methods/tasks.js';
 
 // Import test methods (for non-production environments)
 import '../imports/accounts/server/test-methods.js';
@@ -79,9 +87,13 @@ import './publications/autopublish.js';
 import './publications/patients.js';
 import './publications/conditions.js';
 import './publications/communications.js';
+import './publications/serviceRequests.js';
 
 // Import practitioner startup (includes methods and publications)
 import './startup/practitionerStartup.js';
+
+// Verify observations setup (development only)
+import './verify-observations.js';
 
 // Import FHIR methods
 import '../imports/methods/fhirResourceStatistics.js';

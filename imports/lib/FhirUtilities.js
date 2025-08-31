@@ -24,9 +24,13 @@ export const FhirUtilities = {
 
           {"subject.reference": "Patient/" + patientId},
           {"subject.reference": "urn:uuid:" + patientId},
+          
+          {"for.reference": "Patient/" + patientId},
+          {"for.reference": "urn:uuid:" + patientId},
 
           {"patient.reference": { $regex: ".*Patient/" + patientId}}, 
           {"subject.reference": { $regex: ".*Patient/" + patientId}},
+          {"for.reference": { $regex: ".*Patient/" + patientId}},
           
           {"agent.who.reference": "Patient/" + patientId}
         ]}      
@@ -35,7 +39,8 @@ export const FhirUtilities = {
           {"patient.reference": "Patient/public"},
           {"patient.reference": "urn:uuid:Patient/public"},
           {"patient.reference": { $regex: ".*Patient/public"}}, 
-          {"subject.reference": { $regex: ".*Patient/public"}}
+          {"subject.reference": { $regex: ".*Patient/public"}},
+          {"for.reference": { $regex: ".*Patient/public"}}
         ]}
       }
     }

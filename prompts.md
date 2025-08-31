@@ -80,7 +80,12 @@ Claude, let's do another FHIR resource.  This time will be de-novo.  Let's creat
 ```
 
 ```
-Claude, let's do another FHIR resource.  Let's continue creating the FHIR Medication CRUD pattern.  First, create a /tests/nightwatch/honecomb/crud.medications.js test file, following the crud.conditions.js file as a template.  Next, follow the instructions in /imports/ui-fhir/CLAUDE.md, and try to create the entire resource CRUD pattern  Don't do anything fancy.  We'll get to that later.  For now, just follow the CRUD pattern.  Follow the TDD tests till they're green. You have permission to launch `npx nightwatch` commands and search the honeycomb-public-release code repository as needed.
+Claude, let's do another FHIR resource.  Let's continue creating the FHIR MeasureReport CRUD pattern.  First, create a /tests/nightwatch/honecomb/crud.measurereports.js test file, following the crud.measures.js file as a template.  Schema info can be found at https://build.fhir.org/measurereport.html
+```
+
+
+```
+Next, follow the instructions in /imports/ui-fhir/CLAUDE.md, and try to create the entire resource CRUD pattern  Don't do anything fancy.  We'll get to that later.  For now, just follow the CRUD pattern.  Follow the TDD tests till they're green. You have permission to launch `npx nightwatch` commands and search the honeycomb-public-release code repository as needed.
 ```
 
 
@@ -91,19 +96,19 @@ I believe in you.  We've done a lot of these CRUD patterns already.  You can do 
 ```
 
 ```
-Okay, let's turn our attention to the Communications CRUD pattern, on the /communications route.  Use best practices and the implementation checklist and debugging info in /imports/ui-fhir/CLAUDE.md.  You have permission to run tests.  
+Okay, let's turn our attention to the PlanDefinitions CRUD pattern, on the /plan-definitions route.  Use best practices and the implementation checklist and debugging info in /imports/ui-fhir/CLAUDE.md.  Use the imports/ui-fhir/messageHeaders/* files as templates.  You have permission to run tests.  
 
-- Make sure that the Communications schema is created, and attached in all of the right places (Meteor.Tables, Meteor.Collections, etc)
-- Include Communications in the autopublish() function.
+- Make sure that the PlanDefinitions schema is created, and attached in all of the right places (Meteor.Tables, Meteor.Collections, etc)
+- Include PlanDefinitions in the autopublish() function.
 - Make sure we've updated the settings.honeycomb.tdd.json file
-- Create core files in /imports/ui-fhir/supplyDeliveries/*, following the pattern in /imports/ui-fhir/conditions/*
-- Update the CommunicationsDetails page with inputs from the Communications schema, making sure that appropriate #id elements exist on inputs; and update the crud.supplydeliveries.js file to match.  
-- Make sure that all of the columns in CommunicationsTable are filled out appropriately, and update the dehydration functions accordingly.  
-- Create the medias methods file.  
-- Be sure to select the John Doe patient in step 2, AFTER you've navigated to /communications route.  
+- Create core files in /imports/ui-fhir/planDefinitions/*, following the pattern in /imports/ui-fhir/devices/*
+- Update the PlanDefinitionsDetails page with inputs from the PlanDefinitions schema, making sure that appropriate #id elements exist on inputs; and update the crud.supplydeliveries.js file to match.  
+- Make sure that all of the columns in PlanDefinitionsTable are filled out appropriately, and update the dehydration functions accordingly.  
+- Create the planDefinitions methods file.  
+- Be sure to select the John Doe patient in step 2, AFTER you've navigated to /care-teams route.  
 - When searching for records in steps 5 and 8, be sure to scroll to the top and seach by patient (John Doe). 
 
-I believe in you.  We've done a lot of these CRUD patterns already.  I've got to go run some errands that will take a few hours; I'd like you to go through the entire pattern and implementation without me.  I've check out a new branch, so if you really foul things up, we can revert.  I'll ask for a full report of changes made when you're done, and cross reference with the pull request.  But generally speaking... I want you to follow existing patterns, and create the entire Communications CRUD pattern on your own.  We'll debug when I get home.  
+I believe in you.  We've done a lot of these CRUD patterns already.  I've got to go run some errands that will take a few hours; I'd like you to go through the entire pattern and implementation without me.  I've check out a new branch, so if you really foul things up, we can revert.  I'll ask for a full report of changes made when you're done, and cross reference with the pull request.  But generally speaking... I want you to follow existing patterns, and create the entire PlanDefinitions CRUD pattern on your own.  We'll debug when I get home.  
 ```
 
 
@@ -112,3 +117,28 @@ I believe in you.  We've done a lot of these CRUD patterns already.  I've got to
 
   Then, we want to go to the files, and add a search bar on the ConditionsPage, which ties to the subscription, and updates the server side publication, to search for the patient.reference or subject.reference.  Refer to the AllergyIntolerances or Procedures pattern as needed.  There is a FhirUtilities.addPatientFilterToQuery() function that we use for this.
 ```
+
+
+
+```
+Claude, we're sketching out some new packages based on HL7 FHIR IGs.  I've loaded a new implementation guide into workzone/vital-signs, and we're going to build it out in packages/vital-signs.  In particular, I want you to scan the workzone/vital-signs/input/fsh and input/pagecontent directories, and sketch out a file directory layout for the packages/vital-signs atmosphere.js package.  No coding yet.  Just planning and directory layout.
+
+```
+
+
+
+
+
+
+
+Okay, let's turn our attention to the MeasureReports CRUD pattern, on the /measure-reports route.  Use best practices and the implementation checklist and debugging info in /imports/ui-fhir/CLAUDE.md.  Use the imports/ui-fhir/measures/* files as templates.  You have permission to run tests.  
+
+- Make sure that the MeasureReports schema is created, and attached in all of the right places (Meteor.Tables, Meteor.Collections, etc)
+- Include MeasureReports in the autopublish() function.
+- Make sure we've updated the settings.honeycomb.tdd.json file
+- Create core files in /imports/ui-fhir/measureReports/*, following the pattern in /imports/ui-fhir/measures/*
+- Update the MeasureReportsDetails page with inputs from the MeasureReports schema, making sure that appropriate #id elements exist on inputs; and update the crud.measurereports.js file to match.  
+- Make sure that all of the columns in MeasureReportsTable are filled out appropriately, and update the dehydration functions accordingly.  
+- Create the measures methods file.  
+
+I believe in you.  We've done a lot of these CRUD patterns already.  I've got to go run some errands that will take a few hours; I'd like you to go through the entire pattern and implementation without me.  I've check out a new branch, so if you really foul things up, we can revert.  I'll ask for a full report of changes made when you're done, and cross reference with the pull request.  But generally speaking... I want you to follow existing patterns, and create the entire MeasureReports CRUD pattern on your own.  We'll debug when I get home.  

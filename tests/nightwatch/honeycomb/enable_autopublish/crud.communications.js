@@ -1,6 +1,7 @@
 // tests/nightwatch/honeycomb/enable_autopublish/crud.communications.js
 
 const testUtils = require('./shared-test-utils');
+const saveNavigationHelper = require('../../helpers/save-navigation-helper');
 
 describe('Communications CRUD Operations', function() {
   const timestamp = Date.now();
@@ -536,69 +537,31 @@ describe('Communications CRUD Operations', function() {
     
     browser.pause(500);
     
-    // Try clicking the save button using the ID
-    browser
-      .waitForElementVisible('#saveCommunicationButton', 5000)
-      .click('#saveCommunicationButton')
-      .pause(500);
-      
-    // Alternative: If the button says "Update" instead of "Save", handle that too
+    // Communications test uses a specific button ID, so we need to check what text it has
     browser.execute(function() {
       const saveButton = document.querySelector('#saveCommunicationButton');
-      if (saveButton && (saveButton.textContent.includes('Save') || saveButton.textContent.includes('Update'))) {
-        console.log('Found save/update button with text:', saveButton.textContent);
-        return true;
+      if (saveButton) {
+        console.log('Save button text:', saveButton.textContent);
+        return saveButton.textContent;
       }
-      return false;
+      return null;
     }, [], function(result) {
-      console.log('Save/Update button check:', result.value);
-    });
-
-    browser
-      .pause(2000) // Added pause after save button click
-      .waitForElementVisible('#communicationsPage', 5000);
-    
-    browser.execute(function() {
-      const currentUrl = window.location.pathname;
-      const hasTable = document.querySelector('#communicationsTable') !== null;
-      const hasCommunicationsPage = document.querySelector('#communicationsPage') !== null;
-      const hasDetailPage = document.querySelector('#communicationDetailPage') !== null;
+      console.log('Save button text result:', result.value);
       
-      const errorElements = document.querySelectorAll('[color="error"], .error, [class*="error"], [class*="Error"]');
-      let errorText = '';
-      errorElements.forEach(el => {
-        if (el.textContent) errorText += el.textContent + ' ';
+      // Save using the helper for reliable navigation
+      // Pass the actual button text if it's not "Save"
+      const buttonText = result.value && !result.value.includes('Save') ? result.value : 'Save';
+      
+      saveNavigationHelper.saveWithDiagnostics(browser, {
+        resourceType: 'communications',
+        listPageId: '#communicationsPage',
+        listPagePath: '/communications',
+        expectedRedirect: true,
+        saveButtonText: buttonText
       });
-      
-      const consoleErrors = window.consoleErrors || [];
-      
-      return {
-        url: currentUrl,
-        hasTable: hasTable,
-        hasCommunicationsPage: hasCommunicationsPage,
-        hasDetailPage: hasDetailPage,
-        hasError: errorText.length > 0,
-        errorText: errorText.trim(),
-        consoleErrors: consoleErrors,
-        userId: Meteor.userId ? Meteor.userId() : 'No Meteor.userId',
-        isLoggedIn: Meteor.userId ? !!Meteor.userId() : false
-      };
-    }, [], function(result) {
-      console.log('Post-save state:', result.value);
-      if (result.value.hasError) {
-        browser.assert.fail(`Save failed with error: ${result.value.errorText}`);
-      }
-      if (!result.value.isLoggedIn) {
-        browser.assert.fail('User is not logged in after save attempt');
-      }
-      if (result.value.url === '/communications/new') {
-        console.log('Still on new communication page - save may have failed silently');
-      }
     });
     
-    browser
-      .waitForElementVisible('#communicationsPage', 5000)
-      .saveScreenshot('tests/nightwatch/screenshots/communications/05-communication-saved.png');
+    browser.saveScreenshot('tests/nightwatch/screenshots/communications/05-communication-saved.png');
   });
 
   it('05. Verify new communication appears in list', browser => {
@@ -902,7 +865,23 @@ describe('Communications CRUD Operations', function() {
       }, [], function(result) {
         browser.assert.equal(result.value, true, 'Clicked Edit/Lock button to enter edit mode');
       })
-      .pause(500);
+      .pause(1000); // Give more time for edit mode to activate
+
+    // Verify we're in edit mode before proceeding
+    browser.execute(function() {
+      const payloadContent = document.querySelector('#payloadContent');
+      const notesTextarea = document.querySelector('#notesTextarea');
+      return {
+        payloadEnabled: payloadContent ? !payloadContent.disabled : false,
+        notesEnabled: notesTextarea ? !notesTextarea.disabled : false
+      };
+    }, [], function(result) {
+      console.log('Edit mode check:', result.value);
+      if (!result.value.payloadEnabled || !result.value.notesEnabled) {
+        console.log('Fields are still disabled, waiting longer...');
+        browser.pause(1000);
+      }
+    });
 
     browser
       .click('#senderDisplay')

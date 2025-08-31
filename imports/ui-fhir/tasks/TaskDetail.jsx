@@ -1,6 +1,7 @@
 // /imports/ui-fhir/tasks/TaskDetail.jsx
 
 import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useTracker } from 'meteor/react-meteor-data';
 
 import { 
@@ -8,40 +9,85 @@ import {
   Card,
   CardActions,
   CardContent,
-  Grid,
+  CardHeader,
+  Container,
   TextField,
   Select,
   MenuItem,
   FormControl,
-  InputLabel
+  InputLabel,
+  Typography,
+  Box,
+  IconButton,
+  InputAdornment,
+  Tooltip
 } from '@mui/material';
+import LockIcon from '@mui/icons-material/Lock';
+import LockOpenIcon from '@mui/icons-material/LockOpen';
+import SearchIcon from '@mui/icons-material/Search';
 
+import { get, set } from 'lodash';
+import moment from 'moment';
+
+import { Tasks } from '/imports/lib/schemas/SimpleSchemas/Tasks';
 import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
-import { get, set } from 'lodash';
 
-import { FhirDehydrator } from '../../lib/FhirDehydrator';
+function TaskDetail(props) {
+  const navigate = useNavigate();
+  const { id: taskId } = useParams();
+  
+  // Get selected patient and current user from session/tracker
+  const selectedPatient = useTracker(function() {
+    return Session.get('selectedPatient');
+  }, []);
+  
+  const currentUser = useTracker(function() {
+    return Meteor.user();
+  }, []);
 
-// Collection reference
-let Tasks;
-Meteor.startup(async function(){
-  if(Meteor.isClient){
-    Tasks = await global.Collections.Tasks;
-  }
-});
-
-//===========================================================================
-// MAIN COMPONENT
-
-export function TaskDetail(props){
-  const [taskId, setTaskId] = useState(false);
+  // Subscribe to Tasks
+  const isSubscriptionReady = useTracker(function(){
+    let autoPublishEnabled = get(Meteor, 'settings.public.defaults.autopublish', false);
+    let handle;
+    if(autoPublishEnabled){
+      handle = Meteor.subscribe('autopublish.Tasks', {}, {});
+    } else {
+      handle = Meteor.subscribe('tasks.all');
+    }
+    return handle.ready();
+  }, []);
+  
+  // Initialize state with proper FHIR R4 structure
   const [task, setTask] = useState({
     resourceType: "Task",
     status: "requested",
     intent: "order",
     priority: "routine",
+    code: {
+      coding: [{
+        system: "http://snomed.info/sct",
+        code: "",
+        display: ""
+      }],
+      text: ""
+    },
     description: "",
     for: {
+      reference: "",
+      display: ""
+    },
+    encounter: {
+      reference: "",
+      display: ""
+    },
+    executionPeriod: {
+      start: "",
+      end: ""
+    },
+    authoredOn: moment().format('YYYY-MM-DDTHH:mm:ss'),
+    lastModified: moment().format('YYYY-MM-DDTHH:mm:ss'),
+    requester: {
       reference: "",
       display: ""
     },
@@ -49,127 +95,169 @@ export function TaskDetail(props){
       reference: "",
       display: ""
     },
-    requester: {
-      reference: "",
-      display: ""
-    },
-    businessStatus: {
+    reasonCode: {
+      coding: [{
+        system: "http://snomed.info/sct",
+        code: "",
+        display: ""
+      }],
       text: ""
     },
-    lastModified: null,
-    authoredOn: null
+    businessStatus: {
+      coding: [{
+        system: "",
+        code: "",
+        display: ""
+      }],
+      text: ""
+    },
+    note: [{
+      text: ""
+    }]
   });
 
-  // Update internal state when props change
-  useEffect(() => {
-    if(props.taskId !== taskId){
-      setTaskId(props.taskId);
-    }
-    if(props.task && props.task !== task){
-      setTask(props.task);
-    }
-  }, [props.taskId, props.task]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [isEditing, setIsEditing] = useState(false);
 
-  function handleChange(field, value){
-    let updatedTask = Object.assign({}, task);
-    
-    switch(field) {
-      case 'patientDisplay':
-        set(updatedTask, 'for.display', value);
-        break;
-      case 'ownerDisplay':
-        set(updatedTask, 'owner.display', value);
-        break;
-      case 'requesterDisplay':
-        set(updatedTask, 'requester.display', value);
-        break;
-      case 'status':
-        set(updatedTask, 'status', value);
-        break;
-      case 'intent':
-        set(updatedTask, 'intent', value);
-        break;
-      case 'priority':
-        set(updatedTask, 'priority', value);
-        break;
-      case 'description':
-        set(updatedTask, 'description', value);
-        break;
-      case 'businessStatus':
-        set(updatedTask, 'businessStatus.text', value);
-        break;
-      default:
-        break;
-    }
-    
-    setTask(updatedTask);
-  }
-
-  function handleSaveButton(){
-    console.log('TaskDetail.handleSaveButton', task);
-    
-    let taskToSave = Object.assign({}, task);
-    
-    // Remove the _id field for FHIR compliance
-    delete taskToSave._id;
-    
-    if(taskId){
-      // Update existing task
-      console.log('Updating task', taskId);
-      if(Tasks){
-        Tasks._collection.update(
-          {_id: taskId},
-          {$set: taskToSave},
-          function(error, result){
-            if(error){
-              console.error('Error updating task:', error);
-            } else {
-              console.log('Task updated successfully');
-              if(props.onUpdate){
-                props.onUpdate(taskId);
-              }
-            }
+  // Set patient name and requester on component mount for new tasks
+  useEffect(function() {
+    if (!taskId || taskId === 'new') {
+      // Enable editing for new tasks
+      setIsEditing(true);
+      
+      // For new tasks, set the patient name
+      let patientName = '';
+      let patientReference = '';
+      
+      if (selectedPatient) {
+        // Prefer selected patient
+        patientName = get(selectedPatient, 'name[0].text', '') || 
+                     `${get(selectedPatient, 'name[0].given[0]', '')} ${get(selectedPatient, 'name[0].family', '')}`.trim();
+        patientReference = `Patient/${get(selectedPatient, 'id', get(selectedPatient, '_id', ''))}`;
+        
+        // Update the task with patient information
+        setTask(prev => ({
+          ...prev,
+          for: {
+            reference: patientReference,
+            display: patientName
           }
-        );
+        }));
+      }
+      
+      // Set requester to current user
+      let requesterName = '';
+      let requesterReference = '';
+      
+      if (currentUser) {
+        requesterName = get(currentUser, 'profile.name.text', '') ||
+                       `${get(currentUser, 'profile.name.given[0]', '')} ${get(currentUser, 'profile.name.family', '')}`.trim() ||
+                       get(currentUser, 'username', '');
+        requesterReference = `Practitioner/${get(currentUser, '_id', '')}`;
+        
+        // Update the task with requester information
+        setTask(prev => ({
+          ...prev,
+          requester: {
+            reference: requesterReference,
+            display: requesterName
+          }
+        }));
       }
     } else {
-      // Insert new task
-      console.log('Creating new task');
-      if(Tasks){
-        Tasks._collection.insert(taskToSave, function(error, result){
-          if(error){
-            console.error('Error creating task:', error);
-          } else {
-            console.log('Task created successfully', result);
-            if(props.onInsert){
-              props.onInsert(result);
-            }
-          }
-        });
+      // Viewing existing task - start in read-only mode
+      setIsEditing(false);
+    }
+  }, [taskId, selectedPatient, currentUser]);
+
+  // Load task when subscription is ready
+  useEffect(() => {
+    if (taskId && taskId !== 'new' && isSubscriptionReady) {
+      const existingTask = Tasks.findOne({_id: taskId});
+      if (existingTask) {
+        setTask(existingTask);
+        setIsEditing(false);
       }
     }
+  }, [taskId, isSubscriptionReady]);
+
+  function handleChange(field, value) {
+    setTask(prev => {
+      const updated = { ...prev };
+      set(updated, field, value);
+      return updated;
+    });
   }
 
-  function handleDeleteButton(){
-    console.log('TaskDetail.handleDeleteButton', taskId);
+  function handleSearchUser() {
+    console.log('Search for patient/user');
+    // TODO: Implement patient search dialog
+  }
+
+  async function handleSaveButton() {
+    console.log('TaskDetail.handleSaveButton', task);
+    setLoading(true);
+    setError(null);
     
-    if(taskId && Tasks){
-      Tasks._collection.remove({_id: taskId}, function(error, result){
-        if(error){
-          console.error('Error deleting task:', error);
-        } else {
-          console.log('Task deleted successfully');
-          if(props.onRemove){
-            props.onRemove(taskId);
-          }
-        }
-      });
+    try {
+      let dataToSave = {
+        ...task,
+        lastModified: moment().format('YYYY-MM-DDTHH:mm:ss')
+      };
+      
+      // Remove _id for FHIR compliance
+      delete dataToSave._id;
+      
+      if (taskId && taskId !== 'new') {
+        // Update existing task
+        await Meteor.callAsync('updateTask', taskId, dataToSave);
+        console.log('Task updated successfully');
+        setIsEditing(false); // Stay on page, switch to read mode
+      } else {
+        // Create new task
+        const id = await Meteor.callAsync('createTask', dataToSave);
+        console.log('Task created successfully:', id);
+        navigate('/tasks'); // Navigate to list after create
+      }
+    } catch (err) {
+      console.error('Error saving task:', err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
     }
   }
 
-  function handleCancelButton(){
-    if(props.onCancel){
-      props.onCancel();
+  function handleDeleteButton() {
+    if (window.confirm('Are you sure you want to delete this task?')) {
+      setLoading(true);
+      Meteor.callAsync('removeTask', taskId)
+        .then(() => {
+          console.log('Task deleted successfully');
+          navigate('/tasks');
+        })
+        .catch(err => {
+          console.error('Error deleting task:', err);
+          setError(err.message);
+          setLoading(false);
+        });
+    }
+  }
+
+  function handleCancelButton() {
+    if (taskId && taskId !== 'new') {
+      // If editing existing, just switch back to read mode
+      setIsEditing(false);
+      // Reload original data
+      if (isSubscriptionReady) {
+        const existingTask = Tasks.findOne({_id: taskId});
+        if (existingTask) {
+          setTask(existingTask);
+        }
+      }
+    } else {
+      // If new, navigate back to list
+      navigate('/tasks');
     }
   }
 
@@ -186,102 +274,133 @@ export function TaskDetail(props){
     'reflex-order', 'filler-order', 'instance-order', 'option'
   ];
 
+  if (loading && (!taskId || taskId === 'new')) {
+    return (
+      <Container maxWidth="md" sx={{ py: 4 }}>
+        <Typography>Loading...</Typography>
+      </Container>
+    );
+  }
+
   return (
-    <div id={props.id} className="taskDetail">
-      <CardContent>
-        <Grid container spacing={3}>
-          <Grid item xs={12}>
-            <TextField
-              id='patientDisplayInput'
-              name='patientDisplay'
-              label='Patient'
-              value={get(task, 'for.display', '')}
-              onChange={(e) => handleChange('patientDisplay', e.target.value)}
-              fullWidth
-              margin="normal"
-            />
-          </Grid>
+    <Container id='taskDetailPage' maxWidth="md" sx={{ py: 4 }}>
+      <Card sx={{ boxShadow: 3 }}>
+        <CardHeader 
+          title={taskId && taskId !== 'new' ? 'Edit Task' : 'New Task'}
+          sx={{ bgcolor: 'primary.main', color: 'primary.contrastText' }}
+          action={
+            taskId && taskId !== 'new' && (
+              <IconButton onClick={() => setIsEditing(!isEditing)} sx={{ color: 'primary.contrastText' }}>
+                {isEditing ? <LockOpenIcon /> : <LockIcon />}
+              </IconButton>
+            )
+          }
+        />
+        <CardContent>
+          {(taskId && taskId !== 'new') && (
+            <Box sx={{ mb: 3, textAlign: 'right' }}>
+              <span className="barcode helveticas" style={{ fontSize: '2rem' }}>{taskId}</span>
+            </Box>
+          )}
           
-          <Grid item xs={12} md={6}>
+          {error && (
+            <Typography color="error" sx={{ mb: 2 }}>{error}</Typography>
+          )}
+
+          <TextField
+            id="forDisplay"
+            fullWidth
+            label="Patient"
+            value={get(task, 'for.display', '')}
+            onChange={(e) => handleChange('for.display', e.target.value)}
+            disabled={!isEditing}
+            margin="normal"
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <Tooltip title="Search for patient">
+                    <IconButton
+                      onClick={handleSearchUser}
+                      edge="end"
+                      disabled={!isEditing}
+                    >
+                      <SearchIcon />
+                    </IconButton>
+                  </Tooltip>
+                </InputAdornment>
+              ),
+            }}
+          />
+
+          <TextField
+            id="requesterDisplay"
+            fullWidth
+            label="Requester"
+            value={get(task, 'requester.display', '')}
+            onChange={(e) => handleChange('requester.display', e.target.value)}
+            disabled={!isEditing}
+            margin="normal"
+          />
+
+          <TextField
+            id="ownerDisplay"
+            fullWidth
+            label="Owner"
+            value={get(task, 'owner.display', '')}
+            onChange={(e) => handleChange('owner.display', e.target.value)}
+            disabled={!isEditing}
+            margin="normal"
+          />
+
+          <Box sx={{ display: 'flex', gap: 2 }}>
             <TextField
-              id='ownerDisplayInput'
-              name='ownerDisplay'
-              label='Owner'
-              value={get(task, 'owner.display', '')}
-              onChange={(e) => handleChange('ownerDisplay', e.target.value)}
+              id="codeCode"
               fullWidth
+              label="Code"
+              value={get(task, 'code.coding[0].code', '')}
+              onChange={(e) => handleChange('code.coding[0].code', e.target.value)}
+              disabled={!isEditing}
               margin="normal"
             />
-          </Grid>
-          
-          <Grid item xs={12} md={6}>
             <TextField
-              id='requesterDisplayInput'
-              name='requesterDisplay'
-              label='Requester'
-              value={get(task, 'requester.display', '')}
-              onChange={(e) => handleChange('requesterDisplay', e.target.value)}
+              id="codeDisplay"
               fullWidth
+              label="Code Display"
+              value={get(task, 'code.coding[0].display', '')}
+              onChange={(e) => {
+                handleChange('code.coding[0].display', e.target.value);
+                handleChange('code.text', e.target.value);
+              }}
+              disabled={!isEditing}
               margin="normal"
             />
-          </Grid>
+          </Box>
 
-          <Grid item xs={12}>
-            <TextField
-              id='descriptionInput'
-              name='description'
-              label='Description'
-              value={get(task, 'description', '')}
-              onChange={(e) => handleChange('description', e.target.value)}
-              fullWidth
-              multiline
-              rows={3}
-              margin="normal"
-            />
-          </Grid>
+          <FormControl fullWidth margin="normal">
+            <InputLabel id="status-label">Status</InputLabel>
+            <Select
+              labelId="status-label"
+              id="status"
+              value={get(task, 'status', 'requested')}
+              onChange={(e) => handleChange('status', e.target.value)}
+              disabled={!isEditing}
+              label="Status"
+            >
+              {statusOptions.map(option => (
+                <MenuItem key={option} value={option}>{option}</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
 
-          <Grid item xs={12} md={4}>
-            <FormControl fullWidth margin="normal">
-              <InputLabel id="status-label">Status</InputLabel>
-              <Select
-                labelId="status-label"
-                id='statusInput'
-                value={get(task, 'status', 'requested')}
-                onChange={(e) => handleChange('status', e.target.value)}
-                label="Status"
-              >
-                {statusOptions.map(option => (
-                  <MenuItem key={option} value={option}>{option}</MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Grid>
-
-          <Grid item xs={12} md={4}>
-            <FormControl fullWidth margin="normal">
-              <InputLabel id="priority-label">Priority</InputLabel>
-              <Select
-                labelId="priority-label"
-                id='priorityInput'
-                value={get(task, 'priority', 'routine')}
-                onChange={(e) => handleChange('priority', e.target.value)}
-                label="Priority"
-              >
-                {priorityOptions.map(option => (
-                  <MenuItem key={option} value={option}>{option}</MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Grid>
-
-          <Grid item xs={12} md={4}>
+          <Box sx={{ display: 'flex', gap: 2 }}>
             <FormControl fullWidth margin="normal">
               <InputLabel id="intent-label">Intent</InputLabel>
               <Select
                 labelId="intent-label"
-                id='intentInput'
+                id="intent"
                 value={get(task, 'intent', 'order')}
                 onChange={(e) => handleChange('intent', e.target.value)}
+                disabled={!isEditing}
                 label="Intent"
               >
                 {intentOptions.map(option => (
@@ -289,48 +408,165 @@ export function TaskDetail(props){
                 ))}
               </Select>
             </FormControl>
-          </Grid>
 
-          <Grid item xs={12}>
+            <FormControl fullWidth margin="normal">
+              <InputLabel id="priority-label">Priority</InputLabel>
+              <Select
+                labelId="priority-label"
+                id="priority"
+                value={get(task, 'priority', 'routine')}
+                onChange={(e) => handleChange('priority', e.target.value)}
+                disabled={!isEditing}
+                label="Priority"
+              >
+                {priorityOptions.map(option => (
+                  <MenuItem key={option} value={option}>{option}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Box>
+
+          <TextField
+            id="description"
+            fullWidth
+            label="Description"
+            value={get(task, 'description', '')}
+            onChange={(e) => handleChange('description', e.target.value)}
+            disabled={!isEditing}
+            multiline
+            rows={3}
+            margin="normal"
+          />
+
+          <TextField
+            id="authoredOn"
+            fullWidth
+            label="Authored On"
+            type="datetime-local"
+            value={get(task, 'authoredOn', '').substring(0, 16)}
+            onChange={(e) => handleChange('authoredOn', e.target.value + ':00')}
+            disabled={!isEditing}
+            margin="normal"
+            InputLabelProps={{ shrink: true }}
+          />
+
+          <TextField
+            id="lastModified"
+            fullWidth
+            label="Last Modified"
+            type="datetime-local"
+            value={get(task, 'lastModified', '').substring(0, 16)}
+            onChange={(e) => handleChange('lastModified', e.target.value + ':00')}
+            disabled={!isEditing}
+            margin="normal"
+            InputLabelProps={{ shrink: true }}
+          />
+
+          <Box sx={{ display: 'flex', gap: 2 }}>
             <TextField
-              id='businessStatusInput'
-              name='businessStatus'
-              label='Business Status'
-              value={get(task, 'businessStatus.text', '')}
-              onChange={(e) => handleChange('businessStatus', e.target.value)}
+              id="businessStatusCode"
               fullWidth
+              label="Business Status Code"
+              value={get(task, 'businessStatus.coding[0].code', '')}
+              onChange={(e) => {
+                handleChange('businessStatus.coding[0].code', e.target.value);
+                handleChange('businessStatus.text', e.target.value);
+              }}
+              disabled={!isEditing}
               margin="normal"
             />
-          </Grid>
-        </Grid>
-      </CardContent>
+            <TextField
+              id="businessStatusDisplay"
+              fullWidth
+              label="Business Status Display"
+              value={get(task, 'businessStatus.coding[0].display', '')}
+              onChange={(e) => handleChange('businessStatus.coding[0].display', e.target.value)}
+              disabled={!isEditing}
+              margin="normal"
+            />
+          </Box>
 
-      <CardActions sx={{ justifyContent: 'flex-end', px: 3, pb: 2 }}>
-        {taskId && (
-          <Button 
-            id="deleteTaskButton" 
-            color="error"
-            onClick={handleDeleteButton}
-          >
-            Delete
-          </Button>
-        )}
-        <Button 
-          id="cancelTaskButton" 
-          onClick={handleCancelButton}
-        >
-          Cancel
-        </Button>
-        <Button 
-          id="saveTaskButton" 
-          variant="contained"
-          color="primary"
-          onClick={handleSaveButton}
-        >
-          Save
-        </Button>
-      </CardActions>
-    </div>
+          <Box sx={{ display: 'flex', gap: 2 }}>
+            <TextField
+              id="executionPeriodStart"
+              fullWidth
+              label="Execution Start"
+              type="datetime-local"
+              value={get(task, 'executionPeriod.start', '').substring(0, 16)}
+              onChange={(e) => handleChange('executionPeriod.start', e.target.value + ':00')}
+              disabled={!isEditing}
+              margin="normal"
+              InputLabelProps={{ shrink: true }}
+            />
+            <TextField
+              id="executionPeriodEnd"
+              fullWidth
+              label="Execution End"
+              type="datetime-local"
+              value={get(task, 'executionPeriod.end', '').substring(0, 16)}
+              onChange={(e) => handleChange('executionPeriod.end', e.target.value + ':00')}
+              disabled={!isEditing}
+              margin="normal"
+              InputLabelProps={{ shrink: true }}
+            />
+          </Box>
+
+          <TextField
+            id="notesTextarea"
+            fullWidth
+            label="Notes"
+            value={get(task, 'note[0].text', '')}
+            onChange={(e) => handleChange('note[0].text', e.target.value)}
+            disabled={!isEditing}
+            multiline
+            rows={3}
+            margin="normal"
+          />
+        </CardContent>
+
+        <CardActions sx={{ justifyContent: 'flex-end', p: 2 }}>
+          {taskId && taskId !== 'new' && !isEditing && (
+            <>
+              <Button onClick={() => navigate('/tasks')}>
+                Back
+              </Button>
+              <Button 
+                color="error"
+                onClick={handleDeleteButton}
+                disabled={loading}
+              >
+                Delete
+              </Button>
+              <Button 
+                variant="contained"
+                onClick={() => setIsEditing(true)}
+              >
+                Edit
+              </Button>
+            </>
+          )}
+          
+          {isEditing && (
+            <>
+              <Button 
+                onClick={handleCancelButton}
+                disabled={loading}
+              >
+                Cancel
+              </Button>
+              <Button 
+                variant="contained"
+                color="primary"
+                onClick={handleSaveButton}
+                disabled={loading}
+              >
+                {taskId && taskId !== 'new' ? 'Update' : 'Save'} Task
+              </Button>
+            </>
+          )}
+        </CardActions>
+      </Card>
+    </Container>
   );
 }
 

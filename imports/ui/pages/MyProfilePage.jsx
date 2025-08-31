@@ -156,6 +156,17 @@ function MyProfilePage(props) {
       setError(error.message || 'Failed to link practitioner record');
     }
   }
+  
+  // Debug: Link to CMO for testing
+  async function handleLinkToCMO() {
+    try {
+      const result = await Meteor.callAsync('debug.linkCurrentUserToCMO');
+      setSuccessMessage(result.message);
+    } catch (error) {
+      console.error('Error linking to CMO:', error);
+      setError(error.message || 'Failed to link to Chief Medical Officer');
+    }
+  }
 
   async function handleDeleteAccount(){
     console.log('Deleting account...');
@@ -684,6 +695,23 @@ curl -H "session:${accountsAccessToken}" \\
           Delete Account
         </Button>
       </Paper>
+      
+      {/* Debug section - remove in production */}
+      {Meteor.isDevelopment && !currentPractitioner && (
+        <Paper elevation={3} sx={{ p: 3, mb: 3, border: '2px dashed orange' }}>
+          <Typography variant="h6" gutterBottom>
+            Debug Tools (Dev Only)
+          </Typography>
+          <Button 
+            variant="outlined" 
+            color="warning"
+            onClick={handleLinkToCMO}
+          >
+            Link to Chief Medical Officer (Testing)
+          </Button>
+        </Paper>
+      )}
+      
       {/* Practitioner Search Dialog */}
       <Dialog
         open={openPractitionerSearch}

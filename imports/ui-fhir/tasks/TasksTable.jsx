@@ -1,262 +1,328 @@
-import React, { useState, useEffect } from 'react';
+// /imports/ui-fhir/tasks/TasksTable.jsx
+
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 
 import { 
-  Button,
-  Checkbox,
   Table,
   TableBody,
   TableCell,
   TableHead,
   TableRow,
-  TableFooter,
-  TablePagination
+  TablePagination,
+  Checkbox,
+  Button,
+  Typography
 } from '@mui/material';
 
-
 import moment from 'moment';
-import { get } from 'lodash';
+import { get, has } from 'lodash';
 
-// import { Icon } from 'react-icons-kit'
-// import { tag } from 'react-icons-kit/fa/tag'
-// import {iosTrashOutline} from 'react-icons-kit/ionicons/iosTrashOutline'
-
-import { FhirUtilities } from '../../lib/FhirUtilities';
+import FhirUtilities from '../../lib/FhirUtilities';
+import { TableNoData } from '../../components/TableNoData';
 import { FhirDehydrator } from '../../lib/FhirDehydrator';
 
-
-//===========================================================================
-// THEMING
-
-
+// Logger setup
+const logger = {
+  debug: console.debug.bind(console),
+  trace: console.trace.bind(console),
+  data: console.log.bind(console),
+  verbose: console.debug.bind(console),
+  info: console.info.bind(console),
+  warn: console.warn.bind(console),
+  error: console.error.bind(console)
+};
 
 //===========================================================================
 // MAIN COMPONENT
 
-function TasksTable(props){
+export function TasksTable(props){
   logger.info('Rendering the TasksTable');
 
   let { 
     id,
-    children, 
-
-    data,
+    
     tasks,
     selectedTaskId,
 
-    query,
-    paginationLimit,
+    rowsPerPage,
+    count,
+    page,
+    onSetPage,
+    
     disablePagination,
-  
+    showMinutes,
+    dateFormat,
+    tableRowSize,
+    
+    formFactorLayout,
+
     hideCheckbox,
     hideActionIcons,
-    hideIdentifier,
-    hidePatientName,
+    hideBarcode,
+    hidePatientDisplay,
     hidePatientReference,
-    hideOwnerName,
+    hideOwnerDisplay,
     hideOwnerReference,
+    hideRequesterDisplay,
     hideStatus,
     hidePriority,
     hideIntent,
+    hideCode,
     hideDescription,
     hideBusinessStatus,
+    hideExecutionPeriod,
     hideLastModified,
     hideAuthoredOn,
-    hideBarcode,
-    hideTextIcon,
-  
-    onCellClick,
-    onRowClick,
-    onMetaClick,
-    onRemoveRecord,
-    onActionButtonClick,
     hideActionButton,
+    
     actionButtonLabel,
-  
-    autoColumns,
-    rowsPerPage,
-    tableRowSize,
-    dateFormat,
-    showMinutes,
-    hideEnteredInError,
-    formFactorLayout,
-    count,
-    labels,
+    
+    onRowClick,
+    onActionButtonClick,
+    onToggle,
 
     defaultCheckboxValue,
-
-    page,
-    onSetPage,
 
     ...otherProps 
   } = props;
 
+  // Store original prop values
+  const hidePatientDisplayFromProp = hidePatientDisplay;
+  const hidePatientReferenceFromProp = hidePatientReference;
+  const hideBarcodeFromProp = hideBarcode;
 
-    // ------------------------------------------------------------------------
-  // Form Factors
-
+  // Form Factor adjustments
   if(formFactorLayout){
-    logger.verbose('formFactorLayout', formFactorLayout + ' ' + window.innerWidth);
+    logger.verbose('formFactorLayout', formFactorLayout);
     switch (formFactorLayout) {
       case "phone":
         hideCheckbox = true;
         hideActionIcons = true;
-        hidePatientName = true;
+        hideBarcode = true;
+        hidePatientDisplay = true;
         hidePatientReference = true;
-        hideOwnerName = true;
+        hideOwnerDisplay = true;
         hideOwnerReference = true;
+        hideRequesterDisplay = false;
         hideStatus = false;
         hidePriority = true;
         hideIntent = true;
+        hideCode = true;
         hideDescription = false;
         hideBusinessStatus = true;
+        hideExecutionPeriod = true;
         hideLastModified = true;
         hideAuthoredOn = true;
-        hideBarcode = true;  
-        multiline = true;
-        hideTextIcon = false
         break;
       case "tablet":
         hideCheckbox = true;
         hideActionIcons = true;
-        hidePatientName = false;
+        hideBarcode = false;
+        hidePatientDisplay = false;
         hidePatientReference = true;
-        hideOwnerName = false;
+        hideOwnerDisplay = false;
         hideOwnerReference = true;
+        hideRequesterDisplay = false;
         hideStatus = false;
         hidePriority = false;
         hideIntent = true;
+        hideCode = false;
         hideDescription = false;
         hideBusinessStatus = true;
+        hideExecutionPeriod = false;
         hideLastModified = false;
         hideAuthoredOn = true;
-        hideBarcode = false;   
-        multiline = false;
-        hideTextIcon = false
         break;
       case "web":
+        hideCheckbox = (hideCheckbox !== undefined) ? hideCheckbox : true;
+        hideActionIcons = false;
+        hideBarcode = (hideBarcodeFromProp !== undefined) ? hideBarcodeFromProp : true;
+        hidePatientDisplay = (hidePatientDisplayFromProp !== undefined) ? hidePatientDisplayFromProp : false;
+        hidePatientReference = (hidePatientReferenceFromProp !== undefined) ? hidePatientReferenceFromProp : true;
+        hideOwnerDisplay = false;
+        hideOwnerReference = true;
+        hideRequesterDisplay = false;
         hideStatus = false;
         hidePriority = false;
+        hideIntent = true;
+        hideCode = false;
         hideDescription = false;
-        hidePatientName = false;
-        hideOwnerName = false;
         hideBusinessStatus = true;
+        hideExecutionPeriod = false;
         hideLastModified = true;
         hideAuthoredOn = false;
-        hideBarcode = false;
-        multiline = false;
-        hideTextIcon = false
         break;
       case "desktop":
-        hideStatus = false;
-        hidePatientName = false;
-        hideOwnerName = false;
-        hidePriority = false;
-        hideDescription = false;
-        hideBusinessStatus = true;
-        hideLastModified = false;
-        hideAuthoredOn = true;
-        hideBarcode = false;
-        multiline = false;
-        hideTextIcon = true;
-        break;
-      case "hdmi":
+        hideCheckbox = (hideCheckbox !== undefined) ? hideCheckbox : true;
+        hideActionIcons = false;
+        hideBarcode = (hideBarcodeFromProp !== undefined) ? hideBarcodeFromProp : false;
+        hidePatientDisplay = (hidePatientDisplayFromProp !== undefined) ? hidePatientDisplayFromProp : false;
+        hidePatientReference = (hidePatientReferenceFromProp !== undefined) ? hidePatientReferenceFromProp : false;
+        hideOwnerDisplay = false;
+        hideOwnerReference = false;
+        hideRequesterDisplay = false;
         hideStatus = false;
         hidePriority = false;
+        hideIntent = false;
+        hideCode = false;
         hideDescription = false;
         hideBusinessStatus = false;
+        hideExecutionPeriod = false;
         hideLastModified = false;
         hideAuthoredOn = false;
-        hideBarcode = false;
-        multiline = false;
-        hideTextIcon = true;
+        break;
+      case "hdmi":
+        hideCheckbox = (hideCheckbox !== undefined) ? hideCheckbox : true;
+        hideActionIcons = false;
+        hideBarcode = (hideBarcodeFromProp !== undefined) ? hideBarcodeFromProp : false;
+        hidePatientDisplay = (hidePatientDisplayFromProp !== undefined) ? hidePatientDisplayFromProp : false;
+        hidePatientReference = (hidePatientReferenceFromProp !== undefined) ? hidePatientReferenceFromProp : false;
+        hideOwnerDisplay = false;
+        hideOwnerReference = false;
+        hideRequesterDisplay = false;
+        hideStatus = false;
+        hidePriority = false;
+        hideIntent = false;
+        hideCode = false;
+        hideDescription = false;
+        hideBusinessStatus = false;
+        hideExecutionPeriod = false;
+        hideLastModified = false;
+        hideAuthoredOn = false;
         break;            
     }
   }
 
+  //---------------------------------------------------------------------
+  // Pagination
+
+  let rows = [];
+  const [pageState, setPageState] = useState(page || 0);
+  const [rowsPerPageState, setRowsPerPage] = useState(rowsPerPage || 5);
+
+  let paginationCount = 101;
+  if(count){
+    paginationCount = count;
+  } else {
+    paginationCount = rows.length;
+  }
+
+  function handleChangePage(event, newPage){
+    setPageState(newPage);
+    if(onSetPage){
+      onSetPage(newPage);
+    }
+  }
+
+  let paginationFooter;
+  if(!disablePagination){
+    paginationFooter = <TablePagination
+      component="div"
+      rowsPerPageOptions={[5, 10, 25, 100]}
+      colSpan={3}
+      count={paginationCount}
+      rowsPerPage={rowsPerPageState}
+      page={pageState}
+      onPageChange={handleChangePage}
+      onRowsPerPageChange={handleChangeRowsPerPage}
+    />
+  }
+
+  function handleChangeRowsPerPage(event){
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPageState(0);
+    if(onSetPage){
+      onSetPage(0);
+    }
+  }
 
   //---------------------------------------------------------------------
   // Helper Functions
 
   function handleToggle(index){
-    console.log('Toggling entry ' + index)
+    console.log('Toggling entry ' + index);
     if(props.onToggle){
       props.onToggle(index);
     }
   }
 
-  function removeRecord(_id){
-    console.log('removeRecord')
-  }
   function handleRowClick(id){
-    
-
+    console.log('TasksTable.handleRowClick', id);
     if(props && (typeof onRowClick === "function")){
       onRowClick(id);
     }
   }
-  function handleActionButtonClick(_id){
+
+  function handleActionButtonClick(id){
     if(typeof onActionButtonClick === "function"){
-      onActionButtonClick(_id);
+      onActionButtonClick(id);
     }
   }
-  
+
   //---------------------------------------------------------------------
-  // Column Rendering
+  // Column Rendering Functions
 
   function renderCheckboxHeader(){
     if (!hideCheckbox) {
       return (
-        <TableCell className="toggle" style={{width: '60px'}} >{get(labels, 'checkbox', 'Checkbox')}</TableCell>
+        <TableCell className='toggle' style={{width: '60px'}}>
+          <Checkbox 
+            onChange={handleToggle} 
+            disabled
+          />
+        </TableCell>
       );
     }
   }
   function renderCheckbox(index){
     if (!hideCheckbox) {
       return (
-        <TableCell className="toggle" style={{padding: '0px'}}>
-          <Checkbox
-            defaultChecked={defaultCheckboxValue}
-            onChange={ handleToggle.bind(this, index)} 
+        <TableCell className='toggle' style={{width: '60px'}}>
+          <Checkbox 
+            onChange={handleToggle.bind(this, index)} 
+            checked={defaultCheckboxValue}
           />
         </TableCell>
       );
     }
   }
-  function renderTextIconHeader(){
-    if (!hideTextIcon) {
-      return (
-        <TableCell className='textIcon'>Text</TableCell>
-      );
-    }
-  }
-  function renderTextIcon(textDiv ){
 
-    let textIcon = "None";
-    if((typeof textDiv === "string" && (textDiv.length > 0))){
-      textIcon = "Text"
+  function renderBarcodeHeader(){
+    if (!hideBarcode) {
+      return (
+        <TableCell className='id'>System ID</TableCell>
+      );
     }
+  }
+  function renderBarcode(id){
+    if (!hideBarcode) {
+      const idString = typeof id === 'object' && id._str ? id._str : String(id);
+      return (
+        <TableCell className='id'>
+          <span className="barcode helveticas">{idString}</span>
+        </TableCell>
+      );
+    }
+  }
 
-    if (!hideTextIcon) {
+  function renderPatientDisplayHeader(){
+    if (!hidePatientDisplay) {
       return (
-        <TableCell className='textIcon' style={{minWidth: '140px'}}>{ textIcon }</TableCell>
+        <TableCell className='patientDisplay'>Patient Name</TableCell>
       );
     }
   }
-  function renderPatientNameHeader(){
-    if (!hidePatientName) {
+  function renderPatientDisplay(patientDisplay){
+    if (!hidePatientDisplay) {
       return (
-        <TableCell className='patientDisplay'>Patient</TableCell>
+        <TableCell className='patientDisplay' style={{minWidth: '140px'}}>
+          {patientDisplay }
+        </TableCell>
       );
     }
   }
-  function renderPatientName(patientDisplay ){
-    if (!hidePatientName) {
-      return (
-        <TableCell className='patientDisplay' style={{minWidth: '140px'}}>{ patientDisplay }</TableCell>
-      );
-    }
-  }
+
   function renderPatientReferenceHeader(){
     if (!hidePatientReference) {
       return (
@@ -264,66 +330,50 @@ function TasksTable(props){
       );
     }
   }
-  function renderPatientReference(patientReference ){
+  function renderPatientReference(patientReference){
     if (!hidePatientReference) {
       return (
-        <TableCell className='patientReference' style={{maxWidth: '160px', overflow: 'hidden', textOverflow: 'ellipsis',  whiteSpace: 'nowrap'}}>
-          { FhirUtilities.pluckReferenceId(patientReference) }
+        <TableCell className='patientReference' style={{minWidth: '140px'}}>
+          {patientReference}
         </TableCell>
       );
     }
   }
-  function renderOwnerNameHeader(){
-    if (!hideOwnerName) {
+
+  function renderRequesterDisplayHeader(){
+    if (!hideRequesterDisplay) {
+      return (
+        <TableCell className='requesterDisplay'>Requester</TableCell>
+      );
+    }
+  }
+  function renderRequesterDisplay(requesterDisplay){
+    if (!hideRequesterDisplay) {
+      return (
+        <TableCell className='requesterDisplay' style={{minWidth: '140px'}}>
+          {requesterDisplay }
+        </TableCell>
+      );
+    }
+  }
+
+  function renderOwnerDisplayHeader(){
+    if (!hideOwnerDisplay) {
       return (
         <TableCell className='ownerDisplay'>Owner</TableCell>
       );
     }
   }
-  function renderOwnerName(ownerDisplay ){
-    if (!hideOwnerName) {
+  function renderOwnerDisplay(ownerDisplay){
+    if (!hideOwnerDisplay) {
       return (
-        <TableCell className='ownerDisplay' style={{minWidth: '140px'}}>{ ownerDisplay }</TableCell>
-      );
-    }
-  }
-  function renderOwnerReferenceHeader(){
-    if (!hideOwnerReference) {
-      return (
-        <TableCell className='ownerReference'>Owner Reference</TableCell>
-      );
-    }
-  }
-  function renderOwnerReference(ownerReference ){
-    if (!hideOwnerReference) {
-      return (
-        <TableCell className='ownerReference' style={{maxWidth: '160px', overflow: 'hidden', textOverflow: 'ellipsis',  whiteSpace: 'nowrap'}}>
-          { FhirUtilities.pluckReferenceId(ownerReference) }
+        <TableCell className='ownerDisplay' style={{minWidth: '140px'}}>
+          {ownerDisplay }
         </TableCell>
       );
     }
   }
-  function renderIdentifierHeader(){
-    if (!hideIdentifier) {
-      return (
-        <TableCell className='identifier'>Identifier</TableCell>
-      );
-    }
-  }
-  function renderIdentifier(identifier ){
-    if (!hideIdentifier) {
-      return (
-        <TableCell className='identifier'>{ identifier }</TableCell>
-      );
-    }
-  } 
-  function renderStatus(status){
-    if (!hideStatus) {
-      return (
-        <TableCell className='status'>{ status }</TableCell>
-      );
-    }
-  }
+
   function renderStatusHeader(){
     if (!hideStatus) {
       return (
@@ -331,214 +381,212 @@ function TasksTable(props){
       );
     }
   }
-  function renderPriority(priority){
-    if (!hidePriority) {
+  function renderStatus(status){
+    if (!hideStatus) {
       return (
-        <TableCell className='priority' style={{width: '100px'}}>{ priority }</TableCell>
+        <TableCell className='status'>
+          {status}
+        </TableCell>
       );
     }
   }
+
   function renderPriorityHeader(){
     if (!hidePriority) {
       return (
-        <TableCell className='priority' style={{width: '100px'}}>{get(labels, 'priority', 'Priority')}</TableCell>
+        <TableCell className='priority'>Priority</TableCell>
+      );
+    }
+  }
+  function renderPriority(priority){
+    if (!hidePriority) {
+      return (
+        <TableCell className='priority'>
+          {priority}
+        </TableCell>
+      );
+    }
+  }
+
+  function renderIntentHeader(){
+    if (!hideIntent) {
+      return (
+        <TableCell className='intent'>Intent</TableCell>
       );
     }
   }
   function renderIntent(intent){
     if (!hideIntent) {
       return (
-        <TableCell className='intent' style={{width: '120px'}}>{ intent }</TableCell>
+        <TableCell className='intent'>
+          {intent}
+        </TableCell>
       );
     }
   }
-  function renderIntentHeader(){
-    if (!hideIntent) {
+
+  function renderCodeHeader(){
+    if (!hideCode) {
       return (
-        <TableCell className='intent' style={{width: '120px'}}>{get(labels, 'intent', 'Intent')}</TableCell>
+        <TableCell className='code'>Code</TableCell>
+      );
+    }
+  }
+  function renderCode(code){
+    if (!hideCode) {
+      return (
+        <TableCell className='code'>
+          {code}
+        </TableCell>
+      );
+    }
+  }
+
+  function renderDescriptionHeader(){
+    if (!hideDescription) {
+      return (
+        <TableCell className='description'>Description</TableCell>
       );
     }
   }
   function renderDescription(description){
     if (!hideDescription) {
-      if(multiline){
-        return (<TableCell className='description'>
-          <span style={{fontWeight: 400}}>{description }</span>
-        </TableCell>)
-      } else {
-        return (
-          <TableCell className='description' style={{whiteSpace: 'nowrap'}} >{ description }</TableCell>
-        );  
-      }
+      return (
+        <TableCell className='description'>
+          {description}
+        </TableCell>
+      );
     }
   }
-  function renderDescriptionHeader(){
-    if (!hideDescription) {
+
+  function renderBusinessStatusHeader(){
+    if (!hideBusinessStatus) {
       return (
-        <TableCell className='description'>{get(labels, 'description', 'Description')}</TableCell>
+        <TableCell className='businessStatus'>Business Status</TableCell>
       );
     }
   }
   function renderBusinessStatus(businessStatus){
     if (!hideBusinessStatus) {
       return (
-        <TableCell className='businessStatus' >{ businessStatus }</TableCell>
+        <TableCell className='businessStatus'>
+          {businessStatus}
+        </TableCell>
       );
     }
   }
-  function renderBusinessStatusHeader(){
-    if (!hideBusinessStatus) {
+
+  function renderExecutionPeriodHeader(){
+    if (!hideExecutionPeriod) {
       return (
-        <TableCell className='businessStatus' >Business Status</TableCell>
+        <TableCell className='executionPeriod'>Execution Period</TableCell>
       );
     }
   }
-  function renderLastModifiedHeader(){
-    if (!hideLastModified) {
+  function renderExecutionPeriod(start, end){
+    if (!hideExecutionPeriod) {
+      let periodDisplay = '';
+      if(start){
+        periodDisplay = moment(start).format('YYYY-MM-DD');
+      }
+      if(end){
+        periodDisplay += ' to ' + moment(end).format('YYYY-MM-DD');
+      }
       return (
-        <TableCell className='lastModified' style={{minWidth: '140px'}}>Last Modified</TableCell>
+        <TableCell className='executionPeriod'>
+          {periodDisplay}
+        </TableCell>
       );
     }
   }
-  function renderLastModified(lastModified ){
-    if (!hideLastModified) {
-      return (
-        <TableCell className='lastModified' style={{minWidth: '140px'}}>{ moment(lastModified).format('YYYY-MM-DD') }</TableCell>
-      );
-    }
-  }
+
   function renderAuthoredOnHeader(){
     if (!hideAuthoredOn) {
       return (
-        <TableCell className='authoredOn' style={{minWidth: '140px'}}>Authored On</TableCell>
+        <TableCell className='authoredOn'>Authored On</TableCell>
       );
     }
   }
-  function renderAuthoredOn(authoredOn ){
+  function renderAuthoredOn(authoredOn){
     if (!hideAuthoredOn) {
-      return (
-        <TableCell className='authoredOn' style={{minWidth: '140px'}}>{ moment(authoredOn).format('YYYY-MM-DD') }</TableCell>
-      );
-    }
-  }
-  function renderActionIconsHeader(){
-    if (!hideActionIcons) {
-      return (
-        <TableCell className='actionIcons'>Actions</TableCell>
-      );
-    }
-  }
-  function renderActionIcons( task ){
-    if (!hideActionIcons) {
-
-      let iconStyle = {
-        marginLeft: '4px', 
-        marginRight: '4px', 
-        marginTop: '4px', 
-        fontSize: '120%'
+      let authoredOnDisplay = '';
+      if(authoredOn){
+        authoredOnDisplay = moment(authoredOn).format('YYYY-MM-DD');
+        if(showMinutes){
+          authoredOnDisplay = moment(authoredOn).format('YYYY-MM-DD hh:mm');
+        }
       }
-
       return (
-        <TableCell className='actionIcons' style={{width: '120px'}}>
-          {/* <Icon icon={tag} style={iconStyle} onClick={showSecurityDialog.bind(this, task)} />
-          <Icon icon={iosTrashOutline} style={iconStyle} onClick={removeRecord.bind(this, task._id)} /> */}
+        <TableCell className='authoredOn'>
+          {authoredOnDisplay}
         </TableCell>
       );
     }
-  } 
+  }
 
-  function renderBarcode(id){
-    if (!hideBarcode) {
+  function renderLastModifiedHeader(){
+    if (!hideLastModified) {
       return (
-        <TableCell><span className="barcode helveticas">{id}</span></TableCell>
+        <TableCell className='lastModified'>Last Modified</TableCell>
       );
     }
   }
-  function renderBarcodeHeader(){
-    if (!hideBarcode) {
+  function renderLastModified(lastModified){
+    if (!hideLastModified) {
+      let lastModifiedDisplay = '';
+      if(lastModified){
+        lastModifiedDisplay = moment(lastModified).format('YYYY-MM-DD');
+        if(showMinutes){
+          lastModifiedDisplay = moment(lastModified).format('YYYY-MM-DD hh:mm');
+        }
+      }
       return (
-        <TableCell>System ID</TableCell>
+        <TableCell className='lastModified'>
+          {lastModifiedDisplay}
+        </TableCell>
       );
     }
   }
+
   function renderActionButtonHeader(){
     if (!hideActionButton) {
       return (
-        <TableCell className='ActionButton' >Action</TableCell>
+        <TableCell className='actionButton'>Action</TableCell>
       );
     }
   }
-  function renderActionButton(taskId){
+  function renderActionButton(id){
     if (!hideActionButton) {
       return (
-        <TableCell className='ActionButton' >
-          <Button onClick={ handleActionButtonClick.bind(this, taskId)}>{ get(props, "actionButtonLabel", "") }</Button>
+        <TableCell className='actionButton' style={{width: '100px'}}>
+          <Button 
+            variant="contained"
+            color="primary"
+            size="small"
+            onClick={handleActionButtonClick.bind(this, id)}
+          >
+            {actionButtonLabel || 'Action'}
+          </Button>
         </TableCell>
       );
     }
   }
 
-  function rowClick(id){
-    if(onRowClick){
-      onRowClick(id);
-    }
-  };
-
-
-    // Pagination
-
-    let rows = [];
-
-    let paginationCount = 101;
-    if(count){
-      paginationCount = count;
-    } else {
-      paginationCount = rows.length;
-    }
-  
-    function handleChangePage(event, newPage){
-      if(typeof onSetPage === "function"){
-        onSetPage(newPage);
-      }
-    }
-  
-    let paginationFooter;
-    if(!disablePagination){
-      paginationFooter = <TablePagination
-        component="div"
-        // rowsPerPageOptions={[5, 10, 25, 100]}
-        rowsPerPageOptions={[5, 10, 25, 100]}
-        colSpan={3}
-        count={paginationCount}
-        rowsPerPage={rowsPerPage}
-        page={page}
-        onPageChange={handleChangePage}
-        style={{float: 'right', border: 'none'}}
-      />
-    }
-
-  
   //---------------------------------------------------------------------
-  // Table Rows
+  // Table Row Rendering
 
   let tableRows = [];
   let tasksToRender = [];
-  let internalDateFormat = "YYYY-MM-DD";
-
-  if(showMinutes){
-    internalDateFormat = "YYYY-MM-DD hh:mm";
-  }
-  if(dateFormat){
-    internalDateFormat = dateFormat;
-  }
+  let internalDateFormat = dateFormat || "YYYY-MM-DD";
 
   if(tasks){
     if(tasks.length > 0){     
-      let count = 0;    
+      let count = 0;
 
       tasks.forEach(function(task){
-        if((count >= (page * rowsPerPage)) && (count < (page + 1) * rowsPerPage)){
-          tasksToRender.push(FhirDehydrator.dehydrateTask(task, internalDateFormat));
+        if((count >= (pageState * rowsPerPageState)) && (count < (pageState + 1) * rowsPerPageState)){
+          let flattenedTask = FhirDehydrator.dehydrateTask(task);
+          tasksToRender.push(flattenedTask);
         }
         count++;
       });  
@@ -548,96 +596,74 @@ function TasksTable(props){
   let rowStyle = {
     cursor: 'pointer',
     height: '52px'
-  }
+  };
 
   if(tasksToRender.length === 0){
-    logger.trace('TasksTable: No tasks to render.');
+    logger.trace('TasksTable: No tasks to render');
   } else {
-    for (var i = 0; i < tasksToRender.length; i++) {
+    for (let i = 0; i < tasksToRender.length; i++) {
+      const task = tasksToRender[i];
+      
       let selected = false;
-      if(tasksToRender[i].id === selectedTaskId){
+      if(task._id === selectedTaskId){
         selected = true;
       }
-      if(get(tasksToRender[i], 'modifierExtension[0]')){
+      
+      if(get(task, 'modifierExtension[0]')){
         rowStyle.color = "orange";
       }
-      if(tableRowSize === "small"){
-        rowStyle.height = '32px';
-      }
-      logger.trace('tasksToRender[i]', tasksToRender[i])
-
-      if(get(tasksToRender[i], "resourceType") === "OperationOutcome"){
-        tableRows.push(
-          <TableRow 
+      
+      tableRows.push(
+        <TableRow 
           className="taskRow" 
-          key={i} 
-          style={rowStyle} 
-          onClick={ handleRowClick.bind(this, tasksToRender[i].id)} 
+          key={task._id} 
+          onClick={handleRowClick.bind(this, task._id)} 
           hover={true} 
-          style={{height: '53px', background: "repeating-linear-gradient( 45deg, rgba(253,184,19, 0.9), rgba(253,184,19, 0.9) 10px, rgba(253,184,19, 0.75) 10px, rgba(253,184,19, 0.75) 20px ), url(http://s3-us-west-2.amazonaws.com/s.cdpn.io/3/old_map_@2X.png)"}} >            
-            <TableCell className='actionIcons' style={{width: '100%', whiteSpace: 'nowrap'}}>
-              {get(tasksToRender[i], 'issue[0].text', 'OperationOutcome: No data returned.')}
-            </TableCell>
-            <TableCell className='actionIcons' ></TableCell>
-            <TableCell className='actionIcons' ></TableCell>           
-          </TableRow>
-        ); 
-      } else {
-        tableRows.push(
-          <TableRow className="taskRow" key={i} style={rowStyle} onClick={ handleRowClick.bind(this, tasksToRender[i]._id)} hover={true} selected={selected} >            
-            { renderCheckbox(i) }
-            { renderActionIcons(tasksToRender[i]) }
-            { renderTextIcon(get(tasksToRender[i], "text.div", "")) }
-            { renderIdentifier(get(tasksToRender[i], "identifier", "")) }
-            { renderPatientName(get(tasksToRender[i], "patientDisplay", "")) } 
-            { renderPatientReference(get(tasksToRender[i], "patientReference", "")) }           
-            { renderOwnerName(get(tasksToRender[i], "ownerDisplay", "")) } 
-            { renderOwnerReference(get(tasksToRender[i], "ownerReference", "")) }
-            { renderStatus(get(tasksToRender[i], "status", ""))}
-            { renderPriority(get(tasksToRender[i], "priority", ""))}
-            { renderIntent(get(tasksToRender[i], "intent", ""))}
-            { renderDescription(get(tasksToRender[i], "description", ""))}
-            { renderBusinessStatus(get(tasksToRender[i], "businessStatus.text", "")) } 
-            { renderLastModified(get(tasksToRender[i], "lastModified", "")) }
-            { renderAuthoredOn(get(tasksToRender[i], "authoredOn", "")) }
-            { renderBarcode(get(tasksToRender[i], "_id", ""))}
-            { renderActionButton(get(tasksToRender[i], "_id", "")) }
-          </TableRow>
-        );   
-      }
-
-       
+          style={rowStyle} 
+          selected={selected}
+        >
+          { renderCheckbox(i) }
+          { renderActionButton(task._id) }
+          { renderBarcode(task._id) }
+          { renderPatientDisplay(task.patientDisplay) }
+          { renderPatientReference(task.patientReference) }
+          { renderRequesterDisplay(task.requesterDisplay) }
+          { renderOwnerDisplay(task.ownerDisplay) }
+          { renderStatus(task.status) }
+          { renderPriority(task.priority) }
+          { renderIntent(task.intent) }
+          { renderCode(task.code) }
+          { renderDescription(task.description) }
+          { renderBusinessStatus(task.businessStatus) }
+          { renderExecutionPeriod(task.executionStart, task.executionEnd) }
+          { renderAuthoredOn(task.authoredOn) }
+          { renderLastModified(task.lastModified) }
+        </TableRow>
+      );       
     }
   }
 
-  
-
-  //---------------------------------------------------------------------
-  // Actual Render Method
-
-  
   return(
     <div id={id} className="tableWithPagination">
-      <Table className='tasksTable' size={tableRowSize} aria-label="a dense table" { ...otherProps }>
+      <Table id='tasksTable' >
         <TableHead>
           <TableRow>
-            { renderCheckboxHeader() } 
-            { renderActionIconsHeader() }
-            { renderTextIconHeader() }
-            { renderIdentifierHeader() }
-            { renderPatientNameHeader() }
+            { renderCheckboxHeader() }
+            { renderActionButtonHeader() }
+            { renderBarcodeHeader() }
+            { renderPatientDisplayHeader() }
             { renderPatientReferenceHeader() }
-            { renderOwnerNameHeader() }
-            { renderOwnerReferenceHeader() }
+            { renderRequesterDisplayHeader() }
+            { renderOwnerDisplayHeader() }
             { renderStatusHeader() }
             { renderPriorityHeader() }
             { renderIntentHeader() }
-            { renderDescriptionHeader() }          
+            { renderCodeHeader() }
+            { renderDescriptionHeader() }
             { renderBusinessStatusHeader() }
-            { renderLastModifiedHeader() }
+            { renderExecutionPeriodHeader() }
             { renderAuthoredOnHeader() }
-            { renderBarcodeHeader() }
-            { renderActionButtonHeader() }
+            { renderLastModifiedHeader() }
           </TableRow>
         </TableHead>
         <TableBody>
@@ -649,87 +675,45 @@ function TasksTable(props){
   );
 }
 
-
 TasksTable.propTypes = {
-  id: PropTypes.string,
-  data: PropTypes.array,
   tasks: PropTypes.array,
   selectedTaskId: PropTypes.string,
-  query: PropTypes.object,
-  paginationLimit: PropTypes.number,
-  disablePagination: PropTypes.bool,
-
+  
+  rowsPerPage: PropTypes.number,
+  page: PropTypes.number,
+  onSetPage: PropTypes.func,
+  
   hideCheckbox: PropTypes.bool,
-  hideActionIcons: PropTypes.bool,
-  hideIdentifier: PropTypes.bool,
-  hidePatientName: PropTypes.bool,
+  hideBarcode: PropTypes.bool,
+  hidePatientDisplay: PropTypes.bool,
   hidePatientReference: PropTypes.bool,
-  hideOwnerName: PropTypes.bool,
+  hideOwnerDisplay: PropTypes.bool,
   hideOwnerReference: PropTypes.bool,
+  hideRequesterDisplay: PropTypes.bool,
   hideStatus: PropTypes.bool,
   hidePriority: PropTypes.bool,
   hideIntent: PropTypes.bool,
+  hideCode: PropTypes.bool,
   hideDescription: PropTypes.bool,
   hideBusinessStatus: PropTypes.bool,
+  hideExecutionPeriod: PropTypes.bool,
   hideLastModified: PropTypes.bool,
   hideAuthoredOn: PropTypes.bool,
-  hideBarcode: PropTypes.bool,
-  hideTextIcon: PropTypes.bool,
-
-  defaultCheckboxValue: PropTypes.bool,
-
-  onCellClick: PropTypes.func,
-  onRowClick: PropTypes.func,
-  onMetaClick: PropTypes.func,
-  onRemoveRecord: PropTypes.func,
-  onActionButtonClick: PropTypes.func,
-  onSetPage: PropTypes.func,
-
-  page: PropTypes.number,
   hideActionButton: PropTypes.bool,
+  
+  onRowClick: PropTypes.func,
+  onActionButtonClick: PropTypes.func,
+  onToggle: PropTypes.func,
+  
   actionButtonLabel: PropTypes.string,
-
-  rowsPerPage: PropTypes.number,
-  dateFormat: PropTypes.string,
-  showMinutes: PropTypes.bool,
-  hideEnteredInError: PropTypes.bool,
+  defaultCheckboxValue: PropTypes.bool,
+  
   count: PropTypes.number,
+  disablePagination: PropTypes.bool,
+  showMinutes: PropTypes.bool,
+  dateFormat: PropTypes.string,
   tableRowSize: PropTypes.string,
-  formFactorLayout: PropTypes.string,
-
-  labels: PropTypes.object
+  formFactorLayout: PropTypes.string
 };
-
-TasksTable.defaultProps = {
-  tableRowSize: 'medium',
-  rowsPerPage: 5,
-  dateFormat: "YYYY-MM-DD hh:mm:ss",
-  hideCheckbox: true,
-  hideActionIcons: true,
-  hideIdentifier: true,
-  hidePatientName: false,
-  hidePatientReference: true,
-  hideOwnerName: false,
-  hideOwnerReference: true,
-  hideStatus: false,
-  hidePriority: false,
-  hideIntent: true,
-  hideDescription: false,
-  hideBusinessStatus: true,
-  hideLastModified: true,
-  hideAuthoredOn: false,
-  hideTextIcon: true,
-  hideBarcode: false,
-  hideActionButton: true,
-  disablePagination: false,  
-  tasks: [],
-  labels: {
-    checkbox: "Checkbox",
-    description: "Description",
-    priority: "Priority",
-    intent: "Intent"
-  },
-  defaultCheckboxValue: false
-}
 
 export default TasksTable;

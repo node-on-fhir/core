@@ -1,6 +1,7 @@
 // tests/nightwatch/honeycomb/enable_autopublish/crud.diagnosticreports.js
 
 const testUtils = require('./shared-test-utils');
+const saveNavigationHelper = require('../../helpers/save-navigation-helper');
 
 describe('DiagnosticReports CRUD Operations', function() {
   const timestamp = Date.now();
@@ -537,72 +538,15 @@ describe('DiagnosticReports CRUD Operations', function() {
     });
 
     // Save the diagnostic report
-    browser
-      .execute(function() {
-        window.consoleErrors = [];
-        const originalError = console.error;
-        console.error = function() {
-          window.consoleErrors.push(Array.from(arguments).join(' '));
-          originalError.apply(console, arguments);
-        };
-        
-        const buttons = document.querySelectorAll('button');
-        for (let button of buttons) {
-          if (button.textContent.includes('Save')) {
-            button.click();
-            return true;
-          }
-        }
-        return false;
-      }, [], function(result) {
-        browser.assert.equal(result.value, true, 'Clicked Save button');
-      });
-
-    browser
-      .pause(2000);
-    
-    // Check if we're back on the diagnostic reports list page
-    browser.execute(function() {
-      const currentUrl = window.location.pathname;
-      const hasTable = document.querySelector('#diagnosticReportsTable') !== null;
-      const hasReportsPage = document.querySelector('#diagnosticReportsPage') !== null;
-      const hasDetailPage = document.querySelector('#diagnosticReportDetailPage') !== null;
-      
-      const errorElements = document.querySelectorAll('[color="error"], .error, [class*="error"], [class*="Error"]');
-      let errorText = '';
-      errorElements.forEach(el => {
-        if (el.textContent) errorText += el.textContent + ' ';
-      });
-      
-      const consoleErrors = window.consoleErrors || [];
-      
-      return {
-        url: currentUrl,
-        hasTable: hasTable,
-        hasReportsPage: hasReportsPage,
-        hasDetailPage: hasDetailPage,
-        hasError: errorText.length > 0,
-        errorText: errorText.trim(),
-        consoleErrors: consoleErrors,
-        userId: Meteor.userId ? Meteor.userId() : 'No Meteor.userId',
-        isLoggedIn: Meteor.userId ? !!Meteor.userId() : false
-      };
-    }, [], function(result) {
-      console.log('Post-save state:', result.value);
-      if (result.value.hasError) {
-        browser.assert.fail(`Save failed with error: ${result.value.errorText}`);
+    // Use save-navigation-helper to handle save and navigation
+    saveNavigationHelper.saveAndNavigate(
+      browser, 
+      'diagnostic-reports', 
+      '#diagnosticReportsPage',
+      function() {
+        browser.saveScreenshot('tests/nightwatch/screenshots/diagnostic-reports/05-diagnostic-report-saved.png');
       }
-      if (!result.value.isLoggedIn) {
-        browser.assert.fail('User is not logged in after save attempt');
-      }
-      if (result.value.url === '/diagnostic-reports/new') {
-        console.log('Still on new diagnostic report page - save may have failed silently');
-      }
-    });
-    
-    browser
-      .waitForElementVisible('#diagnosticReportsPage', 5000)
-      .saveScreenshot('tests/nightwatch/screenshots/diagnostic-reports/05-diagnostic-report-saved.png');
+    );
   });
 
   it('05. Verify new diagnostic report appears in list', browser => {

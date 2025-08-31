@@ -21,7 +21,8 @@ parameters:
           "name": "actors",
           "tests": [
             "tests/nightwatch/honeycomb/enable_autopublish/crud.patients.js",
-            "tests/nightwatch/honeycomb/enable_autopublish/crud.practitioners.js"
+            "tests/nightwatch/honeycomb/enable_autopublish/crud.practitioners.js",
+            "tests/nightwatch/honeycomb/enable_autopublish/crud.careteams.js"
           ]
         },
         {
@@ -62,8 +63,7 @@ parameters:
           "tests": [
             "tests/nightwatch/honeycomb/enable_autopublish/crud.careplans.js",
             "tests/nightwatch/honeycomb/enable_autopublish/crud.nutritionorders.js",
-            "tests/nightwatch/honeycomb/enable_autopublish/crud.servicerequests.js",
-            "tests/nightwatch/honeycomb/enable_autopublish/crud.communications.js"
+            "tests/nightwatch/honeycomb/enable_autopublish/crud.servicerequests.js"
           ]
         },
         {
@@ -77,7 +77,12 @@ parameters:
           "name": "structured-data-capture",
           "tests": [
             "tests/nightwatch/honeycomb/enable_autopublish/crud.questionnaires.js",
-            "tests/nightwatch/honeycomb/enable_autopublish/crud.questionnaireresponses.js",
+            "tests/nightwatch/honeycomb/enable_autopublish/crud.questionnaireresponses.js"
+          ]
+        },
+        {
+          "name": "clinical-trials",
+          "tests": [
             "tests/nightwatch/honeycomb/enable_autopublish/crud.researchstudy.js",
             "tests/nightwatch/honeycomb/enable_autopublish/crud.researchsubjects.js"
           ]
@@ -85,10 +90,31 @@ parameters:
         {
           "name": "administrative",
           "tests": [
+            "tests/nightwatch/honeycomb/enable_autopublish/crud.consents.js",
+            "tests/nightwatch/honeycomb/enable_autopublish/crud.tasks.js",
+            "tests/nightwatch/honeycomb/crud.plandefinitions.js"
+          ]
+        },
+        {
+          "name": "supply-chain",
+          "tests": [
             "tests/nightwatch/honeycomb/enable_autopublish/crud.locations.js",
             "tests/nightwatch/honeycomb/enable_autopublish/crud.devices.js",
-            "tests/nightwatch/honeycomb/enable_autopublish/crud.consents.js",
             "tests/nightwatch/honeycomb/enable_autopublish/crud.supplydeliveries.js"
+          ]
+        },
+        {
+          "name": "communications",
+          "tests": [
+            "tests/nightwatch/honeycomb/enable_autopublish/crud.communications.js"
+            "tests/nightwatch/honeycomb/crud.messageheaders.js"
+          ]
+        },
+        {
+          "name": "public-health",
+          "tests": [
+            "tests/nightwatch/honeycomb/crud.measures.js",
+            "tests/nightwatch/honeycomb/crud.measurereports.js"
           ]
         },
         {
@@ -137,6 +163,8 @@ jobs:
           DEV_AUTO_USERNAME: "demouser"
           DEV_AUTO_PASSWORD: "password2025"
           TEST_RUN: true
+          METEOR_DISABLE_OPTIMISTIC_CACHING: 1
+          METEOR_PROFILE: 100
       - image: mongo:6.0
         name: mongo
     
@@ -293,13 +321,52 @@ jobs:
             echo "Installing npm dependencies..."
             meteor npm install --verbose
             echo "npm install completed successfully"
+            
+            # Update browserslist database to avoid warnings
+            echo "Updating browserslist database..."
+            npx update-browserslist-db@latest || true
       
       - run:
           name: Pre-build Meteor packages
+          no_output_timeout: 20m
           command: |
             echo "Pre-building Meteor packages..."
-            # This will download and compile packages without starting the server
-            timeout 600 meteor build --directory /tmp/build-test || true
+            echo "This step downloads and compiles Meteor packages to speed up the actual app start"
+            
+            # First, just download packages without building
+            echo "Downloading Meteor packages..."
+            meteor list || true
+            
+            # Run build with progress monitoring
+            (
+              meteor build --directory /tmp/build-test --debug &
+              BUILD_PID=$!
+              
+              # Monitor progress
+              START_TIME=$(date +%s)
+              while kill -0 $BUILD_PID 2>/dev/null; do
+                CURRENT_TIME=$(date +%s)
+                ELAPSED=$((CURRENT_TIME - START_TIME))
+                echo "[$(date)] Meteor packages building... (${ELAPSED}s elapsed)"
+                
+                # Check package cache size
+                if [ -d ".meteor/local" ]; then
+                  echo "Package cache size: $(du -sh .meteor/local 2>/dev/null | cut -f1)"
+                fi
+                
+                sleep 30
+              done
+              
+              wait $BUILD_PID
+              BUILD_EXIT=$?
+              echo "Build completed with exit code: $BUILD_EXIT"
+              exit $BUILD_EXIT
+            ) || {
+              echo "Pre-build timed out or failed, but continuing..."
+              echo "This is expected for large projects"
+            }
+            
+            # Clean up
             rm -rf /tmp/build-test
             echo "Pre-build completed"
       
@@ -404,7 +471,8 @@ jobs:
             export NIGHTWATCH_EXTERNAL_CHROMEDRIVER=true
             
             # Run tests without timeout command (might be causing the termination)
-            npx nightwatch --config nightwatch.circle.conf.js << parameters.test-files >> || TEST_EXIT_CODE=$?
+            TEST_FILES="<< parameters.test-files >>"
+            npx nightwatch --config nightwatch.circle.conf.js $TEST_FILES || TEST_EXIT_CODE=$?
             
             # Cleanup
             kill $CHROMEDRIVER_PID 2>/dev/null || true
@@ -435,7 +503,7 @@ workflows:
       - test-group:
           name: actors
           group-name: actors
-          test-files: "tests/nightwatch/honeycomb/enable_autopublish/crud.patients.js tests/nightwatch/honeycomb/enable_autopublish/crud.practitioners.js"
+          test-files: "tests/nightwatch/honeycomb/enable_autopublish/crud.patients.js tests/nightwatch/honeycomb/enable_autopublish/crud.practitioners.js tests/nightwatch/honeycomb/enable_autopublish/crud.careteams.js"
       
       - test-group:
           name: clinical-history
@@ -460,7 +528,7 @@ workflows:
       - test-group:
           name: care-management
           group-name: care-management
-          test-files: "tests/nightwatch/honeycomb/enable_autopublish/crud.careplans.js tests/nightwatch/honeycomb/enable_autopublish/crud.nutritionorders.js tests/nightwatch/honeycomb/enable_autopublish/crud.servicerequests.js tests/nightwatch/honeycomb/enable_autopublish/crud.communications.js"
+          test-files: "tests/nightwatch/honeycomb/enable_autopublish/crud.careplans.js tests/nightwatch/honeycomb/enable_autopublish/crud.nutritionorders.js tests/nightwatch/honeycomb/enable_autopublish/crud.servicerequests.js"
       
       - test-group:
           name: scheduling
@@ -470,12 +538,32 @@ workflows:
       - test-group:
           name: structured-data-capture
           group-name: structured-data-capture
-          test-files: "tests/nightwatch/honeycomb/enable_autopublish/crud.questionnaires.js tests/nightwatch/honeycomb/enable_autopublish/crud.questionnaireresponses.js tests/nightwatch/honeycomb/enable_autopublish/crud.researchstudy.js tests/nightwatch/honeycomb/enable_autopublish/crud.researchsubjects.js"
+          test-files: "tests/nightwatch/honeycomb/enable_autopublish/crud.questionnaires.js tests/nightwatch/honeycomb/enable_autopublish/crud.questionnaireresponses.js"
+      
+      - test-group:
+          name: clinical-trials
+          group-name: clinical-trials
+          test-files: "tests/nightwatch/honeycomb/enable_autopublish/crud.researchstudy.js tests/nightwatch/honeycomb/enable_autopublish/crud.researchsubjects.js"
       
       - test-group:
           name: administrative
           group-name: administrative
-          test-files: "tests/nightwatch/honeycomb/enable_autopublish/crud.devices.js tests/nightwatch/honeycomb/enable_autopublish/crud.consents.js tests/nightwatch/honeycomb/enable_autopublish/crud.locations.js tests/nightwatch/honeycomb/enable_autopublish/crud.supplydeliveries.js"
+          test-files: "tests/nightwatch/honeycomb/enable_autopublish/crud.consents.js tests/nightwatch/honeycomb/enable_autopublish/crud.tasks.js tests/nightwatch/honeycomb/crud.plandefinitions.js"
+
+      - test-group:
+          name: supply-chain
+          group-name: supply-chain
+          test-files: "tests/nightwatch/honeycomb/enable_autopublish/crud.devices.js tests/nightwatch/honeycomb/enable_autopublish/crud.locations.js tests/nightwatch/honeycomb/enable_autopublish/crud.supplydeliveries.js"
+
+      - test-group:
+          name: communications
+          group-name: communications
+          test-files: "tests/nightwatch/honeycomb/crud.messageheaders.js tests/nightwatch/honeycomb/enable_autopublish/crud.communications.js"
+
+      - test-group:
+          name: public-health
+          group-name: public-health
+          test-files: "tests/nightwatch/honeycomb/crud.measures.js tests/nightwatch/honeycomb/crud.measurereports.js"
 
       - test-group:
           name: library-sciences
@@ -486,11 +574,3 @@ workflows:
           name: framework
           group-name: framework
           test-files: "tests/nightwatch/honeycomb/enable_autopublish/simple-sorting-test.js tests/nightwatch/honeycomb/dev_auto_login/my.profile.js tests/nightwatch/honeycomb/default/localhost.js"
-
-# Benefits of this approach:
-# 1. Tests run in parallel across multiple containers
-# 2. Total test time reduced from ~2 hours to ~15-20 minutes
-# 3. Each group is independent - can retry specific groups
-# 4. Uses medium resource class (cheaper than large)
-# 5. Groups are logically organized by functionality
-# 6. Failed groups are easy to identify and re-run
