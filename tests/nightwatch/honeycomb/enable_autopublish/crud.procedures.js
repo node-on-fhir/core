@@ -1,6 +1,7 @@
 // tests/nightwatch/honeycomb/crud.procedures.js
 
 const testUtils = require('./shared-test-utils');
+const saveNavigationHelper = require('../../helpers/save-navigation-helper');
 
 describe('Procedures CRUD Operations', function() {
   const timestamp = Date.now();
@@ -395,71 +396,13 @@ describe('Procedures CRUD Operations', function() {
       .pause(500)
       .saveScreenshot('tests/nightwatch/screenshots/procedures/04-filled-procedure-form.png');
 
-    browser
-      .execute(function() {
-        window.consoleErrors = [];
-        const originalError = console.error;
-        console.error = function() {
-          window.consoleErrors.push(Array.from(arguments).join(' '));
-          originalError.apply(console, arguments);
-        };
-        
-        const buttons = document.querySelectorAll('button');
-        for (let button of buttons) {
-          if (button.textContent.includes('Save')) {
-            button.click();
-            return true;
-          }
-        }
-        return false;
-      }, [], function(result) {
-        browser.assert.equal(result.value, true, 'Clicked Save button');
-      });
-
-    browser
-      .waitForElementVisible('#proceduresPage', 5000);
-    
-    browser.execute(function() {
-      const currentUrl = window.location.pathname;
-      const hasTable = document.querySelector('#proceduresTable') !== null;
-      const hasProceduresPage = document.querySelector('#proceduresPage') !== null;
-      const hasDetailPage = document.querySelector('#procedureDetailPage') !== null;
-      
-      const errorElements = document.querySelectorAll('[color="error"], .error, [class*="error"], [class*="Error"]');
-      let errorText = '';
-      errorElements.forEach(el => {
-        if (el.textContent) errorText += el.textContent + ' ';
-      });
-      
-      const consoleErrors = window.consoleErrors || [];
-      
-      return {
-        url: currentUrl,
-        hasTable: hasTable,
-        hasProceduresPage: hasProceduresPage,
-        hasDetailPage: hasDetailPage,
-        hasError: errorText.length > 0,
-        errorText: errorText.trim(),
-        consoleErrors: consoleErrors,
-        userId: Meteor.userId ? Meteor.userId() : 'No Meteor.userId',
-        isLoggedIn: Meteor.userId ? !!Meteor.userId() : false
-      };
-    }, [], function(result) {
-      console.log('Post-save state:', result.value);
-      if (result.value.hasError) {
-        browser.assert.fail(`Save failed with error: ${result.value.errorText}`);
-      }
-      if (!result.value.isLoggedIn) {
-        browser.assert.fail('User is not logged in after save attempt');
-      }
-      if (result.value.url === '/procedures/new') {
-        console.log('Still on new procedure page - save may have failed silently');
-      }
+    // Save using the helper for reliable navigation
+    saveNavigationHelper.saveWithDiagnostics(browser, {
+      resourceType: 'procedures',
+      listPageId: '#proceduresPage',
+      listPagePath: '/procedures',
+      expectedRedirect: true
     });
-    
-    browser
-      .waitForElementVisible('#proceduresPage', 5000)
-      .waitForElementVisible('#proceduresPage', 5000);
     
     // Wait for the procedure to appear in the database with retries
     browser.executeAsync(function(done) {

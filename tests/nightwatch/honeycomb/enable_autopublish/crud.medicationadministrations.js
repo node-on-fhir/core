@@ -494,90 +494,14 @@ describe('MedicationAdministrations CRUD Operations', function() {
       .pause(500)
       .saveScreenshot('tests/nightwatch/screenshots/medicationadministrations/04-filled-medicationadministration-form.png');
 
-    browser
-      .execute(function() {
-        window.consoleErrors = [];
-        const originalError = console.error;
-        console.error = function() {
-          window.consoleErrors.push(Array.from(arguments).join(' '));
-          originalError.apply(console, arguments);
-        };
-        
-        // Check what data we're about to save
-        const fields = {
-          subjectDisplay: document.querySelector('#subjectDisplay')?.value,
-          performerDisplay: document.querySelector('#performerDisplay')?.value,
-          medicationCode: document.querySelector('#medicationCode')?.value,
-          medicationDisplay: document.querySelector('#medicationDisplay')?.value,
-          status: document.querySelector('#status')?.value,
-          effectiveDateTime: document.querySelector('#effectiveDateTime')?.value
-        };
-        console.log('Form field values before save:', fields);
-        
-        const buttons = document.querySelectorAll('button');
-        for (let button of buttons) {
-          if (button.textContent.includes('Save')) {
-            button.click();
-            return true;
-          }
-        }
-        return false;
-      }, [], function(result) {
-        browser.assert.equal(result.value, true, 'Clicked Save button');
-      });
-
-    /* REPLACED WITH HELPER - START
-    
-    browser.execute(function() {
-      const currentUrl = window.location.pathname;
-      const hasTable = document.querySelector('#medicationAdministrationsTable') !== null;
-      const hasMedicationAdministrationsPage = document.querySelector('#medicationAdministrationsPage') !== null;
-      const hasDetailPage = document.querySelector('#medicationAdministrationDetailPage') !== null;
-      
-      const errorElements = document.querySelectorAll('[color="error"], .error, [class*="error"], [class*="Error"]');
-      let errorText = '';
-      errorElements.forEach(el => {
-        if (el.textContent) errorText += el.textContent + ' ';
-      });
-      
-      const consoleErrors = window.consoleErrors || [];
-      
-      return {
-        url: currentUrl,
-        hasTable: hasTable,
-        hasMedicationAdministrationsPage: hasMedicationAdministrationsPage,
-        hasDetailPage: hasDetailPage,
-        hasError: errorText.length > 0,
-        errorText: errorText.trim(),
-        consoleErrors: consoleErrors,
-        userId: Meteor.userId ? Meteor.userId() : 'No Meteor.userId',
-        isLoggedIn: Meteor.userId ? !!Meteor.userId() : false
-      };
-    }, [], function(result) {
-      console.log('Post-save state:', result.value);
-      if (result.value.hasError) {
-        browser.assert.fail(`Save failed with error: ${result.value.errorText}`);
-      }
-      if (!result.value.isLoggedIn) {
-        browser.assert.fail('User is not logged in after save attempt');
-      }
-      if (result.value.url === '/medicationadministrations/new') {
-        console.log('Still on new medication administration page - save may have failed silently');
-      }
-    });
-    
-    browser
-      .waitForElementVisible('#medicationAdministrationsPage', 5000)
-      .saveScreenshot('tests/nightwatch/screenshots/medicationadministrations/05-medicationadministration-saved.png');
-    REPLACED WITH HELPER - END */
-    
-    // Save the medication administration using the helper for reliable navigation
+    // Save using the helper for reliable navigation
     saveNavigationHelper.saveWithDiagnostics(browser, {
       resourceType: 'medicationAdministrations',
       listPageId: '#medicationAdministrationsPage',
       listPagePath: '/medication-administrations',
       expectedRedirect: true
     });
+
     
     browser.saveScreenshot('tests/nightwatch/screenshots/medicationadministrations/05-medicationadministration-saved.png');
 
