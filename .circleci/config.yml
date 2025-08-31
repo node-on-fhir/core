@@ -320,35 +320,35 @@ jobs:
             # Create a minimal build to trigger package compilation
             # Use a script that outputs progress to prevent timeout
             cat > /tmp/prebuild.sh << 'EOF'
-#!/bin/bash
+            #!/bin/bash
             
-# Start the build in background with minimal options
-# Skip minification and other optimizations for prebuild
-meteor build --directory /tmp/build-test --debug &
-BUILD_PID=$!
+            # Start the build in background with minimal options
+            # Skip minification and other optimizations for prebuild
+            meteor build --directory /tmp/build-test --debug &
+            BUILD_PID=$!
             
-# Output progress every 30 seconds
-START_TIME=$(date +%s)
-while kill -0 $BUILD_PID 2>/dev/null; do
-  CURRENT_TIME=$(date +%s)
-  ELAPSED=$((CURRENT_TIME - START_TIME))
-  echo "[$(date)] Meteor packages building... (${ELAPSED}s elapsed)"
-  
-  # Check .meteor/local for progress
-  if [ -d ".meteor/local" ]; then
-    echo "Package cache size: $(du -sh .meteor/local 2>/dev/null | cut -f1)"
-  fi
-  
-  sleep 30
-done
+            # Output progress every 30 seconds
+            START_TIME=$(date +%s)
+            while kill -0 $BUILD_PID 2>/dev/null; do
+              CURRENT_TIME=$(date +%s)
+              ELAPSED=$((CURRENT_TIME - START_TIME))
+              echo "[$(date)] Meteor packages building... (${ELAPSED}s elapsed)"
+              
+              # Check .meteor/local for progress
+              if [ -d ".meteor/local" ]; then
+                echo "Package cache size: $(du -sh .meteor/local 2>/dev/null | cut -f1)"
+              fi
+              
+              sleep 30
+            done
             
-# Wait for the build to complete
-wait $BUILD_PID
-BUILD_EXIT_CODE=$?
+            # Wait for the build to complete
+            wait $BUILD_PID
+            BUILD_EXIT_CODE=$?
             
-echo "Build process completed with exit code: $BUILD_EXIT_CODE"
-exit $BUILD_EXIT_CODE
-EOF
+            echo "Build process completed with exit code: $BUILD_EXIT_CODE"
+            exit $BUILD_EXIT_CODE
+            EOF
             
             chmod +x /tmp/prebuild.sh
             # Run with longer timeout and allow failure
