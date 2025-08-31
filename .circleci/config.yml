@@ -367,7 +367,7 @@ jobs:
           no_output_timeout: 30m
           command: |
             # Set DEV_AUTO_LOGIN based on parameter
-            if [ "\<< parameters.disable-auto-login >>" = "true" ]; then
+            if [ "<< parameters.disable-auto-login >>" = "true" ]; then
               export DEV_AUTO_LOGIN=false
               export DEV_AUTO_USERNAME=""
               export DEV_AUTO_PASSWORD=""
@@ -406,7 +406,7 @@ jobs:
             done
       
       - run:
-          name: Run Nightwatch tests - \<< parameters.group-name >>
+          name: Run Nightwatch tests - << parameters.group-name >>
           command: |
             # Debug information
             echo "Starting test execution at: $(date)"
@@ -425,8 +425,8 @@ jobs:
             echo "Meteor is running"
             
             echo "========================================"
-            echo "Running test group: \<< parameters.group-name >>"
-            echo "Test files: \<< parameters.test-files >>"
+            echo "Running test group: << parameters.group-name >>"
+            echo "Test files: << parameters.test-files >>"
             echo "========================================"
             
             # Start ChromeDriver in background
@@ -451,7 +451,8 @@ jobs:
             export NIGHTWATCH_EXTERNAL_CHROMEDRIVER=true
             
             # Run tests without timeout command (might be causing the termination)
-            npx nightwatch --config nightwatch.circle.conf.js \<< parameters.test-files >> || TEST_EXIT_CODE=$?
+            TEST_FILES="<< parameters.test-files >>"
+            npx nightwatch --config nightwatch.circle.conf.js $TEST_FILES || TEST_EXIT_CODE=$?
             
             # Cleanup
             kill $CHROMEDRIVER_PID 2>/dev/null || true
