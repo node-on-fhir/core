@@ -143,6 +143,8 @@ jobs:
           DEV_AUTO_USERNAME: "demouser"
           DEV_AUTO_PASSWORD: "password2025"
           TEST_RUN: true
+          METEOR_DISABLE_OPTIMISTIC_CACHING: 1
+          METEOR_PROFILE: 100
       - image: mongo:6.0
         name: mongo
     
@@ -311,20 +313,32 @@ jobs:
             echo "Pre-building Meteor packages..."
             echo "This step downloads and compiles Meteor packages to speed up the actual app start"
             
-            # Create a minimal build to trigger package downloads
+            # First, just download packages without building
+            echo "Downloading Meteor packages..."
+            meteor list || true
+            
+            # Create a minimal build to trigger package compilation
             # Use a script that outputs progress to prevent timeout
             cat > /tmp/prebuild.sh << 'EOF'
 #!/bin/bash
             
-# Start the build in background
-meteor build --directory /tmp/build-test &
+# Start the build in background with minimal options
+# Skip minification and other optimizations for prebuild
+meteor build --directory /tmp/build-test --debug &
 BUILD_PID=$!
             
 # Output progress every 30 seconds
+START_TIME=$(date +%s)
 while kill -0 $BUILD_PID 2>/dev/null; do
-  echo "[$(date)] Meteor packages are still building..."
-  # Check disk usage to show progress
-  du -sh /tmp/build-test 2>/dev/null || echo "Build directory not yet created"
+  CURRENT_TIME=$(date +%s)
+  ELAPSED=$((CURRENT_TIME - START_TIME))
+  echo "[$(date)] Meteor packages building... (${ELAPSED}s elapsed)"
+  
+  # Check .meteor/local for progress
+  if [ -d ".meteor/local" ]; then
+    echo "Package cache size: $(du -sh .meteor/local 2>/dev/null | cut -f1)"
+  fi
+  
   sleep 30
 done
             
@@ -337,10 +351,13 @@ exit $BUILD_EXIT_CODE
 EOF
             
             chmod +x /tmp/prebuild.sh
-            # Run with longer timeout
-            timeout 1200 /tmp/prebuild.sh || true
+            # Run with longer timeout and allow failure
+            timeout 1200 /tmp/prebuild.sh || {
+              echo "Pre-build timed out or failed, but continuing..."
+              echo "This is expected for large projects"
+            }
             
-            # Clean up
+            # Clean up build artifacts but keep package cache
             rm -rf /tmp/build-test /tmp/prebuild.sh
             echo "Pre-build completed"
       
