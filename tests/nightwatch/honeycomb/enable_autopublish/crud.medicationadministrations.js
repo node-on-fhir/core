@@ -1,6 +1,7 @@
 // tests/nightwatch/honeycomb/crud.medicationadministrations.js
 
 const testUtils = require('./shared-test-utils');
+const saveNavigationHelper = require('../../helpers/save-navigation-helper');
 
 describe('MedicationAdministrations CRUD Operations', function() {
   const timestamp = Date.now();
@@ -525,8 +526,7 @@ describe('MedicationAdministrations CRUD Operations', function() {
         browser.assert.equal(result.value, true, 'Clicked Save button');
       });
 
-    browser
-      .waitForElementVisible('#medicationAdministrationsPage', 5000);
+    /* REPLACED WITH HELPER - START
     
     browser.execute(function() {
       const currentUrl = window.location.pathname;
@@ -569,6 +569,17 @@ describe('MedicationAdministrations CRUD Operations', function() {
     browser
       .waitForElementVisible('#medicationAdministrationsPage', 5000)
       .saveScreenshot('tests/nightwatch/screenshots/medicationadministrations/05-medicationadministration-saved.png');
+    REPLACED WITH HELPER - END */
+    
+    // Save the medication administration using the helper for reliable navigation
+    saveNavigationHelper.saveWithDiagnostics(browser, {
+      resourceType: 'medicationAdministrations',
+      listPageId: '#medicationAdministrationsPage',
+      listPagePath: '/medication-administrations',
+      expectedRedirect: true
+    });
+    
+    browser.saveScreenshot('tests/nightwatch/screenshots/medicationadministrations/05-medicationadministration-saved.png');
 
     // Check server-side count
     browser.executeAsync(function(done) {

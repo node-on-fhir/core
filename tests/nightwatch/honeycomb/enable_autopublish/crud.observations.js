@@ -1,6 +1,7 @@
 // tests/nightwatch/honeycomb/enable_autopublish/crud.observations.js
 
 const testUtils = require('./shared-test-utils');
+const saveNavigationHelper = require('../../helpers/save-navigation-helper');
 
 describe('Observations CRUD Operations', function() {
   const timestamp = Date.now();
@@ -491,73 +492,15 @@ describe('Observations CRUD Operations', function() {
       return { logged: true };
     });
 
-    // Save the observation
-    browser
-      .execute(function() {
-        window.consoleErrors = [];
-        const originalError = console.error;
-        console.error = function() {
-          window.consoleErrors.push(Array.from(arguments).join(' '));
-          originalError.apply(console, arguments);
-        };
-        
-        const buttons = document.querySelectorAll('button');
-        for (let button of buttons) {
-          if (button.textContent.includes('Save')) {
-            button.click();
-            return true;
-          }
-        }
-        return false;
-      }, [], function(result) {
-        browser.assert.equal(result.value, true, 'Clicked Save button');
-      });
-
-    browser
-      .pause(2000);
-    
-    // Check if we're back on the observations list page
-    browser.execute(function() {
-      const currentUrl = window.location.pathname;
-      const hasTable = document.querySelector('#observationsTable') !== null;
-      const hasObservationsPage = document.querySelector('#observationsPage') !== null;
-      const hasDetailPage = document.querySelector('#observationDetailPage') !== null;
-      
-      const errorElements = document.querySelectorAll('[color="error"], .error, [class*="error"], [class*="Error"]');
-      let errorText = '';
-      errorElements.forEach(el => {
-        if (el.textContent) errorText += el.textContent + ' ';
-      });
-      
-      const consoleErrors = window.consoleErrors || [];
-      
-      return {
-        url: currentUrl,
-        hasTable: hasTable,
-        hasObservationsPage: hasObservationsPage,
-        hasDetailPage: hasDetailPage,
-        hasError: errorText.length > 0,
-        errorText: errorText.trim(),
-        consoleErrors: consoleErrors,
-        userId: Meteor.userId ? Meteor.userId() : 'No Meteor.userId',
-        isLoggedIn: Meteor.userId ? !!Meteor.userId() : false
-      };
-    }, [], function(result) {
-      console.log('Post-save state:', result.value);
-      if (result.value.hasError) {
-        browser.assert.fail(`Save failed with error: ${result.value.errorText}`);
-      }
-      if (!result.value.isLoggedIn) {
-        browser.assert.fail('User is not logged in after save attempt');
-      }
-      if (result.value.url === '/observations/new') {
-        console.log('Still on new observation page - save may have failed silently');
-      }
+    // Save the observation using the helper for reliable navigation
+    saveNavigationHelper.saveWithDiagnostics(browser, {
+      resourceType: 'observations',
+      listPageId: '#observationsPage',
+      listPagePath: '/observations',
+      expectedRedirect: true
     });
     
-    browser
-      .waitForElementVisible('#observationsPage', 5000)
-      .saveScreenshot('tests/nightwatch/screenshots/observations/05-observation-saved.png');
+    browser.saveScreenshot('tests/nightwatch/screenshots/observations/05-observation-saved.png');
   });
 
   it('05. Verify new observation appears in list', browser => {
