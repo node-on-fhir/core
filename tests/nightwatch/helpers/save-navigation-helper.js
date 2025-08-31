@@ -62,12 +62,63 @@ module.exports = {
       
       // Check if we're still on the same page
       if (state.currentUrl === state.beforeSaveUrl && state.currentUrl.includes('/new')) {
-        console.log('Still on new page after save - attempting manual navigation');
+        console.log('Still on new page after save - attempting client-side navigation');
         
-        // Force navigation to list page
-        browser
-          .url(`http://localhost:3000/${resourcePath}`)
-          .pause(1000);
+        // Try client-side navigation first to preserve Session
+        browser.execute(function(targetPath) {
+          console.log('Attempting client-side navigation to:', targetPath);
+          
+          // Check if we have React Router's navigate function
+          if (window.navigate && typeof window.navigate === 'function') {
+            console.log('Using window.navigate');
+            window.navigate(targetPath);
+            return { method: 'navigate', success: true };
+          }
+          
+          // Check for useNavigate hook stored globally (some apps do this)
+          if (window.__navigate && typeof window.__navigate === 'function') {
+            console.log('Using window.__navigate');
+            window.__navigate(targetPath);
+            return { method: '__navigate', success: true };
+          }
+          
+          // Try React Router v6 history
+          if (window.__reactRouterHistory && window.__reactRouterHistory.push) {
+            console.log('Using React Router history.push');
+            window.__reactRouterHistory.push(targetPath);
+            return { method: 'history.push', success: true };
+          }
+          
+          // Try HTML5 History API with popstate event
+          if (window.history && window.history.pushState) {
+            console.log('Using HTML5 History API');
+            window.history.pushState({}, '', targetPath);
+            window.dispatchEvent(new PopStateEvent('popstate', { state: {} }));
+            
+            // Give React Router time to respond
+            setTimeout(() => {
+              window.dispatchEvent(new Event('pushstate'));
+            }, 100);
+            
+            return { method: 'pushState', success: true };
+          }
+          
+          // No client-side navigation available
+          return { method: 'none', success: false };
+        }, [`/${resourcePath}`], function(result) {
+          console.log('Client-side navigation result:', result.value);
+          
+          // If client-side navigation failed, fall back to full page navigation
+          if (!result.value.success) {
+            console.log('Client-side navigation not available, using full page navigation');
+            browser
+              .url(`http://localhost:3000/${resourcePath}`)
+              .pause(1000);
+          } else {
+            // Give client-side navigation time to complete
+            browser.pause(1000);
+          }
+        });
       }
     });
 
@@ -75,6 +126,20 @@ module.exports = {
     browser
       .waitForElementVisible(pageSelectorId, 10000) // Increased timeout for CI
       .pause(500); // Small pause for stability
+
+    // Verify Session was preserved (for debugging)
+    browser.execute(function() {
+      if (typeof Session !== 'undefined') {
+        return {
+          hasSession: true,
+          selectedPatientId: Session.get('selectedPatientId'),
+          selectedPatient: Session.get('selectedPatient') ? 'Present' : 'Missing'
+        };
+      }
+      return { hasSession: false };
+    }, [], function(result) {
+      console.log('Session state after navigation:', result.value);
+    });
 
     // Execute callback if provided
     if (callback) {
