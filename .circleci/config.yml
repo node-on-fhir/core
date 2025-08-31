@@ -317,48 +317,37 @@ jobs:
             echo "Downloading Meteor packages..."
             meteor list || true
             
-            # Create a minimal build to trigger package compilation
-            # Use a script that outputs progress to prevent timeout
-            cat > /tmp/prebuild.sh << 'EOF'
-            #!/bin/bash
-            
-            # Start the build in background with minimal options
-            # Skip minification and other optimizations for prebuild
-            meteor build --directory /tmp/build-test --debug &
-            BUILD_PID=$!
-            
-            # Output progress every 30 seconds
-            START_TIME=$(date +%s)
-            while kill -0 $BUILD_PID 2>/dev/null; do
-              CURRENT_TIME=$(date +%s)
-              ELAPSED=$((CURRENT_TIME - START_TIME))
-              echo "[$(date)] Meteor packages building... (${ELAPSED}s elapsed)"
+            # Run build with progress monitoring
+            (
+              meteor build --directory /tmp/build-test --debug &
+              BUILD_PID=$!
               
-              # Check .meteor/local for progress
-              if [ -d ".meteor/local" ]; then
-                echo "Package cache size: $(du -sh .meteor/local 2>/dev/null | cut -f1)"
-              fi
+              # Monitor progress
+              START_TIME=$(date +%s)
+              while kill -0 $BUILD_PID 2>/dev/null; do
+                CURRENT_TIME=$(date +%s)
+                ELAPSED=$((CURRENT_TIME - START_TIME))
+                echo "[$(date)] Meteor packages building... (${ELAPSED}s elapsed)"
+                
+                # Check package cache size
+                if [ -d ".meteor/local" ]; then
+                  echo "Package cache size: $(du -sh .meteor/local 2>/dev/null | cut -f1)"
+                fi
+                
+                sleep 30
+              done
               
-              sleep 30
-            done
-            
-            # Wait for the build to complete
-            wait $BUILD_PID
-            BUILD_EXIT_CODE=$?
-            
-            echo "Build process completed with exit code: $BUILD_EXIT_CODE"
-            exit $BUILD_EXIT_CODE
-            EOF
-            
-            chmod +x /tmp/prebuild.sh
-            # Run with longer timeout and allow failure
-            timeout 1200 /tmp/prebuild.sh || {
+              wait $BUILD_PID
+              BUILD_EXIT=$?
+              echo "Build completed with exit code: $BUILD_EXIT"
+              exit $BUILD_EXIT
+            ) || {
               echo "Pre-build timed out or failed, but continuing..."
               echo "This is expected for large projects"
             }
             
-            # Clean up build artifacts but keep package cache
-            rm -rf /tmp/build-test /tmp/prebuild.sh
+            # Clean up
+            rm -rf /tmp/build-test
             echo "Pre-build completed"
       
       - run:
@@ -378,7 +367,7 @@ jobs:
           no_output_timeout: 30m
           command: |
             # Set DEV_AUTO_LOGIN based on parameter
-            if [ "<< parameters.disable-auto-login >>" = "true" ]; then
+            if [ "\<< parameters.disable-auto-login >>" = "true" ]; then
               export DEV_AUTO_LOGIN=false
               export DEV_AUTO_USERNAME=""
               export DEV_AUTO_PASSWORD=""
@@ -417,7 +406,7 @@ jobs:
             done
       
       - run:
-          name: Run Nightwatch tests - << parameters.group-name >>
+          name: Run Nightwatch tests - \<< parameters.group-name >>
           command: |
             # Debug information
             echo "Starting test execution at: $(date)"
@@ -436,8 +425,8 @@ jobs:
             echo "Meteor is running"
             
             echo "========================================"
-            echo "Running test group: << parameters.group-name >>"
-            echo "Test files: << parameters.test-files >>"
+            echo "Running test group: \<< parameters.group-name >>"
+            echo "Test files: \<< parameters.test-files >>"
             echo "========================================"
             
             # Start ChromeDriver in background
@@ -462,7 +451,7 @@ jobs:
             export NIGHTWATCH_EXTERNAL_CHROMEDRIVER=true
             
             # Run tests without timeout command (might be causing the termination)
-            npx nightwatch --config nightwatch.circle.conf.js << parameters.test-files >> || TEST_EXIT_CODE=$?
+            npx nightwatch --config nightwatch.circle.conf.js \<< parameters.test-files >> || TEST_EXIT_CODE=$?
             
             # Cleanup
             kill $CHROMEDRIVER_PID 2>/dev/null || true
