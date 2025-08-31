@@ -299,14 +299,49 @@ jobs:
             echo "Installing npm dependencies..."
             meteor npm install --verbose
             echo "npm install completed successfully"
+            
+            # Update browserslist database to avoid warnings
+            echo "Updating browserslist database..."
+            npx update-browserslist-db@latest || true
       
       - run:
           name: Pre-build Meteor packages
+          no_output_timeout: 20m
           command: |
             echo "Pre-building Meteor packages..."
-            # This will download and compile packages without starting the server
-            timeout 600 meteor build --directory /tmp/build-test || true
-            rm -rf /tmp/build-test
+            echo "This step downloads and compiles Meteor packages to speed up the actual app start"
+            
+            # Create a minimal build to trigger package downloads
+            # Use a script that outputs progress to prevent timeout
+            cat > /tmp/prebuild.sh << 'EOF'
+#!/bin/bash
+            
+# Start the build in background
+meteor build --directory /tmp/build-test &
+BUILD_PID=$!
+            
+# Output progress every 30 seconds
+while kill -0 $BUILD_PID 2>/dev/null; do
+  echo "[$(date)] Meteor packages are still building..."
+  # Check disk usage to show progress
+  du -sh /tmp/build-test 2>/dev/null || echo "Build directory not yet created"
+  sleep 30
+done
+            
+# Wait for the build to complete
+wait $BUILD_PID
+BUILD_EXIT_CODE=$?
+            
+echo "Build process completed with exit code: $BUILD_EXIT_CODE"
+exit $BUILD_EXIT_CODE
+EOF
+            
+            chmod +x /tmp/prebuild.sh
+            # Run with longer timeout
+            timeout 1200 /tmp/prebuild.sh || true
+            
+            # Clean up
+            rm -rf /tmp/build-test /tmp/prebuild.sh
             echo "Pre-build completed"
       
       - run:
