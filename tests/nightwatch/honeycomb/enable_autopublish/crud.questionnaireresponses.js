@@ -1,6 +1,7 @@
 // tests/nightwatch/honeycomb/crud.questionnaireresponses.js
 
 const testUtils = require('./shared-test-utils');
+const saveNavigationHelper = require('../../helpers/save-navigation-helper');
 
 describe('QuestionnaireResponses CRUD Operations', function() {
   const timestamp = Date.now();
@@ -399,71 +400,12 @@ describe('QuestionnaireResponses CRUD Operations', function() {
       .pause(500)
       .saveScreenshot('tests/nightwatch/screenshots/questionnaireresponses/04-filled-questionnaireresponse-form.png');
 
-    browser
-      .execute(function() {
-        window.consoleErrors = [];
-        const originalError = console.error;
-        console.error = function() {
-          window.consoleErrors.push(Array.from(arguments).join(' '));
-          originalError.apply(console, arguments);
-        };
-        
-        const buttons = document.querySelectorAll('button');
-        for (let button of buttons) {
-          if (button.textContent.includes('Save')) {
-            button.click();
-            return true;
-          }
-        }
-        return false;
-      }, [], function(result) {
-        browser.assert.equal(result.value, true, 'Clicked Save button');
-      });
-
-    browser
-      .waitForElementVisible('#questionnaireResponsesPage', 5000);
-    
-    browser.execute(function() {
-      const currentUrl = window.location.pathname;
-      const hasTable = document.querySelector('#questionnaireResponsesTable') !== null;
-      const hasQuestionnaireResponsesPage = document.querySelector('#questionnaireResponsesPage') !== null;
-      const hasDetailPage = document.querySelector('#questionnaireResponseDetailPage') !== null;
-      
-      const errorElements = document.querySelectorAll('[color="error"], .error, [class*="error"], [class*="Error"]');
-      let errorText = '';
-      errorElements.forEach(el => {
-        if (el.textContent) errorText += el.textContent + ' ';
-      });
-      
-      const consoleErrors = window.consoleErrors || [];
-      
-      return {
-        url: currentUrl,
-        hasTable: hasTable,
-        hasQuestionnaireResponsesPage: hasQuestionnaireResponsesPage,
-        hasDetailPage: hasDetailPage,
-        hasError: errorText.length > 0,
-        errorText: errorText.trim(),
-        consoleErrors: consoleErrors,
-        userId: Meteor.userId ? Meteor.userId() : 'No Meteor.userId',
-        isLoggedIn: Meteor.userId ? !!Meteor.userId() : false
-      };
-    }, [], function(result) {
-      console.log('Post-save state:', result.value);
-      if (result.value.hasError) {
-        browser.assert.fail(`Save failed with error: ${result.value.errorText}`);
-      }
-      if (!result.value.isLoggedIn) {
-        browser.assert.fail('User is not logged in after save attempt');
-      }
-      if (result.value.url === '/questionnaireresponses/new') {
-        console.log('Still on new questionnaire response page - save may have failed silently');
-      }
+    // Use save-navigation-helper to handle save and navigation
+    saveNavigationHelper.clickSaveAndNavigate(browser, {
+      resourceType: 'questionnaireresponses',
+      expectedUrl: '/questionnaire-responses',
+      screenshot: 'tests/nightwatch/screenshots/questionnaireresponses/05-questionnaireresponse-saved.png'
     });
-    
-    browser
-      .waitForElementVisible('#questionnaireResponsesPage', 5000)
-      .saveScreenshot('tests/nightwatch/screenshots/questionnaireresponses/05-questionnaireresponse-saved.png');
   });
 
   it('05. Verify new questionnaire response appears in list', browser => {
