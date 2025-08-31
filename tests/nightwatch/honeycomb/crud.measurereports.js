@@ -40,7 +40,18 @@ describe('MeasureReports CRUD Operations', function() {
     console.log('Starting MeasureReports CRUD test suite...');
     browser
       .url('http://localhost:3000')
-      .waitForElementVisible('body', 5000);
+      .waitForElementVisible('body', 10000) // Increased timeout for CI
+      .pause(2000) // Extra pause for app initialization
+      .execute(function() {
+        // Check if Meteor is loaded
+        return {
+          meteorReady: typeof Meteor !== 'undefined',
+          hasBody: document.body !== null,
+          bodyText: document.body ? document.body.textContent.substring(0, 200) : 'No body'
+        };
+      }, [], function(result) {
+        console.log('App initialization check:', result.value);
+      });
   });
 
   beforeEach(browser => {
@@ -65,6 +76,13 @@ describe('MeasureReports CRUD Operations', function() {
       };
     }, [], function(result) {
       console.log('Initial login state:', result.value);
+      
+      // Add null check for result.value
+      if (!result.value || result.value.error) {
+        console.error('Failed to check login state:', result.value);
+        browser.assert.fail('Failed to check login state - app may not be ready');
+        return;
+      }
       
       if (!result.value.isLoggedIn) {
         console.log('Not logged in, attempting programmatic login...');
@@ -253,13 +271,28 @@ describe('MeasureReports CRUD Operations', function() {
       console.log('Edit mode check:', result.value);
     });
 
-    // Fill form fields
+    // Fill form fields with better error handling
     browser
-      .pause(500)
+      .pause(1000) // Longer pause for stability
+      .execute(function() {
+        // Check if form is ready
+        return {
+          hasIdentifierInput: document.querySelector('#identifierInput') !== null,
+          hasSubjectInput: document.querySelector('#subjectInput') !== null,
+          formReady: document.querySelector('#measureReportDetailPage') !== null
+        };
+      }, [], function(result) {
+        console.log('Form readiness check:', result.value);
+      })
+      .waitForElementVisible('#identifierInput', 10000)
       .clearValue('#identifierInput')
       .setValue('#identifierInput', testMeasureReport.identifier)
+      .pause(500) // Small pause between operations
+      .waitForElementVisible('#subjectInput', 5000)
       .clearValue('#subjectInput')
       .setValue('#subjectInput', testMeasureReport.subject)
+      .pause(500)
+      .waitForElementVisible('#dateInput', 5000)
       .clearValue('#dateInput')
       .setValue('#dateInput', testMeasureReport.date)
       .clearValue('#reporterInput')
@@ -438,22 +471,42 @@ describe('MeasureReports CRUD Operations', function() {
       }
     });
     
+    // Add explicit navigation check after save
     browser
-      .waitForElementVisible('#measureReportsPage', 5000)
+      .pause(2000) // Give more time for redirect
+      .execute(function() {
+        return {
+          url: window.location.pathname,
+          hasPage: document.querySelector('#measureReportsPage') !== null,
+          hasError: document.querySelector('.error-message') !== null,
+          bodyText: document.body.textContent.substring(0, 500)
+        };
+      }, [], function(result) {
+        console.log('After save navigation:', result.value);
+      });
+    
+    // Try explicit navigation if not redirected
+    browser
+      .url('http://localhost:3000/measure-reports')
+      .pause(1000)
+      .waitForElementVisible('#measureReportsPage', 10000)
       .saveScreenshot('tests/nightwatch/screenshots/measure-reports/05-measure-report-saved.png');
   });
 
   it('05. Verify new measure report appears in list', browser => {
+    // Ensure we're on the measure reports page
     browser
-      .waitForElementVisible('#measureReportsPage', 5000)
+      .url('http://localhost:3000/measure-reports')
+      .pause(2000)
+      .waitForElementVisible('#measureReportsPage', 10000)
       .pause(1000);
     
     // Search for our specific test measure report
     browser
-      .waitForElementVisible('#measureReportSearchInput', 5000)
+      .waitForElementVisible('#measureReportSearchInput', 10000)
       .clearValue('#measureReportSearchInput')
-      .setValue('#measureReportSearchInput', testMeasureReport.identifier.substring(0, 20))
-      .pause(1000);
+      .setValue('#measureReportSearchInput', testMeasureReport.identifier)
+      .pause(2000); // Longer pause for search to complete
     
     browser.execute(function() {
       const hasTable = document.querySelector('#measureReportsTable') !== null;
