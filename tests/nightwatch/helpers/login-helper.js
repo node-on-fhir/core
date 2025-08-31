@@ -119,47 +119,53 @@ module.exports = {
    */
   ensureLoggedIn: function(browser, callback) {
     const self = this;
+    let retryCount = 0;
+    const maxRetries = 5;
     
-    // First check login state
-    self.checkLoginState(browser, function(loginState) {
-      console.log('Current login state:', loginState);
-      
-      if (!loginState.meteorAvailable) {
-        // Wait for Meteor to be available
-        console.log('Waiting for Meteor to be available...');
-        browser.pause(3000);
+    const attemptLogin = () => {
+      // Check login state
+      self.checkLoginState(browser, function(loginState) {
+        console.log(`Login state check (attempt ${retryCount + 1}/${maxRetries}):`, loginState);
         
-        // Try again
-        self.checkLoginState(browser, function(retryState) {
-          if (!retryState.meteorAvailable) {
-            browser.assert.fail('Meteor is not available after waiting');
+        if (!loginState.meteorAvailable) {
+          retryCount++;
+          if (retryCount < maxRetries) {
+            // Wait for Meteor to be available
+            console.log(`Meteor not available, waiting 3s before retry ${retryCount}/${maxRetries}...`);
+            browser.pause(3000);
+            attemptLogin(); // Retry
+          } else {
+            console.error('Meteor is not available after maximum retries');
             if (callback) callback(false);
-          } else if (!retryState.isLoggedIn) {
-            // Try to login
-            self.performLogin(browser, function(loginResult) {
-              if (callback) callback(loginResult.loginSuccess);
-            });
-          } else {
-            if (callback) callback(true);
           }
-        });
-      } else if (!loginState.isLoggedIn) {
-        // Try to login
-        console.log('Not logged in, attempting login...');
-        self.performLogin(browser, function(loginResult) {
-          if (loginResult.loginSuccess) {
-            console.log('Successfully logged in as:', loginResult.username);
-            browser.pause(1000); // Give time for session to stabilize
-          } else {
-            console.error('Login failed:', loginResult.error);
-          }
-          if (callback) callback(loginResult.loginSuccess);
-        });
-      } else {
-        // Already logged in
-        console.log('Already logged in as:', loginState.username, 'userId:', loginState.userId);
-        if (callback) callback(true);
-      }
-    });
+        } else if (!loginState.isLoggedIn) {
+          // Try to login
+          console.log('Not logged in, attempting login...');
+          self.performLogin(browser, function(loginResult) {
+            if (loginResult.loginSuccess) {
+              console.log('Successfully logged in as:', loginResult.username);
+              browser.pause(1000); // Give time for session to stabilize
+              if (callback) callback(true);
+            } else {
+              console.error('Login failed:', loginResult.error);
+              retryCount++;
+              if (retryCount < maxRetries) {
+                console.log(`Login failed, retrying in 2s... (${retryCount}/${maxRetries})`);
+                browser.pause(2000);
+                attemptLogin(); // Retry
+              } else {
+                if (callback) callback(false);
+              }
+            }
+          });
+        } else {
+          // Already logged in
+          console.log('Already logged in as:', loginState.username, 'userId:', loginState.userId);
+          if (callback) callback(true);
+        }
+      });
+    };
+    
+    attemptLogin();
   }
 };

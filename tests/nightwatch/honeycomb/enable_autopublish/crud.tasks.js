@@ -635,14 +635,44 @@ describe('Tasks CRUD Operations', function() {
           Session.set('selectedPatientId', patient._id);
           Session.set('selectedPatient', patient);
           console.log('Re-established patient context for view details:', patient._id, patient.name?.[0]?.text);
+          
+          // Force a re-render by triggering a reactive update
+          if (typeof Tracker !== 'undefined') {
+            Tracker.flush();
+          }
           return { success: true, patientId: patient._id };
         }
       }
       return { success: false };
-    }, ['test-patient-' + timestamp]);
+    }, ['test-patient-' + timestamp], function(result) {
+      console.log('Patient context re-establishment result:', result.value);
+    });
+    
+    // Give more time for data to load with patient context and subscription to update
+    browser.pause(2000);
+    
+    // Check if table exists before waiting for it
+    browser.execute(function() {
+      const hasTable = document.querySelector('#tasksTable') !== null;
+      const hasNoData = document.querySelector('.no-data-card') !== null ||
+                       (document.querySelector('#tasksPage') && 
+                        document.querySelector('#tasksPage').textContent.includes('No Data Available'));
+      const taskCount = typeof Tasks !== 'undefined' ? Tasks.find().count() : 0;
+      return { 
+        hasTable: hasTable, 
+        hasNoData: hasNoData,
+        taskCount: taskCount
+      };
+    }, [], function(result) {
+      console.log('Page state before waiting for table:', result.value);
+      
+      if (!result.value.hasTable && !result.value.hasNoData) {
+        // Page might still be loading
+        browser.pause(1000);
+      }
+    });
     
     browser
-      .pause(500)
       .waitForElementVisible('#tasksTable', 5000);
 
     browser

@@ -63,8 +63,7 @@ parameters:
           "tests": [
             "tests/nightwatch/honeycomb/enable_autopublish/crud.careplans.js",
             "tests/nightwatch/honeycomb/enable_autopublish/crud.nutritionorders.js",
-            "tests/nightwatch/honeycomb/enable_autopublish/crud.servicerequests.js",
-            "tests/nightwatch/honeycomb/enable_autopublish/crud.communications.js"
+            "tests/nightwatch/honeycomb/enable_autopublish/crud.servicerequests.js"
           ]
         },
         {
@@ -78,7 +77,12 @@ parameters:
           "name": "structured-data-capture",
           "tests": [
             "tests/nightwatch/honeycomb/enable_autopublish/crud.questionnaires.js",
-            "tests/nightwatch/honeycomb/enable_autopublish/crud.questionnaireresponses.js",
+            "tests/nightwatch/honeycomb/enable_autopublish/crud.questionnaireresponses.js"
+          ]
+        },
+        {
+          "name": "clinical-trials",
+          "tests": [
             "tests/nightwatch/honeycomb/enable_autopublish/crud.researchstudy.js",
             "tests/nightwatch/honeycomb/enable_autopublish/crud.researchsubjects.js"
           ]
@@ -86,15 +90,31 @@ parameters:
         {
           "name": "administrative",
           "tests": [
+            "tests/nightwatch/honeycomb/enable_autopublish/crud.consents.js",
+            "tests/nightwatch/honeycomb/enable_autopublish/crud.tasks.js",
+            "tests/nightwatch/honeycomb/crud.plandefinitions.js"
+          ]
+        },
+        {
+          "name": "supply-chain",
+          "tests": [
             "tests/nightwatch/honeycomb/enable_autopublish/crud.locations.js",
             "tests/nightwatch/honeycomb/enable_autopublish/crud.devices.js",
-            "tests/nightwatch/honeycomb/enable_autopublish/crud.consents.js",
-            "tests/nightwatch/honeycomb/enable_autopublish/crud.supplydeliveries.js",
-            "tests/nightwatch/honeycomb/enable_autopublish/crud.tasks.js",
-            "tests/nightwatch/honeycomb/crud.measures.js",
-            "tests/nightwatch/honeycomb/crud.measurereports.js",
-            "tests/nightwatch/honeycomb/crud.plandefinitions.js",
+            "tests/nightwatch/honeycomb/enable_autopublish/crud.supplydeliveries.js"
+          ]
+        },
+        {
+          "name": "communications",
+          "tests": [
+            "tests/nightwatch/honeycomb/enable_autopublish/crud.communications.js"
             "tests/nightwatch/honeycomb/crud.messageheaders.js"
+          ]
+        },
+        {
+          "name": "public-health",
+          "tests": [
+            "tests/nightwatch/honeycomb/crud.measures.js",
+            "tests/nightwatch/honeycomb/crud.measurereports.js"
           ]
         },
         {
@@ -508,7 +528,7 @@ workflows:
       - test-group:
           name: care-management
           group-name: care-management
-          test-files: "tests/nightwatch/honeycomb/enable_autopublish/crud.careplans.js tests/nightwatch/honeycomb/enable_autopublish/crud.nutritionorders.js tests/nightwatch/honeycomb/enable_autopublish/crud.servicerequests.js tests/nightwatch/honeycomb/enable_autopublish/crud.communications.js"
+          test-files: "tests/nightwatch/honeycomb/enable_autopublish/crud.careplans.js tests/nightwatch/honeycomb/enable_autopublish/crud.nutritionorders.js tests/nightwatch/honeycomb/enable_autopublish/crud.servicerequests.js"
       
       - test-group:
           name: scheduling
@@ -518,12 +538,32 @@ workflows:
       - test-group:
           name: structured-data-capture
           group-name: structured-data-capture
-          test-files: "tests/nightwatch/honeycomb/enable_autopublish/crud.questionnaires.js tests/nightwatch/honeycomb/enable_autopublish/crud.questionnaireresponses.js tests/nightwatch/honeycomb/enable_autopublish/crud.researchstudy.js tests/nightwatch/honeycomb/enable_autopublish/crud.researchsubjects.js"
+          test-files: "tests/nightwatch/honeycomb/enable_autopublish/crud.questionnaires.js tests/nightwatch/honeycomb/enable_autopublish/crud.questionnaireresponses.js"
+      
+      - test-group:
+          name: clinical-trials
+          group-name: clinical-trials
+          test-files: "tests/nightwatch/honeycomb/enable_autopublish/crud.researchstudy.js tests/nightwatch/honeycomb/enable_autopublish/crud.researchsubjects.js"
       
       - test-group:
           name: administrative
           group-name: administrative
-          test-files: "tests/nightwatch/honeycomb/enable_autopublish/crud.devices.js tests/nightwatch/honeycomb/enable_autopublish/crud.consents.js tests/nightwatch/honeycomb/enable_autopublish/crud.locations.js tests/nightwatch/honeycomb/enable_autopublish/crud.supplydeliveries.js tests/nightwatch/honeycomb/enable_autopublish/crud.tasks.js tests/nightwatch/honeycomb/crud.measures.js tests/nightwatch/honeycomb/crud.measurereports.js tests/nightwatch/honeycomb/crud.plandefinitions.js tests/nightwatch/honeycomb/crud.messageheaders.js"
+          test-files: "tests/nightwatch/honeycomb/enable_autopublish/crud.consents.js tests/nightwatch/honeycomb/enable_autopublish/crud.tasks.js tests/nightwatch/honeycomb/crud.plandefinitions.js"
+
+      - test-group:
+          name: supply-chain
+          group-name: supply-chain
+          test-files: "tests/nightwatch/honeycomb/enable_autopublish/crud.devices.js tests/nightwatch/honeycomb/enable_autopublish/crud.locations.js tests/nightwatch/honeycomb/enable_autopublish/crud.supplydeliveries.js"
+
+      - test-group:
+          name: communications
+          group-name: communications
+          test-files: "tests/nightwatch/honeycomb/crud.messageheaders.js tests/nightwatch/honeycomb/enable_autopublish/crud.communications.js"
+
+      - test-group:
+          name: public-health
+          group-name: public-health
+          test-files: "tests/nightwatch/honeycomb/crud.measures.js tests/nightwatch/honeycomb/crud.measurereports.js"
 
       - test-group:
           name: library-sciences
