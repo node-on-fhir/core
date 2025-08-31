@@ -764,6 +764,12 @@ describe('Tasks CRUD Operations', function() {
   });
 
   it('07. Update existing task', browser => {
+    // Navigate to tasks list page
+    browser
+      .url('http://localhost:3000/tasks')
+      .waitForElementVisible('#tasksPage', 5000)
+      .pause(1000);
+    
     // Re-establish patient context after navigation
     browser.execute(function(testIdentifier) {
       if (typeof Session !== 'undefined' && typeof Patients !== 'undefined') {

@@ -660,6 +660,26 @@ describe('Measures CRUD Operations', function() {
       })
       .pause(500);
 
+    // Ensure we're in edit mode
+    browser.execute(function() {
+      const versionInput = document.querySelector('#versionInput');
+      if (versionInput && versionInput.disabled) {
+        // Find and click edit button
+        const buttons = document.querySelectorAll('button');
+        for (let button of buttons) {
+          if (button.textContent.includes('Edit')) {
+            button.click();
+            return 'clicked_edit';
+          }
+        }
+      }
+      return 'already_editable';
+    }, [], function(result) {
+      console.log('Edit mode check:', result.value);
+    });
+
+    browser.pause(1000); // Give time for form to become editable
+
     // Update measure details
     browser
       .clearValue('#titleInput')

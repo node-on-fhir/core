@@ -71,6 +71,7 @@ describe('MeasureReports CRUD Operations', function() {
         browser.assert.fail('Failed to ensure user is logged in');
       } else {
         browser.assert.ok(true, 'User is logged in');
+      }
       
       // Clean up any existing test data
       browser.executeAsync(function(done) {
