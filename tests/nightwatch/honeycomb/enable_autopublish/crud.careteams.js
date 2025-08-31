@@ -1,6 +1,7 @@
 // tests/nightwatch/honeycomb/crud.careteams.js
 
 const testUtils = require('./shared-test-utils');
+const saveNavigationHelper = require('../../helpers/save-navigation-helper');
 
 describe('CareTeams CRUD Operations', function() {
   const timestamp = Date.now();
@@ -466,72 +467,15 @@ describe('CareTeams CRUD Operations', function() {
       .pause(500)
       .saveScreenshot('tests/nightwatch/screenshots/careteams/04-filled-careteam-form.png');
 
-    browser
-      .execute(function() {
-        window.consoleErrors = [];
-        const originalError = console.error;
-        console.error = function() {
-          window.consoleErrors.push(Array.from(arguments).join(' '));
-          originalError.apply(console, arguments);
-        };
-        
-        const buttons = document.querySelectorAll('button');
-        for (let button of buttons) {
-          if (button.textContent.includes('Save')) {
-            button.click();
-            return true;
-          }
-        }
-        return false;
-      }, [], function(result) {
-        browser.assert.equal(result.value, true, 'Clicked Save button');
-      });
-
-    browser
-      .pause(2000) // Added pause after save button click
-      .waitForElementVisible('#careTeamsPage', 5000);
-    
-    browser.execute(function() {
-      const currentUrl = window.location.pathname;
-      const hasTable = document.querySelector('#careTeamsTable') !== null;
-      const hasCareTeamsPage = document.querySelector('#careTeamsPage') !== null;
-      const hasDetailPage = document.querySelector('#careTeamDetailPage') !== null;
-      
-      const errorElements = document.querySelectorAll('[color="error"], .error, [class*="error"], [class*="Error"]');
-      let errorText = '';
-      errorElements.forEach(el => {
-        if (el.textContent) errorText += el.textContent + ' ';
-      });
-      
-      const consoleErrors = window.consoleErrors || [];
-      
-      return {
-        url: currentUrl,
-        hasTable: hasTable,
-        hasCareTeamsPage: hasCareTeamsPage,
-        hasDetailPage: hasDetailPage,
-        hasError: errorText.length > 0,
-        errorText: errorText.trim(),
-        consoleErrors: consoleErrors,
-        userId: Meteor.userId ? Meteor.userId() : 'No Meteor.userId',
-        isLoggedIn: Meteor.userId ? !!Meteor.userId() : false
-      };
-    }, [], function(result) {
-      console.log('Post-save state:', result.value);
-      if (result.value.hasError) {
-        browser.assert.fail(`Save failed with error: ${result.value.errorText}`);
+    // Use save-navigation-helper to handle save and navigation
+    saveNavigationHelper.saveAndNavigate(
+      browser, 
+      'care-teams', 
+      '#careTeamsPage',
+      function() {
+        browser.saveScreenshot('tests/nightwatch/screenshots/careteams/05-careteam-saved.png');
       }
-      if (!result.value.isLoggedIn) {
-        browser.assert.fail('User is not logged in after save attempt');
-      }
-      if (result.value.url === '/care-teams/new') {
-        console.log('Still on new care team page - save may have failed silently');
-      }
-    });
-    
-    browser
-      .waitForElementVisible('#careTeamsPage', 5000)
-      .saveScreenshot('tests/nightwatch/screenshots/careteams/05-careteam-saved.png');
+    );
   });
 
   it('05. Verify new care team appears in list', browser => {
