@@ -36,7 +36,16 @@ Meteor.methods({
 
   'pacio.assignPatientToBed': async function(bedId, patientId, additionalInfo) {
     check(bedId, String);
-    check(patientId, String);
+    // Handle both String IDs and MongoDB ObjectIDs
+    check(patientId, Match.Where(function(id) {
+      // Accept strings
+      if (typeof id === 'string') return true;
+      // Accept MongoDB ObjectIDs (which have _str property or toHexString method)
+      if (typeof id === 'object' && id !== null) {
+        return id._str !== undefined || typeof id.toHexString === 'function' || typeof id.toString === 'function';
+      }
+      return false;
+    }));
     check(additionalInfo, Match.Maybe({
       attendingPhysician: Match.Maybe(String),
       primaryNurse: Match.Maybe(String),
@@ -46,6 +55,21 @@ Meteor.methods({
 
     if (!this.userId) {
       throw new Meteor.Error('unauthorized', 'User must be logged in');
+    }
+
+    // Convert patientId to string if it's a MongoDB ObjectID
+    let patientIdString = patientId;
+    if (typeof patientId === 'object' && patientId !== null) {
+      if (patientId._str) {
+        // MongoDB ObjectID from client (has _str property)
+        patientIdString = patientId._str;
+      } else if (typeof patientId.toHexString === 'function') {
+        // MongoDB ObjectID with toHexString method
+        patientIdString = patientId.toHexString();
+      } else if (typeof patientId.toString === 'function') {
+        // Generic object with toString method
+        patientIdString = patientId.toString();
+      }
     }
 
     // Check if bed exists and is available
@@ -64,7 +88,24 @@ Meteor.methods({
       throw new Meteor.Error('patients-not-found', 'Patients collection not found');
     }
 
-    const patient = await Patients.findOneAsync({ _id: patientId });
+    // Query for patient - handle both string and ObjectID lookups
+    let patient;
+    
+    if (process.env.USE_MONGO_OBJECTID) {
+      // When using MongoDB ObjectIDs, convert string to ObjectID for query
+      const { Mongo } = Package.mongo;
+      try {
+        const objectId = new Mongo.ObjectID(patientIdString);
+        patient = await Patients.findOneAsync({ _id: objectId });
+      } catch (e) {
+        // If ObjectID creation fails, try with string
+        patient = await Patients.findOneAsync({ _id: patientIdString });
+      }
+    } else {
+      // Standard string ID lookup
+      patient = await Patients.findOneAsync({ _id: patientIdString });
+    }
+    
     if (!patient) {
       throw new Meteor.Error('patient-not-found', 'Patient not found');
     }
@@ -80,7 +121,7 @@ Meteor.methods({
     try {
       const updateFields = {
         status: 'occupied',
-        patientId: patientId,
+        patientId: patientIdString,
         patientName: patientName,
         patientMRN: patientMRN,
         patientAge: patientAge,
@@ -105,7 +146,7 @@ Meteor.methods({
         { $set: updateFields }
       );
 
-      console.log(`Bed ${bed.bedId} assigned to patient ${patientName} (${patientId})`);
+      console.log(`Bed ${bed.bedId} assigned to patient ${patientName} (${patientIdString})`);
       return { success: true, bedId: bedId };
       
     } catch (error) {

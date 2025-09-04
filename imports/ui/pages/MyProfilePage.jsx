@@ -96,6 +96,15 @@ function MyProfilePage(props) {
     }
     return null;
   }, [currentUser])
+  
+  // Track selected patient from session
+  let selectedPatientId = useTracker(function(){
+    return Session.get('selectedPatientId');
+  }, [])
+  
+  let selectedPatient = useTracker(function(){
+    return Session.get('selectedPatient');
+  }, [])
 
   // Get the practitioner record for the current user
   let currentPractitioner = useTracker(function(){
@@ -416,16 +425,52 @@ function MyProfilePage(props) {
           <Alert severity="info" sx={{ mb: 2 }}>
             No patient record linked to your account. Create one to access patient-specific features and health records.
           </Alert>
-          <Button 
-            variant="contained"
-            color="primary"
-            onClick={() => {
-              Session.set('selectedPatientId', get(currentUser, 'patientId') || get(currentUser, 'id'));
-              navigate('/patients/new');
-            }}
-          >
-            Create Patient Record
-          </Button>
+          <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+            <Button 
+              variant="contained"
+              color="primary"
+              onClick={() => {
+                Session.set('selectedPatientId', get(currentUser, 'patientId') || get(currentUser, 'id'));
+                navigate('/patients/new');
+              }}
+            >
+              Create Patient Record
+            </Button>
+            {Package['clinical:data-importer'] && (
+              <Button 
+                variant="outlined"
+                color="primary"
+                onClick={() => {
+                  navigate('/import-data?next=my-profile');
+                }}
+              >
+                Load Personal Health Record
+              </Button>
+            )}
+            <Button 
+              variant="outlined"
+              color="primary"
+              onClick={async () => {
+                const patientIdToLink = selectedPatientId || get(selectedPatient, 'id');
+                
+                if (patientIdToLink) {
+                  try {
+                    await Meteor.callAsync('users.linkPatient', patientIdToLink);
+                    setSuccessMessage('Patient record linked successfully!');
+                    // The reactive data will update automatically
+                  } catch (error) {
+                    console.error('Error linking patient:', error);
+                    setError(error.message || 'Failed to link patient record');
+                  }
+                } else {
+                  setError('No patient selected. Please select a patient first.');
+                }
+              }}
+              disabled={!selectedPatientId && !selectedPatient}
+            >
+              Link Selected Patient
+            </Button>
+          </Box>
         </Paper>
       )}
 

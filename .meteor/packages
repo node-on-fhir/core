@@ -35,6 +35,13 @@ fetch
 
 
 
+clinical:data-importer
+symptomatic:timelines
+symptomatic:mcp
+clinical:pacio-core
+clinical:symptom-tracking
+trialx:hermes-tooling
+
 # clinical:checklist-manifesto
 # clinical:clinical-documents
 # clinical:consent-generator
