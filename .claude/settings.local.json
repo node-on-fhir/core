@@ -17,7 +17,10 @@
       "Bash(meteor --version)",
       "Bash(cp:*)",
       "Bash(ls:*)",
-      "Bash(echo:*)"
+      "Bash(echo:*)",
+      "WebFetch(domain:www.npmjs.com)",
+      "WebFetch(domain:www.npmjs.com)",
+      "WebFetch(domain:www.npmjs.com)"
     ],
     "deny": []
   }

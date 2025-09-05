@@ -195,6 +195,7 @@ import {
 // import MediaDetail from '../ui-fhir/medias/MediaDetail';
 import SupplyDeliveryDetail from '../ui-fhir/supplyDeliveries/SupplyDeliveryDetail';
 
+
 //===============================================================================================================
 // PACIO Pages
 
@@ -356,6 +357,7 @@ Meteor.NotSignedInWrapper = NotSignedInWrapper;
 Meteor.MedicalRecordImporter = MedicalRecordImporter;
 Meteor.PatientCard = PatientCard;
 Meteor.HipaaLogger = HipaaLogger;
+Meteor.React = React;
 
 
 
@@ -424,6 +426,8 @@ window.AuditEvents = AuditEvents;
 // SECURITY TODO:  maybe best to put a guard around this 
 // debug only?  or maybe only in development mode?
 window.Session = Session;
+
+window.React = React;
 
 //===============================================================================================================
 // Router History
@@ -1297,9 +1301,7 @@ Object.keys(Package).forEach(function(packageName){
     Package[packageName].DynamicRoutes.forEach(function(route){
       // If route has component instead of element, create the element
       if(route.component && !route.element) {
-        console.log(`[APP] Creating element for ${route.path} from component:`, route.component);
         route.element = React.createElement(route.component);
-        console.log(`[APP] Created element:`, route.element);
       }
       
       // Debug logging for swarm route
