@@ -557,6 +557,10 @@ if(get(Meteor, 'settings.public.modules.accounts.enabled', true)){
     element: <LoginPage />
   });
   dynamicRoutes.push({
+    path: "/sign-in",
+    element: <LoginPage />
+  });
+  dynamicRoutes.push({
     path: "/register", 
     element: <RegisterPage />
   });

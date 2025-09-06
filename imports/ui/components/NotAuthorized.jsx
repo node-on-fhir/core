@@ -12,7 +12,8 @@ import {
   Button,
   Link,
   useTheme,
-  useMediaQuery
+  useMediaQuery,
+  alpha
 } from '@mui/material';
 
 import LockIcon from '@mui/icons-material/Lock';
@@ -72,11 +73,11 @@ export default function NotAuthorized(props) {
               width: lockIconSize,
               height: lockIconSize,
               borderRadius: '50%',
-              background: 'linear-gradient(135deg, #0077ff 0%, #0055cc 100%)',
+              background: theme => `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              boxShadow: '0 10px 30px rgba(0,119,255,0.2)',
+              boxShadow: theme => `0 10px 30px ${alpha(theme.palette.primary.main, 0.2)}`,
               position: 'relative',
               '&::before': {
                 content: '""',
@@ -91,7 +92,7 @@ export default function NotAuthorized(props) {
             <LockIcon 
               sx={{ 
                 fontSize: lockIconInnerSize, 
-                color: '#0077ff',
+                color: 'primary.main',
                 zIndex: 1,
               }} 
             />
@@ -135,8 +136,8 @@ export default function NotAuthorized(props) {
                 border: '1px solid #e0e0e0',
                 transition: 'all 0.2s ease',
                 '&:hover': {
-                  border: '1px solid #0077ff',
-                  boxShadow: '0 4px 20px rgba(0,119,255,0.1)',
+                  border: theme => `1px solid ${theme.palette.primary.main}`,
+                  boxShadow: theme => `0 4px 20px ${alpha(theme.palette.primary.main, 0.1)}`,
                 },
               }}
               onClick={handleSignIn}
@@ -266,11 +267,11 @@ export default function NotAuthorized(props) {
               width: 200,
               height: 200,
               borderRadius: '50%',
-              background: 'linear-gradient(135deg, #0077ff 0%, #0055cc 100%)',
+              background: theme => `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              boxShadow: '0 10px 40px rgba(0,119,255,0.15)',
+              boxShadow: theme => `0 10px 40px ${alpha(theme.palette.primary.main, 0.15)}`,
               '&::before': {
                 content: '""',
                 position: 'absolute',
@@ -284,7 +285,7 @@ export default function NotAuthorized(props) {
             <LockIcon 
               sx={{ 
                 fontSize: 90, 
-                color: '#0077ff',
+                color: 'primary.main',
                 zIndex: 1,
               }} 
             />
@@ -328,8 +329,8 @@ export default function NotAuthorized(props) {
                 border: '1px solid #e0e0e0',
                 transition: 'all 0.2s ease',
                 '&:hover': {
-                  border: '1px solid #0077ff',
-                  boxShadow: '0 4px 20px rgba(0,119,255,0.1)',
+                  border: theme => `1px solid ${theme.palette.primary.main}`,
+                  boxShadow: theme => `0 4px 20px ${alpha(theme.palette.primary.main, 0.1)}`,
                 },
               }}
               onClick={handleSignIn}
@@ -462,11 +463,11 @@ export default function NotAuthorized(props) {
             width: 200,
             height: 200,
             borderRadius: '50%',
-            background: 'linear-gradient(135deg, #0077ff 0%, #0055cc 100%)',
+            background: theme => `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            boxShadow: '0 10px 40px rgba(0,119,255,0.15)',
+            boxShadow: theme => `0 10px 40px ${alpha(theme.palette.primary.main, 0.15)}`,
             '&::before': {
               content: '""',
               position: 'absolute',
@@ -480,7 +481,7 @@ export default function NotAuthorized(props) {
           <LockIcon 
             sx={{ 
               fontSize: 90, 
-              color: '#0077ff',
+              color: 'primary.main',
               zIndex: 1,
             }} 
           />
@@ -525,8 +526,8 @@ export default function NotAuthorized(props) {
               border: '1px solid #e0e0e0',
               transition: 'all 0.2s ease',
               '&:hover': {
-                border: '1px solid #0077ff',
-                boxShadow: '0 4px 20px rgba(0,119,255,0.1)',
+                border: theme => `1px solid ${theme.palette.primary.main}`,
+                boxShadow: theme => `0 4px 20px ${alpha(theme.palette.primary.main, 0.1)}`,
               },
             }}
             onClick={handleSignIn}
@@ -603,7 +604,7 @@ export default function NotAuthorized(props) {
           alignItems: 'center',
           justifyContent: 'center',
           padding: 6,
-          background: 'linear-gradient(135deg, #e8f5ff 0%, #d6efff 100%)',
+          background: theme => `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.08)} 0%, ${alpha(theme.palette.primary.main, 0.15)} 100%)`,
         }}
       >
         <Container maxWidth="md">
@@ -671,14 +672,14 @@ export default function NotAuthorized(props) {
                   width: 200,
                   height: 200,
                   borderRadius: 3,
-                  backgroundColor: '#f0f7ff',
+                  backgroundColor: theme => alpha(theme.palette.primary.main, 0.05),
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   flexShrink: 0,
                 }}
               >
-                <LockIcon sx={{ fontSize: 80, color: '#0077ff' }} />
+                <LockIcon sx={{ fontSize: 80, color: 'primary.main' }} />
               </Box>
             </Box>
           </Box>
