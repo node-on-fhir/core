@@ -163,6 +163,7 @@ import { Organizations } from '../imports/lib/schemas/SimpleSchemas/Organization
 import { Observations } from '../imports/lib/schemas/SimpleSchemas/Observations';
 import { Patients } from '../imports/lib/schemas/SimpleSchemas/Patients';
 import { PlanDefinitions } from '../imports/lib/schemas/SimpleSchemas/PlanDefinitions';
+import { RelatedPersons } from '../imports/lib/schemas/SimpleSchemas/RelatedPersons';
 import { Practitioners } from '../imports/lib/schemas/SimpleSchemas/Practitioners';
 import { Procedures } from '../imports/lib/schemas/SimpleSchemas/Procedures';
 import { Questionnaires } from '../imports/lib/schemas/SimpleSchemas/Questionnaires';
@@ -230,6 +231,7 @@ Meteor.Collections = {
   Procedures,
   Questionnaires,
   QuestionnaireResponses,
+  RelatedPersons,
   ResearchStudies,
   ResearchSubjects,
   Schedules,
@@ -292,6 +294,7 @@ global.Collections = {
   Procedures,
   Questionnaires,
   QuestionnaireResponses,
+  RelatedPersons,
   ResearchStudies,
   ResearchSubjects,
   Schedules,

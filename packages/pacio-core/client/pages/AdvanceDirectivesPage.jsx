@@ -62,10 +62,7 @@ import AddIcon from '@mui/icons-material/Add';
 import VerifiedIcon from '@mui/icons-material/Verified';
 import WarningIcon from '@mui/icons-material/Warning';
 
-import { DocumentReferences } from '/imports/lib/schemas/SimpleSchemas/DocumentReferences';
-import { Consents } from '/imports/lib/schemas/SimpleSchemas/Consents';
-import { RelatedPersons } from '/imports/lib/schemas/SimpleSchemas/RelatedPersons';
-import { Patients } from '/imports/lib/schemas/SimpleSchemas/Patients';
+// Collections will be accessed through Meteor.Collections
 import { FhirUtilities } from '/imports/lib/FhirUtilities';
 
 // Removed unused page imports - now using only DocumentReferences
@@ -121,6 +118,12 @@ function AdvancedDirectivesPage(props) {
   const data = useTracker(() => {
     const patientId = Session.get('selectedPatientId');
     
+    // Get collections from Meteor.Collections
+    const DocumentReferences = get(Meteor, 'Collections.DocumentReferences');
+    const Consents = get(Meteor, 'Collections.Consents');
+    const RelatedPersons = get(Meteor, 'Collections.RelatedPersons');
+    const Patients = get(Meteor, 'Collections.Patients');
+    
     // Subscribe to DocumentReferences for the patient
     const subscription = patientId ? 
       Meteor.subscribe('pacio.documentReferences', patientId) : null;
@@ -135,27 +138,45 @@ function AdvancedDirectivesPage(props) {
       };
     }
 
-    // First, let's get all document references for the patient
-    const allDocumentReferences = DocumentReferences.find(query).fetch();
-    
-    // Log what we found for debugging
-    console.log('All DocumentReferences for patient:', allDocumentReferences);
-    console.log('Document types found:', allDocumentReferences.map(d => get(d, 'type')));
-    
-    // Filter for advance directive types only
-    const advanceDirectives = allDocumentReferences.filter(doc => {
-      const typeCode = get(doc, 'type.coding[0].code');
-      return directiveTypes.map(d => d.code).includes(typeCode);
-    });
-    
-    // Keep all documents for the "All Documents" tab
-    const documentReferences = advanceDirectives;
-    
-    console.log(`Found ${allDocumentReferences.length} total documents, ${advanceDirectives.length} are advance directives`);
+    // Initialize default return values
+    let documentReferences = [];
+    let allDocumentReferences = [];
+    let consents = [];
+    let relatedPersons = [];
+    let patient = null;
 
-    const consents = Consents.find(query).fetch();
-    const relatedPersons = RelatedPersons.find({ patient: query['subject.reference'] }).fetch();
-    const patient = Patients.findOne(patientId);
+    // Only query if collections are available
+    if (DocumentReferences) {
+      // First, let's get all document references for the patient
+      allDocumentReferences = DocumentReferences.find(query).fetch();
+      
+      // Log what we found for debugging
+      console.log('All DocumentReferences for patient:', allDocumentReferences);
+      console.log('Document types found:', allDocumentReferences.map(d => get(d, 'type')));
+      
+      // Filter for advance directive types only
+      const advanceDirectives = allDocumentReferences.filter(doc => {
+        const typeCode = get(doc, 'type.coding[0].code');
+        return directiveTypes.map(d => d.code).includes(typeCode);
+      });
+      
+      // Keep all documents for the "All Documents" tab
+      documentReferences = advanceDirectives;
+      
+      console.log(`Found ${allDocumentReferences.length} total documents, ${advanceDirectives.length} are advance directives`);
+    }
+
+    if (Consents) {
+      consents = Consents.find(query).fetch();
+    }
+    
+    if (RelatedPersons) {
+      relatedPersons = RelatedPersons.find({ patient: query['subject.reference'] }).fetch();
+    }
+    
+    if (Patients && patientId) {
+      patient = Patients.findOne(patientId);
+    }
 
     return {
       documentReferences,
@@ -286,9 +307,9 @@ function AdvancedDirectivesPage(props) {
   };
 
   const EmergencyContacts = () => (
-    <Card variant="outlined" sx={{ backgroundColor: '#fff3e0' }}>
+    <Card variant="outlined">
       <CardHeader 
-        avatar={<PhoneIcon />}
+        avatar={<PhoneIcon color="primary" />}
         title="Emergency Contacts"
         titleTypographyProps={{ variant: 'h6' }}
       />
@@ -313,7 +334,8 @@ function AdvancedDirectivesPage(props) {
         </List>
         <Button 
           startIcon={<AddIcon />} 
-          size="small" 
+          size="small"
+          color="primary" 
           sx={{ mt: 1 }}
         >
           Add Emergency Contact
@@ -399,8 +421,14 @@ function AdvancedDirectivesPage(props) {
   );
 
   return (
-    <Container maxWidth="xl" sx={{ pt: 3, pb: 3 }}>
-      <Box sx={{ mb: 3 }}>
+    <Box sx={{ 
+      bgcolor: theme => theme.palette.mode === 'light' 
+        ? theme.palette.grey[50] 
+        : theme.palette.background.default,
+      minHeight: '100vh'
+    }}>
+      <Container maxWidth="xl" sx={{ pt: 3, pb: 3 }}>
+        <Box sx={{ mb: 3 }}>
         <Breadcrumbs aria-label="breadcrumb">
           <Link 
             color="inherit" 
@@ -839,7 +867,8 @@ function AdvancedDirectivesPage(props) {
           </Button>
         </DialogActions>
       </Dialog>
-    </Container>
+      </Container>
+    </Box>
   );
 }
 

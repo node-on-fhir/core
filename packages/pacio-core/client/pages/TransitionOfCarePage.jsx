@@ -660,8 +660,14 @@ function TransitionsOfCarePage(props) {
   };
 
   return (
-    <Container maxWidth="xl" sx={{ pt: 3, pb: 3 }}>
-      <Box sx={{ mb: 3 }}>
+    <Box sx={{ 
+      bgcolor: theme => theme.palette.mode === 'light' 
+        ? theme.palette.grey[50] 
+        : theme.palette.background.default,
+      minHeight: '100vh'
+    }}>
+      <Container maxWidth="xl" sx={{ pt: 3, pb: 3 }}>
+        <Box sx={{ mb: 3 }}>
         <Breadcrumbs aria-label="breadcrumb">
           <Link 
             color="inherit" 
@@ -902,7 +908,8 @@ function TransitionsOfCarePage(props) {
           </Button>
         </DialogActions>
       </Dialog>
-    </Container>
+      </Container>
+    </Box>
   );
 }
 

@@ -182,8 +182,14 @@ export function PatientFetchPage(props) {
   };
   
   return (
-    <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
-      <Box sx={{ mb: 4 }}>
+    <Box sx={{ 
+      bgcolor: theme => theme.palette.mode === 'light' 
+        ? theme.palette.grey[50] 
+        : theme.palette.background.default,
+      minHeight: '100vh'
+    }}>
+      <Container maxWidth="xl" sx={{ pt: 4, pb: 4 }}>
+        <Box sx={{ mb: 4 }}>
         <Typography variant="h4" component="h1" gutterBottom>
           Patient Fetch
         </Typography>
@@ -226,7 +232,15 @@ export function PatientFetchPage(props) {
                 />
                 
                 {/* Generated URL Display */}
-                <Paper variant="outlined" sx={{ p: 2, bgcolor: 'grey.50' }}>
+                <Paper 
+                  variant="outlined" 
+                  sx={theme => ({ 
+                    p: 2, 
+                    bgcolor: theme.palette.mode === 'dark' 
+                      ? theme.palette.grey[900] 
+                      : theme.palette.grey[50] 
+                  })}
+                >
                   <Typography variant="subtitle2" color="text.secondary" gutterBottom>
                     Generated URL:
                   </Typography>
@@ -292,19 +306,23 @@ export function PatientFetchPage(props) {
               }
             />
             <CardContent>
-              <Paper 
-                variant="outlined" 
-                sx={{ 
+              <Box 
+                sx={theme => ({ 
                   p: 2, 
-                  bgcolor: 'grey.100', 
+                  backgroundColor: theme.palette.mode === 'dark' 
+                    ? '#1a1a1a' 
+                    : '#f5f5f5',
+                  color: theme.palette.text.primary,
                   maxHeight: '500px', 
                   overflowY: 'auto',
                   fontFamily: 'monospace',
-                  fontSize: '0.875rem'
-                }}
+                  fontSize: '0.875rem',
+                  border: `1px solid ${theme.palette.divider}`,
+                  borderRadius: 1
+                })}
               >
                 {resourceLogs.length === 0 ? (
-                  <Typography variant="body2" sx={{ color: 'grey.500' }}>
+                  <Typography variant="body2" sx={{ color: 'text.secondary' }}>
                     Console output will appear here...
                   </Typography>
                 ) : (
@@ -324,10 +342,11 @@ export function PatientFetchPage(props) {
                     {/* <div ref={consoleEndRef} /> */}
                   </List>
                 )}
-              </Paper>
+              </Box>
             </CardContent>
           </Card>
       </Box>
-    </Container>
+      </Container>
+    </Box>
   );
 }

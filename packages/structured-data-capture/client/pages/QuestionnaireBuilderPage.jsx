@@ -173,33 +173,46 @@ export function QuestionnaireBuilderPage() {
 
   if (previewMode) {
     return (
-      <Container maxWidth="lg" sx={{ mt: 4 }}>
-        <Box sx={{ mb: 2 }}>
-          <Button 
-            variant="outlined" 
-            onClick={() => setPreviewMode(false)}
-          >
-            Back to Editor
-          </Button>
-        </Box>
-        <QuestionnaireForm
-          questionnaire={questionnaire}
-          onSubmit={(response) => {
-            console.log('Preview response:', response);
-            alert('This is just a preview - responses are not saved');
-          }}
-          showProgress={true}
-          showSidebar={false}
-        />
-      </Container>
+      <Box sx={{ 
+        bgcolor: theme => theme.palette.mode === 'light' 
+          ? theme.palette.grey[50] 
+          : theme.palette.background.default,
+        minHeight: '100vh'
+      }}>
+        <Container maxWidth="lg" sx={{ pt: 4 }}>
+          <Box sx={{ mb: 2 }}>
+            <Button 
+              variant="outlined" 
+              onClick={() => setPreviewMode(false)}
+            >
+              Back to Editor
+            </Button>
+          </Box>
+          <QuestionnaireForm
+            questionnaire={questionnaire}
+            onSubmit={(response) => {
+              console.log('Preview response:', response);
+              alert('This is just a preview - responses are not saved');
+            }}
+            showProgress={true}
+            showSidebar={false}
+          />
+        </Container>
+      </Box>
     );
   }
 
   return (
-    <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
-      <Typography variant="h4" gutterBottom>
-        Questionnaire Builder
-      </Typography>
+    <Box sx={{ 
+      bgcolor: theme => theme.palette.mode === 'light' 
+        ? theme.palette.grey[50] 
+        : theme.palette.background.default,
+      minHeight: '100vh'
+    }}>
+      <Container maxWidth="xl" sx={{ pt: 4, pb: 4 }}>
+        <Typography variant="h4" gutterBottom>
+          Questionnaire Builder
+        </Typography>
 
       <Grid container spacing={3}>
         {/* Left Panel - Questionnaire Properties */}
@@ -357,10 +370,10 @@ export function QuestionnaireBuilderPage() {
               {questionnaire.item.map((item, index) => (
                 <Card key={item.linkId} sx={{ mb: 2 }}>
                   <CardContent 
-                    sx={{ 
+                    sx={theme => ({ 
                       cursor: 'pointer',
-                      backgroundColor: selectedItemIndex === index ? 'action.selected' : 'transparent'
-                    }}
+                      backgroundColor: selectedItemIndex === index ? theme.palette.action.selected : 'transparent'
+                    })}
                     onClick={() => setSelectedItemIndex(index)}
                   >
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -399,6 +412,7 @@ export function QuestionnaireBuilderPage() {
           </Paper>
         </Grid>
       </Grid>
-    </Container>
+      </Container>
+    </Box>
   );
 }

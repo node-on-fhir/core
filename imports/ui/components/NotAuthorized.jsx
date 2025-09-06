@@ -16,6 +16,7 @@ import {
   alpha
 } from '@mui/material';
 
+import FingerprintIcon from '@mui/icons-material/Fingerprint';
 import LockIcon from '@mui/icons-material/Lock';
 
 export default function NotAuthorized(props) {
@@ -54,7 +55,7 @@ export default function NotAuthorized(props) {
           display: 'flex',
           flexDirection: 'column',
           minHeight: '100vh',
-          backgroundColor: '#f8f8f8',
+          backgroundColor: 'background.default',
         }}
       >
         {/* Top section with lock icon */}
@@ -63,21 +64,24 @@ export default function NotAuthorized(props) {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            backgroundColor: 'white',
-            borderBottom: '1px solid #e0e0e0',
+            backgroundColor: 'background.paper',
+            borderBottom: '1px solid',
+            borderColor: 'divider',
             padding: 6,
           }}
         >
           <Box
-            sx={{
+            sx={theme => ({
               width: lockIconSize,
               height: lockIconSize,
               borderRadius: '50%',
-              background: theme => `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
+              background: theme.palette.mode === 'dark'
+                ? `linear-gradient(135deg, ${theme.palette.primary.light} 0%, ${theme.palette.primary.main} 100%)`
+                : `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              boxShadow: theme => `0 10px 30px ${alpha(theme.palette.primary.main, 0.2)}`,
+              boxShadow: `0 10px 30px ${alpha(theme.palette.primary.main, 0.2)}`,
               position: 'relative',
               '&::before': {
                 content: '""',
@@ -85,11 +89,11 @@ export default function NotAuthorized(props) {
                 width: lockIconSize - 20,
                 height: lockIconSize - 20,
                 borderRadius: '50%',
-                background: 'white',
+                backgroundColor: theme.palette.background.paper,
               }
-            }}
+            })}
           >
-            <LockIcon 
+            <FingerprintIcon 
               sx={{ 
                 fontSize: lockIconInnerSize, 
                 color: 'primary.main',
@@ -106,9 +110,10 @@ export default function NotAuthorized(props) {
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
-            justifyContent: 'center',
+            justifyContent: 'flex-start',
             padding: 4,
-            backgroundColor: '#f8f8f8',
+            paddingTop: 8,
+            backgroundColor: 'background.default',
           }}
         >
           <Container maxWidth="sm">
@@ -127,13 +132,14 @@ export default function NotAuthorized(props) {
 
             <Box
               sx={{
-                backgroundColor: 'white',
+                backgroundColor: 'background.paper',
                 borderRadius: 2,
                 padding: 3,
                 marginBottom: 3,
                 boxShadow: '0 2px 10px rgba(0,0,0,0.05)',
                 cursor: 'pointer',
-                border: '1px solid #e0e0e0',
+                border: '1px solid',
+                borderColor: 'divider',
                 transition: 'all 0.2s ease',
                 '&:hover': {
                   border: theme => `1px solid ${theme.palette.primary.main}`,
@@ -148,7 +154,7 @@ export default function NotAuthorized(props) {
                     width: 48,
                     height: 48,
                     borderRadius: 1,
-                    backgroundColor: '#ff6b35',
+                    backgroundColor: 'secondary.main',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -170,24 +176,24 @@ export default function NotAuthorized(props) {
               </Box>
             </Box>
 
-            <Box sx={{ textAlign: 'center' }}>
-              <Link
-                component="button"
-                variant="body2"
+            <Box sx={{ mt: 2 }}>
+              <Button
+                fullWidth
+                variant="outlined"
+                size="medium"
                 onClick={function() { navigate('/signin') }}
-                sx={{ textDecoration: 'none' }}
+                sx={{ mb: 1 }}
               >
                 Sign in to another account
-              </Link>
-              {' • '}
-              <Link
-                component="button"
-                variant="body2"
+              </Button>
+              <Button
+                fullWidth
+                variant="outlined"
+                size="medium"
                 onClick={function() { navigate('/signup') }}
-                sx={{ textDecoration: 'none' }}
               >
                 Create a new account
-              </Link>
+              </Button>
             </Box>
 
             <Box sx={{ textAlign: 'center', marginTop: 6 }}>
@@ -212,7 +218,7 @@ export default function NotAuthorized(props) {
         sx={{
           display: 'flex',
           minHeight: '100vh',
-          backgroundColor: '#ffffff',
+          backgroundColor: 'background.default',
           position: 'relative',
         }}
       >
@@ -220,7 +226,7 @@ export default function NotAuthorized(props) {
         <Box
           sx={{
             flex: '0 0 20%',
-            backgroundColor: 'rgb(250, 250, 250)',
+            backgroundColor: 'action.hover',
           }}
         />
 
@@ -232,9 +238,10 @@ export default function NotAuthorized(props) {
             top: 0,
             width: 40,
             height: '100%',
-            backgroundColor: 'white',
-            borderLeft: '1.5px solid #d0d0d0',
-            borderRight: '1.5px solid #d0d0d0',
+            backgroundColor: 'background.paper',
+            borderLeft: '1.5px solid',
+            borderRight: '1.5px solid',
+            borderColor: 'divider',
             zIndex: 1,
           }}
         />
@@ -245,9 +252,10 @@ export default function NotAuthorized(props) {
             top: 0,
             width: 40,
             height: '100%',
-            backgroundColor: 'white',
-            borderLeft: '1.5px solid #d0d0d0',
-            borderRight: '1.5px solid #d0d0d0',
+            backgroundColor: 'background.paper',
+            borderLeft: '1.5px solid',
+            borderRight: '1.5px solid',
+            borderColor: 'divider',
             zIndex: 1,
           }}
         />
@@ -257,32 +265,35 @@ export default function NotAuthorized(props) {
           sx={{
             position: 'absolute',
             left: 'calc(20% + 4px)',
-            top: '50%',
+            top: '200px',
             transform: 'translate(-50%, -50%)',
             zIndex: 3,
           }}
         >
           <Box
-            sx={{
+            sx={theme => ({
               width: 200,
               height: 200,
+              marginTop: '-80px',
               borderRadius: '50%',
-              background: theme => `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
+              background: theme.palette.mode === 'dark'
+                ? `linear-gradient(135deg, ${theme.palette.primary.light} 0%, ${theme.palette.primary.main} 100%)`
+                : `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              boxShadow: theme => `0 10px 40px ${alpha(theme.palette.primary.main, 0.15)}`,
+              boxShadow: `0 10px 40px ${alpha(theme.palette.primary.main, 0.15)}`,
               '&::before': {
                 content: '""',
                 position: 'absolute',
                 width: 170,
                 height: 170,
                 borderRadius: '50%',
-                background: 'white',
+                backgroundColor: theme.palette.background.paper,
               }
-            }}
+            })}
           >
-            <LockIcon 
+            <FingerprintIcon 
               sx={{ 
                 fontSize: 90, 
                 color: 'primary.main',
@@ -300,9 +311,10 @@ export default function NotAuthorized(props) {
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            backgroundColor: 'rgb(250, 250, 250)',
+            backgroundColor: 'action.hover',
             padding: 4,
-            borderLeft: '8px solid #e0e0e0',
+            borderLeft: '8px solid',
+            borderColor: 'divider',
           }}
         >
           <Box sx={{ maxWidth: 320, width: '100%' }}>
@@ -321,12 +333,13 @@ export default function NotAuthorized(props) {
 
             <Box
               sx={{
-                backgroundColor: 'white',
+                backgroundColor: 'background.paper',
                 borderRadius: 2,
                 padding: 3,
                 marginBottom: 4,
                 cursor: 'pointer',
-                border: '1px solid #e0e0e0',
+                border: '1px solid',
+                borderColor: 'divider',
                 transition: 'all 0.2s ease',
                 '&:hover': {
                   border: theme => `1px solid ${theme.palette.primary.main}`,
@@ -341,7 +354,7 @@ export default function NotAuthorized(props) {
                     width: 48,
                     height: 48,
                     borderRadius: 1,
-                    backgroundColor: '#ff6b35',
+                    backgroundColor: 'secondary.main',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -363,24 +376,24 @@ export default function NotAuthorized(props) {
               </Box>
             </Box>
 
-            <Box sx={{ textAlign: 'center' }}>
-              <Link
-                component="button"
-                variant="body2"
+            <Box sx={{ mt: 2 }}>
+              <Button
+                fullWidth
+                variant="outlined"
+                size="medium"
                 onClick={function() { navigate('/signin') }}
-                sx={{ textDecoration: 'none' }}
+                sx={{ mb: 1 }}
               >
                 Sign in to another account
-              </Link>
-              {' • '}
-              <Link
-                component="button"
-                variant="body2"
+              </Button>
+              <Button
+                fullWidth
+                variant="outlined"
+                size="medium"
                 onClick={function() { navigate('/signup') }}
-                sx={{ textDecoration: 'none' }}
               >
                 Create a new account
-              </Link>
+              </Button>
             </Box>
 
             <Box sx={{ textAlign: 'center', marginTop: 8 }}>
@@ -408,7 +421,7 @@ export default function NotAuthorized(props) {
       sx={{
         display: 'flex',
         minHeight: '100vh',
-        backgroundColor: '#ffffff',
+        backgroundColor: 'background.default',
         position: 'relative',
       }}
     >
@@ -416,7 +429,7 @@ export default function NotAuthorized(props) {
       <Box
         sx={{
           flex: '0 0 20%',
-          backgroundColor: 'rgb(250, 250, 250)',
+          backgroundColor: 'action.hover',
         }}
       />
 
@@ -428,9 +441,10 @@ export default function NotAuthorized(props) {
           top: 0,
           width: 40,
           height: '100%',
-          backgroundColor: 'white',
-          borderLeft: '1.5px solid #d0d0d0',
-          borderRight: '1.5px solid #d0d0d0',
+          backgroundColor: 'background.paper',
+          borderLeft: '1.5px solid',
+          borderRight: '1.5px solid',
+          borderColor: 'divider',
           zIndex: 1,
         }}
       />
@@ -441,9 +455,10 @@ export default function NotAuthorized(props) {
           top: 0,
           width: 40,
           height: '100%',
-          backgroundColor: 'white',
-          borderLeft: '1.5px solid #d0d0d0',
-          borderRight: '1.5px solid #d0d0d0',
+          backgroundColor: 'background.paper',
+          borderLeft: '1.5px solid',
+          borderRight: '1.5px solid',
+          borderColor: 'divider',
           zIndex: 1,
         }}
       />
@@ -459,26 +474,29 @@ export default function NotAuthorized(props) {
         }}
       >
         <Box
-          sx={{
+          sx={theme => ({
             width: 200,
             height: 200,
+            marginTop: '-80px',
             borderRadius: '50%',
-            background: theme => `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
+            background: theme.palette.mode === 'dark'
+              ? `linear-gradient(135deg, ${theme.palette.primary.light} 0%, ${theme.palette.primary.main} 100%)`
+              : `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            boxShadow: theme => `0 10px 40px ${alpha(theme.palette.primary.main, 0.15)}`,
+            boxShadow: `0 10px 40px ${alpha(theme.palette.primary.main, 0.15)}`,
             '&::before': {
               content: '""',
               position: 'absolute',
               width: 170,
               height: 170,
               borderRadius: '50%',
-              background: 'white',
+              backgroundColor: theme.palette.background.paper,
             }
-          }}
+          })}
         >
-          <LockIcon 
+          <FingerprintIcon 
             sx={{ 
               fontSize: 90, 
               color: 'primary.main',
@@ -496,10 +514,11 @@ export default function NotAuthorized(props) {
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          backgroundColor: 'rgb(250, 250, 250)',
+          backgroundColor: 'action.hover',
           padding: 4,
-          borderLeft: '8px solid #e0e0e0',
-          borderRight: '1px solid #e0e0e0',
+          borderLeft: '8px solid',
+          borderRight: '1px solid',
+          borderColor: 'divider',
         }}
       >
         <Box sx={{ maxWidth: 320, width: '100%' }}>
@@ -518,12 +537,13 @@ export default function NotAuthorized(props) {
 
           <Box
             sx={{
-              backgroundColor: 'white',
+              backgroundColor: 'background.paper',
               borderRadius: 2,
               padding: 3,
               marginBottom: 4,
               cursor: 'pointer',
-              border: '1px solid #e0e0e0',
+              border: '1px solid',
+              borderColor: 'divider',
               transition: 'all 0.2s ease',
               '&:hover': {
                 border: theme => `1px solid ${theme.palette.primary.main}`,
@@ -560,24 +580,24 @@ export default function NotAuthorized(props) {
             </Box>
           </Box>
 
-          <Box sx={{ textAlign: 'center' }}>
-            <Link
-              component="button"
-              variant="body2"
+          <Box sx={{ mt: 2 }}>
+            <Button
+              fullWidth
+              variant="outlined"
+              size="medium"
               onClick={function() { navigate('/signin') }}
-              sx={{ textDecoration: 'none' }}
+              sx={{ mb: 1 }}
             >
               Sign in to another account
-            </Link>
-            {' • '}
-            <Link
-              component="button"
-              variant="body2"
+            </Button>
+            <Button
+              fullWidth
+              variant="outlined"
+              size="medium"
               onClick={function() { navigate('/signup') }}
-              sx={{ textDecoration: 'none' }}
             >
               Create a new account
-            </Link>
+            </Button>
           </Box>
 
           <Box sx={{ textAlign: 'center', marginTop: 8 }}>
@@ -614,7 +634,7 @@ export default function NotAuthorized(props) {
             gutterBottom
             sx={{ 
               fontWeight: 600,
-              color: '#333',
+              color: 'text.primary',
               marginBottom: 3,
             }}
           >
@@ -623,7 +643,7 @@ export default function NotAuthorized(props) {
           
           <Box
             sx={{
-              backgroundColor: 'white',
+              backgroundColor: 'background.paper',
               borderRadius: 3,
               padding: 4,
               boxShadow: '0 10px 40px rgba(0,0,0,0.1)',
@@ -661,7 +681,7 @@ export default function NotAuthorized(props) {
                       textDecoration: 'underline',
                     }
                   }}
-                  onClick={function() { navigate('/about-security') }}
+                  onClick={function() { window.open('https://github.com/node-on-fhir/honeycomb/tree/main/packages/hipaa-compliance', '_blank') }}
                 >
                   Learn more about NodeOnFHIR Security →
                 </Button>
@@ -672,7 +692,9 @@ export default function NotAuthorized(props) {
                   width: 200,
                   height: 200,
                   borderRadius: 3,
-                  backgroundColor: theme => alpha(theme.palette.primary.main, 0.05),
+                  backgroundColor: theme => theme.palette.mode === 'dark' 
+                    ? alpha(theme.palette.primary.main, 0.15) 
+                    : alpha(theme.palette.primary.main, 0.05),
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',

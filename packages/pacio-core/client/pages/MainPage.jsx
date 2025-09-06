@@ -449,7 +449,7 @@ export function MainPage() {
   
   if (isLoadingBeds || isLoadingPatients) {
     return (
-      <Box sx={{ p: 2, height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <Box sx={{ p: 2, height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: theme => theme.palette.mode === 'light' ? theme.palette.grey[50] : theme.palette.background.default }}>
         <Box textAlign="center">
           <LinearProgress sx={{ width: 200, mb: 2 }} />
           <Typography color="textSecondary">Loading bed status...</Typography>
@@ -459,7 +459,7 @@ export function MainPage() {
   }
 
   return (
-    <Box sx={{ p: 2, height: '100vh', overflow: 'hidden' }}>
+    <Box sx={{ p: 2, height: '100vh', overflow: 'hidden', bgcolor: theme => theme.palette.mode === 'light' ? theme.palette.grey[50] : theme.palette.background.default }}>
       {/* Header */}
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
         <Box>
@@ -623,7 +623,7 @@ export function MainPage() {
                   <Card 
                     variant="outlined" 
                     sx={{ 
-                      borderLeft: bed.status === 'occupied' ? `4px solid ${getAcuityColor(bed.acuityLevel || 'Stable')}` : '4px solid #e0e0e0',
+                      borderLeft: bed.status === 'occupied' ? `4px solid ${getAcuityColor(bed.acuityLevel || 'Stable')}` : theme => `4px solid ${theme.palette.divider}`,
                       '&:hover': { boxShadow: 2 }
                     }}
                   >
@@ -642,7 +642,7 @@ export function MainPage() {
                                   size="small" 
                                   sx={{ 
                                     bgcolor: getAcuityColor(bed.acuityLevel || 'Stable'),
-                                    color: 'white'
+                                    color: theme => theme.palette.getContrastText(getAcuityColor(bed.acuityLevel || 'Stable'))
                                   }}
                                 />
                                 {bed.isolation && (
