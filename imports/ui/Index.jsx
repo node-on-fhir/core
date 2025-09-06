@@ -13,7 +13,8 @@ import {
   TextField,
   Typography,
   Box,
-  InputAdornment
+  InputAdornment,
+  useTheme
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 
@@ -24,6 +25,7 @@ const DynamicLinksCollection = new Mongo.Collection('DynamicLinks', { connection
 
 export const Index = () => {
   const navigate = useNavigate();
+  const theme = useTheme();
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredCoreLinks, setFilteredCoreLinks] = useState([]);
   const [filteredFhirLinks, setFilteredFhirLinks] = useState([]);
@@ -442,8 +444,8 @@ export const Index = () => {
         <h3 style={{marginTop: '0px', paddingTop: '0px'}}>Index</h3>
         <ul>
           {filteredCoreLinks.map(link => (
-            <li key={link._id} onClick={() => navigate(link.url)} style={{cursor: 'pointer'}}>
-              <a>{link.title}</a>
+            <li key={link._id} onClick={() => navigate(link.url)} style={{cursor: 'pointer', color: theme.palette.mode === 'dark' ? theme.palette.primary.light : 'inherit'}}>
+              <a style={{color: 'inherit'}}>{link.title}</a>
             </li>
           ))}
         </ul>
@@ -460,8 +462,8 @@ export const Index = () => {
         <h3 style={{marginTop: '0px', paddingTop: '0px'}}>FHIR Modules</h3>
         <ul>
           {filteredFhirLinks.map(link => (
-            <li key={link._id} onClick={() => navigate(link.url)} style={{cursor: 'pointer'}}>
-              <a>{link.title}</a>
+            <li key={link._id} onClick={() => navigate(link.url)} style={{cursor: 'pointer', color: theme.palette.mode === 'dark' ? theme.palette.primary.light : 'inherit'}}>
+              <a style={{color: 'inherit'}}>{link.title}</a>
             </li>
           ))}
         </ul>
@@ -478,10 +480,10 @@ export const Index = () => {
         <h3 style={{marginTop: '0px', paddingTop: '0px'}}>Dynamic Modules</h3>
         <ul>
           {filteredDynamicLinks.map(link => (
-            <li key={link._id} onClick={() => navigate(link.path)} style={{cursor: 'pointer'}}>
-              <a>{link.name}</a>
+            <li key={link._id} onClick={() => navigate(link.path)} style={{cursor: 'pointer', color: theme.palette.mode === 'dark' ? theme.palette.primary.light : 'inherit'}}>
+              <a style={{color: 'inherit'}}>{link.name}</a>
               {link.description && (
-                <span style={{color: '#666', fontSize: '0.9em', marginLeft: '10px'}}>
+                <span style={{color: theme.palette.mode === 'dark' ? '#999' : '#666', fontSize: '0.9em', marginLeft: '10px'}}>
                   - {link.description}
                 </span>
               )}
@@ -496,7 +498,12 @@ export const Index = () => {
   const totalResults = filteredCoreLinks.length + filteredFhirLinks.length + filteredDynamicLinks.length;
 
   return (
-    <div style={{height: window.innerHeight, overflow: 'scroll', paddingBottom: '100px'}}>
+    <div style={{
+      height: window.innerHeight, 
+      overflow: 'scroll', 
+      paddingBottom: '100px',
+      backgroundColor: theme.palette.mode === 'dark' ? theme.palette.background.default : theme.palette.grey[50]
+    }}>
       <CardContent>
         {/* Search Bar Section */}
         <Box sx={{ mb: 4 }}>
