@@ -116,13 +116,13 @@ function setupAccountsMethods() {
     },
 
     // Extend user session
-    'accounts.extendSession': function() {
+    'accounts.extendSession': async function() {
       if (!this.userId) {
         throw new Meteor.Error('not-authenticated', 'User not authenticated');
       }
 
       // Update last activity timestamp
-      Meteor.users.update(this.userId, {
+      await Meteor.users.updateAsync(this.userId, {
         $set: { lastActivityAt: new Date() }
       });
 

@@ -1,4 +1,4 @@
-# Advance Healthcare Directives Page with Tabs
+<!-- # Advance Healthcare Directives Page with Tabs
 
 ## Summary
 
@@ -75,4 +75,4 @@ To test the implementation:
 
 - Each imported page component handles its own data fetching and subscriptions
 - The patient context is maintained through Session variables
-- The tab structure allows users to access related clinical information without leaving the advance healthcare directives context
+- The tab structure allows users to access related clinical information without leaving the advance healthcare directives context -->

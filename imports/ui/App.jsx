@@ -1314,6 +1314,11 @@ Object.keys(Package).forEach(function(packageName){
         }
       }
       
+      // Debug logging for routes with requireAuth
+      if(route.requireAuth) {
+        console.log('[APP] Route requires authentication:', route.path, route);
+      }
+      
       dynamicRoutes.push(route);      
     });    
     if(Package[packageName].MainPage){
@@ -1910,9 +1915,19 @@ function StyledMainRouter(props){
 
   return (<main id='mainAppRouter' style={mainAppStyle}>
     <Routes>
-      {dynamicRoutes.map((route, index) => (
-        <Route key={index} path={route.path} element={route.element} />
-      ))}
+      {dynamicRoutes.map((route, index) => {
+        // Check if route requires authentication
+        if (route.requireAuth) {
+          return (
+            <Route 
+              key={index} 
+              path={route.path} 
+              element={<AuthenticatedRoute>{route.element}</AuthenticatedRoute>} 
+            />
+          );
+        }
+        return <Route key={index} path={route.path} element={route.element} />;
+      })}
       {/* Fallback route for 404 Not Found */}
       <Route path="*" />
     </Routes>

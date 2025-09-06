@@ -5,6 +5,7 @@ import { Navigate } from 'react-router-dom';
 import { useTracker } from 'meteor/react-meteor-data';
 import { Meteor } from 'meteor/meteor';
 import { get } from 'lodash';
+import NotAuthorized from './NotAuthorized';
 
 export function AuthenticatedRoute({ children }) {
   const { user, loggingIn } = useTracker(() => {
@@ -23,17 +24,23 @@ export function AuthenticatedRoute({ children }) {
         display: 'flex', 
         justifyContent: 'center', 
         alignItems: 'center', 
-        height: '100vh' 
+        height: '100vh',
+        backgroundColor: '#f5f5f5' 
       }}>
-        <div>Loading...</div>
+        <div style={{ 
+          fontSize: '18px', 
+          color: '#666',
+          fontFamily: 'Roboto, sans-serif' 
+        }}>
+          Checking authentication...
+        </div>
       </div>
     );
   }
 
-  // If not authenticated, redirect to login
+  // If not authenticated, show NotAuthorized component
   if (!user) {
-    const loginPath = get(Meteor, 'settings.public.defaults.landingPage', '/login');
-    return <Navigate to={loginPath} replace />;
+    return <NotAuthorized />;
   }
 
   // User is authenticated, render the protected component

@@ -22,7 +22,7 @@ export const DynamicRoutes = [
     name: 'StructuredDataCapture',
     path: '/structured-data-capture',
     element: <StructuredDataCapturePage />,
-    requireAuth: false
+    requireAuth: true
   },
   {
     name: 'QuestionnaireBuilder',
@@ -34,7 +34,7 @@ export const DynamicRoutes = [
     name: 'QuestionnaireLibrary',
     path: '/questionnaire-library',
     element: <QuestionnaireLibraryPage />,
-    requireAuth: false
+    requireAuth: true
   },
   {
     name: 'ResponseAnalytics',
@@ -55,7 +55,8 @@ export const SidebarWorkflows = [
   {
     primaryText: 'Form Library',
     to: '/questionnaire-library',
-    iconName: 'list'
+    iconName: 'list',
+    requireAuth: true
   },
   {
     primaryText: 'Response Analytics',
