@@ -40,6 +40,12 @@ export function AuthenticatedRoute({ children }) {
 
   // If not authenticated, show NotAuthorized component
   if (!user) {
+    // Check if we should bypass the NotAuthorized UI for debugging
+    const bypassNotAuthorized = get(Meteor, 'settings.public.NotAuthorizedUiBypass', false);
+    if (bypassNotAuthorized) {
+      console.log('[AuthenticatedRoute] NotAuthorized UI bypassed due to Meteor.settings.public.NotAuthorizedUiBypass = true');
+      return children;
+    }
     return <NotAuthorized />;
   }
 

@@ -493,7 +493,8 @@ let dynamicRoutes = [
     element: <PatientChart />
   }, {
     path: "/fhir-resources-index",
-    element: <FhirResourcesDashboard />
+    element: <FhirResourcesDashboard />,
+    requireAuth: true
   }, {
     path: "/fhir",
     element: <FhirBasePage />

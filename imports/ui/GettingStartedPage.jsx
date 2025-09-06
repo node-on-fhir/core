@@ -1744,6 +1744,21 @@ function GettingStartedPage(props){
                 />
               </Grid>
               <Grid item xs={12} md={6}>
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={get(settings, 'public.NotAuthorizedUiBypass', false)}
+                      onChange={(e) => updateSetting('public.NotAuthorizedUiBypass', e.target.checked)}
+                      size="small"
+                    />
+                  }
+                  label="Bypass NotAuthorized UI"
+                />
+                <FormHelperText sx={{ ml: 2 }}>
+                  Disable NotAuthorized screen for development/sandbox
+                </FormHelperText>
+              </Grid>
+              <Grid item xs={12} md={6}>
                 <FormControl fullWidth size="small">
                   <InputLabel>Internal Date Format</InputLabel>
                   <Select
@@ -4763,6 +4778,21 @@ function GettingStartedPage(props){
                     <MenuItem value="Enabled">Enabled</MenuItem>
                     <MenuItem value="Disabled">Disabled</MenuItem>
                   </Select>
+                </FormControl>
+              </Grid>
+              <Grid item xs={12} md={4}>
+                <FormControl fullWidth size="small">
+                  <InputLabel>NOT_AUTHORIZED_UI_BYPASS</InputLabel>
+                  <Select
+                    value={get(settings, 'private.env.NOT_AUTHORIZED_UI_BYPASS', 'No Value')}
+                    onChange={(e) => updateSetting('private.env.NOT_AUTHORIZED_UI_BYPASS', e.target.value)}
+                    label="NOT_AUTHORIZED_UI_BYPASS"
+                  >
+                    <MenuItem value="No Value">No Value</MenuItem>
+                    <MenuItem value="Enabled">Enabled</MenuItem>
+                    <MenuItem value="Disabled">Disabled</MenuItem>
+                  </Select>
+                  <FormHelperText>Bypass NotAuthorized component for development</FormHelperText>
                 </FormControl>
               </Grid>
               <Grid item xs={12} md={4}>

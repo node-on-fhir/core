@@ -369,6 +369,25 @@ Meteor.startup(async function(){
     }
   })
 
+  // Handle NotAuthorized UI bypass environment variable
+  if(process.env.NOT_AUTHORIZED_UI_BYPASS) {
+    console.log('==========================================================================================');
+    console.log('[NotAuthorized] UI Bypass is ENABLED via environment variable');
+    console.log('[NotAuthorized] Setting Meteor.settings.public.NotAuthorizedUiBypass = true');
+    console.log('==========================================================================================');
+    
+    // Ensure settings structure exists
+    if (!Meteor.settings) {
+      Meteor.settings = {};
+    }
+    if (!Meteor.settings.public) {
+      Meteor.settings.public = {};
+    }
+    
+    // Set the bypass flag
+    Meteor.settings.public.NotAuthorizedUiBypass = true;
+  }
+
   // Establish a database connection
   mongoose.connect(process.env.MONGO_URL, {
     useUnifiedTopology: true,

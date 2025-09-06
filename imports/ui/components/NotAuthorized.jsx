@@ -17,7 +17,7 @@ import {
 
 import LockIcon from '@mui/icons-material/Lock';
 
-export default function NotAuthorized() {
+export default function NotAuthorized(props) {
   const navigate = useNavigate();
   const theme = useTheme();
   
@@ -617,7 +617,7 @@ export default function NotAuthorized() {
               marginBottom: 3,
             }}
           >
-            Stronger security starts with authenticated access
+            HIPAA security starts with authenticated access
           </Typography>
           
           <Box
