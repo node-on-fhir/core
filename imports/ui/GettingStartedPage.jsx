@@ -2118,7 +2118,7 @@ function GettingStartedPage(props){
               <TableBody>
                 {/* General */}
                 <TableRow>
-                  <TableCell rowSpan={5} sx={{ fontWeight: 'bold', verticalAlign: 'top', backgroundColor: 'action.hover' }}>General</TableCell>
+                  <TableCell rowSpan={6} sx={{ fontWeight: 'bold', verticalAlign: 'top', backgroundColor: 'action.hover' }}>General</TableCell>
                   <TableCell>Home Page</TableCell>
                   <TableCell>Main landing page and dashboard</TableCell>
                   <TableCell align="center">
@@ -2126,6 +2126,17 @@ function GettingStartedPage(props){
                       size="small"
                       checked={get(settings, 'public.defaults.sidebar.menuItems.HomePage', true)}
                       onChange={(e) => updateSetting('public.defaults.sidebar.menuItems.HomePage', e.target.checked)}
+                    />
+                  </TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell>Site Index</TableCell>
+                  <TableCell>Site index listing all available pages</TableCell>
+                  <TableCell align="center">
+                    <Checkbox
+                      size="small"
+                      checked={get(settings, 'public.defaults.sidebar.menuItems.IndexPage', false)}
+                      onChange={(e) => updateSetting('public.defaults.sidebar.menuItems.IndexPage', e.target.checked)}
                     />
                   </TableCell>
                 </TableRow>

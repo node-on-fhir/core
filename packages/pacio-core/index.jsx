@@ -116,7 +116,8 @@ const MainPageComponent = withSuspense(MainPageLazy);
 export const MainPage = {
   'name': 'PACIO Dashboard',
   'path': '/',
-  'element': <MainPageComponent />
+  'element': <MainPageComponent />,
+  'description': 'Main PACIO facility dashboard and patient overview'
 };
 
 // Patient Fetch Page - Lazy loaded
@@ -166,84 +167,108 @@ export const DynamicRoutes = [
     name: 'PacioDashboard',
     path: '/pacio-dashboard',
     element: <MainPageComponent />,
-    requireAuth: true
+    requireAuth: true,
+    description: 'PACIO facility dashboard and overview'
   },
   // List routes (no patient ID)
   {
     name: 'AdvanceDirectivesList',
     path: '/advance-directives',
     element: <AdvanceDirectivesPage />,
-    requireAuth: true
+    requireAuth: true,
+    description: 'Browse and manage all advance directives'
   },
   {
     name: 'TransitionOfCareList', 
     path: '/transition-of-care',
     element: <TransitionOfCarePage />,
-    requireAuth: true
+    requireAuth: true,
+    description: 'View all transition of care documents'
   },
   {
     name: 'MedicationListsList',
     path: '/medication-lists',
     element: <MedicationListsPage />,
-    requireAuth: true
+    requireAuth: true,
+    description: 'Manage medication lists across patients'
   },
   {
     name: 'PatientFetch',
     path: '/patient-fetch',
     element: <PatientFetchPage />,
-    requireAuth: true
+    requireAuth: true,
+    description: 'Import patient data from external FHIR servers'
   },
   // Patient-specific routes
   {
+    name: 'PatientAdvanceDirectives',
     path: '/patient/:id/advance-directives',
     element: <PatientAdvanceDirectives />,
-    requireAuth: true
+    requireAuth: true,
+    description: 'View and manage advance directives for a specific patient'
   },
   {
+    name: 'AdvanceDirectiveDetail',
     path: '/advance-directive/:id',
     element: <AdvanceDirectiveDetail />,
-    requireAuth: true
+    requireAuth: true,
+    description: 'View details of a specific advance directive document'
   },
   {
+    name: 'AdvanceDirectiveRevoke',
     path: '/advance-directive/:id/revoke',
     element: <AdvanceDirectiveRevoke />,
-    requireAuth: true
+    requireAuth: true,
+    description: 'Revoke an existing advance directive'
   },
   {
+    name: 'PatientTransitionOfCare',
     path: '/patient/:id/transition-of-care',
     element: <PatientTransitionOfCare />,
-    requireAuth: true
+    requireAuth: true,
+    description: 'Manage transition of care documents for a patient'
   },
   {
+    name: 'TransitionOfCareDetail',
     path: '/transition-of-care/:id',
     element: <TransitionOfCareDetail />,
-    requireAuth: true
+    requireAuth: true,
+    description: 'View details of a specific transition of care document'
   },
   {
+    name: 'PatientGoals',
     path: '/patient/:id/goals',
     element: <PatientGoals />,
-    requireAuth: true
+    requireAuth: true,
+    description: 'Track and manage patient care goals'
   },
   {
+    name: 'PatientMedicationLists',
     path: '/patient/:id/medication-lists',
     element: <PatientMedicationLists />,
-    requireAuth: true
+    requireAuth: true,
+    description: 'View and manage medication lists for a patient'
   },
   {
+    name: 'PatientNutritionOrders',
     path: '/patient/:id/nutrition-orders',
     element: <PatientNutritionOrders />,
-    requireAuth: true
+    requireAuth: true,
+    description: 'Manage nutrition and dietary orders for a patient'
   },
   {
+    name: 'PdfViewer',
     path: '/pdf/:binaryId',
     element: Meteor.PdfViewer ? <Meteor.PdfViewer /> : <div>PdfViewer not available</div>,
-    requireAuth: true
+    requireAuth: true,
+    description: 'View PDF documents with watermarking support'
   },
   {
     name: 'TakeVitalSigns',
     path: '/take-vital-signs',
     element: <TakeVitalSignsPage />,
-    requireAuth: true
+    requireAuth: true,
+    description: 'Record patient vital signs and measurements'
   }
 ];
 

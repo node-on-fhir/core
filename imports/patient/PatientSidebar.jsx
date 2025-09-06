@@ -990,6 +990,20 @@ export function PatientSidebar(props){
 
 
   //----------------------------------------------------------------------
+  // Site Index
+  
+  let pageIndex = [];
+  if(get(Meteor, 'settings.public.defaults.sidebar.menuItems.IndexPage')){
+      pageIndex.push(<ListItem id='pageIndexItem' key='pageIndexItem' button onClick={function(){ openPage('/index'); }} >
+        <ListItemIcon >
+          <Icon icon={list} />
+        </ListItemIcon>
+        <ListItemText primary="Site Index"  />
+      </ListItem>);    
+      pageIndex.push(<Divider key="page-index-hr" />);
+  };
+
+  //----------------------------------------------------------------------
   // Data Management
 
   let dataManagementElements = [];
@@ -1282,6 +1296,7 @@ export function PatientSidebar(props){
   return(
     <div id='patientSidebar' style={{marginBottom: '80px'}}>
       { homePage }
+      { pageIndex }
 
       { loginElements }
       { profileElements }

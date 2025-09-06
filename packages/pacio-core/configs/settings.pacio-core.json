@@ -84,6 +84,7 @@
       "sidebar": {
         "menuItems": {
           "HomePage": true,
+          "IndexPage": true,
           "PatientSummary": true,
           "PatientDirectory": true,
           "FhirResources": true,
