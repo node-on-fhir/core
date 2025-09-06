@@ -199,9 +199,6 @@ import SupplyDeliveryDetail from '../ui-fhir/supplyDeliveries/SupplyDeliveryDeta
 //===============================================================================================================
 // PACIO Pages
 
-import MedicationListsPage from '../ui-pacio/MedicationListsPage.jsx';
-import TransitionsOfCarePage from '../ui-pacio/TransitionsOfCarePage.jsx';
-import AdvancedDirectivesPage from '../ui-pacio/AdvancedDirectivesPage.jsx';
 import MyProfilePage from './pages/MyProfilePage.jsx';
 import FhirResourcesDashboard from './FhirResourcesDashboard.jsx';
 
@@ -1267,19 +1264,7 @@ if(get(Meteor, 'settings.public.modules.fhir.Claims')){
   })
 }
 
-// PACIO Routes - Override package routes with our custom implementations
-dynamicRoutes.push({
-  path: "/medication-lists",
-  element: <MedicationListsPage />
-});
-dynamicRoutes.push({
-  path: "/transition-of-care",
-  element: <TransitionsOfCarePage />
-});
-dynamicRoutes.push({
-  path: "/advance-directives", 
-  element: <AdvancedDirectivesPage />
-});
+// PACIO Routes are now handled by the pacio-core package
 dynamicRoutes.push({
   path: "/my-profile", 
   element: <MyProfilePage />

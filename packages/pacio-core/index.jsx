@@ -83,17 +83,17 @@ const MedicationsPage = withSuspense(MedicationsPageLazy);
 
 // New stub pages for main workflows
 const AdvanceDirectivesPageLazy = React.lazy(() => 
-  import('./client/pages/AdvanceDirectivesPage').then(module => ({ default: module.AdvanceDirectivesPage }))
+  import('./client/pages/AdvanceDirectivesPage')
 );
 const AdvanceDirectivesPage = withSuspense(AdvanceDirectivesPageLazy);
 
 const TransitionOfCarePageLazy = React.lazy(() => 
-  import('./client/pages/TransitionOfCarePage').then(module => ({ default: module.TransitionOfCarePage }))
+  import('./client/pages/TransitionOfCarePage')
 );
 const TransitionOfCarePage = withSuspense(TransitionOfCarePageLazy);
 
 const MedicationListsPageLazy = React.lazy(() => 
-  import('./client/pages/MedicationListsPage').then(module => ({ default: module.MedicationListsPage }))
+  import('./client/pages/MedicationListsPage')
 );
 const MedicationListsPage = withSuspense(MedicationListsPageLazy);
 
