@@ -69,14 +69,19 @@ function MyProfilePage(props) {
   }, []);
 
   let currentUser = useTracker(function(){
-    const sessionUser = Session.get('currentUser');
+    // Always get fresh data from Meteor.user() for reactivity
     const meteorUser = Meteor.user();
-    console.log('MyProfilePage - sessionUser:', sessionUser);
     console.log('MyProfilePage - meteorUser:', meteorUser);
     console.log('MyProfilePage - userId:', Meteor.userId());
+    console.log('MyProfilePage - practitionerId:', get(meteorUser, 'practitionerId'));
     
-    // Use Meteor.user() if session is not set
-    return sessionUser || meteorUser;
+    // Update session if needed for other components
+    if (meteorUser && (!Session.get('currentUser') || Session.get('currentUser')._id !== meteorUser._id)) {
+      Session.set('currentUser', meteorUser);
+    }
+    
+    // Always return Meteor.user() for proper reactivity
+    return meteorUser;
   }, [])
 
   let accountsAccessToken = useTracker(function(){
@@ -178,8 +183,10 @@ function MyProfilePage(props) {
       setSuccessMessage('Practitioner record linked successfully!');
       setOpenPractitionerSearch(false);
       
-      // No need to reload - the reactive data will update automatically
-      // The useTracker hooks will detect the change and re-render
+      // The useTracker hooks will detect the change automatically
+      // via Meteor's reactivity system. The currentUser and currentPractitioner
+      // will update when the user document changes on the server.
+      console.log('Practitioner linked. UI will update via reactivity.');
       
     } catch (error) {
       console.error('Error linking practitioner:', error);

@@ -223,6 +223,9 @@
   },
   "private": {
     "debug": true,
+    "chiefMedicalOfficer": {
+      "reference": "Practitioner/Jprxn3CFPTDRDRNpx"
+    },
     "mcp": {
       "enabled": true,
       "transport": ["http"],
