@@ -195,3 +195,28 @@ if (Package['browser-policy-common']) {
 
 This pattern is standards-compliant and works with modern bundlers while maintaining the conditional loading behavior.
 
+## Healthy Paranoia Checklist Format
+
+When the user asks for a "Healthy Paranoia Checklist" or when discussing risky technical implementations, use this format:
+
+### Healthy Paranoia Checklist: [Topic]
+
+**What could still go wrong:**
+- 🎯 [Specific technical risk with details]
+- 💥 [Infrastructure/deployment concern]  
+- 🐛 [Likely bug or edge case scenario]
+- 📱 [Platform/device-specific issue]
+- 🔒 [Security/compliance/regulatory worry]
+- 😭 [The nightmare scenario that keeps you up at night]
+
+**But remember:** [What's actually working and why that's significant]
+
+This format:
+- Validates legitimate concerns without dismissing them
+- Lists specific, realistic technical risks (not vague worries)
+- Uses emojis to add levity while discussing potential failures
+- Maintains perspective by acknowledging what IS working
+- Balances optimism with engineering realism
+
+Perfect for situations where "it should just work" has burned us before.
+
