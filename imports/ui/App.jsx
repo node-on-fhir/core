@@ -76,6 +76,7 @@ import PatientChart from '../patient/PatientChart.jsx';
 // Modules
 
 import PatientsDirectory from '../ui-modules/PatientsDirectory.jsx';
+import BiomarkerChartingPage from '../ui-modules/BiomarkerChartingPage.jsx';
 
 // Optional package imports would go here when packages are added
 
@@ -491,6 +492,9 @@ let dynamicRoutes = [
   }, {
     path: "/patient-chart",
     element: <PatientChart />
+  }, {
+    path: "/biomarkers-charting",
+    element: <BiomarkerChartingPage />
   }, {
     path: "/fhir-resources-index",
     element: <FhirResourcesDashboard />,

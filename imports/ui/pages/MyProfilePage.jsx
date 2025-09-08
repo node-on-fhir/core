@@ -17,13 +17,20 @@ import {
   Dialog,
   DialogTitle,
   DialogActions,
-  Collapse
+  Collapse,
+  Chip,
+  Stack,
+  Card,
+  CardContent,
+  CardHeader,
+  CircularProgress
 } from '@mui/material';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
+import ScannerIcon from '@mui/icons-material/Scanner';
 
 import { get } from 'lodash';
 import { useTracker } from 'meteor/react-meteor-data';
@@ -55,6 +62,12 @@ function MyProfilePage(props) {
   const [openAIKey, setOpenAIKey] = useState('');
   const [anthropicKey, setAnthropicKey] = useState('');
   const [savingKeys, setSavingKeys] = useState(false);
+  const [scanningRecords, setScanningRecords] = useState(false);
+  const [terminologyCodes, setTerminologyCodes] = useState({
+    snomed: [],
+    loinc: [],
+    icd10: []
+  });
   const navigate = useNavigate();
   const theme = useTheme();
   
@@ -82,7 +95,18 @@ function MyProfilePage(props) {
     
     // Always return Meteor.user() for proper reactivity
     return meteorUser;
-  }, [])
+  }, []);
+
+  // Load terminology from user profile
+  useEffect(() => {
+    if (currentUser?.profile?.terminology) {
+      setTerminologyCodes({
+        snomed: get(currentUser, 'profile.terminology.snomed', []),
+        loinc: get(currentUser, 'profile.terminology.loinc', []),
+        icd10: get(currentUser, 'profile.terminology.icd10', [])
+      });
+    }
+  }, [currentUser]);
 
   let accountsAccessToken = useTracker(function(){
     const sessionToken = Session.get('accountsAccessToken');
@@ -839,6 +863,270 @@ curl -H "session:${accountsAccessToken}" \\
         <Typography variant="body2" color="text.secondary">
           No consent records found.
         </Typography>
+      </Paper>
+
+      {/* Terminology Relevant to My Care */}
+      <Paper elevation={3} sx={{ p: 3, mb: 3, backgroundColor: theme.palette.mode === 'dark' ? 'background.paper' : 'background.default' }}>
+        <Typography variant="h6" gutterBottom>
+          Terminology Relevant to My Care
+        </Typography>
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+          Medical codes and terminology found in your health records
+        </Typography>
+        
+        <Box sx={{ mb: 2 }}>
+          <Button
+            variant="contained"
+            startIcon={scanningRecords ? <CircularProgress size={20} color="inherit" /> : <ScannerIcon />}
+            onClick={async () => {
+              setScanningRecords(true);
+              try {
+                // Initialize collections - try multiple ways to access them
+                let Conditions, Observations, Procedures;
+                
+                // Try window.Collections first (client-side)
+                if (typeof window !== 'undefined' && window.Collections) {
+                  Conditions = window.Collections.Conditions;
+                  Observations = window.Collections.Observations;
+                  Procedures = window.Collections.Procedures;
+                } else if (Meteor.Collections) {
+                  Conditions = Meteor.Collections.Conditions;
+                  Observations = Meteor.Collections.Observations;
+                  Procedures = Meteor.Collections.Procedures;
+                }
+                
+                // If still not found, try importing directly
+                if (!Conditions) {
+                  try {
+                    const { Conditions: ConditionsImport } = await import('../../lib/schemas/SimpleSchemas/Conditions');
+                    const { Observations: ObservationsImport } = await import('../../lib/schemas/SimpleSchemas/Observations');
+                    const { Procedures: ProceduresImport } = await import('../../lib/schemas/SimpleSchemas/Procedures');
+                    
+                    Conditions = ConditionsImport;
+                    Observations = ObservationsImport;
+                    Procedures = ProceduresImport;
+                  } catch (importError) {
+                    console.warn('Could not import collections:', importError);
+                  }
+                }
+                
+                console.log('Collections found:', { 
+                  Conditions: !!Conditions, 
+                  Observations: !!Observations, 
+                  Procedures: !!Procedures 
+                });
+
+                const codes = {
+                  snomed: new Map(),
+                  loinc: new Map(),
+                  icd10: new Map()
+                };
+
+                // Helper function to extract codes
+                const extractCodes = (coding) => {
+                  if (Array.isArray(coding)) {
+                    coding.forEach(code => {
+                      if (code.system && code.code) {
+                        const codeKey = `${code.code}|${code.display || ''}`;
+                        if (code.system.includes('snomed')) {
+                          codes.snomed.set(codeKey, {
+                            code: code.code,
+                            display: code.display || code.code,
+                            system: 'SNOMED'
+                          });
+                        } else if (code.system.includes('loinc')) {
+                          codes.loinc.set(codeKey, {
+                            code: code.code,
+                            display: code.display || code.code,
+                            system: 'LOINC'
+                          });
+                        } else if (code.system.includes('icd-10') || code.system.includes('icd10')) {
+                          codes.icd10.set(codeKey, {
+                            code: code.code,
+                            display: code.display || code.code,
+                            system: 'ICD-10'
+                          });
+                        }
+                      }
+                    });
+                  }
+                };
+
+                // Get patient ID
+                const patientId = get(currentUser, 'patientId');
+                console.log('Scanning for patient ID:', patientId);
+                
+                // Scan Conditions
+                if (Conditions && patientId) {
+                  const query = {
+                    $or: [
+                      { 'subject.reference': `Patient/${patientId}` },
+                      { 'subject.reference': { $regex: `Patient/${patientId}` } }
+                    ]
+                  };
+                  
+                  const conditions = await Conditions.find(query).fetch();
+                  console.log('Found conditions:', conditions.length);
+                  
+                  conditions.forEach(condition => {
+                    if (condition.code?.coding) {
+                      extractCodes(condition.code.coding);
+                    }
+                  });
+                }
+
+                // Scan Observations
+                if (Observations && patientId) {
+                  const query = {
+                    $or: [
+                      { 'subject.reference': `Patient/${patientId}` },
+                      { 'subject.reference': { $regex: `Patient/${patientId}` } }
+                    ]
+                  };
+                  
+                  const observations = await Observations.find(query).fetch();
+                  console.log('Found observations:', observations.length);
+                  
+                  observations.forEach(observation => {
+                    if (observation.code?.coding) {
+                      extractCodes(observation.code.coding);
+                    }
+                  });
+                }
+
+                // Scan Procedures
+                if (Procedures && patientId) {
+                  const query = {
+                    $or: [
+                      { 'subject.reference': `Patient/${patientId}` },
+                      { 'subject.reference': { $regex: `Patient/${patientId}` } }
+                    ]
+                  };
+                  
+                  const procedures = await Procedures.find(query).fetch();
+                  console.log('Found procedures:', procedures.length);
+                  
+                  procedures.forEach(procedure => {
+                    if (procedure.code?.coding) {
+                      extractCodes(procedure.code.coding);
+                    }
+                  });
+                }
+
+                // Convert maps to arrays
+                const newTerminology = {
+                  snomed: Array.from(codes.snomed.values()),
+                  loinc: Array.from(codes.loinc.values()),
+                  icd10: Array.from(codes.icd10.values())
+                };
+                
+                console.log('Terminology found:', {
+                  snomed: newTerminology.snomed.length,
+                  loinc: newTerminology.loinc.length,
+                  icd10: newTerminology.icd10.length,
+                  sample: newTerminology
+                });
+
+                setTerminologyCodes(newTerminology);
+
+                // Save to user profile (check if method exists)
+                try {
+                  await Meteor.callAsync('users.updateTerminology', newTerminology);
+                } catch (methodError) {
+                  console.warn('Could not save to profile:', methodError.message);
+                  // Continue anyway - we still have the codes in state
+                }
+                
+                setSuccessMessage(`Found ${newTerminology.snomed.length} SNOMED, ${newTerminology.loinc.length} LOINC, and ${newTerminology.icd10.length} ICD-10 codes`);
+              } catch (error) {
+                console.error('Error scanning records:', error);
+                setError('Failed to scan medical records');
+              } finally {
+                setScanningRecords(false);
+              }
+            }}
+            disabled={scanningRecords || !currentUser?.patientId}
+          >
+            {scanningRecords ? 'Scanning...' : 'Scan Records'}
+          </Button>
+          {!currentUser?.patientId && (
+            <Typography variant="caption" color="text.secondary" sx={{ ml: 2 }}>
+              Link a patient record first
+            </Typography>
+          )}
+        </Box>
+
+        {/* Display terminology codes */}
+        <Stack spacing={2}>
+          {terminologyCodes.snomed.length > 0 && (
+            <Box>
+              <Typography variant="subtitle2" gutterBottom>
+                SNOMED CT Codes
+              </Typography>
+              <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+                {terminologyCodes.snomed.map((term, index) => (
+                  <Chip
+                    key={index}
+                    label={`${term.code}: ${term.display}`}
+                    variant="outlined"
+                    sx={{ 
+                      borderColor: 'primary.main',
+                      mb: 1
+                    }}
+                  />
+                ))}
+              </Stack>
+            </Box>
+          )}
+
+          {terminologyCodes.loinc.length > 0 && (
+            <Box>
+              <Typography variant="subtitle2" gutterBottom>
+                LOINC Codes
+              </Typography>
+              <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+                {terminologyCodes.loinc.map((term, index) => (
+                  <Chip
+                    key={index}
+                    label={`${term.code}: ${term.display}`}
+                    variant="outlined"
+                    sx={{ 
+                      borderColor: 'success.main',
+                      mb: 1
+                    }}
+                  />
+                ))}
+              </Stack>
+            </Box>
+          )}
+
+          {terminologyCodes.icd10.length > 0 && (
+            <Box>
+              <Typography variant="subtitle2" gutterBottom>
+                ICD-10 Codes
+              </Typography>
+              <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+                {terminologyCodes.icd10.map((term, index) => (
+                  <Chip
+                    key={index}
+                    label={`${term.code}: ${term.display}`}
+                    variant="outlined"
+                    sx={{ 
+                      borderColor: 'warning.main',
+                      mb: 1
+                    }}
+                  />
+                ))}
+              </Stack>
+            </Box>
+          )}
+
+          {terminologyCodes.snomed.length === 0 && terminologyCodes.loinc.length === 0 && terminologyCodes.icd10.length === 0 && (
+            <Typography variant="body2" color="text.secondary">
+              No terminology codes found. Click "Scan Records" to analyze your medical records.
+            </Typography>
+          )}
+        </Stack>
       </Paper>
 
       <Paper elevation={3} sx={{ p: 3, mb: 3, backgroundColor: theme.palette.mode === 'dark' ? 'background.paper' : 'background.default' }}>

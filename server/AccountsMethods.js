@@ -1,57 +1,49 @@
 import { Meteor } from 'meteor/meteor';
-import { get } from 'lodash';
+import { get, set } from 'lodash';
 
 Meteor.methods({
-  'jsaccounts/validateLogout': function (accessToken) {
-    const connection = this.connection;
-
-    process.env.DEBUG_ACCOUNTS && console.log('accountsServer', accountsServer);
-    process.env.DEBUG_ACCOUNTS && console.log('connection', connection);
-    process.env.DEBUG_ACCOUNTS && console.log('accessToken', accessToken);
-
-    if (AccountsServer) {
-      Meteor._noYieldsAllowed(function () {
-        accountsServer.logout(accessToken);
-        // AccountsServer._removeTokenFromConnection(connection.id);
-        // AccountsServer._setAccountData(connection.id, 'loginToken', null);
-      });
+  // These methods are commented out as they depend on accountsServer which is not globally available
+  // They would need to be refactored to work with the current architecture
+  
+  // 'jsaccounts/validateLogout': function (accessToken) {
+  //   const connection = this.connection;
+  //   this.setUserId(null);
+  // },
+  
+  // 'jsaccounts/validateLogin': function (accessToken) {
+  //   const connection = this.connection;
+  //   const meteorContext = this;
+  //   // Implementation would need accountsServer
+  //   return true;
+  // },
+  
+  'users.updateTerminology': async function(terminology) {
+    // Check if user is logged in
+    if (!this.userId) {
+      throw new Meteor.Error('not-authorized', 'You must be logged in to update terminology');
     }
 
-    this.setUserId(null);
-  },
-  'jsaccounts/validateLogin': function (accessToken) {
-    const connection = this.connection;
-    const meteorContext = this;
+    // Validate the terminology structure
+    if (!terminology || typeof terminology !== 'object') {
+      throw new Meteor.Error('invalid-data', 'Invalid terminology data');
+    }
 
-    const method = Meteor.wrapAsync(function (accessToken, callback) {
-
-      // ServerValidator.validateToken(accessToken, meteorContext)
-      accountsServer.findSessionByAccessToken(accessToken)
-        .then(user => {
-          callback(null, user);
-        })
-        .catch(e => {
-          callback(e, null);
-        })
-    });
-
-    const user = method(accessToken);
-    const jsaccountsContext = {
-      userId: user ? user.id : null,
-      user: user || null,
-      accessToken,
+    // Ensure arrays for each terminology type
+    const sanitizedTerminology = {
+      snomed: Array.isArray(terminology.snomed) ? terminology.snomed : [],
+      loinc: Array.isArray(terminology.loinc) ? terminology.loinc : [],
+      icd10: Array.isArray(terminology.icd10) ? terminology.icd10 : []
     };
 
-    if (AccountsServer)  {
-      Meteor._noYieldsAllowed(function () {
-        AccountsServer._removeTokenFromConnection(connection.id);
-        AccountsServer._setAccountData(connection.id, 'loginToken', jsaccountsContext.accessToken);
-        // AccountsServer.logout(jsaccountsContext.accessToken);
-      });
-    }
+    // Update the user's profile with the terminology using Meteor v3 async API
+    await Meteor.users.updateAsync(this.userId, {
+      $set: {
+        'profile.terminology': sanitizedTerminology
+      }
+    });
 
-    this.setUserId(jsaccountsContext.userId);
-
+    console.log(`Updated terminology for user ${this.userId}: ${sanitizedTerminology.snomed.length} SNOMED, ${sanitizedTerminology.loinc.length} LOINC, ${sanitizedTerminology.icd10.length} ICD-10 codes`);
+    
     return true;
   }
 });  

@@ -2167,6 +2167,17 @@ function GettingStartedPage(props){
                   </TableCell>
                 </TableRow>
                 <TableRow>
+                  <TableCell>Biomarker Charting</TableCell>
+                  <TableCell>View and analyze biomarker trends and vital signs</TableCell>
+                  <TableCell align="center">
+                    <Checkbox
+                      size="small"
+                      checked={get(settings, 'public.defaults.sidebar.menuItems.BiomarkerCharting', false)}
+                      onChange={(e) => updateSetting('public.defaults.sidebar.menuItems.BiomarkerCharting', e.target.checked)}
+                    />
+                  </TableCell>
+                </TableRow>
+                <TableRow>
                   <TableCell>Health Records</TableCell>
                   <TableCell>Access all health records and documents</TableCell>
                   <TableCell align="center">
@@ -2841,6 +2852,16 @@ function GettingStartedPage(props){
                       />
                     }
                     label="Patient Chart"
+                  />
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        size="small"
+                        checked={get(settings, 'public.modules.BiomarkerCharting', false)}
+                        onChange={(e) => updateSetting('public.modules.BiomarkerCharting', e.target.checked)}
+                      />
+                    }
+                    label="Biomarker Charting"
                   />
                   <FormControlLabel
                     control={

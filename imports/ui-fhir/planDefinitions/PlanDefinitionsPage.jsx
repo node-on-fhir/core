@@ -112,36 +112,13 @@ export function PlanDefinitionsPage(props){
   
   // Subscribe to plan definitions data with search filter
   const isLoading = useTracker(() => {
-    let autoPublishEnabled = get(Meteor, 'settings.public.defaults.autopublish', false);
+    // Try the hermes-tooling publication which we know exists
+    const handle = Meteor.subscribe('planDefinitions');
     
-    // Build query for subscription
-    let query = {};
+    console.log('PlanDefinitionsPage - Subscription status:', handle.ready());
     
-    // Add search filter
-    if(searchFilter && searchFilter.length > 0) {
-      query = {
-        $or: [
-          {'_id': searchFilter},
-          {'id': searchFilter},
-          {'url': {$regex: searchFilter, $options: 'i'}},
-          {'name': {$regex: searchFilter, $options: 'i'}},
-          {'title': {$regex: searchFilter, $options: 'i'}},
-          {'status': {$regex: searchFilter, $options: 'i'}},
-          {'publisher': {$regex: searchFilter, $options: 'i'}},
-          {'description': {$regex: searchFilter, $options: 'i'}},
-          {'type.coding.0.display': {$regex: searchFilter, $options: 'i'}}
-        ]
-      };
-    }
-    
-    if(autoPublishEnabled){
-      const handle = Meteor.subscribe('autopublish.PlanDefinitions', query, { limit: 1000 });
-      return !handle.ready();
-    } else {
-      const handle = Meteor.subscribe('planDefinitions.all');
-      return !handle.ready();
-    }
-  }, [searchFilter]);
+    return !handle.ready();
+  }, []);
 
 
   data.selectedPlanDefinitionId = useTracker(function(){
@@ -152,7 +129,9 @@ export function PlanDefinitionsPage(props){
   }, [])
   data.planDefinitions = useTracker(function(){
     // No patient filtering for PlanDefinitions - it's a definition resource
-    return PlanDefinitions.find({}).fetch();
+    const results = PlanDefinitions.find({}).fetch();
+    console.log('PlanDefinitionsPage - Found', results.length, 'PlanDefinitions in collection');
+    return results;
   }, [])
   data.planDefinitionsIndex = useTracker(function(){
     return Session.get('PlanDefinitionsTable.planDefinitionsIndex')

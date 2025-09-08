@@ -562,7 +562,16 @@ export default function CorrectionRequestsPage() {
   };
   
   return (
-    <div id="correctionRequestsPage" style={{ padding: '20px' }}>
+    <Box 
+      id="correctionRequestsPage" 
+      sx={{ 
+        p: 2.5,
+        bgcolor: theme => theme.palette.mode === 'light' 
+          ? theme.palette.grey[50] 
+          : theme.palette.background.default,
+        minHeight: '100vh'
+      }}
+    >
       <Grid container spacing={3}>
         <Grid item xs={12}>
           <Card>
@@ -740,6 +749,6 @@ export default function CorrectionRequestsPage() {
           <AddIcon />
         </Fab>
       )}
-    </div>
+    </Box>
   );
 }

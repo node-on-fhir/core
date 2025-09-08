@@ -34,6 +34,7 @@ import './ProxyRelay.js';
 import './VaultServer.js';
 import '../imports/lib/UdapMethods.js';
 import './Swagger.js';
+import './AccountsMethods.js';
 
 // Import accounts startup if enabled
 import '../imports/startup/server/index.js';

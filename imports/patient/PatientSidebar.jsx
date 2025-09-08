@@ -48,6 +48,7 @@ import {iosPulseStrong} from 'react-icons-kit/ionicons/iosPulseStrong' // Pulse,
 import {location} from 'react-icons-kit/typicons/location' // Location
 import {eyedropper} from 'react-icons-kit/fa/eyedropper'
 import {dashboard} from 'react-icons-kit/fa/dashboard' //Dashboard
+import {lineChart} from 'react-icons-kit/fa/lineChart' // Biomarker Charts
 import {list} from 'react-icons-kit/fa/list' //Dashboard
 import {addressCardO} from 'react-icons-kit/fa/addressCardO'  // Address Card  
 import {mapO} from 'react-icons-kit/fa/mapO'
@@ -1017,6 +1018,17 @@ export function PatientSidebar(props){
         <Icon icon={heartbeat} />
       </ListItemIcon>
       <ListItemText primary="Patient Chart"  />
+    </ListItem>);    
+  };
+  
+  // Biomarker Charting
+  if(get(Meteor, 'settings.public.defaults.sidebar.menuItems.BiomarkerCharting', false)){
+    drawDataMgmDivider = true;
+    dataManagementElements.push(<ListItem id='biomarkerChartingItem' key='biomarkerChartingItem' button onClick={function(){ openPage('/biomarkers-charting'); }} >
+      <ListItemIcon >
+        <Icon icon={lineChart} />
+      </ListItemIcon>
+      <ListItemText primary="Biomarker Charting"  />
     </ListItem>);    
   };
   
