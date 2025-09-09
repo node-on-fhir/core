@@ -5,7 +5,7 @@ import { get } from 'lodash';
 
 /**
  * Validates that a given URL is safe to be used for navigation.
- * Only allows http/https protocols and (optionally) trusted hostnames.
+ * Only allows http/https protocols and same-origin URLs.
  * @param {string} url
  * @returns {boolean}
  */
@@ -13,9 +13,9 @@ function isSafeUrl(url) {
   try {
     const parsedUrl = new URL(url, window.location.origin);
     const protocol = parsedUrl.protocol;
-    // Add allowed hostnames check if desired:
-    // const allowedHosts = [...]; if (!allowedHosts.includes(parsedUrl.hostname)) return false;
-    if (protocol === 'http:' || protocol === 'https:') {
+    const { origin } = window.location;
+    // Only allow http/https, and require same-origin (strict policy)
+    if ((protocol === 'http:' || protocol === 'https:') && parsedUrl.origin === origin) {
       return true;
     }
     return false;
@@ -194,9 +194,15 @@ UIHandlers = {
       case 'tab':
         // Open in new tab
         if (url && isSafeUrl(url)) {
+          window.open(url, target || '_blank');
         } else if (url) {
           console.warn('Unsafe URL for navigation (tab):', url);
-          window.open(url, target || '_blank');
+          // Blocked: do not perform navigation. Optionally trigger security event:
+          $(document).trigger('smart:messaging:security:blocked', {
+            type: 'unsafe_url',
+            url: url,
+            navigationHint: hint
+          });
         }
         break;
         
