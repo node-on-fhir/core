@@ -117,7 +117,8 @@ export function PlanDefinitionsPage(props){
     
     console.log('PlanDefinitionsPage - Subscription status:', handle.ready());
     
-    return !handle.ready();
+    // Return loading state - handle might be undefined in test environment
+    return handle ? !handle.ready() : false;
   }, []);
 
 

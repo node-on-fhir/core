@@ -104,26 +104,62 @@ describe('PlanDefinitions CRUD Operations', function() {
     browser
       .url('http://localhost:3000/plan-definitions')
       .waitForElementVisible('#planDefinitionsPage', 5000)
-      .pause(1000);
+      .pause(2000); // Give more time for subscription to complete
       
     browser.execute(function() {
+        const pageElement = document.querySelector('#planDefinitionsPage');
+        const pageText = pageElement ? pageElement.textContent : '';
+        
         const hasTable = document.querySelector('#planDefinitionsTable') !== null;
         const hasNoDataCard = document.querySelector('.no-data-card') !== null ||
                             document.querySelector('.no-data-available') !== null ||
                             document.querySelector('[id*="no-data"]') !== null ||
-                            (document.querySelector('#planDefinitionsPage') && 
-                             document.querySelector('#planDefinitionsPage').textContent.includes('No Data Available'));
+                            pageText.includes('No Data Available');
+        const isLoading = pageText.includes('Loading plan definitions');
+        
         return {
           hasTable: hasTable,
           hasNoDataCard: hasNoDataCard,
-          hasEitherElement: hasTable || hasNoDataCard
+          isLoading: isLoading,
+          hasEitherElement: hasTable || hasNoDataCard,
+          pageText: pageText.substring(0, 200) // For debugging
         };
       }, [], function(result) {
         if (!result || !result.value) {
           browser.assert.fail('Failed to check page elements - result is null');
           return;
         }
-        browser.assert.equal(result.value.hasEitherElement, true, 'Either plan definitions table or no-data message is present');
+        
+        // If still loading, wait a bit more and try again
+        if (result.value.isLoading) {
+          console.log('Page is still loading, waiting...');
+          browser.pause(2000);
+          
+          browser.execute(function() {
+            const pageElement = document.querySelector('#planDefinitionsPage');
+            const pageText = pageElement ? pageElement.textContent : '';
+            
+            const hasTable = document.querySelector('#planDefinitionsTable') !== null;
+            const hasNoDataCard = pageText.includes('No Data Available');
+            
+            return {
+              hasTable: hasTable,
+              hasNoDataCard: hasNoDataCard,
+              hasEitherElement: hasTable || hasNoDataCard,
+              pageText: pageText.substring(0, 200)
+            };
+          }, [], function(retryResult) {
+            if (!retryResult || !retryResult.value) {
+              browser.assert.fail('Failed to check page elements after retry - result is null');
+              return;
+            }
+            console.log('After retry - Page text:', retryResult.value.pageText);
+            browser.assert.equal(retryResult.value.hasEitherElement, true, 'Either plan definitions table or no-data message is present');
+          });
+        } else {
+          console.log('Page text:', result.value.pageText);
+          browser.assert.equal(result.value.hasEitherElement, true, 'Either plan definitions table or no-data message is present');
+        }
       })
       .saveScreenshot('tests/nightwatch/screenshots/plan-definitions/02-plan-definitions-list.png');
   });
