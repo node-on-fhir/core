@@ -143,6 +143,18 @@ UIHandlers = {
     
     SmartWebMessaging.debug('Processing navigation hint', hint);
     
+    // Validate URL before any navigation
+    if (url && !UrlValidator.isSafeUrl(url)) {
+      console.error('UIHandlers: Blocked navigation to unsafe URL:', url);
+      // Trigger security event
+      $(document).trigger('smart:messaging:security:blocked', {
+        type: 'unsafe_url',
+        url: url,
+        navigationHint: hint
+      });
+      return;
+    }
+    
     switch (type) {
       case 'none':
         // No navigation
@@ -150,24 +162,32 @@ UIHandlers = {
         
       case 'replace':
         // Replace current window location
-        if (url) {
+        if (url && UrlValidator.isSafeUrl(url)) {
           window.location.replace(url);
         }
         break;
         
       case 'tab':
         // Open in new tab
-        if (url) {
-          window.open(url, target || '_blank');
+        if (url && UrlValidator.isSafeUrl(url)) {
+          // Additional validation for _blank target to prevent window.opener attacks
+          const safeTarget = target || '_blank';
+          const newWindow = window.open(url, safeTarget);
+          if (newWindow && safeTarget === '_blank') {
+            // Prevent window.opener attacks
+            newWindow.opener = null;
+          }
         }
         break;
         
       case 'history':
-        // Use history API
-        if (url && window.history && window.history.pushState) {
+        // Use history API - only allow same-origin URLs for history manipulation
+        if (url && UrlValidator.isSameOrigin(url) && window.history && window.history.pushState) {
           window.history.pushState(null, '', url);
           // Trigger route change event
           $(window).trigger('popstate');
+        } else if (url && !UrlValidator.isSameOrigin(url)) {
+          console.warn('UIHandlers: History API navigation blocked for cross-origin URL:', url);
         }
         break;
         

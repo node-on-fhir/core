@@ -40,6 +40,9 @@ Package.onUse(function(api) {
   api.addFiles('lib/utilities/MessageValidator.js', ['client', 'server']);
   api.addFiles('lib/utilities/OriginChecker.js', ['client', 'server']);
   
+  // Client-side security utilities
+  api.addFiles('client/utils/UrlValidator.js', 'client');
+  
   // Main namespace
   api.addFiles('lib/SmartWebMessaging.js', ['client', 'server']);
   
@@ -75,6 +78,7 @@ Package.onUse(function(api) {
   api.export('MessageTypes');
   api.export('Activities');
   api.export('LaunchStatusCodes');
+  api.export('UrlValidator', 'client');
 });
 
 Package.onTest(function(api) {
@@ -86,6 +90,7 @@ Package.onTest(function(api) {
   api.addFiles('tests/client/MessageHandler.tests.js', 'client');
   api.addFiles('tests/client/ScratchpadHandlers.tests.js', 'client');
   api.addFiles('tests/client/ActivityLauncher.tests.js', 'client');
+  api.addFiles('tests/client/UrlValidator.tests.js', 'client');
   
   api.addFiles('tests/server/authorization.tests.js', 'server');
   api.addFiles('tests/server/scratchpadMethods.tests.js', 'server');
