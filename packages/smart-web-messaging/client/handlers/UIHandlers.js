@@ -2,6 +2,28 @@
 
 import { get } from 'lodash';
 
+
+/**
+ * Validates that a given URL is safe to be used for navigation.
+ * Only allows http/https protocols and (optionally) trusted hostnames.
+ * @param {string} url
+ * @returns {boolean}
+ */
+function isSafeUrl(url) {
+  try {
+    const parsedUrl = new URL(url, window.location.origin);
+    const protocol = parsedUrl.protocol;
+    // Add allowed hostnames check if desired:
+    // const allowedHosts = [...]; if (!allowedHosts.includes(parsedUrl.hostname)) return false;
+    if (protocol === 'http:' || protocol === 'https:') {
+      return true;
+    }
+    return false;
+  } catch (_) {
+    return false;
+  }
+}
+
 /**
  * Handlers for ui.* messages
  */
@@ -150,22 +172,28 @@ UIHandlers = {
         
       case 'replace':
         // Replace current window location
-        if (url) {
+        if (url && isSafeUrl(url)) {
+        } else if (url) {
+          console.warn('Unsafe URL for navigation (replace):', url);
           window.location.replace(url);
         }
         break;
         
       case 'tab':
         // Open in new tab
-        if (url) {
+        if (url && isSafeUrl(url)) {
+        } else if (url) {
+          console.warn('Unsafe URL for navigation (tab):', url);
           window.open(url, target || '_blank');
         }
         break;
         
       case 'history':
         // Use history API
-        if (url && window.history && window.history.pushState) {
+        if (url && isSafeUrl(url) && window.history && window.history.pushState) {
           window.history.pushState(null, '', url);
+        } else if (url) {
+          console.warn('Unsafe URL for navigation (history):', url);
           // Trigger route change event
           $(window).trigger('popstate');
         }
