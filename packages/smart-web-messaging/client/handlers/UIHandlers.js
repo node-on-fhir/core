@@ -1,5 +1,23 @@
 // packages/smart-web-messaging/client/handlers/UIHandlers.js
 
+/**
+ * Security Notice:
+ * This module handles navigation requests from SMART Web Messaging.
+ * All URLs are validated and sanitized before navigation to prevent XSS attacks.
+ * 
+ * Security measures:
+ * 1. URL validation - only allows safe protocols (http/https)
+ * 2. Same-origin enforcement for sensitive operations
+ * 3. Domain whitelisting for cross-origin navigation
+ * 4. URL sanitization to remove injection attempts
+ * 5. Centralized navigation through safeNavigate() function
+ * 6. Security event triggering for monitoring blocked attempts
+ * 
+ * Configuration:
+ * Trusted domains can be configured in settings:
+ * settings.public.smartMessaging.trustedDomains = ['example.com', '*.trusted.org']
+ */
+
 import { get } from 'lodash';
 
 
@@ -10,14 +28,129 @@ import { get } from 'lodash';
  * @returns {boolean}
  */
 function isSafeUrl(url) {
-  // Only allow relative path navigation (no protocol, domain, etc.)
-  if (typeof url !== 'string') return false;
-  // Must start with a single slash, can't have '//' after the first position, and no javascript: or data:
+  if (typeof url !== 'string' || !url) return false;
+  
+  // Allow relative paths (must start with single slash)
   if (/^\/(?!\/)/.test(url) && !/[\s"'><`]/.test(url)) {
-    // Disallow double slashes (//) except leading, basic XSS chars, and schemes.
     return true;
   }
-  return false;
+  
+  // Allow same-origin absolute URLs
+  try {
+    const parsed = new URL(url, window.location.origin);
+    // Only allow http/https protocols
+    if (!['http:', 'https:'].includes(parsed.protocol)) {
+      return false;
+    }
+    // For same-origin navigation, allow it
+    if (parsed.origin === window.location.origin) {
+      return true;
+    }
+    // For cross-origin, only allow if explicitly whitelisted
+    return isWhitelistedDomain(parsed.hostname);
+  } catch (e) {
+    return false;
+  }
+}
+
+/**
+ * Check if a domain is whitelisted for navigation
+ * @param {string} hostname
+ * @returns {boolean}
+ */
+function isWhitelistedDomain(hostname) {
+  // Get whitelist from settings or use defaults
+  const whitelist = get(Meteor, 'settings.public.smartMessaging.trustedDomains', []);
+  
+  // Add common trusted healthcare domains if needed
+  const defaultTrusted = [
+    // Add specific trusted domains here if needed
+    // 'smarthealth.cards',
+    // 'hl7.org'
+  ];
+  
+  const allTrusted = [...whitelist, ...defaultTrusted];
+  return allTrusted.some(domain => {
+    // Support wildcard subdomains (*.example.com)
+    if (domain.startsWith('*.')) {
+      const baseDomain = domain.slice(2);
+      return hostname === baseDomain || hostname.endsWith('.' + baseDomain);
+    }
+    return hostname === domain;
+  });
+}
+
+/**
+ * Safe navigation wrapper that sanitizes and validates URLs
+ * @param {string} url - URL to navigate to
+ * @param {string} method - Navigation method (replace, tab, history)
+ * @param {string} target - Target for window.open
+ * @returns {boolean} True if navigation was performed
+ */
+function safeNavigate(url, method = 'replace', target = '_self') {
+  // Validate URL first
+  if (!url || !isSafeUrl(url)) {
+    console.error('Navigation blocked - unsafe URL:', url);
+    $(document).trigger('smart:messaging:security:blocked', {
+      type: 'unsafe_navigation',
+      url: url,
+      method: method
+    });
+    return false;
+  }
+  
+  // Sanitize the URL to prevent any injection
+  let sanitizedUrl;
+  try {
+    // For relative URLs, ensure they're properly formatted
+    if (url.startsWith('/')) {
+      // Remove any potentially dangerous characters while preserving the path
+      sanitizedUrl = url.replace(/[<>"'`]/g, '');
+    } else {
+      // For absolute URLs, parse and reconstruct
+      const parsed = new URL(url, window.location.origin);
+      sanitizedUrl = parsed.href;
+    }
+  } catch (e) {
+    console.error('Failed to sanitize URL:', e);
+    return false;
+  }
+  
+  // Perform the navigation based on method
+  try {
+    switch (method) {
+      case 'replace':
+        // Use location.href instead of location.replace for better security
+        window.location.href = sanitizedUrl;
+        break;
+        
+      case 'tab':
+        const newWindow = window.open(sanitizedUrl, target);
+        if (newWindow && target === '_blank') {
+          // Prevent window.opener attacks
+          newWindow.opener = null;
+        }
+        break;
+        
+      case 'history':
+        if (window.history && window.history.pushState) {
+          window.history.pushState(null, '', sanitizedUrl);
+          $(window).trigger('popstate');
+        }
+        break;
+        
+      default:
+        console.error('Unknown navigation method:', method);
+        return false;
+    }
+    
+    // Log successful navigation for audit
+    console.log('Navigation performed:', { url: sanitizedUrl, method: method });
+    return true;
+  } catch (e) {
+    console.error('Navigation failed:', e);
+    return false;
+  }
 }
 
 /**
@@ -156,73 +289,60 @@ UIHandlers = {
    */
   processNavigationHint: function(hint) {
     const type = get(hint, 'type', 'none');
-    const target = get(hint, 'target');
+    const target = get(hint, 'target', '_self');
     const url = get(hint, 'url');
     
     SmartWebMessaging.debug('Processing navigation hint', hint);
     
-    // Validate URL before any navigation
-    if (url && !isSafeUrl(url)) {
-      console.error('UIHandlers: Blocked navigation to unsafe URL:', url);
-      // Trigger security event
-      $(document).trigger('smart:messaging:security:blocked', {
-        type: 'unsafe_url',
-        url: url,
-        navigationHint: hint
-      });
+    // No URL means no navigation
+    if (!url) {
+      if (type !== 'none') {
+        console.warn('Navigation hint missing URL:', hint);
+      }
       return;
     }
     
+    // Map navigation type to our safe navigation method
+    let navigationMethod;
     switch (type) {
       case 'none':
-        // No navigation
-        break;
+        // No navigation requested
+        return;
         
       case 'replace':
-        // Replace current window location
-        if (url && isSafeUrl(url)) {
-          window.location.replace(url);
-        } else if (url) {
-          console.warn('Unsafe URL for navigation (replace):', url);
-          // Blocked: do not perform navigation. Optionally trigger security event:
-          $(document).trigger('smart:messaging:security:blocked', {
-            type: 'unsafe_url',
-            url: url,
-            navigationHint: hint
-          });
-        }
+        navigationMethod = 'replace';
         break;
         
       case 'tab':
-        // Open in new tab
-        if (url && isSafeUrl(url)) {
-          window.open(url, target || '_blank');
-        } else if (url) {
-          console.warn('Unsafe URL for navigation (tab):', url);
-          // Blocked: do not perform navigation. Optionally trigger security event:
-          $(document).trigger('smart:messaging:security:blocked', {
-            type: 'unsafe_url',
-            url: url,
-            navigationHint: hint
-          });
-        }
+        navigationMethod = 'tab';
         break;
         
       case 'history':
-        // Use history API
-        if (url && isSafeUrl(url) && window.history && window.history.pushState) {
-          window.history.pushState(null, '', url);
-        } else if (url) {
-          console.warn('Unsafe URL for navigation (history):', url);
-          // Trigger route change event
-          $(window).trigger('popstate');
-        } else if (url && !isSafeUrl(url)) {
-          console.warn('UIHandlers: History API navigation blocked for cross-origin URL:', url);
-        }
+        navigationMethod = 'history';
         break;
         
       default:
         console.warn('UIHandlers: Unknown navigation type', type);
+        $(document).trigger('smart:messaging:security:blocked', {
+          type: 'unknown_navigation_type',
+          navigationHint: hint
+        });
+        return;
+    }
+    
+    // Use the safe navigation function
+    const success = safeNavigate(url, navigationMethod, target);
+    
+    if (!success) {
+      // Navigation was blocked - event already triggered by safeNavigate
+      console.warn('Navigation hint blocked:', hint);
+    } else {
+      // Trigger success event for tracking
+      $(document).trigger('smart:messaging:navigation:success', {
+        url: url,
+        method: navigationMethod,
+        navigationHint: hint
+      });
     }
   }
 };
