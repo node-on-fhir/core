@@ -166,7 +166,7 @@ UIHandlers = {
     SmartWebMessaging.debug('Processing navigation hint', hint);
     
     // Validate URL before any navigation
-    if (url && !UrlValidator.isSafeUrl(url)) {
+    if (url && !isSafeUrl(url)) {
       console.error('UIHandlers: Blocked navigation to unsafe URL:', url);
       // Trigger security event
       $(document).trigger('smart:messaging:security:blocked', {
@@ -220,7 +220,7 @@ UIHandlers = {
           console.warn('Unsafe URL for navigation (history):', url);
           // Trigger route change event
           $(window).trigger('popstate');
-        } else if (url && !UrlValidator.isSameOrigin(url)) {
+        } else if (url && !isSafeUrl(url)) {
           console.warn('UIHandlers: History API navigation blocked for cross-origin URL:', url);
         }
         break;
