@@ -29,7 +29,11 @@ import {
 } from '@mui/icons-material';
 
 import { get } from 'lodash';
-import PlanDefinitionsTable from '../components/PlanDefinitionsTable';
+
+let PlanDefinitionsTable;
+Meteor.startup(function(){
+  PlanDefinitionsTable = get(Meteor, 'Tables.PlanDefinitionsTable');
+})
 
 // Session Variables
 Session.setDefault('selectedPlanDefinitionId', false);
