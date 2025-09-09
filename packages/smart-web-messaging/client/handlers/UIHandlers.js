@@ -185,9 +185,15 @@ UIHandlers = {
       case 'replace':
         // Replace current window location
         if (url && isSafeUrl(url)) {
+          window.location.replace(url);
         } else if (url) {
           console.warn('Unsafe URL for navigation (replace):', url);
-          window.location.replace(url);
+          // Blocked: do not perform navigation. Optionally trigger security event:
+          $(document).trigger('smart:messaging:security:blocked', {
+            type: 'unsafe_url',
+            url: url,
+            navigationHint: hint
+          });
         }
         break;
         
