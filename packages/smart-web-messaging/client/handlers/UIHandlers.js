@@ -10,18 +10,14 @@ import { get } from 'lodash';
  * @returns {boolean}
  */
 function isSafeUrl(url) {
-  try {
-    const parsedUrl = new URL(url, window.location.origin);
-    const protocol = parsedUrl.protocol;
-    const { origin } = window.location;
-    // Only allow http/https, and require same-origin (strict policy)
-    if ((protocol === 'http:' || protocol === 'https:') && parsedUrl.origin === origin) {
-      return true;
-    }
-    return false;
-  } catch (_) {
-    return false;
+  // Only allow relative path navigation (no protocol, domain, etc.)
+  if (typeof url !== 'string') return false;
+  // Must start with a single slash, can't have '//' after the first position, and no javascript: or data:
+  if (/^\/(?!\/)/.test(url) && !/[\s"'><`]/.test(url)) {
+    // Disallow double slashes (//) except leading, basic XSS chars, and schemes.
+    return true;
   }
+  return false;
 }
 
 /**
