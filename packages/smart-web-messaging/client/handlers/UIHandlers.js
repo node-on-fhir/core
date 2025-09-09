@@ -21,6 +21,26 @@ function isSafeUrl(url) {
 }
 
 /**
+ * Check if a candidate URL is strictly same-origin relative to the current page.
+ * Only allows a single leading slash and no full domain or scheme.
+ * @param {string} url 
+ * @returns {boolean}
+ */
+function isSameOriginUrl(url) {
+  if (typeof url !== 'string') return false;
+  try {
+    // New URL with base = current location
+    const resolved = new URL(url, window.location.origin);
+    // Only allow URLs whose origin exactly matches, and path starts with a single /
+    return resolved.origin === window.location.origin &&
+           /^\/(?!\/)/.test(url) && // prevent // or anything but single / at front
+           !/[\s"'><`]/.test(url);  // extra defense
+  } catch (e) {
+    return false;
+  }
+}
+
+/**
  * Handlers for ui.* messages
  */
 UIHandlers = {
@@ -194,8 +214,8 @@ UIHandlers = {
         break;
         
       case 'tab':
-        // Open in new tab
-        if (url && isSafeUrl(url)) {
+        // Open in new tab, but ONLY if strictly same-origin
+        if (url && isSafeUrl(url) && isSameOriginUrl(url)) {
           window.open(url, target || '_blank');
         } else if (url) {
           console.warn('Unsafe URL for navigation (tab):', url);
