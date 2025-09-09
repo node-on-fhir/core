@@ -76,6 +76,7 @@ import PatientChart from '../patient/PatientChart.jsx';
 // Modules
 
 import PatientsDirectory from '../ui-modules/PatientsDirectory.jsx';
+import BiomarkerChartingPage from '../ui-modules/BiomarkerChartingPage.jsx';
 
 // Optional package imports would go here when packages are added
 
@@ -195,14 +196,13 @@ import {
 // import MediaDetail from '../ui-fhir/medias/MediaDetail';
 import SupplyDeliveryDetail from '../ui-fhir/supplyDeliveries/SupplyDeliveryDetail';
 
+
 //===============================================================================================================
 // PACIO Pages
 
-import MedicationListsPage from '../ui-pacio/MedicationListsPage.jsx';
-import TransitionsOfCarePage from '../ui-pacio/TransitionsOfCarePage.jsx';
-import AdvancedDirectivesPage from '../ui-pacio/AdvancedDirectivesPage.jsx';
 import MyProfilePage from './pages/MyProfilePage.jsx';
 import FhirResourcesDashboard from './FhirResourcesDashboard.jsx';
+import FhirResourcesIndex from './FhirResourcesIndex.jsx';
 
 //===============================================================================================================
 
@@ -356,6 +356,7 @@ Meteor.NotSignedInWrapper = NotSignedInWrapper;
 Meteor.MedicalRecordImporter = MedicalRecordImporter;
 Meteor.PatientCard = PatientCard;
 Meteor.HipaaLogger = HipaaLogger;
+Meteor.React = React;
 
 
 
@@ -425,6 +426,8 @@ window.AuditEvents = AuditEvents;
 // debug only?  or maybe only in development mode?
 window.Session = Session;
 
+window.React = React;
+
 //===============================================================================================================
 // Router History
 
@@ -491,8 +494,16 @@ let dynamicRoutes = [
     path: "/patient-chart",
     element: <PatientChart />
   }, {
+    path: "/biomarkers-charting",
+    element: <BiomarkerChartingPage />
+  }, {
     path: "/fhir-resources-index",
-    element: <FhirResourcesDashboard />
+    element: <FhirResourcesDashboard />,
+    requireAuth: true
+  }, {
+    path: "/fhir-resources-dashboard",
+    element: <FhirResourcesIndex />,
+    requireAuth: true
   }, {
     path: "/fhir",
     element: <FhirBasePage />
@@ -552,6 +563,10 @@ if(get(Meteor, 'settings.public.modules.accounts.enabled', true)){
   });
   dynamicRoutes.push({
     path: "/signin",
+    element: <LoginPage />
+  });
+  dynamicRoutes.push({
+    path: "/sign-in",
     element: <LoginPage />
   });
   dynamicRoutes.push({
@@ -1263,19 +1278,7 @@ if(get(Meteor, 'settings.public.modules.fhir.Claims')){
   })
 }
 
-// PACIO Routes - Override package routes with our custom implementations
-dynamicRoutes.push({
-  path: "/medication-lists",
-  element: <MedicationListsPage />
-});
-dynamicRoutes.push({
-  path: "/transition-of-care",
-  element: <TransitionsOfCarePage />
-});
-dynamicRoutes.push({
-  path: "/advance-directives", 
-  element: <AdvancedDirectivesPage />
-});
+// PACIO Routes are now handled by the pacio-core package
 dynamicRoutes.push({
   path: "/my-profile", 
   element: <MyProfilePage />
@@ -1297,9 +1300,7 @@ Object.keys(Package).forEach(function(packageName){
     Package[packageName].DynamicRoutes.forEach(function(route){
       // If route has component instead of element, create the element
       if(route.component && !route.element) {
-        console.log(`[APP] Creating element for ${route.path} from component:`, route.component);
         route.element = React.createElement(route.component);
-        console.log(`[APP] Created element:`, route.element);
       }
       
       // Debug logging for swarm route
@@ -1310,6 +1311,11 @@ Object.keys(Package).forEach(function(packageName){
         if(route.element && route.element.$$typeof) {
           console.log('[APP] Swarm element $$typeof:', route.element.$$typeof.toString());
         }
+      }
+      
+      // Debug logging for routes with requireAuth
+      if(route.requireAuth) {
+        console.log('[APP] Route requires authentication:', route.path, route);
       }
       
       dynamicRoutes.push(route);      
@@ -1908,9 +1914,19 @@ function StyledMainRouter(props){
 
   return (<main id='mainAppRouter' style={mainAppStyle}>
     <Routes>
-      {dynamicRoutes.map((route, index) => (
-        <Route key={index} path={route.path} element={route.element} />
-      ))}
+      {dynamicRoutes.map((route, index) => {
+        // Check if route requires authentication
+        if (route.requireAuth) {
+          return (
+            <Route 
+              key={index} 
+              path={route.path} 
+              element={<AuthenticatedRoute>{route.element}</AuthenticatedRoute>} 
+            />
+          );
+        }
+        return <Route key={index} path={route.path} element={route.element} />;
+      })}
       {/* Fallback route for 404 Not Found */}
       <Route path="*" />
     </Routes>

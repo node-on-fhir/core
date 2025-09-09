@@ -355,8 +355,8 @@ export function LoginForm({ onSuccess, onSignupClick, onForgotPasswordClick }) {
               sx: { 
                 '& .MuiOutlinedInput-notchedOutline': {
                   borderColor: registrationMode ? 
-                    (password.length >= 16 ? '#5cb85c' : 
-                     password.length >= 12 ? '#f0ad4e' : 
+                    (password.length >= 16 ? 'success.main' : 
+                     password.length >= 12 ? 'warning.main' : 
                      'divider') : 'divider',
                   borderWidth: registrationMode && password.length >= 12 ? 2 : 1
                 }
@@ -368,8 +368,8 @@ export function LoginForm({ onSuccess, onSignupClick, onForgotPasswordClick }) {
                 bottom: -22,
                 mx: 0,
                 color: registrationMode ? 
-                  (password.length >= 16 ? '#5cb85c' : 
-                   password.length >= 12 ? '#f0ad4e' : 
+                  (password.length >= 16 ? 'success.main' : 
+                   password.length >= 12 ? 'warning.main' : 
                    'text.secondary') : 'text.secondary'
               }
             }}
@@ -502,6 +502,7 @@ export function LoginForm({ onSuccess, onSignupClick, onForgotPasswordClick }) {
                 type="submit"
                 fullWidth
                 variant="contained"
+                color="primary"
                 size="large"
                 disabled={loading || checkingNewUsername}
                 sx={{ 
@@ -510,16 +511,7 @@ export function LoginForm({ onSuccess, onSignupClick, onForgotPasswordClick }) {
                   textTransform: 'uppercase',
                   fontWeight: 600,
                   fontSize: '0.875rem',
-                  letterSpacing: '0.5px',
-                  backgroundColor: '#5cb85c',
-                  color: '#fff',
-                  '&:hover': {
-                    backgroundColor: '#4cae4c'
-                  },
-                  '&:disabled': {
-                    backgroundColor: '#e0e0e0',
-                    color: '#999'
-                  }
+                  letterSpacing: '0.5px'
                 }}
               >
                 {loading ? 'CREATING ACCOUNT...' : 'REGISTER USER'}
@@ -558,8 +550,9 @@ export function LoginForm({ onSuccess, onSignupClick, onForgotPasswordClick }) {
               severity="info" 
               icon={false}
               sx={{ 
-                bgcolor: '#f5f5f5',
-                border: '1px solid #e0e0e0',
+                bgcolor: 'action.hover',
+                border: '1px solid',
+                borderColor: 'divider',
                 '& .MuiAlert-message': {
                   width: '100%',
                   textAlign: 'center',
@@ -574,6 +567,7 @@ export function LoginForm({ onSuccess, onSignupClick, onForgotPasswordClick }) {
             <Button
               fullWidth
               variant="outlined"
+              color="secondary"
               size="large"
               onClick={(e) => {
                 e.preventDefault();
@@ -582,15 +576,9 @@ export function LoginForm({ onSuccess, onSignupClick, onForgotPasswordClick }) {
               sx={{ 
                 mt: 2,
                 py: 1.5,
-                borderColor: '#f0ad4e',
-                color: '#f0ad4e',
                 fontWeight: 600,
                 fontSize: '0.875rem',
-                letterSpacing: '0.5px',
-                '&:hover': {
-                  borderColor: '#ec971f',
-                  backgroundColor: 'rgba(240, 173, 78, 0.04)'
-                }
+                letterSpacing: '0.5px'
               }}
             >
               CREATE NEW ACCOUNT
@@ -604,8 +592,9 @@ export function LoginForm({ onSuccess, onSignupClick, onForgotPasswordClick }) {
             sx={{ 
               mb: 4,
               mt: 4,
-              bgcolor: '#f5f5f5',
-              border: '1px solid #e0e0e0',
+              bgcolor: 'action.hover',
+              border: '1px solid',
+              borderColor: 'divider',
               '& .MuiAlert-message': {
                 width: '100%',
                 textAlign: 'center',
@@ -638,6 +627,7 @@ export function LoginForm({ onSuccess, onSignupClick, onForgotPasswordClick }) {
               type="submit"
               fullWidth
               variant="contained"
+              color="primary"
               size="large"
               disabled={loading || checkingUser || !username || !password}
               sx={{ 
@@ -646,16 +636,7 @@ export function LoginForm({ onSuccess, onSignupClick, onForgotPasswordClick }) {
                 textTransform: 'uppercase',
                 fontWeight: 600,
                 fontSize: '0.875rem',
-                letterSpacing: '0.5px',
-                backgroundColor: '#f0ad4e',
-                color: '#000',
-                '&:hover': {
-                  backgroundColor: '#ec971f'
-                },
-                '&:disabled': {
-                  backgroundColor: '#e0e0e0',
-                  color: '#999'
-                }
+                letterSpacing: '0.5px'
               }}
             >
               {loading ? 'SIGNING IN...' : 
@@ -680,7 +661,7 @@ export function LoginForm({ onSuccess, onSignupClick, onForgotPasswordClick }) {
                 onForgotPasswordClick?.();
               }}
               sx={{ 
-                color: '#f0ad4e',
+                color: 'secondary.main',
                 textDecoration: 'none',
                 '&:hover': {
                   textDecoration: 'underline'

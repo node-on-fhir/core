@@ -34,6 +34,7 @@ import './ProxyRelay.js';
 import './VaultServer.js';
 import '../imports/lib/UdapMethods.js';
 import './Swagger.js';
+import './AccountsMethods.js';
 
 // Import accounts startup if enabled
 import '../imports/startup/server/index.js';
@@ -163,6 +164,7 @@ import { Organizations } from '../imports/lib/schemas/SimpleSchemas/Organization
 import { Observations } from '../imports/lib/schemas/SimpleSchemas/Observations';
 import { Patients } from '../imports/lib/schemas/SimpleSchemas/Patients';
 import { PlanDefinitions } from '../imports/lib/schemas/SimpleSchemas/PlanDefinitions';
+import { RelatedPersons } from '../imports/lib/schemas/SimpleSchemas/RelatedPersons';
 import { Practitioners } from '../imports/lib/schemas/SimpleSchemas/Practitioners';
 import { Procedures } from '../imports/lib/schemas/SimpleSchemas/Procedures';
 import { Questionnaires } from '../imports/lib/schemas/SimpleSchemas/Questionnaires';
@@ -230,6 +232,7 @@ Meteor.Collections = {
   Procedures,
   Questionnaires,
   QuestionnaireResponses,
+  RelatedPersons,
   ResearchStudies,
   ResearchSubjects,
   Schedules,
@@ -292,6 +295,7 @@ global.Collections = {
   Procedures,
   Questionnaires,
   QuestionnaireResponses,
+  RelatedPersons,
   ResearchStudies,
   ResearchSubjects,
   Schedules,
@@ -368,6 +372,25 @@ Meteor.startup(async function(){
       "lang": "en"
     }
   })
+
+  // Handle NotAuthorized UI bypass environment variable
+  if(process.env.NOT_AUTHORIZED_UI_BYPASS) {
+    console.log('==========================================================================================');
+    console.log('[NotAuthorized] UI Bypass is ENABLED via environment variable');
+    console.log('[NotAuthorized] Setting Meteor.settings.public.NotAuthorizedUiBypass = true');
+    console.log('==========================================================================================');
+    
+    // Ensure settings structure exists
+    if (!Meteor.settings) {
+      Meteor.settings = {};
+    }
+    if (!Meteor.settings.public) {
+      Meteor.settings.public = {};
+    }
+    
+    // Set the bypass flag
+    Meteor.settings.public.NotAuthorizedUiBypass = true;
+  }
 
   // Establish a database connection
   mongoose.connect(process.env.MONGO_URL, {

@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from "react-router-dom";
 import { get } from 'lodash';
 import { Meteor } from 'meteor/meteor';
+import { Session } from 'meteor/session';
 import { useTracker } from 'meteor/react-meteor-data';
 import moment from 'moment';
 
@@ -16,8 +17,11 @@ import Tooltip from '@mui/material/Tooltip';
 import Chip from '@mui/material/Chip';
 import Button from '@mui/material/Button';
 import ButtonGroup from '@mui/material/ButtonGroup';
+import Alert from '@mui/material/Alert';
+import AlertTitle from '@mui/material/AlertTitle';
 import { useTheme } from '@mui/material/styles';
 import { styled } from '@mui/material/styles';
+import { DDP } from 'meteor/ddp-client';
 
 // Icons
 import RefreshIcon from '@mui/icons-material/Refresh';
@@ -33,6 +37,10 @@ import RssFeedIcon from '@mui/icons-material/RssFeed';
 import AllInclusiveIcon from '@mui/icons-material/AllInclusive';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import DatasetIcon from '@mui/icons-material/Dataset';
+import ApiIcon from '@mui/icons-material/Api';
+import CloudSyncIcon from '@mui/icons-material/CloudSync';
+import StarIcon from '@mui/icons-material/Star';
+import WarningIcon from '@mui/icons-material/Warning';
 
 // Import FHIR collections
 import { ActivityDefinitions } from '/imports/lib/schemas/SimpleSchemas/ActivityDefinitions';
@@ -139,23 +147,37 @@ const ResourceRow = styled(Box)(({ theme }) => ({
   }
 }));
 
+const StarSection = styled(Box)({
+  flex: '0 0 40px',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+});
+
 const ResourceName = styled(Box)({
-  flex: '0 0 320px',
+  flex: '0 0 280px',
   display: 'flex',
   alignItems: 'center',
   gap: '12px',
 });
 
 const ServerCountSection = styled(Box)({
-  flex: '0 0 120px',
+  flex: '0 0 100px',
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'flex-end',
   paddingRight: '20px',
 });
 
+const DDPSection = styled(Box)({
+  flex: '0 0 80px',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+});
+
 const LocalCountSection = styled(Box)({
-  flex: '0 0 120px',
+  flex: '0 0 100px',
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'flex-end',
@@ -170,10 +192,17 @@ const ProgressSection = styled(Box)({
 });
 
 const MetadataSection = styled(Box)({
-  flex: '0 0 200px',
+  flex: '0 0 150px',
   display: 'flex',
   alignItems: 'center',
   gap: '8px',
+});
+
+const RestApiSection = styled(Box)({
+  flex: '0 0 80px',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
 });
 
 const ActionSection = styled(Box)({
@@ -191,6 +220,7 @@ export function FhirResourcesDashboard() {
   const [refreshing, setRefreshing] = useState(false);
   const [lastRefresh, setLastRefresh] = useState(moment());
   const [filterMode, setFilterMode] = useState('withData'); // 'all', 'capability', or 'withData'
+  const [metadataResources, setMetadataResources] = useState([]);
 
   // Track Meteor connection status
   const meteorStatus = useTracker(() => {
@@ -203,9 +233,166 @@ export function FhirResourcesDashboard() {
     };
   });
 
+  // Track system configuration for diagnostics
+  const systemConfig = useTracker(() => {
+    return {
+      autopublishEnabled: get(Meteor, 'settings.private.fhir.autopublishSubscriptions', false),
+      environment: get(Meteor, 'settings.public.environment', 'development'),
+      fhirPath: get(Meteor, 'settings.private.fhir.fhirPath', 'baseR4')
+    };
+  });
+
+  // Track active DDP subscriptions using Meteor.connection._subscriptions
+  const activeSubscriptions = useTracker(() => {
+    const subs = {};
+    const selectedPatientId = Session.get('selectedPatientId');
+    
+    // Force reactivity on connection status and selected patient
+    const connectionStatus = Meteor.status();
+    
+    if (Meteor.connection && Meteor.connection._subscriptions) {
+      // Log subscription details for debugging
+      const totalSubs = Object.keys(Meteor.connection._subscriptions).length;
+      console.log(`Tracking ${totalSubs} active subscriptions, selectedPatientId: ${selectedPatientId}`);
+      
+      // Debug: Log all subscription names when patient is selected
+      if (selectedPatientId) {
+        const subDetails = Object.values(Meteor.connection._subscriptions)
+          .filter(s => s && s.name)
+          .map(s => ({
+            name: s.name,
+            params: s.params,
+            ready: s.ready
+          }));
+        console.log('Active subscriptions with patient:', selectedPatientId);
+        console.log('Subscription details:', subDetails);
+      }
+      
+      Object.values(Meteor.connection._subscriptions).forEach(sub => {
+        if (sub && sub.name) {
+          // Group subscriptions by resource name (flexible pattern matching)
+          let resourceName = null;
+          
+          // Look for common FHIR resource names anywhere in the subscription name
+          // This matches patterns like: pacio.Conditions, autopublish.Conditions, conditions.byPatient, etc.
+          const resourcePatterns = [
+            'AllergyIntolerances?',
+            'Appointments?',
+            'CarePlans?',
+            'CareTeams?',
+            'Communications?',
+            'Compositions?',
+            'Conditions?',
+            'Consents?',
+            'DocumentReferences?',
+            'Encounters?',
+            'Goals?',
+            'Immunizations?',
+            'Lists?',
+            'Locations?',
+            'MedicationAdministrations?',
+            'MedicationRequests?',
+            'MedicationStatements?',
+            'Medications?',
+            'NutritionOrders?',
+            'Observations?',
+            'Organizations?',
+            'Patients?',
+            'PlanDefinitions?',
+            'Practitioners?',
+            'Procedures?',
+            'QuestionnaireResponses?',
+            'Questionnaires?',
+            'ServiceRequests?',
+            'Tasks?',
+            'ValueSets?'
+          ];
+          
+          // Check each pattern
+          for (const pattern of resourcePatterns) {
+            const regex = new RegExp(pattern, 'i');
+            if (regex.test(sub.name)) {
+              // Extract base resource name and ensure plural
+              resourceName = pattern.replace('?', '');
+              if (!resourceName.endsWith('s')) {
+                resourceName += 's';
+              }
+              break;
+            }
+          }
+          
+          // Fallback: try to extract from common patterns if not found above
+          if (!resourceName) {
+            // Try pattern like "prefix.ResourceName" or "resourceName.suffix"
+            const match = sub.name.match(/\.([A-Z][a-z]+(?:[A-Z][a-z]+)*)|^([A-Z][a-z]+(?:[A-Z][a-z]+)*)|^([a-z]+)[\.\-]/);
+            if (match) {
+              const captured = match[1] || match[2] || match[3];
+              if (captured) {
+                resourceName = captured.charAt(0).toUpperCase() + captured.slice(1);
+                if (!resourceName.endsWith('s')) {
+                  resourceName += 's';
+                }
+              }
+            }
+          }
+          
+          if (resourceName) {
+            // Debug: Log resource mapping
+            if (selectedPatientId && !subs[resourceName]) {
+              console.log(`Mapping subscription "${sub.name}" to resource "${resourceName}"`);
+            }
+            
+            if (!subs[resourceName]) {
+              subs[resourceName] = [];
+            }
+            // Check if subscription is patient-specific
+            let hasPatientParam = false;
+            if (selectedPatientId && sub.params) {
+              hasPatientParam = sub.params.some(p => {
+                // Direct patient ID as string
+                if (typeof p === 'string' && p === selectedPatientId) return true;
+                
+                // Object with patient-related fields
+                if (typeof p === 'object' && p) {
+                  // Check various patient-related field names
+                  if (p.patientId === selectedPatientId) return true;
+                  if (p._id === selectedPatientId) return true;
+                  if (p.subject === `Patient/${selectedPatientId}`) return true;
+                  if (p['subject.reference'] === `Patient/${selectedPatientId}`) return true;
+                  
+                  // Check if query has patient reference
+                  if (p.query && typeof p.query === 'object') {
+                    if (p.query.patientId === selectedPatientId) return true;
+                    if (p.query.subject === `Patient/${selectedPatientId}`) return true;
+                    if (p.query['subject.reference'] === `Patient/${selectedPatientId}`) return true;
+                  }
+                }
+                return false;
+              });
+              
+              // Also check if subscription name suggests it's patient-specific
+              if (!hasPatientParam && sub.name.includes('byPatient')) {
+                hasPatientParam = true;
+              }
+            }
+            
+            subs[resourceName].push({
+              name: sub.name,
+              ready: sub.ready,
+              params: sub.params,
+              hasPatientParam: hasPatientParam,
+              isAutopublish: sub.name.startsWith('autopublish.')
+            });
+          }
+        }
+      });
+    }
+    return subs;
+  });
+
   // Get server URL
   const serverUrl = Meteor.absoluteUrl();
-  const fhirEndpoint = `${serverUrl}fhir-r4`;
+  const fhirEndpoint = `${serverUrl}baseR4`;
 
   // Define all FHIR resources
   const fhirResources = [
@@ -291,6 +478,33 @@ export function FhirResourcesDashboard() {
     return filtered;
   }
 
+  // Check if REST endpoint is enabled (from metadata)
+  function hasRestEndpoint(collection) {
+    // Check if resource is in metadata
+    const resourceType = collection.replace(/s$/, ''); // Remove plural
+    return metadataResources.includes(resourceType) || metadataResources.includes(collection);
+  }
+
+  // Check if DDP publication is enabled (from server stats)
+  function hasDDPPublication(collection) {
+    const stats = resourceStats[collection];
+    return stats && stats.ddpPublications && stats.ddpPublications.length > 0;
+  }
+
+  // Get subscription status for a resource
+  function getSubscriptionStatus(collection) {
+    const resourceSubs = activeSubscriptions[collection] || [];
+    const hasPatientSpecific = resourceSubs.some(s => s.hasPatientParam);
+    
+    return {
+      active: resourceSubs.length > 0,
+      count: resourceSubs.length,
+      ready: resourceSubs.every(s => s.ready),
+      hasPatientSpecific: hasPatientSpecific,
+      subscriptions: resourceSubs
+    };
+  }
+
   // Check if a collection has active pub/sub
   const hasPubSub = useTracker(() => {
     const subscriptions = {};
@@ -339,6 +553,28 @@ export function FhirResourcesDashboard() {
     return counts;
   }, []);
 
+  // Fetch metadata to get REST endpoint info
+  const fetchMetadata = async function() {
+    try {
+      const response = await fetch(`${fhirEndpoint}/metadata`, {
+        headers: {
+          'Accept': 'application/fhir+json'
+        }
+      });
+      
+      if (response.ok) {
+        const metadata = await response.json();
+        if (metadata && metadata.rest && metadata.rest[0] && metadata.rest[0].resource) {
+          const resources = metadata.rest[0].resource.map(r => r.type);
+          console.log('Metadata resources:', resources);
+          setMetadataResources(resources);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching metadata:', error);
+    }
+  };
+
   // Fetch resource statistics from the server
   const fetchResourceStats = function() {
     setRefreshing(true);
@@ -359,6 +595,7 @@ export function FhirResourcesDashboard() {
 
   useEffect(function() {
     fetchResourceStats();
+    fetchMetadata();
     
     const interval = setInterval(fetchResourceStats, 30000);
     
@@ -455,8 +692,17 @@ export function FhirResourcesDashboard() {
           </Box>
         </Box>
         
+        {/* Autopublish Alert */}
+        {systemConfig.autopublishEnabled && (
+          <Alert severity="warning" icon={<WarningIcon />} sx={{ mb: 2 }}>
+            <AlertTitle>Autopublish Enabled</AlertTitle>
+            Autopublish subscriptions are enabled. This may impact performance in production.
+            <Chip label="Development Mode" size="small" sx={{ ml: 2 }} />
+          </Alert>
+        )}
+        
         {/* Server Info and Summary Stats */}
-        <Box sx={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+        <Box sx={{ display: 'flex', gap: 4, alignItems: 'center', mb: 2 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <LinkIcon fontSize="small" color="action" />
             <Typography variant="body2" color="textSecondary">
@@ -476,6 +722,27 @@ export function FhirResourcesDashboard() {
               {totalServerCount.toLocaleString()} server docs
             </Typography>
           </Box>
+        </Box>
+        
+        {/* Legend */}
+        <Box sx={{ display: 'flex', gap: 3, alignItems: 'center', p: 1, bgcolor: theme.palette.action.hover, borderRadius: 1 }}>
+          <Typography variant="caption" color="textSecondary" sx={{ fontWeight: 600 }}>Legend:</Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+            <StarIcon fontSize="small" sx={{ color: 'gold' }} />
+            <Typography variant="caption" color="textSecondary">In Metadata</Typography>
+          </Box>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+            <ApiIcon fontSize="small" color="primary" />
+            <Typography variant="caption" color="textSecondary">REST API</Typography>
+          </Box>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+            <CloudSyncIcon fontSize="small" color="secondary" />
+            <Typography variant="caption" color="textSecondary">DDP Pub</Typography>
+          </Box>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+            <WifiIcon fontSize="small" color="success" />
+            <Typography variant="caption" color="textSecondary">Active Sub</Typography>
+          </Box>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <ComputerIcon fontSize="small" color="action" />
             <Typography variant="body2" color="textSecondary">
@@ -486,7 +753,7 @@ export function FhirResourcesDashboard() {
       </Box>
 
       {/* Main Content */}
-      <Box sx={{ flex: 1, overflow: 'auto' }}>
+      <Box sx={{ flex: 1, overflow: 'auto', pb: '80px' }}>
         <Paper sx={{ m: 3, borderRadius: 2 }}>
           {/* List Header */}
           <Box sx={{ 
@@ -499,6 +766,7 @@ export function FhirResourcesDashboard() {
             top: 0,
             zIndex: 10
           }}>
+            <StarSection />
             <ResourceName>
               <Typography variant="body2" color="textSecondary" fontWeight={600}>
                 Resource Type
@@ -509,6 +777,11 @@ export function FhirResourcesDashboard() {
                 Server
               </Typography>
             </ServerCountSection>
+            <DDPSection>
+              <Typography variant="body2" color="textSecondary" fontWeight={600}>
+                DDP
+              </Typography>
+            </DDPSection>
             <LocalCountSection>
               <Typography variant="body2" color="textSecondary" fontWeight={600}>
                 Local
@@ -521,9 +794,14 @@ export function FhirResourcesDashboard() {
             </ProgressSection>
             <MetadataSection>
               <Typography variant="body2" color="textSecondary" fontWeight={600}>
-                Info
+                Indices
               </Typography>
             </MetadataSection>
+            <RestApiSection>
+              <Typography variant="body2" color="textSecondary" fontWeight={600}>
+                REST
+              </Typography>
+            </RestApiSection>
             <ActionSection />
           </Box>
 
@@ -546,6 +824,10 @@ export function FhirResourcesDashboard() {
               const clientCount = localCounts[resource.collection] || 0; // Use local count from tracker
               const isDisabled = !serverCount && !clientCount;
               const hasActivePubSub = hasPubSub[resource.collection];
+              const inCapabilityStatement = isInCapabilityStatement(resource.collection);
+              const hasRest = hasRestEndpoint(resource.collection);
+              const hasDDP = hasDDPPublication(resource.collection);
+              const subStatus = getSubscriptionStatus(resource.collection);
               
               return (
                 <ResourceRow
@@ -559,16 +841,19 @@ export function FhirResourcesDashboard() {
                     }
                   }}
                 >
+                  <StarSection>
+                    {inCapabilityStatement && (
+                      <Tooltip title="In CapabilityStatement/metadata">
+                        <StarIcon fontSize="small" sx={{ color: 'gold' }} />
+                      </Tooltip>
+                    )}
+                  </StarSection>
+                  
                   <ResourceName>
                     <FolderIcon fontSize="small" sx={{ color: theme.palette.action.active }} />
                     <Typography variant="body1">
                       {resource.name}
                     </Typography>
-                    {hasActivePubSub && (
-                      <Tooltip title="Active pub/sub subscription">
-                        <RssFeedIcon fontSize="small" color="success" />
-                      </Tooltip>
-                    )}
                   </ResourceName>
                   
                   <ServerCountSection>
@@ -576,6 +861,38 @@ export function FhirResourcesDashboard() {
                       {formatCount(serverCount)}
                     </Typography>
                   </ServerCountSection>
+                  
+                  <DDPSection>
+                    {subStatus.active ? (
+                      <Tooltip title={
+                        <div>
+                          <div>{`${subStatus.count} active subscription(s)`}</div>
+                          {subStatus.subscriptions && subStatus.subscriptions.map((sub, idx) => (
+                            <div key={idx} style={{ fontSize: '0.85em', marginTop: '2px' }}>
+                              • {sub.name} 
+                              {sub.isAutopublish && ' (autopub)'}
+                              {sub.hasPatientParam && ' (patient)'}
+                            </div>
+                          ))}
+                        </div>
+                      }>
+                        <Chip 
+                          icon={<WifiIcon />} 
+                          label={subStatus.count} 
+                          size="small" 
+                          color={subStatus.ready ? "success" : "warning"}
+                          variant={subStatus.hasPatientSpecific ? "filled" : "outlined"}
+                          sx={{ height: 20 }}
+                        />
+                      </Tooltip>
+                    ) : hasDDP ? (
+                      <Tooltip title={`DDP Publications available: ${stats.ddpPublications ? stats.ddpPublications.join(', ') : 'unknown'}`}>
+                        <CloudSyncIcon fontSize="small" color="action" />
+                      </Tooltip>
+                    ) : (
+                      <Typography variant="caption" color="textSecondary">—</Typography>
+                    )}
+                  </DDPSection>
                   
                   <LocalCountSection>
                     <Typography variant="body2" sx={{ fontFamily: 'monospace', color: theme.palette.text.secondary }}>
@@ -589,18 +906,40 @@ export function FhirResourcesDashboard() {
                   
                   <MetadataSection>
                     {stats.indices && stats.indices.length > 0 && (
-                      <Chip 
-                        size="small" 
-                        label={`${stats.indices.length} indices`} 
-                        variant="outlined"
-                      />
-                    )}
-                    {stats.lastModified && (
-                      <Typography variant="caption" color="textSecondary">
-                        {moment(stats.lastModified).fromNow()}
-                      </Typography>
+                      <Tooltip title={`Indices: ${stats.indices.map(idx => idx.name).join(', ')}`}>
+                        <Chip 
+                          size="small" 
+                          label={stats.indices.map(idx => {
+                            // Extract field names from index
+                            if (idx.fields && idx.fields.length > 0) {
+                              return idx.fields.join(', ');
+                            }
+                            // Fallback to index name if no fields
+                            return idx.name;
+                          }).join(' | ')} 
+                          variant="outlined"
+                          sx={{ 
+                            maxWidth: '140px',
+                            '& .MuiChip-label': {
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap'
+                            }
+                          }}
+                        />
+                      </Tooltip>
                     )}
                   </MetadataSection>
+                  
+                  <RestApiSection>
+                    {hasRest ? (
+                      <Tooltip title="REST API Endpoint Enabled">
+                        <ApiIcon fontSize="small" color="primary" />
+                      </Tooltip>
+                    ) : (
+                      <Typography variant="caption" color="textSecondary">—</Typography>
+                    )}
+                  </RestApiSection>
                   
                   <ActionSection>
                     {!isDisabled && (

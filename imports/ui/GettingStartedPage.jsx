@@ -1744,6 +1744,21 @@ function GettingStartedPage(props){
                 />
               </Grid>
               <Grid item xs={12} md={6}>
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={get(settings, 'public.NotAuthorizedUiBypass', false)}
+                      onChange={(e) => updateSetting('public.NotAuthorizedUiBypass', e.target.checked)}
+                      size="small"
+                    />
+                  }
+                  label="Bypass NotAuthorized UI"
+                />
+                <FormHelperText sx={{ ml: 2 }}>
+                  Disable NotAuthorized screen for development/sandbox
+                </FormHelperText>
+              </Grid>
+              <Grid item xs={12} md={6}>
                 <FormControl fullWidth size="small">
                   <InputLabel>Internal Date Format</InputLabel>
                   <Select
@@ -2118,7 +2133,7 @@ function GettingStartedPage(props){
               <TableBody>
                 {/* General */}
                 <TableRow>
-                  <TableCell rowSpan={5} sx={{ fontWeight: 'bold', verticalAlign: 'top', backgroundColor: 'action.hover' }}>General</TableCell>
+                  <TableCell rowSpan={6} sx={{ fontWeight: 'bold', verticalAlign: 'top', backgroundColor: 'action.hover' }}>General</TableCell>
                   <TableCell>Home Page</TableCell>
                   <TableCell>Main landing page and dashboard</TableCell>
                   <TableCell align="center">
@@ -2130,6 +2145,17 @@ function GettingStartedPage(props){
                   </TableCell>
                 </TableRow>
                 <TableRow>
+                  <TableCell>Site Index</TableCell>
+                  <TableCell>Site index listing all available pages</TableCell>
+                  <TableCell align="center">
+                    <Checkbox
+                      size="small"
+                      checked={get(settings, 'public.defaults.sidebar.menuItems.IndexPage', false)}
+                      onChange={(e) => updateSetting('public.defaults.sidebar.menuItems.IndexPage', e.target.checked)}
+                    />
+                  </TableCell>
+                </TableRow>
+                <TableRow>
                   <TableCell>Patient Chart</TableCell>
                   <TableCell>View and manage patient medical records</TableCell>
                   <TableCell align="center">
@@ -2137,6 +2163,17 @@ function GettingStartedPage(props){
                       size="small"
                       checked={get(settings, 'public.defaults.sidebar.menuItems.PatientChart', false)}
                       onChange={(e) => updateSetting('public.defaults.sidebar.menuItems.PatientChart', e.target.checked)}
+                    />
+                  </TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell>Biomarker Charting</TableCell>
+                  <TableCell>View and analyze biomarker trends and vital signs</TableCell>
+                  <TableCell align="center">
+                    <Checkbox
+                      size="small"
+                      checked={get(settings, 'public.defaults.sidebar.menuItems.BiomarkerCharting', false)}
+                      onChange={(e) => updateSetting('public.defaults.sidebar.menuItems.BiomarkerCharting', e.target.checked)}
                     />
                   </TableCell>
                 </TableRow>
@@ -2815,6 +2852,16 @@ function GettingStartedPage(props){
                       />
                     }
                     label="Patient Chart"
+                  />
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        size="small"
+                        checked={get(settings, 'public.modules.BiomarkerCharting', false)}
+                        onChange={(e) => updateSetting('public.modules.BiomarkerCharting', e.target.checked)}
+                      />
+                    }
+                    label="Biomarker Charting"
                   />
                   <FormControlLabel
                     control={
@@ -4752,6 +4799,21 @@ function GettingStartedPage(props){
                     <MenuItem value="Enabled">Enabled</MenuItem>
                     <MenuItem value="Disabled">Disabled</MenuItem>
                   </Select>
+                </FormControl>
+              </Grid>
+              <Grid item xs={12} md={4}>
+                <FormControl fullWidth size="small">
+                  <InputLabel>NOT_AUTHORIZED_UI_BYPASS</InputLabel>
+                  <Select
+                    value={get(settings, 'private.env.NOT_AUTHORIZED_UI_BYPASS', 'No Value')}
+                    onChange={(e) => updateSetting('private.env.NOT_AUTHORIZED_UI_BYPASS', e.target.value)}
+                    label="NOT_AUTHORIZED_UI_BYPASS"
+                  >
+                    <MenuItem value="No Value">No Value</MenuItem>
+                    <MenuItem value="Enabled">Enabled</MenuItem>
+                    <MenuItem value="Disabled">Disabled</MenuItem>
+                  </Select>
+                  <FormHelperText>Bypass NotAuthorized component for development</FormHelperText>
                 </FormControl>
               </Grid>
               <Grid item xs={12} md={4}>

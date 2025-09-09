@@ -16,6 +16,12 @@ import { RestClient } from '@accounts/rest-client';
 
 
 window.React = React
+Meteor.React = React
+
+// Make Material-UI components available globally for packages
+import * as mui from '@mui/material';
+window.MaterialUI = mui;
+Meteor.mui = mui;
 
 Meteor.startup(() => {
   const container = document.getElementById('react-target');

@@ -1,2 +1,61 @@
-cookbook
-workzone
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Development directories
+workzone/
+cookbook/
+tests/
+nightwatch/
+.nightwatch/
+
+# Large data files
+packages/provider-directory/data/
+*.fig
+*.pdf
+
+# Documentation (keep README.md)
+docs/
+*.md
+!README.md
+
+# Package development files
+packages/*/.git/
+packages/*/tests/
+packages/*/node_modules/
+packages/*/.npm/
+
+# IDE files
+.vscode/
+.idea/
+*.sublime-*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*~
+
+# Build artifacts
+.build/
+dist/
+
+# Coverage reports
+coverage/
+.nyc_output/
+
+# Screenshots and media
+screenshots/
+*.png
+*.jpg
+*.jpeg
+*.gif
+!public/*.png
+!public/*.jpg

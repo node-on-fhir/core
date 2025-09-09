@@ -16,16 +16,18 @@ if (Meteor.isDevelopment) {
 
 console.log('Starting accounts client module...');
 
-// Configure accounts UI
-Accounts.ui.config({
-  passwordSignupFields: 'USERNAME_AND_EMAIL',
-  minimumPasswordLength: get(Meteor, 'settings.public.accounts.passwordPolicy.minLength', 8),
-  defaultFieldValues: {
-    username: '',
-    email: '',
-    password: ''
-  }
-});
+// Configure accounts UI if available
+if (typeof Accounts.ui !== 'undefined') {
+  Accounts.ui.config({
+    passwordSignupFields: 'USERNAME_AND_EMAIL',
+    minimumPasswordLength: get(Meteor, 'settings.public.accounts.passwordPolicy.minLength', 8),
+    defaultFieldValues: {
+      username: '',
+      email: '',
+      password: ''
+    }
+  });
+}
 
 // Handle login redirect
 Accounts.onLogin(() => {

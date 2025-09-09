@@ -153,6 +153,7 @@ export function ForgotPasswordForm({ onSuccess, onBackToLogin }) {
           type="submit"
           fullWidth
           variant="contained"
+          color="primary"
           size="large"
           disabled={loading || success}
           sx={{ 
@@ -162,15 +163,6 @@ export function ForgotPasswordForm({ onSuccess, onBackToLogin }) {
             fontWeight: 600,
             fontSize: '0.875rem',
             letterSpacing: '0.5px',
-            backgroundColor: '#f0ad4e',
-            color: '#000',
-            '&:hover': {
-              backgroundColor: '#ec971f'
-            },
-            '&:disabled': {
-              backgroundColor: '#e0e0e0',
-              color: '#999'
-            }
           }}
         >
           {loading ? 'Sending...' : 'Send Reset Email'}
@@ -190,7 +182,7 @@ export function ForgotPasswordForm({ onSuccess, onBackToLogin }) {
               onBackToLogin?.();
             }}
             sx={{ 
-              color: '#f0ad4e',
+              color: 'secondary.main',
               textDecoration: 'none',
               fontWeight: 500,
               '&:hover': {

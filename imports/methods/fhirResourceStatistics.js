@@ -13,6 +13,45 @@ Meteor.methods({
     
     const statistics = {};
     
+    // Get DDP publication info
+    const ddpPublications = {};
+    const publications = Meteor.server.publish_handlers;
+    if (publications) {
+      Object.keys(publications).forEach(pubName => {
+        // Extract resource name from publication name (handles both patterns)
+        // Pattern 1: "patients.search", "conditions.byPatient"
+        // Pattern 2: "Patients", "Conditions"
+        let resourceName = null;
+        
+        // Try lowercase pattern first (e.g., "patients.search")
+        const lowercaseMatch = pubName.match(/^([a-z]+)\./);
+        if (lowercaseMatch) {
+          // Capitalize and potentially pluralize
+          resourceName = lowercaseMatch[1].charAt(0).toUpperCase() + lowercaseMatch[1].slice(1);
+          if (!resourceName.endsWith('s')) {
+            resourceName += 's';
+          }
+        } else {
+          // Try uppercase pattern (e.g., "Patients")
+          const uppercaseMatch = pubName.match(/^([A-Z][a-z]+(?:[A-Z][a-z]+)*)/);
+          if (uppercaseMatch) {
+            resourceName = uppercaseMatch[1];
+            // Ensure it's plural
+            if (!resourceName.endsWith('s')) {
+              resourceName += 's';
+            }
+          }
+        }
+        
+        if (resourceName) {
+          if (!ddpPublications[resourceName]) {
+            ddpPublications[resourceName] = [];
+          }
+          ddpPublications[resourceName].push(pubName);
+        }
+      });
+    }
+    
     // Define the collections we want to check
     const collectionNames = [
       'ActivityDefinitions',
@@ -86,7 +125,9 @@ Meteor.methods({
           clientCount: 0,
           indices: [],
           hooks: [],
-          lastModified: null
+          lastModified: null,
+          ddpPublications: ddpPublications[collectionName] || [],
+          hasRestEndpoint: false
         };
 
         try {

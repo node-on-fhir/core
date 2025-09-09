@@ -31,65 +31,40 @@ import { Session } from 'meteor/session';
 import { get } from 'lodash';
 
 import LayoutHelpers from '../../lib/LayoutHelpers';
-import FhirUtilities from '../../lib/FhirUtilities';
 import { PlanDefinitions } from '/imports/lib/schemas/SimpleSchemas/PlanDefinitions';
 
-
-//=============================================================================================================================================
-// DATA CURSORS
-
-//=============================================================================================================================================
 // Session Variables
-
-Session.setDefault('fhirVersion', 'v1.0.2');
 Session.setDefault('selectedPlanDefinitionId', false);
-
-
-Session.setDefault('planDefinitionPageTabIndex', 1); 
-Session.setDefault('planDefinitionSearchFilter', ''); 
-Session.setDefault('selectedPlanDefinitionId', false);
-Session.setDefault('selectedPlanDefinition', false)
-Session.setDefault('PlanDefinitionsPage.onePageLayout', true)
-Session.setDefault('PlanDefinitionsPage.defaultQuery', {})
-Session.setDefault('PlanDefinitionsTable.hideCheckbox', true)
-Session.setDefault('PlanDefinitionsTable.planDefinitionsIndex', 0)
-
-
+Session.setDefault('PlanDefinitionsPage.onePageLayout', true);
+Session.setDefault('PlanDefinitionsPage.defaultQuery', {});
+Session.setDefault('PlanDefinitionsTable.hideCheckbox', true);
+Session.setDefault('PlanDefinitionsTable.planDefinitionsIndex', 0);
 
 //=============================================================================================================================================
 // GLOBAL THEMING
 
-// This is necessary for the Material UI component render layer
 let theme = {
   primaryColor: "rgb(177, 128, 13)",
   primaryText: "rgba(255, 255, 255, 1) !important",
-
   secondaryColor: "rgb(177, 128, 13)",
   secondaryText: "rgba(255, 255, 255, 1) !important",
-
   cardColor: "rgba(255, 255, 255, 1) !important",
   cardTextColor: "rgba(0, 0, 0, 1) !important",
-
   errorColor: "rgb(128,20,60) !important",
   errorText: "#ffffff !important",
-
   appBarColor: "#f5f5f5 !important",
   appBarTextColor: "rgba(0, 0, 0, 1) !important",
-
   paperColor: "#f5f5f5 !important",
   paperTextColor: "rgba(0, 0, 0, 1) !important",
-
   backgroundCanvas: "rgba(255, 255, 255, 1) !important",
   background: "linear-gradient(45deg, rgb(177, 128, 13) 30%, rgb(150, 202, 144) 90%)",
-
   nivoTheme: "greens"
-}
+};
 
 // if we have a globally defined theme from a settings file
 if(get(Meteor, 'settings.public.theme.palette')){
   theme = Object.assign(theme, get(Meteor, 'settings.public.theme.palette'));
 }
-
 
 //=============================================================================================================================================
 // COMPONENTS
@@ -110,40 +85,33 @@ export function PlanDefinitionsPage(props){
     planDefinitionsIndex: 0
   };
   
-  // Subscribe to plan definitions data with search filter
+  // Subscribe to planDefinitions data with search filter
   const isLoading = useTracker(() => {
     let autoPublishEnabled = get(Meteor, 'settings.public.defaults.autopublish', false);
     
     // Build query for subscription
     let query = {};
-    
-    // Add search filter
     if(searchFilter && searchFilter.length > 0) {
       query = {
         $or: [
           {'_id': searchFilter},
           {'id': searchFilter},
-          {'url': {$regex: searchFilter, $options: 'i'}},
           {'name': {$regex: searchFilter, $options: 'i'}},
           {'title': {$regex: searchFilter, $options: 'i'}},
-          {'status': {$regex: searchFilter, $options: 'i'}},
-          {'publisher': {$regex: searchFilter, $options: 'i'}},
-          {'description': {$regex: searchFilter, $options: 'i'}},
-          {'type.coding.0.display': {$regex: searchFilter, $options: 'i'}}
+          {'description': {$regex: searchFilter, $options: 'i'}}
         ]
       };
     }
     
     if(autoPublishEnabled){
-      const handle = Meteor.subscribe('autopublish.PlanDefinitions', query, { limit: 1000 });
+      const handle = Meteor.subscribe('autopublish.PlanDefinitions', query, { limit: 100 });
       return !handle.ready();
     } else {
       const handle = Meteor.subscribe('planDefinitions.all');
       return !handle.ready();
     }
   }, [searchFilter]);
-
-
+  
   data.selectedPlanDefinitionId = useTracker(function(){
     return Session.get('selectedPlanDefinitionId');
   }, [])
@@ -151,8 +119,9 @@ export function PlanDefinitionsPage(props){
     return PlanDefinitions.findOne(Session.get('selectedPlanDefinitionId'));
   }, [])
   data.planDefinitions = useTracker(function(){
-    // No patient filtering for PlanDefinitions - it's a definition resource
-    return PlanDefinitions.find({}).fetch();
+    // Data is already sorted by the server-side publication
+    // No client-side sorting to avoid conflicts
+    return PlanDefinitions.find({}).fetch()
   }, [])
   data.planDefinitionsIndex = useTracker(function(){
     return Session.get('PlanDefinitionsTable.planDefinitionsIndex')
@@ -164,7 +133,6 @@ export function PlanDefinitionsPage(props){
     return Session.get('showFhirIds');
   }, [])
 
-
   let headerHeight = LayoutHelpers.calcHeaderHeight();
   let formFactor = LayoutHelpers.determineFormFactor();
   let paddingWidth = LayoutHelpers.calcCanvasPaddingWidth();
@@ -173,7 +141,7 @@ export function PlanDefinitionsPage(props){
   let noDataCardStyle = {};
 
   function handleAddPlanDefinition(){
-    console.log('Add Plan Definition button clicked');
+    console.log('Add PlanDefinition button clicked');
     navigate('/plan-definitions/new');
   }
 
@@ -213,9 +181,7 @@ export function PlanDefinitionsPage(props){
               </ToggleButtonGroup>
               
               <ToggleButtonGroup
-                value={[
-                  ...(showSystemId ? ['systemId'] : [])
-                ]}
+                value={showSystemId ? ['systemId'] : []}
                 onChange={(event, newFormats) => {
                   setShowSystemId(newFormats.includes('systemId'));
                 }}
@@ -242,7 +208,7 @@ export function PlanDefinitionsPage(props){
           <TextField
             id="planDefinitionSearchInput"
             fullWidth
-            placeholder="Search plan definitions by ID, URL, name, title, status, or publisher..."
+            placeholder="Search plan definitions by ID, name, title, or description..."
             value={searchFilter}
             onChange={(e) => setSearchFilter(e.target.value)}
             variant="outlined"
@@ -290,7 +256,7 @@ export function PlanDefinitionsPage(props){
       </CardContent>
     </Card>
   } else {
-    // Show empty state with "Add Your First Plan Definition" button
+    // Show empty table with message instead of hiding everything
     layoutContent = <Card 
       sx={{ 
         width: '100%',
@@ -298,35 +264,47 @@ export function PlanDefinitionsPage(props){
         boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
         border: '1px solid',
         borderColor: 'divider',
-        overflow: 'hidden',
-        minHeight: 400,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center'
+        overflow: 'hidden'
       }}
     >
-      <CardContent sx={{ textAlign: 'center', py: 6 }}>
-        <Typography variant="h6" color="text.secondary" gutterBottom>
-          No Data Available
-        </Typography>
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-          {searchFilter ? `No plan definitions found matching "${searchFilter}"` : 'No plan definitions found'}
-        </Typography>
-        {searchFilter ? (
-          <Button
-            variant="outlined"
-            onClick={() => setSearchFilter('')}
-          >
-            Clear Search
-          </Button>
-        ) : (
-          <Button
-            variant="outlined"
-            startIcon={<AddIcon />}
-            onClick={handleAddPlanDefinition}
-          >
-            Add Your First Plan Definition
-          </Button>
+      <CardContent sx={{ p: 0 }}>
+        <PlanDefinitionsTable 
+          id='planDefinitionsTable'
+          planDefinitions={[]}
+          count={0}
+          formFactorLayout={formFactor}
+          rowsPerPage={10}
+          hideBarcode={!showSystemId}
+          order={sortOrder}
+          onRowClick={function(planDefinitionId){
+            console.log('PlanDefinitionsPage.onRowClick', planDefinitionId);
+            navigate('/plan-definitions/' + planDefinitionId);
+          }}
+          onSetPage={function(index){
+            Session.set('PlanDefinitionsTable.planDefinitionsIndex', index);
+          }}                
+          page={data.planDefinitionsIndex}
+        />
+        {searchFilter && (
+          <Box sx={{ p: 3, textAlign: 'center' }}>
+            <Typography variant="body1" color="text.secondary">
+              No plan definitions found matching "{searchFilter}"
+            </Typography>
+            <Button
+              variant="text"
+              onClick={() => setSearchFilter('')}
+              sx={{ mt: 1 }}
+            >
+              Clear search
+            </Button>
+          </Box>
+        )}
+        {!searchFilter && (
+          <Box sx={{ p: 3, textAlign: 'center' }}>
+            <Typography variant="body1" color="text.secondary">
+              No plan definitions found
+            </Typography>
+          </Box>
         )}
       </CardContent>
     </Card>

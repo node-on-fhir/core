@@ -181,6 +181,15 @@
     }
   },
   "private": {
+    "mcp": {
+      "enabled": true,
+      "transport": ["http"],
+      "authentication": "none"
+    },
+    "a2a": {
+      "enabled": true,
+      "serverUrl": "http://localhost:8080"
+    },
     "pacio": {
       "chiefMedicalOfficer": {
         "reference": "Practitioner/chief-medical-officer",

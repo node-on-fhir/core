@@ -171,13 +171,19 @@ export function QuestionnaireLibraryPage() {
   };
 
   return (
-    <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-      <Typography variant="h4" gutterBottom>
-        Questionnaire Library
-      </Typography>
-      
-      <Paper sx={{ p: 3, mb: 3 }}>
-        <Grid container spacing={2} alignItems="center">
+    <Box sx={{ 
+      bgcolor: theme => theme.palette.mode === 'light' 
+        ? theme.palette.grey[50] 
+        : theme.palette.background.default,
+      minHeight: '100vh'
+    }}>
+      <Container maxWidth="lg" sx={{ pt: 4, pb: 4 }}>
+        <Typography variant="h4" gutterBottom>
+          Questionnaire Library
+        </Typography>
+        
+        <Paper sx={{ p: 3, mb: 3 }}>
+          <Grid container spacing={2} alignItems="center">
           <Grid item xs={12} md={6}>
             <TextField
               fullWidth
@@ -310,6 +316,7 @@ export function QuestionnaireLibraryPage() {
           </Typography>
         </Box>
       )}
-    </Container>
+      </Container>
+    </Box>
   );
 }

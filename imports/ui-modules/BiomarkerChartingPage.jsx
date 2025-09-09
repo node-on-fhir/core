@@ -1,752 +1,614 @@
+// /Volumes/SonicMagic/Code/honeycomb-public-release/imports/ui-modules/BiomarkerChartingPage.jsx
 
+import React, { useState, useEffect, useMemo } from 'react';
 import { 
   Button, 
   Grid, 
+  Card,
   CardHeader, 
   CardContent, 
   Typography,
   FormControl,
-  Input,
   InputLabel,
   Select,
-  MenuItem
-} from '@material-ui/core';
-import { StyledCard, PageCanvas } from 'fhir-starter';
+  MenuItem,
+  Box,
+  Chip,
+  Paper,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  CircularProgress,
+  Alert,
+  AlertTitle,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  IconButton
+} from '@mui/material';
+import SettingsIcon from '@mui/icons-material/Settings';
+import CloseIcon from '@mui/icons-material/Close';
 
-import React, { useState } from 'react';
-import { ReactMeteorData, useTracker } from 'meteor/react-meteor-data';
-import { browserHistory } from 'react-router';
+import { useTracker, useSubscribe } from 'meteor/react-meteor-data';
+import { useNavigate } from 'react-router-dom';
 
-import { get, concat } from 'lodash';
+import { get, groupBy, orderBy, uniqBy } from 'lodash';
 import moment from 'moment';
 
 import { Session } from 'meteor/session';
 import { Meteor } from 'meteor/meteor';
-import { 
-  DynamicSpacer, 
-  LayoutHelpers,
-  NoDataWrapper,
-  NotSignedInWrapper
-} from 'meteor/clinical:hl7-fhir-data-infrastructure';
+import { Observations } from '../lib/schemas/SimpleSchemas/Observations';
 
-import { Line } from '@nivo/line'
+import { ResponsiveLine } from '@nivo/line'
 
-// import NoDataWrapper from './NoDataWrapper';
+// Helper functions to replace clinical:hl7-fhir-data-infrastructure components
+function DynamicSpacer() {
+  return <div style={{ height: 20 }} />;
+}
 
-// import { InlineMath, BlockMath } from 'react-katex';
-// import 'katex/dist/katex.min.css';
+function calcHeaderHeight() {
+  return get(Meteor, 'settings.public.defaults.prominentHeader') ? 148 : 84;
+}
+
+function calcCanvasPaddingWidth() {
+  return Session.get('appWidth') < 768 ? 20 : 40;
+}
+
+function NoDataWrapper({ dataCount, noDataImagePath, history, title, buttonLabel, redirectPath }) {
+  const navigate = useNavigate();
+  
+  return (
+    <Card style={{ margin: 20, padding: 40, textAlign: 'center' }}>
+      <CardContent>
+        <Typography variant="h5" gutterBottom>{title}</Typography>
+        <Typography variant="body1" color="textSecondary" paragraph>
+          Please select a patient to view biomarker data.
+        </Typography>
+        <Button 
+          variant="contained" 
+          color="primary" 
+          onClick={() => navigate(redirectPath)}
+        >
+          {buttonLabel}
+        </Button>
+      </CardContent>
+    </Card>
+  );
+}
 
 export function BiomarkerChartingPage(props){
-
-  let [heightPage, setHeightPage] = useState(0);
-  let [weightPage, setWeightPage] = useState(0);
+  const navigate = useNavigate();
   
-  let noDataImagePath = get(Meteor, 'settings.public.defaults.noData.noDataImagePath', "packages/clinical_hl7-fhir-data-infrastructure/assets/NoData.png");  
-  let headerHeight = LayoutHelpers.calcHeaderHeight();
-
-  let data = {
-    chart: {
-      width: Session.get('appWidth') * 0.45,  
-      height: 200
-    },
-    organizations: {
-      image: "/pages/provider-directory/organizations.jpg"
-    },
-    bmi: {
-      height: 0,
-      weight: 0
-    },
-    selectedPatient: null,
-    heightObservations: [],
-    weightObservations: [],
-    observationsCount: 0,
-    timescale: 0
-  };
-
-  data.chart.width = useTracker(function(){
-    return Session.get('appWidth') * 0.45;
-  }, [])
-
-  data.bmi.weight = useTracker(function(){
-      let recentWeight = Observations.find({'code.text': 'Weight'}, {sort: {effectiveDateTime: 1}}).fetch()[0];
-      return get(recentWeight, 'valueQuantity.value', null);
-  }, []);
-
-  data.bmi.height = useTracker(function(){
-    let recentHeight = Observations.find({'code.text': 'Height'}, {sort: {effectiveDateTime: 1}}).fetch()[0];
-    return get(recentHeight, 'valueQuantity.value', null);
-  }, []);
-
-  data.selectedPatient = useTracker(function(){
-    return Session.get('selectedPatient');
-  }, []);
-
-
-  data.heightObservations = useTracker(function(){
-    return Observations.find({'code.text': 'Height'}, {sort: {effectiveDateTime: 1}}).fetch();
-  }, []);
-
-  data.weightObservations = useTracker(function(){
-    return Observations.find({$or: [{'code.text': 'Weight'}, {'code.coding.code': '29463-7'}]}, {sort: {effectiveDateTime: 1}}).fetch();
-  }, []);
-
-  data.pulseObservations = useTracker(function(){
-    return Observations.find({$or: [{'code.text': 'Pulse'}, {'code.text': 'Heart rate'}, {'code.text': '8867-4'}]}, {sort: {effectiveDateTime: 1}}).fetch();
-  }, []);
-
-  data.temperatureObservations = useTracker(function(){
-    return Observations.find({$or: [{'code.text': 'Body temperature'}, {'code.coding.code': '8310-5'}]}, {sort: {effectiveDateTime: 1}}).fetch();
-  }, []);
-
-  data.pressureObservations = useTracker(function(){
-    return Observations.find({$or: [{'component.code.text': 'Diastolic Blood Pressure'}, {'component.code.coding.code': '8462-5'}]}, {sort: {effectiveDateTime: 1}}).fetch();
-  }, []);
-
-  data.respirationObservations = useTracker(function(){
-    return Observations.find({$or: [{'code.text': 'Respiratory rate'}, {'code.coding.code': '9279-1'}]}, {sort: {effectiveDateTime: 1}}).fetch();
-  }, []);
-
-  data.oxygenationObservations = useTracker(function(){
-    return Observations.find({$or: [{'code.text': 'Oxygen saturation in Arterial blood'}, {'code.coding.code': '2708-6'}, {'code.coding.code': '59408-5'}]}, {sort: {effectiveDateTime: 1}}).fetch();
-  }, []);
-
+  // State management
+  const [timescale, setTimescale] = useState(0);
+  const [selectedCodes, setSelectedCodes] = useState([]);
+  const [codeAnalysis, setCodeAnalysis] = useState(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   
-  data.observationsCount = useTracker(function(){
-    return Observations.find().count();
-  }, []);
-
-  data.timescale = useTracker(function(){
-    return Session.get('timescale');
-  }, [])
-
-
-
-  let observationQuery = {$or: [{'code.text': 'Height'}, {'code.text': 'Weight'}]}
-  let bmi = (data.bmi.weight / data.bmi.height / data.bmi.height * 10000).toFixed(2);
-
-
-  function openLink(url){
-    console.log("openLink", url);
-    browserHistory.push(url);
-  }
-  function handleInitializeData(){
-    // alert('Initialize!')
-    Meteor.call('initializeBodyMassIndexData')
-  }
-
-  function handleChangeTimescale(event){
-    // console.log('handleChangeTimescale', event.target.value)
-    Session.set('timescale', event.target.value)
-  }
-
-  // let headerHeight = 84;
-  // if(get(Meteor, 'settings.public.defaults.prominentHeader')){
-  //   headerHeight = 148;
-  // }
-
-  let paddingWidth = LayoutHelpers.calcCanvasPaddingWidth();
+  // Layout calculations
+  const headerHeight = calcHeaderHeight();
+  const paddingWidth = calcCanvasPaddingWidth();
+  const chartHeight = 180;
   
-  let dataManagementElements;
-
-
-  //if(data.observationsCount > 0){
-
-    let pulseElements = [];
-    let respirationElements = [];
-    let bloodPressureElements = [];
-    let weightElements = [];
-    let temperatureElements = [];
-    let bloodOxygenationElements = [];
-
-
-    let dataVisulationTimeFormat = 'MMM DD, YYYY';
-    switch (data.timescale) {
-      case 0:  // all
-        dataVisulationTimeFormat = 'MMM DD, YYYY';
-        break;
-      case 1:  // year
-        dataVisulationTimeFormat = 'YYYY';
-        break;
-      case 2:  // season
-        dataVisulationTimeFormat = 'YYYY Q';
-        break;
-      case 3:  // month
-        dataVisulationTimeFormat = 'YYYY-MM';
-        break;
-      case 4:  // week
-        dataVisulationTimeFormat = 'YYYY ww ddd';
-        break;
-      case 5:  // day
-        dataVisulationTimeFormat = 'YYYY-MM-DD';
-        break;
-      case 6:  // hour
-        dataVisulationTimeFormat = 'kk';
-        break;    
-      case 7:  // minute
-        dataVisulationTimeFormat = 'kk mm';
-        break;    
-      default:
-        dataVisulationTimeFormat = 'MMM DD, YYYY';
-        break;
+  // Get selected patient
+  const selectedPatientId = useTracker(() => Session.get('selectedPatientId'), []);
+  const selectedPatient = useTracker(() => Session.get('selectedPatient'), []);
+  
+  // Subscribe to Observations for the selected patient
+  // Try multiple subscription names that might exist
+  const isLoadingSubscription = useSubscribe(() => {
+    if (selectedPatientId) {
+      // Try the pacio.Observations subscription first
+      return Meteor.subscribe('pacio.Observations', selectedPatientId);
     }
-
-    // const valuesToShow = data.map((v,i)=>i % 10 === 0  ?  '' : v)
-
-    if(data.pulseObservations.length > 0){
-      pulseElements.push(<StyledCard margins={20} >
-      <CardHeader 
-        title="Pulse"
-        style={{paddingBottom: '0px'}}
-        />
-      <CardContent style={{fontSize: '180%', paddingTop: '0px'}}>
-        <Line
-          width={ data.chart.width}
-          height={ data.chart.height}
-          curve='natural'
-          data={[
-            {
-              "id": "weight",
-              "color": "hsl(122, 70%, 50%)",
-              "data": Observations.find({$or: [{'code.text': 'Pulse'}, {'code.text': 'Heart rate'}, {'code.text': '8867-4'}]}, {sort: {effectiveDateTime: 1}}).map(function(observation){
-                return {
-                  x: moment(get(observation, 'effectiveDateTime')).format(dataVisulationTimeFormat),
-                  y: get(observation, 'valueQuantity.value')
-                }
-              })
-            }
-          ]}
-          margin={{
-              "top": 50,
-              "right": 110,
-              "bottom": 50,
-              "left": 60
-          }}
-          minY="auto"
-          stacked={true}
-          axisBottom={{
-              "orient": "bottom",
-              "tickSize": 5,
-              "tickPadding": 5,
-              "tickRotation": 0,
-              "legend": "observation date",
-              "legendOffset": 36
-              // "format":  function(v){
-              //   return Observations.find({$or: [{'code.text': 'Pulse'}, {'code.text': 'Heart rate'}, {'code.text': '8867-4'}]}, {sort: {effectiveDateTime: 1}}).map(function(observation, index){
-              //     return index % 10 === 0  ?  '' : moment(get(observation, 'effectiveDateTime')).format(dataVisulationTimeFormat);
-              //   })
-              // }
-          }}
-          axisLeft={{
-              "tickSize": 5,
-              "tickPadding": 5,
-              "tickRotation": 0,
-              "legend": "beats / minute",
-              "legendOffset": -40
-          }}
-          dotSize={10}
-          dotColor="inherit:darker(0.3)"
-          dotBorderWidth={2}
-          dotBorderColor="#ffffff"
-          enableDotLabel={true}
-          dotLabel="y"
-          dotLabelYOffset={-12}
-          animate={true}
-          motionStiffness={90}
-          motionDamping={15}
-          // legends={[
-          //     {
-          //         "anchor": "bottom-right",
-          //         "direction": "column",
-          //         "translateX": 100,
-          //         "itemWidth": 80,
-          //         "itemHeight": 20,
-          //         "symbolSize": 12,
-          //         "symbolShape": "circle"
-          //     }
-          // ]}
-        />
-      </CardContent>
-      </StyledCard>)
-      pulseElements.push(<DynamicSpacer />)
+    return null;
+  });
+  
+  // Fetch observations for the selected patient
+  const observations = useTracker(() => {
+    if (!selectedPatientId) return [];
+    
+    // First try to get observations without any filter to see if they exist
+    const allObs = Observations.find().fetch();
+    console.log('Total observations in collection:', allObs.length);
+    
+    if (allObs.length === 0) {
+      // If Observations collection is empty, return mock data for now
+      // This suggests the subscription isn't populating this collection
+      console.warn('Observations collection is empty - subscription may not be working');
+      return [];
     }
-    if(data.respirationObservations.length > 0){
-      respirationElements.push(<StyledCard margins={20} >
-        <CardHeader 
-          title="Respiration Rate"
-          style={{paddingBottom: '0px'}}
-          />
-        <CardContent style={{fontSize: '180%', paddingTop: '0px'}}>
-          <Line
-            width={ data.chart.width}
-            height={ data.chart.height}
-            curve='natural'
-            data={[
-              {
-                "id": "weight",
-                "color": "hsl(122, 70%, 50%)",
-                "data": Observations.find({$or: [{'code.text': 'Respiratory rate'}, {'code.coding.code': '9279-1'}]}, {sort: {effectiveDateTime: 1}}).map(function(observation){
-                  return {
-                    x: moment(get(observation, 'effectiveDateTime')).format(dataVisulationTimeFormat),
-                    y: get(observation, 'valueQuantity.value')
-                  }
-                })
-              }
-            ]}
-            margin={{
-                "top": 50,
-                "right": 110,
-                "bottom": 50,
-                "left": 60
-            }}
-            minY="auto"
-            stacked={true}
-            axisBottom={{
-                "orient": "bottom",
-                "tickSize": 5,
-                "tickPadding": 5,
-                "tickRotation": 0,
-                "legend": "observation date",
-                "legendOffset": 36
-                // "format":  function(v){
-                //   return Observations.find({$or: [{'code.text': 'Pulse'}, {'code.text': 'Heart rate'}, {'code.text': '8867-4'}]}, {sort: {effectiveDateTime: 1}}).map(function(observation, index){
-                //     return index % 10 === 0  ?  '' : moment(get(observation, 'effectiveDateTime')).format(dataVisulationTimeFormat);
-                //   })
-                // }
-            }}
-            axisLeft={{
-                "tickSize": 5,
-                "tickPadding": 5,
-                "tickRotation": 0,
-                "legend": "breaths / minute",
-                "legendOffset": -40
-            }}
-            dotSize={10}
-            dotColor="inherit:darker(0.3)"
-            dotBorderWidth={2}
-            dotBorderColor="#ffffff"
-            enableDotLabel={true}
-            dotLabel="y"
-            dotLabelYOffset={-12}
-            animate={true}
-            motionStiffness={90}
-            motionDamping={15}
-            // legends={[
-            //     {
-            //         "anchor": "bottom-right",
-            //         "direction": "column",
-            //         "translateX": 100,
-            //         "itemWidth": 80,
-            //         "itemHeight": 20,
-            //         "symbolSize": 12,
-            //         "symbolShape": "circle"
-            //     }
-            // ]}
-          />
-        </CardContent>
-      </StyledCard>)
-      respirationElements.push(<DynamicSpacer />)
+    
+    const query = {
+      $or: [
+        { 'subject.reference': 'Patient/' + selectedPatientId },
+        { 'subject.reference': selectedPatientId },
+        { 'subject.id': selectedPatientId }
+      ]
+    };
+    
+    const patientObs = Observations.find(query, { sort: { effectiveDateTime: -1 } }).fetch();
+    console.log('Observations for patient:', patientObs.length);
+    return patientObs;
+  }, [selectedPatientId]);
+  
+  // Analyze observations to discover unique codes
+  useEffect(() => {
+    if (observations.length > 0 && !codeAnalysis) {
+      console.log('Starting analysis of', observations.length, 'observations...');
+      analyzeObservationCodes(observations);
     }
-    if(data.pressureObservations.length > 0){
-      bloodPressureElements.push(<StyledCard margins={20} >
-        <CardHeader 
-          title="Blood Pressure"
-          style={{paddingBottom: '0px'}}
-          />
-        <CardContent style={{fontSize: '180%', paddingTop: '0px'}}>
-          <Line
-            width={ data.chart.width}
-            height={ data.chart.height}
-            curve='natural'
-            data={[
-              {
-                "id": "Diastolic",
-                "color": "",
-                "data": Observations.find({$or: [{'component.code.text': 'Diastolic Blood Pressure'}, {'component.code.coding.code': '8462-5'}]}, {sort: {effectiveDateTime: 1}}).map(function(observation){
-                  return {
-                    x: moment(get(observation, 'effectiveDateTime')).format(dataVisulationTimeFormat),
-                    y: get(observation, 'component[0].valueQuantity.value')
-                  }
-                })
-              }, {
-                "id": "Systolic",
-                "color": "",
-                "data": Observations.find({$or: [{'component.code.text': 'Systolic Blood Pressure'}, {'component.code.coding.code': '8480-6'}]}, {sort: {effectiveDateTime: 1}}).map(function(observation){
-                  return {
-                    x: moment(get(observation, 'effectiveDateTime')).format(dataVisulationTimeFormat),
-                    y: get(observation, 'component[1].valueQuantity.value')
-                  }
-                })
-              }
-            ]}
-            margin={{
-                "top": 50,
-                "right": 110,
-                "bottom": 50,
-                "left": 60
-            }}
-            minY="auto"
-            stacked={true}
-            axisBottom={{
-                "orient": "bottom",
-                "tickSize": 5,
-                "tickPadding": 5,
-                "tickRotation": 0,
-                "legend": "observation date",
-                "legendOffset": 36             
-                // "format":  function(v){
-                //   return Observations.find({$or: [{'code.text': 'Pulse'}, {'code.text': 'Heart rate'}, {'code.text': '8867-4'}]}, {sort: {effectiveDateTime: 1}}).map(function(observation, index){
-                //     return index % 10 === 0  ?  '' : moment(get(observation, 'effectiveDateTime')).format(dataVisulationTimeFormat);
-                //   })
-                // }
-            }}
-            axisLeft={{
-                "tickSize": 5,
-                "tickPadding": 5,
-                "tickRotation": 0,
-                "legend": "mm Hg",
-                "legendOffset": -40
-            }}
-            dotSize={10}
-            dotColor="inherit:darker(0.3)"
-            dotBorderWidth={2}
-            dotBorderColor="#ffffff"
-            enableDotLabel={true}
-            dotLabel="y"
-            dotLabelYOffset={-12}
-            animate={true}
-            motionStiffness={90}
-            motionDamping={15}
-            // legends={[
-            //     {
-            //         "anchor": "bottom-right",
-            //         "direction": "column",
-            //         "translateX": 100,
-            //         "itemWidth": 80,
-            //         "itemHeight": 20,
-            //         "symbolSize": 12,
-            //         "symbolShape": "circle"
-            //     }
-            // ]}
-          />
-        </CardContent>
-      </StyledCard>)
-      bloodPressureElements.push(<DynamicSpacer />)
+  }, [observations]);
+  
+  function analyzeObservationCodes(observationsToAnalyze) {
+    console.log('Analyzing observation codes for', observationsToAnalyze.length, 'observations');
+    
+    try {
+      const codeMap = new Map();
+      
+      observationsToAnalyze.forEach(obs => {
+        // Extract code information
+        let codeInfo = {
+          system: null,
+          code: null,
+          display: null,
+          text: get(obs, 'code.text'),
+          count: 0,
+          latestValue: null,
+          unit: null,
+          dates: []
+        };
+        
+        // Try to get SNOMED code
+        const snomedCoding = get(obs, 'code.coding', []).find(c => 
+          c.system && c.system.includes('snomed')
+        );
+        
+        // Try to get LOINC code
+        const loincCoding = get(obs, 'code.coding', []).find(c => 
+          c.system && c.system.includes('loinc')
+        );
+        
+        // Use whichever coding we found
+        const coding = snomedCoding || loincCoding || get(obs, 'code.coding[0]', {});
+        
+        if (coding.code) {
+          codeInfo.system = coding.system;
+          codeInfo.code = coding.code;
+          codeInfo.display = coding.display || codeInfo.text;
+        }
+        
+        // Create unique key for this code
+        const codeKey = codeInfo.code || codeInfo.text || 'unknown';
+        
+        if (codeMap.has(codeKey)) {
+          const existing = codeMap.get(codeKey);
+          existing.count++;
+          existing.dates.push(get(obs, 'effectiveDateTime'));
+          if (!existing.latestValue && get(obs, 'valueQuantity.value')) {
+            existing.latestValue = get(obs, 'valueQuantity.value');
+            existing.unit = get(obs, 'valueQuantity.unit');
+          }
+        } else {
+          codeInfo.count = 1;
+          codeInfo.dates = [get(obs, 'effectiveDateTime')];
+          codeInfo.latestValue = get(obs, 'valueQuantity.value');
+          codeInfo.unit = get(obs, 'valueQuantity.unit');
+          codeMap.set(codeKey, codeInfo);
+        }
+      });
+      
+      console.log('Code analysis complete. Found', codeMap.size, 'unique codes');
+      
+      // Convert map to array and sort by count
+      const codeArray = Array.from(codeMap.values());
+      const sortedCodes = orderBy(codeArray, ['count'], ['desc']);
+      
+      console.log('Top 5 codes:', sortedCodes.slice(0, 5).map(c => ({
+        code: c.code || c.text,
+        count: c.count,
+        hasValue: c.latestValue !== null
+      })));
+      
+      setCodeAnalysis(sortedCodes);
+      
+      // Auto-select top 6 codes with values and at least 2 measurements
+      const topCodes = sortedCodes
+        .filter(c => c.latestValue !== null && c.count >= 2)
+        .slice(0, 6)
+        .map(c => c.code || c.text);
+      
+      console.log('Auto-selected codes:', topCodes);
+      setSelectedCodes(topCodes);
+      
+    } catch (error) {
+      console.error('Error analyzing observations:', error);
+      setCodeAnalysis([]);
+      setSelectedCodes([]);
+    } finally {
+      setIsAnalyzing(false);
+      console.log('Analysis state set to false');
     }
-    if(data.weightObservations.length > 0){
-      weightElements.push(<StyledCard margins={20} >
-        <CardHeader 
-          title="Weight"
-          style={{paddingBottom: '0px'}}
-          />
-        <CardContent style={{fontSize: '180%', paddingTop: '0px'}}>
-          <Line
-            width={ data.chart.width}
-            height={ data.chart.height}
-            curve='natural'
-            data={[
-              {
-                "id": "weight",
-                "color": "hsl(122, 70%, 50%)",
-                "data": Observations.find({$or: [{'code.text': 'Weight'}, {'code.coding.code': '29463-7'}]}, {sort: {effectiveDateTime: 1}}).map(function(observation){
-                  return {
-                    x: moment(get(observation, 'effectiveDateTime')).format(dataVisulationTimeFormat),
-                    y: get(observation, 'valueQuantity.value')
-                  }
-                })
-              }
-            ]}
-            margin={{
-                "top": 50,
-                "right": 110,
-                "bottom": 50,
-                "left": 60
-            }}
-            minY="auto"
-            stacked={true}
-            axisBottom={{
-                "orient": "bottom",
-                "tickSize": 5,
-                "tickPadding": 5,
-                "tickRotation": 0,
-                "legend": "observation date",
-                "legendOffset": 36
-                // "format":  function(v){
-                //   return Observations.find({$or: [{'code.text': 'Pulse'}, {'code.text': 'Heart rate'}, {'code.text': '8867-4'}]}, {sort: {effectiveDateTime: 1}}).map(function(observation, index){
-                //     return index % 10 === 0  ?  '' : moment(get(observation, 'effectiveDateTime')).format(dataVisulationTimeFormat);
-                //   })
-                // }
-            }}
-            axisLeft={{
-                "tickSize": 5,
-                "tickPadding": 5,
-                "tickRotation": 0,
-                "legend": "Kilograms (kg)",
-                "legendOffset": -40
-            }}
-            dotSize={10}
-            dotColor="inherit:darker(0.3)"
-            dotBorderWidth={2}
-            dotBorderColor="#ffffff"
-            enableDotLabel={true}
-            dotLabel="y"
-            dotLabelYOffset={-12}
-            animate={true}
-            motionStiffness={90}
-            motionDamping={15}
-            // legends={[
-            //     {
-            //         "anchor": "bottom-right",
-            //         "direction": "column",
-            //         "translateX": 100,
-            //         "itemWidth": 80,
-            //         "itemHeight": 20,
-            //         "symbolSize": 12,
-            //         "symbolShape": "circle"
-            //     }
-            // ]}
-          />
-        </CardContent>
-      </StyledCard>)
-      weightElements.push(<DynamicSpacer />)
+  }
+  
+  // Get data for selected codes - only include codes with 2+ measurements
+  const chartData = useMemo(() => {
+    if (!selectedCodes.length || !observations.length) return [];
+    
+    return selectedCodes.map(codeId => {
+      // Find observations for this code
+      const codeObs = observations.filter(obs => {
+        const hasCode = get(obs, 'code.coding', []).some(c => c.code === codeId);
+        const hasText = get(obs, 'code.text') === codeId;
+        return hasCode || hasText;
+      });
+      
+      // Get display name
+      const codeInfo = codeAnalysis?.find(c => c.code === codeId || c.text === codeId);
+      const displayName = codeInfo?.display || codeInfo?.text || codeId;
+      
+      return {
+        code: codeId,
+        display: displayName,
+        unit: codeInfo?.unit || '',
+        observations: orderBy(codeObs, ['effectiveDateTime'], ['asc'])
+      };
+    }).filter(data => data.observations.length >= 2); // Only show graphs with 2+ data points
+  }, [selectedCodes, observations, codeAnalysis]);
+  
+  // Format data for time display
+  function getTimeFormat() {
+    switch (timescale) {
+      case 0: return 'MMM DD, YYYY';  // all
+      case 1: return 'YYYY';           // year
+      case 2: return 'YYYY [Q]Q';      // season/quarter
+      case 3: return 'YYYY-MM';        // month
+      case 4: return 'YYYY [W]ww';     // week
+      case 5: return 'YYYY-MM-DD';     // day
+      case 6: return 'HH:00';          // hour
+      case 7: return 'HH:mm';          // minute
+      default: return 'MMM DD, YYYY';
     }
-    if(data.temperatureObservations.length > 0){
-      temperatureElements.push(<StyledCard margins={20} >
-        <CardHeader 
-          title="Temperature"
-          style={{paddingBottom: '0px'}}
-          />
-        <CardContent style={{fontSize: '180%', paddingTop: '0px'}}>
-          <Line
-            width={ data.chart.width}
-            height={ data.chart.height}
-            curve='natural'
-            data={[
-              {
-                "id": "weight",
-                "color": "hsl(122, 70%, 50%)",
-                "data": Observations.find({$or: [{'code.text': 'Body temperature'}, {'code.coding.code': '8310-5'}]}, {sort: {effectiveDateTime: 1}}).map(function(observation){
-                  return {
-                    x: moment(get(observation, 'effectiveDateTime')).format(dataVisulationTimeFormat),
-                    y: get(observation, 'valueQuantity.value')
-                  }
-                })
-              }
-            ]}
-            margin={{
-                "top": 50,
-                "right": 110,
-                "bottom": 50,
-                "left": 60
-            }}
-            minY="auto"
-            stacked={true}
-            axisBottom={{
-                "orient": "bottom",
-                "tickSize": 5,
-                "tickPadding": 5,
-                "tickRotation": 0,
-                "legend": "observation date",
-                "legendOffset": 36
-                // "format":  function(v){
-                //   return Observations.find({$or: [{'code.text': 'Pulse'}, {'code.text': 'Heart rate'}, {'code.text': '8867-4'}]}, {sort: {effectiveDateTime: 1}}).map(function(observation, index){
-                //     return index % 10 === 0  ?  '' : moment(get(observation, 'effectiveDateTime')).format(dataVisulationTimeFormat);
-                //   })
-                // }
-            }}
-            axisLeft={{
-                "tickSize": 5,
-                "tickPadding": 5,
-                "tickRotation": 0,
-                "legend": "Celsius (Cel)",
-                "legendOffset": -40
-            }}
-            dotSize={10}
-            dotColor="inherit:darker(0.3)"
-            dotBorderWidth={2}
-            dotBorderColor="#ffffff"
-            enableDotLabel={true}
-            dotLabel="y"
-            dotLabelYOffset={-12}
-            animate={true}
-            motionStiffness={90}
-            motionDamping={15}
-            // legends={[
-            //     {
-            //         "anchor": "bottom-right",
-            //         "direction": "column",
-            //         "translateX": 100,
-            //         "itemWidth": 80,
-            //         "itemHeight": 20,
-            //         "symbolSize": 12,
-            //         "symbolShape": "circle"
-            //     }
-            // ]}
-          />
-        </CardContent>
-      </StyledCard>)
-      temperatureElements.push(<DynamicSpacer />)
-    }
-    if(data.oxygenationObservations.length > 0){
-      bloodOxygenationElements.push(<StyledCard margins={20} >
-        <CardHeader 
-          title="Blood Oxygenation"
-          style={{paddingBottom: '0px'}}
-          />
-        <CardContent style={{fontSize: '180%', paddingTop: '0px'}}>
-          <Line
-            width={ data.chart.width}
-            height={ data.chart.height}
-            curve='natural'
-            data={[
-              {
-                "id": "weight",
-                "color": "hsl(122, 70%, 50%)",
-                "data": Observations.find({$or: [{'code.text': 'Oxygen saturation in Arterial blood'}, {'code.coding.code': '59408-5'}]}, {sort: {effectiveDateTime: 1}}).map(function(observation){
-                  return {
-                    x: moment(get(observation, 'effectiveDateTime')).format(dataVisulationTimeFormat),
-                    y: get(observation, 'valueQuantity.value')
-                  }
-                })
-              }
-            ]}
-            margin={{
-                "top": 50,
-                "right": 110,
-                "bottom": 50,
-                "left": 60
-            }}
-            minY="auto"
-            stacked={true}
-            axisBottom={{
-                "orient": "bottom",
-                "tickSize": 5,
-                "tickPadding": 5,
-                "tickRotation": 0,
-                "legend": "observation date",
-                "legendOffset": 36
-                // "format":  function(v){
-                //   return Observations.find({$or: [{'code.text': 'Pulse'}, {'code.text': 'Heart rate'}, {'code.text': '8867-4'}]}, {sort: {effectiveDateTime: 1}}).map(function(observation, index){
-                //     return index % 10 === 0  ?  '' : moment(get(observation, 'effectiveDateTime')).format(dataVisulationTimeFormat);
-                //   })
-                // }
-            }}
-            axisLeft={{
-                "tickSize": 5,
-                "tickPadding": 5,
-                "tickRotation": 0,
-                "legend": "%",
-                "legendOffset": -40
-            }}
-            dotSize={10}
-            dotColor="inherit:darker(0.3)"
-            dotBorderWidth={2}
-            dotBorderColor="#ffffff"
-            enableDotLabel={true}
-            dotLabel="y"
-            dotLabelYOffset={-12}
-            animate={true}
-            motionStiffness={90}
-            motionDamping={15}
-            // legends={[
-            //     {
-            //         "anchor": "bottom-right",
-            //         "direction": "column",
-            //         "translateX": 100,
-            //         "itemWidth": 80,
-            //         "itemHeight": 20,
-            //         "symbolSize": 12,
-            //         "symbolShape": "circle"
-            //     }
-            // ]}
-          />
-        </CardContent>
-      </StyledCard>)
-      bloodOxygenationElements.push(<DynamicSpacer />)
-    }
-
-    if(data.selectedPatient){
-      dataManagementElements = <NotSignedInWrapper notSignedInImagePath="">
-        <Grid container spacing={3} style={{marginTop: '0px', marginBottom: '84px', paddingBottom: '84px'}}>            
-            <Grid item md={2}>
-              <FormControl style={{width: '100%', paddingBottom: '20px', marginTop: '10px'}}>
-                <InputLabel id="timescale-label">Timescale</InputLabel>
-                <Select
-                  id="timescale-selector"
-                  value={ data.timescale }
-                  onChange={handleChangeTimescale.bind(this)}
-                  fullWidth
-                  >
-                  <MenuItem value={0} id="timescale-menu-item-0" key="timescale-menu-item-0" >All</MenuItem>
-                  <MenuItem value={1} id="timescale-menu-item-1" key="timescale-menu-item-1" >Year</MenuItem>
-                  <MenuItem value={2} id="timescale-menu-item-2" key="timescale-menu-item-2" >Season</MenuItem>
-                  <MenuItem value={3} id="timescale-menu-item-3" key="timescale-menu-item-3" >Month</MenuItem>
-                  <MenuItem value={4} id="timescale-menu-item-4" key="timescale-menu-item-4" >Week</MenuItem>
-                  <MenuItem value={5} id="timescale-menu-item-5" key="timescale-menu-item-5" >Day</MenuItem>
-                  <MenuItem value={6} id="timescale-menu-item-6" key="timescale-menu-item-6" >Hour</MenuItem>
-                  <MenuItem value={7} id="timescale-menu-item-7" key="timescale-menu-item-7" >Minute</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid item md={2}>
-              
-            </Grid>
-            <Grid item md={2}>
-
-            </Grid>
-            <Grid item md={6}>
-
-            </Grid>
-            <Grid item md={6}>
-              
-              { pulseElements }
-              { bloodPressureElements }
-              { temperatureElements }
-
-            </Grid>
-            <Grid item md={6}>
-              
-              { respirationElements }
-              { weightElements }
-              { bloodOxygenationElements }        
-
-            </Grid>
-          </Grid>
-      </NotSignedInWrapper>
-    } else {
-      dataManagementElements = <NotSignedInWrapper notSignedInImagePath="">
+  }
+  
+  function handleCodeToggle(codeId) {
+    setSelectedCodes(prev => {
+      if (prev.includes(codeId)) {
+        return prev.filter(c => c !== codeId);
+      } else {
+        return [...prev, codeId];
+      }
+    });
+  }
+  
+  function handleTimescaleChange(event) {
+    setTimescale(event.target.value);
+  }
+  
+  // Render content
+  if (!selectedPatient) {
+    return (
+      <div style={{paddingTop: 40, paddingLeft: paddingWidth, paddingRight: paddingWidth}}>
         <NoDataWrapper 
-          dataCount={data.observationsCount} 
+          dataCount={0} 
           noDataImagePath=""
           history={props.history} 
           title="No Patient Selected"
           buttonLabel="Lookup Patient"
-          redirectPath="/patient-lookup"
-          >          
-        </NoDataWrapper>
-      </NotSignedInWrapper>
-    }
-    
-    
-
-
-  // } else {
-  //   dataManagementElements = <Grid justify="center" container spacing={8} style={{marginTop: '0px', marginBottom: '80px'}}>            
-  //     <Grid item md={6}>
-  //       <CardHeader title="No Data" subheader='Click button to load sample patient into the database.' />
-  //       <Button 
-  //         fullWidth
-  //         variant="contained"
-  //         color="primary"
-  //         onClick={handleInitializeData.bind(this)}
-  //         >Initialize</Button>
-  //     </Grid>
-  //   </Grid>
-  // }
-
+          redirectPath="/patient-directory"
+        />
+      </div>
+    );
+  }
+  
+  // Check if we're still loading
+  const subscriptionLoading = isLoadingSubscription();
+  
+  // Debug logging
+  console.log('Subscription loading:', subscriptionLoading);
+  console.log('Is analyzing:', isAnalyzing);
+  console.log('Observations count:', observations.length);
+  console.log('Code analysis:', codeAnalysis);
+  
+  // Don't show loading if we have already analyzed the data
+  // The subscription might stay "loading" but if we have data, show it
+  if (!codeAnalysis && (subscriptionLoading || isAnalyzing)) {
+    return (
+      <div style={{paddingTop: 40, paddingLeft: paddingWidth, paddingRight: paddingWidth}}>
+        <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
+          <CircularProgress />
+          <Typography variant="h6" style={{marginLeft: 20}}>
+            {isAnalyzing ? `Analyzing ${observations.length} observations...` : 'Loading observations...'}
+          </Typography>
+        </Box>
+      </div>
+    );
+  }
+  
   return (
-      <PageCanvas id='bodyMassPage' headerHeight={headerHeight} paddingLeft={paddingWidth} paddingRight={paddingWidth}  >
-        { dataManagementElements }
-      </PageCanvas>
+    <div id='biomarkerChartingPage' style={{paddingTop: 40, paddingLeft: paddingWidth, paddingRight: paddingWidth}}>
+
+      {/* Settings Modal */}
+      <Dialog 
+        open={settingsOpen} 
+        onClose={() => setSettingsOpen(false)}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle>
+          <Box display="flex" alignItems="center" justifyContent="space-between">
+            Biomarker Charting Settings
+            <IconButton onClick={() => setSettingsOpen(false)}>
+              <CloseIcon />
+            </IconButton>
+          </Box>
+        </DialogTitle>
+        <DialogContent dividers>
+          <Grid container spacing={3}>
+            <Grid item xs={12}>
+              <FormControl fullWidth>
+                <InputLabel id="timescale-label">Timescale</InputLabel>
+                <Select
+                  labelId="timescale-label"
+                  value={timescale}
+                  onChange={handleTimescaleChange}
+                  label="Timescale"
+                >
+                  <MenuItem value={0}>All</MenuItem>
+                  <MenuItem value={1}>Year</MenuItem>
+                  <MenuItem value={2}>Quarter</MenuItem>
+                  <MenuItem value={3}>Month</MenuItem>
+                  <MenuItem value={4}>Week</MenuItem>
+                  <MenuItem value={5}>Day</MenuItem>
+                  <MenuItem value={6}>Hour</MenuItem>
+                  <MenuItem value={7}>Minute</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12}>
+              <Typography variant="subtitle1" gutterBottom>
+                Select Biomarkers to Display:
+              </Typography>
+              <Typography variant="body2" color="text.secondary" gutterBottom>
+                Click chips to toggle biomarkers on/off. Only biomarkers with 2+ measurements will display charts.
+              </Typography>
+              <Box sx={{ 
+                display: 'flex', 
+                flexWrap: 'wrap', 
+                gap: 1,
+                maxHeight: '300px',
+                overflow: 'auto',
+                padding: '12px',
+                border: '1px solid rgba(0,0,0,0.12)',
+                borderRadius: '4px',
+                bgcolor: 'background.paper'
+              }}>
+                {codeAnalysis?.filter(c => c.latestValue !== null && c.count >= 2).map(code => (
+                  <Chip
+                    key={code.code || code.text}
+                    label={`${code.display || code.text} (${code.count})`}
+                    onClick={() => handleCodeToggle(code.code || code.text)}
+                    variant={selectedCodes.includes(code.code || code.text) ? "filled" : "outlined"}
+                    color={selectedCodes.includes(code.code || code.text) ? "primary" : "default"}
+                    size="small"
+                  />
+                ))}
+              </Box>
+            </Grid>
+          </Grid>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setSettingsOpen(false)}>Close</Button>
+        </DialogActions>
+      </Dialog>
+
+      <Grid container spacing={3} style={{marginBottom: '84px'}}>
+        
+        {/* Two column layout - Table on left, Graphs on right */}
+        {codeAnalysis && codeAnalysis.length > 0 && (
+          <>
+            {/* Left Column - Discovered Observation Codes Table */}
+            <Grid item xs={12} md={6}>
+              <Card>
+                <CardHeader 
+                  title="Discovered Observation Codes"
+                  action={
+                    <IconButton
+                      onClick={() => setSettingsOpen(true)}
+                      aria-label="settings"
+                      sx={{
+                        border: '1px solid rgba(0, 0, 0, 0.12)',
+                        '&:hover': {
+                          backgroundColor: 'action.hover',
+                        }
+                      }}
+                    >
+                      <SettingsIcon />
+                    </IconButton>
+                  }
+                />
+                <CardContent>
+                  <TableContainer component={Paper} variant="outlined">
+                    <Table>
+                      <TableHead>
+                        <TableRow>
+                          <TableCell sx={{ py: 1 }}>Code / System</TableCell>
+                          <TableCell sx={{ py: 1 }}>Display Name / Date Range</TableCell>
+                          <TableCell sx={{ py: 1 }} align="right">Latest Value</TableCell>
+                          <TableCell sx={{ py: 1 }}>Unit</TableCell>
+                          <TableCell sx={{ py: 1 }} align="center">Count</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {codeAnalysis.slice(0, 20).map((code, index) => (
+                          <TableRow key={index}>
+                            <TableCell sx={{ py: '10px' }}>
+                              <Box>
+                                <Typography variant="body2" fontWeight="medium">
+                                  {code.code || 'N/A'}
+                                </Typography>
+                                <Typography variant="caption" color="text.secondary">
+                                  {code.system ? code.system.split('/').pop() : 'N/A'}
+                                </Typography>
+                              </Box>
+                            </TableCell>
+                            <TableCell sx={{ py: '10px' }}>
+                              <Box>
+                                <Typography variant="body2">
+                                  {code.display || code.text || 'Unknown'}
+                                </Typography>
+                                <Typography variant="caption" color="text.secondary">
+                                  {code.dates.length > 0 ? (
+                                    <>
+                                      {moment(Math.min(...code.dates.map(d => new Date(d)))).format('MMM YYYY')}
+                                      {' - '}
+                                      {moment(Math.max(...code.dates.map(d => new Date(d)))).format('MMM YYYY')}
+                                    </>
+                                  ) : 'No dates'}
+                                </Typography>
+                              </Box>
+                            </TableCell>
+                            <TableCell sx={{ py: '10px' }} align="right">
+                              <Typography variant="body2">
+                                {code.latestValue || 'N/A'}
+                              </Typography>
+                            </TableCell>
+                            <TableCell sx={{ py: '10px' }}>
+                              <Typography variant="body2">
+                                {code.unit || ''}
+                              </Typography>
+                            </TableCell>
+                            <TableCell sx={{ py: '10px' }} align="center">
+                              <Chip 
+                                label={code.count} 
+                                size="small" 
+                                color={code.count >= 10 ? "primary" : "default"}
+                                variant={code.count >= 10 ? "filled" : "outlined"}
+                              />
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                </CardContent>
+              </Card>
+            </Grid>
+            
+            {/* Right Column - All Charts */}
+            <Grid item xs={12} md={6}>
+              <Grid container spacing={2}>
+                {chartData.map((data, index) => {
+                  // Calculate Y-axis range with some padding
+                  const values = data.observations.map(obs => get(obs, 'valueQuantity.value', 0));
+                  const minValue = Math.min(...values);
+                  const maxValue = Math.max(...values);
+                  const padding = (maxValue - minValue) * 0.1;
+                  
+                  return (
+                    <Grid item xs={12} key={data.code}>
+                      <Card>
+                <CardHeader 
+                  title={data.display}
+                  subheader={`${data.observations.length} measurements`}
+                  style={{paddingBottom: '0px'}}
+                />
+                <CardContent style={{paddingTop: '0px'}}>
+                  <div style={{ width: '100%', height: chartHeight }}>
+                    <ResponsiveLine
+                      data={[{
+                        id: data.display,
+                        color: "hsl(" + (index * 60) + ", 70%, 50%)",
+                        data: data.observations.map(obs => ({
+                          x: moment(get(obs, 'effectiveDateTime')).format(getTimeFormat()),
+                          y: get(obs, 'valueQuantity.value', 0)
+                        }))
+                      }]}
+                      margin={{
+                        top: 20,
+                        right: 40,
+                        bottom: 60,
+                        left: 60
+                      }}
+                      xScale={{ type: 'point' }}
+                      yScale={{ 
+                        type: 'linear',
+                        min: minValue - padding,
+                        max: maxValue + padding,
+                        stacked: false,
+                        reverse: false
+                      }}
+                      yFormat=" >-.2f"
+                      axisBottom={{
+                        tickSize: 5,
+                        tickPadding: 5,
+                        tickRotation: -45,
+                        legend: 'Date',
+                        legendOffset: 50,
+                        legendPosition: 'middle',
+                        tickValues: data.observations.length > 10 ? 
+                          `every ${Math.ceil(data.observations.length / 8)}` : 
+                          undefined
+                      }}
+                      axisLeft={{
+                        tickSize: 5,
+                        tickPadding: 5,
+                        tickRotation: 0,
+                        legend: data.unit || 'Value',
+                        legendOffset: -45,
+                        legendPosition: 'middle',
+                        format: v => `${v}`
+                      }}
+                      curve='monotoneX'
+                      pointSize={6}
+                      pointColor={{ theme: 'background' }}
+                      pointBorderWidth={2}
+                      pointBorderColor={{ from: 'serieColor' }}
+                      pointLabelYOffset={-12}
+                      useMesh={true}
+                      enableGridX={false}
+                      enableGridY={true}
+                      enableArea={false}
+                      animate={true}
+                      motionConfig="gentle"
+                      tooltip={({ point }) => (
+                        <div style={{
+                          background: 'white',
+                          padding: '9px 12px',
+                          border: '1px solid #ccc',
+                          borderRadius: '3px'
+                        }}>
+                          <div><strong>{point.data.xFormatted}</strong></div>
+                          <div>{point.data.yFormatted} {data.unit}</div>
+                        </div>
+                      )}
+                    />
+                  </div>
+                </CardContent>
+                      </Card>
+                    </Grid>
+                  );
+                })}
+                
+                {chartData.length === 0 && (
+                  <Grid item xs={12}>
+                    <Alert severity="info">
+                      <AlertTitle>No Charts Selected</AlertTitle>
+                      Select biomarkers from the chips above to display their charts. Only biomarkers with 2 or more measurements can be charted.
+                    </Alert>
+                  </Grid>
+                )}
+              </Grid>
+            </Grid>
+          </>
+        )}
+      </Grid>
+    </div>
   );
 }
 

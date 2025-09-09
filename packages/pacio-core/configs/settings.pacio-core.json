@@ -84,10 +84,11 @@
       "sidebar": {
         "menuItems": {
           "HomePage": true,
+          "IndexPage": true,
           "PatientSummary": true,
           "PatientDirectory": true,
           "FhirResources": true,
-          "FhirModules": true,
+          "FhirModules": false,
           "DynamicModules": true,
           "SidebarWorkflows": true,
           "Theme": false,
@@ -95,20 +96,12 @@
           "Privacy": true,
           "TermsAndConditions": true,
           "DataImport": true,
-          "DataExport": true,
+          "DataExport": false,
           "ConstructionZone": false,
-          "UserProfile": true
-        },
-        "hidden": [
-          "/audit-events",
-          "/body-sites",
-          "/bundles",
-          "/contracts",
-          "/devices",
-          "/imaging-studies",
-          "/message-headers",
-          "/risk-assessments"
-        ]
+          "UserProfile": true,
+          "PatientChart": true,
+          "FhirResourcesDashboard": true
+        }
       }
     },
     "interfaces": {
@@ -230,6 +223,9 @@
   },
   "private": {
     "debug": true,
+    "chiefMedicalOfficer": {
+      "reference": "Practitioner/Jprxn3CFPTDRDRNpx"
+    },
     "mcp": {
       "enabled": true,
       "transport": ["http"],

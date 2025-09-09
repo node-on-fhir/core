@@ -432,8 +432,33 @@ export default function SyntheaConfigurationPage() {
     setShowSnackbar(true);
   }, [config]);
 
+  const generateTrialsResources = useCallback(() => {
+    setSnackbarMessage('Generating trials resources...');
+    setShowSnackbar(true);
+    
+    Meteor.call('synthea.generateTrialsResources', (error, result) => {
+      if (error) {
+        console.error('Error generating trials resources:', error);
+        setSnackbarMessage(`Error: ${error.message || 'Failed to generate trials resources'}`);
+        setShowSnackbar(true);
+      } else {
+        console.log('Trials resources generated successfully:', result);
+        setSnackbarMessage(result.message || 'Trials resources generated successfully!');
+        setShowSnackbar(true);
+      }
+    });
+  }, []);
+
   return (
-    <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
+    <Box sx={{ 
+      minHeight: '100vh',
+      bgcolor: theme => theme.palette.mode === 'light' 
+        ? theme.palette.grey[50]
+        : theme.palette.background.default,
+      pt: 4,
+      pb: 4
+    }}>
+    <Container maxWidth="xl">
       <Fade in timeout={500}>
         <Paper 
           elevation={0} 
@@ -543,14 +568,24 @@ export default function SyntheaConfigurationPage() {
                   Mongo Compass Docs
                 </Button>
                 {dbUtilsEnabled && (
-                  <Button
-                    variant="outlined"
-                    startIcon={<Storage />}
-                    onClick={() => setShowObjectIdModal(true)}
-                    color="secondary"
-                  >
-                    Convert ObjectIDs
-                  </Button>
+                  <>
+                    <Button
+                      variant="outlined"
+                      startIcon={<Storage />}
+                      onClick={() => setShowObjectIdModal(true)}
+                      color="secondary"
+                    >
+                      Convert ObjectIDs
+                    </Button>
+                    <Button
+                      variant="outlined"
+                      startIcon={<LocalHospital />}
+                      onClick={generateTrialsResources}
+                      color="primary"
+                    >
+                      Generate Trials Resources
+                    </Button>
+                  </>
                 )}
               </Box>
             </Grid>
@@ -1663,5 +1698,6 @@ export default function SyntheaConfigurationPage() {
         onClose={() => setShowObjectIdModal(false)}
       />
     </Container>
+    </Box>
   );
 }

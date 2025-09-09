@@ -128,13 +128,22 @@ SyncedCron is automatically disabled when `TEST_RUN=true` is set, regardless of 
 - **clinical:hl7-fhir-data-infrastructure** - This package is deprecated. Do not use it in new packages or add it as a dependency.
 
 ### Preferred Dependencies for Clinical Packages
+
+
 When creating clinical packages, use these dependencies:
-- `clinical:hl7-fhir-resources` - For FHIR resource definitions
-- `clinical:hl7-resource-datatypes` - For FHIR data types
-- `aldeed:collection2@2.5.0` - For schema validation (not newer versions)
-- `matb33:collection-hooks@0.7.13` - For collection hooks (not newer versions)
+- `meteor` 
+- `webapp` 
+- `ecmascript` 
+- `react-meteor-data` 
+- `session` 
+- `mongo` 
+- `check` 
+- `clinical:extended-api`
+- `clinical:hl7-resource-datatypes`
 
 - Style guide:  we are writing a Meteor v3 app, using React and MaterialUI app.  
+
+- *** IMPORTANT:  On the server, be sure to use Meteor v3 API, including getTextAsync, findAsync, insertAsync, updateAsync, removeAsync, countAsync, etc. *** 
 
 - Add the path and name of the file as the first line of each file (commented out)
 
@@ -147,8 +156,6 @@ When creating clinical packages, use these dependencies:
 - We are writing a 12 Factor app, so will wish to specify key configuration params via environment variables, which then get attached to the Meteor.settings on server startup, and later accessed elsewhere in the app.  
 
 - When possible, files should be written in such a way that they can be refactored into an Atmosphere.js package later.
-
-- IMPORTANT:  On the server, be sure to use Meteor v3 API, including getTextAsync, findAsync, insertAsync, updateAsync, removeAsync, countAsync, etc.
 
 - Development environment is MacOS ARM64.  When multiple clients are run, they will likely be run on the same machine, using ports 3000 and 4000 respectively.  
 
@@ -194,4 +201,29 @@ if (Package['browser-policy-common']) {
 ```
 
 This pattern is standards-compliant and works with modern bundlers while maintaining the conditional loading behavior.
+
+## Healthy Paranoia Checklist Format
+
+When the user asks for a "Healthy Paranoia Checklist" or when discussing risky technical implementations, use this format:
+
+### Healthy Paranoia Checklist: [Topic]
+
+**What could still go wrong:**
+- 🎯 [Specific technical risk with details]
+- 💥 [Infrastructure/deployment concern]  
+- 🐛 [Likely bug or edge case scenario]
+- 📱 [Platform/device-specific issue]
+- 🔒 [Security/compliance/regulatory worry]
+- 😭 [The nightmare scenario that keeps you up at night]
+
+**But remember:** [What's actually working and why that's significant]
+
+This format:
+- Validates legitimate concerns without dismissing them
+- Lists specific, realistic technical risks (not vague worries)
+- Uses emojis to add levity while discussing potential failures
+- Maintains perspective by acknowledging what IS working
+- Balances optimism with engineering realism
+
+Perfect for situations where "it should just work" has burned us before.
 

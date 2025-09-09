@@ -221,26 +221,39 @@ export default function StructuredDataCapturePage() {
 
   if (selectedQuestionnaire) {
     return (
-      <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-        <QuestionnaireForm
-          questionnaire={selectedQuestionnaire.questionnaire}
-          onSubmit={handleSubmit}
-          onCancel={handleCancel}
-          showProgress={true}
-          showSidebar={true}
-          enableTracking={true}
-          thankYouPage={{
-            show: true,
-            message: `Thank you for completing the ${selectedQuestionnaire.title}`,
-            redirectDelay: 3000
-          }}
-        />
-      </Container>
+      <Box sx={{ 
+        bgcolor: theme => theme.palette.mode === 'light' 
+          ? theme.palette.grey[50] 
+          : theme.palette.background.default,
+        minHeight: '100vh'
+      }}>
+        <Container maxWidth="lg" sx={{ pt: 4, pb: 4 }}>
+          <QuestionnaireForm
+            questionnaire={selectedQuestionnaire.questionnaire}
+            onSubmit={handleSubmit}
+            onCancel={handleCancel}
+            showProgress={true}
+            showSidebar={true}
+            enableTracking={true}
+            thankYouPage={{
+              show: true,
+              message: `Thank you for completing the ${selectedQuestionnaire.title}`,
+              redirectDelay: 3000
+            }}
+          />
+        </Container>
+      </Box>
     );
   }
 
   return (
-    <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+    <Box sx={{ 
+      bgcolor: theme => theme.palette.mode === 'light' 
+        ? theme.palette.grey[50] 
+        : theme.palette.background.default,
+      minHeight: '100vh'
+    }}>
+      <Container maxWidth="lg" sx={{ pt: 4, pb: 4 }}>
         <Typography variant="h4" gutterBottom>
           Structured Data Capture
         </Typography>
@@ -340,5 +353,6 @@ export default function StructuredDataCapturePage() {
           </Grid>
         </Paper>
       </Container>
+    </Box>
   );
 }

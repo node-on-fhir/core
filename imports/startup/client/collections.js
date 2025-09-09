@@ -50,6 +50,7 @@ import { Practitioners } from '/imports/lib/schemas/SimpleSchemas/Practitioners'
 import { Procedures } from '/imports/lib/schemas/SimpleSchemas/Procedures';
 import { Questionnaires } from '/imports/lib/schemas/SimpleSchemas/Questionnaires';
 import { QuestionnaireResponses } from '/imports/lib/schemas/SimpleSchemas/QuestionnaireResponses';
+import { RelatedPersons } from '/imports/lib/schemas/SimpleSchemas/RelatedPersons';
 import { ResearchStudies } from '/imports/lib/schemas/SimpleSchemas/ResearchStudies';
 import { ResearchSubjects } from '/imports/lib/schemas/SimpleSchemas/ResearchSubjects';
 import { Schedules } from '/imports/lib/schemas/SimpleSchemas/Schedules';
@@ -108,6 +109,7 @@ if (Meteor.isClient) {
     Procedures,
     Questionnaires,
     QuestionnaireResponses,
+    RelatedPersons,
     ResearchStudies,
     ResearchSubjects,
     Schedules,
@@ -165,6 +167,7 @@ if (Meteor.isClient) {
   window.Procedures = Procedures;
   window.Questionnaires = Questionnaires;
   window.QuestionnaireResponses = QuestionnaireResponses;
+  window.RelatedPersons = RelatedPersons;
   window.ResearchStudies = ResearchStudies;
   window.ResearchSubjects = ResearchSubjects;
   window.Schedules = Schedules;

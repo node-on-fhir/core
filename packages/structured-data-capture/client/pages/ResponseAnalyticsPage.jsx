@@ -22,7 +22,8 @@ import {
   Select,
   MenuItem,
   FormControl,
-  InputLabel
+  InputLabel,
+  useTheme
 } from '@mui/material';
 import {
   TrendingUp as TrendingUpIcon,
@@ -136,6 +137,7 @@ function StatCard({ title, value, subtitle, icon, trend }) {
 }
 
 export function ResponseAnalyticsPage() {
+  const theme = useTheme();
   const [timeRange, setTimeRange] = useState('week');
   const [selectedQuestionnaire, setSelectedQuestionnaire] = useState('all');
 
@@ -150,7 +152,12 @@ export function ResponseAnalyticsPage() {
   };
 
   return (
-    <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+    <Box sx={{ 
+      minHeight: '100vh', 
+      backgroundColor: theme.palette.mode === 'dark' ? theme.palette.background.default : theme.palette.grey[50],
+      pt: 2
+    }}>
+    <Container maxWidth="lg" sx={{ pb: 4 }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
         <Typography variant="h4">
           Response Analytics
@@ -222,7 +229,7 @@ export function ResponseAnalyticsPage() {
       </Grid>
 
       {/* Questionnaire Performance Table */}
-      <Paper sx={{ p: 3, mb: 3 }}>
+      <Paper sx={{ p: 3, mb: 3, backgroundColor: theme.palette.mode === 'dark' ? 'background.paper' : 'background.default' }}>
         <Typography variant="h6" gutterBottom>
           Questionnaire Performance
         </Typography>
@@ -281,7 +288,7 @@ export function ResponseAnalyticsPage() {
 
       {/* Question-Level Metrics */}
       {selectedQuestionnaire !== 'all' && (
-        <Paper sx={{ p: 3 }}>
+        <Paper sx={{ p: 3, backgroundColor: theme.palette.mode === 'dark' ? 'background.paper' : 'background.default' }}>
           <Typography variant="h6" gutterBottom>
             Question-Level Metrics
           </Typography>
@@ -315,5 +322,6 @@ export function ResponseAnalyticsPage() {
         </Paper>
       )}
     </Container>
+    </Box>
   );
 }

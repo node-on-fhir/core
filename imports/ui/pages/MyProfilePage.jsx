@@ -17,11 +17,20 @@ import {
   Dialog,
   DialogTitle,
   DialogActions,
-  Collapse
+  Collapse,
+  Chip,
+  Stack,
+  Card,
+  CardContent,
+  CardHeader,
+  CircularProgress
 } from '@mui/material';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
+import Visibility from '@mui/icons-material/Visibility';
+import VisibilityOff from '@mui/icons-material/VisibilityOff';
+import ScannerIcon from '@mui/icons-material/Scanner';
 
 import { get } from 'lodash';
 import { useTracker } from 'meteor/react-meteor-data';
@@ -48,6 +57,17 @@ function MyProfilePage(props) {
   const [successMessage, setSuccessMessage] = useState('');
   const [openPractitionerSearch, setOpenPractitionerSearch] = useState(false);
   const [showApiExample, setShowApiExample] = useState(false);
+  const [showOpenAIKey, setShowOpenAIKey] = useState(false);
+  const [showAnthropicKey, setShowAnthropicKey] = useState(false);
+  const [openAIKey, setOpenAIKey] = useState('');
+  const [anthropicKey, setAnthropicKey] = useState('');
+  const [savingKeys, setSavingKeys] = useState(false);
+  const [scanningRecords, setScanningRecords] = useState(false);
+  const [terminologyCodes, setTerminologyCodes] = useState({
+    snomed: [],
+    loinc: [],
+    icd10: []
+  });
   const navigate = useNavigate();
   const theme = useTheme();
   
@@ -62,15 +82,31 @@ function MyProfilePage(props) {
   }, []);
 
   let currentUser = useTracker(function(){
-    const sessionUser = Session.get('currentUser');
+    // Always get fresh data from Meteor.user() for reactivity
     const meteorUser = Meteor.user();
-    console.log('MyProfilePage - sessionUser:', sessionUser);
     console.log('MyProfilePage - meteorUser:', meteorUser);
     console.log('MyProfilePage - userId:', Meteor.userId());
+    console.log('MyProfilePage - practitionerId:', get(meteorUser, 'practitionerId'));
     
-    // Use Meteor.user() if session is not set
-    return sessionUser || meteorUser;
-  }, [])
+    // Update session if needed for other components
+    if (meteorUser && (!Session.get('currentUser') || Session.get('currentUser')._id !== meteorUser._id)) {
+      Session.set('currentUser', meteorUser);
+    }
+    
+    // Always return Meteor.user() for proper reactivity
+    return meteorUser;
+  }, []);
+
+  // Load terminology from user profile
+  useEffect(() => {
+    if (currentUser?.profile?.terminology) {
+      setTerminologyCodes({
+        snomed: get(currentUser, 'profile.terminology.snomed', []),
+        loinc: get(currentUser, 'profile.terminology.loinc', []),
+        icd10: get(currentUser, 'profile.terminology.icd10', [])
+      });
+    }
+  }, [currentUser]);
 
   let accountsAccessToken = useTracker(function(){
     const sessionToken = Session.get('accountsAccessToken');
@@ -96,6 +132,15 @@ function MyProfilePage(props) {
     }
     return null;
   }, [currentUser])
+  
+  // Track selected patient from session
+  let selectedPatientId = useTracker(function(){
+    return Session.get('selectedPatientId');
+  }, [])
+  
+  let selectedPatient = useTracker(function(){
+    return Session.get('selectedPatient');
+  }, [])
 
   // Get the practitioner record for the current user
   let currentPractitioner = useTracker(function(){
@@ -132,6 +177,20 @@ function MyProfilePage(props) {
     headerHeight = 128;
   }
   
+  // Load existing API keys from user profile
+  useEffect(() => {
+    if(currentUser) {
+      const llmConfig = get(currentUser, 'profile.externalServices.llmConfig', {});
+      // Load the actual keys from the profile
+      const savedOpenAIKey = get(llmConfig, 'openaiApiKey', '');
+      const savedAnthropicKey = get(llmConfig, 'claudeApiKey', '');
+      
+      // Set the keys in state
+      setOpenAIKey(savedOpenAIKey);
+      setAnthropicKey(savedAnthropicKey);
+    }
+  }, [currentUser]);
+  
   // Debug current data
   console.log('MyProfilePage render - currentUser:', currentUser);
   console.log('MyProfilePage render - currentUser._id:', get(currentUser, '_id'));
@@ -148,8 +207,10 @@ function MyProfilePage(props) {
       setSuccessMessage('Practitioner record linked successfully!');
       setOpenPractitionerSearch(false);
       
-      // No need to reload - the reactive data will update automatically
-      // The useTracker hooks will detect the change and re-render
+      // The useTracker hooks will detect the change automatically
+      // via Meteor's reactivity system. The currentUser and currentPractitioner
+      // will update when the user document changes on the server.
+      console.log('Practitioner linked. UI will update via reactivity.');
       
     } catch (error) {
       console.error('Error linking practitioner:', error);
@@ -165,6 +226,33 @@ function MyProfilePage(props) {
     } catch (error) {
       console.error('Error linking to CMO:', error);
       setError(error.message || 'Failed to link to Chief Medical Officer');
+    }
+  }
+
+  // Handle saving API keys
+  async function handleSaveApiKeys() {
+    setSavingKeys(true);
+    try {
+      const config = {
+        llmMode: 'cloud',
+        cloudProvider: openAIKey ? 'openai' : 'anthropic',
+        claudeApiKey: anthropicKey || '',
+        openaiApiKey: openAIKey || '',
+        selectedLocalModel: '',
+        systemPrompt: 'You are a helpful medical assistant with expertise in clinical decision support.',
+        temperature: 0.7,
+        topP: 0.95,
+        maxTokens: 2048,
+        showSystemPrompt: true
+      };
+      
+      await Meteor.callAsync('llm.saveConfig', config);
+      setSuccessMessage('API keys saved successfully!');
+    } catch (error) {
+      console.error('Error saving API keys:', error);
+      setError(error.message || 'Failed to save API keys');
+    } finally {
+      setSavingKeys(false);
     }
   }
 
@@ -359,7 +447,12 @@ function MyProfilePage(props) {
 
   
   return (
-    <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+    <Box sx={{ 
+      minHeight: '100vh', 
+      backgroundColor: theme.palette.mode === 'dark' ? theme.palette.background.default : theme.palette.grey[50],
+      pt: 2
+    }}>
+    <Container maxWidth="lg" sx={{ pb: 4 }}>
       <Snackbar
         anchorOrigin={{
           vertical: 'top',
@@ -406,7 +499,7 @@ function MyProfilePage(props) {
           />
         </Box>
       ) : (
-        <Paper elevation={3} sx={{ p: 3, mb: 3 }}>
+        <Paper elevation={3} sx={{ p: 3, mb: 3, backgroundColor: theme.palette.mode === 'dark' ? 'background.paper' : 'background.default' }}>
           <Typography variant="h6" gutterBottom>
             Patient Record Link
           </Typography>
@@ -416,21 +509,57 @@ function MyProfilePage(props) {
           <Alert severity="info" sx={{ mb: 2 }}>
             No patient record linked to your account. Create one to access patient-specific features and health records.
           </Alert>
-          <Button 
-            variant="contained"
-            color="primary"
-            onClick={() => {
-              Session.set('selectedPatientId', get(currentUser, 'patientId') || get(currentUser, 'id'));
-              navigate('/patients/new');
-            }}
-          >
-            Create Patient Record
-          </Button>
+          <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+            <Button 
+              variant="contained"
+              color="primary"
+              onClick={() => {
+                Session.set('selectedPatientId', get(currentUser, 'patientId') || get(currentUser, 'id'));
+                navigate('/patients/new');
+              }}
+            >
+              Create Patient Record
+            </Button>
+            {Package['clinical:data-importer'] && (
+              <Button 
+                variant="outlined"
+                color="primary"
+                onClick={() => {
+                  navigate('/import-data?next=my-profile');
+                }}
+              >
+                Load Personal Health Record
+              </Button>
+            )}
+            <Button 
+              variant="outlined"
+              color="primary"
+              onClick={async () => {
+                const patientIdToLink = selectedPatientId || get(selectedPatient, 'id');
+                
+                if (patientIdToLink) {
+                  try {
+                    await Meteor.callAsync('users.linkPatient', patientIdToLink);
+                    setSuccessMessage('Patient record linked successfully!');
+                    // The reactive data will update automatically
+                  } catch (error) {
+                    console.error('Error linking patient:', error);
+                    setError(error.message || 'Failed to link patient record');
+                  }
+                } else {
+                  setError('No patient selected. Please select a patient first.');
+                }
+              }}
+              disabled={!selectedPatientId && !selectedPatient}
+            >
+              Link Selected Patient
+            </Button>
+          </Box>
         </Paper>
       )}
 
       {/* Practitioner Record Link Card */}
-      <Paper elevation={3} sx={{ p: 3, mb: 3 }}>
+      <Paper elevation={3} sx={{ p: 3, mb: 3, backgroundColor: theme.palette.mode === 'dark' ? 'background.paper' : 'background.default' }}>
         <Typography variant="h6" gutterBottom>
           Professional License
         </Typography>
@@ -517,7 +646,7 @@ function MyProfilePage(props) {
         </Box>
       </Paper>
 
-      <Paper elevation={3} sx={{ p: 3, mb: 3 }}>
+      <Paper elevation={3} sx={{ p: 3, mb: 3, backgroundColor: theme.palette.mode === 'dark' ? 'background.paper' : 'background.default' }}>
         <Typography variant="h6" gutterBottom>
           Profile Information
         </Typography>
@@ -608,7 +737,7 @@ curl -H "session:${accountsAccessToken}" \\
         </Box>
       </Paper>
 
-      <Paper elevation={3} sx={{ p: 3, mb: 3 }}>
+      <Paper elevation={3} sx={{ p: 3, mb: 3, backgroundColor: theme.palette.mode === 'dark' ? 'background.paper' : 'background.default' }}>
         <Typography variant="h6" gutterBottom>
           Roles and Linked Records
         </Typography>
@@ -668,8 +797,66 @@ curl -H "session:${accountsAccessToken}" \\
         </Box>
       </Paper>
 
+      <Paper elevation={3} sx={{ p: 3, mb: 3, backgroundColor: theme.palette.mode === 'dark' ? 'background.paper' : 'background.default' }}>
+        <Typography variant="h6" gutterBottom>
+          External Services
+        </Typography>
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+          Configure API keys for external AI services
+        </Typography>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+          <TextField
+            fullWidth
+            type={showOpenAIKey ? 'text' : 'password'}
+            label="OpenAI API Key"
+            value={openAIKey}
+            onChange={(e) => setOpenAIKey(e.target.value)}
+            placeholder="sk-..."
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton
+                    onClick={() => setShowOpenAIKey(!showOpenAIKey)}
+                    edge="end"
+                  >
+                    {showOpenAIKey ? <VisibilityOff /> : <Visibility />}
+                  </IconButton>
+                </InputAdornment>
+              ),
+            }}
+          />
+          <TextField
+            fullWidth
+            type={showAnthropicKey ? 'text' : 'password'}
+            label="Anthropic API Key"
+            value={anthropicKey}
+            onChange={(e) => setAnthropicKey(e.target.value)}
+            placeholder="sk-ant-..."
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton
+                    onClick={() => setShowAnthropicKey(!showAnthropicKey)}
+                    edge="end"
+                  >
+                    {showAnthropicKey ? <VisibilityOff /> : <Visibility />}
+                  </IconButton>
+                </InputAdornment>
+              ),
+            }}
+          />
+          <Button
+            variant="contained"
+            onClick={handleSaveApiKeys}
+            disabled={savingKeys || (!openAIKey && !anthropicKey)}
+            sx={{ alignSelf: 'flex-start' }}
+          >
+            {savingKeys ? 'Saving...' : 'Save API Keys'}
+          </Button>
+        </Box>
+      </Paper>
 
-      <Paper elevation={3} sx={{ p: 3, mb: 3 }}>
+      <Paper elevation={3} sx={{ p: 3, mb: 3, backgroundColor: theme.palette.mode === 'dark' ? 'background.paper' : 'background.default' }}>
         <Typography variant="h6" gutterBottom>
           My Consent Records
         </Typography>
@@ -678,7 +865,271 @@ curl -H "session:${accountsAccessToken}" \\
         </Typography>
       </Paper>
 
-      <Paper elevation={3} sx={{ p: 3, mb: 3 }}>
+      {/* Terminology Relevant to My Care */}
+      <Paper elevation={3} sx={{ p: 3, mb: 3, backgroundColor: theme.palette.mode === 'dark' ? 'background.paper' : 'background.default' }}>
+        <Typography variant="h6" gutterBottom>
+          Terminology Relevant to My Care
+        </Typography>
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+          Medical codes and terminology found in your health records
+        </Typography>
+        
+        <Box sx={{ mb: 2 }}>
+          <Button
+            variant="contained"
+            startIcon={scanningRecords ? <CircularProgress size={20} color="inherit" /> : <ScannerIcon />}
+            onClick={async () => {
+              setScanningRecords(true);
+              try {
+                // Initialize collections - try multiple ways to access them
+                let Conditions, Observations, Procedures;
+                
+                // Try window.Collections first (client-side)
+                if (typeof window !== 'undefined' && window.Collections) {
+                  Conditions = window.Collections.Conditions;
+                  Observations = window.Collections.Observations;
+                  Procedures = window.Collections.Procedures;
+                } else if (Meteor.Collections) {
+                  Conditions = Meteor.Collections.Conditions;
+                  Observations = Meteor.Collections.Observations;
+                  Procedures = Meteor.Collections.Procedures;
+                }
+                
+                // If still not found, try importing directly
+                if (!Conditions) {
+                  try {
+                    const { Conditions: ConditionsImport } = await import('../../lib/schemas/SimpleSchemas/Conditions');
+                    const { Observations: ObservationsImport } = await import('../../lib/schemas/SimpleSchemas/Observations');
+                    const { Procedures: ProceduresImport } = await import('../../lib/schemas/SimpleSchemas/Procedures');
+                    
+                    Conditions = ConditionsImport;
+                    Observations = ObservationsImport;
+                    Procedures = ProceduresImport;
+                  } catch (importError) {
+                    console.warn('Could not import collections:', importError);
+                  }
+                }
+                
+                console.log('Collections found:', { 
+                  Conditions: !!Conditions, 
+                  Observations: !!Observations, 
+                  Procedures: !!Procedures 
+                });
+
+                const codes = {
+                  snomed: new Map(),
+                  loinc: new Map(),
+                  icd10: new Map()
+                };
+
+                // Helper function to extract codes
+                const extractCodes = (coding) => {
+                  if (Array.isArray(coding)) {
+                    coding.forEach(code => {
+                      if (code.system && code.code) {
+                        const codeKey = `${code.code}|${code.display || ''}`;
+                        if (code.system.includes('snomed')) {
+                          codes.snomed.set(codeKey, {
+                            code: code.code,
+                            display: code.display || code.code,
+                            system: 'SNOMED'
+                          });
+                        } else if (code.system.includes('loinc')) {
+                          codes.loinc.set(codeKey, {
+                            code: code.code,
+                            display: code.display || code.code,
+                            system: 'LOINC'
+                          });
+                        } else if (code.system.includes('icd-10') || code.system.includes('icd10')) {
+                          codes.icd10.set(codeKey, {
+                            code: code.code,
+                            display: code.display || code.code,
+                            system: 'ICD-10'
+                          });
+                        }
+                      }
+                    });
+                  }
+                };
+
+                // Get patient ID
+                const patientId = get(currentUser, 'patientId');
+                console.log('Scanning for patient ID:', patientId);
+                
+                // Scan Conditions
+                if (Conditions && patientId) {
+                  const query = {
+                    $or: [
+                      { 'subject.reference': `Patient/${patientId}` },
+                      { 'subject.reference': { $regex: `Patient/${patientId}` } }
+                    ]
+                  };
+                  
+                  const conditions = await Conditions.find(query).fetch();
+                  console.log('Found conditions:', conditions.length);
+                  
+                  conditions.forEach(condition => {
+                    if (condition.code?.coding) {
+                      extractCodes(condition.code.coding);
+                    }
+                  });
+                }
+
+                // Scan Observations
+                if (Observations && patientId) {
+                  const query = {
+                    $or: [
+                      { 'subject.reference': `Patient/${patientId}` },
+                      { 'subject.reference': { $regex: `Patient/${patientId}` } }
+                    ]
+                  };
+                  
+                  const observations = await Observations.find(query).fetch();
+                  console.log('Found observations:', observations.length);
+                  
+                  observations.forEach(observation => {
+                    if (observation.code?.coding) {
+                      extractCodes(observation.code.coding);
+                    }
+                  });
+                }
+
+                // Scan Procedures
+                if (Procedures && patientId) {
+                  const query = {
+                    $or: [
+                      { 'subject.reference': `Patient/${patientId}` },
+                      { 'subject.reference': { $regex: `Patient/${patientId}` } }
+                    ]
+                  };
+                  
+                  const procedures = await Procedures.find(query).fetch();
+                  console.log('Found procedures:', procedures.length);
+                  
+                  procedures.forEach(procedure => {
+                    if (procedure.code?.coding) {
+                      extractCodes(procedure.code.coding);
+                    }
+                  });
+                }
+
+                // Convert maps to arrays
+                const newTerminology = {
+                  snomed: Array.from(codes.snomed.values()),
+                  loinc: Array.from(codes.loinc.values()),
+                  icd10: Array.from(codes.icd10.values())
+                };
+                
+                console.log('Terminology found:', {
+                  snomed: newTerminology.snomed.length,
+                  loinc: newTerminology.loinc.length,
+                  icd10: newTerminology.icd10.length,
+                  sample: newTerminology
+                });
+
+                setTerminologyCodes(newTerminology);
+
+                // Save to user profile (check if method exists)
+                try {
+                  await Meteor.callAsync('users.updateTerminology', newTerminology);
+                } catch (methodError) {
+                  console.warn('Could not save to profile:', methodError.message);
+                  // Continue anyway - we still have the codes in state
+                }
+                
+                setSuccessMessage(`Found ${newTerminology.snomed.length} SNOMED, ${newTerminology.loinc.length} LOINC, and ${newTerminology.icd10.length} ICD-10 codes`);
+              } catch (error) {
+                console.error('Error scanning records:', error);
+                setError('Failed to scan medical records');
+              } finally {
+                setScanningRecords(false);
+              }
+            }}
+            disabled={scanningRecords || !currentUser?.patientId}
+          >
+            {scanningRecords ? 'Scanning...' : 'Scan Records'}
+          </Button>
+          {!currentUser?.patientId && (
+            <Typography variant="caption" color="text.secondary" sx={{ ml: 2 }}>
+              Link a patient record first
+            </Typography>
+          )}
+        </Box>
+
+        {/* Display terminology codes */}
+        <Stack spacing={2}>
+          {terminologyCodes.snomed.length > 0 && (
+            <Box>
+              <Typography variant="subtitle2" gutterBottom>
+                SNOMED CT Codes
+              </Typography>
+              <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+                {terminologyCodes.snomed.map((term, index) => (
+                  <Chip
+                    key={index}
+                    label={`${term.code}: ${term.display}`}
+                    variant="outlined"
+                    sx={{ 
+                      borderColor: 'primary.main',
+                      mb: 1
+                    }}
+                  />
+                ))}
+              </Stack>
+            </Box>
+          )}
+
+          {terminologyCodes.loinc.length > 0 && (
+            <Box>
+              <Typography variant="subtitle2" gutterBottom>
+                LOINC Codes
+              </Typography>
+              <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+                {terminologyCodes.loinc.map((term, index) => (
+                  <Chip
+                    key={index}
+                    label={`${term.code}: ${term.display}`}
+                    variant="outlined"
+                    sx={{ 
+                      borderColor: 'success.main',
+                      mb: 1
+                    }}
+                  />
+                ))}
+              </Stack>
+            </Box>
+          )}
+
+          {terminologyCodes.icd10.length > 0 && (
+            <Box>
+              <Typography variant="subtitle2" gutterBottom>
+                ICD-10 Codes
+              </Typography>
+              <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+                {terminologyCodes.icd10.map((term, index) => (
+                  <Chip
+                    key={index}
+                    label={`${term.code}: ${term.display}`}
+                    variant="outlined"
+                    sx={{ 
+                      borderColor: 'warning.main',
+                      mb: 1
+                    }}
+                  />
+                ))}
+              </Stack>
+            </Box>
+          )}
+
+          {terminologyCodes.snomed.length === 0 && terminologyCodes.loinc.length === 0 && terminologyCodes.icd10.length === 0 && (
+            <Typography variant="body2" color="text.secondary">
+              No terminology codes found. Click "Scan Records" to analyze your medical records.
+            </Typography>
+          )}
+        </Stack>
+      </Paper>
+
+      <Paper elevation={3} sx={{ p: 3, mb: 3, backgroundColor: theme.palette.mode === 'dark' ? 'background.paper' : 'background.default' }}>
         <Typography variant="h6" gutterBottom color="error">
           Danger Area
         </Typography>
@@ -698,7 +1149,7 @@ curl -H "session:${accountsAccessToken}" \\
       
       {/* Debug section - remove in production */}
       {Meteor.isDevelopment && !currentPractitioner && (
-        <Paper elevation={3} sx={{ p: 3, mb: 3, border: '2px dashed orange' }}>
+        <Paper elevation={3} sx={{ p: 3, mb: 3, border: '2px dashed orange', backgroundColor: theme.palette.mode === 'dark' ? 'background.paper' : 'background.default' }}>
           <Typography variant="h6" gutterBottom>
             Debug Tools (Dev Only)
           </Typography>
@@ -731,6 +1182,7 @@ curl -H "session:${accountsAccessToken}" \\
         </DialogActions>
       </Dialog>
     </Container>
+    </Box>
   );
 }
 

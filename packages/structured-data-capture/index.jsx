@@ -1,16 +1,7 @@
 // /Volumes/SonicMagic/Code/honeycomb-public-release/packages/structured-data-capture/index.jsx
 
-import React from 'react';
-import { 
-  Assignment as QuestionnaireIcon,
-  Psychology as SmartFormIcon,
-  ListAlt as FormListIcon,
-  DynamicForm as DynamicFormIcon,
-  CheckBox as ChecklistIcon,
-  LocalHospital as ClinicalIcon
-} from '@mui/icons-material';
-
 // Import pages directly (no lazy loading for packages)
+import StructuredDataCaptureLandingPage from './client/pages/StructuredDataCaptureLandingPage';
 import StructuredDataCapturePage from './client/pages/StructuredDataCapturePage';
 import { QuestionnaireBuilderPage } from './client/pages/QuestionnaireBuilderPage';
 import { QuestionnaireLibraryPage } from './client/pages/QuestionnaireLibraryPage';
@@ -21,49 +12,57 @@ export const DynamicRoutes = [
   {
     name: 'StructuredDataCapture',
     path: '/structured-data-capture',
-    element: <StructuredDataCapturePage />,
-    requireAuth: false
+    component: StructuredDataCaptureLandingPage,
+    requireAuth: true
+  },
+  {
+    name: 'StructuredDataCaptureForms',
+    path: '/structured-data-capture-forms',
+    component: StructuredDataCapturePage,
+    requireAuth: true
   },
   {
     name: 'QuestionnaireBuilder',
     path: '/questionnaire-builder',
-    element: <QuestionnaireBuilderPage />,
+    component: QuestionnaireBuilderPage,
     requireAuth: true
   },
   {
     name: 'QuestionnaireLibrary',
     path: '/questionnaire-library',
-    element: <QuestionnaireLibraryPage />,
-    requireAuth: false
+    component: QuestionnaireLibraryPage,
+    requireAuth: true
   },
   {
     name: 'ResponseAnalytics',
     path: '/response-analytics',
-    element: <ResponseAnalyticsPage />,
+    component: ResponseAnalyticsPage,
     requireAuth: true
   }
 ];
 
-// Workflow items for the sidebar
-export const SidebarWorkflows = [
-  {
-    primaryText: 'Form Builder',
-    to: '/questionnaire-builder',
-    iconName: 'notepad',
-    requireAuth: true
-  },
-  {
-    primaryText: 'Form Library',
-    to: '/questionnaire-library',
-    iconName: 'list'
-  },
-  {
-    primaryText: 'Response Analytics',
-    to: '/response-analytics',
-    iconName: 'dashboard',
-    requireAuth: true
-  }
-];
+// Workflow items for the sidebar - commented out as these are now accessible via the main SDC page
+// export const SidebarWorkflows = [
+//   {
+//     primaryText: 'Form Builder',
+//     to: '/questionnaire-builder',
+//     iconName: 'notepad',
+//     requireAuth: true
+//   },
+//   {
+//     primaryText: 'Form Library',
+//     to: '/questionnaire-library',
+//     iconName: 'list',
+//     requireAuth: true
+//   },
+//   {
+//     primaryText: 'Response Analytics',
+//     to: '/response-analytics',
+//     iconName: 'dashboard',
+//     requireAuth: true
+//   }
+// ];
+export const SidebarWorkflows = [];
 
 // Clinical workflows
 export const ClinicianWorkflows = [

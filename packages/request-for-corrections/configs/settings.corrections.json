@@ -1,0 +1,20 @@
+{
+  "public": {
+    "requestForCorrections": {
+      "enableNotifications": true,
+      "defaultReviewTimeoutDays": 30,
+      "maxAttachmentSize": 10485760,
+      "supportedAttachmentTypes": ["image/jpeg", "image/png", "application/pdf", "text/plain"],
+      "enableDisagreementWorkflow": true
+    }
+  },
+  "private": {
+    "requestForCorrections": {
+      "autoAssignReviewers": false,
+      "requireApprovalForAmendments": true,
+      "notificationEmail": "corrections@healthcare.org",
+      "escalationTimeoutDays": 45,
+      "enableAuditLogging": true
+    }
+  }
+}

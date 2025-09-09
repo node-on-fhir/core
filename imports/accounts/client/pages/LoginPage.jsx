@@ -22,14 +22,21 @@ export function LoginPage() {
   };
 
   return (
-    <Container maxWidth="sm">
-      <Box sx={{ pt: 8, pb: 4 }}>
-        <LoginForm 
-          onSuccess={handleSuccess}
-          onSignupClick={handleSignupClick}
-          onForgotPasswordClick={handleForgotPasswordClick}
-        />
-      </Box>
-    </Container>
+    <Box sx={{ 
+      minHeight: '100vh',
+      bgcolor: theme => theme.palette.mode === 'light' 
+        ? theme.palette.grey[50]
+        : theme.palette.background.default
+    }}>
+      <Container maxWidth="sm">
+        <Box sx={{ pt: 8, pb: 4 }}>
+          <LoginForm 
+            onSuccess={handleSuccess}
+            onSignupClick={handleSignupClick}
+            onForgotPasswordClick={handleForgotPasswordClick}
+          />
+        </Box>
+      </Container>
+    </Box>
   );
 }

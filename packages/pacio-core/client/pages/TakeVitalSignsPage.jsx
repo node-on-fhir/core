@@ -419,10 +419,17 @@ export default function TakeVitalSignsPage() {
     };
     
     return (
-        <Container maxWidth="lg" style={{ paddingTop: '80px' }}>
-            <Typography variant="h4" gutterBottom>
-                Take Vital Signs
-            </Typography>
+        <Box sx={{ 
+            bgcolor: theme => theme.palette.mode === 'light' 
+                ? theme.palette.grey[50] 
+                : theme.palette.background.default,
+            minHeight: '100vh',
+            pt: '80px'
+        }}>
+            <Container maxWidth="lg">
+                <Typography variant="h4" gutterBottom>
+                    Take Vital Signs
+                </Typography>
             
             {selectedPatient ? (
                 <Typography variant="subtitle1" gutterBottom>
@@ -490,6 +497,7 @@ export default function TakeVitalSignsPage() {
                     {isSaving ? 'Saving...' : 'Save Vital Signs'}
                 </Button>
             </Box>
-        </Container>
+            </Container>
+        </Box>
     );
 }

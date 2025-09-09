@@ -363,8 +363,8 @@ export function SignupForm({ onSuccess, onLoginClick }) {
             InputProps={{
               sx: { 
                 '& .MuiOutlinedInput-notchedOutline': {
-                  borderColor: formData.password.length >= 16 ? '#5cb85c' : 
-                               formData.password.length >= 12 ? '#f0ad4e' : 
+                  borderColor: formData.password.length >= 16 ? 'success.main' : 
+                               formData.password.length >= 12 ? 'warning.main' : 
                                'divider',
                   borderWidth: formData.password.length >= 12 ? 2 : 1
                 }
@@ -376,8 +376,8 @@ export function SignupForm({ onSuccess, onLoginClick }) {
                 bottom: -22,
                 mx: 0,
                 fontSize: '0.75rem',
-                color: formData.password.length >= 16 ? '#5cb85c' : 
-                       formData.password.length >= 12 ? '#f0ad4e' : 
+                color: formData.password.length >= 16 ? 'success.main' : 
+                       formData.password.length >= 12 ? 'warning.main' : 
                        'text.secondary'
               }
             }}
@@ -464,6 +464,7 @@ export function SignupForm({ onSuccess, onLoginClick }) {
           type="submit"
           fullWidth
           variant="contained"
+          color="primary"
           size="large"
           disabled={
             loading || 
@@ -483,15 +484,6 @@ export function SignupForm({ onSuccess, onLoginClick }) {
             fontWeight: 600,
             fontSize: '0.875rem',
             letterSpacing: '0.5px',
-            backgroundColor: '#f0ad4e',
-            color: '#000',
-            '&:hover': {
-              backgroundColor: '#ec971f'
-            },
-            '&:disabled': {
-              backgroundColor: '#e0e0e0',
-              color: '#999'
-            }
           }}
         >
           {loading ? 'Creating account...' : 
@@ -514,7 +506,7 @@ export function SignupForm({ onSuccess, onLoginClick }) {
                 onLoginClick ? onLoginClick() : navigate('/login');
               }}
               sx={{ 
-                color: '#f0ad4e',
+                color: 'secondary.main',
                 textDecoration: 'none',
                 fontWeight: 500,
                 '&:hover': {

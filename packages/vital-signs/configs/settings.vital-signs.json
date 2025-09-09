@@ -1,0 +1,115 @@
+{
+  "public": {
+    "title": "Honeycomb - Vital Signs Module",
+    "fhirVersion": "R4",
+    "loggingThreshold": "debug",
+    "app": {
+      "name": "Honeycomb Vital Signs",
+      "logo": {
+        "primaryText": "Vital Signs",
+        "secondaryText": "Tracker"
+      }
+    },
+    "defaults": {
+      "route": "/vital-signs",
+      "landingPage": "/vital-signs",
+      "avatars": true,
+      "prominentHeader": true,
+      "sidebar": {
+        "menuItems": {
+          "HomePage": true,
+          "PatientSummary": true,
+          "PatientDirectory": true,
+          "FhirResources": true,
+          "FhirModules": true,
+          "DynamicModules": true,
+          "SidebarWorkflows": true,
+          "ClinicianWorkflows": true,
+          "Theme": false,
+          "About": true,
+          "Privacy": true,
+          "TermsAndConditions": true,
+          "DataImport": true,
+          "DataExport": true
+        }
+      }
+    },
+    "vitalSigns": {
+      "chartLibrary": "recharts",
+      "enableRealTimeUpdates": false,
+      "defaultTimeRange": "7d",
+      "showNormalRanges": true,
+      "vitalSignTypes": {
+        "enabled": [
+          "8867-4",
+          "8480-6", 
+          "8462-4",
+          "8310-5",
+          "9279-1",
+          "59408-5",
+          "29463-7",
+          "39156-5"
+        ]
+      }
+    },
+    "theme": {
+      "palette": {
+        "primary": {
+          "main": "#f44336"
+        },
+        "secondary": {
+          "main": "#2196f3"
+        }
+      }
+    },
+    "modules": {
+      "sidebar": {
+        "workflows": true,
+        "elements": true
+      },
+      "header": {
+        "workflows": true
+      },
+      "fhir": {
+        "AllergyIntolerances": true,
+        "AuditEvents": true,
+        "Appointments": true,
+        "CarePlans": true,
+        "CareTeams": true,
+        "Compositions": true,
+        "Communications": true,
+        "Conditions": true,
+        "Consents": true,
+        "Devices": true,
+        "DiagnosticReports": true,
+        "DocumentReferences": true,
+        "Encounters": true,
+        "Goals": true,
+        "Immunizations": true,
+        "ImagingStudies": true,
+        "Lists": true,
+        "Locations": true,
+        "Medias": true,
+        "Medications": true,
+        "MedicationRequests": true,
+        "MedicationAdministrations": true,
+        "MedicationStatements": true,
+        "NutritionOrders": true,
+        "Organizations": true,
+        "Observations": true,
+        "Patients": true,
+        "Practitioners": true,
+        "Procedures": true,
+        "Questionnaires": true,
+        "QuestionnaireResponses": true,
+        "ResearchStudies": true,
+        "ResearchSubjects": true,
+        "Schedules": true,
+        "ServiceRequests": true,
+        "SupplyDeliveries": true,
+        "Tasks": true
+      }
+    }
+  },
+  "private": {}
+}

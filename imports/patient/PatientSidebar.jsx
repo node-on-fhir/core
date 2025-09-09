@@ -48,6 +48,7 @@ import {iosPulseStrong} from 'react-icons-kit/ionicons/iosPulseStrong' // Pulse,
 import {location} from 'react-icons-kit/typicons/location' // Location
 import {eyedropper} from 'react-icons-kit/fa/eyedropper'
 import {dashboard} from 'react-icons-kit/fa/dashboard' //Dashboard
+import {lineChart} from 'react-icons-kit/fa/lineChart' // Biomarker Charts
 import {list} from 'react-icons-kit/fa/list' //Dashboard
 import {addressCardO} from 'react-icons-kit/fa/addressCardO'  // Address Card  
 import {mapO} from 'react-icons-kit/fa/mapO'
@@ -835,8 +836,8 @@ export function PatientSidebar(props){
       PractitionerRoles: { route: '/practitioner-roles', icon: 'userMd', label: 'Practitioner Roles' },
       Procedures: { route: '/procedures', icon: 'bath', label: 'Procedures' },
       Provenances: { route: '/provenances', icon: 'documentIcon', label: 'Provenances' },
-      Questionnaires: { route: '/questionnaires', icon: 'ic_question_answer', label: 'Questionnaires' },
-      QuestionnaireResponses: { route: '/questionnaire-responses', icon: 'ic_question_answer', label: 'Questionnaire Responses' },
+      // Questionnaires: { route: '/questionnaires', icon: 'ic_question_answer', label: 'Questionnaires' },
+      // QuestionnaireResponses: { route: '/questionnaire-responses', icon: 'ic_question_answer', label: 'Questionnaire Responses' },
       ResearchStudies: { route: '/research-studies', icon: 'erlenmeyerFlask', label: 'Research Studies' },
       ResearchSubjects: { route: '/research-subjects', icon: 'users', label: 'Research Subjects' },
       Restrictions: { route: '/restrictions', icon: 'fire', label: 'Restrictions' },
@@ -990,6 +991,20 @@ export function PatientSidebar(props){
 
 
   //----------------------------------------------------------------------
+  // Site Index
+  
+  let pageIndex = [];
+  if(get(Meteor, 'settings.public.defaults.sidebar.menuItems.IndexPage')){
+      pageIndex.push(<ListItem id='pageIndexItem' key='pageIndexItem' button onClick={function(){ openPage('/index'); }} >
+        <ListItemIcon >
+          <Icon icon={list} />
+        </ListItemIcon>
+        <ListItemText primary="Site Index"  />
+      </ListItem>);    
+      pageIndex.push(<Divider key="page-index-hr" />);
+  };
+
+  //----------------------------------------------------------------------
   // Data Management
 
   let dataManagementElements = [];
@@ -1003,6 +1018,17 @@ export function PatientSidebar(props){
         <Icon icon={heartbeat} />
       </ListItemIcon>
       <ListItemText primary="Patient Chart"  />
+    </ListItem>);    
+  };
+  
+  // Biomarker Charting
+  if(get(Meteor, 'settings.public.defaults.sidebar.menuItems.BiomarkerCharting', false)){
+    drawDataMgmDivider = true;
+    dataManagementElements.push(<ListItem id='biomarkerChartingItem' key='biomarkerChartingItem' button onClick={function(){ openPage('/biomarkers-charting'); }} >
+      <ListItemIcon >
+        <Icon icon={lineChart} />
+      </ListItemIcon>
+      <ListItemText primary="Biomarker Charting"  />
     </ListItem>);    
   };
   
@@ -1282,6 +1308,7 @@ export function PatientSidebar(props){
   return(
     <div id='patientSidebar' style={{marginBottom: '80px'}}>
       { homePage }
+      { pageIndex }
 
       { loginElements }
       { profileElements }

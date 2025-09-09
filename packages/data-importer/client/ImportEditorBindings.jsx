@@ -24,6 +24,7 @@ import {
   Select,
   MenuItem,
   InputLabel,
+  Alert,
   useTheme as useMuiTheme
 } from '@mui/material';
 
@@ -324,6 +325,7 @@ export function ImportEditorBindings(props){
   let [sendToDataWarehouse, setSendToDataWarehouse] = useState(false);
   // let [autoSelectFirstPatient, setAutoSelectFirstPatient] = useState(false);
   
+  let [importedPatientCount, setImportedPatientCount] = useState(0);
   
   const [importQueue, setImportQueue] = useState([]); 
 
@@ -349,6 +351,10 @@ export function ImportEditorBindings(props){
   }, []);
   editWrapEnabled = useTracker(function(){
     return Session.get("editWrapEnabled");
+  }, []);
+  
+  importedPatientCount = useTracker(function(){
+    return Session.get("importedPatientCount") || 0;
   }, []);
 
   
@@ -1143,28 +1149,69 @@ export function ImportEditorBindings(props){
 
     let resourceTypes = [];
     let preview = {};
+    let patientCount = 0;
 
-    if(typeof previewBuffer === "string"){
-      previewBuffer = JSON.parse(previewBuffer);
+    // Handle NDJSON array format
+    if(Array.isArray(previewBuffer)){
+      console.log("Preview buffer is an array (NDJSON format)");
+      previewBuffer.forEach(function(line){
+        let parsedLine;
+        try {
+          if(typeof line === 'string'){
+            parsedLine = JSON.parse(line);
+          } else {
+            parsedLine = line;
+          }
+          
+          if(get(parsedLine, 'resourceType')){
+            resourceTypes.push(get(parsedLine, 'resourceType'));
+            if(!preview[get(parsedLine, 'resourceType')]){
+              preview[get(parsedLine, 'resourceType')] = 1;
+            } else {
+              preview[get(parsedLine, 'resourceType')] = preview[get(parsedLine, 'resourceType')] + 1;
+            }
+            if(get(parsedLine, 'resourceType') === 'Patient'){
+              patientCount++;
+            }
+          }
+        } catch(e) {
+          console.log('Error parsing NDJSON line in scanData:', e);
+        }
+      });
+    } else {
+      // Handle regular JSON/Bundle format
+      if(typeof previewBuffer === "string"){
+        try {
+          previewBuffer = JSON.parse(previewBuffer);
+        } catch(e) {
+          console.log('Error parsing preview buffer:', e);
+        }
+      }
+      
+      if(get(previewBuffer, 'resourceType')){
+        resourceTypes.push(get(previewBuffer, 'resourceType'));      
+        preview[get(previewBuffer, 'resourceType')] = 1;
+        if(get(previewBuffer, 'resourceType') === 'Patient'){
+          patientCount = 1;
+        }
+      }
+      if(get(previewBuffer, 'entry') && Array.isArray(get(previewBuffer, 'entry'))){
+        previewBuffer.entry.forEach(function(entry){
+          if(get(entry, 'resource.resourceType')){
+            resourceTypes.push(get(entry, 'resource.resourceType'));    
+            if(!preview[get(entry, 'resource.resourceType')]){
+              preview[get(entry, 'resource.resourceType')] = 1
+            } else {
+              preview[get(entry, 'resource.resourceType')] = preview[get(entry, 'resource.resourceType')] + 1;
+            }
+            if(get(entry, 'resource.resourceType') === 'Patient'){
+              patientCount++;
+            }
+          }
+        })
+      }
     }
     
-
-    if(get(previewBuffer, 'resourceType')){
-      resourceTypes.push(get(previewBuffer, 'resourceType'));      
-      preview[get(previewBuffer, 'resourceType')] = 1;
-    }
-    if(get(previewBuffer, 'entry') && Array.isArray(get(previewBuffer, 'entry'))){
-      previewBuffer.entry.forEach(function(entry){
-        if(get(entry, 'resource.resourceType')){
-          resourceTypes.push(get(entry, 'resource.resourceType'));    
-          if(!preview[get(entry, 'resource.resourceType')]){
-            preview[get(entry, 'resource.resourceType')] = 1
-          } else {
-            preview[get(entry, 'resource.resourceType')] = preview[get(entry, 'resource.resourceType')] + 1;
-          }
-        }
-      })
-    }
     logger.debug("Collected the following resources: ", resourceTypes)
     // console.log("Collected the following resources: ", resourceTypes)
 
@@ -1172,13 +1219,17 @@ export function ImportEditorBindings(props){
     logger.debug("Compacted into the following list: ", bundleResourceTypes)
     console.log("Compacted into the following list: ", bundleResourceTypes)
     console.log("Generated the following preview: ", preview)
+    console.log("Found " + patientCount + " patients in the imported data");
 
     if(cumulative){
       bundleResourceTypes.push(scannedResourceTypes);
       logger.debug("Cumulative resources: ", bundleResourceTypes)
     }
     setScannedResourceTypes(bundleResourceTypes);
-    setResourcePreview(preview)
+    setResourcePreview(preview);
+    
+    // Store patient count in session for UI display
+    Session.set('importedPatientCount', patientCount);
   }
 
   function handleChangeImportAlgorithm(event, index, value, foo){
@@ -1246,6 +1297,32 @@ export function ImportEditorBindings(props){
       logger.debug('NDJSON parser.....');
 
       console.log('Parsing NDJSON previewBuffer', previewBuffer)
+
+      // Auto-select first patient from NDJSON if enabled
+      if(autoSelectFirstPatient && previewBuffer && Array.isArray(previewBuffer)){
+        let firstPatientFound = false;
+        previewBuffer.forEach(function(line){
+          if(!firstPatientFound){
+            let parsedLine;
+            try {
+              if(typeof line === 'string'){
+                parsedLine = JSON.parse(line);
+              } else {
+                parsedLine = line;
+              }
+              
+              if(get(parsedLine, 'resourceType') === 'Patient'){
+                Session.set('selectedPatient', parsedLine);
+                Session.set('selectedPatientId', get(parsedLine, 'id'));
+                firstPatientFound = true;
+                console.log('Auto-selected patient from NDJSON file:', get(parsedLine, 'id'));
+              }
+            } catch(e) {
+              console.log('Error parsing NDJSON line:', e);
+            }
+          }
+        });
+      }
 
       MedicalRecordImporter.importNdjson(previewBuffer, get(Meteor, 'settings.public.interfaces.fhirRelay.channel.endpoint', "http://localhost:3000/baseR4"));              
     } else if(['xls', 'xlsx'].includes(fileExtension)){
@@ -1771,6 +1848,13 @@ export function ImportEditorBindings(props){
                 </Grid>
               </CardActions>
             </Card>
+            
+            {/* Show warning if multiple patients detected */}
+            {importedPatientCount > 1 && autoSelectFirstPatient && (
+              <Alert severity="warning" style={{marginTop: '16px'}}>
+                Multiple patients detected ({importedPatientCount} patients found). The first patient will be automatically selected when importing.
+              </Alert>
+            )}
 
           </Grid>
           <Grid item md={12} lg={columnWidth} style={{width: '100%'}}>
@@ -1796,8 +1880,8 @@ export function ImportEditorBindings(props){
           { previewDataContent }
           <Grid item md={12} lg={columnWidth} style={{width: '100%'}} key="last-grid-item">
             <CardHeader title="Step 3 - Collection Preview" />
-            <Card style={{marginBottom: '20px', backgroundColor: muiTheme.palette.mode === 'dark' ? muiTheme.palette.background.paper : '#ffffff'}} width={cardWidth + 'px'}>
-                <CardContent>
+            <Card style={{height: window.innerHeight - 300, marginBottom: '20px', backgroundColor: muiTheme.palette.mode === 'dark' ? muiTheme.palette.background.paper : '#ffffff', display: 'flex', flexDirection: 'column'}} width={cardWidth + 'px'}>
+                <CardContent style={{paddingBottom: 0}}>
                   <InputLabel id="import-algorithm-label">Import Algorithm</InputLabel>
                   <Select
                     // floatingLabelText="Mapping Algorithm"
@@ -1813,24 +1897,26 @@ export function ImportEditorBindings(props){
                   </Select>
                 </CardContent>
                 { dynamicAlgorithmItems }
-                <CollectionManagement
-                  mode={importAlgorithm}
-                  resourceTypes={scannedResourceTypes}
-                  displayImportButton={true}
-                  displayImportCheckmarks={true}
-                  displayExportCheckmarks={false}
-                  displayExportButton={false}
-                  displayLocalClientCount={true}
-                  displayClientCount={false}
-                  displayDropButton={true}
-                  displayPubSubEnabled={false}
-                  noDataMessage="Please select a file to import."
-                  preview={resourcePreview}
-                  onSelectionChange={function(selectionState){
-                    console.log('onSelectionChange', selectionState)
-                    setCollectionsToExport(selectionState);
-                  }}
-                />
+                <div style={{flex: 1, overflow: 'auto', padding: '0 16px 16px 16px'}}>
+                  <CollectionManagement
+                    mode={importAlgorithm}
+                    resourceTypes={scannedResourceTypes}
+                    displayImportButton={true}
+                    displayImportCheckmarks={true}
+                    displayExportCheckmarks={false}
+                    displayExportButton={false}
+                    displayLocalClientCount={true}
+                    displayClientCount={false}
+                    displayDropButton={true}
+                    displayPubSubEnabled={false}
+                    noDataMessage="Please select a file to import."
+                    preview={resourcePreview}
+                    onSelectionChange={function(selectionState){
+                      console.log('onSelectionChange', selectionState)
+                      setCollectionsToExport(selectionState);
+                    }}
+                  />
+                </div>
             </Card>
             { workflowButton }
           </Grid> 
