@@ -202,6 +202,7 @@ import SupplyDeliveryDetail from '../ui-fhir/supplyDeliveries/SupplyDeliveryDeta
 
 import MyProfilePage from './pages/MyProfilePage.jsx';
 import FhirResourcesDashboard from './FhirResourcesDashboard.jsx';
+import FhirResourcesIndex from './FhirResourcesIndex.jsx';
 
 //===============================================================================================================
 
@@ -498,6 +499,10 @@ let dynamicRoutes = [
   }, {
     path: "/fhir-resources-index",
     element: <FhirResourcesDashboard />,
+    requireAuth: true
+  }, {
+    path: "/fhir-resources-dashboard",
+    element: <FhirResourcesIndex />,
     requireAuth: true
   }, {
     path: "/fhir",

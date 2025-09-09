@@ -19,7 +19,17 @@ import {
 
 // Loading component
 const Loading = () => (
-  <Box display="flex" justifyContent="center" alignItems="center" height="100vh">
+  <Box 
+    display="flex" 
+    justifyContent="center" 
+    alignItems="center" 
+    height="100vh"
+    sx={{ 
+      bgcolor: theme => theme.palette.mode === 'light' 
+        ? theme.palette.grey[50]
+        : theme.palette.background.default
+    }}
+  >
     <CircularProgress />
   </Box>
 );
@@ -285,17 +295,12 @@ export const SidebarWorkflows = [
     iconName: 'documentIcon'
   },
   {
-    primaryText: 'Patient Directory',
-    to: '/patients',
-    iconName: 'users'
-  },
-  {
     primaryText: 'Advance Directives',
     to: '/advance-directives',
     iconName: 'notepad'
   },
   {
-    primaryText: 'Transition of Care',
+    primaryText: 'Continuity of Care',
     to: '/transition-of-care',
     iconName: 'ic_transfer_within_a_station'
   },
@@ -313,16 +318,6 @@ export const SidebarWorkflows = [
     primaryText: 'Structured Data Capture',
     to: '/structured-data-capture',
     iconName: 'notepad'
-  },
-  {
-    primaryText: 'Questionnaire Builder',
-    to: '/questionnaire-builder',
-    iconName: 'notepad'
-  },
-  {
-    primaryText: 'Questionnaire Library',
-    to: '/questionnaire-library',
-    iconName: 'list'
   }
 ];
 

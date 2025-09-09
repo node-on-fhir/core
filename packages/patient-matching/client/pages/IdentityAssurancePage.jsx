@@ -155,7 +155,14 @@ export default function IdentityAssurancePage() {
                   <Typography variant="body2" color="text.secondary" gutterBottom>
                     Or select from available patients:
                   </Typography>
-                  <List dense sx={{ maxHeight: 300, overflow: 'auto', border: 1, borderColor: 'divider', borderRadius: 1 }}>
+                  <List dense sx={{ 
+                    maxHeight: 300, 
+                    overflow: 'auto', 
+                    border: 1, 
+                    borderColor: 'divider', 
+                    borderRadius: 1,
+                    bgcolor: theme => theme.palette.background.paper 
+                  }}>
                     {availablePatients.map((patient) => (
                       <ListItem 
                         key={patient._id} 
@@ -413,7 +420,14 @@ export default function IdentityAssurancePage() {
                         get(providerStatus, 'isDevelopment', false);
 
   return (
-    <Container maxWidth="md" sx={{ py: 4 }}>
+    <Box sx={{ 
+      minHeight: '100vh',
+      bgcolor: theme => theme.palette.mode === 'light' 
+        ? theme.palette.grey[50]
+        : theme.palette.background.default,
+      py: 4
+    }}>
+      <Container maxWidth="md">
       {/* Development Mode Alert */}
       {isDevelopment && (
         <Alert 
@@ -441,7 +455,13 @@ export default function IdentityAssurancePage() {
 
       {/* Provider Status Information */}
       <Collapse in={showDebugInfo && isDevelopment}>
-        <Paper sx={{ p: 2, mb: 3, bgcolor: 'grey.100' }}>
+        <Paper sx={{ 
+          p: 2, 
+          mb: 3, 
+          bgcolor: theme => theme.palette.mode === 'light' 
+            ? theme.palette.grey[100]
+            : theme.palette.background.paper
+        }}>
           <Typography variant="subtitle2" fontWeight="bold" gutterBottom>
             Identity Provider Status
           </Typography>
@@ -511,6 +531,7 @@ export default function IdentityAssurancePage() {
 
         {renderStepContent(activeStep)}
       </Paper>
-    </Container>
+      </Container>
+    </Box>
   );
 }

@@ -5,8 +5,22 @@ import { check, Match } from 'meteor/check';
 import { Communications } from '../../imports/lib/schemas/SimpleSchemas/Communications';
 
 // Basic publication for all communications (with limit)
-Meteor.publish('communications', function(limit = 100) {
-  check(limit, Match.Optional(Number));
+Meteor.publish('communications', function(limit) {
+  // Log the call for debugging
+  console.log('Publishing all Communications for', this.userId ? `user ${this.userId}` : 'anonymous', 'with limit:', limit);
+  
+  // Handle undefined limit with default value
+  if (limit === undefined || limit === null) {
+    limit = 100;
+  }
+  
+  // Ensure limit is a number
+  if (typeof limit !== 'number') {
+    console.warn('Communications publication received non-numeric limit:', limit, 'defaulting to 100');
+    limit = 100;
+  }
+  
+  check(limit, Number);
   
   if (!this.userId) {
     return this.ready();

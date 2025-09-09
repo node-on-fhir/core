@@ -72,10 +72,18 @@ export function VitalSignsPageWrapper() {
   const patientName = get(selectedPatient, 'name[0].text', 'No patient selected');
 
   return (
-    <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-      <Typography variant="h4" gutterBottom>
-        Vital Signs Module
-      </Typography>
+    <Box sx={{ 
+      minHeight: '100vh',
+      bgcolor: theme => theme.palette.mode === 'light' 
+        ? theme.palette.grey[50]
+        : theme.palette.background.default,
+      pt: 4,
+      pb: 4
+    }}>
+      <Container maxWidth="lg">
+        <Typography variant="h4" gutterBottom>
+          Vital Signs Module
+        </Typography>
       
       {selectedPatientId ? (
         <>
@@ -160,6 +168,7 @@ export function VitalSignsPageWrapper() {
           </Box>
         </Paper>
       )}
-    </Container>
+      </Container>
+    </Box>
   );
 }

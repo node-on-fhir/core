@@ -189,8 +189,14 @@ export function VitalSignsPage(props) {
   };
 
   return (
-    <div id="vitalSignsPage" style={{ padding: '20px' }}>
-      <Container maxWidth="xl" sx={{ py: 3 }}>
+    <Box id="vitalSignsPage" sx={{ 
+      minHeight: '100vh',
+      bgcolor: theme => theme.palette.mode === 'light' 
+        ? theme.palette.grey[50]
+        : theme.palette.background.default,
+      py: 3
+    }}>
+      <Container maxWidth="xl">
         {renderHeader()}
         {renderTabs()}
         {renderContent()}
@@ -206,6 +212,6 @@ export function VitalSignsPage(props) {
           />
         )}
       </Container>
-    </div>
+    </Box>
   );
 }

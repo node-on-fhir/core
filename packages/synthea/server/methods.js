@@ -4,6 +4,9 @@ import { check, Match } from 'meteor/check';
 import { Mongo } from 'meteor/mongo';
 import { get } from 'lodash';
 
+// Import the trials generation method
+import './methods/generateTrialsResources';
+
 // Track conversion state
 let conversionState = {
   isRunning: false,

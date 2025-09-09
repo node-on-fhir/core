@@ -12,7 +12,17 @@ import { AppLayout } from '../imports/ui/layouts/AppLayout';
 
 // Loading component
 const Loading = () => (
-  <Box display="flex" justifyContent="center" alignItems="center" minHeight="100vh">
+  <Box 
+    display="flex" 
+    justifyContent="center" 
+    alignItems="center" 
+    minHeight="100vh"
+    sx={{ 
+      bgcolor: theme => theme.palette.mode === 'light' 
+        ? theme.palette.grey[50]
+        : theme.palette.background.default
+    }}
+  >
     <CircularProgress />
   </Box>
 );

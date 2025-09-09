@@ -118,8 +118,15 @@ export default function PatientMatchingPage() {
   };
 
   return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
-      <Paper sx={{ p: 4 }}>
+    <Box sx={{ 
+      minHeight: '100vh',
+      bgcolor: theme => theme.palette.mode === 'light' 
+        ? theme.palette.grey[50]
+        : theme.palette.background.default,
+      py: 4
+    }}>
+      <Container maxWidth="lg">
+        <Paper sx={{ p: 4 }}>
         <Box sx={{ mb: 4 }}>
           <Typography variant="h4" gutterBottom>
             <PersonSearchIcon sx={{ mr: 2, verticalAlign: 'bottom' }} />
@@ -280,6 +287,7 @@ export default function PatientMatchingPage() {
           </Alert>
         )}
       </Paper>
-    </Container>
+      </Container>
+    </Box>
   );
 }
