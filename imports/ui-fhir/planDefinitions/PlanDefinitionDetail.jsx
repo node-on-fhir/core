@@ -844,6 +844,7 @@ function PlanDefinitionDetail(props) {
                     {renderIdentifiers()}
                     <Divider />
                     <TextField
+                      id="urlInput"
                       fullWidth
                       label="Canonical URL"
                       value={get(planDefinition, 'url', '')}
@@ -853,6 +854,7 @@ function PlanDefinitionDetail(props) {
                     />
                     <Box display="flex" gap={2}>
                       <TextField
+                        id="versionInput"
                         sx={{ flex: 1 }}
                         label="Version"
                         value={get(planDefinition, 'version', '')}
@@ -888,6 +890,7 @@ function PlanDefinitionDetail(props) {
                 <AccordionDetails>
                   <Stack spacing={2}>
                     <TextField
+                      id="nameInput"
                       fullWidth
                       label="Name (Computer Friendly)"
                       value={get(planDefinition, 'name', '')}
@@ -897,6 +900,7 @@ function PlanDefinitionDetail(props) {
                       helperText="Computer-friendly name (no spaces)"
                     />
                     <TextField
+                      id="titleInput"
                       fullWidth
                       label="Title (Human Friendly)"
                       value={get(planDefinition, 'title', '')}
@@ -917,6 +921,7 @@ function PlanDefinitionDetail(props) {
                       <FormControl sx={{ flex: 1 }} required>
                         <InputLabel>Type</InputLabel>
                         <Select
+                          id="typeSelect"
                           value={get(planDefinition, 'type.coding[0].code', 'clinical-protocol')}
                           onChange={(e) => {
                             const typeMap = {
@@ -939,6 +944,7 @@ function PlanDefinitionDetail(props) {
                       <FormControl sx={{ flex: 1 }} required>
                         <InputLabel>Status</InputLabel>
                         <Select
+                          id="statusSelect"
                           value={get(planDefinition, 'status', 'draft')}
                           onChange={(e) => handleChange('status', e.target.value)}
                           disabled={!isEditing}
@@ -951,6 +957,7 @@ function PlanDefinitionDetail(props) {
                       </FormControl>
                     </Box>
                     <TextField
+                      id="descriptionTextarea"
                       fullWidth
                       multiline
                       rows={4}
@@ -961,6 +968,7 @@ function PlanDefinitionDetail(props) {
                       helperText="Natural language description"
                     />
                     <TextField
+                      id="purposeTextarea"
                       fullWidth
                       multiline
                       rows={3}
@@ -971,6 +979,7 @@ function PlanDefinitionDetail(props) {
                       helperText="Why this plan definition is defined"
                     />
                     <TextField
+                      id="usageTextarea"
                       fullWidth
                       multiline
                       rows={3}
@@ -997,6 +1006,7 @@ function PlanDefinitionDetail(props) {
                   <Grid container spacing={2}>
                     <Grid item xs={12} md={6}>
                       <TextField
+                        id="dateInput"
                         fullWidth
                         label="Publication Date"
                         type="date"
@@ -1008,6 +1018,7 @@ function PlanDefinitionDetail(props) {
                     </Grid>
                     <Grid item xs={12} md={6}>
                       <TextField
+                        id="approvalDateInput"
                         fullWidth
                         label="Approval Date"
                         type="date"
@@ -1019,6 +1030,7 @@ function PlanDefinitionDetail(props) {
                     </Grid>
                     <Grid item xs={12} md={6}>
                       <TextField
+                        id="lastReviewDateInput"
                         fullWidth
                         label="Last Review Date"
                         type="date"
@@ -1045,6 +1057,7 @@ function PlanDefinitionDetail(props) {
                     </Grid>
                     <Grid item xs={12} md={6}>
                       <TextField
+                        id="effectivePeriodStartInput"
                         fullWidth
                         label="Start Date"
                         type="date"
@@ -1056,6 +1069,7 @@ function PlanDefinitionDetail(props) {
                     </Grid>
                     <Grid item xs={12} md={6}>
                       <TextField
+                        id="effectivePeriodEndInput"
                         fullWidth
                         label="End Date"
                         type="date"
@@ -1084,6 +1098,7 @@ function PlanDefinitionDetail(props) {
           {activeTab === 2 && (
             <Stack spacing={3}>
               <TextField
+                id="publisherInput"
                 fullWidth
                 label="Publisher"
                 value={get(planDefinition, 'publisher', '')}
@@ -1169,6 +1184,7 @@ function PlanDefinitionDetail(props) {
           {activeTab === 4 && (
             <Stack spacing={3}>
               <TextField
+                id="copyrightTextarea"
                 fullWidth
                 multiline
                 rows={3}
