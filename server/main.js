@@ -21,6 +21,7 @@ console.log('===================================================================
 import './Cron.js';
 import './ConsentEngineMethods.js';
 import './SearchParameterMethods.js';
+import './SyntheaMethods.js';
 import './ConsentEngineHttp.js';
 import './CdsHooksEndpoints.js';
 import './Methods.js';
@@ -390,6 +391,25 @@ Meteor.startup(async function(){
     
     // Set the bypass flag
     Meteor.settings.public.NotAuthorizedUiBypass = true;
+  }
+
+  // Handle Synthea DB Utils environment variable
+  if(process.env.ENABLE_SYNTHEA_DB_UTILS) {
+    console.log('==========================================================================================');
+    console.log('[Synthea] Database Utils are ENABLED via environment variable');
+    console.log('[Synthea] Setting Meteor.settings.public.enableSyntheaDbUtils = true');
+    console.log('==========================================================================================');
+    
+    // Ensure settings structure exists
+    if (!Meteor.settings) {
+      Meteor.settings = {};
+    }
+    if (!Meteor.settings.public) {
+      Meteor.settings.public = {};
+    }
+    
+    // Set the Synthea DB utils flag
+    Meteor.settings.public.enableSyntheaDbUtils = true;
   }
 
   // Establish a database connection

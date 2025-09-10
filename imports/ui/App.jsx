@@ -1432,15 +1432,15 @@ const requreSysadmin = (nextState, replace) => {
 //===============================================================================================================
 // Analytics
 
-let analyticsTrackingId = get(Meteor, 'settings.public.google.analytics.trackingId')
+let analyticsMeasurementId = get(Meteor, 'settings.public.google.analytics.measurementId')
 
 import ReactGA from "react-ga4";
-if(analyticsTrackingId){
-  ReactGA.initialize(analyticsTrackingId, {debug: get(Meteor, 'settings.public.google.analytics.debug', false)});
+if(analyticsMeasurementId){
+  ReactGA.initialize(analyticsMeasurementId, {debug: get(Meteor, 'settings.public.google.analytics.debug', false)});
 }
 
 function logPageView() {
-  if(analyticsTrackingId){
+  if(analyticsMeasurementId){
     // ReactGA.pageview(window.location.pathname + window.location.search);
     ReactGA.send({ hitType: "pageview", page: window.location.pathname });
   }
@@ -1449,7 +1449,7 @@ function logPageView() {
 function usePageViews() {
   // let location = useLocation();
   React.useEffect(() => {
-    if(analyticsTrackingId){
+    if(analyticsMeasurementId){
       ReactGA.pageview(window.location.pathname + window.location.search);
       // ReactGA.set({ page: window.location.pathname });  
       ReactGA.send({ hitType: "pageview", page: window.location.pathname });
