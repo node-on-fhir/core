@@ -34,20 +34,19 @@ mdg:validated-method
 fetch
 
 
-clinical:data-importer
-clinical:pacio-core
-clinical:request-for-corrections
-clinical:international-patient-summary
-clinical:synthea
-clinical:patient-matching
+# clinical:data-importer
+# clinical:pacio-core
+# clinical:request-for-corrections
+# clinical:international-patient-summary
+# clinical:synthea
+# clinical:patient-matching
+# clinical:structured-data-capture
 
-symptomatic:timelines
-symptomatic:symptom-tracking
-symptomatic:mcp
+# symptomatic:timelines
+# symptomatic:symptom-tracking
+# symptomatic:mcp
 
-clinical:structured-data-capture
 # clinical:vital-signs
-
 # clinical:checklist-manifesto
 # clinical:clinical-documents
 # clinical:consent-generator
