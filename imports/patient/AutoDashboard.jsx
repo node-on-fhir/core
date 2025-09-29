@@ -1245,7 +1245,9 @@ export function AutoDashboard(props){
                 id="autoDashboardPage" 
                 sx={{
                     minHeight: '100vh',
-                    backgroundColor: 'background.default',
+                    backgroundColor: theme => theme.palette.mode === 'light' 
+                        ? theme.palette.grey[50]  // Off-white in light mode for card contrast
+                        : theme.palette.background.default,  // Default dark background
                     px: { xs: 2, sm: 3, md: 4 },
                     py: { xs: 3, sm: 4, md: 5 },
                     overflowY: 'auto',
@@ -1298,21 +1300,26 @@ export function AutoDashboard(props){
                                 </Typography>
                             </Box>
                             <Button
-                                variant="outlined"
+                                variant="contained"
+                                color="primary"
+                                size="large"
                                 startIcon={<GroupIcon />}
                                 onClick={() => navigate(autoDashboardNoDataPath)}
                                 sx={{
+                                    mt: 2,
+                                    px: 4,
+                                    py: 1.5,
+                                    fontSize: '1rem',
+                                    fontWeight: 500,
                                     borderRadius: 2,
                                     textTransform: 'none',
-                                    px: 3,
-                                    py: 1,
-                                    borderWidth: 2,
+                                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
                                     '&:hover': {
-                                        borderWidth: 2
+                                        boxShadow: '0 4px 8px rgba(0,0,0,0.15)'
                                     }
                                 }}
                             >
-                                Browse Patients
+                                Lookup Patient
                             </Button>
                         </CardContent>
                     </Card>
@@ -1325,6 +1332,10 @@ export function AutoDashboard(props){
         <Box
             id="autoDashboardPage"
             sx={{
+                minHeight: '100vh',
+                backgroundColor: theme => theme.palette.mode === 'light' 
+                    ? theme.palette.grey[50]  // Off-white in light mode
+                    : theme.palette.background.default,  // Default dark background
                 height: '100%',
                 overflowY: 'auto',
                 overflowX: 'hidden'

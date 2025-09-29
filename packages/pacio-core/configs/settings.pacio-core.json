@@ -99,8 +99,9 @@
           "DataExport": false,
           "ConstructionZone": false,
           "UserProfile": true,
-          "PatientChart": true,
-          "FhirResourcesDashboard": true
+          "FhirResourcesDashboard": true,
+          "BiomarkerCharting": true,
+          "PatientChart": true
         }
       }
     },

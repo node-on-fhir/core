@@ -33,8 +33,8 @@ accounts-base
 mdg:validated-method
 fetch
 
-
-# clinical:data-importer
+clinical:data-importer
+clinical:data-exporter
 # clinical:pacio-core
 # clinical:request-for-corrections
 # clinical:international-patient-summary
@@ -45,6 +45,8 @@ fetch
 # symptomatic:timelines
 # symptomatic:symptom-tracking
 # symptomatic:mcp
+
+# trialx:hermes-tooling
 
 # clinical:vital-signs
 # clinical:checklist-manifesto
@@ -61,5 +63,4 @@ fetch
 # clinical:request-for-corrections
 # clinical:provider-directory
 # clinical:saner
-# clinical:vital-signs
 # clinical:workqueues  

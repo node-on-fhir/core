@@ -32,6 +32,7 @@ import {
 } from '@mui/material';
 import SettingsIcon from '@mui/icons-material/Settings';
 import CloseIcon from '@mui/icons-material/Close';
+import GroupIcon from '@mui/icons-material/Group';
 
 import { useTracker, useSubscribe } from 'meteor/react-meteor-data';
 import { useNavigate } from 'react-router-dom';
@@ -62,21 +63,76 @@ function NoDataWrapper({ dataCount, noDataImagePath, history, title, buttonLabel
   const navigate = useNavigate();
   
   return (
-    <Card style={{ margin: 20, padding: 40, textAlign: 'center' }}>
-      <CardContent>
-        <Typography variant="h5" gutterBottom>{title}</Typography>
-        <Typography variant="body1" color="textSecondary" paragraph>
-          Please select a patient to view biomarker data.
-        </Typography>
-        <Button 
-          variant="contained" 
-          color="primary" 
-          onClick={() => navigate(redirectPath)}
-        >
-          {buttonLabel}
-        </Button>
-      </CardContent>
-    </Card>
+    <Box 
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        minHeight: '50vh',
+        textAlign: 'center'
+      }}
+    >
+      <Card 
+        sx={{ 
+          maxWidth: '600px',
+          width: '100%',
+          borderRadius: 3,
+          boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+          border: '1px solid',
+          borderColor: 'divider',
+          backgroundColor: 'background.paper'
+        }}
+      >
+        <CardContent sx={{ p: 6 }}>
+          <Box sx={{ mb: 3 }}>
+            <Typography 
+              variant="h5" 
+              sx={{ 
+                fontWeight: 500,
+                color: 'text.primary',
+                mb: 2
+              }}
+            >
+              {title}
+            </Typography>
+            <Typography 
+              variant="body1" 
+              sx={{ 
+                color: 'text.secondary',
+                lineHeight: 1.7,
+                maxWidth: '480px',
+                mx: 'auto'
+              }}
+            >
+              Please select a patient to view biomarker data.
+            </Typography>
+          </Box>
+          <Button 
+            variant="contained" 
+            color="primary"
+            size="large"
+            startIcon={<GroupIcon />}
+            onClick={() => navigate(redirectPath)}
+            sx={{
+              mt: 2,
+              px: 4,
+              py: 1.5,
+              fontSize: '1rem',
+              fontWeight: 500,
+              borderRadius: 2,
+              textTransform: 'none',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+              '&:hover': {
+                boxShadow: '0 4px 8px rgba(0,0,0,0.15)'
+              }
+            }}
+          >
+            {buttonLabel}
+          </Button>
+        </CardContent>
+      </Card>
+    </Box>
   );
 }
 
@@ -293,16 +349,28 @@ export function BiomarkerChartingPage(props){
   // Render content
   if (!selectedPatient) {
     return (
-      <div style={{paddingTop: 40, paddingLeft: paddingWidth, paddingRight: paddingWidth}}>
+      <Box 
+        sx={{
+          minHeight: '100vh',
+          backgroundColor: theme => theme.palette.mode === 'light' 
+            ? theme.palette.grey[50]  // Off-white in light mode for card contrast
+            : theme.palette.background.default,  // Default dark background
+          paddingTop: '40px',
+          paddingLeft: paddingWidth + 'px',
+          paddingRight: paddingWidth + 'px'
+        }}
+      >
         <NoDataWrapper 
           dataCount={0} 
           noDataImagePath=""
           history={props.history} 
           title="No Patient Selected"
+          subheader="Please select a patient to view their comprehensive medical dashboard. The dashboard will display encounters, conditions, procedures, observations, and other clinical data."
           buttonLabel="Lookup Patient"
           redirectPath="/patient-directory"
+          titleVariant="h5"
         />
-      </div>
+      </Box>
     );
   }
   

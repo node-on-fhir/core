@@ -74,6 +74,34 @@ export function MainPage() {
   const [selectedFloor, setSelectedFloor] = useState('all');
   const [selectedWing, setSelectedWing] = useState('all');
 
+  // Fetch Chief Medical Officer data
+  const chiefMedicalOfficer = useTracker(() => {
+    const Practitioners = get(Meteor, 'Collections.Practitioners');
+    if (!Practitioners) {
+      console.warn('Practitioners collection not available');
+      return null;
+    }
+    
+    // Find practitioner with Chief Medical Officer role
+    // You may need to adjust this query based on your actual data structure
+    const cmo = Practitioners.findOne({
+      $or: [
+        { 'qualification.code.text': 'Chief Medical Officer' },
+        { 'qualification.code.coding.display': 'Chief Medical Officer' },
+        { 'name.text': { $regex: /chief.*medical.*officer/i } }
+      ]
+    });
+    
+    if (!cmo) {
+      // Fallback: try to find any practitioner with MD qualification
+      return Practitioners.findOne({
+        'qualification.code.text': { $regex: /MD|M\.D\.|Doctor/i }
+      });
+    }
+    
+    return cmo;
+  }, []);
+
   // Mock data for single facility dashboard
   const facilityData = useTracker(() => {
     return {
@@ -314,12 +342,28 @@ export function MainPage() {
             <CardContent sx={{ p: 2 }}>
               <Box display="flex" alignItems="center" justifyContent="space-between">
                 <Box>
-                  <Typography variant="h5" fontWeight="bold">
-                    {facilityData.facility.staff.nurses + facilityData.facility.staff.cnas}
-                  </Typography>
-                  <Typography variant="body2" color="textSecondary">
-                    Staff on Duty
-                  </Typography>
+                  {chiefMedicalOfficer ? (
+                    <>
+                      <Typography variant="h6" fontWeight="bold" sx={{ fontSize: '1rem', lineHeight: 1.2 }}>
+                        {get(chiefMedicalOfficer, 'name[0].given[0]', '')} {get(chiefMedicalOfficer, 'name[0].family', 'CMO')}
+                      </Typography>
+                      <Typography variant="caption" color="textSecondary" sx={{ display: 'block' }}>
+                        Chief Medical Officer
+                      </Typography>
+                      <Typography variant="caption" color="primary" sx={{ fontSize: '0.7rem' }}>
+                        Practitioner/{get(chiefMedicalOfficer, 'id', get(chiefMedicalOfficer, '_id', 'N/A'))}
+                      </Typography>
+                    </>
+                  ) : (
+                    <>
+                      <Typography variant="h5" fontWeight="bold">
+                        CMO
+                      </Typography>
+                      <Typography variant="body2" color="textSecondary">
+                        Not Assigned
+                      </Typography>
+                    </>
+                  )}
                 </Box>
                 <GroupIcon color="info" />
               </Box>

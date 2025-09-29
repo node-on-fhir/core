@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
 import { useTracker } from 'meteor/react-meteor-data';
+import { useNavigate } from 'react-router-dom';
 
 import {
   Box,
@@ -62,6 +63,7 @@ function InternationalPatientSummaryPage(props) {
   console.log('InternationalPatientSummaryPage.props', props);
 
   const theme = useTheme();
+  const navigate = useNavigate();
   const [tabIndex, setTabIndex] = useState(0);
   const [showEditor, setShowEditor] = useState(false);
   const [narrativeContent, setNarrativeContent] = useState('');
@@ -124,6 +126,10 @@ function InternationalPatientSummaryPage(props) {
 
   async function saveComposition() {
     console.log('Saving IPS Composition...');
+    
+    // Save the narrative content to Session for use in A2A Admin
+    Session.set('ipsComposition', narrativeContent);
+    console.log('IPS narrative saved to Session for A2A integration');
     
     try {
       // Create FHIR Composition resource
@@ -331,23 +337,53 @@ You may want to try a different model or check your data.`);
   }
 
   function constructIPSPrompt(ipsData) {
-    const patientName = ipsData.patient ? 
-      `${get(ipsData.patient, 'name[0].given[0]', '')} ${get(ipsData.patient, 'name[0].family', '')}` : 
+    // Extract comprehensive patient demographics
+    const patient = ipsData.patient || {};
+    const patientName = patient ? 
+      `${get(patient, 'name[0].given[0]', '')} ${get(patient, 'name[0].family', '')}` : 
       'Unknown Patient';
     
-    let prompt = `Generate a clinical narrative summary for an International Patient Summary (IPS).
+    const birthDate = get(patient, 'birthDate', 'Unknown');
+    const gender = get(patient, 'gender', 'Unknown');
+    const identifiers = get(patient, 'identifier', []);
+    const mrn = identifiers.find(id => id.type?.coding?.[0]?.code === 'MR')?.value || 'Not specified';
+    const address = get(patient, 'address[0]', {});
+    const city = get(address, 'city', '');
+    const state = get(address, 'state', '');
+    const country = get(address, 'country', '');
+    const location = [city, state, country].filter(Boolean).join(', ') || 'Not specified';
+    
+    // Calculate age if birthDate is available
+    let age = 'Unknown';
+    if (birthDate && birthDate !== 'Unknown') {
+      const birthYear = new Date(birthDate).getFullYear();
+      const currentYear = new Date().getFullYear();
+      age = currentYear - birthYear;
+    }
+    
+    let prompt = `You are a clinical documentation specialist creating an International Patient Summary (IPS) narrative.
 
-Patient: ${patientName}
+PATIENT DEMOGRAPHICS:
+- Name: ${patientName}
+- Date of Birth: ${birthDate} (Age: ${age})
+- Gender: ${gender}
+- Medical Record Number: ${mrn}
+- Location: ${location}
 
-Based on the following structured data, create a concise, clinically relevant narrative summary:
-
+CLINICAL DATA:
 `;
 
     // Add problems
     if(ipsData.sections.problems?.length > 0) {
-      prompt += `\nActive Problems:\n`;
+      prompt += `\nActive Problems and Conditions:\n`;
       ipsData.sections.problems.forEach(problem => {
-        prompt += `- ${get(problem, 'code.coding[0].display', get(problem, 'code.text', 'Unknown'))}\n`;
+        const condition = get(problem, 'code.coding[0].display', get(problem, 'code.text', 'Unknown'));
+        const onset = get(problem, 'onsetDateTime', '');
+        const status = get(problem, 'clinicalStatus.coding[0].code', 'active');
+        prompt += `- ${condition}`;
+        if (onset) prompt += ` (onset: ${onset})`;
+        if (status !== 'active') prompt += ` [${status}]`;
+        prompt += `\n`;
       });
     }
 
@@ -355,7 +391,12 @@ Based on the following structured data, create a concise, clinically relevant na
     if(ipsData.sections.allergies?.length > 0) {
       prompt += `\nAllergies and Intolerances:\n`;
       ipsData.sections.allergies.forEach(allergy => {
-        prompt += `- ${get(allergy, 'code.coding[0].display', get(allergy, 'code.text', 'Unknown'))} (${get(allergy, 'criticality', 'unknown')} criticality)\n`;
+        const allergen = get(allergy, 'code.coding[0].display', get(allergy, 'code.text', 'Unknown'));
+        const criticality = get(allergy, 'criticality', 'unknown');
+        const reaction = get(allergy, 'reaction[0].manifestation[0].coding[0].display', '');
+        prompt += `- ${allergen} (${criticality} criticality)`;
+        if (reaction) prompt += ` - Reaction: ${reaction}`;
+        prompt += `\n`;
       });
     }
 
@@ -365,19 +406,56 @@ Based on the following structured data, create a concise, clinically relevant na
       ipsData.sections.medications.forEach(med => {
         const medName = get(med, 'medicationCodeableConcept.coding[0].display', 
           get(med, 'medicationCodeableConcept.text', 'Unknown'));
-        prompt += `- ${medName}\n`;
+        const dosage = get(med, 'dosage[0].text', '');
+        const route = get(med, 'dosage[0].route.coding[0].display', '');
+        prompt += `- ${medName}`;
+        if (dosage) prompt += ` - ${dosage}`;
+        if (route) prompt += ` (${route})`;
+        prompt += `\n`;
       });
     }
 
-    prompt += `\nPlease generate a professional clinical narrative that:
-1. Summarizes the patient's current health status
-2. Highlights key problems and conditions
-3. Notes important allergies and their severity
-4. Lists current medications
-5. Is suitable for cross-border care scenarios
-6. Uses clear, professional medical language
+    // Add immunizations if present
+    if(ipsData.sections.immunizations?.length > 0) {
+      prompt += `\nImmunizations:\n`;
+      ipsData.sections.immunizations.forEach(imm => {
+        const vaccine = get(imm, 'vaccineCode.coding[0].display', 'Unknown vaccine');
+        const date = get(imm, 'occurrenceDateTime', '');
+        prompt += `- ${vaccine}`;
+        if (date) prompt += ` (${date})`;
+        prompt += `\n`;
+      });
+    }
 
-Narrative Summary:`;
+    // Add vital signs if present
+    if(ipsData.sections.vitalSigns?.length > 0) {
+      prompt += `\nRecent Vital Signs:\n`;
+      ipsData.sections.vitalSigns.slice(0, 5).forEach(vital => {
+        const type = get(vital, 'code.coding[0].display', 'Unknown');
+        const value = get(vital, 'valueQuantity.value', '');
+        const unit = get(vital, 'valueQuantity.unit', '');
+        const date = get(vital, 'effectiveDateTime', '');
+        prompt += `- ${type}: ${value} ${unit}`;
+        if (date) prompt += ` (${date})`;
+        prompt += `\n`;
+      });
+    }
+
+    prompt += `
+INSTRUCTIONS:
+Generate a comprehensive clinical narrative that:
+1. BEGINS with patient demographics (name, age, gender, location)
+2. Summarizes the patient's current health status in narrative form
+3. Integrates problems, medications, and allergies into a coherent clinical picture
+4. Highlights critical safety information (allergies, contraindications)
+5. Provides a chronological overview when relevant
+6. Uses professional medical terminology appropriate for healthcare providers
+7. Is suitable for international care coordination and cross-border scenarios
+8. Maintains a clear, structured format with appropriate paragraphs
+
+Format the narrative as prose paragraphs, not lists. Begin with: "This International Patient Summary presents..."
+
+CLINICAL NARRATIVE:`;
 
     return prompt;
   }
@@ -386,6 +464,15 @@ Narrative Summary:`;
     console.log('Generating with WebLLM...', config.model);
     
     try {
+      // Detect if we're on iPad/iOS
+      const isIPad = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
+                     (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+      
+      // Determine if this is a large model (>2GB)
+      const isLargeModel = config.model.includes('Mistral-7B') || 
+                          config.model.includes('7B') ||
+                          config.model.includes('Phi-3.5');
+      
       // WebLLM runs directly in the browser
       // Check if WebLLM is available
       if (!window.webllm) {
@@ -433,35 +520,149 @@ Narrative Summary:`;
           config.onProgress('Initializing WebLLM engine...', 15);
         }
         
-        const engine = await window.webllm.CreateMLCEngine(
-          config.model,
-          { initProgressCallback }
-        );
+        // Use conservative settings for iPad to prevent memory issues
+        // For large models on iPad, use even more conservative settings
+        let engineConfig;
+        if (isIPad) {
+          if (isLargeModel) {
+            // Ultra-conservative for large models on iPad
+            engineConfig = {
+              initProgressCallback,
+              logLevel: 'INFO',
+              // Minimal context window for large models
+              contextWindowSize: 512,
+              // Additional memory-saving options if available
+              maxBatchSize: 1,
+              maxGenLen: 256
+            };
+            console.log('Using ultra-conservative settings for large model on iPad');
+          } else {
+            // Standard conservative for smaller models on iPad
+            engineConfig = {
+              initProgressCallback,
+              logLevel: 'INFO',
+              contextWindowSize: 1024,
+              maxBatchSize: 1
+            };
+          }
+        } else {
+          // Desktop can handle more
+          engineConfig = {
+            initProgressCallback
+          };
+        }
+        
+        // Clear any existing engines to free memory before creating new one
+        if (isIPad && window.webllm.engine) {
+          try {
+            console.log('Clearing existing WebLLM engine to free memory');
+            await window.webllm.engine.unload();
+            delete window.webllm.engine;
+            // Give browser time to garbage collect
+            await new Promise(resolve => setTimeout(resolve, 500));
+          } catch(e) {
+            console.log('Could not clear existing engine:', e);
+          }
+        }
+        
+        let engine;
+        try {
+          engine = await window.webllm.CreateMLCEngine(
+            config.model,
+            engineConfig
+          );
+          
+          // Store engine reference for cleanup
+          window.webllm.engine = engine;
+        } catch (engineError) {
+          console.error('Failed to create WebLLM engine:', engineError);
+          
+          // If we're on iPad with a large model, suggest alternatives
+          if (isIPad && isLargeModel) {
+            throw new Error(`Mistral 7B requires too much memory for iPad. Please try:
+• Llama 3.2 1B (works well, 650MB)
+• Llama 3.2 3B (1.8GB) 
+• Close other apps to free memory
+• Use BYOLLMK with cloud API instead`);
+          }
+          
+          // Re-throw for other cases
+          throw engineError;
+        }
         
         if (config.onProgress) {
           config.onProgress('Generating narrative summary...', 90);
+        }
+        
+        // Adjust prompts based on model size and platform
+        let systemPrompt;
+        let finalPrompt = prompt;
+        let maxTokens;
+        
+        if (isIPad && isLargeModel) {
+          // Minimal prompt for large models on iPad
+          systemPrompt = "Summarize this patient data concisely.";
+          
+          // Aggressively truncate prompt - just keep essentials
+          if (prompt.length > 1500) {
+            const lines = prompt.split('\n');
+            const patientInfo = lines.slice(0, 5).join('\n');
+            const keyData = lines.slice(5, 20).join('\n');
+            finalPrompt = `${patientInfo}\n\n${keyData}\n\nProvide a brief clinical summary.`;
+            console.log('Aggressively truncated prompt for large model from', prompt.length, 'to', finalPrompt.length);
+          }
+          maxTokens = 256;
+        } else if (isIPad) {
+          // Standard iPad optimization for smaller models
+          systemPrompt = "Generate a concise clinical summary for this International Patient Summary.";
+          
+          if (prompt.length > 2500) {
+            const lines = prompt.split('\n');
+            const patientSection = lines.slice(0, 8).join('\n');
+            const clinicalSection = lines.slice(8, 30).join('\n');
+            const instructionSection = lines.slice(-8).join('\n');
+            finalPrompt = patientSection + '\n\n' + clinicalSection + '\n\n' + instructionSection;
+            console.log('Truncated prompt for iPad from', prompt.length, 'to', finalPrompt.length);
+          }
+          maxTokens = 400;
+        } else {
+          // Desktop - full capability
+          systemPrompt = "You are a clinical assistant helping to generate International Patient Summary narratives. Provide professional, concise clinical summaries.";
+          maxTokens = 1000;
         }
         
         // Generate the narrative
         const messages = [
           { 
             role: "system", 
-            content: "You are a clinical assistant helping to generate International Patient Summary narratives. Provide professional, concise clinical summaries." 
+            content: systemPrompt
           },
           { 
             role: "user", 
-            content: prompt 
+            content: finalPrompt
           }
         ];
         
         const reply = await engine.chat.completions.create({
           messages,
           temperature: 0.7,
-          max_tokens: 1000
+          max_tokens: maxTokens
         });
         
         if (config.onProgress) {
           config.onProgress('Finalizing narrative...', 100);
+        }
+        
+        // Clean up engine to free memory on iPad
+        if (isIPad && engine.unload) {
+          setTimeout(() => {
+            try {
+              engine.unload();
+              console.log('WebLLM engine unloaded to free memory');
+            } catch(e) {
+              console.log('Could not unload engine:', e);
+            }
+          }, 1000);
         }
         
         return reply.choices[0].message.content;
@@ -481,6 +682,15 @@ ${prompt}
       }
     } catch (error) {
       console.error('Error with WebLLM generation:', error);
+      
+      // If we get a memory-related error on iPad, provide a helpful message
+      if (/iPad|iPhone|iPod/.test(navigator.userAgent) || 
+          (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)) {
+        if (error.message && (error.message.includes('memory') || error.message.includes('quota'))) {
+          throw new Error('Memory limit exceeded on iPad. Try using a smaller model or closing other apps.');
+        }
+      }
+      
       throw error;
     }
   }
@@ -601,8 +811,16 @@ ${prompt}
               variant="outlined" 
               size="small"
               onClick={saveComposition}
+              sx={{ mr: 1 }}
             >
-              Save Composition
+              Save
+            </Button>
+            <Button 
+              variant="outlined" 
+              size="small"
+              onClick={() => navigate('/compositions')}
+            >
+              Compositions
             </Button>
           </Box>
           <Box sx={{ height: '500px', border: 1, borderColor: 'divider', borderRadius: 1 }}>

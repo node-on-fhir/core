@@ -12,8 +12,7 @@ import { ImportButtons } from './client/DataFooterButtons';
 let DynamicRoutes = [{
   'name': 'Import',
   'path': '/import-data',
-  'element': <ImportPage />,
-  'requireAuth': true
+  'element': <ImportPage />
 }, {
   'name': 'EditorRoute',
   'path': '/data-editor',
@@ -47,7 +46,6 @@ export {
   AdminDynamicRoutes,
   AdminSidebarElements,
   FooterButtons,
-  SidebarWorkflows,
 
   ImportPage,
 
