@@ -33,8 +33,8 @@ accounts-base
 mdg:validated-method
 fetch
 
-clinical:data-importer
-clinical:data-exporter
+# clinical:data-importer
+# clinical:data-exporter
 # clinical:pacio-core
 # clinical:request-for-corrections
 # clinical:international-patient-summary
