@@ -42,6 +42,7 @@ import moment from 'moment';
 import { parseString } from 'xml2js';
 import xml2js from 'xml2js';
 import XLSX from 'xlsx';
+import JSZip from 'jszip';
 
 import MedicalRecordImporter from '../lib/MedicalRecordImporter';
 
@@ -370,8 +371,17 @@ export function ImportEditorBindings(props){
   }
 
   strigifiedImportBuffer = useTracker(function(){    
-    if(Session.get("importBuffer")){
-      return JSON.stringify(Session.get("importBuffer"), null, 2);
+    const buffer = Session.get("importBuffer");
+    if(buffer){
+      // Don't try to stringify ArrayBuffer or binary data
+      if(buffer instanceof ArrayBuffer || buffer instanceof Uint8Array){
+        return "[Binary Data - Apple Health Export]";
+      }
+      try {
+        return JSON.stringify(buffer, null, 2);
+      } catch(e) {
+        return String(buffer);
+      }
     } else {
       return "";
     }
@@ -408,6 +418,8 @@ export function ImportEditorBindings(props){
   const [page, setPage] = useState(0);
   const [rowsPerPageToRender, setRowsPerPage] = useState(5);
   const [showPreviewData, setShowPreviewData] = useState(false);
+  const [appleHealthTimeRange, setAppleHealthTimeRange] = useState('all');
+  const [showAppleHealthOptions, setShowAppleHealthOptions] = useState(false);
 
   let paginationCount = 0;
   if(Array.isArray(importQueue)){
@@ -458,61 +470,87 @@ export function ImportEditorBindings(props){
       let promises = Object.keys(fileList).map(function(fileIndex){
 
         return new Promise(function (resolve, reject) {
+          const currentFile = fileList[fileIndex];
+          const fileType = currentFile.type || currentFile.name.split(".").pop();
+          const isZipFile = ['application/zip', 'application/x-zip-compressed', 'zip'].includes(fileType) || currentFile.name.endsWith('.zip');
+          
           var reader = new FileReader();
           reader.onload = function(event){
 
             let newQueueItem = {
-              name: fileList[fileIndex].name,
-              lastModifiedDate: fileList[fileIndex].lastModifiedDate,
-              size: fileList[fileIndex].size,
-              name: fileList[fileIndex].name,
-              type: fileList[fileIndex].type ? fileList[fileIndex].type : fileList[fileIndex].name.split(".")[1],
+              name: currentFile.name,
+              lastModifiedDate: currentFile.lastModifiedDate,
+              size: currentFile.size,
+              type: fileType,
               status: 'loaded'
             }
             
-            console.log('FileReader.fileList[fileIndex]', fileList[fileIndex]);
+            console.log('FileReader.currentFile', currentFile);
             console.log('FileReader.newQueueItem', newQueueItem);
-            var content = event.target.result;   
-            console.log('content', content);
-
-            let fileType = get(fileList[fileIndex], 'type');
-            console.log('fileType', fileType);
             
-            var parsedContent;
+            if(isZipFile){
+              // Handle Apple Health export zip files
+              console.log('Processing Apple Health export zip file as ArrayBuffer');
+              const arrayBuffer = event.target.result;
+              newQueueItem.content = arrayBuffer;
+              newQueueItem.isAppleHealthExport = true;
+              setShowAppleHealthOptions(true);
+              
+              // Pre-analyze the Apple Health export
+              MedicalRecordImporter.analyzeAppleHealthExport(arrayBuffer).then(analysis => {
+                if (!analysis.error) {
+                  // Store the analysis for display
+                  Session.set('appleHealthAnalysis', analysis);
+                }
+              }).catch(err => {
+                console.error('Error analyzing Apple Health export:', err);
+              });
+              
+              resolve(newQueueItem);
+            } else {
+              var content = event.target.result;   
+              console.log('content', content);
+              
+              var parsedContent;
 
-            if(newQueueItem.type === "text/csv"){
-              parsedContent = PapaParse.parse(content); 
-              newQueueItem.content = parsedContent.data;
-            } else if(['application/json', 'application/json+fhir'].includes(newQueueItem.type)){
-              parsedContent = JSON.parse(content); 
-              newQueueItem.content = parsedContent;
-            } else if(['phr', 'application/phr', 'ndjson', 'application/x-ndjson', 'application/ndjson', 'application/ndjson+fhir'].includes(newQueueItem.type)){
-              let newlineArray = content.split('\n');
+              if(newQueueItem.type === "text/csv"){
+                parsedContent = PapaParse.parse(content); 
+                newQueueItem.content = parsedContent.data;
+              } else if(['application/json', 'application/json+fhir'].includes(newQueueItem.type)){
+                parsedContent = JSON.parse(content); 
+                newQueueItem.content = parsedContent;
+              } else if(['phr', 'application/phr', 'ndjson', 'application/x-ndjson', 'application/ndjson', 'application/ndjson+fhir'].includes(newQueueItem.type)){
+                let newlineArray = content.split('\n');
 
-              console.log('newlineArray', newlineArray)
-              console.log('newlineArray.length', newlineArray.length)
+                console.log('newlineArray', newlineArray)
+                console.log('newlineArray.length', newlineArray.length)
 
-              if(Array.isArray(newlineArray)){
-                newQueueItem.content = [];
-                newlineArray.forEach(function(line){
-                  // console.log('line', line)
-                  if(line){
-                    console.log('line', line)
-                    let parsedContent = JSON.parse(line);
-                    console.log('parsedContent', parsedContent)
-  
-                    newQueueItem.content.push(parsedContent);  
-                  }
-                })
+                if(Array.isArray(newlineArray)){
+                  newQueueItem.content = [];
+                  newlineArray.forEach(function(line){
+                    // console.log('line', line)
+                    if(line){
+                      console.log('line', line)
+                      let parsedContent = JSON.parse(line);
+                      console.log('parsedContent', parsedContent)
+    
+                      newQueueItem.content.push(parsedContent);  
+                    }
+                  })
+                }
               }
+
+              logger.trace('FileReader.newQueueItem', newQueueItem);
+              resolve(newQueueItem)
             }
-
-            logger.trace('FileReader.newQueueItem', newQueueItem);
-
-            resolve(newQueueItem)
           };
 
-          reader.readAsText(fileList[fileIndex]);             
+          // Read zip files as ArrayBuffer, everything else as text
+          if(isZipFile){
+            reader.readAsArrayBuffer(currentFile);
+          } else {
+            reader.readAsText(currentFile);
+          }             
         });
       })
 
@@ -541,6 +579,24 @@ export function ImportEditorBindings(props){
       case 0:  // FHIR Bundle
         Session.set('previewBuffer', importBuffer);
         MedicalRecordImporter.importBundle(importBuffer);
+        break;
+      case 1:  // Apple Health Export
+        console.log('Processing Apple Health Export with time range:', appleHealthTimeRange);
+        if(importBuffer && typeof importBuffer === 'object') {
+          MedicalRecordImporter.importAppleHealthExport(importBuffer, {
+            timeRange: appleHealthTimeRange,
+            includeWorkouts: true,
+            includeClinicalRecords: true,
+            includeHealthRecords: true
+          }).then(result => {
+            if(result.success) {
+              console.log('Apple Health import successful');
+              Session.set('lastUpdated', new Date());
+            } else {
+              console.error('Apple Health import failed:', result.error);
+            }
+          });
+        }
         break;      
       case 4:  // FaceBook
         parseFacebookProfile(importBuffer);
@@ -1099,7 +1155,7 @@ export function ImportEditorBindings(props){
     }
   }
 
-  function digestData(editorContent, fileExtension, selectedAlgorithm){
+  function digestData(editorContent, fileExtension, selectedAlgorithm, appleHealthOptions){
     console.log('================================================================')
     console.log('DIGESTING DATA')
     console.log('digestData.editorContent', editorContent)
@@ -1107,9 +1163,27 @@ export function ImportEditorBindings(props){
     console.log('digestData.fileExtension', fileExtension)
     console.log('')
 
-
-    if(!editorContent){
-      editorContent = Session.get('importBuffer');
+    // For Apple Health Export (algorithm 1), we need the ArrayBuffer
+    if(selectedAlgorithm === 1){
+      // Check if we have the ArrayBuffer in the import buffer
+      if(importBuffer instanceof ArrayBuffer){
+        console.log('Using ArrayBuffer from importBuffer for Apple Health Export');
+        editorContent = importBuffer;
+      } else {
+        // Try to get from session
+        const sessionBuffer = Session.get('importBuffer');
+        if(sessionBuffer instanceof ArrayBuffer){
+          console.log('Using ArrayBuffer from Session for Apple Health Export');
+          editorContent = sessionBuffer;
+        } else {
+          console.error('Apple Health Export requires ArrayBuffer but none found');
+          console.log('importBuffer type:', typeof importBuffer);
+          console.log('sessionBuffer type:', typeof sessionBuffer);
+        }
+      }
+    } else if(!editorContent){
+      // Try to get from state first, then from session
+      editorContent = importBuffer || Session.get('importBuffer');
     }
     //  else {
     //   Session.set('importBuffer', editorContent)
@@ -1118,7 +1192,7 @@ export function ImportEditorBindings(props){
 
     let proxyUrl = get(Meteor, 'settings.public.interfaces.fhirRelay.channel.endpoint', 'http://localhost:3000/baseR4')
 
-    parseFileContents(editorContent, fileExtension, selectedAlgorithm)
+    parseFileContents(editorContent, fileExtension, selectedAlgorithm, appleHealthOptions)
 
     switch (selectedAlgorithm) {
       case 2:
@@ -1146,6 +1220,12 @@ export function ImportEditorBindings(props){
     }
     console.log("Scanning the preview buffer...", previewBuffer)
     console.log("preview buffer type...", typeof previewBuffer)
+    
+    // Skip scanning for ArrayBuffer (zip files)
+    if(previewBuffer instanceof ArrayBuffer){
+      console.log('Skipping scan for ArrayBuffer (likely a zip file)');
+      return;
+    }
 
     let resourceTypes = [];
     let preview = {};
@@ -1278,14 +1358,18 @@ export function ImportEditorBindings(props){
 
 
 
-  async function parseFileContents(previewBuffer, fileExtension, mappingAlgorithm){
+  async function parseFileContents(previewBuffer, fileExtension, mappingAlgorithm, appleHealthOptions){
     // do a quick scan to determine which resource types are being used
 
     console.log('--------------------------------------------------------')
     console.log('Parsing Data')
+    console.log('previewBuffer type:', typeof previewBuffer);
+    console.log('Is ArrayBuffer?', previewBuffer instanceof ArrayBuffer);
 
-
-    scanData(previewBuffer, true);
+    // Skip scanning for binary data like ArrayBuffer
+    if(!(previewBuffer instanceof ArrayBuffer)){
+      scanData(previewBuffer, true);
+    }
   
 
     logger.debug('File mime type: ' + fileExtension);
@@ -1397,14 +1481,54 @@ export function ImportEditorBindings(props){
       // logger.debug('ImportEditorBindings.MappingAlgorithm: ' + mappingAlgorithm);
 
       MedicalRecordImporter.importNdjson(previewBuffer);      
+    } else if(['application/zip', 'application/x-zip-compressed', 'zip'].includes(fileExtension) || previewBuffer instanceof ArrayBuffer){
+      console.log("Detected zip file or ArrayBuffer (likely Apple Health Export)");
+      if(mappingAlgorithm === 1 && previewBuffer instanceof ArrayBuffer) {
+        console.log('Processing Apple Health Export with ArrayBuffer');
+        const importOptions = appleHealthOptions || {
+          timeRange: appleHealthTimeRange,
+          includeWorkouts: true,
+          includeClinicalRecords: true,
+          includeHealthRecords: true
+        };
+        MedicalRecordImporter.importAppleHealthExport(previewBuffer, importOptions).then(result => {
+          console.log('Apple Health import result:', result);
+          Session.set('lastUpdated', new Date());
+        }).catch(error => {
+          console.error('Apple Health import error:', error);
+        });
+      } else {
+        console.error('Zip file detected but not processing as Apple Health Export');
+      }
     } else {
       logger.debug("Otherwise, we're going to assume that this is a JSON or FHIR file.  Parsing...")
       logger.debug('File contents: ', previewBuffer);
 
       
       switch (mappingAlgorithm) {
-        case 1:  // FHIR Bundle
+        case 0:  // FHIR Bundle
           MedicalRecordImporter.importBundle(previewBuffer);
+          break;
+        case 1:  // Apple Health Export
+          console.log('Processing Apple Health Export with mapping algorithm 1');
+          if(previewBuffer instanceof ArrayBuffer) {
+            const importOptions = appleHealthOptions || {
+              timeRange: appleHealthTimeRange,
+              includeWorkouts: true,
+              includeClinicalRecords: true,
+              includeHealthRecords: true
+            };
+            MedicalRecordImporter.importAppleHealthExport(previewBuffer, importOptions).then(result => {
+              if(result.success) {
+                console.log('Apple Health import successful');
+                Session.set('lastUpdated', new Date());
+              } else {
+                console.error('Apple Health import failed:', result.error);
+              }
+            });
+          } else {
+            console.error('Apple Health Export requires ArrayBuffer format');
+          }
           break;      
         case 2:  // FaceBook
           parseFacebookProfile(previewBuffer);
@@ -1488,6 +1612,35 @@ export function ImportEditorBindings(props){
     }
     if(get(queueItem, 'type')){
       fileExtension = get(queueItem, 'type');
+    }
+    
+    // Check if this is an Apple Health export
+    if(get(queueItem, 'isAppleHealthExport')){
+      console.log('Processing Apple Health Export file');
+      // Set the mapping algorithm to Apple Health Export
+      setMappingAlgorithm(1);
+      
+      // Import the Apple Health data directly
+      MedicalRecordImporter.importAppleHealthExport(previewBuffer, {
+        timeRange: appleHealthTimeRange,
+        includeWorkouts: true,
+        includeClinicalRecords: true,
+        includeHealthRecords: true
+      }).then(result => {
+        if(result.success) {
+          console.log('Apple Health import successful');
+          Session.set('lastUpdated', new Date());
+        } else {
+          console.error('Apple Health import failed:', result.error);
+        }
+      });
+      
+      // Mark as completed
+      if(typeof resolve === "function"){
+        queueItem.status = "completed";
+        resolve(queueItem);
+      }
+      return; // Exit early since we handled the import
     }
     
     // // make sure we're dealing with a json object
@@ -1612,10 +1765,16 @@ export function ImportEditorBindings(props){
     Session.set("fileExtension", get(item, 'type'))
     Session.set('lastUpdated', new Date())
 
-    // TODO: how do we get the item content?
-
-    // Session.set('importBuffer', get(item, 'content'));
-
+    // Set the import buffer with the file content
+    if(get(item, 'content')){
+      setImportBuffer(get(item, 'content'));
+      Session.set('importBuffer', get(item, 'content'));
+    }
+    
+    // For Apple Health exports, set the mapping algorithm
+    if(get(item, 'isAppleHealthExport')){
+      setMappingAlgorithm(1);
+    }
   }  
   function openPageUrl(url){
     console.log('openPageUrl', url)
@@ -1865,7 +2024,7 @@ export function ImportEditorBindings(props){
                 readyToImport={readyToImport}
                 progressMax={importQueueLength}
                 progressValue={progressValue}
-                importBuffer={strigifiedImportBuffer}
+                importBuffer={importBuffer || Session.get('importBuffer') || strigifiedImportBuffer}
                 mappingAlgorithm={mappingAlgorithm}
                 fileExtension={fileExtension}
                 // onImportFile={importFile.bind(this)}
@@ -1874,6 +2033,7 @@ export function ImportEditorBindings(props){
                 onChangeMappingAlgorithm={changeMappingAlgorithm}
                 onMapData={mapData}
                 editWrapEnabled={editWrapEnabled}
+                onAppleHealthTimeRangeChange={(value) => setAppleHealthTimeRange(value)}
               />
             </Card>
           </Grid>

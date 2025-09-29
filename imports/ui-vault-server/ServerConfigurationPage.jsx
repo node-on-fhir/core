@@ -302,6 +302,53 @@ function ServerConfigurationPage(props){
       }
     })
   }
+  
+  function generateResearchStudies(){
+    console.log("Generating Research Studies...")
+
+    Meteor.call('generateResearchStudies', 10, function(error, result){
+      if(error){
+        console.error('error', error)
+        alert('Error generating Research Studies: ' + error.message)
+      }
+      if(result){
+        console.log('result', result)
+        alert(result.message)
+      }
+    })
+  }
+  
+  function generateResearchSubjects(){
+    console.log("Generating Research Subjects...")
+
+    Meteor.call('generateResearchSubjects', 20, function(error, result){
+      if(error){
+        console.error('error', error)
+        alert('Error generating Research Subjects: ' + error.message)
+      }
+      if(result){
+        console.log('result', result)
+        alert(result.message)
+      }
+    })
+  }
+  
+  function clearResearchData(){
+    console.log("Clearing Research Data...")
+    
+    if(confirm("Are you sure you want to clear all Research Studies and Subjects?")){
+      Meteor.call('clearResearchData', function(error, result){
+        if(error){
+          console.error('error', error)
+          alert('Error clearing Research Data: ' + error.message)
+        }
+        if(result){
+          console.log('result', result)
+          alert(result.message)
+        }
+      })
+    }
+  }
   function handleSyncProviderDirectory(){
     console.log("Syncing provider directory...")
 
@@ -742,6 +789,42 @@ function ServerConfigurationPage(props){
       </CardContent>
     </Card>
   }
+  
+  // Synthea DB Utils - Research Study/Subject generation
+  let syntheaDbUtilsElements;
+  if(currentUser && get(Meteor, 'settings.public.enableSyntheaDbUtils')){
+    syntheaDbUtilsElements = <Card key={Random.id()} margin={20} style={{marginBottom: '20px', width: '100%'}}>
+      <CardHeader 
+        title="Synthea Database Utilities" 
+        subheader="Generate synthetic Research Studies and Subjects for testing"
+      />
+      <CardContent>        
+        <Button
+          variant="contained"
+          fullWidth
+          size="small"
+          color="primary"
+          onClick={ generateResearchStudies.bind(this) }
+          style={{marginBottom: '5px'}}
+        >Generate Research Studies (10)</Button>
+        <Button
+          variant="contained"
+          fullWidth
+          size="small"
+          color="primary"
+          onClick={ generateResearchSubjects.bind(this) }
+          style={{marginBottom: '5px'}}
+        >Generate Research Subjects (20)</Button>
+        <Button
+          variant="outlined"
+          fullWidth
+          size="small"
+          color="error"
+          onClick={ clearResearchData.bind(this) }
+        >Clear All Research Data</Button>
+      </CardContent>
+    </Card>
+  }
 
 
   let upstreamServerSyncButton = <Button
@@ -937,6 +1020,7 @@ function ServerConfigurationPage(props){
             { subscriptionsCard }
             { tefcaEndpointsElements }
             { initSampleDataElements }
+            { syntheaDbUtilsElements }
             { serverConfigComponents }
           </Grid>
         </Grid>

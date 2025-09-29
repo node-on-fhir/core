@@ -12,7 +12,8 @@ import {
   CardContent,
   Button,
   Box,
-  Typography
+  Typography,
+  TextField
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add'; 
 
@@ -53,9 +54,39 @@ Session.setDefault('CompositionsTable.compositionsIndex', 0)
 
 export function CompositionsPage(props){
   const navigate = useNavigate();
+  const [searchFilter, setSearchFilter] = useState('');
   
-  // Subscribe to compositions
-  const isLoading = useSubscribe('pacio.compositions');
+  // Subscribe to compositions with search filter
+  const isLoading = useTracker(() => {
+    let query = {};
+    
+    // Add search filter if present
+    if(searchFilter && searchFilter.length > 0) {
+      query = {
+        $or: [
+          {'_id': searchFilter},
+          {'id': searchFilter},
+          {'identifier.value': searchFilter},
+          {'type.text': {$regex: searchFilter, $options: 'i'}},
+          {'type.coding.0.display': {$regex: searchFilter, $options: 'i'}},
+          {'type.coding.0.code': searchFilter},
+          {'subject.display': {$regex: searchFilter, $options: 'i'}},
+          {'subject.reference': {$regex: searchFilter, $options: 'i'}}
+        ]
+      };
+    }
+    
+    // Check if autopublish is enabled
+    let autoPublishEnabled = get(Meteor, 'settings.public.defaults.autopublish', false);
+    
+    if(autoPublishEnabled){
+      const handle = Meteor.subscribe('autopublish.Compositions', query, { limit: 1000 });
+      return !handle.ready();
+    } else {
+      const handle = Meteor.subscribe('pacio.compositions', query);
+      return !handle.ready();
+    }
+  }, [searchFilter]);
 
   let data = {
     currentCompositionId: '',
@@ -80,8 +111,26 @@ export function CompositionsPage(props){
     return Compositions.findOne({_id: Session.get('selectedCompositionId')});
   }, [])
   data.compositions = useTracker(function(){
-    return Compositions.find().fetch();
-  }, [])
+    let query = {};
+    
+    // Apply same search filter as subscription
+    if(searchFilter && searchFilter.length > 0) {
+      query = {
+        $or: [
+          {'_id': searchFilter},
+          {'id': searchFilter},
+          {'identifier.value': searchFilter},
+          {'type.text': {$regex: searchFilter, $options: 'i'}},
+          {'type.coding.0.display': {$regex: searchFilter, $options: 'i'}},
+          {'type.coding.0.code': searchFilter},
+          {'subject.display': {$regex: searchFilter, $options: 'i'}},
+          {'subject.reference': {$regex: searchFilter, $options: 'i'}}
+        ]
+      };
+    }
+    
+    return Compositions.find(query).fetch();
+  }, [searchFilter])
   data.compositionsIndex = useTracker(function(){
     return Session.get('CompositionsTable.compositionsIndex')
   }, [])
@@ -134,6 +183,19 @@ export function CompositionsPage(props){
             >
               Add Composition
             </Button>
+          </Grid>
+        </Grid>
+        <Grid container spacing={2} sx={{ mt: 2 }}>
+          <Grid item xs={12}>
+            <TextField
+              id="compositionSearchInput"
+              fullWidth
+              placeholder="Search compositions by ID, identifier, type display, type code, or subject..."
+              value={searchFilter}
+              onChange={(e) => setSearchFilter(e.target.value)}
+              variant="outlined"
+              size="small"
+            />
           </Grid>
         </Grid>
       </Box>

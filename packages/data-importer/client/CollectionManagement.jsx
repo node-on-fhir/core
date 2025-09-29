@@ -104,6 +104,8 @@ let supportedResources = [
   "Questionnaire",
   "QuestionnaireResponse",
   "RelatedPerson",
+  "ResearchStudy",
+  "ResearchSubject",
   "Restriction",
   "RiskAssessment",
   "SearchParameter",
@@ -223,28 +225,34 @@ export function CollectionManagement(props){
   //------------------------------------------------------------
   // TODO: Refactor using the following
 
-  let collectionManagementQuery = {};
+  // Watch for collection updates
+  useTracker(function(){
+    // This will re-run when lastUpdated changes
+    Session.get('lastUpdated');
+    
+    let collectionManagementQuery = {};
 
-  if(props.selectedPatientId){
-    collectionManagementQuery["subject.reference"] = "urn:uuid:" + props.selectedPatientId
-  }
-  supportedResources.forEach(function(resourceName){
-    if(typeof window.Collections[Meteor.FhirUtilities.pluralizeResourceName(resourceName)] === "object"){
-      data.collections.client[resourceName] = window.Collections[Meteor.FhirUtilities.pluralizeResourceName(resourceName)].find(collectionManagementQuery).count();
-      data.collections.localClient[resourceName] = window.Collections[Meteor.FhirUtilities.pluralizeResourceName(resourceName)]._collection.find(collectionManagementQuery).count();
-
-      if(Meteor.default_connection){
-        Object.keys( Meteor.default_connection._subscriptions).forEach(function(key) {
-          if(Meteor.default_connection._subscriptions[key]){
-            var record = Meteor.default_connection._subscriptions[key];          
-            if(record.name === Meteor.FhirUtilities.pluralizeResourceName(resourceName)){
-              data.collections.pubsub[resourceName] = true;
-            }  
-          }
-        });
-      }
+    if(props.selectedPatientId){
+      collectionManagementQuery["subject.reference"] = "urn:uuid:" + props.selectedPatientId
     }
-  });
+    supportedResources.forEach(function(resourceName){
+      if(typeof window.Collections[Meteor.FhirUtilities.pluralizeResourceName(resourceName)] === "object"){
+        data.collections.client[resourceName] = window.Collections[Meteor.FhirUtilities.pluralizeResourceName(resourceName)].find(collectionManagementQuery).count();
+        data.collections.localClient[resourceName] = window.Collections[Meteor.FhirUtilities.pluralizeResourceName(resourceName)]._collection.find(collectionManagementQuery).count();
+
+        if(Meteor.default_connection){
+          Object.keys( Meteor.default_connection._subscriptions).forEach(function(key) {
+            if(Meteor.default_connection._subscriptions[key]){
+              var record = Meteor.default_connection._subscriptions[key];          
+              if(record.name === Meteor.FhirUtilities.pluralizeResourceName(resourceName)){
+                data.collections.pubsub[resourceName] = true;
+              }  
+            }
+          });
+        }
+      }
+    });
+  }, [props.selectedPatientId]);
 
   // console.log('ImportPage.CollectionManagement.data', data)
 
@@ -525,6 +533,9 @@ export function CollectionManagement(props){
         break;        
       case 'ResearchStudies':      
         singularized = 'ResearchStudy';
+        break;        
+      case 'ResearchSubjects':      
+        singularized = 'ResearchSubject';
         break;        
       default:
         singularized = resourceTypeString.substring(0, resourceTypeString.length - 1)
@@ -1935,6 +1946,42 @@ export function CollectionManagement(props){
     </TableRow>
   }
 
+  let researchStudiesRow;
+  if(determineRowVisible("ResearchStudy")){
+    shouldDisplayNoDataRow = false;
+    researchStudiesRow = <TableRow className='dataManagementRow'  hover={true}>
+      { renderIcon("ResearchStudy") }
+      { renderImportCheckmark(methods.toggleResearchStudies.bind(this), 'ResearchStudy') }
+      <TableCell className="collection">Research Studies</TableCell>
+      { renderPreview('ResearchStudy')} 
+      { renderClientCount('ResearchStudy')} 
+      { renderLocalClientCount('ResearchStudy')} 
+      { renderPubSub('ResearchStudy')} 
+      { renderImportButton('ResearchStudies')} 
+      { renderDropButton('ResearchStudy')} 
+      { renderExportButton('ResearchStudies')} 
+      { renderExportCheckmark(exportMethods.toggleResearchStudiesExport.bind(this), 'ResearchStudy') }
+    </TableRow>
+  }
+
+  let researchSubjectsRow;
+  if(determineRowVisible("ResearchSubject")){
+    shouldDisplayNoDataRow = false;
+    researchSubjectsRow = <TableRow className='dataManagementRow'  hover={true}>
+      { renderIcon("ResearchSubject") }
+      { renderImportCheckmark(methods.toggleResearchSubjects.bind(this), 'ResearchSubject') }
+      <TableCell className="collection">Research Subjects</TableCell>
+      { renderPreview('ResearchSubject')} 
+      { renderClientCount('ResearchSubject')} 
+      { renderLocalClientCount('ResearchSubject')} 
+      { renderPubSub('ResearchSubject')} 
+      { renderImportButton('ResearchSubjects')} 
+      { renderDropButton('ResearchSubject')} 
+      { renderExportButton('ResearchSubjects')} 
+      { renderExportCheckmark(exportMethods.toggleResearchSubjectsExport.bind(this), 'ResearchSubject') }
+    </TableRow>
+  }
+
   let riskAssessmentsRow;
   if(determineRowVisible("RiskAssessment")){
     shouldDisplayNoDataRow = false;
@@ -2195,6 +2242,8 @@ export function CollectionManagement(props){
         { questionnaireResponsesRow }
         { restrictionsRow }
         { relatedPersonsRow }
+        { researchStudiesRow }
+        { researchSubjectsRow }
         { riskAssessmentsRow }
         { searchParametersRow }
         { schedulesRow }

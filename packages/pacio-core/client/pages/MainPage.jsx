@@ -121,6 +121,7 @@ export function MainPage() {
   const [currentQuoteIndex, setCurrentQuoteIndex] = useState(0);
   const [anchorEl, setAnchorEl] = useState(null);
   const [menuBedId, setMenuBedId] = useState(null);
+  const [customMapConfig, setCustomMapConfig] = useState(null);
   
   // Track authentication status
   const userId = useTracker(() => Meteor.userId());
@@ -147,6 +148,17 @@ export function MainPage() {
     };
     
     checkApiKey();
+  }, []);
+  
+  // Check for CustomMap package following the DynamicRoutes pattern
+  useEffect(() => {
+    // Look for CustomMap in the Package object
+    if (typeof Package !== 'undefined' && Package.CustomMap) {
+      console.log('CustomMap found in Package object:', Package.CustomMap);
+      setCustomMapConfig(Package.CustomMap);
+    } else {
+      console.log('No CustomMap package found, using default LocationMap');
+    }
   }, []);
 
   // Rotate through quotes
@@ -203,6 +215,34 @@ export function MainPage() {
   
   // Also subscribe to all communications for debugging
   const allCommunicationsLoading = useSubscribe('communications', 100);
+  
+  // Fetch Chief Medical Officer data
+  const chiefMedicalOfficer = useTracker(() => {
+    const Practitioners = get(Meteor, 'Collections.Practitioners');
+    if (!Practitioners) {
+      console.warn('Practitioners collection not available');
+      return null;
+    }
+    
+    // Find practitioner with Chief Medical Officer role
+    // You may need to adjust this query based on your actual data structure
+    const cmo = Practitioners.findOne({
+      $or: [
+        { 'qualification.code.text': 'Chief Medical Officer' },
+        { 'qualification.code.coding.display': 'Chief Medical Officer' },
+        { 'name.text': { $regex: /chief.*medical.*officer/i } }
+      ]
+    });
+    
+    if (!cmo) {
+      // Fallback: try to find any practitioner with MD qualification
+      return Practitioners.findOne({
+        'qualification.code.text': { $regex: /MD|M\.D\.|Doctor/i }
+      });
+    }
+    
+    return cmo;
+  }, []);
   
   // Fetch data from collections - trust the cursor
   const facilityData = useTracker(() => {
@@ -560,12 +600,28 @@ export function MainPage() {
             <CardContent sx={{ p: 2 }}>
               <Box display="flex" alignItems="center" justifyContent="space-between">
                 <Box>
-                  <Typography variant="h5" fontWeight="bold">
-                    {facilityData.facility.staff.nurses + facilityData.facility.staff.cnas}
-                  </Typography>
-                  <Typography variant="body2" color="textSecondary">
-                    Staff on Duty
-                  </Typography>
+                  {chiefMedicalOfficer ? (
+                    <>
+                      <Typography variant="h6" fontWeight="bold" sx={{ fontSize: '1rem', lineHeight: 1.2 }}>
+                        {get(chiefMedicalOfficer, 'name[0].given[0]', '')} {get(chiefMedicalOfficer, 'name[0].family', 'CMO')}
+                      </Typography>
+                      <Typography variant="caption" color="textSecondary" sx={{ display: 'block' }}>
+                        Chief Medical Officer
+                      </Typography>
+                      <Typography variant="caption" color="primary" sx={{ fontSize: '0.7rem' }}>
+                        Practitioner/{get(chiefMedicalOfficer, 'id', get(chiefMedicalOfficer, '_id', 'N/A'))}
+                      </Typography>
+                    </>
+                  ) : (
+                    <>
+                      <Typography variant="h5" fontWeight="bold">
+                        CMO
+                      </Typography>
+                      <Typography variant="body2" color="textSecondary">
+                        Not Assigned
+                      </Typography>
+                    </>
+                  )}
                 </Box>
                 <GroupIcon color="info" />
               </Box>
@@ -856,15 +912,43 @@ export function MainPage() {
               <Grid item xs={12}>
                 <Paper sx={{ p: 2, height: `${(bedStatusHeight - 10) / 2}px` }}>
                   <Typography variant="h6" gutterBottom>
-                    Facility Location
+                    {customMapConfig ? customMapConfig.defaultProps?.title || 'Lunar Surface Map' : 'Facility Location'}
                   </Typography>
-                  <LocationMap
-                    latitude={facilityData.facility.lat}
-                    longitude={facilityData.facility.lng}
-                    name={facilityData.facility.name}
-                    height="calc(100% - 40px)"
-                    zoom={14}
-                  />
+                  {(() => {
+                    // Use CustomMap if available, otherwise default LocationMap
+                    if (customMapConfig && customMapConfig.component) {
+                      const CustomMapComponent = customMapConfig.component;
+                      return (
+                        <CustomMapComponent
+                          {...(customMapConfig.defaultProps || {})}
+                          height="calc(100% - 40px)"
+                          // For lunar maps, we can pass different props
+                          // These could be mission coordinates, rover locations, etc.
+                          assets={[
+                            {
+                              id: 'facility-1',
+                              name: facilityData.facility.name,
+                              type: 'HABITAT',
+                              status: 'OPERATIONAL',
+                              coordinates: [facilityData.facility.lng, facilityData.facility.lat],
+                              o2Level: 95
+                            }
+                          ]}
+                        />
+                      );
+                    } else {
+                      // Default to LocationMap for regular facilities
+                      return (
+                        <LocationMap
+                          latitude={facilityData.facility.lat}
+                          longitude={facilityData.facility.lng}
+                          name={facilityData.facility.name}
+                          height="calc(100% - 40px)"
+                          zoom={14}
+                        />
+                      );
+                    }
+                  })()}
                 </Paper>
               </Grid>
             )}

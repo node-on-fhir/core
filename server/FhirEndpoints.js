@@ -65,6 +65,8 @@ import { QuestionnaireResponses } from '../imports/lib/schemas/SimpleSchemas/Que
 import { Restrictions } from '../imports/lib/schemas/SimpleSchemas/Restrictions';
 import { RelatedPersons } from '../imports/lib/schemas/SimpleSchemas/RelatedPersons';
 import { RiskAssessments } from '../imports/lib/schemas/SimpleSchemas/RiskAssessments';
+import { ResearchSubjects } from '../imports/lib/schemas/SimpleSchemas/ResearchSubjects';
+import { ResearchStudies } from '../imports/lib/schemas/SimpleSchemas/ResearchStudies';
 import { SearchParameters } from '../imports/lib/schemas/SimpleSchemas/SearchParameters';
 import { ServiceRequests } from '../imports/lib/schemas/SimpleSchemas/ServiceRequests';
 import { StructureDefinitions } from '../imports/lib/schemas/SimpleSchemas/StructureDefinitions';
@@ -311,6 +313,8 @@ if(Meteor.isServer){
   Collections.Restrictions = Restrictions;
   Collections.RelatedPersons = RelatedPersons;
   Collections.RiskAssessments = RiskAssessments;
+  Collections.ResearchSubjects = ResearchSubjects;
+  Collections.ResearchStudies = ResearchStudies;
   Collections.SearchParameters = SearchParameters;
   Collections.ServiceRequests = ServiceRequests;
   Collections.StructureDefinitions = StructureDefinitions;

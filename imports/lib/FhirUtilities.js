@@ -313,6 +313,9 @@ export const FhirUtilities = {
         break;        
       case 'ResearchStudy':      
         pluralized = 'ResearchStudies';
+        break;
+      case 'ResearchSubject':      
+        pluralized = 'ResearchSubjects';
         break;        
       default:
         pluralized = resourceType + 's';
@@ -403,6 +406,9 @@ export const FhirUtilities = {
         break;        
       case 'ResearchStudy':      
         pluralized = 'ResearchStudies';
+        break;
+      case 'ResearchSubject':      
+        pluralized = 'ResearchSubjects';
         break;        
       default:
         pluralized = resourceType + 's';

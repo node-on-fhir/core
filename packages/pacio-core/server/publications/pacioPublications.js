@@ -38,16 +38,28 @@ Meteor.publish('pacio.advanceDirectives', function(patientId, directiveId) {
 });
 
 // Publish all compositions
-Meteor.publish('pacio.compositions', function(patientId) {
-  check(patientId, Match.Maybe(String));
+Meteor.publish('pacio.compositions', function(queryOrPatientId, options) {
+  // Support both old patientId parameter and new query object
+  let query = {};
+  
+  if (typeof queryOrPatientId === 'string') {
+    // Old API: patientId as string
+    check(queryOrPatientId, Match.Maybe(String));
+    if (queryOrPatientId) {
+      query['subject.reference'] = `Patient/${queryOrPatientId}`;
+    }
+  } else if (typeof queryOrPatientId === 'object') {
+    // New API: query object for search
+    check(queryOrPatientId, Match.Maybe(Object));
+    query = queryOrPatientId || {};
+  } else {
+    check(queryOrPatientId, Match.Maybe(String));
+  }
+  
+  check(options, Match.Maybe(Object));
   
   if (!this.userId) {
     return this.ready();
-  }
-  
-  const query = {};
-  if (patientId) {
-    query['subject.reference'] = `Patient/${patientId}`;
   }
   
   const Compositions = Meteor.Collections && Meteor.Collections.Compositions;
@@ -55,9 +67,13 @@ Meteor.publish('pacio.compositions', function(patientId) {
     return this.ready();
   }
   
-  return Compositions.find(query, {
-    sort: { date: -1 }
-  });
+  // Apply options with defaults
+  const queryOptions = Object.assign({
+    sort: { date: -1 },
+    limit: 1000
+  }, options);
+  
+  return Compositions.find(query, queryOptions);
 });
 
 // Publish transition of care documents

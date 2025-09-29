@@ -83,6 +83,13 @@ const partial =
 
 // Initialize SyncedCron (but don't auto-start)
 Meteor.startup(async function syncedCronStartup() {
+  // Prevent duplicate initialization
+  if (SyncedCron._initialized) {
+    console.log('SyncedCron: Already initialized, skipping duplicate startup');
+    return;
+  }
+  SyncedCron._initialized = true;
+  
   const options = SyncedCron.options;
 
   log = createLogger('SyncedCron');
@@ -99,23 +106,27 @@ Meteor.startup(async function syncedCronStartup() {
   else Later.date.localTime();
 
   // collection holding the job history records
-  SyncedCron._collection = new Mongo.Collection(
-    options.collectionName,
-    options.collectionOptions
-  );
-
-  await SyncedCron._collection.createIndexAsync(
-    { intendedAt: 1, name: 1 },
-    { unique: true }
-  );
-
-  // Add TTL index if configured and not disabled
-  if (options.collectionTTL) {
-    const expiry = Math.max(minTTL, options.collectionTTL);
-    await SyncedCron._collection.createIndexAsync(
-      { startedAt: 1 },
-      { expireAfterSeconds: expiry }
+  // Check if collection already exists to prevent duplicate initialization
+  if (!SyncedCron._collection) {
+    SyncedCron._collection = new Mongo.Collection(
+      options.collectionName,
+      options.collectionOptions
     );
+    
+    // Create indexes only for new collection
+    await SyncedCron._collection.createIndexAsync(
+      { intendedAt: 1, name: 1 },
+      { unique: true }
+    );
+
+    // Add TTL index if configured and not disabled
+    if (options.collectionTTL) {
+      const expiry = Math.max(minTTL, options.collectionTTL);
+      await SyncedCron._collection.createIndexAsync(
+        { startedAt: 1 },
+        { expireAfterSeconds: expiry }
+      );
+    }
   }
 
   log.info('SyncedCron initialized (not started)');

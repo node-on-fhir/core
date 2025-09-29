@@ -1,7 +1,9 @@
 
 
 import { Meteor } from 'meteor/meteor';
+import { Session } from 'meteor/session';
 import React, { useState, useEffect, useCallback } from 'react';
+import { useTracker } from 'meteor/react-meteor-data';
 // import Promise from 'promise';
 
 import { 
@@ -18,11 +20,13 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  LinearProgress
+  LinearProgress,
+  FormHelperText
 } from '@mui/material';
 import PropTypes from 'prop-types';
 
 import { get, set, has, uniq, cloneDeep } from 'lodash';
+import moment from 'moment';
 
 import "ace-builds";
 import ace from 'ace-builds/src-noconflict/ace';
@@ -35,6 +39,8 @@ import "ace-builds/src-noconflict/snippets/html"
 
 import "ace-builds/src-noconflict/theme-tomorrow";
 import "ace-builds/src-noconflict/theme-monokai";
+
+import AppleHealthPreview from './AppleHealthPreview';
 
 // import 'ace-builds/webpack-resolver'
 
@@ -112,7 +118,8 @@ function DataEditor(props){
   const [editorWrap, setEditorWrap] = useState(false);
   const [selectedAlgorithm, setSelectedAlgorithm] = useState(0);
   const [detectedFileExtension, setDetectedFileExtension] = useState("json");
-
+  const [appleHealthTimeRange, setAppleHealthTimeRange] = useState('all');
+  const [appleHealthAnalysis, setAppleHealthAnalysis] = useState(null);
 
   //---------------------------------------------------------------------
   // Props  
@@ -131,14 +138,140 @@ function DataEditor(props){
     editorWrapEnabled = false,
     ...otherProps } = props;
 
+  // Watch for Apple Health analysis updates
+  useTracker(() => {
+    const analysis = Session.get('appleHealthAnalysis');
+    if (analysis && analysis !== appleHealthAnalysis) {
+      setAppleHealthAnalysis(analysis);
+      
+      // Update the editor content with the analysis
+      if (importBuffer instanceof ArrayBuffer) {
+        const sizeInfo = importBuffer?.byteLength ? (importBuffer.byteLength / 1024 / 1024).toFixed(2) + ' MB' : '';
+        let summaryText = `[Apple Health Export]\n\nFile size: ${sizeInfo}\n\n`;
+        
+        if (analysis.healthRecords) {
+          summaryText += `Total records: ${analysis.totalRecords?.toLocaleString() || 0}\n`;
+          
+          if (analysis.dateRange?.earliest && analysis.dateRange?.latest) {
+            const startDate = moment(analysis.dateRange.earliest).format('MMM YYYY');
+            const endDate = moment(analysis.dateRange.latest).format('MMM YYYY');
+            summaryText += `Date range: ${startDate} - ${endDate}\n`;
+          }
+          
+          summaryText += '\n--- Health Records ---\n';
+          
+          const sortedTypes = Object.entries(analysis.healthRecords)
+            .sort((a, b) => b[1].count - a[1].count)
+            .slice(0, 50);
+          
+          sortedTypes.forEach(([type, info]) => {
+            const displayName = info.displayName || type.replace(/HK(Quantity|Category)TypeIdentifier/, '');
+            const count = info.count.toString().padStart(8, ' ');
+            summaryText += `${count}  ${displayName}\n`;
+          });
+          
+          if (Object.keys(analysis.healthRecords).length > 50) {
+            summaryText += `\n... and ${Object.keys(analysis.healthRecords).length - 50} more types\n`;
+          }
+          
+          if (analysis.clinicalRecords && analysis.clinicalRecords.length > 0) {
+            summaryText += '\n--- Clinical Records ---\n';
+            analysis.clinicalRecords.forEach(record => {
+              const count = record.count.toString().padStart(8, ' ');
+              summaryText += `${count}  ${record.type}\n`;
+            });
+          }
+          
+          if (analysis.workouts && Object.keys(analysis.workouts).length > 0) {
+            summaryText += '\n--- Workouts ---\n';
+            Object.entries(analysis.workouts)
+              .sort((a, b) => b[1].count - a[1].count)
+              .forEach(([type, info]) => {
+                const count = info.count.toString().padStart(8, ' ');
+                summaryText += `${count}  ${info.displayName}\n`;
+              });
+          }
+          
+          summaryText += '\nClick "Digest" to select which data to import.';
+        } else {
+          summaryText += 'This ZIP file contains your Apple Health data.\nClick "Digest" to analyze and select data for import.';
+        }
+        
+        setEditorContent(summaryText);
+      }
+    }
+  }, [importBuffer]);
+
     // console.log('DataEditor.props', props)
 
 
     useEffect(function(){
-      if(['xml', 'xmlx', 'xlsx', 'json', 'ccd', 'bundle', 'txt', 'application/json', 'application/csv', 'application/json+fhir'].includes(fileExtension)){
+      if(['application/zip', 'application/x-zip-compressed', 'zip'].includes(fileExtension) || importBuffer instanceof ArrayBuffer){
+        // Handle binary data for zip files
+        const sizeInfo = importBuffer?.byteLength ? (importBuffer.byteLength / 1024 / 1024).toFixed(2) + ' MB' : '';
+        
+        // Check if we have analysis data
+        const analysis = Session.get('appleHealthAnalysis');
+        let summaryText = `[Apple Health Export]\n\nFile size: ${sizeInfo}\n\n`;
+        
+        if (analysis && analysis.healthRecords) {
+          // Add total records count
+          summaryText += `Total records: ${analysis.totalRecords?.toLocaleString() || 0}\n`;
+          
+          if (analysis.dateRange?.earliest && analysis.dateRange?.latest) {
+            const startDate = moment(analysis.dateRange.earliest).format('MMM YYYY');
+            const endDate = moment(analysis.dateRange.latest).format('MMM YYYY');
+            summaryText += `Date range: ${startDate} - ${endDate}\n`;
+          }
+          
+          summaryText += '\n--- Health Records ---\n';
+          
+          // Sort by count descending and display
+          const sortedTypes = Object.entries(analysis.healthRecords)
+            .sort((a, b) => b[1].count - a[1].count)
+            .slice(0, 50); // Show top 50 types
+          
+          sortedTypes.forEach(([type, info]) => {
+            const displayName = info.displayName || type.replace(/HK(Quantity|Category)TypeIdentifier/, '');
+            const count = info.count.toString().padStart(8, ' ');
+            summaryText += `${count}  ${displayName}\n`;
+          });
+          
+          if (Object.keys(analysis.healthRecords).length > 50) {
+            summaryText += `\n... and ${Object.keys(analysis.healthRecords).length - 50} more types\n`;
+          }
+          
+          // Add clinical records if present
+          if (analysis.clinicalRecords && analysis.clinicalRecords.length > 0) {
+            summaryText += '\n--- Clinical Records ---\n';
+            analysis.clinicalRecords.forEach(record => {
+              const count = record.count.toString().padStart(8, ' ');
+              summaryText += `${count}  ${record.type}\n`;
+            });
+          }
+          
+          // Add workouts if present
+          if (analysis.workouts && Object.keys(analysis.workouts).length > 0) {
+            summaryText += '\n--- Workouts ---\n';
+            Object.entries(analysis.workouts)
+              .sort((a, b) => b[1].count - a[1].count)
+              .forEach(([type, info]) => {
+                const count = info.count.toString().padStart(8, ' ');
+                summaryText += `${count}  ${info.displayName}\n`;
+              });
+          }
+          
+          summaryText += '\nClick "Digest" to select which data to import.';
+        } else {
+          summaryText += 'This ZIP file contains your Apple Health data.\nClick "Digest" to analyze and select data for import.';
+        }
+        
+        importBufferContents = summaryText;
+        setSelectedAlgorithm(1); // Apple Health Export
+      } else if(['xml', 'xmlx', 'xlsx', 'json', 'ccd', 'bundle', 'txt', 'application/json', 'application/csv', 'application/json+fhir'].includes(fileExtension)){
         // importBufferContents = JSON.stringify(importBuffer, null, 2);
-        importBufferContents = importBuffer;
-        setSelectedAlgorithm(1);
+        importBufferContents = typeof importBuffer === 'string' ? importBuffer : JSON.stringify(importBuffer, null, 2);
+        setSelectedAlgorithm(0); // FHIR Bundle
       } else if(['phr', 'sphr', 'applicaion/x-phr', 'ndjson', 'application/x-ndjson'].includes(fileExtension)){
         // console.log('importBuffer application/x-ndjson', importBuffer);
         console.log('importBuffer typeof', typeof importBuffer);
@@ -214,9 +347,13 @@ function DataEditor(props){
       props.onMapData();
     }
   }
-  function digestData(){
+  function digestData(options){
     if(typeof props.onDigestData === "function"){
-      props.onDigestData(editorContent, detectedFileExtension, selectedAlgorithm);
+      // Pass the actual import buffer for binary data, not the editor content
+      const dataToDigest = (importBuffer instanceof ArrayBuffer || importBuffer instanceof Uint8Array) 
+        ? importBuffer 
+        : editorContent;
+      props.onDigestData(dataToDigest, detectedFileExtension, selectedAlgorithm, options);
     }
   }
   function handleScanData(){
@@ -271,7 +408,7 @@ function DataEditor(props){
   } else {
     digestButton = <Button 
       id='mapData'
-      onClick={ digestData.bind(this)}
+      onClick={() => digestData()}
       // color="primary"
       variant="contained"
       fullWidth                
@@ -297,44 +434,92 @@ function DataEditor(props){
       </CardContent>
     </CardContent>
   } else {
+    // Show Apple Health Preview for Apple Health Export, otherwise show editor
+    const showAppleHealthPreview = selectedAlgorithm === 1 && (importBuffer instanceof ArrayBuffer || importBuffer instanceof Uint8Array);
+    
     previewComponents = <CardContent>      
-      <AceEditor
-        mode="json"
-        theme={theme === 'light' ? "tomorrow" : "monokai"}
-        wrapEnabled={editorWrapEnabled}
-        onChange={onChange}
-        name="rawDataEditor"
-        editorProps={{ $blockScrolling: true }}
-        style={{width: '100%', marginBottom: '20px', height: window.innerHeight - 470}}
-        value={editorContent}
-        defaultValue={JSON.stringify(editorContent, null, 2)}
-      />
+      {showAppleHealthPreview ? (
+        <AppleHealthPreview
+          importBuffer={importBuffer}
+          onImport={(options) => {
+            if(typeof props.onDigestData === "function"){
+              props.onDigestData(importBuffer, detectedFileExtension, selectedAlgorithm, options);
+            }
+          }}
+          style={{height: window.innerHeight - 470}}
+        />
+      ) : (
+        <AceEditor
+          mode="json"
+          theme={theme === 'light' ? "tomorrow" : "monokai"}
+          wrapEnabled={editorWrapEnabled}
+          onChange={onChange}
+          name="rawDataEditor"
+          editorProps={{ $blockScrolling: true }}
+          style={{width: '100%', marginBottom: '20px', height: window.innerHeight - 470}}
+          value={typeof editorContent === 'string' ? editorContent : '[Binary Data]'}
+          defaultValue=""
+          readOnly={importBuffer instanceof ArrayBuffer || importBuffer instanceof Uint8Array}
+        />
+      )}
 
 
-      <FormControl style={{width: '100%', paddingBottom: '20px', marginTop: '10px'}}>
-        <InputLabel id="import-algorithm-label">Mapping Algorithm</InputLabel>
-        <Select
-          id="import-algorithm-selector"
-          value={ selectedAlgorithm}
-          onChange={handleChangeMappingAlgorithm.bind(this)}
-          fullWidth
-          >
-          <MenuItem value={1} id="import-algorithm-menu-item-1" key="import-algorithm-menu-item-1" >FHIR Resource</MenuItem>
-          <MenuItem value={2} id="import-algorithm-menu-item-2" key="import-algorithm-menu-item-2" >FHIR Bundle</MenuItem>
-          <MenuItem value={3} id="import-algorithm-menu-item-3" key="import-algorithm-menu-item-3" >FHIR Bulk Data</MenuItem>
-          <MenuItem value={4} id="import-algorithm-menu-item-4" key="import-algorithm-menu-item-4" >FHIR Personal Health Record</MenuItem>
-          <MenuItem value={5} id="import-algorithm-menu-item-5" key="import-algorithm-menu-item-5" >Facebook Profile</MenuItem>
-          <MenuItem value={6} id="import-algorithm-menu-item-6" key="import-algorithm-menu-item-6" >City of Chicago Data File</MenuItem>
-          <MenuItem value={7} id="import-algorithm-menu-item-7" key="import-algorithm-menu-item-7" >Geojson</MenuItem>
-          <MenuItem value={8} id="import-algorithm-menu-item-8" key="import-algorithm-menu-item-8" >CDC Reporting Spreadsheet</MenuItem>
-          <MenuItem value={9} id="import-algorithm-menu-item-9" key="import-algorithm-menu-item-9" >FEMA Reporting Spreadsheet</MenuItem>
-          <MenuItem value={10} id="import-algorithm-menu-item-10" key="import-algorithm-menu-item-10" >Inpatient Prospective Payment System File</MenuItem>
-          <MenuItem value={11} id="import-algorithm-menu-item-11" key="import-algorithm-menu-item-11" >SANER Hospital File</MenuItem>
-          <MenuItem value={12} id="import-algorithm-menu-item-12" key="import-algorithm-menu-item-12" >LOINC Questionnaire</MenuItem>
-          <MenuItem value={13} id="import-algorithm-menu-item-13" key="import-algorithm-menu-item-13" >FHIR Bundle (Collection)</MenuItem>
-        </Select>
-      </FormControl>
-
+      {!showAppleHealthPreview && (
+        <>
+      <Grid container spacing={2} style={{marginTop: '10px'}}>
+        <Grid item xs={selectedAlgorithm === 1 ? 6 : 12}>
+          <FormControl style={{width: '100%'}}>
+            <InputLabel id="import-algorithm-label">Mapping Algorithm</InputLabel>
+            <Select
+              id="import-algorithm-selector"
+              value={ selectedAlgorithm}
+              onChange={handleChangeMappingAlgorithm.bind(this)}
+              fullWidth
+              >
+              <MenuItem value={0} id="import-algorithm-menu-item-0" key="import-algorithm-menu-item-0" >FHIR Bundle</MenuItem>
+              <MenuItem value={1} id="import-algorithm-menu-item-1" key="import-algorithm-menu-item-1" >Apple Health Export</MenuItem>
+              <MenuItem value={2} id="import-algorithm-menu-item-2" key="import-algorithm-menu-item-2" >FHIR Resource</MenuItem>
+              <MenuItem value={3} id="import-algorithm-menu-item-3" key="import-algorithm-menu-item-3" >FHIR Bulk Data</MenuItem>
+              <MenuItem value={4} id="import-algorithm-menu-item-4" key="import-algorithm-menu-item-4" >FHIR Personal Health Record</MenuItem>
+              <MenuItem value={5} id="import-algorithm-menu-item-5" key="import-algorithm-menu-item-5" >Facebook Profile</MenuItem>
+              <MenuItem value={6} id="import-algorithm-menu-item-6" key="import-algorithm-menu-item-6" >City of Chicago Data File</MenuItem>
+              <MenuItem value={7} id="import-algorithm-menu-item-7" key="import-algorithm-menu-item-7" >Geojson</MenuItem>
+              <MenuItem value={8} id="import-algorithm-menu-item-8" key="import-algorithm-menu-item-8" >CDC Reporting Spreadsheet</MenuItem>
+              <MenuItem value={9} id="import-algorithm-menu-item-9" key="import-algorithm-menu-item-9" >FEMA Reporting Spreadsheet</MenuItem>
+              <MenuItem value={10} id="import-algorithm-menu-item-10" key="import-algorithm-menu-item-10" >Inpatient Prospective Payment System File</MenuItem>
+              <MenuItem value={11} id="import-algorithm-menu-item-11" key="import-algorithm-menu-item-11" >SANER Hospital File</MenuItem>
+              <MenuItem value={12} id="import-algorithm-menu-item-12" key="import-algorithm-menu-item-12" >LOINC Questionnaire</MenuItem>
+              <MenuItem value={13} id="import-algorithm-menu-item-13" key="import-algorithm-menu-item-13" >FHIR Bundle (Collection)</MenuItem>
+            </Select>
+          </FormControl>
+        </Grid>
+        
+        {/* Show Apple Health time range selector when Apple Health Export is selected */}
+        {selectedAlgorithm === 1 && (
+          <Grid item xs={6}>
+            <FormControl style={{width: '100%'}}>
+              <InputLabel id="apple-health-time-range-label">Time Range Filter</InputLabel>
+              <Select
+                labelId="apple-health-time-range-label"
+                id="apple-health-time-range-selector"
+                value={appleHealthTimeRange}
+                onChange={(e) => {
+                  setAppleHealthTimeRange(e.target.value);
+                  if(typeof props.onAppleHealthTimeRangeChange === "function"){
+                    props.onAppleHealthTimeRangeChange(e.target.value);
+                  }
+                }}
+                fullWidth
+              >
+                <MenuItem value="all">All Data</MenuItem>
+                <MenuItem value="lastDecade">Last 10 Years</MenuItem>
+                <MenuItem value="lastYear">Last Year</MenuItem>
+                <MenuItem value="lastMonth">Last Month</MenuItem>
+              </Select>
+            </FormControl>
+          </Grid>
+        )}
+      </Grid>
 
       {/* <pre 
         id="dropzonePreview"
@@ -353,7 +538,7 @@ function DataEditor(props){
         { importBufferContents }
       </pre> */}
 
-      <Grid container>
+      <Grid container style={{marginTop: '20px', paddingBottom: '20px'}}>
         <Grid item md={4} style={{paddingRight: '10px'}}>
           { digestButton }
         </Grid>
@@ -364,6 +549,8 @@ function DataEditor(props){
           { previewButton }
         </Grid>
       </Grid>
+        </>
+      )}
     </CardContent>
   }
 
@@ -374,7 +561,11 @@ function DataEditor(props){
 DataEditor.propTypes = {
   progressMax: PropTypes.number,
   initialValue: PropTypes.number,
-  importBuffer: PropTypes.string,
+  importBuffer: PropTypes.oneOfType([
+    PropTypes.string,
+    PropTypes.instanceOf(ArrayBuffer),
+    PropTypes.instanceOf(Uint8Array)
+  ]),
   fileExtension: PropTypes.string,
   mappingAlgorithm: PropTypes.number,
   readyToImport: PropTypes.bool,
@@ -386,7 +577,8 @@ DataEditor.propTypes = {
   onEditorChange: PropTypes.func,
   onChangeMappingAlgorithm: PropTypes.func,
   onImportFile: PropTypes.func,
-  onMapData: PropTypes.func
+  onMapData: PropTypes.func,
+  onAppleHealthTimeRangeChange: PropTypes.func
 }
 
 

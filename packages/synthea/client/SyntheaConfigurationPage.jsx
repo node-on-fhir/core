@@ -557,7 +557,7 @@ export default function SyntheaConfigurationPage() {
                   href="https://github.com/synthetichealth/synthea/wiki"
                   target="_blank"
                 >
-                  Synthea Documentation
+                  Synthea Docs
                 </Button>
                 <Button
                   variant="outlined"
@@ -565,7 +565,7 @@ export default function SyntheaConfigurationPage() {
                   href="https://www.mongodb.com/docs/compass/install/"
                   target="_blank"
                 >
-                  Mongo Compass Docs
+                  Mongo Compass
                 </Button>
                 {dbUtilsEnabled && (
                   <>
