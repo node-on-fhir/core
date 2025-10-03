@@ -10,6 +10,7 @@
       "dateTimeFormat": "YYYY-MM-DD HH:mm:ss",
       "disableHeader": false,
       "disableFooter": false,
+      "prominentHeader": true,
       "paginationLimit": 100,
       "subscriptionLimit": 1000,
       "sidebar": {
@@ -17,7 +18,9 @@
           "HomePage": true,
           "FhirModules": true,
           "SidebarWorkflows": true,
-          "ClinicianWorkflows": true
+          "ClinicianWorkflows": true,
+          "PatientChart": true,
+          "PatientDirectory": true
         }
       }
     },
@@ -31,6 +34,7 @@
       }
     },
     "modules": {
+      "PatientDirectory": true,
       "referenceApp": {
         "enabled": true,
         "showInSidebar": true,
