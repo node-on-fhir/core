@@ -44,21 +44,23 @@ const CERTIFICATION_CRITERIA = [
   {
     id: '170.315(a)(1)',
     criterion: 'Computerized Provider Order Entry (CPOE) - Medications',
-    hasAlgorithms: false,
-    isImplemented: false,
-    isV3: false,
+    hasAlgorithms: true,
+    isImplemented: true,
+    isV3: true,
     hasTests: false,
-    package: 'order-entry',
+    package: 'order-catalog',
+    link: '/order-catalog',
     guide: 'https://www.healthit.gov/test-method/computerized-provider-order-entry-cpoe-medications'
   },
   {
     id: '170.315(a)(2)', 
     criterion: 'CPOE - Laboratory',
-    hasAlgorithms: false,
-    isImplemented: false,
-    isV3: false,
+    hasAlgorithms: true,
+    isImplemented: true,
+    isV3: true,
     hasTests: false,
-    package: 'lab-order-entry',
+    package: 'order-catalog',
+    link: '/order-catalog',
     guide: 'https://www.healthit.gov/test-method/computerized-provider-order-entry-cpoe-laboratory'
   },
   {
@@ -75,10 +77,11 @@ const CERTIFICATION_CRITERIA = [
     id: '170.315(a)(4)',
     criterion: 'Drug-Drug, Drug-Allergy Interaction Checks',
     hasAlgorithms: true,
-    isImplemented: false,
-    isV3: false,
+    isImplemented: true,
+    isV3: true,
     hasTests: false,
-    package: 'drug-interactions',
+    package: 'order-catalog',
+    link: '/order-catalog',
     guide: 'https://www.healthit.gov/test-method/drug-drug-drug-allergy-interaction-checks'
   },
   {
@@ -697,12 +700,28 @@ function ReferenceAppPage(props) {
                           </Typography>
                         </TableCell>
                         <TableCell>
-                          <Chip 
-                            label={criterion.package}
-                            size="small"
-                            variant="outlined"
-                            color={criterion.isImplemented ? "success" : "default"}
-                          />
+                          {criterion.link ? (
+                            <Chip 
+                              label={criterion.package}
+                              size="small"
+                              variant="outlined"
+                              color={criterion.isImplemented ? "success" : "default"}
+                              component="a"
+                              href={criterion.link}
+                              clickable
+                              onClick={(e) => {
+                                e.preventDefault();
+                                navigate(criterion.link);
+                              }}
+                            />
+                          ) : (
+                            <Chip 
+                              label={criterion.package}
+                              size="small"
+                              variant="outlined"
+                              color={criterion.isImplemented ? "success" : "default"}
+                            />
+                          )}
                         </TableCell>
                         <TableCell align="center">
                           {criterion.hasAlgorithms ? (

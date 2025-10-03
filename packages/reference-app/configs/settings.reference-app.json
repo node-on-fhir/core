@@ -11,7 +11,15 @@
       "disableHeader": false,
       "disableFooter": false,
       "paginationLimit": 100,
-      "subscriptionLimit": 1000
+      "subscriptionLimit": 1000,
+      "sidebar": {
+        "menuItems": {
+          "HomePage": true,
+          "FhirModules": true,
+          "SidebarWorkflows": true,
+          "ClinicianWorkflows": true
+        }
+      }
     },
     "interfaces": {
       "fhir": {
@@ -41,6 +49,33 @@
           "showFooterButtons": true,
           "theme": "default"
         }
+      },
+      "orderCatalog": {
+        "enabled": true,
+        "showInSidebar": true,
+        "showInWorkflows": true,
+        "requireAuthentication": true,
+        "allowedRoles": ["practitioner", "admin", "nurse"],
+        "features": {
+          "cpoeEnabled": true,
+          "drugInteractionChecks": true,
+          "labOrders": true,
+          "medicationOrders": true,
+          "orderSets": true
+        },
+        "defaultSettings": {
+          "orderPriority": "routine",
+          "requireOrderPriority": true,
+          "enableAuditLogging": true
+        }
+      },
+      "fhir": {
+        "enabled": true
+      },
+      "sidebar": {
+        "enabled": true,
+        "showWorkflows": true,
+        "showElements": true
       }
     }
   },

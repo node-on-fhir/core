@@ -43,18 +43,27 @@ Meteor.startup(async function() {
   // ---------------------------------------------------------------------------
   
   try {
-    // Access collections using Meteor v3 async API
-    const Patients = await global.Collections.Patients;
-    const Observations = await global.Collections.Observations;
-    
-    if (Patients) {
-      const patientCount = await Patients.countAsync();
-      console.log(`ReferenceApp: Found ${patientCount} patients in database`);
-    }
-    
-    if (Observations) {
-      const observationCount = await Observations.countAsync();
-      console.log(`ReferenceApp: Found ${observationCount} observations in database`);
+    // Check if global.Collections exists
+    if (typeof global.Collections !== 'undefined') {
+      // Access collections using Meteor v3 async API
+      const Patients = global.Collections?.Patients;
+      const Observations = global.Collections?.Observations;
+      
+      if (Patients && typeof Patients.countAsync === 'function') {
+        const patientCount = await Patients.countAsync();
+        console.log(`ReferenceApp: Found ${patientCount} patients in database`);
+      } else {
+        console.log('ReferenceApp: Patients collection not available or not async-ready');
+      }
+      
+      if (Observations && typeof Observations.countAsync === 'function') {
+        const observationCount = await Observations.countAsync();
+        console.log(`ReferenceApp: Found ${observationCount} observations in database`);
+      } else {
+        console.log('ReferenceApp: Observations collection not available or not async-ready');
+      }
+    } else {
+      console.log('ReferenceApp: Global collections not initialized yet');
     }
     
   } catch (error) {
