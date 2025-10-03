@@ -40,6 +40,7 @@ import { useNavigate } from 'react-router-dom';
 
 // Static tracking of certification implementation status
 // Update these values as we implement each package/feature
+// hasValidated indicates ONC has validated/tested our implementation
 const CERTIFICATION_CRITERIA = [
   {
     id: '170.315(a)(1)',
@@ -48,6 +49,7 @@ const CERTIFICATION_CRITERIA = [
     isImplemented: true,
     isV3: true,
     hasTests: false,
+    hasValidated: false,
     package: 'order-catalog',
     link: '/order-catalog',
     guide: 'https://www.healthit.gov/test-method/computerized-provider-order-entry-cpoe-medications'
@@ -59,6 +61,7 @@ const CERTIFICATION_CRITERIA = [
     isImplemented: true,
     isV3: true,
     hasTests: false,
+    hasValidated: false,
     package: 'order-catalog',
     link: '/order-catalog',
     guide: 'https://www.healthit.gov/test-method/computerized-provider-order-entry-cpoe-laboratory'
@@ -66,11 +69,13 @@ const CERTIFICATION_CRITERIA = [
   {
     id: '170.315(a)(3)',
     criterion: 'CPOE - Diagnostic Imaging',
-    hasAlgorithms: false,
-    isImplemented: false,
-    isV3: false,
+    hasAlgorithms: true,
+    isImplemented: true,
+    isV3: true,
     hasTests: false,
-    package: 'diagnostic-imaging',
+    hasValidated: false,
+    package: 'order-catalog',
+    link: '/order-catalog',
     guide: 'https://www.healthit.gov/test-method/computerized-provider-order-entry-cpoe-diagnostic-imaging'
   },
   {
@@ -80,8 +85,9 @@ const CERTIFICATION_CRITERIA = [
     isImplemented: true,
     isV3: true,
     hasTests: false,
-    package: 'order-catalog',
-    link: '/order-catalog',
+    hasValidated: false,
+    package: 'drug-interactions',
+    link: '/drug-interactions/drug-drug',
     guide: 'https://www.healthit.gov/test-method/drug-drug-drug-allergy-interaction-checks'
   },
   {
@@ -91,6 +97,7 @@ const CERTIFICATION_CRITERIA = [
     isImplemented: true,
     isV3: true,
     hasTests: true,
+    hasValidated: false,
     package: 'honeycomb',
     guide: 'https://www.healthit.gov/test-method/demographics'
   },
@@ -101,6 +108,7 @@ const CERTIFICATION_CRITERIA = [
     isImplemented: false,
     isV3: false,
     hasTests: false,
+    hasValidated: false,
     package: 'clinical-decision-support',
     guide: 'https://www.healthit.gov/test-method/clinical-decision-support'
   },
@@ -111,6 +119,7 @@ const CERTIFICATION_CRITERIA = [
     isImplemented: false,
     isV3: false,
     hasTests: false,
+    hasValidated: false,
     package: 'implantable-devices',
     guide: 'https://www.healthit.gov/test-method/implantable-device-list'
   },
@@ -121,6 +130,7 @@ const CERTIFICATION_CRITERIA = [
     isImplemented: true,
     isV3: true,
     hasTests: false,
+    hasValidated: false,
     package: 'pacio-core',
     guide: 'https://www.healthit.gov/test-method/transitions-care'
   },
@@ -131,6 +141,7 @@ const CERTIFICATION_CRITERIA = [
     isImplemented: false,
     isV3: false,
     hasTests: false,
+    hasValidated: false,
     package: 'clinical-reconciliation',
     guide: 'https://www.healthit.gov/test-method/clinical-information-reconciliation-and-incorporation'
   },
@@ -141,6 +152,7 @@ const CERTIFICATION_CRITERIA = [
     isImplemented: false,
     isV3: false,
     hasTests: false,
+    hasValidated: false,
     package: 'e-prescribing',
     guide: 'https://www.healthit.gov/test-method/electronic-prescribing'
   },
@@ -151,6 +163,7 @@ const CERTIFICATION_CRITERIA = [
     isImplemented: true,
     isV3: true,
     hasTests: false,
+    hasValidated: false,
     package: 'data-exporter',
     guide: 'https://www.healthit.gov/test-method/data-export'
   },
@@ -161,6 +174,7 @@ const CERTIFICATION_CRITERIA = [
     isImplemented: false,
     isV3: false,
     hasTests: false,
+    hasValidated: false,
     package: 'security-tags',
     guide: 'https://www.healthit.gov/test-method/security-tags-summary-care-send'
   },
@@ -171,6 +185,7 @@ const CERTIFICATION_CRITERIA = [
     isImplemented: false,
     isV3: false,
     hasTests: false,
+    hasValidated: false,
     package: 'security-tags',
     guide: 'https://www.healthit.gov/test-method/security-tags-summary-care-receive'
   },
@@ -181,6 +196,7 @@ const CERTIFICATION_CRITERIA = [
     isImplemented: true,
     isV3: true,
     hasTests: false,
+    hasValidated: false,
     package: 'honeycomb',
     guide: 'https://www.healthit.gov/test-method/care-plan'
   },
@@ -191,6 +207,7 @@ const CERTIFICATION_CRITERIA = [
     isImplemented: true,
     isV3: true,
     hasTests: false,
+    hasValidated: false,
     package: 'data-exporter',
     guide: 'https://www.healthit.gov/test-method/electronic-health-information-export'
   },
@@ -201,6 +218,7 @@ const CERTIFICATION_CRITERIA = [
     isImplemented: false,
     isV3: false,
     hasTests: false,
+    hasValidated: false,
     package: 'cqm-reporting',
     guide: 'https://www.healthit.gov/test-method/clinical-quality-measures-cqms-record-and-export'
   },
@@ -211,6 +229,7 @@ const CERTIFICATION_CRITERIA = [
     isImplemented: false,
     isV3: false,
     hasTests: false,
+    hasValidated: false,
     package: 'cqm-calculation',
     guide: 'https://www.healthit.gov/test-method/clinical-quality-measures-cqms-import-and-calculate'
   },
@@ -221,6 +240,7 @@ const CERTIFICATION_CRITERIA = [
     isImplemented: false,
     isV3: false,
     hasTests: false,
+    hasValidated: false,
     package: 'cqm-reporting',
     guide: 'https://www.healthit.gov/test-method/clinical-quality-measures-cqms-report'
   },
@@ -231,6 +251,7 @@ const CERTIFICATION_CRITERIA = [
     isImplemented: true,
     isV3: true,
     hasTests: true,
+    hasValidated: false,
     package: 'accounts-oauth',
     guide: 'https://www.healthit.gov/test-method/authentication-access-control-authorization'
   },
@@ -241,6 +262,7 @@ const CERTIFICATION_CRITERIA = [
     isImplemented: true,
     isV3: true,
     hasTests: true,
+    hasValidated: false,
     package: 'hipaa-compliance',
     guide: 'https://www.healthit.gov/test-method/auditable-events-and-tamper-resistance'
   },
@@ -251,6 +273,7 @@ const CERTIFICATION_CRITERIA = [
     isImplemented: true,
     isV3: true,
     hasTests: true,
+    hasValidated: false,
     package: 'hipaa-compliance',
     guide: 'https://www.healthit.gov/test-method/audit-reports'
   },
@@ -261,6 +284,7 @@ const CERTIFICATION_CRITERIA = [
     isImplemented: false,
     isV3: false,
     hasTests: false,
+    hasValidated: false,
     package: 'request-for-corrections',
     guide: 'https://www.healthit.gov/test-method/amendments'
   },
@@ -271,6 +295,7 @@ const CERTIFICATION_CRITERIA = [
     isImplemented: true,
     isV3: false,
     hasTests: false,
+    hasValidated: false,
     package: 'accounts-base',
     guide: 'https://www.healthit.gov/test-method/automatic-access-time-out'
   },
@@ -281,6 +306,7 @@ const CERTIFICATION_CRITERIA = [
     isImplemented: true,
     isV3: true,
     hasTests: false,
+    hasValidated: false,
     package: 'honeycomb',
     guide: 'https://www.healthit.gov/test-method/encryption-data-rest'
   },
@@ -291,6 +317,7 @@ const CERTIFICATION_CRITERIA = [
     isImplemented: false,
     isV3: false,
     hasTests: false,
+    hasValidated: false,
     package: 'device-encryption',
     guide: 'https://www.healthit.gov/test-method/end-user-device-encryption'
   },
@@ -301,6 +328,7 @@ const CERTIFICATION_CRITERIA = [
     isImplemented: true,
     isV3: true,
     hasTests: false,
+    hasValidated: false,
     package: 'hipaa-compliance',
     guide: 'https://www.healthit.gov/test-method/integrity'
   },
@@ -311,6 +339,7 @@ const CERTIFICATION_CRITERIA = [
     isImplemented: true,
     isV3: true,
     hasTests: false,
+    hasValidated: false,
     package: 'webapp',
     guide: 'https://www.healthit.gov/test-method/trusted-connection'
   },
@@ -321,6 +350,7 @@ const CERTIFICATION_CRITERIA = [
     isImplemented: true,
     isV3: true,
     hasTests: true,
+    hasValidated: false,
     package: 'hipaa-compliance',
     guide: 'https://www.healthit.gov/test-method/auditing-actions-health-information'
   },
@@ -331,6 +361,7 @@ const CERTIFICATION_CRITERIA = [
     isImplemented: true,
     isV3: true,
     hasTests: false,
+    hasValidated: false,
     package: 'accounts-password',
     guide: 'https://www.healthit.gov/test-method/encrypt-authentication-credentials'
   },
@@ -341,6 +372,7 @@ const CERTIFICATION_CRITERIA = [
     isImplemented: false,
     isV3: false,
     hasTests: false,
+    hasValidated: false,
     package: 'multi-factor-auth',
     guide: 'https://www.healthit.gov/test-method/multi-factor-authentication'
   },
@@ -351,6 +383,7 @@ const CERTIFICATION_CRITERIA = [
     isImplemented: true,
     isV3: true,
     hasTests: false,
+    hasValidated: false,
     package: 'patient-portal',
     guide: 'https://www.healthit.gov/test-method/view-download-and-transmit-3rd-party'
   },
@@ -361,6 +394,7 @@ const CERTIFICATION_CRITERIA = [
     isImplemented: false,
     isV3: false,
     hasTests: false,
+    hasValidated: false,
     package: 'secure-messaging',
     guide: 'https://www.healthit.gov/test-method/secure-messaging'
   },
@@ -371,6 +405,7 @@ const CERTIFICATION_CRITERIA = [
     isImplemented: false,
     isV3: false,
     hasTests: false,
+    hasValidated: false,
     package: 'patient-generated-data',
     guide: 'https://www.healthit.gov/test-method/patient-health-information-capture'
   },
@@ -381,6 +416,7 @@ const CERTIFICATION_CRITERIA = [
     isImplemented: false,
     isV3: false,
     hasTests: false,
+    hasValidated: false,
     package: 'immunization-registry',
     guide: 'https://www.healthit.gov/test-method/transmission-immunization-registries'
   },
@@ -391,6 +427,7 @@ const CERTIFICATION_CRITERIA = [
     isImplemented: false,
     isV3: false,
     hasTests: false,
+    hasValidated: false,
     package: 'public-health-reporting',
     guide: 'https://www.healthit.gov/test-method/transmission-public-health-agencies-syndromic-surveillance'
   },
@@ -401,6 +438,7 @@ const CERTIFICATION_CRITERIA = [
     isImplemented: false,
     isV3: false,
     hasTests: false,
+    hasValidated: false,
     package: 'lab-reporting',
     guide: 'https://www.healthit.gov/test-method/transmission-public-health-agencies-reportable-laboratory-tests-and-values-results'
   },
@@ -411,6 +449,7 @@ const CERTIFICATION_CRITERIA = [
     isImplemented: false,
     isV3: false,
     hasTests: false,
+    hasValidated: false,
     package: 'electronic-case-reporting',
     guide: 'https://www.healthit.gov/test-method/transmission-public-health-agencies-electronic-case-reporting'
   },
@@ -421,6 +460,7 @@ const CERTIFICATION_CRITERIA = [
     isImplemented: false,
     isV3: false,
     hasTests: false,
+    hasValidated: false,
     package: 'antimicrobial-reporting',
     guide: 'https://www.healthit.gov/test-method/transmission-public-health-agencies-antimicrobial-use-and-resistance-reporting'
   },
@@ -431,6 +471,7 @@ const CERTIFICATION_CRITERIA = [
     isImplemented: false,
     isV3: false,
     hasTests: false,
+    hasValidated: false,
     package: 'healthcare-surveys',
     guide: 'https://www.healthit.gov/test-method/transmission-public-health-agencies-health-care-surveys'
   },
@@ -441,6 +482,7 @@ const CERTIFICATION_CRITERIA = [
     isImplemented: false,
     isV3: false,
     hasTests: false,
+    hasValidated: false,
     package: 'quality-measures',
     guide: 'https://www.healthit.gov/test-method/automated-numerator-recording'
   },
@@ -451,6 +493,7 @@ const CERTIFICATION_CRITERIA = [
     isImplemented: false,
     isV3: false,
     hasTests: false,
+    hasValidated: false,
     package: 'quality-measures',
     guide: 'https://www.healthit.gov/test-method/automated-measure-calculation'
   },
@@ -461,6 +504,7 @@ const CERTIFICATION_CRITERIA = [
     isImplemented: true,
     isV3: true,
     hasTests: false,
+    hasValidated: false,
     package: 'honeycomb',
     guide: 'https://www.healthit.gov/test-method/safety-enhanced-design'
   },
@@ -471,6 +515,7 @@ const CERTIFICATION_CRITERIA = [
     isImplemented: false,
     isV3: false,
     hasTests: false,
+    hasValidated: false,
     package: 'quality-management',
     guide: 'https://www.healthit.gov/test-method/quality-management-system'
   },
@@ -481,6 +526,7 @@ const CERTIFICATION_CRITERIA = [
     isImplemented: true,
     isV3: true,
     hasTests: false,
+    hasValidated: false,
     package: 'honeycomb',
     guide: 'https://www.healthit.gov/test-method/accessibility-centered-design'
   },
@@ -491,6 +537,7 @@ const CERTIFICATION_CRITERIA = [
     isImplemented: false,
     isV3: false,
     hasTests: false,
+    hasValidated: false,
     package: 'ccda-export',
     guide: 'https://www.healthit.gov/test-method/consolidated-cda-creation-performance'
   },
@@ -501,6 +548,7 @@ const CERTIFICATION_CRITERIA = [
     isImplemented: true,
     isV3: false,
     hasTests: false,
+    hasValidated: false,
     package: 'smart-on-fhir',
     guide: 'https://www.healthit.gov/test-method/application-access-patient-selection'
   },
@@ -511,6 +559,7 @@ const CERTIFICATION_CRITERIA = [
     isImplemented: true,
     isV3: false,
     hasTests: false,
+    hasValidated: false,
     package: 'smart-on-fhir',
     guide: 'https://www.healthit.gov/test-method/application-access-data-category-request'
   },
@@ -521,6 +570,7 @@ const CERTIFICATION_CRITERIA = [
     isImplemented: true,
     isV3: false,
     hasTests: false,
+    hasValidated: false,
     package: 'smart-on-fhir',
     guide: 'https://www.healthit.gov/test-method/application-access-all-data-request'
   },
@@ -531,6 +581,7 @@ const CERTIFICATION_CRITERIA = [
     isImplemented: true,
     isV3: true,
     hasTests: true,
+    hasValidated: false,
     package: 'fhir-server',
     guide: 'https://www.healthit.gov/test-method/standardized-api-patient-and-population-services'
   },
@@ -541,6 +592,7 @@ const CERTIFICATION_CRITERIA = [
     isImplemented: false,
     isV3: false,
     hasTests: false,
+    hasValidated: false,
     package: 'direct-messaging',
     guide: 'https://www.healthit.gov/test-method/direct-project'
   }
@@ -635,7 +687,7 @@ function ReferenceAppPage(props) {
         pb: 4
       }}
     >
-      <Container maxWidth="lg" style={containerStyle}>
+      <Container maxWidth="xl" style={containerStyle}>
         
         {/* Main Content */}
         <Box>
@@ -676,6 +728,7 @@ function ReferenceAppPage(props) {
                       <TableCell width="80" align="center">Implemented</TableCell>
                       <TableCell width="60" align="center">v3</TableCell>
                       <TableCell width="60" align="center">Tests</TableCell>
+                      <TableCell width="80" align="center">Validated</TableCell>
                       <TableCell width="80" align="center">Guide</TableCell>
                     </TableRow>
                   </TableHead>
@@ -747,6 +800,13 @@ function ReferenceAppPage(props) {
                         <TableCell align="center">
                           {criterion.hasTests ? (
                             <CheckCircleIcon color="warning" fontSize="small" />
+                          ) : (
+                            <RadioButtonUncheckedIcon color="disabled" fontSize="small" />
+                          )}
+                        </TableCell>
+                        <TableCell align="center">
+                          {criterion.hasValidated ? (
+                            <CheckCircleIcon color="success" fontSize="small" />
                           ) : (
                             <RadioButtonUncheckedIcon color="disabled" fontSize="small" />
                           )}

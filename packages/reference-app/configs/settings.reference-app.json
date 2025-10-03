@@ -69,6 +69,25 @@
           "enableAuditLogging": true
         }
       },
+      "drugInteractions": {
+        "enabled": true,
+        "showInWorkflows": true,
+        "requireAuthentication": true,
+        "allowedRoles": ["practitioner", "admin", "nurse", "pharmacist"],
+        "features": {
+          "drugDrugChecking": true,
+          "drugAllergyChecking": true,
+          "realTimeChecking": true,
+          "checkOnOrderEntry": true,
+          "checkOnOrderSign": true
+        },
+        "defaultSettings": {
+          "severityThreshold": "moderate",
+          "enableAuditLogging": true,
+          "showEvidence": true,
+          "allowOverride": true
+        }
+      },
       "fhir": {
         "enabled": true
       },
