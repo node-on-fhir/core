@@ -134,10 +134,9 @@ const PatientsDirectoryButtons = [{
 }];
 
 // Workflow tabs for header - OPTIONAL
-let WorkflowTabs = [
-  { label: "Overview", onClick: () => { window.location = '/reference-app' }},
-  { label: "Settings", onClick: () => { window.location = '/reference-app/settings' }}
-];
+// Note: Since we removed tabs from ReferenceAppPage, these are likely not used
+// Keeping empty array to prevent breaking other components that might import this
+let WorkflowTabs = [];
 
 // =============================================================================
 // SETTINGS INTEGRATION

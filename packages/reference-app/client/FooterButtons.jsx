@@ -144,5 +144,3 @@ export function ReferenceAppFooterButtons(props) {
     </ButtonGroup>
   );
 }
-
-export default ReferenceAppFooterButtons;

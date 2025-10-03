@@ -343,5 +343,3 @@ export function ReferenceAppWorkflow(props) {
     </Card>
   );
 }
-
-export default ReferenceAppWorkflow;
