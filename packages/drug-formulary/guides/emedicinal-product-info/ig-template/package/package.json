@@ -1,0 +1,13 @@
+{
+  "name": "hl7.vulcan.template",
+  "type": "fhir.template",
+  "license": "CC0-1.0",
+  "description": "HL7 Vulcan Template - for use with HL7 Vulcan-published FHIR IGs",
+  "author": "http://hl7.org/fhir",
+  "canonical": "http://fhir.org/templates/hl7.vulcan.template",
+  "base": "hl7.fhir.template",
+  "dependencies": {
+    "hl7.fhir.template": "current"
+  },
+  "version": "0.1.0"
+}
