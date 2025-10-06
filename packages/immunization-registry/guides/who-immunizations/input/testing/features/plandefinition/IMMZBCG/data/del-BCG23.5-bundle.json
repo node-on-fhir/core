@@ -1,0 +1,1 @@
+{"resourceType":"Bundle","id":"tests-BCG23.5-bundle","type":"transaction","entry":[{"request":{"method":"DELETE","url":"Immunization/flu-BCG23.5"}},{"request":{"method":"DELETE","url":"Observation/tb-BCG23.5"}},{"request":{"method":"DELETE","url":"Patient/BCG23.5"}}]}

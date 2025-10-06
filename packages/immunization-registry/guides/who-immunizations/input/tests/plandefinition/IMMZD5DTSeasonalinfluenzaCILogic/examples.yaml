@@ -1,0 +1,50 @@
+---
+#0. The client has a history of anaphylactic reactions
+#   "Potential contraindications" = "History of anaphylactic reactions"
+### Seasonal influenza vaccination could be contraindicated. Clinical judgement is required. Create a clinical note
+### '"Immunization recommendation status" = "Further evaluation needed"
+id: "21.0"
+birth: -7m
+patient:
+  fhir:
+    gender: female
+contraindication:
+    historyofanaphylacticreactions:
+      code: DE166
+      display: "History of anaphylactic reactions"
+      effectiveDateTime: -1d
+medicationrequest:
+  seasonalinfluenza:
+    medication:
+      code: XM8857
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Influenza vaccine, inactivated, whole virus"
+    fhir:
+      authoredOn: 0d
+      status: draft
+      intent: proposal
+---
+#0. The client has a history of severe allergic reactions after a previous dose or to a vaccine component
+#   "Potential contraindications" = "Severe allergic reactions"
+### Seasonal influenza vaccination could be contraindicated. Clinical judgement is required. Create a clinical note
+### '"Immunization recommendation status" = "Further evaluation needed"
+id: "22.0"
+birth: -15y
+patient:
+  fhir:
+    gender: female
+contraindication:
+    severeallergicreactions:
+      code: DE167
+      display: "Severe allergic reactions"
+      effectiveDateTime: -1d
+medicationrequest:
+  seasonalinfluenza:
+    medication:
+      code: XM8857
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Influenza vaccine, inactivated, whole virus"
+    fhir:
+      authoredOn: 0d
+      status: draft
+      intent: proposal

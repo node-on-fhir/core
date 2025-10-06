@@ -1,0 +1,619 @@
+{
+  "resourceType": "ConceptMap",
+  "id": "IMMZ.C.ConceptMap",
+  "url": "http://smart.who.int/immunizations/ConceptMap/IMMZ.C.ConceptMap",
+  "description": "Mapping to and from IMMZ.C Data Dictionary to other codesystems.",
+  "name": "IMMZ_C_ConceptMap",
+  "title": "ConceptMap to and from IMMZ.C DataElements",
+  "status": "active",
+  "experimental": false,
+  "date": "2024-12-12",
+  "group": [
+    {
+      "source": "http://smart.who.int/immunizations/CodeSystem/IMMZ.C",
+      "target": "http://hl7.org/fhir/administrative-gender",
+      "element": [
+        {
+          "code": "DE6",
+          "target": [
+            {
+              "code": "male",
+              "equivalence": "equivalent"
+            }
+          ]
+        },
+        {
+          "code": "DE7",
+          "target": [
+            {
+              "code": "female",
+              "equivalence": "equivalent"
+            }
+          ]
+        },
+        {
+          "code": "DE8",
+          "target": [
+            {
+              "code": "unknown",
+              "equivalence": "equivalent"
+            }
+          ]
+        },
+        {
+          "code": "DE9",
+          "target": [
+            {
+              "code": "other",
+              "equivalence": "wider"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "source": "http://hl7.org/fhir/administrative-gender",
+      "target": "http://smart.who.int/immunizations/CodeSystem/IMMZ.C",
+      "element": [
+        {
+          "code": "male",
+          "target": [
+            {
+              "code": "DE6",
+              "equivalence": "equivalent"
+            }
+          ]
+        },
+        {
+          "code": "female",
+          "target": [
+            {
+              "code": "DE7",
+              "equivalence": "equivalent"
+            }
+          ]
+        },
+        {
+          "code": "unknown",
+          "target": [
+            {
+              "code": "DE8",
+              "equivalence": "equivalent"
+            }
+          ]
+        },
+        {
+          "code": "other",
+          "target": [
+            {
+              "code": "DE9",
+              "equivalence": "narrower"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "source": "http://smart.who.int/immunizations/CodeSystem/IMMZ.C",
+      "target": "http://id.who.int/icd/release/11/mms",
+      "element": [
+        {
+          "code": "DE6",
+          "target": [
+            {
+              "code": "XX2UQ8",
+              "equivalence": "equivalent"
+            }
+          ]
+        },
+        {
+          "code": "DE7",
+          "target": [
+            {
+              "code": "XX2V25",
+              "equivalence": "equivalent"
+            }
+          ]
+        },
+        {
+          "code": "DE8",
+          "target": [
+            {
+              "code": "XX2PX3",
+              "equivalence": "equivalent"
+            }
+          ]
+        },
+        {
+          "code": "DE9",
+          "target": [
+            {
+              "code": "XX45B7",
+              "equivalence": "equivalent"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "source": "http://id.who.int/icd/release/11/mms",
+      "target": "http://smart.who.int/immunizations/CodeSystem/IMMZ.C",
+      "element": [
+        {
+          "code": "XX2UQ8",
+          "target": [
+            {
+              "code": "DE6",
+              "equivalence": "equivalent"
+            }
+          ]
+        },
+        {
+          "code": "XX2V25",
+          "target": [
+            {
+              "code": "DE7",
+              "equivalence": "equivalent"
+            }
+          ]
+        },
+        {
+          "code": "XX2PX3",
+          "target": [
+            {
+              "code": "DE8",
+              "equivalence": "equivalent"
+            }
+          ]
+        },
+        {
+          "code": "XX45B7",
+          "target": [
+            {
+              "code": "DE9",
+              "equivalence": "equivalent"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "source": "http://smart.who.int/immunizations/CodeSystem/IMMZ.C",
+      "target": "http://loinc.org",
+      "element": [
+        {
+          "code": "DE2",
+          "target": [
+            {
+              "code": "54125-0",
+              "equivalence": "equivalent"
+            }
+          ]
+        },
+        {
+          "code": "DE3",
+          "target": [
+            {
+              "code": "45392-8",
+              "equivalence": "equivalent"
+            }
+          ]
+        },
+        {
+          "code": "DE4",
+          "target": [
+            {
+              "code": "45394-4",
+              "equivalence": "equivalent"
+            }
+          ]
+        },
+        {
+          "code": "DE5",
+          "target": [
+            {
+              "code": "46098-0",
+              "equivalence": "equivalent"
+            }
+          ]
+        },
+        {
+          "code": "DE10",
+          "target": [
+            {
+              "code": "21112-8",
+              "equivalence": "equivalent"
+            }
+          ]
+        },
+        {
+          "code": "DE13",
+          "target": [
+            {
+              "code": "63900-5",
+              "equivalence": "wider"
+            }
+          ]
+        },
+        {
+          "code": "DE16",
+          "target": [
+            {
+              "code": "45392-8",
+              "equivalence": "wider"
+            }
+          ]
+        },
+        {
+          "code": "DE17",
+          "target": [
+            {
+              "code": "45394-4",
+              "equivalence": "wider"
+            }
+          ]
+        },
+        {
+          "code": "DE18",
+          "target": [
+            {
+              "code": "42077-8",
+              "equivalence": "equivalent"
+            }
+          ]
+        },
+        {
+          "code": "DE19",
+          "target": [
+            {
+              "code": "56799-0",
+              "equivalence": "narrower"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "source": "http://loinc.org",
+      "target": "http://smart.who.int/immunizations/CodeSystem/IMMZ.C",
+      "element": [
+        {
+          "code": "54125-0",
+          "target": [
+            {
+              "code": "DE2",
+              "equivalence": "equivalent"
+            }
+          ]
+        },
+        {
+          "code": "45392-8",
+          "target": [
+            {
+              "code": "DE3",
+              "equivalence": "equivalent"
+            }
+          ]
+        },
+        {
+          "code": "45394-4",
+          "target": [
+            {
+              "code": "DE4",
+              "equivalence": "equivalent"
+            }
+          ]
+        },
+        {
+          "code": "46098-0",
+          "target": [
+            {
+              "code": "DE5",
+              "equivalence": "equivalent"
+            }
+          ]
+        },
+        {
+          "code": "21112-8",
+          "target": [
+            {
+              "code": "DE10",
+              "equivalence": "equivalent"
+            }
+          ]
+        },
+        {
+          "code": "63900-5",
+          "target": [
+            {
+              "code": "DE13",
+              "equivalence": "narrower"
+            }
+          ]
+        },
+        {
+          "code": "45392-8",
+          "target": [
+            {
+              "code": "DE16",
+              "equivalence": "narrower"
+            }
+          ]
+        },
+        {
+          "code": "45394-4",
+          "target": [
+            {
+              "code": "DE17",
+              "equivalence": "narrower"
+            }
+          ]
+        },
+        {
+          "code": "42077-8",
+          "target": [
+            {
+              "code": "DE18",
+              "equivalence": "equivalent"
+            }
+          ]
+        },
+        {
+          "code": "56799-0",
+          "target": [
+            {
+              "code": "DE19",
+              "equivalence": "wider"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "source": "http://smart.who.int/immunizations/CodeSystem/IMMZ.C",
+      "target": "http://snomed.info/sct",
+      "element": [
+        {
+          "code": "DE2",
+          "target": [
+            {
+              "code": "371484003",
+              "equivalence": "equivalent"
+            }
+          ]
+        },
+        {
+          "code": "DE3",
+          "target": [
+            {
+              "code": "184095009",
+              "equivalence": "relatedto"
+            }
+          ]
+        },
+        {
+          "code": "DE4",
+          "target": [
+            {
+              "code": "184096005",
+              "equivalence": "relatedto"
+            }
+          ]
+        },
+        {
+          "code": "DE5",
+          "target": [
+            {
+              "code": "184100006",
+              "equivalence": "equivalent"
+            }
+          ]
+        },
+        {
+          "code": "DE6",
+          "target": [
+            {
+              "code": "248153007",
+              "equivalence": "equivalent"
+            }
+          ]
+        },
+        {
+          "code": "DE7",
+          "target": [
+            {
+              "code": "248152002",
+              "equivalence": "equivalent"
+            }
+          ]
+        },
+        {
+          "code": "DE8",
+          "target": [
+            {
+              "code": "772004004",
+              "equivalence": "relatedto"
+            }
+          ]
+        },
+        {
+          "code": "DE9",
+          "target": [
+            {
+              "code": "15867007",
+              "equivalence": "equivalent"
+            }
+          ]
+        },
+        {
+          "code": "DE10",
+          "target": [
+            {
+              "code": "184099003",
+              "equivalence": "equivalent"
+            }
+          ]
+        },
+        {
+          "code": "DE14",
+          "target": [
+            {
+              "code": "184140000",
+              "equivalence": "wider"
+            }
+          ]
+        },
+        {
+          "code": "DE15",
+          "target": [
+            {
+              "code": "184140000",
+              "equivalence": "wider"
+            }
+          ]
+        },
+        {
+          "code": "DE18",
+          "target": [
+            {
+              "code": "184103008",
+              "equivalence": "equivalent"
+            }
+          ]
+        },
+        {
+          "code": "DE19",
+          "target": [
+            {
+              "code": "184097001",
+              "equivalence": "narrower"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "source": "http://snomed.info/sct",
+      "target": "http://smart.who.int/immunizations/CodeSystem/IMMZ.C",
+      "element": [
+        {
+          "code": "371484003",
+          "target": [
+            {
+              "code": "DE2",
+              "equivalence": "equivalent"
+            }
+          ]
+        },
+        {
+          "code": "184095009",
+          "target": [
+            {
+              "code": "DE3",
+              "equivalence": "relatedto"
+            }
+          ]
+        },
+        {
+          "code": "184096005",
+          "target": [
+            {
+              "code": "DE4",
+              "equivalence": "relatedto"
+            }
+          ]
+        },
+        {
+          "code": "184100006",
+          "target": [
+            {
+              "code": "DE5",
+              "equivalence": "equivalent"
+            }
+          ]
+        },
+        {
+          "code": "248153007",
+          "target": [
+            {
+              "code": "DE6",
+              "equivalence": "equivalent"
+            }
+          ]
+        },
+        {
+          "code": "248152002",
+          "target": [
+            {
+              "code": "DE7",
+              "equivalence": "equivalent"
+            }
+          ]
+        },
+        {
+          "code": "772004004",
+          "target": [
+            {
+              "code": "DE8",
+              "equivalence": "relatedto"
+            }
+          ]
+        },
+        {
+          "code": "15867007",
+          "target": [
+            {
+              "code": "DE9",
+              "equivalence": "equivalent"
+            }
+          ]
+        },
+        {
+          "code": "184099003",
+          "target": [
+            {
+              "code": "DE10",
+              "equivalence": "equivalent"
+            }
+          ]
+        },
+        {
+          "code": "184140000",
+          "target": [
+            {
+              "code": "DE14",
+              "equivalence": "narrower"
+            }
+          ]
+        },
+        {
+          "code": "184140000",
+          "target": [
+            {
+              "code": "DE15",
+              "equivalence": "narrower"
+            }
+          ]
+        },
+        {
+          "code": "184103008",
+          "target": [
+            {
+              "code": "DE18",
+              "equivalence": "equivalent"
+            }
+          ]
+        },
+        {
+          "code": "184097001",
+          "target": [
+            {
+              "code": "DE19",
+              "equivalence": "wider"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

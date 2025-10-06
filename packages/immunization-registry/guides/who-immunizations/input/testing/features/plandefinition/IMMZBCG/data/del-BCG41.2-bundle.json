@@ -1,0 +1,1 @@
+{"resourceType":"Bundle","id":"tests-BCG41.2-bundle","type":"transaction","entry":[{"request":{"method":"DELETE","url":"Observation/immunosuppressive-BCG41.2"}},{"request":{"method":"DELETE","url":"Patient/BCG41.2"}},{"request":{"method":"DELETE","url":"MedicationRequest/measles-BCG41.2"}}]}

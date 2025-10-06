@@ -1,0 +1,1 @@
+{"resourceType":"Bundle","id":"tests-HepatitisB55.3-bundle","type":"transaction","entry":[{"request":{"method":"DELETE","url":"Immunization/hepb2-HepatitisB55.3"}},{"request":{"method":"DELETE","url":"Immunization/hepb1-HepatitisB55.3"}},{"request":{"method":"DELETE","url":"Patient/HepatitisB55.3"}}]}

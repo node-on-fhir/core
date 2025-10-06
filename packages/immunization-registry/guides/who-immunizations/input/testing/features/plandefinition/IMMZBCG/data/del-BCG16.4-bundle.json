@@ -1,0 +1,1 @@
+{"resourceType":"Bundle","id":"tests-BCG16.4-bundle","type":"transaction","entry":[{"request":{"method":"DELETE","url":"Observation/tb-BCG16.4"}},{"request":{"method":"DELETE","url":"Patient/BCG16.4"}}]}

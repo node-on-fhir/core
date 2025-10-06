@@ -1,0 +1,232 @@
+{
+  "resourceType": "QuestionnaireResponse",
+  "id": "Example.IMMZ.D13.QuestionnaireResponse.BCG",
+  "status": "completed",
+  "authored": "2025-01-30T19:20:20.913Z",
+  "questionnaire": "http://smart.who.int/immunizations/Questionnaire/QIMMZD13",
+  "subject": {
+    "reference": "Patient/IMMZ.C.Patient.1"
+  },
+  "item": [
+    {
+      "linkId": "typeOfDose",
+      "answer": [
+        {
+          "valueCoding": {
+            "code": "DE259",
+            "system": "http://smart.who.int/immunizations/CodeSystem/IMMZ.D",
+            "display": "Primary series"
+          }
+        }
+      ]
+    },
+    {
+      "linkId": "completedThePrimaryVaccinationSeries",
+      "answer": [
+        {
+          "valueBoolean": true
+        }
+      ]
+    },
+    {
+      "linkId": "completedTheBoosterSeries",
+      "answer": [
+        {
+          "valueBoolean": false
+        }
+      ]
+    },
+    {
+      "linkId": "dateWhenPrimaryVaccinationSeriesWasCompleted",
+      "answer": [
+        {
+          "valueDate": "2020-07-01"
+        }
+      ]
+    },
+    {
+      "linkId": "hivStatus",
+      "answer": [
+        {
+          "valueCoding": {
+            "code": "DE206",
+            "system": "http://smart.who.int/immunizations/CodeSystem/IMMZ.D",
+            "display": "HIV-negative"
+          }
+        }
+      ]
+    },
+    {
+      "linkId": "vaccineType",
+      "answer": [
+        {
+          "valueCoding": {
+            "code": "DE1",
+            "system": "http://smart.who.int/immunizations/CodeSystem/IMMZ.Z",
+            "display": "BCG vaccines"
+          }
+        }
+      ]
+    },
+    {
+      "linkId": "dateAndTimeOfVaccination",
+      "answer": [
+        {
+          "valueDateTime": "2020-07-01T04:00:00Z"
+        }
+      ]
+    },
+    {
+      "linkId": "contactDate",
+      "answer": [
+        {
+          "valueDate": "2020-07-01"
+        }
+      ]
+    },
+    {
+      "linkId": "doseNumber",
+      "answer": [
+        {
+          "valueInteger": 1
+        }
+      ]
+    },
+    {
+      "linkId": "immunizationEventStatus",
+      "answer": [
+        {
+          "valueCoding": {
+            "code": "DE2",
+            "system": "http://smart.who.int/immunizations/CodeSystem/IMMZ.D",
+            "display": "Completed"
+          }
+        }
+      ]
+    },
+    {
+      "linkId": "vaccineBrand",
+      "answer": [
+        {
+          "valueCoding": {
+            "code": "brand",
+            "system": "http://smart.who.int/immunizations/CodeSystem/IMMZ.Ex",
+            "display": "Example Brand"
+          }
+        }
+      ]
+    },
+    {
+      "linkId": "liveVaccine",
+      "answer": [
+        {
+          "valueBoolean": true
+        }
+      ]
+    },
+    {
+      "linkId": "countryOfVaccination",
+      "answer": [
+        {
+          "valueCoding": {
+            "code": "ZAF",
+            "system": "urn:iso:std:iso:3166",
+            "display": "South Africa"
+          }
+        }
+      ]
+    },
+    {
+      "linkId": "administrativeArea",
+      "answer": [
+        {
+          "valueCoding": {
+            "code": "ZA-WC",
+            "system": "urn:iso:std:iso:3166-2",
+            "display": "Western Cape"
+          }
+        }
+      ]
+    },
+    {
+      "linkId": "vaccineManufacturer",
+      "answer": [
+        {
+          "valueCoding": {
+            "code": "manufacturer",
+            "system": "http://smart.who.int/immunizations/CodeSystem/IMMZ.Ex",
+            "display": "Example Manufacturer"
+          }
+        }
+      ]
+    },
+    {
+      "linkId": "vaccineBatchNumber",
+      "answer": [
+        {
+          "valueString": "148734"
+        }
+      ]
+    },
+    {
+      "linkId": "vaccineMarketAuthorizationHolder",
+      "answer": [
+        {
+          "valueCoding": {
+            "code": "marketauth",
+            "system": "http://smart.who.int/immunizations/CodeSystem/IMMZ.Ex",
+            "display": "Example Market Authorization Holder"
+          }
+        }
+      ]
+    },
+    {
+      "linkId": "expirationDate",
+      "answer": [
+        {
+          "valueDate": "2022-01-01"
+        }
+      ]
+    },
+    {
+      "linkId": "doseQuantity",
+      "answer": [
+        {
+          "valueQuantity": {
+            "value": 0.05,
+            "code": "mL",
+            "system": "http://unitsofmeasure.org"
+          }
+        }
+      ]
+    },
+    {
+      "linkId": "healthWorkerIdentifier",
+      "answer": [
+        {
+          "valueString": "8723487"
+        }
+      ]
+    },
+    {
+      "linkId": "totalDosesInSeries",
+      "answer": [
+        {
+          "valueDecimal": 1
+        }
+      ]
+    },
+    {
+      "linkId": "diseaseTargeted",
+      "answer": [
+        {
+          "valueCoding": {
+            "code": "DE139",
+            "system": "http://smart.who.int/immunizations/CodeSystem/IMMZ.D",
+            "display": "Tuberculosis"
+          }
+        }
+      ]
+    }
+  ]
+}

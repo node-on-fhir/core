@@ -1,0 +1,169 @@
+---
+#The client is pregnant
+#   "Potential contraindications" = "Currently pregnant"
+### Bacille Calmette–Guérin (BCG) vaccination is contraindicated
+### '"Immunization recommendation status" = "Contraindicated"
+id: BCG37.1
+birth: -25y
+patient:
+  fhir:
+    gender: female
+observation:
+  pregnant:
+    code:
+      code: DE161
+      system: http://smart.who.int/immunizations/CodeSystem/IMMZ.D
+      display: Potential contraindications
+    fhir:
+      effectiveDateTime: -5m
+      valueCodeableConcept:
+        coding:
+          - code: DE162
+            system: http://smart.who.int/immunizations/CodeSystem/IMMZ.D
+            display: Currently pregnant
+medicationrequest:
+  measles:
+    medication:
+      code: XM8142
+      system: http://id.who.int/icd/release/11/mms
+      display: Tuberculosis, live attenuated vaccines
+    fhir:
+      authoredOn: 0d
+      status: draft
+      intent: proposal
+---
+#The client has history of severe allergic reactions
+#   '"Potential contraindications" = "Severe allergic reactions"
+### BCG vaccination could be contraindicated. Clinical judgement is required. Create a clinical note.
+### '"Immunization recommendation status" = "Further evaluation needed"
+id: BCG38.1
+birth: -5y
+patient:
+  fhir:
+    gender: female
+observation:
+  allergic:
+    code:
+      code: DE161
+      system: http://smart.who.int/immunizations/CodeSystem/IMMZ.D
+      display: Potential contraindications
+    fhir:
+      effectiveDateTime: -5m
+      valueCodeableConcept:
+        coding:
+          - code: DE167
+            system: http://smart.who.int/immunizations/CodeSystem/IMMZ.D
+            display: Severe allergic reactions
+medicationrequest:
+  measles:
+    medication:
+      code: XM8142
+      system: http://id.who.int/icd/release/11/mms
+      display: Tuberculosis, live attenuated vaccines
+    fhir:
+      authoredOn: 0d
+      status: draft
+      intent: proposal
+---
+#The client has immunodeficiency syndromes
+#   "Potential contraindications" = "Immunodeficiency syndromes"
+### BCG vaccination is contraindicated
+### '"Immunization recommendation status" = "Contraindicated"
+id: BCG39.1
+birth: -5y
+patient:
+  fhir:
+    gender: female
+observation:
+  immunodeficiency:
+    code:
+      code: DE161
+      system: http://smart.who.int/immunizations/CodeSystem/IMMZ.D
+      display: Potential contraindications
+    fhir:
+      effectiveDateTime: -5m
+      valueCodeableConcept:
+        coding:
+          - code: DE187
+            system: http://smart.who.int/immunizations/CodeSystem/IMMZ.D
+            display: Immunodeficiency syndromes
+medicationrequest:
+  measles:
+    medication:
+      code: XM8142
+      system: http://id.who.int/icd/release/11/mms
+      display: Tuberculosis, live attenuated vaccines
+    fhir:
+      authoredOn: 0d
+      status: draft
+      intent: proposal
+---
+#The client is exposed to immunosuppressive treatment
+#   "Potential contraindications" = "Exposed to immunosuppressive treatment"
+#Client's age is less than 1 year
+#   "Age" < 1 year
+### BCG vaccination is contraindicated
+### '"Immunization recommendation status" = "Contraindicated"
+id: BCG40.2
+birth: -6m
+patient:
+  fhir:
+    gender: female
+observation:
+  immunosuppressive:
+    code:
+      code: DE161
+      system: http://smart.who.int/immunizations/CodeSystem/IMMZ.D
+      display: Potential contraindications
+    fhir:
+      effectiveDateTime: -5m
+      valueCodeableConcept:
+        coding:
+          - code: DE164
+            system: http://smart.who.int/immunizations/CodeSystem/IMMZ.D
+            display: Exposed to immunosuppressive treatment
+medicationrequest:
+  measles:
+    medication:
+      code: XM8142
+      system: http://id.who.int/icd/release/11/mms
+      display: Tuberculosis, live attenuated vaccines
+    fhir:
+      authoredOn: 0d
+      status: draft
+      intent: proposal
+---
+#The client is exposed to immunosuppressive treatment
+#   "Potential contraindications" = "Exposed to immunosuppressive treatment"
+#Client's age is more than or equal to 1 year
+#   "Age" ≥ 1 year
+### BCG vaccination could be contraindicated. Clinical judgement is required. Create a clinical note.
+### '"Immunization recommendation status" = "Further evaluation needed"
+id: BCG41.2
+birth: -6y
+patient:
+  fhir:
+    gender: female
+observation:
+  immunosuppressive:
+    code:
+      code: DE161
+      system: http://smart.who.int/immunizations/CodeSystem/IMMZ.D
+      display: Potential contraindications
+    fhir:
+      effectiveDateTime: -5m
+      valueCodeableConcept:
+        coding:
+          - code: DE164
+            system: http://smart.who.int/immunizations/CodeSystem/IMMZ.D
+            display: Exposed to immunosuppressive treatment
+medicationrequest:
+  measles:
+    medication:
+      code: XM8142
+      system: http://id.who.int/icd/release/11/mms
+      display: Tuberculosis, live attenuated vaccines
+    fhir:
+      authoredOn: 0d
+      status: draft
+      intent: proposal

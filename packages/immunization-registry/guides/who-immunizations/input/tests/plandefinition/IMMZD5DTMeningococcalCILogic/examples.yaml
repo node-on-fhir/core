@@ -1,0 +1,25 @@
+---
+#0. The client has history of severe allergic reactions
+#   "Potential contraindications" = "Severe allergic reactions"
+### Meningococcal vaccination could be contraindicated. Clinical judgement is required. Create a clinical note
+### "Immunization recommendation status" (where "Type of meningococcal dose" = "Polysaccharide vaccine") = "Further evaluation needed"
+id: "78.0"
+birth: -2y
+patient:
+  fhir:
+    gender: female
+contraindication:
+    severeallergicreactions:
+      code: DE167
+      display: "Severe allergic reactions"
+      effectiveDateTime: -1y
+medicationrequest:
+  meningococcal:
+    medication:
+      code: XM5LC2
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Meningococcal polyvalent purified polysaccharides antigen vaccines"
+    fhir:
+      authoredOn: 0d
+      status: draft
+      intent: proposal

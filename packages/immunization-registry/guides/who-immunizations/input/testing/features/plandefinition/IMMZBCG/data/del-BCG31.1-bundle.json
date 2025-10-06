@@ -1,0 +1,1 @@
+{"resourceType":"Bundle","id":"tests-BCG31.1-bundle","type":"transaction","entry":[{"request":{"method":"DELETE","url":"Immunization/bcg-BCG31.1"}},{"request":{"method":"DELETE","url":"Patient/BCG31.1"}}]}

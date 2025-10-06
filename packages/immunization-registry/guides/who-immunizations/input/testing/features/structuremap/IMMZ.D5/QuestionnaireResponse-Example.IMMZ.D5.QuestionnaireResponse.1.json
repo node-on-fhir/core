@@ -1,0 +1,36 @@
+{
+  "resourceType": "QuestionnaireResponse",
+  "id": "Example.IMMZ.D5.QuestionnaireResponse.1",
+  "status": "completed",
+  "authored": "2025-01-31T19:20:20.913Z",
+  "questionnaire": "http://smart.who.int/immunizations/Questionnaire/QIMMZD5",
+  "subject": {
+    "reference": "Patient/IMMZ.C.Patient.2"
+  },
+  "item": [
+    {
+      "linkId": "potentialContraindications",
+      "answer": [
+        {
+          "valueCoding": {
+            "code": "DE162",
+            "system": "http://smart.who.int/immunizations/CodeSystem/IMMZ.D",
+            "display": "Currently pregnant"
+          }
+        }
+      ]
+    },
+    {
+      "linkId": "potentialContraindications",
+      "answer": [
+        {
+          "valueCoding": {
+            "code": "DE167",
+            "system": "http://smart.who.int/immunizations/CodeSystem/IMMZ.D",
+            "display": "Severe allergic reactions"
+          }
+        }
+      ]
+    }
+  ]
+}

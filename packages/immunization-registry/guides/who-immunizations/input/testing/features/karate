@@ -1,0 +1,3 @@
+#!/bin/bash
+
+java -cp "$(dirname "$0")/karate-1.5.1.jar":. -Dkarate.config.dir=$(dirname "$0") com.intuit.karate.Main "$@"

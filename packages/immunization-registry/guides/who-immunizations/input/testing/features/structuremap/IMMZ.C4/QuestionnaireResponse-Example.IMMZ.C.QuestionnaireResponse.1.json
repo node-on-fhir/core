@@ -1,0 +1,114 @@
+{
+  "resourceType": "QuestionnaireResponse",
+  "id": "Example.IMMZ.C.QuestionnaireResponse.1",
+  "status": "completed",
+  "authored": "2024-12-13T19:20:20.913Z",
+  "questionnaire": "http://smart.who.int/immunizations/Questionnaire/QIMMZC4",
+  "item": [
+    {
+      "linkId": "uniqueIdentifier",
+      "answer": [
+        {
+          "valueString": "12345-ZA"
+        }
+      ]
+    },
+    {
+      "linkId": "name",
+      "answer": [
+        {
+          "valueString": "Thabo Mbulelo Mbeki"
+        }
+      ]
+    },
+    {
+      "linkId": "firstName",
+      "answer": [
+        {
+          "valueString": "Thabo Mbulelo"
+        }
+      ]
+    },
+    {
+      "linkId": "familyName",
+      "answer": [
+        {
+          "valueString": "Mbeki"
+        }
+      ]
+    },
+    {
+      "linkId": "sex",
+      "answer": [
+        {
+          "valueCoding": {
+            "code": "DE6",
+            "system": "http://smart.who.int/immunizations/CodeSystem/IMMZ.C",
+            "display": "Male"
+          }
+        }
+      ]
+    },
+    {
+      "linkId": "dateOfBirth",
+      "answer": [
+        {
+          "valueDate": "2020-06-18"
+        }
+      ]
+    },
+    {
+      "linkId": "age",
+      "answer": [
+        {
+          "valueString": "4 years"
+        }
+      ]
+    },
+    {
+      "linkId": "caregiversMultiple",
+      "item": [
+        {
+          "linkId": "caregiversFullName",
+          "answer": [
+            {
+              "valueString": "Zanele Mbeki"
+            }
+          ]
+        },
+        {
+          "linkId": "caregiversFirstName",
+          "answer": [
+            {
+              "valueString": "Zanele"
+            }
+          ]
+        },
+        {
+          "linkId": "caregiversFamilyName",
+          "answer": [
+            {
+              "valueString": "Mbeki"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "linkId": "contactPhoneNumber",
+      "answer": [
+        {
+          "valueString": "+27 21 465 8000"
+        }
+      ]
+    },
+    {
+      "linkId": "address",
+      "answer": [
+        {
+          "valueString": "123 Main Street, Cape Town, Western Cape, 8001, ZA"
+        }
+      ]
+    }
+  ]
+}

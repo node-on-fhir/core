@@ -1,0 +1,266 @@
+---
+#1. Client's age is less than 6 weeks
+#   'Today's date – "Date of birth" < 6 weeks
+### Client is not due for rotavirus vaccination
+### "Immunization recommendation status" = "Not due"
+id: "07.1"
+birth: -5w
+patient:
+  fhir:
+    gender: female
+---
+#0. No rotavirus primary series doses were administered
+#   Count of vaccines administered (where "Vaccine type" = "Rotavirus vaccines" and "Type of dose" = "Primary series") = 0
+#1. Client's age is between 6 weeks and 24 months
+#   6 weeks ≤ Today's date – "Date of birth" < 24 months
+#2. No live vaccine was administered in the last 4 weeks
+#   Today's date - latest "Date and time of vaccination" (where "Live vaccine" = TRUE) ≥ 4 weeks
+### Client is due for rotavirus vaccination
+### "Immunization recommendation status" = "Due"
+id: "08.012"
+birth: -12w
+patient:
+  fhir:
+    gender: female
+---
+#0. No rotavirus primary series doses were administered
+#1. Client's age is between 6 weeks and 24 months
+#2. Live vaccine was administered in the last 4 weeks
+#   Today's date - latest "Date and time of vaccination" (where "Live vaccine" = TRUE) < 4 weeks
+### Client is not due for rotavirus vaccination
+### "Immunization recommendation status" = "Not due"
+id: "09.012"
+birth: -12w
+patient:
+  fhir:
+    gender: female
+immunization:
+  flu:
+    vaccine:
+      code: XM5V64
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Influenza vaccines, live attenuated"
+    fhir:
+      expirationDate: 1y
+      occurrenceDateTime: -2w
+---
+#0. One rotavirus primary series dose was administered
+#   Count of vaccines administered (where "Vaccine type" = "Rotavirus vaccines" and "Type of dose" = "Primary series") = 1
+#1. Client's age is between 6 weeks and 24 months
+#   6 weeks ≤ Today's date – "Date of birth" < 24 months
+#2. No live vaccine was administered in the last 4 weeks
+#   Today's date - latest "Date and time of vaccination" (where "Live vaccine" = TRUE) ≥ 4 weeks
+### Client is due for rotavirus vaccination
+### "Immunization recommendation status" = "Due"
+id: "10.012"
+birth: -12w
+patient:
+  fhir:
+    gender: female
+immunization:
+  rotavirus:
+    vaccine:
+      code: XM4GV0
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Rota virus, live attenuated"
+    doses:
+      p3:
+        - -4w
+---
+#0. One rotavirus primary series dose was administered
+#1. Client's age is between 6 weeks and 24 months
+#2. Live vaccine was administered in the last 4 weeks
+#   Today's date - latest "Date and time of vaccination" (where "Live vaccine" = TRUE) < 4 weeks
+### Client is not due for rotavirus vaccination
+### "Immunization recommendation status" = "Not due"
+id: "11.012"
+birth: -12w
+patient:
+  fhir:
+    gender: female
+immunization:
+  rotavirus:
+    vaccine:
+      code: XM4GV0
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Rota virus, live attenuated"
+    doses:
+      p3:
+        - -2w
+---
+#0. Two rotavirus primary series doses were administered
+#   Count of vaccines administered (where "Vaccine type" = "Rotavirus vaccines" and "Type of dose" = "Primary series") = 2
+#1. Client's age is between 6 weeks and 24 months
+#   6 weeks ≤ Today's date – "Date of birth" ≤ 24 months
+#2. No live vaccine was administered in the last 4 weeks
+#   Today's date - latest "Date and time of vaccination" (where "Live vaccine" = TRUE) ≥ 4 weeks
+#3. The series administered to the client is a mixed series or a series with unknown vaccine products
+#   "Vaccine brand" (where "Vaccine type" = "Rotavirus vaccines" AND "Dose number" = 1) ≠ "Vaccine brand" (where "Vaccine type" = "Rotavirus vaccines" AND "Dose number" = 2)
+### Client is due for rotavirus vaccination
+### "Immunization recommendation status" = "Due"
+id: "12.0123"
+birth: -16w
+patient:
+  fhir:
+    gender: female
+immunization:
+  rotavirus:
+    vaccine:
+      code: XM4GV0
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Rota virus, live attenuated"
+    doses:
+      p3:
+        - -8w
+        - -4w
+---
+#0. Two rotavirus primary series doses were administered
+#1. Client's age is between 6 weeks and 24 months
+#2. Live vaccines was administered in the last 4 weeks
+#   Today's date - latest "Date and time of vaccination" (where "Live vaccine" = TRUE) < 4 weeks
+#3. The series administered to the client is a mixed series or a series with unknown vaccine products
+### Client is not due for rotavirus vaccination
+### "Immunization recommendation status" = "Not due"
+id: "13.0123"
+birth: -16w
+patient:
+  fhir:
+    gender: female
+immunization:
+  rotavirus:
+    vaccine:
+      code: XM4GV0
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Rota virus, live attenuated"
+    doses:
+      p3:
+        - -8w
+        - -3w
+---
+#0. Two rotavirus primary series doses were administered
+#1. Client's age is between 6 weeks and 24 months
+#2. No live vaccine was administered in last 4 weeks
+#   Today's date - latest "Date and time of vaccination" (where "Live vaccine" = TRUE) ≥ 4 weeks
+#3. The series administered to the client contains the same product
+#   "Vaccine brand" (where "Vaccine type" = "Rotavirus vaccines" AND "Dose number" = 1) = "Vaccine brand" (where "Vaccine type" = "Rotavirus vaccines" AND "Dose number" = 2)
+#4. The series contain more than two doses
+#   "Total doses in series" > 2
+### Client is due for rotavirus vaccination
+### "Immunization recommendation status" = "Due"
+id: "14.01234"
+birth: -16w
+patient:
+  fhir:
+    gender: female
+immunization:
+  rotavirus:
+    vaccine:
+      code: XM4GV0
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Rota virus, live attenuated"
+    doses:
+      p3:
+        - -8w
+        - -4w
+    fhir:
+      extension:
+        - url: "http://smart.who.int/immunizations/StructureDefinition/IMMZVaccineBrand"
+          valueCodeableConcept:
+            coding:
+            - code: Rotavac
+              system: "http://example.org/Brands"
+              display: "Rotavac"
+---
+#0. Two rotavirus primary series doses were administered
+#1. Client's age is between 6 weeks and 24 months
+#2. Live vaccine was administered in last 4 weeks
+#   Today's date - latest "Date and time of vaccination" (where "Live vaccine" = TRUE) < 4 weeks
+#3. The series administered to the client contains the same product
+#4. The series contain more than two doses
+### Client is not due for rotavirus vaccination
+### "Immunization recommendation status" = "Not due"
+id: "15.01234"
+birth: -16w
+patient:
+  fhir:
+    gender: female
+immunization:
+  rotavirus:
+    vaccine:
+      code: XM4GV0
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Rota virus, live attenuated"
+    doses:
+      p3:
+        - -8w
+        - -3w
+    fhir:
+      extension:
+        - url: "http://smart.who.int/immunizations/StructureDefinition/IMMZVaccineBrand"
+          valueCodeableConcept:
+            coding:
+            - code: Rotavac
+              system: "http://example.org/Brands"
+              display: "Rotavac"
+---
+#0. Two rotavirus primary series doses were administered
+#1. Client's age is between 6 weeks and 24 months
+#3. The series administered to the client contains the same product
+#4. The series contain less than or equal to two doses
+#   "Total doses in series" ≤ 2
+### Rotavirus immunization schedule is complete
+### "Immunization recommendation status" = "Complete"
+id: "16.0134"
+birth: -16w
+patient:
+  fhir:
+    gender: female
+immunization:
+  rotavirus:
+    vaccine:
+      code: XM4GV0
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Rota virus, live attenuated"
+    doses:
+      p2:
+        - -8w
+        - -3w
+    fhir:
+      extension:
+        - url: "http://smart.who.int/immunizations/StructureDefinition/IMMZVaccineBrand"
+          valueCodeableConcept:
+            coding:
+            - code: Rotavac
+              system: "http://example.org/Brands"
+              display: "Rotarix"
+---
+#0. Three rotavirus primary series doses were administered
+#   Count of vaccines administered (where "Vaccine type" = "Rotavirus vaccines" and "Type of dose" = "Primary series") = 3
+### Rotavirus immunization schedule is complete
+### '"Immunization recommendation status" = "Complete"
+id: "17.0"
+birth: -20w
+patient:
+  fhir:
+    gender: female
+immunization:
+  rotavirus:
+    vaccine:
+      code: XM4GV0
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Rota virus, live attenuated"
+    doses:
+      p2:
+        - b+6w
+        - b+10w
+        - b+14w
+---
+#1. Client's age is more than 24 months
+#   "Date of birth" > 24 months
+### Client is not due for rotavirus vaccination if immunization schedule is not complete.
+### "Immunization recommendation status" = "Not due" IF current "Immunization recommendation status" ≠ "Complete"
+id: "18.1"
+birth: -3y
+patient:
+  fhir:
+    gender: female

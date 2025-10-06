@@ -1,0 +1,69 @@
+output
+fsh-generated
+input-cache
+temp
+template
+bundles
+*.jar
+.DS_Store
+**/tests-*-bundle.json
+node_modules/
+outputs/*
+node_modules
+input/vocabulary/valueset/external/
+results/*
+input/tests/results/**
+input/tests/*/*/*/
+.vscode/
+**/.~lock.*
+**/target
+input/tests/*/*/Group-*.json
+
+# Temporary folders #
+#####################
+temp
+template
+output
+fsh-generated
+
+# Don't commit this because it's so large #
+###########################################
+/input-cache
+
+# Windows generated files #
+###########################
+Thumbs.db
+
+# OS generated files #
+######################
+.DS_Store
+.DS_Store?
+
+# backup files #
+################
+*.bak
+
+# python #
+##########
+__pycache__/
+
+# java settings 
+################
+
+
+.vscode/
+.idea/
+.idea/*
+
+
+# emacs #
+#########
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+.\#*
+.swp

@@ -1,0 +1,33 @@
+---
+#The client has history of severe allergic reactions
+#   "Potential contraindications" = "Severe allergic reactions"
+### Hepatitis B vaccination could be contraindicated. Clinical judgement is required. Create a clinical note.
+### '"Immunization recommendation status" = "Further evaluation needed"
+id: HepatitisB62.1
+birth: -2h
+patient:
+  fhir:
+    gender: female
+observation:
+  allergic:
+    code:
+      code: DE161
+      system: http://smart.who.int/immunizations/CodeSystem/IMMZ.D
+      display: Potential contraindications
+    fhir:
+      effectiveDateTime: -5m
+      valueCodeableConcept:
+        coding:
+          - code: DE167
+            system: http://smart.who.int/immunizations/CodeSystem/IMMZ.D
+            display: Severe allergic reactions
+medicationrequest:
+  measles:
+    medication:
+      code: XM9V38
+      system: http://id.who.int/icd/release/11/mms
+      display: Hepatitis B, purified antigen
+    fhir:
+      authoredOn: 0d
+      status: draft
+      intent: proposal

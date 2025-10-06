@@ -1,0 +1,1 @@
+{"resourceType":"Bundle","id":"tests-BCG27.5-bundle","type":"transaction","entry":[{"request":{"method":"DELETE","url":"Observation/well-BCG27.5"}},{"request":{"method":"DELETE","url":"Observation/hiv-BCG27.5"}},{"request":{"method":"DELETE","url":"Observation/art-BCG27.5"}},{"request":{"method":"DELETE","url":"Patient/BCG27.5"}}]}

@@ -1,0 +1,330 @@
+---
+id: 08.Alt6w
+birth: -5w
+patient:
+  fhir:
+    gender: female
+---
+id: 09.Abt6w1y
+birth: -8w
+patient:
+  fhir:
+    gender: female
+---
+id: 10.DTP1Dlt4w
+birth: -8w
+patient:
+  fhir:
+    gender: female
+immunization:
+  dtp:
+    vaccine:
+      code: XM31Q8
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Tetanus, diphtheria, acellular pertussis vaccines"
+    dose: "1/3"
+    fhir:
+      occurrenceDateTime: -2w
+---
+id: 11.DTP1Dgt4w
+birth: -10w
+patient:
+  fhir:
+    gender: female
+immunization:
+  dtp:
+    vaccine:
+      code: XM31Q8
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Tetanus, diphtheria, acellular pertussis vaccines"
+    dose: "1/3"
+    fhir:
+      occurrenceDateTime: -4w
+---
+id: 12.DTP2Dlt4w
+birth: -12w
+patient:
+  fhir:
+    gender: female
+immunization:
+  dtp:
+    vaccine:
+      code: XM31Q8
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Tetanus, diphtheria, acellular pertussis vaccines"
+    doses:
+      p3:
+        - -6w
+        - -2w
+---
+id: 13.DTP2Dgt4w
+birth: -14w
+patient:
+  fhir:
+    gender: female
+immunization:
+  dtp:
+    vaccine:
+      code: XM31Q8
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Tetanus, diphtheria, acellular pertussis vaccines"
+    doses:
+      p3:
+        - -8w
+        - -4w
+---
+id: 14.DTP3Td0Alt12m
+birth: -6m
+patient:
+  fhir:
+    gender: female
+immunization:
+  dtp:
+    vaccine:
+      code: XM31Q8
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Tetanus, diphtheria, acellular pertussis vaccines"
+    doses:
+      p3:
+        - b+6w
+        - b+10w
+        - b+14w
+---
+id: 15.DTP3Td0Agt12m
+birth: -12m
+patient:
+  fhir:
+    gender: female
+immunization:
+  dtp:
+    vaccine:
+      code: XM31Q8
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Tetanus, diphtheria, acellular pertussis vaccines"
+    doses:
+      p3:
+        - b+6w
+        - b+10w
+        - b+14w
+---
+id: 16.DTP3Td1Alt4y
+birth: -2y
+patient:
+  fhir:
+    gender: female
+immunization:
+  dtp:
+    vaccine:
+      code: XM31Q8
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Tetanus, diphtheria, acellular pertussis vaccines"
+    doses:
+      p3:
+        - b+6w
+        - b+10w
+        - b+14w
+  td:
+    vaccine:
+      code: XM1G86
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Tetanus toxoid, combinations with diphtheria toxoid vaccines"
+    doses:
+      b3:
+        - b+12m
+---
+id: 17.DTP3Td1Agt4y
+birth: -4y
+patient:
+  fhir:
+    gender: female
+immunization:
+  dtp:
+    vaccine:
+      code: XM31Q8
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Tetanus, diphtheria, acellular pertussis vaccines"
+    doses:
+      p3:
+        - b+6w
+        - b+10w
+        - b+14w
+  td:
+    vaccine:
+      code: XM1G86
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Tetanus toxoid, combinations with diphtheria toxoid vaccines"
+    doses:
+      b3:
+        - b+12m
+---
+id: 18.DTP3Td2Alt9y
+birth: -8y
+patient:
+  fhir:
+    gender: female
+immunization:
+  dtp:
+    vaccine:
+      code: XM31Q8
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Tetanus, diphtheria, acellular pertussis vaccines"
+    doses:
+      p3:
+        - b+6w
+        - b+10w
+        - b+14w
+  td:
+    vaccine:
+      code: XM1G86
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Tetanus toxoid, combinations with diphtheria toxoid vaccines"
+    doses:
+      b3:
+        - b+12m
+        - b+4y
+---
+id: 19.DTP3Td2Agt9y
+birth: -9y
+patient:
+  fhir:
+    gender: female
+immunization:
+  dtp:
+    vaccine:
+      code: XM31Q8
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Tetanus, diphtheria, acellular pertussis vaccines"
+    doses:
+      p3:
+        - b+6w
+        - b+10w
+        - b+14w
+  td:
+    vaccine:
+      code: XM1G86
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Tetanus toxoid, combinations with diphtheria toxoid vaccines"
+    doses:
+      b3:
+        - b+12m
+        - b+4y
+---
+id: 20.DTP3Td3
+birth: -10y
+patient:
+  fhir:
+    gender: female
+immunization:
+  dtp:
+    vaccine:
+      code: XM31Q8
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Tetanus, diphtheria, acellular pertussis vaccines"
+    doses:
+      p3:
+        - b+6w
+        - b+10w
+        - b+14w
+  td:
+    vaccine:
+      code: XM1G86
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Tetanus toxoid, combinations with diphtheria toxoid vaccines"
+    doses:
+      b3:
+        - b+12m
+        - b+4y
+        - b+9y
+---
+id: 21.DTP3P0Alt1y
+birth: -10m
+patient:
+  fhir:
+    gender: female
+immunization:
+  dtp:
+    vaccine:
+      code: XM31Q8
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Tetanus, diphtheria, acellular pertussis vaccines"
+    doses:
+      p3:
+        - b+6w
+        - b+10w
+        - b+14w
+---
+id: 22.DTP3P0Abt1y6yDTPlt6m
+birth: -3y
+patient:
+  fhir:
+    gender: female
+immunization:
+  dtp:
+    vaccine:
+      code: XM31Q8
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Tetanus, diphtheria, acellular pertussis vaccines"
+    doses:
+      p3:
+        - b+6w
+        - b+10w
+        - -5m
+---
+id: 23.DTP3P0Abt1y6yDTPgt6m
+birth: -3y
+patient:
+  fhir:
+    gender: female
+immunization:
+  dtp:
+    vaccine:
+      code: XM31Q8
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Tetanus, diphtheria, acellular pertussis vaccines"
+    doses:
+      p3:
+        - b+6w
+        - b+10w
+        - b+14w
+---
+id: 24.DTP3P0Agt6y
+birth: -7y
+patient:
+  fhir:
+    gender: female
+immunization:
+  dtp:
+    vaccine:
+      code: XM31Q8
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Tetanus, diphtheria, acellular pertussis vaccines"
+    doses:
+      p3:
+        - b+6w
+        - b+10w
+        - b+14w
+---
+id: 25.DTP3P1
+birth: -3y
+patient:
+  fhir:
+    gender: female
+immunization:
+  dtp:
+    vaccine:
+      code: XM31Q8
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Tetanus, diphtheria, acellular pertussis vaccines"
+    doses:
+      p3:
+        - b+6w
+        - b+10w
+        - b+14w
+  pertussis:
+    vaccine:
+      code: XM43M9
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Pertussis vaccines"
+    doses:
+      b1:
+        - -1m

@@ -1,0 +1,25 @@
+map "http://smart.who.int/immunizations/StructureMap/IMMZ.D5.LMToBundle" = "IMMZ.D5.LMToBundle"
+// Immunization Administer Vaccine - Transform Logical Model to Immunization resources
+
+uses "http://smart.who.int/immunizations/StructureDefinition/IMMZD5" alias IMMZD5 as source
+uses "http://hl7.org/fhir/StructureDefinition/Bundle" alias Bundle as target
+// uses "http://hl7.org/fhir/StructureDefinition/Patient" alias Patient as produced
+// uses "http://hl7.org/fhir/StructureDefinition/RelatedPerson" alias RelatedPerson as produced
+
+imports "http://smart.who.int/immunizations/StructureMap/IMMZ.Helpers"
+
+
+group IMMZD5ToBundle (source immz : IMMZD5, target bundle: Bundle) {
+
+  immz -> bundle.type = "transaction" "SetBundleType";
+
+  immz.patient as patient then {
+
+    immz.potentialContraindications as content -> 
+      c('http://smart.who.int/immunizations/CodeSystem/IMMZ.D', 'DE161', 'Potential contraindications') as code,
+      c( 'http://terminology.hl7.org/CodeSystem/observation-category', 'survey', 'Survey' ) as survey
+    then MakeObservation( patient, code, survey, content, bundle ) "potentialContraindications";
+
+  } "GetPatient";
+}
+

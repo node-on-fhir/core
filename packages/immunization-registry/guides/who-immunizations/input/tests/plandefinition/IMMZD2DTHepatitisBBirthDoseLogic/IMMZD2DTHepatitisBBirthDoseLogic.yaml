@@ -1,0 +1,46 @@
+---
+#Hepatitis B birth dose was not administered
+#   Count of vaccines administered (where "Vaccine type" = "Hepatitis B-containing vaccines" and "Birth dose" = TRUE) = 0
+#Client's age is less than {Member States defined upper limit}
+#   Today's date − "Date of birth" < Member States defined upper limit
+### Client is due for hepatitis B monovalent vaccine
+### "Immunization recommendation status" = "Due" (where "Type of hepatitis B dose" = "Hepatitis B monovalent vaccine")
+id: HepatitisB08.2
+birth: -6h
+patient:
+  fhir:
+    gender: female
+---
+#Hepatitis B birth dose was not administered
+#   Count of vaccines administered (where "Vaccine type" = "Hepatitis B-containing vaccines" and "Birth dose" = TRUE) = 0
+#Client's age is more than {Member States defined upper limit}
+#   Today's date - "Date of birth" > Member States defined upper limit
+### Client should follow delayed-start decision logic
+id: HepatitisB09.2
+birth: -3d
+patient:
+  fhir:
+    gender: female
+---
+#Hepatitis B birth dose was administered
+#   Count of vaccines administered (where "Vaccine type" = "Hepatitis B-containing vaccines" and "Birth dose" = TRUE) = 1
+### Client is not due for the hepatitis B birth dose
+### "Immunization recommendation status" = "Not due"
+id: HepatitisB10.1
+birth: -1w
+patient:
+  fhir:
+    gender: female
+immunization:
+  hepb:
+    vaccine:
+      code: XM9V38
+      system: http://id.who.int/icd/release/11/mms
+      display: Hepatitis B, purified antigen
+    fhir:
+      expirationDate: 1y
+      occurrenceDateTime: b+2h
+      protocolApplied:
+        - doseNumberString: "1"
+          seriesDosesString: "1"
+          series: Dose 0

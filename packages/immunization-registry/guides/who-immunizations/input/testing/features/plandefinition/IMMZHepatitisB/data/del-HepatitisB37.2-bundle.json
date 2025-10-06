@@ -1,0 +1,1 @@
+{"resourceType":"Bundle","id":"tests-HepatitisB37.2-bundle","type":"transaction","entry":[{"request":{"method":"DELETE","url":"Patient/HepatitisB37.2"}}]}

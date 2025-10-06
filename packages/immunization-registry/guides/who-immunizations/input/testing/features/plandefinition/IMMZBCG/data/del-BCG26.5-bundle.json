@@ -1,0 +1,1 @@
+{"resourceType":"Bundle","id":"tests-BCG26.5-bundle","type":"transaction","entry":[{"request":{"method":"DELETE","url":"Observation/immstable-BCG26.5"}},{"request":{"method":"DELETE","url":"Observation/art-BCG26.5"}},{"request":{"method":"DELETE","url":"Observation/hiv-BCG26.5"}},{"request":{"method":"DELETE","url":"Patient/BCG26.5"}}]}

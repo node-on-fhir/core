@@ -1,0 +1,124 @@
+{
+  "resourceType": "QuestionnaireResponse",
+  "id": "Example.IMMZ.D1.QuestionnaireResponse.Polio",
+  "status": "completed",
+  "authored": "2025-01-13T19:20:20.913Z",
+  "questionnaire": "http://smart.who.int/immunizations/Questionnaire/QIMMZD1",
+  "subject": {
+    "reference": "Patient/IMMZ.C.Patient.1"
+  },
+  "item": [
+    {
+      "linkId": "birthDose",
+      "answer": [
+        {
+          "valueBoolean": true
+        }
+      ]
+    },
+    {
+      "linkId": "typeOfDose",
+      "answer": [
+        {
+          "valueCoding": {
+            "code": "DE260",
+            "system": "http://smart.who.int/immunizations/CodeSystem/IMMZ.D",
+            "display": "Dose 0"
+          }
+        }
+      ]
+    },
+    {
+      "linkId": "completedThePrimaryVaccinationSeries",
+      "answer": [
+        {
+          "valueBoolean": false
+        }
+      ]
+    },
+    {
+      "linkId": "completedTheBoosterSeries",
+      "answer": [
+        {
+          "valueBoolean": false
+        }
+      ]
+    },
+    {
+      "linkId": "hivStatus",
+      "answer": [
+        {
+          "valueCoding": {
+            "code": "DE206",
+            "system": "http://smart.who.int/immunizations/CodeSystem/IMMZ.D",
+            "display": "HIV-negative"
+          }
+        }
+      ]
+    },
+    {
+      "linkId": "pretermBirth",
+      "answer": [
+        {
+          "valueBoolean": false
+        }
+      ]
+    },
+    {
+      "linkId": "immunocompromised",
+      "answer": [
+        {
+          "valueBoolean": false
+        }
+      ]
+    },
+    {
+      "linkId": "typeOfPoliovirusDose",
+      "answer": [
+        {
+          "valueCoding": {
+            "code": "DE214",
+            "system": "http://smart.who.int/immunizations/CodeSystem/IMMZ.D",
+            "display": "bOPV"
+          }
+        }
+      ]
+    },
+    {
+      "linkId": "vaccineType",
+      "answer": [
+        {
+          "valueCoding": {
+            "code": "DE14",
+            "system": "http://smart.who.int/immunizations/CodeSystem/IMMZ.Z",
+            "display": "Poliovirus-containing vaccines"
+          }
+        }
+      ]
+    },
+    {
+      "linkId": "dateAndTimeOfVaccination",
+      "answer": [
+        {
+          "valueDateTime": "2020-06-18T04:00:00Z"
+        }
+      ]
+    },
+    {
+      "linkId": "contactDate",
+      "answer": [
+        {
+          "valueDate": "2020-06-18"
+        }
+      ]
+    },
+    {
+      "linkId": "doseNumber",
+      "answer": [
+        {
+          "valueInteger": 1
+        }
+      ]
+    }
+  ]
+}

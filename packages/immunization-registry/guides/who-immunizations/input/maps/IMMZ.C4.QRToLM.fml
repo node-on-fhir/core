@@ -1,0 +1,52 @@
+map "http://smart.who.int/immunizations/StructureMap/IMMZ.C4.QRToLM" = "IMMZ.C4.QRToLM"
+// Immunization Client Registry - Transform QuestionnaireResponse to Logical Model
+
+uses "http://hl7.org/fhir/StructureDefinition/QuestionnaireResponse" alias QResp as source
+uses "http://smart.who.int/immunizations/StructureDefinition/IMMZC4" alias immz as target
+
+imports "http://smart.who.int/immunizations/StructureMap/IMMZ.Helpers"
+
+
+group QRespToIMMZC ( source qr : QResp, target immz : IMMZC) {
+
+  qr.item as item where linkId = 'uniqueIdentifier' -> immz.uniqueIdentifier as field 
+  then ItemToValue(item, field) "uniqueIdentifier";
+
+  qr.item as item where linkId = 'name' -> immz.name as field 
+  then ItemToValue(item, field) "name";
+
+  qr.item as item where linkId = 'firstName' -> immz.firstName as field 
+  then ItemToValue(item, field) "firstName";
+
+  qr.item as item where linkId = 'familyName' -> immz.familyName as field 
+  then ItemToValue(item, field) "familyName";
+
+  qr.item as item where linkId = 'sex' -> immz.sex as field 
+  then ItemToCode(item, field) "sex";
+
+  qr.item as item where linkId = 'dateOfBirth' -> immz.dateOfBirth as field 
+  then ItemToValue(item, field) "dateOfBirth";
+
+  qr.item as item where linkId = 'age' -> immz.age as field 
+  then ItemToValue(item, field) "age";
+
+  qr.item as caregiver where caregiver.linkId = 'caregiversMultiple' -> immz.caregiversMultiple as caretgt then {
+
+    caregiver.item as item where linkId = 'caregiversFullName' -> caretgt.caregiversFullName as field
+    then ItemToValue(item, field) "caregiversFullName";
+
+    caregiver.item as item where linkId = 'caregiversFirstName' -> caretgt.caregiversFirstName as field
+    then ItemToValue(item, field) "caregiversFirstName";
+
+    caregiver.item as item where linkId = 'caregiversFamilyName' -> caretgt.caregiversFamilyName as field
+    then ItemToValue(item, field) "caregiversFamilyName";
+
+  } "caregiversMultiple";
+
+  qr.item as item where linkId = 'contactPhoneNumber' -> immz.contactPhoneNumber as field 
+  then ItemToValue(item, field) "contactPhoneNumber";
+
+  qr.item as item where linkId = 'address' -> immz.address as field 
+  then ItemToValue(item, field) "address";
+
+}

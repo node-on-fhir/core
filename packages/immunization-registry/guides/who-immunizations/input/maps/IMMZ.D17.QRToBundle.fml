@@ -1,0 +1,21 @@
+map "http://smart.who.int/immunizations/StructureMap/IMMZ.D17.QRToBundle" = "IMMZ.D17.QRToBundle"
+// Immunization Administer Vaccine - Transform QuestionnaireResponse to Immunization resources
+
+uses "http://hl7.org/fhir/StructureDefinition/QuestionnaireResponse" alias QResp as source
+uses "http://smart.who.int/immunizations/StructureDefinition/IMMZD17" alias IMMZD17 as source
+uses "http://hl7.org/fhir/StructureDefinition/Bundle" alias Bundle as target
+
+imports "http://smart.who.int/immunizations/StructureMap/IMMZ.D17.QRToLM"
+imports "http://smart.who.int/immunizations/StructureMap/IMMZ.D17.LMToBundle"
+
+group QRespToBundle (
+  source qr : QResp,
+  target bundle: Bundle
+) {
+  qr -> create("http://smart.who.int/immunizations/StructureDefinition/IMMZD17") as model 
+  then{
+    qr -> model then QRespToIMMZD17( qr, model) "QRtoLM";
+    qr -> bundle then IMMZD17ToBundle( model, bundle ) "LMtoBundle";
+  } "QRtoBundle";
+}
+

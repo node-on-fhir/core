@@ -1,0 +1,164 @@
+---
+#1. Client's age is less than 6 months
+#   Today's date − "Date of birth" < 6 months
+### Client is not due for seasonal influenza vaccination
+### "Immunization recommendation status" = "Not due"
+id: "08.1"
+birth: -5m
+patient:
+  fhir:
+    gender: female
+---
+#0. No seasonal influenza primary series doses were administered
+#   Count of vaccines administered (where "Vaccine type" = "Seasonal influenza vaccines" and "Type of dose" = "Primary series") = 0
+#1. Client's age is more than or equal to 6 months
+#   Today's date − "Date of birth" ≥ 6 months
+### Client is due for seasonal influenza vaccination
+### "Immunization recommendation status" = "Due"
+id: "09.01"
+birth: -6m
+patient:
+  fhir:
+    gender: female
+---
+#0. One seasonal influenza primary series doses were administered
+#   Count of vaccines administered (where "Vaccine type" = "Seasonal influenza vaccines" and "Type of dose" = "Primary series") = 1
+#1. Client's age is less than 9 years
+#   Today's date − "Date of birth" < 9 years
+#2. The latest seasonal influenza dose was administered less than 4 weeks ago
+#   Today's date − "Date and time of vaccination" (where "Vaccine type" = "Seasonal influenza vaccines") < 4 weeks
+### Client is not due for seasonal influenza vaccination
+### "Immunization recommendation status" = "Not due"
+id: "10.012"
+birth: -6m
+patient:
+  fhir:
+    gender: female
+immunization:
+  flu:
+    vaccine:
+      code: XM8857
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Influenza vaccine, inactivated, whole virus"
+    doses:
+      p2:
+        - 0d
+---
+#0. One seasonal influenza primary series doses were administered
+#   Count of vaccines administered (where "Vaccine type" = "Seasonal influenza vaccines" and "Type of dose" = "Primary series") = 1
+#1. Client's age is less than 9 years
+#   Today's date − "Date of birth" < 9 years
+#2. The latest seasonal influenza dose was administered more than 4 weeks ago
+#   Today's date − "Date and time of vaccination" (where "Vaccine type" = "Seasonal influenza vaccines") ≥ 4 weeks
+### Client is due for seasonal influenza vaccination
+### "Immunization recommendation status" = "Due"
+id: "11.012"
+birth: -7m
+patient:
+  fhir:
+    gender: female
+immunization:
+  flu:
+    vaccine:
+      code: XM8857
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Influenza vaccine, inactivated, whole virus"
+    doses:
+      p2:
+        - b+6m
+---
+#0. One seasonal influenza primary series doses were administered
+#   Count of vaccines administered (where "Vaccine type" = "Seasonal influenza vaccines" and "Type of dose" = "Primary series") = 1
+#1. Client's age is more than or equal to 9 years
+#   Today's date − "Date of birth" ≥ 9 years
+#2. The latest seasonal influenza dose was  administered less than 1 year ago
+#   Today's date − "Date and time of vaccination" (where "Vaccine type" = "Seasonal influenza vaccines") < 1 year
+### The primary series is complete. Client is not due for seasonal influenza annual dose
+### "Immunization recommendation status" = "Not due"
+### "Completed the primary vaccination series" (where "Vaccine type" = "Seasonal influenza vaccines") = TRUE
+id: "12.012"
+birth: -9y
+patient:
+  fhir:
+    gender: female
+immunization:
+  flu:
+    vaccine:
+      code: XM8857
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Influenza vaccine, inactivated, whole virus"
+    doses:
+      p2:
+        - -6m
+---
+#0. One seasonal influenza primary series doses were administered
+#   Count of vaccines administered (where "Vaccine type" = "Seasonal influenza vaccines" and "Type of dose" = "Primary series") = 1
+#1. Client's age is more than or equal to 9 years
+#   Today's date − "Date of birth" ≥ 9 years
+#2. The latest seasonal influenza dose was administered more than 1 year ago
+#   Today's date − "Date and time of vaccination" (where "Vaccine type" = "Seasonal influenza vaccines") ≥ 1 year
+### The primary series is complete. Client is due for seasonal influenza annual dose
+### "Immunization recommendation status" = "Due"
+### "Completed the primary vaccination series" (where "Vaccine type" = "Seasonal influenza vaccines") = TRUE
+id: "13.012"
+birth: -9y
+patient:
+  fhir:
+    gender: female
+immunization:
+  flu:
+    vaccine:
+      code: XM8857
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Influenza vaccine, inactivated, whole virus"
+    doses:
+      p2:
+        - -1y
+---
+#0. Two seasonal influenza primary series doses were administered
+#   Count of vaccines administered (where "Vaccine type" = "Seasonal influenza vaccines" and "Type of dose" = "Primary series") = 2
+#2. The latest seasonal influenza dose was  administered less than 1 year ago
+#   Today's date − "Date and time of vaccination" (where "Vaccine type" = "Seasonal influenza vaccines") < 1 year
+### The primary series is complete. Client is not due for seasonal influenza annual dose
+### "Immunization recommendation status" = "Not due"
+### "Completed the primary vaccination series" (where "Vaccine type" = "Seasonal influenza vaccines") = TRUE
+id: "14.02"
+birth: -1y
+patient:
+  fhir:
+    gender: female
+immunization:
+  flu:
+    vaccine:
+      code: XM8857
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Influenza vaccine, inactivated, whole virus"
+    doses:
+      p2:
+        - -4w
+        - 0d
+---
+#0. Two seasonal influenza primary series doses were administered
+#   Count of vaccines administered (where "Vaccine type" = "Seasonal influenza vaccines" and "Type of dose" = "Primary series") = 2
+#2. The latest seasonal influenza dose was administered more than 1 year ago
+#   Today's date − "Date and time of vaccination" (where "Vaccine type" = "Seasonal influenza vaccines") ≥ 1 year
+### The primary series is complete. Client is due for seasonal influenza annual dose
+### "Immunization recommendation status" = "Due"
+### "Completed the primary vaccination series" (where "Vaccine type" = "Seasonal influenza vaccines") = TRUE
+id: "15.02"
+birth: -10y
+patient:
+  fhir:
+    gender: female
+immunization:
+  flu:
+    vaccine:
+      code: XM8857
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Influenza vaccine, inactivated, whole virus"
+    doses:
+      p2:
+        - b+6m
+        - b+7m
+      b1:
+        - -1y

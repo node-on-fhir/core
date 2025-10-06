@@ -1,0 +1,1 @@
+{"resourceType":"Bundle","id":"tests-HepatitisB10.1-bundle","type":"transaction","entry":[{"request":{"method":"DELETE","url":"Immunization/hepb-HepatitisB10.1"}},{"request":{"method":"DELETE","url":"Patient/HepatitisB10.1"}}]}

@@ -1,0 +1,148 @@
+---
+id: 24.Alt6w
+birth: -5w
+patient:
+  fhir:
+    gender: female
+---
+id: 25.Abt6w5y
+birth: -8w
+patient:
+  fhir:
+    gender: female
+---
+id: 26.D1Abt6w5yFlt1yDlt4w
+birth: -8w
+patient:
+  fhir:
+    gender: female
+immunization:
+  hib:
+    vaccine:
+      code: XM11V3 
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Haemophilus influenzae B vaccines"
+    doses:
+      p3:
+        - -2w
+---
+id: 27.D1Abt6w5yFlt1yDgt4w
+birth: -5m
+patient:
+  fhir:
+    gender: female
+immunization:
+  hib:
+    vaccine:
+      code: XM11V3 
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Haemophilus influenzae B vaccines"
+    doses:
+      p3:
+        - -4w
+---
+id: 28.D1Abt6w5yFgt1y
+birth: -2y
+patient:
+  fhir:
+    gender: female
+immunization:
+  hib:
+    vaccine:
+      code: XM11V3 
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Haemophilus influenzae B vaccines"
+    doses:
+      p3:
+        - -4w
+---
+id: 29.D2Abt6w5yDlt4w
+birth: -1y
+patient:
+  fhir:
+    gender: female
+immunization:
+  hib:
+    vaccine:
+      code: XM11V3 
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Haemophilus influenzae B vaccines"
+    doses:
+      p3:
+        - -7m
+        - -2w
+---
+id: 30.D2Abt6w5yDgt4w
+birth: -1y
+patient:
+  fhir:
+    gender: female
+immunization:
+  hib:
+    vaccine:
+      code: XM11V3 
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Haemophilus influenzae B vaccines"
+    doses:
+      p3:
+        - -7m
+        - -6m
+---
+id: 31.D3B0Abt6w5yDlt6m
+birth: -8m
+patient:
+  fhir:
+    gender: female
+immunization:
+  hib:
+    vaccine:
+      code: XM11V3 
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Haemophilus influenzae B vaccines"
+    doses:
+      p3:
+        - b+6w
+        - b+10w
+        - -5m
+---
+id: 32.D3B0Abt6w5yDgt6m
+birth: -1y
+patient:
+  fhir:
+    gender: female
+immunization:
+  hib:
+    vaccine:
+      code: XM11V3 
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Haemophilus influenzae B vaccines"
+    doses:
+      p3:
+        - b+6w
+        - b+10w
+        - b+14w
+---
+id: 33.D3B1
+birth: -1y
+patient:
+  fhir:
+    gender: female
+immunization:
+  hib:
+    vaccine:
+      code: XM11V3 
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Haemophilus influenzae B vaccines"
+    doses:
+      p3:
+        - b+6w
+        - b+10w
+        - b+14w
+      b1:
+        - -1w
+---
+id: 34.Agt5y
+birth: -6y
+patient:
+  fhir:
+    gender: female

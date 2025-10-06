@@ -1,0 +1,72 @@
+{
+  "resourceType": "QuestionnaireResponse",
+  "id": "Example.IMMZ.D17.QuestionnaireResponse.1",
+  "status": "completed",
+  "authored": "2025-06-25T19:20:20.913Z",
+  "questionnaire": "http://smart.who.int/immunizations/Questionnaire/QIMMZD17",
+  "subject": {
+    "reference": "Patient/IMMZ.C.Patient.2"
+  },
+  "item": [
+    {
+      "linkId": "reactionReported",
+      "answer": [
+        {
+          "valueBoolean": true
+        }
+      ]
+    },
+    {
+      "linkId": "reactionDate",
+      "answer": [
+        {
+          "valueDate": "2025-06-25"
+        }
+      ]
+    },
+    {
+      "linkId": "reactionManifestation",
+      "answer": [
+        {
+          "valueCoding": {
+            "code": "DE103",
+            "system": "http://smart.who.int/immunizations/CodeSystem/IMMZ.D",
+            "display": "Anaphylaxis"
+          }
+        }
+      ]
+    },
+    {
+      "linkId": "typeOfReaction",
+      "answer": [
+        {
+          "valueCoding": {
+            "code": "DE109",
+            "system": "http://smart.who.int/immunizations/CodeSystem/IMMZ.D",
+            "display": "Life threatening"
+          }
+        }
+      ]
+    },
+    {
+      "linkId": "otherImportantMedicalEvent",
+      "answer": [
+        {
+          "valueString": "Other event details"
+        }
+      ]
+    },
+    {
+      "linkId": "reactionOutcome",
+      "answer": [
+        {
+          "valueCoding": {
+            "code": "DE120",
+            "system": "http://smart.who.int/immunizations/CodeSystem/IMMZ.D",
+            "display": "Not recovered"
+          }
+        }
+      ]
+    }
+  ]
+}

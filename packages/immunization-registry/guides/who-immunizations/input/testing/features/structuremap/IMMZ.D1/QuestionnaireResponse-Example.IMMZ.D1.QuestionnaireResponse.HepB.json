@@ -1,0 +1,132 @@
+{
+  "resourceType": "QuestionnaireResponse",
+  "id": "Example.IMMZ.D1.QuestionnaireResponse.HepB",
+  "status": "completed",
+  "authored": "2025-01-13T19:20:20.913Z",
+  "questionnaire": "http://smart.who.int/immunizations/Questionnaire/QIMMZD1",
+  "subject": {
+    "reference": "Patient/IMMZ.C.Patient.1"
+  },
+  "item": [
+    {
+      "linkId": "birthDose",
+      "answer": [
+        {
+          "valueBoolean": true
+        }
+      ]
+    },
+    {
+      "linkId": "typeOfDose",
+      "answer": [
+        {
+          "valueCoding": {
+            "code": "DE259",
+            "system": "http://smart.who.int/immunizations/CodeSystem/IMMZ.D",
+            "display": "Primary series"
+          }
+        }
+      ]
+    },
+    {
+      "linkId": "completedThePrimaryVaccinationSeries",
+      "answer": [
+        {
+          "valueBoolean": false
+        }
+      ]
+    },
+    {
+      "linkId": "completedTheBoosterSeries",
+      "answer": [
+        {
+          "valueBoolean": false
+        }
+      ]
+    },
+    {
+      "linkId": "hivStatus",
+      "answer": [
+        {
+          "valueCoding": {
+            "code": "DE206",
+            "system": "http://smart.who.int/immunizations/CodeSystem/IMMZ.D",
+            "display": "HIV-negative"
+          }
+        }
+      ]
+    },
+    {
+      "linkId": "pretermBirth",
+      "answer": [
+        {
+          "valueBoolean": false
+        }
+      ]
+    },
+    {
+      "linkId": "immunocompromised",
+      "answer": [
+        {
+          "valueBoolean": false
+        }
+      ]
+    },
+    {
+      "linkId": "typeOfHepatitisBDose",
+      "answer": [
+        {
+          "valueCoding": {
+            "code": "DE255",
+            "system": "http://smart.who.int/immunizations/CodeSystem/IMMZ.D",
+            "display": "Hepatitis B monovalent vaccine"
+          }
+        }
+      ]
+    },
+    {
+      "linkId": "birthWeightInGrams",
+      "answer": [
+        {
+          "valueDecimal": 3255.7
+        }
+      ]
+    },
+    {
+      "linkId": "vaccineType",
+      "answer": [
+        {
+          "valueCoding": {
+            "code": "DE6",
+            "system": "http://smart.who.int/immunizations/CodeSystem/IMMZ.Z",
+            "display": "Hepatitis B-containing vaccines"
+          }
+        }
+      ]
+    },
+    {
+      "linkId": "dateAndTimeOfVaccination",
+      "answer": [
+        {
+          "valueDateTime": "2020-06-25T04:00:00Z"
+        }
+      ]
+    },
+    {
+      "linkId": "contactDate",
+      "answer": [
+        {
+          "valueDate": "2021-06-25"
+        }
+      ]
+    },
+    {
+      "linkId": "doseNumber",
+      "answer": [
+        {
+          "valueInteger": 1
+        }
+      ]
+    }
+  ]
+}

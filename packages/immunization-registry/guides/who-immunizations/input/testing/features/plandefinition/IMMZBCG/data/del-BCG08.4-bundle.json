@@ -1,0 +1,1 @@
+{"resourceType":"Bundle","id":"tests-BCG08.4-bundle","type":"transaction","entry":[{"request":{"method":"DELETE","url":"Immunization/flu-BCG08.4"}},{"request":{"method":"DELETE","url":"Patient/BCG08.4"}}]}

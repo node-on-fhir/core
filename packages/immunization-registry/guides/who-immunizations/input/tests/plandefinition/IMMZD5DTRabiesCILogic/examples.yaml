@@ -1,0 +1,25 @@
+---
+#1. The client has history of severe allergic reactions
+#   "Potential contraindications" = "Severe allergic reactions"
+### Clinical judgement is required. Create a clinical note
+### "Immunization recommendation status" = "Further evaluation needed"
+id: "17.1"
+birth: -25y
+patient:
+  fhir:
+    gender: female
+contraindication:
+    severeallergicreactions:
+      code: DE167
+      display: "Severe allergic reactions"
+      effectiveDateTime: -1d
+medicationrequest:
+  rabies:
+    medication:
+      code: XM6T09
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Rabies vaccine"
+    fhir:
+      authoredOn: 0d
+      status: draft
+      intent: proposal

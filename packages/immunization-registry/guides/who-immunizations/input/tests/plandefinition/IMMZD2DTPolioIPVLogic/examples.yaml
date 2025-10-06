@@ -1,0 +1,429 @@
+---
+id: 71.Alt6w
+birth: -5w
+patient:
+  fhir:
+    gender: female
+---
+id: 72.Agt6w
+birth: -6w
+patient:
+  fhir:
+    gender: female
+---
+id: 73.D1PDlt4w
+birth: -8w
+patient:
+  fhir:
+    gender: female
+immunization:
+  polio:
+    vaccine:
+      code: XM5V19
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Poliomyelitis, trivalent, inactivated, whole virus"
+    fhir:
+      extension:
+        - url: "http://smart.who.int/immunizations/StructureDefinition/IMMZTypeOfDose"
+          valueCodeableConcept:
+            coding:
+            - code: DE213
+              system: "http://smart.who.int/immunizations/CodeSystem/IMMZ.D"
+              display: "IPV"
+      expirationDate: 1y
+      occurrenceDateTime: b+6w
+      protocolApplied:
+        - doseNumberString: "1"
+          seriesDosesString: "3"
+          series: "Primary series"
+---
+id: 74.D1PDgt4w
+birth: -12w
+patient:
+  fhir:
+    gender: female
+immunization:
+  polio:
+    vaccine:
+      code: XM5V19
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Poliomyelitis, trivalent, inactivated, whole virus"
+    fhir:
+      extension:
+        - url: "http://smart.who.int/immunizations/StructureDefinition/IMMZTypeOfDose"
+          valueCodeableConcept:
+            coding:
+            - code: DE213
+              system: "http://smart.who.int/immunizations/CodeSystem/IMMZ.D"
+              display: "IPV"
+      expirationDate: 1y
+      occurrenceDateTime: b+6w
+      protocolApplied:
+        - doseNumberString: "1"
+          seriesDosesString: "3"
+          series: "Primary series"
+---
+id: 75.D2PDlt4w
+birth: -13w
+patient:
+  fhir:
+    gender: female
+immunization:
+  polio1:
+    vaccine:
+      code: XM5V19
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Poliomyelitis, trivalent, inactivated, whole virus"
+    fhir:
+      extension:
+        - url: "http://smart.who.int/immunizations/StructureDefinition/IMMZTypeOfDose"
+          valueCodeableConcept:
+            coding:
+            - code: DE213
+              system: "http://smart.who.int/immunizations/CodeSystem/IMMZ.D"
+              display: "IPV"
+      expirationDate: 1y
+      occurrenceDateTime: b+6w
+      protocolApplied:
+        - doseNumberString: "1"
+          seriesDosesString: "3"
+          series: "Primary series"
+  polio2:
+    vaccine:
+      code: XM5V19
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Poliomyelitis, trivalent, inactivated, whole virus"
+    fhir:
+      extension:
+        - url: "http://smart.who.int/immunizations/StructureDefinition/IMMZTypeOfDose"
+          valueCodeableConcept:
+            coding:
+            - code: DE213
+              system: "http://smart.who.int/immunizations/CodeSystem/IMMZ.D"
+              display: "IPV"
+      expirationDate: 1y
+      occurrenceDateTime: b+10w
+      protocolApplied:
+        - doseNumberString: "2"
+          seriesDosesString: "3"
+          series: "Primary series"
+---
+id: 76.D2PDgt4w
+birth: -14w
+patient:
+  fhir:
+    gender: female
+immunization:
+  polio1:
+    vaccine:
+      code: XM5V19
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Poliomyelitis, trivalent, inactivated, whole virus"
+    fhir:
+      extension:
+        - url: "http://smart.who.int/immunizations/StructureDefinition/IMMZTypeOfDose"
+          valueCodeableConcept:
+            coding:
+            - code: DE213
+              system: "http://smart.who.int/immunizations/CodeSystem/IMMZ.D"
+              display: "IPV"
+      expirationDate: 1y
+      occurrenceDateTime: b+6w
+      protocolApplied:
+        - doseNumberString: "1"
+          seriesDosesString: "3"
+          series: "Primary series"
+  polio2:
+    vaccine:
+      code: XM5V19
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Poliomyelitis, trivalent, inactivated, whole virus"
+    fhir:
+      extension:
+        - url: "http://smart.who.int/immunizations/StructureDefinition/IMMZTypeOfDose"
+          valueCodeableConcept:
+            coding:
+            - code: DE213
+              system: "http://smart.who.int/immunizations/CodeSystem/IMMZ.D"
+              display: "IPV"
+      expirationDate: 1y
+      occurrenceDateTime: b+10w
+      protocolApplied:
+        - doseNumberString: "2"
+          seriesDosesString: "3"
+          series: "Primary series"
+---
+id: 77.D3FDAgt6w
+birth: -22w
+patient:
+  fhir:
+    gender: female
+immunization:
+  polio1:
+    vaccine:
+      code: XM5V19
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Poliomyelitis, trivalent, inactivated, whole virus"
+    fhir:
+      extension:
+        - url: "http://smart.who.int/immunizations/StructureDefinition/IMMZTypeOfDose"
+          valueCodeableConcept:
+            coding:
+            - code: DE213
+              system: "http://smart.who.int/immunizations/CodeSystem/IMMZ.D"
+              display: "IPV"
+      expirationDate: 1y
+      occurrenceDateTime: b+8w
+      protocolApplied:
+        - doseNumberString: "1"
+          seriesDosesString: "3"
+          series: "Primary series"
+  polio2:
+    vaccine:
+      code: XM5V19
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Poliomyelitis, trivalent, inactivated, whole virus"
+    fhir:
+      extension:
+        - url: "http://smart.who.int/immunizations/StructureDefinition/IMMZTypeOfDose"
+          valueCodeableConcept:
+            coding:
+            - code: DE213
+              system: "http://smart.who.int/immunizations/CodeSystem/IMMZ.D"
+              display: "IPV"
+      expirationDate: 1y
+      occurrenceDateTime: b+12w
+      protocolApplied:
+        - doseNumberString: "2"
+          seriesDosesString: "3"
+          series: "Primary series"
+  polio3:
+    vaccine:
+      code: XM5V19
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Poliomyelitis, trivalent, inactivated, whole virus"
+    fhir:
+      extension:
+        - url: "http://smart.who.int/immunizations/StructureDefinition/IMMZTypeOfDose"
+          valueCodeableConcept:
+            coding:
+            - code: DE213
+              system: "http://smart.who.int/immunizations/CodeSystem/IMMZ.D"
+              display: "IPV"
+      expirationDate: 1y
+      occurrenceDateTime: b+16w
+      protocolApplied:
+        - doseNumberString: "3"
+          seriesDosesString: "3"
+          series: "Primary series"
+---
+id: 78.D3FDA6wPDlt6m
+birth: -22w
+patient:
+  fhir:
+    gender: female
+immunization:
+  polio1:
+    vaccine:
+      code: XM5V19
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Poliomyelitis, trivalent, inactivated, whole virus"
+    fhir:
+      extension:
+        - url: "http://smart.who.int/immunizations/StructureDefinition/IMMZTypeOfDose"
+          valueCodeableConcept:
+            coding:
+            - code: DE213
+              system: "http://smart.who.int/immunizations/CodeSystem/IMMZ.D"
+              display: "IPV"
+      expirationDate: 1y
+      occurrenceDateTime: b+6w
+      protocolApplied:
+        - doseNumberString: "1"
+          seriesDosesString: "3"
+          series: "Primary series"
+  polio2:
+    vaccine:
+      code: XM5V19
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Poliomyelitis, trivalent, inactivated, whole virus"
+    fhir:
+      extension:
+        - url: "http://smart.who.int/immunizations/StructureDefinition/IMMZTypeOfDose"
+          valueCodeableConcept:
+            coding:
+            - code: DE213
+              system: "http://smart.who.int/immunizations/CodeSystem/IMMZ.D"
+              display: "IPV"
+      expirationDate: 1y
+      occurrenceDateTime: b+10w
+      protocolApplied:
+        - doseNumberString: "2"
+          seriesDosesString: "3"
+          series: "Primary series"
+  polio3:
+    vaccine:
+      code: XM5V19
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Poliomyelitis, trivalent, inactivated, whole virus"
+    fhir:
+      extension:
+        - url: "http://smart.who.int/immunizations/StructureDefinition/IMMZTypeOfDose"
+          valueCodeableConcept:
+            coding:
+            - code: DE213
+              system: "http://smart.who.int/immunizations/CodeSystem/IMMZ.D"
+              display: "IPV"
+      expirationDate: 1y
+      occurrenceDateTime: b+14w
+      protocolApplied:
+        - doseNumberString: "3"
+          seriesDosesString: "3"
+          series: "Primary series"
+---
+id: 79.D3FDA6wPDgt6mBF
+birth: -10m
+patient:
+  fhir:
+    gender: female
+immunization:
+  polio1:
+    vaccine:
+      code: XM5V19
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Poliomyelitis, trivalent, inactivated, whole virus"
+    fhir:
+      extension:
+        - url: "http://smart.who.int/immunizations/StructureDefinition/IMMZTypeOfDose"
+          valueCodeableConcept:
+            coding:
+            - code: DE213
+              system: "http://smart.who.int/immunizations/CodeSystem/IMMZ.D"
+              display: "IPV"
+      expirationDate: 1y
+      occurrenceDateTime: b+6w
+      protocolApplied:
+        - doseNumberString: "1"
+          seriesDosesString: "3"
+          series: "Primary series"
+  polio2:
+    vaccine:
+      code: XM5V19
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Poliomyelitis, trivalent, inactivated, whole virus"
+    fhir:
+      extension:
+        - url: "http://smart.who.int/immunizations/StructureDefinition/IMMZTypeOfDose"
+          valueCodeableConcept:
+            coding:
+            - code: DE213
+              system: "http://smart.who.int/immunizations/CodeSystem/IMMZ.D"
+              display: "IPV"
+      expirationDate: 1y
+      occurrenceDateTime: b+10w
+      protocolApplied:
+        - doseNumberString: "2"
+          seriesDosesString: "3"
+          series: "Primary series"
+  polio3:
+    vaccine:
+      code: XM5V19
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Poliomyelitis, trivalent, inactivated, whole virus"
+    fhir:
+      extension:
+        - url: "http://smart.who.int/immunizations/StructureDefinition/IMMZTypeOfDose"
+          valueCodeableConcept:
+            coding:
+            - code: DE213
+              system: "http://smart.who.int/immunizations/CodeSystem/IMMZ.D"
+              display: "IPV"
+      expirationDate: 1y
+      occurrenceDateTime: b+14w
+      protocolApplied:
+        - doseNumberString: "3"
+          seriesDosesString: "3"
+          series: "Primary series"
+---
+id: 80.D3FDA6wPDgt6mBT
+birth: -11m
+patient:
+  fhir:
+    gender: female
+immunization:
+  polio1:
+    vaccine:
+      code: XM5V19
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Poliomyelitis, trivalent, inactivated, whole virus"
+    fhir:
+      extension:
+        - url: "http://smart.who.int/immunizations/StructureDefinition/IMMZTypeOfDose"
+          valueCodeableConcept:
+            coding:
+            - code: DE213
+              system: "http://smart.who.int/immunizations/CodeSystem/IMMZ.D"
+              display: "IPV"
+      expirationDate: 1y
+      occurrenceDateTime: b+6w
+      protocolApplied:
+        - doseNumberString: "1"
+          seriesDosesString: "3"
+          series: "Primary series"
+  polio2:
+    vaccine:
+      code: XM5V19
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Poliomyelitis, trivalent, inactivated, whole virus"
+    fhir:
+      extension:
+        - url: "http://smart.who.int/immunizations/StructureDefinition/IMMZTypeOfDose"
+          valueCodeableConcept:
+            coding:
+            - code: DE213
+              system: "http://smart.who.int/immunizations/CodeSystem/IMMZ.D"
+              display: "IPV"
+      expirationDate: 1y
+      occurrenceDateTime: b+10w
+      protocolApplied:
+        - doseNumberString: "2"
+          seriesDosesString: "3"
+          series: "Primary series"
+  polio3:
+    vaccine:
+      code: XM5V19
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Poliomyelitis, trivalent, inactivated, whole virus"
+    fhir:
+      extension:
+        - url: "http://smart.who.int/immunizations/StructureDefinition/IMMZTypeOfDose"
+          valueCodeableConcept:
+            coding:
+            - code: DE213
+              system: "http://smart.who.int/immunizations/CodeSystem/IMMZ.D"
+              display: "IPV"
+      expirationDate: 1y
+      occurrenceDateTime: b+14w
+      protocolApplied:
+        - doseNumberString: "3"
+          seriesDosesString: "3"
+          series: "Primary series"
+  polio4:
+    vaccine:
+      code: XM5V19
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Poliomyelitis, trivalent, inactivated, whole virus"
+    fhir:
+      extension:
+        - url: "http://smart.who.int/immunizations/StructureDefinition/IMMZTypeOfDose"
+          valueCodeableConcept:
+            coding:
+            - code: DE213
+              system: "http://smart.who.int/immunizations/CodeSystem/IMMZ.D"
+              display: "IPV"
+      expirationDate: 1y
+      occurrenceDateTime: b+10m
+      protocolApplied:
+        - doseNumberString: "1"
+          seriesDosesString: "1"
+          series: "Booster dose"

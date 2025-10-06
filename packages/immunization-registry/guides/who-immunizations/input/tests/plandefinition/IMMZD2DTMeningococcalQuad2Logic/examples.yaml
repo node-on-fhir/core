@@ -1,0 +1,108 @@
+---
+#1. Client's age is less than 9 months
+#   Today's date − "Date of birth" < 9 months
+### Client is not due for meningococcal vaccination
+### "Immunization recommendation status" = "Not due"
+id: "55.1"
+birth: -8m
+patient:
+  fhir:
+    gender: female
+---
+#0. No meningococcal primary series dose was administered
+#   Count of vaccines administered (where "Vaccine type" = "Meningococcal vaccines" and "Type of dose" = "Primary series") = 0
+#1. Client's age is more than or equal to 9 months
+#   Today's date − "Date of birth" ≥ 9 months
+### Client is due for meningococcal vaccination
+### "Immunization recommendation status" = "Due"
+id: "56.01"
+birth: -9m
+patient:
+  fhir:
+    gender: female
+---
+#0. One meningococcal primary series dose was administered
+#   Count of vaccines administered (where "Vaccine type" = "Meningococcal vaccines" and "Type of dose" = "Primary series") = 1
+#2. Client's age was less than or equal to 23 months when the primary series was started
+#   "Date and time of vaccination" (where "Vaccine type" = "Meningococcal vaccines") - "Date of birth" ≤ 23 months
+#3. The latest meningococcal dose was administered less than 3 months ago
+#   Today's date − "Date and time of vaccination" (where "Vaccine type" = "Meningococcal vaccines") < 3 months
+### Client is not due for meningococcal vaccination
+### "Immunization recommendation status" = "Not due"
+id: "57.023"
+birth: -9m
+patient:
+  fhir:
+    gender: female
+immunization:
+  meningococcal:
+    vaccine:
+      code: XM5LC2
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Meningococcal polyvalent purified polysaccharides antigen vaccines"
+    doses:
+      p2:
+        - 0d
+---
+#0. One meningococcal primary series dose was administered
+#2. Client's age was less than or equal to 23 months when the primary series was started
+#3. The latest meningococcal dose was administered more than 3 months ago
+#   Today's date − "Date and time of vaccination" (where "Vaccine type" = "Meningococcal vaccines") ≥ 3 months
+### Client is due for meningococcal vaccination
+### "Immunization recommendation status" = "Due"
+id: "58.023"
+birth: -12m
+patient:
+  fhir:
+    gender: female
+immunization:
+  meningococcal:
+    vaccine:
+      code: XM5LC2
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Meningococcal polyvalent purified polysaccharides antigen vaccines"
+    doses:
+      p2:
+        - b+9m
+---
+#0. One meningococcal primary series dose was administered
+#2. Client's age was more than 23 months when the primary series was started
+#   "Date and time of vaccination" (where "Vaccine type" = "Meningococcal vaccines") - "Date of birth" > 23 months
+### Meningococcal immunization schedule is complete
+### "Immunization recommendation status" = "Complete"
+### "Completed the primary vaccination series" (where "Vaccine type" = "Meningococcal vaccines") = TRUE
+id: "59.02"
+birth: -2y
+patient:
+  fhir:
+    gender: female
+immunization:
+  meningococcal:
+    vaccine:
+      code: XM5LC2
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Meningococcal polyvalent purified polysaccharides antigen vaccines"
+    doses:
+      p1:
+        - b+2y
+---
+#0. Two meningococcal primary series doses were administered
+#   Count of vaccines administered (where "Vaccine type" = "Meningococcal vaccines" and "Type of dose" = "Primary series") = 2
+### Meningococcal immunization schedule is complete
+### "Immunization recommendation status" = "Complete"
+### "Completed the primary vaccination series" (where "Vaccine type" = "Meningococcal vaccines") = TRUE
+id: "60.0"
+birth: -18m
+patient:
+  fhir:
+    gender: female
+immunization:
+  meningococcal:
+    vaccine:
+      code: XM5LC2
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Meningococcal polyvalent purified polysaccharides antigen vaccines"
+    doses:
+      p2:
+        - b+9m
+        - b+12m

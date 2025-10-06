@@ -1,0 +1,1 @@
+{"resourceType":"Bundle","id":"tests-HepatitisB39.2-bundle","type":"transaction","entry":[{"request":{"method":"DELETE","url":"Immunization/hepbbirth-HepatitisB39.2"}},{"request":{"method":"DELETE","url":"Immunization/hepb1-HepatitisB39.2"}},{"request":{"method":"DELETE","url":"Patient/HepatitisB39.2"}}]}

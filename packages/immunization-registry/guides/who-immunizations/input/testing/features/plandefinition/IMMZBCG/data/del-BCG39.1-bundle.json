@@ -1,0 +1,1 @@
+{"resourceType":"Bundle","id":"tests-BCG39.1-bundle","type":"transaction","entry":[{"request":{"method":"DELETE","url":"Observation/immunodeficiency-BCG39.1"}},{"request":{"method":"DELETE","url":"Patient/BCG39.1"}},{"request":{"method":"DELETE","url":"MedicationRequest/measles-BCG39.1"}}]}

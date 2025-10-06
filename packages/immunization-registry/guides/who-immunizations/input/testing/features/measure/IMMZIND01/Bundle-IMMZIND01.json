@@ -1,0 +1,2077 @@
+{
+  "resourceType": "Bundle",
+  "id": "IMMZIND01Logic",
+  "type": "transaction",
+  "entry": [
+    {
+      "resource": {
+        "resourceType": "Patient",
+        "id": "07.Alt28dHIVULV0",
+        "name": [
+          {
+            "text": "07.Alt28dHIVULV0",
+            "use": "official"
+          }
+        ],
+        "birthDate": "2025-06-10",
+        "gender": "female"
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Patient/07.Alt28dHIVULV0"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Immunization",
+        "id": "flu-08.Alt28dHIVULVlt4w",
+        "status": "completed",
+        "vaccineCode": {
+          "coding": [
+            {
+              "code": "XM5V64",
+              "system": "http://id.who.int/icd/release/11/mms",
+              "display": "Influenza vaccines, live attenuated"
+            }
+          ]
+        },
+        "expirationDate": "2026-06-11",
+        "lotNumber": "123",
+        "patient": {
+          "reference": "Patient/08.Alt28dHIVULVlt4w"
+        },
+        "location": {
+          "display": "Vaccination Site"
+        },
+        "occurrenceDateTime": "2025-05-28"
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Immunization/flu-08.Alt28dHIVULVlt4w"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Patient",
+        "id": "08.Alt28dHIVULVlt4w",
+        "name": [
+          {
+            "text": "08.Alt28dHIVULVlt4w",
+            "use": "official"
+          }
+        ],
+        "birthDate": "2025-05-21",
+        "gender": "female"
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Patient/08.Alt28dHIVULVlt4w"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Observation",
+        "id": "art-09.Alt28dHIVPARTTISTLV0",
+        "status": "final",
+        "code": {
+          "coding": [
+            {
+              "code": "DE210",
+              "system": "http://smart.who.int/immunizations/CodeSystem/IMMZ.D",
+              "display": "Currently on ART"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/09.Alt28dHIVPARTTISTLV0"
+        },
+        "effectiveDateTime": "2025-05-28",
+        "valueBoolean": true
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Observation/art-09.Alt28dHIVPARTTISTLV0"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Observation",
+        "id": "hiv-09.Alt28dHIVPARTTISTLV0",
+        "status": "final",
+        "code": {
+          "coding": [
+            {
+              "code": "DE204",
+              "system": "http://smart.who.int/immunizations/CodeSystem/IMMZ.D",
+              "display": "HIV status"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/09.Alt28dHIVPARTTISTLV0"
+        },
+        "effectiveDateTime": "2025-05-28",
+        "valueCodeableConcept": {
+          "coding": [
+            {
+              "code": "DE205",
+              "system": "http://smart.who.int/immunizations/CodeSystem/IMMZ.D",
+              "display": "HIV-positive"
+            }
+          ]
+        }
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Observation/hiv-09.Alt28dHIVPARTTISTLV0"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Observation",
+        "id": "immstable-09.Alt28dHIVPARTTISTLV0",
+        "status": "final",
+        "code": {
+          "coding": [
+            {
+              "code": "DE249",
+              "system": "http://smart.who.int/immunizations/CodeSystem/IMMZ.D",
+              "display": "Immunologically stable"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/09.Alt28dHIVPARTTISTLV0"
+        },
+        "effectiveDateTime": "2025-05-28",
+        "valueBoolean": true
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Observation/immstable-09.Alt28dHIVPARTTISTLV0"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Patient",
+        "id": "09.Alt28dHIVPARTTISTLV0",
+        "name": [
+          {
+            "text": "09.Alt28dHIVPARTTISTLV0",
+            "use": "official"
+          }
+        ],
+        "birthDate": "2025-05-28",
+        "gender": "female"
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Patient/09.Alt28dHIVPARTTISTLV0"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Immunization",
+        "id": "flu-10.Alt28dHIVPARTTISTLVlt4w",
+        "status": "completed",
+        "vaccineCode": {
+          "coding": [
+            {
+              "code": "XM5V64",
+              "system": "http://id.who.int/icd/release/11/mms",
+              "display": "Influenza vaccines, live attenuated"
+            }
+          ]
+        },
+        "expirationDate": "2026-06-11",
+        "lotNumber": "123",
+        "patient": {
+          "reference": "Patient/10.Alt28dHIVPARTTISTLVlt4w"
+        },
+        "location": {
+          "display": "Vaccination Site"
+        },
+        "occurrenceDateTime": "2025-05-28"
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Immunization/flu-10.Alt28dHIVPARTTISTLVlt4w"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Observation",
+        "id": "art-10.Alt28dHIVPARTTISTLVlt4w",
+        "status": "final",
+        "code": {
+          "coding": [
+            {
+              "code": "DE210",
+              "system": "http://smart.who.int/immunizations/CodeSystem/IMMZ.D",
+              "display": "Currently on ART"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/10.Alt28dHIVPARTTISTLVlt4w"
+        },
+        "effectiveDateTime": "2025-05-28",
+        "valueBoolean": true
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Observation/art-10.Alt28dHIVPARTTISTLVlt4w"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Observation",
+        "id": "hiv-10.Alt28dHIVPARTTISTLVlt4w",
+        "status": "final",
+        "code": {
+          "coding": [
+            {
+              "code": "DE204",
+              "system": "http://smart.who.int/immunizations/CodeSystem/IMMZ.D",
+              "display": "HIV status"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/10.Alt28dHIVPARTTISTLVlt4w"
+        },
+        "effectiveDateTime": "2025-05-28",
+        "valueCodeableConcept": {
+          "coding": [
+            {
+              "code": "DE205",
+              "system": "http://smart.who.int/immunizations/CodeSystem/IMMZ.D",
+              "display": "HIV-positive"
+            }
+          ]
+        }
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Observation/hiv-10.Alt28dHIVPARTTISTLVlt4w"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Observation",
+        "id": "immstable-10.Alt28dHIVPARTTISTLVlt4w",
+        "status": "final",
+        "code": {
+          "coding": [
+            {
+              "code": "DE249",
+              "system": "http://smart.who.int/immunizations/CodeSystem/IMMZ.D",
+              "display": "Immunologically stable"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/10.Alt28dHIVPARTTISTLVlt4w"
+        },
+        "effectiveDateTime": "2025-05-28",
+        "valueBoolean": true
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Observation/immstable-10.Alt28dHIVPARTTISTLVlt4w"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Patient",
+        "id": "10.Alt28dHIVPARTTISTLVlt4w",
+        "name": [
+          {
+            "text": "10.Alt28dHIVPARTTISTLVlt4w",
+            "use": "official"
+          }
+        ],
+        "birthDate": "2025-05-28",
+        "gender": "female"
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Patient/10.Alt28dHIVPARTTISTLVlt4w"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Observation",
+        "id": "art-11.Alt28dHIVPARTTISF",
+        "status": "final",
+        "code": {
+          "coding": [
+            {
+              "code": "DE210",
+              "system": "http://smart.who.int/immunizations/CodeSystem/IMMZ.D",
+              "display": "Currently on ART"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/11.Alt28dHIVPARTTISF"
+        },
+        "effectiveDateTime": "2025-05-28",
+        "valueBoolean": true
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Observation/art-11.Alt28dHIVPARTTISF"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Observation",
+        "id": "hiv-11.Alt28dHIVPARTTISF",
+        "status": "final",
+        "code": {
+          "coding": [
+            {
+              "code": "DE204",
+              "system": "http://smart.who.int/immunizations/CodeSystem/IMMZ.D",
+              "display": "HIV status"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/11.Alt28dHIVPARTTISF"
+        },
+        "effectiveDateTime": "2025-05-28",
+        "valueCodeableConcept": {
+          "coding": [
+            {
+              "code": "DE205",
+              "system": "http://smart.who.int/immunizations/CodeSystem/IMMZ.D",
+              "display": "HIV-positive"
+            }
+          ]
+        }
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Observation/hiv-11.Alt28dHIVPARTTISF"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Observation",
+        "id": "immstable-11.Alt28dHIVPARTTISF",
+        "status": "final",
+        "code": {
+          "coding": [
+            {
+              "code": "DE249",
+              "system": "http://smart.who.int/immunizations/CodeSystem/IMMZ.D",
+              "display": "Immunologically stable"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/11.Alt28dHIVPARTTISF"
+        },
+        "effectiveDateTime": "2025-05-28",
+        "valueBoolean": false
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Observation/immstable-11.Alt28dHIVPARTTISF"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Patient",
+        "id": "11.Alt28dHIVPARTTISF",
+        "name": [
+          {
+            "text": "11.Alt28dHIVPARTTISF",
+            "use": "official"
+          }
+        ],
+        "birthDate": "2025-05-28",
+        "gender": "female"
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Patient/11.Alt28dHIVPARTTISF"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Observation",
+        "id": "art-12.Alt28dHIVPARTF",
+        "status": "final",
+        "code": {
+          "coding": [
+            {
+              "code": "DE210",
+              "system": "http://smart.who.int/immunizations/CodeSystem/IMMZ.D",
+              "display": "Currently on ART"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/12.Alt28dHIVPARTF"
+        },
+        "effectiveDateTime": "2025-05-28",
+        "valueBoolean": false
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Observation/art-12.Alt28dHIVPARTF"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Observation",
+        "id": "hiv-12.Alt28dHIVPARTF",
+        "status": "final",
+        "code": {
+          "coding": [
+            {
+              "code": "DE204",
+              "system": "http://smart.who.int/immunizations/CodeSystem/IMMZ.D",
+              "display": "HIV status"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/12.Alt28dHIVPARTF"
+        },
+        "effectiveDateTime": "2025-05-28",
+        "valueCodeableConcept": {
+          "coding": [
+            {
+              "code": "DE205",
+              "system": "http://smart.who.int/immunizations/CodeSystem/IMMZ.D",
+              "display": "HIV-positive"
+            }
+          ]
+        }
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Observation/hiv-12.Alt28dHIVPARTF"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Patient",
+        "id": "12.Alt28dHIVPARTF",
+        "name": [
+          {
+            "text": "12.Alt28dHIVPARTF",
+            "use": "official"
+          }
+        ],
+        "birthDate": "2025-05-28",
+        "gender": "female"
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Patient/12.Alt28dHIVPARTF"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Observation",
+        "id": "tb-13.Abt28d5yHIVUTBNLVgt4w",
+        "status": "final",
+        "code": {
+          "coding": [
+            {
+              "code": "DE246",
+              "system": "http://smart.who.int/immunizations/CodeSystem/IMMZ.D",
+              "display": "TB infection test result"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/13.Abt28d5yHIVUTBNLVgt4w"
+        },
+        "effectiveDateTime": "2025-05-28",
+        "valueCodeableConcept": {
+          "coding": [
+            {
+              "code": "DE248",
+              "system": "http://smart.who.int/immunizations/CodeSystem/IMMZ.D",
+              "display": "Negative"
+            }
+          ]
+        }
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Observation/tb-13.Abt28d5yHIVUTBNLVgt4w"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Patient",
+        "id": "13.Abt28d5yHIVUTBNLVgt4w",
+        "name": [
+          {
+            "text": "13.Abt28d5yHIVUTBNLVgt4w",
+            "use": "official"
+          }
+        ],
+        "birthDate": "2024-06-11",
+        "gender": "female"
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Patient/13.Abt28d5yHIVUTBNLVgt4w"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Immunization",
+        "id": "flu-14.Abt28d5yHIVUTBNLVlt4w",
+        "status": "completed",
+        "vaccineCode": {
+          "coding": [
+            {
+              "code": "XM5V64",
+              "system": "http://id.who.int/icd/release/11/mms",
+              "display": "Influenza vaccines, live attenuated"
+            }
+          ]
+        },
+        "expirationDate": "2026-06-11",
+        "lotNumber": "123",
+        "patient": {
+          "reference": "Patient/14.Abt28d5yHIVUTBNLVlt4w"
+        },
+        "location": {
+          "display": "Vaccination Site"
+        },
+        "occurrenceDateTime": "2025-05-28"
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Immunization/flu-14.Abt28d5yHIVUTBNLVlt4w"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Observation",
+        "id": "tb-14.Abt28d5yHIVUTBNLVlt4w",
+        "status": "final",
+        "code": {
+          "coding": [
+            {
+              "code": "DE246",
+              "system": "http://smart.who.int/immunizations/CodeSystem/IMMZ.D",
+              "display": "TB infection test result"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/14.Abt28d5yHIVUTBNLVlt4w"
+        },
+        "effectiveDateTime": "2025-05-28",
+        "valueCodeableConcept": {
+          "coding": [
+            {
+              "code": "DE248",
+              "system": "http://smart.who.int/immunizations/CodeSystem/IMMZ.D",
+              "display": "Negative"
+            }
+          ]
+        }
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Observation/tb-14.Abt28d5yHIVUTBNLVlt4w"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Patient",
+        "id": "14.Abt28d5yHIVUTBNLVlt4w",
+        "name": [
+          {
+            "text": "14.Abt28d5yHIVUTBNLVlt4w",
+            "use": "official"
+          }
+        ],
+        "birthDate": "2024-06-11",
+        "gender": "female"
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Patient/14.Abt28d5yHIVUTBNLVlt4w"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Patient",
+        "id": "15.Abt28d5yHIVUTBU",
+        "name": [
+          {
+            "text": "15.Abt28d5yHIVUTBU",
+            "use": "official"
+          }
+        ],
+        "birthDate": "2024-06-11",
+        "gender": "female"
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Patient/15.Abt28d5yHIVUTBU"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Observation",
+        "id": "tb-16.Abt28d5yTBP",
+        "status": "final",
+        "code": {
+          "coding": [
+            {
+              "code": "DE246",
+              "system": "http://smart.who.int/immunizations/CodeSystem/IMMZ.D",
+              "display": "TB infection test result"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/16.Abt28d5yTBP"
+        },
+        "effectiveDateTime": "2025-05-28",
+        "valueCodeableConcept": {
+          "coding": [
+            {
+              "code": "DE247",
+              "system": "http://smart.who.int/immunizations/CodeSystem/IMMZ.D",
+              "display": "Positive"
+            }
+          ]
+        }
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Observation/tb-16.Abt28d5yTBP"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Patient",
+        "id": "16.Abt28d5yTBP",
+        "name": [
+          {
+            "text": "16.Abt28d5yTBP",
+            "use": "official"
+          }
+        ],
+        "birthDate": "2024-06-11",
+        "gender": "female"
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Patient/16.Abt28d5yTBP"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Observation",
+        "id": "art-17.Abt28d5YHIVPARTTISF",
+        "status": "final",
+        "code": {
+          "coding": [
+            {
+              "code": "DE210",
+              "system": "http://smart.who.int/immunizations/CodeSystem/IMMZ.D",
+              "display": "Currently on ART"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/17.Abt28d5YHIVPARTTISF"
+        },
+        "effectiveDateTime": "2025-05-28",
+        "valueBoolean": true
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Observation/art-17.Abt28d5YHIVPARTTISF"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Observation",
+        "id": "hiv-17.Abt28d5YHIVPARTTISF",
+        "status": "final",
+        "code": {
+          "coding": [
+            {
+              "code": "DE204",
+              "system": "http://smart.who.int/immunizations/CodeSystem/IMMZ.D",
+              "display": "HIV status"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/17.Abt28d5YHIVPARTTISF"
+        },
+        "effectiveDateTime": "2025-05-28",
+        "valueCodeableConcept": {
+          "coding": [
+            {
+              "code": "DE205",
+              "system": "http://smart.who.int/immunizations/CodeSystem/IMMZ.D",
+              "display": "HIV-positive"
+            }
+          ]
+        }
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Observation/hiv-17.Abt28d5YHIVPARTTISF"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Observation",
+        "id": "immstable-17.Abt28d5YHIVPARTTISF",
+        "status": "final",
+        "code": {
+          "coding": [
+            {
+              "code": "DE249",
+              "system": "http://smart.who.int/immunizations/CodeSystem/IMMZ.D",
+              "display": "Immunologically stable"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/17.Abt28d5YHIVPARTTISF"
+        },
+        "effectiveDateTime": "2025-05-28",
+        "valueBoolean": false
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Observation/immstable-17.Abt28d5YHIVPARTTISF"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Patient",
+        "id": "17.Abt28d5YHIVPARTTISF",
+        "name": [
+          {
+            "text": "17.Abt28d5YHIVPARTTISF",
+            "use": "official"
+          }
+        ],
+        "birthDate": "2024-06-11",
+        "gender": "female"
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Patient/17.Abt28d5YHIVPARTTISF"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Observation",
+        "id": "art-18.Abt28d5YHIVPARTTCWF",
+        "status": "final",
+        "code": {
+          "coding": [
+            {
+              "code": "DE210",
+              "system": "http://smart.who.int/immunizations/CodeSystem/IMMZ.D",
+              "display": "Currently on ART"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/18.Abt28d5YHIVPARTTCWF"
+        },
+        "effectiveDateTime": "2025-05-28",
+        "valueBoolean": true
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Observation/art-18.Abt28d5YHIVPARTTCWF"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Observation",
+        "id": "hiv-18.Abt28d5YHIVPARTTCWF",
+        "status": "final",
+        "code": {
+          "coding": [
+            {
+              "code": "DE204",
+              "system": "http://smart.who.int/immunizations/CodeSystem/IMMZ.D",
+              "display": "HIV status"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/18.Abt28d5YHIVPARTTCWF"
+        },
+        "effectiveDateTime": "2025-05-28",
+        "valueCodeableConcept": {
+          "coding": [
+            {
+              "code": "DE205",
+              "system": "http://smart.who.int/immunizations/CodeSystem/IMMZ.D",
+              "display": "HIV-positive"
+            }
+          ]
+        }
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Observation/hiv-18.Abt28d5YHIVPARTTCWF"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Observation",
+        "id": "well-18.Abt28d5YHIVPARTTCWF",
+        "status": "final",
+        "code": {
+          "coding": [
+            {
+              "code": "DE250",
+              "system": "http://smart.who.int/immunizations/CodeSystem/IMMZ.D",
+              "display": "Clinically well"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/18.Abt28d5YHIVPARTTCWF"
+        },
+        "effectiveDateTime": "2025-05-28",
+        "valueBoolean": false
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Observation/well-18.Abt28d5YHIVPARTTCWF"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Patient",
+        "id": "18.Abt28d5YHIVPARTTCWF",
+        "name": [
+          {
+            "text": "18.Abt28d5YHIVPARTTCWF",
+            "use": "official"
+          }
+        ],
+        "birthDate": "2024-06-11",
+        "gender": "female"
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Patient/18.Abt28d5YHIVPARTTCWF"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Observation",
+        "id": "art-19.Abt28d5YHIVPARTTISTCWTLVgt4w",
+        "status": "final",
+        "code": {
+          "coding": [
+            {
+              "code": "DE210",
+              "system": "http://smart.who.int/immunizations/CodeSystem/IMMZ.D",
+              "display": "Currently on ART"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/19.Abt28d5YHIVPARTTISTCWTLVgt4w"
+        },
+        "effectiveDateTime": "2025-05-28",
+        "valueBoolean": true
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Observation/art-19.Abt28d5YHIVPARTTISTCWTLVgt4w"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Observation",
+        "id": "hiv-19.Abt28d5YHIVPARTTISTCWTLVgt4w",
+        "status": "final",
+        "code": {
+          "coding": [
+            {
+              "code": "DE204",
+              "system": "http://smart.who.int/immunizations/CodeSystem/IMMZ.D",
+              "display": "HIV status"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/19.Abt28d5YHIVPARTTISTCWTLVgt4w"
+        },
+        "effectiveDateTime": "2025-05-28",
+        "valueCodeableConcept": {
+          "coding": [
+            {
+              "code": "DE205",
+              "system": "http://smart.who.int/immunizations/CodeSystem/IMMZ.D",
+              "display": "HIV-positive"
+            }
+          ]
+        }
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Observation/hiv-19.Abt28d5YHIVPARTTISTCWTLVgt4w"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Observation",
+        "id": "immstable-19.Abt28d5YHIVPARTTISTCWTLVgt4w",
+        "status": "final",
+        "code": {
+          "coding": [
+            {
+              "code": "DE249",
+              "system": "http://smart.who.int/immunizations/CodeSystem/IMMZ.D",
+              "display": "Immunologically stable"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/19.Abt28d5YHIVPARTTISTCWTLVgt4w"
+        },
+        "effectiveDateTime": "2025-05-28",
+        "valueBoolean": true
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Observation/immstable-19.Abt28d5YHIVPARTTISTCWTLVgt4w"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Observation",
+        "id": "well-19.Abt28d5YHIVPARTTISTCWTLVgt4w",
+        "status": "final",
+        "code": {
+          "coding": [
+            {
+              "code": "DE250",
+              "system": "http://smart.who.int/immunizations/CodeSystem/IMMZ.D",
+              "display": "Clinically well"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/19.Abt28d5YHIVPARTTISTCWTLVgt4w"
+        },
+        "effectiveDateTime": "2025-05-28",
+        "valueBoolean": true
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Observation/well-19.Abt28d5YHIVPARTTISTCWTLVgt4w"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Patient",
+        "id": "19.Abt28d5YHIVPARTTISTCWTLVgt4w",
+        "name": [
+          {
+            "text": "19.Abt28d5YHIVPARTTISTCWTLVgt4w",
+            "use": "official"
+          }
+        ],
+        "birthDate": "2024-06-11",
+        "gender": "female"
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Patient/19.Abt28d5YHIVPARTTISTCWTLVgt4w"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Immunization",
+        "id": "flu-20.Abt28d5YHIVPARTTISTCWTLVlt4w",
+        "status": "completed",
+        "vaccineCode": {
+          "coding": [
+            {
+              "code": "XM5V64",
+              "system": "http://id.who.int/icd/release/11/mms",
+              "display": "Influenza vaccines, live attenuated"
+            }
+          ]
+        },
+        "expirationDate": "2026-06-11",
+        "lotNumber": "123",
+        "patient": {
+          "reference": "Patient/20.Abt28d5YHIVPARTTISTCWTLVlt4w"
+        },
+        "location": {
+          "display": "Vaccination Site"
+        },
+        "occurrenceDateTime": "2025-05-28"
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Immunization/flu-20.Abt28d5YHIVPARTTISTCWTLVlt4w"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Observation",
+        "id": "art-20.Abt28d5YHIVPARTTISTCWTLVlt4w",
+        "status": "final",
+        "code": {
+          "coding": [
+            {
+              "code": "DE210",
+              "system": "http://smart.who.int/immunizations/CodeSystem/IMMZ.D",
+              "display": "Currently on ART"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/20.Abt28d5YHIVPARTTISTCWTLVlt4w"
+        },
+        "effectiveDateTime": "2025-05-28",
+        "valueBoolean": true
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Observation/art-20.Abt28d5YHIVPARTTISTCWTLVlt4w"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Observation",
+        "id": "hiv-20.Abt28d5YHIVPARTTISTCWTLVlt4w",
+        "status": "final",
+        "code": {
+          "coding": [
+            {
+              "code": "DE204",
+              "system": "http://smart.who.int/immunizations/CodeSystem/IMMZ.D",
+              "display": "HIV status"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/20.Abt28d5YHIVPARTTISTCWTLVlt4w"
+        },
+        "effectiveDateTime": "2025-05-28",
+        "valueCodeableConcept": {
+          "coding": [
+            {
+              "code": "DE205",
+              "system": "http://smart.who.int/immunizations/CodeSystem/IMMZ.D",
+              "display": "HIV-positive"
+            }
+          ]
+        }
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Observation/hiv-20.Abt28d5YHIVPARTTISTCWTLVlt4w"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Observation",
+        "id": "immstable-20.Abt28d5YHIVPARTTISTCWTLVlt4w",
+        "status": "final",
+        "code": {
+          "coding": [
+            {
+              "code": "DE249",
+              "system": "http://smart.who.int/immunizations/CodeSystem/IMMZ.D",
+              "display": "Immunologically stable"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/20.Abt28d5YHIVPARTTISTCWTLVlt4w"
+        },
+        "effectiveDateTime": "2025-05-28",
+        "valueBoolean": true
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Observation/immstable-20.Abt28d5YHIVPARTTISTCWTLVlt4w"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Observation",
+        "id": "well-20.Abt28d5YHIVPARTTISTCWTLVlt4w",
+        "status": "final",
+        "code": {
+          "coding": [
+            {
+              "code": "DE250",
+              "system": "http://smart.who.int/immunizations/CodeSystem/IMMZ.D",
+              "display": "Clinically well"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/20.Abt28d5YHIVPARTTISTCWTLVlt4w"
+        },
+        "effectiveDateTime": "2025-05-28",
+        "valueBoolean": true
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Observation/well-20.Abt28d5YHIVPARTTISTCWTLVlt4w"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Patient",
+        "id": "20.Abt28d5YHIVPARTTISTCWTLVlt4w",
+        "name": [
+          {
+            "text": "20.Abt28d5YHIVPARTTISTCWTLVlt4w",
+            "use": "official"
+          }
+        ],
+        "birthDate": "2024-06-11",
+        "gender": "female"
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Patient/20.Abt28d5YHIVPARTTISTCWTLVlt4w"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Observation",
+        "id": "art-21.Abt28d5YHIVPARTF",
+        "status": "final",
+        "code": {
+          "coding": [
+            {
+              "code": "DE210",
+              "system": "http://smart.who.int/immunizations/CodeSystem/IMMZ.D",
+              "display": "Currently on ART"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/21.Abt28d5YHIVPARTF"
+        },
+        "effectiveDateTime": "2025-05-28",
+        "valueBoolean": false
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Observation/art-21.Abt28d5YHIVPARTF"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Observation",
+        "id": "hiv-21.Abt28d5YHIVPARTF",
+        "status": "final",
+        "code": {
+          "coding": [
+            {
+              "code": "DE204",
+              "system": "http://smart.who.int/immunizations/CodeSystem/IMMZ.D",
+              "display": "HIV status"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/21.Abt28d5YHIVPARTF"
+        },
+        "effectiveDateTime": "2025-05-28",
+        "valueCodeableConcept": {
+          "coding": [
+            {
+              "code": "DE205",
+              "system": "http://smart.who.int/immunizations/CodeSystem/IMMZ.D",
+              "display": "HIV-positive"
+            }
+          ]
+        }
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Observation/hiv-21.Abt28d5YHIVPARTF"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Patient",
+        "id": "21.Abt28d5YHIVPARTF",
+        "name": [
+          {
+            "text": "21.Abt28d5YHIVPARTF",
+            "use": "official"
+          }
+        ],
+        "birthDate": "2024-06-11",
+        "gender": "female"
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Patient/21.Abt28d5YHIVPARTF"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Observation",
+        "id": "tb-22.Agt5YHIVUTBNLVgt4w",
+        "status": "final",
+        "code": {
+          "coding": [
+            {
+              "code": "DE246",
+              "system": "http://smart.who.int/immunizations/CodeSystem/IMMZ.D",
+              "display": "TB infection test result"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/22.Agt5YHIVUTBNLVgt4w"
+        },
+        "effectiveDateTime": "2025-05-28",
+        "valueCodeableConcept": {
+          "coding": [
+            {
+              "code": "DE248",
+              "system": "http://smart.who.int/immunizations/CodeSystem/IMMZ.D",
+              "display": "Negative"
+            }
+          ]
+        }
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Observation/tb-22.Agt5YHIVUTBNLVgt4w"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Patient",
+        "id": "22.Agt5YHIVUTBNLVgt4w",
+        "name": [
+          {
+            "text": "22.Agt5YHIVUTBNLVgt4w",
+            "use": "official"
+          }
+        ],
+        "birthDate": "2019-06-11",
+        "gender": "female"
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Patient/22.Agt5YHIVUTBNLVgt4w"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Immunization",
+        "id": "flu-23.Agt5YHIVUTBNLVlt4w",
+        "status": "completed",
+        "vaccineCode": {
+          "coding": [
+            {
+              "code": "XM5V64",
+              "system": "http://id.who.int/icd/release/11/mms",
+              "display": "Influenza vaccines, live attenuated"
+            }
+          ]
+        },
+        "expirationDate": "2026-06-11",
+        "lotNumber": "123",
+        "patient": {
+          "reference": "Patient/23.Agt5YHIVUTBNLVlt4w"
+        },
+        "location": {
+          "display": "Vaccination Site"
+        },
+        "occurrenceDateTime": "2025-05-28"
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Immunization/flu-23.Agt5YHIVUTBNLVlt4w"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Observation",
+        "id": "tb-23.Agt5YHIVUTBNLVlt4w",
+        "status": "final",
+        "code": {
+          "coding": [
+            {
+              "code": "DE246",
+              "system": "http://smart.who.int/immunizations/CodeSystem/IMMZ.D",
+              "display": "TB infection test result"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/23.Agt5YHIVUTBNLVlt4w"
+        },
+        "effectiveDateTime": "2025-05-28",
+        "valueCodeableConcept": {
+          "coding": [
+            {
+              "code": "DE248",
+              "system": "http://smart.who.int/immunizations/CodeSystem/IMMZ.D",
+              "display": "Negative"
+            }
+          ]
+        }
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Observation/tb-23.Agt5YHIVUTBNLVlt4w"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Patient",
+        "id": "23.Agt5YHIVUTBNLVlt4w",
+        "name": [
+          {
+            "text": "23.Agt5YHIVUTBNLVlt4w",
+            "use": "official"
+          }
+        ],
+        "birthDate": "2019-06-11",
+        "gender": "female"
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Patient/23.Agt5YHIVUTBNLVlt4w"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Patient",
+        "id": "24.Agt5YHIVUTBU",
+        "name": [
+          {
+            "text": "24.Agt5YHIVUTBU",
+            "use": "official"
+          }
+        ],
+        "birthDate": "2019-06-11",
+        "gender": "female"
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Patient/24.Agt5YHIVUTBU"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Observation",
+        "id": "tb-25.Agt5YHIVUTBP",
+        "status": "final",
+        "code": {
+          "coding": [
+            {
+              "code": "DE246",
+              "system": "http://smart.who.int/immunizations/CodeSystem/IMMZ.D",
+              "display": "TB infection test result"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/25.Agt5YHIVUTBP"
+        },
+        "effectiveDateTime": "2025-05-28",
+        "valueCodeableConcept": {
+          "coding": [
+            {
+              "code": "DE247",
+              "system": "http://smart.who.int/immunizations/CodeSystem/IMMZ.D",
+              "display": "Positive"
+            }
+          ]
+        }
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Observation/tb-25.Agt5YHIVUTBP"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Patient",
+        "id": "25.Agt5YHIVUTBP",
+        "name": [
+          {
+            "text": "25.Agt5YHIVUTBP",
+            "use": "official"
+          }
+        ],
+        "birthDate": "2019-06-11",
+        "gender": "female"
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Patient/25.Agt5YHIVUTBP"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Observation",
+        "id": "art-26.Agt5YHIVPARTTISF",
+        "status": "final",
+        "code": {
+          "coding": [
+            {
+              "code": "DE210",
+              "system": "http://smart.who.int/immunizations/CodeSystem/IMMZ.D",
+              "display": "Currently on ART"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/26.Agt5YHIVPARTTISF"
+        },
+        "effectiveDateTime": "2025-05-28",
+        "valueBoolean": true
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Observation/art-26.Agt5YHIVPARTTISF"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Observation",
+        "id": "hiv-26.Agt5YHIVPARTTISF",
+        "status": "final",
+        "code": {
+          "coding": [
+            {
+              "code": "DE204",
+              "system": "http://smart.who.int/immunizations/CodeSystem/IMMZ.D",
+              "display": "HIV status"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/26.Agt5YHIVPARTTISF"
+        },
+        "effectiveDateTime": "2025-05-28",
+        "valueCodeableConcept": {
+          "coding": [
+            {
+              "code": "DE205",
+              "system": "http://smart.who.int/immunizations/CodeSystem/IMMZ.D",
+              "display": "HIV-positive"
+            }
+          ]
+        }
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Observation/hiv-26.Agt5YHIVPARTTISF"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Observation",
+        "id": "immstable-26.Agt5YHIVPARTTISF",
+        "status": "final",
+        "code": {
+          "coding": [
+            {
+              "code": "DE249",
+              "system": "http://smart.who.int/immunizations/CodeSystem/IMMZ.D",
+              "display": "Immunologically stable"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/26.Agt5YHIVPARTTISF"
+        },
+        "effectiveDateTime": "2025-05-28",
+        "valueBoolean": false
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Observation/immstable-26.Agt5YHIVPARTTISF"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Patient",
+        "id": "26.Agt5YHIVPARTTISF",
+        "name": [
+          {
+            "text": "26.Agt5YHIVPARTTISF",
+            "use": "official"
+          }
+        ],
+        "birthDate": "2019-06-11",
+        "gender": "female"
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Patient/26.Agt5YHIVPARTTISF"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Observation",
+        "id": "art-27.Agt5YHIVPARTTCWF",
+        "status": "final",
+        "code": {
+          "coding": [
+            {
+              "code": "DE210",
+              "system": "http://smart.who.int/immunizations/CodeSystem/IMMZ.D",
+              "display": "Currently on ART"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/27.Agt5YHIVPARTTCWF"
+        },
+        "effectiveDateTime": "2025-05-28",
+        "valueBoolean": true
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Observation/art-27.Agt5YHIVPARTTCWF"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Observation",
+        "id": "hiv-27.Agt5YHIVPARTTCWF",
+        "status": "final",
+        "code": {
+          "coding": [
+            {
+              "code": "DE204",
+              "system": "http://smart.who.int/immunizations/CodeSystem/IMMZ.D",
+              "display": "HIV status"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/27.Agt5YHIVPARTTCWF"
+        },
+        "effectiveDateTime": "2025-05-28",
+        "valueCodeableConcept": {
+          "coding": [
+            {
+              "code": "DE205",
+              "system": "http://smart.who.int/immunizations/CodeSystem/IMMZ.D",
+              "display": "HIV-positive"
+            }
+          ]
+        }
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Observation/hiv-27.Agt5YHIVPARTTCWF"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Observation",
+        "id": "well-27.Agt5YHIVPARTTCWF",
+        "status": "final",
+        "code": {
+          "coding": [
+            {
+              "code": "DE250",
+              "system": "http://smart.who.int/immunizations/CodeSystem/IMMZ.D",
+              "display": "Clinically well"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/27.Agt5YHIVPARTTCWF"
+        },
+        "effectiveDateTime": "2025-05-28",
+        "valueBoolean": false
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Observation/well-27.Agt5YHIVPARTTCWF"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Patient",
+        "id": "27.Agt5YHIVPARTTCWF",
+        "name": [
+          {
+            "text": "27.Agt5YHIVPARTTCWF",
+            "use": "official"
+          }
+        ],
+        "birthDate": "2019-06-11",
+        "gender": "female"
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Patient/27.Agt5YHIVPARTTCWF"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Observation",
+        "id": "art-28.Agt5YHIVPARTTISTCWTLVgt4w",
+        "status": "final",
+        "code": {
+          "coding": [
+            {
+              "code": "DE210",
+              "system": "http://smart.who.int/immunizations/CodeSystem/IMMZ.D",
+              "display": "Currently on ART"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/28.Agt5YHIVPARTTISTCWTLVgt4w"
+        },
+        "effectiveDateTime": "2025-05-28",
+        "valueBoolean": true
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Observation/art-28.Agt5YHIVPARTTISTCWTLVgt4w"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Observation",
+        "id": "hiv-28.Agt5YHIVPARTTISTCWTLVgt4w",
+        "status": "final",
+        "code": {
+          "coding": [
+            {
+              "code": "DE204",
+              "system": "http://smart.who.int/immunizations/CodeSystem/IMMZ.D",
+              "display": "HIV status"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/28.Agt5YHIVPARTTISTCWTLVgt4w"
+        },
+        "effectiveDateTime": "2025-05-28",
+        "valueCodeableConcept": {
+          "coding": [
+            {
+              "code": "DE205",
+              "system": "http://smart.who.int/immunizations/CodeSystem/IMMZ.D",
+              "display": "HIV-positive"
+            }
+          ]
+        }
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Observation/hiv-28.Agt5YHIVPARTTISTCWTLVgt4w"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Observation",
+        "id": "immstable-28.Agt5YHIVPARTTISTCWTLVgt4w",
+        "status": "final",
+        "code": {
+          "coding": [
+            {
+              "code": "DE249",
+              "system": "http://smart.who.int/immunizations/CodeSystem/IMMZ.D",
+              "display": "Immunologically stable"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/28.Agt5YHIVPARTTISTCWTLVgt4w"
+        },
+        "effectiveDateTime": "2025-05-28",
+        "valueBoolean": true
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Observation/immstable-28.Agt5YHIVPARTTISTCWTLVgt4w"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Observation",
+        "id": "well-28.Agt5YHIVPARTTISTCWTLVgt4w",
+        "status": "final",
+        "code": {
+          "coding": [
+            {
+              "code": "DE250",
+              "system": "http://smart.who.int/immunizations/CodeSystem/IMMZ.D",
+              "display": "Clinically well"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/28.Agt5YHIVPARTTISTCWTLVgt4w"
+        },
+        "effectiveDateTime": "2025-05-28",
+        "valueBoolean": true
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Observation/well-28.Agt5YHIVPARTTISTCWTLVgt4w"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Patient",
+        "id": "28.Agt5YHIVPARTTISTCWTLVgt4w",
+        "name": [
+          {
+            "text": "28.Agt5YHIVPARTTISTCWTLVgt4w",
+            "use": "official"
+          }
+        ],
+        "birthDate": "2019-06-11",
+        "gender": "female"
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Patient/28.Agt5YHIVPARTTISTCWTLVgt4w"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Immunization",
+        "id": "flu-29.Agt5YHIVPARTTISTCWTLVlt4w",
+        "status": "completed",
+        "vaccineCode": {
+          "coding": [
+            {
+              "code": "XM5V64",
+              "system": "http://id.who.int/icd/release/11/mms",
+              "display": "Influenza vaccines, live attenuated"
+            }
+          ]
+        },
+        "expirationDate": "2026-06-11",
+        "lotNumber": "123",
+        "patient": {
+          "reference": "Patient/29.Agt5YHIVPARTTISTCWTLVlt4w"
+        },
+        "location": {
+          "display": "Vaccination Site"
+        },
+        "occurrenceDateTime": "2025-05-28"
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Immunization/flu-29.Agt5YHIVPARTTISTCWTLVlt4w"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Observation",
+        "id": "art-29.Agt5YHIVPARTTISTCWTLVlt4w",
+        "status": "final",
+        "code": {
+          "coding": [
+            {
+              "code": "DE210",
+              "system": "http://smart.who.int/immunizations/CodeSystem/IMMZ.D",
+              "display": "Currently on ART"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/29.Agt5YHIVPARTTISTCWTLVlt4w"
+        },
+        "effectiveDateTime": "2025-05-28",
+        "valueBoolean": true
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Observation/art-29.Agt5YHIVPARTTISTCWTLVlt4w"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Observation",
+        "id": "hiv-29.Agt5YHIVPARTTISTCWTLVlt4w",
+        "status": "final",
+        "code": {
+          "coding": [
+            {
+              "code": "DE204",
+              "system": "http://smart.who.int/immunizations/CodeSystem/IMMZ.D",
+              "display": "HIV status"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/29.Agt5YHIVPARTTISTCWTLVlt4w"
+        },
+        "effectiveDateTime": "2025-05-28",
+        "valueCodeableConcept": {
+          "coding": [
+            {
+              "code": "DE205",
+              "system": "http://smart.who.int/immunizations/CodeSystem/IMMZ.D",
+              "display": "HIV-positive"
+            }
+          ]
+        }
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Observation/hiv-29.Agt5YHIVPARTTISTCWTLVlt4w"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Observation",
+        "id": "immstable2-29.Agt5YHIVPARTTISTCWTLVlt4w",
+        "status": "final",
+        "code": {
+          "coding": [
+            {
+              "code": "DE249",
+              "system": "http://smart.who.int/immunizations/CodeSystem/IMMZ.D",
+              "display": "Immunologically stable"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/29.Agt5YHIVPARTTISTCWTLVlt4w"
+        },
+        "effectiveDateTime": "2025-06-04",
+        "valueBoolean": true
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Observation/immstable2-29.Agt5YHIVPARTTISTCWTLVlt4w"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Observation",
+        "id": "immstable-29.Agt5YHIVPARTTISTCWTLVlt4w",
+        "status": "final",
+        "code": {
+          "coding": [
+            {
+              "code": "DE249",
+              "system": "http://smart.who.int/immunizations/CodeSystem/IMMZ.D",
+              "display": "Immunologically stable"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/29.Agt5YHIVPARTTISTCWTLVlt4w"
+        },
+        "effectiveDateTime": "2025-05-28",
+        "valueBoolean": false
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Observation/immstable-29.Agt5YHIVPARTTISTCWTLVlt4w"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Observation",
+        "id": "well-29.Agt5YHIVPARTTISTCWTLVlt4w",
+        "status": "final",
+        "code": {
+          "coding": [
+            {
+              "code": "DE250",
+              "system": "http://smart.who.int/immunizations/CodeSystem/IMMZ.D",
+              "display": "Clinically well"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/29.Agt5YHIVPARTTISTCWTLVlt4w"
+        },
+        "effectiveDateTime": "2025-05-28",
+        "valueBoolean": true
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Observation/well-29.Agt5YHIVPARTTISTCWTLVlt4w"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Patient",
+        "id": "29.Agt5YHIVPARTTISTCWTLVlt4w",
+        "name": [
+          {
+            "text": "29.Agt5YHIVPARTTISTCWTLVlt4w",
+            "use": "official"
+          }
+        ],
+        "birthDate": "2019-06-11",
+        "gender": "female"
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Patient/29.Agt5YHIVPARTTISTCWTLVlt4w"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Observation",
+        "id": "art-30.Agt5YHIVPARTF",
+        "status": "final",
+        "code": {
+          "coding": [
+            {
+              "code": "DE210",
+              "system": "http://smart.who.int/immunizations/CodeSystem/IMMZ.D",
+              "display": "Currently on ART"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/30.Agt5YHIVPARTF"
+        },
+        "effectiveDateTime": "2025-05-28",
+        "valueBoolean": false
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Observation/art-30.Agt5YHIVPARTF"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Observation",
+        "id": "hiv-30.Agt5YHIVPARTF",
+        "status": "final",
+        "code": {
+          "coding": [
+            {
+              "code": "DE204",
+              "system": "http://smart.who.int/immunizations/CodeSystem/IMMZ.D",
+              "display": "HIV status"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/30.Agt5YHIVPARTF"
+        },
+        "effectiveDateTime": "2025-05-28",
+        "valueCodeableConcept": {
+          "coding": [
+            {
+              "code": "DE205",
+              "system": "http://smart.who.int/immunizations/CodeSystem/IMMZ.D",
+              "display": "HIV-positive"
+            }
+          ]
+        }
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Observation/hiv-30.Agt5YHIVPARTF"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Patient",
+        "id": "30.Agt5YHIVPARTF",
+        "name": [
+          {
+            "text": "30.Agt5YHIVPARTF",
+            "use": "official"
+          }
+        ],
+        "birthDate": "2019-06-11",
+        "gender": "female"
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Patient/30.Agt5YHIVPARTF"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Immunization",
+        "id": "bcg-31.D1",
+        "status": "completed",
+        "vaccineCode": {
+          "coding": [
+            {
+              "code": "XM8142",
+              "system": "http://id.who.int/icd/release/11/mms",
+              "display": "Tuberculosis, live attenuated vaccines"
+            }
+          ]
+        },
+        "expirationDate": "2026-06-11",
+        "lotNumber": "123",
+        "patient": {
+          "reference": "Patient/31.D1"
+        },
+        "location": {
+          "display": "Vaccination Site"
+        },
+        "occurrenceDateTime": "2025-05-28",
+        "protocolApplied": [
+          {
+            "doseNumberString": "1",
+            "seriesDosesString": "1",
+            "series": "Primary series"
+          }
+        ]
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Immunization/bcg-31.D1"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Patient",
+        "id": "31.D1",
+        "name": [
+          {
+            "text": "31.D1",
+            "use": "official"
+          }
+        ],
+        "birthDate": "2019-06-11",
+        "gender": "female"
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Patient/31.D1"
+      }
+    }
+  ]
+}

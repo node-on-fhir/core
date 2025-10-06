@@ -1,0 +1,36 @@
+== Suppressed Messages ==
+
+# Add warning and/or information messages here after you've confirmed that they aren't really a problem
+# (And include comments like this justifying why)
+# See https://github.com/FHIR/sample-ig/blob/master/input/ignoreWarnings.txt for examples
+
+# Don't need these files
+An HTML fragment from the set [cross-version-analysis.xhtml, cross-version-analysis-inline.xhtml] is not included anywhere in the produced implementation guide
+An HTML fragment from the set [dependency-table.xhtml, dependency-table-short.xhtml, dependency-table-nontech.xhtml] is not included anywhere in the produced implementation guide
+The HTML fragment 'globals-table.xhtml' is not included anywhere in the produced implementation guide
+
+# This is ok. It is the only option until CPG updates it.
+Reference to draft CodeSystem http://hl7.org/fhir/uv/cpg/CodeSystem/cpg-knowledge-capability|1.0.0
+
+# Tried to resolve this but using pin-canonicals caused issues with the content in the depended IG.
+# Also tried using the version in the FSH file, but it didn't keep it for the profile with InstanceOf.
+There are multiple different potential matches for the url 'http://hl7.org/fhir/uv/cpg/StructureDefinition/cpg-immunizationactivity'. It might be a good idea to fix to the correct version to reduce the likelihood of a wrong version being selected by an implementation/implementer, or use the [IG Parameter `pin-canonicals`](https://hl7.org/fhir/tools/CodeSystem-ig-parameters.html). Using version '2.0.0', found versions: 1.0.0, 2.0.0. Suggested fix: change the canonical reference from 'http://hl7.org/fhir/uv/cpg/StructureDefinition/cpg-immunizationactivity' to 'http://hl7.org/fhir/uv/cpg/StructureDefinition/cpg-immunizationactivity|2.0.0'
+There are multiple different potential matches for the url 'http://hl7.org/fhir/uv/cpg/StructureDefinition/cpg-communicationactivity'. It might be a good idea to fix to the correct version to reduce the likelihood of a wrong version being selected by an implementation/implementer, or use the [IG Parameter `pin-canonicals`](https://hl7.org/fhir/tools/CodeSystem-ig-parameters.html). Using version '2.0.0', found versions: 1.0.0, 2.0.0. Suggested fix: change the canonical reference from 'http://hl7.org/fhir/uv/cpg/StructureDefinition/cpg-communicationactivity' to 'http://hl7.org/fhir/uv/cpg/StructureDefinition/cpg-communicationactivity|2.0.0' 
+There are multiple different potential matches for the url 'http://hl7.org/fhir/uv/cpg/StructureDefinition/cpg-communicationrequest'. It might be a good idea to fix to the correct version to reduce the likelihood of a wrong version being selected by an implementation/implementer, or use the [IG Parameter `pin-canonicals`](https://hl7.org/fhir/tools/CodeSystem-ig-parameters.html). Using version '2.0.0', found versions: 1.0.0, 2.0.0. Suggested fix: change the canonical reference from 'http://hl7.org/fhir/uv/cpg/StructureDefinition/cpg-communicationrequest' to 'http://hl7.org/fhir/uv/cpg/StructureDefinition/cpg-communicationrequest|2.0.0' 
+
+# Accepted warnings from CQL about identifier hiding
+An operand identifier [reference] is hiding another identifier of the same name.
+
+# This is just for testing results
+Result type choice<System.Boolean,System.String> of definition Test Validation is not supported; implementations may not be able to use the result of this expression
+
+# These extensions are ok
+This element does not match any known slice defined in the profile http://hl7.org/fhir/uv/crmi/StructureDefinition/crmi-publishablelibrary|1.0.0 (this may not be a problem, but you should check that it's not intended to match a slice)
+This element does not match any known slice defined in the profile http://hl7.org/fhir/uv/cql/StructureDefinition/cql-library|1.0.0 (this may not be a problem, but you should check that it's not intended to match a slice)
+This element does not match any known slice defined in the profile http://hl7.org/fhir/uv/cql/StructureDefinition/cql-module|1.0.0 (this may not be a problem, but you should check that it's not intended to match a slice)
+
+# Not sure why the publisher isn't finding these
+ValueSet 'http://hl7.org/fhir/ValueSet/version-algorithm' not found
+Unknown Code System 'http://hl7.org/fhir/version-algorithm'
+No definition could be found for URL value 'http://hl7.org/fhir/version-algorithm'
+No definition could be found for URL value 'http://terminology.hl7.org/5.1.0/CodeSystem-v3-RoleClass.html'

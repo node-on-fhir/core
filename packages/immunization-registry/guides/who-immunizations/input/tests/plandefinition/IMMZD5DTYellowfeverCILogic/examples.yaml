@@ -1,0 +1,175 @@
+---
+#0. Client's age is less than 6 months
+#   Today's date − "Date of birth" < 6 months
+### Yellow fever vaccination is contraindicated
+### "Immunization recommendation status" = "Contraindicated"
+id: "16.0"
+birth: -5m
+patient:
+  fhir:
+    gender: female
+contraindication:
+    dateofbirth:
+      code: DE
+      display: "Date of birth"
+      effectiveDateTime: -1d
+medicationrequest:
+  yellowfever:
+    medication:
+      code: XM0N24
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Yellow fever vaccine"
+    fhir:
+      authoredOn: 0d
+      status: draft
+      intent: proposal
+---
+#0. Client's age is 6–9 months
+#   6 months  ≤ Today's date − "Date of birth" < 9 months
+### Clinical judgement is required. Create a clinical note
+### "Immunization recommendation status" = "Further evaluation needed"
+id: "17.0"
+birth: -8m
+patient:
+  fhir:
+    gender: female
+contraindication:
+    dateofbirth:
+      code: DE
+      display: "Date of birth"
+      effectiveDateTime: -1d
+medicationrequest:
+  yellowfever:
+    medication:
+      code: XM0N24
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Yellow fever vaccine"
+    fhir:
+      authoredOn: 0d
+      status: draft
+      intent: proposal
+---
+#0. Client's age is more than or equal to 60 years
+#   Today's date − "Date of birth" ≥ 60 years
+### Clinical judgement is required. Create a clinical note
+### "Immunization recommendation status" = "Further evaluation needed"
+id: "18.0"
+birth: -60y
+patient:
+  fhir:
+    gender: female
+contraindication:
+    dateofbirth:
+      code: DE
+      display: "Date of birth"
+      effectiveDateTime: -1d
+medicationrequest:
+  yellowfever:
+    medication:
+      code: XM0N24
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Yellow fever vaccine"
+    fhir:
+      authoredOn: 0d
+      status: draft
+      intent: proposal
+---
+#1. The client has a history of severe allergic reactions
+#   "Potential contraindications" = "Severe allergic reactions"
+### Yellow fever vaccination could be contraindicated. Clinical judgement is required. Create a clinical note
+### "Immunization recommendation status" = "Further evaluation needed"
+id: "19.1"
+birth: -9m
+patient:
+  fhir:
+    gender: female
+contraindication:
+    severeallergicreactions:
+      code: DE167
+      display: "Severe allergic reactions"
+      effectiveDateTime: -1d
+medicationrequest:
+  yellowfever:
+    medication:
+      code: XM0N24
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Yellow fever vaccine"
+    fhir:
+      authoredOn: 0d
+      status: draft
+      intent: proposal
+---
+#1. The client is severely immunocompromised
+#   "Potential contraindications" = "Severely immunocompromised"
+### Yellow fever vaccination is contraindicated
+### "Immunization recommendation status" = "Contraindicated"
+id: "20.1"
+birth: -9m
+patient:
+  fhir:
+    gender: female
+contraindication:
+    severelyimmunocompromised:
+      code: DE200
+      display: "Severely immunocompromised"
+      effectiveDateTime: -1d
+medicationrequest:
+  yellowfever:
+    medication:
+      code: XM0N24
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Yellow fever vaccine"
+    fhir:
+      authoredOn: 0d
+      status: draft
+      intent: proposal
+---
+#1. The client is currently pregnant
+#   "Potential contraindications" = "Currently pregnant"
+### Clinical judgement is required. Create a clinical note
+### "Immunization recommendation status" = "Further evaluation needed"
+id: "21.1"
+birth: -25y
+patient:
+  fhir:
+    gender: female
+contraindication:
+    currentlypregnant:
+      code: DE162
+      display: "Currently pregnant"
+      effectiveDateTime: -1d
+medicationrequest:
+  yellowfever:
+    medication:
+      code: XM0N24
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Yellow fever vaccine"
+    fhir:
+      authoredOn: 0d
+      status: draft
+      intent: proposal
+---
+#1. The client is lactating
+#   "Potential contraindications" = "Breastfeeding" 
+### Clinical judgement is required. Create a clinical note
+### "Immunization recommendation status" = "Further evaluation needed"
+id: "22.1"
+birth: -25y
+patient:
+  fhir:
+    gender: female
+contraindication:
+    breastfeeding:
+      code: DE191
+      display: "Breastfeeding"
+      effectiveDateTime: -1d
+medicationrequest:
+  yellowfever:
+    medication:
+      code: XM0N24
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Yellow fever vaccine"
+    fhir:
+      authoredOn: 0d
+      status: draft
+      intent: proposal

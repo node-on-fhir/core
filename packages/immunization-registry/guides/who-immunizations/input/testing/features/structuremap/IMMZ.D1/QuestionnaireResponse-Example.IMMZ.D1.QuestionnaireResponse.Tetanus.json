@@ -1,0 +1,104 @@
+{
+  "resourceType": "QuestionnaireResponse",
+  "id": "Example.IMMZ.D1.QuestionnaireResponse.Tetanus",
+  "status": "completed",
+  "authored": "2025-01-13T19:20:20.913Z",
+  "questionnaire": "http://smart.who.int/immunizations/Questionnaire/QIMMZD1",
+  "subject": {
+    "reference": "Patient/IMMZ.C.Patient.1"
+  },
+  "item": [
+    {
+      "linkId": "typeOfDose",
+      "answer": [
+        {
+          "valueCoding": {
+            "code": "DE259",
+            "system": "http://smart.who.int/immunizations/CodeSystem/IMMZ.D",
+            "display": "Primary series"
+          }
+        }
+      ]
+    },
+    {
+      "linkId": "completedThePrimaryVaccinationSeries",
+      "answer": [
+        {
+          "valueBoolean": false
+        }
+      ]
+    },
+    {
+      "linkId": "completedTheBoosterSeries",
+      "answer": [
+        {
+          "valueBoolean": false
+        }
+      ]
+    },
+    {
+      "linkId": "hivStatus",
+      "answer": [
+        {
+          "valueCoding": {
+            "code": "DE206",
+            "system": "http://smart.who.int/immunizations/CodeSystem/IMMZ.D",
+            "display": "HIV-negative"
+          }
+        }
+      ]
+    },
+    {
+      "linkId": "pretermBirth",
+      "answer": [
+        {
+          "valueBoolean": false
+        }
+      ]
+    },
+    {
+      "linkId": "immunocompromised",
+      "answer": [
+        {
+          "valueBoolean": false
+        }
+      ]
+    },
+    {
+      "linkId": "vaccineType",
+      "answer": [
+        {
+          "valueCoding": {
+            "code": "DE19",
+            "system": "http://smart.who.int/immunizations/CodeSystem/IMMZ.Z",
+            "display": "Tetanus-containing vaccines"
+          }
+        }
+      ]
+    },
+    {
+      "linkId": "dateAndTimeOfVaccination",
+      "answer": [
+        {
+          "valueDateTime": "2021-04-01T04:00:00Z"
+        }
+      ]
+    },
+    {
+      "linkId": "contactDate",
+      "answer": [
+        {
+          "valueDate": "2021-04-01"
+        }
+      ]
+    },
+    {
+      "linkId": "doseNumber",
+      "answer": [
+        {
+          "valueInteger": 1
+        }
+      ]
+    }
+  ]
+}

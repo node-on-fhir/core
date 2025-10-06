@@ -1,0 +1,41 @@
+map "http://smart.who.int/immunizations/StructureMap/IMMZ.D17.LMToBundle" = "IMMZ.D17.LMToBundle"
+// Immunization Administer Vaccine - Transform Logical Model to Immunization resources
+
+uses "http://smart.who.int/immunizations/StructureDefinition/IMMZD17" alias IMMZD17 as source
+uses "http://hl7.org/fhir/StructureDefinition/Bundle" alias Bundle as target
+// uses "http://hl7.org/fhir/StructureDefinition/Patient" alias Patient as produced
+// uses "http://hl7.org/fhir/StructureDefinition/RelatedPerson" alias RelatedPerson as produced
+
+imports "http://smart.who.int/immunizations/StructureMap/IMMZ.Helpers"
+
+
+group IMMZD17ToBundle (source immz : IMMZD17, target bundle: Bundle) {
+
+  immz -> bundle.type = "transaction" "SetBundleType";
+
+  immz.patient as patient then {
+
+    immz -> uuid() as aeid, 
+      bundle.entry as entry,
+      entry.fullUrl = append("urn:uuid:", aeid),
+      entry.request as request,
+      request.method = "PUT",
+      request.url = append("AdverseEvent/", aeid),
+      entry.resource = create("AdverseEvent") as ae
+    then {
+      immz -> ae.id = aeid "SetId";
+      immz -> ae.actuality = 'actual' "SetActuality";
+      patient -> ae.subject = patient "SetSubject";
+      immz.reactionDate as date -> ae.date = date "SetDate";
+      immz.reactionManifestation as manifestation -> ae.event = manifestation "SetEvent";
+      immz.typeOfReaction as seriousness -> ae.seriousness = seriousness "SetSeriousness";
+      immz.reactionOutcome as outcome -> ae.outcome = translate(outcome, 'http://smart.who.int/immunizations/ConceptMap/IMMZ.D.ConceptMap', 'coding') "SetOutcome";
+      immz.otherImportantMedicalEvent as event -> ae.extension as ext then {
+        event -> ext.url = 'http://smart.who.int/immunizations/StructureDefinition/IMMZOtherMedicalEvent' "SetURL";
+        event -> ext.value = event "SetValue";
+      } "CreateOtherMedicalExt";
+    } "CreateAdverseEvent";
+
+  } "GetPatient";
+}
+

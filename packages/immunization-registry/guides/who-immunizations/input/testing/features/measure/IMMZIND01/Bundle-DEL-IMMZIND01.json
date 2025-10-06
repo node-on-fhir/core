@@ -1,0 +1,498 @@
+{
+  "resourceType": "Bundle",
+  "type": "transaction",
+  "entry": [
+    {
+      "request": {
+        "method": "DELETE",
+        "url": "Observation/art-09.Alt28dHIVPARTTISTLV0?_expunge=true"
+      }
+    },
+    {
+      "request": {
+        "method": "DELETE",
+        "url": "Observation/hiv-09.Alt28dHIVPARTTISTLV0?_expunge=true"
+      }
+    },
+    {
+      "request": {
+        "method": "DELETE",
+        "url": "Observation/immstable-09.Alt28dHIVPARTTISTLV0?_expunge=true"
+      }
+    },
+    {
+      "request": {
+        "method": "DELETE",
+        "url": "Observation/art-10.Alt28dHIVPARTTISTLVlt4w?_expunge=true"
+      }
+    },
+    {
+      "request": {
+        "method": "DELETE",
+        "url": "Observation/hiv-10.Alt28dHIVPARTTISTLVlt4w?_expunge=true"
+      }
+    },
+    {
+      "request": {
+        "method": "DELETE",
+        "url": "Observation/immstable-10.Alt28dHIVPARTTISTLVlt4w?_expunge=true"
+      }
+    },
+    {
+      "request": {
+        "method": "DELETE",
+        "url": "Observation/art-11.Alt28dHIVPARTTISF?_expunge=true"
+      }
+    },
+    {
+      "request": {
+        "method": "DELETE",
+        "url": "Observation/hiv-11.Alt28dHIVPARTTISF?_expunge=true"
+      }
+    },
+    {
+      "request": {
+        "method": "DELETE",
+        "url": "Observation/immstable-11.Alt28dHIVPARTTISF?_expunge=true"
+      }
+    },
+    {
+      "request": {
+        "method": "DELETE",
+        "url": "Observation/art-12.Alt28dHIVPARTF?_expunge=true"
+      }
+    },
+    {
+      "request": {
+        "method": "DELETE",
+        "url": "Observation/hiv-12.Alt28dHIVPARTF?_expunge=true"
+      }
+    },
+    {
+      "request": {
+        "method": "DELETE",
+        "url": "Observation/tb-13.Abt28d5yHIVUTBNLVgt4w?_expunge=true"
+      }
+    },
+    {
+      "request": {
+        "method": "DELETE",
+        "url": "Observation/tb-14.Abt28d5yHIVUTBNLVlt4w?_expunge=true"
+      }
+    },
+    {
+      "request": {
+        "method": "DELETE",
+        "url": "Observation/tb-16.Abt28d5yTBP?_expunge=true"
+      }
+    },
+    {
+      "request": {
+        "method": "DELETE",
+        "url": "Observation/art-17.Abt28d5YHIVPARTTISF?_expunge=true"
+      }
+    },
+    {
+      "request": {
+        "method": "DELETE",
+        "url": "Observation/hiv-17.Abt28d5YHIVPARTTISF?_expunge=true"
+      }
+    },
+    {
+      "request": {
+        "method": "DELETE",
+        "url": "Observation/immstable-17.Abt28d5YHIVPARTTISF?_expunge=true"
+      }
+    },
+    {
+      "request": {
+        "method": "DELETE",
+        "url": "Observation/art-18.Abt28d5YHIVPARTTCWF?_expunge=true"
+      }
+    },
+    {
+      "request": {
+        "method": "DELETE",
+        "url": "Observation/hiv-18.Abt28d5YHIVPARTTCWF?_expunge=true"
+      }
+    },
+    {
+      "request": {
+        "method": "DELETE",
+        "url": "Observation/well-18.Abt28d5YHIVPARTTCWF?_expunge=true"
+      }
+    },
+    {
+      "request": {
+        "method": "DELETE",
+        "url": "Observation/art-19.Abt28d5YHIVPARTTISTCWTLVgt4w?_expunge=true"
+      }
+    },
+    {
+      "request": {
+        "method": "DELETE",
+        "url": "Observation/hiv-19.Abt28d5YHIVPARTTISTCWTLVgt4w?_expunge=true"
+      }
+    },
+    {
+      "request": {
+        "method": "DELETE",
+        "url": "Observation/immstable-19.Abt28d5YHIVPARTTISTCWTLVgt4w?_expunge=true"
+      }
+    },
+    {
+      "request": {
+        "method": "DELETE",
+        "url": "Observation/well-19.Abt28d5YHIVPARTTISTCWTLVgt4w?_expunge=true"
+      }
+    },
+    {
+      "request": {
+        "method": "DELETE",
+        "url": "Observation/art-20.Abt28d5YHIVPARTTISTCWTLVlt4w?_expunge=true"
+      }
+    },
+    {
+      "request": {
+        "method": "DELETE",
+        "url": "Observation/hiv-20.Abt28d5YHIVPARTTISTCWTLVlt4w?_expunge=true"
+      }
+    },
+    {
+      "request": {
+        "method": "DELETE",
+        "url": "Observation/immstable-20.Abt28d5YHIVPARTTISTCWTLVlt4w?_expunge=true"
+      }
+    },
+    {
+      "request": {
+        "method": "DELETE",
+        "url": "Observation/well-20.Abt28d5YHIVPARTTISTCWTLVlt4w?_expunge=true"
+      }
+    },
+    {
+      "request": {
+        "method": "DELETE",
+        "url": "Observation/art-21.Abt28d5YHIVPARTF?_expunge=true"
+      }
+    },
+    {
+      "request": {
+        "method": "DELETE",
+        "url": "Observation/hiv-21.Abt28d5YHIVPARTF?_expunge=true"
+      }
+    },
+    {
+      "request": {
+        "method": "DELETE",
+        "url": "Observation/tb-22.Agt5YHIVUTBNLVgt4w?_expunge=true"
+      }
+    },
+    {
+      "request": {
+        "method": "DELETE",
+        "url": "Observation/tb-23.Agt5YHIVUTBNLVlt4w?_expunge=true"
+      }
+    },
+    {
+      "request": {
+        "method": "DELETE",
+        "url": "Observation/tb-25.Agt5YHIVUTBP?_expunge=true"
+      }
+    },
+    {
+      "request": {
+        "method": "DELETE",
+        "url": "Observation/art-26.Agt5YHIVPARTTISF?_expunge=true"
+      }
+    },
+    {
+      "request": {
+        "method": "DELETE",
+        "url": "Observation/hiv-26.Agt5YHIVPARTTISF?_expunge=true"
+      }
+    },
+    {
+      "request": {
+        "method": "DELETE",
+        "url": "Observation/immstable-26.Agt5YHIVPARTTISF?_expunge=true"
+      }
+    },
+    {
+      "request": {
+        "method": "DELETE",
+        "url": "Observation/art-27.Agt5YHIVPARTTCWF?_expunge=true"
+      }
+    },
+    {
+      "request": {
+        "method": "DELETE",
+        "url": "Observation/hiv-27.Agt5YHIVPARTTCWF?_expunge=true"
+      }
+    },
+    {
+      "request": {
+        "method": "DELETE",
+        "url": "Observation/well-27.Agt5YHIVPARTTCWF?_expunge=true"
+      }
+    },
+    {
+      "request": {
+        "method": "DELETE",
+        "url": "Observation/art-28.Agt5YHIVPARTTISTCWTLVgt4w?_expunge=true"
+      }
+    },
+    {
+      "request": {
+        "method": "DELETE",
+        "url": "Observation/hiv-28.Agt5YHIVPARTTISTCWTLVgt4w?_expunge=true"
+      }
+    },
+    {
+      "request": {
+        "method": "DELETE",
+        "url": "Observation/immstable-28.Agt5YHIVPARTTISTCWTLVgt4w?_expunge=true"
+      }
+    },
+    {
+      "request": {
+        "method": "DELETE",
+        "url": "Observation/well-28.Agt5YHIVPARTTISTCWTLVgt4w?_expunge=true"
+      }
+    },
+    {
+      "request": {
+        "method": "DELETE",
+        "url": "Observation/art-29.Agt5YHIVPARTTISTCWTLVlt4w?_expunge=true"
+      }
+    },
+    {
+      "request": {
+        "method": "DELETE",
+        "url": "Observation/hiv-29.Agt5YHIVPARTTISTCWTLVlt4w?_expunge=true"
+      }
+    },
+    {
+      "request": {
+        "method": "DELETE",
+        "url": "Observation/immstable2-29.Agt5YHIVPARTTISTCWTLVlt4w?_expunge=true"
+      }
+    },
+    {
+      "request": {
+        "method": "DELETE",
+        "url": "Observation/immstable-29.Agt5YHIVPARTTISTCWTLVlt4w?_expunge=true"
+      }
+    },
+    {
+      "request": {
+        "method": "DELETE",
+        "url": "Observation/well-29.Agt5YHIVPARTTISTCWTLVlt4w?_expunge=true"
+      }
+    },
+    {
+      "request": {
+        "method": "DELETE",
+        "url": "Observation/art-30.Agt5YHIVPARTF?_expunge=true"
+      }
+    },
+    {
+      "request": {
+        "method": "DELETE",
+        "url": "Observation/hiv-30.Agt5YHIVPARTF?_expunge=true"
+      }
+    },
+    {
+      "request": {
+        "method": "DELETE",
+        "url": "Immunization/flu-08.Alt28dHIVULVlt4w?_expunge=true"
+      }
+    },
+    {
+      "request": {
+        "method": "DELETE",
+        "url": "Immunization/flu-10.Alt28dHIVPARTTISTLVlt4w?_expunge=true"
+      }
+    },
+    {
+      "request": {
+        "method": "DELETE",
+        "url": "Immunization/flu-14.Abt28d5yHIVUTBNLVlt4w?_expunge=true"
+      }
+    },
+    {
+      "request": {
+        "method": "DELETE",
+        "url": "Immunization/flu-20.Abt28d5YHIVPARTTISTCWTLVlt4w?_expunge=true"
+      }
+    },
+    {
+      "request": {
+        "method": "DELETE",
+        "url": "Immunization/flu-23.Agt5YHIVUTBNLVlt4w?_expunge=true"
+      }
+    },
+    {
+      "request": {
+        "method": "DELETE",
+        "url": "Immunization/flu-29.Agt5YHIVPARTTISTCWTLVlt4w?_expunge=true"
+      }
+    },
+    {
+      "request": {
+        "method": "DELETE",
+        "url": "Immunization/bcg-31.D1?_expunge=true"
+      }
+    },
+    {
+      "request": {
+        "method": "DELETE",
+        "url": "Patient/07.Alt28dHIVULV0?_expunge=true"
+      }
+    },
+    {
+      "request": {
+        "method": "DELETE",
+        "url": "Patient/08.Alt28dHIVULVlt4w?_expunge=true"
+      }
+    },
+    {
+      "request": {
+        "method": "DELETE",
+        "url": "Patient/09.Alt28dHIVPARTTISTLV0?_expunge=true"
+      }
+    },
+    {
+      "request": {
+        "method": "DELETE",
+        "url": "Patient/10.Alt28dHIVPARTTISTLVlt4w?_expunge=true"
+      }
+    },
+    {
+      "request": {
+        "method": "DELETE",
+        "url": "Patient/11.Alt28dHIVPARTTISF?_expunge=true"
+      }
+    },
+    {
+      "request": {
+        "method": "DELETE",
+        "url": "Patient/12.Alt28dHIVPARTF?_expunge=true"
+      }
+    },
+    {
+      "request": {
+        "method": "DELETE",
+        "url": "Patient/13.Abt28d5yHIVUTBNLVgt4w?_expunge=true"
+      }
+    },
+    {
+      "request": {
+        "method": "DELETE",
+        "url": "Patient/14.Abt28d5yHIVUTBNLVlt4w?_expunge=true"
+      }
+    },
+    {
+      "request": {
+        "method": "DELETE",
+        "url": "Patient/15.Abt28d5yHIVUTBU?_expunge=true"
+      }
+    },
+    {
+      "request": {
+        "method": "DELETE",
+        "url": "Patient/16.Abt28d5yTBP?_expunge=true"
+      }
+    },
+    {
+      "request": {
+        "method": "DELETE",
+        "url": "Patient/17.Abt28d5YHIVPARTTISF?_expunge=true"
+      }
+    },
+    {
+      "request": {
+        "method": "DELETE",
+        "url": "Patient/18.Abt28d5YHIVPARTTCWF?_expunge=true"
+      }
+    },
+    {
+      "request": {
+        "method": "DELETE",
+        "url": "Patient/19.Abt28d5YHIVPARTTISTCWTLVgt4w?_expunge=true"
+      }
+    },
+    {
+      "request": {
+        "method": "DELETE",
+        "url": "Patient/20.Abt28d5YHIVPARTTISTCWTLVlt4w?_expunge=true"
+      }
+    },
+    {
+      "request": {
+        "method": "DELETE",
+        "url": "Patient/21.Abt28d5YHIVPARTF?_expunge=true"
+      }
+    },
+    {
+      "request": {
+        "method": "DELETE",
+        "url": "Patient/22.Agt5YHIVUTBNLVgt4w?_expunge=true"
+      }
+    },
+    {
+      "request": {
+        "method": "DELETE",
+        "url": "Patient/23.Agt5YHIVUTBNLVlt4w?_expunge=true"
+      }
+    },
+    {
+      "request": {
+        "method": "DELETE",
+        "url": "Patient/24.Agt5YHIVUTBU?_expunge=true"
+      }
+    },
+    {
+      "request": {
+        "method": "DELETE",
+        "url": "Patient/25.Agt5YHIVUTBP?_expunge=true"
+      }
+    },
+    {
+      "request": {
+        "method": "DELETE",
+        "url": "Patient/26.Agt5YHIVPARTTISF?_expunge=true"
+      }
+    },
+    {
+      "request": {
+        "method": "DELETE",
+        "url": "Patient/27.Agt5YHIVPARTTCWF?_expunge=true"
+      }
+    },
+    {
+      "request": {
+        "method": "DELETE",
+        "url": "Patient/28.Agt5YHIVPARTTISTCWTLVgt4w?_expunge=true"
+      }
+    },
+    {
+      "request": {
+        "method": "DELETE",
+        "url": "Patient/29.Agt5YHIVPARTTISTCWTLVlt4w?_expunge=true"
+      }
+    },
+    {
+      "request": {
+        "method": "DELETE",
+        "url": "Patient/30.Agt5YHIVPARTF?_expunge=true"
+      }
+    },
+    {
+      "request": {
+        "method": "DELETE",
+        "url": "Patient/31.D1?_expunge=true"
+      }
+    }
+  ]
+}

@@ -1,0 +1,1 @@
+{"resourceType":"Bundle","id":"tests-BCG21.4-bundle","type":"transaction","entry":[{"request":{"method":"DELETE","url":"Observation/art-BCG21.4"}},{"request":{"method":"DELETE","url":"Observation/hiv-BCG21.4"}},{"request":{"method":"DELETE","url":"Patient/BCG21.4"}}]}

@@ -1,0 +1,36 @@
+---
+id: "08.1"
+birth: -5m
+patient:
+  fhir:
+    gender: female
+---
+id: "09.01"
+birth: -30y
+patient:
+  fhir:
+    gender: female
+immunization:
+  covid19:
+    vaccine:
+      code: XM68M6
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "COVID-19 vaccines"
+    doses:
+      b1:
+        - 0d
+---
+id: "10.01"
+birth: -30y
+patient:
+  fhir:
+    gender: female
+immunization:
+  covid19:
+    vaccine:
+      code: XM68M6
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "COVID-19 vaccines"
+    doses:
+      b1:
+        - -1y

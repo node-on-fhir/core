@@ -1,0 +1,66 @@
+---
+#2. Client's age is less than 12 months
+#   Today's date − "Date of birth" < 12 months
+### Client is not due for varicella vaccination
+### "Immunization recommendation status" = "Not due"
+id: "09.2"
+birth: -11m
+patient:
+  fhir:
+    gender: female
+---
+#1. No varicella primary series dose was administered
+#   Count of vaccines administered (where "Vaccine type" = "Varicella-containing vaccines" and "Type of dose" = "Primary series") = 0
+#2. Cient's age is more than or equal to 12 months
+#   Today's date − "Date of birth" ≥ 12 months
+#3. Live vaccine was administered in the past 4 weeks
+#   Today's date − latest "Date and time of vaccination" (where "Live vaccine" = TRUE) < 4 weeks
+### Client is not due for varicella vaccination
+### "Immunization recommendation status" = "Not due"
+id: "10.123"
+birth: -12m
+patient:
+  fhir:
+    gender: female
+immunization:
+  flu:
+    vaccine:
+      code: XM5V64
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Influenza vaccines, live attenuated"
+    fhir:
+      expirationDate: 1y
+      occurrenceDateTime: -2w
+---
+#1. No varicella primary series dose was administered
+#   Count of vaccines administered (where "Vaccine type" = "Varicella-containing vaccines" and "Type of dose" = "Primary series") = 0
+#2. Cient's age is more than or equal to 12 months
+#   Today's date − "Date of birth" ≥ 12 months
+#3. No live vaccine was administered in the past 4 weeks
+#   Today's date − latest "Date and time of vaccination" (where "Live vaccine" = TRUE) ≥ 4 weeks
+### Client is due for varicella vaccination
+### "Immunization recommendation status" = "Due"
+id: "11.123"
+birth: -12m
+patient:
+  fhir:
+    gender: female
+---
+#1. One varicella primary series dose was administered
+#   Count of vaccines administered (where "Vaccine type" = "Varicella-containing vaccines" and "Type of dose" = "Primary series") = 1
+### Varicella immunization schedule is complete
+### "Immunization recommendation status" = "Complete"
+id: "12.1"
+birth: -12m
+patient:
+  fhir:
+    gender: female
+immunization:
+  varicella:
+    vaccine:
+      code: XM8DG3
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Varicella zoster vaccines"
+    doses:
+      p1:
+        - 0d
