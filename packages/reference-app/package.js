@@ -32,6 +32,10 @@ Package.onUse(function(api) {
   // ONC Health IT Certification dependencies - OPTIONAL
   // Add these packages for full certification compliance testing
   api.use([
+    'clinical:accounts-management@1.0.0',
+    'clinical:antimicrobial-reporting@1.0.0',
+
+
     'clinical:order-catalog@0.1.0',
     'clinical:drug-interactions@0.1.0', 
     'clinical:secure-messaging@0.1.0',
@@ -53,9 +57,7 @@ Package.onUse(function(api) {
     'clinical:cancer-registry-reporting@1.0.0',
     'clinical:lab-test-reporting@1.0.0',
     'clinical:immunization-registry@1.0.0',
-    'clinical:antimicrobial-reporting@1.0.0',
     'clinical:pacio-core@0.1.0',
-    'clinical:accounts-management@1.0.0',
     'clinical:multi-factor-auth@0.1.0'
   ]);
   
