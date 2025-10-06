@@ -1,0 +1,10 @@
+{
+  "package-id" : "hl7.fhir.us.icsr-ae-reporting",
+  "version" : "1.0.1",
+  "path" : "http://hl7.org/fhir/us/icsr-ae-reporting/STU1",
+  "status" : "update",
+  "mode": "technical-correction",
+  "sequence" : "STU 1",
+  "desc" : "This is a technical correction to the first release in the STU 1 sequence.",
+  "first": false
+}
