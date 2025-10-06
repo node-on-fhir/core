@@ -16,17 +16,20 @@ let DynamicRoutes = [{
   name: 'HipaaAuditLog',
   path: '/hipaa/audit-log',
   element: <AuditLogPage />,
-  requireAuth: true
+  requireAuth: true,
+  description: 'HIPAA Audit Log - ONC §170.315(d)(2), §170.315(d)(3), §170.315(d)(10)'
 }, {
   name: 'HipaaPolicyMenu',
   path: '/hipaa/policies',
   element: <PolicyMenuPage />,
-  requireAuth: false
+  requireAuth: false,
+  description: 'HIPAA Compliance Policies and Documentation'
 }, {
   name: 'HipaaPolicy',
   path: '/hipaa/policies/:policyId',
   element: <PolicyPage />,
-  requireAuth: false
+  requireAuth: false,
+  description: 'Individual HIPAA Policy Details'
 }];
 
 // Admin routes

@@ -309,8 +309,9 @@ export default function EPrescribingPage() {
 
   return (
     <Box sx={{ 
-      p: 2, 
-      bgcolor: theme => theme.palette.mode === 'light' ? theme.palette.grey[50] : theme.palette.background.default 
+      p: 2,
+      minHeight: '100vh',
+      bgcolor: theme => theme.palette.mode === 'light' ? 'grey.50' : 'background.default'
     }}>
       {/* Header with NCPDP SCRIPT Message Type Selector */}
       <Paper sx={{ p: 2, mb: 2 }}>

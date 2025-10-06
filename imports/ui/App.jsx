@@ -70,6 +70,7 @@ import { ForgotPasswordForm } from '../accounts/client/components/ForgotPassword
 
 import PatientQuickChart from '../patient/PatientQuickChart.jsx';
 import PatientChart from '../patient/PatientChart.jsx';
+import EnhancedCarePlanDesigner from '../ui-fhir/carePlans/EnhancedCarePlanDesigner.jsx';
 
 
 //===============================================================================================================
@@ -690,6 +691,11 @@ if(get(Meteor, 'settings.public.modules.fhir.CarePlans')){
   dynamicRoutes.push({
     path: "/careplans/:id",
     element: <CarePlanDetail />
+  })
+  dynamicRoutes.push({
+    path: "/care-plan-designer",
+    element: <EnhancedCarePlanDesigner />,
+    requireAuth: true
   })
 }
 if(get(Meteor, 'settings.public.modules.fhir.CodeSystems')){

@@ -20,7 +20,11 @@
           "SidebarWorkflows": true,
           "ClinicianWorkflows": true,
           "PatientChart": true,
-          "PatientDirectory": true
+          "PatientDirectory": true,
+          "UserProfile": true,
+          "ProblemList": true,
+          "MedicationAllergyList": true,
+          "MedicationList": true
         }
       }
     },
@@ -93,7 +97,21 @@
         }
       },
       "fhir": {
-        "enabled": true
+        "enabled": true,
+        "Patients": true,
+        "CarePlans": true
+      },
+      "clinicalLists": {
+        "enabled": true,
+        "showInSidebar": true,
+        "showInWorkflows": true,
+        "requireAuthentication": true,
+        "allowedRoles": ["practitioner", "admin", "nurse", "user"],
+        "features": {
+          "problemList": true,
+          "medicationAllergyList": true,
+          "medicationList": true
+        }
       },
       "sidebar": {
         "enabled": true,

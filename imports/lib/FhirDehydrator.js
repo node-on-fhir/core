@@ -2364,6 +2364,118 @@ export function flattenExplanationOfBenefit(explanationOfBenefit, internalDateFo
   return result;
 }
 
+export function flattenFamilyMemberHistory(familyMemberHistory) {
+  let result = {
+    _id: '',
+    id: '',
+    resourceType: '',
+    identifier: '',
+    status: '',
+    patientDisplay: '',
+    patientReference: '',
+    relationship: '',
+    relationshipCode: '',
+    name: '',
+    sex: '',
+    bornDate: '',
+    ageAge: '',
+    ageRange: '',
+    estimatedAge: '',
+    deceasedBoolean: false,
+    deceasedAge: '',
+    deceasedDate: '',
+    reasonCode: '',
+    reasonReference: '',
+    note: '',
+    conditions: [],
+    operationOutcome: ''
+  };
+
+  result.resourceType = get(familyMemberHistory, 'resourceType', "FamilyMemberHistory");
+  
+  result._id = extractIdString(get(familyMemberHistory, '_id', ''));
+  result.id = get(familyMemberHistory, 'id', '');
+  
+  // Identifier
+  if(get(familyMemberHistory, 'identifier.0.value')){
+    result.identifier = get(familyMemberHistory, 'identifier.0.value');
+  }
+  
+  // Status
+  result.status = get(familyMemberHistory, 'status', '');
+  
+  // Patient reference
+  result.patientDisplay = get(familyMemberHistory, 'patient.display', '');
+  result.patientReference = get(familyMemberHistory, 'patient.reference', '');
+  
+  // Relationship
+  if(get(familyMemberHistory, 'relationship.text')){
+    result.relationship = get(familyMemberHistory, 'relationship.text');
+  } else if(get(familyMemberHistory, 'relationship.coding.0.display')){
+    result.relationship = get(familyMemberHistory, 'relationship.coding.0.display');
+  }
+  result.relationshipCode = get(familyMemberHistory, 'relationship.coding.0.code', '');
+  
+  // Name
+  result.name = get(familyMemberHistory, 'name', '');
+  
+  // Sex
+  result.sex = get(familyMemberHistory, 'sex', '');
+  
+  // Birth and age information
+  result.bornDate = get(familyMemberHistory, 'bornDate', '');
+  
+  if(get(familyMemberHistory, 'ageAge.value')){
+    result.ageAge = `${get(familyMemberHistory, 'ageAge.value')} ${get(familyMemberHistory, 'ageAge.unit', 'years')}`;
+  }
+  
+  if(get(familyMemberHistory, 'ageRange.low.value') || get(familyMemberHistory, 'ageRange.high.value')){
+    const low = get(familyMemberHistory, 'ageRange.low.value', '');
+    const high = get(familyMemberHistory, 'ageRange.high.value', '');
+    const unit = get(familyMemberHistory, 'ageRange.low.unit', 'years');
+    result.ageRange = `${low}-${high} ${unit}`;
+  }
+  
+  result.estimatedAge = get(familyMemberHistory, 'estimatedAge', false);
+  
+  // Deceased information
+  result.deceasedBoolean = get(familyMemberHistory, 'deceasedBoolean', false);
+  
+  if(get(familyMemberHistory, 'deceasedAge.value')){
+    result.deceasedAge = `${get(familyMemberHistory, 'deceasedAge.value')} ${get(familyMemberHistory, 'deceasedAge.unit', 'years')}`;
+  }
+  
+  result.deceasedDate = get(familyMemberHistory, 'deceasedDate', '');
+  
+  // Reason
+  if(get(familyMemberHistory, 'reasonCode.0.text')){
+    result.reasonCode = get(familyMemberHistory, 'reasonCode.0.text');
+  } else if(get(familyMemberHistory, 'reasonCode.0.coding.0.display')){
+    result.reasonCode = get(familyMemberHistory, 'reasonCode.0.coding.0.display');
+  }
+  
+  result.reasonReference = get(familyMemberHistory, 'reasonReference.0.display', '');
+  
+  // Notes
+  if(get(familyMemberHistory, 'note.0.text')){
+    result.note = get(familyMemberHistory, 'note.0.text');
+  }
+  
+  // Conditions - extract condition names for easy display
+  if(Array.isArray(get(familyMemberHistory, 'condition'))){
+    result.conditions = familyMemberHistory.condition.map(condition => {
+      if(get(condition, 'code.text')){
+        return get(condition, 'code.text');
+      } else if(get(condition, 'code.coding.0.display')){
+        return get(condition, 'code.coding.0.display');
+      }
+      return '';
+    }).filter(Boolean);
+  }
+
+  return result;
+}
+
 
 
 export function flattenGoal(goal) {

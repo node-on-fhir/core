@@ -197,7 +197,7 @@ export const DynamicRoutes = [
   },
   {
     name: 'MedicationListsList',
-    path: '/medication-lists',
+    path: '/medication-management',
     element: <MedicationListsPage />,
     requireAuth: true,
     description: 'Manage medication lists across patients'
@@ -305,8 +305,8 @@ export const SidebarWorkflows = [
     iconName: 'ic_transfer_within_a_station'
   },
   {
-    primaryText: 'Medication Lists',
-    to: '/medication-lists',
+    primaryText: 'Medication Management',
+    to: '/medication-management',
     iconName: 'ic_local_pharmacy'
   },
   {
@@ -322,140 +322,141 @@ export const SidebarWorkflows = [
 ];
 
 // Additional FHIR Resources for sidebar (alphabetically ordered)
-export const SidebarElements = [
-  {
-    primaryText: 'Allergy Intolerances',
-    to: '/allergy-intolerances',
-    iconName: 'users',
-    collectionName: 'AllergyIntolerances'
-  },
-  {
-    primaryText: 'Care Plans',
-    to: '/care-plans',
-    iconName: 'users',
-    collectionName: 'CarePlans'
-  },
-  {
-    primaryText: 'Care Teams',
-    to: '/care-teams',
-    iconName: 'users',
-    collectionName: 'CareTeams'
-  },
-  {
-    primaryText: 'Communications',
-    to: '/communications',
-    iconName: 'envelopeO',
-    collectionName: 'Communications'
-  },
-  {
-    primaryText: 'Compositions',
-    to: '/compositions',
-    iconName: 'document',
-    collectionName: 'Compositions'
-  },
-  {
-    primaryText: 'Conditions',
-    to: '/conditions',
-    iconName: 'hospitalO',
-    collectionName: 'Conditions'
-  },
-  {
-    primaryText: 'Document References',
-    to: '/document-references',
-    iconName: 'document',
-    collectionName: 'DocumentReferences'
-  },
-  {
-    primaryText: 'Goals',
-    to: '/goals',
-    iconName: 'heartO',
-    collectionName: 'Goals'
-  },
-  {
-    primaryText: 'Lists',
-    to: '/lists',
-    iconName: 'list',
-    collectionName: 'Lists'
-  },
-  {
-    primaryText: 'Locations',
-    to: '/locations',
-    iconName: 'location',
-    collectionName: 'Locations'
-  },
-  {
-    primaryText: 'Medication Administrations',
-    to: '/medication-administrations',
-    iconName: 'ic_local_pharmacy',
-    collectionName: 'MedicationAdminstrations'
-  },
-  {
-    primaryText: 'Medication Requests',
-    to: '/medication-requests',
-    iconName: 'ic_local_pharmacy',
-    collectionName: 'MedicationRequests'
-  },
-  {
-    primaryText: 'Medications',
-    to: '/medications',
-    iconName: 'ic_local_pharmacy',
-    collectionName: 'Medications'
-  },
-  {
-    primaryText: 'Nutrition Orders',
-    to: '/nutrition-orders',
-    iconName: 'dashboard',
-    collectionName: 'NutritionOrders'
-  },
-  {
-    primaryText: 'Observations',
-    to: '/observations',
-    iconName: 'thermometer3',
-    collectionName: 'Observations'
-  },
-  {
-    primaryText: 'Patients',
-    to: '/patients',
-    iconName: 'user',
-    collectionName: 'Patients'
-  },
-  {
-    primaryText: 'Practitioners',
-    to: '/practitioners',
-    iconName: 'userMd',
-    collectionName: 'Practitioners'
-  },
-  {
-    primaryText: 'Procedures',
-    to: '/procedures',
-    iconName: 'userMd',
-    collectionName: 'Procedures'
-  },
-  {
-    primaryText: 'Questionnaires',
-    to: '/questionnaires',
-    iconName: 'notepad',
-    collectionName: 'Questionnaires'
-  },
-  {
-    primaryText: 'Questionnaire Responses',
-    to: '/questionnaire-responses',
-    iconName: 'notepad',
-    collectionName: 'QuestionnaireResponses'
-  },
-  {
-    primaryText: 'Service Requests',
-    to: '/service-requests',
-    iconName: 'notepad',
-    collectionName: 'ServiceRequests'
-  },
-  {
-    primaryText: 'Tasks',
-    to: '/tasks',
-    iconName: 'ic_playlist_add_check',
-    collectionName: 'Tasks'
-  }
-];
+export const SidebarElements = [];
+// export const SidebarElements = [
+//   {
+//     primaryText: 'Allergy Intolerances',
+//     to: '/allergy-intolerances',
+//     iconName: 'users',
+//     collectionName: 'AllergyIntolerances'
+//   },
+//   {
+//     primaryText: 'Care Plans',
+//     to: '/care-plans',
+//     iconName: 'users',
+//     collectionName: 'CarePlans'
+//   },
+//   {
+//     primaryText: 'Care Teams',
+//     to: '/care-teams',
+//     iconName: 'users',
+//     collectionName: 'CareTeams'
+//   },
+//   {
+//     primaryText: 'Communications',
+//     to: '/communications',
+//     iconName: 'envelopeO',
+//     collectionName: 'Communications'
+//   },
+//   {
+//     primaryText: 'Compositions',
+//     to: '/compositions',
+//     iconName: 'document',
+//     collectionName: 'Compositions'
+//   },
+//   {
+//     primaryText: 'Conditions',
+//     to: '/conditions',
+//     iconName: 'hospitalO',
+//     collectionName: 'Conditions'
+//   },
+//   {
+//     primaryText: 'Document References',
+//     to: '/document-references',
+//     iconName: 'document',
+//     collectionName: 'DocumentReferences'
+//   },
+//   {
+//     primaryText: 'Goals',
+//     to: '/goals',
+//     iconName: 'heartO',
+//     collectionName: 'Goals'
+//   },
+//   {
+//     primaryText: 'Lists',
+//     to: '/lists',
+//     iconName: 'list',
+//     collectionName: 'Lists'
+//   },
+//   {
+//     primaryText: 'Locations',
+//     to: '/locations',
+//     iconName: 'location',
+//     collectionName: 'Locations'
+//   },
+//   {
+//     primaryText: 'Medication Administrations',
+//     to: '/medication-administrations',
+//     iconName: 'ic_local_pharmacy',
+//     collectionName: 'MedicationAdminstrations'
+//   },
+//   {
+//     primaryText: 'Medication Requests',
+//     to: '/medication-requests',
+//     iconName: 'ic_local_pharmacy',
+//     collectionName: 'MedicationRequests'
+//   },
+//   {
+//     primaryText: 'Medications',
+//     to: '/medications',
+//     iconName: 'ic_local_pharmacy',
+//     collectionName: 'Medications'
+//   },
+//   {
+//     primaryText: 'Nutrition Orders',
+//     to: '/nutrition-orders',
+//     iconName: 'dashboard',
+//     collectionName: 'NutritionOrders'
+//   },
+//   {
+//     primaryText: 'Observations',
+//     to: '/observations',
+//     iconName: 'thermometer3',
+//     collectionName: 'Observations'
+//   },
+//   {
+//     primaryText: 'Patients',
+//     to: '/patients',
+//     iconName: 'user',
+//     collectionName: 'Patients'
+//   },
+//   {
+//     primaryText: 'Practitioners',
+//     to: '/practitioners',
+//     iconName: 'userMd',
+//     collectionName: 'Practitioners'
+//   },
+//   {
+//     primaryText: 'Procedures',
+//     to: '/procedures',
+//     iconName: 'userMd',
+//     collectionName: 'Procedures'
+//   },
+//   {
+//     primaryText: 'Questionnaires',
+//     to: '/questionnaires',
+//     iconName: 'notepad',
+//     collectionName: 'Questionnaires'
+//   },
+//   {
+//     primaryText: 'Questionnaire Responses',
+//     to: '/questionnaire-responses',
+//     iconName: 'notepad',
+//     collectionName: 'QuestionnaireResponses'
+//   },
+//   {
+//     primaryText: 'Service Requests',
+//     to: '/service-requests',
+//     iconName: 'notepad',
+//     collectionName: 'ServiceRequests'
+//   },
+//   {
+//     primaryText: 'Tasks',
+//     to: '/tasks',
+//     iconName: 'ic_playlist_add_check',
+//     collectionName: 'Tasks'
+//   }
+// ];
 
 // Footer Elements
 export const FooterElements = [

@@ -8,8 +8,9 @@ This package serves as the definitive template for creating new Honeycomb packag
 
 ## Features
 
+- ✅ **ONC Health IT Certification Program Tracker** - Comprehensive dashboard for tracking all 63 ONC certification criteria
 - ✅ Complete route injection system
-- ✅ Sidebar workflow integration
+- ✅ Sidebar workflow integration  
 - ✅ Footer button management
 - ✅ FHIR resource handling
 - ✅ Dark theme support
@@ -19,6 +20,9 @@ This package serves as the definitive template for creating new Honeycomb packag
 - ✅ Publications with authorization
 - ✅ Settings integration
 - ✅ Environment variable support
+- ✅ Responsive design for desktop and mobile
+- ✅ Multi-Factor Authentication integration
+- ✅ ONC compliance validation
 
 ## Package Structure
 
@@ -89,6 +93,16 @@ FooterButtons = [{
 ```bash
 meteor add clinical:reference-app
 ```
+
+### Running with Full ONC Certification Suite
+
+To run with all ONC Health IT Certification packages for complete testing and development:
+
+```bash
+meteor run --settings packages/reference-app/configs/settings.reference-app.json --extra-packages "clinical:reference-app, clinical:order-catalog, clinical:drug-interactions, clinical:secure-messaging, clinical:request-for-corrections, clinical:ccda-export, clinical:implantable-devices, clinical:e-prescribing, clinical:quality-measures, clinical:hipaa-compliance, clinical:clinical-lists, clinical:drug-formulary, clinical:syndromic-surveillance, clinical:family-health-history, clinical:social-determinants, clinical:data-exporter, clinical:structured-data-capture, symptomatic:symptom-tracking, clinical:case-reporting, clinical:cancer-registry-reporting, clinical:lab-test-reporting, clinical:immunization-registry, clinical:antimicrobial-reporting, clinical:pacio-core, clinical:accounts-management, clinical:multi-factor-auth"
+```
+
+This command loads all certification-related packages to provide the complete ONC Health IT Certification Program Tracker experience with all 63 criteria implementations.
 
 ### Configuration
 
