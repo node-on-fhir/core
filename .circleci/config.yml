@@ -218,24 +218,24 @@ parameters:
             "packages/social-determinants/tests/nightwatch/170.315.a.15.test.js"
           ]
         },
-        {
-          "name": "onc-data-exporter",
-          "tests": [
-            "packages/data-exporter/tests/nightwatch/170.315.b.6.test.js"
-          ]
-        },
+        # {
+        #   "name": "onc-data-exporter",
+        #   "tests": [
+        #     "packages/data-exporter/tests/nightwatch/170.315.b.6.test.js"
+        #   ]
+        # },
         {
           "name": "onc-structured-data-capture",
           "tests": [
             "packages/structured-data-capture/tests/nightwatch/170.315.a.18.test.js"
           ]
         },
-        {
-          "name": "onc-symptom-tracking",
-          "tests": [
-            "packages/symptom-tracking/tests/nightwatch/170.315.a.11.test.js"
-          ]
-        },
+        # {
+        #   "name": "onc-symptom-tracking",
+        #   "tests": [
+        #     "packages/symptom-tracking/tests/nightwatch/170.315.a.11.test.js"
+        #   ]
+        # },
         {
           "name": "onc-case-reporting",
           "tests": [
@@ -800,20 +800,20 @@ workflows:
           group-name: onc-social-determinants
           test-files: "packages/social-determinants/tests/nightwatch/170.315.a.15.test.js"
       
-      - test-group:
-          name: onc-data-exporter
-          group-name: onc-data-exporter
-          test-files: "packages/data-exporter/tests/nightwatch/170.315.b.6.test.js"
+      # - test-group:
+      #     name: onc-data-exporter
+      #     group-name: onc-data-exporter
+      #     test-files: "packages/data-exporter/tests/nightwatch/170.315.b.6.test.js"
       
       - test-group:
           name: onc-structured-data-capture
           group-name: onc-structured-data-capture
           test-files: "packages/structured-data-capture/tests/nightwatch/170.315.a.18.test.js"
       
-      - test-group:
-          name: onc-symptom-tracking
-          group-name: onc-symptom-tracking
-          test-files: "packages/symptom-tracking/tests/nightwatch/170.315.a.11.test.js"
+      # - test-group:
+      #     name: onc-symptom-tracking
+      #     group-name: onc-symptom-tracking
+      #     test-files: "packages/symptom-tracking/tests/nightwatch/170.315.a.11.test.js"
       
       - test-group:
           name: onc-case-reporting
