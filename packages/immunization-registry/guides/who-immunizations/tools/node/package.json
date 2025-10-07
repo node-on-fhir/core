@@ -1,9 +1,0 @@
-{
-  "dependencies": {
-    "@fast-csv/parse": "^5.0.2",
-    "chalk": "^5.5.0",
-    "commander": "^14.0.0",
-    "date-math": "^0.0.1",
-    "node-xlsx": "^0.24.0"
-  }
-}
