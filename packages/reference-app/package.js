@@ -38,6 +38,7 @@ Package.onUse(function(api) {
     'clinical:case-reporting@1.0.0',
     'clinical:ccda-export@1.0.0',
     'clinical:clinical-lists@0.1.0',    
+    'clinical:data-exporter@0.12.2',
     'clinical:drug-formulary@0.1.0',
     'clinical:drug-interactions@0.1.0',
     'clinical:e-prescribing@0.1.0',
@@ -47,24 +48,19 @@ Package.onUse(function(api) {
     'clinical:immunization-registry@1.0.0',
     'clinical:implantable-devices@0.1.0',
     'clinical:international-patient-summary@0.1.0',
-
-    'clinical:order-catalog@0.1.0',     
-    'clinical:secure-messaging@0.1.0',
-    'clinical:request-for-corrections@0.1.0',
-    'clinical:quality-measures@0.1.0',
-    
-    'clinical:syndromic-surveillance@1.0.0',
-    'clinical:social-determinants@1.0.0',
-    'clinical:data-exporter@0.12.2',
-    'clinical:structured-data-capture@0.1.0',
-    'symptomatic:symptom-tracking@0.1.0',
     'clinical:lab-test-reporting@1.0.0',
+    'clinical:multi-factor-auth@0.1.0',
+    'clinical:order-catalog@0.1.0',     
     'clinical:pacio-core@0.1.0',
-    'clinical:multi-factor-auth@0.1.0'
-  ]);
-  
-  // Optional dependencies with weak flag
-  api.use('matb33:collection-hooks', {weak: true});
+    'clinical:patient-matching@0.1.0',
+    'clinical:quality-measures@0.1.0',
+    'clinical:request-for-corrections@0.1.0',    
+    'clinical:secure-messaging@0.1.0',
+    'clinical:syndromic-surveillance@1.0.0',
+    'clinical:social-determinants@1.0.0',    
+    'clinical:structured-data-capture@0.1.0',
+    'symptomatic:symptom-tracking@0.1.0'
+  ], {weak: true});
   
   // Server files
   api.addFiles('server/index.js', 'server');

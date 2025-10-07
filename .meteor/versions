@@ -31,6 +31,7 @@ clinical:lab-test-reporting@1.0.0
 clinical:multi-factor-auth@0.1.0
 clinical:order-catalog@0.1.0
 clinical:pacio-core@0.1.0
+clinical:patient-matching@0.1.0
 clinical:quality-measures@0.1.0
 clinical:reference-app@0.1.0
 clinical:request-for-corrections@0.1.0

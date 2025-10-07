@@ -166,7 +166,7 @@ export {
   // RECOMMENDED
   SidebarWorkflows,
   SidebarElements,
-  FooterButtons,
+  // FooterButtons,
   
   // OPTIONAL - Admin features
   AdminDynamicRoutes,
