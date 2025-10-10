@@ -25,7 +25,6 @@ matb33:collection-hooks
 clinical:hl7-resource-datatypes
 clinical:extended-api
 clinical:fonts
-clinical:scheduling
 
 service-configuration
 accounts-password
