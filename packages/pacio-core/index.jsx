@@ -189,11 +189,25 @@ export const DynamicRoutes = [
     description: 'Browse and manage all advance directives'
   },
   {
-    name: 'TransitionOfCareList', 
+    name: 'TransitionOfCareList',
     path: '/transition-of-care',
     element: <TransitionOfCarePage />,
     requireAuth: true,
     description: 'View all transition of care documents'
+  },
+  {
+    name: 'TransitionOfCareListPlural',
+    path: '/transitions-of-care',
+    element: <TransitionOfCarePage />,
+    requireAuth: true,
+    description: 'View all transition of care documents (alias)'
+  },
+  {
+    name: 'ContinuityOfCareList',
+    path: '/continuity-of-care',
+    element: <TransitionOfCarePage />,
+    requireAuth: true,
+    description: 'View all continuity of care documents (alias for transition of care)'
   },
   {
     name: 'MedicationListsList',

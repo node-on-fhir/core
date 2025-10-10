@@ -27,7 +27,12 @@ module.exports = {
     browser.perform(function() {
       console.log('✅ ONC 170.315(g)(1) - Quality Measures (Automated Numerator Recording) route accessibility test passed');
     });
-    
-    browser.end();
+
+    browser
+      .saveScreenshot('screenshots/quality-measures_170.315.g.1.png')
+      .perform(function() {
+        console.log('📸 Screenshot saved for ONC 170.315(g)(1)');
+      })
+      .end();
   }
 };

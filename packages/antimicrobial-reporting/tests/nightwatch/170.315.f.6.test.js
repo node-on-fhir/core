@@ -27,7 +27,12 @@ module.exports = {
     browser.perform(function() {
       console.log('✅ ONC 170.315(f)(6) - Antimicrobial Reporting route accessibility test passed');
     });
-    
-    browser.end();
+
+    browser
+      .saveScreenshot('screenshots/antimicrobial-reporting_170.315.f.6.png')
+      .perform(function() {
+        console.log('📸 Screenshot saved for ONC 170.315(f)(6)');
+      })
+      .end();
   }
 };

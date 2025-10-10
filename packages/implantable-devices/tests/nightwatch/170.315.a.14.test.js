@@ -26,7 +26,12 @@ module.exports = {
     browser.perform(function() {
       console.log('✅ ONC 170.315(a)(14) - Implantable Devices route accessibility test passed');
     });
-    
-    browser.end();
+
+    browser
+      .saveScreenshot('screenshots/implantable-devices_170.315.a.14.png')
+      .perform(function() {
+        console.log('📸 Screenshot saved for ONC 170.315(a)(14)');
+      })
+      .end();
   }
 };

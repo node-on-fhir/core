@@ -27,7 +27,12 @@ module.exports = {
     browser.perform(function() {
       console.log('✅ ONC 170.315(a)(4) - Drug Interactions (Drug-Drug, Drug-Allergy Checks) route accessibility test passed');
     });
-    
-    browser.end();
+
+    browser
+      .saveScreenshot('screenshots/drug-interactions_170.315.a.4.png')
+      .perform(function() {
+        console.log('📸 Screenshot saved for ONC 170.315(a)(4)');
+      })
+      .end();
   }
 };

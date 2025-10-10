@@ -12,6 +12,10 @@ module.exports = {
       .perform(function() {
         console.log('✅ ONC 170.315(d)(1) - Accounts Management route is accessible');
       })
+      .saveScreenshot('screenshots/accounts-management_170.315.d.1.simple.png')
+      .perform(function() {
+        console.log('📸 Screenshot saved for ONC 170.315(d)(1)');
+      })
       .end();
   }
 };

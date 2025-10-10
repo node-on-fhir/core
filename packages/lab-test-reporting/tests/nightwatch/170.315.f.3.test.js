@@ -26,7 +26,12 @@ module.exports = {
     browser.perform(function() {
       console.log('✅ ONC 170.315(f)(3) - Lab Test Reporting route accessibility test passed');
     });
-    
-    browser.end();
+
+    browser
+      .saveScreenshot('screenshots/lab-test-reporting_170.315.f.3.png')
+      .perform(function() {
+        console.log('📸 Screenshot saved for ONC 170.315(f)(3)');
+      })
+      .end();
   }
 };

@@ -26,7 +26,12 @@ module.exports = {
     browser.perform(function() {
       console.log('✅ ONC 170.315(f)(1) - Immunization Registry route accessibility test passed');
     });
-    
-    browser.end();
+
+    browser
+      .saveScreenshot('screenshots/immunization-registry_170.315.f.1.png')
+      .perform(function() {
+        console.log('📸 Screenshot saved for ONC 170.315(f)(1)');
+      })
+      .end();
   }
 };

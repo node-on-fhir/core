@@ -27,7 +27,12 @@ module.exports = {
     browser.perform(function() {
       console.log('✅ ONC 170.315(a)(1) - Order Catalog (CPOE - Medications) route accessibility test passed');
     });
-    
-    browser.end();
+
+    browser
+      .saveScreenshot('screenshots/order-catalog_170.315.a.1.png')
+      .perform(function() {
+        console.log('📸 Screenshot saved for ONC 170.315(a)(1)');
+      })
+      .end();
   }
 };
