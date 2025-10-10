@@ -28,7 +28,7 @@ module.exports = {
     });
 
     browser
-      .saveScreenshot('screenshots/syndromic-surveillance_170.315.f.2.png')
+      .saveScreenshot('tests/screenshots/syndromic-surveillance_170.315.f.2.png')
       .perform(function() {
         console.log('📸 Screenshot saved for ONC 170.315(f)(2)');
       })

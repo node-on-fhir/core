@@ -28,7 +28,7 @@ module.exports = {
     });
 
     browser
-      .saveScreenshot('screenshots/e-prescribing_170.315.a.10.png')
+      .saveScreenshot('tests/screenshots/e-prescribing_170.315.a.10.png')
       .perform(function() {
         console.log('📸 Screenshot saved for ONC 170.315(a)(10)');
       })

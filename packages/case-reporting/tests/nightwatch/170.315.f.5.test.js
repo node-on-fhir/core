@@ -29,7 +29,7 @@ module.exports = {
     });
 
     browser
-      .saveScreenshot('screenshots/case-reporting_170.315.f.5.png')
+      .saveScreenshot('tests/screenshots/case-reporting_170.315.f.5.png')
       .perform(function() {
         console.log('📸 Screenshot saved for ONC 170.315(f)(5)');
       })

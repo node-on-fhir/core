@@ -28,7 +28,7 @@ module.exports = {
     });
 
     browser
-      .saveScreenshot('screenshots/implantable-devices_170.315.a.14.png')
+      .saveScreenshot('tests/screenshots/implantable-devices_170.315.a.14.png')
       .perform(function() {
         console.log('📸 Screenshot saved for ONC 170.315(a)(14)');
       })

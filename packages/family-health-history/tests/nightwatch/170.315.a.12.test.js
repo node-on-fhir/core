@@ -28,7 +28,7 @@ module.exports = {
     });
 
     browser
-      .saveScreenshot('screenshots/family-health-history_170.315.a.12.png')
+      .saveScreenshot('tests/screenshots/family-health-history_170.315.a.12.png')
       .perform(function() {
         console.log('📸 Screenshot saved for ONC 170.315(a)(12)');
       })

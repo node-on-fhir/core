@@ -28,7 +28,7 @@ module.exports = {
     });
 
     browser
-      .saveScreenshot('screenshots/multi-factor-auth_170.315.d.13.png')
+      .saveScreenshot('tests/screenshots/multi-factor-auth_170.315.d.13.png')
       .perform(function() {
         console.log('📸 Screenshot saved for ONC 170.315(d)(13)');
       })
