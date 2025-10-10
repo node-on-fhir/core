@@ -27,7 +27,12 @@ module.exports = {
     browser.perform(function() {
       console.log('✅ ONC 170.315(b)(8) - Secure Messaging route accessibility test passed');
     });
-    
-    browser.end();
+
+    browser
+      .saveScreenshot('screenshots/secure-messaging_170.315.b.8.png')
+      .perform(function() {
+        console.log('📸 Screenshot saved for ONC 170.315(b)(8)');
+      })
+      .end();
   }
 };

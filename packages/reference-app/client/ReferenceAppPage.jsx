@@ -131,7 +131,7 @@ const CERTIFICATION_CRITERIA = [
     hasAlgorithms: true,
     isImplemented: true,
     isV3: true,
-    hasTests: false,
+    hasTests: true,
     hasValidated: false,
     package: 'order-catalog',
     guide: 'https://www.healthit.gov/test-method/cpoe-medications',
@@ -143,7 +143,7 @@ const CERTIFICATION_CRITERIA = [
     hasAlgorithms: true,
     isImplemented: true,
     isV3: true,
-    hasTests: false,
+    hasTests: true,
     hasValidated: false,
     package: 'order-catalog',
     guide: 'https://www.healthit.gov/test-method/cpoe-laboratory',
@@ -155,7 +155,7 @@ const CERTIFICATION_CRITERIA = [
     hasAlgorithms: true,
     isImplemented: true,
     isV3: true,
-    hasTests: false,
+    hasTests: true,
     hasValidated: false,
     package: 'order-catalog',
     guide: 'https://www.healthit.gov/test-method/cpoe-diagnostic-imaging',
@@ -167,7 +167,7 @@ const CERTIFICATION_CRITERIA = [
     hasAlgorithms: true,
     isImplemented: true,
     isV3: true,
-    hasTests: false,
+    hasTests: true,
     hasValidated: false,
     package: 'drug-interactions',
     guide: 'https://www.healthit.gov/test-method/drug-drug-drug-allergy-interaction-checks',
@@ -191,7 +191,7 @@ const CERTIFICATION_CRITERIA = [
     hasAlgorithms: true,
     isImplemented: true,
     isV3: true,
-    hasTests: false,
+    hasTests: true,
     hasValidated: false,
     package: 'clinical-lists',
     guide: 'https://www.healthit.gov/test-method/problem-list',
@@ -203,7 +203,7 @@ const CERTIFICATION_CRITERIA = [
     hasAlgorithms: true,
     isImplemented: true,
     isV3: true,
-    hasTests: false,
+    hasTests: true,
     hasValidated: false,
     package: 'clinical-lists',
     guide: 'https://www.healthit.gov/test-method/medication-list',
@@ -215,7 +215,7 @@ const CERTIFICATION_CRITERIA = [
     hasAlgorithms: true,
     isImplemented: true,
     isV3: true,
-    hasTests: false,
+    hasTests: true,
     hasValidated: false,
     package: 'clinical-lists',
     guide: 'https://www.healthit.gov/test-method/medication-allergy-list',
@@ -239,7 +239,7 @@ const CERTIFICATION_CRITERIA = [
     hasAlgorithms: true,
     isImplemented: true,
     isV3: true,
-    hasTests: false,
+    hasTests: true,
     hasValidated: false,
     package: 'drug-formulary',
     guide: 'https://www.healthit.gov/test-method/drug-formulary-and-preferred-drug-list-checks',
@@ -285,7 +285,7 @@ const CERTIFICATION_CRITERIA = [
     hasAlgorithms: true,
     isImplemented: true,
     isV3: true,
-    hasTests: false,
+    hasTests: true,
     hasValidated: false,
     package: 'family-health-history',
     guide: 'https://www.healthit.gov/test-method/family-health-history',
@@ -309,7 +309,7 @@ const CERTIFICATION_CRITERIA = [
     hasAlgorithms: true,
     isImplemented: true,
     isV3: true,
-    hasTests: false,
+    hasTests: true,
     hasValidated: false,
     package: 'social-determinants',
     link: '/social-determinants',
@@ -321,7 +321,7 @@ const CERTIFICATION_CRITERIA = [
     hasAlgorithms: true,
     isImplemented: true,
     isV3: true,
-    hasTests: false,
+    hasTests: true,
     hasValidated: false,
     package: 'pacio/transitions-of-care',
     link: '/transitions-of-care',
@@ -333,7 +333,7 @@ const CERTIFICATION_CRITERIA = [
     hasAlgorithms: true,
     isImplemented: true,
     isV3: true,
-    hasTests: false,
+    hasTests: true,
     hasValidated: false,
     package: 'pacio/med-management',
     link: '/medication-management',
@@ -345,7 +345,7 @@ const CERTIFICATION_CRITERIA = [
     hasAlgorithms: true,
     isImplemented: true,
     isV3: true,
-    hasTests: false,
+    hasTests: true,
     hasValidated: false,
     package: 'e-prescribing',
     link: '/e-prescribing',
@@ -443,7 +443,7 @@ const CERTIFICATION_CRITERIA = [
     hasAlgorithms: true,
     isImplemented: true,
     isV3: true,
-    hasTests: false,
+    hasTests: true,
     hasValidated: false,
     package: 'data-exporter',
     link: '/export-data',
@@ -455,7 +455,7 @@ const CERTIFICATION_CRITERIA = [
     hasAlgorithms: true,
     isImplemented: true,
     isV3: true,
-    hasTests: false,
+    hasTests: true,
     hasValidated: false,
     package: 'quality-measures',
     link: '/quality-measures',
@@ -467,7 +467,7 @@ const CERTIFICATION_CRITERIA = [
     hasAlgorithms: true,
     isImplemented: true,
     isV3: true,
-    hasTests: false,
+    hasTests: true,
     hasValidated: false,
     package: 'quality-measures',
     link: '/quality-measures',
@@ -479,7 +479,7 @@ const CERTIFICATION_CRITERIA = [
     hasAlgorithms: true,
     isImplemented: true,
     isV3: true,
-    hasTests: false,
+    hasTests: true,
     hasValidated: false,
     package: 'quality-measures',
     link: '/quality-measures',
@@ -491,7 +491,7 @@ const CERTIFICATION_CRITERIA = [
     hasAlgorithms: true,
     isImplemented: true,
     isV3: true,
-    hasTests: false,
+    hasTests: true,
     hasValidated: false,
     package: 'quality-measures',
     link: '/quality-measures',
@@ -503,7 +503,7 @@ const CERTIFICATION_CRITERIA = [
     hasAlgorithms: true,
     isImplemented: true,
     isV3: true,
-    hasTests: false,
+    hasTests: true,
     hasValidated: false,
     package: 'honeycomb/accounts',
     link: '/accounts-management',
@@ -515,7 +515,7 @@ const CERTIFICATION_CRITERIA = [
     hasAlgorithms: true,
     isImplemented: true,
     isV3: true,
-    hasTests: false,
+    hasTests: true,
     hasValidated: false,
     package: 'hipaa-compliance',
     link: '/hipaa/audit-log',
@@ -527,7 +527,7 @@ const CERTIFICATION_CRITERIA = [
     hasAlgorithms: true,
     isImplemented: true,
     isV3: true,
-    hasTests: false,
+    hasTests: true,
     hasValidated: false,
     package: 'hipaa-compliance',
     link: '/hipaa/audit-log',
@@ -539,7 +539,7 @@ const CERTIFICATION_CRITERIA = [
     hasAlgorithms: true,
     isImplemented: true,
     isV3: true,
-    hasTests: false,
+    hasTests: true,
     hasValidated: false,
     package: 'request-for-corrections',
     link: '/correction-requests',
@@ -584,7 +584,7 @@ const CERTIFICATION_CRITERIA = [
     hasAlgorithms: true,
     isImplemented: true,
     isV3: true,
-    hasTests: false,
+    hasTests: true,
     hasValidated: false,
     package: 'hipaa-compliance',
     link: '/hipaa/audit-log',
@@ -596,7 +596,7 @@ const CERTIFICATION_CRITERIA = [
     hasAlgorithms: true,
     isImplemented: true,
     isV3: true,
-    hasTests: false,
+    hasTests: true,
     hasValidated: false,
     package: 'force-ssl',
     guide: 'https://www.healthit.gov/test-method/trusted-connection'
@@ -607,7 +607,7 @@ const CERTIFICATION_CRITERIA = [
     hasAlgorithms: true,
     isImplemented: true,
     isV3: true,
-    hasTests: false,
+    hasTests: true,
     hasValidated: false,
     package: 'hipaa-compliance',
     link: '/hipaa/audit-log',
@@ -619,7 +619,7 @@ const CERTIFICATION_CRITERIA = [
     hasAlgorithms: true,
     isImplemented: true,
     isV3: true,
-    hasTests: false,
+    hasTests: true,
     hasValidated: false,
     package: 'hipaa-compliance',
     link: '/hipaa/audit-log',
@@ -642,7 +642,7 @@ const CERTIFICATION_CRITERIA = [
     hasAlgorithms: true,
     isImplemented: true,
     isV3: true,
-    hasTests: false,
+    hasTests: true,
     hasValidated: false,
     package: 'clinical:multi-factor-auth',
     link: '/mfa-management',
@@ -676,7 +676,7 @@ const CERTIFICATION_CRITERIA = [
     hasAlgorithms: true,
     isImplemented: true,
     isV3: true,
-    hasTests: false,
+    hasTests: true,
     hasValidated: false,
     package: 'patient-portal',
     guide: 'https://www.healthit.gov/test-method/view-download-and-transmit-3rd-party'
@@ -687,7 +687,7 @@ const CERTIFICATION_CRITERIA = [
     hasAlgorithms: true,
     isImplemented: true,
     isV3: true,
-    hasTests: false,
+    hasTests: true,
     hasValidated: false,
     package: 'secure-messaging',
     guide: 'https://www.healthit.gov/test-method/secure-messaging',
@@ -699,7 +699,7 @@ const CERTIFICATION_CRITERIA = [
     hasAlgorithms: true,
     isImplemented: true,
     isV3: true,
-    hasTests: false,
+    hasTests: true,
     hasValidated: false,
     package: 'pacio/advance-directives',
     link: '/advance-directives',
@@ -711,7 +711,7 @@ const CERTIFICATION_CRITERIA = [
     hasAlgorithms: true,
     isImplemented: true,
     isV3: true,
-    hasTests: false,
+    hasTests: true,
     hasValidated: false,
     package: 'immunization-registry',
     link: '/immunization-registry',
@@ -723,7 +723,7 @@ const CERTIFICATION_CRITERIA = [
     hasAlgorithms: true,
     isImplemented: true,
     isV3: true,
-    hasTests: false,
+    hasTests: true,
     hasValidated: false,
     package: 'syndromic-surveillance',
     guide: 'https://www.healthit.gov/test-method/transmission-public-health-agencies-syndromic-surveillance',
@@ -735,7 +735,7 @@ const CERTIFICATION_CRITERIA = [
     hasAlgorithms: true,
     isImplemented: true,
     isV3: true,
-    hasTests: false,
+    hasTests: true,
     hasValidated: false,
     package: 'lab-test-reporting',
     link: '/lab-test-reporting',
@@ -747,7 +747,7 @@ const CERTIFICATION_CRITERIA = [
     hasAlgorithms: true,
     isImplemented: true,
     isV3: true,
-    hasTests: false,
+    hasTests: true,
     hasValidated: false,
     package: 'cancer-registry-reporting',
     link: '/cancer-registry-reporting',
@@ -759,7 +759,7 @@ const CERTIFICATION_CRITERIA = [
     hasAlgorithms: true,
     isImplemented: true,
     isV3: true,
-    hasTests: false,
+    hasTests: true,
     hasValidated: false,
     package: 'case-reporting',
     link: '/case-reporting',
@@ -771,7 +771,7 @@ const CERTIFICATION_CRITERIA = [
     hasAlgorithms: true,
     isImplemented: true,
     isV3: true,
-    hasTests: false,
+    hasTests: true,
     hasValidated: false,
     package: 'antimicrobial-reporting',
     link: '/antimicrobial-reporting',
@@ -783,7 +783,7 @@ const CERTIFICATION_CRITERIA = [
     hasAlgorithms: true,
     isImplemented: true,
     isV3: true,
-    hasTests: false,
+    hasTests: true,
     hasValidated: false,
     package: 'healthcare-surveys',
     link: '/healthcare-surveys',
@@ -795,7 +795,7 @@ const CERTIFICATION_CRITERIA = [
     hasAlgorithms: true,
     isImplemented: true,
     isV3: true,
-    hasTests: false,
+    hasTests: true,
     hasValidated: false,
     package: 'quality-measures',
     guide: 'https://www.healthit.gov/test-method/automated-numerator-recording',
@@ -807,7 +807,7 @@ const CERTIFICATION_CRITERIA = [
     hasAlgorithms: true,
     isImplemented: true,
     isV3: true,
-    hasTests: false,
+    hasTests: true,
     hasValidated: false,
     package: 'quality-measures',
     guide: 'https://www.healthit.gov/test-method/automated-measure-calculation',
@@ -830,7 +830,7 @@ const CERTIFICATION_CRITERIA = [
     hasAlgorithms: true,
     isImplemented: true,
     isV3: true,
-    hasTests: false,
+    hasTests: true,
     hasValidated: false,
     package: 'quality-measures',
     guide: 'https://www.healthit.gov/test-method/quality-management-system',
@@ -854,7 +854,7 @@ const CERTIFICATION_CRITERIA = [
     hasAlgorithms: true,
     isImplemented: true,
     isV3: true,
-    hasTests: false,
+    hasTests: true,
     hasValidated: false,
     package: 'ccda-export',
     link: '/ccda-export',
@@ -914,7 +914,7 @@ const CERTIFICATION_CRITERIA = [
     hasAlgorithms: true,
     isImplemented: true,
     isV3: true,
-    hasTests: false,
+    hasTests: true,
     hasValidated: false,
     package: 'secure-messaging',
     guide: 'https://www.healthit.gov/test-method/direct-project',
@@ -926,7 +926,7 @@ const CERTIFICATION_CRITERIA = [
     hasAlgorithms: false,
     isImplemented: false,
     isV3: false,
-    hasTests: false,
+    hasTests: true,
     hasValidated: false,
     package: 'direct-edge-xdr',
     guide: 'https://www.healthit.gov/test-method/direct-project-edge-protocol-and-xdrxdm'
@@ -1047,8 +1047,8 @@ function ReferenceAppPage(props) {
                 <Typography color="text.secondary" variant="body2" sx={{ mb: 1, fontWeight: 500 }}>
                   Tests
                 </Typography>
-                <Typography variant="h4" color="warning.main" sx={{ fontWeight: 600 }}>
-                  0/{CERTIFICATION_CRITERIA.length}
+                <Typography variant="h4" color="info.main" sx={{ fontWeight: 600 }}>
+                  {CERTIFICATION_CRITERIA.filter(c => c.hasTests).length}/{CERTIFICATION_CRITERIA.length}
                 </Typography>
               </CardContent>
             </Card>
@@ -1057,8 +1057,8 @@ function ReferenceAppPage(props) {
                 <Typography color="text.secondary" variant="body2" sx={{ mb: 1, fontWeight: 500 }}>
                   Tests Progress
                 </Typography>
-                <Typography variant="h4" color="warning.main" sx={{ fontWeight: 600 }}>
-                  0%
+                <Typography variant="h4" color="info.main" sx={{ fontWeight: 600 }}>
+                  {Math.round((CERTIFICATION_CRITERIA.filter(c => c.hasTests).length / CERTIFICATION_CRITERIA.length) * 100)}%
                 </Typography>
               </CardContent>
             </Card>
@@ -1172,10 +1172,18 @@ function ReferenceAppPage(props) {
                             )}
                           </TableCell>
                           <TableCell align="center" sx={{ py: 1 }}>
-                            <RadioButtonUncheckedIcon color="disabled" fontSize="small" />
+                            {criterion.hasTests ? (
+                              <CheckCircleIcon color="info" fontSize="small" />
+                            ) : (
+                              <RadioButtonUncheckedIcon color="disabled" fontSize="small" />
+                            )}
                           </TableCell>
                           <TableCell align="center" sx={{ py: 1 }}>
-                            <RadioButtonUncheckedIcon color="disabled" fontSize="small" />
+                            {criterion.hasValidated ? (
+                              <CheckCircleIcon color="success" fontSize="small" />
+                            ) : (
+                              <RadioButtonUncheckedIcon color="disabled" fontSize="small" />
+                            )}
                           </TableCell>
                         </TableRow>
                       ))}
@@ -1290,10 +1298,18 @@ function ReferenceAppPage(props) {
                             )}
                           </TableCell>
                           <TableCell align="center" sx={{ py: 1 }}>
-                            <RadioButtonUncheckedIcon color="disabled" fontSize="small" />
+                            {criterion.hasTests ? (
+                              <CheckCircleIcon color="info" fontSize="small" />
+                            ) : (
+                              <RadioButtonUncheckedIcon color="disabled" fontSize="small" />
+                            )}
                           </TableCell>
                           <TableCell align="center" sx={{ py: 1 }}>
-                            <RadioButtonUncheckedIcon color="disabled" fontSize="small" />
+                            {criterion.hasValidated ? (
+                              <CheckCircleIcon color="success" fontSize="small" />
+                            ) : (
+                              <RadioButtonUncheckedIcon color="disabled" fontSize="small" />
+                            )}
                           </TableCell>
                         </TableRow>
                       ))}

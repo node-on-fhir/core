@@ -27,7 +27,12 @@ module.exports = {
     browser.perform(function() {
       console.log('✅ ONC 170.315(d)(4) - Request for Corrections (Amendments) route accessibility test passed');
     });
-    
-    browser.end();
+
+    browser
+      .saveScreenshot('screenshots/request-for-corrections_170.315.d.4.png')
+      .perform(function() {
+        console.log('📸 Screenshot saved for ONC 170.315(d)(4)');
+      })
+      .end();
   }
 };

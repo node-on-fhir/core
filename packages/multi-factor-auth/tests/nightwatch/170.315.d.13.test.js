@@ -26,7 +26,12 @@ module.exports = {
     browser.perform(function() {
       console.log('✅ ONC 170.315(d)(13) - Multi-Factor Auth route accessibility test passed');
     });
-    
-    browser.end();
+
+    browser
+      .saveScreenshot('screenshots/multi-factor-auth_170.315.d.13.png')
+      .perform(function() {
+        console.log('📸 Screenshot saved for ONC 170.315(d)(13)');
+      })
+      .end();
   }
 };

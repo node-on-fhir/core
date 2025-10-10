@@ -35,6 +35,7 @@ clinical:patient-matching@0.1.0
 clinical:quality-measures@0.1.0
 clinical:reference-app@0.1.0
 clinical:request-for-corrections@0.1.0
+clinical:scheduling@0.1.0
 clinical:secure-messaging@0.1.0
 clinical:social-determinants@1.0.0
 clinical:structured-data-capture@0.1.0

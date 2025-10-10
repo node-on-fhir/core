@@ -61,7 +61,11 @@ Package.onUse(function(api) {
     'clinical:structured-data-capture@0.1.0',
     'symptomatic:symptom-tracking@0.1.0'
   ], {weak: true});
+
+
+    
   
+
   // Server files
   api.addFiles('server/index.js', 'server');
   api.addFiles('server/methods.js', 'server');
