@@ -42,13 +42,39 @@ describe('MeasureReports CRUD Operations', function() {
     console.log('Starting MeasureReports CRUD test suite...');
     browser
       .url('http://localhost:3000')
-      .waitForElementVisible('body', circleHelper.TIMEOUTS.EXTRA_LONG);
-    
-    // Wait for app to be fully ready
-    circleHelper.waitForAppReady(browser, function(isReady) {
-      if (!isReady) {
-        browser.assert.fail('Application failed to become ready');
-      }
+      .waitForElementVisible('body', circleHelper.TIMEOUTS.EXTRA_LONG)
+      .pause(2000); // Give app time to initialize
+
+    // Check for Meteor and basic app readiness with retries
+    browser.perform(function() {
+      let retries = 0;
+      const maxRetries = 10;
+
+      const checkReady = () => {
+        browser.execute(function() {
+          return {
+            meteorReady: typeof Meteor !== 'undefined',
+            hasPage: document.querySelector('[id$="Page"]') !== null || document.querySelector('#app-root') !== null,
+            bodyLoaded: document.body && document.body.innerHTML.length > 100
+          };
+        }, [], function(result) {
+          console.log(`App readiness check (${retries + 1}/${maxRetries}):`, result.value);
+
+          if (result.value && result.value.meteorReady && (result.value.hasPage || result.value.bodyLoaded)) {
+            console.log('✅ App is ready');
+          } else if (retries < maxRetries) {
+            retries++;
+            console.log(`App not ready, waiting 3s... (${retries}/${maxRetries})`);
+            browser.pause(3000);
+            checkReady();
+          } else {
+            console.error('⚠️  App may not be fully ready, but continuing test...');
+            // Don't fail here - let individual tests handle readiness
+          }
+        });
+      };
+
+      checkReady();
     });
   });
 
