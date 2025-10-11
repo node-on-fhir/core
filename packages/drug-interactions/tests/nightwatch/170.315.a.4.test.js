@@ -5,10 +5,42 @@ module.exports = {
   
   'Drug Interactions - 170.315(a)(4) - Drug-Drug, Drug-Allergy Interaction Checks': function (browser) {
     browser
+      .url('http://localhost:3000')
+      .waitForElementVisible('body', 5000);
+
+    // Check if user is logged in, if not, create test user and login
+    browser.execute(function() {
+      return {
+        isLoggedIn: typeof Meteor !== 'undefined' && !!Meteor.userId(),
+        userId: Meteor.userId ? Meteor.userId() : null
+      };
+    }, [], function(result) {
+      if (!result.value.isLoggedIn) {
+        browser.executeAsync(function(done) {
+          Meteor.call('test.createTestUser', {
+            username: 'janedoe',
+            email: 'janedoe@test.org',
+            password: 'janedoe123'
+          }, function(err, userId) {
+            if (!err) {
+              Meteor.loginWithPassword('janedoe', 'janedoe123', function(loginErr) {
+                done({ loginSuccess: !loginErr, userId: Meteor.userId() });
+              });
+            } else {
+              done({ loginSuccess: false, error: err });
+            }
+          });
+        }, [], function() {
+          console.log('✅ Test user logged in for ONC 170.315(a)(4)');
+        });
+      }
+    });
+
+    browser
       .url('http://localhost:3000/drug-interactions/drug-drug')
       .waitForElementVisible('body', 3000)
       .pause(1000); // Give page time to load
-      
+
     // Check for multiple possible page indicators
     browser.elements('css selector', '#drugInteractionsPage, [data-testid="drug-interactions"], .drug-interactions-page, h1, h2, main, .page-content', function(result) {
       if (result.value && result.value.length > 0) {

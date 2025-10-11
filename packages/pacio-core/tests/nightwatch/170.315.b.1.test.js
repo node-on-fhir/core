@@ -4,6 +4,38 @@ module.exports = {
   tags: ['pacio-core', 'onc-certification', '170.315.b.1'],
   'PACIO Core - 170.315(b)(1) - Transitions of Care': function (browser) {
     browser
+      .url('http://localhost:3000')
+      .waitForElementVisible('body', 5000);
+
+    // Check if user is logged in, if not, create test user and login
+    browser.execute(function() {
+      return {
+        isLoggedIn: typeof Meteor !== 'undefined' && !!Meteor.userId(),
+        userId: Meteor.userId ? Meteor.userId() : null
+      };
+    }, [], function(result) {
+      if (!result.value.isLoggedIn) {
+        browser.executeAsync(function(done) {
+          Meteor.call('test.createTestUser', {
+            username: 'janedoe',
+            email: 'janedoe@test.org',
+            password: 'janedoe123'
+          }, function(err, userId) {
+            if (!err) {
+              Meteor.loginWithPassword('janedoe', 'janedoe123', function(loginErr) {
+                done({ loginSuccess: !loginErr, userId: Meteor.userId() });
+              });
+            } else {
+              done({ loginSuccess: false, error: err });
+            }
+          });
+        }, [], function() {
+          console.log('✅ Test user logged in for ONC 170.315(b)(1)');
+        });
+      }
+    });
+
+    browser
       .url('http://localhost:3000/transitions-of-care')
       .waitForElementVisible('body', 3000)
       .pause(1000); // Give page time to load

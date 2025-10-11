@@ -5,10 +5,42 @@ module.exports = {
   
   'Order Catalog - 170.315(a)(2) - CPOE - Laboratory': function (browser) {
     browser
+      .url('http://localhost:3000')
+      .waitForElementVisible('body', 5000);
+
+    // Check if user is logged in, if not, create test user and login
+    browser.execute(function() {
+      return {
+        isLoggedIn: typeof Meteor !== 'undefined' && !!Meteor.userId(),
+        userId: Meteor.userId ? Meteor.userId() : null
+      };
+    }, [], function(result) {
+      if (!result.value.isLoggedIn) {
+        browser.executeAsync(function(done) {
+          Meteor.call('test.createTestUser', {
+            username: 'janedoe',
+            email: 'janedoe@test.org',
+            password: 'janedoe123'
+          }, function(err, userId) {
+            if (!err) {
+              Meteor.loginWithPassword('janedoe', 'janedoe123', function(loginErr) {
+                done({ loginSuccess: !loginErr, userId: Meteor.userId() });
+              });
+            } else {
+              done({ loginSuccess: false, error: err });
+            }
+          });
+        }, [], function() {
+          console.log('✅ Test user logged in for ONC 170.315(a)(2)');
+        });
+      }
+    });
+
+    browser
       .url('http://localhost:3000/cpoe/laboratory')
       .waitForElementVisible('body', 3000)
       .pause(1000); // Give page time to load
-      
+
     // Check for multiple possible page indicators
     browser.elements('css selector', '#cpoeLabPage, [data-testid="cpoe-laboratory"], .cpoe-laboratory-page, h1, h2, main, .page-content', function(result) {
       if (result.value && result.value.length > 0) {
