@@ -21,6 +21,7 @@ packages/provider-directory/data/
 docs/
 *.md
 !README.md
+certification/
 
 # Package development files
 packages/*/.git/

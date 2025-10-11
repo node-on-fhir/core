@@ -12,7 +12,7 @@ callback-hook@1.6.0
 check@1.4.4
 clinical:extended-api@3.0.0
 clinical:fonts@1.2.0
-clinical:scheduling@0.1.0
+clinical:hl7-resource-datatypes@4.0.8
 core-runtime@1.0.0
 ddp@1.4.2
 ddp-client@3.1.1
