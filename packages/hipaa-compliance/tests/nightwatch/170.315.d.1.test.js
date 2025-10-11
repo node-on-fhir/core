@@ -36,12 +36,12 @@ module.exports = {
     });
 
     browser
-      .url('http://localhost:3000/hipaa-compliance')
+      .url('http://localhost:3000/hipaa/audit-log')
       .waitForElementVisible('body', 3000)
       .pause(1000); // Give page time to load
 
     // Check for multiple possible page indicators
-    browser.elements('css selector', '#hipaaCompliancePage, [data-testid="hipaa-compliance"], .hipaa-compliance-page, h1, h2, main, .page-content', function(result) {
+    browser.elements('css selector', '#auditLogPage, [data-testid="audit-log"], .audit-log-page, h1, h2, main, .page-content', function(result) {
       if (result.value && result.value.length > 0) {
         browser.assert.ok(true, 'ONC 170.315(d)(1) - Page loaded with content elements');
       } else {

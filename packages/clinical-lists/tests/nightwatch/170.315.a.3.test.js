@@ -37,12 +37,12 @@ module.exports = {
     });
 
     browser
-      .url('http://localhost:3000/clinical-lists')
+      .url('http://localhost:3000/problem-list')
       .waitForElementVisible('body', 3000)
       .pause(1000); // Give page time to load
 
     // Check for multiple possible page indicators
-    browser.elements('css selector', '#clinicalListsPage, [data-testid="clinical-lists"], .clinical-lists-page, h1, h2, main, .page-content', function(result) {
+    browser.elements('css selector', '#problemListPage, [data-testid="problem-list"], .problem-list-page, h1, h2, main, .page-content', function(result) {
       if (result.value && result.value.length > 0) {
         browser.assert.ok(true, 'ONC 170.315(a)(3) - Page loaded with content elements');
       } else {
