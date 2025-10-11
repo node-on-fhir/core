@@ -14,7 +14,7 @@ let DynamicRoutes = [{
   path: '/order-catalog',
   element: <OrderCatalogPage />,
   requireAuth: true,
-  description: 'Computerized Provider Order Entry (CPOE) - ONC Certified'
+  description: 'Computerized Provider Order Entry (CPOE)'
 }, {
   name: 'CPOEMedications',
   path: '/cpoe/medications',

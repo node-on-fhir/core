@@ -16,9 +16,9 @@ module.exports = {
    * Wait for application to be fully ready
    */
   waitForAppReady: function(browser, callback) {
-    const maxRetries = 5;
+    const maxRetries = 10; // Increased from 5 to 10 for CircleCI
     let retryCount = 0;
-    
+
     const checkApp = () => {
       browser.execute(function() {
         try {
@@ -39,8 +39,8 @@ module.exports = {
           };
         }
       }, [], function(result) {
-        console.log(`App readiness check (attempt ${retryCount + 1}):`, result.value);
-        
+        console.log(`App readiness check (attempt ${retryCount + 1}/${maxRetries}):`, result.value);
+
         if (!result.value || !result.value.meteorReady || !result.value.routerReady) {
           retryCount++;
           if (retryCount < maxRetries) {
@@ -48,16 +48,16 @@ module.exports = {
             browser.pause(3000);
             checkApp();
           } else {
-            console.error('App failed to become ready after maximum retries');
+            console.error(`App failed to become ready after ${maxRetries} retries (${maxRetries * 3} seconds)`);
             if (callback) callback(false);
           }
         } else {
-          console.log('App is ready');
+          console.log('✅ App is ready');
           if (callback) callback(true);
         }
       });
     };
-    
+
     checkApp();
   },
 

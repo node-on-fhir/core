@@ -277,10 +277,10 @@ function OrderCatalogPage(props) {
               </Typography>
             </Grid>
             <Grid item>
-              <Chip 
-                icon={<CheckCircleIcon />} 
-                label="ONC Certified" 
-                color="success" 
+              <Chip
+                icon={<CheckCircleIcon />}
+                label="ONC HealthIT"
+                color="primary"
                 variant="outlined"
               />
             </Grid>

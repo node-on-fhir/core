@@ -3,7 +3,7 @@
 Package.describe({
   name: 'clinical:order-catalog',
   version: '0.1.0',
-  summary: 'FHIR Order Catalog - CPOE for medications and laboratory orders (ONC Certified)',
+  summary: 'FHIR Order Catalog - CPOE for medications and laboratory orders',
   git: 'https://github.com/clinical-meteor/order-catalog',
   documentation: 'README.md'
 });
