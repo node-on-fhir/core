@@ -24,6 +24,7 @@ import { Bundle } from '../imports/lib/schemas/SimpleSchemas/Bundles'
 
 import { AllergyIntolerances } from '../imports/lib/schemas/SimpleSchemas/AllergyIntolerances';
 import { AuditEvents } from '../imports/lib/schemas/SimpleSchemas/AuditEvents';
+import { Appointments } from '../imports/lib/schemas/SimpleSchemas/Appointments';
 import { Bundles } from '../imports/lib/schemas/SimpleSchemas/Bundles';
 import { CarePlans } from '../imports/lib/schemas/SimpleSchemas/CarePlans';
 import { CareTeams } from '../imports/lib/schemas/SimpleSchemas/CareTeams';
@@ -69,6 +70,8 @@ import { ResearchSubjects } from '../imports/lib/schemas/SimpleSchemas/ResearchS
 import { ResearchStudies } from '../imports/lib/schemas/SimpleSchemas/ResearchStudies';
 import { SearchParameters } from '../imports/lib/schemas/SimpleSchemas/SearchParameters';
 import { ServiceRequests } from '../imports/lib/schemas/SimpleSchemas/ServiceRequests';
+import { Slots } from '../imports/lib/schemas/SimpleSchemas/Slots';
+import { Schedules } from '../imports/lib/schemas/SimpleSchemas/Schedules';
 import { StructureDefinitions } from '../imports/lib/schemas/SimpleSchemas/StructureDefinitions';
 import { Subscriptions } from '../imports/lib/schemas/SimpleSchemas/Subscriptions';
 import { Tasks } from '../imports/lib/schemas/SimpleSchemas/Tasks';
@@ -271,6 +274,7 @@ if(Meteor.isClient){
 if(Meteor.isServer){
   Collections.AllergyIntolerances = AllergyIntolerances;
   Collections.AuditEvents = AuditEvents;
+  Collections.Appointments = Appointments;
   Collections.Bundles = Bundles;
   Collections.CarePlans = CarePlans;
   Collections.CareTeams = CareTeams;
@@ -319,6 +323,8 @@ if(Meteor.isServer){
   Collections.ServiceRequests = ServiceRequests;
   Collections.StructureDefinitions = StructureDefinitions;
   Collections.Subscriptions = Subscriptions;
+  Collections.Slots = Slots;
+  Collections.Schedules = Schedules;
   Collections.Tasks = Tasks;
   Collections.ValueSets = ValueSets;
   // Collections.VerificationResults = VerificationResults;

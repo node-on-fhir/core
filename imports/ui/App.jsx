@@ -1308,7 +1308,7 @@ Object.keys(Package).forEach(function(packageName){
       if(route.component && !route.element) {
         route.element = React.createElement(route.component);
       }
-      
+
       // Debug logging for swarm route
       if(route.path === '/swarm') {
         console.log('[APP] Swarm route found:', route);
@@ -1318,16 +1318,16 @@ Object.keys(Package).forEach(function(packageName){
           console.log('[APP] Swarm element $$typeof:', route.element.$$typeof.toString());
         }
       }
-      
+
       // Debug logging for routes with requireAuth
       if(route.requireAuth) {
         console.log('[APP] Route requires authentication:', route.path, route);
       }
-      
-      dynamicRoutes.push(route);      
-    });    
+
+      dynamicRoutes.push(route);
+    });
     if(Package[packageName].MainPage){
-      dynamicRoutes.push(Package[packageName].MainPage);      
+      dynamicRoutes.push(Package[packageName].MainPage);
       foundMainPage = true;
       // if(typeof homeRoute.element === "undefined"){
       //   homeRoute.element = Package[packageName].MainPage
@@ -1337,8 +1337,32 @@ Object.keys(Package).forEach(function(packageName){
     }
   }
 });
+
+// Check if settings specify a default home page route
 if(!foundMainPage){
-  dynamicRoutes.push(homeRoute);      
+  // Check for defaults.route, defaults.homePage, or defaults.landingPage in settings
+  const defaultRoute = get(Meteor, 'settings.public.defaults.route') ||
+                      get(Meteor, 'settings.public.defaults.homePage') ||
+                      get(Meteor, 'settings.public.defaults.landingPage');
+
+  if(defaultRoute && defaultRoute !== '/'){
+    // Find the route that matches the default route setting
+    const matchingRoute = dynamicRoutes.find(route => route.path === defaultRoute);
+
+    if(matchingRoute){
+      console.log('Setting home route to:', defaultRoute, 'based on settings');
+      // Create a home route that redirects to or renders the default route
+      homeRoute = {
+        path: "/",
+        element: matchingRoute.element,
+        requireAuth: matchingRoute.requireAuth
+      };
+    } else {
+      console.warn('Default route specified in settings not found:', defaultRoute);
+    }
+  }
+
+  dynamicRoutes.push(homeRoute);
 }
 
 // ==============================================================================
