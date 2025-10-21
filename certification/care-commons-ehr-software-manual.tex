@@ -1,0 +1,696 @@
+% certification/care-commons-ehr-software-manual.tex
+% Care Commons EHR - ONC Health IT Certification Software Manual
+%
+% This LaTeX document provides comprehensive certification documentation
+% for the Care Commons EHR system per 45 CFR Part 170 requirements.
+
+\documentclass[11pt,letterpaper,oneside]{book}
+
+% Packages
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[margin=1in]{geometry}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsthm}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{tocloft}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{enumitem}
+\usepackage{fancyvrb}
+
+% Hyperref configuration
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    filecolor=magenta,
+    urlcolor=cyan,
+    pdftitle={Care Commons EHR Software Manual},
+    pdfauthor={Care Commons Consortium},
+}
+
+% Page style
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\leftmark}
+\fancyhead[R]{\thepage}
+\fancyfoot[C]{Care Commons EHR - ONC Health IT Certification}
+
+% Define maturity levels
+\definecolor{draftcolor}{RGB}{255,165,0}
+\definecolor{implementedcolor}{RGB}{100,149,237}
+\definecolor{verifiedcolor}{RGB}{50,205,50}
+\definecolor{validatedcolor}{RGB}{0,128,0}
+
+\newcommand{\maturitylabel}[1]{%
+  \ifnum\pdfstrcmp{#1}{draft}=0
+    \textcolor{draftcolor}{\textbf{DRAFT}}
+  \else\ifnum\pdfstrcmp{#1}{implemented}=0
+    \textcolor{implementedcolor}{\textbf{IMPLEMENTED}}
+  \else\ifnum\pdfstrcmp{#1}{verified}=0
+    \textcolor{verifiedcolor}{\textbf{VERIFIED}}
+  \else\ifnum\pdfstrcmp{#1}{validated}=0
+    \textcolor{validatedcolor}{\textbf{VALIDATED}}
+  \else
+    \textbf{#1}
+  \fi\fi\fi\fi
+}
+
+% Gherkin syntax highlighting for BDD
+\lstdefinelanguage{Gherkin}{
+  morekeywords={Feature, Scenario, Given, When, Then, And, But, Background},
+  sensitive=true,
+  morecomment=[l]{\#},
+  morestring=[b]",
+}
+
+\lstset{
+  basicstyle=\ttfamily\small,
+  breaklines=true,
+  columns=fullflexible,
+  frame=single,
+  backgroundcolor=\color{gray!10},
+}
+
+% Title page
+\title{
+  \Huge\textbf{Care Commons EHR}\\
+  \Large ONC Health IT Certification\\
+  \Large Software Manual\\
+  \vspace{1cm}
+  \large 2015 Edition Cures Update
+}
+\author{Care Commons Consortium}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\tableofcontents
+
+% ============================================================================
+\part{Base EHR Certification}
+% ============================================================================
+
+\chapter*{Overview}
+\addcontentsline{toc}{chapter}{Overview}
+
+This Part documents the Base EHR certification criteria per the ONC 2015 Edition Cures Update certification program. Base EHR requires \textbf{11 core criteria} to be met.
+
+\section*{Certification Criteria Summary}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lll}
+\toprule
+\textbf{Criterion} & \textbf{Title} & \textbf{Status} \\
+\midrule
+� 170.315(a)(1) & CPOE - Medications & Implemented \\
+� 170.315(a)(2) & CPOE - Laboratory & Implemented \\
+� 170.315(a)(3) & CPOE - Diagnostic Imaging & Implemented \\
+� 170.315(a)(4) & Drug Interaction Checks & Implemented \\
+� 170.315(a)(5) & Demographics & Implemented \\
+� 170.315(a)(9) & Clinical Decision Support & Expired \\
+� 170.315(b)(11) & Decision Support Interventions & Implemented \\
+� 170.315(a)(14) & Implantable Device List & Implemented \\
+� 170.315(e)(1) & View, Download, Transmit & Implemented \\
+� 170.315(g)(7) & Application Access - Patient Selection & Implemented \\
+� 170.315(g)(9) & Application Access - All Data & Implemented \\
+� 170.315(g)(10) & Standardized API & Implemented \\
+\bottomrule
+\end{tabular}
+\caption{Base EHR Certification Criteria}
+\end{table}
+
+\textbf{Note on � 170.315(a)(9):} This criterion expired January 1, 2025 and was replaced by � 170.315(b)(11). Due to government website unavailability as of January 2025, it is unclear whether Base EHR requires the expired a-9 (grandfathered) or the replacement b-11. This manual documents both criteria.
+
+% ============================================================================
+\chapter{� 170.315(a)(1) - CPOE Medications}
+\label{chap:a1}
+% ============================================================================
+
+\clearpage
+
+\section{Criterion Information}
+
+\subsection{Maturity Level}
+\maturitylabel{implemented}
+
+\subsection{Regulatory Text}
+
+From \textit{45 CFR � 170.315(a)(1)}:
+
+\begin{quotation}
+\textbf{(1) Computerized provider order entrymedications.}
+
+\textbf{(i)} Enable a user to record, change, and access medication orders.
+
+\textbf{(ii)} Optional. Include a ``reason for order'' field.
+\end{quotation}
+
+\section{Behavior-Driven Development Specification}
+
+\lstinputlisting[language=Gherkin, caption={170.315(a)(1) - CPOE Medications}]{bdd/170.315-a-1-cpoe-medications.feature}
+
+\section{Screenshots}
+
+\begin{figure}[h]
+\centering
+% \includegraphics[width=0.9\textwidth]{screenshots/170.315.a.1-cpoe-medications.png}
+\fbox{\parbox{0.9\textwidth}{\centering\vspace{2in}Screenshot Placeholder: CPOE Medications Interface\vspace{2in}}}
+\caption{CPOE Medications - Order Entry Interface}
+\label{fig:a1-screenshot}
+\end{figure}
+
+% ============================================================================
+\chapter{� 170.315(a)(2) - CPOE Laboratory}
+\label{chap:a2}
+% ============================================================================
+
+\clearpage
+
+\section{Criterion Information}
+
+\subsection{Maturity Level}
+\maturitylabel{implemented}
+
+\subsection{Regulatory Text}
+
+From \textit{45 CFR � 170.315(a)(2)}:
+
+\begin{quotation}
+\textbf{(2) Computerized provider order entrylaboratory.}
+
+\textbf{(i)} Enable a user to record, change, and access laboratory orders.
+
+\textbf{(ii)} Optional. Include a ``reason for order'' field.
+\end{quotation}
+
+\section{Behavior-Driven Development Specification}
+
+\lstinputlisting[language=Gherkin, caption={170.315(a)(2) - CPOE Laboratory}]{bdd/170.315-a-2-cpoe-laboratory.feature}
+
+\section{Screenshots}
+
+\begin{figure}[h]
+\centering
+\fbox{\parbox{0.9\textwidth}{\centering\vspace{2in}Screenshot Placeholder: CPOE Laboratory Interface\vspace{2in}}}
+\caption{CPOE Laboratory - Order Entry Interface}
+\label{fig:a2-screenshot}
+\end{figure}
+
+% ============================================================================
+\chapter{� 170.315(a)(3) - CPOE Diagnostic Imaging}
+\label{chap:a3}
+% ============================================================================
+
+\clearpage
+
+\section{Criterion Information}
+
+\subsection{Maturity Level}
+\maturitylabel{implemented}
+
+\subsection{Regulatory Text}
+
+From \textit{45 CFR � 170.315(a)(3)}:
+
+\begin{quotation}
+\textbf{(3) Computerized provider order entrydiagnostic imaging.}
+
+\textbf{(i)} Enable a user to record, change, and access diagnostic imaging orders.
+
+\textbf{(ii)} Optional. Include a ``reason for order'' field.
+\end{quotation}
+
+\section{Behavior-Driven Development Specification}
+
+\lstinputlisting[language=Gherkin, caption={170.315(a)(3) - CPOE Diagnostic Imaging}]{bdd/170.315-a-3-cpoe-diagnostic-imaging.feature}
+
+\section{Screenshots}
+
+\begin{figure}[h]
+\centering
+\fbox{\parbox{0.9\textwidth}{\centering\vspace{2in}Screenshot Placeholder: CPOE Diagnostic Imaging Interface\vspace{2in}}}
+\caption{CPOE Diagnostic Imaging - Order Entry Interface}
+\label{fig:a3-screenshot}
+\end{figure}
+
+% ============================================================================
+\chapter{� 170.315(a)(4) - Drug Interaction Checks}
+\label{chap:a4}
+% ============================================================================
+
+\clearpage
+
+\section{Criterion Information}
+
+\subsection{Maturity Level}
+\maturitylabel{implemented}
+
+\subsection{Regulatory Text}
+
+From \textit{45 CFR � 170.315(a)(4)}:
+
+\begin{quotation}
+\textbf{(4) Drug-drug, drug-allergy interaction checks for CPOE }
+
+\textbf{(i) Interventions.} Before a medication order is completed and acted upon during computerized provider order entry (CPOE), interventions must automatically indicate to a user drug-drug and drug-allergy contraindications based on a patient's medication list and medication allergy list.
+
+\textbf{(ii) Adjustments.}
+
+\textbf{(A)} Enable the severity level of interventions provided for drug-drug interaction checks to be adjusted.
+
+\textbf{(B)} Limit the ability to adjust severity levels in at least one of these two ways:
+
+\textbf{(1)} To a specific set of identified users.
+
+\textbf{(2)} As a system administrative function.
+\end{quotation}
+
+\section{Behavior-Driven Development Specification}
+
+\lstinputlisting[language=Gherkin, caption={170.315(a)(4) - Drug Interaction Checks}]{bdd/170.315-a-4-drug-interactions.feature}
+
+\section{Screenshots}
+
+\begin{figure}[h]
+\centering
+\fbox{\parbox{0.9\textwidth}{\centering\vspace{2in}Screenshot Placeholder: Drug Interaction Alert\vspace{2in}}}
+\caption{Drug-Drug Interaction Alert Display}
+\label{fig:a4-screenshot}
+\end{figure}
+
+% ============================================================================
+\chapter{� 170.315(a)(5) - Demographics}
+\label{chap:a5}
+% ============================================================================
+
+\clearpage
+
+\section{Criterion Information}
+
+\subsection{Maturity Level}
+\maturitylabel{implemented}
+
+\subsection{Regulatory Text}
+
+From \textit{45 CFR � 170.315(a)(5)}:
+
+\begin{quotation}
+\textbf{(5) Patient demographics and observations.}
+
+\textbf{(i)} Enable a user to record, change, and access patient demographic and observations data including race, ethnicity, preferred language, sex, sex parameter for clinical use, sexual orientation, gender identity, name to use, pronouns, and date of birth.
+\end{quotation}
+
+(Full regulatory text abbreviated for brevity. See BDD specification for complete requirements.)
+
+\section{Behavior-Driven Development Specification}
+
+\lstinputlisting[language=Gherkin, caption={170.315(a)(5) - Demographics}]{bdd/170.315-a-5-demographics-observations.feature}
+
+\section{Screenshots}
+
+\begin{figure}[h]
+\centering
+\fbox{\parbox{0.9\textwidth}{\centering\vspace{2in}Screenshot Placeholder: Patient Demographics Interface\vspace{2in}}}
+\caption{Patient Demographics - Data Entry Interface}
+\label{fig:a5-screenshot}
+\end{figure}
+
+% ============================================================================
+\chapter{� 170.315(a)(9) - Clinical Decision Support (EXPIRED)}
+\label{chap:a9}
+% ============================================================================
+
+\clearpage
+
+\section{Criterion Information}
+
+\subsection{Maturity Level}
+\maturitylabel{implemented} \textbf{(EXPIRED)}
+
+\subsection{Expiration Notice}
+
+\textcolor{red}{\textbf{CRITICAL: This criterion EXPIRED on January 1, 2025 per 45 CFR � 170.315(a)(9)(vi).}}
+
+This criterion has been replaced by � 170.315(b)(11) - Decision Support Interventions (see Chapter \ref{chap:b11}).
+
+Due to government website unavailability as of January 2025, it is unclear whether Base EHR certifications issued before the expiration date can still use this criterion (grandfathered), or if all certifications must now use � 170.315(b)(11).
+
+\subsection{Regulatory Text}
+
+From \textit{45 CFR � 170.315(a)(9)}:
+
+\begin{quotation}
+\textbf{(9) Clinical decision support (CDS) }
+
+\textbf{(i) CDS intervention interaction.} Interventions provided to a user must occur when a user is interacting with technology.
+
+(Full regulatory text abbreviated. See BDD specification for complete requirements.)
+
+\textbf{(vi) Expiration of criterion.} The adoption of this criterion for purposes of the ONC Health IT Certification Program expires on January 1, 2025.
+\end{quotation}
+
+\section{Behavior-Driven Development Specification}
+
+\lstinputlisting[language=Gherkin, caption={170.315(a)(9) - Clinical Decision Support}]{bdd/170.315-a-9-clinical-decision-support.feature}
+
+\section{Screenshots}
+
+\begin{figure}[h]
+\centering
+\fbox{\parbox{0.9\textwidth}{\centering\vspace{2in}Screenshot Placeholder: CDS Configuration Interface\vspace{2in}}}
+\caption{Clinical Decision Support - Configuration Interface}
+\label{fig:a9-screenshot}
+\end{figure}
+
+% ============================================================================
+\chapter{� 170.315(b)(11) - Decision Support Interventions}
+\label{chap:b11}
+% ============================================================================
+
+\clearpage
+
+\section{Criterion Information}
+
+\subsection{Maturity Level}
+\maturitylabel{implemented}
+
+\subsection{Replacement Notice}
+
+\textbf{This criterion REPLACES � 170.315(a)(9) which expired January 1, 2025.}
+
+Decision Support Interventions (DSI) is an enhanced version of the legacy Clinical Decision Support criterion, adding requirements for:
+\begin{itemize}
+\item Predictive decision support interventions (AI/ML algorithms)
+\item Demographic data usage transparency
+\item Electronic intervention feedback mechanism
+\item Enhanced risk and fairness disclosures for predictive DSI
+\end{itemize}
+
+\subsection{Regulatory Text}
+
+From \textit{45 CFR � 170.315(b)(11)}:
+
+\begin{quotation}
+\textbf{(11) Decision Support Interventions.}
+
+(Full regulatory text includes all requirements from a-9 plus enhanced requirements for predictive interventions, demographic transparency, feedback mechanisms, and algorithm governance. See BDD specification for complete requirements.)
+\end{quotation}
+
+\section{Behavior-Driven Development Specification}
+
+\lstinputlisting[language=Gherkin, caption={170.315(b)(11) - Decision Support Interventions}]{bdd/170.315-b-11-decision-support-interventions.feature}
+
+\section{Screenshots}
+
+\begin{figure}[h]
+\centering
+\fbox{\parbox{0.9\textwidth}{\centering\vspace{2in}Screenshot Placeholder: DSI Configuration Interface\vspace{2in}}}
+\caption{Decision Support Interventions - Configuration Interface}
+\label{fig:b11-screenshot}
+\end{figure}
+
+% ============================================================================
+\chapter{� 170.315(a)(14) - Implantable Device List}
+\label{chap:a14}
+% ============================================================================
+
+\clearpage
+
+\section{Criterion Information}
+
+\subsection{Maturity Level}
+\maturitylabel{implemented}
+
+\subsection{Regulatory Text}
+
+From \textit{45 CFR � 170.315(a)(14)}:
+
+\begin{quotation}
+\textbf{(14) Implantable device list.}
+
+\textbf{(i)} Record Unique Device Identifiers associated with a patient's Implantable Devices.
+
+\textbf{(ii)} Parse the following identifiers from a Unique Device Identifier.
+
+(Full regulatory text abbreviated. See BDD specification for complete requirements.)
+\end{quotation}
+
+\section{Behavior-Driven Development Specification}
+
+\lstinputlisting[language=Gherkin, caption={170.315(a)(14) - Implantable Device List}]{bdd/170.315-a-14-implantable-device-list.feature}
+
+\section{Screenshots}
+
+\begin{figure}[h]
+\centering
+\fbox{\parbox{0.9\textwidth}{\centering\vspace{2in}Screenshot Placeholder: Implantable Device List\vspace{2in}}}
+\caption{Implantable Device List - Patient View}
+\label{fig:a14-screenshot}
+\end{figure}
+
+% ============================================================================
+\chapter{� 170.315(e)(1) - View, Download, Transmit}
+\label{chap:e1}
+% ============================================================================
+
+\clearpage
+
+\section{Criterion Information}
+
+\subsection{Maturity Level}
+\maturitylabel{implemented}
+
+\subsection{Regulatory Text}
+
+From \textit{45 CFR � 170.315(e)(1)}:
+
+\begin{quotation}
+\textbf{(1) View, download, and transmit to 3rd party.}
+
+The technology must enable patients to view, download, and transmit their health information.
+
+(Full regulatory text abbreviated. See BDD specification for complete requirements.)
+\end{quotation}
+
+\section{Behavior-Driven Development Specification}
+
+\lstinputlisting[language=Gherkin, caption={170.315(e)(1) - View, Download, Transmit}]{bdd/170.315-e-1-view-download-transmit.feature}
+
+\section{Screenshots}
+
+\begin{figure}[h]
+\centering
+\fbox{\parbox{0.9\textwidth}{\centering\vspace{2in}Screenshot Placeholder: Patient Portal VDT Interface\vspace{2in}}}
+\caption{View, Download, Transmit - Patient Portal Interface}
+\label{fig:e1-screenshot}
+\end{figure}
+
+% ============================================================================
+\chapter{� 170.315(g)(7) - Application Access - Patient Selection}
+\label{chap:g7}
+% ============================================================================
+
+\clearpage
+
+\section{Criterion Information}
+
+\subsection{Maturity Level}
+\maturitylabel{implemented}
+
+\subsection{Regulatory Text}
+
+From \textit{45 CFR � 170.315(g)(7)}:
+
+\begin{quotation}
+\textbf{(7) Application accesspatient selection.}
+
+The technology must be able to receive a request with sufficient information to uniquely identify a patient and return an ID or other token.
+
+(Full regulatory text abbreviated. See BDD specification for complete requirements.)
+\end{quotation}
+
+\section{Behavior-Driven Development Specification}
+
+\lstinputlisting[language=Gherkin, caption={170.315(g)(7) - Application Access}]{bdd/170.315-g-7-10-apis.feature}
+
+\section{Screenshots}
+
+\begin{figure}[h]
+\centering
+\fbox{\parbox{0.9\textwidth}{\centering\vspace{2in}Screenshot Placeholder: FHIR API Patient Search\vspace{2in}}}
+\caption{Application Access - Patient Selection API}
+\label{fig:g7-screenshot}
+\end{figure}
+
+% ============================================================================
+\chapter{� 170.315(g)(9) - Application Access - All Data}
+\label{chap:g9}
+% ============================================================================
+
+\clearpage
+
+\section{Criterion Information}
+
+\subsection{Maturity Level}
+\maturitylabel{implemented}
+
+\subsection{Regulatory Text}
+
+From \textit{45 CFR � 170.315(g)(9)}:
+
+\begin{quotation}
+\textbf{(9) Application accessall data request.}
+
+Provide an application programming interface (API) that can return all available data for a specific patient in a single request.
+
+(Full regulatory text abbreviated. See BDD specification for complete requirements.)
+\end{quotation}
+
+\section{Behavior-Driven Development Specification}
+
+\lstinputlisting[language=Gherkin, caption={170.315(g)(9) - Application Access}]{bdd/170.315-g-7-10-apis.feature}
+
+\section{Screenshots}
+
+\begin{figure}[h]
+\centering
+\fbox{\parbox{0.9\textwidth}{\centering\vspace{2in}Screenshot Placeholder: FHIR \$everything Operation\vspace{2in}}}
+\caption{Application Access - All Data Request API}
+\label{fig:g9-screenshot}
+\end{figure}
+
+% ============================================================================
+\chapter{� 170.315(g)(10) - Standardized API}
+\label{chap:g10}
+% ============================================================================
+
+\clearpage
+
+\section{Criterion Information}
+
+\subsection{Maturity Level}
+\maturitylabel{implemented}
+
+\subsection{Regulatory Text}
+
+From \textit{45 CFR � 170.315(g)(10)}:
+
+\begin{quotation}
+\textbf{(10) Standardized API for patient and population services.}
+
+The technology must implement a standardized API that conforms to FHIR R4, US Core, SMART App Launch, OpenID Connect, and SMART Backend Services.
+
+(Full regulatory text abbreviated. See BDD specification for complete requirements.)
+\end{quotation}
+
+\section{Behavior-Driven Development Specification}
+
+\lstinputlisting[language=Gherkin, caption={170.315(g)(10) - Standardized API}]{bdd/170.315-g-7-10-apis.feature}
+
+\section{Screenshots}
+
+\begin{figure}[h]
+\centering
+\fbox{\parbox{0.9\textwidth}{\centering\vspace{2in}Screenshot Placeholder: SMART App Launch\vspace{2in}}}
+\caption{Standardized API - SMART App Launch Authorization}
+\label{fig:g10-screenshot}
+\end{figure}
+
+% ============================================================================
+\appendix
+% ============================================================================
+
+\chapter{Acronyms and Abbreviations}
+
+\begin{description}[style=nextline]
+\item[API] Application Programming Interface
+\item[BDD] Behavior-Driven Development
+\item[C-CDA] Consolidated Clinical Document Architecture
+\item[CDS] Clinical Decision Support
+\item[CFR] Code of Federal Regulations
+\item[CPOE] Computerized Provider Order Entry
+\item[DI] Device Identifier
+\item[DSI] Decision Support Interventions
+\item[EHR] Electronic Health Record
+\item[FHIR] Fast Healthcare Interoperability Resources
+\item[GMDN] Global Medical Device Nomenclature
+\item[GUDID] Global Unique Device Identification Database
+\item[HCT/P] Human Cells, Tissues, and Cellular and Tissue-Based Products
+\item[HL7] Health Level Seven
+\item[MRI] Magnetic Resonance Imaging
+\item[OAuth] Open Authorization
+\item[ONC] Office of the National Coordinator for Health Information Technology
+\item[PI] Production Identifier
+\item[SMART] Substitutable Medical Applications, Reusable Technologies
+\item[SNOMED CT] Systematized Nomenclature of Medicine - Clinical Terms
+\item[SPCU] Sex Parameter for Clinical Use
+\item[UDI] Unique Device Identifier
+\item[USCDI] United States Core Data for Interoperability
+\item[VDT] View, Download, Transmit
+\end{description}
+
+\chapter{References}
+
+\begin{enumerate}
+\item Office of the National Coordinator for Health Information Technology. \textit{2015 Edition Health IT Certification Criteria, 2015 Edition Base EHR Definition, and ONC Health IT Certification Program Modifications}. 45 CFR Part 170. Federal Register, 2015.
+
+\item Office of the National Coordinator for Health Information Technology. \textit{21st Century Cures Act: Interoperability, Information Blocking, and the ONC Health IT Certification Program}. 45 CFR Part 170. Federal Register, 2020.
+
+\item HL7 International. \textit{FHIR R4 Specification}. http://hl7.org/fhir/R4/
+
+\item HL7 International. \textit{US Core Implementation Guide}. http://hl7.org/fhir/us/core/
+
+\item SMART Health IT. \textit{SMART App Launch Framework}. http://hl7.org/fhir/smart-app-launch/
+
+\item Office of the National Coordinator for Health Information Technology. \textit{United States Core Data for Interoperability (USCDI) Version 5}. 2024.
+
+\item FDA. \textit{Unique Device Identification System (UDI System)}. 21 CFR Part 801.
+
+\item FDA. \textit{Global Unique Device Identification Database (GUDID)}. https://accessgudid.nlm.nih.gov/
+\end{enumerate}
+
+\chapter{Certification Testing Notes}
+
+\section{Inferno Testing}
+
+For comprehensive certification testing of API criteria (g-7, g-9, g-10), the official ONC-approved Inferno testing tool must be used:
+
+\textbf{Inferno Website:} https://inferno.healthit.gov
+
+Inferno provides authoritative test suites that validate:
+\begin{itemize}
+\item FHIR R4 conformance
+\item US Core Implementation Guide compliance
+\item SMART App Launch OAuth 2.0 flows
+\item OpenID Connect Core
+\item SMART Backend Services (Bulk FHIR)
+\item USCDI data completeness
+\item Token management and revocation
+\item All mandatory and must-support elements
+\end{itemize}
+
+The Nightwatch tests in this system provide basic endpoint verification for development and CI/CD purposes. They are \textbf{not} a replacement for Inferno certification testing.
+
+\section{Test Execution}
+
+To run the complete Base EHR test suite:
+
+\begin{Verbatim}[commandchars=\\\{\}]
+cd /path/to/honeycomb-public-release
+chmod +x certification/tdd/base_ehr/run-base-ehr-tests.sh
+./certification/tdd/base_ehr/run-base-ehr-tests.sh
+\end{Verbatim}
+
+This script runs all 12 tests (11 base + 1 alternate for a-9/b-11 uncertainty).
+
+\end{document}
