@@ -136,12 +136,10 @@ const InvisibleCard = styled(Card)({
 //----------------------------------------------------------------------
 // Helper Components
 
-let DynamicSpacer;
 let useTheme;
 let pki = forge.pki;
 
 Meteor.startup(function(){
-  DynamicSpacer = Meteor.DynamicSpacer;
   useTheme = Meteor.useTheme;
 })
 

@@ -48,12 +48,13 @@ import "ace-builds/src-noconflict/ext-language_tools";
 
 import "ace-builds/src-noconflict/theme-tomorrow";
 import "ace-builds/src-noconflict/theme-monokai";
+import { DynamicSpacer } from './DynamicSpacer';
 
 
 
 //====================================================================================
 // SMART on FHIR
-// 
+//
 // TODO:  Refactor this; duplicated in multiple files
 
 let firstSmartConfig = get(Meteor, 'settings.public.smartOnFhir[0]', []);
@@ -105,10 +106,8 @@ async function verifyCodeChallenge(codeVerifier, expectedCodeChallenge) {
 //----------------------------------------------------------------------
 // Helper Components
 
-let DynamicSpacer;
 let useTheme;
 Meteor.startup(function(){
-  DynamicSpacer = Meteor.DynamicSpacer;
   useTheme = Meteor.useTheme;
 })
 

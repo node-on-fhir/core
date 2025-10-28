@@ -44,10 +44,10 @@ let defaultQuestionnaire = {
 
 //===========================================================================
 
-let DynamicSpacer;
+import { DynamicSpacer } from '../../ui/DynamicSpacer';
+
 let ValueSets;
 Meteor.startup(function(){
-  DynamicSpacer = Meteor.DynamicSpacer;
   ValueSets = Meteor.Collections.ValueSets;
 })
 
