@@ -64,3 +64,4 @@ fetch
 # clinical:provider-directory
 # clinical:saner
 # clinical:workqueues  
+rspack@1.0.0-beta340.12

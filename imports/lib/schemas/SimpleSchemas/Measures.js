@@ -31,7 +31,7 @@ import { BaseSchema, CodingSchema, DomainResourceSchema, IdentifierSchema, Conta
 // // create the object using our BaseModel
 let Measure = BaseModel.extend();
 
-export let Measures = new Mongo.Collection('Measures');
+let Measures = new Mongo.Collection('Measures');
 
 // //Assign a collection so the object knows how to perform CRUD operations
 Measure.prototype._collection = Measures;

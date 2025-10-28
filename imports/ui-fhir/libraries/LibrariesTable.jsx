@@ -29,9 +29,9 @@ import { FhirDehydrator } from '../../lib/FhirDehydrator';
 //=============================================================================================================================================
 // DATA CURSORS
 
-Meteor.startup(function(){
-  Libraries = Meteor.Collections.Libraries;
-})
+// Import directly to avoid timing issues with Meteor.Collections
+import LibrariesSchema from '../../lib/schemas/SimpleSchemas/Libraries';
+const { Libraries } = LibrariesSchema;
 
 //===========================================================================
 // MAIN COMPONENT

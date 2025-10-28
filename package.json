@@ -41,6 +41,7 @@
     "@nivo/line": "^0.84.0",
     "@nivo/sunburst": "^0.84.0",
     "@nivo/treemap": "^0.84.0",
+    "@swc/helpers": "^0.5.17",
     "@types/swagger-ui-express": "^4.1.8",
     "@uiw/color-convert": "^2.4.0",
     "@uiw/react-color-shade-slider": "^2.4.0",
@@ -124,8 +125,18 @@
     }
   },
   "devDependencies": {
+    "@meteorjs/rspack": "^0.0.60",
     "@nightwatch/react": "^3.1.2",
-    "nightwatch": "^3.12.1"
+    "@rsdoctor/rspack-plugin": "^1.2.3",
+    "@rspack/cli": "^1.5.3",
+    "@rspack/core": "^1.5.3",
+    "@rspack/plugin-react-refresh": "^1.4.3",
+    "buffer": "^6.0.3",
+    "nightwatch": "^3.12.1",
+    "process": "^0.11.10",
+    "react-refresh": "^0.17.0",
+    "stream-browserify": "^3.0.0",
+    "util": "^0.12.5"
   },
   "overrides": {
     "bson": "^6.8.0",

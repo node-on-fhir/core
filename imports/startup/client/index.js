@@ -44,19 +44,31 @@ Meteor.startup(() => {
 
   // Load additional modules based on configuration
   const modules = get(Meteor, 'settings.public.modules', {});
-  
+
   // Analytics module
   if (modules.analytics?.enabled) {
-    import('./analytics-startup').catch(console.error);
+    import(/* webpackIgnore: true */ './analytics-startup').catch(error => {
+      console.warn('Analytics startup module not found:', error.message);
+    });
+  } else {
+    console.log('Analytics module disabled in settings');
   }
 
   // Chat module
   if (modules.chat?.enabled) {
-    import('./chat-startup').catch(console.error);
+    import(/* webpackIgnore: true */ './chat-startup').catch(error => {
+      console.warn('Chat startup module not found:', error.message);
+    });
+  } else {
+    console.log('Chat module disabled in settings');
   }
 
   // Notifications module
   if (modules.notifications?.enabled) {
-    import('./notifications-startup').catch(console.error);
+    import(/* webpackIgnore: true */ './notifications-startup').catch(error => {
+      console.warn('Notifications startup module not found:', error.message);
+    });
+  } else {
+    console.log('Notifications module disabled in settings');
   }
 });

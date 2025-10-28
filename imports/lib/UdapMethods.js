@@ -14,10 +14,15 @@ import jwt from 'jsonwebtoken';
 
 import ndjsonParser from 'ndjson-parse';
 
-let Endpoints;
-Meteor.startup(function(){
-    Endpoints = Meteor.Collections.Endpoints;
-})
+// Lazy accessor for Endpoints collection
+// Collections are populated in server/FhirEndpoints.js
+function getEndpoints() {
+    if (!global.Collections || !global.Collections.Endpoints) {
+        console.warn('Endpoints collection not yet initialized');
+        return null;
+    }
+    return global.Collections.Endpoints;
+}
 
 // import {
 //     FhirUtilities,
@@ -231,7 +236,12 @@ if(Meteor.isServer){
                                     set(endpoint, 'name', get(endpoint, 'connectionType[0].text'));
 
                                     console.log('endpoint', endpoint);
-                                    await Endpoints._collection.upsertAsync({id: get(endpoint, 'id')}, {$set: endpoint})
+                                    const Endpoints = getEndpoints();
+                                    if (Endpoints) {
+                                        await Endpoints._collection.upsertAsync({id: get(endpoint, 'id')}, {$set: endpoint});
+                                    } else {
+                                        console.error('Cannot upsert endpoint: Endpoints collection not initialized');
+                                    }
                                 }
                             }
                         })

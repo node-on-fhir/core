@@ -283,7 +283,7 @@ import { Specimens } from '../lib/schemas/SimpleSchemas/Specimens';
 import { Tasks } from '../lib/schemas/SimpleSchemas/Tasks';
 import { ValueSets } from '../lib/schemas/SimpleSchemas/ValueSets';
 
-import { PatientCard } from '../patient/PatientCard.jsx'
+import PatientCard from '../patient/PatientCard.jsx'
 import { FhirUtilities } from '../lib/FhirUtilities.js'
 import { FhirDehydrator } from '../lib/FhirDehydrator.js'
 import { LayoutHelpers } from '../lib/LayoutHelpers.js'

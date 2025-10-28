@@ -24,6 +24,8 @@ import { useTracker } from 'meteor/react-meteor-data';
 import { get } from 'lodash';
 import { Session } from 'meteor/session';
 import { Random } from 'meteor/random';
+import { DynamicSpacer } from '../../ui/DynamicSpacer';
+import { ValueSets } from '../../lib/schemas/SimpleSchemas/ValueSets';
 
 
 
@@ -38,11 +40,6 @@ let defaultQuestionnaire = {
 };
 
 //===========================================================================
-
-Meteor.startup(function(){
-  DynamicSpacer = Meteor.DynamicSpacer;
-  ValueSets = Meteor.Collections.ValueSets;
-})
 
 // =========================================================================================================
 // Session Variables  

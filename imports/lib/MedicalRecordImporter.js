@@ -64,9 +64,9 @@ if(Meteor.isServer){
 
 
 //---------------------------------------------------------------------------
-// Main Application  
+// Main Application
 
-MedicalRecordImporter = {
+const MedicalRecordImporter = {
   pluralizeResourceName: function(resourceType){
     var pluralized = '';
     switch (resourceType) {

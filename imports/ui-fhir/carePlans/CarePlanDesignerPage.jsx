@@ -15,7 +15,7 @@ import GoalsTable from '../goals/GoalsTable';
 import MedicationsTable from '../medications/MedicationsTable';
 import { PatientsTable } from '../../ui-tables';
 
-import { CarePlansTable } from './CarePlansTable';
+import CarePlansTable from './CarePlansTable';
 
 import React from 'react';
 import { useTracker } from 'meteor/react-meteor-data';
@@ -26,6 +26,7 @@ import { Session } from 'meteor/session';
 import { browserHistory } from 'react-router';
 
 import { get } from 'lodash';
+import { DynamicSpacer } from '../../ui/DynamicSpacer';
 
 //---------------------------------------------------------------
 
@@ -34,14 +35,6 @@ Session.setDefault('patientDialogOpen', false);
 Session.setDefault('selectedPatient', false);
 Session.setDefault('selectedPatientId', '');
 Session.setDefault('selectedCarePlanId', '');
-
-
-
-//---------------------------------------------------------------
-
-Meteor.startup(function(){
-  DynamicSpacer = Meteor.DynamicSpacer
-})
 
 //---------------------------------------------------------------
 

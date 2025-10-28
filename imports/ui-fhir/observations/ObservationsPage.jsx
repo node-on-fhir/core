@@ -19,7 +19,7 @@ import AddIcon from '@mui/icons-material/Add';
 
 import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
-import HipaaLogger from '../../lib/HipaaLogger';
+import { HipaaLogger } from '../../lib/HipaaLogger';
 
 // import ObservationDetail from './ObservationDetail';
 import ObservationsTable from './ObservationsTable';

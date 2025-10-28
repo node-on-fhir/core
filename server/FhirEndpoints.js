@@ -10,7 +10,7 @@ import RestHelpers from './RestHelpers.js';
 import { get, has, set, unset, cloneDeep, capitalize, findIndex, countBy } from 'lodash';
 import moment from 'moment';
 
-import OAuthClientComponents from '../imports/collections/OAuthClients.js';
+import { OAuthClients } from '../imports/collections/OAuthClients.js';
 import OAuthServerConfig from './OAuthServer.js';
 
 
@@ -298,7 +298,7 @@ if(Meteor.isServer){
   Collections.Observations = Observations;
   Collections.Organizations = Organizations;
   Collections.OrganizationAffiliations = OrganizationAffiliations;
-  Collections.OAuthClients = OAuthClientComponents.OAuthClients;
+  Collections.OAuthClients = OAuthClients;
   Collections.Medications = Medications;
   Collections.MedicationOrders = MedicationOrders;
   Collections.Measures = Measures;

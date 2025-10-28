@@ -2,7 +2,7 @@ import React, { useState, useEffect, Fragment } from 'react';
 import PropTypes from 'prop-types';
 import { useNavigate } from 'react-router-dom';
 
-import { 
+import {
   Button,
   Table,
   TableBody,
@@ -11,17 +11,17 @@ import {
   TableRow,
   TablePagination,
   IconButton,
-  FirstPageIcon,
-  KeyboardArrowLeft,
-  KeyboardArrowRight,
-  LastPageIcon,
   Collapse,
   Box,
   Typography,
   Chip,
   Stack
 } from '@mui/material';
-import { 
+import {
+  FirstPage as FirstPageIcon,
+  KeyboardArrowLeft,
+  KeyboardArrowRight,
+  LastPage as LastPageIcon,
   KeyboardArrowDown,
   KeyboardArrowUp,
   Edit as EditIcon,
@@ -51,6 +51,7 @@ import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
 
 import { flattenPatient } from '../lib/FhirDehydrator';
+import { DynamicSpacer } from '../ui/DynamicSpacer';
 
 // //===========================================================================
 // // THEMING
@@ -99,10 +100,8 @@ let styles = {
 //----------------------------------------------------------------------
 // Helper Components
 
-let DynamicSpacer;
 let useTheme;
 Meteor.startup(function(){
-  DynamicSpacer = Meteor.DynamicSpacer;
   useTheme = Meteor.useTheme;
 })
 
