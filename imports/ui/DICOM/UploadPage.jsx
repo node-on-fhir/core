@@ -25,7 +25,8 @@ import {
   CheckCircle as SuccessIcon,
   Error as ErrorIcon,
   Delete as DeleteIcon,
-  ArrowBack as BackIcon
+  ArrowBack as BackIcon,
+  Transform as ConvertIcon
 } from '@mui/icons-material';
 import SimpleDicomViewport from './components/SimpleDicomViewport';
 
@@ -60,6 +61,7 @@ function UploadPage() {
   const [uploadResults, setUploadResults] = useState([]);
   const [error, setError] = useState(null);
   const [uploadedImageData, setUploadedImageData] = useState(null);
+  const [converting, setConverting] = useState(false);
 
   // Handle file selection
   const handleFileSelect = function(event) {
@@ -199,6 +201,166 @@ function UploadPage() {
     return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
   };
 
+  // Handle convert to FHIR
+  const handleConvertToFHIR = async function() {
+    if (files.length === 0) {
+      setError('Please select files to convert');
+      return;
+    }
+
+    setConverting(true);
+    setError(null);
+    const results = [];
+
+    try {
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+
+        try {
+          // Read file as ArrayBuffer
+          const arrayBuffer = await readFileAsArrayBuffer(file);
+
+          // Convert to base64 for transmission
+          const base64Data = arrayBufferToBase64(arrayBuffer);
+
+          // Call Meteor method to convert DICOM to FHIR
+          const result = await new Promise(function(resolve, reject) {
+            Meteor.call('dicom.convertToFHIR', {
+              filename: file.name,
+              data: base64Data,
+              size: file.size
+            }, function(error, result) {
+              if (error) {
+                reject(error);
+              } else {
+                resolve(result);
+              }
+            });
+          });
+
+          results.push({
+            filename: file.name,
+            success: true,
+            result: result,
+            message: `Created DocumentReference: ${result.documentReference.id}, ImagingStudy: ${result.imagingStudy.id}`
+          });
+
+          console.log('✅ FHIR conversion successful:', result);
+
+          // Insert into client-side Minimongo for immediate display
+          // (until we set up proper pub/sub)
+          const timestamp = new Date().toISOString();
+
+          // Insert ImagingStudy
+          const ImagingStudies = Meteor.Collections?.ImagingStudies;
+          if (ImagingStudies && result.imagingStudy) {
+            // Create a minimal ImagingStudy document for client display
+            const clientStudy = {
+              _id: result.imagingStudy.id,
+              resourceType: 'ImagingStudy',
+              status: 'available',
+              started: timestamp,
+              numberOfSeries: 1,
+              numberOfInstances: 1,
+              description: `Imaging study from ${file.name}`,
+              series: [{
+                uid: `${Date.now()}.1`,
+                number: 1,
+                modality: {
+                  system: 'http://dicom.nema.org/resources/ontology/DCM',
+                  code: 'CT',
+                  display: 'Computed Tomography'
+                },
+                numberOfInstances: 1
+              }]
+            };
+
+            // Insert directly into underlying Minimongo collection (bypasses allow/deny rules)
+            try {
+              ImagingStudies._collection.insert(clientStudy);
+              console.log('✅ Inserted ImagingStudy into client Minimongo:', result.imagingStudy.id);
+            } catch (insertError) {
+              console.warn('⚠️  Could not insert ImagingStudy into client collection:', insertError);
+            }
+          }
+
+          // Insert DocumentReference
+          const DocumentReferences = Meteor.Collections?.DocumentReferences;
+          if (DocumentReferences && result.documentReference) {
+            const clientDocRef = {
+              _id: result.documentReference.id,
+              resourceType: 'DocumentReference',
+              status: 'current',
+              docStatus: 'final',
+              date: timestamp,
+              description: `DICOM file: ${file.name}`,
+              type: {
+                coding: [{
+                  system: 'http://loinc.org',
+                  code: '18748-4',
+                  display: 'Diagnostic imaging study'
+                }],
+                text: 'DICOM Image'
+              },
+              category: [{
+                coding: [{
+                  system: 'http://loinc.org',
+                  code: 'LP29684-5',
+                  display: 'Radiology'
+                }]
+              }],
+              content: [{
+                attachment: {
+                  contentType: 'application/dicom',
+                  data: base64Data,  // Include the base64 DICOM data
+                  size: file.size,
+                  title: file.name,
+                  creation: timestamp
+                }
+              }],
+              context: {
+                related: [{
+                  reference: `ImagingStudy/${result.imagingStudy.id}`
+                }]
+              }
+            };
+
+            // Insert directly into underlying Minimongo collection (bypasses allow/deny rules)
+            try {
+              DocumentReferences._collection.insert(clientDocRef);
+              console.log('✅ Inserted DocumentReference into client Minimongo:', result.documentReference.id);
+            } catch (insertError) {
+              console.warn('⚠️  Could not insert DocumentReference into client collection:', insertError);
+            }
+          }
+        } catch (err) {
+          console.error('Conversion error for', file.name, ':', err);
+          results.push({
+            filename: file.name,
+            success: false,
+            error: err.message || 'Conversion failed'
+          });
+        }
+      }
+
+      setUploadResults(results);
+
+      // Check if any conversions succeeded
+      const successCount = results.filter(function(r) { return r.success; }).length;
+      if (successCount > 0) {
+        // Navigate to studies page to see the new FHIR resources
+        if (navigate) {
+          navigate('/dicom/studies');
+        }
+      }
+    } catch (err) {
+      console.error('FHIR conversion error:', err);
+      setError(err.message || 'Failed to convert to FHIR');
+    } finally {
+      setConverting(false);
+    }
+  };
+
   return (
     <Box
       id="dicomUploadPage"
@@ -207,35 +369,6 @@ function UploadPage() {
         py: 4
       }}
     >
-      {/* Header Card */}
-      <Card sx={{
-        mx: 3,
-        mb: 3,
-        bgcolor: cardBgColor,
-        color: cardTextColor
-      }}>
-        <CardHeader
-          title="Upload DICOM Files"
-          subheader="Drag and drop or select DICOM files to upload"
-          action={
-            navigate && (
-              <Button
-                variant="outlined"
-                startIcon={<BackIcon />}
-                onClick={() => navigate('/dicom/studies')}
-                sx={{ color: cardTextColor }}
-              >
-                Back to Studies
-              </Button>
-            )
-          }
-          sx={{
-            '& .MuiCardHeader-title': { color: cardTextColor },
-            '& .MuiCardHeader-subheader': { color: subheaderColor }
-          }}
-        />
-      </Card>
-
       {/* Upload Area - hide when image is loaded */}
       {!uploadedImageData && (
         <Card sx={{
@@ -244,6 +377,14 @@ function UploadPage() {
           bgcolor: cardBgColor,
           color: cardTextColor
         }}>
+          <CardHeader
+            title="Upload DICOM Files"
+            subheader={files.length > 0 ? `${files.length} file${files.length !== 1 ? 's' : ''} selected` : "Drag and drop or select DICOM files to upload"}
+            sx={{
+              '& .MuiCardHeader-title': { color: cardTextColor },
+              '& .MuiCardHeader-subheader': { color: subheaderColor }
+            }}
+          />
           <CardContent>
             <Box
               onDrop={handleDrop}
@@ -281,84 +422,91 @@ function UploadPage() {
                 Select Files
               </Button>
             </Box>
-          </CardContent>
-        </Card>
-      )}
 
-      {/* Error Alert */}
-      {error && (
-        <Box sx={{ mx: 3, mb: 3 }}>
-          <Alert severity="error">
-            {error}
-          </Alert>
-        </Box>
-      )}
-
-      {/* File List */}
-      {files.length > 0 && (
-        <Card sx={{
-          mx: 3,
-          mb: 3,
-          bgcolor: cardBgColor,
-          color: cardTextColor
-        }}>
-          <CardContent>
-            <Typography variant="h6" gutterBottom sx={{ color: cardTextColor }}>
-              Selected Files ({files.length})
-            </Typography>
-            <List>
-              {files.map(function(file, index) {
-                return (
-                  <ListItem
-                    key={index}
-                    sx={{
-                      borderBottom: isDark ? '1px solid rgba(255, 255, 255, 0.12)' : '1px solid rgba(0, 0, 0, 0.12)'
-                    }}
-                    secondaryAction={
-                      !uploading && (
-                        <IconButton
-                          edge="end"
-                          onClick={() => handleRemoveFile(index)}
-                          sx={{ color: cardTextColor }}
-                        >
-                          <DeleteIcon />
-                        </IconButton>
-                      )
-                    }
-                  >
-                    <ListItemIcon>
-                      <FileIcon sx={{ color: cardTextColor }} />
-                    </ListItemIcon>
-                    <ListItemText
-                      primary={file.name}
-                      secondary={formatFileSize(file.size)}
-                      primaryTypographyProps={{ sx: { color: cardTextColor } }}
-                      secondaryTypographyProps={{ sx: { color: subheaderColor } }}
-                    />
-                  </ListItem>
-                );
-              })}
-            </List>
-
-            {uploading && (
-              <Box sx={{ mt: 2 }}>
-                <Typography variant="body2" sx={{ mb: 1, color: subheaderColor }}>
-                  Uploading... {Math.round(uploadProgress)}%
-                </Typography>
-                <LinearProgress variant="determinate" value={uploadProgress} />
+            {/* Error Alert */}
+            {error && (
+              <Box sx={{ mt: 3 }}>
+                <Alert severity="error">
+                  {error}
+                </Alert>
               </Box>
             )}
 
-            {!uploading && (
-              <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end' }}>
-                <Button
-                  variant="contained"
-                  onClick={handleUpload}
-                  disabled={files.length === 0}
-                  startIcon={<UploadIcon />}
-                >
-                  Upload {files.length} File{files.length !== 1 ? 's' : ''}
-                </Button>
+            {/* Selected Files List */}
+            {files.length > 0 && (
+              <Box sx={{ mt: 3 }}>
+                <List>
+                  {files.map(function(file, index) {
+                    return (
+                      <ListItem
+                        key={index}
+                        sx={{
+                          borderBottom: isDark ? '1px solid rgba(255, 255, 255, 0.12)' : '1px solid rgba(0, 0, 0, 0.12)'
+                        }}
+                        secondaryAction={
+                          !uploading && (
+                            <IconButton
+                              edge="end"
+                              onClick={() => handleRemoveFile(index)}
+                              sx={{ color: cardTextColor }}
+                            >
+                              <DeleteIcon />
+                            </IconButton>
+                          )
+                        }
+                      >
+                        <ListItemIcon>
+                          <FileIcon sx={{ color: cardTextColor }} />
+                        </ListItemIcon>
+                        <ListItemText
+                          primary={file.name}
+                          secondary={formatFileSize(file.size)}
+                          primaryTypographyProps={{ sx: { color: cardTextColor } }}
+                          secondaryTypographyProps={{ sx: { color: subheaderColor } }}
+                        />
+                      </ListItem>
+                    );
+                  })}
+                </List>
+
+                {uploading && (
+                  <Box sx={{ mt: 2 }}>
+                    <Typography variant="body2" sx={{ mb: 1, color: subheaderColor }}>
+                      Uploading... {Math.round(uploadProgress)}%
+                    </Typography>
+                    <LinearProgress variant="determinate" value={uploadProgress} />
+                  </Box>
+                )}
+
+                {!uploading && !converting && (
+                  <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
+                    <Button
+                      variant="outlined"
+                      onClick={handleConvertToFHIR}
+                      disabled={files.length === 0}
+                      startIcon={<ConvertIcon />}
+                    >
+                      Convert to FHIR
+                    </Button>
+                    <Button
+                      variant="contained"
+                      onClick={handleUpload}
+                      disabled={files.length === 0}
+                      startIcon={<UploadIcon />}
+                    >
+                      Upload {files.length} File{files.length !== 1 ? 's' : ''}
+                    </Button>
+                  </Box>
+                )}
+
+                {converting && (
+                  <Box sx={{ mt: 2 }}>
+                    <Typography variant="body2" sx={{ mb: 1, color: subheaderColor }}>
+                      Converting to FHIR resources...
+                    </Typography>
+                    <LinearProgress />
+                  </Box>
+                )}
               </Box>
             )}
           </CardContent>
@@ -396,7 +544,7 @@ function UploadPage() {
                     <ListItemText
                       primary={result.filename}
                       secondary={result.success
-                        ? 'Uploaded successfully'
+                        ? (result.message || 'Uploaded successfully')
                         : result.error
                       }
                       primaryTypographyProps={{ sx: { color: cardTextColor } }}
@@ -423,10 +571,25 @@ function UploadPage() {
           bgcolor: cardBgColor,
           color: cardTextColor
         }}>
+          <CardHeader
+            title="DICOM Image Preview"
+            action={
+              navigate && (
+                <Button
+                  variant="outlined"
+                  startIcon={<BackIcon />}
+                  onClick={() => navigate('/dicom/studies')}
+                  sx={{ color: cardTextColor }}
+                >
+                  Back to Studies
+                </Button>
+              )
+            }
+            sx={{
+              '& .MuiCardHeader-title': { color: cardTextColor }
+            }}
+          />
           <CardContent>
-            <Typography variant="h6" gutterBottom sx={{ color: cardTextColor }}>
-              DICOM Image Preview
-            </Typography>
             <Box sx={{ mt: 2 }}>
               <SimpleDicomViewport
                 dicomData={uploadedImageData}

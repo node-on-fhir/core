@@ -5,6 +5,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Box, CircularProgress, Typography } from '@mui/material';
 import { parseDicomFromBase64, extractDicomMetadata, cleanupBlobUrl } from '../utils/SimpleDicomLoader';
+import { Toolbar } from './Toolbar';
+import { useTools } from '../hooks/useTools';
 
 /**
  * Simple DICOM Viewport Component
@@ -17,6 +19,29 @@ export function SimpleDicomViewport({ dicomData }) {
   const [error, setError] = useState(null);
   const [metadata, setMetadata] = useState(null);
   const [blobUrl, setBlobUrl] = useState(null);
+  const [activeTool, setActiveTool] = useState('Wwwc');
+
+  // Initialize tools
+  const { setActiveTool: changeActiveTool, resetViewport, takeScreenshot } = useTools(
+    'SIMPLE_DICOM_VIEWPORT',
+    renderingEngineRef.current
+  );
+
+  // Handle tool change
+  const handleToolChange = function(toolId) {
+    setActiveTool(toolId);
+    changeActiveTool(toolId);
+  };
+
+  // Handle reset
+  const handleReset = function() {
+    resetViewport();
+  };
+
+  // Handle screenshot
+  const handleScreenshot = function() {
+    takeScreenshot();
+  };
 
   useEffect(function() {
     if (!dicomData) {
@@ -224,24 +249,42 @@ export function SimpleDicomViewport({ dicomData }) {
   return (
     <Box
       sx={{
-        position: 'relative',
         width: '100%',
-        height: '600px', // Fixed height for the viewport
-        minHeight: '400px',
-        backgroundColor: '#000',
+        display: 'flex',
+        flexDirection: 'column',
       }}
     >
-      {/* Viewport canvas container */}
-      <div
-        ref={viewportRef}
-        style={{
+      {/* Toolbar */}
+      {metadata && !loading && !error && (
+        <Toolbar
+          activeTool={activeTool}
+          onToolChange={handleToolChange}
+          onReset={handleReset}
+          onScreenshot={handleScreenshot}
+        />
+      )}
+
+      {/* Viewport container */}
+      <Box
+        sx={{
+          position: 'relative',
           width: '100%',
-          height: '100%',
-          position: 'absolute',
-          top: 0,
-          left: 0,
+          height: '600px', // Fixed height for the viewport
+          minHeight: '400px',
+          backgroundColor: '#000',
         }}
-      />
+      >
+        {/* Viewport canvas container */}
+        <div
+          ref={viewportRef}
+          style={{
+            width: '100%',
+            height: '100%',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+          }}
+        />
 
       {/* Loading indicator */}
       {loading && (
@@ -336,6 +379,7 @@ export function SimpleDicomViewport({ dicomData }) {
           </Typography>
         </Box>
       )}
+      </Box>
     </Box>
   );
 }
