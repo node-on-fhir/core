@@ -71,4 +71,32 @@ Meteor.startup(() => {
   } else {
     console.log('Notifications module disabled in settings');
   }
+
+  // DICOM Viewer with Cornerstone3D
+  console.log('[DICOM] Checking DICOM settings...');
+  console.log('[DICOM] Meteor.settings:', Meteor.settings);
+  console.log('[DICOM] Meteor.settings.public:', Meteor.settings.public);
+  console.log('[DICOM] Meteor.settings.public.dicom:', Meteor.settings.public?.dicom);
+
+  const dicomEnabled = get(Meteor, 'settings.public.dicom.enabled', false);
+  console.log('[DICOM] dicomEnabled:', dicomEnabled);
+
+  if (dicomEnabled) {
+    console.log('🎯 Loading DICOM viewer (Cornerstone3D)...');
+    import('./cornerstone-setup').then(({ initializeCornerstone3D }) => {
+      console.log('[DICOM] Calling initializeCornerstone3D()...');
+      return initializeCornerstone3D();
+    }).then(result => {
+      if (result) {
+        console.log('✅ Cornerstone3D initialized and ready');
+        console.log('[DICOM] Result:', result);
+      } else {
+        console.log('📦 Cornerstone3D initialization skipped (disabled in settings)');
+      }
+    }).catch(error => {
+      console.error('❌ Failed to initialize Cornerstone3D:', error);
+    });
+  } else {
+    console.log('📦 DICOM viewer disabled in settings');
+  }
 });

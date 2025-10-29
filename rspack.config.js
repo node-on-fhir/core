@@ -33,6 +33,27 @@ module.exports = defineConfig(Meteor => {
         Buffer: ['buffer', 'Buffer']
       })
     );
+
+    // Configure Web Worker support for Cornerstone3D DICOM image loader
+    // The issue: RSPack's import_scripts chunk loading injects CommonJS code
+    // that references 'module' which doesn't exist in ES module workers
+    config.output = {
+      ...config.output,
+      // Try using 'import' style chunk loading for workers to avoid CommonJS
+      // This tells RSPack to use dynamic import() instead of importScripts()
+      workerChunkLoading: false, // Disable automatic chunk loading in workers
+      // Ensure workers can load chunks properly
+      publicPath: '/',
+      // Global object for workers (should be 'self', not 'window')
+      globalObject: 'self',
+    };
+
+    // Experiments for worker support
+    config.experiments = {
+      ...config.experiments,
+      // Enable top-level await for workers (allows async imports)
+      topLevelAwait: true,
+    };
   }
 
   // Server-specific configuration

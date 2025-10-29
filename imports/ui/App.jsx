@@ -429,6 +429,10 @@ window.Session = Session;
 
 window.React = React;
 
+// Export React Router hooks for packages to use shared Router context
+import * as ReactRouterDOM from 'react-router-dom';
+window.ReactRouter = ReactRouterDOM;
+
 //===============================================================================================================
 // Router History
 
@@ -1524,9 +1528,13 @@ const ThemeContext = createContext();
 export const useTheme = () => useContext(ThemeContext);
 Meteor.useTheme = useTheme;
 
-// this Provider components enables the useTheme() hook in child components 
+// this Provider components enables the useTheme() hook in child components
 export const CustomThemeProvider = ({ children }) => {
-  const [theme, setTheme] = useState('light');
+  const [theme, setTheme] = useState(function() {
+    const settingsMode = get(Meteor, 'settings.public.theme.darkMode', false);
+    const paletteMode = get(Meteor, 'settings.public.theme.palette.mode', '');
+    return settingsMode || paletteMode === 'dark' ? 'dark' : 'light';
+  });
   const [themeRefreshCounter, setThemeRefreshCounter] = useState(0);
 
   // Create themes dynamically based on current Meteor.settings
@@ -1551,11 +1559,17 @@ export const CustomThemeProvider = ({ children }) => {
     const appBarColor = isDark ? appBarColorDark : appBarColorLight;
     const appBarTextColor = isDark ? appBarTextColorDark : appBarTextColorLight;
     
-    // Get background page color with dark mode support
+    // Get background colors with dark mode support
+    const backgroundCanvas = get(Meteor, "settings.public.theme.palette.backgroundCanvas", "");
+    const backgroundCanvasDark = get(Meteor, "settings.public.theme.palette.backgroundCanvasDark", backgroundCanvas);
     const backgroundPageColorLight = get(Meteor, "settings.public.theme.palette.backgroundPageColor", "");
     const backgroundPageColorDark = get(Meteor, "settings.public.theme.palette.backgroundPageColorDark", backgroundPageColorLight);
-    const backgroundPageColor = isDark ? backgroundPageColorDark : backgroundPageColorLight;
-    
+    const backgroundPageColor = isDark ? (backgroundCanvasDark || backgroundPageColorDark) : (backgroundCanvas || backgroundPageColorLight);
+
+    // Get card/paper colors from settings
+    const paperColorFromSettings = get(Meteor, "settings.public.theme.palette.paperColor", "");
+    const cardColorFromSettings = get(Meteor, "settings.public.theme.palette.cardColor", "");
+
     const themeConfig = {
       palette: {
         mode: mode,
@@ -1593,13 +1607,15 @@ export const CustomThemeProvider = ({ children }) => {
       }
     };
     
-    // Add background color if specified
-    if (backgroundPageColor) {
-      themeConfig.palette.background = {
-        default: backgroundPageColor,
-        paper: isDark ? '#424242' : '#ffffff'
-      };
-    }
+    // Add background colors from settings (handle empty strings)
+    const backgroundDefault = backgroundPageColor ? backgroundPageColor : (isDark ? '#121212' : '#fafafa');
+    const paperColor = paperColorFromSettings ? paperColorFromSettings.replace(' !important', '').trim() : '';
+    const backgroundPaper = paperColor || (isDark ? '#1e1e1e' : '#ffffff');
+
+    themeConfig.palette.background = {
+      default: backgroundDefault,
+      paper: backgroundPaper
+    };
     
     return createTheme(themeConfig);
   };
@@ -1894,8 +1910,12 @@ function StyledMainRouter(props){
     return prominentHeaderSetting && hasPatient;
   }, []);
 
-  let backgroundCanvas = get(Meteor, 'settings.public.theme.palette.backgroundCanvas', "#ffffff");
-  let backgroundCanvasDark = get(Meteor, 'settings.public.theme.palette.backgroundCanvasDark', "#ffffff");
+  // Use theme-aware default backgrounds instead of white
+  const backgroundCanvas = get(Meteor, 'settings.public.theme.palette.backgroundCanvas', "#f6f6f6");
+  const backgroundCanvasDark = get(Meteor, 'settings.public.theme.palette.backgroundCanvasDark', "#121212");
+
+  // Compute background based on current theme
+  const backgroundStyle = theme === "light" ? backgroundCanvas : backgroundCanvasDark;
 
   let mainAppStyle = {
     position: 'relative',
@@ -1903,6 +1923,7 @@ function StyledMainRouter(props){
     overflowY: 'auto',
     overflowX: 'hidden',
     transition: 'padding-top 0.3s ease-in-out',
+    background: backgroundStyle, // Set background here so it's part of the object
     ...style // Merge the passed style prop
   }
 
@@ -1910,12 +1931,6 @@ function StyledMainRouter(props){
   // The prominent header Toolbar is 64px, so we add that to the top padding
   if(showProminentHeader){
     mainAppStyle.paddingTop = '64px';
-  }
-
-  if(theme === "light"){
-    mainAppStyle.background = backgroundCanvas;
-  } else {
-    mainAppStyle.background = backgroundCanvasDark;
   }
 
   return (<main id='mainAppRouter' style={mainAppStyle}>
