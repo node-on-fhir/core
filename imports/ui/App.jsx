@@ -79,6 +79,10 @@ import EnhancedCarePlanDesigner from '../ui-fhir/carePlans/EnhancedCarePlanDesig
 import PatientsDirectory from '../ui-modules/PatientsDirectory.jsx';
 import BiomarkerChartingPage from '../ui-modules/BiomarkerChartingPage.jsx';
 
+// DICOM Viewer
+import StudyListPage from './DICOM/StudyListPage.jsx';
+import UploadPage from './DICOM/UploadPage.jsx';
+
 // Optional package imports would go here when packages are added
 
 //===============================================================================================================
@@ -606,6 +610,18 @@ if(get(Meteor, 'settings.public.modules.Theming')){
   dynamicRoutes.push({
     path: "/theming",
     element: <ThemingPage />
+  })
+}
+
+// DICOM Viewer routes
+if(get(Meteor, 'settings.public.modules.DicomViewer')){
+  dynamicRoutes.push({
+    path: "/dicom/studies",
+    element: <AuthenticatedRoute><StudyListPage /></AuthenticatedRoute>
+  })
+  dynamicRoutes.push({
+    path: "/dicom/upload",
+    element: <AuthenticatedRoute><UploadPage /></AuthenticatedRoute>
   })
 }
 

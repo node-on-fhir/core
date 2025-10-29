@@ -51,6 +51,7 @@ import '../imports/api/communications/methods.js';
 import '../imports/api/compositions/methods.js';
 import '../imports/api/conditions/methods.js';
 import '../imports/api/consents/methods.js';
+import '../imports/api/dicom/server/methods.js';
 import '../imports/api/documentReferences/methods.js';
 import '../imports/api/devices/methods.js'; // Import the methods
 import '../imports/api/encounters/methods.js';
