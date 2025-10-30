@@ -42,7 +42,9 @@ import "ace-builds/src-noconflict/theme-monokai";
 
 import AppleHealthPreview from './AppleHealthPreview';
 
-// import 'ace-builds/webpack-resolver'
+// Configure Ace Editor for Rspack compatibility
+// Disable web workers to avoid __rspack__/worker-json.js loading errors
+ace.config.set("useWorker", false);
 
 // //====================================================================================
 // // Async Hook
@@ -469,12 +471,16 @@ function DataEditor(props){
       <Grid container spacing={2} style={{marginTop: '10px'}}>
         <Grid item xs={selectedAlgorithm === 1 ? 6 : 12}>
           <FormControl style={{width: '100%'}}>
-            <InputLabel id="import-algorithm-label">Mapping Algorithm</InputLabel>
+            <InputLabel id="import-algorithm-label" style={{color: props.cardTextColor}}>Mapping Algorithm</InputLabel>
             <Select
               id="import-algorithm-selector"
               value={ selectedAlgorithm}
               onChange={handleChangeMappingAlgorithm.bind(this)}
               fullWidth
+              style={{color: props.cardTextColor}}
+              sx={{
+                '& .MuiSelect-icon': { color: props.cardTextColor }
+              }}
               >
               <MenuItem value={0} id="import-algorithm-menu-item-0" key="import-algorithm-menu-item-0" >FHIR Bundle</MenuItem>
               <MenuItem value={1} id="import-algorithm-menu-item-1" key="import-algorithm-menu-item-1" >Apple Health Export</MenuItem>

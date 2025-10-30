@@ -35,14 +35,13 @@ import { Meteor } from 'meteor/meteor';
 import { Random } from 'meteor/random';
 import { HTTP } from 'meteor/http';
 
-import { browserHistory } from 'react-router';
 import { get, set, has, uniq, cloneDeep } from 'lodash';
 import moment from 'moment';
 
 import { parseString } from 'xml2js';
 import xml2js from 'xml2js';
-import XLSX from 'xlsx';
-import JSZip from 'jszip';
+// import XLSX from 'xlsx';  // Unused - removed to avoid web worker conflicts with Rspack
+// import JSZip from 'jszip';  // Unused - removed to avoid web worker conflicts with Rspack
 
 import MedicalRecordImporter from '../lib/MedicalRecordImporter';
 
@@ -52,7 +51,13 @@ import { CollectionManagement } from './CollectionManagement';
 import PreviewDataCard from './PreviewDataCard';
 import DataEditor from './DataEditor';
 
-import { useNavigate } from "react-router-dom";
+// Use Meteor.startup pattern for Router utilities
+let useNavigate;
+Meteor.startup(function(){
+  if (window.ReactRouter) {
+    useNavigate = window.ReactRouter.useNavigate;
+  }
+});
 
 
 // import "ace-builds";
@@ -289,7 +294,18 @@ export function ImportEditorBindings(props){
   const { theme: themeMode } = useTheme();
   const muiTheme = useMuiTheme();
 
-  const navigate = useNavigate();
+  const navigate = useNavigate ? useNavigate() : null;
+
+  // Get Honeycomb theme colors from settings (not Material-UI theme)
+  const isDark = themeMode === 'dark';
+
+  // Strip !important flags if present in settings
+  const stripImportant = (str) => typeof str === 'string' ? str.replace(/\s*!important\s*$/, '') : str;
+
+  // Theme-aware colors: use mode-specific defaults since settings file has dark mode values
+  const cardBgColor = isDark ? '#1e1e1e' : '#ffffff';
+  const cardTextColor = isDark ? 'rgba(255, 255, 255, 0.87)' : 'rgba(0, 0, 0, 0.87)';
+  const subheaderColor = isDark ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)';
 
   if(typeof logger === "undefined"){
     if(typeof props.logger === "object"){
@@ -514,7 +530,8 @@ export function ImportEditorBindings(props){
               var parsedContent;
 
               if(newQueueItem.type === "text/csv"){
-                parsedContent = PapaParse.parse(content); 
+                // Disable workers to avoid Rspack bundling issues
+                parsedContent = PapaParse.parse(content, { worker: false });
                 newQueueItem.content = parsedContent.data;
               } else if(['application/json', 'application/json+fhir'].includes(newQueueItem.type)){
                 parsedContent = JSON.parse(content); 
@@ -1778,7 +1795,9 @@ export function ImportEditorBindings(props){
   }  
   function openPageUrl(url){
     console.log('openPageUrl', url)
-    navigate(url, { replace: true });
+    if (navigate) {
+      navigate(url, { replace: true });
+    }
   }
   
   
@@ -1857,7 +1876,7 @@ export function ImportEditorBindings(props){
     if(Array.isArray(importQueueRowsToRender)){
       // console.log('ImportQueue is an array.', importQueueRowsToRender)
       importQueueRowsToRender.forEach(function(item, index){
-        importQueueRows.push(<TableRow key={"importQueueRow-" + index} hover={true} onClick={selectImportQueueRow.bind(this, item)} style={{cursor: 'pointer'}} >
+        importQueueRows.push(<TableRow key={"importQueueRow-" + index} hover={true} onClick={selectImportQueueRow.bind(this, item)} style={{cursor: 'pointer', color: cardTextColor}} >
           {/* <TableCell>{index}</TableCell> */}
           <TableCell>
             {get(item, 'name')}<br />
@@ -1866,7 +1885,7 @@ export function ImportEditorBindings(props){
           <TableCell>{get(item, 'size')}</TableCell>
           {/* <TableCell style={{minWidth: '160px'}}>{moment(get(item, 'lastModifiedDate')).format('YYYY-MM-DD hh:mm')}</TableCell> */}
         </TableRow>)
-      })  
+      })
     }  
   }
 
@@ -1898,8 +1917,12 @@ export function ImportEditorBindings(props){
   if(showPreviewData){
     columnWidth = 3;
     previewDataContent = <Grid item md={12} lg={columnWidth} style={{width: '100%'}}>
-      <CardHeader title="Step 2.1 - Preview Data" style={{cursor: 'pointer'}} onClick={ setShowPreviewData.bind(this, false)} />
-      <Card style={{height: window.innerHeight - 300, backgroundColor: muiTheme.palette.mode === 'dark' ? muiTheme.palette.background.paper : '#ffffff'}} width={cardWidth + 'px'}>
+      <CardHeader
+        title="Step 2.1 - Preview Data"
+        style={{cursor: 'pointer', color: cardTextColor}}
+        onClick={ setShowPreviewData.bind(this, false)}
+      />
+      <Card style={{height: window.innerHeight - 300, backgroundColor: cardBgColor, color: cardTextColor}} width={cardWidth + 'px'}>
         <PreviewDataCard
           readyToImport={readyToImport}
           progressMax={importQueueLength}
@@ -1962,8 +1985,23 @@ export function ImportEditorBindings(props){
         <Grid container spacing={4} justify='center' style={{marginBottom: '100px'}}>
           <Grid item md={12} lg={columnWidth} style={{width: '100%'}}>
             <CardHeader title="Step 1 - File Scanner" />
-          
-            <Card width={cardWidth + 'px'} style={{backgroundColor: muiTheme.palette.mode === 'dark' ? muiTheme.palette.background.paper : '#ffffff'}}>              
+
+            <Card
+              width={cardWidth + 'px'}
+              sx={{
+                bgcolor: cardBgColor,
+                color: cardTextColor,
+                '& .MuiTableCell-root': {
+                  color: cardTextColor,
+                  borderColor: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.12)'
+                },
+                '& .MuiCheckbox-root': { color: cardTextColor },
+                '& .MuiTablePagination-root': { color: cardTextColor },
+                '& .MuiTablePagination-selectLabel': { color: cardTextColor },
+                '& .MuiTablePagination-displayedRows': { color: cardTextColor },
+                '& .MuiSelect-icon': { color: cardTextColor }
+              }}
+            >
               <CardContent>        
                 <Button 
                   id='selectFileButton'
@@ -1990,7 +2028,7 @@ export function ImportEditorBindings(props){
                 </Table>
                 { paginationFooter }
 
-                <div style={{marginTop: '6px'}} >
+                <div style={{marginTop: '6px', color: cardTextColor}} >
                   <Checkbox checked={autoSelectFirstPatient} onChange={toggleAutoSelectPatient.bind(this)} />Autoselect patient
                   <br />
                   <Checkbox checked={sendToDataWarehouse} onChange={toggleSendToDataWarehouse.bind(this)} />Send to data warehouse servers
@@ -2017,8 +2055,19 @@ export function ImportEditorBindings(props){
 
           </Grid>
           <Grid item md={12} lg={columnWidth} style={{width: '100%'}}>
-            <CardHeader title="Step 2 - Raw Data" style={{cursor: 'pointer'}} onClick={ setShowPreviewData.bind(this, true)} />
-            <Card style={{height: window.innerHeight - 300, backgroundColor: muiTheme.palette.mode === 'dark' ? muiTheme.palette.background.paper : '#ffffff'}} width={cardWidth + 'px'}>
+            <CardHeader
+              title="Step 2 - Raw Data"
+              style={{cursor: 'pointer', color: cardTextColor}}
+              onClick={ setShowPreviewData.bind(this, true)}
+            />
+            <Card
+              style={{height: window.innerHeight - 300}}
+              width={cardWidth + 'px'}
+              sx={{
+                bgcolor: cardBgColor,
+                color: cardTextColor
+              }}
+            >
               <DataEditor
                 previewMode={showPreviewData}
                 readyToImport={readyToImport}
@@ -2034,13 +2083,29 @@ export function ImportEditorBindings(props){
                 onMapData={mapData}
                 editWrapEnabled={editWrapEnabled}
                 onAppleHealthTimeRangeChange={(value) => setAppleHealthTimeRange(value)}
+                cardBgColor={cardBgColor}
+                cardTextColor={cardTextColor}
+                isDark={isDark}
               />
             </Card>
           </Grid>
           { previewDataContent }
           <Grid item md={12} lg={columnWidth} style={{width: '100%'}} key="last-grid-item">
             <CardHeader title="Step 3 - Collection Preview" />
-            <Card style={{height: window.innerHeight - 300, marginBottom: '20px', backgroundColor: muiTheme.palette.mode === 'dark' ? muiTheme.palette.background.paper : '#ffffff', display: 'flex', flexDirection: 'column'}} width={cardWidth + 'px'}>
+            <Card
+              style={{height: window.innerHeight - 300, marginBottom: '20px', display: 'flex', flexDirection: 'column'}}
+              width={cardWidth + 'px'}
+              sx={{
+                bgcolor: cardBgColor,
+                color: cardTextColor,
+                '& .MuiInputLabel-root': { color: cardTextColor },
+                '& .MuiSelect-root': { color: cardTextColor },
+                '& .MuiSelect-icon': { color: cardTextColor },
+                '& .MuiTableCell-root': { color: cardTextColor },
+                '& .MuiCheckbox-root': { color: cardTextColor },
+                '& .MuiButton-root': { color: cardTextColor }
+              }}
+            >
                 <CardContent style={{paddingBottom: 0}}>
                   <InputLabel id="import-algorithm-label">Import Algorithm</InputLabel>
                   <Select
@@ -2048,6 +2113,10 @@ export function ImportEditorBindings(props){
                     value={importAlgorithm}
                     onChange={handleChangeImportAlgorithm}
                     fullWidth
+                    style={{color: cardTextColor}}
+                    sx={{
+                      '& .MuiSelect-icon': { color: cardTextColor }
+                    }}
                   >
                     <MenuItem value="all" id="import-all" key="import-all">all</MenuItem>
                     <MenuItem value="import" id="import-import" key="import-import" >import</MenuItem>
@@ -2057,7 +2126,7 @@ export function ImportEditorBindings(props){
                   </Select>
                 </CardContent>
                 { dynamicAlgorithmItems }
-                <div style={{flex: 1, overflow: 'auto', padding: '0 16px 16px 16px'}}>
+                <div style={{flex: 1, overflow: 'auto', padding: '0 16px 16px 16px', color: cardTextColor}}>
                   <CollectionManagement
                     mode={importAlgorithm}
                     resourceTypes={scannedResourceTypes}
@@ -2071,6 +2140,7 @@ export function ImportEditorBindings(props){
                     displayPubSubEnabled={false}
                     noDataMessage="Please select a file to import."
                     preview={resourcePreview}
+                    textColor={cardTextColor}
                     onSelectionChange={function(selectionState){
                       console.log('onSelectionChange', selectionState)
                       setCollectionsToExport(selectionState);
