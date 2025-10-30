@@ -69,6 +69,15 @@ export function PatientsDirectory(props){
   const [debouncedSearchFilter, setDebouncedSearchFilter] = useState('');
   const searchTimeoutRef = useRef(null);
 
+  // Get theme for dark mode support
+  const useTheme = Meteor.useTheme;
+  const appTheme = useTheme ? useTheme() : { theme: 'light' };
+  const isDark = appTheme.theme === 'dark';
+
+  // Theme-aware colors
+  const cardBgColor = isDark ? '#1e1e1e' : '#ffffff';
+  const cardTextColor = isDark ? 'rgba(255, 255, 255, 0.87)' : 'rgba(0, 0, 0, 0.87)';
+
   // Debounce the search filter to prevent rapid re-subscriptions
   useEffect(() => {
     if (searchTimeoutRef.current) {
@@ -471,14 +480,25 @@ export function PatientsDirectory(props){
 
   let layoutContent;
   if(data.patients.length > 0){
-    layoutContent = <Card 
-      sx={{ 
+    layoutContent = <Card
+      sx={{
         width: '100%',
         borderRadius: 3,
         boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
         border: '1px solid',
         borderColor: 'divider',
-        overflow: 'hidden'
+        overflow: 'hidden',
+        bgcolor: cardBgColor,
+        color: cardTextColor,
+        '& .MuiTableCell-root': {
+          color: cardTextColor,
+          borderColor: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.12)'
+        },
+        '& .MuiTableCell-head': {
+          backgroundColor: isDark ? '#2a2a2a' : '#f5f5f5',
+          color: cardTextColor,
+          fontWeight: 600
+        }
       }}
     >
       <CardContent sx={{ p: 0 }}>

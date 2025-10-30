@@ -1329,10 +1329,11 @@ Object.keys(Package).forEach(function(packageName){
   if(Package[packageName].DynamicRoutes){
     // we try to build up a route from what's specified in the package
     Package[packageName].DynamicRoutes.forEach(function(route){
-      // If route has component instead of element, create the element
-      if(route.component && !route.element) {
-        route.element = React.createElement(route.component);
-      }
+      // Don't create element here - it will be created in the Routes component
+      // Just keep the component reference
+      // if(route.component && !route.element) {
+      //   route.element = React.createElement(route.component);
+      // }
       
       // Debug logging for swarm route
       if(route.path === '/swarm') {
@@ -1549,6 +1550,11 @@ const ThemeContext = createContext();
 export const useTheme = () => useContext(ThemeContext);
 Meteor.useTheme = useTheme;
 
+// Export React Router hooks via Meteor object for use in packages
+Meteor.useLocation = ReactRouterDOM.useLocation;
+Meteor.useNavigate = ReactRouterDOM.useNavigate;
+Meteor.useParams = ReactRouterDOM.useParams;
+
 // this Provider components enables the useTheme() hook in child components
 export const CustomThemeProvider = ({ children }) => {
   const [theme, setTheme] = useState(function() {
@@ -1587,9 +1593,14 @@ export const CustomThemeProvider = ({ children }) => {
     const backgroundPageColorDark = get(Meteor, "settings.public.theme.palette.backgroundPageColorDark", backgroundPageColorLight);
     const backgroundPageColor = isDark ? (backgroundCanvasDark || backgroundPageColorDark) : (backgroundCanvas || backgroundPageColorLight);
 
-    // Get card/paper colors from settings
-    const paperColorFromSettings = get(Meteor, "settings.public.theme.palette.paperColor", "");
-    const cardColorFromSettings = get(Meteor, "settings.public.theme.palette.cardColor", "");
+    // Get card/paper colors from settings with dark mode support
+    const paperColorLight = get(Meteor, "settings.public.theme.palette.paperColor", "");
+    const paperColorDark = get(Meteor, "settings.public.theme.palette.paperColorDark", "");
+    const paperColorFromSettings = isDark ? paperColorDark : paperColorLight;
+
+    const cardColorLight = get(Meteor, "settings.public.theme.palette.cardColor", "");
+    const cardColorDark = get(Meteor, "settings.public.theme.palette.cardColorDark", "");
+    const cardColorFromSettings = isDark ? cardColorDark : cardColorLight;
 
     const themeConfig = {
       palette: {
@@ -1619,6 +1630,48 @@ export const CustomThemeProvider = ({ children }) => {
             colorPrimary: {
               backgroundColor: appBarColor,
               color: appBarTextColor
+            }
+          }
+        },
+        MuiDrawer: {
+          styleOverrides: {
+            paper: {
+              backgroundColor: isDark ? '#1e1e1e' : '#ffffff',
+              color: isDark ? 'rgba(255, 255, 255, 0.87)' : 'rgba(0, 0, 0, 0.87)'
+            }
+          }
+        },
+        MuiCard: {
+          styleOverrides: {
+            root: {
+              backgroundColor: isDark ? '#1e1e1e' : '#ffffff',
+              color: isDark ? 'rgba(255, 255, 255, 0.87)' : 'rgba(0, 0, 0, 0.87)'
+            }
+          }
+        },
+        MuiTableHead: {
+          styleOverrides: {
+            root: {
+              backgroundColor: isDark ? '#2a2a2a' : '#f5f5f5'
+            }
+          }
+        },
+        MuiTableCell: {
+          styleOverrides: {
+            head: {
+              backgroundColor: isDark ? '#2a2a2a' : '#f5f5f5',
+              color: isDark ? 'rgba(255, 255, 255, 0.87)' : 'rgba(0, 0, 0, 0.87)',
+              fontWeight: 600
+            },
+            body: {
+              color: isDark ? 'rgba(255, 255, 255, 0.87)' : 'rgba(0, 0, 0, 0.87)'
+            }
+          }
+        },
+        MuiTableRow: {
+          styleOverrides: {
+            head: {
+              backgroundColor: isDark ? '#2a2a2a' : '#f5f5f5'
             }
           }
         }
@@ -1957,17 +2010,20 @@ function StyledMainRouter(props){
   return (<main id='mainAppRouter' style={mainAppStyle}>
     <Routes>
       {dynamicRoutes.map((route, index) => {
+        // Get the element - create from component if needed
+        const routeElement = route.element || (route.component ? React.createElement(route.component) : null);
+
         // Check if route requires authentication
         if (route.requireAuth) {
           return (
-            <Route 
-              key={index} 
-              path={route.path} 
-              element={<AuthenticatedRoute>{route.element}</AuthenticatedRoute>} 
+            <Route
+              key={index}
+              path={route.path}
+              element={<AuthenticatedRoute>{routeElement}</AuthenticatedRoute>}
             />
           );
         }
-        return <Route key={index} path={route.path} element={route.element} />;
+        return <Route key={index} path={route.path} element={routeElement} />;
       })}
       {/* Fallback route for 404 Not Found */}
       <Route path="*" />

@@ -1,7 +1,7 @@
 // packages/sphr-analyzer/client/FileAnalysisPage.jsx
 import React from 'react';
 
-import { Button, Container, Grid, CardHeader, CardContent, Typography } from '@mui/material';
+import { Button, Container, Grid, CardHeader, CardContent, Typography, useTheme } from '@mui/material';
 
 import { useTracker } from 'meteor/react-meteor-data';
 
@@ -10,8 +10,12 @@ import { cloneDeep, get } from 'lodash';
 import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
 
-import { Sunburst } from '@nivo/sunburst'
-import { useLocation, useNavigate } from "react-router-dom";
+import { Sunburst } from '@nivo/sunburst';
+
+let useAppTheme;
+Meteor.startup(function(){
+  useAppTheme = Meteor.useTheme;
+});
 
 
 // //=============================================================================================================================================
@@ -502,21 +506,22 @@ let dynamicSunburstTemplate = {
 
 
 export function FileAnalysisPage(props){
-  const navigate = useNavigate();
+  const theme = useTheme();
+  const appTheme = useAppTheme ? useAppTheme() : { theme: 'light' };
 
   let headerHeight = 84;
 
-  let noDataImagePath = get(Meteor, 'settings.public.defaults.noData.noDataImagePathPath', "NoData.png");  
+  let noDataImagePath = get(Meteor, 'settings.public.defaults.noData.noDataImagePathPath', "NoData.png");
 
 
   if(get(Meteor, 'settings.public.defaults.prominantHeader')){
     headerHeight = 148;
-  }  
+  }
 
   function openLink(url){
     console.log("openLink", url);
-    // props.history.replace(url)
-    navigate(url, {replace: true});
+    // Use window.location for navigation since this is only called from a simple button click
+    window.location.href = url;
   }
 
   let imgHeight = (Session.get('appHeight') - 210) / 3;
@@ -676,7 +681,10 @@ export function FileAnalysisPage(props){
 
 
   return (
-    <div id='FileAnalysisPage' >
+    <div id='FileAnalysisPage' style={{
+      minHeight: '100vh',
+      paddingTop: '24px'
+    }}>
       { layoutContent }
     </div>
   );

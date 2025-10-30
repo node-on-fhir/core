@@ -66,20 +66,8 @@ import PrintIcon from '@mui/icons-material/Print';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 
-// Import tables from Meteor.Tables
-import ConditionsTable from '/imports/ui-fhir/conditions/ConditionsTable';
-import MedicationsTable from '/imports/ui-fhir/medications/MedicationsTable';
-import AllergyIntolerancesTable from '/imports/ui-fhir/allergyIntolerances/AllergyIntolerancesTable';
-import ImmunizationsTable from '/imports/ui-fhir/immunizations/ImmunizationsTable';
-import ObservationsTable from '/imports/ui-fhir/observations/ObservationsTable';
-import ProceduresTable from '/imports/ui-fhir/procedures/ProceduresTable';
-import CarePlansTable from '/imports/ui-fhir/carePlans/CarePlansTable';
-import CareTeamsTable from '/imports/ui-fhir/careTeams/CareTeamsTable';
-import GoalsTable from '/imports/ui-fhir/goals/GoalsTable';
-import ServiceRequestsTable from '/imports/ui-fhir/serviceRequests/ServiceRequestsTable';
-import NutritionOrdersTable from '/imports/ui-fhir/nutritionOrders/NutritionOrdersTable';
-import DevicesTable from '/imports/ui-fhir/devices/DevicesTable';
-import DocumentReferencesTable from '/imports/ui-fhir/documentReferences/DocumentReferencesTable';
+// Tables will be accessed from Meteor.Tables
+// Packages cannot directly import from /imports/ with Meteor 3 + RSPack
 
 // FHIR Resources collections
 const initCollections = () => {
@@ -129,6 +117,30 @@ const transitionSections = [
 ];
 
 function TransitionsOfCarePage(props) {
+  // Access tables from Meteor.Tables (registered by main app)
+  const ConditionsTable = Meteor.Tables?.ConditionsTable;
+  const MedicationsTable = Meteor.Tables?.MedicationsTable;
+  const AllergyIntolerancesTable = Meteor.Tables?.AllergyIntolerancesTable;
+  const ImmunizationsTable = Meteor.Tables?.ImmunizationsTable;
+  const ObservationsTable = Meteor.Tables?.ObservationsTable;
+  const ProceduresTable = Meteor.Tables?.ProceduresTable;
+  const CarePlansTable = Meteor.Tables?.CarePlansTable;
+  const CareTeamsTable = Meteor.Tables?.CareTeamsTable;
+  const GoalsTable = Meteor.Tables?.GoalsTable;
+  const ServiceRequestsTable = Meteor.Tables?.ServiceRequestsTable;
+  const NutritionOrdersTable = Meteor.Tables?.NutritionOrdersTable;
+  const DevicesTable = Meteor.Tables?.DevicesTable;
+  const DocumentReferencesTable = Meteor.Tables?.DocumentReferencesTable;
+
+  // Get Honeycomb theme for dark mode support
+  const useAppTheme = Meteor.useTheme;
+  const appTheme = useAppTheme ? useAppTheme() : { theme: 'light' };
+  const isDark = appTheme.theme === 'dark';
+
+  // Theme-aware colors for cards
+  const cardBgColor = isDark ? '#1e1e1e' : '#ffffff';
+  const cardTextColor = isDark ? 'rgba(255, 255, 255, 0.87)' : 'rgba(0, 0, 0, 0.87)';
+
   const [selectedTransition, setSelectedTransition] = useState(null);
   const [expandedSections, setExpandedSections] = useState({});
   const [completedSections, setCompletedSections] = useState({});
@@ -140,7 +152,7 @@ function TransitionsOfCarePage(props) {
   });
   const [editMode, setEditMode] = useState(false);
   const [selectedComposition, setSelectedComposition] = useState(null);
-  
+
   const collections = initCollections();
   
   // Subscribe to PACIO data
@@ -660,25 +672,23 @@ function TransitionsOfCarePage(props) {
   };
 
   return (
-    <Box sx={{ 
-      bgcolor: theme => theme.palette.mode === 'light' 
-        ? theme.palette.grey[50] 
-        : theme.palette.background.default,
-      minHeight: '100vh'
-    }}>
+    <Box sx={{ minHeight: '100vh' }}>
       <Container maxWidth="xl" sx={{ pt: 3, pb: 3 }}>
         <Box sx={{ mb: 3 }}>
-        <Breadcrumbs aria-label="breadcrumb">
-          <Link 
-            color="inherit" 
-            href="/" 
+        <Breadcrumbs aria-label="breadcrumb" sx={{
+          '& .MuiTypography-root': { color: cardTextColor },
+          '& .MuiLink-root': { color: cardTextColor }
+        }}>
+          <Link
+            color="inherit"
+            href="/"
             sx={{ display: 'flex', alignItems: 'center' }}
           >
-            <HomeIcon sx={{ mr: 0.5 }} fontSize="inherit" />
+            <HomeIcon sx={{ mr: 0.5, color: cardTextColor }} fontSize="inherit" />
             Home
           </Link>
-          <Typography color="text.primary" sx={{ display: 'flex', alignItems: 'center' }}>
-            <TransferWithinAStationIcon sx={{ mr: 0.5 }} fontSize="inherit" />
+          <Typography sx={{ display: 'flex', alignItems: 'center', color: cardTextColor }}>
+            <TransferWithinAStationIcon sx={{ mr: 0.5, color: cardTextColor }} fontSize="inherit" />
             Transitions of Care
           </Typography>
         </Breadcrumbs>
@@ -686,8 +696,12 @@ function TransitionsOfCarePage(props) {
 
       <Grid container spacing={3}>
         <Grid item xs={12} md={4}>
-          <Card>
-            <CardHeader 
+          <Card sx={{
+            bgcolor: cardBgColor,
+            color: cardTextColor,
+            '& .MuiTypography-root': { color: cardTextColor }
+          }}>
+            <CardHeader
               title="Care Journey Timeline"
             />
             <CardContent>
@@ -760,8 +774,15 @@ function TransitionsOfCarePage(props) {
         </Grid>
 
         <Grid item xs={12} md={8}>
-          <Card>
-            <CardHeader 
+          <Card sx={{
+            bgcolor: cardBgColor,
+            color: cardTextColor,
+            '& .MuiTypography-root': { color: cardTextColor },
+            '& .MuiCardHeader-subheader': {
+              color: isDark ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)'
+            }
+          }}>
+            <CardHeader
               title="Continuity of Care Document"
               subheader={selectedTransition ? 
                 `${get(selectedTransition, 'title')} - ${moment(get(selectedTransition, 'date')).format('MMMM DD, YYYY')}` : 

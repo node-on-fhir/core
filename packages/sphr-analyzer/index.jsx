@@ -7,11 +7,11 @@ import QualityChecksPage from './client/QualityChecksPage';
 let DynamicRoutes = [{
   'name': 'FileAnalysisPage',
   'path': '/file-analysis',
-  'element': <FileAnalysisPage />
+  'element': React.createElement(FileAnalysisPage)
 }, {
   'name': 'QualityChecksPage',
   'path': '/quality-checks',
-  'element': <QualityChecksPage />
+  'element': React.createElement(QualityChecksPage)
 }];
 
 

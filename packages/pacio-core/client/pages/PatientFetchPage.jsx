@@ -22,13 +22,13 @@
 //   This dual approach ensures data is available on the client regardless of subscription status, though the pub/sub approach is preferred when available.
 
 import React, { useState, useEffect, useRef } from 'react';
-import { 
-  Box, 
-  Card, 
-  CardContent, 
+import {
+  Box,
+  Card,
+  CardContent,
   CardHeader,
   Container,
-  TextField, 
+  TextField,
   Typography,
   Button,
   CircularProgress,
@@ -43,12 +43,21 @@ import {
 import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
 import { get } from 'lodash';
-import { useNavigate } from 'react-router-dom';
 
 export function PatientFetchPage(props) {
-  const navigate = useNavigate();
-  // const consoleEndRef = useRef(null);
-  
+  // Access useNavigate from Meteor object (packages can't directly import from react-router-dom)
+  const useNavigate = Meteor.useNavigate;
+  const navigate = useNavigate ? useNavigate() : () => console.warn('useNavigate not available');
+
+  // Get Honeycomb theme for dark mode support
+  const useAppTheme = Meteor.useTheme;
+  const appTheme = useAppTheme ? useAppTheme() : { theme: 'light' };
+  const isDark = appTheme.theme === 'dark';
+
+  // Theme-aware colors for cards
+  const cardBgColor = isDark ? '#1e1e1e' : '#ffffff';
+  const cardTextColor = isDark ? 'rgba(255, 255, 255, 0.87)' : 'rgba(0, 0, 0, 0.87)';
+
   // Get default URL from settings
   const defaultUrl = get(Meteor, 'settings.public.interfaces.patientFetch.defaultUrl', 
     'https://gw.interop.community/paciosandbox/open/Patient/patient-betsysmith-johnson01/$everything');
@@ -182,18 +191,15 @@ export function PatientFetchPage(props) {
   };
   
   return (
-    <Box sx={{ 
-      bgcolor: theme => theme.palette.mode === 'light' 
-        ? theme.palette.grey[50] 
-        : theme.palette.background.default,
-      minHeight: '100vh'
-    }}>
+    <Box sx={{ minHeight: '100vh' }}>
       <Container maxWidth="xl" sx={{ pt: 4, pb: 4 }}>
         <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" component="h1" gutterBottom>
+        <Typography variant="h4" component="h1" gutterBottom sx={{ color: cardTextColor }}>
           Patient Fetch
         </Typography>
-        <Typography variant="body1" color="text.secondary" paragraph>
+        <Typography variant="body1" paragraph sx={{
+          color: isDark ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)'
+        }}>
           Fetch all patient data using the FHIR $everything operation
         </Typography>
       </Box>
@@ -204,8 +210,23 @@ export function PatientFetchPage(props) {
           gap: 3 
         }}>
           {/* Left Column - Configuration */}
-          <Card>
-            <CardHeader 
+          <Card sx={{
+            bgcolor: cardBgColor,
+            color: cardTextColor,
+            '& .MuiTypography-root': { color: cardTextColor },
+            '& .MuiCardHeader-subheader': {
+              color: isDark ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)'
+            },
+            '& .MuiInputLabel-root': { color: cardTextColor },
+            '& .MuiInputBase-root': { color: cardTextColor },
+            '& .MuiOutlinedInput-notchedOutline': {
+              borderColor: isDark ? 'rgba(255, 255, 255, 0.23)' : 'rgba(0, 0, 0, 0.23)'
+            },
+            '& .MuiFormHelperText-root': {
+              color: isDark ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)'
+            }
+          }}>
+            <CardHeader
               title="FHIR Server Configuration"
               subheader="Configure the FHIR server and patient identifier"
             />
@@ -232,19 +253,23 @@ export function PatientFetchPage(props) {
                 />
                 
                 {/* Generated URL Display */}
-                <Paper 
-                  variant="outlined" 
-                  sx={theme => ({ 
-                    p: 2, 
-                    bgcolor: theme.palette.mode === 'dark' 
-                      ? theme.palette.grey[900] 
-                      : theme.palette.grey[50] 
-                  })}
+                <Paper
+                  variant="outlined"
+                  sx={{
+                    p: 2,
+                    bgcolor: isDark ? '#2a2a2a' : '#f5f5f5'
+                  }}
                 >
-                  <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                  <Typography variant="subtitle2" sx={{
+                    color: isDark ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)'
+                  }} gutterBottom>
                     Generated URL:
                   </Typography>
-                  <Typography variant="body2" sx={{ wordBreak: 'break-all', fontFamily: 'monospace' }}>
+                  <Typography variant="body2" sx={{
+                    wordBreak: 'break-all',
+                    fontFamily: 'monospace',
+                    color: cardTextColor
+                  }}>
                     {buildUrl()}
                   </Typography>
                 </Paper>
@@ -291,10 +316,21 @@ export function PatientFetchPage(props) {
               </Box>
             </CardContent>
           </Card>
-          
+
+
           {/* Right Column - Console Log */}
-          <Card>
-            <CardHeader 
+          <Card sx={{
+            bgcolor: cardBgColor,
+            color: cardTextColor,
+            '& .MuiTypography-root': { color: cardTextColor },
+            '& .MuiCardHeader-subheader': {
+              color: isDark ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)'
+            },
+            '& .MuiListItemText-secondary': {
+              color: isDark ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)'
+            }
+          }}>
+            <CardHeader
               title="Fetch Console"
               subheader="Resource fetch progress and details"
               action={
@@ -306,20 +342,18 @@ export function PatientFetchPage(props) {
               }
             />
             <CardContent>
-              <Box 
-                sx={theme => ({ 
-                  p: 2, 
-                  backgroundColor: theme.palette.mode === 'dark' 
-                    ? '#1a1a1a' 
-                    : '#f5f5f5',
-                  color: theme.palette.text.primary,
-                  maxHeight: '500px', 
+              <Box
+                sx={{
+                  p: 2,
+                  backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5',
+                  color: cardTextColor,
+                  maxHeight: '500px',
                   overflowY: 'auto',
                   fontFamily: 'monospace',
                   fontSize: '0.875rem',
-                  border: `1px solid ${theme.palette.divider}`,
+                  border: isDark ? '1px solid rgba(255,255,255,0.12)' : '1px solid rgba(0,0,0,0.12)',
                   borderRadius: 1
-                })}
+                }}
               >
                 {resourceLogs.length === 0 ? (
                   <Typography variant="body2" sx={{ color: 'text.secondary' }}>

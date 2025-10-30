@@ -205,6 +205,15 @@ export function AutoDashboard(props){
     const client = useContext(FhirClientContext);
     const navigate = useNavigate();
 
+    // Get Honeycomb theme for dark mode support
+    const useAppTheme = Meteor.useTheme;
+    const appTheme = useAppTheme ? useAppTheme() : { theme: 'light' };
+    const isDark = appTheme.theme === 'dark';
+
+    // Theme-aware colors for cards
+    const cardBgColor = isDark ? '#1e1e1e' : '#ffffff';
+    const cardTextColor = isDark ? 'rgba(255, 255, 255, 0.87)' : 'rgba(0, 0, 0, 0.87)';
+
     // State for expanded sections
     const [expandedSections, setExpandedSections] = useState({
         encounters: true,
@@ -1264,15 +1273,22 @@ export function AutoDashboard(props){
                         textAlign: 'center'
                     }}
                 >
-                    <Card 
-                        sx={{ 
+                    <Card
+                        sx={{
                             maxWidth: '600px',
                             width: '100%',
                             borderRadius: 3,
                             boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
                             border: '1px solid',
                             borderColor: 'divider',
-                            backgroundColor: 'background.paper'
+                            bgcolor: cardBgColor,
+                            color: cardTextColor,
+                            '& .MuiTypography-root': {
+                                color: cardTextColor
+                            },
+                            '& .MuiTypography-body1': {
+                                color: isDark ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)'
+                            }
                         }}
                     >
                         <CardContent sx={{ p: 6 }}>
