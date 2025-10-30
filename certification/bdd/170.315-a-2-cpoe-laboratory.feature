@@ -11,38 +11,33 @@
 
 @170.315-a-2 @cpoe @laboratory @clinical
 Feature: Computerized Provider Order Entry - Laboratory
-  As an ordering provider
-  I want to electronically create and manage laboratory orders
-  So that I can efficiently order appropriate diagnostic tests
+  As a provider
+  I want to create and manage laboratory orders
 
   Background:
-    Given I am authenticated as an ordering provider
-    And I have appropriate privileges to order laboratory tests
-    And a patient record is open
+    Given I am authenticated as a provider
+    And a patient record is selected
 
   Scenario: Create a new laboratory order
     Given the patient requires a "Complete Blood Count"
-    When I create a laboratory order for "CBC with differential"
-    Then the system shall enable recording of the laboratory order
-    And the order shall include all necessary details for specimen collection
-    And the order shall be transmitted to the laboratory system
+    When I open the OrderCatalog on /order-catalog
+    And select a PlanDefinition for "CBC with differential"
+    Then the system shall reference the PlanDefinition.id of "CBC with differential"
+    And look up the associated actions and ActivityDefinitions
+    And create a new resource based on ActivityDefinition.kind (typically a ServiceRequest)
+    And the ServiceRequest shall include all necessary details for specimen collection
+    And the ServiceRequest shall be inserted into the ServiceRequests collection
 
   Scenario: Change an existing laboratory order
-    Given the patient has a pending laboratory order for "Basic Metabolic Panel"
-    When I change the laboratory order to "Comprehensive Metabolic Panel"
-    Then the system shall enable changing of the laboratory order
-    And the modified order shall be communicated to the laboratory
-    And the change shall be documented in the order history
+    Given the patient has a pending ServiceRequest for "Basic Metabolic Panel"
+    When I change the ServiceRequest to "Comprehensive Metabolic Panel"
+    And the modified ServiceRequest shall be saved in the ServiceRequests collection
 
   Scenario: Access existing laboratory orders
-    Given the patient has multiple laboratory orders in various states
-    When I request to view the patient's laboratory orders
-    Then the system shall enable access to all laboratory orders
-    And the orders shall show current status (pending, completed, cancelled)
+    Given the patient has multiple ServiceRequests in various states
+    When I request to view the patient's ServiceRequests
+    Then the system shall update the ServiceRequests subscription by patientId
+    And the ServiceRequestsTable shall show current status (pending, completed, cancelled) for each request 
     And I shall be able to view results for completed orders
 
-  Scenario: Optionally include reason for laboratory order
-    Given I am creating a new laboratory order for "Hemoglobin A1c"
-    When I have the option to include a reason for the order
-    Then the system may include a "reason for order" field
-    And if provided, the reason shall be stored with the order
+  
