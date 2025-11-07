@@ -20,8 +20,8 @@ Feature: Social, Psychological, and Behavioral Data
   So that I can address social needs and provide holistic patient care
 
   Background:
-    Given I am authenticated as a healthcare provider
-    And I have a patient record open
+    Given I am authenticated as a provider
+    And a patient record is selected
 
   # ------ Financial Resource Strain ------
 

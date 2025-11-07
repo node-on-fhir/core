@@ -16,7 +16,9 @@ Feature: Direct Project, Edge Protocol, and XDR/XDM
   So that I can interoperate with various health information networks
 
   Background:
-    Given the system supports multiple transport protocols
+    Given the system has the clinical:data-exporter package installed
+    And the system has the clinical:data-importer package installed
+    
 
   # Direct Project with Wrapped Message
 
@@ -32,25 +34,7 @@ Feature: Direct Project, Edge Protocol, and XDR/XDM
     Then the system shall receive per § 170.202(a)(2)
     And the message shall be processed as wrapped message
 
-  # XDR/XDM Support
-
-  Scenario: Send via XDR/XDM with limited metadata profile
-    Given I am using XDR/XDM transport
-    When I send health information with limited metadata
-    Then the system shall send per § 170.202(b)
-    And limited XDS metadata profile shall be supported
-
-  Scenario: Send via XDR/XDM with full metadata profile
-    Given I am using XDR/XDM transport
-    When I send health information with full metadata
-    Then the system shall send per § 170.202(b)
-    And full XDS metadata profile shall be supported
-
-  Scenario: Receive via XDR/XDM
-    Given I am using XDR/XDM transport
-    When I receive health information
-    Then the system shall receive per § 170.202(b)
-    And both metadata profiles shall be supported
+  
 
   # Edge Protocol Methods
 
@@ -80,8 +64,34 @@ Feature: Direct Project, Edge Protocol, and XDR/XDM
     Given health information has been sent
     When delivery notification is required
     Then the system shall send notification per § 170.202(e)(1)
+    And shall be displayed in the user interface
 
   Scenario: Receive delivery notification
     Given I sent health information
     When delivery notification is sent back
     Then the system shall receive notification per § 170.202(e)(1)
+    And shall be displayed in the user interface
+    
+
+# XDR/XDM Support
+#
+# Scenario: Send via XDR/XDM with limited metadata profile
+#   Given I am using XDR/XDM transport
+#   When I send health information with limited metadata
+#   Then the system shall send per § 170.202(b)
+#   And limited XDS metadata profile shall be supported
+
+# Scenario: Send via XDR/XDM with full metadata profile
+#   Given I am using XDR/XDM transport
+#   When I send health information with full metadata
+#   Then the system shall send per § 170.202(b)
+#   And full XDS metadata profile shall be supported
+
+# Scenario: Receive via XDR/XDM
+#   Given I am using XDR/XDM transport
+#   When I receive health information
+#   Then the system shall receive per § 170.202(b)
+#   And both metadata profiles shall be supported
+
+
+

@@ -12,8 +12,9 @@ Feature: Audit Report(s)
   So that I can review system access and actions
 
   Background:
-    Given audit logs have been recorded
-    And I am authorized to access audit reports
+    Given I am authenticated as a system administrator
+    And the clinical:hipaa-compliance package is installed
+    And audit logging is configuredin Meteor.settings.private.hipaa
 
   Scenario: Enable audit report creation
     Given audit data exists in the system

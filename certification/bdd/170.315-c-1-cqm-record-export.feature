@@ -17,8 +17,8 @@ Feature: Clinical Quality Measures - Record and Export
   So that I can track quality metrics and submit quality reports
 
   Background:
-    Given I am authenticated as a healthcare provider
-    And the Health IT Module is certified to specific CQMs
+    Given I am authenticated as a provider
+    And the application has the clinics:quality-measures package installed 
 
   Scenario: Record all data necessary for CQM calculation
     Given I am documenting patient care for a certified CQM

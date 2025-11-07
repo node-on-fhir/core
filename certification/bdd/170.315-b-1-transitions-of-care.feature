@@ -93,8 +93,8 @@ Feature: Transitions of Care
   So that I can ensure care continuity when patients move between care settings
 
   Background:
-    Given I am authenticated as a healthcare provider
-    And I have appropriate privileges for care transitions
+    Given I am authenticated as a provider
+    And a patient record is selected
 
   # ------ Send Transition of Care Summary via Edge Protocol ------
 

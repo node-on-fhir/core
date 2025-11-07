@@ -14,8 +14,8 @@ Feature: Clinical Quality Measures - Import and Calculate
   So that I can analyze quality data from multiple sources
 
   Background:
-    Given I am authenticated as a healthcare provider
-    And the Health IT Module is certified to specific CQMs
+    Given I am authenticated as a provider
+    And the application has the clinics:quality-measures package installed 
 
   Scenario: Import CQM data in QRPP format
     Given I have CQM data file in QRPP format

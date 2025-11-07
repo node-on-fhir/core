@@ -20,8 +20,9 @@ Feature: Auditable Events and Tamper-Resistance
   So that I can track all actions related to electronic health information
 
   Background:
-    Given the Health IT system is operational
-    And audit logging is configured
+    Given I am authenticated as a system administrator
+    And the clinical:hipaa-compliance package is installed
+    And audit logging is configuredin Meteor.settings.private.hipaa
 
   Scenario: Record actions related to EHI
     Given a user performs actions with EHI

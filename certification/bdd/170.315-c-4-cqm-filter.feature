@@ -26,7 +26,8 @@ Feature: Clinical Quality Measures - Filter
   So that I can analyze quality data for specific populations or providers
 
   Background:
-    Given I am authenticated as a healthcare provider
+    Given I am authenticated as a provider
+    And the application has the clinics:quality-measures package installed 
     And CQM results are available
 
   # ------ Record Filter Data ------

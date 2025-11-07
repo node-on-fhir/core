@@ -12,8 +12,8 @@ Feature: Family Health History
   So that I can assess genetic risk factors and provide appropriate screening
 
   Background:
-    Given I am authenticated as a healthcare provider
-    And I have a patient record open
+    Given I am authenticated as a provider
+    And a patient record is selected
 
   Scenario: Record family health history
     Given I am documenting family health history

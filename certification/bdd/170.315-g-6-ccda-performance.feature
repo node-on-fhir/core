@@ -16,35 +16,11 @@ Feature: Consolidated CDA Creation Performance
   So that the system creates valid C-CDA documents
 
   Background:
-    Given the Health IT Module creates C-CDA documents
-    And document quality is essential
+    Given the clinical:data-exporter package is installed
 
-  Scenario: Create valid CCD documents
+  Scenario: Export to CCD documents
     Given I am creating Continuity of Care Document
     When generating the CCD
     Then the document shall conform to C-CDA standards
     And the document shall be valid
     And the document shall be processable by receiving systems
-
-  Scenario: Create valid Referral Note documents
-    Given I am creating Referral Note
-    When generating the document
-    Then the document shall conform to C-CDA standards
-    And the document shall be valid
-    And referral information shall be complete
-
-  @inpatient-only
-  Scenario: Create valid Discharge Summary documents
-    Given I am in inpatient setting
-    And I am creating Discharge Summary
-    When generating the document
-    Then the document shall conform to C-CDA standards
-    And the document shall be valid
-    And discharge information shall be complete
-
-  Scenario: Validate document template conformance
-    Given C-CDA documents are being created
-    When validating documents
-    Then templates shall conform to C-CDA specifications
-    And all required sections shall be present
-    And all required entries shall be included

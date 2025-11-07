@@ -26,22 +26,17 @@ Feature: Quality Management System
     And quality is essential
 
   Scenario: Maintain quality management system
-    Given I am developing and maintaining health IT
-    When managing development processes
-    Then I shall maintain a quality management system
-    And QMS shall cover all aspects of development
-    And QMS shall ensure product quality
+    Given we are using GitHub as our source control system
+    When staging a pull request
+    Then we shall run Nightwatch E2E tests via Continuous Integration (CircleCI) for Validation purpouses
+    And take screenshots of any errors
+    And resolve all errors before merging the pull request
 
-  Scenario: Document QMS processes
+  Scenario: Document quality management via software manual
     Given I have a quality management system
-    When documenting QMS
-    Then all processes shall be documented
-    And documentation shall be comprehensive
-    And documentation shall be maintained current
+    When documenting functionality for ONC HealthIT certification 
+    Then all processes shall be documented via LaTeX into a Software Manual
+    And screenshots will be automatically inlucded from the continuous integration system
+    And the Gherkin BDD tests and a reference to the Nightwatch script will be included for each criterion
 
-  Scenario: Apply QMS to certified capabilities
-    Given capabilities are being certified
-    When developing certified functionality
-    Then QMS shall be applied to all certified capabilities
-    And quality controls shall be consistently applied
-    And certified capabilities shall meet quality standards
+  

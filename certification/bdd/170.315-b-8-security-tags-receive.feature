@@ -16,7 +16,7 @@ Feature: Security Tags - Summary of Care - Receive
   So that I can respect patient privacy preferences and legal requirements
 
   Background:
-    Given I am authenticated as a healthcare provider
+    Given I am authenticated as a provider
     And I am receiving a summary of care document
 
   Scenario: Receive summary with document-level restriction tags

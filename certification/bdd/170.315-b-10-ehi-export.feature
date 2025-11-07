@@ -36,8 +36,8 @@ Feature: Electronic Health Information Export
   So that I can ensure data portability and patient access rights
 
   Background:
-    Given I am authenticated with appropriate export privileges
-    And the Health IT Module stores electronic health information
+    Given I am authenticated as a provider
+    And I have a patient record open
 
   # ------ Single Patient Export ------
 

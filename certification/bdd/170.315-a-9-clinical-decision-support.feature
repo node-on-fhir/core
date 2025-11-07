@@ -65,9 +65,8 @@ Feature: Clinical Decision Support (CDS)
   So that I can make informed treatment decisions
 
   Background:
-    Given I am authenticated as a healthcare provider
-    And CDS is properly configured
-    And the current date is before January 1, 2025
+    Given I am authenticated as a provider
+    And a patient record is selected
 
   # ------ CDS Intervention Interaction ------
 

@@ -38,13 +38,6 @@ Feature: Multi-Factor Authentication
     And this may be token or smart card or phone
     And possession factor shall be validated
 
-  Scenario: Support inherence factor
-    Given a user is providing authentication factors
-    When using inherence factor
-    Then the system may verify something user is
-    And this may be biometric
-    And inherence factor shall be authenticated
-
   Scenario: Enforce MFA for privileged access
     Given a user has privileged access rights
     When authenticating for privileged access

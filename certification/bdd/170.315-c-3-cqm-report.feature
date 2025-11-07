@@ -14,7 +14,8 @@ Feature: Clinical Quality Measures - Report
   So that I can submit quality data to reporting programs
 
   Background:
-    Given I am authenticated as a healthcare provider
+    Given I am authenticated as a provider
+    And the application has the clinics:quality-measures package installed 
     And CQM data has been recorded and calculated
 
   Scenario: Create QRDA Category I report for inpatient measures

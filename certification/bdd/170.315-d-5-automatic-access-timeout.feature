@@ -12,7 +12,7 @@ Feature: Automatic Access Time-out
   So that unauthorized access to health information is prevented
 
   Background:
-    Given I am authenticated as a healthcare user
+    Given I am authenticated as a user
     And automatic access time-out is enabled
 
   Scenario: Automatically stop access after inactivity

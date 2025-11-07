@@ -38,9 +38,8 @@ Feature: Patient Demographics and Observations
   So that I can provide culturally competent and personalized care
 
   Background:
-    Given I am authenticated as a healthcare provider
-    And I have appropriate privileges to record patient demographics
-    And a patient record is open or being created
+    Given I am authenticated as a provider
+    And a patient record is selected
 
   # ------ Race and Ethnicity ------
 

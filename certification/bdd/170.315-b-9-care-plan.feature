@@ -16,7 +16,7 @@ Feature: Care Plan
   So that I can coordinate interdisciplinary care and track patient goals
 
   Background:
-    Given I am authenticated as a healthcare provider
+    Given I am authenticated as a provider
     And I have a patient record open
 
   Scenario: Record care plan information

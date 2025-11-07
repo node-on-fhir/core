@@ -16,32 +16,16 @@ Feature: Accessibility-Centered Design
 
   Background:
     Given I am developing health IT
-    And accessibility is required
-
-  Scenario: Apply accessibility standards
-    Given I am designing user interfaces
-    When developing the system
-    Then I shall apply accessibility-centered design
-    And design shall meet accessibility standards
-    And system shall be usable by people with disabilities
+    And accessibility 508 compliance is required
 
   Scenario: Support assistive technologies
     Given users may use assistive technologies
     When designing interfaces
     Then the system shall support screen readers
+    And the system shall support aria labels
+    And the system shall support light/dark mode for the vision impaired
     And the system shall support keyboard navigation
-    And the system shall support other assistive technologies
+    And the system shall support speach dictation
+    And the system shall support agentic software agent navigation with Comet Browser
 
-  Scenario: Document accessibility approach
-    Given accessibility standards have been applied
-    When documenting the system
-    Then accessibility approach shall be documented
-    And standards used shall be identified
-    Or statement shall be made that no accessibility standards were used
-
-  Scenario: Test accessibility compliance
-    Given the system has been developed
-    When validating accessibility
-    Then accessibility testing shall be conducted
-    And non-compliance shall be identified and corrected
-    And system shall meet accessibility requirements
+  

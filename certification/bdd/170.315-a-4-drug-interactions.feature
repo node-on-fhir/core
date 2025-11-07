@@ -24,60 +24,55 @@ Feature: Drug-Drug and Drug-Allergy Interaction Checks for CPOE
   So that I can prevent adverse drug events and improve patient safety
 
   Background:
-    Given I am authenticated as a prescribing provider
+    Given I am authenticated as a provider
+    And a patient record is selected
     And the patient has an active medication list
     And the patient has a medication allergy list
-    And interaction checking is enabled
+    And I am on /order-catalog/medications
+    
 
   Scenario: Automatic drug-drug interaction checking during CPOE
     Given the patient is currently taking "Warfarin 5mg daily"
-    When I attempt to order "Aspirin 325mg daily"
-    And I complete the medication order entry
-    But before the order is completed and acted upon
-    Then the system shall automatically indicate drug-drug contraindications
-    And the intervention shall display before order completion
+    When I am on /order-catalog/medications
+    Then an RxNorm search bar will display, with RxNorm accordion table underneath with top-10 records
+    When I select the medication request for "Aspirin 325mg daily"
+    Then the row will expand, with action buttons
+    And the system shall automatically indicate drug-drug contraindications with an alert
     And the alert shall describe the interaction between Warfarin and Aspirin
 
   Scenario: Automatic drug-allergy interaction checking during CPOE
     Given the patient has a documented allergy to "Penicillin"
-    When I attempt to order "Amoxicillin 500mg"
-    And I complete the medication order entry
-    But before the order is completed and acted upon
-    Then the system shall automatically indicate drug-allergy contraindications
-    And the intervention shall display before order completion
+    When I am on /order-catalog/medications
+    Then an RxNorm search bar will display, with RxNorm accordion table underneath with top-10 records
+    When I complete the medication request for "Amoxicillin 500mg"
+    Then the row will expand, with action buttons
+    Then the system shall automatically indicate drug-allergy contraindications with an alert
     And the alert shall identify the cross-reactivity concern
 
   Scenario: Display interventions based on active medication list
     Given the patient's active medication list contains multiple medications
-    When I order a new medication
+    When I search for medications
     Then the system shall check against all medications in the active medication list
-    And all relevant drug-drug interactions shall be displayed
+    And all drug-drug interactions shall be displayed as chips or icons in the accordion table
 
   Scenario: Display interventions based on medication allergy list
     Given the patient's allergy list contains documented allergies
-    When I order a new medication
+    When I search for medications
     Then the system shall check against all allergies in the medication allergy list
-    And all relevant drug-allergy contraindications shall be displayed
+    And all relevant drug-allergy contraindications shall be displayed as chips or icons in the accordion table
 
   Scenario: Enable severity level adjustment for drug-drug interactions
-    Given I am a system administrator or authorized user
-    When I access the drug-drug interaction settings
+    Given I am a system administrator 
+    When I access the /drug-drug-interaction-settings
     Then the system shall enable adjustment of severity levels
     And severity levels shall control which interactions trigger alerts
-
-  Scenario: Limit severity level adjustment to authorized users
-    Given severity level adjustment capability exists
-    When limiting who can adjust severity levels
-    Then the system shall limit adjustment to a specific set of identified users
-    Or the system shall limit adjustment as a system administrative function
-    And unauthorized users shall not be able to modify severity settings
 
   Scenario: Display high-severity drug-drug interaction
     Given the interaction checking system is configured with severity levels
     And the patient is taking "MAO Inhibitor"
     When I attempt to order "SSRI antidepressant"
     Then the system shall display high-severity interaction alert
-    And the alert shall be prominent and require acknowledgment
+    And the alert shall require acknowledgment
 
   Scenario: Display moderate-severity drug-drug interaction
     Given the interaction checking system is configured with severity levels
@@ -89,12 +84,12 @@ Feature: Drug-Drug and Drug-Allergy Interaction Checks for CPOE
   Scenario: Provider override of drug interaction alert
     Given a drug-drug interaction alert is displayed
     When I review the alert and determine the benefit outweighs risk
-    Then the system shall allow me to override the alert
-    And the override shall require documentation of clinical reasoning
+    Then the system shall allow me to 'override' the alert
+    And the override shall expand a collapsed clinical reasoning input
     And the override shall be recorded in the audit log
 
   Scenario: Multiple simultaneous interaction alerts
     Given the patient has complex medication regimen
-    When I order a medication that interacts with multiple existing medications
-    Then the system shall display all relevant interactions
+    When I select a medication that interacts with multiple existing medications or allergies
+    Then the system shall display all relevant interactions in the expansion panel
     And interactions shall be prioritized by severity

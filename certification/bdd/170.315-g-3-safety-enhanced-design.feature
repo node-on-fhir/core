@@ -16,23 +16,33 @@ Feature: Safety-Enhanced Design
     Given I am developing health IT
     And patient safety is a priority
 
-  Scenario: Apply user-centered design process
+  Scenario: Apply safety-enhanced design process on inputs
     Given I am designing system functionality
     When developing user interfaces
-    Then I shall apply user-centered design principles
-    And design shall minimize use errors
-    And design shall enhance patient safety
+    Then I shall apply safety-enhanced design principles
+    And design shall type check inputs
+    And design shall flag ambiguous acronyms
+    And design shall lookup and verify SNOMED codes
+    And design shall lookup and verify RxNorm codes
 
+Scenario: Apply safety-enhanced design process on outputs
+    Given I am designing system functionality
+    When developing user interfaces
+    Then I shall apply safety-enhanced design principles
+    And design shall validate resources against FHIR schemas on export
+    
   Scenario: Conduct usability testing
     Given system interfaces have been designed
     When validating design
     Then I shall conduct usability testing
-    And testing shall identify usability issues
-    And findings shall inform design improvements
+    And testing shall identify and record usability issues via GitHub issues
+    And new features will cite GitHub issues with the tag 'usability'
 
-  Scenario: Apply safety-enhanced design principles
+  Scenario: Apply user-centered design principles
     Given I am designing clinical workflows
     When implementing functionality
-    Then I shall apply safety principles
-    And design shall reduce likelihood of errors
-    And design shall support safe clinical practices
+    Then I shall 'close the loop' by initiating design changes with the current screenshot of the functionality
+    And specify the differential between existing functionality and new functionality
+    And conduct an editorial review process
+    And obtain safety signoff
+    

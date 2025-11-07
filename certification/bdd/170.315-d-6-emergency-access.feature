@@ -10,6 +10,7 @@ Feature: Emergency Access
   So that I can provide appropriate urgent care
 
   Background:
+    Given I am authenticated as a provider
     Given an emergency situation exists
     And I am part of an identified set of emergency users
 

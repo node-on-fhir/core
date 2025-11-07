@@ -12,7 +12,8 @@ Feature: Decision Support Interventions
   So that I can make evidence-based decisions while understanding AI/algorithm influences
 
   Background:
-    Given I am authenticated as a healthcare provider
+    Given I am authenticated as a provider
+    And I have a patient record open
     And decision support interventions are configured
 
   # ------ Intervention Interaction ------

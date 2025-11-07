@@ -17,6 +17,7 @@ Feature: Computerized Provider Order Entry - Laboratory
   Background:
     Given I am authenticated as a provider
     And a patient record is selected
+    And I am on /order-catalog/laboratory
 
   Scenario: Create a new laboratory order
     Given the patient requires a "Complete Blood Count"
@@ -40,4 +41,16 @@ Feature: Computerized Provider Order Entry - Laboratory
     And the ServiceRequestsTable shall show current status (pending, completed, cancelled) for each request 
     And I shall be able to view results for completed orders
 
+  
+Background:
+    Given I am authenticated as a lab tech
+    
+  Scenario: Access workqueue
+    Given no patient record is selected
+    And I am on /service-requests
+    Then the system shall enable access to all ServiceRequests of type "laboratory"
+    And the orders shall show current status
+    And I shall be able to open the ServiceRequest records
+    And update their status and other fields
+    
   

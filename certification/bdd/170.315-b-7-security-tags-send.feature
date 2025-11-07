@@ -12,7 +12,8 @@ Feature: Security Tags - Summary of Care - Send
   So that I can protect patient privacy according to their consent
 
   Background:
-    Given I am authenticated as a healthcare provider
+    Given I am authenticated as a provider
+    And a patient record is selected
     And I am creating a summary of care document
 
   Scenario: Tag summary record as restricted at document level

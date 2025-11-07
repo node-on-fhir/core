@@ -70,8 +70,8 @@ Feature: Implantable Device List
   So that I can ensure patient safety, support recall management, and provide accurate device information
 
   Background:
-    Given I am authenticated as a healthcare provider
-    And I have a patient record open
+    Given I am authenticated as a provider
+    And a patient record is selected
 
   # ------ Record UDI ------
 
