@@ -456,16 +456,22 @@ export function PatientsDirectory(props){
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
-                  <SearchIcon />
+                  <SearchIcon sx={{ color: cardTextColor }} />
                 </InputAdornment>
               ),
             }}
             sx={{
-              backgroundColor: 'background.paper',
+              backgroundColor: cardBgColor,
+              '& .MuiInputBase-root': { color: cardTextColor },
+              '& .MuiInputBase-input': { color: cardTextColor },
+              '& .MuiInputBase-input::placeholder': {
+                color: isDark ? 'rgba(255, 255, 255, 0.5)' : 'rgba(0, 0, 0, 0.5)',
+                opacity: 1
+              },
               '& .MuiOutlinedInput-root': {
                 borderRadius: 2,
                 '& fieldset': {
-                  borderColor: 'divider',
+                  borderColor: isDark ? 'rgba(255, 255, 255, 0.23)' : 'rgba(0, 0, 0, 0.23)',
                 },
                 '&:hover fieldset': {
                   borderColor: 'primary.main',

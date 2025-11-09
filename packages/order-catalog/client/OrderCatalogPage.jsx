@@ -255,8 +255,9 @@ function OrderCatalogPage(props) {
   return (
     <Box
       id="orderCatalogPage"
-      sx={{ 
-        bgcolor: theme => theme.palette.mode === 'light' 
+      data-testid="order-catalog-page"
+      sx={{
+        bgcolor: theme => theme.palette.mode === 'light'
           ? theme.palette.grey[50]
           : theme.palette.background.default,
         minHeight: '100vh',
@@ -302,12 +303,13 @@ function OrderCatalogPage(props) {
                     exclusive
                     onChange={(e, value) => value && setOrderType(value)}
                     size="small"
+                    data-testid="order-type-selector"
                   >
-                    <ToggleButton value="laboratory">
+                    <ToggleButton value="laboratory" data-testid="laboratory-tab">
                       <BiotechIcon sx={{ mr: 1 }} />
                       Laboratory
                     </ToggleButton>
-                    <ToggleButton value="medication">
+                    <ToggleButton value="medication" data-testid="medications-tab">
                       <MedicationIcon sx={{ mr: 1 }} />
                       Medication
                     </ToggleButton>
@@ -323,6 +325,7 @@ function OrderCatalogPage(props) {
                     placeholder={`Search ${orderType} orders...`}
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
+                    data-testid={orderType === 'laboratory' ? 'laboratory-search-input' : 'medication-search-input'}
                     InputProps={{
                       startAdornment: orderType === 'laboratory' ? <ScienceIcon sx={{ mr: 1, color: 'text.secondary' }} /> : <MedicationIcon sx={{ mr: 1, color: 'text.secondary' }} />
                     }}
@@ -344,7 +347,11 @@ function OrderCatalogPage(props) {
                 
                 {/* Catalog Table */}
                 <TableContainer sx={{ maxHeight: 400 }}>
-                  <Table size="small" stickyHeader>
+                  <Table
+                    size="small"
+                    stickyHeader
+                    data-testid={orderType === 'laboratory' ? 'laboratory-orders-table' : 'medication-orders-table'}
+                  >
                     <TableHead>
                       <TableRow>
                         <TableCell>Code</TableCell>
@@ -365,10 +372,11 @@ function OrderCatalogPage(props) {
                     </TableHead>
                     <TableBody>
                       {filteredCatalog.map((item) => (
-                        <TableRow 
+                        <TableRow
                           key={item.id}
                           hover
                           sx={{ cursor: 'pointer' }}
+                          data-testid={`${orderType}-order-row-${item.id}`}
                         >
                           <TableCell>
                             <Typography variant="caption" sx={{ fontFamily: 'monospace' }}>
@@ -410,6 +418,7 @@ function OrderCatalogPage(props) {
                               size="small"
                               color="primary"
                               onClick={() => handleAddToOrder(item)}
+                              data-testid={`add-${orderType}-order-button`}
                             >
                               <AddIcon />
                             </IconButton>
@@ -425,7 +434,7 @@ function OrderCatalogPage(props) {
           
           {/* Right Panel: Active Orders */}
           <Grid item xs={12} md={5}>
-            <Card>
+            <Card data-testid="active-orders-panel">
               <CardHeader
                 title="Active Orders"
                 subheader={`${activeOrders.length} items pending submission`}
@@ -508,12 +517,13 @@ function OrderCatalogPage(props) {
                               </>
                             )}
                             <TextField
-                              label="Clinical Notes"
+                              label="Clinical Notes (Reason for Order)"
                               multiline
                               rows={2}
                               size="small"
-                              placeholder="Optional clinical notes..."
+                              placeholder="Optional: reason for order, clinical indication..."
                               onChange={(e) => handleUpdateOrder(order.id, { notes: e.target.value })}
+                              data-testid={`${orderType}-order-reason-field`}
                             />
                           </Stack>
                         </AccordionDetails>
@@ -528,6 +538,7 @@ function OrderCatalogPage(props) {
                     <Button
                       color="inherit"
                       onClick={() => setActiveOrders([])}
+                      data-testid="clear-orders-button"
                     >
                       Clear All
                     </Button>
@@ -535,6 +546,7 @@ function OrderCatalogPage(props) {
                       color="primary"
                       onClick={handleSubmitOrders}
                       disabled={activeOrders.length === 0}
+                      data-testid="submit-orders-button"
                     >
                       Submit Orders ({activeOrders.length})
                     </Button>

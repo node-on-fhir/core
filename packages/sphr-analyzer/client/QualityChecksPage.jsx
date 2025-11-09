@@ -494,7 +494,7 @@ export function QualityChecksPage(props){
                                     <Typography variant="h6" sx={{ fontWeight: 500 }}>
                                       {check.title}
                                     </Typography>
-                                    <Chip 
+                                    <Chip
                                       label={check.severity}
                                       size="small"
                                       color={
@@ -503,7 +503,15 @@ export function QualityChecksPage(props){
                                         check.severity === 'high' ? 'warning' :
                                         check.severity === 'optional' ? 'info' : 'default'
                                       }
-                                      sx={{ textTransform: 'uppercase', fontSize: '0.7rem' }}
+                                      sx={{
+                                        textTransform: 'uppercase',
+                                        fontSize: '0.7rem',
+                                        ...(check.status === 'success' && {
+                                          bgcolor: isDark ? 'rgba(76, 175, 80, 0.2)' : 'rgba(76, 175, 80, 0.1)',
+                                          color: isDark ? '#81c784' : '#388e3c',
+                                          borderColor: isDark ? '#81c784' : '#4caf50'
+                                        })
+                                      }}
                                     />
                                   </Box>
                                   <Typography variant="body2" sx={{ color: isDark ? 'rgba(255, 255, 255, 0.6)' : '#666' }}>
@@ -524,14 +532,26 @@ export function QualityChecksPage(props){
                                   }
                                   onClick={check.action}
                                   disabled={check.status === 'success' || check.disabled}
-                                  startIcon={check.status === 'success' ? <CheckCircle /> : 
-                                           check.status === 'error' || check.status === 'warning' ? 
+                                  startIcon={check.status === 'success' ? <CheckCircle /> :
+                                           check.status === 'error' || check.status === 'warning' ?
                                            check.icon : <Lock />}
-                                  sx={{ 
+                                  sx={{
                                     minWidth: 180,
                                     borderRadius: 2,
                                     textTransform: 'none',
-                                    fontWeight: 500
+                                    fontWeight: 500,
+                                    ...(check.status === 'success' && {
+                                      bgcolor: isDark ? 'rgba(76, 175, 80, 0.15)' : 'transparent',
+                                      color: isDark ? '#81c784' : '#2e7d32',
+                                      borderColor: isDark ? '#66bb6a' : '#4caf50',
+                                      '&:hover': {
+                                        bgcolor: isDark ? 'rgba(76, 175, 80, 0.25)' : 'rgba(76, 175, 80, 0.04)',
+                                        borderColor: isDark ? '#81c784' : '#388e3c'
+                                      },
+                                      '& .MuiButton-startIcon': {
+                                        color: isDark ? '#81c784' : '#4caf50'
+                                      }
+                                    })
                                   }}
                                 >
                                   {check.status === 'success' ? 'Completed' : check.actionLabel}

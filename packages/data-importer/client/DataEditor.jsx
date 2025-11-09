@@ -211,38 +211,38 @@ function DataEditor(props){
       if(['application/zip', 'application/x-zip-compressed', 'zip'].includes(fileExtension) || importBuffer instanceof ArrayBuffer){
         // Handle binary data for zip files
         const sizeInfo = importBuffer?.byteLength ? (importBuffer.byteLength / 1024 / 1024).toFixed(2) + ' MB' : '';
-        
+
         // Check if we have analysis data
         const analysis = Session.get('appleHealthAnalysis');
         let summaryText = `[Apple Health Export]\n\nFile size: ${sizeInfo}\n\n`;
-        
+
         if (analysis && analysis.healthRecords) {
           // Add total records count
           summaryText += `Total records: ${analysis.totalRecords?.toLocaleString() || 0}\n`;
-          
+
           if (analysis.dateRange?.earliest && analysis.dateRange?.latest) {
             const startDate = moment(analysis.dateRange.earliest).format('MMM YYYY');
             const endDate = moment(analysis.dateRange.latest).format('MMM YYYY');
             summaryText += `Date range: ${startDate} - ${endDate}\n`;
           }
-          
+
           summaryText += '\n--- Health Records ---\n';
-          
+
           // Sort by count descending and display
           const sortedTypes = Object.entries(analysis.healthRecords)
             .sort((a, b) => b[1].count - a[1].count)
             .slice(0, 50); // Show top 50 types
-          
+
           sortedTypes.forEach(([type, info]) => {
             const displayName = info.displayName || type.replace(/HK(Quantity|Category)TypeIdentifier/, '');
             const count = info.count.toString().padStart(8, ' ');
             summaryText += `${count}  ${displayName}\n`;
           });
-          
+
           if (Object.keys(analysis.healthRecords).length > 50) {
             summaryText += `\n... and ${Object.keys(analysis.healthRecords).length - 50} more types\n`;
           }
-          
+
           // Add clinical records if present
           if (analysis.clinicalRecords && analysis.clinicalRecords.length > 0) {
             summaryText += '\n--- Clinical Records ---\n';
@@ -251,7 +251,7 @@ function DataEditor(props){
               summaryText += `${count}  ${record.type}\n`;
             });
           }
-          
+
           // Add workouts if present
           if (analysis.workouts && Object.keys(analysis.workouts).length > 0) {
             summaryText += '\n--- Workouts ---\n';
@@ -262,13 +262,20 @@ function DataEditor(props){
                 summaryText += `${count}  ${info.displayName}\n`;
               });
           }
-          
+
           summaryText += '\nClick "Digest" to select which data to import.';
         } else {
           summaryText += 'This ZIP file contains your Apple Health data.\nClick "Digest" to analyze and select data for import.';
         }
-        
+
         importBufferContents = summaryText;
+        setSelectedAlgorithm(1); // Apple Health Export
+      } else if(typeof importBuffer === 'string' && importBuffer.includes('<!DOCTYPE HealthData')){
+        // Handle Apple Health XML file (detected by DOCTYPE)
+        console.log('Detected Apple Health XML file');
+        // Don't set importBufferContents to the raw XML - it's too large to render
+        // The AppleHealthPreview component will be shown instead
+        importBufferContents = 'Apple Health Export detected. Preview will appear below.';
         setSelectedAlgorithm(1); // Apple Health Export
       } else if(['xml', 'xmlx', 'xlsx', 'json', 'ccd', 'bundle', 'txt', 'application/json', 'application/csv', 'application/json+fhir'].includes(fileExtension)){
         // importBufferContents = JSON.stringify(importBuffer, null, 2);
@@ -436,10 +443,14 @@ function DataEditor(props){
       </CardContent>
     </CardContent>
   } else {
-    // Show Apple Health Preview for Apple Health Export, otherwise show editor
-    const showAppleHealthPreview = selectedAlgorithm === 1 && (importBuffer instanceof ArrayBuffer || importBuffer instanceof Uint8Array);
-    
-    previewComponents = <CardContent>      
+    // Show Apple Health Preview for Apple Health Export (both ZIP and XML), otherwise show editor
+    const showAppleHealthPreview = selectedAlgorithm === 1 && (
+      importBuffer instanceof ArrayBuffer ||
+      importBuffer instanceof Uint8Array ||
+      (typeof importBuffer === 'string' && importBuffer.includes('<!DOCTYPE HealthData'))
+    );
+
+    previewComponents = <CardContent>
       {showAppleHealthPreview ? (
         <AppleHealthPreview
           importBuffer={importBuffer}

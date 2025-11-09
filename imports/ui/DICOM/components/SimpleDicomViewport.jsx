@@ -269,8 +269,8 @@ export function SimpleDicomViewport({ dicomData }) {
         sx={{
           position: 'relative',
           width: '100%',
-          height: '600px', // Fixed height for the viewport
-          minHeight: '400px',
+          height: '900px', // 50% larger than original 600px
+          minHeight: '600px', // 50% larger than original 400px
           backgroundColor: '#000',
         }}
       >

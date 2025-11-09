@@ -260,6 +260,7 @@ import { Goals } from '../lib/schemas/SimpleSchemas/Goals';
 import { Groups } from '../lib/schemas/SimpleSchemas/Groups';
 import { GuidanceResponses } from '../lib/schemas/SimpleSchemas/GuidanceResponses';
 import { Immunizations } from '../lib/schemas/SimpleSchemas/Immunizations';
+import { ImagingStudies } from '../lib/schemas/SimpleSchemas/ImagingStudies';
 import { Libraries } from '../lib/schemas/SimpleSchemas/Libraries';
 import { Lists } from '../lib/schemas/SimpleSchemas/Lists';
 import { Locations } from '../lib/schemas/SimpleSchemas/Locations';
@@ -384,6 +385,7 @@ window.Collections = {
   Compositions,
   Devices,
   DiagnosticReports,
+  DocumentReferences,
   Encounters,
   Evidences,
   Endpoints,
@@ -392,6 +394,7 @@ window.Collections = {
   Groups,
   GuidanceResponses,
   Immunizations,
+  ImagingStudies,
   Lists,
   Locations,
   Libraries,
@@ -1318,9 +1321,25 @@ dynamicRoutes.push({
 // ==============================================================================
 // Dynamic Routes
 
+// Determine which component should render at the root path
+// Check if a default route is specified in settings
+let defaultRoutePath = get(Meteor, 'settings.public.defaults.route', '/');
+let homeRouteElement = <GettingStartedPage />;
+
+// If a specific route is configured (and it's not just "/"),
+// find the corresponding route component
+if (defaultRoutePath && defaultRoutePath !== '/') {
+  const matchingRoute = dynamicRoutes.find(route => route.path === defaultRoutePath);
+  if (matchingRoute && matchingRoute.element) {
+    homeRouteElement = matchingRoute.element;
+  } else {
+    console.warn(`Default route "${defaultRoutePath}" specified in settings but no matching route found. Using GettingStartedPage.`);
+  }
+}
+
 let homeRoute = {
   path: "/",
-  element: <GettingStartedPage />
+  element: homeRouteElement
 }
 
 let headerNavigation;

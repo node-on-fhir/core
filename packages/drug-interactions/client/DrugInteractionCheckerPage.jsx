@@ -164,14 +164,15 @@ export default function DrugInteractionCheckerPage(props) {
   }
 
   return (
-    <Box sx={{ 
-      p: 3,
-      minHeight: '100vh',
-      bgcolor: theme => theme.palette.mode === 'light' 
-        ? theme.palette.grey[50] 
-        : theme.palette.background.default
-    }}>
-      <Typography variant="h4" sx={{ mb: 3 }}>
+    <Box
+      id="drugInteractionCheckerPage"
+      data-testid="drug-interaction-page"
+      sx={{
+        p: 3,
+        minHeight: '100vh'
+      }}
+    >
+      <Typography variant="h4" sx={{ mb: 3 }} data-testid="page-title">
         Drug Interaction Checker - ONC §170.315(a)(4)
       </Typography>
 
@@ -182,10 +183,11 @@ export default function DrugInteractionCheckerPage(props) {
             <CardHeader 
               title="Interaction Check Configuration"
               action={
-                <Button 
-                  color="secondary" 
+                <Button
+                  color="secondary"
                   onClick={clearAll}
                   size="small"
+                  data-testid="clear-all-button"
                 >
                   Clear All
                 </Button>
@@ -196,6 +198,7 @@ export default function DrugInteractionCheckerPage(props) {
               <FormControl fullWidth sx={{ mb: 3 }}>
                 <InputLabel>Check Type</InputLabel>
                 <Select
+                  data-testid="check-type-select"
                   value={mode}
                   label="Check Type"
                   onChange={(e) => {
@@ -203,8 +206,8 @@ export default function DrugInteractionCheckerPage(props) {
                     setInteractions([]);
                   }}
                 >
-                  <MenuItem value="drug-drug">Drug-Drug Interactions</MenuItem>
-                  <MenuItem value="drug-allergy">Drug-Allergy Interactions</MenuItem>
+                  <MenuItem value="drug-drug" data-testid="drug-drug-option">Drug-Drug Interactions</MenuItem>
+                  <MenuItem value="drug-allergy" data-testid="drug-allergy-option">Drug-Allergy Interactions</MenuItem>
                 </Select>
               </FormControl>
 
@@ -213,10 +216,11 @@ export default function DrugInteractionCheckerPage(props) {
                 Medications
               </Typography>
               <Autocomplete
+                data-testid="medication-autocomplete"
                 options={COMMON_MEDICATIONS}
                 getOptionLabel={(option) => option.display}
                 renderInput={(params) => (
-                  <TextField {...params} label="Add medication" variant="outlined" />
+                  <TextField {...params} label="Add medication" variant="outlined" data-testid="medication-search-input" />
                 )}
                 onChange={(event, value) => addMedication(value)}
                 sx={{ mb: 2 }}
@@ -224,7 +228,7 @@ export default function DrugInteractionCheckerPage(props) {
 
               {/* Selected Medications List */}
               {selectedMedications.length > 0 && (
-                <Paper variant="outlined" sx={{ p: 1, mb: 3 }}>
+                <Paper variant="outlined" sx={{ p: 1, mb: 3 }} data-testid="selected-medications-list">
                   <Stack direction="row" spacing={1} flexWrap="wrap">
                     {selectedMedications.map((med, index) => (
                       <Chip
@@ -234,6 +238,7 @@ export default function DrugInteractionCheckerPage(props) {
                         color="primary"
                         variant="outlined"
                         sx={{ m: 0.5 }}
+                        data-testid={`medication-chip-${index}`}
                       />
                     ))}
                   </Stack>
@@ -247,10 +252,11 @@ export default function DrugInteractionCheckerPage(props) {
                     Allergies
                   </Typography>
                   <Autocomplete
+                    data-testid="allergy-autocomplete"
                     options={COMMON_ALLERGIES}
                     getOptionLabel={(option) => option.display}
                     renderInput={(params) => (
-                      <TextField {...params} label="Add allergy" variant="outlined" />
+                      <TextField {...params} label="Add allergy" variant="outlined" data-testid="allergy-search-input" />
                     )}
                     onChange={(event, value) => addAllergy(value)}
                     sx={{ mb: 2 }}
@@ -258,7 +264,7 @@ export default function DrugInteractionCheckerPage(props) {
 
                   {/* Selected Allergies List */}
                   {selectedAllergies.length > 0 && (
-                    <Paper variant="outlined" sx={{ p: 1 }}>
+                    <Paper variant="outlined" sx={{ p: 1 }} data-testid="selected-allergies-list">
                       <Stack direction="row" spacing={1} flexWrap="wrap">
                         {selectedAllergies.map((allergy, index) => (
                           <Chip
@@ -268,6 +274,7 @@ export default function DrugInteractionCheckerPage(props) {
                             color="warning"
                             variant="outlined"
                             sx={{ m: 0.5 }}
+                            data-testid={`allergy-chip-${index}`}
                           />
                         ))}
                       </Stack>
@@ -279,17 +286,17 @@ export default function DrugInteractionCheckerPage(props) {
               {/* Status Messages */}
               <Box sx={{ mt: 3 }}>
                 {mode === 'drug-drug' && selectedMedications.length < 2 && (
-                  <Alert severity="info">
+                  <Alert severity="info" data-testid="drug-drug-status-message">
                     Add at least 2 medications to check for interactions
                   </Alert>
                 )}
                 {mode === 'drug-allergy' && (
                   <>
                     {selectedMedications.length === 0 && (
-                      <Alert severity="info">Add medications to check</Alert>
+                      <Alert severity="info" data-testid="drug-allergy-status-message">Add medications to check</Alert>
                     )}
                     {selectedAllergies.length === 0 && selectedMedications.length > 0 && (
-                      <Alert severity="info">Add allergies to check against</Alert>
+                      <Alert severity="info" data-testid="allergy-status-message">Add allergies to check against</Alert>
                     )}
                   </>
                 )}
@@ -304,17 +311,18 @@ export default function DrugInteractionCheckerPage(props) {
             <CardHeader title="Interaction Check Results" />
             <CardContent>
               {interactions.length === 0 && selectedMedications.length >= 2 && (
-                <Alert severity="success" icon={<CheckCircleIcon />}>
+                <Alert severity="success" icon={<CheckCircleIcon />} data-testid="no-interactions-alert">
                   <AlertTitle>No Interactions Found</AlertTitle>
                   No significant interactions detected between selected items.
                 </Alert>
               )}
 
               {interactions.length > 0 && (
-                <Stack spacing={2}>
+                <Stack spacing={2} data-testid="interactions-list">
                   {interactions.map((interaction, index) => (
-                    <Alert 
+                    <Alert
                       key={index}
+                      data-testid={`interaction-alert-${index}`}
                       severity={
                         interaction.severity === 'contraindicated' ? 'error' :
                         interaction.severity === 'severe' ? 'error' :
@@ -322,35 +330,35 @@ export default function DrugInteractionCheckerPage(props) {
                       }
                       icon={<WarningIcon />}
                     >
-                      <AlertTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <AlertTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }} data-testid={`interaction-severity-${index}`}>
                         <span>{getSeverityIcon(interaction.severity)}</span>
                         <span style={{ color: getSeverityColor(interaction.severity) }}>
                           {interaction.severity.toUpperCase()}
                         </span>
                         {mode === 'drug-drug' ? (
-                          <span>: {interaction.drug1Display || interaction.drug1?.display} + {interaction.drug2Display || interaction.drug2?.display}</span>
+                          <span data-testid={`interaction-drugs-${index}`}>: {interaction.drug1Display || interaction.drug1?.display} + {interaction.drug2Display || interaction.drug2?.display}</span>
                         ) : (
-                          <span>: {interaction.drugDisplay} + {interaction.allergyDisplay}</span>
+                          <span data-testid={`interaction-drug-allergy-${index}`}>: {interaction.drugDisplay} + {interaction.allergyDisplay}</span>
                         )}
                       </AlertTitle>
-                      
+
                       <Box sx={{ mt: 1 }}>
-                        <Typography variant="body2" sx={{ mb: 1 }}>
+                        <Typography variant="body2" sx={{ mb: 1 }} data-testid={`interaction-mechanism-${index}`}>
                           <strong>Mechanism:</strong> {interaction.mechanism}
                         </Typography>
-                        <Typography variant="body2" sx={{ mb: 1 }}>
+                        <Typography variant="body2" sx={{ mb: 1 }} data-testid={`interaction-effect-${index}`}>
                           <strong>Effect:</strong> {interaction.effect || interaction.reaction}
                         </Typography>
-                        <Typography variant="body2" sx={{ mb: 1 }}>
+                        <Typography variant="body2" sx={{ mb: 1 }} data-testid={`interaction-management-${index}`}>
                           <strong>Management:</strong> {interaction.management || interaction.alternatives}
                         </Typography>
                         {interaction.crossReactivity && (
-                          <Typography variant="body2" sx={{ mb: 1 }}>
+                          <Typography variant="body2" sx={{ mb: 1 }} data-testid={`interaction-cross-reactivity-${index}`}>
                             <strong>Cross-reactivity:</strong> {interaction.crossReactivity}
                           </Typography>
                         )}
-                        <Typography variant="caption" color="text.secondary">
-                          Evidence: {interaction.evidence || 'Clinical'} | 
+                        <Typography variant="caption" color="text.secondary" data-testid={`interaction-evidence-${index}`}>
+                          Evidence: {interaction.evidence || 'Clinical'} |
                           Reference: {interaction.references || 'Clinical guidelines'}
                         </Typography>
                       </Box>
@@ -360,32 +368,32 @@ export default function DrugInteractionCheckerPage(props) {
               )}
 
               {/* ONC Certification Info */}
-              <Box sx={{ 
-                mt: 4, 
-                p: 2, 
-                bgcolor: theme => theme.palette.mode === 'dark' 
-                  ? theme.palette.grey[900] 
-                  : theme.palette.grey[100], 
-                borderRadius: 1 
-              }}>
+              <Box
+                data-testid="onc-certification-info"
+                sx={{
+                  mt: 4,
+                  p: 2,
+                  borderRadius: 1
+                }}
+              >
                 <Typography variant="caption" color="text.secondary">
                   This tool meets ONC §170.315(a)(4) certification requirements for:
                 </Typography>
                 <List dense>
                   <ListItem>
-                    <ListItemText 
+                    <ListItemText
                       primary="• Drug-drug interaction checking"
                       primaryTypographyProps={{ variant: 'caption' }}
                     />
                   </ListItem>
                   <ListItem>
-                    <ListItemText 
-                      primary="• Drug-allergy interaction checking" 
+                    <ListItemText
+                      primary="• Drug-allergy interaction checking"
                       primaryTypographyProps={{ variant: 'caption' }}
                     />
                   </ListItem>
                   <ListItem>
-                    <ListItemText 
+                    <ListItemText
                       primary="• Severity-based alerting with management guidance"
                       primaryTypographyProps={{ variant: 'caption' }}
                     />

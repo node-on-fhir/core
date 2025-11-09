@@ -489,7 +489,12 @@ export function ImportEditorBindings(props){
           const currentFile = fileList[fileIndex];
           const fileType = currentFile.type || currentFile.name.split(".").pop();
           const isZipFile = ['application/zip', 'application/x-zip-compressed', 'zip'].includes(fileType) || currentFile.name.endsWith('.zip');
-          
+
+          // Detect Apple Health export.xml - large XML files or specifically named export.xml
+          const isAppleHealthXml = (currentFile.name === 'export.xml' ||
+                                   currentFile.name.toLowerCase().includes('apple') && currentFile.name.endsWith('.xml')) &&
+                                   currentFile.size > 1000000; // > 1MB suggests Apple Health data
+
           var reader = new FileReader();
           reader.onload = function(event){
 
@@ -500,10 +505,10 @@ export function ImportEditorBindings(props){
               type: fileType,
               status: 'loaded'
             }
-            
+
             console.log('FileReader.currentFile', currentFile);
             console.log('FileReader.newQueueItem', newQueueItem);
-            
+
             if(isZipFile){
               // Handle Apple Health export zip files
               console.log('Processing Apple Health export zip file as ArrayBuffer');
@@ -511,7 +516,7 @@ export function ImportEditorBindings(props){
               newQueueItem.content = arrayBuffer;
               newQueueItem.isAppleHealthExport = true;
               setShowAppleHealthOptions(true);
-              
+
               // Pre-analyze the Apple Health export
               MedicalRecordImporter.analyzeAppleHealthExport(arrayBuffer).then(analysis => {
                 if (!analysis.error) {
@@ -521,8 +526,32 @@ export function ImportEditorBindings(props){
               }).catch(err => {
                 console.error('Error analyzing Apple Health export:', err);
               });
-              
+
               resolve(newQueueItem);
+            } else if(isAppleHealthXml) {
+              // Handle standalone Apple Health export.xml files
+              console.log('Processing Apple Health export.xml file');
+              var content = event.target.result;
+
+              // Verify it's actually an Apple Health XML by checking for DOCTYPE
+              if(content.includes('<!DOCTYPE HealthData') || content.includes('HealthKit Export Version')) {
+                console.log('Confirmed Apple Health XML structure');
+                newQueueItem.content = content;
+                newQueueItem.type = 'xml';
+                newQueueItem.isAppleHealthExport = true;
+                newQueueItem.isAppleHealthXml = true;
+                setShowAppleHealthOptions(true);
+
+                logger.trace('FileReader.newQueueItem', newQueueItem);
+                resolve(newQueueItem);
+              } else {
+                console.log('Large XML file but not Apple Health format, treating as standard XML');
+                // Fall through to standard XML handling below
+                parsedContent = content;
+                newQueueItem.content = parsedContent;
+                logger.trace('FileReader.newQueueItem', newQueueItem);
+                resolve(newQueueItem);
+              }
             } else {
               var content = event.target.result;   
               console.log('content', content);
@@ -1180,20 +1209,29 @@ export function ImportEditorBindings(props){
     console.log('digestData.fileExtension', fileExtension)
     console.log('')
 
-    // For Apple Health Export (algorithm 1), we need the ArrayBuffer
+    // For Apple Health Export (algorithm 1), we need the raw data (ArrayBuffer or XML string)
     if(selectedAlgorithm === 1){
-      // Check if we have the ArrayBuffer in the import buffer
+      // Check if we have the ArrayBuffer in the import buffer (ZIP file)
       if(importBuffer instanceof ArrayBuffer){
-        console.log('Using ArrayBuffer from importBuffer for Apple Health Export');
+        console.log('Using ArrayBuffer from importBuffer for Apple Health Export (ZIP)');
         editorContent = importBuffer;
-      } else {
-        // Try to get from session
+      }
+      // Check if we have Apple Health XML string (standalone export.xml)
+      else if(typeof importBuffer === 'string' && MedicalRecordImporter.isAppleHealthXml(importBuffer)){
+        console.log('Using XML string from importBuffer for Apple Health Export (XML)');
+        editorContent = importBuffer;
+      }
+      // Fallback to session
+      else {
         const sessionBuffer = Session.get('importBuffer');
         if(sessionBuffer instanceof ArrayBuffer){
-          console.log('Using ArrayBuffer from Session for Apple Health Export');
+          console.log('Using ArrayBuffer from Session for Apple Health Export (ZIP)');
+          editorContent = sessionBuffer;
+        } else if(typeof sessionBuffer === 'string' && MedicalRecordImporter.isAppleHealthXml(sessionBuffer)){
+          console.log('Using XML string from Session for Apple Health Export (XML)');
           editorContent = sessionBuffer;
         } else {
-          console.error('Apple Health Export requires ArrayBuffer but none found');
+          console.error('Apple Health Export requires ArrayBuffer (ZIP) or XML string but none found');
           console.log('importBuffer type:', typeof importBuffer);
           console.log('sessionBuffer type:', typeof sessionBuffer);
         }
@@ -1382,12 +1420,65 @@ export function ImportEditorBindings(props){
     console.log('Parsing Data')
     console.log('previewBuffer type:', typeof previewBuffer);
     console.log('Is ArrayBuffer?', previewBuffer instanceof ArrayBuffer);
+    console.log('mappingAlgorithm:', mappingAlgorithm);
 
-    // Skip scanning for binary data like ArrayBuffer
+    // PRIORITY 1: Check for Apple Health Export FIRST (before any JSON parsing attempts)
+    // This handles both ZIP files (ArrayBuffer) and standalone export.xml (XML string)
+    if(mappingAlgorithm === 1 ||
+       previewBuffer instanceof ArrayBuffer ||
+       (typeof previewBuffer === 'string' && MedicalRecordImporter.isAppleHealthXml(previewBuffer))) {
+
+      console.log('Apple Health Export detected - processing...');
+
+      if(previewBuffer instanceof ArrayBuffer) {
+        // Handle ZIP file
+        console.log('Processing Apple Health ZIP file (ArrayBuffer)');
+        const importOptions = appleHealthOptions || {
+          timeRange: 'all',
+          includeWorkouts: true,
+          includeClinicalRecords: true,
+          includeHealthRecords: true
+        };
+
+        try {
+          const result = await MedicalRecordImporter.importAppleHealthExport(previewBuffer, importOptions);
+          if(result.success) {
+            console.log('Apple Health ZIP import successful');
+            Session.set('lastUpdated', new Date());
+          } else {
+            console.error('Apple Health ZIP import failed:', result.error);
+          }
+        } catch(error) {
+          console.error('Error importing Apple Health ZIP:', error);
+        }
+        return; // Exit early - we're done
+      }
+      else if(typeof previewBuffer === 'string' && MedicalRecordImporter.isAppleHealthXml(previewBuffer)) {
+        // Handle standalone XML file
+        console.log('Processing Apple Health XML file (string)');
+        const importOptions = appleHealthOptions || {
+          timeRange: 'all',
+          includeWorkouts: true,
+          includeClinicalRecords: false, // XML doesn't have clinical-records folder
+          includeHealthRecords: true
+        };
+
+        try {
+          await MedicalRecordImporter.processAppleHealthXML(previewBuffer, importOptions);
+          console.log('Apple Health XML import successful');
+          Session.set('lastUpdated', new Date());
+        } catch(error) {
+          console.error('Error importing Apple Health XML:', error);
+        }
+        return; // Exit early - we're done
+      }
+    }
+
+    // PRIORITY 2: Skip scanning for binary data (but not for Apple Health which we already handled)
     if(!(previewBuffer instanceof ArrayBuffer)){
       scanData(previewBuffer, true);
     }
-  
+
 
     logger.debug('File mime type: ' + fileExtension);
     console.log('File mime type: ' + fileExtension);
@@ -1497,59 +1588,29 @@ export function ImportEditorBindings(props){
       // logger.debug('File contents: ', previewBuffer);
       // logger.debug('ImportEditorBindings.MappingAlgorithm: ' + mappingAlgorithm);
 
-      MedicalRecordImporter.importNdjson(previewBuffer);      
+      MedicalRecordImporter.importNdjson(previewBuffer);
     } else if(['application/zip', 'application/x-zip-compressed', 'zip'].includes(fileExtension) || previewBuffer instanceof ArrayBuffer){
-      console.log("Detected zip file or ArrayBuffer (likely Apple Health Export)");
-      if(mappingAlgorithm === 1 && previewBuffer instanceof ArrayBuffer) {
-        console.log('Processing Apple Health Export with ArrayBuffer');
-        const importOptions = appleHealthOptions || {
-          timeRange: appleHealthTimeRange,
-          includeWorkouts: true,
-          includeClinicalRecords: true,
-          includeHealthRecords: true
-        };
-        MedicalRecordImporter.importAppleHealthExport(previewBuffer, importOptions).then(result => {
-          console.log('Apple Health import result:', result);
-          Session.set('lastUpdated', new Date());
-        }).catch(error => {
-          console.error('Apple Health import error:', error);
-        });
-      } else {
-        console.error('Zip file detected but not processing as Apple Health Export');
-      }
+      // Note: Apple Health Export (ZIP/ArrayBuffer) is now handled at the TOP of parseFileContents
+      // This block should only be reached if it's NOT Apple Health (algorithm !== 1)
+      console.log("Detected zip file or ArrayBuffer (non-Apple Health)");
+      console.warn('Zip file detected but not Apple Health Export - no handler implemented');
     } else {
       logger.debug("Otherwise, we're going to assume that this is a JSON or FHIR file.  Parsing...")
       logger.debug('File contents: ', previewBuffer);
 
-      
+
       switch (mappingAlgorithm) {
         case 0:  // FHIR Bundle
           MedicalRecordImporter.importBundle(previewBuffer);
           break;
         case 1:  // Apple Health Export
-          console.log('Processing Apple Health Export with mapping algorithm 1');
-          if(previewBuffer instanceof ArrayBuffer) {
-            const importOptions = appleHealthOptions || {
-              timeRange: appleHealthTimeRange,
-              includeWorkouts: true,
-              includeClinicalRecords: true,
-              includeHealthRecords: true
-            };
-            MedicalRecordImporter.importAppleHealthExport(previewBuffer, importOptions).then(result => {
-              if(result.success) {
-                console.log('Apple Health import successful');
-                Session.set('lastUpdated', new Date());
-              } else {
-                console.error('Apple Health import failed:', result.error);
-              }
-            });
-          } else {
-            console.error('Apple Health Export requires ArrayBuffer format');
-          }
-          break;      
+          // Note: Apple Health Export is now handled at the TOP of parseFileContents
+          // This case should never be reached because we return early above
+          console.warn('Apple Health Export case 1 reached - should have been handled at top of parseFileContents');
+          break;
         case 2:  // FaceBook
           parseFacebookProfile(previewBuffer);
-          break;      
+          break;
         case 3:  // Chicago Grocers File
           this.parseChicagoGrocersFile(previewBuffer);
           break;
@@ -1631,27 +1692,45 @@ export function ImportEditorBindings(props){
       fileExtension = get(queueItem, 'type');
     }
     
-    // Check if this is an Apple Health export
+    // Check if this is an Apple Health export (zip or XML)
     if(get(queueItem, 'isAppleHealthExport')){
       console.log('Processing Apple Health Export file');
       // Set the mapping algorithm to Apple Health Export
       setMappingAlgorithm(1);
-      
-      // Import the Apple Health data directly
-      MedicalRecordImporter.importAppleHealthExport(previewBuffer, {
-        timeRange: appleHealthTimeRange,
-        includeWorkouts: true,
-        includeClinicalRecords: true,
-        includeHealthRecords: true
-      }).then(result => {
-        if(result.success) {
-          console.log('Apple Health import successful');
+
+      // Check if this is XML or ZIP
+      if(get(queueItem, 'isAppleHealthXml')) {
+        // Handle standalone XML file
+        console.log('Processing Apple Health XML file');
+        const importOptions = {
+          timeRange: appleHealthTimeRange,
+          includeWorkouts: true,
+          includeClinicalRecords: false, // XML doesn't have clinical-records folder
+          includeHealthRecords: true
+        };
+        MedicalRecordImporter.processAppleHealthXML(previewBuffer, importOptions).then(() => {
+          console.log('Apple Health XML import successful');
           Session.set('lastUpdated', new Date());
-        } else {
-          console.error('Apple Health import failed:', result.error);
-        }
-      });
-      
+        }).catch(error => {
+          console.error('Apple Health XML import failed:', error);
+        });
+      } else {
+        // Handle ZIP file (ArrayBuffer)
+        MedicalRecordImporter.importAppleHealthExport(previewBuffer, {
+          timeRange: appleHealthTimeRange,
+          includeWorkouts: true,
+          includeClinicalRecords: true,
+          includeHealthRecords: true
+        }).then(result => {
+          if(result.success) {
+            console.log('Apple Health import successful');
+            Session.set('lastUpdated', new Date());
+          } else {
+            console.error('Apple Health import failed:', result.error);
+          }
+        });
+      }
+
       // Mark as completed
       if(typeof resolve === "function"){
         queueItem.status = "completed";
@@ -1785,9 +1864,19 @@ export function ImportEditorBindings(props){
     // Set the import buffer with the file content
     if(get(item, 'content')){
       setImportBuffer(get(item, 'content'));
-      Session.set('importBuffer', get(item, 'content'));
+
+      // Only store in Session if it's NOT a large file (avoid EJSON size limits)
+      // For Apple Health XML (100MB+) or large ZIP files, keep in component state only
+      const contentSize = get(item, 'content.byteLength') || get(item, 'content.length') || 0;
+      if(contentSize < 10 * 1024 * 1024) { // Less than 10MB
+        Session.set('importBuffer', get(item, 'content'));
+      } else {
+        console.log('Skipping Session.set for large file (', (contentSize / 1024 / 1024).toFixed(2), 'MB), keeping in component state only');
+        // Remove any existing importBuffer from Session to avoid confusion
+        Session.set('importBuffer', null);
+      }
     }
-    
+
     // For Apple Health exports, set the mapping algorithm
     if(get(item, 'isAppleHealthExport')){
       setMappingAlgorithm(1);

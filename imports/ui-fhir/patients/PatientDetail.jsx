@@ -371,7 +371,7 @@ function PatientDetail(props) {
 
   return (
     <LocalizationProvider dateAdapter={AdapterMoment}>
-      <Container id="patientDetailPage" maxWidth="md" sx={{ py: 4 }}>
+      <Container id="patientDetailPage" data-testid="patient-detail-page" maxWidth="md" sx={{ py: 4 }}>
         <Card>
           <CardHeader
             avatar={<PersonIcon />}
@@ -388,6 +388,7 @@ function PatientDetail(props) {
                   <Grid item xs={12} sm={6}>
                     <TextField
                       id="givenNameInput"
+                      data-testid="patient-firstname-field"
                       fullWidth
                       label="Given Name(s)"
                       value={get(patient, 'name[0].given[0]', '')}
@@ -398,6 +399,7 @@ function PatientDetail(props) {
                   <Grid item xs={12} sm={6}>
                     <TextField
                       id="familyNameInput"
+                      data-testid="patient-lastname-field"
                       fullWidth
                       label="Family Name"
                       value={get(patient, 'name[0].family', '')}
@@ -415,6 +417,7 @@ function PatientDetail(props) {
                   <Grid item xs={12}>
                     <TextField
                       id="identifierInput"
+                      data-testid="patient-mrn-field"
                       fullWidth
                       label="Medical Record Number"
                       value={get(patient, 'identifier[0].value', '')}
@@ -436,6 +439,21 @@ function PatientDetail(props) {
               </Box>
 
               {/* Demographics Section */}
+              {/*
+                NOTE: USCDI v5 fields required for ONC 170.315(a)(5) compliance are MISSING:
+                - Race (§ 170.207(f) - OMB/CDC Race & Ethnicity codes)
+                - Ethnicity (§ 170.207(f) - OMB/CDC Race & Ethnicity codes)
+                - Gender Identity (§ 170.207(o) - USCDI v5)
+                - Sexual Orientation (§ 170.207(o) - USCDI v5)
+                - Preferred Pronouns (§ 170.207(o) - USCDI v5)
+
+                These need to be added as FHIR extensions:
+                - http://hl7.org/fhir/us/core/StructureDefinition/us-core-race
+                - http://hl7.org/fhir/us/core/StructureDefinition/us-core-ethnicity
+                - http://hl7.org/fhir/StructureDefinition/patient-genderIdentity
+                - http://hl7.org/fhir/StructureDefinition/individual-pronouns
+                - Sexual orientation extension (to be determined)
+              */}
               <Box>
                 <Typography variant="h6" gutterBottom>Demographics</Typography>
                 <Grid container spacing={2}>
@@ -445,15 +463,16 @@ function PatientDetail(props) {
                       label="Birth Date"
                       value={patient.birthDate ? moment(patient.birthDate) : null}
                       onChange={(newValue) => handleChange('birthDate', newValue ? newValue.format('YYYY-MM-DD') : '')}
-                      slotProps={{ textField: { id: 'birthDateInput', fullWidth: true } }}
+                      slotProps={{ textField: { id: 'birthDateInput', 'data-testid': 'patient-birthdate-field', fullWidth: true } }}
                     />
                   </Grid>
                   <Grid item xs={12} sm={6}>
                     <FormControl fullWidth>
                       <InputLabel>Birth Sex</InputLabel>
                       <Select
+                        data-testid="patient-birthsex-select"
                         value={(() => {
-                          const ext = (patient.extension || []).find(e => 
+                          const ext = (patient.extension || []).find(e =>
                             e.url === 'http://hl7.org/fhir/us/core/StructureDefinition/us-core-birthsex'
                           );
                           return ext?.valueCode || '';
@@ -463,12 +482,12 @@ function PatientDetail(props) {
                           if (!updatedPatient.extension) {
                             updatedPatient.extension = [];
                           }
-                          
+
                           // Find or create the birth sex extension
-                          const birthSexIndex = updatedPatient.extension.findIndex(ext => 
+                          const birthSexIndex = updatedPatient.extension.findIndex(ext =>
                             ext.url === 'http://hl7.org/fhir/us/core/StructureDefinition/us-core-birthsex'
                           );
-                          
+
                           if (birthSexIndex >= 0) {
                             updatedPatient.extension[birthSexIndex].valueCode = e.target.value;
                           } else {
@@ -477,7 +496,7 @@ function PatientDetail(props) {
                               valueCode: e.target.value
                             });
                           }
-                          
+
                           setPatient(updatedPatient);
                         }}
                         label="Birth Sex"
@@ -496,6 +515,7 @@ function PatientDetail(props) {
                     <FormControl fullWidth>
                       <InputLabel>Language</InputLabel>
                       <Select
+                        data-testid="patient-language-select"
                         value={get(patient, 'communication[0].language.coding[0].code', '')}
                         onChange={(e) => {
                           const selected = languageOptions.find(opt => opt.code === e.target.value);
@@ -516,8 +536,9 @@ function PatientDetail(props) {
                     <FormControl fullWidth>
                       <InputLabel>Karyotype</InputLabel>
                       <Select
+                        data-testid="patient-karyotype-select"
                         value={(() => {
-                          const ext = (patient.extension || []).find(e => 
+                          const ext = (patient.extension || []).find(e =>
                             e.url === 'http://hl7.org/fhir/StructureDefinition/patient-karyotype'
                           );
                           return ext?.valueCodeableConcept?.coding?.[0]?.code || '';
@@ -528,12 +549,12 @@ function PatientDetail(props) {
                           if (!updatedPatient.extension) {
                             updatedPatient.extension = [];
                           }
-                          
+
                           // Find or create the karyotype extension
-                          const karyotypeIndex = updatedPatient.extension.findIndex(ext => 
+                          const karyotypeIndex = updatedPatient.extension.findIndex(ext =>
                             ext.url === 'http://hl7.org/fhir/StructureDefinition/patient-karyotype'
                           );
-                          
+
                           const karyotypeExtension = {
                             url: 'http://hl7.org/fhir/StructureDefinition/patient-karyotype',
                             valueCodeableConcept: {
@@ -544,13 +565,13 @@ function PatientDetail(props) {
                               }]
                             }
                           };
-                          
+
                           if (karyotypeIndex >= 0) {
                             updatedPatient.extension[karyotypeIndex] = karyotypeExtension;
                           } else {
                             updatedPatient.extension.push(karyotypeExtension);
                           }
-                          
+
                           setPatient(updatedPatient);
                         }}
                         label="Karyotype"
@@ -569,6 +590,7 @@ function PatientDetail(props) {
                     <FormControl fullWidth>
                       <InputLabel>Marital Status</InputLabel>
                       <Select
+                        data-testid="patient-maritalstatus-select"
                         value={get(patient, 'maritalStatus.coding[0].code', '')}
                         onChange={(e) => {
                           const selected = maritalStatusOptions.find(opt => opt.value === e.target.value);
@@ -590,6 +612,7 @@ function PatientDetail(props) {
                       <InputLabel>Gender</InputLabel>
                       <Select
                         id="genderSelect"
+                        data-testid="patient-gender-select"
                         value={patient.gender || ''}
                         onChange={(e) => handleChange('gender', e.target.value)}
                         label="Gender"
@@ -614,6 +637,7 @@ function PatientDetail(props) {
                     onClick={handleAddTelecom}
                     size="small"
                     sx={{ ml: 2 }}
+                    data-testid="add-telecom-button"
                   >
                     Add Contact
                   </Button>
@@ -625,6 +649,7 @@ function PatientDetail(props) {
                       <FormControl fullWidth>
                         <InputLabel>System</InputLabel>
                         <Select
+                          data-testid={`patient-telecom-system-${index}`}
                           value={telecom.system || 'phone'}
                           onChange={(e) => handleChange(`telecom[${index}].system`, e.target.value)}
                           label="System"
@@ -646,6 +671,7 @@ function PatientDetail(props) {
                           if(index === 1 && telecom.system === 'email') return 'emailInput';
                           return `telecom${index}Input`;
                         })()}
+                        data-testid={`patient-telecom-value-${index}`}
                         fullWidth
                         label={(() => {
                           switch(telecom.system) {
@@ -682,6 +708,7 @@ function PatientDetail(props) {
                       <FormControl fullWidth>
                         <InputLabel>Use</InputLabel>
                         <Select
+                          data-testid={`patient-telecom-use-${index}`}
                           value={telecom.use || 'home'}
                           onChange={(e) => handleChange(`telecom[${index}].use`, e.target.value)}
                           label="Use"
@@ -696,6 +723,7 @@ function PatientDetail(props) {
                     </Grid>
                     <Grid item xs={12} sm={1}>
                       <IconButton
+                        data-testid={`patient-telecom-delete-${index}`}
                         onClick={() => handleRemoveTelecom(index)}
                         disabled={patient.telecom.length <= 1}
                         color="error"
@@ -721,6 +749,7 @@ function PatientDetail(props) {
                   <Grid item xs={12}>
                     <TextField
                       id="addressLineInput"
+                      data-testid="patient-address-line"
                       fullWidth
                       label="Street Address"
                       value={get(patient, 'address[0].line[0]', '')}
@@ -730,6 +759,7 @@ function PatientDetail(props) {
                   <Grid item xs={12} sm={6}>
                     <TextField
                       id="cityInput"
+                      data-testid="patient-address-city"
                       fullWidth
                       label="City"
                       value={get(patient, 'address[0].city', '')}
@@ -739,6 +769,7 @@ function PatientDetail(props) {
                   <Grid item xs={12} sm={3}>
                     <TextField
                       id="stateInput"
+                      data-testid="patient-address-state"
                       fullWidth
                       label="State"
                       value={get(patient, 'address[0].state', '')}
@@ -748,6 +779,7 @@ function PatientDetail(props) {
                   <Grid item xs={12} sm={3}>
                     <TextField
                       id="postalCodeInput"
+                      data-testid="patient-address-postalcode"
                       fullWidth
                       label="ZIP Code"
                       value={get(patient, 'address[0].postalCode', '')}
@@ -757,6 +789,7 @@ function PatientDetail(props) {
                   <Grid item xs={12}>
                     <TextField
                       id="countryInput"
+                      data-testid="patient-address-country"
                       fullWidth
                       label="Country"
                       value={get(patient, 'address[0].country', '')}
@@ -784,11 +817,13 @@ function PatientDetail(props) {
             <Button
               startIcon={<CancelIcon />}
               onClick={() => navigate(-1)}
+              data-testid="cancel-patient-button"
             >
               Cancel
             </Button>
             <Button
               id="savePatientButton"
+              data-testid="save-patient-button"
               variant="contained"
               startIcon={<SaveIcon />}
               onClick={handleSave}
