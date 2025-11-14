@@ -51,8 +51,13 @@ export function MedicationsPage(props){
 
   // Subscribe to medications data
   const isLoading = useTracker(() => {
-    // Check if we should use autopublish (development mode)
-    const handle = Meteor.subscribe('autopublish.Medications', {}, {});
+    // Request configured subscription limit to ensure newly created records appear
+    // This is especially important when there are 100+ existing records (e.g., Synthea data)
+    const subscriptionLimit = get(Meteor, 'settings.public.defaults.subscriptionLimit', 1000);
+    const handle = Meteor.subscribe('autopublish.Medications', {}, {
+      limit: subscriptionLimit,
+      sort: { '_id': -1 } // Most recent first
+    });
     return !handle.ready();
   }, []);
 
@@ -80,11 +85,24 @@ export function MedicationsPage(props){
   }, [])
   data.medications = useTracker(function(){
     // Sort by most recent first (using _id in reverse order)
-    return Medications.find({}, {
-      sort: { 
+    const medications = Medications.find({}, {
+      sort: {
         '_id': -1  // Most recent first (naive but works with MongoDB ObjectIDs)
       }
     }).fetch();
+
+    // Diagnostic logging
+    console.log('[MedicationsPage] Fetched', medications.length, 'medications from client collection');
+    if (medications.length > 0) {
+      console.log('[MedicationsPage] First 3 medications:', medications.slice(0, 3).map(med => ({
+        _id: med._id,
+        codeText: get(med, 'code.text'),
+        codeDisplay: get(med, 'code.coding[0].display'),
+        manufacturer: get(med, 'manufacturer.display')
+      })));
+    }
+
+    return medications;
   }, [])
   data.medicationsIndex = useTracker(function(){
     return Session.get('MedicationsTable.medicationsIndex')

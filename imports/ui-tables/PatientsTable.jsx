@@ -941,7 +941,10 @@ export function PatientsTable(props = {}){
         rowStyle.height = '32px';
       }
 
-      const patientId = get(patientsToRender[i], 'id') || get(patientsToRender[i], '_id');
+      // Use _id as primary key (NOT id) to avoid collisions
+      // After flattenPatient(), records have both _id and id fields
+      // Using || can cause one patient's id to match another's _id
+      const patientId = get(patientsToRender[i], '_id');
       const isExpanded = expandedRows[patientId] || false;
       
       // Main row
@@ -999,7 +1002,8 @@ export function PatientsTable(props = {}){
                     onClick={(e) => {
                       e.stopPropagation();
                       console.log('Selecting patient:', patientId);
-                      const selectedPatient = patientsToRender.find(p => (p.id === patientId || p._id === patientId));
+                      // Use _id only for lookup to avoid collisions
+                      const selectedPatient = patientsToRender.find(p => p._id === patientId);
                       console.log('Found patient:', selectedPatient);
                       
                       // Normalize the patient ID (handle ObjectID)
@@ -1047,59 +1051,64 @@ export function PatientsTable(props = {}){
                     startIcon={<ViewIcon />}
                     onClick={(e) => {
                       e.stopPropagation();
-                      
-                      // Set the selected patient in session
-                      const selectedPatient = patientsToRender.find(p => (p.id === patientId || p._id === patientId));
-                      // Normalize the patient ID (handle ObjectID)
-                      const normalizedId = typeof patientId === 'object' && patientId._str ? patientId._str : patientId;
-                      Session.set('selectedPatientId', normalizedId);
-                      Session.set('selectedPatient', selectedPatient);
-                      
-                      // Log AuditEvent for viewing patient chart
-                      Meteor.call('auditEvents.log', 'rest', Meteor.userId(), `Patient/${patientId}`, 
-                        `User viewed patient chart for ${selectedPatient?.name || patientId}`, {
-                          action: 'READ',
-                          entity: [{
-                            what: {
-                              reference: `Patient/${patientId}`,
-                              display: selectedPatient?.name || 'Unknown Patient'
-                            },
-                            type: {
-                              system: 'http://hl7.org/fhir/resource-types',
-                              code: 'Patient',
-                              display: 'Patient'
+
+                      // Get the patient's FHIR id (not MongoDB _id)
+                      // Use _id only for lookup to avoid collisions
+                      const selectedPatient = patientsToRender.find(p => p._id === patientId);
+                      const fhirId = selectedPatient?.id;
+
+                      if (fhirId) {
+                        // Set only the FHIR id - let AutoDashboard query for the full patient
+                        // This prevents structure mismatch between flattened and full FHIR objects
+                        Session.set('selectedPatientId', fhirId);
+
+                        // Log AuditEvent for viewing patient chart
+                        Meteor.call('auditEvents.log', 'rest', Meteor.userId(), `Patient/${fhirId}`,
+                          `User viewed patient chart for ${selectedPatient?.name || fhirId}`, {
+                            action: 'READ',
+                            entity: [{
+                              what: {
+                                reference: `Patient/${fhirId}`,
+                                display: selectedPatient?.name || 'Unknown Patient'
+                              },
+                              type: {
+                                system: 'http://hl7.org/fhir/resource-types',
+                                code: 'Patient',
+                                display: 'Patient'
+                              }
+                            }]
+                          }, (error) => {
+                            if (error) {
+                              console.error('Error logging audit event:', error);
+                            } else {
+                              console.log('Audit event logged for patient chart view');
                             }
-                          }]
-                        }, (error) => {
-                          if (error) {
-                            console.error('Error logging audit event:', error);
-                          } else {
-                            console.log('Audit event logged for patient chart view');
                           }
-                        }
-                      );
-                      
-                      // Navigate to patient chart
-                      navigate('/patient-chart');
+                        );
+
+                        // Navigate to patient chart
+                        navigate('/patient-chart');
+                      }
                     }}
                   >
                     View Chart
                   </Button>
                   
                   <Button
-                    id="viewPatientButton"
+                    className="viewPatientDemographicsButton"
                     variant="outlined"
                     size="small"
                     startIcon={<PersonIcon />}
                     onClick={(e) => {
                       e.stopPropagation();
-                      
+
                       // Get the patient's FHIR id (not MongoDB _id)
-                      const selectedPatient = patientsToRender.find(p => (p.id === patientId || p._id === patientId));
+                      // Use _id only for lookup to avoid collisions
+                      const selectedPatient = patientsToRender.find(p => p._id === patientId);
                       const fhirId = selectedPatient?.id;
-                      
-                      console.log('View patient details:', patientId, 'FHIR ID:', fhirId);
-                      
+
+                      console.log('View patient demographics:', patientId, 'FHIR ID:', fhirId);
+
                       // Navigate to patient detail page using FHIR id
                       if (fhirId) {
                         navigate(`/patients/${fhirId}`);
@@ -1108,7 +1117,7 @@ export function PatientsTable(props = {}){
                       }
                     }}
                   >
-                    View Patient
+                    Demographics
                   </Button>
                   
                   <Button

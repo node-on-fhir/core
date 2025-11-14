@@ -140,7 +140,16 @@ function MedicationDetail(props) {
   async function handleSave() {
     setLoading(true);
     setError(null);
-    
+
+    // Diagnostic logging
+    console.log('[MedicationDetail] Saving medication:', {
+      codeText: get(medication, 'code.text'),
+      codeCode: get(medication, 'code.coding[0].code'),
+      codeDisplay: get(medication, 'code.coding[0].display'),
+      manufacturer: get(medication, 'manufacturer.display'),
+      fullMedication: medication
+    });
+
     try {
       if (id && id !== 'new') {
         // Update existing medication
@@ -484,7 +493,8 @@ function MedicationDetail(props) {
                   Delete
                 </Button>
               )}
-              <Button 
+              <Button
+                id="saveMedicationButton"
                 onClick={handleSave}
                 variant="contained"
                 color="primary"

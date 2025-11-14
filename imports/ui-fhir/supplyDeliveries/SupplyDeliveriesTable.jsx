@@ -542,7 +542,7 @@ function SupplyDeliveriesTable(props){
           className="supplyDeliveryRow" 
           key={i} 
           style={rowStyle} 
-          onClick={ handleRowClick.bind(this, supplyDeliveriesToRender[i].id)} 
+          onClick={ handleRowClick.bind(this, supplyDeliveriesToRender[i]._id)} 
           hover={true} 
           style={{height: '53px', background: "repeating-linear-gradient( 45deg, rgba(253,184,19, 0.9), rgba(253,184,19, 0.9) 10px, rgba(253,184,19, 0.75) 10px, rgba(253,184,19, 0.75) 20px ), url(http://s3-us-west-2.amazonaws.com/s.cdpn.io/3/old_map_@2X.png)"}} >            
             <TableCell className='actionIcons' style={{width: '100%', whiteSpace: 'nowrap'}}>
@@ -554,7 +554,7 @@ function SupplyDeliveriesTable(props){
         ); 
       } else {
         tableRows.push(
-          <TableRow className="supplyDeliveryRow" key={i} style={rowStyle} onClick={ handleRowClick.bind(this, supplyDeliveriesToRender[i]._id || supplyDeliveriesToRender[i].id)} hover={true} selected={selected} >            
+          <TableRow className="supplyDeliveryRow" key={i} style={rowStyle} onClick={ handleRowClick.bind(this, supplyDeliveriesToRender[i]._id)} hover={true} selected={selected} >            
             { renderCheckbox(i) }
             { renderActionIcons(supplyDeliveriesToRender[i]) }
             { renderIdentifier(get(supplyDeliveriesToRender[i], "identifier", "")) }

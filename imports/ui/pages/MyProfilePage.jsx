@@ -122,13 +122,12 @@ function MyProfilePage(props) {
   let currentPatient = useTracker(function(){
     const patientId = get(currentUser, 'patientId');
     if(patientId){
-      // Try both id and _id fields
-      return Patients.findOne({
-        $or: [
-          { id: patientId },
-          { _id: patientId }
-        ]
-      });
+      // Use MongoDB _id (primary key) only - avoid ID collision anti-pattern
+      const patient = Patients.findOne({ _id: patientId });
+      if (!patient) {
+        console.warn('MyProfilePage - Patient not found for _id:', patientId);
+      }
+      return patient;
     }
     return null;
   }, [currentUser])
@@ -146,13 +145,12 @@ function MyProfilePage(props) {
   let currentPractitioner = useTracker(function(){
     const practitionerId = get(currentUser, 'practitionerId');
     if(practitionerId){
-      // Try both id and _id fields
-      return Practitioners.findOne({
-        $or: [
-          { id: practitionerId },
-          { _id: practitionerId }
-        ]
-      });
+      // Use MongoDB _id (primary key) only - avoid ID collision anti-pattern
+      const practitioner = Practitioners.findOne({ _id: practitionerId });
+      if (!practitioner) {
+        console.warn('MyProfilePage - Practitioner not found for _id:', practitionerId);
+      }
+      return practitioner;
     }
     return null;
   }, [currentUser])
@@ -161,13 +159,12 @@ function MyProfilePage(props) {
   let currentPractitionerRole = useTracker(function(){
     const practitionerRoleId = get(currentUser, 'practitionerRoleId');
     if(practitionerRoleId){
-      // Try both id and _id fields
-      return PractitionerRoles.findOne({
-        $or: [
-          { id: practitionerRoleId },
-          { _id: practitionerRoleId }
-        ]
-      });
+      // Use MongoDB _id (primary key) only - avoid ID collision anti-pattern
+      const practitionerRole = PractitionerRoles.findOne({ _id: practitionerRoleId });
+      if (!practitionerRole) {
+        console.warn('MyProfilePage - PractitionerRole not found for _id:', practitionerRoleId);
+      }
+      return practitionerRole;
     }
     return null;
   }, [currentUser])
@@ -1137,10 +1134,11 @@ curl -H "session:${accountsAccessToken}" \\
         <Typography variant="body2" sx={{ mb: 2 }}>
           Deleting your account will permanently remove all your data and cannot be undone.
         </Typography>
-        <Button 
-          fullWidth 
-          variant="contained" 
-          color="error" 
+        <Button
+          id="deleteUserButton"
+          fullWidth
+          variant="contained"
+          color="error"
           onClick={handleDeleteAccount}
         >
           Delete Account

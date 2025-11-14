@@ -53,9 +53,10 @@ function PatientDetail(props) {
   }, []);
   
   // Initialize state with proper FHIR R4 structure
+  // IMPORTANT: Don't set id in initial state - let server generate it
+  // This prevents stale IDs from being reused across patient creations
   const [patient, setPatient] = useState({
     resourceType: "Patient",
-    id: id || Random.id(),
     active: true,
     name: [{
       use: "official",
@@ -142,9 +143,67 @@ function PatientDetail(props) {
         setPatient(existingPatient);
       }
     } else if (!id || id === 'new') {
-      // For new patients, set defaults from current user
-      const newPatient = { ...patient };
-      
+      // For new patients, create fresh state - don't spread old patient!
+      // This prevents reusing IDs from previously viewed patients
+      const newPatient = {
+        resourceType: "Patient",
+        active: true,
+        name: [{
+          use: "official",
+          family: "",
+          given: [""],
+          text: ""
+        }],
+        telecom: [
+          {
+            system: "phone",
+            value: "",
+            use: "mobile"
+          },
+          {
+            system: "email",
+            value: "",
+            use: "home"
+          }
+        ],
+        gender: "",
+        birthDate: "",
+        address: [{
+          use: "home",
+          type: "both",
+          line: [""],
+          city: "",
+          state: "",
+          postalCode: "",
+          country: "USA"
+        }],
+        identifier: [{
+          system: "http://hospital.example.org/identifiers/mrn",
+          value: ""
+        }],
+        maritalStatus: {
+          coding: [{
+            system: "http://terminology.hl7.org/CodeSystem/v3-MaritalStatus",
+            code: "",
+            display: ""
+          }]
+        },
+        communication: [{
+          language: {
+            coding: [{
+              system: "urn:ietf:bcp:47",
+              code: "en-US",
+              display: "English (United States)"
+            }]
+          },
+          preferred: true
+        }],
+        extension: []
+      };
+
+      // IMPORTANT: Don't set id field - let server generate it
+      // This prevents ID reuse across patient creations
+
       // Pre-fill with user's information if available
       if (currentUser) {
         // Set name from user
@@ -154,7 +213,7 @@ function PatientDetail(props) {
           set(newPatient, 'name[0].family', nameParts[nameParts.length - 1]);
           set(newPatient, 'name[0].text', currentUser.fullLegalName);
         }
-        
+
         // Set email from user
         if (get(currentUser, 'emails[0].address')) {
           const emailIndex = newPatient.telecom.findIndex(t => t.system === 'email');
@@ -162,13 +221,13 @@ function PatientDetail(props) {
             newPatient.telecom[emailIndex].value = currentUser.emails[0].address;
           }
         }
-        
-        // Set patient ID if available
+
+        // Only set patient ID if user is creating their own patient record
         if (get(currentUser, 'patientId')) {
           newPatient.id = currentUser.patientId;
         }
       }
-      
+
       setPatient(newPatient);
     }
   }, [id, currentUser]);
@@ -216,15 +275,26 @@ function PatientDetail(props) {
     console.log('[PatientDetail] Starting save operation...');
     console.log('[PatientDetail] Patient data to save:', patient);
     console.log('[PatientDetail] Current ID:', id);
-    
+    console.log('[PatientDetail] Current user patientId:', get(currentUser, 'patientId'));
+
+    // Determine if we're editing an existing patient (vs creating new)
+    const isEditingExisting = id && id !== 'new';
+
+    // For navigation: check if we're editing the user's OWN patient
+    // Only applies when editing existing patients, not creating new ones
+    const isEditingOwnPatient = isEditingExisting && (get(currentUser, 'patientId') === id);
+
+    // Track if we just linked this patient (for navigation logic)
+    let patientWasJustLinked = false;
+
     try {
       let result;
-      
-      if (id && id !== 'new') {
+
+      if (isEditingExisting) {
         // Update existing patient
         const patientId = patient._id || patient.id;
         console.log('[PatientDetail] Updating patient with ID:', patientId);
-        result = await Meteor.callAsync('patients.update', 
+        result = await Meteor.callAsync('patients.update',
           { $or: [{ id: patientId }, { _id: patientId }] },
           { $set: patient }
         );
@@ -233,15 +303,15 @@ function PatientDetail(props) {
         // Create new patient
         console.log('[PatientDetail] Creating new patient...');
         console.log('[PatientDetail] Calling patients.insert with data:', JSON.stringify(patient, null, 2));
-        
+
         try {
           // Add a timeout wrapper for the method call
-          const timeoutPromise = new Promise((_, reject) => 
+          const timeoutPromise = new Promise((_, reject) =>
             setTimeout(() => reject(new Error('Method call timeout after 10s')), 10000)
           );
-          
+
           const methodPromise = Meteor.callAsync('patients.insert', patient);
-          
+
           result = await Promise.race([methodPromise, timeoutPromise]);
           console.log('[PatientDetail] Insert result:', result);
         } catch (methodError) {
@@ -255,35 +325,42 @@ function PatientDetail(props) {
           });
           throw methodError;
         }
-        
+
         // If this is the current user's patient, update the user record
         if (currentUser && !currentUser.patientId) {
           console.log('[PatientDetail] Linking patient to user...');
           try {
             await Meteor.callAsync('users.linkPatient', patient.id);
             console.log('[PatientDetail] User link successful');
+            patientWasJustLinked = true;
           } catch (linkError) {
             console.error('[PatientDetail] User link error:', linkError);
             // Don't throw here - patient was created successfully
           }
+        } else {
+          console.log('[PatientDetail] User already has a patient linked, skipping link');
         }
       }
-      
+
       setSuccessMessage('Patient saved successfully');
       console.log('[PatientDetail] Save successful, navigating in 1.5s...');
-      
-      // Navigate back to profile or patients list
+      console.log('[PatientDetail] isEditingExisting:', isEditingExisting);
+      console.log('[PatientDetail] isEditingOwnPatient:', isEditingOwnPatient);
+      console.log('[PatientDetail] patientWasJustLinked:', patientWasJustLinked);
+
+      // Navigate to profile only if editing user's own patient (not creating new)
+      // This ensures new patients always navigate to /patients list
       setTimeout(() => {
         console.log('[PatientDetail] Navigating back to list...');
-        if (currentUser && patient.id === currentUser.patientId) {
-          console.log('[PatientDetail] Navigating to /my-profile');
+        if (isEditingOwnPatient && !patientWasJustLinked) {
+          console.log('[PatientDetail] Navigating to /my-profile (editing own profile)');
           navigate('/my-profile');
         } else {
           console.log('[PatientDetail] Navigating to /patients');
           navigate('/patients');
         }
       }, 1500);
-      
+
     } catch (error) {
       console.error('[PatientDetail] Error saving patient:', error);
       setErrors({ save: error.message || 'Failed to save patient' });

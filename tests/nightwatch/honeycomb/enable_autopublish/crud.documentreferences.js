@@ -4,6 +4,7 @@ const testUtils = require('./shared-test-utils');
 
 describe('DocumentReferences CRUD Operations', function() {
   const timestamp = Date.now();
+  let testPatientId = null; // Store patient ID for cross-test access
   const testDocumentReference = {
     status: 'current',
     type: `Clinical Note ${timestamp}`,
@@ -108,19 +109,36 @@ describe('DocumentReferences CRUD Operations', function() {
                 browser.assert.fail('Failed to create test patient: ' + result.error);
               } else {
                 console.log('Test patient created with ID:', result.result);
+                testPatientId = result.result; // Store ID for cross-test access
                 browser.assert.ok(true, 'Successfully created test patient');
-                
-                // Set the patient in Session
-                browser.execute(function(patientId) {
-                  if (typeof Session !== 'undefined' && typeof Patients !== 'undefined') {
-                    const patient = Patients.findOne({_id: patientId});
-                    if (patient) {
-                      Session.set('selectedPatientId', patientId);
-                      Session.set('selectedPatient', patient);
-                      console.log('Set selected patient in Session:', patientId);
-                    }
+
+                // Fetch patient from server and set in Session
+                browser.executeAsync(function(patientId, done) {
+                  if (typeof Meteor !== 'undefined' && typeof Session !== 'undefined') {
+                    Meteor.call('patients.findOne', patientId, function(error, patient) {
+                      if (error) {
+                        console.error('Error fetching patient:', error);
+                        done({ success: false, error: error.message });
+                      } else if (patient) {
+                        Session.set('selectedPatientId', patient._id);
+                        Session.set('selectedPatient', patient);
+                        console.log('Set selected patient in Session:', patient._id, patient.name?.[0]?.text);
+                        done({ success: true, patientId: patient._id, patientName: patient.name?.[0]?.text });
+                      } else {
+                        console.error('Patient not found:', patientId);
+                        done({ success: false, error: 'Patient not found' });
+                      }
+                    });
+                  } else {
+                    done({ success: false, error: 'Meteor or Session not available' });
                   }
-                }, [result.result]);
+                }, [result.result], function(fetchResult) {
+                  if (fetchResult.value.success) {
+                    console.log('Successfully set selected patient:', fetchResult.value);
+                  } else {
+                    console.error('Failed to set selected patient:', fetchResult.value.error);
+                  }
+                });
               }
             });
           } else {
@@ -132,7 +150,7 @@ describe('DocumentReferences CRUD Operations', function() {
       } else {
         browser.assert.ok(true, 'Already logged in (autologin enabled)');
         console.log('Already logged in as:', result.value.username, 'userId:', result.value.userId);
-        
+
         // Create a test patient even if already logged in
         testUtils.createTestPatient(browser, {
           name: 'John Doe',
@@ -145,27 +163,45 @@ describe('DocumentReferences CRUD Operations', function() {
             browser.assert.fail('Failed to create test patient: ' + result.error);
           } else {
             console.log('Test patient created with ID:', result.result);
+            testPatientId = result.result; // Store ID for cross-test access
             browser.assert.ok(true, 'Successfully created test patient');
-            
-            // Set the patient in Session
-            browser.execute(function(patientId) {
-              if (typeof Session !== 'undefined' && typeof Patients !== 'undefined') {
-                const patient = Patients.findOne({_id: patientId});
-                if (patient) {
-                  Session.set('selectedPatientId', patientId);
-                  Session.set('selectedPatient', patient);
-                  console.log('Set selected patient in Session:', patientId);
-                }
+
+            // Fetch patient from server and set in Session
+            browser.executeAsync(function(patientId, done) {
+              if (typeof Meteor !== 'undefined' && typeof Session !== 'undefined') {
+                Meteor.call('patients.findOne', patientId, function(error, patient) {
+                  if (error) {
+                    console.error('Error fetching patient:', error);
+                    done({ success: false, error: error.message });
+                  } else if (patient) {
+                    Session.set('selectedPatientId', patient._id);
+                    Session.set('selectedPatient', patient);
+                    console.log('Set selected patient in Session:', patient._id, patient.name?.[0]?.text);
+                    done({ success: true, patientId: patient._id, patientName: patient.name?.[0]?.text });
+                  } else {
+                    console.error('Patient not found:', patientId);
+                    done({ success: false, error: 'Patient not found' });
+                  }
+                });
+              } else {
+                done({ success: false, error: 'Meteor or Session not available' });
               }
-            }, [result.result]);
+            }, [result.result], function(fetchResult) {
+              if (fetchResult.value.success) {
+                console.log('Successfully set selected patient:', fetchResult.value);
+              } else {
+                console.error('Failed to set selected patient:', fetchResult.value.error);
+              }
+            });
           }
         });
       }
-      
+
+
       // Clean up any existing test data
       browser.executeAsync(function(done) {
         if (typeof DocumentReferences !== 'undefined') {
-          const testDocuments = DocumentReferences.find({ 
+          const testDocuments = DocumentReferences.find({
             $or: [
               { 'type.text': { $regex: '.*Clinical Note.*' } },
               { 'description': { $regex: 'Test document reference.*' } },
@@ -179,88 +215,38 @@ describe('DocumentReferences CRUD Operations', function() {
         }
         done();
       });
-      
+
       browser.pause(500);
-      
-      // Re-establish patient context
-      browser.execute(function(testIdentifier) {
-        console.log('Looking for patient with identifier:', testIdentifier);
-        
-        if (typeof Session !== 'undefined' && typeof Patients !== 'undefined') {
-          const allPatients = Patients.find({}).fetch();
-          console.log('Total patients in collection:', allPatients.length);
-          
-          let patient = Patients.findOne({
-            'identifier.value': testIdentifier
-          });
-          
-          if (!patient) {
-            console.log('Patient not found by identifier, trying by name...');
-            patient = Patients.findOne({
-              $or: [
-                { 'name.0.text': { $regex: 'John.*Doe' } },
-                { 'name.0.family': 'Doe' },
-                { 'name.0.given.0': 'John' }
-              ]
-            });
-          }
-          
-          if (!patient && allPatients.length > 0) {
-            console.log('Patient not found by name, using most recent patient');
-            patient = Patients.findOne({}, { sort: { _id: -1 } });
-          }
-          
-          if (patient) {
-            console.log('Found patient:', patient._id, patient.name?.[0]?.text);
-            Session.set('selectedPatientId', patient._id);
-            Session.set('selectedPatient', patient);
-            return { success: true, patientId: patient._id, patientName: patient.name?.[0]?.text };
-          } else {
-            console.error('Could not find any patient');
-            return { success: false, error: 'No patients found in collection' };
-          }
-        }
-        return { success: false, error: 'Session or Patients not available' };
-      }, ['test-patient-' + timestamp], function(result) {
-        console.log('Patient selection check:', result.value);
-        if (result.value.success) {
-          browser.assert.ok(true, `Patient selected: ${result.value.patientName}`);
-        } else {
-          console.error('Failed to set selected patient:', result.value.error);
-        }
-      });
     });
   });
 
   it('02. Verify document references list page loads', browser => {
     browser
       .url('http://localhost:3000/document-references')
-      .waitForElementVisible('#documentReferencesPage', 5000)
-      .pause(1000);
-      
-    // Re-establish patient context after navigation
-    browser.execute(function() {
-      if (typeof Session !== 'undefined' && typeof Patients !== 'undefined') {
-        // Try to find our test patient
-        const testPatient = Patients.findOne({
-          $or: [
-            { 'name.0.text': { $regex: 'John.*Doe' } },
-            { 'name.0.family': 'Doe', 'name.0.given.0': 'John' }
-          ]
+      .waitForElementVisible('#documentReferencesPage', 5000);
+
+    // Re-establish patient context (browser.url clears Session)
+    browser.executeAsync(function(patientId, done) {
+      if (typeof Meteor !== 'undefined' && typeof Session !== 'undefined') {
+        Meteor.call('patients.findOne', patientId, function(error, patient) {
+          if (error) {
+            console.error('Error fetching patient:', error);
+            done({ success: false, error: error.message });
+          } else if (patient) {
+            Session.set('selectedPatientId', patient._id);
+            Session.set('selectedPatient', patient);
+            console.log('Re-established patient context:', patient._id, patient.name?.[0]?.text);
+            done({ success: true });
+          } else {
+            console.error('Patient not found:', patientId);
+            done({ success: false, error: 'Patient not found' });
+          }
         });
-        
-        if (testPatient) {
-          Session.set('selectedPatientId', testPatient._id);
-          Session.set('selectedPatient', testPatient);
-          console.log('Re-established patient context:', testPatient._id);
-          return { patientSet: true, patientId: testPatient._id };
-        }
+      } else {
+        done({ success: false, error: 'Meteor or Session not available' });
       }
-      return { patientSet: false };
-    }, [], function(result) {
-      console.log('Patient context re-establishment:', result.value);
-    });
-    
+    }, [testPatientId]);
+
     browser.pause(1000)
       .execute(function() {
         const hasTable = document.querySelector('#documentReferencesTable') !== null;
@@ -997,17 +983,35 @@ describe('DocumentReferences CRUD Operations', function() {
         browser.assert.ok(result.value.notes.includes(testDocumentReference.notes), 'Notes contain expected text');
       })
       .saveScreenshot('tests/nightwatch/screenshots/document-references/07-view-document-reference-details.png');
-    
+
     // Navigate back to document references list
-    browser
-      .url('http://localhost:3000/document-references')
-      .waitForElementVisible('#documentReferencesPage', 5000);
+    testUtils.navigateUrl(browser, '/document-references');
+    browser.waitForElementVisible('#documentReferencesPage', 5000);
   });
 
   it('07. Update existing document reference', browser => {
     browser
-      .waitForElementVisible('#documentReferencesTable', 5000)
+      .waitForElementVisible('#documentReferencesPage', 5000)
       .pause(1000);
+
+    // Debug: Check patient context and table state
+    browser.execute(function() {
+      const hasTable = document.querySelector('#documentReferencesTable') !== null;
+      const selectedPatientId = typeof Session !== 'undefined' ? Session.get('selectedPatientId') : null;
+      const selectedPatient = typeof Session !== 'undefined' ? Session.get('selectedPatient') : null;
+      let documentCount = 0;
+      if (typeof DocumentReferences !== 'undefined') {
+        documentCount = DocumentReferences.find({}).count();
+      }
+      return {
+        hasTable: hasTable,
+        selectedPatientId: selectedPatientId,
+        selectedPatient: selectedPatient ? 'set' : 'not set',
+        documentCount: documentCount
+      };
+    }, [], function(result) {
+      console.log('Test 07 - Page state:', result.value);
+    });
 
     // Search for our specific test document by content title
     browser
@@ -1188,16 +1192,17 @@ describe('DocumentReferences CRUD Operations', function() {
         browser.assert.equal(result.value, true, 'Clicked Save button');
       });
 
+    browser.pause(2000);
+    testUtils.navigateUrl(browser, '/document-references');
     browser
-      .pause(2000)
-      .url('http://localhost:3000/document-references')
-      .waitForElementVisible('#documentReferencesTable', 5000)
+      .waitForElementVisible('#documentReferencesPage', 5000)
+      .pause(500)
       .saveScreenshot('tests/nightwatch/screenshots/document-references/09-document-reference-updated.png');
   });
 
   it('08. Verify updated document reference in list', browser => {
     browser
-      .waitForElementVisible('#documentReferencesTable', 5000)
+      .waitForElementVisible('#documentReferencesPage', 5000)
       .waitForElementVisible('#documentReferenceSearchInput', 5000)
       .clearValue('#documentReferenceSearchInput')
       .setValue('#documentReferenceSearchInput', testDocumentReference.patientName)

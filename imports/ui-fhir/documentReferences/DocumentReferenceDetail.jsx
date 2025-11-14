@@ -194,12 +194,20 @@ function DocumentReferenceDetail(props) {
         isNew: id === 'new',
         isSubscriptionReady: isSubscriptionReady
       });
-      
-      if (id && id !== 'new' && isSubscriptionReady) {
+
+      if (id && id !== 'new') {
         setLoading(true);
         try {
           console.log('DocumentReferenceDetail - Attempting to load document with _id:', id);
-          const result = await DocumentReferences.findOneAsync({_id: id});
+
+          // Load immediately if data exists - don't wait for subscription
+          let result = DocumentReferences.findOne({_id: id});
+
+          // Fallback: try finding by id field
+          if (!result) {
+            result = DocumentReferences.findOne({id: id});
+          }
+
           if (result) {
             console.log('DocumentReferenceDetail - Loaded document:', result);
             console.log('DocumentReferenceDetail - Type structure:', {
@@ -251,9 +259,9 @@ function DocumentReferenceDetail(props) {
         }
       }
     }
-    
+
     loadDocumentReference();
-  }, [id, isSubscriptionReady]);
+  }, [id]); // Only depend on id, not subscription status
 
   // Handle field changes
   function handleChange(path, value) {
@@ -371,7 +379,9 @@ function DocumentReferenceDetail(props) {
           {/* System ID Barcode */}
           {(id && id !== 'new') && (
             <Box sx={{ mb: 3, textAlign: 'right' }}>
-              <span className="barcode helveticas" style={{ fontSize: '2rem' }}>{id}</span>
+              <span className="barcode helveticas" style={{ fontSize: '2rem' }}>
+                {typeof id === 'object' && id._str ? id._str : String(id)}
+              </span>
             </Box>
           )}
           

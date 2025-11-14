@@ -24,6 +24,16 @@ import { get, reverse } from 'lodash';
 import { FhirUtilities } from '../../lib/FhirUtilities';
 import { FhirDehydrator } from '../../lib/FhirDehydrator';
 
+// Logger setup
+const logger = {
+  debug: console.debug.bind(console),
+  trace: console.trace.bind(console),
+  data: console.log.bind(console),
+  verbose: console.debug.bind(console),
+  info: console.info.bind(console),
+  warn: console.warn.bind(console),
+  error: console.error.bind(console)
+};
 
 //===========================================================================
 // THEMING
@@ -669,7 +679,7 @@ function ConditionsTable(props){
         ); 
       } else {
         tableRows.push(
-          <TableRow className="conditionRow" key={i} style={rowStyle} onClick={ handleRowClick.bind(this, conditionsToRender[i]._id || conditionsToRender[i].id)} hover={true} selected={selected} >            
+          <TableRow className="conditionRow" key={i} style={rowStyle} onClick={ handleRowClick.bind(this, conditionsToRender[i]._id)} hover={true} selected={selected} >
             { renderCheckbox(i) }
             { renderActionIcons(conditionsToRender[i]) }
             { renderTextIcon(get(conditionsToRender[i], "text.div", "")) }

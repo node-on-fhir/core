@@ -92,8 +92,19 @@ module.exports = {
     client.executeAsync(function(data, done) {
       if (typeof Meteor !== 'undefined') {
         console.log('Creating test patient:', data.name);
-        
-        // Default patient structure
+        console.log('Current user ID:', Meteor.userId());
+        console.log('Current user:', Meteor.user());
+
+        // Set up subscription (but don't wait for it to be ready)
+        const autoPublishEnabled = Meteor.settings?.public?.defaults?.autopublish || false;
+        const subscriptionName = autoPublishEnabled ? 'autopublish.Patients' : 'patients.all';
+
+        console.log('Setting up Patients subscription:', subscriptionName);
+        console.log('Autopublish enabled:', autoPublishEnabled);
+
+        Meteor.subscribe(subscriptionName, {}, { limit: 100 });
+
+        // Create patient immediately - don't wait for subscription
         const patient = {
           resourceType: 'Patient',
           active: true,
@@ -106,7 +117,7 @@ module.exports = {
           gender: data.gender || 'unknown',
           birthDate: data.birthDate || '1990-01-01'
         };
-        
+
         // Add identifier if provided
         if (data.identifier) {
           patient.identifier = [{
@@ -114,14 +125,20 @@ module.exports = {
             value: data.identifier
           }];
         }
-        
+
+        console.log('Calling patients.insert with data:', JSON.stringify(patient, null, 2));
+
         Meteor.call('patients.insert', patient, function(error, result) {
           if (error) {
             console.error('Error creating test patient:', error);
+            console.error('Error details:', error.message, error.reason, error.details);
+            done({ error: error.message || error.reason || error, result: null });
           } else {
-            console.log('Test patient created with ID:', result);
+            console.log('Test patient created successfully with ID:', result);
+            // Don't verify - subscription may be limited and won't include new patient immediately
+            // The patient exists server-side, which is what matters for the test
+            done({ error: null, result: result });
           }
-          done({ error: error, result: result });
         });
       } else {
         done({ error: 'Meteor not available' });
@@ -149,5 +166,45 @@ module.exports = {
     }, function() {
       if (callback) callback();
     });
+  },
+
+  /**
+   * Navigate to a URL using Meteor.navigate() to preserve Session state
+   *
+   * This is a drop-in replacement for browser.url() that uses React Router
+   * navigation instead of full page reloads. This preserves Meteor Session
+   * variables like selectedPatient, which is critical for maintaining test
+   * context across navigation.
+   *
+   * Usage:
+   *   // Instead of:
+   *   browser.url('http://localhost:3000/patients')
+   *
+   *   // Use:
+   *   testUtils.navigateUrl(browser, '/patients')
+   *
+   * @param {Object} client - Nightwatch browser client
+   * @param {String} path - Path to navigate to (e.g., '/patients', '/allergy-intolerances')
+   * @param {Function} callback - Optional callback when navigation completes
+   */
+  navigateUrl: function(client, path, callback) {
+    client.execute(function(navigatePath) {
+      if (typeof Meteor !== 'undefined' && typeof Meteor.navigate === 'function') {
+        console.log('[navigateUrl] Using Meteor.navigate() to:', navigatePath);
+        Meteor.navigate(navigatePath);
+        return { method: 'Meteor.navigate', path: navigatePath };
+      } else {
+        console.warn('[navigateUrl] Meteor.navigate not available, using window.location');
+        window.location.href = navigatePath;
+        return { method: 'window.location', path: navigatePath };
+      }
+    }, [path], function(result) {
+      if (result && result.value) {
+        console.log('[navigateUrl] Navigation method:', result.value.method);
+      }
+      if (callback) callback(result);
+    });
+
+    return client; // Allow chaining
   }
 };

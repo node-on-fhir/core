@@ -528,23 +528,65 @@ describe('SupplyDeliveries CRUD Operations', function() {
       .waitForElementVisible('#supplyDeliveryDetailsPage', 5000)
       .pause(500);
 
-    // Click delete button
+    // Verify we're logged in before attempting deletion
+    browser.execute(function() {
+      return {
+        pathname: window.location.pathname,
+        isLoggedIn: typeof Meteor !== 'undefined' && !!Meteor.userId(),
+        userId: Meteor.userId ? Meteor.userId() : null
+      };
+    }, [], function(result) {
+      console.log('[Test 08] Current state:', result.value);
+      browser.assert.ok(result.value.isLoggedIn, 'User should be logged in for deletion');
+      browser.assert.ok(result.value.pathname.includes('/supply-deliveries/'),
+        'Should be on supply delivery detail page');
+    });
+
+    // Click delete button using execute approach (more reliable than .click())
     browser
-      .waitForElementVisible('#deleteSupplyDeliveryButton', 5000)
-      .click('#deleteSupplyDeliveryButton')
       .pause(500)
-      .acceptAlert()
-      .pause(1000);
+      .execute(function() {
+        console.log('[Delete] Looking for Delete button');
+        const buttons = document.querySelectorAll('button');
+        console.log('[Delete] Found', buttons.length, 'buttons');
+        for (let i = 0; i < buttons.length; i++) {
+          const button = buttons[i];
+          const text = button.textContent;
+          console.log(`[Delete] Button ${i}: "${text}"`);
+          if (text && text.includes('Delete')) {
+            console.log('[Delete] Found Delete button, clicking it');
+            button.click();
+            return true;
+          }
+        }
+        console.log('[Delete] Delete button not found');
+        return false;
+      })
+      .pause(500) // Wait for alert to appear
+      .acceptAlert() // Accept the confirmation dialog
+      .pause(1000); // Wait for deletion to complete
 
     // Verify we're back on the list page
-    browser.execute(function() {
-      return window.location.pathname;
-    }, [], function(result) {
-      browser.assert.ok(
-        result.value === '/supply-deliveries',
-        'Should be redirected to supply deliveries list after deletion'
-      );
-    });
+    browser
+      .pause(500)
+      .execute(function() {
+        return {
+          pathname: window.location.pathname,
+          hasPage: !!document.querySelector('#supplyDeliveriesPage'),
+          hasTable: !!document.querySelector('#supplyDeliveriesTable'),
+          hasNoData: !!document.querySelector('[data-testid="no-supply-deliveries"]')
+        };
+      }, [], function(result) {
+        console.log('[Test 08] After deletion:', result.value);
+        browser.assert.ok(
+          result.value.pathname === '/supply-deliveries',
+          'Should be redirected to supply deliveries list after deletion'
+        );
+        browser.assert.ok(
+          result.value.hasTable || result.value.hasNoData,
+          'Should show either table or no-data state'
+        );
+      });
   });
 
   it('09. Cleanup test data', browser => {

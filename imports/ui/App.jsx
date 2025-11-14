@@ -1960,26 +1960,28 @@ export function App(props){
     <div id='primaryFlexPanel' style={{height: '100%', display: 'flex', flexDirection: 'column'}}>
       <CustomThemeProvider>
         <Router>
-          <Header 
-            drawerIsOpen={drawerIsOpen} 
-            handleDrawerOpen={handleDrawerOpen} 
-            headerNavigation={headerNavigation} 
-            history={window.history}
-            { ...otherProps } 
-          />
-          <SideDrawer 
-            drawerIsOpen={drawerIsOpen} 
-            onDrawerClose={function(){setDrawerIsOpen(false)}}  
-            location={props.location} 
-            history={window.history}
-            { ...otherProps } />        
-          <StyledMainRouter style={{flex: 1}} />
-          <Footer 
-            drawerIsOpen={drawerIsOpen} 
-            location={props.location} 
-            history={window.history}
-            { ...otherProps } 
-          />
+          <NavigationProvider>
+            <Header
+              drawerIsOpen={drawerIsOpen}
+              handleDrawerOpen={handleDrawerOpen}
+              headerNavigation={headerNavigation}
+              history={window.history}
+              { ...otherProps }
+            />
+            <SideDrawer
+              drawerIsOpen={drawerIsOpen}
+              onDrawerClose={function(){setDrawerIsOpen(false)}}
+              location={props.location}
+              history={window.history}
+              { ...otherProps } />
+            <StyledMainRouter style={{flex: 1}} />
+            <Footer
+              drawerIsOpen={drawerIsOpen}
+              location={props.location}
+              history={window.history}
+              { ...otherProps }
+            />
+          </NavigationProvider>
         </Router>
       </CustomThemeProvider>      
     </div>

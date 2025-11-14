@@ -4,6 +4,8 @@ const testUtils = require('./shared-test-utils');
 
 describe('CarePlans CRUD Operations', function() {
   const timestamp = Date.now();
+  let testPatientId = null; // Store patient ID for use across tests
+
   const testCarePlan = {
     patientName: 'John Doe',
     authorName: `Dr. Smith ${timestamp}`,  // Note: This will be overridden by the component
@@ -107,8 +109,37 @@ describe('CarePlans CRUD Operations', function() {
                 console.error('Failed to create test patient:', result.error);
                 browser.assert.fail('Failed to create test patient: ' + result.error);
               } else {
+                testPatientId = result.result; // Store for use in other tests
                 console.log('Test patient created with ID:', result.result);
                 browser.assert.ok(true, 'Successfully created test patient');
+
+                // Fetch the patient from the server and set in Session
+                browser.executeAsync(function(patientId, done) {
+                  if (typeof Meteor !== 'undefined' && typeof Session !== 'undefined') {
+                    Meteor.call('patients.findOne', patientId, function(error, patient) {
+                      if (error) {
+                        console.error('Error fetching patient:', error);
+                        done({ success: false, error: error.message });
+                      } else if (patient) {
+                        Session.set('selectedPatientId', patientId);
+                        Session.set('selectedPatient', patient);
+                        console.log('Set selected patient in Session:', patientId, patient.name?.[0]?.text);
+                        done({ success: true, patientId: patientId, patientName: patient.name?.[0]?.text });
+                      } else {
+                        console.error('Patient not found:', patientId);
+                        done({ success: false, error: 'Patient not found' });
+                      }
+                    });
+                  } else {
+                    done({ success: false, error: 'Meteor or Session not available' });
+                  }
+                }, [result.result], function(fetchResult) {
+                  if (fetchResult.value.success) {
+                    console.log('Successfully set selected patient:', fetchResult.value);
+                  } else {
+                    console.error('Failed to set selected patient:', fetchResult.value.error);
+                  }
+                });
               }
             });
           } else {
@@ -131,19 +162,37 @@ describe('CarePlans CRUD Operations', function() {
             console.error('Failed to create test patient:', result.error);
             browser.assert.fail('Failed to create test patient: ' + result.error);
           } else {
+            testPatientId = result.result; // Store for use in other tests
             console.log('Test patient created with ID:', result.result);
             browser.assert.ok(true, 'Successfully created test patient');
-            
-            browser.execute(function(patientId) {
-              if (typeof Session !== 'undefined' && typeof Patients !== 'undefined') {
-                const patient = Patients.findOne({_id: patientId});
-                if (patient) {
-                  Session.set('selectedPatientId', patientId);
-                  Session.set('selectedPatient', patient);
-                  console.log('Set selected patient in Session:', patientId);
-                }
+
+            // Fetch the patient from the server and set in Session
+            browser.executeAsync(function(patientId, done) {
+              if (typeof Meteor !== 'undefined' && typeof Session !== 'undefined') {
+                Meteor.call('patients.findOne', patientId, function(error, patient) {
+                  if (error) {
+                    console.error('Error fetching patient:', error);
+                    done({ success: false, error: error.message });
+                  } else if (patient) {
+                    Session.set('selectedPatientId', patientId);
+                    Session.set('selectedPatient', patient);
+                    console.log('Set selected patient in Session:', patientId, patient.name?.[0]?.text);
+                    done({ success: true, patientId: patientId, patientName: patient.name?.[0]?.text });
+                  } else {
+                    console.error('Patient not found:', patientId);
+                    done({ success: false, error: 'Patient not found' });
+                  }
+                });
+              } else {
+                done({ success: false, error: 'Meteor or Session not available' });
               }
-            }, [result.result]);
+            }, [result.result], function(fetchResult) {
+              if (fetchResult.value.success) {
+                console.log('Successfully set selected patient:', fetchResult.value);
+              } else {
+                console.error('Failed to set selected patient:', fetchResult.value.error);
+              }
+            });
           }
         });
       }
@@ -151,7 +200,7 @@ describe('CarePlans CRUD Operations', function() {
       // Clean up any existing test data
       browser.executeAsync(function(done) {
         if (typeof CarePlans !== 'undefined') {
-          const testCarePlans = CarePlans.find({ 
+          const testCarePlans = CarePlans.find({
             'author.display': { $regex: 'Smith|Johnson' }
           }).fetch();
           testCarePlans.forEach(function(carePlan) {
@@ -161,38 +210,38 @@ describe('CarePlans CRUD Operations', function() {
         }
         done();
       });
-      
-      browser.pause(1000)
-        .execute(function(testIdentifier) {
-          if (typeof Session !== 'undefined' && typeof Patients !== 'undefined') {
-            const patient = Patients.findOne({
-              'identifier.value': testIdentifier
-            });
-            if (patient) {
-              Session.set('selectedPatientId', patient._id);
-              Session.set('selectedPatient', patient);
-              console.log('Set selected patient in Session:', patient._id, patient.name?.[0]?.text);
-              return { success: true, patientId: patient._id, patientName: patient.name?.[0]?.text };
-            } else {
-              console.error('Could not find test patient with identifier:', testIdentifier);
-              return { success: false, error: 'Patient not found' };
-            }
-          }
-          return { success: false, error: 'Session or Patients not available' };
-        }, ['test-patient-' + timestamp], function(result) {
-          if (result.value.success) {
-            console.log('Successfully set selected patient:', result.value);
-          } else {
-            console.error('Failed to set selected patient:', result.value.error);
-          }
-        });
     });
   });
 
   it('02. Verify care plans list page loads', browser => {
     browser
       .url('http://localhost:3000/careplans')
-      .waitForElementVisible('#carePlansPage', 5000)
+      .waitForElementVisible('#carePlansPage', 5000);
+
+    // Re-establish patient context after navigation (browser.url clears Session)
+    browser.executeAsync(function(patientId, done) {
+      if (typeof Meteor !== 'undefined' && typeof Session !== 'undefined') {
+        Meteor.call('patients.findOne', patientId, function(error, patient) {
+          if (error) {
+            console.error('Error fetching patient:', error);
+            done({ success: false, error: error.message });
+          } else if (patient) {
+            Session.set('selectedPatientId', patient._id);
+            Session.set('selectedPatient', patient);
+            console.log('Re-established patient context:', patient._id, patient.name?.[0]?.text);
+            done({ success: true });
+          } else {
+            console.error('Patient not found:', patientId);
+            done({ success: false, error: 'Patient not found' });
+          }
+        });
+      } else {
+        done({ success: false, error: 'Meteor or Session not available' });
+      }
+    }, [testPatientId]);
+
+    browser
+      .pause(500)
       .execute(function() {
         const hasTable = document.querySelector('#carePlansTable') !== null;
         const hasNoDataCard = document.querySelector('.no-data-card') !== null ||
@@ -627,10 +676,9 @@ describe('CarePlans CRUD Operations', function() {
         browser.assert.ok(result.value.notes.includes(testCarePlan.notes), 'Notes contain expected text');
       })
       .saveScreenshot('tests/nightwatch/screenshots/careplans/07-view-careplan-details.png');
-    
-    browser
-      .url('http://localhost:3000/careplans')
-      .waitForElementVisible('#carePlansPage', 5000);
+
+    testUtils.navigateUrl(browser, '/careplans');
+    browser.waitForElementVisible('#carePlansPage', 5000);
   });
 
   it('07. Update existing care plan', browser => {
@@ -721,8 +769,8 @@ describe('CarePlans CRUD Operations', function() {
         browser.assert.equal(result.value, true, 'Clicked Save button');
       });
 
+    testUtils.navigateUrl(browser, '/careplans');
     browser
-      .url('http://localhost:3000/careplans')
       .waitForElementVisible('#carePlansTable', 5000)
       .saveScreenshot('tests/nightwatch/screenshots/careplans/09-careplan-updated.png');
   });

@@ -114,7 +114,10 @@ export function DevicesPage(props){
   // Subscribe to devices data with search filter
   const isLoading = useTracker(() => {
     let autoPublishEnabled = get(Meteor, 'settings.public.defaults.autopublish', false);
-    
+
+    console.log('[DevicesPage] Autopublish enabled:', autoPublishEnabled);
+    console.log('[DevicesPage] Search filter:', searchFilter);
+
     // Build query for subscription
     let query = {};
     if(searchFilter && searchFilter.length > 0) {
@@ -129,12 +132,17 @@ export function DevicesPage(props){
         ]
       };
     }
-    
+
+    console.log('[DevicesPage] Subscription query:', JSON.stringify(query));
+
     if(autoPublishEnabled){
       const handle = Meteor.subscribe('autopublish.Devices', query, { limit: 100 });
+      console.log('[DevicesPage] Subscription handle:', handle);
+      console.log('[DevicesPage] Subscription ready:', handle.ready());
       return !handle.ready();
     } else {
       const handle = Meteor.subscribe('devices.all');
+      console.log('[DevicesPage] Using devices.all subscription, ready:', handle.ready());
       return !handle.ready();
     }
   }, [searchFilter]);

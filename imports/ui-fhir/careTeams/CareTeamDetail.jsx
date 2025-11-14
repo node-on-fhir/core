@@ -234,9 +234,28 @@ function CareTeamDetail(props) {
     if (window.confirm('Are you sure you want to delete this care team?')) {
       setLoading(true);
       setError(null);
-      
+
       try {
-        await Meteor.callAsync('removeCareTeam', careTeamId);
+        // Use MongoDB _id from the loaded care team object, not the URL param
+        // The URL param might be the FHIR id, but delete requires MongoDB _id
+        let mongoId = get(careTeam, '_id');
+
+        // If _id not in state, look it up from the collection
+        if (!mongoId) {
+          console.log('[handleDeleteButton] _id not in state, looking up from collection with id:', id);
+          const record = CareTeams.findOne({_id: id}) || CareTeams.findOne({id: id});
+          if (record) {
+            mongoId = record._id;
+            console.log('[handleDeleteButton] Found MongoDB _id:', mongoId);
+          }
+        }
+
+        if (!mongoId) {
+          throw new Error('Care team _id not found - record may not be loaded yet');
+        }
+
+        console.log('[handleDeleteButton] Deleting care team with _id:', mongoId);
+        await Meteor.callAsync('removeCareTeam', mongoId);
         navigate('/care-teams');
       } catch (err) {
         console.error('Error deleting care team:', err);

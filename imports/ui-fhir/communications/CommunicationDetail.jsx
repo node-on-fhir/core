@@ -163,15 +163,17 @@ function CommunicationDetail(props) {
       // Set patient if selected
       if (selectedPatient) {
         // Get patient name - similar to ServiceRequestDetail pattern
-        const patientName = get(selectedPatient, 'name[0].text', '') || 
+        const patientName = get(selectedPatient, 'name[0].text', '') ||
                           `${get(selectedPatient, 'name[0].given[0]', '')} ${get(selectedPatient, 'name[0].family', '')}`.trim() ||
                           FhirUtilities.pluckName(selectedPatient);
-        
-        // Use MongoDB _id for reference - consistent with ServiceRequestDetail
-        const patientReference = `Patient/${get(selectedPatient, '_id', '')}`;
-        
-        console.log('Setting patient in communication:', { patientReference, patientName });
-        
+
+        // Use FHIR id for reference - NOT MongoDB _id (per CLAUDE.md anti-pattern guidance)
+        // FHIR resources reference each other using FHIR IDs
+        const patientFhirId = get(selectedPatient, 'id', '');
+        const patientReference = `Patient/${patientFhirId}`;
+
+        console.log('Setting patient in communication:', { patientReference, patientName, patientFhirId });
+
         setCommunication(prev => ({
           ...prev,
           subject: {

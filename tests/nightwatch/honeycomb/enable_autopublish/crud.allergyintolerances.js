@@ -53,181 +53,327 @@ describe('AllergyIntolerances CRUD Operations', function() {
         window.testTimestamp = ts;
       }, [timestamp]);
 
-    // Check if we're logged in
-    browser.execute(function() {
-      return {
-        isLoggedIn: typeof Meteor !== 'undefined' && !!Meteor.userId(),
-        userId: Meteor.userId ? Meteor.userId() : null,
-        username: Meteor.user ? (Meteor.user() ? Meteor.user().username : null) : null
-      };
-    }, [], function(result) {
-      console.log('Initial login state:', result.value);
-      
-      if (!result.value.isLoggedIn) {
-        console.log('Not logged in, attempting programmatic login...');
-        
-        browser.executeAsync(function(done) {
-          if (typeof Meteor !== 'undefined') {
-            Meteor.call('test.createTestUser', {
-              username: 'janedoe',
-              email: 'janedoe@test.org',
-              password: 'janedoe123'
-            }, function(err, userId) {
-              if (err) {
-                console.error('Failed to create test user:', err);
-                done({ userCreated: false, error: err.message });
-              } else {
-                console.log('Test user ready, userId:', userId);
-                Meteor.loginWithPassword('janedoe', 'janedoe123', function(loginErr) {
-                  if (loginErr) {
-                    console.error('Login failed:', loginErr);
-                    done({ userCreated: true, loginSuccess: false, error: loginErr.message });
-                  } else {
-                    console.log('Login successful');
-                    done({ 
-                      userCreated: true,
-                      loginSuccess: true, 
-                      userId: Meteor.userId(), 
-                      username: Meteor.user() ? Meteor.user().username : null 
-                    });
-                  }
-                });
-              }
-            });
-          } else {
-            done({ userCreated: false, loginSuccess: false, error: 'Meteor not available' });
-          }
-        }, [], function(result) {
-          if (result.value.loginSuccess) {
-            browser.assert.ok(true, 'Successfully created test user and logged in');
-            console.log('Logged in as:', result.value.username, 'userId:', result.value.userId);
-            
-            // Create a test patient
-            testUtils.createTestPatient(browser, {
-              name: 'John Doe',
-              family: 'Doe',
-              given: 'John',
-              identifier: 'test-patient-' + timestamp
-            }, function(result) {
-              if (result.error) {
-                console.error('Failed to create test patient:', result.error);
-                browser.assert.fail('Failed to create test patient: ' + result.error);
-              } else {
-                console.log('Test patient created with ID:', result.result);
-                browser.assert.ok(true, 'Successfully created test patient');
-                
-                // Set the patient in Session
-                browser.execute(function(patientId) {
-                  if (typeof Session !== 'undefined' && typeof Patients !== 'undefined') {
-                    const patient = Patients.findOne({_id: patientId});
-                    if (patient) {
-                      Session.set('selectedPatientId', patientId);
-                      Session.set('selectedPatient', patient);
-                      console.log('Set selected patient in Session:', patientId);
-                    }
-                  }
-                }, [result.result]);
-              }
-            });
-          } else {
-            browser.assert.fail('Setup failed: ' + result.value.error);
-          }
-        });
-        
-        browser.pause(500);
-      } else {
-        browser.assert.ok(true, 'Already logged in (autologin enabled)');
-        console.log('Already logged in as:', result.value.username, 'userId:', result.value.userId);
-        
-        // Create a test patient even if already logged in
-        testUtils.createTestPatient(browser, {
-          name: 'John Doe',
-          family: 'Doe',
-          given: 'John',
-          identifier: 'test-patient-' + timestamp
-        }, function(result) {
-          if (result.error) {
-            console.error('Failed to create test patient:', result.error);
-            browser.assert.fail('Failed to create test patient: ' + result.error);
-          } else {
-            console.log('Test patient created with ID:', result.result);
-            browser.assert.ok(true, 'Successfully created test patient');
-            
-            // Set the patient in Session
-            browser.execute(function(patientId) {
-              if (typeof Session !== 'undefined' && typeof Patients !== 'undefined') {
-                const patient = Patients.findOne({_id: patientId});
-                if (patient) {
-                  Session.set('selectedPatientId', patientId);
-                  Session.set('selectedPatient', patient);
-                  console.log('Set selected patient in Session:', patientId);
-                }
-              }
-            }, [result.result]);
-          }
-        });
+    // Explicitly attempt auto-login first
+    browser.executeAsync(function(testTimestamp, done) {
+      if (typeof Meteor === 'undefined' || typeof Accounts === 'undefined') {
+        done({ error: 'Meteor or Accounts not available' });
+        return;
       }
-      
-      // Clean up any existing test data
-      browser.executeAsync(function(done) {
-        if (typeof AllergyIntolerances !== 'undefined') {
-          const testAllergies = AllergyIntolerances.find({ 
-            $or: [
-              { 'code.text': { $regex: '.*allergy.*' } },
-              { 'reaction.0.description': { $regex: 'Anaphylaxis.*' } },
-              { 'recorder.display': { $regex: 'Dr\\..*' } }
-            ]
-          }).fetch();
-          testAllergies.forEach(function(allergy) {
-            AllergyIntolerances.remove({ _id: allergy._id });
+
+      console.log('=== Attempting Auto-Login ===');
+
+      // Try to get auto-login token from server
+      Meteor.call('dev.getAutoLoginToken', function(err, result) {
+        if (err) {
+          console.log('Auto-login not available:', err.reason || err.message);
+          done({ autoLogin: false, reason: err.reason || err.message });
+        } else if (result && result.token) {
+          console.log('Auto-login token received, logging in...');
+
+          // Login with the token
+          Accounts.loginWithToken(result.token, function(loginErr) {
+            if (loginErr) {
+              console.error('Failed to login with token:', loginErr);
+              done({ autoLogin: false, error: loginErr.message });
+            } else {
+              console.log('Auto-login successful! Subscribing to currentUser...');
+
+              // Subscribe to accounts.currentUser to get patientId field
+              const userHandle = Meteor.subscribe('accounts.currentUser');
+
+              // Wait for subscription to be ready and patientId to sync
+              let attempts = 0;
+              const maxAttempts = 50; // 5 seconds max
+
+              const checkPatientId = function() {
+                attempts++;
+                const user = Meteor.user();
+                const userPatientId = user?.patientId;
+
+                if (userHandle.ready() && userPatientId) {
+                  console.log('User subscription ready, patientId synced:', userPatientId);
+                  done({
+                    autoLogin: true,
+                    userId: user._id,
+                    username: user.username,
+                    patientId: userPatientId
+                  });
+                } else if (attempts >= maxAttempts) {
+                  console.log('Subscription ready:', userHandle.ready(), 'patientId:', userPatientId);
+                  console.log('No patientId after 5 seconds, proceeding without it');
+                  done({
+                    autoLogin: true,
+                    userId: user._id,
+                    username: user.username,
+                    patientId: null
+                  });
+                } else {
+                  setTimeout(checkPatientId, 100);
+                }
+              };
+
+              checkPatientId();
+            }
           });
-          console.log('Cleared', testAllergies.length, 'test allergy intolerances');
+        } else {
+          console.log('Auto-login not configured');
+          done({ autoLogin: false, reason: 'not-configured' });
         }
-        done();
       });
-      
-      browser.pause(500);
+    }, [timestamp], function(autoLoginResult) {
+      console.log('Auto-login result:', autoLoginResult.value);
+
+      if (autoLoginResult.value.error) {
+        browser.assert.fail('Setup failed: ' + autoLoginResult.value.error);
+        return;
+      }
+
+      if (autoLoginResult.value.autoLogin && autoLoginResult.value.patientId) {
+        // Auto-login succeeded with patientId - verify patient exists
+        console.log('Auto-login succeeded, checking patient...');
+
+        browser.executeAsync(function(userPatientId, done) {
+          console.log('Checking if patient exists:', userPatientId);
+
+          // Use server method instead of subscription for reliability
+          Meteor.call('dev.checkPatientExists', userPatientId, function(err, result) {
+            if (err) {
+              done({ error: 'Error checking patient: ' + err.message });
+              return;
+            }
+
+            if (result && result.exists) {
+              console.log('✓ Patient exists:', userPatientId, '-', result.name);
+
+              // Subscribe to patients to get reactive data
+              const autoPublishEnabled = Meteor.settings?.public?.defaults?.autopublish || false;
+              const subscriptionName = autoPublishEnabled ? 'autopublish.Patients' : 'patients.all';
+              Meteor.subscribe(subscriptionName, {}, { limit: 100 });
+
+              // Wait a bit for patient to sync to client collection
+              setTimeout(function() {
+                const patient = Patients.findOne({ _id: userPatientId });
+                if (patient) {
+                  Session.set('selectedPatientId', userPatientId);
+                  Session.set('selectedPatient', patient);
+                }
+
+                done({
+                  success: true,
+                  patientId: userPatientId,
+                  patientName: result.name,
+                  scenario: 'auto-login-with-existing-patient'
+                });
+              }, 500);
+            } else {
+              // Patient doesn't exist - this is normal for empty database
+              console.log('⚠ Patient ' + userPatientId + ' not found (empty database?)');
+              console.log('  Falling back to patient creation...');
+              done({
+                success: false,
+                autoLogin: true,
+                missingPatient: true
+              });
+            }
+          });
+        }, [autoLoginResult.value.patientId], function(patientResult) {
+          if (patientResult.value.error) {
+            browser.assert.fail('Setup failed: ' + patientResult.value.error);
+          } else if (patientResult.value.success) {
+            console.log('✓ Setup complete:', patientResult.value.scenario);
+            console.log('  Patient:', patientResult.value.patientName, 'ID:', patientResult.value.patientId);
+            browser.assert.ok(true, 'Auto-login succeeded with patient context');
+          } else if (patientResult.value.missingPatient) {
+            // Auto-login worked but patient doesn't exist - fall through to manual creation
+            console.log('Auto-login succeeded but patient missing, creating test patient...');
+            createTestPatient(browser, timestamp);
+          }
+        });
+
+      } else {
+        // Auto-login failed or not configured - create test user and patient
+        console.log('Auto-login not available, creating test user and patient...');
+        createTestPatient(browser, timestamp);
+      }
     });
   });
 
+  // Helper function to create test patient
+  function createTestPatient(browser, timestamp) {
+    browser.executeAsync(function(testTimestamp, done) {
+      // Check if we're already logged in (from auto-login)
+      const alreadyLoggedIn = !!Meteor.userId();
+
+      if (alreadyLoggedIn) {
+        console.log('Already logged in, just creating patient...');
+        createPatient();
+      } else {
+        console.log('Not logged in, creating test user first...');
+        const testUsername = 'test-clinician';
+        const testEmail = 'test-clinician@test.org';
+        const testPassword = 'password2025';
+
+        Meteor.call('test.createTestUser', {
+          username: testUsername,
+          email: testEmail,
+          password: testPassword
+        }, function(err, userId) {
+          if (err) {
+            done({ error: 'Failed to create user: ' + err.message });
+            return;
+          }
+
+          Meteor.loginWithPassword(testUsername, testPassword, function(loginErr) {
+            if (loginErr) {
+              done({ error: 'Login failed: ' + loginErr.message });
+              return;
+            }
+
+            console.log('Logged in, creating test patient...');
+            createPatient();
+          });
+        });
+      }
+
+      function createPatient() {
+        const patientData = {
+          resourceType: 'Patient',
+          active: true,
+          name: [{
+            use: 'official',
+            text: 'John Doe',
+            family: 'Doe',
+            given: ['John']
+          }],
+          gender: 'unknown',
+          birthDate: '1990-01-01',
+          identifier: [{
+            use: 'usual',
+            value: 'test-patient-' + testTimestamp
+          }]
+        };
+
+        Meteor.call('patients.insert', patientData, function(createErr, patientId) {
+          if (createErr) {
+            done({ error: 'Failed to create patient: ' + createErr.message });
+            return;
+          }
+
+          console.log('Created test patient:', patientId);
+
+          // Set patient context immediately - don't wait for client collection sync
+          // The server confirmed creation, that's sufficient for testing
+          Session.set('selectedPatientId', patientId);
+
+          // Build a minimal patient object for Session
+          Session.set('selectedPatient', {
+            _id: patientId,
+            id: patientId,
+            resourceType: 'Patient',
+            name: patientData.name,
+            gender: patientData.gender,
+            birthDate: patientData.birthDate
+          });
+
+          const scenario = alreadyLoggedIn ? 'auto-login-created-patient' : 'created-test-user-and-patient';
+          console.log('✓ Patient created and session set:', patientId);
+
+          done({
+            success: true,
+            patientId: patientId,
+            patientName: 'John Doe',
+            scenario: scenario
+          });
+        });
+      }
+    }, [timestamp], function(manualResult) {
+      if (manualResult.value.error) {
+        browser.assert.fail('Setup failed: ' + manualResult.value.error);
+      } else {
+        console.log('✓ Setup complete:', manualResult.value.scenario);
+        console.log('  Patient:', manualResult.value.patientName, 'ID:', manualResult.value.patientId);
+        browser.assert.ok(true, 'Test environment ready');
+      }
+    });
+  }
+
+  it('01b. Clean up test data', browser => {
+    // Clean up any existing test allergy data
+    browser.executeAsync(function(done) {
+      if (typeof AllergyIntolerances !== 'undefined') {
+        const testAllergies = AllergyIntolerances.find({
+          $or: [
+            { 'code.text': { $regex: '.*allergy.*' } },
+            { 'reaction.0.description': { $regex: 'Anaphylaxis.*' } },
+            { 'recorder.display': { $regex: 'Dr\\..*' } }
+          ]
+        }).fetch();
+        testAllergies.forEach(function(allergy) {
+          AllergyIntolerances.remove({ _id: allergy._id });
+        });
+        console.log('Cleared', testAllergies.length, 'test allergy intolerances');
+      }
+      done();
+    });
+
+    browser.pause(500);
+  });
   it('02. Verify allergy intolerances list page loads', browser => {
+    // Wait for Meteor.navigate to be available, then use it
+    browser.executeAsync(function(done) {
+      console.log('Waiting for Meteor.navigate to be available...');
+
+      let attempts = 0;
+      const maxAttempts = 50; // 5 seconds max
+
+      const checkNavigate = function() {
+        attempts++;
+
+        if (typeof Meteor !== 'undefined' && typeof Meteor.navigate === 'function') {
+          console.log('✓ Meteor.navigate is available!');
+          console.log('Current patient context:', Session.get('selectedPatientId'));
+
+          // Use Meteor.navigate for client-side routing (preserves Session)
+          Meteor.navigate('/allergy-intolerances');
+          done({ success: true, method: 'Meteor.navigate' });
+        } else if (attempts >= maxAttempts) {
+          console.warn('⚠ Meteor.navigate not available after 5 seconds, using window.location');
+          window.location.href = '/allergy-intolerances';
+          done({ success: true, method: 'window.location' });
+        } else {
+          setTimeout(checkNavigate, 100);
+        }
+      };
+
+      checkNavigate();
+    }, [], function(result) {
+      console.log('Navigation method:', result.value.method);
+    });
+
     browser
-      .url('http://localhost:3000/allergy-intolerances')
       .waitForElementVisible('#allergyIntolerancesPage', 5000)
       .pause(500);
-      
-    // NOW set patient context after navigation
-    browser.execute(function(testIdentifier) {
-      console.log('Setting patient context after navigation to /allergy-intolerances');
-      
-      if (typeof Session !== 'undefined' && typeof Patients !== 'undefined') {
-        let patient = Patients.findOne({
-          'identifier.value': testIdentifier
-        });
-        
-        if (!patient) {
-          patient = Patients.findOne({
-            $or: [
-              { 'name.0.text': { $regex: 'John.*Doe' } },
-              { 'name.0.family': 'Doe' },
-              { 'name.0.given.0': 'John' }
-            ]
-          });
-        }
-        
-        if (patient) {
-          Session.set('selectedPatientId', patient._id);
-          Session.set('selectedPatient', patient);
-          console.log('Patient context set:', patient._id, patient.name?.[0]?.text);
-          return { success: true, patientId: patient._id, patientName: patient.name?.[0]?.text };
-        }
-      }
-      return { success: false };
-    }, ['test-patient-' + timestamp], function(result) {
-      if (result.value.success) {
-        browser.assert.ok(true, `Patient context set: ${result.value.patientName}`);
+
+    // Verify patient context was preserved (no need to restore)
+    browser.execute(function() {
+      const selectedPatientId = Session.get('selectedPatientId');
+      const selectedPatient = Session.get('selectedPatient');
+
+      console.log('After navigation - Patient context:', {
+        patientId: selectedPatientId,
+        patientName: selectedPatient?.name?.[0]?.text
+      });
+
+      if (selectedPatientId && selectedPatient) {
+        return { success: true, patientId: selectedPatientId, patientName: selectedPatient.name?.[0]?.text };
       } else {
-        browser.assert.fail('Failed to set patient context');
+        return { success: false, reason: 'session-cleared' };
+      }
+    }, [], function(result) {
+      if (result.value.success) {
+        browser.assert.ok(true, `Patient context preserved: ${result.value.patientName}`);
+      } else {
+        browser.assert.fail(`Patient context was lost after navigation: ${result.value.reason}`);
       }
     });
     
@@ -804,6 +950,26 @@ describe('AllergyIntolerances CRUD Operations', function() {
     browser
       .pause(500)
       .waitForElementVisible('#allergyIntoleranceDetailPage', 5000)
+      .pause(1000); // Wait for subscription to load data
+
+    // Click edit button if present (form may be in view mode)
+    browser.execute(function() {
+      const buttons = document.querySelectorAll('button');
+      for (let button of buttons) {
+        const buttonText = button.textContent.toLowerCase();
+        if (buttonText.includes('edit') || buttonText.includes('lock')) {
+          console.log('Clicking edit/lock button:', button.textContent);
+          button.click();
+          return { clicked: true, buttonText: button.textContent };
+        }
+      }
+      return { clicked: false };
+    }, [], function(result) {
+      console.log('Edit button click result:', result.value);
+    });
+
+    browser
+      .pause(1500) // Wait for edit mode to activate and form to populate
       .assert.valueContains('#codeInput', testAllergyIntolerance.codeCode)
       .assert.valueContains('#codeDisplayInput', testAllergyIntolerance.codeDisplay)
       .assert.valueContains('#reactionInput', testAllergyIntolerance.reaction)
@@ -879,45 +1045,25 @@ describe('AllergyIntolerances CRUD Operations', function() {
         browser.assert.ok(result.value.notes.includes(testAllergyIntolerance.notes), 'Notes contain expected text');
       })
       .saveScreenshot('tests/nightwatch/screenshots/allergy-intolerances/07-view-allergy-intolerance-details.png');
-    
-    // Navigate back to allergy intolerances list
-    browser
-      .url('http://localhost:3000/allergy-intolerances')
-      .waitForElementVisible('#allergyIntolerancesPage', 5000);
+
+    // Navigate back to allergy intolerances list using helper (preserves Session)
+    testUtils.navigateUrl(browser, '/allergy-intolerances');
+    browser.waitForElementVisible('#allergyIntolerancesPage', 5000);
   });
 
   it('07. Update existing allergy intolerance', browser => {
-    // After navigation with browser.url(), need to re-establish patient context
-    browser.execute(function(testIdentifier) {
-      console.log('Re-establishing patient context in test 07');
-      
-      if (typeof Session !== 'undefined' && typeof Patients !== 'undefined') {
-        let patient = Patients.findOne({
-          'identifier.value': testIdentifier
-        });
-        
-        if (!patient) {
-          patient = Patients.findOne({
-            $or: [
-              { 'name.0.text': { $regex: 'John.*Doe' } },
-              { 'name.0.family': 'Doe' },
-              { 'name.0.given.0': 'John' }
-            ]
-          });
-        }
-        
-        if (patient) {
-          Session.set('selectedPatientId', patient._id);
-          Session.set('selectedPatient', patient);
-          console.log('Patient context restored:', patient._id, patient.name?.[0]?.text);
-          return { success: true, patientId: patient._id };
-        }
-      }
-      return { success: false };
-    }, ['test-patient-' + timestamp]);
-    
-    browser.pause(500);
-    
+    // Session should be preserved from previous test via Meteor.navigate
+    browser.execute(function() {
+      console.log('Test 07 - Session check:');
+      console.log('  selectedPatientId:', Session.get('selectedPatientId'));
+      console.log('  selectedPatient:', Session.get('selectedPatient') ? 'present' : 'missing');
+      return {
+        hasPatient: !!Session.get('selectedPatientId')
+      };
+    }, [], function(result) {
+      console.log('Test 07 patient context:', result.value);
+    });
+
     browser
       .waitForElementVisible('#allergyIntolerancesTable', 5000)
       .pause(500);
@@ -1064,9 +1210,11 @@ describe('AllergyIntolerances CRUD Operations', function() {
         browser.assert.equal(result.value, true, 'Clicked Update button');
       });
 
+    // Navigate back to list using helper (preserves Session)
+    browser.pause(1000);
+    testUtils.navigateUrl(browser, '/allergy-intolerances');
+
     browser
-      .pause(2000)
-      .url('http://localhost:3000/allergy-intolerances')
       .waitForElementVisible('#allergyIntolerancesTable', 5000)
       .saveScreenshot('tests/nightwatch/screenshots/allergy-intolerances/09-allergy-intolerance-updated.png');
   });

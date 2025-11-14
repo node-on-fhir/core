@@ -25,6 +25,8 @@ import BadgeIcon from '@mui/icons-material/Badge';
 import PersonIcon from '@mui/icons-material/Person';
 import CodeIcon from '@mui/icons-material/Code';
 import BusinessIcon from '@mui/icons-material/Business';
+import PolicyIcon from '@mui/icons-material/Policy';
+import NoteIcon from '@mui/icons-material/Note';
 
 import ConsentsTable from './ConsentsTable';
 
@@ -56,6 +58,8 @@ export function ConsentsPage(props){
   const [showPatientName, setShowPatientName] = useState(false);
   const [showPatientReference, setShowPatientReference] = useState(false);
   const [showOrganization, setShowOrganization] = useState(false);
+  const [showPolicyRule, setShowPolicyRule] = useState(true);  // Show by default for testing
+  const [showNotes, setShowNotes] = useState(true);  // Show by default for testing
   const [searchFilter, setSearchFilter] = useState('');
 
   let data = {
@@ -67,27 +71,17 @@ export function ConsentsPage(props){
     showFhirIds: false,
     consentsIndex: 0
   };
-  
-  // Subscribe to consents data with search filter
-  const isLoading = useTracker(() => {
-    const selectedPatientId = Session.get('selectedPatientId');
-    const selectedPatient = Session.get('selectedPatient');
-    let autoPublishEnabled = get(Meteor, 'settings.public.defaults.autopublish', false);
-    
-    let query = {};
-    
-    // Add patient filter if patient is selected
-    if(selectedPatient || selectedPatientId) {
-      const fhirId = get(selectedPatient, 'id');
-      
-      if(fhirId) {
-        query = FhirUtilities.addPatientFilterToQuery(fhirId);
-      } else if(selectedPatientId) {
-        query = FhirUtilities.addPatientFilterToQuery(selectedPatientId);
-      }
-    }
-    
-    // Add search filter
+
+  // CRITICAL: Build query consistently for both subscription and data tracker
+  // This ensures we always work with the same set of consents
+  function buildConsentsQuery(selectedPatient, selectedPatientId, searchFilter) {
+    const fhirId = get(selectedPatient, 'id');
+    const patientIdToUse = fhirId || selectedPatientId;
+
+    // Start with patient filter if we have a patient selected
+    let query = patientIdToUse ? FhirUtilities.addPatientFilterToQuery(patientIdToUse) : {};
+
+    // Add search filter if present
     if(searchFilter && searchFilter.length > 0) {
       const searchQuery = {
         $or: [
@@ -96,20 +90,39 @@ export function ConsentsPage(props){
           {'status': {$regex: searchFilter, $options: 'i'}},
           {'category.0.coding.0.display': {$regex: searchFilter, $options: 'i'}},
           {'category.0.coding.0.code': {$regex: searchFilter, $options: 'i'}},
-          {'patient.display': {$regex: searchFilter, $options: 'i'}}
+          {'patient.display': {$regex: searchFilter, $options: 'i'}},
+          {'policyRule.text': {$regex: searchFilter, $options: 'i'}},
+          {'note.0.text': {$regex: searchFilter, $options: 'i'}}
         ]
       };
-      
-      // Merge with patient query if exists
-      if(query.$and) {
-        query.$and.push(searchQuery);
+
+      // Merge queries properly
+      if(query.$or) {
+        // Patient filter exists (which uses $or), combine with search using $and
+        query = {$and: [query, searchQuery]};
       } else if(Object.keys(query).length > 0) {
+        // Other query exists, combine with search
         query = {$and: [query, searchQuery]};
       } else {
+        // No existing query, use search directly
         query = searchQuery;
       }
     }
-    
+
+    return query;
+  }
+
+  // Subscribe to consents data with search filter
+  const isLoading = useTracker(() => {
+    const selectedPatientId = Session.get('selectedPatientId');
+    const selectedPatient = Session.get('selectedPatient');
+    let autoPublishEnabled = get(Meteor, 'settings.public.defaults.autopublish', false);
+
+    // Use shared query builder
+    const query = buildConsentsQuery(selectedPatient, selectedPatientId, searchFilter);
+
+    console.log('[ConsentsPage Subscription] Query:', JSON.stringify(query, null, 2));
+
     if(autoPublishEnabled){
       const handle = Meteor.subscribe('autopublish.Consents', query, { limit: 1000 });
       return !handle.ready();
@@ -135,25 +148,24 @@ export function ConsentsPage(props){
   data.consents = useTracker(function(){
     const selectedPatientId = Session.get('selectedPatientId');
     const selectedPatient = Session.get('selectedPatient');
-    
-    const fhirId = get(selectedPatient, 'id');
-    const patientIdToUse = fhirId || selectedPatientId;
-    
-    const query = patientIdToUse ? FhirUtilities.addPatientFilterToQuery(patientIdToUse) : {};
-    
+
+    // CRITICAL: Use same query builder as subscription to ensure consistency
+    const query = buildConsentsQuery(selectedPatient, selectedPatientId, searchFilter);
+
     // Debug logging only once
     if(!Session.get('ConsentsPage.debugLogged')) {
       Session.set('ConsentsPage.debugLogged', true);
-      
-      console.log('Consents data - MongoDB _id:', selectedPatientId);
-      console.log('Consents data - FHIR id:', fhirId);
-      console.log('Consents data - query:', query);
-      console.log('Total consents:', Consents.find({}).count());
-      console.log('Filtered consents:', Consents.find(query).count());
+
+      const fhirId = get(selectedPatient, 'id');
+      console.log('[ConsentsPage Data] MongoDB _id:', selectedPatientId);
+      console.log('[ConsentsPage Data] FHIR id:', fhirId);
+      console.log('[ConsentsPage Data] Query:', JSON.stringify(query, null, 2));
+      console.log('[ConsentsPage Data] Total consents in client:', Consents.find({}).count());
+      console.log('[ConsentsPage Data] Filtered consents:', Consents.find(query).count());
     }
-    
+
     return Consents.find(query).fetch();
-  }, [])
+  }, [searchFilter])
   data.consentsIndex = useTracker(function(){
     return Session.get('ConsentsTable.consentsIndex')
   }, [])
@@ -185,6 +197,8 @@ export function ConsentsPage(props){
     setShowPatientReference(newFormats.includes('patientReference'));
     setShowSystemId(newFormats.includes('systemId'));
     setShowOrganization(newFormats.includes('organization'));
+    setShowPolicyRule(newFormats.includes('policyRule'));
+    setShowNotes(newFormats.includes('notes'));
   }
 
   function renderHeader() {
@@ -221,7 +235,9 @@ export function ConsentsPage(props){
                   ...(showPatientName ? ['patientName'] : []),
                   ...(showPatientReference ? ['patientReference'] : []),
                   ...(showSystemId ? ['systemId'] : []),
-                  ...(showOrganization ? ['organization'] : [])
+                  ...(showOrganization ? ['organization'] : []),
+                  ...(showPolicyRule ? ['policyRule'] : []),
+                  ...(showNotes ? ['notes'] : [])
                 ]}
                 onChange={handleToggleChange}
                 aria-label="display options"
@@ -238,6 +254,12 @@ export function ConsentsPage(props){
                 </ToggleButton>
                 <ToggleButton value="organization" aria-label="show organization">
                   <BusinessIcon />
+                </ToggleButton>
+                <ToggleButton value="policyRule" aria-label="show policy rule">
+                  <PolicyIcon />
+                </ToggleButton>
+                <ToggleButton value="notes" aria-label="show notes">
+                  <NoteIcon />
                 </ToggleButton>
               </ToggleButtonGroup>
               
@@ -280,7 +302,7 @@ export function ConsentsPage(props){
       }}
     >
       <CardContent sx={{ p: 0 }}>
-        <ConsentsTable 
+        <ConsentsTable
           id='consentsTable'
           consents={data.consents}
           count={data.consents.length}
@@ -290,6 +312,8 @@ export function ConsentsPage(props){
           hidePatientName={!showPatientName}
           hidePatientReference={!showPatientReference}
           hideOrganization={!showOrganization}
+          hidePolicyRule={!showPolicyRule}
+          hideNotes={!showNotes}
           order={sortOrder}
           onRowClick={function(consentId){
             console.log('ConsentsPage.onRowClick', consentId);

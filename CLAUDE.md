@@ -79,6 +79,59 @@ meteor-desktop
 - **Routing**: React Router v6 configuration in `/imports/ui/App.jsx`
 - **Testing**: Page Object Model for E2E tests in `/tests/nightwatch/pages/`
 
+## Anti-Patterns to Avoid
+
+### ID Lookup Anti-Pattern
+
+**NEVER use OR logic when looking up records by ID.** This is a critical bug that causes wrong records to be returned.
+
+```javascript
+// ❌ WRONG - Can match multiple records causing ID collisions!
+const patientId = get(patient, 'id') || get(patient, '_id');
+const record = collection.find(p => p.id === value || p._id === value);
+
+// ✅ CORRECT - Use MongoDB _id (primary key) only
+const patientId = get(patient, '_id');
+const record = collection.find(p => p._id === value);
+```
+
+**Why This Matters:**
+
+After data transformation functions like `flattenPatient()`, records have **BOTH** `_id` and `id` fields:
+
+```javascript
+{
+  _id: '5832e8a0ea861706b1857c49',  // MongoDB primary key
+  id: '23c65305-e7da-3fa8-e7c9-92d6199dd40e'  // FHIR identifier
+}
+```
+
+Using OR logic (`||`) can cause catastrophic ID collisions:
+- Patient A: `{ _id: 'abc123', id: 'xyz789' }`
+- Patient B: `{ _id: 'xyz789', id: 'def456' }`
+- Looking up `'xyz789'` with OR logic matches **BOTH** patients!
+- `.find()` returns whichever comes first (wrong patient)
+
+**Real-World Impact:** This bug caused test patients to open the wrong patient details page, showing "Kylee Leannon" instead of the test patient. With 293+ patients in the database, ID collisions are inevitable.
+
+**When You Need FHIR ID:**
+
+Get it from the found record after lookup, don't use it for the lookup itself:
+
+```javascript
+// Find by MongoDB _id
+const patient = Patients.findOne({ _id: mongoId });
+
+// Then extract FHIR id for navigation or display
+const fhirId = patient.id;
+navigate(`/patients/${fhirId}`);
+```
+
+**MongoDB _id is the source of truth** for all record lookups. FHIR `id` is just a field and should only be used for:
+- Display purposes
+- FHIR API compliance
+- Navigation URLs (after lookup)
+
 ## Important Notes
 
 - Replace all "QWERTY" placeholders before deployment

@@ -4,6 +4,8 @@ const testUtils = require('./shared-test-utils');
 
 describe('Conditions CRUD Operations', function() {
   const timestamp = Date.now();
+  let testPatientId = null; // Store patient ID for cross-test access
+
   const testCondition = {
     patientName: 'John Doe',
     asserterName: `Dr. Smith ${timestamp}`,
@@ -118,20 +120,37 @@ describe('Conditions CRUD Operations', function() {
                 console.error('Failed to create test patient:', result.error);
                 browser.assert.fail('Failed to create test patient: ' + result.error);
               } else {
+                testPatientId = result.result; // Store ID for use in other tests
                 console.log('Test patient created with ID:', result.result);
                 browser.assert.ok(true, 'Successfully created test patient');
-                
-                // Set the patient in Session immediately - EXACTLY like CarePlans
-                browser.execute(function(patientId) {
-                  if (typeof Session !== 'undefined' && typeof Patients !== 'undefined') {
-                    const patient = Patients.findOne({_id: patientId});
-                    if (patient) {
-                      Session.set('selectedPatientId', patientId);
-                      Session.set('selectedPatient', patient);
-                      console.log('Set selected patient in Session:', patientId);
-                    }
+
+                // Fetch the patient from the server and set in Session
+                browser.executeAsync(function(patientId, done) {
+                  if (typeof Meteor !== 'undefined' && typeof Session !== 'undefined') {
+                    Meteor.call('patients.findOne', patientId, function(error, patient) {
+                      if (error) {
+                        console.error('Error fetching patient:', error);
+                        done({ success: false, error: error.message });
+                      } else if (patient) {
+                        Session.set('selectedPatientId', patient._id);
+                        Session.set('selectedPatient', patient);
+                        console.log('Set selected patient in Session:', patient._id, patient.name?.[0]?.text);
+                        done({ success: true, patientId: patient._id, patientName: patient.name?.[0]?.text });
+                      } else {
+                        console.error('Patient not found:', patientId);
+                        done({ success: false, error: 'Patient not found' });
+                      }
+                    });
+                  } else {
+                    done({ success: false, error: 'Meteor or Session not available' });
                   }
-                }, [result.result]);
+                }, [result.result], function(fetchResult) {
+                  if (fetchResult.value.success) {
+                    console.log('Successfully set selected patient:', fetchResult.value);
+                  } else {
+                    console.error('Failed to set selected patient:', fetchResult.value.error);
+                  }
+                });
               }
             });
           } else {
@@ -155,21 +174,37 @@ describe('Conditions CRUD Operations', function() {
             console.error('Failed to create test patient:', result.error);
             browser.assert.fail('Failed to create test patient: ' + result.error);
           } else {
+            testPatientId = result.result; // Store ID for use in other tests
             console.log('Test patient created with ID:', result.result);
             browser.assert.ok(true, 'Successfully created test patient');
-            
-            // Set the Session variables for the selected patient using the returned ID
-            // EXACTLY like CarePlans - set with returned ID
-            browser.execute(function(patientId) {
-              if (typeof Session !== 'undefined' && typeof Patients !== 'undefined') {
-                const patient = Patients.findOne({_id: patientId});
-                if (patient) {
-                  Session.set('selectedPatientId', patientId);
-                  Session.set('selectedPatient', patient);
-                  console.log('Set selected patient in Session:', patientId);
-                }
+
+            // Fetch the patient from the server and set in Session
+            browser.executeAsync(function(patientId, done) {
+              if (typeof Meteor !== 'undefined' && typeof Session !== 'undefined') {
+                Meteor.call('patients.findOne', patientId, function(error, patient) {
+                  if (error) {
+                    console.error('Error fetching patient:', error);
+                    done({ success: false, error: error.message });
+                  } else if (patient) {
+                    Session.set('selectedPatientId', patient._id);
+                    Session.set('selectedPatient', patient);
+                    console.log('Set selected patient in Session:', patient._id, patient.name?.[0]?.text);
+                    done({ success: true, patientId: patient._id, patientName: patient.name?.[0]?.text });
+                  } else {
+                    console.error('Patient not found:', patientId);
+                    done({ success: false, error: 'Patient not found' });
+                  }
+                });
+              } else {
+                done({ success: false, error: 'Meteor or Session not available' });
               }
-            }, [result.result]);
+            }, [result.result], function(fetchResult) {
+              if (fetchResult.value.success) {
+                console.log('Successfully set selected patient:', fetchResult.value);
+              } else {
+                console.error('Failed to set selected patient:', fetchResult.value.error);
+              }
+            });
           }
         });
       }
@@ -254,57 +289,34 @@ describe('Conditions CRUD Operations', function() {
   });
 
   it('02. Verify conditions list page loads', browser => {
-    browser
-      .url('http://localhost:3000/conditions')
-      .waitForElementVisible('#conditionsPage', 5000);
-      
-    // Add a pause to ensure subscriptions are ready
-    browser.pause(1000);
-    
-    // NOW set patient context after navigation (following AllergyIntolerances pattern)
-    browser.execute(function(testIdentifier) {
-      console.log('Setting patient context after navigation to /conditions');
-      console.log('testIdentifier:', testIdentifier);
-      
-      if (typeof Session !== 'undefined' && typeof Patients !== 'undefined') {
-        // Debug: Check if collection is available
-        console.log('Patients collection available:', !!Patients);
-        console.log('Total patients in collection:', Patients.find({}).count());
-        
-        // Just find the most recent John Doe patient
-        let patient = Patients.findOne({
-          $or: [
-            { 'name.0.text': { $regex: 'John.*Doe' } },
-            { 'name.0.family': 'Doe' },
-            { 'name.0.given.0': 'John' }
-          ]
-        }, { sort: { _id: -1 } });
-        
-        console.log('Found patient:', patient);
-        
-        if (patient) {
-          Session.set('selectedPatientId', patient._id);
-          Session.set('selectedPatient', patient);
-          console.log('Patient context set:', patient._id, patient.name?.[0]?.text);
-          return { success: true, patientId: patient._id, patientName: patient.name?.[0]?.text };
-        } else {
-          console.log('No patient found');
-          return { success: false, error: 'Patient not found' };
-        }
-      }
-      console.log('Session or Patients not available');
-      return { success: false, error: 'Session or Patients not available' };
-    }, ['test-patient-' + timestamp], function(result) {
-      console.log('Patient context result:', result.value);
-      if (result.value.success) {
-        browser.assert.ok(true, `Patient context set: ${result.value.patientName}`);
+    // Use testUtils.navigateUrl to preserve Session state
+    testUtils.navigateUrl(browser, '/conditions');
+    browser.waitForElementVisible('#conditionsPage', 5000);
+
+    // Re-establish patient context after navigation (browser.url clears Session)
+    browser.executeAsync(function(patientId, done) {
+      if (typeof Meteor !== 'undefined' && typeof Session !== 'undefined') {
+        Meteor.call('patients.findOne', patientId, function(error, patient) {
+          if (error) {
+            console.error('Error fetching patient:', error);
+            done({ success: false, error: error.message });
+          } else if (patient) {
+            Session.set('selectedPatientId', patient._id);
+            Session.set('selectedPatient', patient);
+            console.log('Re-established patient context:', patient._id, patient.name?.[0]?.text);
+            done({ success: true });
+          } else {
+            console.error('Patient not found:', patientId);
+            done({ success: false, error: 'Patient not found' });
+          }
+        });
       } else {
-        browser.assert.fail('Failed to set patient context: ' + (result.value.error || 'Unknown error'));
+        done({ success: false, error: 'Meteor or Session not available' });
       }
-    });
-    
-    browser.pause(1000);
-      
+    }, [testPatientId]);
+
+    browser.pause(500); // Let subscription update
+
     browser.execute(function() {
         // Check if we have either the table or the no-data card
         const hasTable = document.querySelector('#conditionsTable') !== null;
@@ -1173,9 +1185,8 @@ describe('Conditions CRUD Operations', function() {
       .saveScreenshot('tests/nightwatch/screenshots/conditions/07-view-condition-details.png');
     
     // Navigate back to conditions list
-    browser
-      .url('http://localhost:3000/conditions')
-      .waitForElementVisible('#conditionsPage', 5000);
+    testUtils.navigateUrl(browser, '/conditions');
+    browser.waitForElementVisible('#conditionsPage', 5000);
   });
 
   it('07. Update existing condition', browser => {
@@ -1292,9 +1303,11 @@ describe('Conditions CRUD Operations', function() {
       });
 
     browser
-      .pause(1000)
-      // Navigate back to conditions list
-      .url('http://localhost:3000/conditions')
+      .pause(1000);
+
+    // Navigate back to conditions list
+    testUtils.navigateUrl(browser, '/conditions');
+    browser
       .waitForElementVisible('#conditionsTable', 5000)
       .saveScreenshot('tests/nightwatch/screenshots/conditions/09-condition-updated.png');
   });

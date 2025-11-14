@@ -395,21 +395,9 @@ describe('ImagingStudies CRUD Operations', function() {
       console.log('Edit mode check:', result.value);
     });
 
-    // Fill form fields
-    // Set the modality using the select dropdown
+    // Fill form fields using setValue for text inputs
     browser
       .pause(500)
-      .execute(function(modalityCode) {
-        const select = document.querySelector('#modalitySelect');
-        if (select) {
-          // Find the native select element within Material-UI
-          const nativeSelect = select.querySelector('select') || select;
-          nativeSelect.value = modalityCode;
-          nativeSelect.dispatchEvent(new Event('change', { bubbles: true }));
-          return true;
-        }
-        return false;
-      }, [testImagingStudy.modalityCode])
       .clearValue('#descriptionInput')
       .setValue('#descriptionInput', testImagingStudy.description)
       .clearValue('#startedInput')
@@ -433,81 +421,6 @@ describe('ImagingStudies CRUD Operations', function() {
       .clearValue('#notesTextarea')
       .setValue('#notesTextarea', testImagingStudy.notes)
       .pause(500);
-
-    // Also use execute method as fallback
-    browser.execute(function(study) {
-      function setFieldValue(selector, value) {
-        const field = document.querySelector(selector);
-        if (field) {
-          const nativeInputValueSetter = Object.getOwnPropertyDescriptor(
-            window.HTMLInputElement.prototype, 
-            'value'
-          ).set;
-          nativeInputValueSetter.call(field, value);
-          
-          const inputEvent = new Event('input', { bubbles: true });
-          field.dispatchEvent(inputEvent);
-          
-          const changeEvent = new Event('change', { bubbles: true });
-          field.dispatchEvent(changeEvent);
-          
-          console.log(`Set ${selector} to:`, value);
-          return true;
-        } else if (selector.includes('Textarea')) {
-          const textarea = document.querySelector(selector);
-          if (textarea) {
-            const nativeTextareaValueSetter = Object.getOwnPropertyDescriptor(
-              window.HTMLTextAreaElement.prototype, 
-              'value'
-            ).set;
-            nativeTextareaValueSetter.call(textarea, value);
-            
-            const inputEvent = new Event('input', { bubbles: true });
-            textarea.dispatchEvent(inputEvent);
-            
-            const changeEvent = new Event('change', { bubbles: true });
-            textarea.dispatchEvent(changeEvent);
-            
-            console.log(`Set ${selector} to:`, value);
-            return true;
-          }
-        }
-        console.warn(`Field ${selector} not found`);
-        return false;
-      }
-      
-      const results = {};
-      
-      // Ensure subject display is set
-      const subjectField = document.querySelector('#subjectDisplay');
-      if (subjectField && !subjectField.value) {
-        const selectedPatient = Session.get('selectedPatient');
-        if (selectedPatient && selectedPatient.name) {
-          let patientName = '';
-          if (typeof selectedPatient.name === 'string') {
-            patientName = selectedPatient.name;
-          } else if (Array.isArray(selectedPatient.name) && selectedPatient.name[0]) {
-            patientName = selectedPatient.name[0].text || 
-                        `${selectedPatient.name[0].given?.join(' ') || ''} ${selectedPatient.name[0].family || ''}`.trim();
-          }
-          if (patientName) {
-            results.subjectDisplay = setFieldValue('#subjectDisplay', patientName);
-          }
-        }
-      }
-      
-      results.description = setFieldValue('#descriptionInput', study.description);
-      results.numberOfSeries = setFieldValue('#numberOfSeriesInput', study.numberOfSeries.toString());
-      results.numberOfInstances = setFieldValue('#numberOfInstancesInput', study.numberOfInstances.toString());
-      results.reasonCode = setFieldValue('#reasonCodeInput', study.reasonCode);
-      results.interpreter = setFieldValue('#interpreterInput', study.interpreter);
-      results.endpoint = setFieldValue('#endpointInput', study.endpoint);
-      results.notes = setFieldValue('#notesTextarea', study.notes);
-      
-      return { filled: true, results: results };
-    }, [testImagingStudy], function(result) {
-      console.log('Form fields filled:', result.value);
-    });
 
     // Handle Material-UI Select components
     browser.execute(function(status) {

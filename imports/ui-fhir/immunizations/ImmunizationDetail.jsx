@@ -174,14 +174,23 @@ function ImmunizationDetail(props) {
 
   // Load immunization if editing
   useEffect(function() {
-    if (immunizationId && immunizationId !== 'new' && isSubscriptionReady) {
+    if (immunizationId && immunizationId !== 'new') {
+      // Load immediately if data exists - don't wait for subscription
       const existingImmunization = Immunizations.findOne({_id: immunizationId});
+
       if (existingImmunization) {
         setImmunization(existingImmunization);
         setIsEditing(false);
+      } else {
+        // Fallback: try finding by id field
+        const immunizationById = Immunizations.findOne({id: immunizationId});
+        if (immunizationById) {
+          setImmunization(immunizationById);
+          setIsEditing(false);
+        }
       }
     }
-  }, [immunizationId, isSubscriptionReady]);
+  }, [immunizationId]);
 
   // Handle field changes
   function handleChange(path, value) {
@@ -207,7 +216,7 @@ function ImmunizationDetail(props) {
   async function handleSaveButton() {
     setLoading(true);
     setError(null);
-    
+
     try {
       const dataToSave = {
         resourceType: "Immunization",
@@ -225,17 +234,25 @@ function ImmunizationDetail(props) {
         manufacturer: get(immunization, 'manufacturer'),
         note: get(immunization, 'note')
       };
-      
+
+      console.log('ImmunizationDetail - Saving immunization...');
+      console.log('Selected patient:', selectedPatient);
+      console.log('Patient reference before check:', get(dataToSave, 'patient.reference'));
+
       // Ensure patient reference is set if we have a selected patient
-      if (!dataToSave.patient?.reference && selectedPatient) {
+      // Check for empty string as well as undefined/null
+      if ((!dataToSave.patient?.reference || dataToSave.patient.reference === '') && selectedPatient) {
         const patientReference = `Patient/${get(selectedPatient, 'id', get(selectedPatient, '_id', ''))}`;
+        console.log('Setting patient reference to:', patientReference);
         dataToSave.patient = {
           reference: patientReference,
-          display: get(dataToSave, 'patient.display', '') || 
-                  get(selectedPatient, 'name[0].text', '') || 
+          display: get(dataToSave, 'patient.display', '') ||
+                  get(selectedPatient, 'name[0].text', '') ||
                   `${get(selectedPatient, 'name[0].given[0]', '')} ${get(selectedPatient, 'name[0].family', '')}`.trim()
         };
       }
+
+      console.log('Final data to save:', JSON.stringify(dataToSave, null, 2));
       
       // Ensure we have proper CodeableConcepts
       if (dataToSave.vaccineCode && !dataToSave.vaccineCode.coding) {

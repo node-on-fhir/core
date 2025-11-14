@@ -39,9 +39,15 @@ function injectEnvironmentVariables() {
   }
 
   // Development auto-login configuration
+  // Explicitly set based on environment variable to override settings file
   if (process.env.NODE_ENV === 'development' && process.env.DEV_AUTO_LOGIN === 'true') {
     set(Meteor, 'settings.public.devAutoLoginEnabled', true);
     console.log('Development auto-login enabled');
+  } else {
+    // Explicitly disable if environment variable is not 'true'
+    // This overrides any setting from settings.json
+    set(Meteor, 'settings.public.devAutoLoginEnabled', false);
+    console.log('Development auto-login disabled');
   }
 
   // Database configuration
@@ -78,8 +84,10 @@ function injectEnvironmentVariables() {
   
   // Autopublish configuration
   if (process.env.ENABLE_AUTOPUBLISH) {
-    set(Meteor, 'settings.private.fhir.autopublishSubscriptions', process.env.ENABLE_AUTOPUBLISH === 'true');
-    console.log('Autopublish enabled via environment variable:', process.env.ENABLE_AUTOPUBLISH);
+    // Handle both 'true' and '1' as truthy values
+    const autopublishValue = process.env.ENABLE_AUTOPUBLISH === 'true' || process.env.ENABLE_AUTOPUBLISH === '1';
+    set(Meteor, 'settings.private.fhir.autopublishSubscriptions', autopublishValue);
+    console.log('Autopublish enabled via environment variable:', process.env.ENABLE_AUTOPUBLISH, '-> setting to:', autopublishValue);
   }
 
   // API keys and secrets

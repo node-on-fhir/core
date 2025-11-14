@@ -526,75 +526,31 @@ describe('MedicationAdministrations CRUD Operations', function() {
   it('05. Verify new medication administration appears in list', browser => {
     browser
       .waitForElementVisible('#medicationAdministrationsPage', 5000)
-      .pause(3000) // Give MORE time for subscription to load
-      
-      // Refresh the page to force subscription reload
-      .refresh()
-      .waitForElementVisible('#medicationAdministrationsPage', 5000)
-            
-      // Check if we have a table or a single card view
-      .execute(function() {
-        const hasTable = !!document.querySelector('#medicationAdministrationsTable');
-        const hasCards = !!document.querySelector('.medication-administration-card');
-        const pageContent = document.querySelector('#medicationAdministrationsPage')?.textContent || '';
-        
-        // Also check subscription status
-        const subHandles = Meteor.connection._subscriptions;
-        const subInfo = {};
-        Object.keys(subHandles).forEach(key => {
-          const sub = subHandles[key];
-          if (sub.name && sub.name.includes('MedicationAdministrations')) {
-            subInfo[sub.name] = { ready: sub.ready, params: sub.params };
-          }
-        });
-        
-        return {
-          hasTable,
-          hasCards,
-          pageContent: pageContent.substring(0, 500), // First 500 chars
-          subscriptions: subInfo
-        };
-      }, [], function(result) {
-        console.log('Page state after save:', result.value);
-        
-        // If we have a table, check for content
-        if (result.value.hasTable) {
-          browser
-            .waitForElementVisible('#medicationAdministrationsTable', 5000)
-            .assert.containsText('#medicationAdministrationsTable', testMedicationAdministration.performerName)
-            .assert.containsText('#medicationAdministrationsTable', testMedicationAdministration.medicationDisplay);
-        } else {
-          // Check if we have the "no data" state after save
-          console.log('No table found, checking for data...');
-          browser.execute(function() {
-            // Check if data exists in the collection
-            if (typeof MedicationAdministrations !== 'undefined') {
-              const count = MedicationAdministrations.find().count();
-              const data = MedicationAdministrations.find().fetch();
-              return {
-                collectionExists: true,
-                count: count,
-                data: data
-              };
-            }
-            return { collectionExists: false };
-          }, [], function(dataResult) {
-            console.log('Collection check:', dataResult.value);
-            
-            // If we have data but it's not showing, that's a subscription issue
-            if (dataResult.value && dataResult.value.count > 0) {
-              browser.assert.ok(true, 'Medication administration saved (found in collection)');
-            } else {
-              // Otherwise just verify we're on the right page
-              browser.assert.ok(
-                result.value.pageContent.includes('Administration') || 
-                result.value.pageContent.includes('No Data Available'),
-                'On medication administrations page'
-              );
-            }
-          });
-        }
-      })
+      .pause(500);
+
+    // Scroll to top to make search input visible
+    browser.execute(function() {
+      window.scrollTo(0, 0);
+    });
+    browser.pause(500);
+
+    // Search for the specific test record using a short, unique search term
+    // Use "Smith" from "Nurse Smith 1763121998791" - short and unique
+    const searchTerm = testMedicationAdministration.performerName.split(' ')[1]; // e.g., "Smith"
+    console.log('Searching for test record with term:', searchTerm);
+
+    browser
+      .waitForElementVisible('#medicationAdministrationSearchInput', 5000)
+      .clearValue('#medicationAdministrationSearchInput')
+      .pause(1000) // Wait for table to reset
+      .setValue('#medicationAdministrationSearchInput', searchTerm)
+      .pause(3000); // Wait for character-by-character typing and subscription to update
+
+    // Verify table contains the search term (acts as implicit wait for search to complete)
+    browser
+      .waitForElementVisible('#medicationAdministrationsTable', 5000)
+      .assert.containsText('#medicationAdministrationsTable', searchTerm, 'Table filtered to show test record')
+      .assert.containsText('#medicationAdministrationsTable', testMedicationAdministration.medicationDisplay)
       .saveScreenshot('tests/nightwatch/screenshots/medicationadministrations/06-medicationadministration-in-list.png');
   });
 

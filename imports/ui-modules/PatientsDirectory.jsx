@@ -129,27 +129,28 @@ export function PatientsDirectory(props){
         console.log('Exact ID search query:', query);
       } else {
         // Regex search for other fields
-        const searchRegex = new RegExp(debouncedSearchFilter, 'i');
+        // Use string pattern instead of RegExp object for Meteor subscription serialization
+        const searchPattern = debouncedSearchFilter;
         query = {
           $or: [
-            {'id': {$regex: searchRegex}},
-            {'_id': {$regex: searchRegex}},
-            {'name.text': {$regex: searchRegex}},
-            {'name.0.text': {$regex: searchRegex}},
-            {'name.given': {$regex: searchRegex}},
-            {'name.0.given': {$regex: searchRegex}},
-            {'name.family': {$regex: searchRegex}},
-            {'name.0.family': {$regex: searchRegex}},
-            {'identifier.value': {$regex: searchRegex}},
-            {'identifier.0.value': {$regex: searchRegex}},
-            {'telecom.value': {$regex: searchRegex}},
-            {'telecom.0.value': {$regex: searchRegex}},
-            {'address.city': {$regex: searchRegex}},
-            {'address.0.city': {$regex: searchRegex}},
-            {'address.state': {$regex: searchRegex}},
-            {'address.0.state': {$regex: searchRegex}},
-            {'address.postalCode': {$regex: searchRegex}},
-            {'address.0.postalCode': {$regex: searchRegex}}
+            {'id': {$regex: searchPattern, $options: 'i'}},
+            {'_id': {$regex: searchPattern, $options: 'i'}},
+            {'name.text': {$regex: searchPattern, $options: 'i'}},
+            {'name.0.text': {$regex: searchPattern, $options: 'i'}},
+            {'name.given': {$regex: searchPattern, $options: 'i'}},
+            {'name.0.given': {$regex: searchPattern, $options: 'i'}},
+            {'name.family': {$regex: searchPattern, $options: 'i'}},
+            {'name.0.family': {$regex: searchPattern, $options: 'i'}},
+            {'identifier.value': {$regex: searchPattern, $options: 'i'}},
+            {'identifier.0.value': {$regex: searchPattern, $options: 'i'}},
+            {'telecom.value': {$regex: searchPattern, $options: 'i'}},
+            {'telecom.0.value': {$regex: searchPattern, $options: 'i'}},
+            {'address.city': {$regex: searchPattern, $options: 'i'}},
+            {'address.0.city': {$regex: searchPattern, $options: 'i'}},
+            {'address.state': {$regex: searchPattern, $options: 'i'}},
+            {'address.0.state': {$regex: searchPattern, $options: 'i'}},
+            {'address.postalCode': {$regex: searchPattern, $options: 'i'}},
+            {'address.0.postalCode': {$regex: searchPattern, $options: 'i'}}
           ]
         };
       }
@@ -346,6 +347,7 @@ export function PatientsDirectory(props){
           };
         } else {
           // Regex search for other fields
+          // Client-side query can use RegExp objects directly
           const searchRegex = new RegExp(debouncedSearchFilter, 'i');
           query = {
             $or: [

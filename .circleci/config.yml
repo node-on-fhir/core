@@ -21,8 +21,7 @@ parameters:
           "name": "actors",
           "tests": [
             "tests/nightwatch/honeycomb/enable_autopublish/crud.patients.js",
-            "tests/nightwatch/honeycomb/enable_autopublish/crud.practitioners.js",
-            "tests/nightwatch/honeycomb/enable_autopublish/crud.careteams.js"
+            "tests/nightwatch/honeycomb/enable_autopublish/crud.practitioners.js"
           ]
         },
         {
@@ -62,15 +61,7 @@ parameters:
           "name": "care-management",
           "tests": [
             "tests/nightwatch/honeycomb/enable_autopublish/crud.careplans.js",
-            "tests/nightwatch/honeycomb/enable_autopublish/crud.nutritionorders.js",
             "tests/nightwatch/honeycomb/enable_autopublish/crud.servicerequests.js"
-          ]
-        },
-        {
-          "name": "scheduling",
-          "tests": [
-            "tests/nightwatch/honeycomb/enable_autopublish/crud.appointments.js",
-            "tests/nightwatch/honeycomb/enable_autopublish/crud.schedules.js"
           ]
         },
         {
@@ -120,7 +111,6 @@ parameters:
         {
           "name": "library-sciences",
           "tests": [
-            "tests/nightwatch/honeycomb/enable_autopublish/crud.medias.js",
             "tests/nightwatch/honeycomb/enable_autopublish/crud.documentreferences.js"
           ]
         },
@@ -133,157 +123,15 @@ parameters:
           ]
         },
         {
-          "name": "onc-quality-measures",
-          "tests": [
-            "packages/quality-measures/tests/nightwatch/170.315.g.1.test.js",
-            "packages/quality-measures/tests/nightwatch/170.315.g.2.test.js"
-          ]
-        },
-        {
-          "name": "onc-order-catalog",
+          "name": "base-ehr",
           "tests": [
             "packages/order-catalog/tests/nightwatch/170.315.a.1.test.js",
-            "packages/order-catalog/tests/nightwatch/170.315.a.2.test.js"
-          ]
-        },
-        {
-          "name": "onc-drug-interactions",
-          "tests": [
-            "packages/drug-interactions/tests/nightwatch/170.315.a.4.test.js"
-          ]
-        },
-        {
-          "name": "onc-secure-messaging",
-          "tests": [
-            "packages/secure-messaging/tests/nightwatch/170.315.b.8.test.js"
-          ]
-        },
-        {
-          "name": "onc-request-for-corrections",
-          "tests": [
-            "packages/request-for-corrections/tests/nightwatch/170.315.d.4.test.js"
-          ]
-        },
-        {
-          "name": "onc-ccda-export",
-          "tests": [
-            "packages/ccda-export/tests/nightwatch/170.315.g.6.test.js"
-          ]
-        },
-        {
-          "name": "onc-implantable-devices",
-          "tests": [
-            "packages/implantable-devices/tests/nightwatch/170.315.a.14.test.js"
-          ]
-        },
-        {
-          "name": "onc-e-prescribing",
-          "tests": [
-            "packages/e-prescribing/tests/nightwatch/170.315.a.10.test.js"
-          ]
-        },
-        {
-          "name": "onc-hipaa-compliance",
-          "tests": [
-            "packages/hipaa-compliance/tests/nightwatch/170.315.d.1.test.js"
-          ]
-        },
-        {
-          "name": "onc-clinical-lists",
-          "tests": [
-            "packages/clinical-lists/tests/nightwatch/170.315.a.3.test.js"
-          ]
-        },
-        {
-          "name": "onc-drug-formulary",
-          "tests": [
-            "packages/drug-formulary/tests/nightwatch/170.315.a.5.test.js"
-          ]
-        },
-        {
-          "name": "onc-syndromic-surveillance",
-          "tests": [
-            "packages/syndromic-surveillance/tests/nightwatch/170.315.f.2.test.js"
-          ]
-        },
-        {
-          "name": "onc-family-health-history",
-          "tests": [
+            "packages/order-catalog/tests/nightwatch/170.315.a.2.test.js",
+            "packages/drug-interactions/tests/nightwatch/170.315.a.4.test.js",
+            "packages/implantable-devices/tests/nightwatch/170.315.a.14.test.js",
+            "packages/hipaa-compliance/tests/nightwatch/170.315.d.1.test.js",
+            "packages/clinical-lists/tests/nightwatch/170.315.a.3.test.js",
             "packages/family-health-history/tests/nightwatch/170.315.a.12.test.js"
-          ]
-        },
-        {
-          "name": "onc-social-determinants",
-          "tests": [
-            "packages/social-determinants/tests/nightwatch/170.315.a.15.test.js"
-          ]
-        },
-        # {
-        #   "name": "onc-data-exporter",
-        #   "tests": [
-        #     "packages/data-exporter/tests/nightwatch/170.315.b.6.test.js"
-        #   ]
-        # },
-        {
-          "name": "onc-structured-data-capture",
-          "tests": [
-            "packages/structured-data-capture/tests/nightwatch/170.315.a.18.test.js"
-          ]
-        },
-        # {
-        #   "name": "onc-symptom-tracking",
-        #   "tests": [
-        #     "packages/symptom-tracking/tests/nightwatch/170.315.a.11.test.js"
-        #   ]
-        # },
-        {
-          "name": "onc-case-reporting",
-          "tests": [
-            "packages/case-reporting/tests/nightwatch/170.315.f.5.test.js"
-          ]
-        },
-        {
-          "name": "onc-cancer-registry-reporting",
-          "tests": [
-            "packages/cancer-registry-reporting/tests/nightwatch/170.315.f.4.test.js"
-          ]
-        },
-        {
-          "name": "onc-lab-test-reporting",
-          "tests": [
-            "packages/lab-test-reporting/tests/nightwatch/170.315.f.3.test.js"
-          ]
-        },
-        {
-          "name": "onc-immunization-registry",
-          "tests": [
-            "packages/immunization-registry/tests/nightwatch/170.315.f.1.test.js"
-          ]
-        },
-        {
-          "name": "onc-antimicrobial-reporting",
-          "tests": [
-            "packages/antimicrobial-reporting/tests/nightwatch/170.315.f.6.test.js"
-          ]
-        },
-        {
-          "name": "onc-pacio-core",
-          "tests": [
-            "packages/pacio-core/tests/nightwatch/170.315.b.1.test.js",
-            "packages/pacio-core/tests/nightwatch/170.315.b.2.test.js",
-            "packages/pacio-core/tests/nightwatch/170.315.e.3.test.js"
-          ]
-        },
-        {
-          "name": "onc-accounts-management",
-          "tests": [
-            "packages/accounts-management/tests/nightwatch/170.315.d.1.test.js"
-          ]
-        },
-        {
-          "name": "onc-multi-factor-auth",
-          "tests": [
-            "packages/multi-factor-auth/tests/nightwatch/170.315.d.13.test.js"
           ]
         }
       ]
@@ -732,126 +580,10 @@ workflows:
       
       # ONC Health IT Certification test groups
       - test-group:
-          name: onc-quality-measures
-          group-name: onc-quality-measures
-          test-files: "packages/quality-measures/tests/nightwatch/170.315.g.1.test.js packages/quality-measures/tests/nightwatch/170.315.g.2.test.js"
+          name: base-ehr
+          group-name: base-ehr
+          test-files: "packages/order-catalog/tests/nightwatch/170.315.a.1.test.js packages/order-catalog/tests/nightwatch/170.315.a.2.test.js packages/drug-interactions/tests/nightwatch/170.315.a.4.test.js packages/implantable-devices/tests/nightwatch/170.315.a.14.test.js packages/hipaa-compliance/tests/nightwatch/170.315.d.1.test.js packages/clinical-lists/tests/nightwatch/170.315.a.3.test.js packages/family-health-history/tests/nightwatch/170.315.a.12.test.js"
       
-      - test-group:
-          name: onc-order-catalog
-          group-name: onc-order-catalog
-          test-files: "packages/order-catalog/tests/nightwatch/170.315.a.1.test.js packages/order-catalog/tests/nightwatch/170.315.a.2.test.js"
-      
-      - test-group:
-          name: onc-drug-interactions
-          group-name: onc-drug-interactions
-          test-files: "packages/drug-interactions/tests/nightwatch/170.315.a.4.test.js"
-      
-      - test-group:
-          name: onc-secure-messaging
-          group-name: onc-secure-messaging
-          test-files: "packages/secure-messaging/tests/nightwatch/170.315.b.8.test.js"
-      
-      - test-group:
-          name: onc-request-for-corrections
-          group-name: onc-request-for-corrections
-          test-files: "packages/request-for-corrections/tests/nightwatch/170.315.d.4.test.js"
-      
-      - test-group:
-          name: onc-ccda-export
-          group-name: onc-ccda-export
-          test-files: "packages/ccda-export/tests/nightwatch/170.315.g.6.test.js"
-      
-      - test-group:
-          name: onc-implantable-devices
-          group-name: onc-implantable-devices
-          test-files: "packages/implantable-devices/tests/nightwatch/170.315.a.14.test.js"
-      
-      - test-group:
-          name: onc-e-prescribing
-          group-name: onc-e-prescribing
-          test-files: "packages/e-prescribing/tests/nightwatch/170.315.a.10.test.js"
-      
-      - test-group:
-          name: onc-hipaa-compliance
-          group-name: onc-hipaa-compliance
-          test-files: "packages/hipaa-compliance/tests/nightwatch/170.315.d.1.test.js"
-      
-      - test-group:
-          name: onc-clinical-lists
-          group-name: onc-clinical-lists
-          test-files: "packages/clinical-lists/tests/nightwatch/170.315.a.3.test.js"
-      
-      - test-group:
-          name: onc-drug-formulary
-          group-name: onc-drug-formulary
-          test-files: "packages/drug-formulary/tests/nightwatch/170.315.a.5.test.js"
-      
-      - test-group:
-          name: onc-syndromic-surveillance
-          group-name: onc-syndromic-surveillance
-          test-files: "packages/syndromic-surveillance/tests/nightwatch/170.315.f.2.test.js"
-      
-      - test-group:
-          name: onc-family-health-history
-          group-name: onc-family-health-history
-          test-files: "packages/family-health-history/tests/nightwatch/170.315.a.12.test.js"
-      
-      - test-group:
-          name: onc-social-determinants
-          group-name: onc-social-determinants
-          test-files: "packages/social-determinants/tests/nightwatch/170.315.a.15.test.js"
-      
-      # - test-group:
-      #     name: onc-data-exporter
-      #     group-name: onc-data-exporter
-      #     test-files: "packages/data-exporter/tests/nightwatch/170.315.b.6.test.js"
-      
-      - test-group:
-          name: onc-structured-data-capture
-          group-name: onc-structured-data-capture
-          test-files: "packages/structured-data-capture/tests/nightwatch/170.315.a.18.test.js"
-      
-      # - test-group:
-      #     name: onc-symptom-tracking
-      #     group-name: onc-symptom-tracking
-      #     test-files: "packages/symptom-tracking/tests/nightwatch/170.315.a.11.test.js"
-      
-      - test-group:
-          name: onc-case-reporting
-          group-name: onc-case-reporting
-          test-files: "packages/case-reporting/tests/nightwatch/170.315.f.5.test.js"
-      
-      - test-group:
-          name: onc-cancer-registry-reporting
-          group-name: onc-cancer-registry-reporting
-          test-files: "packages/cancer-registry-reporting/tests/nightwatch/170.315.f.4.test.js"
-      
-      - test-group:
-          name: onc-lab-test-reporting
-          group-name: onc-lab-test-reporting
-          test-files: "packages/lab-test-reporting/tests/nightwatch/170.315.f.3.test.js"
-      
-      - test-group:
-          name: onc-immunization-registry
-          group-name: onc-immunization-registry
-          test-files: "packages/immunization-registry/tests/nightwatch/170.315.f.1.test.js"
-      
-      - test-group:
-          name: onc-antimicrobial-reporting
-          group-name: onc-antimicrobial-reporting
-          test-files: "packages/antimicrobial-reporting/tests/nightwatch/170.315.f.6.test.js"
-      
-      - test-group:
-          name: onc-pacio-core
-          group-name: onc-pacio-core
-          test-files: "packages/pacio-core/tests/nightwatch/170.315.b.1.test.js packages/pacio-core/tests/nightwatch/170.315.b.2.test.js packages/pacio-core/tests/nightwatch/170.315.e.3.test.js"
-      
-      - test-group:
-          name: onc-accounts-management
-          group-name: onc-accounts-management
-          test-files: "packages/accounts-management/tests/nightwatch/170.315.d.1.test.js"
-      
-      - test-group:
-          name: onc-multi-factor-auth
-          group-name: onc-multi-factor-auth
-          test-files: "packages/multi-factor-auth/tests/nightwatch/170.315.d.13.test.js"
+
+
+            

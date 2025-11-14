@@ -134,14 +134,23 @@ function ImagingStudyDetail(props) {
 
   // Load imaging study if editing existing one
   useEffect(function() {
-    if (imagingStudyId && imagingStudyId !== 'new' && isSubscriptionReady) {
+    if (imagingStudyId && imagingStudyId !== 'new') {
+      // Load immediately if data exists - don't wait for subscription
       const existingStudy = ImagingStudies.findOne({_id: imagingStudyId});
+
       if (existingStudy) {
         setImagingStudy(existingStudy);
         setIsEditing(false);
+      } else {
+        // Fallback: try finding by id field
+        const studyById = ImagingStudies.findOne({id: imagingStudyId});
+        if (studyById) {
+          setImagingStudy(studyById);
+          setIsEditing(false);
+        }
       }
     }
-  }, [imagingStudyId, isSubscriptionReady]);
+  }, [imagingStudyId]);
 
   // Handle field changes
   function handleChange(path, value) {

@@ -499,7 +499,7 @@ function SupplyDeliveryDetail(props) {
                 id="notesInput"
                 name="notes"
                 label="Notes"
-                multiline
+                multiline={true}
                 rows={4}
                 value={get(supplyDelivery, 'note[0].text', '')}
                 onChange={(e) => handleInputChange('note[0].text', e.target.value)}

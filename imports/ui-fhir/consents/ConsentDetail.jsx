@@ -75,33 +75,28 @@ export function ConsentDetail(props) {
 
   // Load existing consent if editing
   useEffect(() => {
-    if (id && isSubscriptionReady) {
+    if (id && id !== 'new') {
+      // Load immediately if data exists - don't wait for subscription
       console.log('ConsentDetail - Looking for consent with id:', id);
-      console.log('ConsentDetail - Subscription ready:', isSubscriptionReady);
-      // Try finding by MongoDB _id first (which is what the route uses)
       let existingConsent = Consents.findOne({_id: id});
-      
-      // If not found, try by FHIR id
-      if (!existingConsent) {
-        existingConsent = Consents.findOne({id: id});
-      }
-      
-      console.log('ConsentDetail - Found consent:', existingConsent);
+
       if (existingConsent) {
-        console.log('ConsentDetail - Loading consent data:', JSON.stringify(existingConsent, null, 2));
+        console.log('ConsentDetail - Loading consent data:', existingConsent);
         setConsent(existingConsent);
         setIsEditing(false); // Switch to view mode when loading existing
       } else {
-        console.warn('ConsentDetail - No consent found with id:', id);
-        // Check if any consents exist
-        const allConsents = Consents.find().fetch();
-        console.log('ConsentDetail - Total consents in collection:', allConsents.length);
-        if (allConsents.length > 0) {
-          console.log('ConsentDetail - First consent _id:', allConsents[0]._id, 'FHIR id:', allConsents[0].id);
+        // Fallback: try id field
+        const consentById = Consents.findOne({id: id});
+        if (consentById) {
+          console.log('ConsentDetail - Found consent by id field:', consentById);
+          setConsent(consentById);
+          setIsEditing(false);
+        } else {
+          console.warn('ConsentDetail - No consent found with id:', id);
         }
       }
     }
-  }, [id, isSubscriptionReady]);
+  }, [id]); // Only depend on id, not subscription status
   
   // Track patient from session
   const selectedPatient = useTracker(() => Session.get('selectedPatient'), []);
@@ -137,15 +132,20 @@ export function ConsentDetail(props) {
   }, [id, selectedPatient, selectedPatientId]);
 
   const handleChange = (path, value) => {
+    console.log('=== handleChange called ===');
+    console.log('Path:', path);
+    console.log('Value:', typeof value === 'object' ? JSON.stringify(value, null, 2) : value);
+
     const updated = {...consent};
     set(updated, path, value);
-    
+
     // Special handling for patient display to preserve reference
     if (path === 'patient.display' && consent.patient?.reference) {
       // Preserve the existing reference when updating display
       updated.patient.reference = consent.patient.reference;
     }
-    
+
+    console.log('Updated consent state (path ' + path + '):', get(updated, path));
     setConsent(updated);
   };
 
@@ -185,13 +185,13 @@ export function ConsentDetail(props) {
       }
       
       // Log what we're about to save
-      console.log('ConsentDetail - About to save consent:', JSON.stringify(dataToSave, null, 2));
-      console.log('ConsentDetail - Patient reference:', dataToSave.patient?.reference);
-      console.log('ConsentDetail - Patient display:', dataToSave.patient?.display);
-      console.log('ConsentDetail - Full patient object:', dataToSave.patient);
-      console.log('ConsentDetail - Category:', dataToSave.category);
-      console.log('ConsentDetail - Status:', dataToSave.status);
-      
+      console.log('=== ConsentDetail handleSave ===');
+      console.log('dataToSave.policyRule:', JSON.stringify(dataToSave.policyRule, null, 2));
+      console.log('dataToSave.note:', JSON.stringify(dataToSave.note, null, 2));
+      console.log('dataToSave.patient:', JSON.stringify(dataToSave.patient, null, 2));
+      console.log('dataToSave.category:', JSON.stringify(dataToSave.category, null, 2));
+      console.log('dataToSave.status:', dataToSave.status);
+
       // Clean up the data
       delete dataToSave._document;
       
@@ -289,20 +289,27 @@ export function ConsentDetail(props) {
                 label="Category"
                 value={get(consent, 'category.0.coding.0.code', '')}
                 onChange={(e) => {
+                  console.log('=== Category select onChange fired ===');
+                  console.log('Selected value:', e.target.value);
+
                   const categoryMap = {
                     'IDSCL': 'Information disclosure',
                     'RESEARCH': 'Research information access',
                     'RSDID': 'Research subject directory',
                     'RSREID': 'Research re-identification'
                   };
-                  handleChange('category.0', {
+
+                  const newCategory = {
                     coding: [{
                       system: 'http://terminology.hl7.org/CodeSystem/v3-ActCode',
                       code: e.target.value,
                       display: categoryMap[e.target.value] || e.target.value
                     }],
                     text: categoryMap[e.target.value] || e.target.value
-                  });
+                  };
+
+                  console.log('Calling handleChange with category:', JSON.stringify(newCategory, null, 2));
+                  handleChange('category.0', newCategory);
                 }}
                 disabled={!isEditing}
               >

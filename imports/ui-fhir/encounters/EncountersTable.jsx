@@ -679,7 +679,7 @@ function EncountersTable(props){
         ); 
       } else {
         tableRows.push(
-          <TableRow className="encounterRow" key={i} style={rowStyle} onClick={ handleRowClick.bind(this, encountersToRender[i]._id || encountersToRender[i].id)} hover={true} selected={selected} >            
+          <TableRow className="encounterRow" key={i} style={rowStyle} onClick={ handleRowClick.bind(this, encountersToRender[i]._id)} hover={true} selected={selected} >            
             { renderCheckbox(i) }
             { renderActionIcons(encountersToRender[i]) }
             { renderTextIcon(get(encountersToRender[i], "text.div", "")) }

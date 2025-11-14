@@ -27,8 +27,13 @@ Meteor.methods({
       }
     };
     
-    // Debug logging for policyRule
-    console.log('Creating consent with policyRule:', get(cleanConsent, 'policyRule'));
+    // Debug logging
+    console.log('=== createConsent DEBUG ===');
+    console.log('policyRule:', JSON.stringify(cleanConsent.policyRule, null, 2));
+    console.log('note:', JSON.stringify(cleanConsent.note, null, 2));
+    console.log('status:', cleanConsent.status);
+    console.log('category:', JSON.stringify(cleanConsent.category, null, 2));
+    console.log('patient:', JSON.stringify(cleanConsent.patient, null, 2));
 
     // Set default status if not provided
     if (!cleanConsent.status) {
@@ -52,11 +57,26 @@ Meteor.methods({
     });
 
     try {
+      console.log('Calling Consents.insertAsync...');
       const consentId = await Consents.insertAsync(cleanConsent);
-      console.log('Created consent:', consentId);
+      console.log('✓ Created consent with ID:', consentId);
+
+      // Verify it was saved correctly
+      const saved = await Consents.findOneAsync({_id: consentId});
+      if (saved) {
+        console.log('✓ Verified saved consent:');
+        console.log('  policyRule.text:', saved.policyRule?.text);
+        console.log('  note[0].text:', saved.note?.[0]?.text);
+        console.log('  status:', saved.status);
+      } else {
+        console.error('✗ WARNING: Consent not found immediately after insert!');
+      }
+
       return consentId;
     } catch (error) {
-      console.error('Error creating consent:', error);
+      console.error('✗ Error creating consent:', error);
+      console.error('Error message:', error.message);
+      console.error('Error stack:', error.stack);
       throw new Meteor.Error('insert-failed', error.message);
     }
   },
@@ -95,11 +115,33 @@ Meteor.methods({
     });
 
     try {
+      // Detailed logging for debugging
+      console.log('=== updateConsent DEBUG ===');
+      console.log('Consent ID:', consentId);
+      console.log('cleanConsent.category:', JSON.stringify(cleanConsent.category, null, 2));
+      console.log('cleanConsent.status:', cleanConsent.status);
+
+      // Check if consent exists before update
+      const existingConsent = await Consents.findOneAsync({ _id: consentId });
+      console.log('Existing consent found?', !!existingConsent);
+      if (existingConsent) {
+        console.log('Existing category:', JSON.stringify(existingConsent.category, null, 2));
+        console.log('Existing status:', existingConsent.status);
+      } else {
+        console.error('CRITICAL: Consent not found with _id:', consentId);
+      }
+
       const result = await Consents.updateAsync(
         { _id: consentId },
         { $set: cleanConsent }
       );
-      console.log('Updated consent:', consentId, result);
+      console.log('Update result (number of docs updated):', result);
+
+      if (result === 0) {
+        console.error('WARNING: Update returned 0 - no documents were updated!');
+        console.error('This usually means schema validation failed or document not found');
+      }
+
       return consentId;
     } catch (error) {
       console.error('Error updating consent:', error);

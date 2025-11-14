@@ -1634,6 +1634,7 @@ export function flattenConsent(document){
     policyAuthority: get(document, 'policy[0].authority', ''),
     policyUri: get(document, 'policy[0].uri', ''),
     policyRule: get(document, 'policyRule.text', ''),
+    notes: get(document, 'note[0].text', ''),
     provisionType: get(document, 'provision.type', ''),
     provisionAction: '',  // Will be processed below to handle nested structure
     provisionClass: '',  // Initialize as empty string, will be processed below
@@ -3120,6 +3121,29 @@ export function flattenImagingStudy(imagingStudy, internalDateFormat){
     result.procedureDisplay = get(imagingStudy, 'procedureCode[0].coding[0].code');
   }
 
+  // Reason code
+  if(get(imagingStudy, 'reasonCode[0].text')){
+    result.reasonCode = get(imagingStudy, 'reasonCode[0].text');
+    result.reasonCodeDisplay = get(imagingStudy, 'reasonCode[0].text');
+  } else if(get(imagingStudy, 'reasonCode[0].coding[0].display')){
+    result.reasonCode = get(imagingStudy, 'reasonCode[0].coding[0].code', '');
+    result.reasonCodeDisplay = get(imagingStudy, 'reasonCode[0].coding[0].display');
+  } else if(get(imagingStudy, 'reasonCode[0].coding[0].code')){
+    result.reasonCode = get(imagingStudy, 'reasonCode[0].coding[0].code');
+    result.reasonCodeDisplay = get(imagingStudy, 'reasonCode[0].coding[0].code');
+  }
+
+  // Interpreter
+  if(get(imagingStudy, 'interpreter[0].display')){
+    result.interpreter = get(imagingStudy, 'interpreter[0].display');
+    result.interpreterReference = get(imagingStudy, 'interpreter[0].reference', '');
+  }
+
+  // Endpoint
+  if(get(imagingStudy, 'endpoint[0].display')){
+    result.endpoint = get(imagingStudy, 'endpoint[0].display');
+  }
+
   // Notes
   if(get(imagingStudy, 'note[0].text')){
     result.note = get(imagingStudy, 'note[0].text');
@@ -3886,7 +3910,7 @@ export function flattenMedication(medication, dateFormat){
     activeIngredient: '',
     strengthRatio: '',
     strengthQuantity: '',
-    lotNumber: '', 
+    lotNumber: '',
     expirationDate: '',
     definitionReference: '',
     definitionDisplay: ''
@@ -3896,6 +3920,21 @@ export function flattenMedication(medication, dateFormat){
 
   result._id = get(medication, '_id');
   result.id = get(medication, 'id', '');
+
+  // Debug logging to understand actual data structure
+  if (typeof console !== 'undefined' && medication && !window.__medicationDehydratorLogged) {
+    console.log('[FhirDehydrator] Sample medication structure:', {
+      hasForm: !!medication.form,
+      hasDoseForm: !!medication.doseForm,
+      formKeys: medication.form ? Object.keys(medication.form) : [],
+      hasIngredient: !!medication.ingredient,
+      ingredientKeys: medication.ingredient?.[0] ? Object.keys(medication.ingredient[0]) : [],
+      hasManufacturer: !!medication.manufacturer,
+      hasMarketingAuth: !!medication.marketingAuthorizationHolder,
+      sampleMedication: JSON.stringify(medication, null, 2).substring(0, 1000)
+    });
+    window.__medicationDehydratorLogged = true;
+  }
 
 
   result.status = get(medication, 'status', '');
@@ -3914,26 +3953,51 @@ export function flattenMedication(medication, dateFormat){
   // Handle both marketingAuthorizationHolder and manufacturer fields
   result.manufacturer = get(medication, 'marketingAuthorizationHolder.display', '') || get(medication, 'manufacturer.display', '');
 
-  if(get(medication, 'doseForm.text', '')){
+  // Handle both 'doseForm' (older spec) and 'form' (R4) fields
+  if(get(medication, 'form.text', '')){
+    result.form = get(medication, 'form.text', '');
+    result.doseForm = get(medication, 'form.text', '');
+  } else if(get(medication, 'form.coding[0].display', '')){
+    result.form = get(medication, 'form.coding[0].display', '');
+    result.doseForm = get(medication, 'form.coding[0].display', '');
+  } else if(get(medication, 'doseForm.text', '')){
     result.doseForm = get(medication, 'doseForm.text', '');
-    result.form = get(medication, 'doseForm.text', ''); 
+    result.form = get(medication, 'doseForm.text', '');
   } else {
-    result.doseForm = get(medication, 'doseForm.coding[0].code', '');
+    result.doseForm = get(medication, 'doseForm.coding[0].display', '');
     result.form = get(medication, 'doseForm.coding[0].display', '');
   }
 
-  result.totalVolume = get(medication, 'totalVolume.value', '') + ' ' + get(medication, 'totalVolume.unit', ''); 
+  result.totalVolume = get(medication, 'totalVolume.value', '') + ' ' + get(medication, 'totalVolume.unit', '');
 
-  if(get(medication, 'ingredient[0].concept.text')){
+  // Handle both 'concept' (older spec) and 'itemCodeableConcept' (R4) fields
+  if(get(medication, 'ingredient[0].itemCodeableConcept.coding[0].display', '')){
+    result.activeIngredient = get(medication, 'ingredient[0].itemCodeableConcept.coding[0].display', '');
+  } else if(get(medication, 'ingredient[0].itemCodeableConcept.text', '')){
+    result.activeIngredient = get(medication, 'ingredient[0].itemCodeableConcept.text', '');
+  } else if(get(medication, 'ingredient[0].concept.text', '')){
     result.activeIngredient = get(medication, 'ingredient[0].concept.text', '');
-  } else if(get(medication, 'ingredient[0].reference.display')){
+  } else if(get(medication, 'ingredient[0].reference.display', '')){
     result.activeIngredient = get(medication, 'ingredient[0].reference.display', '');
   } else {
     result.activeIngredient = get(medication, 'ingredient[0].reference.reference', '');
   }
 
-  result.strengthRatio = get(medication, 'ingredient[0].numerator.value', '') + ' ' + get(medication, 'ingredient[0].numerator.unit', '');  + '/' + get(medication, 'ingredient[0].denominator.value', '') + ' ' + get(medication, 'ingredient[0].denominator.unit', ''); ; 
-  result.strengthQuantity = get(medication, 'ingredient[0].value', '') + ' ' + get(medication, 'ingredient[0].unit', ''); 
+  // Handle R4 structure: ingredient[0].strength.numerator/denominator
+  const numeratorValue = get(medication, 'ingredient[0].strength.numerator.value', '');
+  const numeratorUnit = get(medication, 'ingredient[0].strength.numerator.unit', '');
+  const denominatorValue = get(medication, 'ingredient[0].strength.denominator.value', '');
+  const denominatorUnit = get(medication, 'ingredient[0].strength.denominator.unit', '');
+
+  if(numeratorValue && denominatorValue){
+    result.strengthRatio = numeratorValue + ' ' + numeratorUnit + '/' + denominatorValue + ' ' + denominatorUnit;
+  } else if(numeratorValue){
+    result.strengthRatio = numeratorValue + ' ' + numeratorUnit;
+  } else {
+    result.strengthRatio = '';
+  }
+
+  result.strengthQuantity = get(medication, 'ingredient[0].strength.value', '') + ' ' + get(medication, 'ingredient[0].strength.unit', ''); 
 
   result.lotNumber = get(medication, 'batch.lotNumber', '');
   result.expirationDate = get(medication, 'batch.expirationDate', '');

@@ -432,6 +432,27 @@ function MedicationsTable(props){
   if(medicationsToRender.length === 0){
     logger.trace('MedicationsTable: No medications to render.');
   } else {
+    // Debug first medication to understand data structure
+    if(medicationsToRender.length > 0){
+      logger.info('MedicationsTable: Rendering', medicationsToRender.length, 'medications');
+      logger.info('MedicationsTable: First medication dehydrated data:', {
+        _id: medicationsToRender[0]._id,
+        medicationCodeableConceptText: medicationsToRender[0].medicationCodeableConceptText,
+        code: medicationsToRender[0].code,
+        form: medicationsToRender[0].form,
+        manufacturer: medicationsToRender[0].manufacturer,
+        activeIngredient: medicationsToRender[0].activeIngredient
+      });
+
+      // Log all medication names to help identify if test medication is present
+      const medicationNames = medicationsToRender.map((med, index) => ({
+        index,
+        name: med.medicationCodeableConceptText,
+        manufacturer: med.manufacturer
+      }));
+      logger.info('MedicationsTable: All medication names:', medicationNames.slice(0, 10));
+    }
+
     for (var i = 0; i < medicationsToRender.length; i++) {
 
       let selected = false;

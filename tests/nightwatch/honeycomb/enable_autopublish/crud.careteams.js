@@ -539,10 +539,10 @@ describe('CareTeams CRUD Operations', function() {
         browser.assert.ok(result.value.notes.includes(testCareTeam.notes), 'Notes contain expected text');
       })
       .saveScreenshot('tests/nightwatch/screenshots/careteams/07-view-careteam-details.png');
-    
-    browser
-      .url('http://localhost:3000/care-teams')
-      .waitForElementVisible('#careTeamsPage', 5000);
+
+    // Use testUtils.navigateUrl to preserve Session state
+    testUtils.navigateUrl(browser, '/care-teams');
+    browser.waitForElementVisible('#careTeamsPage', 5000);
   });
 
   it('07. Update existing care team', browser => {
@@ -626,9 +626,11 @@ describe('CareTeams CRUD Operations', function() {
         browser.assert.equal(result.value, true, 'Clicked Save button');
       });
 
+    browser.pause(1000);
+
+    // Use testUtils.navigateUrl to preserve Session state
+    testUtils.navigateUrl(browser, '/care-teams');
     browser
-      .pause(1000)
-      .url('http://localhost:3000/care-teams')
       .waitForElementVisible('#careTeamsTable', 5000)
       .saveScreenshot('tests/nightwatch/screenshots/careteams/09-careteam-updated.png');
   });
@@ -723,7 +725,7 @@ describe('CareTeams CRUD Operations', function() {
           })
           .pause(500)  // Wait for alert
           .acceptAlert()
-          .pause(2000); // Wait for deletion and navigation
+          .pause(4000); // Wait for async deletion and navigation/error to complete
           
         // Note: Delete may fail if TEST_RUN environment variable is not set
         // This is a safety feature to prevent accidental deletions in production
@@ -776,45 +778,65 @@ describe('CareTeams CRUD Operations', function() {
   });
 
   it('10. Verify care team removed from list', browser => {
-    // First check if we're still on detail page (deletion restricted)
+    // Wait for subscription to update after deletion
+    browser.pause(1000);
+
+    // Check current page state and any error messages
     browser
       .execute(function() {
+        const isOnDetailPage = document.querySelector('#careTeamDetailPage') !== null;
+        const isOnListPage = document.querySelector('#careTeamsPage') !== null;
+        const errorText = document.querySelector('[color="error"]') ?
+                         document.querySelector('[color="error"]').textContent : '';
+        const hasRestrictionMessage = document.body.textContent.includes('deletion is restricted') ||
+                                     document.body.textContent.includes('restricted') ||
+                                     errorText.includes('restricted');
+
         return {
-          isOnDetailPage: document.querySelector('#careTeamDetailPage') !== null,
-          hasRestrictionMessage: document.body.textContent.includes('deletion is restricted')
+          isOnDetailPage,
+          isOnListPage,
+          hasRestrictionMessage,
+          errorText,
+          url: window.location.pathname
         };
       }, [], function(result) {
-        if (result.value.isOnDetailPage && result.value.hasRestrictionMessage) {
-          browser.assert.ok(true, 'Deletion was restricted as expected without TEST_RUN=true');
+        console.log('Delete verification state:', result.value);
+
+        if (result.value.hasRestrictionMessage) {
+          // Deletion was restricted - this is acceptable
+          browser.assert.ok(true, 'Deletion was restricted (TEST_RUN not set)');
           console.log('To enable deletion tests, run: TEST_RUN=true meteor run --settings ...');
-        } else {
-          // If we're on the list page, verify deletion
+        } else if (result.value.isOnListPage) {
+          // On list page - deletion should have succeeded, verify record is gone
           browser
             .waitForElementVisible('#careTeamsPage', 5000)
             .execute(function(timestamp) {
-              // Check if table exists first
               const table = document.querySelector('#careTeamsTable');
               if (table) {
                 const rows = document.querySelectorAll('#careTeamsTable tbody tr');
+                let foundCount = 0;
                 for (let row of rows) {
                   if (row.textContent.includes(timestamp)) {
-                    return { found: true, hasTable: true };
+                    foundCount++;
                   }
                 }
-                return { found: false, hasTable: true };
+                return { found: foundCount > 0, foundCount, hasTable: true };
               } else {
-                // No table means no data, which means care team was deleted
                 const hasNoData = document.querySelector('.no-data-card') !== null ||
                                  document.querySelector('#careTeamsPage').textContent.includes('No Data Available');
-                return { found: false, hasTable: false, hasNoData: hasNoData };
+                return { found: false, foundCount: 0, hasTable: false, hasNoData };
               }
             }, [timestamp.toString()], function(result) {
+              console.log('Table search result:', result.value);
               if (result.value.hasTable) {
                 browser.assert.equal(result.value.found, false, 'Care team no longer in list');
               } else {
                 browser.assert.equal(result.value.hasNoData, true, 'No data available shown (care team was deleted)');
               }
             });
+        } else {
+          // Unexpected state
+          browser.assert.ok(false, 'Unexpected state: not on detail or list page');
         }
       })
       .saveScreenshot('tests/nightwatch/screenshots/careteams/12-careteam-not-in-list.png');

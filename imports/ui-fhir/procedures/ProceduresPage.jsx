@@ -4,8 +4,8 @@ import React, { useState } from 'react';
 import { useTracker } from 'meteor/react-meteor-data';
 import { useNavigate } from 'react-router-dom';
 
-import { 
-  Grid, 
+import {
+  Grid,
   Container,
   Divider,
   Card,
@@ -15,7 +15,8 @@ import {
   Box,
   Typography,
   ToggleButton,
-  ToggleButtonGroup
+  ToggleButtonGroup,
+  TextField
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
@@ -35,6 +36,8 @@ import { get } from 'lodash';
 
 // Import the collection directly to avoid timing issues
 import { Procedures } from '/imports/lib/schemas/SimpleSchemas/Procedures';
+import { Patients } from '/imports/lib/schemas/SimpleSchemas/Patients';
+import { FhirUtilities } from '/imports/lib/FhirUtilities';
 
 
 
@@ -60,6 +63,7 @@ Session.setDefault('ProceduresTable.proceduresIndex', 0)
 export function ProceduresPage(props){
   const navigate = useNavigate();
   const [sortOrder, setSortOrder] = useState('descending');
+  const [searchFilter, setSearchFilter] = useState('');
 
   let data = {
     currentProcedureId: '',
@@ -71,15 +75,59 @@ export function ProceduresPage(props){
     proceduresIndex: 0
   };
 
-  // Subscribe to Procedures
-  useTracker(function(){
+  // Subscribe to Procedures with query filtering
+  const isLoading = useTracker(function(){
+    const selectedPatientId = Session.get('selectedPatientId');
+    const selectedPatient = Session.get('selectedPatient');
     let autoPublishEnabled = get(Meteor, 'settings.public.defaults.autopublish', false);
-    if(autoPublishEnabled){
-      return Meteor.subscribe('autopublish.Procedures', {}, {});
-    } else {
-      return Meteor.subscribe('procedures.all');
+
+    let query = {};
+
+    // Build patient filter query
+    if(selectedPatient || selectedPatientId) {
+      const fhirId = get(selectedPatient, 'id');
+
+      if(fhirId) {
+        query = FhirUtilities.addPatientFilterToQuery(fhirId);
+      } else if(selectedPatientId) {
+        // Fallback to MongoDB _id if no FHIR id available
+        query = FhirUtilities.addPatientFilterToQuery(selectedPatientId);
+      }
     }
-  }, []);
+
+    // Add search filter if present
+    if(searchFilter && searchFilter.length > 0) {
+      query = {
+        $and: [
+          query,
+          {
+            $or: [
+              {'_id': searchFilter},
+              {'id': searchFilter},
+              {'code.coding.0.display': {$regex: searchFilter, $options: 'i'}},
+              {'code.coding.0.code': {$regex: searchFilter, $options: 'i'}},
+              {'performer.0.actor.display': {$regex: searchFilter, $options: 'i'}},
+              {'subject.display': {$regex: searchFilter, $options: 'i'}},
+              {'note.0.text': {$regex: searchFilter, $options: 'i'}}
+            ]
+          }
+        ]
+      };
+    }
+
+    console.log('Procedures subscription - selectedPatientId:', selectedPatientId);
+    console.log('Procedures subscription - FHIR id:', get(selectedPatient, 'id'));
+    console.log('Procedures subscription - searchFilter:', searchFilter);
+    console.log('Procedures subscription query:', query);
+
+    if(autoPublishEnabled){
+      const handle = Meteor.subscribe('autopublish.Procedures', query, { limit: 1000 });
+      return !handle.ready();
+    } else {
+      const handle = Meteor.subscribe('procedures.all');
+      return !handle.ready();
+    }
+  }, [Session.get('selectedPatientId'), searchFilter]);
 
   data.onePageLayout = useTracker(function(){
     return Session.get('ProceduresPage.onePageLayout');
@@ -102,8 +150,12 @@ export function ProceduresPage(props){
     const sortOptions = {};
     if (sortOrder === 'ascending') {
       sortOptions.sort = { 'performedDateTime': 1 };
-    } else {
+    } else if (sortOrder === 'descending') {
       sortOptions.sort = { 'performedDateTime': -1 };
+    } else if (sortOrder === 'newest') {
+      sortOptions.sort = { '_id': -1 };
+    } else if (sortOrder === 'oldest') {
+      sortOptions.sort = { '_id': 1 };
     }
     const procs = Procedures.find({}, sortOptions).fetch();
     console.log('ProceduresPage - found procedures:', procs.length);
@@ -155,8 +207,16 @@ export function ProceduresPage(props){
               {data.procedures.length} procedures found
             </Typography>
           </Grid>
-          <Grid item>
-            <Box display="flex" gap={2} alignItems="center">
+          <Grid item xs={12} sm={6}>
+            <Box display="flex" gap={2} alignItems="center" justifyContent="flex-end">
+              <TextField
+                id="procedureSearchInput"
+                size="small"
+                placeholder="Search procedures..."
+                value={searchFilter}
+                onChange={(e) => setSearchFilter(e.target.value)}
+                sx={{ minWidth: 200 }}
+              />
               <ToggleButtonGroup
                 value={sortOrder}
                 exclusive

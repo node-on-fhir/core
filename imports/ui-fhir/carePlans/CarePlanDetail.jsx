@@ -151,7 +151,9 @@ function CarePlanDetail(props) {
         } else if (selectedPatient.name && Array.isArray(selectedPatient.name)) {
           patientName = FhirUtilities.pluckName(selectedPatient);
         }
-        patientReference = `Patient/${selectedPatientId}`;
+        // IMPORTANT: Use FHIR id for reference, not MongoDB _id
+        // FHIR resources reference patients by their FHIR id
+        patientReference = `Patient/${get(selectedPatient, 'id')}`;
       }
       
       // Set author to current user
@@ -215,34 +217,36 @@ function CarePlanDetail(props) {
 
   // Load care plan if editing
   useEffect(function() {
-    async function loadCarePlan() {
-      if (id && id !== 'new' && CarePlans) {
-        setLoading(true);
-        try {
-          console.log('CarePlanDetail: Loading care plan with ID:', id);
-          const result = CarePlans.findOne({_id: id});
-          if (result) {
-            console.log('CarePlanDetail: Loaded care plan:', result);
-            
-            // Handle legacy care plans where author might be an object instead of an array
-            if (result.author && !Array.isArray(result.author)) {
-              console.log('CarePlanDetail: Converting legacy author object to array');
-              result.author = [result.author];
-            }
-            
-            setCarePlan(result);
-            setError(null); // Clear any previous errors
+    if (id && id !== 'new' && CarePlans) {
+      // Load data immediately if it exists - don't wait for subscription
+      const result = CarePlans.findOne({_id: id});
+
+      if (result) {
+        console.log('CarePlanDetail: Loaded care plan:', result);
+
+        // Handle legacy care plans where author might be an object instead of an array
+        if (result.author && !Array.isArray(result.author)) {
+          console.log('CarePlanDetail: Converting legacy author object to array');
+          result.author = [result.author];
+        }
+
+        setCarePlan(result);
+        setError(null); // Clear any previous errors
+      } else {
+        // Fallback: try finding by id field
+        const carePlanById = CarePlans.findOne({id: id});
+        if (carePlanById) {
+          console.log('CarePlanDetail: Found care plan by id field:', carePlanById);
+
+          if (carePlanById.author && !Array.isArray(carePlanById.author)) {
+            carePlanById.author = [carePlanById.author];
           }
-        } catch (err) {
-          console.error('CarePlanDetail: Error loading care plan:', err);
-          setError(err.error || err.message);
-        } finally {
-          setLoading(false);
+
+          setCarePlan(carePlanById);
+          setError(null);
         }
       }
     }
-    
-    loadCarePlan();
   }, [id]);
 
   // Handle field changes
@@ -338,7 +342,7 @@ function CarePlanDetail(props) {
       if (patient) {
         // Extract patient name - handle both FHIR structure and flat structure
         let patientName = '';
-        
+
         // Check if it's a flat structure (from PatientsTable)
         if (typeof patient.name === 'string') {
           patientName = patient.name;
@@ -351,16 +355,17 @@ function CarePlanDetail(props) {
           // Fallback - try to construct from other fields
           patientName = patient.id || patientId;
         }
-        
+
         console.log('Final patient name:', patientName);
-        
+
         // Update the care plan with selected patient
         console.log('Updating care plan subject...');
-        // Update both fields at once to ensure consistency
+        // IMPORTANT: Use FHIR id for reference, not MongoDB _id
+        const fhirId = get(patient, 'id');
         setCarePlan(prevCarePlan => {
           console.log('Previous care plan in setState:', prevCarePlan);
           const updated = JSON.parse(JSON.stringify(prevCarePlan));
-          set(updated, 'subject.reference', `Patient/${patientId}`);
+          set(updated, 'subject.reference', `Patient/${fhirId}`);
           set(updated, 'subject.display', patientName);
           console.log('Updated care plan in setState:', updated);
           console.log('Subject after update:', updated.subject);
@@ -372,7 +377,9 @@ function CarePlanDetail(props) {
           const foundPatient = Patients.findOne({_id: patientId});
           if (foundPatient) {
             const patientName = FhirUtilities.pluckName(foundPatient);
-            handleChange('subject.reference', `Patient/${patientId}`);
+            // Use FHIR id from found patient
+            const fhirId = get(foundPatient, 'id');
+            handleChange('subject.reference', `Patient/${fhirId}`);
             handleChange('subject.display', patientName);
           } else {
             // Fallback to just ID

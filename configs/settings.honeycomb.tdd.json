@@ -2,6 +2,7 @@
   "public": {
     "title": "Honeycomb",
     "fhirVersion": "R4",
+    "devAutoLoginEnabled": true,
     "smartOnFhir": [
       {
         "vendor": "SmartHealth IT",
@@ -17,7 +18,7 @@
       "defaultVideo": "/VideoBackgrounds/GrayWaves.mp4",
       "backgroundImagePath": "/backgrounds/medical/Gradient.jpg",
       "palette": {
-        "primaryColor": "rgb(108, 183, 110)",
+        "primaryColor": "#435663",
         "primaryText": "rgba(255, 255, 255, 1) !important",
         "secondaryColor": "#fdb813",
         "secondaryText": "rgba(255, 255, 255, 1) !important",
@@ -101,7 +102,8 @@
           "DataImport": true,
           "DataExport": true,
           "ConstructionZone": false,
-          "UserProfile": true
+          "UserProfile": true,
+          "FhirResourcesDashboard": true
         },
         "hidden": [
           "/audit-events",
