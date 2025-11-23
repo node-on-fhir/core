@@ -191,8 +191,8 @@ describe('MedicationRequests CRUD Operations', function() {
   });
 
   it('02. Verify medication requests list page loads', browser => {
+    testUtils.navigateUrl(browser, '/medication-requests');
     browser
-      .url('http://localhost:3000/medication-requests')
       .waitForElementVisible('#medicationRequestsPage', 5000)
             .execute(function() {
         const hasTable = document.querySelector('#medicationRequestsTable') !== null;
@@ -242,7 +242,7 @@ describe('MedicationRequests CRUD Operations', function() {
       }, [], function(result) {
         if (!result.value) {
           // If button not found, try direct navigation
-          browser.url('http://localhost:3000/medication-requests/new');
+          testUtils.navigateUrl(browser, '/medication-requests/new');
         } else {
           browser.assert.equal(result.value, true, 'Clicked Add Medication Request button');
         }
@@ -645,9 +645,9 @@ describe('MedicationRequests CRUD Operations', function() {
         browser.assert.ok(result.value.priority || result.value.priorityDisplay, 'Priority field has value');
       })
       .saveScreenshot('tests/nightwatch/screenshots/medicationrequests/07-view-medicationrequest-details.png');
-    
+
+    testUtils.navigateUrl(browser, '/medication-requests');
     browser
-      .url('http://localhost:3000/medication-requests')
       .waitForElementVisible('#medicationRequestsPage', 5000);
   });
 
@@ -766,7 +766,7 @@ describe('MedicationRequests CRUD Operations', function() {
         console.log('Navigation state after save:', result.value);
         if (result.value.onDetailPage && !result.value.onListPage) {
           // Still on detail page, navigate to list
-          browser.url('http://localhost:3000/medication-requests');
+          testUtils.navigateUrl(browser, '/medication-requests');
         }
       });
     
@@ -789,8 +789,8 @@ describe('MedicationRequests CRUD Operations', function() {
       console.log('After update - Collection state:', result.value);
     });
 
+    testUtils.navigateUrl(browser, '/medication-requests');
     browser
-      .url('http://localhost:3000/medication-requests')
       .waitForElementVisible('#medicationRequestsTable', 5000)
       .saveScreenshot('tests/nightwatch/screenshots/medicationrequests/09-medicationrequest-updated.png');
   });
@@ -950,7 +950,7 @@ describe('MedicationRequests CRUD Operations', function() {
       }, [], function(result) {
         if (!result.value) {
           // If button not found, navigate directly
-          browser.url('http://localhost:3000/medication-requests/new');
+          testUtils.navigateUrl(browser, '/medication-requests/new');
         } else {
           browser.assert.equal(result.value, true, 'Clicked Add button');
         }

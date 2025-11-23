@@ -119,8 +119,8 @@ describe('Medications CRUD Operations', function() {
   });
 
   it('02. Verify medications list page loads', browser => {
+    testUtils.navigateUrl(browser, '/medications');
     browser
-      .url('http://localhost:3000/medications')
       .waitForElementVisible('#medicationsPage', 5000)
       .execute(function() {
         const hasTable = document.querySelector('#medicationsTable') !== null;
@@ -176,7 +176,7 @@ describe('Medications CRUD Operations', function() {
       }, [], function(result) {
         if (!result.value) {
           // If button not found, try direct navigation
-          browser.url('http://localhost:3000/medications/new');
+          testUtils.navigateUrl(browser, '/medications/new');
         } else {
           browser.assert.equal(result.value, true, 'Clicked Add Medication button');
         }
@@ -552,9 +552,9 @@ describe('Medications CRUD Operations', function() {
         browser.assert.ok(result.value.notes.includes(testMedication.notes), 'Notes contain expected text');
       })
       .saveScreenshot('tests/nightwatch/screenshots/medications/07-view-medication-details.png');
-    
+
+    testUtils.navigateUrl(browser, '/medications');
     browser
-      .url('http://localhost:3000/medications')
       .waitForElementVisible('#medicationsPage', 5000);
   });
 
@@ -644,8 +644,8 @@ describe('Medications CRUD Operations', function() {
         browser.assert.equal(result.value, true, 'Clicked Save button');
       });
 
+    testUtils.navigateUrl(browser, '/medications');
     browser
-      .url('http://localhost:3000/medications')
       .waitForElementVisible('#medicationsTable', 5000)
       .saveScreenshot('tests/nightwatch/screenshots/medications/09-medication-updated.png');
   });

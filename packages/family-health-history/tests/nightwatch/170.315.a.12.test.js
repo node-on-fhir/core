@@ -1,5 +1,7 @@
 // packages/family-health-history/tests/nightwatch/170.315.a.12.test.js
 
+const testUtils = require('../../tests/nightwatch/honeycomb/enable_autopublish/shared-test-utils');
+
 module.exports = {
   tags: ['family-health-history', 'onc-certification', '170.315.a.12'],
   'Family Health History - 170.315(a)(12) - Family Health History': function (browser) {
@@ -14,7 +16,7 @@ module.exports = {
         userId: Meteor.userId ? Meteor.userId() : null
       };
     }, [], function(result) {
-      if (!result.value.isLoggedIn) {
+      if (!result.value || !result.value.isLoggedIn) {
         browser.executeAsync(function(done) {
           Meteor.call('test.createTestUser', {
             username: 'janedoe',
@@ -35,8 +37,8 @@ module.exports = {
       }
     });
 
+    testUtils.navigateUrl(browser, '/family-health-history');
     browser
-      .url('http://localhost:3000/family-health-history')
       .waitForElementVisible('body', 3000)
       .pause(1000); // Give page time to load
 

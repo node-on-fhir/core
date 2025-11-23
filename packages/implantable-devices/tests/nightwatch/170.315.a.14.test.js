@@ -1,5 +1,7 @@
 // packages/implantable-devices/tests/nightwatch/170.315.a.14.test.js
 
+const testUtils = require('../../tests/nightwatch/honeycomb/enable_autopublish/shared-test-utils');
+
 module.exports = {
   tags: ['implantable-devices', 'onc-certification', '170.315.a.14'],
   'Implantable Devices - 170.315(a)(14) - Implantable Device List': function (browser) {
@@ -14,7 +16,7 @@ module.exports = {
         userId: Meteor.userId ? Meteor.userId() : null
       };
     }, [], function(result) {
-      if (!result.value.isLoggedIn) {
+      if (!result.value || !result.value.isLoggedIn) {
         browser.executeAsync(function(done) {
           Meteor.call('test.createTestUser', {
             username: 'janedoe',
@@ -35,8 +37,8 @@ module.exports = {
       }
     });
 
+    testUtils.navigateUrl(browser, '/implantable-devices');
     browser
-      .url('http://localhost:3000/implantable-devices')
       .waitForElementVisible('body', 3000)
       .pause(1000); // Give page time to load
 

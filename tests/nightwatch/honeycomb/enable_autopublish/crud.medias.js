@@ -73,8 +73,8 @@ describe('Medias CRUD Operations', function() {
       };
     }, [], function(result) {
       console.log('Initial login state:', result.value);
-      
-      if (!result.value.isLoggedIn) {
+
+      if (!result.value || !result.value.isLoggedIn) {
         console.log('Not logged in, attempting programmatic login...');
         
         browser.executeAsync(function(done) {
@@ -250,11 +250,10 @@ describe('Medias CRUD Operations', function() {
   });
 
   it('02. Verify medias list page loads', browser => {
-    // First navigate to home page to ensure React app loads
+    // Navigate to medias page
+    testUtils.navigateUrl(browser, '/medias');
     browser
-      .url('http://localhost:3000')
       .waitForElementVisible('body', 5000)
-      .url('http://localhost:3000/medias')
       .pause(500)
       .execute(function() {
         // Debug: Check if we're on the right page
@@ -944,10 +943,10 @@ describe('Medias CRUD Operations', function() {
         browser.assert.ok(result.value.notes.includes(testMedia.notes), 'Notes contain expected text');
       })
       .saveScreenshot('tests/nightwatch/screenshots/medias/07-view-media-details.png');
-    
+
     // Navigate back to medias list
+    testUtils.navigateUrl(browser, '/medias');
     browser
-      .url('http://localhost:3000/medias')
       .waitForElementVisible('#mediasPage', 5000);
   });
 
@@ -1055,8 +1054,11 @@ describe('Medias CRUD Operations', function() {
       });
 
     browser
-      .pause(2000)
-      .url('http://localhost:3000/medias')
+      .pause(2000);
+
+    testUtils.navigateUrl(browser, '/medias');
+
+    browser
       .waitForElementVisible('#mediasTable', 5000)
       .saveScreenshot('tests/nightwatch/screenshots/medias/09-media-updated.png');
   });

@@ -1,5 +1,7 @@
 // packages/hipaa-compliance/tests/nightwatch/170.315.d.1.test.js
 
+const testUtils = require('../../tests/nightwatch/honeycomb/enable_autopublish/shared-test-utils');
+
 module.exports = {
   tags: ['hipaa-compliance', 'onc-certification', '170.315.d.1'],
   'HIPAA Compliance - 170.315(d)(1) - Authentication, Access Control, Authorization': function (browser) {
@@ -14,7 +16,7 @@ module.exports = {
         userId: Meteor.userId ? Meteor.userId() : null
       };
     }, [], function(result) {
-      if (!result.value.isLoggedIn) {
+      if (!result.value || !result.value.isLoggedIn) {
         browser.executeAsync(function(done) {
           Meteor.call('test.createTestUser', {
             username: 'janedoe',
@@ -35,8 +37,8 @@ module.exports = {
       }
     });
 
+    testUtils.navigateUrl(browser, '/hipaa/audit-log');
     browser
-      .url('http://localhost:3000/hipaa/audit-log')
       .waitForElementVisible('body', 3000)
       .pause(1000); // Give page time to load
 

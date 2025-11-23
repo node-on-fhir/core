@@ -57,8 +57,8 @@ describe('DocumentReferences CRUD Operations', function() {
       };
     }, [], function(result) {
       console.log('Initial login state:', result.value);
-      
-      if (!result.value.isLoggedIn) {
+
+      if (!result.value || !result.value.isLoggedIn) {
         console.log('Not logged in, attempting programmatic login...');
         
         browser.executeAsync(function(done) {
@@ -221,11 +221,11 @@ describe('DocumentReferences CRUD Operations', function() {
   });
 
   it('02. Verify document references list page loads', browser => {
+    testUtils.navigateUrl(browser, '/document-references');
     browser
-      .url('http://localhost:3000/document-references')
       .waitForElementVisible('#documentReferencesPage', 5000);
 
-    // Re-establish patient context (browser.url clears Session)
+    // Re-establish patient context as safety net
     browser.executeAsync(function(patientId, done) {
       if (typeof Meteor !== 'undefined' && typeof Session !== 'undefined') {
         Meteor.call('patients.findOne', patientId, function(error, patient) {

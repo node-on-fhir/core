@@ -85,8 +85,8 @@ describe('MessageHeaders CRUD Operations', function() {
   });
 
   it('02. Verify message headers list page loads', browser => {
+    testUtils.navigateUrl(browser, '/message-headers');
     browser
-      .url('http://localhost:3000/message-headers')
       .waitForElementVisible('#messageHeadersPage', 5000)
       .pause(1000);
       
@@ -759,10 +759,10 @@ describe('MessageHeaders CRUD Operations', function() {
     
     browser
       .saveScreenshot('tests/nightwatch/screenshots/message-headers/07-view-message-header-details.png');
-    
+
     // Navigate back to message headers list
+    testUtils.navigateUrl(browser, '/message-headers');
     browser
-      .url('http://localhost:3000/message-headers')
       .waitForElementVisible('#messageHeadersPage', 5000);
   });
 
@@ -870,8 +870,11 @@ describe('MessageHeaders CRUD Operations', function() {
       });
 
     browser
-      .pause(1000)
-      .url('http://localhost:3000/message-headers')
+      .pause(1000);
+
+    testUtils.navigateUrl(browser, '/message-headers');
+
+    browser
       .waitForElementVisible('#messageHeadersTable', 5000)
       .saveScreenshot('tests/nightwatch/screenshots/message-headers/09-message-header-updated.png');
   });

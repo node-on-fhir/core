@@ -1,5 +1,7 @@
 // packages/clinical-lists/tests/nightwatch/170.315.a.3.test.js
 
+const testUtils = require('../../tests/nightwatch/honeycomb/enable_autopublish/shared-test-utils');
+
 module.exports = {
   tags: ['clinical-lists', 'onc-certification', '170.315.a.3'],
   
@@ -15,7 +17,7 @@ module.exports = {
         userId: Meteor.userId ? Meteor.userId() : null
       };
     }, [], function(result) {
-      if (!result.value.isLoggedIn) {
+      if (!result.value || !result.value.isLoggedIn) {
         browser.executeAsync(function(done) {
           Meteor.call('test.createTestUser', {
             username: 'janedoe',
@@ -36,8 +38,8 @@ module.exports = {
       }
     });
 
+    testUtils.navigateUrl(browser, '/problem-list');
     browser
-      .url('http://localhost:3000/problem-list')
       .waitForElementVisible('body', 3000)
       .pause(1000); // Give page time to load
 

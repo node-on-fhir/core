@@ -244,12 +244,12 @@ describe('Appointments CRUD Operations', function() {
   });
 
   it('02. Verify appointments list page loads', browser => {
+    testUtils.navigateUrl(browser, '/appointments');
     browser
-      .url('http://localhost:3000/appointments')
       .waitForElementVisible('#appointmentsPage', 5000)
       .pause(1000);
-    
-    // Set patient context AFTER navigation (critical - navigation clears Session)
+
+    // Re-establish patient context as safety net
     browser.execute(function(testIdentifier) {
       console.log('Setting patient context after navigation to /appointments');
       console.log('Looking for patient with identifier:', testIdentifier);
@@ -1008,8 +1008,8 @@ describe('Appointments CRUD Operations', function() {
       .saveScreenshot('tests/nightwatch/screenshots/appointments/07-view-appointment-details.png');
     
     // Navigate back to appointments list
+    testUtils.navigateUrl(browser, '/appointments');
     browser
-      .url('http://localhost:3000/appointments')
       .waitForElementVisible('#appointmentsPage', 5000);
   });
 
@@ -1120,8 +1120,11 @@ describe('Appointments CRUD Operations', function() {
       });
 
     browser
-      .pause(1000)
-      .url('http://localhost:3000/appointments')
+      .pause(1000);
+
+    testUtils.navigateUrl(browser, '/appointments');
+
+    browser
       .waitForElementVisible('#appointmentsTable', 5000)
       .saveScreenshot('tests/nightwatch/screenshots/appointments/09-appointment-updated.png');
   });

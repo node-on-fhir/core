@@ -784,8 +784,8 @@ describe('DiagnosticReports CRUD Operations', function() {
       .saveScreenshot('tests/nightwatch/screenshots/diagnostic-reports/07-view-diagnostic-report-details.png');
     
     // Navigate back to diagnostic reports list
+    testUtils.navigateUrl(browser, '/diagnostic-reports');
     browser
-      .url('http://localhost:3000/diagnostic-reports')
       .waitForElementVisible('#diagnosticReportsPage', 5000);
   });
 
@@ -944,8 +944,11 @@ describe('DiagnosticReports CRUD Operations', function() {
       });
 
     browser
-      .pause(2000)
-      .url('http://localhost:3000/diagnostic-reports')
+      .pause(2000);
+
+    testUtils.navigateUrl(browser, '/diagnostic-reports');
+
+    browser
       .waitForElementVisible('#diagnosticReportsTable', 5000)
       .saveScreenshot('tests/nightwatch/screenshots/diagnostic-reports/09-diagnostic-report-updated.png');
   });
@@ -1045,7 +1048,7 @@ describe('DiagnosticReports CRUD Operations', function() {
             console.log('After delete navigation check:', result.value);
             // If not on diagnostic reports page, navigate there
             if (!result.value.url.includes('/diagnostic-reports')) {
-              browser.url('http://localhost:3000/diagnostic-reports');
+              testUtils.navigateUrl(browser, '/diagnostic-reports');
             }
           })
           .waitForElementVisible('#diagnosticReportsPage', 10000) // Increased timeout
@@ -1083,7 +1086,7 @@ describe('DiagnosticReports CRUD Operations', function() {
       }, [], function(result) {
         console.log('Test 10 start - Current location:', result.value);
         if (!result.value.url.includes('/diagnostic-reports')) {
-          browser.url('http://localhost:3000/diagnostic-reports');
+          testUtils.navigateUrl(browser, '/diagnostic-reports');
         }
       })
       .waitForElementVisible('#diagnosticReportsPage', 10000)

@@ -188,8 +188,8 @@ describe('Encounters CRUD Operations', function() {
   });
 
   it('02. Verify encounters list page loads', browser => {
+    testUtils.navigateUrl(browser, '/encounters');
     browser
-      .url('http://localhost:3000/encounters')
       .waitForElementVisible('#encountersPage', 5000)
             .execute(function() {
         const hasTable = document.querySelector('#encountersTable') !== null;
@@ -638,8 +638,8 @@ describe('Encounters CRUD Operations', function() {
         browser.assert.equal(result.value, true, 'Clicked Save button');
       });
 
+    testUtils.navigateUrl(browser, '/encounters');
     browser
-            .url('http://localhost:3000/encounters')
       .waitForElementVisible('#encountersTable', 5000)
       .saveScreenshot('tests/nightwatch/screenshots/encounters/09-encounter-updated.png');
   });

@@ -62,8 +62,8 @@ describe('ImagingStudies CRUD Operations', function() {
       };
     }, [], function(result) {
       console.log('Initial login state:', result.value);
-      
-      if (!result.value.isLoggedIn) {
+
+      if (!result.value || !result.value.isLoggedIn) {
         console.log('Not logged in, attempting programmatic login...');
         
         browser.executeAsync(function(done) {
@@ -788,8 +788,8 @@ describe('ImagingStudies CRUD Operations', function() {
       .saveScreenshot('tests/nightwatch/screenshots/imaging-studies/07-view-imaging-study-details.png');
     
     // Navigate back to imaging studies list
+    testUtils.navigateUrl(browser, '/imaging-studies');
     browser
-      .url('http://localhost:3000/imaging-studies')
       .waitForElementVisible('#imagingStudiesPage', 5000);
   });
 
@@ -900,8 +900,11 @@ describe('ImagingStudies CRUD Operations', function() {
       });
 
     browser
-      .pause(500)
-      .url('http://localhost:3000/imaging-studies')
+      .pause(500);
+
+    testUtils.navigateUrl(browser, '/imaging-studies');
+
+    browser
       .waitForElementVisible('#imagingStudiesTable', 5000)
       .saveScreenshot('tests/nightwatch/screenshots/imaging-studies/09-imaging-study-updated.png');
   });
