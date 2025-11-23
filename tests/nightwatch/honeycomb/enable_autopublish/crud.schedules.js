@@ -1,6 +1,7 @@
 // tests/nightwatch/honeycomb/enable_autopublish/crud.schedules.js
 
 const testUtils = require('./shared-test-utils');
+const loginHelper = require('../../helpers/login-helper');
 
 describe('Schedules CRUD Operations', function() {
   const timestamp = Date.now();
@@ -59,69 +60,18 @@ describe('Schedules CRUD Operations', function() {
         window.testTimestamp = ts;
       }, [timestamp]);
 
-    // Check if we're logged in
-    browser.execute(function() {
-      return {
-        isLoggedIn: typeof Meteor !== 'undefined' && !!Meteor.userId(),
-        userId: Meteor.userId ? Meteor.userId() : null,
-        username: Meteor.user ? (Meteor.user() ? Meteor.user().username : null) : null
-      };
-    }, [], function(result) {
-      console.log('Initial login state:', result.value);
-      
-      if (!result.value.isLoggedIn) {
-        console.log('Not logged in, attempting programmatic login...');
-        
-        browser.executeAsync(function(done) {
-          if (typeof Meteor !== 'undefined') {
-            Meteor.call('test.createTestUser', {
-              username: 'janedoe',
-              email: 'janedoe@test.org',
-              password: 'janedoe123'
-            }, function(err, userId) {
-              if (err) {
-                console.error('Failed to create test user:', err);
-                done({ userCreated: false, error: err.message });
-              } else {
-                console.log('Test user ready, userId:', userId);
-                Meteor.loginWithPassword('janedoe', 'janedoe123', function(loginErr) {
-                  if (loginErr) {
-                    console.error('Login failed:', loginErr);
-                    done({ userCreated: true, loginSuccess: false, error: loginErr.message });
-                  } else {
-                    console.log('Login successful');
-                    done({ 
-                      userCreated: true,
-                      loginSuccess: true, 
-                      userId: Meteor.userId(), 
-                      username: Meteor.user() ? Meteor.user().username : null 
-                    });
-                  }
-                });
-              }
-            });
-          } else {
-            done({ userCreated: false, loginSuccess: false, error: 'Meteor not available' });
-          }
-        }, [], function(result) {
-          console.log('Programmatic login result:', result.value);
-          if (result.value.loginSuccess) {
-            browser.assert.equal(result.value.loginSuccess, true, 'Successfully logged in programmatically');
-          } else {
-            browser.assert.fail('Setup failed: ' + result.value.error);
-          }
-        });
-        
-        browser.pause(1000);
+    // Use loginHelper to ensure user is logged in with retry logic
+    loginHelper.ensureLoggedIn(browser, function(isLoggedIn) {
+      if (!isLoggedIn) {
+        browser.assert.fail('Failed to ensure user is logged in');
       } else {
-        browser.assert.ok(true, 'Already logged in (autologin enabled)');
-        console.log('Already logged in as:', result.value.username, 'userId:', result.value.userId);
+        browser.assert.ok(true, 'User is logged in');
       }
-      
+
       // Clean up any existing test data - no patient context needed for Schedules
       browser.executeAsync(function(done) {
         if (typeof Schedules !== 'undefined') {
-          const testSchedules = Schedules.find({ 
+          const testSchedules = Schedules.find({
             $or: [
               { 'identifier.0.value': { $regex: 'Schedule-.*' } },
               { 'comment': { $regex: '.*consultation hours.*' } },
@@ -135,8 +85,6 @@ describe('Schedules CRUD Operations', function() {
         }
         done();
       });
-      
-      browser.pause(1000);
     });
   });
 
