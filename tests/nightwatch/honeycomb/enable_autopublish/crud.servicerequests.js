@@ -324,55 +324,14 @@ describe('ServiceRequests CRUD Operations', function() {
     });
 
     // Skip setting requester field - it should be auto-populated with logged-in user
+    // Fill form fields using standard Nightwatch commands (triggers React onChange properly)
     browser
       .pause(500)
-      .click('#performerDisplay')
-      .execute(function() {
-        const performerField = document.querySelector('#performerDisplay');
-        if (performerField) {
-          performerField.select();
-          performerField.value = '';
-          const inputEvent = new Event('input', { bubbles: true });
-          const changeEvent = new Event('change', { bubbles: true });
-          performerField.dispatchEvent(inputEvent);
-          performerField.dispatchEvent(changeEvent);
-          const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
-          nativeInputValueSetter.call(performerField, '');
-          performerField.dispatchEvent(inputEvent);
-        }
-      })
+      .clearValue('#performerDisplay')
       .setValue('#performerDisplay', testServiceRequest.performerName)
-      .click('#codeCode')
-      .execute(function() {
-        const codeField = document.querySelector('#codeCode');
-        if (codeField) {
-          codeField.select();
-          codeField.value = '';
-          const inputEvent = new Event('input', { bubbles: true });
-          const changeEvent = new Event('change', { bubbles: true });
-          codeField.dispatchEvent(inputEvent);
-          codeField.dispatchEvent(changeEvent);
-          const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
-          nativeInputValueSetter.call(codeField, '');
-          codeField.dispatchEvent(inputEvent);
-        }
-      })
+      .clearValue('#codeCode')
       .setValue('#codeCode', testServiceRequest.code)
-      .click('#codeDisplay')
-      .execute(function() {
-        const codeDisplayField = document.querySelector('#codeDisplay');
-        if (codeDisplayField) {
-          codeDisplayField.select();
-          codeDisplayField.value = '';
-          const inputEvent = new Event('input', { bubbles: true });
-          const changeEvent = new Event('change', { bubbles: true });
-          codeDisplayField.dispatchEvent(inputEvent);
-          codeDisplayField.dispatchEvent(changeEvent);
-          const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
-          nativeInputValueSetter.call(codeDisplayField, '');
-          codeDisplayField.dispatchEvent(inputEvent);
-        }
-      })
+      .clearValue('#codeDisplay')
       .setValue('#codeDisplay', testServiceRequest.codeDisplay);
 
     // Handle Material-UI Select components

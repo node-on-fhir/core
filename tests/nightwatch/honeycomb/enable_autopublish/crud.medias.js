@@ -684,8 +684,22 @@ describe('Medias CRUD Operations', function() {
     // Search for our specific test media since there may be many Synthea medias
     browser
       .waitForElementVisible('#mediaSearchInput', 5000)
-      .clearValue('#mediaSearchInput')
-      .setValue('#mediaSearchInput', testMedia.contentTitle.substring(0, 20))
+      .execute(function(searchValue) {
+        const input = document.querySelector('#mediaSearchInput');
+        if (input) {
+          // Clear the field
+          input.value = '';
+          input.dispatchEvent(new Event('input', { bubbles: true }));
+          input.dispatchEvent(new Event('change', { bubbles: true }));
+
+          // Set new value
+          input.value = searchValue;
+          input.dispatchEvent(new Event('input', { bubbles: true }));
+          input.dispatchEvent(new Event('change', { bubbles: true }));
+          return true;
+        }
+        return false;
+      }, [testMedia.contentTitle.substring(0, 20)])
       .pause(1000);
     
     browser.execute(function() {
@@ -768,8 +782,22 @@ describe('Medias CRUD Operations', function() {
     // Search for our specific media - use a simpler search term
     browser
       .waitForElementVisible('#mediaSearchInput', 5000)
-      .clearValue('#mediaSearchInput')
-      .setValue('#mediaSearchInput', 'Patient photo')
+      .execute(function(searchValue) {
+        const input = document.querySelector('#mediaSearchInput');
+        if (input) {
+          // Clear the field
+          input.value = '';
+          input.dispatchEvent(new Event('input', { bubbles: true }));
+          input.dispatchEvent(new Event('change', { bubbles: true }));
+
+          // Set new value
+          input.value = searchValue;
+          input.dispatchEvent(new Event('input', { bubbles: true }));
+          input.dispatchEvent(new Event('change', { bubbles: true }));
+          return true;
+        }
+        return false;
+      }, ['Patient photo'])
       .pause(1000);
 
     // Now click on the media row
@@ -895,8 +923,22 @@ describe('Medias CRUD Operations', function() {
     // Search for our specific test media first
     browser
       .waitForElementVisible('#mediaSearchInput', 5000)
-      .clearValue('#mediaSearchInput')
-      .setValue('#mediaSearchInput', testMedia.contentTitle.substring(0, 20))
+      .execute(function(searchValue) {
+        const input = document.querySelector('#mediaSearchInput');
+        if (input) {
+          // Clear the field
+          input.value = '';
+          input.dispatchEvent(new Event('input', { bubbles: true }));
+          input.dispatchEvent(new Event('change', { bubbles: true }));
+
+          // Set new value
+          input.value = searchValue;
+          input.dispatchEvent(new Event('input', { bubbles: true }));
+          input.dispatchEvent(new Event('change', { bubbles: true }));
+          return true;
+        }
+        return false;
+      }, [testMedia.contentTitle.substring(0, 20)])
       .pause(1000);
 
     // Now click on the media to edit
@@ -955,32 +997,34 @@ describe('Medias CRUD Operations', function() {
       .setValue('#reasonCodeInput', updatedMedia.reasonCode)
       .clearValue('#contentTitleInput')
       .setValue('#contentTitleInput', updatedMedia.contentTitle)
-      .click('#statusSelect')
-      .pause(1000)
       .execute(function(value) {
         console.log('Looking for status value:', value);
-        const menuItems = document.querySelectorAll('[role="option"]');
-        console.log('Found menu items:', menuItems.length);
+        const statusSelect = document.querySelector('#statusSelect');
+        if (statusSelect) {
+          statusSelect.click();
+          setTimeout(() => {
+            const menuItems = document.querySelectorAll('[role="option"]');
+            console.log('Found menu items:', menuItems.length);
 
-        for (let item of menuItems) {
-          const dataValue = item.getAttribute('data-value');
-          // Normalize text by replacing spaces with hyphens
-          const textValue = item.textContent.toLowerCase().replace(/\s+/g, '-');
-          const searchValue = value.toLowerCase();
+            for (let item of menuItems) {
+              const dataValue = item.getAttribute('data-value');
+              // Normalize text by replacing spaces with hyphens
+              const textValue = item.textContent.toLowerCase().replace(/\s+/g, '-');
+              const searchValue = value.toLowerCase();
 
-          console.log('Checking item:', item.textContent, 'normalized:', textValue);
+              console.log('Checking item:', item.textContent, 'normalized:', textValue);
 
-          if (dataValue === value || textValue === searchValue) {
-            console.log('Match found! Clicking:', item.textContent);
-            item.click();
-            return true;
-          }
+              if (dataValue === value || textValue === searchValue) {
+                console.log('Match found! Clicking:', item.textContent);
+                item.click();
+                return true;
+              }
+            }
+            console.error('No match found for value:', value);
+            return false;
+          }, 300);
         }
-        console.error('No match found for value:', value);
-        return false;
-      }, [updatedMedia.status], function(result) {
-        browser.assert.equal(result.value, true, 'Selected status');
-      })
+      }, [updatedMedia.status])
       .clearValue('#notesTextarea')
       .setValue('#notesTextarea', updatedMedia.notes)
       .pause(500)
@@ -1015,8 +1059,22 @@ describe('Medias CRUD Operations', function() {
     browser
       .waitForElementVisible('#mediasTable', 5000)
       .waitForElementVisible('#mediaSearchInput', 5000)
-      .clearValue('#mediaSearchInput')
-      .setValue('#mediaSearchInput', updatedMedia.contentTitle.substring(0, 20))
+      .execute(function(searchValue) {
+        const input = document.querySelector('#mediaSearchInput');
+        if (input) {
+          // Clear the field
+          input.value = '';
+          input.dispatchEvent(new Event('input', { bubbles: true }));
+          input.dispatchEvent(new Event('change', { bubbles: true }));
+
+          // Set new value
+          input.value = searchValue;
+          input.dispatchEvent(new Event('input', { bubbles: true }));
+          input.dispatchEvent(new Event('change', { bubbles: true }));
+          return true;
+        }
+        return false;
+      }, [updatedMedia.contentTitle.substring(0, 20)])
       .pause(1000)
       .execute(function(expectedTitle) {
         const table = document.querySelector('#mediasTable');

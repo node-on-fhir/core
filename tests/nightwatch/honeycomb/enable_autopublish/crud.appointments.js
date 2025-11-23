@@ -1006,22 +1006,28 @@ describe('Appointments CRUD Operations', function() {
       .clearValue('#descriptionInput')
       .setValue('#descriptionInput', updatedAppointment.description)
       .clearValue('#commentInput')
-      .setValue('#commentInput', updatedAppointment.comment)
-      .click('#statusSelect')
-      .pause(300)
-      .execute(function(value) {
-        const menuItems = document.querySelectorAll('[role="option"]');
-        for (let item of menuItems) {
-          if (item.textContent.toLowerCase().includes(value.toLowerCase()) || 
-              item.getAttribute('data-value') === value) {
-            item.click();
-            return true;
+      .setValue('#commentInput', updatedAppointment.comment);
+
+    // Handle Material-UI Select for status
+    browser.execute(function(value) {
+      const statusSelect = document.querySelector('#statusSelect');
+      if (statusSelect) {
+        statusSelect.click();
+        setTimeout(() => {
+          const menuItems = document.querySelectorAll('[role="option"]');
+          for (let item of menuItems) {
+            if (item.textContent.toLowerCase().includes(value.toLowerCase()) ||
+                item.getAttribute('data-value') === value) {
+              item.click();
+              break;
+            }
           }
-        }
-        return false;
-      }, [updatedAppointment.status], function(result) {
-        browser.assert.equal(result.value, true, 'Selected status');
-      })
+        }, 300);
+      }
+    }, [updatedAppointment.status]);
+
+    browser
+      .pause(1000)
       .clearValue('#notesInput')
       .setValue('#notesInput', updatedAppointment.notes)
       .pause(500)

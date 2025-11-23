@@ -48,6 +48,14 @@ When updating an existing `crud.*.js` test file, scan for these common issues:
 
 **Why**: With 100 records in table, finding specific test row without filtering is unreliable and slow.
 
+### 5. React Form Input Handling
+- [ ] Search for `clearValue()` + `setValue()` patterns on search inputs
+- [ ] Replace with execute block that triggers React events (see section 6)
+- [ ] Check for `.click('#...Select')` on Material-UI Select components
+- [ ] Move click inside execute block to avoid "element click intercepted" errors
+
+**Why**: `clearValue()` doesn't trigger React onChange events, causing value concatenation. Material-UI clicks outside execute blocks get intercepted by overlapping elements.
+
 ---
 
 ## Quick Fix Templates
@@ -267,9 +275,57 @@ if (process.env.USE_MONGO_OBJECTID) {
 - **Issue**: Setting values programmatically in React forms requires special handling
 - **Solution**: Use different approaches for different input types
 
-#### Text Input Pattern (Use setValue directly):
+#### The clearValue() Problem
+
+**Critical Discovery**: Nightwatch's `clearValue()` does NOT reliably clear React-controlled inputs.
+
+**Why it fails**:
+- `clearValue()` clears the DOM value but doesn't trigger React's `onChange` events
+- React's state still thinks the old value is there
+- When `setValue()` types new characters, React concatenates them instead of replacing
+- This is a well-known issue with React-controlled inputs in automated testing
+
+**Symptom**: Search values concatenating like `"Patient photo 1763897715996Patient photo"`
+
+#### Search Input Pattern (Execute Block - REQUIRED)
+
+For search inputs and any fields where `clearValue()` fails, use this pattern:
+
 ```javascript
-// CORRECT - Use setValue for text inputs, textareas
+// CORRECT - Execute block that properly triggers React events
+browser
+  .waitForElementVisible('#searchInput', 5000)
+  .execute(function(searchValue) {
+    const input = document.querySelector('#searchInput');
+    if (input) {
+      // Clear the field
+      input.value = '';
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      input.dispatchEvent(new Event('change', { bubbles: true }));
+
+      // Set new value
+      input.value = searchValue;
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      input.dispatchEvent(new Event('change', { bubbles: true }));
+      return true;
+    }
+    return false;
+  }, [searchValue])
+  .pause(1000);
+```
+
+**What this does**:
+1. Explicitly clears React's state: `input.value = ''` + `dispatchEvent('input')` tells React the field is now empty
+2. Properly sets new value: `input.value = searchValue` + `dispatchEvent('input')` tells React the new value
+3. Triggers all necessary events: Both `input` and `change` events ensure React state updates
+4. No more concatenation: React sees clear → empty → new value, not old value → concatenated value
+
+#### Regular Text Input Pattern (Use setValue directly)
+
+For regular text inputs that will be fully replaced (not search fields):
+
+```javascript
+// CORRECT for non-search text inputs
 browser
   .clearValue('#codeInput')
   .setValue('#codeInput', testData.codeCode)
@@ -277,12 +333,65 @@ browser
   .setValue('#notesTextarea', testData.notes);
 ```
 
-**Important**: 
-- Use setValue directly on text inputs (like the locations test does)
-- Only use execute blocks for Material-UI Select components
-- Use the correct field values from test data (e.g., codeCode for the code field, codeDisplay for the display field)
+**Important**: Use the correct field values from test data (e.g., codeCode for the code field, codeDisplay for the display field)
 
-#### Why Native Setter Approach Fails:
+#### Material-UI Select Pattern (Execute Block - REQUIRED)
+
+For Material-UI Select components, you MUST use execute blocks with the click inside:
+
+```javascript
+// CORRECT - Click and select inside execute block
+browser
+  .execute(function(value) {
+    const statusSelect = document.querySelector('#statusSelect');
+    if (statusSelect) {
+      statusSelect.click();  // Click INSIDE execute to avoid interception
+      setTimeout(() => {
+        const menuItems = document.querySelectorAll('[role="option"]');
+        for (let item of menuItems) {
+          const dataValue = item.getAttribute('data-value');
+          const textValue = item.textContent.toLowerCase().replace(/\s+/g, '-');
+          const searchValue = value.toLowerCase();
+
+          if (dataValue === value || textValue === searchValue) {
+            item.click();
+            break;
+          }
+        }
+      }, 300);  // Wait for dropdown to render
+    }
+  }, [statusValue])
+  .pause(500);
+```
+
+**Why this is required**:
+- Material-UI Select components have overlapping elements
+- Nightwatch's `.click('#statusSelect')` outside execute blocks gets intercepted
+- Error: "element click intercepted: Element ... is not clickable at point (x, y). Other element would receive the click"
+- Clicking inside JavaScript execute block bypasses Selenium's element position checking
+
+```javascript
+// WRONG - Will fail with "element click intercepted"
+browser
+  .click('#statusSelect')  // ✗ Gets intercepted
+  .pause(1000)
+  .execute(function(value) {
+    // ... select menu item
+  }, [value]);
+```
+
+#### When to Use Each Pattern
+
+| Input Type | Pattern | Reason |
+|------------|---------|--------|
+| Search inputs | Execute block (clear + set + events) | `clearValue()` doesn't trigger React events |
+| Regular text inputs | `clearValue()` + `setValue()` | Simple replacement works |
+| Material-UI Select | Execute block (click + select) | Avoid element interception errors |
+| Date inputs | `clearValue()` + `setValue()` | Simple replacement works |
+| Textareas | `clearValue()` + `setValue()` | Simple replacement works |
+
+#### Why Native Setter Approach Fails
+
 ```javascript
 // WRONG - This causes "Illegal invocation" errors
 browser.execute(function(value) {

@@ -573,8 +573,7 @@ describe('Encounters CRUD Operations', function() {
   });
 
   it('08. Verify updated encounter in list', browser => {
-    // Note: The practitioner name update may not persist in all implementations
-    // So we search for the original name to verify the encounter still exists
+    // Search for the updated practitioner name to verify the update was successful
     browser
       .waitForElementVisible('#encountersTable', 5000)
       .pause(500);
@@ -582,9 +581,9 @@ describe('Encounters CRUD Operations', function() {
     browser
       .clearValue('#encounterSearchInput')
       .pause(1000)
-      .setValue('#encounterSearchInput', 'Smith')
+      .setValue('#encounterSearchInput', 'Johnson')
       .pause(3000)
-      .assert.containsText('#encountersTable', 'Smith')
+      .assert.containsText('#encountersTable', 'Johnson')
       .saveScreenshot('tests/nightwatch/screenshots/encounters/10-updated-encounter-in-list.png');
   });
 

@@ -5,6 +5,8 @@ const loginHelper = require('../../helpers/login-helper');
 
 describe('SupplyDeliveries CRUD Operations', function() {
   const timestamp = Date.now();
+  let createdSupplyDeliveryId = null; // Store supply delivery ID for cross-test access
+
   const testSupplyDelivery = {
     status: 'in-progress',
     type: 'device',
@@ -310,8 +312,20 @@ describe('SupplyDeliveries CRUD Operations', function() {
       };
     }, [], function(result) {
       console.log('Navigation after save:', result.value);
-      browser.assert.ok(result.value.isOnListPage, 
+      browser.assert.ok(result.value.isOnListPage,
         'Should navigate back to supply deliveries list after save');
+    });
+
+    // Capture the created supply delivery ID for subsequent tests
+    browser.execute(function() {
+      return window.saveResult?.result || null;
+    }, [], function(result) {
+      if (result.value) {
+        createdSupplyDeliveryId = result.value;
+        console.log('✓ Captured supply delivery ID for subsequent tests:', createdSupplyDeliveryId);
+      } else {
+        console.warn('✗ Could not capture supply delivery ID');
+      }
     });
   });
 
@@ -361,25 +375,34 @@ describe('SupplyDeliveries CRUD Operations', function() {
   });
 
   it('06. View supply delivery details', browser => {
-    // Search for our specific supply delivery if search is available
-    browser.execute(function(ts) {
-      const searchInput = document.querySelector('#supplyDeliverySearchInput');
-      if (searchInput) {
-        searchInput.value = ts.toString();
-        searchInput.dispatchEvent(new Event('input', { bubbles: true }));
-        return { searchPerformed: true };
-      }
-      return { searchPerformed: false };
-    }, [timestamp], function(result) {
-      if (result.value.searchPerformed) {
-        browser.pause(500); // Wait for search to filter results
-      }
-    });
+    // DEVIATION FROM STANDARD CRUD PATTERN:
+    //
+    // Standard approach would be:
+    //   1. Search for supply delivery in table
+    //   2. Click the row to open detail page
+    //
+    // Problem with standard approach:
+    //   - Newly created supply delivery may not be in client collection (subscription limit)
+    //   - Search won't find what's not in the collection
+    //   - Clicking wrong row would load wrong supply delivery
+    //
+    // Our approach:
+    //   - Navigate DIRECTLY to /supply-deliveries/{id} using the captured ID
+    //   - SupplyDeliveryDetail component will load the specific delivery
+    //   - Ensures we're viewing the correct supply delivery regardless of table state
 
-    // Click on the first row (should be our newest supply delivery if sorted properly)
+    browser.execute(function(deliveryId) {
+      console.log('Navigating directly to supply delivery detail:', deliveryId);
+      // Use React Router navigation to preserve state
+      if (typeof Meteor !== 'undefined' && typeof Meteor.navigate === 'function') {
+        Meteor.navigate('/supply-deliveries/' + deliveryId);
+      } else {
+        window.location.href = '/supply-deliveries/' + deliveryId;
+      }
+    }, [createdSupplyDeliveryId]);
+
     browser
-      .click('#supplyDeliveriesTable tbody tr:first-child')
-      .pause(1000)
+      .pause(2000) // Wait for navigation and subscription to load data
       .waitForElementVisible('#supplyDeliveryDetailsPage', 5000);
 
     // Verify we can see the details
@@ -416,11 +439,25 @@ describe('SupplyDeliveries CRUD Operations', function() {
   });
 
   it('07. Edit supply delivery', browser => {
+    // Navigate directly to the supply delivery detail page
+    browser.execute(function(deliveryId) {
+      console.log('Navigating to supply delivery for edit:', deliveryId);
+      if (typeof Meteor !== 'undefined' && typeof Meteor.navigate === 'function') {
+        Meteor.navigate('/supply-deliveries/' + deliveryId);
+      } else {
+        window.location.href = '/supply-deliveries/' + deliveryId;
+      }
+    }, [createdSupplyDeliveryId]);
+
+    browser
+      .pause(2000)
+      .waitForElementVisible('#supplyDeliveryDetailsPage', 5000);
+
     // Enter edit mode if needed
     browser.execute(function() {
       const editButton = document.querySelector('#editSupplyDeliveryButton, #lockSupplyDeliveryButton');
       const isLocked = document.querySelector('#lockSupplyDeliveryButton');
-      
+
       if (editButton && !isLocked) {
         editButton.click();
         return { clickedEdit: true };
@@ -485,22 +522,19 @@ describe('SupplyDeliveries CRUD Operations', function() {
   });
 
   it('08. Delete supply delivery', browser => {
-    // Navigate to the supply delivery if not already there
-    browser.execute(function() {
-      return window.location.pathname;
-    }, [], function(result) {
-      if (!result.value.includes('/supply-deliveries/')) {
-        // Navigate back to the supply delivery
-        browser
-          .url('http://localhost:3000/supply-deliveries')
-          .pause(1000)
-          .click('#supplyDeliveriesTable tbody tr:first-child')
-          .pause(1000);
+    // Navigate directly to the supply delivery detail page
+    browser.execute(function(deliveryId) {
+      console.log('Navigating to supply delivery for deletion:', deliveryId);
+      if (typeof Meteor !== 'undefined' && typeof Meteor.navigate === 'function') {
+        Meteor.navigate('/supply-deliveries/' + deliveryId);
+      } else {
+        window.location.href = '/supply-deliveries/' + deliveryId;
       }
-    });
+    }, [createdSupplyDeliveryId]);
 
     // Ensure we're on the detail page
     browser
+      .pause(2000)
       .waitForElementVisible('#supplyDeliveryDetailsPage', 5000)
       .pause(500);
 
@@ -518,46 +552,62 @@ describe('SupplyDeliveries CRUD Operations', function() {
         'Should be on supply delivery detail page');
     });
 
-    // Click delete button using execute approach (more reliable than .click())
-    browser
-      .pause(500)
-      .execute(function() {
-        console.log('[Delete] Looking for Delete button');
-        const buttons = document.querySelectorAll('button');
-        console.log('[Delete] Found', buttons.length, 'buttons');
-        for (let i = 0; i < buttons.length; i++) {
-          const button = buttons[i];
-          const text = button.textContent;
-          console.log(`[Delete] Button ${i}: "${text}"`);
-          if (text && text.includes('Delete')) {
-            console.log('[Delete] Found Delete button, clicking it');
-            button.click();
-            return true;
-          }
-        }
-        console.log('[Delete] Delete button not found');
-        return false;
-      })
-      .pause(500) // Wait for alert to appear
-      .acceptAlert() // Accept the confirmation dialog
-      .pause(1000); // Wait for deletion to complete
+    // Debug: Check component state before delete
+    browser.execute(function() {
+      return {
+        isEditing: window.__supplyDeliveryIsEditing,
+        hasDeleteButton: !!document.querySelector('#deleteSupplyDeliveryButton'),
+        pathname: window.location.pathname
+      };
+    }, [], function(result) {
+      console.log('[Before delete]:', result.value);
+    });
 
-    // Verify we're back on the list page
+    // Click delete button directly (not in execute block)
+    // This handles window.confirm() more reliably than execute blocks
     browser
       .pause(500)
+      .click('#deleteSupplyDeliveryButton')
+      .pause(500)
+      .acceptAlert()
+      .pause(3000); // Longer wait for async deletion and navigation
+
+    // Check for errors and what happened
+    browser.execute(function() {
+      const errorElement = document.querySelector('[class*="error"]') ||
+                          document.querySelector('[class*="Alert"]') ||
+                          document.querySelector('[severity="error"]');
+      return {
+        hasError: !!errorElement,
+        errorText: errorElement ? errorElement.textContent : null,
+        pathname: window.location.pathname,
+        stillOnDetailPage: !!document.querySelector('#supplyDeliveryDetailsPage')
+      };
+    }, [], function(result) {
+      console.log('[After delete]:', result.value);
+      if (result.value.hasError) {
+        console.log('[Delete error found]:', result.value.errorText);
+      }
+    });
+
+    // Verify we're back on the list page or wait for navigation
+    browser
+      .pause(1000)
       .execute(function() {
         return {
           pathname: window.location.pathname,
           hasPage: !!document.querySelector('#supplyDeliveriesPage'),
           hasTable: !!document.querySelector('#supplyDeliveriesTable'),
-          hasNoData: !!document.querySelector('[data-testid="no-supply-deliveries"]')
+          hasNoData: !!document.querySelector('[data-testid="no-supply-deliveries"]'),
+          hasDetailPage: !!document.querySelector('#supplyDeliveryDetailsPage')
         };
       }, [], function(result) {
         console.log('[Test 08] After deletion:', result.value);
-        // browser.assert.ok(
-        //   result.value.pathname === '/supply-deliveries',
-        //   'Should be redirected to supply deliveries list after deletion'
-        // );
+
+        if (result.value.hasDetailPage) {
+          console.log('WARNING: Still on detail page - deletion may have failed');
+        }
+
         browser.assert.ok(
           result.value.hasTable || result.value.hasNoData,
           'Should show either table or no-data state'

@@ -43,7 +43,24 @@ function MedicationDetail(props) {
   const currentUser = useTracker(function() {
     return Meteor.user();
   }, []);
-  
+
+  // Subscribe to medication data using ID-based query (optimized)
+  const isSubscriptionReady = useTracker(function(){
+    if (id && id !== 'new') {
+      // Use ID-based query to take advantage of optimization in autopublish.js
+      const query = {
+        $or: [
+          {'_id': id},
+          {'id': id}
+        ]
+      };
+      console.log('[MedicationDetail] Subscribing with ID query:', query);
+      const handle = Meteor.subscribe('autopublish.Medications', query, {});
+      return handle.ready();
+    }
+    return true; // No subscription needed for new medications
+  }, [id]);
+
   // Initialize state with proper FHIR R4 structure
   const [medication, setMedication] = useState({
     resourceType: "Medication",
@@ -107,27 +124,28 @@ function MedicationDetail(props) {
     }
   }, [id]);
 
-  // Load medication if editing
+  // Load medication when subscription is ready
   useEffect(function() {
-    async function loadMedication() {
-      if (id && id !== 'new') {
-        setLoading(true);
-        try {
-          const result = await Meteor.callAsync('medications.get', id);
-          if (result) {
-            setMedication(result);
-          }
-        } catch (err) {
-          console.error('Error loading medication:', err);
-          setError(err.message);
-        } finally {
-          setLoading(false);
-        }
+    if (id && id !== 'new' && isSubscriptionReady) {
+      console.log('[MedicationDetail] Subscription ready, loading medication from collection');
+      // Load from client collection (populated by subscription)
+      const existingMedication = Medications.findOne({_id: id});
+
+      if (existingMedication) {
+        console.log('[MedicationDetail] Loaded medication:', {
+          _id: existingMedication._id,
+          codeText: get(existingMedication, 'code.text'),
+          codeCode: get(existingMedication, 'code.coding[0].code'),
+          manufacturer: get(existingMedication, 'manufacturer.display')
+        });
+        setMedication(existingMedication);
+        setIsEditing(false); // Start in view mode for existing medications
+      } else {
+        console.warn('[MedicationDetail] Medication not found in collection:', id);
+        setError('Medication not found');
       }
     }
-    
-    loadMedication();
-  }, [id]);
+  }, [id, isSubscriptionReady]);
 
   // Handle field changes
   function handleChange(path, value) {
@@ -252,7 +270,9 @@ function MedicationDetail(props) {
           {/* System ID Barcode */}
           {(id && id !== 'new') && (
             <Box sx={{ mb: 3, textAlign: 'right' }}>
-              <span className="barcode helveticas" style={{ fontSize: '2rem' }}>{id}</span>
+              <span className="barcode helveticas" style={{ fontSize: '2rem' }}>
+                {get(medication, '_id') || id}
+              </span>
             </Box>
           )}
           
@@ -458,23 +478,15 @@ function MedicationDetail(props) {
           ) : (
             // Edit mode buttons
             <>
-              <Button 
+              <Button
                 onClick={() => {
                   if (id && id !== 'new') {
-                    // Cancel editing and reload original data
+                    // Cancel editing and reload original data from collection
                     setIsEditing(false);
-                    // Reload the medication to discard changes
-                    async function reloadMedication() {
-                      try {
-                        const result = await Meteor.callAsync('medications.get', id);
-                        if (result) {
-                          setMedication(result);
-                        }
-                      } catch (err) {
-                        console.error('Error reloading medication:', err);
-                      }
+                    const existingMedication = Medications.findOne({_id: id});
+                    if (existingMedication) {
+                      setMedication(existingMedication);
                     }
-                    reloadMedication();
                   } else {
                     // For new medications, go back
                     navigate('/medications');

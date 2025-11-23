@@ -163,7 +163,9 @@ function EncounterDetail(props) {
         } else if (selectedPatient.name && Array.isArray(selectedPatient.name)) {
           patientName = FhirUtilities.pluckName(selectedPatient);
         }
-        patientReference = `Patient/${selectedPatientId}`;
+        // Use FHIR id for patient reference, not MongoDB _id
+        const fhirId = get(selectedPatient, 'id', selectedPatientId);
+        patientReference = `Patient/${fhirId}`;
       }
       
       // Set practitioner to current user
@@ -250,7 +252,7 @@ function EncounterDetail(props) {
       if (patient) {
         // Extract patient name - handle both FHIR structure and flat structure
         let patientName = '';
-        
+
         // Check if it's a flat structure (from PatientsTable)
         if (typeof patient.name === 'string') {
           patientName = patient.name;
@@ -263,16 +265,20 @@ function EncounterDetail(props) {
           // Fallback - try to construct from other fields
           patientName = patient.id || patientId;
         }
-        
+
         console.log('Final patient name:', patientName);
-        
+
+        // Use FHIR id for patient reference, not MongoDB _id
+        const fhirId = get(patient, 'id', patientId);
+        console.log('Using FHIR id for reference:', fhirId);
+
         // Update the encounter with selected patient
         console.log('Updating encounter subject...');
         // Update both fields at once to ensure consistency
         setEncounter(prevEncounter => {
           console.log('Previous encounter in setState:', prevEncounter);
           const updated = JSON.parse(JSON.stringify(prevEncounter));
-          set(updated, 'subject.reference', `Patient/${patientId}`);
+          set(updated, 'subject.reference', `Patient/${fhirId}`);
           set(updated, 'subject.display', patientName);
           console.log('Updated encounter in setState:', updated);
           console.log('Subject after update:', updated.subject);
@@ -284,15 +290,17 @@ function EncounterDetail(props) {
           const foundPatient = Patients.findOne({_id: patientId});
           if (foundPatient) {
             const patientName = FhirUtilities.pluckName(foundPatient);
-            handleChange('subject.reference', `Patient/${patientId}`);
+            // Use FHIR id for patient reference
+            const fhirId = get(foundPatient, 'id', patientId);
+            handleChange('subject.reference', `Patient/${fhirId}`);
             handleChange('subject.display', patientName);
           } else {
-            // Fallback to just ID
+            // Fallback to just ID (assume it's already FHIR id if no patient found)
             handleChange('subject.reference', `Patient/${patientId}`);
             handleChange('subject.display', 'Patient ' + patientId);
           }
         } else {
-          // No Patients collection available
+          // No Patients collection available (assume patientId is FHIR id)
           handleChange('subject.reference', `Patient/${patientId}`);
           handleChange('subject.display', 'Patient ' + patientId);
         }

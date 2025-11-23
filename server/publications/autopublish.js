@@ -315,13 +315,28 @@ if (finalAutopublishEnabled) {
             }
           }
           
-          // In development, we can be more permissive
-          // Cap at configured limit (default 1000) for performance
+          // Optimize for ID queries - they're much faster and should bypass limits
+          const isIdQuery = query.$or && query.$or.length >= 2 &&
+                            query.$or.every(condition => condition._id || condition.id);
+
+          // Get configured limit for use in both branches
           const configuredLimit = get(Meteor, 'settings.public.defaults.subscriptionLimit', 1000);
-          options.limit = options.limit || 100;
-          // Ensure user can't request more than configured maximum
-          if (options.limit > configuredLimit) {
-            options.limit = configuredLimit;
+
+          if (isIdQuery) {
+            // ID queries are fast lookups on indexed fields - no need for limits
+            console.log(`Publishing ${collectionName} - ID query (unlimited):`, JSON.stringify(query));
+            // Remove any limit for ID queries
+            delete options.limit;
+          } else {
+            // Regular queries need limits for performance
+            // In development, we can be more permissive
+            // Cap at configured limit (default 1000) for performance
+            options.limit = options.limit || 100;
+            // Ensure user can't request more than configured maximum
+            if (options.limit > configuredLimit) {
+              options.limit = configuredLimit;
+            }
+            console.log(`Publishing ${collectionName} with query:`, JSON.stringify(query), 'options:', options, `(max ${options.limit} records)`);
           }
           
           // Default sort by most recent for better development experience

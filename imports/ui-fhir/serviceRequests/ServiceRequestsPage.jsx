@@ -154,7 +154,8 @@ export function ServiceRequestsPage(props){
   }, []);
 
   data.serviceRequests = useTracker(function(){
-    return ServiceRequests.find().fetch()
+    // Return raw FHIR data - ServiceRequestsTable will dehydrate it
+    return ServiceRequests.find().fetch();
   })
 
 
