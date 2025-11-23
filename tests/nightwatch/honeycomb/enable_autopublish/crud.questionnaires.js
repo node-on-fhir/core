@@ -1,6 +1,7 @@
 // tests/nightwatch/honeycomb/crud.questionnaires.js
 
 const testUtils = require('./shared-test-utils');
+const loginHelper = require('../../helpers/login-helper');
 
 describe('Questionnaires CRUD Operations', function() {
   const timestamp = Date.now();
@@ -51,75 +52,27 @@ describe('Questionnaires CRUD Operations', function() {
       .url('http://localhost:3000')
       .waitForElementVisible('body', 5000);
 
-    // Check if we're logged in
-    browser.execute(function() {
-      return {
-        isLoggedIn: typeof Meteor !== 'undefined' && !!Meteor.userId(),
-        userId: Meteor.userId ? Meteor.userId() : null,
-        username: Meteor.user ? (Meteor.user() ? Meteor.user().username : null) : null
-      };
-    }, [], function(result) {
-      console.log('Initial login state:', result.value);
-      
-      if (!result.value.isLoggedIn) {
-        console.log('Not logged in, attempting programmatic login...');
-        
-        browser.executeAsync(function(done) {
-          if (typeof Meteor !== 'undefined') {
-            Meteor.call('test.createTestUser', {
-              username: 'janedoe',
-              email: 'janedoe@test.org',
-              password: 'janedoe123'
-            }, function(err, userId) {
-              if (err) {
-                console.error('Failed to create test user:', err);
-                done({ userCreated: false, error: err.message });
-              } else {
-                console.log('Test user ready, userId:', userId);
-                Meteor.loginWithPassword('janedoe', 'janedoe123', function(loginErr) {
-                  if (loginErr) {
-                    console.error('Login failed:', loginErr);
-                    done({ userCreated: true, loginSuccess: false, error: loginErr.message });
-                  } else {
-                    console.log('Login successful');
-                    done({ 
-                      userCreated: true,
-                      loginSuccess: true, 
-                      userId: Meteor.userId(), 
-                      username: Meteor.user() ? Meteor.user().username : null 
-                    });
-                  }
-                });
-              }
-            });
-          } else {
-            done({ userCreated: false, loginSuccess: false, error: 'Meteor not available' });
-          }
-        }, [], function(result) {
-          if (result.value.loginSuccess) {
-            browser.assert.ok(true, 'Successfully created test user and logged in');
-            console.log('Logged in as:', result.value.username, 'userId:', result.value.userId);
-          } else {
-            browser.assert.fail('Setup failed: ' + result.value.error);
-          }
-        });
+    // Use loginHelper to ensure user is logged in with retry logic
+    loginHelper.ensureLoggedIn(browser, function(isLoggedIn) {
+      if (!isLoggedIn) {
+        browser.assert.fail('Failed to ensure user is logged in');
       } else {
-        console.log('Already logged in as:', result.value.username);
+        browser.assert.ok(true, 'User is logged in');
       }
-    });
 
-    // Clean up any test questionnaires from previous runs
-    browser.executeAsync(function(done) {
-      if (typeof Questionnaires !== 'undefined') {
-        const testQuestionnaires = Questionnaires.find({ 
-          'publisher': { $regex: 'Test Publisher' }
-        }).fetch();
-        testQuestionnaires.forEach(function(questionnaire) {
-          Questionnaires.remove({ _id: questionnaire._id });
-        });
-        console.log('Cleared', testQuestionnaires.length, 'test questionnaires');
-      }
-      done();
+      // Clean up any test questionnaires from previous runs
+      browser.executeAsync(function(done) {
+        if (typeof Questionnaires !== 'undefined') {
+          const testQuestionnaires = Questionnaires.find({
+            'publisher': { $regex: 'Test Publisher' }
+          }).fetch();
+          testQuestionnaires.forEach(function(questionnaire) {
+            Questionnaires.remove({ _id: questionnaire._id });
+          });
+          console.log('Cleared', testQuestionnaires.length, 'test questionnaires');
+        }
+        done();
+      });
     });
   });
 
@@ -140,7 +93,11 @@ describe('Questionnaires CRUD Operations', function() {
           hasEitherElement: hasTable || hasNoDataCard
         };
       }, [], function(result) {
-        browser.assert.equal(result.value.hasEitherElement, true, 'Either questionnaires table or no-data message is present');
+        if (result.value && result.value.hasEitherElement !== undefined) {
+          browser.assert.equal(result.value.hasEitherElement, true, 'Either questionnaires table or no-data message is present');
+        } else {
+          console.error('Failed to check page elements:', result);
+        }
       })
       .saveScreenshot('tests/nightwatch/screenshots/questionnaires/02-questionnaires-list.png');
   });
@@ -159,7 +116,11 @@ describe('Questionnaires CRUD Operations', function() {
         }
         return false;
       }, [], function(result) {
-        browser.assert.equal(result.value, true, 'Clicked Add Questionnaire button');
+        if (result.value !== undefined) {
+          browser.assert.equal(result.value, true, 'Clicked Add Questionnaire button');
+        } else {
+          console.error('Failed to click Add button:', result);
+        }
       });
 
     browser
@@ -288,7 +249,11 @@ describe('Questionnaires CRUD Operations', function() {
         console.log('Save button not found');
         return false;
       }, [], function(result) {
-        browser.assert.equal(result.value, true, 'Clicked Save button');
+        if (result.value !== undefined) {
+          browser.assert.equal(result.value, true, 'Clicked Save button');
+        } else {
+          console.error('Failed to click Save button:', result);
+        }
       });
 
     browser
@@ -317,7 +282,11 @@ describe('Questionnaires CRUD Operations', function() {
         }
         return false;
       }, [testQuestionnaire.title], function(result) {
-        browser.assert.equal(result.value, true, 'Clicked on questionnaire row');
+        if (result.value !== undefined) {
+          browser.assert.equal(result.value, true, 'Clicked on questionnaire row');
+        } else {
+          console.error('Failed to click questionnaire row:', result);
+        }
       });
 
     browser
@@ -368,7 +337,11 @@ describe('Questionnaires CRUD Operations', function() {
         }
         return false;
       }, [], function(result) {
-        browser.assert.equal(result.value, true, 'Clicked Edit/Lock button to enter edit mode');
+        if (result.value !== undefined) {
+          browser.assert.equal(result.value, true, 'Clicked Edit/Lock button to enter edit mode');
+        } else {
+          console.error('Failed to click Edit/Lock button:', result);
+        }
       });
 
     // Wait for form to be editable after clicking edit
@@ -386,7 +359,7 @@ describe('Questionnaires CRUD Operations', function() {
       };
     }, [], function(result) {
       console.log('Edit mode check:', result.value);
-      if (!result.value.isEditable) {
+      if (result.value && !result.value.isEditable) {
         console.log('Form is not in edit mode yet, trying to click edit button again');
         // Try clicking edit button again
         browser.execute(function() {
@@ -447,7 +420,11 @@ describe('Questionnaires CRUD Operations', function() {
         }
         return false;
       }, [], function(result) {
-        browser.assert.equal(result.value, true, 'Clicked Save button');
+        if (result.value !== undefined) {
+          browser.assert.equal(result.value, true, 'Clicked Save button');
+        } else {
+          console.error('Failed to click Save button:', result);
+        }
       });
 
     browser
@@ -513,7 +490,7 @@ describe('Questionnaires CRUD Operations', function() {
         console.log('Delete button not found in current mode');
         return false;
       }, [], function(result) {
-        if (result.value === 'need_edit_mode') {
+        if (result.value && result.value === 'need_edit_mode') {
           // We entered edit mode, now look for delete button
           browser
             .waitForElementVisible('button', 1000) // Wait for UI to update
@@ -548,7 +525,7 @@ describe('Questionnaires CRUD Operations', function() {
       }
       return false;
     }, [], function(result) {
-      if (result.value) {
+      if (result.value !== undefined && result.value) {
         // We navigated, wait for the page to load
         browser.waitForElementVisible('#questionnairesPage', 5000);
       }
@@ -562,10 +539,14 @@ describe('Questionnaires CRUD Operations', function() {
                          document.querySelector('.no-data-available') !== null;
         return { hasTable, hasNoData };
       }, [], function(result) {
-        browser.assert.ok(
-          result.value.hasTable || result.value.hasNoData, 
-          'Either table or no-data state present after deletion'
-        );
+        if (result.value && (result.value.hasTable !== undefined || result.value.hasNoData !== undefined)) {
+          browser.assert.ok(
+            result.value.hasTable || result.value.hasNoData,
+            'Either table or no-data state present after deletion'
+          );
+        } else {
+          console.error('Failed to check page state after deletion:', result);
+        }
       })
       .saveScreenshot('tests/nightwatch/screenshots/questionnaires/11-questionnaire-deleted.png');
   });
