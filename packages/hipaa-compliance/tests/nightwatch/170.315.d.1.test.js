@@ -1,6 +1,6 @@
 // packages/hipaa-compliance/tests/nightwatch/170.315.d.1.test.js
 
-const testUtils = require('../../tests/nightwatch/honeycomb/enable_autopublish/shared-test-utils');
+const testUtils = require('../../../../../tests/nightwatch/honeycomb/enable_autopublish/shared-test-utils');
 
 module.exports = {
   tags: ['hipaa-compliance', 'onc-certification', '170.315.d.1'],

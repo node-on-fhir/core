@@ -59,8 +59,8 @@ describe('ServiceRequests CRUD Operations', function() {
       };
     }, [], function(result) {
       console.log('Initial login state:', result.value);
-      
-      if (!result.value.isLoggedIn) {
+
+      if (!result.value || !result.value.isLoggedIn) {
         console.log('Not logged in, attempting programmatic login...');
         
         browser.executeAsync(function(done) {
@@ -191,8 +191,8 @@ describe('ServiceRequests CRUD Operations', function() {
   });
 
   it('02. Verify service requests list page loads', browser => {
+    testUtils.navigateUrl(browser, '/service-requests');
     browser
-      .url('http://localhost:3000/service-requests')
       .waitForElementVisible('body', 5000)
       .execute(function() {
         // Check for JavaScript errors
@@ -251,8 +251,8 @@ describe('ServiceRequests CRUD Operations', function() {
         console.log('Auth status:', result.value);
       });
     
+    testUtils.navigateUrl(browser, '/service-requests');  // Navigate to the page first
     browser
-      .url('http://localhost:3000/service-requests')  // Navigate to the page first
       .waitForElementVisible('body', 10000)
       .pause(1000);  // Allow React to render
 
@@ -869,17 +869,17 @@ describe('ServiceRequests CRUD Operations', function() {
         browser.assert.ok(result.value.notes.includes(testServiceRequest.notes), 'Notes contain expected text');
       })
       .saveScreenshot('tests/nightwatch/screenshots/servicerequests/07-view-servicerequest-details.png');
-    
+
+      testUtils.navigateUrl(browser, '/service-requests');
       browser
-        .url('http://localhost:3000/service-requests')
         .waitForElementVisible('#serviceRequestsPage', 5000);
     });
   });
 
   it('07. Update existing service request', browser => {
     // Navigate to service requests list page first
+    testUtils.navigateUrl(browser, '/service-requests');
     browser
-      .url('http://localhost:3000/service-requests')
       .waitForElementVisible('#serviceRequestsPage', 5000)
       .pause(1000);
     
@@ -1037,8 +1037,11 @@ describe('ServiceRequests CRUD Operations', function() {
       });
 
       browser
-        .pause(1000)
-        .url('http://localhost:3000/service-requests')
+        .pause(1000);
+
+      testUtils.navigateUrl(browser, '/service-requests');
+
+      browser
         .waitForElementVisible('#serviceRequestsTable', 5000)
         .saveScreenshot('tests/nightwatch/screenshots/servicerequests/09-servicerequest-updated.png');
     });

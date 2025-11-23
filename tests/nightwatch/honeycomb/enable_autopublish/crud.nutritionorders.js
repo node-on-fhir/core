@@ -198,8 +198,8 @@ describe('NutritionOrders CRUD Operations', function() {
   });
 
   it('02. Navigate to nutrition orders list page', browser => {
+    testUtils.navigateUrl(browser, '/nutrition-orders');
     browser
-      .url('http://localhost:3000/nutrition-orders')
       .waitForElementVisible('body', 5000)
       .windowSize('current', 1400, 900)
       .pause(1000);
@@ -352,8 +352,8 @@ describe('NutritionOrders CRUD Operations', function() {
           .waitForElementVisible('#nutritionOrderDetailPage', 5000);
       } else {
         console.log('Add button not found, attempting direct navigation');
+        testUtils.navigateUrl(browser, '/nutrition-orders/new');
         browser
-          .url('http://localhost:3000/nutrition-orders/new')
           .pause(500)
           .waitForElementVisible('#nutritionOrderDetailPage', 5000);
       }
@@ -610,7 +610,7 @@ describe('NutritionOrders CRUD Operations', function() {
       // If still on new page, try to navigate manually
       if (result.value.isOnNewPage) {
         console.log('Save may have failed - still on new page. Attempting manual navigation.');
-        browser.url('http://localhost:3000/nutrition-orders');
+        testUtils.navigateUrl(browser, '/nutrition-orders');
       } else {
         browser.assert.ok(result.value.isOnListPage, 
           'Should navigate back to nutrition orders list after save');
@@ -621,8 +621,8 @@ describe('NutritionOrders CRUD Operations', function() {
   });
 
   it('05. Verify nutrition order was created', browser => {
+    testUtils.navigateUrl(browser, '/nutrition-orders');
     browser
-      .url('http://localhost:3000/nutrition-orders')
       .waitForElementVisible('body', 5000)
       .pause(1500);
 

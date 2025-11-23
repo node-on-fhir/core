@@ -1019,7 +1019,7 @@ describe('Medias CRUD Operations', function() {
       .clearValue('#contentTitleInput')
       .setValue('#contentTitleInput', updatedMedia.contentTitle)
       .click('#statusSelect')
-      .pause(300)
+      .pause(1000)
       .execute(function(value) {
         const menuItems = document.querySelectorAll('[role="option"]');
         for (let item of menuItems) {
