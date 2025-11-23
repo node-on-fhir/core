@@ -439,11 +439,12 @@ describe('ResearchStudy CRUD Operations', function() {
         browser.assert.ok(result.value.description.includes(testResearchStudy.description), 'Description contains expected text');
       })
       .saveScreenshot('tests/nightwatch/screenshots/research-studies/07-view-research-study-details.png');
-    
-    // Navigate back to research studies list
+
+    // Navigate back to research studies list using client-side routing
+    testUtils.navigateUrl(browser, '/research-studies');
+
     browser
-      .url('http://localhost:3000/research-studies')
-      .waitForElementVisible('#researchStudiesPage', 5000);
+      .waitForElementVisible('#researchStudiesPage', 10000);
   });
 
   it('07. Update existing research study', browser => {
@@ -537,11 +538,13 @@ describe('ResearchStudy CRUD Operations', function() {
         browser.assert.equal(result.value, true, 'Clicked Save button');
       });
 
+    browser.pause(1000);
+
+    // Navigate back to research studies list using client-side routing
+    testUtils.navigateUrl(browser, '/research-studies');
+
     browser
-      .pause(1000)
-      // Navigate back to research studies list
-      .url('http://localhost:3000/research-studies')
-      .waitForElementVisible('#researchStudiesTable', 5000)
+      .waitForElementVisible('#researchStudiesTable', 10000)
       .saveScreenshot('tests/nightwatch/screenshots/research-studies/09-research-study-updated.png');
   });
 

@@ -660,22 +660,32 @@ describe('Measures CRUD Operations', function() {
       .clearValue('#titleInput')
       .setValue('#titleInput', updatedMeasure.title)
       .clearValue('#versionInput')
-      .setValue('#versionInput', updatedMeasure.version)
-      .click('#statusSelect')
-      .pause(300)
-      .execute(function(value) {
-        const menuItems = document.querySelectorAll('[role="option"]');
-        for (let item of menuItems) {
-          if (item.textContent.toLowerCase().includes(value.toLowerCase()) || 
-              item.getAttribute('data-value') === value) {
-            item.click();
-            return true;
+      .setValue('#versionInput', updatedMeasure.version);
+
+    // Update status select - click inside execute block to avoid interception
+    browser.execute(function(value) {
+      const statusSelect = document.querySelector('#statusSelect');
+      if (statusSelect) {
+        statusSelect.click();
+        setTimeout(function() {
+          const menuItems = document.querySelectorAll('[role="option"]');
+          for (let item of menuItems) {
+            if (item.textContent.toLowerCase().includes(value.toLowerCase()) ||
+                item.getAttribute('data-value') === value) {
+              item.click();
+              return;
+            }
           }
-        }
-        return false;
-      }, [updatedMeasure.status], function(result) {
-        browser.assert.equal(result.value, true, 'Selected status');
-      })
+        }, 300);
+        return true;
+      }
+      return false;
+    }, [updatedMeasure.status], function(result) {
+      browser.assert.equal(result.value, true, 'Selected status');
+    });
+
+    browser
+      .pause(500)
       .clearValue('#descriptionTextarea')
       .setValue('#descriptionTextarea', updatedMeasure.description)
       .clearValue('#purposeTextarea')

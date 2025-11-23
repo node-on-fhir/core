@@ -669,6 +669,125 @@ const isLoading = useTracker(() => {
 
 This comprehensive query handles various ways FHIR resources might reference a patient, ensuring we catch all records for the selected patient.
 
+### Patient Context Management in Multi-Test Suites (CRITICAL FOR CI)
+
+**The Problem:**
+
+In test suites where test 01 creates a patient and tests 07-09 need to use it, the patient may not be findable in later tests when running in CI with subscription limits:
+
+1. **Subscription Limits**: Autopublish limits to 100-1000 records for performance
+2. **Database Has Existing Data**: Synthea generates 100+ patients already in DB
+3. **New Patient Outside Window**: Test patient exists in DB but isn't in the subscribed 100 records
+4. **Client Query Fails**: `Patients.findOne()` only searches subscribed records, returns `null`
+5. **Session Not Set**: Without patient in Session, filtered queries return empty
+6. **Heisenbug**: Works locally (small DB) but fails intermittently in CI (large DB)
+
+**The Solution Pattern:**
+
+**1. Store Patient ID at Suite Level:**
+```javascript
+describe('Communications CRUD Operations', function() {
+  const timestamp = Date.now();
+  let testPatientId = null; // Accessible across all tests in suite
+
+  const testCommunication = { /* ... */ };
+```
+
+**2. Capture ID in Test 01:**
+```javascript
+it('01. Setup test environment', browser => {
+  testUtils.createTestPatient(browser, {
+    name: 'John Doe',
+    family: 'Doe',
+    given: 'John',
+    identifier: 'test-patient-' + timestamp
+  }, function(result) {
+    testPatientId = result.result; // ← Store for later tests
+    console.log('Created patient with ID:', testPatientId);
+
+    // Then fetch from server and set in Session
+    browser.executeAsync(function(patientId, done) {
+      Meteor.call('patients.findOne', patientId, function(error, patient) {
+        if (patient) {
+          Session.set('selectedPatientId', patient._id);
+          Session.set('selectedPatient', patient);
+          done({ success: true });
+        }
+      });
+    }, [testPatientId]);
+  });
+});
+```
+
+**3. Re-establish Context in Later Tests Using Server Method:**
+```javascript
+it('07. Update existing communication', browser => {
+  // DON'T use client collection lookup - subscription limits!
+  // ✗ BAD: const patient = Patients.findOne({'identifier.value': ...});
+
+  // ✓ GOOD: Use server-side Meteor method
+  browser.executeAsync(function(patientId, done) {
+    console.log('[Test 07] Re-establishing patient context with ID:', patientId);
+
+    if (typeof Meteor !== 'undefined' && typeof Session !== 'undefined') {
+      // Server method queries DB directly, bypasses subscription limits
+      Meteor.call('patients.findOne', patientId, function(error, patient) {
+        if (error) {
+          console.error('[Test 07] Error fetching patient:', error);
+          done({ success: false, error: error.message });
+        } else if (patient) {
+          Session.set('selectedPatientId', patient._id);
+          Session.set('selectedPatient', patient);
+          console.log('[Test 07] Re-established patient context:', patient._id);
+          done({ success: true, patientId: patient._id });
+        } else {
+          console.error('[Test 07] Patient not found:', patientId);
+          done({ success: false, error: 'Patient not found' });
+        }
+      });
+    } else {
+      done({ success: false, error: 'Meteor or Session not available' });
+    }
+  }, [testPatientId], function(result) {
+    if (result.value && result.value.success) {
+      console.log('[Test 07] Successfully re-established patient context');
+    } else {
+      console.error('[Test 07] Failed to re-establish patient context:', result.value?.error);
+    }
+  });
+
+  browser.pause(1000); // Let subscription react to new Session value
+});
+```
+
+**Why This Works:**
+
+- **Server Method**: `Meteor.call('patients.findOne', id)` queries MongoDB directly
+- **Not Limited by Subscriptions**: Can find any patient in DB regardless of client collection state
+- **Guaranteed Success**: Using exact `_id` we captured, not searching by identifier
+- **Works in Both Environments**: Local (small DB) and CI (large DB with limits)
+
+**When to Apply This Pattern:**
+
+✅ **Required When:**
+- Test suite has multiple tests (01 creates, 07+ uses)
+- Database has 100+ existing records
+- Running in CI with unpredictable environment
+- Seeing intermittent "empty table" or "patient not found" failures
+
+❌ **Not Needed When:**
+- Single test creates and uses data (no cross-test dependencies)
+- Small datasets (< 50 records total)
+- Test creates patient and uses it in same test (data guaranteed in subscription)
+
+**Examples of This Pattern:**
+- ✅ `crud.immunizations.js` (lines 8, 69, 674-701)
+- ✅ `crud.observations.js` (lines 9, 68, 624-651)
+- ✅ `crud.allergyintolerances.js` (lines 8, 67, 624-651)
+- ✅ `crud.careplans.js` (lines 8, 67, 624-651)
+
+**Related Best Practice:** Always use `testUtils.navigateUrl()` instead of `browser.url()` for mid-test navigation to preserve Session state.
+
 ## Implementation Checklist for New CRUD Tests
 
 ### 1. Test Structure Setup

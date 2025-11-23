@@ -6,7 +6,8 @@ const loginHelper = require('../../helpers/login-helper');
 
 describe('Communications CRUD Operations', function() {
   const timestamp = Date.now();
-  
+  let testPatientId = null; // Store patient ID for cross-test access
+
   // IMPORTANT: The sender field is automatically populated with the logged-in user
   // when creating a new communication. In our test environment, this is 'janedoe'.
   const testCommunication = {
@@ -67,6 +68,7 @@ describe('Communications CRUD Operations', function() {
           console.error('Failed to create test patient:', result.error);
           browser.assert.fail('Failed to create test patient: ' + result.error);
         } else {
+          testPatientId = result.result; // Store for later tests
           console.log('Test patient created with ID:', result.result);
           browser.assert.ok(true, 'Successfully created test patient');
 
@@ -640,57 +642,42 @@ describe('Communications CRUD Operations', function() {
   });
 
   it('07. Update existing communication', browser => {
-    // Re-establish patient context after navigation
-    browser.execute(function(testIdentifier) {
-      console.log('Looking for patient with identifier:', testIdentifier);
-      
-      if (typeof Session === 'undefined') {
-        return { success: false, error: 'Session not defined' };
-      }
-      if (typeof Patients === 'undefined') {
-        return { success: false, error: 'Patients collection not defined' };
-      }
-      
-      // First try by identifier
-      let patient = Patients.findOne({'identifier.value': testIdentifier});
-      
-      if (!patient) {
-        console.log('Not found by identifier, trying by name...');
-        patient = Patients.findOne({
-          $or: [
-            { 'name.0.text': { $regex: 'John.*Doe' } },
-            { 'name.0.family': 'Doe' },
-            { 'name.0.given.0': 'John' }
-          ]
+    // Re-establish patient context using server-side fetch
+    browser.executeAsync(function(patientId, done) {
+      console.log('[Test 07] Re-establishing patient context with ID:', patientId);
+
+      if (typeof Meteor !== 'undefined' && typeof Session !== 'undefined') {
+        // Server method queries DB directly, bypasses subscription limits
+        Meteor.call('patients.findOne', patientId, function(error, patient) {
+          if (error) {
+            console.error('[Test 07] Error fetching patient:', error);
+            done({ success: false, error: error.message });
+          } else if (patient) {
+            Session.set('selectedPatientId', patient._id);
+            Session.set('selectedPatient', patient);
+            console.log('[Test 07] Re-established patient context:', patient._id, patient.name?.[0]?.text);
+            done({ success: true, patientId: patient._id });
+          } else {
+            console.error('[Test 07] Patient not found:', patientId);
+            done({ success: false, error: 'Patient not found' });
+          }
         });
+      } else {
+        done({ success: false, error: 'Meteor or Session not available' });
       }
-      
-      if (!patient) {
-        // List all patients for debugging
-        const allPatients = Patients.find().fetch();
-        console.log('Total patients in collection:', allPatients.length);
-        if (allPatients.length > 0) {
-          console.log('First patient:', allPatients[0]);
-        }
-        return { success: false, error: 'Patient not found', totalPatients: allPatients.length };
-      }
-      
-      Session.set('selectedPatientId', patient._id);
-      Session.set('selectedPatient', patient);
-      console.log('Re-established patient in Session for update test:', patient._id, patient.name?.[0]?.text);
-      return { success: true, patientId: patient._id, patientName: patient.name?.[0]?.text };
-    }, ['test-patient-' + timestamp], function(result) {
-      console.log('Patient session re-establishment for update:', result.value);
-      if (!result.value.success) {
-        console.warn('Failed to re-establish patient context:', result.value.error);
+    }, [testPatientId], function(result) {
+      if (result.value && result.value.success) {
+        console.log('[Test 07] Successfully re-established patient context');
+      } else {
+        console.error('[Test 07] Failed to re-establish patient context:', result.value?.error);
       }
     });
-    
+
     browser
-      .waitForElementVisible('#communicationsTable', 5000);
+      .waitForElementVisible('#communicationsTable', 10000);
 
     // Add a pause to let the table render after patient context is set
-    browser.pause(1000);
+    browser.pause(2000);
     
     // Debug: Check if communications exist in the database
     browser.execute(function(timestamp) {
@@ -853,16 +840,44 @@ describe('Communications CRUD Operations', function() {
         browser.assert.equal(result.value, true, 'Clicked Save button');
       });
 
+    browser.pause(1000);
+
+    // Use navigateUrl to preserve Session
+    testUtils.navigateUrl(browser, '/communications');
+
     browser
-      .pause(1000)
-      .url('http://localhost:3000/communications')
       .waitForElementVisible('#communicationsTable', 5000)
       .saveScreenshot('tests/nightwatch/screenshots/communications/09-communication-updated.png');
   });
 
   it('08. Verify updated communication in list', browser => {
+    // Re-establish patient context using server-side fetch
+    browser.executeAsync(function(patientId, done) {
+      console.log('[Test 08] Re-establishing patient context with ID:', patientId);
+
+      if (typeof Meteor !== 'undefined' && typeof Session !== 'undefined') {
+        Meteor.call('patients.findOne', patientId, function(error, patient) {
+          if (error) {
+            console.error('[Test 08] Error fetching patient:', error);
+            done({ success: false, error: error.message });
+          } else if (patient) {
+            Session.set('selectedPatientId', patient._id);
+            Session.set('selectedPatient', patient);
+            console.log('[Test 08] Re-established patient context:', patient._id);
+            done({ success: true });
+          } else {
+            console.error('[Test 08] Patient not found:', patientId);
+            done({ success: false, error: 'Patient not found' });
+          }
+        });
+      } else {
+        done({ success: false, error: 'Meteor or Session not available' });
+      }
+    }, [testPatientId]);
+
     browser
-      .waitForElementVisible('#communicationsTable', 5000)
+      .pause(1000)
+      .waitForElementVisible('#communicationsTable', 10000)
       // The sender CAN be updated in communications
       .assert.containsText('#communicationsTable', updatedCommunication.senderName) // Updated sender name
       .assert.containsText('#communicationsTable', updatedCommunication.status) // Status should be updated
@@ -870,7 +885,32 @@ describe('Communications CRUD Operations', function() {
   });
 
   it('09. Delete communication', browser => {
+    // Re-establish patient context using server-side fetch
+    browser.executeAsync(function(patientId, done) {
+      console.log('[Test 09] Re-establishing patient context with ID:', patientId);
+
+      if (typeof Meteor !== 'undefined' && typeof Session !== 'undefined') {
+        Meteor.call('patients.findOne', patientId, function(error, patient) {
+          if (error) {
+            console.error('[Test 09] Error fetching patient:', error);
+            done({ success: false, error: error.message });
+          } else if (patient) {
+            Session.set('selectedPatientId', patient._id);
+            Session.set('selectedPatient', patient);
+            console.log('[Test 09] Re-established patient context:', patient._id);
+            done({ success: true });
+          } else {
+            console.error('[Test 09] Patient not found:', patientId);
+            done({ success: false, error: 'Patient not found' });
+          }
+        });
+      } else {
+        done({ success: false, error: 'Meteor or Session not available' });
+      }
+    }, [testPatientId]);
+
     browser
+      .pause(1000)
       .waitForElementVisible('#communicationsPage', 5000);
 
     // First check if we have a table or no data state
