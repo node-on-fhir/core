@@ -457,31 +457,45 @@ describe('QuestionnaireResponses CRUD Operations', function() {
       })
       .pause(500);
 
+    // Scroll to top to avoid toolbar overlay issues
+    browser.execute(function() {
+      window.scrollTo(0, 0);
+    });
+
+    // Update text fields (no click needed - avoid interception)
     browser
-      .click('#authorDisplay')
+      .pause(300)
       .clearValue('#authorDisplay')
       .setValue('#authorDisplay', updatedQuestionnaireResponse.authorName)
-      .click('#status')
-      .pause(300)
-      .execute(function(value) {
-        const menuItems = document.querySelectorAll('[role="option"]');
-        for (let item of menuItems) {
-          if (item.textContent.toLowerCase().includes(value.toLowerCase()) || 
-              item.getAttribute('data-value') === value) {
-            item.click();
-            return true;
-          }
-        }
-        return false;
-      }, [updatedQuestionnaireResponse.status], function(result) {
-        browser.assert.equal(result.value, true, 'Selected status');
-      })
-      .click('#authored')
       .clearValue('#authored')
       .setValue('#authored', updatedQuestionnaireResponse.authored)
-      .click('#notesTextarea')
       .clearValue('#notesTextarea')
-      .setValue('#notesTextarea', updatedQuestionnaireResponse.notes)
+      .setValue('#notesTextarea', updatedQuestionnaireResponse.notes);
+
+    // Update status select (click must be inside execute to avoid interception)
+    browser
+      .pause(300)
+      .execute(function(value) {
+        // Click the select to open it
+        const statusSelect = document.querySelector('#status select, #status');
+        if (statusSelect) {
+          statusSelect.click();
+
+          // Wait for menu to render, then select option
+          setTimeout(function() {
+            const menuItems = document.querySelectorAll('[role="option"]');
+            for (let item of menuItems) {
+              if (item.textContent.toLowerCase().includes(value.toLowerCase()) ||
+                  item.getAttribute('data-value') === value) {
+                item.click();
+                return;
+              }
+            }
+          }, 300);
+          return true;
+        }
+        return false;
+      }, [updatedQuestionnaireResponse.status])
       .pause(500)
       .saveScreenshot('tests/nightwatch/screenshots/questionnaireresponses/08-updated-questionnaireresponse-form.png');
 

@@ -6,6 +6,8 @@ const saveNavigationHelper = require('../../helpers/save-navigation-helper');
 
 describe('Observations CRUD Operations', function() {
   const timestamp = Date.now();
+  let testPatientId = null; // Store patient ID for cross-test access
+
   const testObservation = {
     patientName: 'John Doe',
     performerName: `Dr. Observer ${timestamp}`,
@@ -63,6 +65,7 @@ describe('Observations CRUD Operations', function() {
           console.error('Failed to create test patient:', result.error);
           browser.assert.fail('Failed to create test patient: ' + result.error);
         } else {
+          testPatientId = result.result; // Store patient ID for cross-test access
           console.log('Test patient created with ID:', result.result);
           browser.assert.ok(true, 'Successfully created test patient');
 
@@ -611,11 +614,43 @@ describe('Observations CRUD Operations', function() {
         browser.assert.ok(result.value.notes.includes(testObservation.notes), 'Notes contain expected text');
       })
       .saveScreenshot('tests/nightwatch/screenshots/observations/07-view-observation-details.png');
-    
-    // Navigate back to observations list
+
+    // Navigate back to observations list (preserves Session)
+    testUtils.navigateUrl(browser, '/observations');
     browser
-      .url('http://localhost:3000/observations')
       .waitForElementVisible('#observationsPage', 5000);
+
+    // Re-establish patient context using server-side fetch (handles subscription limits)
+    browser.executeAsync(function(patientId, done) {
+      console.log('[Test 06] Re-establishing patient context with ID:', patientId);
+
+      if (typeof Meteor !== 'undefined' && typeof Session !== 'undefined') {
+        Meteor.call('patients.findOne', patientId, function(error, patient) {
+          if (error) {
+            console.error('[Test 06] Error fetching patient:', error);
+            done({ success: false, error: error.message });
+          } else if (patient) {
+            Session.set('selectedPatientId', patient._id);
+            Session.set('selectedPatient', patient);
+            console.log('[Test 06] Re-established patient context:', patient._id, patient.name?.[0]?.text);
+            done({ success: true, patientId: patient._id });
+          } else {
+            console.error('[Test 06] Patient not found:', patientId);
+            done({ success: false, error: 'Patient not found' });
+          }
+        });
+      } else {
+        done({ success: false, error: 'Meteor or Session not available' });
+      }
+    }, [testPatientId], function(result) {
+      if (result.value && result.value.success) {
+        console.log('[Test 06] Successfully re-established patient context');
+      } else {
+        console.error('[Test 06] Failed to re-establish patient context:', result.value?.error);
+      }
+    });
+
+    browser.pause(500); // Let subscription update
   });
 
   it('07. Update existing observation', browser => {

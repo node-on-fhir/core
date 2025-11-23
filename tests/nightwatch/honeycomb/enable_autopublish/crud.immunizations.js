@@ -657,47 +657,50 @@ describe('Immunizations CRUD Operations', function() {
   });
 
   it('06. View immunization details', browser => {
-    // Make sure we're on the immunizations page
+    // Navigate to immunizations page (preserves Session)
+    testUtils.navigateUrl(browser, '/immunizations');
     browser
-      .url('http://localhost:3000/immunizations')
       .waitForElementVisible('#immunizationsPage', 5000)
       .pause(1000);
-    
+
     // Scroll to top to ensure search input is visible
     browser.execute(function() {
       window.scrollTo(0, 0);
     });
-    
+
     browser.pause(500);
-    
-    // Re-establish patient context
-    browser.execute(function(testIdentifier) {
-      console.log('Re-establishing patient context in test 06');
-      
-      if (typeof Session !== 'undefined' && typeof Patients !== 'undefined') {
-        let patient = Patients.findOne({
-          'identifier.value': testIdentifier
+
+    // Re-establish patient context using server-side fetch (handles subscription limits)
+    browser.executeAsync(function(patientId, done) {
+      console.log('[Test 06] Re-establishing patient context with ID:', patientId);
+
+      if (typeof Meteor !== 'undefined' && typeof Session !== 'undefined') {
+        Meteor.call('patients.findOne', patientId, function(error, patient) {
+          if (error) {
+            console.error('[Test 06] Error fetching patient:', error);
+            done({ success: false, error: error.message });
+          } else if (patient) {
+            Session.set('selectedPatientId', patient._id);
+            Session.set('selectedPatient', patient);
+            console.log('[Test 06] Re-established patient context:', patient._id, patient.name?.[0]?.text);
+            done({ success: true, patientId: patient._id });
+          } else {
+            console.error('[Test 06] Patient not found:', patientId);
+            done({ success: false, error: 'Patient not found' });
+          }
         });
-        
-        if (!patient) {
-          patient = Patients.findOne({
-            $or: [
-              { 'name.0.text': { $regex: 'John.*Doe' } },
-              { 'name.0.family': 'Doe' },
-              { 'name.0.given.0': 'John' }
-            ]
-          });
-        }
-        
-        if (patient) {
-          console.log('Patient found:', patient._id, patient.name?.[0]?.text);
-          Session.set('selectedPatientId', patient._id);
-          Session.set('selectedPatient', patient);
-          return { success: true, patientId: patient._id };
-        }
+      } else {
+        done({ success: false, error: 'Meteor or Session not available' });
       }
-      return { success: false };
-    }, ['test-patient-' + timestamp]);
+    }, [testPatientId], function(result) {
+      if (result.value && result.value.success) {
+        console.log('[Test 06] Successfully re-established patient context');
+      } else {
+        console.error('[Test 06] Failed to re-establish patient context:', result.value?.error);
+      }
+    });
+
+    browser.pause(500); // Let subscription update
 
     // Search for our specific immunization by lot number
     browser
