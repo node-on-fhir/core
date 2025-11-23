@@ -1,6 +1,7 @@
 // tests/nightwatch/honeycomb/crud.researchstudy.js
 
 const testUtils = require('./shared-test-utils');
+const loginHelper = require('../../helpers/login-helper');
 
 describe('ResearchStudy CRUD Operations', function() {
   const timestamp = Date.now();
@@ -44,108 +45,16 @@ describe('ResearchStudy CRUD Operations', function() {
   it('01. Setup test environment', browser => {
     browser
       .url('http://localhost:3000')
-      .waitForElementVisible('body', 5000)
-      .waitForElementVisible('body', 5000); // Give autologin time to work if enabled
+      .waitForElementVisible('body', 5000);
 
-    // Check if we're logged in (either via autologin or need to login manually)
-    browser.execute(function() {
-      // First check if Meteor is even defined
-      if (typeof Meteor === 'undefined') {
-        return {
-          meteorReady: false,
-          isLoggedIn: false,
-          userId: null,
-          username: null,
-          error: 'Meteor is not defined'
-        };
-      }
-      
-      try {
-        return {
-          meteorReady: true,
-          isLoggedIn: !!Meteor.userId(),
-          userId: Meteor.userId ? Meteor.userId() : null,
-          username: Meteor.user && Meteor.user() ? Meteor.user().username : null,
-          error: null
-        };
-      } catch (e) {
-        return {
-          meteorReady: true,
-          isLoggedIn: false,
-          userId: null,
-          username: null,
-          error: e.message
-        };
-      }
-    }, [], function(result) {
-      console.log('Initial login state result:', result);
-      
-      if (!result.value) {
-        console.error('Execute command returned null/undefined.');
-        browser.assert.fail('Failed to check login state');
-        return;
-      }
-      
-      console.log('Initial login state:', result.value);
-      
-      if (!result.value.meteorReady) {
-        console.error('Meteor is not ready:', result.value.error);
-        browser.assert.fail('Meteor is not loaded on the page');
-        return;
-      }
-      
-      if (!result.value.isLoggedIn) {
-        console.log('Not logged in, attempting programmatic login...');
-        
-        // First create or ensure test user exists
-        browser.executeAsync(function(done) {
-          if (typeof Meteor !== 'undefined') {
-            // Create test user if needed
-            Meteor.call('test.createTestUser', {
-              username: 'janedoe',
-              email: 'janedoe@test.org',
-              password: 'janedoe123'
-            }, function(err, userId) {
-              if (err) {
-                console.error('Failed to create test user:', err);
-                done({ userCreated: false, error: err.message });
-              } else {
-                console.log('Test user ready, userId:', userId);
-                // Now login
-                Meteor.loginWithPassword('janedoe', 'janedoe123', function(loginErr) {
-                  if (loginErr) {
-                    console.error('Login failed:', loginErr);
-                    done({ userCreated: true, loginSuccess: false, error: loginErr.message });
-                  } else {
-                    console.log('Login successful');
-                    done({ 
-                      userCreated: true,
-                      loginSuccess: true, 
-                      userId: Meteor.userId(), 
-                      username: Meteor.user() ? Meteor.user().username : null 
-                    });
-                  }
-                });
-              }
-            });
-          } else {
-            done({ userCreated: false, loginSuccess: false, error: 'Meteor not available' });
-          }
-        }, [], function(result) {
-          if (result.value.loginSuccess) {
-            browser.assert.ok(true, 'Successfully created test user and logged in');
-            console.log('Logged in as:', result.value.username, 'userId:', result.value.userId);
-          } else {
-            browser.assert.fail('Setup failed: ' + result.value.error);
-          }
-        });
-        
-        browser.pause(500); // Wait for login to settle
+    // Use loginHelper to ensure user is logged in with retry logic
+    loginHelper.ensureLoggedIn(browser, function(isLoggedIn) {
+      if (!isLoggedIn) {
+        browser.assert.fail('Failed to ensure user is logged in');
       } else {
-        browser.assert.ok(true, 'Already logged in (autologin enabled)');
-        console.log('Already logged in as:', result.value.username, 'userId:', result.value.userId);
+        browser.assert.ok(true, 'User is logged in');
       }
-      
+
       // Clean up any existing test data
       browser.executeAsync(function(done) {
         if (typeof ResearchStudies !== 'undefined') {
