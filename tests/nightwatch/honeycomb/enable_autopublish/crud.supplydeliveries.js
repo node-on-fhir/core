@@ -1,6 +1,7 @@
 // tests/nightwatch/honeycomb/enable_autopublish/crud.supplydeliveries.js
 
 const testUtils = require('./shared-test-utils');
+const loginHelper = require('../../helpers/login-helper');
 
 describe('SupplyDeliveries CRUD Operations', function() {
   const timestamp = Date.now();
@@ -62,82 +63,57 @@ describe('SupplyDeliveries CRUD Operations', function() {
         window.testTimestamp = ts;
       }, [timestamp]);
 
-    // Check if we're logged in
-    browser.execute(function() {
-      return {
-        isLoggedIn: typeof Meteor !== 'undefined' && !!Meteor.userId(),
-        userId: Meteor.userId ? Meteor.userId() : null,
-        username: Meteor.user ? (Meteor.user() ? Meteor.user().username : null) : null
-      };
-    }, [], function(result) {
-      console.log('Initial login state:', result.value);
-      
-      // Check if result.value exists before accessing its properties
-      if (!result.value || !result.value.isLoggedIn) {
-        console.log('Not logged in, attempting programmatic login...');
-        
-        browser.executeAsync(function(done) {
-          if (typeof Meteor !== 'undefined') {
-            Meteor.call('test.createTestUser', {
-              username: 'janedoe',
-              email: 'janedoe@test.org',
-              password: 'janedoe123'
-            }, function(err, userId) {
-              if (err) {
-                console.error('Failed to create test user:', err);
-                done({ userCreated: false, error: err.message });
-              } else {
-                console.log('Test user ready, userId:', userId);
-                Meteor.loginWithPassword('janedoe', 'janedoe123', function(loginErr) {
-                  if (loginErr) {
-                    console.error('Login failed:', loginErr);
-                    done({ userCreated: true, loginSuccess: false, error: loginErr.message });
-                  } else {
-                    console.log('Login successful');
-                    done({ 
-                      userCreated: true,
-                      loginSuccess: true, 
-                      userId: Meteor.userId(), 
-                      username: Meteor.user() ? Meteor.user().username : null 
-                    });
-                  }
-                });
-              }
-            });
-          } else {
-            done({ userCreated: false, loginSuccess: false, error: 'Meteor not available' });
-          }
-        }, [], function(result) {
-          if (result.value.loginSuccess) {
-            console.log('Test user logged in successfully as:', result.value.username);
-          } else {
-            console.error('Login failed:', result.value.error);
-          }
-        });
+    // Use loginHelper to ensure user is logged in with retry logic
+    loginHelper.ensureLoggedIn(browser, function(isLoggedIn) {
+      if (!isLoggedIn) {
+        browser.assert.fail('Failed to ensure user is logged in');
+      } else {
+        browser.assert.ok(true, 'User is logged in');
       }
-    });
 
-    // Create test patient
-    console.log('Creating test patient...');
-    testUtils.createTestPatient(browser, {
-      givenName: 'John',
-      familyName: 'Doe',
-      birthDate: '1970-01-01'
-    }, function(result) {
-      console.log('Test patient created:', result);
-      
-      // Set the patient in Session immediately after creation
-      browser.execute(function(patientId) {
-        const patient = Patients.findOne({_id: patientId});
-        if (patient) {
-          console.log('[Test] Setting session patient:', patient);
-          Session.set('selectedPatientId', patientId);
-          Session.set('selectedPatient', patient);
-          console.log('[Test] Session variables set successfully');
+      // Create test patient
+      testUtils.createTestPatient(browser, {
+        name: 'John Doe',
+        family: 'Doe',
+        given: 'John',
+        identifier: 'test-patient-' + timestamp
+      }, function(result) {
+        if (result.error) {
+          console.error('Failed to create test patient:', result.error);
+          browser.assert.fail('Failed to create test patient: ' + result.error);
         } else {
-          console.error('[Test] Patient not found with ID:', patientId);
+          console.log('Test patient created with ID:', result.result);
+          browser.assert.ok(true, 'Successfully created test patient');
+
+          // Fetch patient from server and set in Session
+          browser.executeAsync(function(patientId, done) {
+            if (typeof Meteor !== 'undefined' && typeof Session !== 'undefined') {
+              Meteor.call('patients.findOne', patientId, function(error, patient) {
+                if (error) {
+                  console.error('Error fetching patient:', error);
+                  done({ success: false, error: error.message });
+                } else if (patient) {
+                  Session.set('selectedPatientId', patient._id);
+                  Session.set('selectedPatient', patient);
+                  console.log('Set selected patient in Session:', patient._id, patient.name?.[0]?.text);
+                  done({ success: true, patientId: patient._id, patientName: patient.name?.[0]?.text });
+                } else {
+                  console.error('Patient not found:', patientId);
+                  done({ success: false, error: 'Patient not found' });
+                }
+              });
+            } else {
+              done({ success: false, error: 'Meteor or Session not available' });
+            }
+          }, [result.result], function(fetchResult) {
+            if (fetchResult.value && fetchResult.value.success) {
+              console.log('Successfully set selected patient:', fetchResult.value);
+            } else if (fetchResult.value) {
+              console.error('Failed to set selected patient:', fetchResult.value.error);
+            }
+          });
         }
-      }, [result.result]);
+      });
     });
 
     // Clean up any existing test data
