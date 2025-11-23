@@ -2,6 +2,7 @@
 
 // MessageHeaders is an infrastructure resource - no patient tracking needed
 
+const testUtils = require('./enable_autopublish/shared-test-utils');
 const loginHelper = require('../helpers/login-helper');
 const saveNavigationHelper = require('../helpers/save-navigation-helper');
 

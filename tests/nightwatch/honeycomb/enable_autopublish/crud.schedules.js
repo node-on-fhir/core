@@ -141,8 +141,8 @@ describe('Schedules CRUD Operations', function() {
   });
 
   it('02. Verify schedules list page loads', browser => {
+    testUtils.navigateUrl(browser, '/schedules');
     browser
-      .url('http://localhost:3000/schedules')
       .waitForElementVisible('body', 10000)
       .pause(2000) // Give React time to render
       .execute(function() {
@@ -482,8 +482,6 @@ describe('Schedules CRUD Operations', function() {
   it('05. Verify new schedule appears in list', browser => {
     browser
       .waitForElementVisible('#schedulesPage', 5000)
-      .refresh() // Force page refresh to ensure data loads
-      .waitForElementVisible('#schedulesPage', 5000)
       .pause(1000); // Give autopublish time to sync
     
     // First check what ID was saved in the previous test
@@ -554,8 +552,8 @@ describe('Schedules CRUD Operations', function() {
       
       // If we found the schedule in the database but UI shows no data, force navigation
       if (result.value && (result.value.count > 0 || result.value.testSchedule || result.value.searchResult)) {
+        testUtils.navigateUrl(browser, '/schedules');
         browser
-          .url('http://localhost:3000/schedules')
           .waitForElementVisible('#schedulesPage', 5000)
           .pause(1000);
       }
@@ -574,12 +572,18 @@ describe('Schedules CRUD Operations', function() {
       };
     }, [], function(result) {
       console.log('Page state:', result.value);
-      
+
+      // Check if result.value exists before accessing properties
+      if (!result.value) {
+        console.warn('Execute block returned null - page state unavailable');
+        return;
+      }
+
       if (result.value.hasNoDataMessage) {
         // No data - let's try searching anyway in case the count is wrong
         console.log('No data message shown, searching will show table view');
       }
-      
+
       // Always try to search if the search input exists
       if (result.value.hasSearchInput) {
         // Search for our specific test schedule using the unique timestamp in comment

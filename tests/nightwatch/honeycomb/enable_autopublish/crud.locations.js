@@ -131,8 +131,8 @@ describe('Locations CRUD Operations', function() {
   });
 
   it('02. Verify locations list page loads', browser => {
+    testUtils.navigateUrl(browser, '/locations');
     browser
-      .url('http://localhost:3000/locations')
       .waitForElementVisible('#locationsPage', 5000)
       .execute(function() {
         const hasTable = document.querySelector('#locationsTable') !== null;
@@ -396,10 +396,10 @@ describe('Locations CRUD Operations', function() {
       .assert.valueContains('#identifierInput', testLocation.identifier)
       .assert.valueContains('#phoneInput', testLocation.phone)
       .saveScreenshot('tests/nightwatch/screenshots/locations/07-view-location-details.png');
-    
+
     // Navigate back to locations list
+    testUtils.navigateUrl(browser, '/locations');
     browser
-      .url('http://localhost:3000/locations')
       .waitForElementVisible('#locationsPage', 5000);
   });
 
@@ -506,8 +506,8 @@ describe('Locations CRUD Operations', function() {
         browser.assert.equal(result.value, true, 'Clicked Save button');
       });
 
+    testUtils.navigateUrl(browser, '/locations');
     browser
-      .url('http://localhost:3000/locations')
       .waitForElementVisible('#locationsPage', 10000)
       .pause(2000) // Give time for data to load
       .execute(function() {

@@ -813,11 +813,15 @@ describe('ServiceRequests CRUD Operations', function() {
         };
       }, [], function(result) {
         console.log('Service request detail state:', result.value);
-        if (result.value.fieldValue === '' && !result.value.isLoading) {
+
+        // Check if result.value exists before accessing properties
+        if (result.value && result.value.fieldValue === '' && !result.value.isLoading) {
           console.log('Warning: Requester field is empty and not loading');
           if (result.value.serviceRequestData) {
             console.log('Service request requester data:', result.value.serviceRequestData.requester);
           }
+        } else if (!result.value) {
+          console.warn('Execute block returned null - ServiceRequests collection may not be available');
         }
       });
       

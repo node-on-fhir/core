@@ -191,8 +191,8 @@ describe('ResearchSubjects CRUD Operations', function() {
   });
 
   it('02. Verify research subjects list page loads', browser => {
+    testUtils.navigateUrl(browser, '/research-subjects');
     browser
-      .url('http://localhost:3000/research-subjects')
       .waitForElementVisible('#researchSubjectsPage', 5000)
       .execute(function() {
         const hasTable = document.querySelector('#researchSubjectsTable') !== null;
@@ -484,9 +484,10 @@ describe('ResearchSubjects CRUD Operations', function() {
         browser.assert.ok(result.value.consentDisplay.includes(testResearchSubject.consent.display), 'Consent display contains expected text');
       })
       .saveScreenshot('tests/nightwatch/screenshots/research-subjects/07-view-research-subject-details.png');
-    
+
+
+    testUtils.navigateUrl(browser, '/research-subjects');
     browser
-      .url('http://localhost:3000/research-subjects')
       .waitForElementVisible('#researchSubjectsPage', 5000);
   });
 
@@ -575,8 +576,10 @@ describe('ResearchSubjects CRUD Operations', function() {
       });
 
     browser
-      .pause(1000)
-      .url('http://localhost:3000/research-subjects')
+      .pause(1000);
+
+    testUtils.navigateUrl(browser, '/research-subjects');
+    browser
       .waitForElementVisible('#researchSubjectsTable', 5000)
       .saveScreenshot('tests/nightwatch/screenshots/research-subjects/09-research-subject-updated.png');
   });
