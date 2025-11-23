@@ -1,6 +1,7 @@
 // tests/nightwatch/honeycomb/enable_autopublish/crud.appointments.js
 
 const testUtils = require('./shared-test-utils');
+const loginHelper = require('../../helpers/login-helper');
 
 describe('Appointments CRUD Operations', function() {
   const timestamp = Date.now();
@@ -58,125 +59,46 @@ describe('Appointments CRUD Operations', function() {
         window.testTimestamp = ts;
       }, [timestamp]);
 
-    // Check if we're logged in
-    browser.execute(function() {
-      return {
-        isLoggedIn: typeof Meteor !== 'undefined' && !!Meteor.userId(),
-        userId: Meteor.userId ? Meteor.userId() : null,
-        username: Meteor.user ? (Meteor.user() ? Meteor.user().username : null) : null
-      };
-    }, [], function(result) {
-      console.log('Initial login state:', result.value);
-      
-      if (!result.value.isLoggedIn) {
-        console.log('Not logged in, attempting programmatic login...');
-        
-        browser.executeAsync(function(done) {
-          if (typeof Meteor !== 'undefined') {
-            Meteor.call('test.createTestUser', {
-              username: 'janedoe',
-              email: 'janedoe@test.org',
-              password: 'janedoe123'
-            }, function(err, userId) {
-              if (err) {
-                console.error('Failed to create test user:', err);
-                done({ userCreated: false, error: err.message });
-              } else {
-                console.log('Test user ready, userId:', userId);
-                Meteor.loginWithPassword('janedoe', 'janedoe123', function(loginErr) {
-                  if (loginErr) {
-                    console.error('Login failed:', loginErr);
-                    done({ userCreated: true, loginSuccess: false, error: loginErr.message });
-                  } else {
-                    console.log('Login successful');
-                    done({ 
-                      userCreated: true,
-                      loginSuccess: true, 
-                      userId: Meteor.userId(), 
-                      username: Meteor.user() ? Meteor.user().username : null 
-                    });
-                  }
-                });
-              }
-            });
-          } else {
-            done({ userCreated: false, loginSuccess: false, error: 'Meteor not available' });
-          }
-        }, [], function(result) {
-          if (result.value.loginSuccess) {
-            browser.assert.ok(true, 'Successfully created test user and logged in');
-            console.log('Logged in as:', result.value.username, 'userId:', result.value.userId);
-            
-            // Create a test patient
-            testUtils.createTestPatient(browser, {
-              name: 'John Doe',
-              family: 'Doe',
-              given: 'John',
-              identifier: 'test-patient-' + timestamp
-            }, function(result) {
-              if (result.error) {
-                console.error('Failed to create test patient:', result.error);
-                browser.assert.fail('Failed to create test patient: ' + result.error);
-              } else {
-                console.log('Test patient created with ID:', result.result);
-                browser.assert.ok(true, 'Successfully created test patient');
-                
-                // Set the patient in Session
-                browser.execute(function(patientId) {
-                  if (typeof Session !== 'undefined' && typeof Patients !== 'undefined') {
-                    const patient = Patients.findOne({_id: patientId});
-                    if (patient) {
-                      Session.set('selectedPatientId', patientId);
-                      Session.set('selectedPatient', patient);
-                      console.log('Set selected patient in Session:', patientId);
-                    }
-                  }
-                }, [result.result]);
-              }
-            });
-          } else {
-            browser.assert.fail('Setup failed: ' + result.value.error);
-          }
-        });
-        
-        browser.pause(1000);
+    // Use login helper with built-in retry logic and null checks
+    loginHelper.ensureLoggedIn(browser, function(isLoggedIn) {
+      if (!isLoggedIn) {
+        browser.assert.fail('Failed to ensure user is logged in');
       } else {
-        browser.assert.ok(true, 'Already logged in (autologin enabled)');
-        console.log('Already logged in as:', result.value.username, 'userId:', result.value.userId);
-        
-        // Create a test patient even if already logged in
-        testUtils.createTestPatient(browser, {
-          name: 'John Doe',
-          family: 'Doe',
-          given: 'John',
-          identifier: 'test-patient-' + timestamp
-        }, function(result) {
-          if (result.error) {
-            console.error('Failed to create test patient:', result.error);
-            browser.assert.fail('Failed to create test patient: ' + result.error);
-          } else {
-            console.log('Test patient created with ID:', result.result);
-            browser.assert.ok(true, 'Successfully created test patient');
-            
-            // Set the patient in Session
-            browser.execute(function(patientId) {
-              if (typeof Session !== 'undefined' && typeof Patients !== 'undefined') {
-                const patient = Patients.findOne({_id: patientId});
-                if (patient) {
-                  Session.set('selectedPatientId', patientId);
-                  Session.set('selectedPatient', patient);
-                  console.log('Set selected patient in Session:', patientId);
-                }
-              }
-            }, [result.result]);
-          }
-        });
+        browser.assert.ok(true, 'User is logged in');
       }
-      
+
+      // Create a test patient
+      testUtils.createTestPatient(browser, {
+        name: 'John Doe',
+        family: 'Doe',
+        given: 'John',
+        identifier: 'test-patient-' + timestamp
+      }, function(result) {
+        if (result.error) {
+          console.error('Failed to create test patient:', result.error);
+          browser.assert.fail('Failed to create test patient: ' + result.error);
+        } else {
+          console.log('Test patient created with ID:', result.result);
+          browser.assert.ok(true, 'Successfully created test patient');
+
+          // Set the patient in Session
+          browser.execute(function(patientId) {
+            if (typeof Session !== 'undefined' && typeof Patients !== 'undefined') {
+              const patient = Patients.findOne({_id: patientId});
+              if (patient) {
+                Session.set('selectedPatientId', patientId);
+                Session.set('selectedPatient', patient);
+                console.log('Set selected patient in Session:', patientId);
+              }
+            }
+          }, [result.result]);
+        }
+      });
+
       // Clean up any existing test data
       browser.executeAsync(function(done) {
         if (typeof Appointments !== 'undefined') {
-          const testAppointments = Appointments.find({ 
+          const testAppointments = Appointments.find({
             $or: [
               { 'appointmentType.text': { $regex: '.*Checkup.*' } },
               { 'description': { $regex: 'Test appointment.*' } },
@@ -190,21 +112,21 @@ describe('Appointments CRUD Operations', function() {
         }
         done();
       });
-      
+
       browser.pause(1000);
-      
+
       // Re-establish patient context
       browser.execute(function(testIdentifier) {
         console.log('Looking for patient with identifier:', testIdentifier);
-        
+
         if (typeof Session !== 'undefined' && typeof Patients !== 'undefined') {
           const allPatients = Patients.find({}).fetch();
           console.log('Total patients in collection:', allPatients.length);
-          
+
           let patient = Patients.findOne({
             'identifier.value': testIdentifier
           });
-          
+
           if (!patient) {
             console.log('Patient not found by identifier, trying by name...');
             patient = Patients.findOne({
@@ -215,12 +137,12 @@ describe('Appointments CRUD Operations', function() {
               ]
             });
           }
-          
+
           if (!patient && allPatients.length > 0) {
             console.log('Patient not found by name, using most recent patient');
             patient = Patients.findOne({}, { sort: { _id: -1 } });
           }
-          
+
           if (patient) {
             console.log('Found patient:', patient._id, patient.name?.[0]?.text);
             Session.set('selectedPatientId', patient._id);
@@ -233,6 +155,10 @@ describe('Appointments CRUD Operations', function() {
         }
         return { success: false, error: 'Session or Patients not available' };
       }, ['test-patient-' + timestamp], function(result) {
+        if (!result || !result.value) {
+          console.error('Execute block returned null');
+          return;
+        }
         console.log('Patient selection check:', result.value);
         if (result.value.success) {
           browser.assert.ok(true, `Patient selected: ${result.value.patientName}`);

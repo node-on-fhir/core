@@ -744,6 +744,11 @@ describe('AllergyIntolerances CRUD Operations', function() {
         isLoggedIn: Meteor.userId ? !!Meteor.userId() : false
       };
     }, [], function(result) {
+      if (!result || !result.value) {
+        browser.assert.fail('Execute block returned null - page state unavailable');
+        return;
+      }
+
       console.log('Post-save state:', result.value);
       if (result.value.hasError) {
         browser.assert.fail(`Save failed with error: ${result.value.errorText}`);
