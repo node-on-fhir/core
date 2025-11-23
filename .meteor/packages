@@ -58,12 +58,15 @@ fetch
 # clinical:drug-interactions
 # clinical:healthcare-surveys
 # clinical:lab-order-entry
-clinical:order-catalog
 # clinical:patient-matching
 # clinical:request-for-corrections
 # clinical:provider-directory
 # clinical:saner
 # clinical:workqueues
-clinical:family-health-history
+
+# Base EHR
+# clinical:order-catalog
+# clinical:family-health-history
+
 
 rspack@1.0.0-beta340.12
