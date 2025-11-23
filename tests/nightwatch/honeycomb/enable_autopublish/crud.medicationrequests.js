@@ -435,6 +435,10 @@ describe('MedicationRequests CRUD Operations', function() {
       .click('#numberOfRepeats')
       .clearValue('#numberOfRepeats')
       .setValue('#numberOfRepeats', testMedicationRequest.numberOfRepeats)
+      .execute(function() {
+        document.querySelector('#authoredOn')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      })
+      .pause(300)
       .click('#authoredOn')
       .clearValue('#authoredOn')
       .setValue('#authoredOn', testMedicationRequest.authoredOn)

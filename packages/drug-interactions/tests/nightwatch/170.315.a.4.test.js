@@ -1,6 +1,6 @@
 // packages/drug-interactions/tests/nightwatch/170.315.a.4.test.js
 
-const testUtils = require('../../../../../tests/nightwatch/honeycomb/enable_autopublish/shared-test-utils');
+const testUtils = require('../../../../tests/nightwatch/honeycomb/enable_autopublish/shared-test-utils');
 
 module.exports = {
   tags: ['drug-interactions', 'onc-certification', '170.315.a.4'],

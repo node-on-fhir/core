@@ -1,6 +1,6 @@
 // packages/family-health-history/tests/nightwatch/170.315.a.12.test.js
 
-const testUtils = require('../../../../../tests/nightwatch/honeycomb/enable_autopublish/shared-test-utils');
+const testUtils = require('../../../../tests/nightwatch/honeycomb/enable_autopublish/shared-test-utils');
 
 module.exports = {
   tags: ['family-health-history', 'onc-certification', '170.315.a.12'],

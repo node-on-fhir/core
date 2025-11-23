@@ -1,6 +1,6 @@
 // packages/implantable-devices/tests/nightwatch/170.315.a.14.test.js
 
-const testUtils = require('../../../../../tests/nightwatch/honeycomb/enable_autopublish/shared-test-utils');
+const testUtils = require('../../../../tests/nightwatch/honeycomb/enable_autopublish/shared-test-utils');
 
 module.exports = {
   tags: ['implantable-devices', 'onc-certification', '170.315.a.14'],

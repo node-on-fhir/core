@@ -1,6 +1,6 @@
 // packages/order-catalog/tests/nightwatch/170.315.a.2.test.js
 
-const testUtils = require('../../../../../tests/nightwatch/honeycomb/enable_autopublish/shared-test-utils');
+const testUtils = require('../../../../tests/nightwatch/honeycomb/enable_autopublish/shared-test-utils');
 
 module.exports = {
   tags: ['order-catalog', 'onc-certification', '170.315.a.2'],

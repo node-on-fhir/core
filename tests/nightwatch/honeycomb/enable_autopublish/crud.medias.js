@@ -1021,14 +1021,25 @@ describe('Medias CRUD Operations', function() {
       .click('#statusSelect')
       .pause(1000)
       .execute(function(value) {
+        console.log('Looking for status value:', value);
         const menuItems = document.querySelectorAll('[role="option"]');
+        console.log('Found menu items:', menuItems.length);
+
         for (let item of menuItems) {
-          if (item.textContent.toLowerCase().includes(value.toLowerCase()) || 
-              item.getAttribute('data-value') === value) {
+          const dataValue = item.getAttribute('data-value');
+          // Normalize text by replacing spaces with hyphens
+          const textValue = item.textContent.toLowerCase().replace(/\s+/g, '-');
+          const searchValue = value.toLowerCase();
+
+          console.log('Checking item:', item.textContent, 'normalized:', textValue);
+
+          if (dataValue === value || textValue === searchValue) {
+            console.log('Match found! Clicking:', item.textContent);
             item.click();
             return true;
           }
         }
+        console.error('No match found for value:', value);
         return false;
       }, [updatedMedia.status], function(result) {
         browser.assert.equal(result.value, true, 'Selected status');

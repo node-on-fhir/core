@@ -186,8 +186,8 @@ describe('QuestionnaireResponses CRUD Operations', function() {
   });
 
   it('02. Verify questionnaire responses list page loads', browser => {
+    testUtils.navigateUrl(browser, '/questionnaire-responses');
     browser
-      .url('http://localhost:3000/questionnaire-responses')
       .pause(1000)
       .execute(function() {
         // Capture any console errors
@@ -421,8 +421,8 @@ describe('QuestionnaireResponses CRUD Operations', function() {
   });
 
   it('06. View questionnaire response details', browser => {
+    testUtils.navigateUrl(browser, '/questionnaire-responses');
     browser
-      .url('http://localhost:3000/questionnaire-responses')
       .waitForElementVisible('#questionnaireResponsesTable', 5000)
       .pause(500);
 
@@ -463,9 +463,9 @@ describe('QuestionnaireResponses CRUD Operations', function() {
         browser.assert.ok(result.value.notes.includes(testQuestionnaireResponse.notes), 'Notes contain expected text');
       })
       .saveScreenshot('tests/nightwatch/screenshots/questionnaireresponses/07-view-questionnaireresponse-details.png');
-    
+
+    testUtils.navigateUrl(browser, '/questionnaire-responses');
     browser
-      .url('http://localhost:3000/questionnaire-responses')
       .waitForElementVisible('#questionnaireResponsesPage', 5000);
   });
 
@@ -555,8 +555,10 @@ describe('QuestionnaireResponses CRUD Operations', function() {
       });
 
     browser
-      .pause(1000)
-      .url('http://localhost:3000/questionnaire-responses')
+      .pause(1000);
+
+    testUtils.navigateUrl(browser, '/questionnaire-responses');
+    browser
       .waitForElementVisible('#questionnaireResponsesTable', 5000)
       .saveScreenshot('tests/nightwatch/screenshots/questionnaireresponses/09-questionnaireresponse-updated.png');
   });
@@ -706,8 +708,8 @@ describe('QuestionnaireResponses CRUD Operations', function() {
   it('11. Test form validation', browser => {
     // Note: This test validates that the form allows submission with minimal data
     // It requires the full test suite to run properly as it depends on the login from test 01
+    testUtils.navigateUrl(browser, '/questionnaire-responses');
     browser
-      .url('http://localhost:3000/questionnaire-responses')
       .waitForElementVisible('#questionnaireResponsesPage', 5000)
       .pause(500);
 
