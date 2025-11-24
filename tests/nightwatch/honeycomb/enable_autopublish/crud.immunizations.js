@@ -828,53 +828,50 @@ describe('Immunizations CRUD Operations', function() {
         browser.assert.ok(result.value.notes.includes(testImmunization.notes), 'Notes contain expected text');
       })
       .saveScreenshot('tests/nightwatch/screenshots/immunizations/07-view-immunization-details.png');
-    
-    // Navigate back to immunizations list
+
+    // Navigate back to immunizations list using client-side routing
+    testUtils.navigateUrl(browser, '/immunizations');
+
     browser
-      .url('http://localhost:3000/immunizations')
-      .waitForElementVisible('#immunizationsPage', 5000);
+      .waitForElementVisible('#immunizationsPage', 10000);
   });
 
   it('07. Update existing immunization', browser => {
+    // Re-establish patient context using server-side fetch
+    browser.executeAsync(function(patientId, done) {
+      console.log('[Test 07] Re-establishing patient context with ID:', patientId);
+
+      if (typeof Meteor !== 'undefined' && typeof Session !== 'undefined') {
+        Meteor.call('patients.findOne', patientId, function(error, patient) {
+          if (error) {
+            console.error('[Test 07] Error fetching patient:', error);
+            done({ success: false, error: error.message });
+          } else if (patient) {
+            Session.set('selectedPatientId', patient._id);
+            Session.set('selectedPatient', patient);
+            console.log('[Test 07] Re-established patient context:', patient._id);
+            done({ success: true });
+          } else {
+            console.error('[Test 07] Patient not found:', patientId);
+            done({ success: false, error: 'Patient not found' });
+          }
+        });
+      } else {
+        done({ success: false, error: 'Meteor or Session not available' });
+      }
+    }, [testPatientId]);
+
     browser
-      .waitForElementVisible('#immunizationsTable', 5000)
+      .pause(1000)
+      .waitForElementVisible('#immunizationsTable', 10000)
       .pause(1000);
-    
+
     // Scroll to top to ensure search input is visible
     browser.execute(function() {
       window.scrollTo(0, 0);
     });
-    
+
     browser.pause(500);
-    
-    // Re-establish patient context
-    browser.execute(function(testIdentifier) {
-      console.log('Re-establishing patient context in test 07');
-      
-      if (typeof Session !== 'undefined' && typeof Patients !== 'undefined') {
-        let patient = Patients.findOne({
-          'identifier.value': testIdentifier
-        });
-        
-        if (!patient) {
-          patient = Patients.findOne({
-            $or: [
-              { 'name.0.text': { $regex: 'John.*Doe' } },
-              { 'name.0.family': 'Doe' },
-              { 'name.0.given.0': 'John' }
-            ]
-          });
-        }
-        
-        if (patient) {
-          console.log('Patient found:', patient._id, patient.name?.[0]?.text);
-          Session.set('selectedPatientId', patient._id);
-          Session.set('selectedPatient', patient);
-          return { success: true, patientId: patient._id };
-        }
-      }
-      return { success: false };
-    }, ['test-patient-' + timestamp]);
 
     // Search by patient name
     browser
@@ -990,10 +987,13 @@ describe('Immunizations CRUD Operations', function() {
         browser.assert.equal(result.value, true, 'Clicked Save/Update button');
       });
 
+    browser.pause(1000);
+
+    // Navigate back using client-side routing
+    testUtils.navigateUrl(browser, '/immunizations');
+
     browser
-      .pause(1000)
-      .url('http://localhost:3000/immunizations')
-      .waitForElementVisible('#immunizationsTable', 5000)
+      .waitForElementVisible('#immunizationsTable', 10000)
       .saveScreenshot('tests/nightwatch/screenshots/immunizations/09-immunization-updated.png');
   });
 

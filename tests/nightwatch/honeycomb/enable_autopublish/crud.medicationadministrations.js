@@ -558,8 +558,36 @@ describe('MedicationAdministrations CRUD Operations', function() {
     }, [testPatientId]);
 
     browser
-      .pause(1000)
-      .waitForElementVisible('#medicationAdministrationsTable', 10000)
+      .pause(2000) // Longer pause for subscription to update after patient context set
+      .waitForElementVisible('#medicationAdministrationsPage', 10000);
+
+    // Check for table or no-data state before proceeding
+    browser.execute(function() {
+      const hasTable = document.querySelector('#medicationAdministrationsTable') !== null;
+      const hasNoData = document.querySelector('.no-data-card') !== null ||
+                        document.querySelector('#medicationAdministrationsPage')?.textContent.includes('No Data Available');
+      const rowCount = hasTable ? document.querySelectorAll('#medicationAdministrationsTable tbody tr').length : 0;
+
+      console.log('[Test 07] Page state - hasTable:', hasTable, 'hasNoData:', hasNoData, 'rowCount:', rowCount);
+
+      return {
+        hasTable: hasTable,
+        hasNoData: hasNoData,
+        rowCount: rowCount
+      };
+    }, [], function(result) {
+      if (result.value.hasTable && result.value.rowCount > 0) {
+        console.log('[Test 07] Table found with', result.value.rowCount, 'rows');
+      } else if (result.value.hasNoData) {
+        browser.assert.fail('[Test 07] No medication administrations available - test cannot proceed');
+      } else {
+        browser.assert.fail('[Test 07] Neither table nor no-data state found - page may not have loaded properly');
+      }
+    });
+
+    // Wait for table to be visible
+    browser
+      .waitForElementVisible('#medicationAdministrationsTable', 5000)
       .pause(500);
 
     browser

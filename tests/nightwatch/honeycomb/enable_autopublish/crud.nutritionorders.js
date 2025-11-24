@@ -1251,13 +1251,25 @@ describe('NutritionOrders CRUD Operations', function() {
       browser.assert.ok(result.value.testCount > 0, 'Should have test nutrition order before deletion');
     });
 
-    // Click delete button
+    // Click delete button using execute block for reliability
     browser
       .waitForElementVisible('#deleteNutritionOrderButton', 5000)
-      .click('#deleteNutritionOrderButton')
+      .execute(function() {
+        const deleteButton = document.querySelector('#deleteNutritionOrderButton');
+        if (deleteButton) {
+          deleteButton.click();
+          return true;
+        }
+        return false;
+      }, [], function(result) {
+        browser.assert.equal(result.value, true, 'Clicked delete button');
+      })
       .pause(500)
       .acceptAlert() // Accept the window.confirm dialog
-      .pause(500);
+      .pause(2000); // Wait for async delete + navigation to complete
+
+    // Wait for navigation to complete
+    browser.waitForElementVisible('#nutritionOrdersPage', 5000);
 
     // Verify we're back on the list page
     browser.execute(function() {

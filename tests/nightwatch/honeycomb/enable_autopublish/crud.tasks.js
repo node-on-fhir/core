@@ -968,10 +968,13 @@ describe('Tasks CRUD Operations', function() {
         browser.assert.equal(result.value, true, 'Clicked Save/Update button');
       });
 
+      browser.pause(1000);
+
+      // Navigate back using client-side routing
+      testUtils.navigateUrl(browser, '/tasks');
+
       browser
-        .pause(1000)
-        .url('http://localhost:3000/tasks')
-        .waitForElementVisible('#tasksTable', 5000)
+        .waitForElementVisible('#tasksTable', 10000)
         .saveScreenshot('tests/nightwatch/screenshots/tasks/09-task-updated.png');
     });
   });
