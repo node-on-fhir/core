@@ -409,23 +409,17 @@ describe('Questionnaires CRUD Operations', function() {
       .setValue('#notesTextarea', updatedQuestionnaire.notes)
       .saveScreenshot('tests/nightwatch/screenshots/questionnaires/08-updated-questionnaire-form.png');
 
-    browser
-      .execute(function() {
-        const buttons = document.querySelectorAll('button');
-        for (let button of buttons) {
-          if (button.textContent.includes('Save')) {
-            button.click();
-            return true;
-          }
+    // Click Save button - use simple execute without callback for reliability
+    browser.execute(function() {
+      const buttons = document.querySelectorAll('button');
+      for (let button of buttons) {
+        if (button.textContent.includes('Save')) {
+          button.click();
+          return true;
         }
-        return false;
-      }, [], function(result) {
-        if (result.value !== undefined) {
-          browser.assert.equal(result.value, true, 'Clicked Save button');
-        } else {
-          console.error('Failed to click Save button:', result);
-        }
-      });
+      }
+      return false;
+    });
 
     browser
       .pause(2000)

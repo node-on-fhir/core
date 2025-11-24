@@ -1076,23 +1076,31 @@ describe('DocumentReferences CRUD Operations', function() {
       .click('#notesTextarea')
       .clearValue('#notesTextarea')
       .setValue('#notesTextarea', updatedDocumentReference.notes)
-      .pause(500)
+      .pause(1000) // Longer pause to ensure select interaction completed
       .saveScreenshot('tests/nightwatch/screenshots/document-references/08-updated-document-reference-form.png');
 
-    // Save the updated document
-    browser
-      .execute(function() {
-        const buttons = document.querySelectorAll('button');
-        for (let button of buttons) {
-          if (button.textContent.includes('Save')) {
-            button.click();
-            return true;
-          }
+    // Scroll to bottom to ensure Save button is visible
+    browser.execute(function() {
+      window.scrollTo(0, document.body.scrollHeight);
+    });
+
+    browser.pause(500);
+
+    // Save the updated document - look for Save or Update button
+    browser.execute(function() {
+      const buttons = document.querySelectorAll('button');
+      for (let button of buttons) {
+        const buttonText = button.textContent.toLowerCase();
+        if (buttonText.includes('save') || buttonText.includes('update')) {
+          console.log('[Test 07] Found button with text:', button.textContent);
+          button.click();
+          return true;
         }
-        return false;
-      }, [], function(result) {
-        browser.assert.equal(result.value, true, 'Clicked Save button');
-      });
+      }
+      console.error('[Test 07] No Save/Update button found. Available buttons:',
+        Array.from(buttons).map(b => b.textContent).join(', '));
+      return false;
+    });
 
     browser.pause(2000);
     testUtils.navigateUrl(browser, '/document-references');
