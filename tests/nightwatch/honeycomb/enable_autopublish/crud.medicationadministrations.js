@@ -6,6 +6,7 @@ const loginHelper = require('../../helpers/login-helper');
 
 describe('MedicationAdministrations CRUD Operations', function() {
   const timestamp = Date.now();
+  let testPatientId = null; // Store patient ID for cross-test access
   const testMedicationAdministration = {
     patientName: 'John Doe',
     performerName: `Nurse Smith ${timestamp}`,
@@ -68,6 +69,7 @@ describe('MedicationAdministrations CRUD Operations', function() {
           console.error('Failed to create test patient:', result.error);
           browser.assert.fail('Failed to create test patient: ' + result.error);
         } else {
+          testPatientId = result.result; // Store for later tests
           console.log('Test patient created with ID:', result.result);
           browser.assert.ok(true, 'Successfully created test patient');
 
@@ -522,15 +524,42 @@ describe('MedicationAdministrations CRUD Operations', function() {
       .assert.elementPresent('#status')
       .assert.elementPresent('#category')
       .saveScreenshot('tests/nightwatch/screenshots/medicationadministrations/07-view-medicationadministration-details.png');
-    
+
+    // Use navigateUrl to preserve Session
+    testUtils.navigateUrl(browser, '/medication-administrations');
+
     browser
-      .url('http://localhost:3000/medication-administrations')
-      .waitForElementVisible('#medicationAdministrationsPage', 5000);
+      .waitForElementVisible('#medicationAdministrationsPage', 10000);
   });
 
   it('07. Update existing medication administration', browser => {
+    // Re-establish patient context using server-side fetch
+    browser.executeAsync(function(patientId, done) {
+      console.log('[Test 07] Re-establishing patient context with ID:', patientId);
+
+      if (typeof Meteor !== 'undefined' && typeof Session !== 'undefined') {
+        Meteor.call('patients.findOne', patientId, function(error, patient) {
+          if (error) {
+            console.error('[Test 07] Error fetching patient:', error);
+            done({ success: false, error: error.message });
+          } else if (patient) {
+            Session.set('selectedPatientId', patient._id);
+            Session.set('selectedPatient', patient);
+            console.log('[Test 07] Re-established patient context:', patient._id);
+            done({ success: true });
+          } else {
+            console.error('[Test 07] Patient not found:', patientId);
+            done({ success: false, error: 'Patient not found' });
+          }
+        });
+      } else {
+        done({ success: false, error: 'Meteor or Session not available' });
+      }
+    }, [testPatientId]);
+
     browser
-      .waitForElementVisible('#medicationAdministrationsTable', 5000)
+      .pause(1000)
+      .waitForElementVisible('#medicationAdministrationsTable', 10000)
       .pause(500);
 
     browser
@@ -612,17 +641,46 @@ describe('MedicationAdministrations CRUD Operations', function() {
         browser.assert.equal(result.value, true, 'Clicked Save button');
       });
 
+    browser.pause(1000);
+
+    // Use navigateUrl to preserve Session
+    testUtils.navigateUrl(browser, '/medication-administrations');
+
     browser
-      .url('http://localhost:3000/medication-administrations')
       .waitForElementVisible('#medicationAdministrationsPage', 10000)
       .pause(2000) // Give time for data to load after navigation
-      .waitForElementVisible('#medicationAdministrationsTable', 5000)
+      .waitForElementVisible('#medicationAdministrationsTable', 10000)
       .saveScreenshot('tests/nightwatch/screenshots/medicationadministrations/09-medicationadministration-updated.png');
   });
 
   it('08. Verify updated medication administration in list', browser => {
+    // Re-establish patient context using server-side fetch
+    browser.executeAsync(function(patientId, done) {
+      console.log('[Test 08] Re-establishing patient context with ID:', patientId);
+
+      if (typeof Meteor !== 'undefined' && typeof Session !== 'undefined') {
+        Meteor.call('patients.findOne', patientId, function(error, patient) {
+          if (error) {
+            console.error('[Test 08] Error fetching patient:', error);
+            done({ success: false, error: error.message });
+          } else if (patient) {
+            Session.set('selectedPatientId', patient._id);
+            Session.set('selectedPatient', patient);
+            console.log('[Test 08] Re-established patient context:', patient._id);
+            done({ success: true });
+          } else {
+            console.error('[Test 08] Patient not found:', patientId);
+            done({ success: false, error: 'Patient not found' });
+          }
+        });
+      } else {
+        done({ success: false, error: 'Meteor or Session not available' });
+      }
+    }, [testPatientId]);
+
     // First, ensure we're on the page and check without search
     browser
+      .pause(1000)
       .waitForElementVisible('#medicationAdministrationsPage', 10000)
       .pause(1000) // Additional pause to ensure page is fully loaded
       .execute(function() {

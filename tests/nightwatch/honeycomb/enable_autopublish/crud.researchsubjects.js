@@ -584,10 +584,10 @@ describe('ResearchSubjects CRUD Operations', function() {
             return false;
           })
           .acceptAlert()
-          .pause(100);
+          .pause(1500); // Wait for component's 500ms setTimeout + navigation + render
 
         browser
-          .waitForElementVisible('#researchSubjectsPage', 5000)
+          .waitForElementVisible('#researchSubjectsPage', 10000)
           .execute(function() {
             const hasTable = document.querySelector('#researchSubjectsTable') !== null;
             const hasNoDataCard = document.querySelector('.no-data-card') !== null ||
