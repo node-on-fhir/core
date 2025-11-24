@@ -695,17 +695,36 @@ describe('Measures CRUD Operations', function() {
 
     // Save the updated measure
     browser
+      .pause(500) // Ensure edit mode transition completes
       .execute(function() {
+        // First try by ID (more reliable)
+        const saveButton = document.querySelector('#saveMeasureButton');
+        if (saveButton) {
+          if (saveButton.disabled) {
+            return { found: true, clicked: false, reason: 'Button is disabled' };
+          }
+          saveButton.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          saveButton.click();
+          return { found: true, clicked: true, reason: 'Clicked by ID' };
+        }
+
+        // Fallback to text search
         const buttons = document.querySelectorAll('button');
         for (let button of buttons) {
-          if (button.textContent.includes('Save')) {
+          if (button.textContent.trim() === 'Save' || button.textContent.includes('Save')) {
+            if (button.disabled) {
+              return { found: true, clicked: false, reason: 'Button found but disabled' };
+            }
+            button.scrollIntoView({ behavior: 'smooth', block: 'center' });
             button.click();
-            return true;
+            return { found: true, clicked: true, reason: 'Clicked by text' };
           }
         }
-        return false;
+        return { found: false, clicked: false, reason: 'Button not found' };
       }, [], function(result) {
-        browser.assert.equal(result.value, true, 'Clicked Save button');
+        console.log('Save button result:', result.value);
+        browser.assert.equal(result.value.clicked, true,
+          `Save button click failed: ${result.value.reason}`);
       });
 
     browser

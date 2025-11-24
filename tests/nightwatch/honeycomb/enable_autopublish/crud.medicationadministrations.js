@@ -561,32 +561,46 @@ describe('MedicationAdministrations CRUD Operations', function() {
       .pause(2000) // Longer pause for subscription to update after patient context set
       .waitForElementVisible('#medicationAdministrationsPage', 10000);
 
-    // Check for table or no-data state - log for debugging but don't fail early
+    // Scroll to top to ensure search input is visible
     browser.execute(function() {
-      const hasTable = document.querySelector('#medicationAdministrationsTable') !== null;
-      const hasNoData = document.querySelector('.no-data-card') !== null ||
-                        document.querySelector('#medicationAdministrationsPage')?.textContent.includes('No Data Available');
-      const rowCount = hasTable ? document.querySelectorAll('#medicationAdministrationsTable tbody tr').length : 0;
-
-      console.log('[Test 07] Page state - hasTable:', hasTable, 'hasNoData:', hasNoData, 'rowCount:', rowCount);
-
-      if (!hasTable && hasNoData) {
-        console.warn('[Test 07] No medication administrations found - page shows no-data state');
-      } else if (!hasTable && !hasNoData) {
-        console.warn('[Test 07] Neither table nor no-data state found - page may not have loaded properly');
-      }
-
-      return { hasTable, hasNoData, rowCount };
+      window.scrollTo(0, 0);
     });
 
-    // Wait for table to be visible
+    browser.pause(500);
+
+    // CRITICAL: Use search to find test medication administration in large dataset
+    // With 100+ records (Synthea data), the test record may not be in the visible/subscribed 100
+    // Search filters down to just our test data
+    browser
+      .waitForElementVisible('#medicationAdministrationSearchInput', 5000)
+      .execute(function(searchValue) {
+        const input = document.querySelector('#medicationAdministrationSearchInput');
+        if (input) {
+          // Clear and set value with proper React events
+          input.value = '';
+          input.dispatchEvent(new Event('input', { bubbles: true }));
+          input.dispatchEvent(new Event('change', { bubbles: true }));
+
+          input.value = searchValue;
+          input.dispatchEvent(new Event('input', { bubbles: true }));
+          input.dispatchEvent(new Event('change', { bubbles: true }));
+          return true;
+        }
+        return false;
+      }, ['Smith']) // Search for unique part of performer name (Nurse Smith)
+      .pause(3000); // Wait for search to filter results (character-by-character typing)
+
+    // Verify filtered results before clicking
+    browser.assert.containsText('#medicationAdministrationsTable', 'Smith');
+
+    // NOW click the first row - should be our test record
     browser
       .waitForElementVisible('#medicationAdministrationsTable', 5000)
       .pause(500);
 
     browser
       .execute(function() {
-        // Click the first row in the table
+        // Click the first row in the filtered table
         const firstRow = document.querySelector('#medicationAdministrationsTable tbody tr');
         if (firstRow) {
           firstRow.click();

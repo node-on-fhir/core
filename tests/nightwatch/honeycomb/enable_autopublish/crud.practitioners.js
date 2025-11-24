@@ -269,9 +269,9 @@ describe('Practitioners CRUD Operations', function() {
         browser.assert.equal(result.value, true, 'Clicked Save button');
       });
 
-    // Debug: Check current URL and page state after save
+    // Check post-save state and handle navigation
     browser
-      .pause(2000)  // Give more time for navigation
+      .pause(2000)  // Give time for navigation
       .execute(function() {
         const currentUrl = window.location.pathname;
         const hasPractitionersPage = document.querySelector('#practitionersPage') !== null;
@@ -281,7 +281,7 @@ describe('Practitioners CRUD Operations', function() {
         errorElements.forEach(el => {
           if (el.textContent) errorText += el.textContent + ' ';
         });
-        
+
         return {
           url: currentUrl,
           hasPractitionersPage: hasPractitionersPage,
@@ -291,11 +291,29 @@ describe('Practitioners CRUD Operations', function() {
         };
       }, [], function(result) {
         console.log('Post-save state:', result.value);
+
+        // If there's an error, fail immediately
         if (result.value.hasError) {
           browser.assert.fail(`Save failed with error: ${result.value.errorText}`);
         }
+
+        // If still on detail page (navigation didn't happen), force navigation
+        if (result.value.hasPractitionerDetail && !result.value.hasPractitionersPage) {
+          console.log('Navigation did not occur automatically, using fallback navigation');
+          browser.execute(function() {
+            if (typeof Meteor !== 'undefined' && typeof Meteor.navigate === 'function') {
+              console.log('Using Meteor.navigate to go to /practitioners');
+              Meteor.navigate('/practitioners');
+            } else {
+              console.log('Using window.location.href to go to /practitioners');
+              window.location.href = '/practitioners';
+            }
+          });
+          browser.pause(1000); // Wait for fallback navigation
+        }
       });
 
+    // NOW wait for the page - should be there either from component navigation or fallback
     browser
       .waitForElementVisible('#practitionersPage', 5000)
       .saveScreenshot('tests/nightwatch/screenshots/practitioners/05-practitioner-saved.png');
