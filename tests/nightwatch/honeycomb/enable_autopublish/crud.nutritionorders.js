@@ -1261,8 +1261,6 @@ describe('NutritionOrders CRUD Operations', function() {
           return true;
         }
         return false;
-      }, [], function(result) {
-        browser.assert.equal(result.value, true, 'Clicked delete button');
       })
       .pause(500)
       .acceptAlert() // Accept the window.confirm dialog

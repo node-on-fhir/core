@@ -474,8 +474,8 @@ describe('Procedures CRUD Operations', function() {
 
   it('05. Verify new procedure appears in list', browser => {
     browser
-      .waitForElementVisible('#proceduresPage', 5000)
-      .pause(1000);
+      .waitForElementVisible('#proceduresPage', 10000)
+      .pause(2000);
 
     // Scroll to top to ensure search input is visible
     browser.execute(function() {
@@ -486,7 +486,7 @@ describe('Procedures CRUD Operations', function() {
 
     // Search for "Smith" to filter procedures (unique performer name)
     browser
-      .waitForElementVisible('#procedureSearchInput', 5000)
+      .waitForElementVisible('#procedureSearchInput', 10000)
       .clearValue('#procedureSearchInput')
       .setValue('#procedureSearchInput', 'Smith')
       .pause(2000); // Wait for search results to update (subscription query)

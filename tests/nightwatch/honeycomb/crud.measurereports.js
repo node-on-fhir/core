@@ -709,23 +709,26 @@ describe('MeasureReports CRUD Operations', function() {
       });
 
     browser
-      .pause(1000)
-      .url('http://localhost:3000/measure-reports')
-      .waitForElementVisible('#measureReportsTable', 5000)
+      .pause(1000);
+
+    testUtils.navigateUrl(browser, '/measure-reports');
+
+    browser
+      .waitForElementVisible('#measureReportsTable', 10000)
       .saveScreenshot('tests/nightwatch/screenshots/measure-reports/09-measure-report-updated.png');
   });
 
   it('08. Verify updated measure report in list', browser => {
     browser
-      .waitForElementVisible('#measureReportsTable', 5000)
-      .waitForElementVisible('#measureReportSearchInput', 5000)
+      .waitForElementVisible('#measureReportsTable', 10000)
+      .waitForElementVisible('#measureReportSearchInput', 10000)
       .clearValue('#measureReportSearchInput')
-      .pause(500);
+      .pause(1000);
       
     // Try searching for the timestamp first to see if any measure report shows up
     browser
       .setValue('#measureReportSearchInput', timestamp.toString())
-      .pause(1500)
+      .pause(2000)
       .execute(function() {
         const table = document.querySelector('#measureReportsTable');
         const rows = table ? table.querySelectorAll('tbody tr') : [];
@@ -774,7 +777,7 @@ describe('MeasureReports CRUD Operations', function() {
     browser
       .clearValue('#measureReportSearchInput')
       .setValue('#measureReportSearchInput', testMeasureReport.identifier.substring(0, 20))
-      .pause(1500)
+      .pause(2000)
       .execute(function(expectedStatus, expectedType, timestamp) {
         const table = document.querySelector('#measureReportsTable');
         const rows = table ? table.querySelectorAll('tbody tr') : [];

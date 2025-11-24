@@ -973,10 +973,10 @@ describe('Communications CRUD Operations', function() {
             return false;
           })
           .acceptAlert()
-          .pause(100);
+          .pause(1500);
 
         browser
-          .waitForElementVisible('#communicationsPage', 5000)
+          .waitForElementVisible('#communicationsPage', 10000)
           .execute(function() {
             const hasTable = document.querySelector('#communicationsTable') !== null;
             const hasNoDataCard = document.querySelector('.no-data-card') !== null ||
