@@ -121,30 +121,7 @@ describe('MedicationAdministrations CRUD Operations', function() {
         done();
       });
 
-      browser.pause(1000)
-        .execute(function(testIdentifier) {
-          if (typeof Session !== 'undefined' && typeof Patients !== 'undefined') {
-            const patient = Patients.findOne({
-              'identifier.value': testIdentifier
-            });
-            if (patient) {
-              Session.set('selectedPatientId', patient._id);
-              Session.set('selectedPatient', patient);
-              console.log('Set selected patient in Session:', patient._id, patient.name?.[0]?.text);
-              return { success: true, patientId: patient._id, patientName: patient.name?.[0]?.text };
-            } else {
-              console.error('Could not find test patient with identifier:', testIdentifier);
-              return { success: false, error: 'Patient not found' };
-            }
-          }
-          return { success: false, error: 'Session or Patients not available' };
-        }, ['test-patient-' + timestamp], function(result) {
-          if (result.value && result.value.success) {
-            console.log('Successfully set selected patient:', result.value);
-          } else if (result.value) {
-            console.error('Failed to set selected patient:', result.value.error);
-          }
-        });
+      browser.pause(1000); // Let session and subscription settle
     });
   });
 
@@ -174,6 +151,39 @@ describe('MedicationAdministrations CRUD Operations', function() {
     browser
       .waitForElementVisible('#medicationAdministrationsPage', 5000)
       .pause(500);
+
+    // Re-establish patient context using server-side method (bypasses subscription limits)
+    browser.executeAsync(function(patientId, done) {
+      console.log('[Test 03] Re-establishing patient context with ID:', patientId);
+
+      if (typeof Meteor !== 'undefined' && typeof Session !== 'undefined') {
+        // Server method queries DB directly, bypasses subscription limits
+        Meteor.call('patients.findOne', patientId, function(error, patient) {
+          if (error) {
+            console.error('[Test 03] Error fetching patient:', error);
+            done({ success: false, error: error.message });
+          } else if (patient) {
+            Session.set('selectedPatientId', patient._id);
+            Session.set('selectedPatient', patient);
+            console.log('[Test 03] Re-established patient context:', patient._id, patient.name?.[0]?.text);
+            done({ success: true, patientId: patient._id, patientName: patient.name?.[0]?.text });
+          } else {
+            console.error('[Test 03] Patient not found:', patientId);
+            done({ success: false, error: 'Patient not found' });
+          }
+        });
+      } else {
+        done({ success: false, error: 'Meteor or Session not available' });
+      }
+    }, [testPatientId], function(result) {
+      if (result.value && result.value.success) {
+        console.log('[Test 03] Successfully re-established patient context:', result.value.patientName);
+      } else {
+        console.error('[Test 03] Failed to re-establish patient context:', result.value?.error);
+      }
+    });
+
+    browser.pause(500); // Let subscription react to new Session value
 
     browser
       .execute(function() {
@@ -205,8 +215,8 @@ describe('MedicationAdministrations CRUD Operations', function() {
         return false;
       }, [], function(result) {
         if (!result.value) {
-          // If button not found, try direct navigation
-          browser.url('http://localhost:3000/medication-administrations/new');
+          // If button not found, use navigateUrl to preserve Session
+          testUtils.navigateUrl(browser, '/medication-administrations/new');
         } else {
           browser.assert.equal(result.value, true, 'Clicked Add Medication Administration button');
         }
@@ -215,14 +225,14 @@ describe('MedicationAdministrations CRUD Operations', function() {
     browser
       .pause(500); // Give navigation time
       
-    // Check if we navigated, if not, use direct navigation
+    // Check if we navigated, if not, use navigateUrl to preserve Session
     browser.execute(function() {
       return window.location.pathname;
     }, [], function(result) {
       console.log('Current path after button click:', result.value);
       if (!result.value.includes('/medication-administrations/new')) {
-        console.log('Button click did not navigate, using direct navigation');
-        browser.url('http://localhost:3000/medication-administrations/new');
+        console.log('Button click did not navigate, using navigateUrl');
+        testUtils.navigateUrl(browser, '/medication-administrations/new');
       }
     });
     
@@ -509,6 +519,38 @@ describe('MedicationAdministrations CRUD Operations', function() {
     browser
       .waitForElementVisible('#medicationAdministrationsPage', 5000)
       .pause(500);
+
+    // Re-establish patient context (test 05 starts fresh, may not have Session)
+    browser.executeAsync(function(patientId, done) {
+      console.log('[Test 05] Re-establishing patient context with ID:', patientId);
+
+      if (typeof Meteor !== 'undefined' && typeof Session !== 'undefined') {
+        Meteor.call('patients.findOne', patientId, function(error, patient) {
+          if (error) {
+            console.error('[Test 05] Error fetching patient:', error);
+            done({ success: false, error: error.message });
+          } else if (patient) {
+            Session.set('selectedPatientId', patient._id);
+            Session.set('selectedPatient', patient);
+            console.log('[Test 05] Re-established patient context:', patient._id, patient.name?.[0]?.text);
+            done({ success: true, patientId: patient._id, patientName: patient.name?.[0]?.text });
+          } else {
+            console.error('[Test 05] Patient not found:', patientId);
+            done({ success: false, error: 'Patient not found' });
+          }
+        });
+      } else {
+        done({ success: false, error: 'Meteor or Session not available' });
+      }
+    }, [testPatientId], function(result) {
+      if (result.value && result.value.success) {
+        console.log('[Test 05] Successfully re-established patient context:', result.value.patientName);
+      } else {
+        console.error('[Test 05] Failed to re-establish patient context:', result.value?.error);
+      }
+    });
+
+    browser.pause(1000); // Let subscription react to new Session value
 
     // Scroll to top to make search input visible
     browser.execute(function() {

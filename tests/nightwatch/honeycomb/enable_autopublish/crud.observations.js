@@ -116,55 +116,7 @@ describe('Observations CRUD Operations', function() {
         done();
       });
 
-      browser.pause(2000);
-
-      // Re-establish patient context
-      browser.execute(function(testIdentifier) {
-        console.log('Looking for patient with identifier:', testIdentifier);
-
-        if (typeof Session !== 'undefined' && typeof Patients !== 'undefined') {
-          const allPatients = Patients.find({}).fetch();
-          console.log('Total patients in collection:', allPatients.length);
-
-          let patient = Patients.findOne({
-            'identifier.value': testIdentifier
-          });
-
-          if (!patient) {
-            console.log('Patient not found by identifier, trying by name...');
-            patient = Patients.findOne({
-              $or: [
-                { 'name.0.text': { $regex: 'John.*Doe' } },
-                { 'name.0.family': 'Doe' },
-                { 'name.0.given.0': 'John' }
-              ]
-            });
-          }
-
-          if (!patient && allPatients.length > 0) {
-            console.log('Patient not found by name, using most recent patient');
-            patient = Patients.findOne({}, { sort: { _id: -1 } });
-          }
-
-          if (patient) {
-            console.log('Found patient:', patient._id, patient.name?.[0]?.text);
-            Session.set('selectedPatientId', patient._id);
-            Session.set('selectedPatient', patient);
-            return { success: true, patientId: patient._id, patientName: patient.name?.[0]?.text };
-          } else {
-            console.error('Could not find any patient');
-            return { success: false, error: 'No patients found in collection' };
-          }
-        }
-        return { success: false, error: 'Session or Patients not available' };
-      }, ['test-patient-' + timestamp], function(result) {
-        console.log('Patient selection check:', result.value);
-        if (result.value && result.value.success) {
-          browser.assert.ok(true, `Patient selected: ${result.value.patientName}`);
-        } else if (result.value) {
-          console.error('Failed to set selected patient:', result.value.error);
-        }
-      });
+      browser.pause(1000); // Let session and subscription settle
     });
   });
 
@@ -195,11 +147,44 @@ describe('Observations CRUD Operations', function() {
       .waitForElementVisible('#observationsPage', 5000)
       .pause(500);
 
+    // Re-establish patient context using server-side method (bypasses subscription limits)
+    browser.executeAsync(function(patientId, done) {
+      console.log('[Test 03] Re-establishing patient context with ID:', patientId);
+
+      if (typeof Meteor !== 'undefined' && typeof Session !== 'undefined') {
+        // Server method queries DB directly, bypasses subscription limits
+        Meteor.call('patients.findOne', patientId, function(error, patient) {
+          if (error) {
+            console.error('[Test 03] Error fetching patient:', error);
+            done({ success: false, error: error.message });
+          } else if (patient) {
+            Session.set('selectedPatientId', patient._id);
+            Session.set('selectedPatient', patient);
+            console.log('[Test 03] Re-established patient context:', patient._id, patient.name?.[0]?.text);
+            done({ success: true, patientId: patient._id, patientName: patient.name?.[0]?.text });
+          } else {
+            console.error('[Test 03] Patient not found:', patientId);
+            done({ success: false, error: 'Patient not found' });
+          }
+        });
+      } else {
+        done({ success: false, error: 'Meteor or Session not available' });
+      }
+    }, [testPatientId], function(result) {
+      if (result.value && result.value.success) {
+        console.log('[Test 03] Successfully re-established patient context:', result.value.patientName);
+      } else {
+        console.error('[Test 03] Failed to re-establish patient context:', result.value?.error);
+      }
+    });
+
+    browser.pause(500); // Let subscription react to new Session value
+
     browser
       .execute(function() {
         const buttons = document.querySelectorAll('button');
         for (let button of buttons) {
-          if (button.textContent.includes('Add Observation') || 
+          if (button.textContent.includes('Add Observation') ||
               button.textContent.includes('Add Your First Observation')) {
             button.click();
             return true;
