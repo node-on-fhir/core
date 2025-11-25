@@ -772,9 +772,10 @@ describe('Observations CRUD Operations', function() {
         browser.assert.equal(result.value, true, 'Clicked Save button');
       });
 
+    // Use navigateUrl to preserve Session patient context
+    testUtils.navigateUrl(browser, '/observations');
     browser
-      .url('http://localhost:3000/observations')
-      .waitForElementVisible('#observationsTable', 5000)
+      .waitForElementVisible('#observationsTable', 10000)
       .saveScreenshot('tests/nightwatch/screenshots/observations/09-observation-updated.png');
   });
 

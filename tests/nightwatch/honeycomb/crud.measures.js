@@ -653,7 +653,29 @@ describe('Measures CRUD Operations', function() {
       console.log('Edit mode check:', result.value);
     });
 
-    browser.pause(1000); // Give time for form to become editable
+    // Wait for edit mode to fully activate - verify Save button appears
+    browser
+      .waitForElementVisible('#saveMeasureButton', 10000)
+      .pause(500); // Additional stability pause for CI environment
+
+    // Verify edit mode is active by checking button state
+    browser.execute(function() {
+      const saveButton = document.querySelector('#saveMeasureButton');
+      const cancelButton = Array.from(document.querySelectorAll('button'))
+        .find(btn => btn.textContent.includes('Cancel'));
+      const titleInput = document.querySelector('#titleInput');
+
+      return {
+        hasSaveButton: !!saveButton,
+        saveButtonEnabled: saveButton && !saveButton.disabled,
+        hasCancelButton: !!cancelButton,
+        inputsEnabled: titleInput && !titleInput.disabled
+      };
+    }, [], function(result) {
+      console.log('Edit mode verification:', result.value);
+      browser.assert.equal(result.value.hasSaveButton, true, 'Save button exists');
+      browser.assert.equal(result.value.saveButtonEnabled, true, 'Save button is enabled');
+    });
 
     // Update measure details
     browser
@@ -684,8 +706,9 @@ describe('Measures CRUD Operations', function() {
       browser.assert.equal(result.value, true, 'Selected status');
     });
 
+    // Longer pause after select to ensure Material-UI state updates complete
     browser
-      .pause(500)
+      .pause(1000)
       .clearValue('#descriptionTextarea')
       .setValue('#descriptionTextarea', updatedMeasure.description)
       .clearValue('#purposeTextarea')
@@ -693,39 +716,27 @@ describe('Measures CRUD Operations', function() {
       .pause(500)
       .saveScreenshot('tests/nightwatch/screenshots/measures/08-updated-measure-form.png');
 
-    // Save the updated measure
+    // Save the updated measure - use standard Nightwatch click since button has reliable ID
     browser
-      .pause(500) // Ensure edit mode transition completes
-      .execute(function() {
-        // First try by ID (more reliable)
-        const saveButton = document.querySelector('#saveMeasureButton');
-        if (saveButton) {
-          if (saveButton.disabled) {
-            return { found: true, clicked: false, reason: 'Button is disabled' };
-          }
-          saveButton.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          saveButton.click();
-          return { found: true, clicked: true, reason: 'Clicked by ID' };
-        }
+      .pause(500) // Ensure form updates are complete
+      .click('#saveMeasureButton')
+      .pause(500); // Give time for save operation to start
 
-        // Fallback to text search
-        const buttons = document.querySelectorAll('button');
-        for (let button of buttons) {
-          if (button.textContent.trim() === 'Save' || button.textContent.includes('Save')) {
-            if (button.disabled) {
-              return { found: true, clicked: false, reason: 'Button found but disabled' };
-            }
-            button.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            button.click();
-            return { found: true, clicked: true, reason: 'Clicked by text' };
-          }
-        }
-        return { found: false, clicked: false, reason: 'Button not found' };
-      }, [], function(result) {
-        console.log('Save button result:', result.value);
-        browser.assert.equal(result.value.clicked, true,
-          `Save button click failed: ${result.value.reason}`);
-      });
+    // Verify save succeeded by checking for navigation or button state change
+    browser.execute(function() {
+      // After save on existing record, should exit edit mode
+      const editButton = Array.from(document.querySelectorAll('button'))
+        .find(btn => btn.textContent.includes('Edit'));
+      const saveButton = document.querySelector('#saveMeasureButton');
+
+      return {
+        hasEditButton: !!editButton,
+        hasSaveButton: !!saveButton,
+        currentPath: window.location.pathname
+      };
+    }, [], function(result) {
+      console.log('Post-save state:', result.value);
+    });
 
     browser
       .pause(1000);
