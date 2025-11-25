@@ -730,10 +730,12 @@ describe('Tasks CRUD Operations', function() {
   });
 
   it('07. Update existing task', browser => {
-    // Navigate to tasks list page
+    // CRITICAL: Use testUtils.navigateUrl instead of browser.url to preserve Session
+    // browser.url() causes full page reload which clears Meteor Session and patient context
+    testUtils.navigateUrl(browser, '/tasks');
+
     browser
-      .url('http://localhost:3000/tasks')
-      .waitForElementVisible('#tasksPage', 5000)
+      .waitForElementVisible('#tasksPage', 10000)  // Increased timeout for CI
       .pause(1000);
     
     // Re-establish patient context after navigation
@@ -783,16 +785,24 @@ describe('Tasks CRUD Operations', function() {
         taskElementsFound: taskElements.length
       };
     }, [], function(result) {
+      // ADD NULL CHECK - execute can return null if page not ready or times out
+      if (!result || !result.value) {
+        console.error('execute returned null - page may not be ready');
+        browser.assert.fail('Failed to check tasks page state - execute returned null');
+        return;
+      }
+
       console.log('Tasks page state:', result.value);
-      
+
       if (!result.value.hasTasksPage) {
         console.log('Tasks page not loaded, current URL:', result.value.currentUrl);
-        // Force navigation again
+        // Use testUtils.navigateUrl instead of browser.url to preserve Session
+        testUtils.navigateUrl(browser, '/tasks');
         browser
-          .url('http://localhost:3000/tasks')
-          .waitForElementVisible('#tasksPage', 5000);
+          .waitForElementVisible('#tasksPage', 10000)  // Increased timeout for CI
+          .pause(1000);
       }
-      
+
       if (result.value.hasNoData) {
         console.log('No tasks found - this might be expected if filtered by patient');
         // Don't fail, just log - we'll try to find the task anyway
@@ -805,10 +815,11 @@ describe('Tasks CRUD Operations', function() {
     browser.execute(function() {
       return document.querySelector('#tasksTable') !== null;
     }, [], function(result) {
-      if (result.value) {
+      // ADD NULL CHECK - execute can return null
+      if (result && result.value) {
         browser.waitForElementVisible('#tasksTable', 5000);
       } else {
-        console.log('Table not present, skipping wait');
+        console.log('Table not present or execute returned null, skipping wait');
       }
     });
 

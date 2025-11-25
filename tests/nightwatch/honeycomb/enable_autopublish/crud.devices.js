@@ -123,11 +123,14 @@ describe('Devices CRUD Operations', function() {
   });
 
   it('02. Verify devices list page loads', browser => {
+    // CRITICAL: Use testUtils.navigateUrl instead of browser.url to preserve Session
+    // browser.url() causes full page reload which clears Meteor Session
+    testUtils.navigateUrl(browser, '/devices');
+
     browser
-      .url('http://localhost:3000/devices')
       .waitForElementVisible('#devicesPage', 5000);
 
-    // Re-establish patient context after navigation (browser.url clears Session)
+    // Re-establish patient context (still needed but Meteor is now available)
     browser.executeAsync(function(patientId, done) {
       if (typeof Meteor !== 'undefined' && typeof Session !== 'undefined') {
         Meteor.call('patients.findOne', patientId, function(error, patient) {
@@ -148,10 +151,12 @@ describe('Devices CRUD Operations', function() {
         done({ success: false, error: 'Meteor or Session not available' });
       }
     }, [testPatientId], function(result) {
-      if (result.value.success) {
+      // ADD NULL CHECK - executeAsync can return null if it times out or Meteor not ready
+      if (result && result.value && result.value.success) {
         browser.assert.ok(true, 'Patient context re-established');
       } else {
-        browser.assert.fail('Failed to set patient context: ' + (result.value.error || 'unknown error'));
+        const errorMsg = (result && result.value && result.value.error) || 'executeAsync returned null or timed out';
+        browser.assert.fail('Failed to set patient context: ' + errorMsg);
       }
     });
 

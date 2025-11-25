@@ -300,22 +300,15 @@ describe('Practitioners CRUD Operations', function() {
         // If still on detail page (navigation didn't happen), force navigation
         if (result.value.hasPractitionerDetail && !result.value.hasPractitionersPage) {
           console.log('Navigation did not occur automatically, using fallback navigation');
-          browser.execute(function() {
-            if (typeof Meteor !== 'undefined' && typeof Meteor.navigate === 'function') {
-              console.log('Using Meteor.navigate to go to /practitioners');
-              Meteor.navigate('/practitioners');
-            } else {
-              console.log('Using window.location.href to go to /practitioners');
-              window.location.href = '/practitioners';
-            }
-          });
-          browser.pause(1000); // Wait for fallback navigation
+          // Use testUtils.navigateUrl for standardized navigation handling
+          testUtils.navigateUrl(browser, '/practitioners');
+          browser.pause(2000); // Wait longer for navigation + component mount
         }
       });
 
-    // NOW wait for the page - should be there either from component navigation or fallback
+    // NOW wait for the page - increased timeout for CI environments
     browser
-      .waitForElementVisible('#practitionersPage', 5000)
+      .waitForElementVisible('#practitionersPage', 10000) // Increased from 5s to 10s
       .saveScreenshot('tests/nightwatch/screenshots/practitioners/05-practitioner-saved.png');
     
     // Capture the ID of the newly created practitioner

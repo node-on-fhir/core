@@ -305,8 +305,10 @@ describe('Questionnaires CRUD Operations', function() {
 
     // Navigate to the questionnaire if not already there
     if (!browser.currentTest.results.errors) {
+      // Use testUtils.navigateUrl to preserve Session state (avoid browser.url mid-test)
+      testUtils.navigateUrl(browser, '/questionnaires');
+
       browser
-        .url('http://localhost:3000/questionnaires')
         .waitForElementVisible('#questionnairesTable', 5000)
         .execute(function(title) {
           const rows = document.querySelectorAll('#questionnairesTable tbody tr');
@@ -421,9 +423,13 @@ describe('Questionnaires CRUD Operations', function() {
       return false;
     });
 
+    browser.pause(2000);
+
+    // Use testUtils.navigateUrl to preserve Session state (avoid browser.url mid-test)
+    // This prevents subscription re-initialization and ensures data is immediately available
+    testUtils.navigateUrl(browser, '/questionnaires');
+
     browser
-      .pause(2000)
-      .url('http://localhost:3000/questionnaires')
       .waitForElementVisible('#questionnairesTable', 5000)
       .saveScreenshot('tests/nightwatch/screenshots/questionnaires/09-questionnaire-updated.png');
   });

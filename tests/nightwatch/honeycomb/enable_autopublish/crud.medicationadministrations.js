@@ -533,6 +533,14 @@ describe('MedicationAdministrations CRUD Operations', function() {
   });
 
   it('07. Update existing medication administration', browser => {
+    // CRITICAL: Navigate to page at test start - don't assume we're there from test 06
+    // Each test should be self-contained and establish its own initial state
+    testUtils.navigateUrl(browser, '/medication-administrations');
+
+    browser
+      .waitForElementVisible('#medicationAdministrationsPage', 10000)
+      .pause(500); // Let page stabilize
+
     // Re-establish patient context using server-side fetch
     browser.executeAsync(function(patientId, done) {
       console.log('[Test 07] Re-establishing patient context with ID:', patientId);
