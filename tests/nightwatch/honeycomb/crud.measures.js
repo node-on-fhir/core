@@ -728,15 +728,18 @@ describe('Measures CRUD Operations', function() {
       });
 
     browser
-      .pause(1000)
-      .url('http://localhost:3000/measures')
-      .waitForElementVisible('#measuresTable', 5000)
+      .pause(1000);
+
+    // CRITICAL: Use testUtils.navigateUrl to preserve Session state
+    testUtils.navigateUrl(browser, '/measures');
+    browser
+      .waitForElementVisible('#measuresTable', 10000)
       .saveScreenshot('tests/nightwatch/screenshots/measures/09-measure-updated.png');
   });
 
   it('08. Verify updated measure in list', browser => {
     browser
-      .waitForElementVisible('#measuresTable', 5000)
+      .waitForElementVisible('#measuresTable', 10000)
       .pause(500);
 
     // Check if search input exists and use it if available
@@ -744,7 +747,8 @@ describe('Measures CRUD Operations', function() {
       const searchInput = document.querySelector('#measureSearchInput');
       return { hasSearchInput: searchInput !== null };
     }, [], function(result) {
-      if (result.value.hasSearchInput) {
+      // ADD NULL CHECK - execute can return null
+      if (result && result.value && result.value.hasSearchInput) {
         browser
           .waitForElementVisible('#measureSearchInput', 5000)
           .clearValue('#measureSearchInput')

@@ -569,6 +569,62 @@ describe('MedicationAdministrations CRUD Operations', function() {
       .pause(2000) // Longer pause for subscription to update after patient context set
       .waitForElementVisible('#medicationAdministrationsPage', 10000);
 
+    // Add comprehensive debugging to understand why table doesn't exist
+    browser.execute(function() {
+      const results = {
+        hasPage: document.querySelector('#medicationAdministrationsPage') !== null,
+        hasTable: document.querySelector('#medicationAdministrationsTable') !== null,
+        hasSearchInput: document.querySelector('#medicationAdministrationSearchInput') !== null,
+        sessionPatientId: Session.get('selectedPatientId'),
+        sessionPatient: Session.get('selectedPatient'),
+        allMedicationAdministrations: MedicationAdministrations.find({}).count(),
+        medicationAdministrationsInView: [],
+        pageContent: ''
+      };
+
+      // Get patient info if available
+      if (results.sessionPatient) {
+        results.patientFhirId = results.sessionPatient.id;
+        results.patientName = results.sessionPatient.name?.[0]?.text;
+      }
+
+      // Get all medication administrations with their patient references
+      const allMeds = MedicationAdministrations.find({}).fetch();
+      results.medicationAdministrationsInView = allMeds.map(med => ({
+        _id: med._id,
+        subjectDisplay: med.subject?.display,
+        subjectReference: med.subject?.reference,
+        performerDisplay: med.performer?.[0]?.actor?.display,
+        status: med.status
+      }));
+
+      // Get page text content
+      const pageElement = document.querySelector('#medicationAdministrationsPage');
+      if (pageElement) {
+        results.pageContent = pageElement.textContent.substring(0, 200);
+      }
+
+      return results;
+    }, [], function(result) {
+      console.log('[Test 07 DEBUG] Page state:', JSON.stringify(result.value, null, 2));
+
+      if (!result.value.hasTable) {
+        console.error('[Test 07] TABLE MISSING!');
+        console.error('[Test 07] Patient context:', result.value.sessionPatientId, result.value.patientName);
+        console.error('[Test 07] Total medication administrations:', result.value.allMedicationAdministrations);
+        console.error('[Test 07] Medication administrations in view:', result.value.medicationAdministrationsInView.length);
+
+        if (result.value.medicationAdministrationsInView.length > 0) {
+          console.error('[Test 07] Sample medication administration:', result.value.medicationAdministrationsInView[0]);
+          console.error('[Test 07] PROBLEM: Medication administrations exist but table not rendering!');
+        } else {
+          console.error('[Test 07] PROBLEM: No medication administrations found - patient filter likely excluding data');
+        }
+      }
+    });
+
+    browser.pause(1000); // Give time to read debug output
+
     // Scroll to top to ensure search input is visible
     browser.execute(function() {
       window.scrollTo(0, 0);

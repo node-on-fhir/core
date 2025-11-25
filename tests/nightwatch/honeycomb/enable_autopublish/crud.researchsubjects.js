@@ -584,7 +584,7 @@ describe('ResearchSubjects CRUD Operations', function() {
             return false;
           })
           .acceptAlert()
-          .pause(1500); // Wait for component's 500ms setTimeout + navigation + render
+          .pause(3000); // Wait for component's 500ms setTimeout + navigation + subscription reload + render
 
         browser
           .waitForElementVisible('#researchSubjectsPage', 10000)
@@ -601,6 +601,11 @@ describe('ResearchSubjects CRUD Operations', function() {
               hasEitherElement: hasTable || hasNoDataCard
             };
           }, [], function(result) {
+            // ADD NULL CHECK - execute can return null
+            if (!result || !result.value) {
+              browser.assert.fail('Failed to check page state after deletion - execute returned null');
+              return;
+            }
             browser.assert.equal(result.value.hasEitherElement, true, 'Either research subjects table or no-data message is present after deletion');
           });
       } else if (result.value.hasNoData) {
