@@ -121,6 +121,18 @@ parameters:
             "tests/nightwatch/honeycomb/dev_auto_login/my.profile.js",
             "tests/nightwatch/honeycomb/default/localhost.js"
           ]
+        },
+        {
+          "name": "base-ehr",
+          "tests": [
+            "packages/order-catalog/tests/nightwatch/170.315.a.1.test.js",
+            "packages/order-catalog/tests/nightwatch/170.315.a.2.test.js",
+            "packages/drug-interactions/tests/nightwatch/170.315.a.4.test.js",
+            "packages/implantable-devices/tests/nightwatch/170.315.a.14.test.js",
+            "packages/hipaa-compliance/tests/nightwatch/170.315.d.1.test.js",
+            "packages/clinical-lists/tests/nightwatch/170.315.a.3.test.js",
+            "packages/family-health-history/tests/nightwatch/170.315.a.12.test.js"
+          ]
         }
       ]
 
@@ -565,3 +577,13 @@ workflows:
           name: framework
           group-name: framework
           test-files: "tests/nightwatch/honeycomb/enable_autopublish/simple-sorting-test.js tests/nightwatch/honeycomb/dev_auto_login/my.profile.js tests/nightwatch/honeycomb/default/localhost.js"
+      
+      # ONC Health IT Certification test groups
+      - test-group:
+          name: base-ehr
+          group-name: base-ehr
+          test-files: "packages/order-catalog/tests/nightwatch/170.315.a.1.test.js packages/order-catalog/tests/nightwatch/170.315.a.2.test.js packages/drug-interactions/tests/nightwatch/170.315.a.4.test.js packages/implantable-devices/tests/nightwatch/170.315.a.14.test.js packages/hipaa-compliance/tests/nightwatch/170.315.d.1.test.js packages/clinical-lists/tests/nightwatch/170.315.a.3.test.js packages/family-health-history/tests/nightwatch/170.315.a.12.test.js"
+      
+
+
+            
