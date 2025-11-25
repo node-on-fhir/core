@@ -664,7 +664,8 @@ function DocumentReferenceDetail(props) {
                   Delete
                 </Button>
               )}
-              <Button 
+              <Button
+                id="saveDocumentReferenceButton"
                 onClick={handleSave}
                 variant="contained"
                 color="primary"

@@ -66,7 +66,6 @@ import {
 } from '@mui/icons-material';
 
 import { get, debounce } from 'lodash';
-import { useNavigate } from 'react-router-dom';
 
 // =============================================================================
 // SAMPLE CATALOG DATA
@@ -125,9 +124,7 @@ const MEDICATION_CATALOG = [
 
 function OrderCatalogPage(props) {
   console.log('OrderCatalogPage.render()', props);
-  
-  const navigate = useNavigate();
-  
+
   // State management
   const [orderType, setOrderType] = useState('laboratory');
   const [searchTerm, setSearchTerm] = useState('');

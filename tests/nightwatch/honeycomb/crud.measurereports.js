@@ -400,8 +400,22 @@ describe('MeasureReports CRUD Operations', function() {
     // Search for our specific test measure report
     browser
       .waitForElementVisible('#measureReportSearchInput', 10000)
-      .clearValue('#measureReportSearchInput')
-      .setValue('#measureReportSearchInput', testMeasureReport.identifier)
+      .execute(function(searchValue) {
+        const input = document.querySelector('#measureReportSearchInput');
+        if (input) {
+          // Clear the field
+          input.value = '';
+          input.dispatchEvent(new Event('input', { bubbles: true }));
+          input.dispatchEvent(new Event('change', { bubbles: true }));
+
+          // Set new value
+          input.value = searchValue;
+          input.dispatchEvent(new Event('input', { bubbles: true }));
+          input.dispatchEvent(new Event('change', { bubbles: true }));
+          return true;
+        }
+        return false;
+      }, [testMeasureReport.identifier])
       .pause(2000); // Longer pause for search to complete
     
     browser.execute(function() {
@@ -467,8 +481,22 @@ describe('MeasureReports CRUD Operations', function() {
     // Search for our specific measure report
     browser
       .waitForElementVisible('#measureReportSearchInput', 5000)
-      .clearValue('#measureReportSearchInput')
-      .setValue('#measureReportSearchInput', testMeasureReport.identifier)
+      .execute(function(searchValue) {
+        const input = document.querySelector('#measureReportSearchInput');
+        if (input) {
+          // Clear the field
+          input.value = '';
+          input.dispatchEvent(new Event('input', { bubbles: true }));
+          input.dispatchEvent(new Event('change', { bubbles: true }));
+
+          // Set new value
+          input.value = searchValue;
+          input.dispatchEvent(new Event('input', { bubbles: true }));
+          input.dispatchEvent(new Event('change', { bubbles: true }));
+          return true;
+        }
+        return false;
+      }, [testMeasureReport.identifier])
       .pause(1000);
 
     // Now click on the measure report row
@@ -598,8 +626,22 @@ describe('MeasureReports CRUD Operations', function() {
     // Search for our specific test measure report first
     browser
       .waitForElementVisible('#measureReportSearchInput', 5000)
-      .clearValue('#measureReportSearchInput')
-      .setValue('#measureReportSearchInput', testMeasureReport.identifier.substring(0, 20))
+      .execute(function(searchValue) {
+        const input = document.querySelector('#measureReportSearchInput');
+        if (input) {
+          // Clear the field
+          input.value = '';
+          input.dispatchEvent(new Event('input', { bubbles: true }));
+          input.dispatchEvent(new Event('change', { bubbles: true }));
+
+          // Set new value
+          input.value = searchValue;
+          input.dispatchEvent(new Event('input', { bubbles: true }));
+          input.dispatchEvent(new Event('change', { bubbles: true }));
+          return true;
+        }
+        return false;
+      }, [testMeasureReport.identifier.substring(0, 20)])
       .pause(1000);
 
     // Now click on the measure report to edit
@@ -722,12 +764,22 @@ describe('MeasureReports CRUD Operations', function() {
     browser
       .waitForElementVisible('#measureReportsTable', 10000)
       .waitForElementVisible('#measureReportSearchInput', 10000)
-      .clearValue('#measureReportSearchInput')
-      .pause(1000);
-      
-    // Try searching for the timestamp first to see if any measure report shows up
-    browser
-      .setValue('#measureReportSearchInput', timestamp.toString())
+      .execute(function(searchValue) {
+        const input = document.querySelector('#measureReportSearchInput');
+        if (input) {
+          // Clear the field
+          input.value = '';
+          input.dispatchEvent(new Event('input', { bubbles: true }));
+          input.dispatchEvent(new Event('change', { bubbles: true }));
+
+          // Set new value
+          input.value = searchValue;
+          input.dispatchEvent(new Event('input', { bubbles: true }));
+          input.dispatchEvent(new Event('change', { bubbles: true }));
+          return true;
+        }
+        return false;
+      }, [timestamp.toString()])
       .pause(2000)
       .execute(function() {
         const table = document.querySelector('#measureReportsTable');
@@ -775,8 +827,22 @@ describe('MeasureReports CRUD Operations', function() {
       
     // Now search for the identifier
     browser
-      .clearValue('#measureReportSearchInput')
-      .setValue('#measureReportSearchInput', testMeasureReport.identifier.substring(0, 20))
+      .execute(function(searchValue) {
+        const input = document.querySelector('#measureReportSearchInput');
+        if (input) {
+          // Clear the field
+          input.value = '';
+          input.dispatchEvent(new Event('input', { bubbles: true }));
+          input.dispatchEvent(new Event('change', { bubbles: true }));
+
+          // Set new value
+          input.value = searchValue;
+          input.dispatchEvent(new Event('input', { bubbles: true }));
+          input.dispatchEvent(new Event('change', { bubbles: true }));
+          return true;
+        }
+        return false;
+      }, [testMeasureReport.identifier.substring(0, 20)])
       .pause(2000)
       .execute(function(expectedStatus, expectedType, timestamp) {
         const table = document.querySelector('#measureReportsTable');
