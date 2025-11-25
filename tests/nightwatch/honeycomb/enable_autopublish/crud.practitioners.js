@@ -105,16 +105,18 @@ describe('Practitioners CRUD Operations', function() {
   });
 
   it('02. Verify practitioners list page loads', browser => {
+    // CRITICAL: Use testUtils.navigateUrl instead of browser.url to preserve Session
+    testUtils.navigateUrl(browser, '/practitioners');
+
     browser
-      .url('http://localhost:3000/practitioners')
-      .waitForElementVisible('#practitionersPage', 5000)
+      .waitForElementVisible('#practitionersPage', 10000)
       .pause(1000)
       .execute(function() {
         const hasTable = document.querySelector('#practitionersTable') !== null;
         const hasNoDataCard = document.querySelector('.no-data-card') !== null ||
                             document.querySelector('.no-data-available') !== null ||
                             document.querySelector('[id*="no-data"]') !== null ||
-                            (document.querySelector('#practitionersPage') && 
+                            (document.querySelector('#practitionersPage') &&
                              document.querySelector('#practitionersPage').textContent.includes('No Data Available'));
         return {
           hasTable: hasTable,
@@ -122,6 +124,11 @@ describe('Practitioners CRUD Operations', function() {
           hasEitherElement: hasTable || hasNoDataCard
         };
       }, [], function(result) {
+        // ADD NULL CHECK - execute can return null
+        if (!result || !result.value) {
+          browser.assert.fail('Failed to check practitioners page state - execute returned null');
+          return;
+        }
         browser.assert.equal(result.value.hasEitherElement, true, 'Either practitioners table or no-data message is present');
       })
       .saveScreenshot('tests/nightwatch/screenshots/practitioners/02-practitioners-list.png');
