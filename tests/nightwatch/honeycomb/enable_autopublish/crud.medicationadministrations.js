@@ -461,6 +461,48 @@ describe('MedicationAdministrations CRUD Operations', function() {
     }, [], function(result) {
       console.log('Server-side count after save:', result.value);
     });
+
+    // Verify the medication administration was created with correct patient reference
+    browser.executeAsync(function(patientId, done) {
+      if (typeof MedicationAdministrations !== 'undefined') {
+        const allMeds = MedicationAdministrations.find({}).fetch();
+        const testMed = allMeds.find(m => m.performer?.[0]?.actor?.display?.includes('Smith'));
+
+        done({
+          totalMeds: allMeds.length,
+          foundTestMed: !!testMed,
+          testMedId: testMed?._id,
+          testMedPatientRef: testMed?.subject?.reference,
+          testMedPatientDisplay: testMed?.subject?.display,
+          testMedPerformer: testMed?.performer?.[0]?.actor?.display,
+          expectedPatientId: patientId,
+          allMedsPatientRefs: allMeds.slice(0, 5).map(m => ({
+            performer: m.performer?.[0]?.actor?.display,
+            patientRef: m.subject?.reference
+          }))
+        });
+      } else {
+        done({ error: 'MedicationAdministrations collection not available' });
+      }
+    }, [testPatientId], function(result) {
+      console.log('[Test 04 POST-SAVE] Medication administration check:', JSON.stringify(result.value, null, 2));
+
+      if (!result.value.foundTestMed) {
+        console.error('[Test 04] WARNING: Test medication administration not found after save!');
+        console.error('[Test 04] Total medication administrations:', result.value.totalMeds);
+        console.error('[Test 04] Sample medication administrations:', result.value.allMedsPatientRefs);
+      } else if (!result.value.testMedPatientRef || !result.value.testMedPatientRef.includes(result.value.expectedPatientId)) {
+        console.error('[Test 04] WARNING: Medication administration has wrong patient reference!');
+        console.error('[Test 04] Expected patient ID:', result.value.expectedPatientId);
+        console.error('[Test 04] Actual patient reference:', result.value.testMedPatientRef);
+        console.error('[Test 04] Actual patient display:', result.value.testMedPatientDisplay);
+      } else {
+        console.log('[Test 04] ✓ Medication administration created successfully');
+        console.log('[Test 04] ✓ Patient reference correct:', result.value.testMedPatientRef);
+        console.log('[Test 04] ✓ Performer:', result.value.testMedPerformer);
+        console.log('[Test 04] ✓ Med Admin ID:', result.value.testMedId);
+      }
+    });
   });
 
   it('05. Verify new medication administration appears in list', browser => {

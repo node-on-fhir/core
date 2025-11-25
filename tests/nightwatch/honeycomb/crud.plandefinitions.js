@@ -4,7 +4,7 @@
 
 const loginHelper = require('../helpers/login-helper');
 const saveNavigationHelper = require('../helpers/save-navigation-helper');
-const testUtils = require('./shared-test-utils');
+const testUtils = require('./enable_autopublish/shared-test-utils');
 
 describe('PlanDefinitions CRUD Operations', function() {
   const timestamp = Date.now();

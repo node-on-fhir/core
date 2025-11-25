@@ -227,10 +227,34 @@ describe('Medias CRUD Operations', function() {
           consoleErrors: consoleErrors
         };
       }, [], function(result) {
-        console.log('Page debug info:', JSON.stringify(result.value, null, 2));
+        console.log('[Test 02 DEBUG] Page state:', JSON.stringify(result.value, null, 2));
+
+        // Check URL
+        if (!result.value.currentUrl.includes('/medias')) {
+          console.error('[Test 02] URL check FAILED. Current URL:', result.value.currentUrl);
+        }
+
+        // Check settings
+        if (!result.value.mediasEnabled) {
+          console.error('[Test 02] Medias module NOT enabled in settings!');
+          console.error('[Test 02] Check Meteor.settings.public.modules.fhir.Medias');
+        }
+
+        // Check for 404
+        if (result.value.hasNotFound) {
+          console.error('[Test 02] Page contains 404 or "Page not found" text!');
+          console.error('[Test 02] Page content preview:', result.value.pageContentPreview);
+        }
+
+        // Check if page rendered
+        if (!result.value.hasMediasPage) {
+          console.error('[Test 02] #mediasPage element NOT found in DOM!');
+        }
+
         browser.assert.ok(result.value.currentUrl.includes('/medias'), 'URL contains /medias');
         browser.assert.ok(result.value.mediasEnabled, 'Medias module is enabled in settings');
         browser.assert.ok(!result.value.hasNotFound, 'Page is not showing 404 error');
+        browser.assert.ok(result.value.hasMediasPage, '#mediasPage element exists');
       })
       .waitForElementVisible('#mediasPage', 5000)
       .pause(1000);
