@@ -693,7 +693,22 @@ describe('MedicationRequests CRUD Operations', function() {
       .pause(500)
       .saveScreenshot('tests/nightwatch/screenshots/medicationrequests/08-updated-medicationrequest-form.png');
 
+    // Scroll to bottom to ensure Save button is visible (critical for CI environments)
+    browser.execute(function() {
+      const cardActions = document.querySelector('div[class*="MuiCardActions"]');
+      if (cardActions) {
+        cardActions.scrollIntoView({ behavior: 'smooth', block: 'end' });
+        return { scrolled: true, found: 'CardActions' };
+      }
+      // Fallback: scroll to bottom of page
+      window.scrollTo(0, document.body.scrollHeight);
+      return { scrolled: true, found: 'fallback' };
+    }, [], function(result) {
+      console.log('Scrolled to Save button area:', result.value);
+    });
+
     browser
+      .pause(500) // Wait for scroll animation to complete
       .execute(function() {
         const buttons = document.querySelectorAll('button');
         for (let button of buttons) {

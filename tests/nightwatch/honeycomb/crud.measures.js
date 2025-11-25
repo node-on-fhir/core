@@ -710,7 +710,22 @@ describe('Measures CRUD Operations', function() {
     browser
       .pause(1000)
       .clearValue('#descriptionTextarea')
-      .setValue('#descriptionTextarea', updatedMeasure.description)
+      .setValue('#descriptionTextarea', updatedMeasure.description);
+
+    // Scroll purposeTextarea into view before interacting (critical for CI environments)
+    browser.execute(function() {
+      const element = document.querySelector('#purposeTextarea');
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return { scrolled: true };
+      }
+      return { scrolled: false };
+    }, [], function(result) {
+      console.log('Scrolled purposeTextarea into view:', result.value);
+    });
+
+    browser
+      .pause(500) // Wait for scroll animation to complete
       .clearValue('#purposeTextarea')
       .setValue('#purposeTextarea', updatedMeasure.purpose)
       .pause(500)
