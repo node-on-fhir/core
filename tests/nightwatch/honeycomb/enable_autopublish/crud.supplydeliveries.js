@@ -570,7 +570,7 @@ describe('SupplyDeliveries CRUD Operations', function() {
       .click('#deleteSupplyDeliveryButton')
       .pause(500)
       .acceptAlert()
-      .pause(3000); // Longer wait for async deletion and navigation
+      .pause(5000); // Wait for delete method call + navigation + page mount in CI
 
     // Check for errors and what happened
     browser.execute(function() {
@@ -592,7 +592,8 @@ describe('SupplyDeliveries CRUD Operations', function() {
 
     // Verify we're back on the list page or wait for navigation
     browser
-      .pause(1000)
+      .pause(2000)
+      .waitForElementVisible('#supplyDeliveriesPage', 10000)
       .execute(function() {
         return {
           pathname: window.location.pathname,
@@ -602,10 +603,17 @@ describe('SupplyDeliveries CRUD Operations', function() {
           hasDetailPage: !!document.querySelector('#supplyDeliveryDetailsPage')
         };
       }, [], function(result) {
+        // ADD NULL CHECK - execute can return null
+        if (!result || !result.value) {
+          console.error('[Test 08] execute returned null - page may not be ready');
+          browser.assert.fail('Failed to check page state after deletion - execute returned null');
+          return;
+        }
+
         console.log('[Test 08] After deletion:', result.value);
 
         if (result.value.hasDetailPage) {
-          console.log('WARNING: Still on detail page - deletion may have failed');
+          console.log('WARNING: Still on detail page - deletion may have failed or navigation slow');
         }
 
         browser.assert.ok(

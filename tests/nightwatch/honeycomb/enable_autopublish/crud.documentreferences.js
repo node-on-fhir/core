@@ -1,6 +1,7 @@
 // tests/nightwatch/honeycomb/enable_autopublish/crud.documentreferences.js
 
 const testUtils = require('./shared-test-utils');
+const saveNavigationHelper = require('../../helpers/save-navigation-helper');
 const loginHelper = require('../../helpers/login-helper');
 
 describe('DocumentReferences CRUD Operations', function() {
@@ -1086,64 +1087,151 @@ describe('DocumentReferences CRUD Operations', function() {
 
     browser.pause(500);
 
-    // Save the updated document - look for Save or Update button
-    browser.execute(function() {
-      const buttons = document.querySelectorAll('button');
-      for (let button of buttons) {
-        const buttonText = button.textContent.toLowerCase();
-        if (buttonText.includes('save') || buttonText.includes('update')) {
-          console.log('[Test 07] Found button with text:', button.textContent);
-          button.click();
-          return true;
-        }
-      }
-      console.error('[Test 07] No Save/Update button found. Available buttons:',
-        Array.from(buttons).map(b => b.textContent).join(', '));
-      return false;
+    // Use saveNavigationHelper for reliable save + navigation
+    saveNavigationHelper.saveWithDiagnostics(browser, {
+      resourceType: 'documentReferences',
+      listPageId: '#documentReferencesPage',
+      listPagePath: '/document-references',
+      expectedRedirect: true
     });
 
-    browser.pause(2000);
-    testUtils.navigateUrl(browser, '/document-references');
     browser
-      .waitForElementVisible('#documentReferencesPage', 5000)
-      .pause(500)
+      .pause(1000) // Extra pause for subscription to update with new data
       .saveScreenshot('tests/nightwatch/screenshots/document-references/09-document-reference-updated.png');
+
+    // Verify the update was successful by checking if updated title appears
+    browser
+      .execute(function() {
+        // Scroll to top to make search input visible
+        window.scrollTo(0, 0);
+      })
+      .pause(500);
+
+    browser
+      .waitForElementVisible('#documentReferenceSearchInput', 5000)
+      .clearValue('#documentReferenceSearchInput')
+      .setValue('#documentReferenceSearchInput', testDocumentReference.patientName)
+      .pause(2000); // Wait for search to filter results
+
+    // Debug: Check what's in the table after update
+    browser.execute(function(expectedTitle) {
+      const table = document.querySelector('#documentReferencesTable');
+      if (!table) {
+        return { error: 'Table not found', hasTable: false };
+      }
+
+      const tableText = table.textContent;
+      const hasUpdatedTitle = tableText.includes(expectedTitle);
+
+      // Find all document titles in table
+      const rows = table.querySelectorAll('tbody tr');
+      const foundTitles = [];
+      for (let row of rows) {
+        if (row.textContent.includes('Test Document')) {
+          foundTitles.push(row.textContent.trim());
+        }
+      }
+
+      return {
+        hasTable: true,
+        hasUpdatedTitle: hasUpdatedTitle,
+        foundTitles: foundTitles,
+        searchedFor: expectedTitle
+      };
+    }, [updatedDocumentReference.contentTitle], function(result) {
+      console.log('[Test 07 POST-UPDATE] Table check:', JSON.stringify(result.value, null, 2));
+
+      if (result.value.hasUpdatedTitle) {
+        console.log('[Test 07] ✓ Update successful - updated title appears in table');
+      } else {
+        console.error('[Test 07] ✗ Update may have failed - updated title NOT in table');
+        console.error('[Test 07] Expected:', updatedDocumentReference.contentTitle);
+        console.error('[Test 07] Found titles:', result.value.foundTitles);
+      }
+    });
   });
 
   it('08. Verify updated document reference in list', browser => {
+    // Scroll to top to ensure search input is visible
+    browser
+      .execute(function() {
+        window.scrollTo(0, 0);
+      })
+      .pause(500);
+
     browser
       .waitForElementVisible('#documentReferencesPage', 5000)
       .waitForElementVisible('#documentReferenceSearchInput', 5000)
       .clearValue('#documentReferenceSearchInput')
       .setValue('#documentReferenceSearchInput', testDocumentReference.patientName)
-      .pause(1000)
-      .execute(function(expectedTitle) {
-        const table = document.querySelector('#documentReferencesTable');
-        const rows = table ? table.querySelectorAll('tbody tr') : [];
-        const documentTitles = [];
-        
-        for (let row of rows) {
-          const cells = row.querySelectorAll('td');
-          for (let cell of cells) {
-            // Look for cells that might contain the content title
-            if (cell.textContent.includes('Test Document')) {
-              documentTitles.push(cell.textContent.trim());
-            }
+      .pause(2000); // Wait for search to filter
+
+    // Enhanced debugging to understand what's in table
+    browser.execute(function(expectedTitle, originalTitle) {
+      const table = document.querySelector('#documentReferencesTable');
+
+      if (!table) {
+        return {
+          error: 'Table not found',
+          hasTable: false
+        };
+      }
+
+      const rows = table.querySelectorAll('tbody tr');
+      const documentTitles = [];
+      const allCellContents = [];
+
+      for (let row of rows) {
+        const cells = row.querySelectorAll('td');
+        const rowData = [];
+
+        for (let cell of cells) {
+          const cellText = cell.textContent.trim();
+          rowData.push(cellText);
+
+          // Look for cells that contain document titles
+          if (cellText.includes('Test Document')) {
+            documentTitles.push(cellText);
           }
         }
-        
-        return {
-          rowCount: rows.length,
-          documentTitles: documentTitles,
-          tableText: table ? table.textContent : 'Table not found',
-          foundExpected: table ? table.textContent.includes(expectedTitle) : false
-        };
-      }, [updatedDocumentReference.contentTitle], function(result) {
-        console.log('Table debug info:', result.value);
-        browser.assert.ok(result.value.foundExpected, 
-          `Updated document title '${updatedDocumentReference.contentTitle}' should be in table. Found titles: ${result.value.documentTitles.join(', ')}`);
-      })
-      .saveScreenshot('tests/nightwatch/screenshots/document-references/10-updated-document-reference-in-list.png');
+
+        allCellContents.push(rowData);
+      }
+
+      const tableText = table.textContent;
+      const hasUpdatedTitle = tableText.includes(expectedTitle);
+      const hasOriginalTitle = tableText.includes(originalTitle);
+
+      return {
+        hasTable: true,
+        rowCount: rows.length,
+        documentTitles: documentTitles,
+        allCellContents: allCellContents,
+        hasUpdatedTitle: hasUpdatedTitle,
+        hasOriginalTitle: hasOriginalTitle,
+        expectedTitle: expectedTitle,
+        originalTitle: originalTitle
+      };
+    }, [updatedDocumentReference.contentTitle, testDocumentReference.contentTitle], function(result) {
+      console.log('[Test 08] Table verification:', JSON.stringify(result.value, null, 2));
+
+      if (result.value.hasUpdatedTitle) {
+        console.log('[Test 08] ✓ PASS - Updated title found in table');
+      } else if (result.value.hasOriginalTitle) {
+        console.error('[Test 08] ✗ FAIL - Original title found, but NOT updated title');
+        console.error('[Test 08] This means the update did NOT persist to the database');
+        console.error('[Test 08] Expected:', result.value.expectedTitle);
+        console.error('[Test 08] Found:', result.value.documentTitles);
+      } else {
+        console.error('[Test 08] ✗ FAIL - Neither original nor updated title found');
+        console.error('[Test 08] Document may have been deleted or search is wrong');
+        console.error('[Test 08] All cell contents:', result.value.allCellContents);
+      }
+
+      browser.assert.ok(result.value.hasUpdatedTitle,
+        `Updated document title '${updatedDocumentReference.contentTitle}' should be in table. Found titles: ${result.value.documentTitles.join(', ')}`);
+    })
+    .saveScreenshot('tests/nightwatch/screenshots/document-references/10-updated-document-reference-in-list.png');
   });
 
   it('09. Delete document reference', browser => {

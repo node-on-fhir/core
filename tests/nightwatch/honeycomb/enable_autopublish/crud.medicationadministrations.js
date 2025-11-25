@@ -567,14 +567,49 @@ describe('MedicationAdministrations CRUD Operations', function() {
       .assert.elementPresent('#category')
       .saveScreenshot('tests/nightwatch/screenshots/medicationadministrations/07-view-medicationadministration-details.png');
 
-    // Use navigateUrl to preserve Session
-    testUtils.navigateUrl(browser, '/medication-administrations');
+    // DEBUG: Check data state at END of test 06
+    browser.execute(function() {
+      if (typeof MedicationAdministrations !== 'undefined') {
+        const allMeds = MedicationAdministrations.find({}).fetch();
+        const smithMeds = allMeds.filter(m => m.performer?.[0]?.actor?.display?.includes('Smith'));
 
-    browser
-      .waitForElementVisible('#medicationAdministrationsPage', 10000);
+        console.log('[Test 06 END] Total medication administrations:', allMeds.length);
+        console.log('[Test 06 END] Smith medication administrations:', smithMeds.length);
+
+        if (smithMeds.length > 0) {
+          console.log('[Test 06 END] ✓ Test medication administration still exists');
+          console.log('[Test 06 END] Performer:', smithMeds[0].performer?.[0]?.actor?.display);
+          console.log('[Test 06 END] ID:', smithMeds[0]._id);
+        } else {
+          console.error('[Test 06 END] ✗ Test medication administration DISAPPEARED!');
+        }
+      }
+    });
+
+    // DON'T navigate back - let test 07 handle its own navigation
+    // This avoids race conditions and double-navigation issues
   });
 
   it('07. Update existing medication administration', browser => {
+    // DEBUG: Check data state at START of test 07 (BEFORE navigation)
+    browser.execute(function() {
+      if (typeof MedicationAdministrations !== 'undefined') {
+        const allMeds = MedicationAdministrations.find({}).fetch();
+        const smithMeds = allMeds.filter(m => m.performer?.[0]?.actor?.display?.includes('Smith'));
+
+        console.log('[Test 07 START PRE-NAV] Total medication administrations:', allMeds.length);
+        console.log('[Test 07 START PRE-NAV] Smith medication administrations:', smithMeds.length);
+
+        if (smithMeds.length > 0) {
+          console.log('[Test 07 START PRE-NAV] ✓ Test medication administration exists before navigation');
+        } else {
+          console.error('[Test 07 START PRE-NAV] ✗ Test medication administration MISSING before navigation!');
+        }
+      }
+    });
+
+    browser.pause(500); // Let debug output print
+
     // CRITICAL: Navigate to page at test start - don't assume we're there from test 06
     // Each test should be self-contained and establish its own initial state
     testUtils.navigateUrl(browser, '/medication-administrations');
@@ -582,6 +617,25 @@ describe('MedicationAdministrations CRUD Operations', function() {
     browser
       .waitForElementVisible('#medicationAdministrationsPage', 10000)
       .pause(500); // Let page stabilize
+
+    // DEBUG: Check data state AFTER navigation but BEFORE patient context re-establishment
+    browser.execute(function() {
+      if (typeof MedicationAdministrations !== 'undefined') {
+        const allMeds = MedicationAdministrations.find({}).fetch();
+        const smithMeds = allMeds.filter(m => m.performer?.[0]?.actor?.display?.includes('Smith'));
+
+        console.log('[Test 07 POST-NAV] Total medication administrations:', allMeds.length);
+        console.log('[Test 07 POST-NAV] Smith medication administrations:', smithMeds.length);
+
+        if (smithMeds.length > 0) {
+          console.log('[Test 07 POST-NAV] ✓ Test medication administration exists after navigation');
+        } else {
+          console.error('[Test 07 POST-NAV] ✗ Test medication administration MISSING after navigation!');
+        }
+      }
+    });
+
+    browser.pause(500); // Let debug output print
 
     // Re-establish patient context using server-side fetch
     browser.executeAsync(function(patientId, done) {
@@ -608,7 +662,7 @@ describe('MedicationAdministrations CRUD Operations', function() {
     }, [testPatientId]);
 
     browser
-      .pause(2000) // Longer pause for subscription to update after patient context set
+      .pause(5000) // Extended pause for subscription to update after patient context set (CI needs more time)
       .waitForElementVisible('#medicationAdministrationsPage', 10000);
 
     // Add comprehensive debugging to understand why table doesn't exist
