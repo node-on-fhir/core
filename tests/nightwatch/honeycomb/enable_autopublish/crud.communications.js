@@ -826,6 +826,30 @@ describe('Communications CRUD Operations', function() {
       .pause(500)
       .saveScreenshot('tests/nightwatch/screenshots/communications/08-updated-communication-form.png');
 
+    // Wait for edit mode to fully activate - verify Save button appears
+    browser
+      .waitForElementVisible('button', 10000)
+      .pause(500); // Additional stability pause for CI environment
+
+    // Verify edit mode is active by checking Save button state
+    browser.execute(function() {
+      const buttons = document.querySelectorAll('button');
+      let saveButton = null;
+      for (let button of buttons) {
+        if (button.textContent.includes('Save')) {
+          saveButton = button;
+          break;
+        }
+      }
+      return {
+        hasSaveButton: !!saveButton,
+        saveButtonEnabled: saveButton && !saveButton.disabled
+      };
+    }, [], function(result) {
+      browser.assert.equal(result.value.hasSaveButton, true, 'Save button exists');
+      browser.assert.equal(result.value.saveButtonEnabled, true, 'Save button is enabled');
+    });
+
     browser
       .execute(function() {
         const buttons = document.querySelectorAll('button');
