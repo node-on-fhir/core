@@ -37,10 +37,18 @@ import {
   QuestionMark as UnknownIcon
 } from '@mui/icons-material';
 import { Meteor } from 'meteor/meteor';
-import { useNavigate } from 'react-router-dom';
 
-function FamilyHealthHistoryPage() {
-  const navigate = useNavigate();
+export function FamilyHealthHistoryPage() {
+  // Use Meteor's navigation pattern instead of React Router's useNavigate
+  // to avoid Router context issues during package initialization
+  const navigate = (path) => {
+    if (typeof Meteor.navigate === 'function') {
+      Meteor.navigate(path);
+    } else {
+      console.warn('Meteor.navigate not available, falling back to window.location');
+      window.location.href = path;
+    }
+  };
   
   // State
   const [familyTreeData, setFamilyTreeData] = useState(null);
