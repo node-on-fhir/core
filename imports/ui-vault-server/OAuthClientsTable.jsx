@@ -25,8 +25,9 @@ function dehydrateOauthClient(input){
   let result = {};
 
   result.software_statement = get(input, 'software_statement');
-  
+
   result._id = get(input, '_id');
+  result.client_id = get(input, 'client_id');
   result.iss = get(input, 'iss');
   result.sub = get(input, 'sub');
   result.aud = get(input, 'aud');
@@ -36,8 +37,23 @@ function dehydrateOauthClient(input){
   result.client_name = get(input, 'client_name');
   result.tos_uri = get(input, 'tos_uri');
   result.token_endpoint_auth_method = get(input, 'token_endpoint_auth_method');
+  result.pkce_enabled = get(input, 'pkce_enabled', false);
+  result.has_secret = !!get(input, 'client_secret');
 
   result.created_at = get(input, 'created_at');
+
+  // Determine auth type for display
+  const authMethod = get(input, 'token_endpoint_auth_method', '');
+  if(authMethod === 'none'){
+    result.auth_type = 'Public';
+  } else if(authMethod === 'private_key_jwt'){
+    result.auth_type = 'Asymmetric';
+  } else if(authMethod.includes('client_secret')){
+    result.auth_type = 'Symmetric';
+  } else {
+    result.auth_type = authMethod;
+  }
+
   return result;
 }
 
@@ -87,6 +103,7 @@ function OAuthClientsTable(props){
 
     hideStatus,
     hideId,
+    hideClientId,
     hideIss,
     hideExp,
     hideClientName,
@@ -94,6 +111,9 @@ function OAuthClientsTable(props){
     hideCreatedAt,
     hideValidated,
     hideButton,
+    hideAuthType,
+    hidePkce,
+    hideHasSecret,
   
 
     onCellClick,
@@ -455,6 +475,66 @@ function OAuthClientsTable(props){
     }
   }
 
+  function renderAuthType(authType){
+    if (!hideAuthType) {
+      return (
+        <TableCell className='authType'>{ authType }</TableCell>
+      );
+    }
+  }
+  function renderAuthTypeHeader(){
+    if (!hideAuthType) {
+      return (
+        <TableCell>Auth Type</TableCell>
+      );
+    }
+  }
+
+  function renderPkce(pkceEnabled){
+    if (!hidePkce) {
+      return (
+        <TableCell className='pkce'>{ pkceEnabled ? 'Yes' : 'No' }</TableCell>
+      );
+    }
+  }
+  function renderPkceHeader(){
+    if (!hidePkce) {
+      return (
+        <TableCell>PKCE</TableCell>
+      );
+    }
+  }
+
+  function renderHasSecret(hasSecret){
+    if (!hideHasSecret) {
+      return (
+        <TableCell className='hasSecret'>{ hasSecret ? 'Yes' : 'No' }</TableCell>
+      );
+    }
+  }
+  function renderHasSecretHeader(){
+    if (!hideHasSecret) {
+      return (
+        <TableCell>Has Secret</TableCell>
+      );
+    }
+  }
+
+  function renderClientId(clientId){
+    if (!hideClientId) {
+      return (
+        <TableCell className='clientId'>{ clientId }</TableCell>
+      );
+    }
+  }
+  function renderClientIdHeader(){
+    if (!hideClientId) {
+      return (
+        <TableCell>Client ID</TableCell>
+      );
+    }
+  }
+
   //---------------------------------------------------------------------
   // Pagination
 
@@ -557,8 +637,11 @@ function OAuthClientsTable(props){
           { renderCheckbox(oauthClientsToRender[i]) }
           { renderActionIcons(oauthClientsToRender[i]) }
 
-          { renderValidated(oauthClientsToRender[i].validated) }
           { renderClientName(oauthClientsToRender[i].client_name) }
+          { renderClientId(oauthClientsToRender[i].client_id) }
+          { renderAuthType(oauthClientsToRender[i].auth_type) }
+          { renderPkce(oauthClientsToRender[i].pkce_enabled) }
+          { renderHasSecret(oauthClientsToRender[i].has_secret) }
           { renderIss(oauthClientsToRender[i].iss) }
           { renderCreatedAt(oauthClientsToRender[i].created_at) }
           { renderExp(oauthClientsToRender[i].exp) }
@@ -581,8 +664,11 @@ function OAuthClientsTable(props){
             { renderCheckboxHeader() }
             { renderActionIconsHeader() }
 
-            { renderValidatedHeader() }
             { renderClientNameHeader() }
+            { renderClientIdHeader() }
+            { renderAuthTypeHeader() }
+            { renderPkceHeader() }
+            { renderHasSecretHeader() }
             { renderIssHeader() }
             { renderCreatedAtHeader() }
             { renderExpHeader() }
@@ -625,10 +711,14 @@ OAuthClientsTable.propTypes = {
   hideValidated: PropTypes.bool,
   hideButton: PropTypes.bool,
   hideId: PropTypes.bool,
+  hideClientId: PropTypes.bool,
   hideIss: PropTypes.bool,
   hideExp: PropTypes.bool,
   hideClientName: PropTypes.bool,
   hideCreatedAt: PropTypes.bool,
+  hideAuthType: PropTypes.bool,
+  hidePkce: PropTypes.bool,
+  hideHasSecret: PropTypes.bool,
 
   onCellClick: PropTypes.func,
   onRowClick: PropTypes.func,
@@ -653,11 +743,15 @@ OAuthClientsTable.defaultProps = {
 
   hideStatus: false,
   hideId: true,
+  hideClientId: false,
   hideIss: false,
   hideExp: false,
   hideClientName: false,
-  hideValidated: false,
+  hideValidated: true,
   hideButton: false,
+  hideAuthType: false,
+  hidePkce: false,
+  hideHasSecret: false,
 
 
   checklist: true,

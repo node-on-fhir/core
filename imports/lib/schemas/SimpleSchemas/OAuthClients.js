@@ -137,6 +137,38 @@ OAuthClientSchema =  new SimpleSchema({
     type: Date,
     optional: true
   },
+  "response_types": {
+    type: Array,
+    optional: true
+  },
+  "response_types.$": {
+    type: String,
+    optional: true
+  },
+  "jwks_uri": {
+    type: String,
+    optional: true
+  },
+  "launch_uri": {
+    type: String,
+    optional: true
+  },
+  "pkce_enabled": {
+    type: Boolean,
+    optional: true,
+    defaultValue: false
+  },
+  "pkce_method": {
+    type: String,
+    optional: true,
+    allowedValues: ['S256', 'plain']
+  },
+  "auth_request_method": {
+    type: String,
+    optional: true,
+    allowedValues: ['GET', 'POST'],
+    defaultValue: 'GET'
+  }
 });
 
 OAuthClients.attachSchema(OAuthClientSchema);

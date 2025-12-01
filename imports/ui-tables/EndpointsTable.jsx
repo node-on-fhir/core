@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 
-// import { logger } from 'winston';
+import { logger } from '/client/ClientLogger';
 
-import { 
+import {
   Checkbox,
   Table,
   TableBody,

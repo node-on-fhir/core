@@ -2,7 +2,6 @@
 
 // React and UI components imports
 import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
 import { useTracker } from 'meteor/react-meteor-data';
@@ -47,6 +46,7 @@ const BASE_EHR_CRITERIA = [
   '170.315(a)(2)', // CPOE - Laboratory
   '170.315(a)(3)', // CPOE - Diagnostic Imaging
   '170.315(a)(5)', // Demographics
+  '170.315(a)(12)', // Family Health History
   '170.315(a)(14)', // Implantable Device List
   '170.315(b)(1)', // Transitions of Care
   '170.315(c)(1)', // Clinical Quality Measures - Record and Export
@@ -59,19 +59,19 @@ const BASE_EHR_CRITERIA = [
 // Conformance Test Tools
 const CONFORMANCE_TEST_TOOLS = [
   {
-    name: 'C-CDA Validator',
-    description: 'Validates C-CDA documents for conformance to standards',
-    criteria: ['170.315(b)(1)', '170.315(g)(6)'],
-    type: 'Document Validation',
-    url: 'https://site.healthit.gov/sandbox-ccda/ccda-validator/',
-    available: true
-  },
-  {
     name: 'FHIR API Test Kit (Inferno)',
     description: 'Tests FHIR API conformance for (g)(10) certification',
     criteria: ['170.315(g)(10)'],
     type: 'API Testing',
     url: 'https://inferno.healthit.gov/inferno/',
+    available: true
+  },
+  {
+    name: 'C-CDA Validator',
+    description: 'Validates C-CDA documents for conformance to standards',
+    criteria: ['170.315(b)(1)', '170.315(g)(6)'],
+    type: 'Document Validation',
+    url: 'https://site.healthit.gov/sandbox-ccda/ccda-validator/',
     available: true
   },
   {
@@ -191,7 +191,7 @@ const CERTIFICATION_CRITERIA = [
     hasAlgorithms: true,
     isImplemented: true,
     isV3: true,
-    hasTests: true,
+    hasTests: false,
     hasValidated: false,
     package: 'clinical-lists',
     guide: 'https://www.healthit.gov/test-method/problem-list',
@@ -203,7 +203,7 @@ const CERTIFICATION_CRITERIA = [
     hasAlgorithms: true,
     isImplemented: true,
     isV3: true,
-    hasTests: true,
+    hasTests: false,
     hasValidated: false,
     package: 'clinical-lists',
     guide: 'https://www.healthit.gov/test-method/medication-list',
@@ -215,7 +215,7 @@ const CERTIFICATION_CRITERIA = [
     hasAlgorithms: true,
     isImplemented: true,
     isV3: true,
-    hasTests: true,
+    hasTests: false,
     hasValidated: false,
     package: 'clinical-lists',
     guide: 'https://www.healthit.gov/test-method/medication-allergy-list',
@@ -239,7 +239,7 @@ const CERTIFICATION_CRITERIA = [
     hasAlgorithms: true,
     isImplemented: true,
     isV3: true,
-    hasTests: true,
+    hasTests: false,
     hasValidated: false,
     package: 'drug-formulary',
     guide: 'https://www.healthit.gov/test-method/drug-formulary-and-preferred-drug-list-checks',
@@ -914,7 +914,7 @@ const CERTIFICATION_CRITERIA = [
     hasAlgorithms: true,
     isImplemented: true,
     isV3: true,
-    hasTests: true,
+    hasTests: false,
     hasValidated: false,
     package: 'secure-messaging',
     guide: 'https://www.healthit.gov/test-method/direct-project',
@@ -939,10 +939,7 @@ const CERTIFICATION_CRITERIA = [
 
 function ReferenceAppPage(props) {
   console.log('ReferenceAppPage.render()', props);
-  
-  // Navigation
-  const navigate = useNavigate();
-  
+
   // State management
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState(null);
@@ -1045,7 +1042,7 @@ function ReferenceAppPage(props) {
             <Card variant="outlined" sx={{ flex: 1 }}>
               <CardContent sx={{ textAlign: 'center', py: 3 }}>
                 <Typography color="text.secondary" variant="body2" sx={{ mb: 1, fontWeight: 500 }}>
-                  Tests
+                  Section Tests
                 </Typography>
                 <Typography variant="h4" color="info.main" sx={{ fontWeight: 600 }}>
                   {CERTIFICATION_CRITERIA.filter(c => c.hasTests).length}/{CERTIFICATION_CRITERIA.length}
@@ -1055,7 +1052,7 @@ function ReferenceAppPage(props) {
             <Card variant="outlined" sx={{ flex: 1 }}>
               <CardContent sx={{ textAlign: 'center', py: 3 }}>
                 <Typography color="text.secondary" variant="body2" sx={{ mb: 1, fontWeight: 500 }}>
-                  Tests Progress
+                  Section Tests Progress
                 </Typography>
                 <Typography variant="h4" color="info.main" sx={{ fontWeight: 600 }}>
                   {Math.round((CERTIFICATION_CRITERIA.filter(c => c.hasTests).length / CERTIFICATION_CRITERIA.length) * 100)}%
@@ -1118,9 +1115,9 @@ function ReferenceAppPage(props) {
                       <TableRow>
                         <TableCell sx={{ fontSize: '0.75rem', py: 1 }}>Criterion</TableCell>
                         <TableCell sx={{ fontSize: '0.75rem', py: 1 }}>Package</TableCell>
-                        <TableCell sx={{ fontSize: '0.75rem', py: 1 }}>Implemented</TableCell>
                         <TableCell sx={{ fontSize: '0.75rem', py: 1 }} align="center">v3</TableCell>
-                        <TableCell sx={{ fontSize: '0.75rem', py: 1 }} align="center">Tests</TableCell>
+                        <TableCell sx={{ fontSize: '0.75rem', py: 1 }} align="center">TDD</TableCell>
+                        <TableCell sx={{ fontSize: '0.75rem', py: 1 }} align="center">CircleCI</TableCell>
                         <TableCell sx={{ fontSize: '0.75rem', py: 1 }} align="center">Validated</TableCell>
                       </TableRow>
                     </TableHead>
@@ -1145,7 +1142,13 @@ function ReferenceAppPage(props) {
                                 label={criterion.package}
                                 size="small"
                                 clickable
-                                onClick={() => navigate(criterion.link)}
+                                onClick={() => {
+                                  if (Meteor.navigate) {
+                                    Meteor.navigate(criterion.link);
+                                  } else {
+                                    console.warn('Meteor.navigate not available');
+                                  }
+                                }}
                                 sx={{ fontFamily: 'monospace', fontSize: '0.65rem' }}
                               />
                             ) : (
@@ -1157,30 +1160,30 @@ function ReferenceAppPage(props) {
                               />
                             )}
                           </TableCell>
-                          <TableCell sx={{ py: 1 }}>
-                            {criterion.isImplemented ? (
-                              <CheckCircleIcon color="success" fontSize="small" />
-                            ) : (
-                              <RadioButtonUncheckedIcon color="disabled" fontSize="small" />
-                            )}
-                          </TableCell>
                           <TableCell align="center" sx={{ py: 1 }}>
                             {criterion.isV3 ? (
-                              <CheckCircleIcon color="info" fontSize="small" />
+                              <CheckCircleIcon color="success" fontSize="small" />
                             ) : (
                               <RadioButtonUncheckedIcon color="disabled" fontSize="small" />
                             )}
                           </TableCell>
                           <TableCell align="center" sx={{ py: 1 }}>
                             {criterion.hasTests ? (
-                              <CheckCircleIcon color="info" fontSize="small" />
+                              <CheckCircleIcon color="success" fontSize="small" />
+                            ) : (
+                              <RadioButtonUncheckedIcon color="disabled" fontSize="small" />
+                            )}
+                          </TableCell>
+                          <TableCell align="center" sx={{ py: 1 }}>
+                            {criterion.hasTests ? (
+                              <CheckCircleIcon color="success" fontSize="small" />
                             ) : (
                               <RadioButtonUncheckedIcon color="disabled" fontSize="small" />
                             )}
                           </TableCell>
                           <TableCell align="center" sx={{ py: 1 }}>
                             {criterion.hasValidated ? (
-                              <CheckCircleIcon color="success" fontSize="small" />
+                              <CheckCircleIcon color="info" fontSize="small" />
                             ) : (
                               <RadioButtonUncheckedIcon color="disabled" fontSize="small" />
                             )}
@@ -1244,9 +1247,9 @@ function ReferenceAppPage(props) {
                       <TableRow>
                         <TableCell sx={{ fontSize: '0.75rem', py: 1 }}>Criterion</TableCell>
                         <TableCell sx={{ fontSize: '0.75rem', py: 1 }}>Package</TableCell>
-                        <TableCell sx={{ fontSize: '0.75rem', py: 1 }}>Implemented</TableCell>
                         <TableCell sx={{ fontSize: '0.75rem', py: 1 }} align="center">v3</TableCell>
-                        <TableCell sx={{ fontSize: '0.75rem', py: 1 }} align="center">Tests</TableCell>
+                        <TableCell sx={{ fontSize: '0.75rem', py: 1 }} align="center">TDD</TableCell>
+                        <TableCell sx={{ fontSize: '0.75rem', py: 1 }} align="center">CircleCI</TableCell>
                         <TableCell sx={{ fontSize: '0.75rem', py: 1 }} align="center">Validated</TableCell>
                       </TableRow>
                     </TableHead>
@@ -1254,7 +1257,7 @@ function ReferenceAppPage(props) {
                       {CERTIFICATION_CRITERIA
                         .filter(criterion => !BASE_EHR_CRITERIA.includes(criterion.id))
                         .map((criterion) => (
-                        <TableRow 
+                        <TableRow
                           key={criterion.id}
                         >
                           <TableCell sx={{ py: 1 }}>
@@ -1271,7 +1274,13 @@ function ReferenceAppPage(props) {
                                 label={criterion.package}
                                 size="small"
                                 clickable
-                                onClick={() => navigate(criterion.link)}
+                                onClick={() => {
+                                  if (Meteor.navigate) {
+                                    Meteor.navigate(criterion.link);
+                                  } else {
+                                    console.warn('Meteor.navigate not available');
+                                  }
+                                }}
                                 sx={{ fontFamily: 'monospace', fontSize: '0.65rem' }}
                               />
                             ) : (
@@ -1283,16 +1292,9 @@ function ReferenceAppPage(props) {
                               />
                             )}
                           </TableCell>
-                          <TableCell sx={{ py: 1 }}>
-                            {criterion.isImplemented ? (
-                              <CheckCircleIcon color="success" fontSize="small" />
-                            ) : (
-                              <RadioButtonUncheckedIcon color="disabled" fontSize="small" />
-                            )}
-                          </TableCell>
                           <TableCell align="center" sx={{ py: 1 }}>
                             {criterion.isV3 ? (
-                              <CheckCircleIcon color="info" fontSize="small" />
+                              <CheckCircleIcon color="success" fontSize="small" />
                             ) : (
                               <RadioButtonUncheckedIcon color="disabled" fontSize="small" />
                             )}
@@ -1305,8 +1307,11 @@ function ReferenceAppPage(props) {
                             )}
                           </TableCell>
                           <TableCell align="center" sx={{ py: 1 }}>
+                            <RadioButtonUncheckedIcon color="disabled" fontSize="small" />
+                          </TableCell>
+                          <TableCell align="center" sx={{ py: 1 }}>
                             {criterion.hasValidated ? (
-                              <CheckCircleIcon color="success" fontSize="small" />
+                              <CheckCircleIcon color="info" fontSize="small" />
                             ) : (
                               <RadioButtonUncheckedIcon color="disabled" fontSize="small" />
                             )}
@@ -1365,22 +1370,43 @@ function ReferenceAppPage(props) {
                 </Typography>
                 
                 {CONFORMANCE_TEST_TOOLS.map((tool, index) => (
-                  <Paper 
-                    key={index} 
-                    variant="outlined" 
+                  <Paper
+                    key={index}
+                    variant="outlined"
                     sx={{ p: 2, mb: 2, '&:last-child': { mb: 0 } }}
                   >
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
                       <Typography variant="subtitle2" sx={{ flex: 1 }}>
                         {tool.name}
                       </Typography>
-                      {tool.available && tool.url && (
+                      {tool.available && index === 0 && (
+                        <Button
+                          size="small"
+                          variant="outlined"
+                          onClick={() => {
+                            if (Meteor.navigate) {
+                              Meteor.navigate('/g10-certification');
+                            } else {
+                              console.warn('Meteor.navigate not available');
+                            }
+                          }}
+                          sx={{
+                            minWidth: 'auto',
+                            px: 1,
+                            py: 0.5,
+                            fontSize: '0.7rem'
+                          }}
+                        >
+                          Begin
+                        </Button>
+                      )}
+                      {tool.available && tool.url && index !== 0 && (
                         <Button
                           size="small"
                           variant="outlined"
                           startIcon={<LaunchIcon />}
                           onClick={() => window.open(tool.url, '_blank', 'noopener,noreferrer')}
-                          sx={{ 
+                          sx={{
                             minWidth: 'auto',
                             px: 1,
                             py: 0.5,

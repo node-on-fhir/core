@@ -30,7 +30,7 @@ import { accountsClient } from './Accounts';
 import { get } from 'lodash';
 import jwt from 'jsonwebtoken';
 
-import { log, message } from '../Logger';
+import { log, message } from '/client/ClientLogger';
 
 const useStyles = makeStyles(theme => ({
   cardContent: {

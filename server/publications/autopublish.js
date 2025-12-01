@@ -196,33 +196,17 @@ if (finalAutopublishEnabled) {
 if (finalAutopublishEnabled) {
 
   console.log('[Autopublish] Starting autopublish setup, checking Devices...');
-  console.log('[Autopublish] Devices in collectionsMap:', collectionsMap['Devices']);
+  // console.log('[Autopublish] Devices in collectionsMap:', collectionsMap['Devices']);
   console.log('[Autopublish] Devices type:', typeof collectionsMap['Devices']);
-  if (collectionsMap['Devices']) {
-    console.log('[Autopublish] Devices._collection exists:', !!collectionsMap['Devices']._collection);
-    console.log('[Autopublish] Devices._collection value:', collectionsMap['Devices']._collection);
-  }
 
   // Create publications for each collection
   Object.keys(collectionsMap).forEach(function(collectionName) {
     const collection = collectionsMap[collectionName];
 
-    // Debug logging for Devices
-    if (collectionName === 'Devices') {
-      console.log('[Autopublish] Devices collection:', collection);
-      console.log('[Autopublish] Devices._collection:', collection ? collection._collection : 'collection is undefined');
-    }
-
     if (collection && collection._collection) {
       // Check if this collection should be published based on settings
       const resourceConfig = get(Meteor, `settings.private.fhir.rest.${collectionName.slice(0, -1)}`, {});
       const shouldPublish = get(resourceConfig, 'publication', true);
-
-      // Debug logging for Devices
-      if (collectionName === 'Devices') {
-        console.log('[Autopublish] Devices resourceConfig:', resourceConfig);
-        console.log('[Autopublish] Devices shouldPublish:', shouldPublish);
-      }
 
       if (shouldPublish) {
         const publicationName = `autopublish.${collectionName}`;

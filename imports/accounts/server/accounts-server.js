@@ -147,7 +147,7 @@ export const AccountsServer = {
       return;
     }
     
-    logger.debug('Accounts object:', Object.keys(Accounts || {}));
+    // logger.debug('Accounts object:', Object.keys(Accounts || {}));
     
     // Validate new users
     // TODO: In Meteor 3, validateNewUser might not be available immediately

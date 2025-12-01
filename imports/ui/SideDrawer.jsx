@@ -24,7 +24,7 @@ import { get, has, cloneDeep } from 'lodash';
 import PatientSidebar from '../patient/PatientSidebar'
 
 // import theme from '../Theme';
-import { logger } from '../Logger';
+import { logger } from '/client/ClientLogger';
 // import useStyles from '../Styles';
 
 import clsx from 'clsx';

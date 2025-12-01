@@ -5,6 +5,9 @@ console.log('[server/main.js] TEST_RUN:', process.env.TEST_RUN);
 console.log('[server/main.js] ENABLE_SYNCED_CRON:', process.env.ENABLE_SYNCED_CRON);
 console.log('==========================================================================================');
 
+// Initialize global.Collections early so packages can check for its existence
+global.Collections = {};
+
 // import './ServerSideRendering.js';
 // import './AccountsServer.js';
 // import './SmartHealthCards.js';
@@ -249,7 +252,8 @@ global.FhirDehydrator = FhirDehydrator;
 global.LayoutHelpers = LayoutHelpers;
 global.HipaaLogger = HipaaLogger;
 
-global.Collections = {
+// Populate global.Collections with all FHIR resource collections
+Object.assign(global.Collections, {
   ActivityDefinitions,
   AllergyIntolerances,
   Appointments,
@@ -305,7 +309,7 @@ global.Collections = {
   ServiceRequests,
   Tasks,
   ValueSets
-}
+});
 
 
 

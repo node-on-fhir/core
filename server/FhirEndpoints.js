@@ -132,7 +132,7 @@ function initializeAccessControl() {
   // Load consent records
   Consents.find({'category.coding.code': 'IDSCL'}).forEach(function(consentRecord){
     let aclRecord = FhirUtilities.consentIntoAccessControl(consentRecord);
-    console.log('Converting Consent to ACL record:', aclRecord);
+    console.log('Converting Consent to ACL record:', JSON.stringify(aclRecord));
     accessControlList.push(aclRecord);
   });
 

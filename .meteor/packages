@@ -46,27 +46,36 @@ fetch
 # symptomatic:symptom-tracking
 # symptomatic:mcp
 
-# trialx:hermes-tooling
-
-# clinical:vital-signs
-# clinical:checklist-manifesto
-# clinical:clinical-documents
-# clinical:consent-generator
-# clinical:cqm-reporting
-# clinical:deqm
-# clinical:direct-messaging
-# clinical:drug-interactions
-# clinical:healthcare-surveys
-# clinical:lab-order-entry
-# clinical:patient-matching
+clinical:reference-app
+# clinical:secure-messaging
 # clinical:request-for-corrections
-# clinical:provider-directory
-# clinical:saner
-# clinical:workqueues
+# clinical:ccda-export
+# clinical:e-prescribing
+# clinical:quality-measures
+# clinical:clinical-lists
+# clinical:drug-formulary
+# clinical:syndromic-surveillance
+# clinical:social-determinants
+# clinical:structured-data-capture
+# clinical:case-reporting
+# linical:cancer-registry-reporting
+# clinical:lab-test-reporting
+# clinical:immunization-registry
+# clinical:antimicrobial-reporting
+clinical:pacio-core
+# clinical:accounts-management
+# clinical:multi-factor-auth
+# clinical:patient-matching
 
-# Base EHR
-# clinical:order-catalog
-# clinical:family-health-history
-
+clinical:family-health-history
+clinical:order-catalog
+# clinical:hipaa-compliance
+# clinical:implantable-devices
+# clinical:drug-interactions
 
 rspack@1.0.0-beta340.12
+
+
+
+
+

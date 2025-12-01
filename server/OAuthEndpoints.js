@@ -591,12 +591,40 @@ WebApp.handlers.post("/oauth/registration", async (req, res) => {
     }
   } else {
     if (req.body) {
-      const oauthClientRecord = { ...req.body, verified: false, created_at: new Date() };
+      // Generate client_secret for confidential clients
+      let client_secret = null;
+      const authMethod = get(req.body, 'token_endpoint_auth_method', 'client_secret_basic');
+
+      if(['client_secret_basic', 'client_secret_post'].includes(authMethod)){
+        // Generate a strong random secret (two Random IDs concatenated)
+        client_secret = Random.id() + Random.id();
+      }
+
+      const oauthClientRecord = {
+        ...req.body,
+        client_secret: client_secret,
+        verified: false,
+        created_at: new Date()
+      };
+
       const clientId = await OAuthClients.insertAsync(oauthClientRecord);
 
-      console.log('clientId', clientId)
+      console.log('clientId', clientId);
+      console.log('Generated client_secret for confidential client:', !!client_secret);
+
+      // Return response with client_secret if generated
+      const response = {
+        client_id: clientId,
+        client_name: get(req.body, 'client_name'),
+        scope: get(req.body, 'scope')
+      };
+
+      if(client_secret){
+        response.client_secret = client_secret;
+      }
+
       if (!res.headersSent){
-        res.status(201).json({ client_id: clientId, client_name: get(req.body, 'client_name'), scope: get(req.body, 'scope') }).end();
+        res.status(201).json(response).end();
       }
     } else {
       if (!res.headersSent){

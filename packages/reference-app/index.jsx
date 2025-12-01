@@ -5,6 +5,7 @@ import { get } from 'lodash';
 
 // Import main page component
 import ReferenceAppPage from './client/ReferenceAppPage';
+import G10CertificationPage from './client/G10CertificationPage';
 
 // Import footer buttons component
 import { ReferenceAppFooterButtons } from './client/FooterButtons';
@@ -27,6 +28,12 @@ let DynamicRoutes = [{
   element: <ReferenceAppPage />,
   requireAuth: true,
   description: 'Reference application main page'
+}, {
+  name: 'G10Certification',
+  path: '/g10-certification',
+  element: <G10CertificationPage />,
+  requireAuth: true,
+  description: '(g)(10) Certification tracking page'
 }];
 
 // Admin routes - OPTIONAL (for admin-only features)
@@ -46,6 +53,11 @@ let SidebarWorkflows = [{
   primaryText: "Reference App",
   to: '/reference-app',
   iconName: 'dashboard',
+  requireAuth: true
+}, {
+  primaryText: "(g)(10) Certification",
+  to: '/g10-certification',
+  iconName: 'checklist',
   requireAuth: true
 }];
 
@@ -182,6 +194,7 @@ export {
   
   // Component exports for reuse
   ReferenceAppPage,
+  G10CertificationPage,
   ReferenceAppWorkflow,
   ReferenceAppFooterButtons,
   

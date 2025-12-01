@@ -60,3 +60,7 @@ screenshots/
 *.gif
 !public/*.png
 !public/*.jpg
+
+*/guide
+*/guide/*
+*/guides/*

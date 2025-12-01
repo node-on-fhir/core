@@ -23,7 +23,11 @@ module.exports = defineConfig(Meteor => {
         "util": require.resolve("util/"),
         "stream": require.resolve("stream-browserify"),
         "buffer": require.resolve("buffer/"),
-        "process": require.resolve("process/browser")
+        "process": require.resolve("process/browser"),
+        // Exclude Node.js-only modules that shouldn't be in client bundle
+        "path": false,
+        "fs": false,
+        "zlib": false
       }
     };
 
