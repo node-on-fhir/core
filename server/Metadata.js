@@ -257,32 +257,73 @@ const MetadataServerMethods = {
     return CapabilityStatement;
   },
   getWellKnownSmartConfiguration: function(){
-    let response = {
-      "resourceType": "Basic",
+    console.log('getWellKnownSmartConfiguration()');
 
-      // required fields
+    return {
+      // Required endpoints per 170.315(g)(10)
+      "issuer": Meteor.absoluteUrl(),
       "authorization_endpoint": Meteor.absoluteUrl() + get(Meteor, 'settings.private.fhir.security.authorizationEndpoint', "oauth/authorize"),
-      "token_endpoint":  Meteor.absoluteUrl() + get(Meteor, 'settings.private.fhir.security.tokenEndpoint', "oauth/token") ,
-      "capabilities": [],
-
-      // optional fields
-      "scopes_supported": "",
-      "response_types_supported": "",
-      "management_endpoint": Meteor.absoluteUrl() + get(Meteor, 'settings.private.fhir.security.revokeEndpoint', "authorizations/manage"),
-      "introspection_endpoint": Meteor.absoluteUrl() + get(Meteor, 'settings.private.fhir.security.revokeEndpoint', "authorizations/introspect"),
-      "registration_endpoint": Meteor.absoluteUrl() + get(Meteor, 'settings.private.fhir.security.registrationEndpoint', "oauth/registration"),
-      "revocation_endpoint": Meteor.absoluteUrl() + get(Meteor, 'settings.private.fhir.security.revokeEndpoint', "authorizations/revoke"),
-      
-      // JWK Set URL for Epic SMART v2
+      "token_endpoint": Meteor.absoluteUrl() + get(Meteor, 'settings.private.fhir.security.tokenEndpoint', "oauth/token"),
       "jwks_uri": Meteor.absoluteUrl() + ".well-known/jwks.json",
 
-      // custom fields
-      "message": "smart config!"
-    }
+      // Full g(10) required capabilities per AUT-PAT-25
+      "capabilities": [
+        "launch-ehr",
+        "launch-standalone",
+        "authorize-post",
+        "client-public",
+        "client-confidential-symmetric",
+        "client-confidential-asymmetric",
+        "sso-openid-connect",
+        "context-banner",
+        "context-style",
+        "context-ehr-patient",
+        "context-ehr-encounter",
+        "context-standalone-patient",
+        "permission-offline",
+        "permission-patient",
+        "permission-user",
+        "permission-v1",
+        "permission-v2"
+      ],
 
-    response.capabilities.push("http://localhost:3000/");
+      // Required grant types per 170.315(g)(10)
+      "grant_types_supported": [
+        "authorization_code",
+        "client_credentials"
+      ],
 
-    return response;
+      // Required code challenge methods - S256 only, NO plain
+      "code_challenge_methods_supported": [
+        "S256"
+      ],
+
+      "response_types_supported": [
+        "code"
+      ],
+
+      // Supported scopes
+      "scopes_supported": [
+        "openid",
+        "fhirUser",
+        "launch",
+        "launch/patient",
+        "launch/encounter",
+        "offline_access",
+        "patient/*.read",
+        "patient/*.rs",
+        "user/*.read",
+        "user/*.rs",
+        "system/*.read",
+        "system/*.rs"
+      ],
+
+      // Optional but useful endpoints
+      "management_endpoint": Meteor.absoluteUrl() + get(Meteor, 'settings.private.fhir.security.manageEndpoint', "authorizations/manage"),
+      "introspection_endpoint": Meteor.absoluteUrl() + get(Meteor, 'settings.private.fhir.security.introspectEndpoint', "authorizations/introspect"),
+      "registration_endpoint": Meteor.absoluteUrl() + get(Meteor, 'settings.private.fhir.security.registrationEndpoint', "oauth/registration"),
+      "revocation_endpoint": Meteor.absoluteUrl() + get(Meteor, 'settings.private.fhir.security.revokeEndpoint', "authorizations/revoke")
+    };
   },
   getWellKnownUdapConfiguration: function(){
     let response = {
