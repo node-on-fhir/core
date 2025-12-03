@@ -51,6 +51,7 @@ import HomePage from './HomePage.jsx';
 import ServerConfigurationPage from '../ui-vault-server/ServerConfigurationPage.jsx';
 import UdapRegistrationPage from '../ui-vault-server/UdapRegistrationPage.jsx';
 import OAuthClientsPage from '../ui-vault-server/OAuthClientsPage.jsx';
+import OAuthPatientPickerPage from './OAuthPatientPickerPage.jsx';
 import FhirBasePage from './pages/FhirBasePage.jsx';
 import SwaggerPage from '../ui-vault-server/SwaggerPage.jsx';
 
@@ -503,6 +504,9 @@ let dynamicRoutes = [
   }, {
     path: "/oauth-clients",
     element: <OAuthClientsPage />
+  }, {
+    path: "/oauth-patient-picker",
+    element: <OAuthPatientPickerPage />
   }, {
     path: "/patient-chart",
     element: <PatientChart />

@@ -51,6 +51,20 @@ function PatientDetail(props) {
   const currentUser = useTracker(function() {
     return Meteor.user();
   }, []);
+
+  // Track subscription readiness to avoid race conditions
+  // Use targeted subscription for existing patients to ensure the specific patient is included
+  const isSubscriptionReady = useTracker(function() {
+    if (id && id !== 'new') {
+      // For existing patients, use patients.byId to fetch this specific patient
+      // This is the same approach used by MyProfilePage
+      const handle = Meteor.subscribe('patients.byId', id);
+      return handle.ready();
+    } else {
+      // For new patients, no subscription needed
+      return true;
+    }
+  }, [id]);
   
   // Initialize state with proper FHIR R4 structure
   // IMPORTANT: Don't set id in initial state - let server generate it
@@ -130,17 +144,26 @@ function PatientDetail(props) {
   const [successMessage, setSuccessMessage] = useState('');
 
   // Load existing patient if ID is provided
+  // Wait for subscription to be ready to avoid race conditions
   useEffect(() => {
+    if (!isSubscriptionReady) {
+      console.log('[PatientDetail] Waiting for subscription to be ready...');
+      return;
+    }
+
     if (id && id !== 'new') {
-      const existingPatient = Patients.findOne({
-        $or: [
-          { id: id },
-          { _id: id }
-        ]
-      });
-      
+      // IMPORTANT: Avoid $or anti-pattern per CLAUDE.md
+      // URL uses FHIR id, so try that first, then fallback to _id
+      let existingPatient = Patients.findOne({ id: id });
+      if (!existingPatient) {
+        existingPatient = Patients.findOne({ _id: id });
+      }
+
       if (existingPatient) {
+        console.log('[PatientDetail] Loaded patient with _id:', existingPatient._id, 'FHIR id:', existingPatient.id);
         setPatient(existingPatient);
+      } else {
+        console.error('[PatientDetail] Patient not found for id:', id);
       }
     } else if (!id || id === 'new') {
       // For new patients, create fresh state - don't spread old patient!
@@ -230,7 +253,7 @@ function PatientDetail(props) {
 
       setPatient(newPatient);
     }
-  }, [id, currentUser]);
+  }, [id, currentUser, isSubscriptionReady]);
 
   // Handle form field changes
   const handleChange = (path, value) => {
@@ -292,13 +315,21 @@ function PatientDetail(props) {
 
       if (isEditingExisting) {
         // Update existing patient
-        const patientId = patient._id || patient.id;
-        console.log('[PatientDetail] Updating patient with ID:', patientId);
+        // CRITICAL: Use MongoDB _id for updates per CLAUDE.md anti-pattern guidelines
+        // Never use $or logic or fallback to FHIR id for lookups
+        const mongoId = patient._id;
+        if (!mongoId) {
+          throw new Error('Cannot update: patient _id is missing. The patient may not have loaded correctly.');
+        }
+        console.log('[PatientDetail] Updating patient with MongoDB _id:', mongoId);
         result = await Meteor.callAsync('patients.update',
-          { $or: [{ id: patientId }, { _id: patientId }] },
+          { _id: mongoId },
           { $set: patient }
         );
         console.log('[PatientDetail] Update result:', result);
+        if (result === 0) {
+          console.warn('[PatientDetail] Warning: Update matched 0 documents for _id:', mongoId);
+        }
       } else {
         // Create new patient
         console.log('[PatientDetail] Creating new patient...');
@@ -330,7 +361,7 @@ function PatientDetail(props) {
         if (currentUser && !currentUser.patientId) {
           console.log('[PatientDetail] Linking patient to user...');
           try {
-            await Meteor.callAsync('users.linkPatient', patient.id);
+            await Meteor.callAsync('users.linkPatient', patient._id);
             console.log('[PatientDetail] User link successful');
             patientWasJustLinked = true;
           } catch (linkError) {

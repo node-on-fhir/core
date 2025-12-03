@@ -635,9 +635,10 @@ WebApp.handlers.post("/oauth/registration", async (req, res) => {
 });
 
 
-WebApp.handlers.get("/oauth/authorize", async (req, res) => {
-
-  console.log("GET /oauth/authorize");
+// Shared authorize handler for both GET and POST
+// SMART on FHIR 2.x requires support for both methods
+async function handleAuthorize(req, res, method) {
+  console.log(method + " /oauth/authorize");
 
   if (process.env.DEBUG_OAUTH) {
     console.log("===================== OAUTH DEBUG START =====================");
@@ -661,6 +662,19 @@ WebApp.handlers.get("/oauth/authorize", async (req, res) => {
   let appState = get(req, 'query.state') || get(req, 'body.state');
   let responseType = get(req, 'query.response_type') || get(req, 'body.response_type');
 
+  // SMART 2.x parameters
+  let requestedScope = get(req, 'query.scope') || get(req, 'body.scope');
+  let launchContext = get(req, 'query.launch') || get(req, 'body.launch');
+  let patientId = get(req, 'query.patient') || get(req, 'body.patient');
+  let codeChallenge = get(req, 'query.code_challenge') || get(req, 'body.code_challenge');
+  let codeChallengeMethod = get(req, 'query.code_challenge_method') || get(req, 'body.code_challenge_method');
+  let aud = get(req, 'query.aud') || get(req, 'body.aud');
+
+  if (process.env.DEBUG_OAUTH) {
+    console.log("SMART 2.x params - scope:", requestedScope, "launch:", launchContext, "patient:", patientId);
+    console.log("PKCE - code_challenge:", codeChallenge, "method:", codeChallengeMethod);
+  }
+
   if (redirectUri && appState.length === 0) {
     res.setHeader("Location", `${redirectUri}?state=unspecified&error=invalid_request`);
 
@@ -671,8 +685,69 @@ WebApp.handlers.get("/oauth/authorize", async (req, res) => {
     if (clientId) {
       const client = await OAuthClients.findOneAsync({ $or: [{ _id: clientId }, { client_id: clientId }] });
       if (client) {
+        // Check if this is a standalone launch that requires patient selection
+        // If launch/patient scope is requested but no patient ID is provided and no launch context,
+        // redirect to the patient picker page
+        const needsPatientPicker = requestedScope &&
+                                   requestedScope.includes('launch/patient') &&
+                                   !patientId &&
+                                   !launchContext;
+
+        if (needsPatientPicker) {
+          console.log('Standalone launch with launch/patient scope - redirecting to patient picker');
+
+          // Validate redirect_uri before proceeding
+          if (redirectUri && Array.isArray(client.redirect_uris) && !client.redirect_uris.includes(redirectUri)) {
+            if (!res.headersSent) {
+              res.status(412).json({ "error_message": 'Provided redirect did not match registered redirects...' }).end();
+            }
+            return;
+          }
+
+          // Build URL to patient picker page with OAuth params
+          const patientPickerUrl = new URL(Meteor.absoluteUrl() + 'oauth-patient-picker');
+          patientPickerUrl.searchParams.set('client_id', clientId);
+          patientPickerUrl.searchParams.set('state', appState || '');
+          patientPickerUrl.searchParams.set('redirect_uri', redirectUri || get(client, 'redirect_uris.0', ''));
+          patientPickerUrl.searchParams.set('scope', requestedScope);
+          patientPickerUrl.searchParams.set('response_type', responseType || 'code');
+          if (codeChallenge) {
+            patientPickerUrl.searchParams.set('code_challenge', codeChallenge);
+            patientPickerUrl.searchParams.set('code_challenge_method', codeChallengeMethod || 'S256');
+          }
+          if (aud) {
+            patientPickerUrl.searchParams.set('aud', aud);
+          }
+
+          console.log('Redirecting to patient picker:', patientPickerUrl.toString());
+
+          res.setHeader('Location', patientPickerUrl.toString());
+          if (!res.headersSent) {
+            res.status(302).end();
+          }
+          return;
+        }
+
         const newAuthorizationCode = Random.id();
         client.authorization_code = newAuthorizationCode;
+
+        // Store SMART 2.x context for token exchange
+        if (requestedScope) {
+          client.requested_scope = requestedScope;
+        }
+        if (launchContext) {
+          client.launch_context = launchContext;
+          client.launch_type = 'ehr';
+        } else {
+          client.launch_type = 'standalone';
+        }
+        if (patientId) {
+          client.patient_id = patientId;
+        }
+        if (codeChallenge) {
+          client.code_challenge = codeChallenge;
+          client.code_challenge_method = codeChallengeMethod || 'S256';
+        }
 
         delete client._document;
         delete client._super_;
@@ -707,6 +782,16 @@ WebApp.handlers.get("/oauth/authorize", async (req, res) => {
       }
     }
   }
+}
+
+// GET /oauth/authorize - Standard authorize endpoint
+WebApp.handlers.get("/oauth/authorize", async (req, res) => {
+  await handleAuthorize(req, res, "GET");
+});
+
+// POST /oauth/authorize - Required by SMART on FHIR 2.x spec
+WebApp.handlers.post("/oauth/authorize", async (req, res) => {
+  await handleAuthorize(req, res, "POST");
 });
 
 
@@ -855,8 +940,123 @@ WebApp.handlers.post("/oauth/token", async (req, res) => {
     }
   }
 
+  // Handle refresh_token grant type
+  if (get(req.body, 'grant_type') === 'refresh_token') {
+    console.log('Processing refresh_token grant type');
+
+    let incomingRefreshToken = get(req.body, 'refresh_token');
+    if (!incomingRefreshToken) {
+      res.status(400).json({
+        "error": "invalid_request",
+        "error_description": "refresh_token is required"
+      });
+      return;
+    }
+
+    // Find client by refresh token
+    let clientWithRefreshToken = await OAuthClients.findOneAsync({ refresh_token: incomingRefreshToken });
+
+    if (!clientWithRefreshToken) {
+      console.log('No client found with refresh_token:', incomingRefreshToken);
+      res.status(400).json({
+        "error": "invalid_grant",
+        "error_description": "Invalid refresh token"
+      });
+      return;
+    }
+
+    console.log('Found client for refresh token:', clientWithRefreshToken.client_id);
+
+    // Generate new access token and refresh token
+    let newAccessToken = Random.id();
+    let newRefreshToken = Random.id();
+
+    // CRITICAL: Use the ORIGINAL scope from when the refresh token was issued
+    // Per OAuth 2.0 spec, refresh token response scope MUST be subset of original
+    let originalScope = clientWithRefreshToken.requested_scope || clientWithRefreshToken.scope || '';
+
+    // If client requests a subset of scopes, use that instead
+    let requestedScope = get(req.body, 'scope', '');
+    let effectiveScope = originalScope;
+
+    if (requestedScope) {
+      // Only allow scopes that are in the original grant
+      let originalScopes = originalScope.split(' ').filter(s => s);
+      let requestedScopes = requestedScope.split(' ').filter(s => s);
+      let allowedScopes = requestedScopes.filter(s => originalScopes.includes(s));
+
+      if (allowedScopes.length > 0) {
+        effectiveScope = allowedScopes.join(' ');
+      } else {
+        // If none of the requested scopes are valid, use original
+        effectiveScope = originalScope;
+      }
+    }
+
+    console.log('Refresh token - original scope:', originalScope);
+    console.log('Refresh token - effective scope:', effectiveScope);
+
+    // Update client with new tokens
+    await OAuthClients.updateAsync(
+      { _id: clientWithRefreshToken._id },
+      {
+        $set: {
+          access_token: newAccessToken,
+          access_token_created_at: new Date(),
+          refresh_token: newRefreshToken
+        }
+      }
+    );
+
+    // Build token response
+    let tokenResponse = {
+      "access_token": newAccessToken,
+      "token_type": "Bearer",
+      "scope": effectiveScope,
+      "expires_in": get(Meteor, 'settings.private.fhir.tokenTimeout', 86400),
+      "refresh_token": newRefreshToken
+    };
+
+    // Add id_token if openid scope is present
+    if (effectiveScope.includes('openid')) {
+      let privateKey = get(Meteor, 'settings.private.x509.privateKey', '');
+      if (privateKey) {
+        privateKey = privateKey.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+
+        let nowInSeconds = Math.floor(Date.now() / 1000);
+        let fhirBasePath = get(Meteor, 'settings.private.fhir.fhirPath', 'baseR4');
+        let idTokenPayload = {
+          iss: Meteor.absoluteUrl() + fhirBasePath,
+          sub: clientWithRefreshToken.user_id || clientWithRefreshToken._id,
+          aud: clientWithRefreshToken.client_id || clientWithRefreshToken._id,
+          exp: nowInSeconds + 3600,
+          iat: nowInSeconds
+        };
+
+        if (clientWithRefreshToken.patient_id && effectiveScope.includes('fhirUser')) {
+          idTokenPayload.fhirUser = Meteor.absoluteUrl() + fhirBasePath + '/Patient/' + clientWithRefreshToken.patient_id;
+        }
+
+        try {
+          tokenResponse.id_token = jwt.sign(idTokenPayload, privateKey, { algorithm: 'RS256' });
+        } catch (idTokenError) {
+          console.error('Error signing id_token for refresh:', idTokenError.message);
+        }
+      }
+    }
+
+    console.log('Refresh token response:', JSON.stringify(tokenResponse, null, 2));
+
+    res.setHeader('Content-Type', 'application/json');
+    res.setHeader('Cache-Control', 'no-store');
+    res.setHeader('Pragma', 'no-cache');
+    res.status(200).json(tokenResponse);
+    return;
+  }
+
   // Handle standard authorization_code grant type (user-interactive flow)
-  let authorizedClient = await OAuthClients.findOneAsync({ authorization_code: get(req.query, 'code') });
+  let authCode = get(req.query, 'code') || get(req.body, 'code');
+  let authorizedClient = await OAuthClients.findOneAsync({ authorization_code: authCode });
   console.log('authorizedClient', authorizedClient);
 
   if (authorizedClient) {
@@ -866,35 +1066,99 @@ WebApp.handlers.post("/oauth/token", async (req, res) => {
     updatedAuthorizedClient.access_token = Random.id();
     updatedAuthorizedClient.access_token_created_at = new Date();
 
-    // todo: check scopes to set this
-    let offlineOrOnlineScope = process.env.REFRESH_TOKEN || false;
-    if(offlineOrOnlineScope){
-      updatedAuthorizedClient.standalone_refresh_token = Random.id();
+    // Use requested_scope from authorization if available, otherwise fall back to registered scope
+    let effectiveScope = authorizedClient.requested_scope || authorizedClient.scope || '';
+
+    // Check for offline_access scope to determine if refresh token should be issued
+    let hasOfflineAccess = effectiveScope.includes('offline_access') || process.env.REFRESH_TOKEN;
+    if (hasOfflineAccess) {
+      updatedAuthorizedClient.refresh_token = Random.id();
     }
 
     await OAuthClients.updateAsync({ _id: updatedAuthorizedClient._id }, { $set: updatedAuthorizedClient });
 
+    // Build token response per SMART App Launch 2.x / 170.315(g)(10) AUT-PAT-35
     let returnPayload = {
       code: 200,
       data: {
         "access_token": updatedAuthorizedClient.access_token,
         "token_type": "Bearer",
-        "scope": authorizedClient.scope,
+        "scope": effectiveScope,
         "expires_in": get(Meteor, 'settings.private.fhir.tokenTimeout', 86400)
       }
     };
-    if(offlineOrOnlineScope){
-      returnPayload.data.standalone_refresh_token = updatedAuthorizedClient.standalone_refresh_token
+
+    // refresh_token - required when offline_access scope is granted (must be valid 3+ months)
+    if (hasOfflineAccess) {
+      returnPayload.data.refresh_token = updatedAuthorizedClient.refresh_token;
+    }
+
+    // patient context - required for context-ehr-patient and context-standalone-patient
+    if (authorizedClient.patient_id) {
+      returnPayload.data.patient = authorizedClient.patient_id;
+    }
+
+    // encounter context - required for US Core 6.1.0+ (context-ehr-encounter)
+    if (authorizedClient.encounter_id) {
+      returnPayload.data.encounter = authorizedClient.encounter_id;
+    }
+
+    // EHR launch context fields
+    if (authorizedClient.launch_type === 'ehr') {
+      returnPayload.data.need_patient_banner = true;
+      returnPayload.data.smart_style_url = Meteor.absoluteUrl() + 'smart-style.json';
+    }
+
+    // id_token - required when openid scope is requested (sso-openid-connect capability)
+    if (effectiveScope.includes('openid')) {
+      let privateKey = get(Meteor, 'settings.private.x509.privateKey', '');
+      if (privateKey) {
+        // Normalize line endings - handle both actual CRLF bytes and escaped strings
+        // After JSON parsing, \r\n becomes actual CRLF (0x0D 0x0A)
+        privateKey = privateKey.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+
+        let nowInSeconds = Math.floor(Date.now() / 1000);
+        let fhirBasePath = get(Meteor, 'settings.private.fhir.fhirPath', 'baseR4');
+        let idTokenPayload = {
+          iss: Meteor.absoluteUrl() + fhirBasePath,
+          sub: authorizedClient.user_id || authorizedClient._id,
+          aud: authorizedClient.client_id || authorizedClient._id,
+          exp: nowInSeconds + 3600,
+          iat: nowInSeconds
+        };
+
+        // Add fhirUser claim if patient context is available
+        if (authorizedClient.patient_id && effectiveScope.includes('fhirUser')) {
+          idTokenPayload.fhirUser = Meteor.absoluteUrl() + fhirBasePath + '/Patient/' + authorizedClient.patient_id;
+        }
+
+        try {
+          console.log('Signing id_token with RS256 algorithm...');
+          console.log('id_token payload:', JSON.stringify(idTokenPayload, null, 2));
+          returnPayload.data.id_token = jwt.sign(idTokenPayload, privateKey, { algorithm: 'RS256' });
+          console.log('id_token signed successfully, length:', returnPayload.data.id_token.length);
+        } catch (idTokenError) {
+          console.error('Error signing id_token:', idTokenError.message);
+          console.error('Error stack:', idTokenError.stack);
+          // Log the key format for debugging (first 50 chars only for security)
+          console.error('Private key starts with:', privateKey.substring(0, 50));
+        }
+      } else {
+        console.warn('openid scope requested but no private key configured for id_token signing');
+      }
     }
 
 
-    // is this a UDAP server?
-    if(get(Meteor, 'settings.private.x509')){
+    // Check if this is a UDAP request (has client_assertion) vs standard OAuth (Basic auth)
+    let client_assertion = get(req.body, 'client_assertion');
 
-      let client_assertion = get(req.body, 'client_assertion');
+    // Only enter UDAP flow if x509 is configured AND client_assertion is provided
+    // This allows both UDAP and standard OAuth/SMART flows to coexist
+    if(get(Meteor, 'settings.private.x509') && client_assertion){
+
       let decoded = jwt.decode(client_assertion, { complete: true });
 
-      console.log('decoded', decoded);
+      console.log('UDAP flow - decoded client_assertion:', decoded);
       if(!decoded){
         if (!res.headersSent){
           res.setHeader('Content-Type', 'application/json');
@@ -948,30 +1212,28 @@ WebApp.handlers.post("/oauth/token", async (req, res) => {
               res.setHeader('Content-Type', 'application/json').status(400).send(Buffer.from(JSON.stringify(returnPayload.data))).end();
             }
           } else {
+            // UDAP server success - add required headers per 170.315(g)(10) AUT-PAT-35
             if (!res.headersSent){
               console.log('Response Headers:', res.getHeaders());
-              res.setHeader('Content-Type', 'application/json').status(200).send(Buffer.from(JSON.stringify(returnPayload.data))).end();
+              res.setHeader('Content-Type', 'application/json');
+              res.setHeader('Cache-Control', 'no-store');
+              res.setHeader('Pragma', 'no-cache');
+              res.status(200).send(Buffer.from(JSON.stringify(returnPayload.data))).end();
             }
           }
         });
       }
     } else {
-      // this is not a UDAP server, so we need to return the access token
-      // without verifying the client_assertion and checking security certificates
-
-      // will need to set the following for OpenID:
-      // - standalone_id_token
-      // - standalone_patient_id
-      // - standalone_encounter_id
-
-      // let standalone_id_token = jwt.sign({
-      // });
-      // returnPayload.data.standalone_id_token = "foo";
-
+      // Standard OAuth/SMART flow (Basic auth or no client_assertion)
+      // This handles both non-UDAP servers and UDAP-capable servers with Basic auth clients
+      // Required headers per 170.315(g)(10) AUT-PAT-35
       if (!res.headersSent){
+        console.log('Standard OAuth flow - returning token response');
         console.log('Response Headers:', res.getHeaders());
-        console.log('OAuthServerConfig.clientCollection', OAuthServerConfig.clientsCollection);
-        res.setHeader('Content-Type', 'application/json').status(200).send(Buffer.from(JSON.stringify(returnPayload.data))).end();
+        res.setHeader('Content-Type', 'application/json');
+        res.setHeader('Cache-Control', 'no-store');
+        res.setHeader('Pragma', 'no-cache');
+        res.status(200).send(Buffer.from(JSON.stringify(returnPayload.data))).end();
       }
     }
 
@@ -1073,6 +1335,161 @@ WebApp.handlers.get("/oauth/getIdentity", async (req, res) => {
 
 });
 
+
+//===========================================================================
+// Meteor Methods for OAuth
+
+Meteor.methods({
+  /**
+   * OAuth.completeWithPatient
+   * Complete OAuth authorization with patient selection (for standalone launch with launch/patient scope)
+   * Called from OAuthPatientPickerPage after user selects a patient
+   */
+  'OAuth.completeWithPatient': async function(params) {
+    console.log('OAuth.completeWithPatient called with params:', JSON.stringify(params, null, 2));
+
+    const { clientId, patientId, patientFhirId, state, redirectUri, scope, codeChallenge, codeChallengeMethod } = params;
+
+    if (!clientId) {
+      throw new Meteor.Error('invalid_request', 'Missing client_id');
+    }
+    if (!patientId && !patientFhirId) {
+      throw new Meteor.Error('invalid_request', 'Missing patient ID');
+    }
+    if (!redirectUri) {
+      throw new Meteor.Error('invalid_request', 'Missing redirect_uri');
+    }
+
+    // Find the OAuth client record
+    const client = await OAuthClients.findOneAsync({
+      $or: [{ _id: clientId }, { client_id: clientId }]
+    });
+
+    if (!client) {
+      console.error('OAuth.completeWithPatient - No client found with client_id:', clientId);
+      throw new Meteor.Error('invalid_client', 'No client found with that client_id');
+    }
+
+    // Validate redirect_uri matches registered redirects
+    if (Array.isArray(client.redirect_uris) && !client.redirect_uris.includes(redirectUri)) {
+      console.error('OAuth.completeWithPatient - Redirect URI mismatch. Got:', redirectUri, 'Expected one of:', client.redirect_uris);
+      throw new Meteor.Error('invalid_request', 'Redirect URI does not match registered redirects');
+    }
+
+    // Generate new authorization code
+    const authorizationCode = Random.id();
+
+    // Update client with patient context and authorization code
+    const updateFields = {
+      authorization_code: authorizationCode,
+      patient_id: patientFhirId || patientId,  // Use FHIR ID if available
+      launch_type: 'standalone',
+      requested_scope: scope || client.scope
+    };
+
+    // Store PKCE params if provided
+    if (codeChallenge) {
+      updateFields.code_challenge = codeChallenge;
+      updateFields.code_challenge_method = codeChallengeMethod || 'S256';
+    }
+
+    console.log('OAuth.completeWithPatient - Updating client with:', updateFields);
+
+    await OAuthClients.updateAsync(
+      { _id: client._id },
+      { $set: updateFields }
+    );
+
+    // Build redirect URL with authorization code
+    const redirectUrl = new URL(redirectUri);
+    redirectUrl.searchParams.set('code', authorizationCode);
+    if (state) {
+      redirectUrl.searchParams.set('state', state);
+    }
+
+    console.log('OAuth.completeWithPatient - Redirect URL:', redirectUrl.toString());
+
+    return {
+      code: authorizationCode,
+      state: state,
+      redirectUrl: redirectUrl.toString()
+    };
+  },
+
+  /**
+   * OAuth.createEhrLaunchContext
+   * Create a launch context for EHR launch (when launching app from within EHR)
+   * Returns a launch token that can be passed to the app's launch URL
+   */
+  'OAuth.createEhrLaunchContext': async function(params) {
+    console.log('OAuth.createEhrLaunchContext called with params:', JSON.stringify(params, null, 2));
+
+    const { clientId, patientId, patientFhirId, encounterId } = params;
+
+    if (!clientId) {
+      throw new Meteor.Error('invalid_request', 'Missing client_id');
+    }
+    if (!patientId && !patientFhirId) {
+      throw new Meteor.Error('invalid_request', 'Missing patient ID');
+    }
+
+    // Find the OAuth client record
+    const client = await OAuthClients.findOneAsync({
+      $or: [{ _id: clientId }, { client_id: clientId }]
+    });
+
+    if (!client) {
+      console.error('OAuth.createEhrLaunchContext - No client found with client_id:', clientId);
+      throw new Meteor.Error('invalid_client', 'No client found with that client_id');
+    }
+
+    // Generate launch context token
+    const launchToken = Random.id();
+
+    // Update client with launch context
+    const updateFields = {
+      launch_context: launchToken,
+      launch_type: 'ehr',
+      patient_id: patientFhirId || patientId
+    };
+
+    // Add encounter context for US Core 6.1.0+ compliance (context-ehr-encounter)
+    // Uses provided encounterId, or falls back to settings default from defaultEncounter blob
+    let effectiveEncounterId = encounterId || get(Meteor, 'settings.private.fhir.defaultEncounter.id');
+    if (effectiveEncounterId) {
+      updateFields.encounter_id = effectiveEncounterId;
+    } else {
+      console.warn('OAuth.createEhrLaunchContext - No encounter_id provided and no defaultEncounter.id configured in settings');
+    }
+
+    console.log('OAuth.createEhrLaunchContext - Updating client with:', updateFields);
+
+    await OAuthClients.updateAsync(
+      { _id: client._id },
+      { $set: updateFields }
+    );
+
+    // Build launch URL
+    const fhirBaseUrl = Meteor.absoluteUrl() + get(Meteor, 'settings.private.fhir.fhirPath', 'baseR4');
+    const launchUri = client.launch_uri || client.redirect_uris?.[0];
+
+    if (!launchUri) {
+      throw new Meteor.Error('invalid_client', 'Client has no launch_uri configured');
+    }
+
+    const launchUrl = new URL(launchUri);
+    launchUrl.searchParams.set('iss', fhirBaseUrl);
+    launchUrl.searchParams.set('launch', launchToken);
+
+    console.log('OAuth.createEhrLaunchContext - Launch URL:', launchUrl.toString());
+
+    return {
+      launchToken: launchToken,
+      launchUrl: launchUrl.toString(),
+      iss: fhirBaseUrl
+    };
+  }
+});
 
 
 

@@ -248,13 +248,10 @@ Meteor.methods({
     }
     
     try {
-      const result = await Patients.removeAsync({
-        $or: [
-          { id: patientId },
-          { _id: patientId }
-        ]
-      });
-      console.log('[patients.remove] Removed patient:', result);
+      // IMPORTANT: Use _id only for lookups per CLAUDE.md anti-pattern guidelines
+      // Never use $or logic which can cause ID collisions
+      const result = await Patients.removeAsync({ _id: patientId });
+      console.log('[patients.remove] Removed patient with _id:', patientId, 'result:', result);
       return result;
     } catch (error) {
       console.error('[patients.remove] Error:', error);
@@ -271,12 +268,10 @@ Meteor.methods({
     }
     
     try {
-      const patient = await Patients.findOneAsync({
-        $or: [
-          { id: patientId },
-          { _id: patientId }
-        ]
-      });
+      // IMPORTANT: Use _id only for lookups per CLAUDE.md anti-pattern guidelines
+      // Never use $or logic which can cause ID collisions
+      const patient = await Patients.findOneAsync({ _id: patientId });
+      console.log('[patients.findOne] Found patient with _id:', patientId, patient ? 'exists' : 'not found');
       return patient;
     } catch (error) {
       console.error('[patients.findOne] Error:', error);

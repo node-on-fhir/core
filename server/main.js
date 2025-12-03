@@ -137,6 +137,7 @@ import { CareTeams } from '../imports/lib/schemas/SimpleSchemas/CareTeams';
 import { Claims } from '../imports/lib/schemas/SimpleSchemas/Claims';
 import { CodeSystems } from '../imports/lib/schemas/SimpleSchemas/CodeSystems';
 import { Conditions } from '../imports/lib/schemas/SimpleSchemas/Conditions';
+import { Coverages } from '../imports/lib/schemas/SimpleSchemas/Coverages';
 import { Consents } from '../imports/lib/schemas/SimpleSchemas/Consents';
 import { Communications } from '../imports/lib/schemas/SimpleSchemas/Communications';
 import { CommunicationRequests } from '../imports/lib/schemas/SimpleSchemas/CommunicationRequests';
@@ -157,6 +158,7 @@ import { Lists } from '../imports/lib/schemas/SimpleSchemas/Lists';
 import { Locations } from '../imports/lib/schemas/SimpleSchemas/Locations';
 import { Medications } from '../imports/lib/schemas/SimpleSchemas/Medications';
 import { MedicationAdministrations } from '../imports/lib/schemas/SimpleSchemas/MedicationAdministrations';
+import { MedicationDispenses } from '../imports/lib/schemas/SimpleSchemas/MedicationDispenses';
 import { MedicationRequests } from '../imports/lib/schemas/SimpleSchemas/MedicationRequests';
 import { MedicationStatements } from '../imports/lib/schemas/SimpleSchemas/MedicationStatements';
 import { Measures } from '../imports/lib/schemas/SimpleSchemas/Measures';
@@ -179,6 +181,7 @@ import { ResearchSubjects } from '../imports/lib/schemas/SimpleSchemas/ResearchS
 import { Schedules } from '../imports/lib/schemas/SimpleSchemas/Schedules';
 import { SearchParameters } from '../imports/lib/schemas/SimpleSchemas/SearchParameters';
 import { ServiceRequests } from '../imports/lib/schemas/SimpleSchemas/ServiceRequests';
+import { Specimens } from '../imports/lib/schemas/SimpleSchemas/Specimens';
 import { Tasks } from '../imports/lib/schemas/SimpleSchemas/Tasks';
 import { ValueSets } from '../imports/lib/schemas/SimpleSchemas/ValueSets';
 
@@ -202,6 +205,7 @@ Meteor.Collections = {
   CodeSystems,
   Conditions,
   Consents,
+  Coverages,
   Communications,
   CommunicationRequests,
   Compositions,
@@ -221,6 +225,7 @@ Meteor.Collections = {
   Locations,
   Medications,
   MedicationAdministrations,
+  MedicationDispenses,
   MedicationRequests,
   MedicationStatements,
   MessageHeaders,
@@ -243,6 +248,7 @@ Meteor.Collections = {
   Schedules,
   SearchParameters,
   ServiceRequests,
+  Specimens,
   Tasks,
   ValueSets
 }
@@ -266,6 +272,7 @@ Object.assign(global.Collections, {
   CodeSystems,
   Conditions,
   Consents,
+  Coverages,
   Communications,
   CommunicationRequests,
   Compositions,
@@ -285,6 +292,7 @@ Object.assign(global.Collections, {
   Locations,
   Medications,
   MedicationAdministrations,
+  MedicationDispenses,
   MedicationRequests,
   MedicationStatements,
   MessageHeaders,
@@ -307,6 +315,7 @@ Object.assign(global.Collections, {
   Schedules,
   SearchParameters,
   ServiceRequests,
+  Specimens,
   Tasks,
   ValueSets
 });
@@ -415,6 +424,21 @@ Meteor.startup(async function(){
     
     // Set the Synthea DB utils flag
     Meteor.settings.public.enableSyntheaDbUtils = true;
+  }
+
+  // Seed default Encounter from settings for US Core 6.1.0+ compliance (context-ehr-encounter)
+  // This is needed for ONC g(10) certification test 3.8.16 / AUT-PAT-32
+  let defaultEncounter = get(Meteor, 'settings.private.fhir.defaultEncounter');
+  if (defaultEncounter && defaultEncounter.id) {
+    const existingEncounter = await Encounters.findOneAsync({ id: defaultEncounter.id });
+    if (!existingEncounter) {
+      console.log('==========================================================================================');
+      console.log('[Encounters] Seeding default Encounter from settings:', defaultEncounter.id);
+      console.log('==========================================================================================');
+      await Encounters.insertAsync(defaultEncounter);
+    } else {
+      console.log('[Encounters] Default Encounter already exists:', defaultEncounter.id);
+    }
   }
 
   // Establish a database connection

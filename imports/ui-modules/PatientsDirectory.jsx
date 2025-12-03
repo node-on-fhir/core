@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useTracker } from 'meteor/react-meteor-data';
 import { useNavigate } from 'react-router-dom';
 
-import { 
+import {
   Grid,
   Container,
   Divider,
@@ -15,10 +15,22 @@ import {
   Box,
   Typography,
   TextField,
-  InputAdornment
+  InputAdornment,
+  ToggleButton,
+  ToggleButtonGroup
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import SearchIcon from '@mui/icons-material/Search';
+import LaunchIcon from '@mui/icons-material/Launch';
+import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
+import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
+import BadgeIcon from '@mui/icons-material/Badge';
+import FingerprintIcon from '@mui/icons-material/Fingerprint';
+import LocationCityIcon from '@mui/icons-material/LocationCity';
+import PeopleIcon from '@mui/icons-material/People';
+import NumbersIcon from '@mui/icons-material/Numbers';
+import WcIcon from '@mui/icons-material/Wc';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 
 import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
@@ -26,6 +38,7 @@ import { Session } from 'meteor/session';
 import { PatientsTable } from '../ui-tables';
 import LayoutHelpers from '../lib/LayoutHelpers.jsx';
 import { Patients } from '../lib/schemas/SimpleSchemas/Patients';
+import LaunchAppsModal from '../components/LaunchAppsModal.jsx';
 
 import { get, has, set } from 'lodash';
 
@@ -68,6 +81,19 @@ export function PatientsDirectory(props){
   const [searchFilter, setSearchFilter] = useState('');
   const [debouncedSearchFilter, setDebouncedSearchFilter] = useState('');
   const searchTimeoutRef = useRef(null);
+  const [launchModalOpen, setLaunchModalOpen] = useState(false);
+  const [launchPatient, setLaunchPatient] = useState(null);
+
+  // Sorting and column visibility state
+  const [sortOrder, setSortOrder] = useState('descending');
+  const [showIdentifier, setShowIdentifier] = useState(false);
+  const [showGender, setShowGender] = useState(true);
+  const [showBirthSex, setShowBirthSex] = useState(false);
+  const [showActive, setShowActive] = useState(false);
+  const [showSystemId, setShowSystemId] = useState(false);
+  const [showFhirId, setShowFhirId] = useState(true);
+  const [showAddress, setShowAddress] = useState(true);
+  const [showDemographics, setShowDemographics] = useState(false);
 
   // Get theme for dark mode support
   const useTheme = Meteor.useTheme;
@@ -428,17 +454,88 @@ export function PatientsDirectory(props){
             </Typography>
           </Grid>
           <Grid item>
-            <Button
-              variant="contained"
-              color="primary"
-              startIcon={<AddIcon />}
-              onClick={handleAddPatient}
-            >
-              Add Patient
-            </Button>
+            <Box display="flex" gap={2} alignItems="center">
+              <ToggleButtonGroup
+                value={sortOrder}
+                exclusive
+                onChange={function(event, newOrder) {
+                  if (newOrder !== null) {
+                    setSortOrder(newOrder);
+                  }
+                }}
+                aria-label="sort order"
+                size="small"
+              >
+                <ToggleButton value="ascending" aria-label="ascending order">
+                  <ArrowUpwardIcon />
+                </ToggleButton>
+                <ToggleButton value="descending" aria-label="descending order">
+                  <ArrowDownwardIcon />
+                </ToggleButton>
+              </ToggleButtonGroup>
+
+              <ToggleButtonGroup
+                value={[
+                  showIdentifier && 'identifier',
+                  showGender && 'gender',
+                  showBirthSex && 'birthSex',
+                  showActive && 'active',
+                  showSystemId && 'systemId',
+                  showFhirId && 'fhirId',
+                  showAddress && 'address',
+                  showDemographics && 'demographics'
+                ].filter(Boolean)}
+                onChange={function(event, newFormats) {
+                  setShowIdentifier(newFormats.includes('identifier'));
+                  setShowGender(newFormats.includes('gender'));
+                  setShowBirthSex(newFormats.includes('birthSex'));
+                  setShowActive(newFormats.includes('active'));
+                  setShowSystemId(newFormats.includes('systemId'));
+                  setShowFhirId(newFormats.includes('fhirId'));
+                  setShowAddress(newFormats.includes('address'));
+                  setShowDemographics(newFormats.includes('demographics'));
+                }}
+                aria-label="column visibility"
+                size="small"
+              >
+                <ToggleButton value="identifier" aria-label="show identifier">
+                  <NumbersIcon />
+                </ToggleButton>
+                <ToggleButton value="gender" aria-label="show gender">
+                  <span style={{ fontSize: '1.25rem', lineHeight: 1 }}>⚤</span>
+                </ToggleButton>
+                <ToggleButton value="birthSex" aria-label="show birth sex">
+                  <WcIcon />
+                </ToggleButton>
+                <ToggleButton value="active" aria-label="show active status">
+                  <CheckCircleIcon />
+                </ToggleButton>
+                <ToggleButton value="systemId" aria-label="show system ID">
+                  <BadgeIcon />
+                </ToggleButton>
+                <ToggleButton value="fhirId" aria-label="show FHIR ID">
+                  <FingerprintIcon />
+                </ToggleButton>
+                <ToggleButton value="address" aria-label="show address columns">
+                  <LocationCityIcon />
+                </ToggleButton>
+                <ToggleButton value="demographics" aria-label="show demographics">
+                  <PeopleIcon />
+                </ToggleButton>
+              </ToggleButtonGroup>
+
+              <Button
+                variant="contained"
+                color="primary"
+                startIcon={<AddIcon />}
+                onClick={handleAddPatient}
+              >
+                Add Patient
+              </Button>
+            </Box>
           </Grid>
         </Grid>
-        
+
         <Box mt={3}>
           <TextField
             id="patientSearchInput"
@@ -565,6 +662,24 @@ export function PatientsDirectory(props){
           page={data.patientsIndex}
           logger={window.logger ? window.logger : null}
           size="medium"
+          onLaunchClick={function(patient){
+            console.log('Launch clicked for patient:', patient);
+            setLaunchPatient(patient);
+            setLaunchModalOpen(true);
+          }}
+          order={sortOrder}
+          hideIdentifier={!showIdentifier}
+          hideGender={!showGender}
+          hideBirthSex={!showBirthSex}
+          hideActive={!showActive}
+          hideSystemBarcode={!showSystemId}
+          hideFhirBarcode={!showFhirId}
+          hideCity={!showAddress}
+          hideState={!showAddress}
+          hidePostalCode={!showAddress}
+          hideCountry={!showAddress}
+          hideMaritalStatus={!showDemographics}
+          hideLanguage={!showDemographics}
         />
       </CardContent>
     </Card>
@@ -654,6 +769,13 @@ export function PatientsDirectory(props){
         { renderHeader() }
         { layoutContent }
       </Box>
+
+      {/* Launch Apps Modal */}
+      <LaunchAppsModal
+        open={launchModalOpen}
+        onClose={function() { setLaunchModalOpen(false); }}
+        patient={launchPatient}
+      />
     </Box>
   );
 }

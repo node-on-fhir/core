@@ -31,78 +31,104 @@ let defaultSearchParams = [
 const MetadataServerMethods = {
   getJwkSet: function(){
     console.log('getJwkSet()');
-    
+
     // Check if we have JWK configuration in settings
     let jwkConfig = get(Meteor, 'settings.private.jwk');
-    
+
     if (jwkConfig && jwkConfig.keys) {
       // If JWK keys are directly configured
       return {
         keys: jwkConfig.keys
       };
     }
-    
-    // Generate JWK from X.509 certificate if available
+
+    // Generate JWK from X.509 certificate or private key
     let x509privateKeyRaw = get(Meteor, 'settings.private.x509.privateKey');
     let x509publicCertRaw = get(Meteor, 'settings.private.x509.publicCertPem');
-    
+
     // Convert \r\n escape sequences to actual line breaks
-    let x509privateKey = x509privateKeyRaw ? x509privateKeyRaw.replace(/\\r\\n/g, '\n') : '';
-    let x509publicCert = x509publicCertRaw ? x509publicCertRaw.replace(/\\r\\n/g, '\n') : '';
-    
-    if (x509privateKey && x509publicCert) {
+    let x509privateKey = x509privateKeyRaw ? x509privateKeyRaw.replace(/\\r\\n/g, '\n').replace(/\r\n/g, '\n').replace(/\r/g, '\n') : '';
+    let x509publicCert = x509publicCertRaw ? x509publicCertRaw.replace(/\\r\\n/g, '\n').replace(/\r\n/g, '\n').replace(/\r/g, '\n') : '';
+
+    let publicKey = null;
+
+    // Try to get public key from certificate first
+    if (x509publicCert) {
       try {
-        // Parse the certificate - handle different line ending formats
         let certPem = x509publicCert
           .replace(/-----BEGIN CERTIFICATE-----/g, '')
           .replace(/-----END CERTIFICATE-----/g, '')
           .replace(/[\r\n]/g, '');
-          
+
         let certDer = forge.util.decode64(certPem);
         let cert = pki.certificateFromAsn1(forge.asn1.fromDer(certDer));
-        let publicKey = cert.publicKey;
-        
+        publicKey = cert.publicKey;
+        console.log('getJwkSet: Extracted public key from certificate');
+      } catch (certError) {
+        console.error('Error parsing certificate:', certError.message);
+      }
+    }
+
+    // If no public key from cert, try to derive from private key
+    if (!publicKey && x509privateKey) {
+      try {
+        let privateKeyObj = pki.privateKeyFromPem(x509privateKey);
+        // RSA private key contains the public key components (n and e)
+        publicKey = {
+          n: privateKeyObj.n,
+          e: privateKeyObj.e
+        };
+        console.log('getJwkSet: Derived public key from private key');
+      } catch (keyError) {
+        console.error('Error parsing private key:', keyError.message);
+      }
+    }
+
+    if (publicKey && publicKey.n && publicKey.e) {
+      try {
         // Convert RSA public key components to base64url format
-        // Get hex representation of modulus and exponent
         let nHex = publicKey.n.toString(16);
         let eHex = publicKey.e.toString(16);
-        
+
         // Ensure even number of hex digits
         if (nHex.length % 2 !== 0) nHex = '0' + nHex;
         if (eHex.length % 2 !== 0) eHex = '0' + eHex;
-        
+
         // Convert to base64url using Node.js Buffer
         let nBuffer = Buffer.from(nHex, 'hex');
         let eBuffer = Buffer.from(eHex, 'hex');
-        
+
         // Base64url encode (base64 with URL-safe characters and no padding)
         let nBase64url = nBuffer.toString('base64')
           .replace(/\+/g, '-')
           .replace(/\//g, '_')
           .replace(/=/g, '');
-          
+
         let eBase64url = eBuffer.toString('base64')
           .replace(/\+/g, '-')
           .replace(/\//g, '_')
           .replace(/=/g, '');
-        
+
         let jwk = {
           kty: "RSA",
           use: "sig",
-          kid: get(Meteor, 'settings.private.jwk.keyId', 'trialx-data-fetch-key-001'),
-          alg: "RS384",
+          kid: get(Meteor, 'settings.private.jwk.keyId', 'honeycomb-signing-key-001'),
+          alg: "RS256",
           n: nBase64url,
           e: eBase64url
         };
-        
+
+        console.log('getJwkSet: Generated JWK successfully');
         return {
           keys: [jwk]
         };
       } catch (error) {
-        console.error('Error converting certificate to JWK:', error);
+        console.error('Error converting to JWK:', error);
       }
+    } else {
+      console.warn('getJwkSet: No x509.privateKey or x509.publicCertPem configured in settings');
     }
-    
+
     // Return empty key set if no keys available
     return {
       keys: []
@@ -261,7 +287,8 @@ const MetadataServerMethods = {
 
     return {
       // Required endpoints per 170.315(g)(10)
-      "issuer": Meteor.absoluteUrl(),
+      // Issuer must match the FHIR base URL per SMART App Launch 2.0
+      "issuer": Meteor.absoluteUrl() + fhirPath,
       "authorization_endpoint": Meteor.absoluteUrl() + get(Meteor, 'settings.private.fhir.security.authorizationEndpoint', "oauth/authorize"),
       "token_endpoint": Meteor.absoluteUrl() + get(Meteor, 'settings.private.fhir.security.tokenEndpoint', "oauth/token"),
       "jwks_uri": Meteor.absoluteUrl() + ".well-known/jwks.json",
@@ -323,6 +350,46 @@ const MetadataServerMethods = {
       "introspection_endpoint": Meteor.absoluteUrl() + get(Meteor, 'settings.private.fhir.security.introspectEndpoint', "authorizations/introspect"),
       "registration_endpoint": Meteor.absoluteUrl() + get(Meteor, 'settings.private.fhir.security.registrationEndpoint', "oauth/registration"),
       "revocation_endpoint": Meteor.absoluteUrl() + get(Meteor, 'settings.private.fhir.security.revokeEndpoint', "authorizations/revoke")
+    };
+  },
+  getWellKnownOpenIdConfiguration: function(){
+    console.log('getWellKnownOpenIdConfiguration()');
+
+    return {
+      // Required per § 170.215(e)(1) and OpenID Connect Discovery 1.0
+      "issuer": Meteor.absoluteUrl() + fhirPath,
+      "authorization_endpoint": Meteor.absoluteUrl() + get(Meteor, 'settings.private.fhir.security.authorizationEndpoint', "oauth/authorize"),
+      "token_endpoint": Meteor.absoluteUrl() + get(Meteor, 'settings.private.fhir.security.tokenEndpoint', "oauth/token"),
+      "jwks_uri": Meteor.absoluteUrl() + ".well-known/jwks.json",
+
+      // Required OpenID Connect claims
+      "response_types_supported": ["code"],
+      "subject_types_supported": ["public"],
+      "id_token_signing_alg_values_supported": ["RS256"],
+
+      // SMART on FHIR specific
+      "scopes_supported": [
+        "openid",
+        "fhirUser",
+        "profile",
+        "launch",
+        "launch/patient",
+        "offline_access"
+      ],
+
+      // Token endpoint auth methods
+      "token_endpoint_auth_methods_supported": [
+        "client_secret_basic",
+        "client_secret_post",
+        "private_key_jwt"
+      ],
+
+      // Claims supported
+      "claims_supported": [
+        "sub",
+        "iss",
+        "fhirUser"
+      ]
     };
   },
   getWellKnownUdapConfiguration: function(){
@@ -427,6 +494,22 @@ WebApp.handlers.get( "/.well-known/smart-configuration", async (req, res) => {
   res.json(returnPayload);
 });
 
+// Also serve at FHIR base URL per SMART App Launch spec
+WebApp.handlers.get("/" + fhirPath + "/.well-known/smart-configuration", async (req, res) => {
+
+  console.log('GET /' + fhirPath + "/.well-known/smart-configuration");
+
+  res.setHeader('Content-type', 'application/json');
+  res.setHeader("Access-Control-Allow-Origin", "*");
+
+  let returnPayload = MetadataServerMethods.getWellKnownSmartConfiguration()
+  if(process.env.TRACE){
+    console.log('return payload', returnPayload);
+  }
+
+  res.json(returnPayload);
+});
+
 WebApp.handlers.get("/" + fhirPath + "/.well-known/udap", async (req, res) => {
 
   console.log('GET /' +  fhirPath + "/.well-known/smart-udap");
@@ -458,6 +541,7 @@ WebApp.handlers.get("/.well-known/udap", async (req, res) => {
 });
 
 // JWK Set endpoint for Epic SMART v2
+// Available at both base route and FHIR path route
 WebApp.handlers.get("/.well-known/jwks.json", async (req, res) => {
 
   console.log("GET /.well-known/jwks.json");
@@ -473,3 +557,91 @@ WebApp.handlers.get("/.well-known/jwks.json", async (req, res) => {
   res.json(returnPayload);
 });
 
+// Also expose at FHIR base path for spec compliance
+WebApp.handlers.get("/" + fhirPath + "/.well-known/jwks.json", async (req, res) => {
+
+  console.log("GET /" + fhirPath + "/.well-known/jwks.json");
+
+  res.setHeader('Content-type', 'application/json');
+  res.setHeader("Access-Control-Allow-Origin", "*");
+
+  let returnPayload = MetadataServerMethods.getJwkSet()
+  if(process.env.TRACE || process.env.DEBUG_OAUTH){
+    console.log('JWK Set return payload:', JSON.stringify(returnPayload, null, 2));
+  }
+
+  res.json(returnPayload);
+});
+
+// OpenID Connect Discovery endpoint per § 170.215(e)(1)
+// Available at both base route and FHIR path route
+WebApp.handlers.get("/.well-known/openid-configuration", async (req, res) => {
+
+  console.log("GET /.well-known/openid-configuration");
+
+  res.setHeader('Content-type', 'application/json');
+  res.setHeader("Access-Control-Allow-Origin", "*");
+
+  let returnPayload = MetadataServerMethods.getWellKnownOpenIdConfiguration()
+  if(process.env.TRACE){
+    console.log('return payload', returnPayload);
+  }
+
+  res.json(returnPayload);
+});
+
+// Also expose at FHIR base path for spec compliance
+WebApp.handlers.get("/" + fhirPath + "/.well-known/openid-configuration", async (req, res) => {
+
+  console.log("GET /" + fhirPath + "/.well-known/openid-configuration");
+
+  res.setHeader('Content-type', 'application/json');
+  res.setHeader("Access-Control-Allow-Origin", "*");
+
+  let returnPayload = MetadataServerMethods.getWellKnownOpenIdConfiguration()
+  if(process.env.TRACE){
+    console.log('return payload', returnPayload);
+  }
+
+  res.json(returnPayload);
+});
+
+// SMART Style endpoint per SMART App Launch spec
+// Returns styling information that apps can use to match EHR look-and-feel
+// https://build.fhir.org/ig/HL7/smart-app-launch/scopes-and-launch-context.html#styling
+function getSmartStyle() {
+  return {
+    color_background: "#edeae3",
+    color_error: "#9e2d2d",
+    color_highlight: "#69b5ce",
+    color_modal_backdrop: "",
+    color_success: "#498e49",
+    color_text: "#303030",
+    dim_border_radius: "6px",
+    dim_font_size: "13px",
+    dim_spacing_size: "20px",
+    font_family_body: "Georgia, Times, 'Times New Roman', serif",
+    font_family_heading: "'HelveticaNeue-Light', Helvetica, Arial, 'Lucida Grande', sans-serif"
+  };
+}
+
+WebApp.handlers.get("/smart-style.json", async (req, res) => {
+
+  console.log("GET /smart-style.json");
+
+  res.setHeader('Content-Type', 'application/json');
+  res.setHeader("Access-Control-Allow-Origin", "*");
+
+  res.status(200).json(getSmartStyle());
+});
+
+// Also expose at FHIR base path for spec compliance
+WebApp.handlers.get("/" + fhirPath + "/smart-style.json", async (req, res) => {
+
+  console.log("GET /" + fhirPath + "/smart-style.json");
+
+  res.setHeader('Content-Type', 'application/json');
+  res.setHeader("Access-Control-Allow-Origin", "*");
+
+  res.status(200).json(getSmartStyle());
+});

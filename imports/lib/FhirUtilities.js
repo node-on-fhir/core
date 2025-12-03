@@ -638,6 +638,81 @@ export const FhirUtilities = {
     }
 
     return result;
+  },
+  /**
+   * findCanonical - Returns the authoritative/canonical record from a set of
+   * FHIR resources that may share the same id (due to versioning or duplicates).
+   *
+   * Usage: FhirUtilities.findCanonical(Patients.find({ id: fhirId }).fetch())
+   *
+   * Resolution strategy:
+   * 1. Filter to active records only (if `active` field exists and is false, exclude)
+   * 2. Sort by meta.lastUpdated (descending) - most recent first
+   * 3. Sort by meta.versionId (descending) - highest version first
+   * 4. Fallback to MongoDB _id comparison if meta fields missing (newer ObjectIDs sort higher)
+   *
+   * OPEN QUESTIONS FOR FUTURE CONSIDERATION:
+   * - Should `status` field be considered? (e.g., 'entered-in-error', 'inactive')
+   *   This is resource-specific and more complex to handle generically.
+   * - Should non-canonical records be marked? (soft delete, supersededBy reference)
+   * - Should there be server-side auto-cleanup on import to deduplicate?
+   * - Should this return { canonical, duplicates, versions } for dedup workflows?
+   *
+   * @param {Array} records - Array of FHIR resources (e.g., from Collection.find().fetch())
+   * @param {Object} options - Optional configuration
+   * @param {Boolean} options.includeInactive - If true, don't filter out inactive records
+   * @returns {Object|null} - The canonical record, or null if no records
+   */
+  findCanonical(records, options) {
+    if (!records || records.length === 0) return null;
+    if (records.length === 1) return records[0];
+
+    const opts = options || {};
+
+    // Filter to active records only (unless includeInactive is set)
+    let candidates = records;
+    if (!opts.includeInactive) {
+      candidates = records.filter(function(record) {
+        // If record has an 'active' field and it's explicitly false, exclude it
+        // If 'active' is undefined or true, include it
+        const active = get(record, 'active');
+        return active !== false;
+      });
+
+      // If all records are inactive, fall back to all records
+      if (candidates.length === 0) {
+        console.warn('FhirUtilities.findCanonical: All records are inactive, using full set');
+        candidates = records;
+      }
+    }
+
+    // Sort by meta.lastUpdated (desc), meta.versionId (desc), then _id (desc) as fallback
+    candidates.sort(function(a, b) {
+      // Primary: meta.lastUpdated
+      const aUpdated = get(a, 'meta.lastUpdated', '');
+      const bUpdated = get(b, 'meta.lastUpdated', '');
+      if (aUpdated && bUpdated && aUpdated !== bUpdated) {
+        return bUpdated.localeCompare(aUpdated); // descending
+      }
+
+      // Secondary: meta.versionId
+      const aVersion = get(a, 'meta.versionId', '');
+      const bVersion = get(b, 'meta.versionId', '');
+      if (aVersion && bVersion && aVersion !== bVersion) {
+        return bVersion.localeCompare(aVersion); // descending
+      }
+
+      // Fallback: MongoDB _id (newer ObjectIDs are lexicographically greater)
+      const aId = get(a, '_id', '');
+      const bId = get(b, '_id', '');
+      if (aId && bId) {
+        return String(bId).localeCompare(String(aId)); // descending
+      }
+
+      return 0;
+    });
+
+    return candidates[0];
   }
 }
 

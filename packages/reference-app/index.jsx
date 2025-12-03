@@ -136,12 +136,12 @@ const ModuleConfig = {
 
 // Patient directory buttons - OPTIONAL
 const PatientsDirectoryButtons = [{
-  id: 'reference-patient-action',
-  label: 'Reference Action',
-  icon: 'dashboard',
+  id: 'certify-patient-action',
+  label: 'Certify',
   color: 'primary',
   onClick: function(patientId, patient) {
-    console.log('Patient action clicked for:', patientId);
+    console.log('Certify clicked for patient:', patientId);
+    window.location.href = '/g10-certification?patient=' + patientId;
   }
 }];
 

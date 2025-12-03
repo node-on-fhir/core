@@ -36,9 +36,10 @@ import {
 // FHIR Resources required for (g)(10) certification
 const G10_REQUIRED_RESOURCES = [
   'Patient', 'AllergyIntolerance', 'CarePlan', 'CareTeam', 'Condition',
-  'Device', 'DiagnosticReport', 'DocumentReference', 'Encounter', 'Goal',
-  'Immunization', 'Location', 'Medication', 'MedicationRequest', 'Observation',
-  'Organization', 'Practitioner', 'PractitionerRole', 'Procedure', 'Provenance'
+  'Coverage', 'Device', 'DiagnosticReport', 'DocumentReference', 'Encounter',
+  'Goal', 'Immunization', 'Location', 'Medication', 'MedicationDispense',
+  'MedicationRequest', 'Observation', 'Organization', 'Practitioner',
+  'PractitionerRole', 'Procedure', 'Provenance', 'ServiceRequest', 'Specimen'
 ];
 
 // SMART capabilities/scopes
@@ -191,7 +192,7 @@ function G10CertificationPage(props) {
     redirect_uris: 'https://inferno.healthit.gov/suites/custom/smart/redirect',
     launch_uri: 'https://inferno.healthit.gov/suites/custom/smart/launch',
     jwks_uri: 'https://inferno.healthit.gov/suites/custom/g10_certification/.well-known/jwks.json',
-    scope: 'launch/patient launch openid fhirUser offline_access patient/Medication.rs patient/AllergyIntolerance.rs patient/CarePlan.rs patient/CareTeam.rs patient/Condition.rs patient/Device.rs patient/DiagnosticReport.rs patient/DocumentReference.rs patient/Encounter.rs patient/Goal.rs patient/Immunization.rs patient/Location.rs patient/MedicationRequest.rs patient/Observation.rs patient/Organization.rs patient/Patient.rs patient/Practitioner.rs patient/Procedure.rs patient/Provenance.rs patient/PractitionerRole.rs user/Medication.rs user/AllergyIntolerance.rs user/CarePlan.rs user/CareTeam.rs user/Condition.rs user/Device.rs user/DiagnosticReport.rs user/DocumentReference.rs user/Encounter.rs user/Goal.rs user/Immunization.rs user/Location.rs user/MedicationRequest.rs user/Observation.rs user/Organization.rs user/Patient.rs user/Practitioner.rs user/Procedure.rs user/Provenance.rs user/PractitionerRole.rs system/*.*'
+    scope: 'launch/patient launch openid fhirUser offline_access patient/Medication.rs patient/AllergyIntolerance.rs patient/CarePlan.rs patient/CareTeam.rs patient/Condition.rs patient/Coverage.rs patient/Device.rs patient/DiagnosticReport.rs patient/DocumentReference.rs patient/Encounter.rs patient/Goal.rs patient/Immunization.rs patient/Location.rs patient/MedicationDispense.rs patient/MedicationRequest.rs patient/Observation.rs patient/Organization.rs patient/Patient.rs patient/Practitioner.rs patient/Procedure.rs patient/Provenance.rs patient/PractitionerRole.rs patient/ServiceRequest.rs patient/Specimen.rs user/Medication.rs user/AllergyIntolerance.rs user/CarePlan.rs user/CareTeam.rs user/Condition.rs user/Coverage.rs user/Device.rs user/DiagnosticReport.rs user/DocumentReference.rs user/Encounter.rs user/Goal.rs user/Immunization.rs user/Location.rs user/MedicationDispense.rs user/MedicationRequest.rs user/Observation.rs user/Organization.rs user/Patient.rs user/Practitioner.rs user/Procedure.rs user/Provenance.rs user/PractitionerRole.rs user/ServiceRequest.rs user/Specimen.rs system/*.*'
   });
 
   // Inferno configuration JSON state
@@ -214,7 +215,7 @@ function G10CertificationPage(props) {
     // Tab 1: PHR Full-Access App
     phr_full_access: {
       patient_id: '',
-      received_scopes: 'launch/patient patient/Medication.rs patient/AllergyIntolerance.rs patient/CarePlan.rs patient/CareTeam.rs patient/Condition.rs patient/Device.rs patient/DiagnosticReport.rs patient/DocumentReference.rs patient/Encounter.rs patient/Goal.rs patient/Immunization.rs patient/Location.rs patient/MedicationRequest.rs patient/Observation.rs patient/Organization.rs patient/Patient.rs patient/Practitioner.rs patient/Procedure.rs patient/Provenance.rs patient/PractitionerRole.rs'
+      received_scopes: 'openid fhirUser offline_access launch/patient patient/Medication.rs patient/AllergyIntolerance.rs patient/CarePlan.rs patient/CareTeam.rs patient/Condition.rs patient/Coverage.rs patient/Device.rs patient/DiagnosticReport.rs patient/DocumentReference.rs patient/Encounter.rs patient/Goal.rs patient/Immunization.rs patient/Location.rs patient/MedicationDispense.rs patient/MedicationRequest.rs patient/Observation.rs patient/Organization.rs patient/Patient.rs patient/Practitioner.rs patient/Procedure.rs patient/Provenance.rs patient/PractitionerRole.rs patient/ServiceRequest.rs patient/Specimen.rs'
     },
     // Tab 2: PHR Limited Access App
     phr_limited_access: {
@@ -224,7 +225,7 @@ function G10CertificationPage(props) {
     // Tab 3: EHR Practitioner Access App
     ehr_practitioner: {
       patient_id: '',
-      received_scopes: 'launch openid fhirUser user/Medication.rs user/AllergyIntolerance.rs user/CarePlan.rs user/CareTeam.rs user/Condition.rs user/Device.rs user/DiagnosticReport.rs user/DocumentReference.rs user/Encounter.rs user/Goal.rs user/Immunization.rs user/Location.rs user/MedicationRequest.rs user/Observation.rs user/Organization.rs user/Patient.rs user/Practitioner.rs user/Procedure.rs user/Provenance.rs user/PractitionerRole.rs'
+      received_scopes: 'launch openid fhirUser offline_access user/Medication.rs user/AllergyIntolerance.rs user/CarePlan.rs user/CareTeam.rs user/Condition.rs user/Coverage.rs user/Device.rs user/DiagnosticReport.rs user/DocumentReference.rs user/Encounter.rs user/Goal.rs user/Immunization.rs user/Location.rs user/MedicationDispense.rs user/MedicationRequest.rs user/Observation.rs user/Organization.rs user/Patient.rs user/Practitioner.rs user/Procedure.rs user/Provenance.rs user/PractitionerRole.rs user/ServiceRequest.rs user/Specimen.rs'
     },
     // Tab 4: Patient Chart (Standalone)
     patient_chart: {
@@ -236,7 +237,7 @@ function G10CertificationPage(props) {
       bulk_server_url: '',
       backend_services_token_endpoint: '',
       bulk_timeout: '600',
-      group_id: ''
+      group_id: 'inferno-test-group'
     },
     // Tab 9: Additional Authorization
     additional_auth: {
@@ -440,7 +441,7 @@ function G10CertificationPage(props) {
       setTestConfig({
         phr_full_access: {
           patient_id: '',
-          received_scopes: 'launch/patient patient/Medication.rs patient/AllergyIntolerance.rs patient/CarePlan.rs patient/CareTeam.rs patient/Condition.rs patient/Device.rs patient/DiagnosticReport.rs patient/DocumentReference.rs patient/Encounter.rs patient/Goal.rs patient/Immunization.rs patient/Location.rs patient/MedicationRequest.rs patient/Observation.rs patient/Organization.rs patient/Patient.rs patient/Practitioner.rs patient/Procedure.rs patient/Provenance.rs patient/PractitionerRole.rs'
+          received_scopes: 'openid fhirUser offline_access launch/patient patient/Medication.rs patient/AllergyIntolerance.rs patient/CarePlan.rs patient/CareTeam.rs patient/Condition.rs patient/Coverage.rs patient/Device.rs patient/DiagnosticReport.rs patient/DocumentReference.rs patient/Encounter.rs patient/Goal.rs patient/Immunization.rs patient/Location.rs patient/MedicationDispense.rs patient/MedicationRequest.rs patient/Observation.rs patient/Organization.rs patient/Patient.rs patient/Practitioner.rs patient/Procedure.rs patient/Provenance.rs patient/PractitionerRole.rs patient/ServiceRequest.rs patient/Specimen.rs'
         },
         phr_limited_access: {
           patient_id: '',
@@ -448,7 +449,7 @@ function G10CertificationPage(props) {
         },
         ehr_practitioner: {
           patient_id: '',
-          received_scopes: 'launch openid fhirUser user/Medication.rs user/AllergyIntolerance.rs user/CarePlan.rs user/CareTeam.rs user/Condition.rs user/Device.rs user/DiagnosticReport.rs user/DocumentReference.rs user/Encounter.rs user/Goal.rs user/Immunization.rs user/Location.rs user/MedicationRequest.rs user/Observation.rs user/Organization.rs user/Patient.rs user/Practitioner.rs user/Procedure.rs user/Provenance.rs user/PractitionerRole.rs'
+          received_scopes: 'launch openid fhirUser offline_access user/Medication.rs user/AllergyIntolerance.rs user/CarePlan.rs user/CareTeam.rs user/Condition.rs user/Coverage.rs user/Device.rs user/DiagnosticReport.rs user/DocumentReference.rs user/Encounter.rs user/Goal.rs user/Immunization.rs user/Location.rs user/MedicationDispense.rs user/MedicationRequest.rs user/Observation.rs user/Organization.rs user/Patient.rs user/Practitioner.rs user/Procedure.rs user/Provenance.rs user/PractitionerRole.rs user/ServiceRequest.rs user/Specimen.rs'
         },
         patient_chart: {
           patient_id: '',
@@ -458,7 +459,7 @@ function G10CertificationPage(props) {
           bulk_server_url: '',
           backend_services_token_endpoint: '',
           bulk_timeout: '600',
-          group_id: ''
+          group_id: 'inferno-test-group'
         },
         additional_auth: {
           patient_id: '',
@@ -558,187 +559,653 @@ function G10CertificationPage(props) {
   }
 
   function handleExportJson() {
-    const baseUrl = serverConfig.url || get(Meteor, 'settings.public.smartOnFhir.fhirServiceUrl', window.location.origin + '/baseR4');
+    // Ensure baseUrl includes /baseR4 path
+    let baseUrl = serverConfig.url || get(Meteor, 'settings.public.smartOnFhir.fhirServiceUrl', window.location.origin + '/baseR4');
+    if (!baseUrl.includes('/baseR4')) {
+      baseUrl = baseUrl.replace(/\/$/, '') + '/baseR4';
+    }
+
     const clientId = get(infernoClient, 'client_id', '');
     const clientSecret = Session.get('infernoClientSecret') || '';
+    const authUrl = serverConfig.authorization_endpoint || baseUrl.replace('/baseR4', '/oauth/authorize');
+    const tokenUrl = serverConfig.token_endpoint || baseUrl.replace('/baseR4', '/oauth/token');
 
-    // Build Inferno preset configuration array matching their format
+    // Helper to build auth_info value objects, omitting empty/undefined values
+    const buildAuthValue = (obj) => {
+      const result = {};
+      Object.entries(obj).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && value !== '') {
+          result[key] = value;
+        }
+      });
+      return result;
+    };
+
+    // Auth type options for dropdowns
+    const authTypeOptions = {
+      list_options: [
+        { label: "Public", value: "public" },
+        { label: "Confidential Symmetric", value: "symmetric" },
+        { label: "Confidential Asymmetric", value: "asymmetric" }
+      ]
+    };
+
+    // Standard patient scopes for standalone launch (includes all g(10) required resources)
+    const standaloneScopes = "launch/patient openid fhirUser offline_access patient/Medication.rs patient/AllergyIntolerance.rs patient/CarePlan.rs patient/CareTeam.rs patient/Condition.rs patient/Coverage.rs patient/Device.rs patient/DiagnosticReport.rs patient/DocumentReference.rs patient/Encounter.rs patient/Goal.rs patient/Immunization.rs patient/Location.rs patient/MedicationDispense.rs patient/MedicationRequest.rs patient/Observation.rs patient/Organization.rs patient/Patient.rs patient/Practitioner.rs patient/Procedure.rs patient/Provenance.rs patient/PractitionerRole.rs patient/ServiceRequest.rs patient/Specimen.rs";
+
+    // User scopes for EHR launch (includes all g(10) required resources)
+    const ehrScopes = "launch openid fhirUser offline_access user/Medication.rs user/AllergyIntolerance.rs user/CarePlan.rs user/CareTeam.rs user/Condition.rs user/Coverage.rs user/Device.rs user/DiagnosticReport.rs user/DocumentReference.rs user/Encounter.rs user/Goal.rs user/Immunization.rs user/Location.rs user/MedicationDispense.rs user/MedicationRequest.rs user/Observation.rs user/Organization.rs user/Patient.rs user/Practitioner.rs user/Procedure.rs user/Provenance.rs user/PractitionerRole.rs user/ServiceRequest.rs user/Specimen.rs";
+
+    // v1 scopes (using .read instead of .rs)
+    const v1Scopes = "launch/patient openid fhirUser offline_access patient/Medication.read patient/AllergyIntolerance.read patient/CarePlan.read patient/CareTeam.read patient/Condition.read patient/Device.read patient/DiagnosticReport.read patient/DocumentReference.read patient/Encounter.read patient/Goal.read patient/Immunization.read patient/Location.read patient/MedicationRequest.read patient/Observation.read patient/Organization.read patient/Patient.read patient/Practitioner.read patient/Procedure.read patient/Provenance.read patient/PractitionerRole.read patient/Specimen.read patient/Coverage.read patient/MedicationDispense.read patient/ServiceRequest.read";
+
+    // Granular scopes for testing fine-grained access
+    const granularScopes1 = "launch/patient openid fhirUser offline_access patient/Condition.rs?category=http://terminology.hl7.org/CodeSystem/condition-category|encounter-diagnosis patient/Condition.rs?category=http://hl7.org/fhir/us/core/CodeSystem/condition-category|health-concern patient/Observation.rs?category=http://terminology.hl7.org/CodeSystem/observation-category|laboratory patient/Observation.rs?category=http://terminology.hl7.org/CodeSystem/observation-category|social-history";
+
+    const granularScopes2 = "launch/patient openid fhirUser offline_access patient/Condition.rs?category=http://terminology.hl7.org/CodeSystem/condition-category|problem-list-item patient/Observation.rs?category=http://terminology.hl7.org/CodeSystem/observation-category|vital-signs patient/Observation.rs?category=http://terminology.hl7.org/CodeSystem/observation-category|survey patient/Observation.rs?category=http://hl7.org/fhir/us/core/CodeSystem/us-core-category|sdoh";
+
+    const granularScopesSelection = "launch/patient openid fhirUser offline_access patient/Condition.rs patient/Observation.rs patient/Patient.rs";
+
+    // Build complete Inferno preset configuration array
     const exportConfig = [
       // FHIR Endpoint URL
       {
         name: "url",
-        title: "FHIR Endpoint",
         description: "URL of the FHIR endpoint used by SMART applications",
+        title: "FHIR Endpoint",
         type: "text",
         value: baseUrl
       },
 
-      // Standalone Patient Launch (Full Access) - Tab 1
+      // Standalone Patient Launch (Confidential Symmetric)
       {
         name: "standalone_smart_auth_info",
-        title: "Standalone Launch Credentials",
-        type: "auth_info",
         options: {
           mode: "auth",
           components: [
-            { name: "auth_type", default: "symmetric", locked: true },
+            { name: "auth_type", default: "symmetric", options: authTypeOptions, locked: true },
             { name: "auth_request_method", default: "GET", locked: true },
             { name: "use_discovery", locked: true },
-            { name: "requested_scopes", default: testConfig.phr_full_access.received_scopes },
+            { name: "requested_scopes", default: standaloneScopes },
             { name: "pkce_support", default: "enabled", locked: true },
             { name: "pkce_code_challenge_method", default: "S256", locked: true },
             { name: "jwks", locked: true }
           ]
         },
-        value: {
+        title: "Standalone Launch Credentials",
+        type: "auth_info",
+        value: buildAuthValue({
           pkce_support: "enabled",
           pkce_code_challenge_method: "S256",
           auth_request_method: "GET",
           auth_type: "symmetric",
           use_discovery: "true",
-          auth_url: serverConfig.authorization_endpoint,
-          token_url: serverConfig.token_endpoint,
-          requested_scopes: testConfig.phr_full_access.received_scopes,
+          auth_url: authUrl,
+          token_url: tokenUrl,
+          requested_scopes: standaloneScopes,
           client_id: clientId,
           client_secret: clientSecret
-        },
+        }),
         default: {}
       },
 
-      // Expected Resources for Limited Access - Tab 2
+      // Expected Resources for Limited Access
       {
         name: "expected_resources",
-        title: "Expected Resource Grant for Limited Access Launch",
-        description: "the user will only grant access to the following resources during authorization.",
-        type: "text",
         default: "patient, condition, observation",
+        description: "the user will only grant access to the following resources during authorization.",
+        title: "Expected Resource Grant for Limited Access Launch",
+        type: "text",
         value: "patient, condition, observation"
       },
 
-      // EHR Practitioner Launch - Tab 3
+      // EHR Launch Credentials
       {
         name: "ehr_smart_auth_info",
-        title: "EHR Launch Credentials",
-        type: "auth_info",
         options: {
           mode: "auth",
           components: [
-            { name: "auth_type", default: "symmetric", locked: true },
+            { name: "auth_type", default: "symmetric", options: authTypeOptions, locked: true },
             { name: "use_discovery", locked: true },
-            { name: "requested_scopes", default: testConfig.ehr_practitioner.received_scopes },
+            { name: "requested_scopes", default: ehrScopes },
             { name: "auth_request_method", default: "POST", locked: true },
             { name: "pkce_support", default: "enabled", locked: true },
             { name: "pkce_code_challenge_method", default: "S256", locked: true }
           ]
         },
-        value: {
+        title: "EHR Launch Credentials",
+        type: "auth_info",
+        value: buildAuthValue({
           pkce_support: "enabled",
           pkce_code_challenge_method: "S256",
           auth_request_method: "POST",
           auth_type: "symmetric",
           use_discovery: "true",
-          requested_scopes: testConfig.ehr_practitioner.received_scopes,
+          auth_url: authUrl,
+          token_url: tokenUrl,
+          requested_scopes: ehrScopes,
           client_id: clientId,
           client_secret: clientSecret
-        },
+        }),
         default: {}
-      }
+      },
+
+      // Additional Patient IDs
+      {
+        name: "additional_patient_ids",
+        description: "Comma separated list of Patient IDs that together with the Patient ID from the SMART App Launch contain all MUST SUPPORT elements.",
+        optional: true,
+        title: "Additional Patient IDs",
+        type: "text",
+        value: ""
+      },
+
+      // Implantable Device Codes
+      {
+        name: "implantable_device_codes",
+        description: "Enter the code for an Implantable Device type, or multiple codes separated by commas. If blank, Inferno will validate all Device resources against the Implantable Device profile",
+        optional: true,
+        title: "Implantable Device Type Code",
+        type: "text",
+        value: ""
+      },
+
+      // Bulk Data FHIR URL
+      {
+        name: "bulk_server_url",
+        description: "The URL of the Bulk FHIR server.",
+        title: "Bulk Data FHIR URL",
+        type: "text",
+        value: baseUrl
+      },
+
+      // Group ID
+      {
+        name: "group_id",
+        description: "The Group ID associated with the group of patients to be exported.",
+        title: "Group ID",
+        type: "text",
+        value: testConfig.bulk_data.group_id || "123"
+      },
+
+      // Bulk Patient IDs in Group
+      {
+        name: "bulk_patient_ids_in_group",
+        description: "Comma separated list of every Patient ID that is in the specified Group. This information is provided by the system under test to verify that data returned matches expectations. Leave blank to not verify Group inclusion.",
+        optional: true,
+        title: "Patient IDs in exported Group",
+        type: "text",
+        value: ""
+      },
+
+      // Bulk Device Types in Group
+      {
+        name: "bulk_device_types_in_group",
+        description: "Comma separated list of every Implantable Device type that is in the specified Group. This information is provided by the system under test to verify that data returned matches expectations. Leave blank to verify all Device resources against the Implantable Device profile.",
+        optional: true,
+        title: "Implantable Device Type Codes in exported Group",
+        type: "text",
+        value: ""
+      },
+
+      // Lines to Validate
+      {
+        name: "lines_to_validate",
+        description: "To validate all, leave blank.",
+        optional: true,
+        title: "Limit validation to a maximum resource count",
+        type: "text",
+        value: ""
+      },
+
+      // Bulk Timeout
+      {
+        name: "bulk_timeout",
+        default: 180,
+        description: "While testing, Inferno waits for the server to complete the exporting task. If the calculated totalTime is greater than the timeout value specified here, Inferno bulk client stops testing. Please enter an integer for the maximum wait time in seconds. If timeout is less than 1, Inferno uses default value 180. If the   timeout is greater than 600 (10 minutes), Inferno uses the maximum value 600.",
+        title: "Export Times Out after (1-600)",
+        type: "text",
+        value: testConfig.bulk_data.bulk_timeout || "600"
+      },
+
+      // Multi-Patient API Credentials (Backend Services)
+      {
+        name: "bulk_smart_auth_info",
+        options: {
+          mode: "auth",
+          components: [
+            { name: "auth_type", default: "backend_services", locked: true },
+            { name: "use_discovery", default: false, locked: true },
+            { name: "token_url", optional: false },
+            { name: "jwks", locked: true }
+          ]
+        },
+        title: "Multi-Patient API Credentials",
+        type: "auth_info",
+        value: buildAuthValue({
+          encryption_algorithm: "ES384",
+          auth_type: "backend_services",
+          token_url: tokenUrl,
+          requested_scopes: ehrScopes,
+          client_id: clientId
+        }),
+        default: {}
+      },
+
+      // Since Timestamp
+      {
+        name: "since_timestamp",
+        default: new Date().toISOString(),
+        description: "A timestamp formatted as a FHIR instant which will be used to test the server's support for the `_since` query parameter",
+        title: "Timestamp for _since parameter",
+        type: "text",
+        value: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString() // 1 week ago
+      },
+
+      // Public Launch Credentials (no client_secret for public clients)
+      {
+        name: "public_smart_auth_info",
+        options: {
+          mode: "auth",
+          components: [
+            { name: "auth_type", default: "public", options: authTypeOptions, locked: true },
+            { name: "auth_request_method", default: "GET", locked: true },
+            { name: "requested_scopes", default: standaloneScopes },
+            { name: "pkce_support", default: "enabled", locked: true },
+            { name: "pkce_code_challenge_method", default: "S256", locked: true },
+            { name: "use_discovery", locked: true }
+          ]
+        },
+        title: "Public Launch Credentials",
+        type: "auth_info",
+        value: buildAuthValue({
+          pkce_support: "enabled",
+          pkce_code_challenge_method: "S256",
+          auth_request_method: "GET",
+          auth_type: "public",
+          use_discovery: "true",
+          requested_scopes: standaloneScopes,
+          client_id: clientId
+        }),
+        default: {}
+      },
+
+      // Token Revocation Attestation
+      {
+        name: "token_revocation_attestation",
+        default: "false",
+        options: {
+          list_options: [
+            { label: "Yes", value: "true" },
+            { label: "No", value: "false" }
+          ]
+        },
+        title: "The Health IT developer demonstrated a patient's request for revoking the tokens provided during the patient standalone launch within the last hour",
+        type: "radio",
+        value: "false"
+      },
+      {
+        name: "token_revocation_notes",
+        optional: true,
+        title: "Notes, if applicable:",
+        type: "textarea",
+        value: ""
+      },
+
+      // EHR Launch with Patient Scopes
+      {
+        name: "ehr_patient_smart_auth_info",
+        options: {
+          mode: "auth",
+          components: [
+            { name: "auth_type", default: "symmetric", options: authTypeOptions, locked: true },
+            { name: "requested_scopes", default: "launch openid fhirUser offline_access patient/Patient.rs", locked: true },
+            { name: "use_discovery", locked: true },
+            { name: "pkce_support", default: "enabled", locked: true },
+            { name: "pkce_code_challenge_method", default: "S256", locked: true },
+            { name: "auth_request_method", default: "GET", locked: true }
+          ]
+        },
+        title: "EHR Launch with Patient Scopes Credentials",
+        type: "auth_info",
+        value: buildAuthValue({
+          pkce_support: "enabled",
+          pkce_code_challenge_method: "S256",
+          auth_request_method: "GET",
+          auth_type: "symmetric",
+          use_discovery: "true",
+          requested_scopes: "launch openid fhirUser offline_access patient/Patient.rs",
+          client_id: clientId,
+          client_secret: clientSecret
+        }),
+        default: {}
+      },
+
+      // Custom Authorization Header
+      {
+        name: "custom_authorization_header",
+        description: "Add custom headers for the introspection request by adding each header's name and value with a new line between each header. Ex:   <Header 1 Name>: <Value 1>",
+        optional: true,
+        title: "Custom HTTP Headers for Introspection Request",
+        type: "textarea",
+        value: ""
+      },
+
+      // Optional Introspection Request Params
+      {
+        name: "optional_introspection_request_params",
+        description: "Any additional parameters to append to the request body, separated by &. Example: 'param1=abc&param2=def'",
+        optional: true,
+        title: "Additional Introspection Request Parameters",
+        type: "textarea",
+        value: ""
+      },
+
+      // Asymmetric Launch Credentials
+      {
+        name: "asymmetric_smart_auth_info",
+        options: {
+          mode: "auth",
+          components: [
+            { name: "auth_type", default: "asymmetric", options: authTypeOptions, locked: true },
+            { name: "requested_scopes", default: standaloneScopes },
+            { name: "pkce_support", default: "enabled", locked: true },
+            { name: "pkce_code_challenge_method", default: "S256", locked: true },
+            { name: "jwks", locked: true },
+            { name: "use_discovery", locked: true },
+            { name: "auth_request_method", default: "GET", locked: true }
+          ]
+        },
+        title: "Asymmetric Launch Credentials",
+        type: "auth_info",
+        value: buildAuthValue({
+          pkce_support: "enabled",
+          pkce_code_challenge_method: "S256",
+          auth_request_method: "GET",
+          encryption_algorithm: "ES384",
+          auth_type: "asymmetric",
+          use_discovery: "true",
+          requested_scopes: standaloneScopes,
+          client_id: clientId
+        }),
+        default: {}
+      },
+
+      // v1 Scopes Credentials
+      {
+        name: "v1_smart_auth_info",
+        options: {
+          mode: "auth",
+          components: [
+            { name: "requested_scopes", default: v1Scopes },
+            { name: "auth_type", default: "symmetric", options: authTypeOptions, locked: true },
+            { name: "auth_request_method", default: "GET", locked: true },
+            { name: "use_discovery", locked: true },
+            { name: "pkce_support", default: "enabled", locked: true },
+            { name: "pkce_code_challenge_method", default: "S256", locked: true }
+          ]
+        },
+        title: "Launch with v1 Scopes Credentials",
+        type: "auth_info",
+        value: buildAuthValue({
+          pkce_support: "enabled",
+          pkce_code_challenge_method: "S256",
+          auth_request_method: "GET",
+          auth_type: "symmetric",
+          use_discovery: "true",
+          requested_scopes: v1Scopes,
+          client_id: clientId,
+          client_secret: clientSecret
+        }),
+        default: {}
+      },
+
+      // Granular Scopes 1 Credentials
+      {
+        name: "granular_scopes_1_auth_info",
+        options: {
+          mode: "auth",
+          components: [
+            { name: "auth_type", options: authTypeOptions },
+            { name: "jwks", locked: true },
+            { name: "requested_scopes", default: granularScopes1 },
+            { name: "pkce_support", default: "enabled", locked: true },
+            { name: "pkce_code_challenge_method", default: "S256", locked: true },
+            { name: "use_discovery", locked: true },
+            { name: "auth_request_method", default: "GET", locked: true }
+          ]
+        },
+        title: "Granular Scopes 1 Credentials",
+        type: "auth_info",
+        value: buildAuthValue({
+          pkce_support: "enabled",
+          pkce_code_challenge_method: "S256",
+          auth_request_method: "GET",
+          auth_type: "public",
+          use_discovery: "true",
+          requested_scopes: granularScopes1,
+          client_id: clientId
+        }),
+        default: {}
+      },
+
+      // Granular Scopes 2 Credentials
+      {
+        name: "granular_scopes_2_auth_info",
+        options: {
+          mode: "auth",
+          components: [
+            { name: "auth_type", options: authTypeOptions },
+            { name: "jwks", locked: true },
+            { name: "requested_scopes", default: granularScopes2 },
+            { name: "pkce_support", default: "enabled", locked: true },
+            { name: "pkce_code_challenge_method", default: "S256", locked: true },
+            { name: "use_discovery", locked: true },
+            { name: "auth_request_method", default: "GET", locked: true }
+          ]
+        },
+        title: "Granular Scopes 2 Credentials",
+        type: "auth_info",
+        value: buildAuthValue({
+          pkce_support: "enabled",
+          pkce_code_challenge_method: "S256",
+          auth_request_method: "GET",
+          auth_type: "public",
+          use_discovery: "true",
+          requested_scopes: granularScopes2,
+          client_id: clientId
+        }),
+        default: {}
+      },
+
+      // Granular Scope Selection Credentials
+      {
+        name: "granular_scopes_selection_smart_auth_info",
+        options: {
+          mode: "auth",
+          components: [
+            { name: "auth_type", options: authTypeOptions },
+            { name: "use_discovery", locked: true },
+            { name: "requested_scopes", default: granularScopesSelection },
+            { name: "jwks", locked: true },
+            { name: "pkce_support", default: "enabled", locked: true },
+            { name: "pkce_code_challenge_method", default: "S256", locked: true },
+            { name: "auth_request_method", default: "GET", locked: true }
+          ]
+        },
+        title: "Granular Scope Selection Credentials",
+        type: "auth_info",
+        value: buildAuthValue({
+          pkce_support: "enabled",
+          pkce_code_challenge_method: "S256",
+          auth_request_method: "GET",
+          auth_type: "public",
+          use_discovery: "true",
+          requested_scopes: granularScopesSelection,
+          client_id: clientId
+        }),
+        default: {}
+      },
+
+      // Visual Inspection Attestations
+      {
+        name: "single_patient_registration_supported",
+        default: "false",
+        options: { list_options: [{ label: "Yes", value: "true" }, { label: "No", value: "false" }] },
+        title: "Health IT Module demonstrated support for application registration for single patients.",
+        type: "radio",
+        value: "false"
+      },
+      { name: "single_patient_registration_notes", optional: true, title: "Notes, if applicable:", type: "textarea", value: "" },
+
+      {
+        name: "multiple_patient_registration_supported",
+        default: "false",
+        options: { list_options: [{ label: "Yes", value: "true" }, { label: "No", value: "false" }] },
+        title: "Health IT Module demonstrated support for application registration for multiple patients.",
+        type: "radio",
+        value: "false"
+      },
+      { name: "multiple_patient_registration_notes", optional: true, title: "Notes, if applicable:", type: "textarea", value: "" },
+
+      {
+        name: "resource_authorization_gui_supported",
+        default: "false",
+        options: { list_options: [{ label: "Yes", value: "true" }, { label: "No", value: "false" }] },
+        title: "Health IT Module demonstrated a graphical user interface for user to authorize FHIR resources.",
+        type: "radio",
+        value: "false"
+      },
+      { name: "resource_authorization_gui_notes", optional: true, title: "Notes, if applicable:", type: "textarea", value: "" },
+
+      {
+        name: "offline_access_notification_supported",
+        default: "false",
+        options: { list_options: [{ label: "Yes", value: "true" }, { label: "No", value: "false" }] },
+        title: "Health IT Module informed patient when \"offline_access\" scope is being granted during authorization.",
+        type: "radio",
+        value: "false"
+      },
+      { name: "offline_access_notification_notes", optional: true, title: "Notes, if applicable:", type: "textarea", value: "" },
+
+      {
+        name: "refresh_token_period_attestation",
+        default: "false",
+        options: { list_options: [{ label: "Yes", value: "true" }, { label: "No", value: "false" }] },
+        title: "Health IT Module attested that it is capable of issuing refresh tokens that are valid for a period of no shorter than three months.",
+        type: "radio",
+        value: "false"
+      },
+      { name: "refresh_token_period_notes", optional: true, title: "Notes, if applicable:", type: "textarea", value: "" },
+
+      {
+        name: "information_accuracy_attestation",
+        default: "false",
+        options: { list_options: [{ label: "Yes", value: "true" }, { label: "No", value: "false" }] },
+        title: "Tester verifies that all information is accurate and without omission.",
+        type: "radio",
+        value: "false"
+      },
+      { name: "information_accuracy_notes", optional: true, title: "Notes, if applicable:", type: "textarea", value: "" },
+
+      {
+        name: "multi_patient_scopes_attestation",
+        default: "false",
+        options: { list_options: [{ label: "Yes", value: "true" }, { label: "No", value: "false" }] },
+        title: "Information returned no greater than scopes pre-authorized for multi-patient queries.",
+        type: "radio",
+        value: "false"
+      },
+      { name: "multi_patient_scopes_notes", optional: true, title: "Notes, if applicable:", type: "textarea", value: "" },
+
+      {
+        name: "developer_documentation_attestation",
+        default: "false",
+        options: { list_options: [{ label: "Yes", value: "true" }, { label: "No", value: "false" }] },
+        title: "Health IT developer demonstrated the documentation is available at a publicly accessible URL.",
+        type: "radio",
+        value: "false"
+      },
+      { name: "developer_documentation_notes", optional: true, title: "Notes, if applicable:", type: "textarea", value: "" },
+
+      {
+        name: "jwks_cache_attestation",
+        default: "false",
+        options: { list_options: [{ label: "Yes", value: "true" }, { label: "No", value: "false" }] },
+        title: "Health IT developer confirms the Health IT Module does not cache the JWK Set received via a TLS-protected URL for longer than the cache-control header indicates.",
+        type: "radio",
+        value: "false"
+      },
+      { name: "jwks_cache_notes", optional: true, title: "Notes, if applicable:", type: "textarea", value: "" },
+
+      {
+        name: "native_refresh_attestation",
+        default: "false",
+        options: { list_options: [{ label: "Yes", value: "true" }, { label: "No", value: "false" }] },
+        title: "Health IT developer demonstrates support for issuing refresh tokens to native applications.",
+        type: "radio",
+        value: "false"
+      },
+      { name: "native_refresh_notes", optional: true, title: "Notes, if applicable:", type: "textarea", value: "" },
+
+      {
+        name: "public_url_attestation",
+        default: "false",
+        options: { list_options: [{ label: "Yes", value: "true" }, { label: "No", value: "false" }] },
+        title: "Health IT developer demonstrates the public location of its certified API technology service base URLs",
+        type: "radio",
+        value: "false"
+      },
+      { name: "public_url_attestation_notes", optional: true, title: "Notes, if applicable:", type: "textarea", value: "" },
+
+      { name: "tls_version_attestation_notes", optional: true, title: "Document how TLS version 1.2 or above is enforced, if required:", type: "textarea", value: "" },
+
+      {
+        name: "refresh_token_refresh_attestation",
+        default: "false",
+        options: { list_options: [{ label: "Yes", value: "true" }, { label: "No", value: "false" }] },
+        title: "Health IT developer attested that the Health IT Module is capable of issuing refresh tokens valid for a new period of no shorter than three months without requiring re-authentication and re-authorization when a valid refresh token is supplied by the application.",
+        type: "radio",
+        value: "false"
+      },
+      { name: "refresh_token_refresh_notes", optional: true, title: "Notes, if applicable:", type: "textarea", value: "" },
+
+      {
+        name: "bulk_v2_since_attestation",
+        default: "false",
+        options: { list_options: [{ label: "Yes", value: "true" }, { label: "No", value: "false" }] },
+        title: "Health IT developer attested that the Health IT Module meets the requirements for supporting the `_since` parameter for bulk data exports.",
+        type: "radio",
+        value: "false"
+      },
+      { name: "bulk_v2_since_attestation_notes", optional: true, title: "Notes, if applicable:", type: "textarea", value: "" },
+
+      {
+        name: "clinical_test_scope_attestation",
+        default: "false",
+        options: { list_options: [{ label: "Yes", value: "true" }, { label: "No", value: "false" }] },
+        title: "Health IT developer attested that the Health IT Module supports granting a sub resource scope for Clinical Test Observations.",
+        type: "radio",
+        value: "false"
+      },
+      { name: "clinical_test_scope_attestation_notes", optional: true, title: "Notes, if applicable:", type: "textarea", value: "" }
     ];
 
-    // Add optional fields only if they have values
-    if (testConfig.bulk_data.bulk_server_url || baseUrl) {
-      exportConfig.push({
-        name: "bulk_server_url",
-        title: "Bulk Data FHIR URL",
-        description: "The URL of the Bulk FHIR server.",
-        type: "text",
-        value: testConfig.bulk_data.bulk_server_url || baseUrl
-      });
-    }
-
-    if (testConfig.bulk_data.group_id) {
-      exportConfig.push({
-        name: "group_id",
-        title: "Group ID",
-        description: "The Group ID associated with the group of patients to be exported.",
-        type: "text",
-        value: testConfig.bulk_data.group_id
-      });
-    }
-
-    exportConfig.push({
-      name: "bulk_timeout",
-      title: "Export Times Out after (1-600)",
-      description: "While testing, Inferno waits for the server to complete the exporting task.",
-      type: "text",
-      default: 180,
-      value: testConfig.bulk_data.bulk_timeout || "180"
+    // Final cleanup: remove empty string values from auth_info value objects
+    const cleanedConfig = exportConfig.map(item => {
+      if (item.type === 'auth_info' && item.value) {
+        const cleanedValue = {};
+        Object.entries(item.value).forEach(([key, val]) => {
+          if (val !== undefined && val !== null && val !== '') {
+            cleanedValue[key] = val;
+          }
+        });
+        return { ...item, value: cleanedValue };
+      }
+      return item;
     });
 
-    // Visual inspection attestations
-    if (testConfig.visual_inspection) {
-      const vi = testConfig.visual_inspection;
-
-      if (vi.token_revocation_attestation) {
-        exportConfig.push({
-          name: "token_revocation_attestation",
-          title: "The Health IT developer demonstrated a patient's request for revoking the tokens provided during the patient standalone launch within the last hour",
-          type: "radio",
-          options: {
-            list_options: [
-              { label: "Yes", value: "true" },
-              { label: "No", value: "false" }
-            ]
-          },
-          default: "false",
-          value: vi.token_revocation_attestation
-        });
-      }
-
-      if (vi.token_revocation_notes) {
-        exportConfig.push({
-          name: "token_revocation_notes",
-          title: "Notes, if applicable:",
-          type: "textarea",
-          optional: true,
-          value: vi.token_revocation_notes
-        });
-      }
-
-      if (vi.single_patient_registration_supported) {
-        exportConfig.push({
-          name: "single_patient_registration_supported",
-          title: "Health IT Module demonstrated support for application registration for single patients.",
-          type: "radio",
-          options: {
-            list_options: [
-              { label: "Yes", value: "true" },
-              { label: "No", value: "false" }
-            ]
-          },
-          default: "false",
-          value: vi.single_patient_registration_supported
-        });
-      }
-
-      if (vi.resource_authorization_gui_supported) {
-        exportConfig.push({
-          name: "resource_authorization_gui_supported",
-          title: "Health IT Module demonstrated a graphical user interface for user to authorize FHIR resources.",
-          type: "radio",
-          options: {
-            list_options: [
-              { label: "Yes", value: "true" },
-              { label: "No", value: "false" }
-            ]
-          },
-          default: "false",
-          value: vi.resource_authorization_gui_supported
-        });
-      }
-    }
-
-    const jsonString = JSON.stringify(exportConfig, null, 2);
+    const jsonString = JSON.stringify(cleanedConfig, null, 2);
     const blob = new Blob([jsonString], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');

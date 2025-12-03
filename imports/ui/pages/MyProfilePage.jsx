@@ -23,8 +23,10 @@ import {
   Card,
   CardContent,
   CardHeader,
+  CardActions,
   CircularProgress
 } from '@mui/material';
+import EditIcon from '@mui/icons-material/Edit';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
@@ -79,6 +81,16 @@ function MyProfilePage(props) {
       Meteor.subscribe('practitionerRoles.current')
     ];
     return handles.every(h => h.ready());
+  }, []);
+
+  // Subscribe to linked patient record when patientId is set
+  useTracker(() => {
+    const user = Meteor.user();
+    const patientId = get(user, 'patientId');
+    if (patientId) {
+      console.log('MyProfilePage - Subscribing to patients.byId:', patientId);
+      Meteor.subscribe('patients.byId', patientId);
+    }
   }, []);
 
   let currentUser = useTracker(function(){
@@ -486,14 +498,27 @@ function MyProfilePage(props) {
 
       {/* Patient Record Link Card - Swap entire card when patient is linked */}
       {currentPatient ? (
-        <Box sx={{ mb: 3 }}>
-          <PatientCard 
+        <Box sx={{ mb: 3, position: 'relative' }}>
+          <PatientCard
             patient={currentPatient}
             showBarcode={false}
             showDetails={false}
             showSummary={true}
             showName={true}
           />
+          <Button
+            variant="outlined"
+            size="small"
+            startIcon={<EditIcon />}
+            onClick={function() { navigate('/patients/' + currentPatient._id); }}
+            sx={{
+              position: 'absolute',
+              top: 16,
+              right: 16
+            }}
+          >
+            Edit
+          </Button>
         </Box>
       ) : (
         <Paper elevation={3} sx={{ p: 3, mb: 3, backgroundColor: theme.palette.mode === 'dark' ? 'background.paper' : 'background.default' }}>
@@ -532,7 +557,7 @@ function MyProfilePage(props) {
               variant="outlined"
               color="primary"
               onClick={async () => {
-                const patientIdToLink = selectedPatientId || get(selectedPatient, 'id');
+                const patientIdToLink = selectedPatientId || get(selectedPatient, '_id');
                 
                 if (patientIdToLink) {
                   try {

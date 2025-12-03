@@ -168,6 +168,45 @@ OAuthClientSchema =  new SimpleSchema({
     optional: true,
     allowedValues: ['GET', 'POST'],
     defaultValue: 'GET'
+  },
+  // SMART 2.x fields for g(10) certification
+  "patient_id": {
+    type: String,
+    optional: true
+  },
+  "encounter_id": {
+    type: String,
+    optional: true
+  },
+  "launch_type": {
+    type: String,
+    optional: true,
+    allowedValues: ['ehr', 'standalone']
+  },
+  "launch_context": {
+    type: String,
+    optional: true
+  },
+  "code_challenge": {
+    type: String,
+    optional: true
+  },
+  "code_challenge_method": {
+    type: String,
+    optional: true,
+    allowedValues: ['S256', 'plain']
+  },
+  "refresh_token": {
+    type: String,
+    optional: true
+  },
+  "requested_scope": {
+    type: String,
+    optional: true
+  },
+  "user_id": {
+    type: String,
+    optional: true
   }
 });
 

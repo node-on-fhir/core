@@ -33,6 +33,7 @@ import { CommunicationRequests } from '../imports/lib/schemas/SimpleSchemas/Comm
 import { Compositions } from '../imports/lib/schemas/SimpleSchemas/Compositions';
 import { Consents } from '../imports/lib/schemas/SimpleSchemas/Consents';
 import { Conditions } from '../imports/lib/schemas/SimpleSchemas/Conditions';
+import { Coverages } from '../imports/lib/schemas/SimpleSchemas/Coverages';
 import { Devices } from '../imports/lib/schemas/SimpleSchemas/Devices';
 import { DiagnosticReports } from '../imports/lib/schemas/SimpleSchemas/DiagnosticReports';
 import { DocumentReferences } from '../imports/lib/schemas/SimpleSchemas/DocumentReferences';
@@ -46,7 +47,9 @@ import { InsurancePlans } from '../imports/lib/schemas/SimpleSchemas/InsurancePl
 import { Lists } from '../imports/lib/schemas/SimpleSchemas/Lists';
 import { Locations } from '../imports/lib/schemas/SimpleSchemas/Locations';
 import { Medications } from '../imports/lib/schemas/SimpleSchemas/Medications';
+import { MedicationDispenses } from '../imports/lib/schemas/SimpleSchemas/MedicationDispenses';
 import { MedicationOrders } from '../imports/lib/schemas/SimpleSchemas/MedicationOrders';
+import { MedicationRequests } from '../imports/lib/schemas/SimpleSchemas/MedicationRequests';
 import { Measures } from '../imports/lib/schemas/SimpleSchemas/Measures';
 import { MeasureReports } from '../imports/lib/schemas/SimpleSchemas/MeasureReports';
 import { NutritionOrders } from '../imports/lib/schemas/SimpleSchemas/NutritionOrders';
@@ -69,6 +72,7 @@ import { ResearchSubjects } from '../imports/lib/schemas/SimpleSchemas/ResearchS
 import { ResearchStudies } from '../imports/lib/schemas/SimpleSchemas/ResearchStudies';
 import { SearchParameters } from '../imports/lib/schemas/SimpleSchemas/SearchParameters';
 import { ServiceRequests } from '../imports/lib/schemas/SimpleSchemas/ServiceRequests';
+import { Specimens } from '../imports/lib/schemas/SimpleSchemas/Specimens';
 import { StructureDefinitions } from '../imports/lib/schemas/SimpleSchemas/StructureDefinitions';
 import { Subscriptions } from '../imports/lib/schemas/SimpleSchemas/Subscriptions';
 import { Tasks } from '../imports/lib/schemas/SimpleSchemas/Tasks';
@@ -211,6 +215,27 @@ function initializeAccessControl() {
     acl.grant('SYSTEM').execute('access').on(resource, ['*']);
   });
 
+  // Define PAT role for unauthenticated requests (no login, no bearer token, etc.)
+  // When a request comes in without authentication, the code defaults to role 'PAT'
+  // Without this role defined, acl.can('PAT') throws AccessControlError causing 500 errors
+  // Role exists but has NO permissions - unauthenticated requests should be denied
+  console.log('Defining PAT role (no permissions - unauthenticated users)');
+  acl.grant('PAT');  // Role exists but grants no access
+
+  // Grant 'patient' role access to USCDI resources for SMART on FHIR patient-level access
+  // This role is assigned when a valid Bearer token is presented with patient context
+  // Per ONC 170.315(g)(10), patients should be able to access their own clinical data
+  console.log('Granting patient role access to USCDI resources');
+  const patientAccessResources = [
+    'Patient', 'AllergyIntolerance', 'CarePlan', 'CareTeam', 'Condition',
+    'Device', 'DiagnosticReport', 'DocumentReference', 'Encounter', 'Goal',
+    'Immunization', 'Location', 'Medication', 'MedicationRequest', 'Observation',
+    'Organization', 'Practitioner', 'PractitionerRole', 'Procedure', 'Provenance'
+  ];
+  patientAccessResources.forEach(function(resource) {
+    acl.grant('patient').execute('access').on(resource, ['*']);
+  });
+
   console.log('ACL initialized with ' + accessControlList.length + ' access control records');
   console.log('Available roles:', acl.getRoles());
 }
@@ -280,6 +305,7 @@ if(Meteor.isServer){
   Collections.Compositions = Compositions;
   Collections.Conditions = Conditions;
   Collections.Consents = Consents;
+  Collections.Coverages = Coverages;
   Collections.Devices = Devices;
   Collections.DiagnosticReports = DiagnosticReports;
   Collections.DocumentReferences = DocumentReferences;
@@ -300,7 +326,9 @@ if(Meteor.isServer){
   Collections.OrganizationAffiliations = OrganizationAffiliations;
   Collections.OAuthClients = OAuthClients;
   Collections.Medications = Medications;
+  Collections.MedicationDispenses = MedicationDispenses;
   Collections.MedicationOrders = MedicationOrders;
+  Collections.MedicationRequests = MedicationRequests;
   Collections.Measures = Measures;
   Collections.MeasureReports = MeasureReports;
   Collections.Patients = Patients;
@@ -317,6 +345,7 @@ if(Meteor.isServer){
   Collections.ResearchStudies = ResearchStudies;
   Collections.SearchParameters = SearchParameters;
   Collections.ServiceRequests = ServiceRequests;
+  Collections.Specimens = Specimens;
   Collections.StructureDefinitions = StructureDefinitions;
   Collections.Subscriptions = Subscriptions;
   Collections.Tasks = Tasks;
@@ -466,10 +495,48 @@ async function parseUserAuthorization(req){
     }  
   }
 
-  // SMART on FHIR (OAUTH) 
+  // SMART on FHIR (OAUTH)
 
   if(typeof OAuthServerConfig !== "object"){
     console.log('OAuthServerConfig does not exist.')
+  }
+
+  // BEARER TOKEN VALIDATION (SMART on FHIR / OAuth 2.0)
+  // Check for Authorization: Bearer <token> header
+  const authHeader = get(req, 'headers.authorization', '');
+  if (authHeader.startsWith('Bearer ') && !authorizationContext) {
+    const bearerToken = authHeader.substring(7); // Remove 'Bearer ' prefix
+    console.log('>>> Bearer token detected:', bearerToken.substring(0, 8) + '...');
+
+    // Look up the access token in OAuthClients collection
+    const oauthClient = await OAuthClients.findOneAsync({ access_token: bearerToken });
+
+    if (oauthClient) {
+      console.log('>>> Bearer token found for client:', oauthClient.client_id);
+
+      // Check if token is expired
+      const tokenCreatedAt = get(oauthClient, 'access_token_created_at');
+      const expiresIn = get(Meteor, 'settings.private.fhir.tokenTimeout', 86400); // Default 24 hours
+      const isExpired = tokenCreatedAt && (new Date() - new Date(tokenCreatedAt)) > (expiresIn * 1000);
+
+      if (isExpired) {
+        console.log('>>> Bearer token expired for client:', oauthClient.client_id);
+      } else {
+        // Token is valid - set authorization context
+        // Use 'patient' role for patient-level access (matches isAuthorized authorized roles)
+        authorizationContext = {
+          role: 'patient',
+          userId: oauthClient.user_id || oauthClient.client_id,
+          patientId: oauthClient.patient_id || '',
+          clientId: oauthClient.client_id,
+          scope: oauthClient.requested_scope || oauthClient.scope || '',
+          isOAuthToken: true
+        };
+        console.log('>>> Bearer token authenticated. Role: patient, Patient ID:', authorizationContext.patientId);
+      }
+    } else {
+      console.log('>>> Bearer token not found in OAuthClients collection');
+    }
   }
 
   process.env.TRACE && console.log("")
@@ -542,6 +609,57 @@ async function isAuthorized(authorizationContext){
   } else {
     return false;
   }
+}
+
+// Check if the requested resource type is authorized by the token's scopes
+// ONC g(10) DAT-PAT-9: Must limit data to only authorized FHIR resources
+function isResourceScopeAuthorized(authorizationContext, resourceType) {
+  // If not an OAuth token request, allow all resources (internal/session auth)
+  if (!get(authorizationContext, 'isOAuthToken')) {
+    return true;
+  }
+
+  const scope = get(authorizationContext, 'scope', '');
+  if (!scope) {
+    console.warn('isResourceScopeAuthorized: No scope found in authorization context');
+    return false;
+  }
+
+  const scopes = scope.split(' ').filter(function(s) { return s.trim(); });
+
+  // Check for wildcard scopes that grant access to all resources
+  // e.g., patient/*.rs, patient/*.read, user/*.rs, system/*.*
+  const hasWildcard = scopes.some(function(s) {
+    return s.match(/^(patient|user|system)\/\*\.(rs|read|write|\*)$/);
+  });
+
+  if (hasWildcard) {
+    return true;
+  }
+
+  // Check for specific resource scope
+  // Scopes can be: patient/Resource.rs, patient/Resource.read, user/Resource.rs, etc.
+  const resourceScopePatterns = [
+    `patient/${resourceType}.rs`,
+    `patient/${resourceType}.read`,
+    `patient/${resourceType}.cruds`,
+    `user/${resourceType}.rs`,
+    `user/${resourceType}.read`,
+    `user/${resourceType}.cruds`,
+    `system/${resourceType}.rs`,
+    `system/${resourceType}.read`,
+    `system/${resourceType}.cruds`
+  ];
+
+  const isAuthorizedForResource = scopes.some(function(s) {
+    return resourceScopePatterns.includes(s);
+  });
+
+  if (!isAuthorizedForResource) {
+    console.log(`isResourceScopeAuthorized: Resource '${resourceType}' not authorized. Scopes: ${scope}`);
+  }
+
+  return isAuthorizedForResource;
 }
 async function logToInboundQueue(request){
   process.env.DEBUG && console.log('request.query', request.query)
@@ -713,7 +831,7 @@ if(typeof serverRouteManifest === "object"){
             res.status(429).json({message: "429 Too Many Requests - your IP is being rate limited"});
           } else {
             let authorizationContext = await parseUserAuthorization(req)
-            if (isAuthorized(authorizationContext)){
+            if (await isAuthorized(authorizationContext)){
               if(get(Meteor, 'settings.private.debug') === true) { console.log('Security checks completed'); }
   
               process.env.DEBUG && console.log('req.query', req.query)
@@ -773,12 +891,26 @@ if(typeof serverRouteManifest === "object"){
           } else {
             // is this person authorized?
             let authorizationContext = await parseUserAuthorization(req)
-            if (isAuthorized(authorizationContext)){
+            if (await isAuthorized(authorizationContext)){
               if(get(Meteor, 'settings.private.debug') === true) { console.log('Security checks completed'); }
+
+              // ONC g(10) DAT-PAT-9: Check if resource type is in authorized scopes
+              if (!isResourceScopeAuthorized(authorizationContext, routeResourceType)) {
+                res.setHeader("content-type", 'application/fhir+json;charset=utf-8');
+                res.status(403).json({
+                  resourceType: "OperationOutcome",
+                  issue: [{
+                    severity: "error",
+                    code: "forbidden",
+                    diagnostics: `Access to ${routeResourceType} is not authorized by the granted scopes`
+                  }]
+                });
+                return;
+              }
 
               // the person is authorized and known; but do they have permission to access?
               let userRole = get(authorizationContext, 'role', 'PAT');
-              
+
               // TODO:  if logged in, user role becomes 'healthcare provider' etc.
 
               let records;
@@ -923,6 +1055,17 @@ if(typeof serverRouteManifest === "object"){
 
                     let mostRecentRecord;
 
+                    // TODO: verify the correctness of the following logic
+                    // Handle ID collision case: multiple records with same FHIR id but different _id
+                    // This can happen when Synthea data (where _id = id) coexists with
+                    // app-created records (where _id is ObjectId). Per CLAUDE.md anti-pattern docs,
+                    // this is a data integrity issue that should be fixed, but we handle gracefully here.
+                    // Log warning and use first record as fallback if versioning is not enabled.
+                    if(get(Meteor, 'settings.private.fhir.rest.' + routeResourceType + '.versioning') !== "versioned"){
+                      console.warn('[FhirEndpoints] WARNING: Found ' + records.length + ' records with same FHIR id "' + req.params.id + '" but versioning is not enabled for ' + routeResourceType + '. This may indicate ID collision. Using first record.');
+                      mostRecentRecord = records[0];
+                    }
+
                     if(get(Meteor, 'settings.private.fhir.rest.' + routeResourceType + '.versioning') === "versioned"){
 
                       if(get(Meteor, 'settings.private.trace') === true) { console.log('records', records); }
@@ -962,12 +1105,24 @@ if(typeof serverRouteManifest === "object"){
                     if (get(Meteor, 'settings.private.fhir.disableAccessControl') === true) {
                       accessGranted = true;
                     } else {
-                      permission = acl.can(userRole).execute('access').with({'securityLevel': recordSecurityLevel}).sync().on(routeResourceType);
-                      console.log('permission.granted: ' + permission.granted);
-    
-                      accessGranted = permission.granted;
+                      // TODO: verify the correctness of the following logic
+                      // Wrap ACL check in try/catch to prevent 500 errors when role doesn't exist
+                      // This mirrors the error handling pattern used in the single-record case above
+                      try {
+                        const roles = acl.getRoles();
+                        if (roles.includes(userRole)) {
+                          permission = acl.can(userRole).execute('access').with({'securityLevel': recordSecurityLevel}).sync().on(routeResourceType);
+                          console.log('permission.granted: ' + permission.granted);
+                          accessGranted = permission.granted;
+                        } else {
+                          console.log('Role not found in ACL:', userRole, '- defaulting to denied (versioned read)');
+                          accessGranted = false;
+                        }
+                      } catch (aclError) {
+                        console.error('ACL Error at versioned read:', aclError.message);
+                        accessGranted = false;
+                      }
                     }
-    
 
                     if(accessGranted){
                       res.setHeader("x-provenance", signProvenance(mostRecentRecord));
@@ -1129,8 +1284,22 @@ if(typeof serverRouteManifest === "object"){
               };
             }
 
-            if (isAuthorized(authorizationContext)){
-              
+            if (await isAuthorized(authorizationContext)){
+
+              // ONC g(10) DAT-PAT-9: Check if resource type is in authorized scopes
+              if (!isResourceScopeAuthorized(authorizationContext, routeResourceType)) {
+                res.setHeader("content-type", 'application/fhir+json;charset=utf-8');
+                res.status(403).json({
+                  resourceType: "OperationOutcome",
+                  issue: [{
+                    severity: "error",
+                    code: "forbidden",
+                    diagnostics: `Access to ${routeResourceType} is not authorized by the granted scopes`
+                  }]
+                });
+                return;
+              }
+
               let userRole = get(authorizationContext, 'role', 'PAT');
 
 
@@ -1458,7 +1627,7 @@ if(typeof serverRouteManifest === "object"){
             res.status(429).json({message: "429 Too Many Requests - your IP is being rate limited"});
           } else {
             let authorizationContext = await parseUserAuthorization(req)
-            if (isAuthorized(authorizationContext)){
+            if (await isAuthorized(authorizationContext)){
               if(get(Meteor, 'settings.private.debug') === true) { console.log('Security checks completed'); }
   
               let record;
@@ -1528,7 +1697,7 @@ if(typeof serverRouteManifest === "object"){
             let accessTokenStr = get(req, 'params.access_token') || get(req, 'params.access_token');
 
             let authorizationContext = await parseUserAuthorization(req)
-            if (isAuthorized(authorizationContext)){
+            if (await isAuthorized(authorizationContext)){
   
               //------------------------------------------------------------------------------------------------
   
@@ -1676,7 +1845,7 @@ if(typeof serverRouteManifest === "object"){
           
             let authorizationContext = await parseUserAuthorization(req)
             
-            if (isAuthorized(authorizationContext)){
+            if (await isAuthorized(authorizationContext)){
         
               if (req.body) {
                 let newRecord = cloneDeep(req.body);
@@ -1869,7 +2038,7 @@ if(typeof serverRouteManifest === "object"){
             let accessTokenStr = (req.params && req.params.access_token) || (req.query && req.query.access_token);
         
             let authorizationContext = await parseUserAuthorization(req)
-            if (isAuthorized(authorizationContext)){
+            if (await isAuthorized(authorizationContext)){
   
               if (req.body) {
                 let incomingRecord = cloneDeep(req.body);
@@ -1979,7 +2148,7 @@ if(typeof serverRouteManifest === "object"){
             res.status(429).json({message: "429 Too Many Requests - your IP is being rate limited"});
           } else {
             let authorizationContext = await parseUserAuthorization(req)
-            if (isAuthorized(authorizationContext)){
+            if (await isAuthorized(authorizationContext)){
               if(get(Meteor, 'settings.private.trace') === true) { 
                 console.log('Searching ' + collectionName + ' for ' + req.params.id, Collections[collectionName].find({_id: req.params.id}).countAsync()); 
               }
@@ -2050,7 +2219,7 @@ if(typeof serverRouteManifest === "object"){
             res.setHeader("ETag", fhirVersion);
   
             let authorizationContext = await parseUserAuthorization(req)
-            if (isAuthorized(authorizationContext)){
+            if (await isAuthorized(authorizationContext)){
               let matchingRecords = [];
               let payload = [];
               let searchLimit = 1;
@@ -2232,7 +2401,7 @@ if(typeof serverRouteManifest === "object"){
             res.setHeader('Content-type', 'application/fhir+json;charset=utf-8');
   
             let authorizationContext = await parseUserAuthorization(req)
-            if (isAuthorized(authorizationContext)){
+            if (await isAuthorized(authorizationContext)){
   
               let resourceRecords = [];
   

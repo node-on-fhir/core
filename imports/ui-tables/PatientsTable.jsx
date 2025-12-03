@@ -30,7 +30,8 @@ import {
   Print as PrintIcon,
   LocalHospital as HospitalIcon,
   Assessment as AuditIcon,
-  Person as PersonIcon
+  Person as PersonIcon,
+  Launch as LaunchIcon
 } from '@mui/icons-material';
 
 
@@ -234,9 +235,10 @@ export function PatientsTable(props = {}){
     rowsPerPage = 5,
     onCellClick,
     onRowClick,
-    onMetaClick, 
+    onMetaClick,
     onActionButtonClick,
     onFhirOperations,
+    onLaunchClick,
     onSetPage,
     onChangeRowsPerPage,
     actionButtonLabel,
@@ -260,14 +262,30 @@ export function PatientsTable(props = {}){
     rowClickMode = 'index',
     page: initialPage = 0,  // Rename to avoid conflict with state
     size,
+    order = 'descending',
 
-    ...otherProps 
+    ...otherProps
   } = props;
 
 
   if(logger){
     logger.trace('PatientsTable.patients', patients)
   }
+
+  // Store original prop values to preserve user preferences
+  // These will be restored after form factor logic
+  const hideIdentifierFromProp = hideIdentifier;
+  const hideGenderFromProp = hideGender;
+  const hideBirthSexFromProp = hideBirthSex;
+  const hideActiveFromProp = hideActive;
+  const hideCityFromProp = hideCity;
+  const hideStateFromProp = hideState;
+  const hidePostalCodeFromProp = hidePostalCode;
+  const hideCountryFromProp = hideCountry;
+  const hideSystemBarcodeFromProp = hideSystemBarcode;
+  const hideFhirBarcodeFromProp = hideFhirBarcode;
+  const hideMaritalStatusFromProp = hideMaritalStatus;
+  const hideLanguageFromProp = hideLanguage;
 
   // ------------------------------------------------------------------------
   // Form Factors
@@ -364,9 +382,24 @@ export function PatientsTable(props = {}){
         hideCounts = true;
         hideSystemBarcode = true;
         hideFhirBarcode = false;
-        break;            
+        break;
     }
   }
+
+  // Restore user preferences for controlled columns
+  // This ensures toggle buttons in PatientsDirectory work correctly
+  hideIdentifier = hideIdentifierFromProp;
+  hideGender = hideGenderFromProp;
+  hideBirthSex = hideBirthSexFromProp;
+  hideActive = hideActiveFromProp;
+  hideCity = hideCityFromProp;
+  hideState = hideStateFromProp;
+  hidePostalCode = hidePostalCodeFromProp;
+  hideCountry = hideCountryFromProp;
+  hideSystemBarcode = hideSystemBarcodeFromProp;
+  hideFhirBarcode = hideFhirBarcodeFromProp;
+  hideMaritalStatus = hideMaritalStatusFromProp;
+  hideLanguage = hideLanguageFromProp;
 
 
     //---------------------------------------------------------------------
@@ -767,8 +800,11 @@ export function PatientsTable(props = {}){
         barcodeClasses = "barcode helvetica";
       }
 
+      // Convert ObjectID to string if needed
+      const idString = typeof id === 'object' && id._str ? id._str : String(id || '');
+
       return (
-        <TableCell><span className={barcodeClasses}>{id}</span></TableCell>
+        <TableCell><span className={barcodeClasses}>{idString}</span></TableCell>
       );
     }
   }
@@ -912,7 +948,22 @@ export function PatientsTable(props = {}){
           patientsToRender.push(flattenPatient(patient, dateFormat));
         }
         count++;
-      });  
+      });
+
+      // Apply sorting based on order prop
+      if (order === 'ascending') {
+        patientsToRender.sort(function(a, b) {
+          const aId = a._id || '';
+          const bId = b._id || '';
+          return String(aId).localeCompare(String(bId));
+        });
+      } else {
+        patientsToRender.sort(function(a, b) {
+          const aId = a._id || '';
+          const bId = b._id || '';
+          return String(bId).localeCompare(String(aId));
+        });
+      }
     }
   }
 
@@ -1132,7 +1183,29 @@ export function PatientsTable(props = {}){
                   >
                     Audit
                   </Button>
-                  
+
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    startIcon={<LaunchIcon />}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      console.log('Launch clicked for patient:', patientId);
+
+                      // Get the full patient object (unflatted version from original patients array)
+                      const selectedPatient = patientsToRender.find(p => p._id === patientId);
+                      console.log('Selected patient for launch:', selectedPatient);
+
+                      if (typeof onLaunchClick === 'function') {
+                        onLaunchClick(selectedPatient);
+                      } else {
+                        console.warn('onLaunchClick handler not provided');
+                      }
+                    }}
+                  >
+                    Launch
+                  </Button>
+
                   {/* Dynamic Buttons from Packages */}
                   {dynamicButtons.map((buttonConfig) => {
                     const ButtonComponent = (
@@ -1284,8 +1357,9 @@ PatientsTable.propTypes = {
   rowsPerPage: PropTypes.number,
   onCellClick: PropTypes.func,
   onRowClick: PropTypes.func,
-  onMetaClick: PropTypes.func, 
+  onMetaClick: PropTypes.func,
   onActionButtonClick: PropTypes.func,
+  onLaunchClick: PropTypes.func,
   actionButtonLabel: PropTypes.string,
   defaultAvatar: PropTypes.string,
   disablePagination: PropTypes.bool,
@@ -1302,7 +1376,8 @@ PatientsTable.propTypes = {
   formFactorLayout: PropTypes.string,
 
   logger: PropTypes.object,
-  rowClickMode: PropTypes.string
+  rowClickMode: PropTypes.string,
+  order: PropTypes.oneOf(['ascending', 'descending'])
 };
 
 export default PatientsTable;
