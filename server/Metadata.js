@@ -28,6 +28,32 @@ let defaultSearchParams = [
     "documentation": "this should be the medical record number"
   }]
 
+// =============================================================================
+// ProfileSet Discovery
+// Discover ProfileSet exports from packages (similar to DynamicRoutes pattern)
+// Supports multiple IGs: US Core, PACIO ADI, specialty profiles, etc.
+
+let discoveredProfileSets = [];
+Object.keys(Package).forEach(function(packageName){
+  if(Package[packageName].ProfileSet){
+    console.log('ProfileSet discovered from package:', packageName);
+    discoveredProfileSets.push(Package[packageName].ProfileSet);
+  }
+});
+
+// Helper: Get all profiles for a resource type across all ProfileSets
+function getProfilesForResource(resourceType) {
+  let profiles = [];
+  discoveredProfileSets.forEach(function(profileSet){
+    if(profileSet.profiles && profileSet.profiles[resourceType]){
+      profiles = profiles.concat(profileSet.profiles[resourceType]);
+    }
+  });
+  return profiles;
+}
+
+// =============================================================================
+
 const MetadataServerMethods = {
   getJwkSet: function(){
     console.log('getJwkSet()');
@@ -266,6 +292,11 @@ const MetadataServerMethods = {
           })
         }
 
+        // Add supportedProfile from all discovered ProfileSets (US Core, PACIO, etc.)
+        let resourceProfiles = getProfilesForResource(key);
+        if (resourceProfiles.length > 0) {
+          newResourceStatement.supportedProfile = resourceProfiles;
+        }
 
         CapabilityStatement.rest[0].resource.push(newResourceStatement);
       })

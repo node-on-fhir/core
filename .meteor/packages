@@ -73,6 +73,9 @@ clinical:order-catalog
 # clinical:implantable-devices
 # clinical:drug-interactions
 
+# US Core 7.0.0 profiles for CapabilityStatement (ONC g(10) certification)
+clinical:us-core
+
 rspack@1.0.0-beta340.12
 
 

@@ -1530,8 +1530,61 @@ if(typeof serverRouteManifest === "object"){
                       })
                     }
                   });
-    
-    
+
+                  // Handle _revInclude (reverse include)
+                  // For Provenance:target, generate Provenance on-demand using resource metadata
+                  let revIncludeParam = get(req, 'query._revinclude') || get(req, 'query._revInclude');
+                  if(revIncludeParam){
+                    let revIncludes = Array.isArray(revIncludeParam) ? revIncludeParam : [revIncludeParam];
+
+                    for(let _revIncludeRef of revIncludes){
+                      let revIncludeParts = _revIncludeRef.split(":");
+
+                      if(revIncludeParts.length >= 2 && revIncludeParts[0] === "Provenance" && revIncludeParts[1] === "target"){
+                        // Generate Provenance for each matched record (just-in-time)
+                        for(let matchedRecord of records){
+                          let provenanceId = "provenance-" + get(matchedRecord, 'id');
+
+                          let provenance = {
+                            resourceType: "Provenance",
+                            id: provenanceId,
+                            meta: {
+                              profile: ["http://hl7.org/fhir/us/core/StructureDefinition/us-core-provenance"]
+                            },
+                            target: [{
+                              reference: routeResourceType + "/" + get(matchedRecord, 'id')
+                            }],
+                            recorded: get(matchedRecord, 'meta.lastUpdated') || new Date().toISOString(),
+                            agent: [{
+                              type: {
+                                coding: [{
+                                  system: "http://terminology.hl7.org/CodeSystem/provenance-participant-type",
+                                  code: "author",
+                                  display: "Author"
+                                }]
+                              },
+                              who: {
+                                display: get(Meteor, 'settings.public.title', 'Honeycomb EHR')
+                              },
+                              onBehalfOf: {
+                                display: get(Meteor, 'settings.public.title', 'Honeycomb EHR')
+                              }
+                            }]
+                          };
+
+                          payload.push({
+                            fullUrl: "Provenance/" + provenanceId,
+                            resource: provenance,
+                            search: {
+                              mode: "include"
+                            }
+                          });
+                        }
+                      }
+                    }
+                  }
+
+
                   // add some pagination logic
                   let links = [];
                   links.push({
@@ -2229,15 +2282,17 @@ if(typeof serverRouteManifest === "object"){
               }
   
               if (req.params.param.includes('_search')) {
-  
-                let databaseQuery = RestHelpers.generateMongoSearchQuery(req.query, routeResourceType);
+                // Merge URL query params with POST body params (FHIR allows both for POST _search)
+                let searchParams = Object.assign({}, req.query, req.body);
+                let databaseQuery = RestHelpers.generateMongoSearchQuery(searchParams, routeResourceType);
                 if(get(Meteor, 'settings.private.debug') === true) { console.log('Collections[collectionName].databaseQuery', databaseQuery); }
   
                 matchingRecords = await Collections[collectionName].find(databaseQuery, {limit: searchLimit}).fetch();
                 console.log('matchingRecords', matchingRecords);
                 
                 let payload = [];
-  
+                let userRole = get(authorizationContext, 'role', 'PAT');
+
                 matchingRecords.forEach(function(record){
   
                   // check for security labels; otherwise assume normal access patterns

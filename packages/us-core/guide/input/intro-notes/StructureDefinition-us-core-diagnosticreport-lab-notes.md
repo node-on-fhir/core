@@ -1,0 +1,1 @@
+{% include diagnosticreport-quickstart.md system="http://terminology.hl7.org/CodeSystem/v2-0074" category="LAB" code="http://loinc.org\|24323-8" %} 
