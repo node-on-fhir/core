@@ -388,6 +388,27 @@ let containerAccessTokenOverride = get(Meteor, 'settings.private.fhir.accessToke
 //==========================================================================================
 // Helper Methods
 
+/**
+ * Find the first authorized role from a user's roles array
+ * Roles have semantic meaning:
+ *   - 'user' = authenticated but no specific access level
+ *   - 'patient' = can access own patient record
+ *   - 'healthcare practitioner'/'healthcare provider' = can access all records
+ * @param {Array} userRoles - The user's roles array
+ * @returns {string} - The first matching authorized role, or 'patient' as default
+ */
+function getAuthorizedRole(userRoles) {
+  const authorizedRoles = ['healthcare practitioner', 'healthcare provider', 'patient'];
+  if (Array.isArray(userRoles)) {
+    for (const role of authorizedRoles) {
+      if (userRoles.includes(role)) {
+        return role;
+      }
+    }
+  }
+  return 'patient'; // default if no authorized role found
+}
+
 async function parseUserAuthorization(req){
   process.env.DEBUG && console.log("Core FHIR API parsing user authorization....")
 
@@ -414,7 +435,7 @@ async function parseUserAuthorization(req){
         const user = await Meteor.users.findOneAsync({username: process.env.DEV_AUTO_USERNAME});
         if(user) {
           authorizationContext = {
-            role: get(user, 'roles[0]', 'user'),
+            role: getAuthorizedRole(get(user, 'roles', [])),
             userId: user._id,
             patientId: get(user, 'patientId'),
             practitionerId: get(user, 'practitionerId')
@@ -566,23 +587,36 @@ async function parseUserAuthorization(req){
   // Simple session token authentication using Meteor's login tokens
   if(sessionToken && !authorizationContext){
     console.log('>>> Checking session token authentication');
-    
+    console.log('>>> Session token (first 20 chars):', sessionToken.substring(0, 20) + '...');
+
     // Find user by their login token
     const hashedToken = Accounts._hashLoginToken(sessionToken);
+    console.log('>>> Hashed token:', hashedToken);
+
     const user = await Meteor.users.findOneAsync({
       'services.resume.loginTokens.hashedToken': hashedToken
     });
-    
+
     if(user) {
       console.log('>>> Session token authenticated for user:', user.username);
+      const authorizedRole = getAuthorizedRole(get(user, 'roles', []));
+      console.log('>>> Authorized role:', authorizedRole);
       authorizationContext = {
-        role: get(user, 'roles[0]', 'user'),
+        role: authorizedRole,
         userId: user._id,
         patientId: get(user, 'patientId', ''),
         practitionerId: get(user, 'practitionerId', '')
       };
     } else {
       console.log('>>> Session token not found or expired');
+      // Debug: Check if any users have login tokens at all
+      const anyUserWithTokens = await Meteor.users.findOneAsync({
+        'services.resume.loginTokens': { $exists: true, $ne: [] }
+      });
+      if(anyUserWithTokens){
+        console.log('>>> Debug: Found user with tokens:', anyUserWithTokens.username);
+        console.log('>>> Debug: Their hashed tokens:', get(anyUserWithTokens, 'services.resume.loginTokens', []).map(t => t.hashedToken));
+      }
     }
   }
 

@@ -4,7 +4,73 @@ import { get, has, set, unset, cloneDeep, pullAt, findIndex } from 'lodash';
 
 import * as mongoQuery from 'mongo-query';
 
+// =============================================================================
+// Profile Decorator Discovery
+// Discover ProfileDecorators from packages (similar to ProfileSet pattern)
+// These are used to apply IG-specific requirements to resources at egress time
 
+let discoveredDecorators = {};
+
+// Discovery runs at module load time after Meteor packages are initialized
+Meteor.startup(function() {
+  Object.keys(Package).forEach(function(packageName) {
+    if (Package[packageName].ProfileDecorators) {
+      console.log('ProfileDecorators discovered from package:', packageName);
+      let decorators = Package[packageName].ProfileDecorators;
+      Object.keys(decorators).forEach(function(resourceType) {
+        if (!discoveredDecorators[resourceType]) {
+          discoveredDecorators[resourceType] = [];
+        }
+        discoveredDecorators[resourceType].push(decorators[resourceType]);
+      });
+    }
+  });
+
+  if (Object.keys(discoveredDecorators).length > 0) {
+    console.log('RestHelpers: Discovered decorators for:', Object.keys(discoveredDecorators).join(', '));
+  } else {
+    console.log('RestHelpers: No ProfileDecorators discovered from packages');
+  }
+});
+
+/**
+ * Apply discovered profile decorators to a resource
+ * @param {Object} resource - The FHIR resource
+ * @param {string} requestedProfile - Optional specific profile URL
+ * @returns {Object} - Decorated resource
+ */
+function applyProfileDecorators(resource, requestedProfile) {
+  let resourceType = get(resource, 'resourceType');
+  if (!resourceType) {
+    return resource;
+  }
+
+  let decorators = discoveredDecorators[resourceType];
+  if (!decorators || decorators.length === 0) {
+    return resource;
+  }
+
+  let result = resource;
+  for (let decorator of decorators) {
+    // If specific profile requested, only apply matching decorator
+    if (requestedProfile && decorator.profileUrl !== requestedProfile) {
+      continue;
+    }
+
+    try {
+      if (typeof decorator.decorate === 'function') {
+        result = decorator.decorate(result);
+        process.env.DEBUG && console.log('RestHelpers: Applied decorator', decorator.profileUrl);
+      }
+    } catch (err) {
+      console.error('RestHelpers: Error applying decorator', err);
+    }
+  }
+
+  return result;
+}
+
+// =============================================================================
 
 export const RestHelpers = {
     fhirVersion: 'fhir-3.0.0',
@@ -336,7 +402,11 @@ export const RestHelpers = {
       }
 
       process.env.TRACE && console.log("response", response);
-        
+
+      // Apply profile decorators (adds IG-specific extensions)
+      // This uses the Package Discovery Pattern to find decorators from installed IG packages
+      response = applyProfileDecorators(response);
+
       return response;
     },
     generateDatabaseQuery: function(query, resourceType){
