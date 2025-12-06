@@ -1,8 +1,11 @@
+// server/RestHelpers.js
 import moment from 'moment';
 
 import { get, has, set, unset, cloneDeep, pullAt, findIndex } from 'lodash';
 
 import * as mongoQuery from 'mongo-query';
+
+import FhirUtilities from '../imports/lib/FhirUtilities.js';
 
 // =============================================================================
 // Profile Decorator Discovery
@@ -553,6 +556,18 @@ export const RestHelpers = {
           $regex: get(query, 'subject'),
           $options: 'i'
         };
+      }
+
+      // Handle 'patient' search parameter for resources that use patient.reference
+      // (AllergyIntolerance, CarePlan, CareTeam, Encounter, Immunization, MedicationRequest, etc.)
+      // Uses FhirUtilities.addPatientFilterToQuery() which handles:
+      // - patient.reference, subject.reference, for.reference
+      // - urn:uuid: format
+      // - Regex patterns for absolute URL matches
+      if (get(query, 'patient')) {
+        let patientValue = get(query, 'patient');
+        let patientId = patientValue.replace(/^Patient\//, '');
+        Object.assign(databaseQuery, FhirUtilities.addPatientFilterToQuery(patientId, {}));
       }
 
       

@@ -3,6 +3,8 @@ import { Random } from 'meteor/random';
 import { WebApp } from "meteor/webapp";
 
 import express from 'express';
+import bodyParser from 'body-parser';
+import querystring from 'querystring';
 
 
 import RestHelpers from './RestHelpers.js';
@@ -85,7 +87,11 @@ import FhirUtilities from '../imports/lib/FhirUtilities.js';
 
 import { RateLimiter } from "limiter";
 
-const limiter = new RateLimiter({ tokensPerInterval: 150, interval: "hour" });
+// Rate limiter configuration - can be customized via Meteor.settings.private.fhir.rateLimit
+const rateLimitTokens = get(Meteor, 'settings.private.fhir.rateLimit.tokensPerInterval', 1000);
+const rateLimitInterval = get(Meteor, 'settings.private.fhir.rateLimit.interval', 'hour');
+const limiter = new RateLimiter({ tokensPerInterval: rateLimitTokens, interval: rateLimitInterval });
+console.log(`Rate limiter configured: ${rateLimitTokens} tokens per ${rateLimitInterval}`);
 
 //------------------------------------------------------------------------------------------
 // Accounts Subsystem 
@@ -234,6 +240,14 @@ function initializeAccessControl() {
   ];
   patientAccessResources.forEach(function(resource) {
     acl.grant('patient').execute('access').on(resource, ['*']);
+  });
+
+  // Grant 'healthcare practitioner' and 'healthcare provider' roles access to all FHIR resources
+  // These roles are assigned to authenticated users with practitioner privileges
+  console.log('Granting healthcare practitioner/provider roles access to all FHIR resources');
+  allFhirResources.forEach(function(resource) {
+    acl.grant('healthcare practitioner').execute('access').on(resource, ['*']);
+    acl.grant('healthcare provider').execute('access').on(resource, ['*']);
   });
 
   console.log('ACL initialized with ' + accessControlList.length + ' access control records');
@@ -780,8 +794,18 @@ async function signProvenance(record){
 
 
 //==========================================================================================
-// Route Manifest  
+// Route Manifest
 
+// Configure body-parser middleware for FHIR endpoints
+// This needs to be registered before routes are defined
+WebApp.handlers.use(bodyParser.json({
+  limit: '50mb',
+  type: ['application/json', 'application/fhir+json']
+}));
+WebApp.handlers.use(bodyParser.urlencoded({
+  limit: '50mb',
+  extended: true
+}));
 
 WebApp.handlers.post("/" + fhirPath + "/ping", async (req, res) => {
 
@@ -793,8 +817,8 @@ WebApp.handlers.post("/" + fhirPath + "/ping", async (req, res) => {
   res.setHeader('Content-type', 'application/json');
   res.setHeader("Access-Control-Allow-Methods", "PUT, POST, GET, DELETE, PATCH, OPTIONS");
 
-  const remainingRequests = await limiter.removeTokens(1);
-  if (remainingRequests < 0) {
+  const gotToken = limiter.tryRemoveTokens(1);
+  if (!gotToken) {
     res.status(429).json({message: "Too Many Requests - your IP is being rate limited'"});
   } else {
     let returnPayload = {
@@ -860,8 +884,8 @@ if(typeof serverRouteManifest === "object"){
           res.setHeader("content-type", 'application/fhir+json;charset=utf-8');
           res.setHeader("ETag", fhirVersion);
 
-          const remainingRequests = await limiter.removeTokens(1);
-          if (remainingRequests < 0) {
+          const gotToken = limiter.tryRemoveTokens(1);
+          if (!gotToken) {
             res.status(429).json({message: "429 Too Many Requests - your IP is being rate limited"});
           } else {
             let authorizationContext = await parseUserAuthorization(req)
@@ -897,8 +921,8 @@ if(typeof serverRouteManifest === "object"){
           res.setHeader('Content-type', 'application/fhir+json;charset=utf-8');
           res.setHeader("ETag", fhirVersion);
           
-          const remainingRequests = await limiter.removeTokens(1);
-          if (remainingRequests < 0) {
+          const gotToken = limiter.tryRemoveTokens(1);
+          if (!gotToken) {
             res.status(429).json({message: "429 Too Many Requests - your IP is being rate limited"});
           } else {
             res.status(501).json();
@@ -919,8 +943,8 @@ if(typeof serverRouteManifest === "object"){
           res.setHeader("content-type", 'application/fhir+json;charset=utf-8');
           res.setHeader("ETag", fhirVersion);
 
-          const remainingRequests = await limiter.removeTokens(1);
-          if (remainingRequests < 0) {
+          const gotToken = limiter.tryRemoveTokens(1);
+          if (!gotToken) {
             res.status(429).json({message: "429 Too Many Requests - your IP is being rate limited"});
           } else {
             // is this person authorized?
@@ -1192,8 +1216,8 @@ if(typeof serverRouteManifest === "object"){
             console.log('Resource Type: ' + routeResourceType);               
           }
 
-          const remainingRequests = await limiter.removeTokens(1);
-          if (remainingRequests < 0) {
+          const gotToken = limiter.tryRemoveTokens(1);
+          if (!gotToken) {
             res.status(429).json({message: "429 Too Many Requests - your IP is being rate limited"});
           } else {
 
@@ -1289,15 +1313,31 @@ if(typeof serverRouteManifest === "object"){
             // Handle built-in FHIR search parameters not in SearchParameters collection
             // _id is a special parameter that exists for all FHIR resources
             if (get(req, 'query._id')) {
-              mongoQuery['id'] = get(req, 'query._id');
-              console.log('Built-in _id search parameter applied:', get(req, 'query._id'));
+              let searchId = get(req, 'query._id').trim();
+              // Strip resource type prefix if present (e.g., "Patient/abc" → "abc")
+              if (searchId.includes('/')) {
+                searchId = searchId.split('/').pop();
+              }
+              mongoQuery['id'] = searchId;
+              console.log('Built-in _id search parameter applied:', searchId);
             }
 
             // Log the final mongoQuery after ALL SearchParameters have been processed
             console.log('========== AFTER SearchParameters Processing ==========');
-            console.log('Final mongoQuery after SearchParameters:', JSON.stringify(mongoQuery, null, 2)); 
+            console.log('Final mongoQuery after SearchParameters:', JSON.stringify(mongoQuery, null, 2));
             console.log('mongoQuery keys:', Object.keys(mongoQuery));
             console.log('=====================================================');
+
+            // Fallback: If no SearchParameters matched but we have a patient query param,
+            // use the existing FhirUtilities.addPatientFilterToQuery() helper
+            // This handles cases where SearchParameters aren't initialized in the database
+            if (Object.keys(mongoQuery).length === 0 && get(req, 'query.patient')) {
+              let patientId = get(req, 'query.patient').replace(/^Patient\//, '');
+              console.log('No SearchParameters matched - using FhirUtilities.addPatientFilterToQuery() fallback');
+              console.log('Patient ID:', patientId);
+              mongoQuery = FhirUtilities.addPatientFilterToQuery(patientId, mongoQuery);
+              console.log('Fallback mongoQuery:', JSON.stringify(mongoQuery, null, 2));
+            }
 
             process.env.DEBUG && console.log('Original Url:  ' + req.originalUrl)
             process.env.DEBUG && console.log('Generated Mongo query: ', mongoQuery);
@@ -1396,49 +1436,65 @@ if(typeof serverRouteManifest === "object"){
                 }
                 
                 if(hipaaAccess.granted){
-                  let authQuery = {$or: [
-                    // {'meta.security.display': {$ne: 'restricted'}}
-                    {'meta.security.display': {$eq: 'unrestricted'}}
-                  ]}
-                  if(routeResourceType === "Patient"){
-                    if(get(authorizationContext, 'patientId')){
-                      authQuery.$or.push({'id': get(authorizationContext, 'patientId')})
-                    }  
-                    if(get(authorizationContext, 'practitionerId')){
-                      authQuery.$or.push({'generalPractitioner.reference': {$regex: get(authorizationContext, 'practitionerId')}})
-                    }
+                  // Check if healthcare practitioner/provider with full access
+                  const isPractitioner = (userRole === 'healthcare practitioner' || userRole === 'healthcare provider');
+                  const practitionerFullAccess = get(Meteor, 'settings.private.accessControl.practitionerFullAccess', true);
+
+                  if (isPractitioner && practitionerFullAccess) {
+                    // Healthcare practitioner with full access - use search query as-is
+                    mongoQuery = searchQuery;
+                    console.log('Practitioner full access - no authorization filter applied');
                   } else {
-                    if(get(authorizationContext, 'patientId')){
-                      authQuery.$or.push({'subject.reference': 'Patient/' + get(authorizationContext, 'patientId')})
-                    }  
-                  }
-                  
-                  // Merge authorization query with search query
-                  if(get(Meteor, 'settings.private.debug') === true) { 
-                    console.log('========== MERGING AUTH WITH SEARCH ==========');
-                    console.log('searchQuery keys:', Object.keys(searchQuery));
-                    console.log('searchQuery:', JSON.stringify(searchQuery, null, 2));
-                    console.log('authQuery:', JSON.stringify(authQuery, null, 2));
-                  }
-                  
-                  if(Object.keys(searchQuery).length > 0){
-                    // If we have search criteria, combine it with auth criteria using $and
-                    mongoQuery = {
-                      $and: [searchQuery, authQuery]
+                    // Apply authorization filters
+                    let authQuery = {$or: [
+                      {'meta.security.display': {$eq: 'unrestricted'}}
+                    ]}
+                    if(routeResourceType === "Patient"){
+                      if(get(authorizationContext, 'patientId')){
+                        authQuery.$or.push({'id': get(authorizationContext, 'patientId')})
+                      }
+                      if(get(authorizationContext, 'practitionerId')){
+                        authQuery.$or.push({'generalPractitioner.reference': {$regex: get(authorizationContext, 'practitionerId')}})
+                      }
+                    } else {
+                      // FHIR resources use different reference paths for patients:
+                      // - Some use 'subject.reference' (Observation, Condition, Procedure, DiagnosticReport, etc.)
+                      // - Some use 'patient.reference' (AllergyIntolerance, CarePlan, CareTeam, Encounter, Immunization, MedicationRequest, etc.)
+                      // We check both to properly filter by patient authorization
+                      if(get(authorizationContext, 'patientId')){
+                        let patientRef = 'Patient/' + get(authorizationContext, 'patientId');
+                        authQuery.$or.push({'subject.reference': patientRef});
+                        authQuery.$or.push({'patient.reference': patientRef});
+                      }
                     }
-                    if(get(Meteor, 'settings.private.debug') === true) { 
-                      console.log('MERGED with $and - mongoQuery:', JSON.stringify(mongoQuery, null, 2));
+
+                    // Merge authorization query with search query
+                    if(get(Meteor, 'settings.private.debug') === true) {
+                      console.log('========== MERGING AUTH WITH SEARCH ==========');
+                      console.log('searchQuery keys:', Object.keys(searchQuery));
+                      console.log('searchQuery:', JSON.stringify(searchQuery, null, 2));
+                      console.log('authQuery:', JSON.stringify(authQuery, null, 2));
                     }
-                  } else {
-                    // No search criteria, just use auth query
-                    mongoQuery = authQuery
-                    if(get(Meteor, 'settings.private.debug') === true) { 
-                      console.log('NO SEARCH QUERY - using authQuery only');
+
+                    if(Object.keys(searchQuery).length > 0){
+                      // If we have search criteria, combine it with auth criteria using $and
+                      mongoQuery = {
+                        $and: [searchQuery, authQuery]
+                      }
+                      if(get(Meteor, 'settings.private.debug') === true) {
+                        console.log('MERGED with $and - mongoQuery:', JSON.stringify(mongoQuery, null, 2));
+                      }
+                    } else {
+                      // No search criteria, just use auth query
+                      mongoQuery = authQuery
+                      if(get(Meteor, 'settings.private.debug') === true) {
+                        console.log('NO SEARCH QUERY - using authQuery only');
+                      }
                     }
-                  }
-                  
-                  if(get(Meteor, 'settings.private.debug') === true) { 
-                    console.log('==============================================');
+
+                    if(get(Meteor, 'settings.private.debug') === true) {
+                      console.log('==============================================');
+                    }
                   }
                 }    
 
@@ -1716,8 +1772,8 @@ if(typeof serverRouteManifest === "object"){
           res.setHeader("content-type", 'application/fhir+json;charset=utf-8');
           res.setHeader("ETag", fhirVersion);
 
-          const remainingRequests = await limiter.removeTokens(1);
-          if (remainingRequests < 0) {
+          const gotToken = limiter.tryRemoveTokens(1);
+          if (!gotToken) {
             res.status(429).json({message: "429 Too Many Requests - your IP is being rate limited"});
           } else {
             let authorizationContext = await parseUserAuthorization(req)
@@ -1784,8 +1840,8 @@ if(typeof serverRouteManifest === "object"){
           res.setHeader('Content-type', 'application/fhir+json;charset=utf-8');
           res.setHeader("ETag", fhirVersion);          
 
-          const remainingRequests = await limiter.removeTokens(1);
-          if (remainingRequests < 0) {
+          const gotToken = limiter.tryRemoveTokens(1);
+          if (!gotToken) {
             res.status(429).json({message: "429 Too Many Requests - your IP is being rate limited"});
           } else {
             let accessTokenStr = get(req, 'params.access_token') || get(req, 'params.access_token');
@@ -1931,8 +1987,8 @@ if(typeof serverRouteManifest === "object"){
           res.setHeader('Content-type', 'application/fhir+json;charset=utf-8');
           res.setHeader("ETag", fhirVersion);
 
-          const remainingRequests = await limiter.removeTokens(1);
-          if (remainingRequests < 0) {
+          const gotToken = limiter.tryRemoveTokens(1);
+          if (!gotToken) {
             res.status(429).json({message: "429 Too Many Requests - your IP is being rate limited"});
           } else {
             let accessTokenStr = (req.params && req.params.access_token) || (req.query && req.query.access_token);
@@ -2125,8 +2181,8 @@ if(typeof serverRouteManifest === "object"){
           res.setHeader('Content-type', 'application/fhir+json;charset=utf-8');
           res.setHeader("ETag", fhirVersion);
 
-          const remainingRequests = await limiter.removeTokens(1);
-          if (remainingRequests < 0) {
+          const gotToken = limiter.tryRemoveTokens(1);
+          if (!gotToken) {
             res.status(429).json({message: "429 Too Many Requests - your IP is being rate limited"});
           } else {
             let accessTokenStr = (req.params && req.params.access_token) || (req.query && req.query.access_token);
@@ -2237,8 +2293,8 @@ if(typeof serverRouteManifest === "object"){
           res.setHeader('Content-type', 'application/fhir+json;charset=utf-8');
           res.setHeader("ETag", fhirVersion);     
           
-          const remainingRequests = await limiter.removeTokens(1);
-          if (remainingRequests < 0) {
+          const gotToken = limiter.tryRemoveTokens(1);
+          if (!gotToken) {
             res.status(429).json({message: "429 Too Many Requests - your IP is being rate limited"});
           } else {
             let authorizationContext = await parseUserAuthorization(req)
@@ -2292,8 +2348,8 @@ if(typeof serverRouteManifest === "object"){
           process.env.DEBUG && console.log('Checking for chained queries (POST)....')
           process.env.DEBUG && console.log('req.query', req.query);
 
-          const remainingRequests = await limiter.removeTokens(1);
-          if (remainingRequests < 0) {
+          const gotToken = limiter.tryRemoveTokens(1);
+          if (!gotToken) {
             res.status(429).json({message: "429 Too Many Requests - your IP is being rate limited"});
           } else {
             Object.keys(req.query).forEach(function(key){
@@ -2316,23 +2372,107 @@ if(typeof serverRouteManifest === "object"){
             if (await isAuthorized(authorizationContext)){
               let matchingRecords = [];
               let payload = [];
-              let searchLimit = 1;
-  
-              if (get(req, 'query._count')) {
-                searchLimit = parseInt(get(req, 'query._count'));
+              let searchLimit = 100; // Default to 100 for search operations, not 1
+
+              if (get(req, 'query._count') || get(req, 'body._count')) {
+                searchLimit = parseInt(get(req, 'query._count') || get(req, 'body._count'));
               }
-  
+
               if (req.params.param.includes('_search')) {
+                // Debug: Log what we're receiving in the POST body
+                console.log('POST _search DEBUG - req.body:', JSON.stringify(req.body));
+                console.log('POST _search DEBUG - req.query:', JSON.stringify(req.query));
+                console.log('POST _search DEBUG - content-type:', req.headers['content-type']);
+
+                // Manual body parsing fallback for application/x-www-form-urlencoded
+                // This handles cases where body-parser middleware may not have processed the request
+                let parsedBody = req.body || {};
+                if ((!req.body || Object.keys(req.body).length === 0) && req.headers['content-type']?.includes('application/x-www-form-urlencoded')) {
+                  try {
+                    // Read the raw body if available
+                    let rawBody = '';
+                    if (req._body && typeof req.body === 'string') {
+                      rawBody = req.body;
+                    } else if (req.rawBody) {
+                      rawBody = req.rawBody;
+                    }
+
+                    // If we still don't have body, try to read from the stream
+                    if (!rawBody && req.readable) {
+                      const chunks = [];
+                      for await (const chunk of req) {
+                        chunks.push(chunk);
+                      }
+                      rawBody = Buffer.concat(chunks).toString();
+                    }
+
+                    if (rawBody) {
+                      parsedBody = querystring.parse(rawBody);
+                      console.log('POST _search DEBUG - manually parsed body:', JSON.stringify(parsedBody));
+                    }
+                  } catch (parseErr) {
+                    console.error('POST _search DEBUG - error parsing body:', parseErr);
+                  }
+                }
+
                 // Merge URL query params with POST body params (FHIR allows both for POST _search)
-                let searchParams = Object.assign({}, req.query, req.body);
-                let databaseQuery = RestHelpers.generateMongoSearchQuery(searchParams, routeResourceType);
-                if(get(Meteor, 'settings.private.debug') === true) { console.log('Collections[collectionName].databaseQuery', databaseQuery); }
-  
-                matchingRecords = await Collections[collectionName].find(databaseQuery, {limit: searchLimit}).fetch();
-                console.log('matchingRecords', matchingRecords);
-                
-                let payload = [];
+                let searchParams = Object.assign({}, req.query, parsedBody);
+                console.log('POST _search DEBUG - merged searchParams:', JSON.stringify(searchParams));
+
+                let searchQuery = RestHelpers.generateMongoSearchQuery(searchParams, routeResourceType);
+                console.log('POST _search DEBUG - generated searchQuery:', JSON.stringify(searchQuery));
+
+                // Apply authorization filter (same as GET search)
                 let userRole = get(authorizationContext, 'role', 'PAT');
+                let mongoQuery = searchQuery;
+
+                // Check if healthcare practitioner/provider with full access
+                const isPractitioner = (userRole === 'healthcare practitioner' || userRole === 'healthcare provider');
+                const practitionerFullAccess = get(Meteor, 'settings.private.accessControl.practitionerFullAccess', true);
+
+                if (userRole === "noauth" || userRole === "SYSTEM") {
+                  // For noauth/SYSTEM, use the search query as-is (no auth restrictions)
+                  mongoQuery = searchQuery;
+                  console.log('POST _search: NOAUTH/SYSTEM - no auth filter applied');
+                } else if (isPractitioner && practitionerFullAccess) {
+                  // Healthcare practitioner with full access - use search query as-is
+                  mongoQuery = searchQuery;
+                  console.log('POST _search: Practitioner full access - no auth filter applied');
+                } else {
+                  // Apply authorization filters
+                  let authQuery = {$or: [
+                    {'meta.security.display': {$eq: 'unrestricted'}}
+                  ]};
+
+                  if(routeResourceType === "Patient"){
+                    if(get(authorizationContext, 'patientId')){
+                      authQuery.$or.push({'id': get(authorizationContext, 'patientId')});
+                    }
+                  } else {
+                    // FHIR resources use different reference paths for patients
+                    if(get(authorizationContext, 'patientId')){
+                      let patientRef = 'Patient/' + get(authorizationContext, 'patientId');
+                      authQuery.$or.push({'subject.reference': patientRef});
+                      authQuery.$or.push({'patient.reference': patientRef});
+                    }
+                  }
+
+                  // Merge authorization query with search query
+                  if(Object.keys(searchQuery).length > 0){
+                    mongoQuery = { $and: [searchQuery, authQuery] };
+                  } else {
+                    mongoQuery = authQuery;
+                  }
+
+                  if(get(Meteor, 'settings.private.debug') === true) {
+                    console.log('POST _search mongoQuery with auth:', JSON.stringify(mongoQuery, null, 2));
+                  }
+                }
+
+                console.log('POST _search DEBUG - final mongoQuery:', JSON.stringify(mongoQuery));
+                matchingRecords = await Collections[collectionName].find(mongoQuery, {limit: searchLimit}).fetch();
+                console.log('POST _search DEBUG - matchingRecords count:', matchingRecords.length);
+                console.log('matchingRecords', matchingRecords);
 
                 matchingRecords.forEach(function(record){
   
@@ -2477,8 +2617,8 @@ if(typeof serverRouteManifest === "object"){
           process.env.DEBUG && console.log('Checking for chained queries (GET)....')
           process.env.DEBUG && console.log('req.query', req.query);
           
-          const remainingRequests = await limiter.removeTokens(1);
-          if (remainingRequests < 0) {
+          const gotToken = limiter.tryRemoveTokens(1);
+          if (!gotToken) {
             res.status(429).json({message: "429 Too Many Requests - your IP is being rate limited"})
           } else {
             Object.keys(req.query).forEach(function(key){
@@ -2567,8 +2707,8 @@ if(typeof serverRouteManifest === "object"){
     res.setHeader("content-type", 'application/fhir+json;charset=utf-8');
     res.setHeader("ETag", fhirVersion);
 
-    const remainingRequests = await limiter.removeTokens(1);
-    if (remainingRequests < 0) {
+    const gotToken = limiter.tryRemoveTokens(1);
+    if (!gotToken) {
       res.status(429).json({message: "429 Too Many Requests - your IP is being rate limited"});
       return;
     }
