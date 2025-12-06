@@ -69,7 +69,7 @@ function CarePlanDetail(props) {
   // Subscribe to care plans and patients data
   const subscriptionReady = useTracker(() => {
     const carePlansHandle = Meteor.subscribe('careplans.all');
-    const patientsHandle = Meteor.subscribe('patients.all');
+    const patientsHandle = Meteor.subscribe('patients.search', {});
     return carePlansHandle.ready() && patientsHandle.ready();
   }, []);
 

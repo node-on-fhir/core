@@ -61,8 +61,10 @@ function MyProfilePage(props) {
   const [showApiExample, setShowApiExample] = useState(false);
   const [showOpenAIKey, setShowOpenAIKey] = useState(false);
   const [showAnthropicKey, setShowAnthropicKey] = useState(false);
+  const [showGrokKey, setShowGrokKey] = useState(false);
   const [openAIKey, setOpenAIKey] = useState('');
   const [anthropicKey, setAnthropicKey] = useState('');
+  const [grokKey, setGrokKey] = useState('');
   const [savingKeys, setSavingKeys] = useState(false);
   const [scanningRecords, setScanningRecords] = useState(false);
   const [terminologyCodes, setTerminologyCodes] = useState({
@@ -134,10 +136,13 @@ function MyProfilePage(props) {
   let currentPatient = useTracker(function(){
     const patientId = get(currentUser, 'patientId');
     if(patientId){
-      // Use MongoDB _id (primary key) only - avoid ID collision anti-pattern
-      const patient = Patients.findOne({ _id: patientId });
+      // Search both _id and id fields to handle both MongoDB and FHIR identifier formats
+      // This matches the server publication query in patients.byId
+      const patient = Patients.findOne({
+        $or: [{ _id: patientId }, { id: patientId }]
+      });
       if (!patient) {
-        console.warn('MyProfilePage - Patient not found for _id:', patientId);
+        console.warn('MyProfilePage - Patient not found for _id or id:', patientId);
       }
       return patient;
     }
@@ -157,10 +162,13 @@ function MyProfilePage(props) {
   let currentPractitioner = useTracker(function(){
     const practitionerId = get(currentUser, 'practitionerId');
     if(practitionerId){
-      // Use MongoDB _id (primary key) only - avoid ID collision anti-pattern
-      const practitioner = Practitioners.findOne({ _id: practitionerId });
+      // Search both _id and id fields to handle both MongoDB and FHIR identifier formats
+      // This matches the server publication query in practitioners.current
+      const practitioner = Practitioners.findOne({
+        $or: [{ _id: practitionerId }, { id: practitionerId }]
+      });
       if (!practitioner) {
-        console.warn('MyProfilePage - Practitioner not found for _id:', practitionerId);
+        console.warn('MyProfilePage - Practitioner not found for _id or id:', practitionerId);
       }
       return practitioner;
     }
@@ -171,10 +179,13 @@ function MyProfilePage(props) {
   let currentPractitionerRole = useTracker(function(){
     const practitionerRoleId = get(currentUser, 'practitionerRoleId');
     if(practitionerRoleId){
-      // Use MongoDB _id (primary key) only - avoid ID collision anti-pattern
-      const practitionerRole = PractitionerRoles.findOne({ _id: practitionerRoleId });
+      // Search both _id and id fields to handle both MongoDB and FHIR identifier formats
+      // This matches the server publication query in practitionerRoles.current
+      const practitionerRole = PractitionerRoles.findOne({
+        $or: [{ _id: practitionerRoleId }, { id: practitionerRoleId }]
+      });
       if (!practitionerRole) {
-        console.warn('MyProfilePage - PractitionerRole not found for _id:', practitionerRoleId);
+        console.warn('MyProfilePage - PractitionerRole not found for _id or id:', practitionerRoleId);
       }
       return practitionerRole;
     }
@@ -247,6 +258,7 @@ function MyProfilePage(props) {
         cloudProvider: openAIKey ? 'openai' : 'anthropic',
         claudeApiKey: anthropicKey || '',
         openaiApiKey: openAIKey || '',
+        grokApiKey: grokKey || '',
         selectedLocalModel: '',
         systemPrompt: 'You are a helpful medical assistant with expertise in clinical decision support.',
         temperature: 0.7,
@@ -520,6 +532,42 @@ function MyProfilePage(props) {
             Edit
           </Button>
         </Box>
+      ) : get(currentUser, 'patientId') ? (
+        /* Stale link - patientId is set but record not found */
+        <Paper elevation={3} sx={{ p: 3, mb: 3, backgroundColor: theme.palette.mode === 'dark' ? 'background.paper' : 'background.default' }}>
+          <Typography variant="h6" gutterBottom>
+            Patient Record Link
+          </Typography>
+          <Alert severity="error" sx={{ mb: 2 }}>
+            Patient record not found. The linked record (ID: {get(currentUser, 'patientId')}) may have been deleted or the database was refreshed.
+          </Alert>
+          <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+            <Button
+              variant="contained"
+              color="error"
+              onClick={async () => {
+                try {
+                  await Meteor.callAsync('users.clearPatientLink');
+                  setSuccessMessage('Patient link cleared successfully. You can now link a new patient record.');
+                } catch (error) {
+                  console.error('Error clearing patient link:', error);
+                  setError(error.message || 'Failed to clear patient link');
+                }
+              }}
+            >
+              Clear Stale Link
+            </Button>
+            <Button
+              variant="outlined"
+              color="primary"
+              onClick={() => {
+                navigate('/patients/new');
+              }}
+            >
+              Create New Patient Record
+            </Button>
+          </Box>
+        </Paper>
       ) : (
         <Paper elevation={3} sx={{ p: 3, mb: 3, backgroundColor: theme.palette.mode === 'dark' ? 'background.paper' : 'background.default' }}>
           <Typography variant="h6" gutterBottom>
@@ -532,7 +580,7 @@ function MyProfilePage(props) {
             No patient record linked to your account. Create one to access patient-specific features and health records.
           </Alert>
           <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-            <Button 
+            <Button
               variant="contained"
               color="primary"
               onClick={() => {
@@ -543,7 +591,7 @@ function MyProfilePage(props) {
               Create Patient Record
             </Button>
             {Package['clinical:data-importer'] && (
-              <Button 
+              <Button
                 variant="outlined"
                 color="primary"
                 onClick={() => {
@@ -553,12 +601,12 @@ function MyProfilePage(props) {
                 Load Personal Health Record
               </Button>
             )}
-            <Button 
+            <Button
               variant="outlined"
               color="primary"
               onClick={async () => {
                 const patientIdToLink = selectedPatientId || get(selectedPatient, '_id');
-                
+
                 if (patientIdToLink) {
                   try {
                     await Meteor.callAsync('users.linkPatient', patientIdToLink);
@@ -588,10 +636,10 @@ function MyProfilePage(props) {
         <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
           Link your professional credentials such as physician license, nursing license, commercial driver's license, pilot's license, or other professional certifications.
         </Typography>
-        
+
         {currentPractitioner ? (
           <Box sx={{ mb: 2 }}>
-            <PractitionerCard 
+            <PractitionerCard
               practitioner={currentPractitioner}
               practitionerRole={currentPractitionerRole}
               showBarcode={false}
@@ -605,16 +653,51 @@ function MyProfilePage(props) {
               showLicenses={true}
             />
           </Box>
+        ) : get(currentUser, 'practitionerId') ? (
+          /* Stale link - practitionerId is set but record not found */
+          <Alert severity="error" sx={{ mb: 2 }}>
+            Practitioner record not found. The linked record (ID: {get(currentUser, 'practitionerId')}) may have been deleted or the database was refreshed.
+          </Alert>
         ) : (
           <Alert severity="info" sx={{ mb: 2 }}>
             No practitioner record linked to your account. Create one to enable professional communication features.
           </Alert>
         )}
-        
+
         <Box sx={{ display: 'flex', gap: 2 }}>
-          {!currentPractitioner && (
+          {/* Show stale link clear button */}
+          {!currentPractitioner && get(currentUser, 'practitionerId') && (
             <>
-              <Button 
+              <Button
+                variant="contained"
+                color="error"
+                onClick={async () => {
+                  try {
+                    await Meteor.callAsync('users.clearPractitionerLink');
+                    setSuccessMessage('Practitioner link cleared successfully. You can now link a new practitioner record.');
+                  } catch (error) {
+                    console.error('Error clearing practitioner link:', error);
+                    setError(error.message || 'Failed to clear practitioner link');
+                  }
+                }}
+              >
+                Clear Stale Link
+              </Button>
+              <Button
+                variant="outlined"
+                color="primary"
+                onClick={() => {
+                  navigate('/practitioners/new?save=my-profile&cancel=my-profile');
+                }}
+              >
+                Create New Practitioner Record
+              </Button>
+            </>
+          )}
+          {/* Show create/link buttons when no practitionerId is set */}
+          {!currentPractitioner && !get(currentUser, 'practitionerId') && (
+            <>
+              <Button
                 variant="contained"
                 color="primary"
                 onClick={() => {
@@ -625,7 +708,7 @@ function MyProfilePage(props) {
               >
                 Create Practitioner Record
               </Button>
-              <Button 
+              <Button
                 variant="outlined"
                 onClick={() => {
                   setOpenPractitionerSearch(true);
@@ -637,7 +720,7 @@ function MyProfilePage(props) {
           )}
           {currentPractitioner && (
             <>
-              <Button 
+              <Button
                 variant="outlined"
                 onClick={() => {
                   Session.set('selectedPractitionerId', get(currentPractitioner, 'id'));
@@ -646,7 +729,7 @@ function MyProfilePage(props) {
               >
                 Edit Practitioner Details
               </Button>
-              <Button 
+              <Button
                 variant="outlined"
                 color="error"
                 onClick={async () => {
@@ -821,7 +904,7 @@ curl -H "session:${accountsAccessToken}" \\
 
       <Paper elevation={3} sx={{ p: 3, mb: 3, backgroundColor: theme.palette.mode === 'dark' ? 'background.paper' : 'background.default' }}>
         <Typography variant="h6" gutterBottom>
-          External Services
+          Large Language Models
         </Typography>
         <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
           Configure API keys for external AI services
@@ -867,10 +950,30 @@ curl -H "session:${accountsAccessToken}" \\
               ),
             }}
           />
+          <TextField
+            fullWidth
+            type={showGrokKey ? 'text' : 'password'}
+            label="Grok API Key"
+            value={grokKey}
+            onChange={(e) => setGrokKey(e.target.value)}
+            placeholder="xai-..."
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton
+                    onClick={() => setShowGrokKey(!showGrokKey)}
+                    edge="end"
+                  >
+                    {showGrokKey ? <VisibilityOff /> : <Visibility />}
+                  </IconButton>
+                </InputAdornment>
+              ),
+            }}
+          />
           <Button
             variant="contained"
             onClick={handleSaveApiKeys}
-            disabled={savingKeys || (!openAIKey && !anthropicKey)}
+            disabled={savingKeys || (!openAIKey && !anthropicKey && !grokKey)}
             sx={{ alignSelf: 'flex-start' }}
           >
             {savingKeys ? 'Saving...' : 'Save API Keys'}

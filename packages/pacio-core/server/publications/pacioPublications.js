@@ -232,17 +232,40 @@ Meteor.publish('pacio.documentReferences', function(patientId) {
   });
 });
 
-// Publish patients
+// Publish patients with role-based ACL
 Meteor.publish('pacio.patients', async function(patientId, searchText) {
   check(patientId, Match.Maybe(String));
   check(searchText, Match.Maybe(String));
-  
+
   if (!this.userId) {
     return this.ready();
   }
-  
-  const query = {};
-  
+
+  // Get user and determine role
+  const user = await Meteor.users.findOneAsync(this.userId);
+  if (!user) {
+    console.log('pacio.patients - User not found for userId:', this.userId);
+    return this.ready();
+  }
+
+  // Role priority: practitioner > provider > patient (mirrors FhirEndpoints.js)
+  function getAuthorizedRole(userRoles) {
+    const authorizedRoles = ['healthcare practitioner', 'healthcare provider', 'patient'];
+    if (Array.isArray(userRoles)) {
+      for (const role of authorizedRoles) {
+        if (userRoles.includes(role)) {
+          return role;
+        }
+      }
+    }
+    return 'patient';
+  }
+
+  const authorizedRole = getAuthorizedRole(get(user, 'roles', []));
+  console.log('pacio.patients - User role:', authorizedRole, 'userId:', this.userId);
+
+  let query = {};
+
   // If specific patient ID provided
   if (patientId) {
     query.$or = [
@@ -250,7 +273,7 @@ Meteor.publish('pacio.patients', async function(patientId, searchText) {
       { _id: patientId }
     ];
   }
-  
+
   // If search text provided, search in name fields
   if (searchText && searchText.length > 0) {
     const searchRegex = new RegExp(searchText, 'i');
@@ -261,21 +284,71 @@ Meteor.publish('pacio.patients', async function(patientId, searchText) {
       { 'identifier.value': searchRegex }
     ];
   }
-  
+
+  // ROLE-BASED ACL
+  if (authorizedRole === 'healthcare practitioner' || authorizedRole === 'healthcare provider') {
+    const practitionerFullAccess = get(Meteor, 'settings.private.accessControl.practitionerFullAccess', true);
+
+    if (practitionerFullAccess) {
+      // Full access - no restrictions, query passes through as-is
+      console.log('pacio.patients - Practitioner access (full)');
+    } else {
+      // Assigned patients only - filter by generalPractitioner.reference
+      const practitionerId = user.practitionerId;
+
+      if (practitionerId) {
+        const practitionerFilter = {
+          $or: [
+            { 'meta.security.display': 'unrestricted' },
+            { 'generalPractitioner.reference': `Practitioner/${practitionerId}` },
+            { 'generalPractitioner.reference': { $regex: practitionerId } }
+          ]
+        };
+        query = Object.keys(query).length > 0 ? { $and: [practitionerFilter, query] } : practitionerFilter;
+        console.log('pacio.patients - Practitioner access (assigned-only)');
+      } else {
+        // Practitioner role but no practitionerId - show unrestricted only
+        query = { 'meta.security.display': 'unrestricted' };
+        console.log('pacio.patients - Practitioner role but no practitionerId');
+      }
+    }
+  } else if (authorizedRole === 'patient') {
+    // Patients can ONLY see their own record
+    const userPatientId = user.patientId;
+
+    if (userPatientId) {
+      const patientFilter = {
+        $or: [
+          { _id: userPatientId },
+          { id: userPatientId }
+        ]
+      };
+      query = Object.keys(query).length > 0 ? { $and: [patientFilter, query] } : patientFilter;
+      console.log('pacio.patients - Patient restricted to own record:', userPatientId);
+    } else {
+      console.log('pacio.patients - Patient role but no patientId - returning empty');
+      return this.ready();
+    }
+  } else {
+    // Unknown role - deny access
+    console.log('pacio.patients - Unknown role, returning empty:', authorizedRole);
+    return this.ready();
+  }
+
   // Get Patients collection from global.Collections
   const Patients = await global.Collections.Patients;
   if (!Patients) {
-    console.warn('Patients collection not found in global.Collections');
+    console.warn('pacio.patients - Patients collection not found');
     return this.ready();
   }
-  
+
   // Limit results for performance
   const options = {
     limit: searchText ? 50 : 100
     // Removed sort due to MongoDB parallel array indexing issues with FHIR name structure
   };
-  
-  console.log('Publishing patients with query:', query, 'options:', options);
+
+  console.log('pacio.patients - Final query:', JSON.stringify(query));
   return Patients.find(query, options);
 });
 

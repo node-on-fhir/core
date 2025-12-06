@@ -63,7 +63,7 @@ function ResearchSubjectDetail(props) {
   // Subscribe to research subjects and patients data
   const subscriptionReady = useTracker(() => {
     const researchSubjectsHandle = Meteor.subscribe('autopublish.ResearchSubjects');
-    const patientsHandle = Meteor.subscribe('patients.all');
+    const patientsHandle = Meteor.subscribe('patients.search', {});
     return researchSubjectsHandle.ready() && patientsHandle.ready();
   }, []);
 

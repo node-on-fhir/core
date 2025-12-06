@@ -60,7 +60,7 @@ function FamilyMemberHistoryDetail(props) {
   // Subscribe to data
   const subscriptionReady = useTracker(() => {
     const familyMemberHistoriesHandle = Meteor.subscribe('familyMemberHistories.all');
-    const patientsHandle = Meteor.subscribe('patients.all');
+    const patientsHandle = Meteor.subscribe('patients.search', {});
     return familyMemberHistoriesHandle.ready() && patientsHandle.ready();
   }, []);
 

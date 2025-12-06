@@ -315,7 +315,7 @@ if (finalAutopublishEnabled) {
             // Regular queries need limits for performance
             // In development, we can be more permissive
             // Cap at configured limit (default 1000) for performance
-            options.limit = options.limit || 100;
+            options.limit = options.limit || configuredLimit;
             // Ensure user can't request more than configured maximum
             if (options.limit > configuredLimit) {
               options.limit = configuredLimit;
@@ -395,22 +395,24 @@ if (finalAutopublishEnabled) {
       const publicationName = `${collectionName.toLowerCase()}.all`;
       
       Meteor.publish(publicationName, function() {
+        const allPublicationLimit = get(Meteor, 'settings.public.defaults.subscriptionLimit', 1000);
+
         if (!this.userId && isDevelopment && finalAutopublishEnabled) {
-          console.log(`Publishing all ${collectionName} for development (unauthenticated) - limited to 100 records`);
-          return collection.find({}, { 
-            limit: 100,
-            sort: { 
+          console.log(`Publishing all ${collectionName} for development (unauthenticated) - limited to ${allPublicationLimit} records`);
+          return collection.find({}, {
+            limit: allPublicationLimit,
+            sort: {
               '_id': -1  // Most recent first (naive but works with MongoDB ObjectIDs)
             }
           });
         } else if (!this.userId) {
           return this.ready();
         }
-        
-        console.log(`Publishing all ${collectionName} for development - limited to 100 records`);
-        return collection.find({}, { 
-          limit: 100,
-          sort: { 
+
+        console.log(`Publishing all ${collectionName} for development - limited to ${allPublicationLimit} records`);
+        return collection.find({}, {
+          limit: allPublicationLimit,
+          sort: {
             '_id': -1  // Most recent first (naive but works with MongoDB ObjectIDs)
           }
         });

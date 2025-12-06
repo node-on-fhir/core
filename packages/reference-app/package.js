@@ -77,6 +77,7 @@ Package.onUse(function(api) {
   // Export collections and utilities
   api.export('ReferenceAppCollections');
   api.export('ReferenceAppUtilities', 'client');
+  api.export('PatientsDirectoryButtons', 'client');
 });
 
 Package.onTest(function(api) {

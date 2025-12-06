@@ -165,6 +165,7 @@ export function PatientsDirectory(props){
             {'name.0.text': {$regex: searchPattern, $options: 'i'}},
             {'name.given': {$regex: searchPattern, $options: 'i'}},
             {'name.0.given': {$regex: searchPattern, $options: 'i'}},
+            {'name.0.given.0': {$regex: searchPattern, $options: 'i'}},
             {'name.family': {$regex: searchPattern, $options: 'i'}},
             {'name.0.family': {$regex: searchPattern, $options: 'i'}},
             {'identifier.value': {$regex: searchPattern, $options: 'i'}},
@@ -184,28 +185,21 @@ export function PatientsDirectory(props){
     
     // Choose the appropriate publication based on configuration
     let handle;
+    console.log('PatientsDirectory - autoPublishEnabled:', autoPublishEnabled);
+    console.log('PatientsDirectory - query keys:', Object.keys(query).length);
+    console.log('PatientsDirectory - full query:', JSON.stringify(query, null, 2));
+
     if(autoPublishEnabled){
-      // Use autopublish if enabled (development mode)
+      // Use autopublish if explicitly enabled via settings
+      // This bypasses ACL - only use for development when needed
       console.log('Using autopublish.Patients with query:', JSON.stringify(query));
       handle = Meteor.subscribe('autopublish.Patients', query, { limit: 1000 });
     } else {
-      // Use the proper authenticated publication
-      const isDevelopment = get(Meteor, 'settings.public.environment') === 'development' || !get(Meteor, 'settings.public.environment');
-      
-      if (isDevelopment) {
-        // In development, use patients.all for simplicity if no search
-        if (Object.keys(query).length === 0) {
-          console.log('Using patients.all publication (development)');
-          handle = Meteor.subscribe('patients.all');
-        } else {
-          console.log('Using patients.search publication with query:', JSON.stringify(query));
-          handle = Meteor.subscribe('patients.search', query, { limit: 1000 });
-        }
-      } else {
-        // In production, always use patients.search with authentication
-        console.log('Using patients.search publication with query:', JSON.stringify(query));
-        handle = Meteor.subscribe('patients.search', query, { limit: 1000 });
-      }
+      // Always use patients.search which has role-based ACL
+      // - Practitioners: full access (configurable)
+      // - Patients: only see their own record
+      console.log('Using patients.search publication with query:', JSON.stringify(query));
+      handle = Meteor.subscribe('patients.search', query, { limit: 1000 });
     }
     
     return !handle.ready();
@@ -383,6 +377,7 @@ export function PatientsDirectory(props){
               {'name.0.text': {$regex: searchRegex}},
               {'name.given': {$regex: searchRegex}},
               {'name.0.given': {$regex: searchRegex}},
+              {'name.0.given.0': {$regex: searchRegex}},
               {'name.family': {$regex: searchRegex}},
               {'name.0.family': {$regex: searchRegex}},
               {'identifier.value': {$regex: searchRegex}},
@@ -399,7 +394,8 @@ export function PatientsDirectory(props){
           };
         }
       }
-      
+
+      console.log('PatientsDirectory client-side query:', JSON.stringify(query));
       return Patients.find(query, { sort: { _id: -1 } }).fetch();
     }
   }, [debouncedSearchFilter])

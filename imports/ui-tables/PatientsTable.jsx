@@ -186,19 +186,23 @@ export function PatientsTable(props = {}){
   useEffect(() => {
     const collectButtons = async () => {
       let buttons = [];
-      
+
       // Parse packages looking for PatientsDirectoryButtons
       const packageNames = Object.keys(Package);
-      
+      console.log('PatientsTable: Scanning packages for PatientsDirectoryButtons...');
+
       for (const packageName of packageNames) {
         if (Package[packageName].PatientsDirectoryButtons) {
+          console.log('PatientsTable: Found PatientsDirectoryButtons in package:', packageName);
+          console.log('PatientsTable: Buttons:', Package[packageName].PatientsDirectoryButtons);
           buttons = buttons.concat(Package[packageName].PatientsDirectoryButtons);
         }
       }
-      
+
+      console.log('PatientsTable: Total dynamic buttons collected:', buttons.length);
       setDynamicButtons(buttons);
     };
-    
+
     collectButtons();
   }, []);
 
@@ -996,6 +1000,7 @@ export function PatientsTable(props = {}){
       // After flattenPatient(), records have both _id and id fields
       // Using || can cause one patient's id to match another's _id
       const patientId = get(patientsToRender[i], '_id');
+      const currentPatient = patientsToRender[i];  // Capture for closure in onClick handlers
       const isExpanded = expandedRows[patientId] || false;
       
       // Main row
@@ -1217,15 +1222,16 @@ export function PatientsTable(props = {}){
                         startIcon={buttonConfig.icon}
                         onClick={(e) => {
                           e.stopPropagation();
-                          
+
                           if (buttonConfig.requiresModal) {
-                            setSelectedPatientForModal(patientsToRender[i]);
+                            setSelectedPatientForModal(currentPatient);
                             setModalState({
                               ...modalState,
                               [buttonConfig.id]: true
                             });
                           } else if (buttonConfig.onClick) {
-                            buttonConfig.onClick(patientId, patientsToRender[i]);
+                            // Pass navigate function to allow React Router navigation
+                            buttonConfig.onClick(patientId, currentPatient, navigate);
                           }
                         }}
                       >

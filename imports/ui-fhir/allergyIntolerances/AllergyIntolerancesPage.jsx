@@ -89,7 +89,7 @@ export function AllergyIntolerancesPage(props){
       const handle = Meteor.subscribe('autopublish.Patients', {}, { limit: 100 });
       return handle.ready();
     } else {
-      const handle = Meteor.subscribe('patients.all');
+      const handle = Meteor.subscribe('patients.search', {});
       return handle.ready();
     }
   }, []);

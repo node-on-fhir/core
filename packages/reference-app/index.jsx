@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { get } from 'lodash';
+import { Session } from 'meteor/session';
 
 // Import main page component
 import ReferenceAppPage from './client/ReferenceAppPage';
@@ -135,13 +136,44 @@ const ModuleConfig = {
 };
 
 // Patient directory buttons - OPTIONAL
+// We use Meteor.navigate() to preserve React context and Session state
 const PatientsDirectoryButtons = [{
   id: 'certify-patient-action',
   label: 'Certify',
   color: 'primary',
   onClick: function(patientId, patient) {
-    console.log('Certify clicked for patient:', patientId);
-    window.location.href = '/g10-certification?patient=' + patientId;
+    console.log('=== CERTIFY BUTTON CLICKED ===');
+    console.log('Received patientId (MongoDB _id):', patientId);
+    console.log('Received patient object:', patient);
+    console.log('Patient FHIR id (patient.id):', get(patient, 'id'));
+
+    // Ensure Session has the selected patient for G10CertificationPage auto-fill
+    // Use the FHIR id (patient.id) for consistency with FHIR operations
+    const fhirId = get(patient, 'id', patientId);
+    console.log('Using fhirId:', fhirId);
+
+    Session.set('selectedPatientId', fhirId);
+    Session.set('selectedPatient', patient);
+
+    // Verify the Session was set correctly
+    console.log('Session.get("selectedPatientId") after set:', Session.get('selectedPatientId'));
+    console.log('Session.get("selectedPatient") after set:', Session.get('selectedPatient'));
+
+    // Use Meteor.navigate() to preserve React context and Session state
+    // This is set up in NavigationContext.jsx and uses React Router internally
+    if (typeof Meteor.navigate === 'function') {
+      console.log('Calling Meteor.navigate("/g10-certification")...');
+      Meteor.navigate('/g10-certification');
+
+      // Check Session after navigate call
+      setTimeout(function() {
+        console.log('=== AFTER NAVIGATE (100ms) ===');
+        console.log('Session.get("selectedPatientId"):', Session.get('selectedPatientId'));
+        console.log('Session.get("selectedPatient"):', Session.get('selectedPatient'));
+      }, 100);
+    } else {
+      console.error('Meteor.navigate() is not available - NavigationContext may not be mounted');
+    }
   }
 }];
 

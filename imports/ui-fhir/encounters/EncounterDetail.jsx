@@ -66,7 +66,7 @@ function EncounterDetail(props) {
   // Subscribe to encounters and patients data
   const subscriptionReady = useTracker(() => {
     const encountersHandle = Meteor.subscribe('encounters.all');
-    const patientsHandle = Meteor.subscribe('patients.all');
+    const patientsHandle = Meteor.subscribe('patients.search', {});
     return encountersHandle.ready() && patientsHandle.ready();
   }, []);
 

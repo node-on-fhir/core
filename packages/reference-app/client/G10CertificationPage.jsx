@@ -273,11 +273,19 @@ function G10CertificationPage(props) {
   // Track reactive data from collections
   const {
     currentUser,
-    isAuthenticated
+    isAuthenticated,
+    selectedPatientId,
+    selectedPatient
   } = useTracker(() => {
+    const patientId = Session.get('selectedPatientId');
+    const patient = Session.get('selectedPatient');
+    console.log('G10CertificationPage.useTracker - selectedPatientId:', patientId);
+    console.log('G10CertificationPage.useTracker - selectedPatient:', patient);
     return {
       currentUser: Meteor.user(),
-      isAuthenticated: Meteor.userId() !== null
+      isAuthenticated: Meteor.userId() !== null,
+      selectedPatientId: patientId,
+      selectedPatient: patient
     };
   });
 
@@ -313,6 +321,57 @@ function G10CertificationPage(props) {
       console.log('G10CertificationPage.unmounted');
     };
   }, []);
+
+  // Auto-fill patient ID from selected patient (from Patient Directory workflow)
+  useEffect(() => {
+    // Use FHIR id from selectedPatient, not MongoDB _id from selectedPatientId
+    const fhirPatientId = get(selectedPatient, 'id');
+
+    if (fhirPatientId) {
+      console.log('G10CertificationPage: Auto-filling patient ID from selectedPatient.id:', fhirPatientId);
+
+      // Only auto-fill empty fields - allows user override
+      setTestConfig(prev => {
+        const updates = {};
+
+        // Tab 1: PHR Full-Access App
+        if (!prev.phr_full_access.patient_id) {
+          updates.phr_full_access = { ...prev.phr_full_access, patient_id: fhirPatientId };
+        }
+
+        // Tab 2: PHR Limited Access App
+        if (!prev.phr_limited_access.patient_id) {
+          updates.phr_limited_access = { ...prev.phr_limited_access, patient_id: fhirPatientId };
+        }
+
+        // Tab 3: EHR Practitioner Access App
+        if (!prev.ehr_practitioner.patient_id) {
+          updates.ehr_practitioner = { ...prev.ehr_practitioner, patient_id: fhirPatientId };
+        }
+
+        // Tab 4: Patient Chart (Standalone)
+        if (!prev.patient_chart.patient_id) {
+          updates.patient_chart = { ...prev.patient_chart, patient_id: fhirPatientId };
+        }
+
+        // Tab 9: Additional Authorization
+        if (!prev.additional_auth.patient_id) {
+          updates.additional_auth = { ...prev.additional_auth, patient_id: fhirPatientId };
+        }
+
+        // Only update if there are changes
+        if (Object.keys(updates).length > 0) {
+          console.log('G10CertificationPage: Updating patient IDs for tabs:', Object.keys(updates));
+          return { ...prev, ...updates };
+        } else {
+          console.log('G10CertificationPage: Patient ID fields already have values, not overwriting');
+          return prev;
+        }
+      });
+    } else {
+      console.log('G10CertificationPage: No selectedPatient.id available. selectedPatient:', selectedPatient);
+    }
+  }, [selectedPatient]);
 
   // Auto-save configuration to localStorage whenever testConfig changes
   useEffect(() => {
@@ -427,6 +486,42 @@ function G10CertificationPage(props) {
     } catch (error) {
       console.error('Error fetching server config:', error);
       setSnackbarMessage('Error fetching server configuration: ' + error.message);
+      setSnackbarSeverity('error');
+      setSnackbarOpen(true);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleAddUscdiFields() {
+    if (!selectedPatient) {
+      setSnackbarMessage('No patient selected. Please select a patient from the Patient Directory first.');
+      setSnackbarSeverity('warning');
+      setSnackbarOpen(true);
+      return;
+    }
+
+    const patientId = get(selectedPatient, 'id') || get(selectedPatient, '_id');
+    const patientName = get(selectedPatient, 'name[0].family', 'Unknown');
+
+    try {
+      setLoading(true);
+      console.log('Adding USCDI fields to patient:', patientId, patientName);
+
+      const result = await Meteor.callAsync('referenceApp.addUscdiFieldsToPatient', patientId);
+      console.log('USCDI fields result:', result);
+
+      if (result.updated) {
+        setSnackbarMessage(`Patient "${patientName}" updated with USCDI fields: ${result.fieldsAdded.join(', ')}`);
+        setSnackbarSeverity('success');
+      } else {
+        setSnackbarMessage(`Patient "${patientName}" already has all required USCDI fields.`);
+        setSnackbarSeverity('info');
+      }
+      setSnackbarOpen(true);
+    } catch (error) {
+      console.error('Error adding USCDI fields:', error);
+      setSnackbarMessage('Error: ' + (error.reason || error.message));
       setSnackbarSeverity('error');
       setSnackbarOpen(true);
     } finally {
@@ -1319,6 +1414,38 @@ function G10CertificationPage(props) {
         <CardContent>
           {currentTab === 0 && (
             <Box>
+              {/* Selected Patient Section */}
+              <Box sx={{ mb: 4 }}>
+                <Typography variant="h6" gutterBottom>
+                  Selected Test Patient
+                </Typography>
+                {selectedPatient ? (
+                  <Alert severity="success" sx={{ mb: 2 }}>
+                    <Typography variant="body2">
+                      <strong>Patient:</strong> {get(selectedPatient, 'name[0].given[0]', '')} {get(selectedPatient, 'name[0].family', 'Unknown')}<br/>
+                      <strong>FHIR ID:</strong> {get(selectedPatient, 'id', 'N/A')}<br/>
+                      <strong>DOB:</strong> {get(selectedPatient, 'birthDate', 'N/A')}
+                    </Typography>
+                  </Alert>
+                ) : (
+                  <Alert severity="warning" sx={{ mb: 2 }}>
+                    No patient selected. Go to the Patient Directory and click "Certify" on a patient to select them for testing.
+                  </Alert>
+                )}
+                <Button
+                  variant="outlined"
+                  color="secondary"
+                  onClick={handleAddUscdiFields}
+                  disabled={loading || !selectedPatient}
+                  sx={{ mr: 2 }}
+                >
+                  {loading ? 'Updating...' : 'Add USCDI Fields to Patient'}
+                </Button>
+                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
+                  Adds name.suffix, name.use:old, address.use:old, period.end fields, and deceasedDateTime for (g)(10) certification compliance.
+                </Typography>
+              </Box>
+
               <Typography variant="h6" gutterBottom>
                 Inferno OAuth Client Configuration
               </Typography>

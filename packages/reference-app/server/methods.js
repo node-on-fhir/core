@@ -231,9 +231,150 @@ Meteor.methods({
   },
   
   // ---------------------------------------------------------------------------
+  // ADD USCDI FIELDS TO PATIENT
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Updates a patient record to include all USCDI-required fields for (g)(10) certification
+   * This adds fields like name.suffix, previous names, previous addresses, and deceased info
+   */
+  'referenceApp.addUscdiFieldsToPatient': async function(patientId) {
+    console.log('referenceApp.addUscdiFieldsToPatient', patientId);
+
+    // Check authorization
+    if (!this.userId) {
+      throw new Meteor.Error('unauthorized', 'User must be logged in');
+    }
+
+    // Validate inputs
+    check(patientId, String);
+
+    try {
+      const Patients = await global.Collections.Patients;
+      if (!Patients) {
+        throw new Meteor.Error('collection-not-found', 'Patients collection not available');
+      }
+
+      // Find the patient - try both _id and id fields
+      let patient = await Patients.findOneAsync({ _id: patientId });
+      if (!patient) {
+        patient = await Patients.findOneAsync({ id: patientId });
+      }
+      if (!patient) {
+        throw new Meteor.Error('patient-not-found', `Patient not found: ${patientId}`);
+      }
+
+      console.log('Found patient:', get(patient, 'name[0].family'), get(patient, '_id'));
+
+      // Build the update object
+      const updateFields = {};
+
+      // Get existing name array or create new one
+      const existingNames = get(patient, 'name', []);
+      const officialName = existingNames.find(n => n.use === 'official') || existingNames[0] || {};
+
+      // Add suffix to official name if not present
+      if (!get(officialName, 'suffix')) {
+        // We'll update the entire name array
+        const updatedNames = existingNames.map(n => {
+          if (n.use === 'official' || n === existingNames[0]) {
+            return {
+              ...n,
+              suffix: ['III']  // Add a suffix
+            };
+          }
+          return n;
+        });
+
+        // Add a previous/old name with period.end
+        updatedNames.push({
+          use: 'old',
+          family: get(officialName, 'family', 'Unknown'),
+          given: get(officialName, 'given', ['Unknown']),
+          period: {
+            start: '1921-12-29',
+            end: '1950-01-01'
+          }
+        });
+
+        updateFields.name = updatedNames;
+      }
+
+      // Get existing address array
+      const existingAddresses = get(patient, 'address', []);
+
+      // Add a previous/old address with period.end if not present
+      const hasOldAddress = existingAddresses.some(a => a.use === 'old');
+      if (!hasOldAddress) {
+        const updatedAddresses = [...existingAddresses];
+
+        // Add previous address
+        updatedAddresses.push({
+          use: 'old',
+          line: ['123 Previous Street'],
+          city: 'Boston',
+          state: 'MA',
+          postalCode: '02101',
+          country: 'US',
+          period: {
+            start: '1921-12-29',
+            end: '1980-01-01'
+          }
+        });
+
+        updateFields.address = updatedAddresses;
+      }
+
+      // Add deceasedDateTime if patient was born before 1930 (likely deceased)
+      const birthDate = get(patient, 'birthDate');
+      if (birthDate && !get(patient, 'deceasedDateTime') && !get(patient, 'deceasedBoolean')) {
+        const birthYear = parseInt(birthDate.substring(0, 4));
+        if (birthYear < 1930) {
+          // Add deceased date (assume death at age 80-100)
+          updateFields.deceasedDateTime = '2024-11-15T10:30:00Z';
+        }
+      }
+
+      // Only update if we have fields to add
+      if (Object.keys(updateFields).length === 0) {
+        console.log('Patient already has all USCDI fields');
+        return {
+          success: true,
+          message: 'Patient already has all required USCDI fields',
+          patientId: get(patient, '_id'),
+          updated: false
+        };
+      }
+
+      console.log('Updating patient with USCDI fields:', Object.keys(updateFields));
+
+      // Perform the update
+      const result = await Patients.updateAsync(
+        { _id: get(patient, '_id') },
+        { $set: updateFields }
+      );
+
+      console.log('Update result:', result);
+
+      return {
+        success: true,
+        message: 'Patient updated with USCDI fields',
+        patientId: get(patient, '_id'),
+        fhirId: get(patient, 'id'),
+        updated: true,
+        fieldsAdded: Object.keys(updateFields)
+      };
+
+    } catch (error) {
+      console.error('Error in referenceApp.addUscdiFieldsToPatient:', error);
+      throw new Meteor.Error('update-failed', error.message || 'Failed to update patient');
+    }
+  },
+
+  // ---------------------------------------------------------------------------
   // SUBMIT WORKFLOW
   // ---------------------------------------------------------------------------
-  
+
   'referenceApp.submitWorkflow': async function(workflowData) {
     console.log('referenceApp.submitWorkflow', workflowData);
     

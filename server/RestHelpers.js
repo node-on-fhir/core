@@ -699,20 +699,50 @@ export const RestHelpers = {
         }
         
         if(isFuzzy){
-          queryComponent[trimmedExpression] = {$regex: get(req.query, get(searchParameter, 'code')), $options: 'i'};                
+          queryComponent[trimmedExpression] = {$regex: get(req.query, get(searchParameter, 'code')), $options: 'i'};
         } else {
-          // queryComponent[trimmedExpression] = get(req.query, get(searchParameter, 'code'));
-          
-          let codeComponents = (get(req.query, get(searchParameter, 'code'))).split(",");
-          if(Array.isArray(codeComponents) && (codeComponents.length > 1)){
-            queryComponent[trimmedExpression] = {$in: []};
-            codeComponents.forEach(function(part){
-              queryComponent[trimmedExpression].$in.push(part);
+          // Handle reference type search parameters
+          // Use $in to match multiple possible reference formats (mirrors $everything pattern)
+          // FHIR references can be stored as: Patient/123, https://server/Patient/123, or just 123
+          let isReferenceType = get(searchParameter, 'type') === 'reference';
+
+          if(isReferenceType){
+            let searchValue = get(req.query, get(searchParameter, 'code'));
+            let codeComponents = searchValue.split(",");
+            let targetResourceType = get(searchParameter, 'target.0', 'Patient');
+            let fhirBaseUrl = get(Meteor, 'settings.public.fhirUrl', 'http://localhost:3000');
+            let fhirPath = get(Meteor, 'settings.private.fhir.rest.endpoint', 'baseR4');
+
+            // Build $in array with all possible reference formats for each value
+            let allPatterns = [];
+            codeComponents.forEach(function(val){
+              val = val.trim();
+              // Extract the ID portion (strip any prefix)
+              let idPart = val;
+              if(val.includes('/')){
+                idPart = val.split('/').pop();
+              }
+
+              // Add all possible formats
+              allPatterns.push(idPart);                                                        // Just ID
+              allPatterns.push(targetResourceType + '/' + idPart);                             // Relative: Patient/123
+              allPatterns.push(fhirBaseUrl + '/' + fhirPath + '/' + targetResourceType + '/' + idPart);  // Absolute URL
             });
+
+            queryComponent[trimmedExpression] = { $in: allPatterns };
+            process.env.DEBUG && console.log('RestHelpers.parseQueryComponent: Reference search with patterns:', allPatterns);
           } else {
-            queryComponent[trimmedExpression] = get(req.query, get(searchParameter, 'code'));
+            // Non-reference types - original logic
+            let codeComponents = (get(req.query, get(searchParameter, 'code'))).split(",");
+            if(Array.isArray(codeComponents) && (codeComponents.length > 1)){
+              queryComponent[trimmedExpression] = {$in: []};
+              codeComponents.forEach(function(part){
+                queryComponent[trimmedExpression].$in.push(part);
+              });
+            } else {
+              queryComponent[trimmedExpression] = get(req.query, get(searchParameter, 'code'));
+            }
           }
-    
         }
       }
     

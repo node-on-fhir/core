@@ -1284,7 +1284,14 @@ if(typeof serverRouteManifest === "object"){
               })       
               
               if(get(Meteor, 'settings.private.debug') === true) { console.log('SearchParameters::mongoQuery', JSON.stringify(mongoQuery)); }
-            }) 
+            })
+
+            // Handle built-in FHIR search parameters not in SearchParameters collection
+            // _id is a special parameter that exists for all FHIR resources
+            if (get(req, 'query._id')) {
+              mongoQuery['id'] = get(req, 'query._id');
+              console.log('Built-in _id search parameter applied:', get(req, 'query._id'));
+            }
 
             // Log the final mongoQuery after ALL SearchParameters have been processed
             console.log('========== AFTER SearchParameters Processing ==========');

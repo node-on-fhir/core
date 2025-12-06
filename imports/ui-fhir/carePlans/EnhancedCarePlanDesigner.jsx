@@ -213,7 +213,7 @@ export function EnhancedCarePlanDesigner() {
 
   // Data subscriptions and tracking
   const { patients, goals, isLoading } = useTracker(() => {
-    const patientsHandle = Meteor.subscribe('patients.all');
+    const patientsHandle = Meteor.subscribe('patients.search', {});
     const goalsHandle = Meteor.subscribe('goals.all');
     
     return {
