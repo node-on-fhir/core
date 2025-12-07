@@ -1303,7 +1303,36 @@ if(typeof serverRouteManifest === "object"){
                   Object.assign(mongoQuery, fieldExistsQuery);
                 } else if(get(searchParameter, 'code') === queryKey){
                   // otherwise, map the fhirpath to mongo
-                  Object.assign(mongoQuery, RestHelpers.fhirPathToMongo(searchParameter, queryKey, req))
+                  let newQueryPart = RestHelpers.fhirPathToMongo(searchParameter, queryKey, req);
+
+                  // Smart query combination: properly combine $or clauses with $and
+                  // This fixes parameter order dependency bugs where one $or overwrites another
+                  if (mongoQuery.$or && newQueryPart.$or) {
+                    // Both have $or - combine with $and
+                    if (!mongoQuery.$and) {
+                      // First time combining - convert existing $or to $and structure
+                      mongoQuery.$and = [{ $or: mongoQuery.$or }];
+                      delete mongoQuery.$or;
+                    }
+                    mongoQuery.$and.push({ $or: newQueryPart.$or });
+                    process.env.DEBUG && console.log('Combined two $or clauses with $and');
+                  } else if (newQueryPart.$or && Object.keys(mongoQuery).length > 0) {
+                    // New query has $or, existing has other conditions
+                    // Wrap existing in $and with new $or
+                    let existingConditions = { ...mongoQuery };
+                    Object.keys(existingConditions).forEach(function(k) { delete mongoQuery[k]; });
+                    mongoQuery.$and = [existingConditions, { $or: newQueryPart.$or }];
+                    process.env.DEBUG && console.log('Wrapped existing conditions with new $or in $and');
+                  } else if (mongoQuery.$or && Object.keys(newQueryPart).length > 0 && !newQueryPart.$or) {
+                    // Existing has $or, new has regular conditions
+                    let existingOr = mongoQuery.$or;
+                    delete mongoQuery.$or;
+                    mongoQuery.$and = [{ $or: existingOr }, newQueryPart];
+                    process.env.DEBUG && console.log('Wrapped existing $or with new conditions in $and');
+                  } else {
+                    // Simple case - no conflicting $or clauses
+                    Object.assign(mongoQuery, newQueryPart);
+                  }
                 }                
               })       
               

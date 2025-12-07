@@ -1,0 +1,28 @@
+{
+  "resourceType": "SearchParameter",
+  "id": "careplan-category",
+  "url": "http://hl7.org/fhir/SearchParameter/CarePlan-category",
+  "version": "4.0.1",
+  "name": "HoneycombCarePlanCategory",
+  "status": "active",
+  "date": "2024-12-06",
+  "publisher": "github.com/node-on-fhir",
+  "contact": [
+    {
+      "telecom": [
+        {
+          "system": "url",
+          "value": "http://github.com/node-on-fhir/honeycomb"
+        }
+      ]
+    }
+  ],
+  "description": "Type of plan",
+  "code": "category",
+  "base": ["CarePlan"],
+  "type": "token",
+  "expression": "CarePlan.category",
+  "xpath": "category",
+  "multipleOr": true,
+  "multipleAnd": true
+}

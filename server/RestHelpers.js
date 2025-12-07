@@ -74,6 +74,300 @@ function applyProfileDecorators(resource, requestedProfile) {
 }
 
 // =============================================================================
+// Token Search Helpers for CodeableConcept Fields
+// These helpers enable proper FHIR token-type searches on CodeableConcept fields
+// by querying the nested coding.code path instead of direct string matching
+
+/**
+ * Convert FHIR xpath to MongoDB field path
+ * @param {string} xpath - e.g., "f:CarePlan/f:category" or "category"
+ * @returns {string} - e.g., "category"
+ */
+function xpathToMongoPath(xpath) {
+  if (!xpath) {
+    console.warn('xpathToMongoPath: Empty xpath provided');
+    return null;
+  }
+
+  // Handle FHIR union expressions like "Patient.name.given | Patient.name.family"
+  // Take the first path from the union (they usually point to related fields)
+  if (xpath.includes(' | ')) {
+    let firstPath = xpath.split(' | ')[0].trim();
+    return xpathToMongoPath(firstPath);  // Recursively process
+  }
+
+  // Handle FHIRPath expressions like "Patient.identifier" → "identifier"
+  // or "Patient.name.given" → "name.given"
+  if (xpath.includes('.') && !xpath.includes('f:')) {
+    let parts = xpath.split('.');
+    // Skip the first part (resource type like "Patient", "CarePlan") and return rest
+    if (parts.length > 1) {
+      return parts.slice(1).join('.');
+    }
+  }
+
+  // Handle f:xpath format like "f:CarePlan/f:category" → "category"
+  if (xpath.includes('f:') || xpath.includes('/')) {
+    let parts = xpath.split('/');
+    let lastPart = parts[parts.length - 1];
+    if (lastPart.startsWith('f:')) {
+      return lastPart.substring(2);
+    }
+    return lastPart;
+  }
+
+  return xpath;
+}
+
+/**
+ * Check if a field is a CodeableConcept type based on FHIR patterns
+ * @param {string} fieldName - The field name from xpath (e.g., "category")
+ * @param {string} searchParamCode - The search parameter code (e.g., "category")
+ * @returns {boolean}
+ */
+function isCodeableConceptField(fieldName, searchParamCode) {
+  // Known CodeableConcept fields in FHIR R4
+  const codeableConceptFields = [
+    'category', 'code', 'type', 'specialty', 'role', 'class',
+    'clinicalStatus', 'verificationStatus', 'clinical-status', 'verification-status',
+    'dischargeDisposition', 'serviceType', 'reasonCode', 'vaccineCode',
+    'route', 'site', 'method', 'bodySite', 'reaction', 'substance',
+    'interpretation', 'dataAbsentReason', 'severity', 'criticality'
+  ];
+
+  // Simple code fields that should NOT use CodeableConcept logic
+  const simpleCodeFields = [
+    'status', 'intent', 'gender', 'priority', 'use', 'mode',
+    'lifecycleStatus', 'active', 'experimental'
+  ];
+
+  if (!fieldName) {
+    console.warn('isCodeableConceptField: Empty fieldName provided');
+    return false;
+  }
+
+  let normalizedField = fieldName.toLowerCase().replace(/-/g, '');
+  let normalizedCode = (searchParamCode || '').toLowerCase().replace(/-/g, '');
+
+  // First check if it's explicitly a simple code field
+  if (simpleCodeFields.some(function(f) {
+    return normalizedField === f.toLowerCase() || normalizedCode === f.toLowerCase();
+  })) {
+    return false;
+  }
+
+  // Then check if it matches known CodeableConcept fields
+  return codeableConceptFields.some(function(f) {
+    return normalizedField === f.toLowerCase() ||
+           normalizedCode === f.toLowerCase() ||
+           normalizedField.includes(f.toLowerCase());
+  });
+}
+
+/**
+ * Build MongoDB query for token search on CodeableConcept field
+ * Supports: bare code, system|code, and comma-separated values
+ * @param {string} mongoPath - e.g., "category"
+ * @param {string} searchValue - e.g., "assess-plan" or "http://system|code"
+ * @returns {Object} - MongoDB query object
+ */
+function buildCodeableConceptTokenQuery(mongoPath, searchValue) {
+  if (!mongoPath || !searchValue) {
+    console.warn('buildCodeableConceptTokenQuery: Missing mongoPath or searchValue');
+    return {};
+  }
+
+  let searchValues = searchValue.split(',').map(function(v) { return v.trim(); });
+  let orConditions = [];
+
+  searchValues.forEach(function(val) {
+    if (val.includes('|')) {
+      // System|code format
+      let pipeIndex = val.indexOf('|');
+      let system = val.substring(0, pipeIndex);
+      let code = val.substring(pipeIndex + 1);
+
+      if (system && code) {
+        // Both system and code specified - match both
+        let condition = {};
+        condition[mongoPath + '.coding'] = {
+          $elemMatch: {
+            'system': system,
+            'code': code
+          }
+        };
+        orConditions.push(condition);
+      } else if (system && !code) {
+        // System only (ends with |) - match any code in that system
+        let condition = {};
+        condition[mongoPath + '.coding.system'] = system;
+        orConditions.push(condition);
+      } else if (!system && code) {
+        // Code only (starts with |) - same as bare code
+        orConditions.push(buildCodeOnlyCondition(mongoPath, code));
+      }
+    } else {
+      // Bare code - match coding.code or text
+      orConditions.push(buildCodeOnlyCondition(mongoPath, val));
+    }
+  });
+
+  if (orConditions.length === 0) {
+    console.warn('buildCodeableConceptTokenQuery: No conditions generated for', mongoPath, searchValue);
+    return {};
+  } else if (orConditions.length === 1) {
+    return orConditions[0];
+  } else {
+    return { $or: orConditions };
+  }
+}
+
+/**
+ * Build condition for code-only search (no system specified)
+ * Matches either coding.code or text field
+ * @param {string} mongoPath - e.g., "category"
+ * @param {string} code - e.g., "assess-plan"
+ * @returns {Object} - MongoDB query condition
+ */
+function buildCodeOnlyCondition(mongoPath, code) {
+  // Match in coding.code (handles array of codings)
+  let codingCondition = {};
+  codingCondition[mongoPath + '.coding.code'] = code;
+
+  // Match in text (fallback for CodeableConcept.text)
+  let textCondition = {};
+  textCondition[mongoPath + '.text'] = code;
+
+  return { $or: [codingCondition, textCondition] };
+}
+
+/**
+ * Check if a field is an Identifier type
+ * @param {string} fieldName - The field name from xpath (e.g., "identifier")
+ * @param {string} searchParamCode - The search parameter code
+ * @returns {boolean}
+ */
+function isIdentifierField(fieldName, searchParamCode) {
+  const identifierFields = ['identifier'];
+
+  if (!fieldName) {
+    return false;
+  }
+
+  let normalizedField = fieldName.toLowerCase();
+  let normalizedCode = (searchParamCode || '').toLowerCase();
+
+  return identifierFields.includes(normalizedField) || identifierFields.includes(normalizedCode);
+}
+
+/**
+ * Build MongoDB query for token search on Identifier field
+ * Identifier has structure: {system: "...", value: "..."}
+ * Supports: bare value, system|value, and comma-separated values
+ * @param {string} mongoPath - e.g., "identifier"
+ * @param {string} searchValue - e.g., "12345" or "http://system|12345"
+ * @returns {Object} - MongoDB query object
+ */
+function buildIdentifierTokenQuery(mongoPath, searchValue) {
+  if (!mongoPath || !searchValue) {
+    console.warn('buildIdentifierTokenQuery: Missing mongoPath or searchValue');
+    return {};
+  }
+
+  let searchValues = searchValue.split(',').map(function(v) { return v.trim(); });
+  let orConditions = [];
+
+  searchValues.forEach(function(val) {
+    if (val.includes('|')) {
+      // System|value format
+      let pipeIndex = val.indexOf('|');
+      let system = val.substring(0, pipeIndex);
+      let value = val.substring(pipeIndex + 1);
+
+      if (system && value) {
+        // Both system and value specified - match both using $elemMatch
+        let condition = {};
+        condition[mongoPath] = {
+          $elemMatch: {
+            'system': system,
+            'value': value
+          }
+        };
+        orConditions.push(condition);
+      } else if (system && !value) {
+        // System only (ends with |) - match any identifier in that system
+        let condition = {};
+        condition[mongoPath + '.system'] = system;
+        orConditions.push(condition);
+      } else if (!system && value) {
+        // Value only (starts with |) - match just the value
+        let condition = {};
+        condition[mongoPath + '.value'] = value;
+        orConditions.push(condition);
+      }
+    } else {
+      // Bare value - match just the value field
+      let condition = {};
+      condition[mongoPath + '.value'] = val;
+      orConditions.push(condition);
+    }
+  });
+
+  if (orConditions.length === 0) {
+    console.warn('buildIdentifierTokenQuery: No conditions generated for', mongoPath, searchValue);
+    return {};
+  } else if (orConditions.length === 1) {
+    return orConditions[0];
+  } else {
+    return { $or: orConditions };
+  }
+}
+
+/**
+ * Check if a field is a HumanName type
+ * @param {string} fieldName - The field name (e.g., "name")
+ * @param {string} searchParamCode - The search parameter code
+ * @returns {boolean}
+ */
+function isHumanNameField(fieldName, searchParamCode) {
+  const humanNameFields = ['name'];
+
+  if (!fieldName) {
+    return false;
+  }
+
+  let normalizedField = fieldName.toLowerCase();
+  let normalizedCode = (searchParamCode || '').toLowerCase();
+
+  return humanNameFields.includes(normalizedField) || humanNameFields.includes(normalizedCode);
+}
+
+/**
+ * Build MongoDB query for string search on HumanName field
+ * Searches family, given, and text fields with case-insensitive regex
+ * @param {string} mongoPath - e.g., "name"
+ * @param {string} searchValue - e.g., "Koelpin146"
+ * @returns {Object} - MongoDB query object
+ */
+function buildHumanNameStringQuery(mongoPath, searchValue) {
+  if (!mongoPath || !searchValue) {
+    console.warn('buildHumanNameStringQuery: Missing mongoPath or searchValue');
+    return {};
+  }
+
+  // Search family, given, and text fields with case-insensitive regex
+  let regex = { $regex: searchValue, $options: 'i' };
+
+  return {
+    $or: [
+      { [mongoPath + '.family']: regex },
+      { [mongoPath + '.given']: regex },
+      { [mongoPath + '.text']: regex }
+    ]
+  };
+}
+
+// =============================================================================
 
 export const RestHelpers = {
     fhirVersion: 'fhir-3.0.0',
@@ -81,6 +375,17 @@ export const RestHelpers = {
     isDebug: process.env.DEBUG || true,
     isTrace: process.env.TRACE,
     noAuth: false, // Use SafeNoAuth.isEnabled() instead
+
+    // Token search helpers for CodeableConcept and Identifier fields (exported for testing)
+    xpathToMongoPath: xpathToMongoPath,
+    isCodeableConceptField: isCodeableConceptField,
+    buildCodeableConceptTokenQuery: buildCodeableConceptTokenQuery,
+    isIdentifierField: isIdentifierField,
+    buildIdentifierTokenQuery: buildIdentifierTokenQuery,
+    // HumanName search helpers
+    isHumanNameField: isHumanNameField,
+    buildHumanNameStringQuery: buildHumanNameStringQuery,
+
     logging: function(req, route){
         if(this.isDebug){
             console.log(route + get(req, 'params.id'));
@@ -747,20 +1052,63 @@ export const RestHelpers = {
             queryComponent[trimmedExpression] = { $in: allPatterns };
             process.env.DEBUG && console.log('RestHelpers.parseQueryComponent: Reference search with patterns:', allPatterns);
           } else {
-            // Non-reference types - original logic
-            let codeComponents = (get(req.query, get(searchParameter, 'code'))).split(",");
-            if(Array.isArray(codeComponents) && (codeComponents.length > 1)){
-              queryComponent[trimmedExpression] = {$in: []};
-              codeComponents.forEach(function(part){
-                queryComponent[trimmedExpression].$in.push(part);
-              });
+            // Non-reference types - check for token type on CodeableConcept
+            let isTokenType = get(searchParameter, 'type') === 'token';
+            let searchValue = get(req.query, get(searchParameter, 'code'));
+            let searchParamCode = get(searchParameter, 'code');
+
+            if (isTokenType) {
+              // The xpath field already contains the MongoDB path - use it directly
+              // (xpath is repurposed to store MongoDB-compatible dotted paths, not FHIRPath)
+              let mongoPath = trimmedExpression;
+
+              // Extract base field for Identifier/CodeableConcept detection
+              // e.g., "identifier.value" → "identifier", "category" → "category"
+              let baseField = mongoPath.includes('.') ? mongoPath.split('.')[0] : mongoPath;
+
+              if (baseField && isIdentifierField(baseField, searchParamCode)) {
+                // Build Identifier-aware query using base field for $elemMatch
+                let identifierQuery = buildIdentifierTokenQuery(baseField, searchValue);
+                Object.assign(queryComponent, identifierQuery);
+                process.env.DEBUG && console.log('RestHelpers.parseQueryComponent: Token search on Identifier:', baseField, searchValue, identifierQuery);
+              } else if (baseField && isCodeableConceptField(baseField, searchParamCode)) {
+                // Build CodeableConcept-aware query (searches coding.code and text)
+                let codeableConceptQuery = buildCodeableConceptTokenQuery(baseField, searchValue);
+                Object.assign(queryComponent, codeableConceptQuery);
+                process.env.DEBUG && console.log('RestHelpers.parseQueryComponent: Token search on CodeableConcept:', baseField, searchValue, codeableConceptQuery);
+              } else {
+                // Token search on simple code field - use mongoPath directly
+                let codeComponents = searchValue.split(",");
+                if (Array.isArray(codeComponents) && (codeComponents.length > 1)) {
+                  queryComponent[mongoPath] = { $in: codeComponents.map(function(c) { return c.trim(); }) };
+                } else {
+                  queryComponent[mongoPath] = searchValue;
+                }
+                process.env.DEBUG && console.log('RestHelpers.parseQueryComponent: Token search on simple field:', mongoPath, searchValue);
+              }
             } else {
-              queryComponent[trimmedExpression] = get(req.query, get(searchParameter, 'code'));
+              // Non-token, non-reference types (string, date, etc.)
+              let baseField = trimmedExpression.includes('.') ? trimmedExpression.split('.')[0] : trimmedExpression;
+
+              if (isHumanNameField(baseField, searchParamCode)) {
+                // HumanName: search family, given, and text fields
+                let humanNameQuery = buildHumanNameStringQuery(baseField, searchValue);
+                Object.assign(queryComponent, humanNameQuery);
+                process.env.DEBUG && console.log('RestHelpers.parseQueryComponent: String search on HumanName:', baseField, searchValue, humanNameQuery);
+              } else {
+                // Original logic for simple fields
+                let codeComponents = searchValue.split(",");
+                if (Array.isArray(codeComponents) && (codeComponents.length > 1)) {
+                  queryComponent[trimmedExpression] = { $in: codeComponents.map(function(c) { return c.trim(); }) };
+                } else {
+                  queryComponent[trimmedExpression] = searchValue;
+                }
+              }
             }
           }
         }
       }
-    
+
       return queryComponent;
     },
     fhirPathToMongo: function(searchParameter, queryKey, req){

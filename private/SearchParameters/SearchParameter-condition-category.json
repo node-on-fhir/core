@@ -1,0 +1,28 @@
+{
+  "resourceType": "SearchParameter",
+  "id": "condition-category",
+  "url": "http://hl7.org/fhir/SearchParameter/Condition-category",
+  "version": "4.0.1",
+  "name": "HoneycombConditionCategory",
+  "status": "active",
+  "date": "2024-12-06",
+  "publisher": "github.com/node-on-fhir",
+  "contact": [
+    {
+      "telecom": [
+        {
+          "system": "url",
+          "value": "http://github.com/node-on-fhir/honeycomb"
+        }
+      ]
+    }
+  ],
+  "description": "The category of the condition",
+  "code": "category",
+  "base": ["Condition"],
+  "type": "token",
+  "expression": "Condition.category",
+  "xpath": "category",
+  "multipleOr": true,
+  "multipleAnd": true
+}

@@ -38,7 +38,8 @@ Meteor.methods({
       let patientName = JSON.parse(await Assets.getTextAsync('SearchParameters/SearchParameter-patient-name.json'));
       let patientOrganization = JSON.parse(await Assets.getTextAsync('SearchParameters/SearchParameter-patient-organization.json'));
       let patientTelecom = JSON.parse(await Assets.getTextAsync('SearchParameters/SearchParameter-patient-telecom.json'));
-      
+      let patientGender = JSON.parse(await Assets.getTextAsync('SearchParameters/SearchParameter-patient-gender.json'));
+
       // Resource patient search parameters
       let conditionPatient = JSON.parse(await Assets.getTextAsync('SearchParameters/SearchParameter-condition-patient.json'));
       let observationPatient = JSON.parse(await Assets.getTextAsync('SearchParameters/SearchParameter-observation-patient.json'));
@@ -63,7 +64,13 @@ Meteor.methods({
       let researchSubjectPatient = JSON.parse(await Assets.getTextAsync('SearchParameters/SearchParameter-researchsubject-patient.json'));
       let serviceRequestPatient = JSON.parse(await Assets.getTextAsync('SearchParameters/SearchParameter-servicerequest-patient.json'));
       let supplyDeliveryPatient = JSON.parse(await Assets.getTextAsync('SearchParameters/SearchParameter-supplydelivery-patient.json'));
-      
+
+      // Category and status search parameters for ONC certification
+      let carePlanCategory = JSON.parse(await Assets.getTextAsync('SearchParameters/SearchParameter-careplan-category.json'));
+      let careTeamStatus = JSON.parse(await Assets.getTextAsync('SearchParameters/SearchParameter-careteam-status.json'));
+      let conditionCategory = JSON.parse(await Assets.getTextAsync('SearchParameters/SearchParameter-condition-category.json'));
+      let diagnosticReportCategory = JSON.parse(await Assets.getTextAsync('SearchParameters/SearchParameter-diagnosticreport-category.json'));
+
       let searchParametersArray = [
         patientAddressCity,
         patientBirthdate,
@@ -74,6 +81,7 @@ Meteor.methods({
         patientName,
         patientOrganization,
         patientTelecom,
+        patientGender,
         conditionPatient,
         observationPatient,
         procedurePatient,
@@ -94,7 +102,12 @@ Meteor.methods({
         questionnaireResponsePatient,
         researchSubjectPatient,
         serviceRequestPatient,
-        supplyDeliveryPatient
+        supplyDeliveryPatient,
+        // Category and status search parameters for ONC certification
+        carePlanCategory,
+        careTeamStatus,
+        conditionCategory,
+        diagnosticReportCategory
       ];
 
       let insertCount = 0;
