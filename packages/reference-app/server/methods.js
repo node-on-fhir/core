@@ -377,12 +377,12 @@ Meteor.methods({
 
   'referenceApp.submitWorkflow': async function(workflowData) {
     console.log('referenceApp.submitWorkflow', workflowData);
-    
+
     // Check authorization
     if (!this.userId) {
       throw new Meteor.Error('unauthorized', 'User must be logged in');
     }
-    
+
     // Validate workflow data
     check(workflowData, {
       patientId: String,
@@ -393,11 +393,11 @@ Meteor.methods({
       value: String,
       notes: Match.Maybe(String)
     });
-    
+
     try {
       // Process workflow submission
       const result = await Meteor.call('referenceApp.submitData', workflowData);
-      
+
       // Create workflow completion record
       if (global.Collections.Tasks) {
         const Tasks = await global.Collections.Tasks;
@@ -434,16 +434,207 @@ Meteor.methods({
           }]
         });
       }
-      
+
       return {
         success: true,
         message: 'Workflow completed successfully',
         result: result
       };
-      
+
     } catch (error) {
       console.error('Error in referenceApp.submitWorkflow:', error);
       throw new Meteor.Error('workflow-failed', 'Failed to complete workflow');
+    }
+  },
+
+  // ---------------------------------------------------------------------------
+  // SEED MUSTSUPPORT REFERENCES FOR ONC (g)(10) CERTIFICATION
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Seeds RelatedPerson and updates CareTeam for ONC (g)(10) MustSupport reference tests
+   * Test 12.5.06: CareTeam.participant.member must reference valid RelatedPerson
+   *
+   * Creates:
+   * - RelatedPerson resource with us-core-relatedperson profile
+   * - Adds RelatedPerson as CareTeam participant with Caregiver role
+   */
+  'referenceApp.seedMustSupportReferences': async function(patientId) {
+    console.log('referenceApp.seedMustSupportReferences', patientId);
+
+    // Check authorization
+    if (!this.userId) {
+      throw new Meteor.Error('unauthorized', 'User must be logged in');
+    }
+
+    // Validate inputs
+    check(patientId, Match.Maybe(String));
+
+    try {
+      // Get collections
+      const Patients = await global.Collections.Patients;
+      const RelatedPersons = await global.Collections.RelatedPersons;
+      const CareTeams = await global.Collections.CareTeams;
+
+      if (!Patients) {
+        throw new Meteor.Error('collection-not-found', 'Patients collection not available');
+      }
+      if (!RelatedPersons) {
+        throw new Meteor.Error('collection-not-found', 'RelatedPersons collection not available');
+      }
+      if (!CareTeams) {
+        throw new Meteor.Error('collection-not-found', 'CareTeams collection not available');
+      }
+
+      // Find patient - use provided ID or get first patient
+      let patient;
+      if (patientId) {
+        patient = await Patients.findOneAsync({ _id: patientId });
+        if (!patient) {
+          patient = await Patients.findOneAsync({ id: patientId });
+        }
+      }
+      if (!patient) {
+        // Get first patient in database
+        patient = await Patients.findOneAsync({});
+      }
+      if (!patient) {
+        throw new Meteor.Error('no-patients', 'No patients found in database');
+      }
+
+      const patientFhirId = get(patient, 'id') || get(patient, '_id');
+      const patientName = `${get(patient, 'name[0].given[0]', '')} ${get(patient, 'name[0].family', '')}`.trim() || 'Unknown Patient';
+      console.log('Using patient:', patientFhirId, patientName);
+
+      // Create RelatedPerson resource with US Core profile
+      const relatedPersonId = Random.id();
+      const relatedPerson = {
+        _id: relatedPersonId,
+        id: relatedPersonId,
+        resourceType: 'RelatedPerson',
+        meta: {
+          profile: ['http://hl7.org/fhir/us/core/StructureDefinition/us-core-relatedperson']
+        },
+        active: true,
+        patient: {
+          reference: `Patient/${patientFhirId}`,
+          display: patientName
+        },
+        relationship: [{
+          coding: [{
+            system: 'http://terminology.hl7.org/CodeSystem/v3-RoleCode',
+            code: 'NIECE',
+            display: 'niece'
+          }]
+        }],
+        name: [{
+          use: 'official',
+          family: 'TestCaregiver',
+          given: ['Sarah']
+        }],
+        telecom: [{
+          system: 'phone',
+          value: '555-555-5555',
+          use: 'home'
+        }],
+        address: [{
+          use: 'home',
+          line: ['123 Caregiver Lane'],
+          city: 'Boston',
+          state: 'MA',
+          postalCode: '02101',
+          country: 'US'
+        }]
+      };
+
+      // Insert RelatedPerson
+      await RelatedPersons.insertAsync(relatedPerson);
+      console.log('Created RelatedPerson:', relatedPersonId);
+
+      // Find existing CareTeam for patient or create one
+      let careTeam = await CareTeams.findOneAsync({
+        'subject.reference': `Patient/${patientFhirId}`
+      });
+
+      if (!careTeam) {
+        // Also try without Patient/ prefix
+        careTeam = await CareTeams.findOneAsync({
+          'subject.reference': patientFhirId
+        });
+      }
+
+      let careTeamCreated = false;
+      let careTeamId;
+
+      if (!careTeam) {
+        // Create new CareTeam
+        careTeamId = Random.id();
+        careTeam = {
+          _id: careTeamId,
+          id: careTeamId,
+          resourceType: 'CareTeam',
+          meta: {
+            profile: ['http://hl7.org/fhir/us/core/StructureDefinition/us-core-careteam']
+          },
+          status: 'active',
+          name: `Care Team for ${patientName}`,
+          subject: {
+            reference: `Patient/${patientFhirId}`,
+            display: patientName
+          },
+          participant: []
+        };
+        careTeamCreated = true;
+        console.log('Creating new CareTeam:', careTeamId);
+      } else {
+        careTeamId = get(careTeam, '_id');
+        console.log('Found existing CareTeam:', careTeamId);
+      }
+
+      // Create participant entry for RelatedPerson
+      const caregiverParticipant = {
+        role: [{
+          coding: [{
+            system: 'http://snomed.info/sct',
+            code: '133932002',
+            display: 'Caregiver (person)'
+          }]
+        }],
+        member: {
+          reference: `RelatedPerson/${relatedPersonId}`,
+          display: 'Sarah TestCaregiver'
+        }
+      };
+
+      // Add participant to CareTeam
+      const participants = get(careTeam, 'participant', []);
+      participants.push(caregiverParticipant);
+
+      if (careTeamCreated) {
+        careTeam.participant = participants;
+        await CareTeams.insertAsync(careTeam);
+        console.log('Inserted new CareTeam with RelatedPerson participant');
+      } else {
+        await CareTeams.updateAsync(
+          { _id: careTeamId },
+          { $set: { participant: participants } }
+        );
+        console.log('Updated existing CareTeam with RelatedPerson participant');
+      }
+
+      return {
+        success: true,
+        message: 'MustSupport references seeded successfully',
+        relatedPersonId: relatedPersonId,
+        careTeamId: careTeamId,
+        careTeamCreated: careTeamCreated,
+        patientId: patientFhirId,
+        patientName: patientName
+      };
+
+    } catch (error) {
+      console.error('Error in referenceApp.seedMustSupportReferences:', error);
+      throw new Meteor.Error('seed-failed', error.message || 'Failed to seed MustSupport references');
     }
   }
 });

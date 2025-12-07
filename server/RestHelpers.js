@@ -6,6 +6,8 @@ import { get, has, set, unset, cloneDeep, pullAt, findIndex } from 'lodash';
 import * as mongoQuery from 'mongo-query';
 
 import FhirUtilities from '../imports/lib/FhirUtilities.js';
+import { Practitioners } from '../imports/lib/schemas/SimpleSchemas/Practitioners';
+import { Organizations } from '../imports/lib/schemas/SimpleSchemas/Organizations';
 
 // =============================================================================
 // Profile Decorator Discovery
@@ -711,11 +713,147 @@ export const RestHelpers = {
 
       process.env.TRACE && console.log("response", response);
 
+      // Normalize urn:uuid: references to standard FHIR format
+      // ONC (g)(10) tests expect references in ResourceType/ID format, not urn:uuid:ID
+      if (has(response, 'subject.reference')) {
+        let subjectRef = get(response, 'subject.reference');
+        if (subjectRef && subjectRef.startsWith('urn:uuid:')) {
+          let patientId = subjectRef.replace('urn:uuid:', '');
+          response.subject.reference = 'Patient/' + patientId;
+          process.env.DEBUG && console.log('[prepForFhirTransfer] Normalized subject.reference:', subjectRef, '->', response.subject.reference);
+        }
+      }
+      if (has(response, 'patient.reference')) {
+        let patientRef = get(response, 'patient.reference');
+        if (patientRef && patientRef.startsWith('urn:uuid:')) {
+          let patientId = patientRef.replace('urn:uuid:', '');
+          response.patient.reference = 'Patient/' + patientId;
+          process.env.DEBUG && console.log('[prepForFhirTransfer] Normalized patient.reference:', patientRef, '->', response.patient.reference);
+        }
+      }
+
+      // Normalize encounter.reference (for Condition resources)
+      // ONC (g)(10) test 12.6.07 requires Condition.encounter to resolve to valid Encounter
+      if (has(response, 'encounter.reference')) {
+        let encounterRef = get(response, 'encounter.reference');
+        if (encounterRef && encounterRef.startsWith('urn:uuid:')) {
+          let encounterId = encounterRef.replace('urn:uuid:', '');
+          response.encounter.reference = 'Encounter/' + encounterId;
+          process.env.DEBUG && console.log('[prepForFhirTransfer] Normalized encounter.reference:', encounterRef, '->', response.encounter.reference);
+        }
+      }
+
+      // CareTeam: Normalize participant.member references for Patient participants
+      // SNOMED code 116154003 = "Patient" role
+      if (Array.isArray(response.participant)) {
+        response.participant.forEach(function(participant) {
+          if (has(participant, 'member.reference')) {
+            let memberRef = get(participant, 'member.reference');
+            if (memberRef && memberRef.startsWith('urn:uuid:')) {
+              // Check if this participant has a "Patient" role (SNOMED 116154003)
+              let isPatientRole = false;
+              if (Array.isArray(participant.role)) {
+                participant.role.forEach(function(role) {
+                  if (Array.isArray(get(role, 'coding'))) {
+                    role.coding.forEach(function(coding) {
+                      if (get(coding, 'code') === '116154003' ||
+                          get(coding, 'display', '').toLowerCase() === 'patient') {
+                        isPatientRole = true;
+                      }
+                    });
+                  }
+                });
+              }
+              if (isPatientRole) {
+                let patientId = memberRef.replace('urn:uuid:', '');
+                participant.member.reference = 'Patient/' + patientId;
+                process.env.DEBUG && console.log('[prepForFhirTransfer] Normalized participant.member.reference:', memberRef, '->', participant.member.reference);
+              }
+            }
+          }
+        });
+      }
+
       // Apply profile decorators (adds IG-specific extensions)
       // This uses the Package Discovery Pattern to find decorators from installed IG packages
       response = applyProfileDecorators(response);
 
       return response;
+    },
+    // Helper to resolve conditional references like "Practitioner?identifier=system|value"
+    // This is a separate async function to avoid making prepForFhirTransfer async
+    // Used for CareTeam participant.member references which Synthea generates as conditional refs
+    resolveConditionalReferences: async function(record) {
+      console.log('[resolveConditionalReferences] Called with record:', get(record, 'resourceType'), get(record, 'id'));
+
+      if (!record || !Array.isArray(record.participant)) {
+        console.log('[resolveConditionalReferences] No participants array, returning');
+        return record;
+      }
+
+      console.log('[resolveConditionalReferences] Processing', record.participant.length, 'participants');
+
+      for (let participant of record.participant) {
+        if (has(participant, 'member.reference')) {
+          let memberRef = get(participant, 'member.reference');
+
+          // Check if this is a conditional reference: ResourceType?identifier=system|value
+          if (memberRef && memberRef.includes('?identifier=')) {
+            console.log('[resolveConditionalReferences] Found conditional reference:', memberRef);
+            const conditionalMatch = memberRef.match(/^(\w+)\?identifier=(.+)$/);
+            if (conditionalMatch) {
+              const [, resourceType, identifierParam] = conditionalMatch;
+              console.log('[resolveConditionalReferences] Parsed - resourceType:', resourceType, 'identifierParam:', identifierParam);
+
+              // Parse system|value format
+              const pipeIndex = identifierParam.lastIndexOf('|');
+              let system = null;
+              let value = identifierParam;
+              if (pipeIndex > 0) {
+                system = identifierParam.substring(0, pipeIndex);
+                value = identifierParam.substring(pipeIndex + 1);
+              }
+              console.log('[resolveConditionalReferences] Parsed identifier - system:', system, 'value:', value);
+
+              // Get the appropriate collection
+              let collection = null;
+              if (resourceType === 'Practitioner') {
+                collection = Practitioners;
+              } else if (resourceType === 'Organization') {
+                collection = Organizations;
+              }
+
+              if (collection) {
+                // Build query for identifier lookup
+                let query;
+                if (system) {
+                  query = { 'identifier': { $elemMatch: { 'system': system, 'value': value } } };
+                } else {
+                  query = { 'identifier.value': value };
+                }
+                console.log('[resolveConditionalReferences] Query:', JSON.stringify(query));
+
+                try {
+                  const resource = await collection.findOneAsync(query);
+                  console.log('[resolveConditionalReferences] Lookup result:', resource ? 'Found: ' + resource.id : 'Not found');
+                  if (resource && resource.id) {
+                    participant.member.reference = resourceType + '/' + resource.id;
+                    console.log('[resolveConditionalReferences] Resolved:', memberRef, '->', participant.member.reference);
+                  } else {
+                    console.warn('[resolveConditionalReferences] No matching resource found for:', memberRef);
+                  }
+                } catch (err) {
+                  console.warn('[resolveConditionalReferences] Lookup failed:', err.message);
+                }
+              } else {
+                console.warn('[resolveConditionalReferences] Unknown resource type in conditional reference:', resourceType);
+              }
+            }
+          }
+        }
+      }
+
+      return record;
     },
     generateDatabaseQuery: function(query, resourceType){
       return RestHelpers.generateMongoSearchQuery(query, resourceType)

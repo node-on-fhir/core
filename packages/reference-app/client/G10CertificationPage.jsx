@@ -192,7 +192,7 @@ function G10CertificationPage(props) {
     redirect_uris: 'https://inferno.healthit.gov/suites/custom/smart/redirect',
     launch_uri: 'https://inferno.healthit.gov/suites/custom/smart/launch',
     jwks_uri: 'https://inferno.healthit.gov/suites/custom/g10_certification/.well-known/jwks.json',
-    scope: 'launch/patient launch openid fhirUser offline_access patient/Medication.rs patient/AllergyIntolerance.rs patient/CarePlan.rs patient/CareTeam.rs patient/Condition.rs patient/Coverage.rs patient/Device.rs patient/DiagnosticReport.rs patient/DocumentReference.rs patient/Encounter.rs patient/Goal.rs patient/Immunization.rs patient/Location.rs patient/MedicationDispense.rs patient/MedicationRequest.rs patient/Observation.rs patient/Organization.rs patient/Patient.rs patient/Practitioner.rs patient/Procedure.rs patient/Provenance.rs patient/PractitionerRole.rs patient/ServiceRequest.rs patient/Specimen.rs user/Medication.rs user/AllergyIntolerance.rs user/CarePlan.rs user/CareTeam.rs user/Condition.rs user/Coverage.rs user/Device.rs user/DiagnosticReport.rs user/DocumentReference.rs user/Encounter.rs user/Goal.rs user/Immunization.rs user/Location.rs user/MedicationDispense.rs user/MedicationRequest.rs user/Observation.rs user/Organization.rs user/Patient.rs user/Practitioner.rs user/Procedure.rs user/Provenance.rs user/PractitionerRole.rs user/ServiceRequest.rs user/Specimen.rs system/*.*'
+    scope: 'launch/patient launch openid fhirUser offline_access patient/Medication.rs patient/AllergyIntolerance.rs patient/CarePlan.rs patient/CareTeam.rs patient/Condition.rs patient/Coverage.rs patient/Device.rs patient/DiagnosticReport.rs patient/DocumentReference.rs patient/Encounter.rs patient/Goal.rs patient/Immunization.rs patient/Location.rs patient/MedicationDispense.rs patient/MedicationRequest.rs patient/Observation.rs patient/Organization.rs patient/Patient.rs patient/Practitioner.rs patient/Procedure.rs patient/Provenance.rs patient/PractitionerRole.rs patient/RelatedPerson.rs patient/ServiceRequest.rs patient/Specimen.rs user/Medication.rs user/AllergyIntolerance.rs user/CarePlan.rs user/CareTeam.rs user/Condition.rs user/Coverage.rs user/Device.rs user/DiagnosticReport.rs user/DocumentReference.rs user/Encounter.rs user/Goal.rs user/Immunization.rs user/Location.rs user/MedicationDispense.rs user/MedicationRequest.rs user/Observation.rs user/Organization.rs user/Patient.rs user/Practitioner.rs user/Procedure.rs user/Provenance.rs user/PractitionerRole.rs user/RelatedPerson.rs user/ServiceRequest.rs user/Specimen.rs system/*.*'
   });
 
   // Inferno configuration JSON state
@@ -215,7 +215,7 @@ function G10CertificationPage(props) {
     // Tab 1: PHR Full-Access App
     phr_full_access: {
       patient_id: '',
-      received_scopes: 'openid fhirUser offline_access launch/patient patient/Medication.rs patient/AllergyIntolerance.rs patient/CarePlan.rs patient/CareTeam.rs patient/Condition.rs patient/Coverage.rs patient/Device.rs patient/DiagnosticReport.rs patient/DocumentReference.rs patient/Encounter.rs patient/Goal.rs patient/Immunization.rs patient/Location.rs patient/MedicationDispense.rs patient/MedicationRequest.rs patient/Observation.rs patient/Organization.rs patient/Patient.rs patient/Practitioner.rs patient/Procedure.rs patient/Provenance.rs patient/PractitionerRole.rs patient/ServiceRequest.rs patient/Specimen.rs'
+      received_scopes: 'openid fhirUser offline_access launch/patient patient/Medication.rs patient/AllergyIntolerance.rs patient/CarePlan.rs patient/CareTeam.rs patient/Condition.rs patient/Coverage.rs patient/Device.rs patient/DiagnosticReport.rs patient/DocumentReference.rs patient/Encounter.rs patient/Goal.rs patient/Immunization.rs patient/Location.rs patient/MedicationDispense.rs patient/MedicationRequest.rs patient/Observation.rs patient/Organization.rs patient/Patient.rs patient/Practitioner.rs patient/Procedure.rs patient/Provenance.rs patient/PractitionerRole.rs patient/RelatedPerson.rs patient/ServiceRequest.rs patient/Specimen.rs'
     },
     // Tab 2: PHR Limited Access App
     phr_limited_access: {
@@ -225,7 +225,7 @@ function G10CertificationPage(props) {
     // Tab 3: EHR Practitioner Access App
     ehr_practitioner: {
       patient_id: '',
-      received_scopes: 'launch openid fhirUser offline_access user/Medication.rs user/AllergyIntolerance.rs user/CarePlan.rs user/CareTeam.rs user/Condition.rs user/Coverage.rs user/Device.rs user/DiagnosticReport.rs user/DocumentReference.rs user/Encounter.rs user/Goal.rs user/Immunization.rs user/Location.rs user/MedicationDispense.rs user/MedicationRequest.rs user/Observation.rs user/Organization.rs user/Patient.rs user/Practitioner.rs user/Procedure.rs user/Provenance.rs user/PractitionerRole.rs user/ServiceRequest.rs user/Specimen.rs'
+      received_scopes: 'launch openid fhirUser offline_access user/Medication.rs user/AllergyIntolerance.rs user/CarePlan.rs user/CareTeam.rs user/Condition.rs user/Coverage.rs user/Device.rs user/DiagnosticReport.rs user/DocumentReference.rs user/Encounter.rs user/Goal.rs user/Immunization.rs user/Location.rs user/MedicationDispense.rs user/MedicationRequest.rs user/Observation.rs user/Organization.rs user/Patient.rs user/Practitioner.rs user/Procedure.rs user/Provenance.rs user/PractitionerRole.rs user/RelatedPerson.rs user/ServiceRequest.rs user/Specimen.rs'
     },
     // Tab 4: Patient Chart (Standalone)
     patient_chart: {
@@ -529,6 +529,35 @@ function G10CertificationPage(props) {
     }
   }
 
+  async function handleSeedMustSupportReferences() {
+    try {
+      setLoading(true);
+      console.log('Seeding MustSupport references...');
+
+      // Pass selected patient ID if available, otherwise method will use first patient
+      const patientId = get(selectedPatient, 'id') || get(selectedPatient, '_id');
+      const result = await Meteor.callAsync('referenceApp.seedMustSupportReferences', patientId);
+      console.log('MustSupport references result:', result);
+
+      let message = `MustSupport references seeded for ${result.patientName}:\n`;
+      message += `• RelatedPerson created: ${result.relatedPersonId}\n`;
+      message += result.careTeamCreated
+        ? `• CareTeam created: ${result.careTeamId}`
+        : `• CareTeam updated: ${result.careTeamId}`;
+
+      setSnackbarMessage(message);
+      setSnackbarSeverity('success');
+      setSnackbarOpen(true);
+    } catch (error) {
+      console.error('Error seeding MustSupport references:', error);
+      setSnackbarMessage('Error: ' + (error.reason || error.message));
+      setSnackbarSeverity('error');
+      setSnackbarOpen(true);
+    } finally {
+      setLoading(false);
+    }
+  }
+
   function handleClearAllData() {
     if (confirm('Are you sure you want to clear all configuration data? This cannot be undone.')) {
       // Clear state
@@ -686,13 +715,13 @@ function G10CertificationPage(props) {
     };
 
     // Standard patient scopes for standalone launch (includes all g(10) required resources)
-    const standaloneScopes = "launch/patient openid fhirUser offline_access patient/Medication.rs patient/AllergyIntolerance.rs patient/CarePlan.rs patient/CareTeam.rs patient/Condition.rs patient/Coverage.rs patient/Device.rs patient/DiagnosticReport.rs patient/DocumentReference.rs patient/Encounter.rs patient/Goal.rs patient/Immunization.rs patient/Location.rs patient/MedicationDispense.rs patient/MedicationRequest.rs patient/Observation.rs patient/Organization.rs patient/Patient.rs patient/Practitioner.rs patient/Procedure.rs patient/Provenance.rs patient/PractitionerRole.rs patient/ServiceRequest.rs patient/Specimen.rs";
+    const standaloneScopes = "launch/patient openid fhirUser offline_access patient/Medication.rs patient/AllergyIntolerance.rs patient/CarePlan.rs patient/CareTeam.rs patient/Condition.rs patient/Coverage.rs patient/Device.rs patient/DiagnosticReport.rs patient/DocumentReference.rs patient/Encounter.rs patient/Goal.rs patient/Immunization.rs patient/Location.rs patient/MedicationDispense.rs patient/MedicationRequest.rs patient/Observation.rs patient/Organization.rs patient/Patient.rs patient/Practitioner.rs patient/Procedure.rs patient/Provenance.rs patient/PractitionerRole.rs patient/RelatedPerson.rs patient/ServiceRequest.rs patient/Specimen.rs";
 
     // User scopes for EHR launch (includes all g(10) required resources)
-    const ehrScopes = "launch openid fhirUser offline_access user/Medication.rs user/AllergyIntolerance.rs user/CarePlan.rs user/CareTeam.rs user/Condition.rs user/Coverage.rs user/Device.rs user/DiagnosticReport.rs user/DocumentReference.rs user/Encounter.rs user/Goal.rs user/Immunization.rs user/Location.rs user/MedicationDispense.rs user/MedicationRequest.rs user/Observation.rs user/Organization.rs user/Patient.rs user/Practitioner.rs user/Procedure.rs user/Provenance.rs user/PractitionerRole.rs user/ServiceRequest.rs user/Specimen.rs";
+    const ehrScopes = "launch openid fhirUser offline_access user/Medication.rs user/AllergyIntolerance.rs user/CarePlan.rs user/CareTeam.rs user/Condition.rs user/Coverage.rs user/Device.rs user/DiagnosticReport.rs user/DocumentReference.rs user/Encounter.rs user/Goal.rs user/Immunization.rs user/Location.rs user/MedicationDispense.rs user/MedicationRequest.rs user/Observation.rs user/Organization.rs user/Patient.rs user/Practitioner.rs user/Procedure.rs user/Provenance.rs user/PractitionerRole.rs user/RelatedPerson.rs user/ServiceRequest.rs user/Specimen.rs";
 
     // v1 scopes (using .read instead of .rs)
-    const v1Scopes = "launch/patient openid fhirUser offline_access patient/Medication.read patient/AllergyIntolerance.read patient/CarePlan.read patient/CareTeam.read patient/Condition.read patient/Device.read patient/DiagnosticReport.read patient/DocumentReference.read patient/Encounter.read patient/Goal.read patient/Immunization.read patient/Location.read patient/MedicationRequest.read patient/Observation.read patient/Organization.read patient/Patient.read patient/Practitioner.read patient/Procedure.read patient/Provenance.read patient/PractitionerRole.read patient/Specimen.read patient/Coverage.read patient/MedicationDispense.read patient/ServiceRequest.read";
+    const v1Scopes = "launch/patient openid fhirUser offline_access patient/Medication.read patient/AllergyIntolerance.read patient/CarePlan.read patient/CareTeam.read patient/Condition.read patient/Device.read patient/DiagnosticReport.read patient/DocumentReference.read patient/Encounter.read patient/Goal.read patient/Immunization.read patient/Location.read patient/MedicationRequest.read patient/Observation.read patient/Organization.read patient/Patient.read patient/Practitioner.read patient/Procedure.read patient/Provenance.read patient/PractitionerRole.read patient/RelatedPerson.read patient/Specimen.read patient/Coverage.read patient/MedicationDispense.read patient/ServiceRequest.read";
 
     // Granular scopes for testing fine-grained access
     const granularScopes1 = "launch/patient openid fhirUser offline_access patient/Condition.rs?category=http://terminology.hl7.org/CodeSystem/condition-category|encounter-diagnosis patient/Condition.rs?category=http://hl7.org/fhir/us/core/CodeSystem/condition-category|health-concern patient/Observation.rs?category=http://terminology.hl7.org/CodeSystem/observation-category|laboratory patient/Observation.rs?category=http://terminology.hl7.org/CodeSystem/observation-category|social-history";
@@ -1443,6 +1472,18 @@ function G10CertificationPage(props) {
                 </Button>
                 <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
                   Adds name.suffix, name.use:old, address.use:old, period.end fields, and deceasedDateTime for (g)(10) certification compliance.
+                </Typography>
+                <Button
+                  variant="outlined"
+                  color="secondary"
+                  onClick={handleSeedMustSupportReferences}
+                  disabled={loading}
+                  sx={{ mr: 2, mt: 2 }}
+                >
+                  {loading ? 'Seeding...' : 'Seed MustSupport References'}
+                </Button>
+                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
+                  Creates RelatedPerson resource and adds as CareTeam participant for test 12.5.06 (CareTeam MustSupport). Uses selected patient or first patient in database.
                 </Typography>
               </Box>
 

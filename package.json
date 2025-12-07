@@ -69,6 +69,7 @@
     "express-oauth-server": "^2.0.0",
     "fhir-react": "^1.0.0",
     "fhirclient": "^2.5.4",
+    "fhirpath": "^4.8.0",
     "file-dialog": "0.0.8",
     "formik": "^2.4.6",
     "google-map-react": "2.2.1",

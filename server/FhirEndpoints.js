@@ -8,6 +8,7 @@ import querystring from 'querystring';
 
 
 import RestHelpers from './RestHelpers.js';
+import { SearchParametersEngine } from './SearchParametersEngine.js';
 
 import { get, has, set, unset, cloneDeep, capitalize, findIndex, countBy } from 'lodash';
 import moment from 'moment';
@@ -707,8 +708,250 @@ function isResourceScopeAuthorized(authorizationContext, resourceType) {
     console.log(`isResourceScopeAuthorized: Resource '${resourceType}' not authorized. Scopes: ${scope}`);
   }
 
+  // SMART 2.x: Also check for granular scopes with query parameters
+  // e.g., patient/Condition.rs?category=health-concern
+  const hasGranularScope = scopes.some(function(s) {
+    // Extract base scope before any query parameters
+    const baseScope = s.split('?')[0];
+    return resourceScopePatterns.includes(baseScope);
+  });
+
+  if (hasGranularScope) {
+    return true;
+  }
+
   return isAuthorizedForResource;
 }
+
+// =============================================================================
+// SMART 2.x Granular Scopes Support
+// ONC (g)(10) requires filtering results based on granular scope parameters
+// e.g., patient/Condition.rs?category=health-concern
+// =============================================================================
+
+/**
+ * Parse a SMART 2.x granular scope into its components
+ * @param {string} scope - e.g., "patient/Condition.rs?category=health-concern"
+ * @returns {Object|null} - Parsed scope or null if not a valid granular scope
+ */
+function parseGranularScope(scope) {
+  if (!scope || typeof scope !== 'string') {
+    return null;
+  }
+
+  // Check if this is a granular scope (has query parameters)
+  const questionMarkIndex = scope.indexOf('?');
+  if (questionMarkIndex === -1) {
+    return null; // Not a granular scope
+  }
+
+  const baseScope = scope.substring(0, questionMarkIndex);
+  const queryString = scope.substring(questionMarkIndex + 1);
+
+  // Parse base scope: patient/Resource.permission or user/Resource.permission
+  const baseScopeMatch = baseScope.match(/^(patient|user|system)\/([A-Za-z]+)\.(rs|read|write|cruds|\*)$/);
+  if (!baseScopeMatch) {
+    console.warn('[GranularScope] Invalid base scope format:', baseScope);
+    return null;
+  }
+
+  const context = baseScopeMatch[1]; // patient, user, or system
+  const resourceType = baseScopeMatch[2]; // Condition, Observation, etc.
+  const permission = baseScopeMatch[3]; // rs, read, write, cruds, *
+
+  // Parse query parameters
+  const filters = {};
+  const params = queryString.split('&');
+  params.forEach(function(param) {
+    const equalsIndex = param.indexOf('=');
+    if (equalsIndex !== -1) {
+      const key = decodeURIComponent(param.substring(0, equalsIndex));
+      const value = decodeURIComponent(param.substring(equalsIndex + 1));
+      filters[key] = value;
+    }
+  });
+
+  return {
+    context: context,
+    resourceType: resourceType,
+    permission: permission,
+    filters: filters,
+    original: scope
+  };
+}
+
+/**
+ * Get all granular scope filters for a specific resource type
+ * @param {Object} authContext - Authorization context with scope
+ * @param {string} resourceType - e.g., "Condition"
+ * @returns {Array} - Array of filter objects, empty if no granular scopes
+ */
+function getGranularFiltersForResource(authContext, resourceType) {
+  const granularFilters = [];
+
+  // If not an OAuth token request, no granular filtering
+  if (!get(authContext, 'isOAuthToken')) {
+    return granularFilters;
+  }
+
+  const scope = get(authContext, 'scope', '');
+  if (!scope) {
+    return granularFilters;
+  }
+
+  const scopes = scope.split(' ').filter(function(s) { return s.trim(); });
+
+  // Check for wildcard scopes - if present, no granular filtering needed
+  const hasWildcard = scopes.some(function(s) {
+    return s.match(/^(patient|user|system)\/\*\.(rs|read|write|\*)$/);
+  });
+  if (hasWildcard) {
+    return granularFilters; // No filtering for wildcard scopes
+  }
+
+  // Check for non-granular resource scope - if present, no granular filtering
+  const hasFullResourceScope = scopes.some(function(s) {
+    const pattern = new RegExp(`^(patient|user|system)/${resourceType}\\.(rs|read|write|cruds|\\*)$`);
+    return pattern.test(s) && !s.includes('?');
+  });
+  if (hasFullResourceScope) {
+    return granularFilters; // Full access to resource, no filtering
+  }
+
+  // Parse granular scopes for this resource type
+  scopes.forEach(function(s) {
+    const parsed = parseGranularScope(s);
+    if (parsed && parsed.resourceType === resourceType && Object.keys(parsed.filters).length > 0) {
+      granularFilters.push(parsed.filters);
+      process.env.DEBUG && console.log('[GranularScope] Found filter for', resourceType, ':', JSON.stringify(parsed.filters));
+    }
+  });
+
+  return granularFilters;
+}
+
+/**
+ * Check if a resource matches a granular scope filter
+ * @param {Object} resource - FHIR resource
+ * @param {Object} filter - Filter object, e.g., { category: "health-concern" }
+ * @returns {boolean} - True if resource matches the filter
+ */
+function resourceMatchesGranularFilter(resource, filter) {
+  // Each filter key is a search parameter, value is the required value
+  for (const [param, requiredValue] of Object.entries(filter)) {
+    const fieldValue = get(resource, param);
+
+    if (!fieldValue) {
+      // Resource doesn't have this field - doesn't match
+      return false;
+    }
+
+    // Handle CodeableConcept fields (category, code, type, etc.)
+    if (Array.isArray(fieldValue)) {
+      // Array of CodeableConcepts
+      const matches = fieldValue.some(function(cc) {
+        return codeableConceptMatchesValue(cc, requiredValue);
+      });
+      if (!matches) {
+        return false;
+      }
+    } else if (typeof fieldValue === 'object' && (fieldValue.coding || fieldValue.text)) {
+      // Single CodeableConcept
+      if (!codeableConceptMatchesValue(fieldValue, requiredValue)) {
+        return false;
+      }
+    } else if (typeof fieldValue === 'string') {
+      // Simple string/code field
+      if (fieldValue !== requiredValue && !requiredValue.endsWith('|' + fieldValue)) {
+        return false;
+      }
+    } else {
+      // Unknown field type - be conservative and not match
+      console.warn('[GranularScope] Unknown field type for', param, ':', typeof fieldValue);
+      return false;
+    }
+  }
+
+  return true;
+}
+
+/**
+ * Check if a CodeableConcept matches a scope value
+ * Value can be: bare code, system|code, or system| (any code in system)
+ * @param {Object} codeableConcept - FHIR CodeableConcept
+ * @param {string} value - Scope filter value
+ * @returns {boolean}
+ */
+function codeableConceptMatchesValue(codeableConcept, value) {
+  if (!codeableConcept) {
+    return false;
+  }
+
+  // Check text field
+  if (codeableConcept.text && codeableConcept.text === value) {
+    return true;
+  }
+
+  // Check coding array
+  const codings = codeableConcept.coding || [];
+  if (!Array.isArray(codings)) {
+    return false;
+  }
+
+  // Parse value for system|code format
+  const pipeIndex = value.indexOf('|');
+  let requiredSystem = null;
+  let requiredCode = value;
+
+  if (pipeIndex !== -1) {
+    requiredSystem = value.substring(0, pipeIndex);
+    requiredCode = value.substring(pipeIndex + 1);
+  }
+
+  return codings.some(function(coding) {
+    // If system is specified, it must match
+    if (requiredSystem && coding.system !== requiredSystem) {
+      return false;
+    }
+
+    // If code is empty (system| format), any code in that system matches
+    if (requiredCode === '') {
+      return requiredSystem ? coding.system === requiredSystem : false;
+    }
+
+    // Code must match
+    return coding.code === requiredCode;
+  });
+}
+
+/**
+ * Apply granular scope filters to a set of resources
+ * Resources must match at least one of the granular filters (OR logic between filters)
+ * @param {Array} resources - Array of FHIR resources
+ * @param {Array} granularFilters - Array of filter objects
+ * @returns {Array} - Filtered resources
+ */
+function applyGranularScopeFilters(resources, granularFilters) {
+  if (!granularFilters || granularFilters.length === 0) {
+    return resources;
+  }
+
+  if (!Array.isArray(resources)) {
+    return resources;
+  }
+
+  const filteredResources = resources.filter(function(resource) {
+    // Resource must match at least one granular filter
+    return granularFilters.some(function(filter) {
+      return resourceMatchesGranularFilter(resource, filter);
+    });
+  });
+
+  process.env.DEBUG && console.log('[GranularScope] Filtered', resources.length, 'resources to', filteredResources.length, 'based on', granularFilters.length, 'granular filters');
+
+  return filteredResources;
+}
+
 async function logToInboundQueue(request){
   process.env.DEBUG && console.log('request.query', request.query)
   process.env.DEBUG && console.log('request.params', request.params)
@@ -1281,63 +1524,118 @@ if(typeof serverRouteManifest === "object"){
             process.env.TRACE && console.log('chainedIds', chainedIds);
 
             // now search through the query for regular run-of-the-mill queries
-            const searchParametersList = await SearchParameters.find({base: routeResourceType}).fetchAsync();
-            searchParametersList.forEach(function(searchParameter){
-              process.env.DEBUG && console.log('------------------------------------------------------')
-              // process.env.DEBUG && console.log('req.query', req.query);
-              process.env.DEBUG && console.log('SearchParameter');
-              process.env.DEBUG && console.log('id:         ' + get(searchParameter, 'id'));
-              process.env.DEBUG && console.log('code:       ' + get(searchParameter, 'code'));
-              process.env.DEBUG && console.log('expression: ' + get(searchParameter, 'expression'));
-              process.env.DEBUG && console.log('base        ' + get(searchParameter, 'base'));
-              process.env.DEBUG && console.log('target      ' + get(searchParameter, 'target[0]'));
-              process.env.DEBUG && console.log('xpath:      ' + get(searchParameter, 'xpath'));
-              process.env.DEBUG && console.log(' ');
+            // Use SearchParametersEngine if enabled (default), otherwise fallback to MongoDB
+            console.log('========== SearchParametersEngine State ==========');
+            console.log('Engine enabled:', SearchParametersEngine.isEnabled());
+            console.log('Engine compiled:', SearchParametersEngine.isCompiled());
+            console.log('Resource type:', routeResourceType);
+            console.log('Params for this resource:', JSON.stringify(SearchParametersEngine.getParamsForResource(routeResourceType)));
+            console.log('=================================================');
 
-              Object.keys(req.query).forEach(function(queryKey){              
-                // for query keys that dont have a value
-                // just build a mongo query that searches if the key exists or not
-                if(Object.hasOwnProperty(queryKey) && (Object[queryKey] === "")){
+            if (SearchParametersEngine.isEnabled() && SearchParametersEngine.isCompiled()) {
+              // ENGINE-BASED QUERY BUILDING (default)
+              process.env.DEBUG && console.log('[FhirEndpoints] Using SearchParametersEngine for query building');
+
+              Object.keys(req.query).forEach(function(queryKey) {
+                // Skip special FHIR parameters (handled separately)
+                if (queryKey.startsWith('_')) return;
+
+                // Skip empty values
+                const queryValue = req.query[queryKey];
+                if (!queryValue || queryValue === '') {
                   let fieldExistsQuery = {};
                   fieldExistsQuery[queryKey] = {$exists: true};
                   Object.assign(mongoQuery, fieldExistsQuery);
-                } else if(get(searchParameter, 'code') === queryKey){
-                  // otherwise, map the fhirpath to mongo
-                  let newQueryPart = RestHelpers.fhirPathToMongo(searchParameter, queryKey, req);
+                  return;
+                }
+
+                // Build query using engine
+                const newQueryPart = SearchParametersEngine.buildMongoQuery(routeResourceType, queryKey, queryValue);
+                console.log('[FhirEndpoints] Query for ' + queryKey + '=' + queryValue + ' →', JSON.stringify(newQueryPart));
+
+                if (newQueryPart) {
+                  process.env.DEBUG && console.log('[FhirEndpoints] Engine built query for ' + queryKey + ':', JSON.stringify(newQueryPart));
 
                   // Smart query combination: properly combine $or clauses with $and
-                  // This fixes parameter order dependency bugs where one $or overwrites another
                   if (mongoQuery.$or && newQueryPart.$or) {
-                    // Both have $or - combine with $and
                     if (!mongoQuery.$and) {
-                      // First time combining - convert existing $or to $and structure
                       mongoQuery.$and = [{ $or: mongoQuery.$or }];
                       delete mongoQuery.$or;
                     }
                     mongoQuery.$and.push({ $or: newQueryPart.$or });
                     process.env.DEBUG && console.log('Combined two $or clauses with $and');
                   } else if (newQueryPart.$or && Object.keys(mongoQuery).length > 0) {
-                    // New query has $or, existing has other conditions
-                    // Wrap existing in $and with new $or
                     let existingConditions = { ...mongoQuery };
                     Object.keys(existingConditions).forEach(function(k) { delete mongoQuery[k]; });
                     mongoQuery.$and = [existingConditions, { $or: newQueryPart.$or }];
                     process.env.DEBUG && console.log('Wrapped existing conditions with new $or in $and');
                   } else if (mongoQuery.$or && Object.keys(newQueryPart).length > 0 && !newQueryPart.$or) {
-                    // Existing has $or, new has regular conditions
                     let existingOr = mongoQuery.$or;
                     delete mongoQuery.$or;
                     mongoQuery.$and = [{ $or: existingOr }, newQueryPart];
                     process.env.DEBUG && console.log('Wrapped existing $or with new conditions in $and');
                   } else {
-                    // Simple case - no conflicting $or clauses
                     Object.assign(mongoQuery, newQueryPart);
                   }
-                }                
-              })       
-              
-              if(get(Meteor, 'settings.private.debug') === true) { console.log('SearchParameters::mongoQuery', JSON.stringify(mongoQuery)); }
-            })
+                } else {
+                  process.env.DEBUG && console.log('[FhirEndpoints] No engine param for ' + routeResourceType + '.' + queryKey);
+                }
+              });
+
+              console.log('========== FINAL ENGINE QUERY ==========');
+              console.log('SearchParametersEngine::mongoQuery', JSON.stringify(mongoQuery, null, 2));
+              console.log('=========================================');
+
+            } else {
+              // FALLBACK: MongoDB-based lookup (when DISABLE_SP_ENGINE=true or engine not compiled)
+              console.warn('[FhirEndpoints] Using MongoDB fallback for SearchParameters (engine disabled or not compiled)');
+
+              const searchParametersList = await SearchParameters.find({base: routeResourceType}).fetchAsync();
+              searchParametersList.forEach(function(searchParameter){
+                process.env.DEBUG && console.log('------------------------------------------------------')
+                process.env.DEBUG && console.log('SearchParameter');
+                process.env.DEBUG && console.log('id:         ' + get(searchParameter, 'id'));
+                process.env.DEBUG && console.log('code:       ' + get(searchParameter, 'code'));
+                process.env.DEBUG && console.log('expression: ' + get(searchParameter, 'expression'));
+                process.env.DEBUG && console.log('base        ' + get(searchParameter, 'base'));
+                process.env.DEBUG && console.log('target      ' + get(searchParameter, 'target[0]'));
+                process.env.DEBUG && console.log('xpath:      ' + get(searchParameter, 'xpath'));
+                process.env.DEBUG && console.log(' ');
+
+                Object.keys(req.query).forEach(function(queryKey){
+                  if(Object.hasOwnProperty(queryKey) && (Object[queryKey] === "")){
+                    let fieldExistsQuery = {};
+                    fieldExistsQuery[queryKey] = {$exists: true};
+                    Object.assign(mongoQuery, fieldExistsQuery);
+                  } else if(get(searchParameter, 'code') === queryKey){
+                    let newQueryPart = RestHelpers.fhirPathToMongo(searchParameter, queryKey, req);
+
+                    if (mongoQuery.$or && newQueryPart.$or) {
+                      if (!mongoQuery.$and) {
+                        mongoQuery.$and = [{ $or: mongoQuery.$or }];
+                        delete mongoQuery.$or;
+                      }
+                      mongoQuery.$and.push({ $or: newQueryPart.$or });
+                      process.env.DEBUG && console.log('Combined two $or clauses with $and');
+                    } else if (newQueryPart.$or && Object.keys(mongoQuery).length > 0) {
+                      let existingConditions = { ...mongoQuery };
+                      Object.keys(existingConditions).forEach(function(k) { delete mongoQuery[k]; });
+                      mongoQuery.$and = [existingConditions, { $or: newQueryPart.$or }];
+                      process.env.DEBUG && console.log('Wrapped existing conditions with new $or in $and');
+                    } else if (mongoQuery.$or && Object.keys(newQueryPart).length > 0 && !newQueryPart.$or) {
+                      let existingOr = mongoQuery.$or;
+                      delete mongoQuery.$or;
+                      mongoQuery.$and = [{ $or: existingOr }, newQueryPart];
+                      process.env.DEBUG && console.log('Wrapped existing $or with new conditions in $and');
+                    } else {
+                      Object.assign(mongoQuery, newQueryPart);
+                    }
+                  }
+                })
+
+                if(get(Meteor, 'settings.private.debug') === true) { console.log('SearchParameters::mongoQuery', JSON.stringify(mongoQuery)); }
+              })
+            }
 
             // Handle built-in FHIR search parameters not in SearchParameters collection
             // _id is a special parameter that exists for all FHIR resources
@@ -1490,10 +1788,16 @@ if(typeof serverRouteManifest === "object"){
                       // - Some use 'subject.reference' (Observation, Condition, Procedure, DiagnosticReport, etc.)
                       // - Some use 'patient.reference' (AllergyIntolerance, CarePlan, CareTeam, Encounter, Immunization, MedicationRequest, etc.)
                       // We check both to properly filter by patient authorization
+                      // References may be stored as: Patient/uuid, urn:uuid:uuid, or just uuid
                       if(get(authorizationContext, 'patientId')){
-                        let patientRef = 'Patient/' + get(authorizationContext, 'patientId');
-                        authQuery.$or.push({'subject.reference': patientRef});
-                        authQuery.$or.push({'patient.reference': patientRef});
+                        let patientId = get(authorizationContext, 'patientId');
+                        let patientRefs = [
+                          patientId,
+                          'Patient/' + patientId,
+                          'urn:uuid:' + patientId
+                        ];
+                        authQuery.$or.push({'subject.reference': { $in: patientRefs }});
+                        authQuery.$or.push({'patient.reference': { $in: patientRefs }});
                       }
                     }
 
@@ -1566,6 +1870,15 @@ if(typeof serverRouteManifest === "object"){
                   
                   records = await Collections[collectionName].find(mongoQuery, databaseOptions).fetch();
 
+                  // SMART 2.x Granular Scopes: Filter results based on scope parameters
+                  // e.g., patient/Condition.rs?category=health-concern
+                  const granularFilters = getGranularFiltersForResource(authorizationContext, routeResourceType);
+                  if (granularFilters.length > 0) {
+                    console.log('[GranularScope] Applying', granularFilters.length, 'filters to', records.length, routeResourceType, 'records');
+                    records = applyGranularScopeFilters(records, granularFilters);
+                    console.log('[GranularScope] After filtering:', records.length, 'records remain');
+                  }
+
                   process.env.DEBUG && console.log('records', records)
                   // if(collectionName === "Patients"){
                   //   records = await Collections[collectionName].find(mongoQuery, databaseOptions).fetch();
@@ -1578,8 +1891,12 @@ if(typeof serverRouteManifest === "object"){
     
                   process.env.DEBUG && console.log('AccessControlLists - Current userRole: ' + userRole)
                   // payload entries
-                  records.forEach(function(record){
-    
+                  for (let record of records) {
+                    // Resolve conditional references for CareTeam (e.g., Practitioner?identifier=...)
+                    if (routeResourceType === 'CareTeam') {
+                      record = await RestHelpers.resolveConditionalReferences(record);
+                    }
+
                     // check for security labels; otherwise assume normal access patterns
                     let recordSecurityLabel = get(record, 'meta.security[0].display', 'normal');
                     if(process.env.TRACE){
@@ -1655,7 +1972,7 @@ if(typeof serverRouteManifest === "object"){
                         }
                       })
                     }
-                  });
+                  }
 
                   // Handle _revInclude (reverse include)
                   // For Provenance:target, generate Provenance on-demand using resource metadata
@@ -2448,7 +2765,75 @@ if(typeof serverRouteManifest === "object"){
                 let searchParams = Object.assign({}, req.query, parsedBody);
                 console.log('POST _search DEBUG - merged searchParams:', JSON.stringify(searchParams));
 
-                let searchQuery = RestHelpers.generateMongoSearchQuery(searchParams, routeResourceType);
+                // Use SearchParametersEngine like GET handler does (instead of legacy generateMongoSearchQuery)
+                let searchQuery = {};
+
+                if (SearchParametersEngine.isEnabled() && SearchParametersEngine.isCompiled()) {
+                  Object.keys(searchParams).forEach(function(queryKey) {
+                    if (queryKey.startsWith('_')) return; // Skip special params like _count
+
+                    const queryValue = searchParams[queryKey];
+                    const newQueryPart = SearchParametersEngine.buildMongoQuery(routeResourceType, queryKey, queryValue);
+
+                    if (newQueryPart) {
+                      // Smart combination of $or clauses with $and (same logic as GET handler)
+                      if (searchQuery.$or && newQueryPart.$or) {
+                        if (!searchQuery.$and) {
+                          searchQuery.$and = [{ $or: searchQuery.$or }];
+                          delete searchQuery.$or;
+                        }
+                        searchQuery.$and.push({ $or: newQueryPart.$or });
+                      } else if (newQueryPart.$or) {
+                        searchQuery.$or = newQueryPart.$or;
+                      } else {
+                        Object.assign(searchQuery, newQueryPart);
+                      }
+                    }
+                  });
+                  console.log('POST _search: Using SearchParametersEngine, query:', JSON.stringify(searchQuery));
+
+                  // Handle patient parameter if not handled by SearchParametersEngine
+                  // (some resources don't have explicit patient SearchParameter definitions)
+                  if (get(searchParams, 'patient') && !searchQuery['subject.reference'] && !searchQuery.$or && !searchQuery.$and) {
+                    let patientId = get(searchParams, 'patient').replace(/^Patient\//, '');
+                    console.log('POST _search: Adding patient filter via FhirUtilities.addPatientFilterToQuery()');
+                    searchQuery = FhirUtilities.addPatientFilterToQuery(patientId, searchQuery);
+                  } else if (get(searchParams, 'patient')) {
+                    // If there's already a query, we need to combine with patient filter using $and
+                    let patientId = get(searchParams, 'patient').replace(/^Patient\//, '');
+                    let patientQuery = FhirUtilities.addPatientFilterToQuery(patientId, {});
+                    if (Object.keys(patientQuery).length > 0) {
+                      // Check if patient filter wasn't already handled by the engine
+                      let queryStr = JSON.stringify(searchQuery);
+                      if (!queryStr.includes('subject.reference') && !queryStr.includes('patient.reference')) {
+                        console.log('POST _search: Combining existing query with patient filter');
+                        searchQuery = { $and: [searchQuery, patientQuery] };
+                      }
+                    }
+                  }
+
+                  // Handle status parameter if not handled by SearchParametersEngine
+                  // (many resources have 'status' but may not have explicit SearchParameter definitions)
+                  if (get(searchParams, 'status') && !searchQuery['status']) {
+                    let statusValue = get(searchParams, 'status');
+                    let queryStr = JSON.stringify(searchQuery);
+                    if (!queryStr.includes('"status"')) {
+                      console.log('POST _search: Adding status filter directly');
+                      if (searchQuery.$and) {
+                        searchQuery.$and.push({ 'status': statusValue });
+                      } else if (Object.keys(searchQuery).length > 0) {
+                        searchQuery = { $and: [searchQuery, { 'status': statusValue }] };
+                      } else {
+                        searchQuery['status'] = statusValue;
+                      }
+                    }
+                  }
+                } else {
+                  // Fallback to legacy query builder if engine not available
+                  searchQuery = RestHelpers.generateMongoSearchQuery(searchParams, routeResourceType);
+                  console.log('POST _search: Using legacy generateMongoSearchQuery (engine not ready)');
+                }
+
                 console.log('POST _search DEBUG - generated searchQuery:', JSON.stringify(searchQuery));
 
                 // Apply authorization filter (same as GET search)
@@ -2479,10 +2864,16 @@ if(typeof serverRouteManifest === "object"){
                     }
                   } else {
                     // FHIR resources use different reference paths for patients
+                    // References may be stored as: Patient/uuid, urn:uuid:uuid, or just uuid
                     if(get(authorizationContext, 'patientId')){
-                      let patientRef = 'Patient/' + get(authorizationContext, 'patientId');
-                      authQuery.$or.push({'subject.reference': patientRef});
-                      authQuery.$or.push({'patient.reference': patientRef});
+                      let patientId = get(authorizationContext, 'patientId');
+                      let patientRefs = [
+                        patientId,
+                        'Patient/' + patientId,
+                        'urn:uuid:' + patientId
+                      ];
+                      authQuery.$or.push({'subject.reference': { $in: patientRefs }});
+                      authQuery.$or.push({'patient.reference': { $in: patientRefs }});
                     }
                   }
 
@@ -2503,8 +2894,12 @@ if(typeof serverRouteManifest === "object"){
                 console.log('POST _search DEBUG - matchingRecords count:', matchingRecords.length);
                 console.log('matchingRecords', matchingRecords);
 
-                matchingRecords.forEach(function(record){
-  
+                for (let record of matchingRecords) {
+                  // Resolve conditional references for CareTeam (e.g., Practitioner?identifier=...)
+                  if (routeResourceType === 'CareTeam') {
+                    record = await RestHelpers.resolveConditionalReferences(record);
+                  }
+
                   // check for security labels; otherwise assume normal access patterns
                   let recordSecurityLevel = get(record, 'meta.security[0].display', 'normal');
   
@@ -2532,9 +2927,9 @@ if(typeof serverRouteManifest === "object"){
                         status: "200"
                       }
                     });
-                  }                
-                });
-  
+                  }
+                }
+
                 console.log('payload', payload);
   
                 // Success

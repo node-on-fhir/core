@@ -1,18 +1,55 @@
-// /Volumes/SonicMagic/Code/honeycomb-public-release/server/SearchParameterMethods.js
+// server/SearchParameterMethods.js
+// SearchParameter initialization - uses SearchParametersEngine for compile-time processing
 import { get, has } from 'lodash';
 import { Meteor } from 'meteor/meteor';
 
 import { SearchParameters } from '../imports/lib/schemas/SimpleSchemas/SearchParameters';
+import { SearchParametersEngine } from './SearchParametersEngine.js';
 
 console.log('[SearchParameterMethods] File loaded, INITIALIZE_SEARCH_PARAMETERS:', process.env.INITIALIZE_SEARCH_PARAMETERS);
 
-Meteor.startup(function(){
+Meteor.startup(async function(){
   console.log('[SearchParameterMethods] Meteor.startup called, INITIALIZE_SEARCH_PARAMETERS:', process.env.INITIALIZE_SEARCH_PARAMETERS);
   if(process.env.INITIALIZE_SEARCH_PARAMETERS){
-      console.log('[SearchParameterMethods] Calling initSearchParameters...');
-      Meteor.call('initSearchParameters')
+    try {
+      // Compile the SearchParametersEngine (loads core + package SearchParameters)
+      console.log('[SearchParameterMethods] Compiling SearchParametersEngine...');
+      await SearchParametersEngine.compile();
+
+      // Insert all SearchParameters to MongoDB for FHIR /SearchParameter endpoint discovery
+      const allParams = SearchParametersEngine.getAllSearchParams();
+      let insertCount = 0;
+      let skipCount = 0;
+
+      for (const sp of allParams) {
+        if (get(sp, 'resourceType') === 'SearchParameter') {
+          try {
+            const existing = await SearchParameters.findOneAsync({id: get(sp, 'id')});
+            if (!existing) {
+              await SearchParameters.insertAsync(sp);
+              insertCount++;
+              console.log('[SearchParameterMethods] Inserted:', get(sp, 'id'));
+            } else {
+              skipCount++;
+            }
+          } catch (error) {
+            console.error('[SearchParameterMethods] Error inserting', get(sp, 'id'), ':', error.message);
+          }
+        }
+      }
+
+      console.log('[SearchParameterMethods] MongoDB insert complete. Inserted: ' + insertCount + ', Skipped: ' + skipCount);
+      console.log('[SearchParameterMethods] SearchParametersEngine.isCompiled():', SearchParametersEngine.isCompiled());
+    } catch (error) {
+      console.error('[SearchParameterMethods] Error during initialization:', error);
+    }
+  } else {
+    console.log('[SearchParameterMethods] INITIALIZE_SEARCH_PARAMETERS not set, skipping engine compilation');
   }
-}, [])  
+
+  // Always log the engine state for debugging
+  console.log('[SearchParameterMethods] Engine state - enabled:', SearchParametersEngine.isEnabled(), ', compiled:', SearchParametersEngine.isCompiled());
+})  
 
 
 Meteor.methods({
