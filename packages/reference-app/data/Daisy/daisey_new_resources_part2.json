@@ -1,0 +1,486 @@
+{
+  "medicationDispenses": [
+    {
+      "fullUrl": "urn:uuid:958c63b0-4a7f-2ee7-dispense-001",
+      "resource": {
+        "resourceType": "MedicationDispense",
+        "id": "958c63b0-4a7f-2ee7-dispense-001",
+        "meta": {
+          "profile": [
+            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-medicationdispense"
+          ]
+        },
+        "status": "completed",
+        "medicationCodeableConcept": {
+          "coding": [
+            {
+              "system": "http://www.nlm.nih.gov/research/umls/rxnorm",
+              "code": "831213",
+              "display": "{28 (norethindrone 0.35 MG Oral Tablet) } Pack [Jolivette 28 Day]"
+            }
+          ],
+          "text": "Jolivette 28 Day"
+        },
+        "subject": {
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
+          "display": "Mrs. Daisey627 Jackelyn13 Koelpin146"
+        },
+        "performer": [
+          {
+            "actor": {
+              "display": "CVS Pharmacy #8472"
+            }
+          }
+        ],
+        "type": {
+          "coding": [
+            {
+              "system": "http://terminology.hl7.org/CodeSystem/v3-ActCode",
+              "code": "RF",
+              "display": "Refill"
+            }
+          ]
+        },
+        "quantity": {
+          "value": 3,
+          "unit": "pack",
+          "system": "http://unitsofmeasure.org",
+          "code": "{package}"
+        },
+        "daysSupply": {
+          "value": 84,
+          "unit": "Day",
+          "system": "http://unitsofmeasure.org",
+          "code": "d"
+        },
+        "whenHandedOver": "2020-08-25T14:30:00-06:00",
+        "dosageInstruction": [
+          {
+            "text": "Take one tablet orally once daily at same time each day",
+            "timing": {
+              "repeat": {
+                "frequency": 1,
+                "period": 1,
+                "periodUnit": "d"
+              }
+            },
+            "route": {
+              "coding": [
+                {
+                  "system": "http://snomed.info/sct",
+                  "code": "26643006",
+                  "display": "Oral route"
+                }
+              ]
+            },
+            "doseAndRate": [
+              {
+                "doseQuantity": {
+                  "value": 1,
+                  "unit": "tablet",
+                  "system": "http://unitsofmeasure.org",
+                  "code": "{tablet}"
+                }
+              }
+            ]
+          }
+        ],
+        "note": [
+          {
+            "text": "Patient picking up routine refill of contraceptive. Counseled on importance of daily adherence and backup methods."
+          }
+        ]
+      },
+      "request": {
+        "method": "POST",
+        "url": "MedicationDispense"
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:958c63b0-4a7f-2ee7-dispense-002",
+      "resource": {
+        "resourceType": "MedicationDispense",
+        "id": "958c63b0-4a7f-2ee7-dispense-002",
+        "meta": {
+          "profile": [
+            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-medicationdispense"
+          ]
+        },
+        "status": "completed",
+        "medicationCodeableConcept": {
+          "coding": [
+            {
+              "system": "http://www.nlm.nih.gov/research/umls/rxnorm",
+              "code": "310965",
+              "display": "Ibuprofen 600 MG Oral Tablet"
+            }
+          ],
+          "text": "Ibuprofen 600mg"
+        },
+        "subject": {
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
+          "display": "Mrs. Daisey627 Jackelyn13 Koelpin146"
+        },
+        "performer": [
+          {
+            "actor": {
+              "display": "Walgreens #5621"
+            }
+          }
+        ],
+        "type": {
+          "coding": [
+            {
+              "system": "http://terminology.hl7.org/CodeSystem/v3-ActCode",
+              "code": "FF",
+              "display": "First Fill"
+            }
+          ]
+        },
+        "quantity": {
+          "value": 60,
+          "unit": "tablet",
+          "system": "http://unitsofmeasure.org",
+          "code": "{tablet}"
+        },
+        "daysSupply": {
+          "value": 30,
+          "unit": "Day",
+          "system": "http://unitsofmeasure.org",
+          "code": "d"
+        },
+        "whenHandedOver": "2018-03-30T16:45:00-06:00",
+        "dosageInstruction": [
+          {
+            "text": "Take 1 tablet by mouth every 6-8 hours as needed for pain. Do not exceed 3 tablets per day.",
+            "timing": {
+              "repeat": {
+                "frequency": 1,
+                "period": 6,
+                "periodUnit": "h"
+              }
+            },
+            "asNeededBoolean": true,
+            "route": {
+              "coding": [
+                {
+                  "system": "http://snomed.info/sct",
+                  "code": "26643006",
+                  "display": "Oral route"
+                }
+              ]
+            },
+            "doseAndRate": [
+              {
+                "doseQuantity": {
+                  "value": 1,
+                  "unit": "tablet",
+                  "system": "http://unitsofmeasure.org",
+                  "code": "{tablet}"
+                }
+              }
+            ],
+            "maxDosePerPeriod": {
+              "numerator": {
+                "value": 3,
+                "unit": "tablet"
+              },
+              "denominator": {
+                "value": 1,
+                "unit": "day"
+              }
+            }
+          }
+        ],
+        "note": [
+          {
+            "text": "Prescribed for chronic low back pain management. Patient counseled on GI side effects and taking with food."
+          }
+        ]
+      },
+      "request": {
+        "method": "POST",
+        "url": "MedicationDispense"
+      }
+    }
+  ],
+  "serviceRequests": [
+    {
+      "fullUrl": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
+      "resource": {
+        "resourceType": "ServiceRequest",
+        "id": "958c63b0-4a7f-2ee7-service-001",
+        "meta": {
+          "profile": [
+            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-servicerequest"
+          ]
+        },
+        "status": "completed",
+        "intent": "order",
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://snomed.info/sct",
+                "code": "108252007",
+                "display": "Laboratory procedure"
+              }
+            ],
+            "text": "Laboratory"
+          }
+        ],
+        "priority": "routine",
+        "code": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "24323-8",
+              "display": "Comprehensive metabolic panel"
+            }
+          ],
+          "text": "Comprehensive Metabolic Panel"
+        },
+        "subject": {
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
+          "display": "Mrs. Daisey627 Jackelyn13 Koelpin146"
+        },
+        "occurrenceDateTime": "2018-06-10T09:00:00-06:00",
+        "requester": {
+          "display": "Primary Care Physician"
+        },
+        "performer": [
+          {
+            "display": "Quest Diagnostics Laboratory"
+          }
+        ],
+        "reasonCode": [
+          {
+            "text": "Prediabetes monitoring, chronic disease management"
+          }
+        ],
+        "note": [
+          {
+            "text": "Annual metabolic screening for patient with prediabetes. Monitor glucose, renal function, electrolytes."
+          }
+        ]
+      },
+      "request": {
+        "method": "POST",
+        "url": "ServiceRequest"
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:958c63b0-4a7f-2ee7-service-002",
+      "resource": {
+        "resourceType": "ServiceRequest",
+        "id": "958c63b0-4a7f-2ee7-service-002",
+        "meta": {
+          "profile": [
+            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-servicerequest"
+          ]
+        },
+        "status": "completed",
+        "intent": "order",
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://snomed.info/sct",
+                "code": "108252007",
+                "display": "Laboratory procedure"
+              }
+            ],
+            "text": "Laboratory"
+          }
+        ],
+        "priority": "routine",
+        "code": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "58410-2",
+              "display": "Complete blood count (hemogram) panel - Blood by Automated count"
+            }
+          ],
+          "text": "Complete Blood Count"
+        },
+        "subject": {
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
+          "display": "Mrs. Daisey627 Jackelyn13 Koelpin146"
+        },
+        "occurrenceDateTime": "2018-06-10T09:00:00-06:00",
+        "requester": {
+          "display": "Primary Care Physician"
+        },
+        "performer": [
+          {
+            "display": "Quest Diagnostics Laboratory"
+          }
+        ],
+        "reasonCode": [
+          {
+            "coding": [
+              {
+                "system": "http://snomed.info/sct",
+                "code": "271737000",
+                "display": "Anemia"
+              }
+            ],
+            "text": "Anemia evaluation and monitoring"
+          }
+        ],
+        "note": [
+          {
+            "text": "Evaluate persistent fatigue and previously documented anemia."
+          }
+        ]
+      },
+      "request": {
+        "method": "POST",
+        "url": "ServiceRequest"
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:958c63b0-4a7f-2ee7-service-003",
+      "resource": {
+        "resourceType": "ServiceRequest",
+        "id": "958c63b0-4a7f-2ee7-service-003",
+        "meta": {
+          "profile": [
+            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-servicerequest"
+          ]
+        },
+        "status": "completed",
+        "intent": "order",
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://snomed.info/sct",
+                "code": "108252007",
+                "display": "Laboratory procedure"
+              }
+            ],
+            "text": "Laboratory"
+          }
+        ],
+        "priority": "routine",
+        "code": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "4548-4",
+              "display": "Hemoglobin A1c/Hemoglobin.total in Blood"
+            }
+          ],
+          "text": "Hemoglobin A1c"
+        },
+        "subject": {
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
+          "display": "Mrs. Daisey627 Jackelyn13 Koelpin146"
+        },
+        "occurrenceDateTime": "2021-06-13T09:00:00-06:00",
+        "requester": {
+          "display": "Primary Care Physician"
+        },
+        "performer": [
+          {
+            "display": "LabCorp"
+          }
+        ],
+        "reasonCode": [
+          {
+            "coding": [
+              {
+                "system": "http://snomed.info/sct",
+                "code": "15777000",
+                "display": "Prediabetes"
+              }
+            ],
+            "text": "Diabetes screening for prediabetes management"
+          }
+        ],
+        "note": [
+          {
+            "text": "Quarterly monitoring per diabetes prevention protocol."
+          }
+        ]
+      },
+      "request": {
+        "method": "POST",
+        "url": "ServiceRequest"
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:958c63b0-4a7f-2ee7-service-004",
+      "resource": {
+        "resourceType": "ServiceRequest",
+        "id": "958c63b0-4a7f-2ee7-service-004",
+        "meta": {
+          "profile": [
+            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-servicerequest"
+          ]
+        },
+        "status": "completed",
+        "intent": "order",
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://snomed.info/sct",
+                "code": "108252007",
+                "display": "Laboratory procedure"
+              }
+            ],
+            "text": "Laboratory"
+          }
+        ],
+        "priority": "stat",
+        "code": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "24365-9",
+              "display": "Prenatal panel"
+            }
+          ],
+          "text": "Prenatal Screening Panel"
+        },
+        "subject": {
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
+          "display": "Mrs. Daisey627 Jackelyn13 Koelpin146"
+        },
+        "occurrenceDateTime": "2011-09-30T10:30:00-06:00",
+        "requester": {
+          "display": "Obstetrics Provider"
+        },
+        "performer": [
+          {
+            "display": "Hospital Laboratory"
+          }
+        ],
+        "reasonCode": [
+          {
+            "coding": [
+              {
+                "system": "http://snomed.info/sct",
+                "code": "77386006",
+                "display": "Pregnant"
+              }
+            ],
+            "text": "First prenatal visit, routine prenatal screening"
+          }
+        ],
+        "note": [
+          {
+            "text": "Initial prenatal labs including blood type, Rh, antibody screen, infectious disease screening."
+          }
+        ]
+      },
+      "request": {
+        "method": "POST",
+        "url": "ServiceRequest"
+      }
+    }
+  ]
+}
