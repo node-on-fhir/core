@@ -1,0 +1,29 @@
+{
+  "resourceType": "SearchParameter",
+  "id": "careteam-patient",
+  "url": "http://hl7.org/fhir/SearchParameter/CareTeam-patient",
+  "version": "4.0.1",
+  "name": "HoneycombCareTeamPatient",
+  "status": "active",
+  "date": "2024-12-07",
+  "publisher": "github.com/node-on-fhir",
+  "contact": [
+    {
+      "telecom": [
+        {
+          "system": "url",
+          "value": "http://github.com/node-on-fhir/honeycomb"
+        }
+      ]
+    }
+  ],
+  "description": "Search for care teams by patient",
+  "code": "patient",
+  "base": ["CareTeam"],
+  "type": "reference",
+  "expression": "CareTeam.subject.where(resolve() is Patient)",
+  "xpath": "subject.reference",
+  "target": ["Patient"],
+  "multipleOr": true,
+  "multipleAnd": false
+}

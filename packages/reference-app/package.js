@@ -70,7 +70,10 @@ Package.onUse(function(api) {
   api.addFiles('server/index.js', 'server');
   api.addFiles('server/methods.js', 'server');
   api.addFiles('server/publications.js', 'server');
-  
+
+  // Add Daisey test patient bundle as server asset for ONC (g)(10) certification
+  api.addAssets('data/Daisy/Daisey627_Jackelyn13_Koelpin146_958c63b0-4a7f-2ee7-ef6a-e04df5931b4c.json', 'server');
+
   // Client entry point
   api.mainModule('index.jsx', 'client');
   

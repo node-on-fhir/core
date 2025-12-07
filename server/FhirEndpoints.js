@@ -232,12 +232,14 @@ function initializeAccessControl() {
   // Grant 'patient' role access to USCDI resources for SMART on FHIR patient-level access
   // This role is assigned when a valid Bearer token is presented with patient context
   // Per ONC 170.315(g)(10), patients should be able to access their own clinical data
+  // Full list of USCDI v4 resources required for (g)(10) certification
   console.log('Granting patient role access to USCDI resources');
   const patientAccessResources = [
-    'Patient', 'AllergyIntolerance', 'CarePlan', 'CareTeam', 'Condition',
+    'Patient', 'AllergyIntolerance', 'CarePlan', 'CareTeam', 'Condition', 'Coverage',
     'Device', 'DiagnosticReport', 'DocumentReference', 'Encounter', 'Goal',
-    'Immunization', 'Location', 'Medication', 'MedicationRequest', 'Observation',
-    'Organization', 'Practitioner', 'PractitionerRole', 'Procedure', 'Provenance'
+    'Immunization', 'Location', 'Medication', 'MedicationDispense', 'MedicationRequest',
+    'Observation', 'Organization', 'Practitioner', 'PractitionerRole', 'Procedure',
+    'Provenance', 'RelatedPerson', 'ServiceRequest', 'Specimen'
   ];
   patientAccessResources.forEach(function(resource) {
     acl.grant('patient').execute('access').on(resource, ['*']);

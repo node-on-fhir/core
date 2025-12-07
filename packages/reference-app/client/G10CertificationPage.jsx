@@ -8,6 +8,9 @@ import { useTracker } from 'meteor/react-meteor-data';
 import { get } from 'lodash';
 
 import {
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
   Box,
   Button,
   Card,
@@ -28,6 +31,7 @@ import {
   Grid,
   Chip
 } from '@mui/material';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
 // =============================================================================
 // CONSTANTS
@@ -183,6 +187,9 @@ function G10CertificationPage(props) {
   // State management
   const [loading, setLoading] = useState(false);
   const [currentTab, setCurrentTab] = useState(0);
+
+  // Missing references seeding state
+  const [missingReferencesUrls, setMissingReferencesUrls] = useState('');
 
   // Inferno OAuth client state
   const [infernoClient, setInfernoClient] = useState(null);
@@ -550,6 +557,183 @@ function G10CertificationPage(props) {
       setSnackbarOpen(true);
     } catch (error) {
       console.error('Error seeding MustSupport references:', error);
+      setSnackbarMessage('Error: ' + (error.reason || error.message));
+      setSnackbarSeverity('error');
+      setSnackbarOpen(true);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handlePatchPatientMustSupport() {
+    if (!selectedPatient) {
+      setSnackbarMessage('No patient selected. Please select a patient from the Patient Directory first.');
+      setSnackbarSeverity('warning');
+      setSnackbarOpen(true);
+      return;
+    }
+
+    const patientId = get(selectedPatient, 'id') || get(selectedPatient, '_id');
+    const patientName = `${get(selectedPatient, 'name[0].given[0]', '')} ${get(selectedPatient, 'name[0].family', 'Unknown')}`.trim();
+
+    try {
+      setLoading(true);
+      console.log('Patching patient with MustSupport elements:', patientId, patientName);
+
+      const result = await Meteor.callAsync('referenceApp.patchPatientMustSupport', patientId);
+      console.log('Patch MustSupport result:', result);
+
+      if (result.updated) {
+        setSnackbarMessage(`Patient "${patientName}" patched with MustSupport elements: ${result.fieldsAdded.join(', ')}`);
+        setSnackbarSeverity('success');
+      } else {
+        setSnackbarMessage(`Patient "${patientName}" already has all MustSupport elements.`);
+        setSnackbarSeverity('info');
+      }
+      setSnackbarOpen(true);
+    } catch (error) {
+      console.error('Error patching patient MustSupport:', error);
+      setSnackbarMessage('Error: ' + (error.reason || error.message));
+      setSnackbarSeverity('error');
+      setSnackbarOpen(true);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleLoadDaiseyPatient() {
+    try {
+      setLoading(true);
+      console.log('Loading Daisey test patient...');
+
+      const result = await Meteor.callAsync('referenceApp.loadDaiseyPatient');
+      console.log('Load Daisey result:', result);
+
+      let message = `Daisey test patient loaded!\n`;
+      message += `• Patient ID: ${result.patientId}\n`;
+      message += `• Total resources: ${result.total}\n`;
+      message += `• Inserted: ${result.inserted}, Updated: ${result.updated}`;
+      if (result.errors > 0) {
+        message += `\n• Errors: ${result.errors}`;
+      }
+
+      setSnackbarMessage(message);
+      setSnackbarSeverity(result.errors > 0 ? 'warning' : 'success');
+      setSnackbarOpen(true);
+    } catch (error) {
+      console.error('Error loading Daisey patient:', error);
+      setSnackbarMessage('Error: ' + (error.reason || error.message));
+      setSnackbarSeverity('error');
+      setSnackbarOpen(true);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  /**
+   * Parses FHIR URLs to extract ResourceType and ID
+   * Example: https://www.care-commons.app/baseR4/RelatedPerson/n7h275DFkFKD4kPrn
+   * Returns: { resourceType: 'RelatedPerson', id: 'n7h275DFkFKD4kPrn' }
+   */
+  function parseReferenceUrl(url) {
+    try {
+      // Remove query params and trailing slashes
+      const cleanUrl = url.split('?')[0].replace(/\/+$/, '');
+
+      // Split by / and get last two segments (ResourceType/id)
+      const segments = cleanUrl.split('/').filter(s => s.trim());
+      if (segments.length < 2) {
+        console.warn('parseReferenceUrl: Not enough segments in URL:', url);
+        return null;
+      }
+
+      const id = segments[segments.length - 1];
+      const resourceType = segments[segments.length - 2];
+
+      // Validate resourceType looks like a FHIR resource (PascalCase)
+      if (!/^[A-Z][a-zA-Z]+$/.test(resourceType)) {
+        console.warn('parseReferenceUrl: Invalid resourceType:', resourceType, 'from URL:', url);
+        return null;
+      }
+
+      return { resourceType, id };
+    } catch (error) {
+      console.error('parseReferenceUrl: Error parsing URL:', url, error);
+      return null;
+    }
+  }
+
+  async function handleSeedMissingReferences() {
+    if (!missingReferencesUrls.trim()) {
+      setSnackbarMessage('Please enter one or more URLs to seed.');
+      setSnackbarSeverity('warning');
+      setSnackbarOpen(true);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      console.log('Seeding missing references from URLs...');
+
+      // Parse URLs (one per line)
+      const lines = missingReferencesUrls.split('\n').filter(line => line.trim());
+      const references = [];
+      const parseErrors = [];
+
+      for (const line of lines) {
+        const parsed = parseReferenceUrl(line.trim());
+        if (parsed) {
+          references.push(parsed);
+        } else {
+          parseErrors.push(line.trim());
+        }
+      }
+
+      if (references.length === 0) {
+        setSnackbarMessage('Could not parse any valid FHIR URLs. Expected format: .../ResourceType/id');
+        setSnackbarSeverity('error');
+        setSnackbarOpen(true);
+        setLoading(false);
+        return;
+      }
+
+      console.log('Parsed references:', references);
+      if (parseErrors.length > 0) {
+        console.warn('Failed to parse URLs:', parseErrors);
+      }
+
+      // Get selected patient ID for resources that need patient references
+      const patientId = get(selectedPatient, 'id') || get(selectedPatient, '_id');
+
+      // Call server method to create stub resources
+      const result = await Meteor.callAsync('referenceApp.seedMissingReferences', {
+        references,
+        patientId
+      });
+
+      console.log('Seed missing references result:', result);
+
+      let message = `Created ${result.created} stub resources`;
+      if (result.skipped > 0) {
+        message += `, skipped ${result.skipped} (already exist)`;
+      }
+      if (result.errors > 0) {
+        message += `, ${result.errors} errors`;
+      }
+      if (parseErrors.length > 0) {
+        message += `\n${parseErrors.length} URLs could not be parsed`;
+      }
+
+      // Clear the input on success
+      if (result.created > 0) {
+        setMissingReferencesUrls('');
+      }
+
+      setSnackbarMessage(message);
+      setSnackbarSeverity(result.errors > 0 ? 'warning' : 'success');
+      setSnackbarOpen(true);
+    } catch (error) {
+      console.error('Error seeding missing references:', error);
       setSnackbarMessage('Error: ' + (error.reason || error.message));
       setSnackbarSeverity('error');
       setSnackbarOpen(true);
@@ -1485,6 +1669,78 @@ function G10CertificationPage(props) {
                 <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
                   Creates RelatedPerson resource and adds as CareTeam participant for test 12.5.06 (CareTeam MustSupport). Uses selected patient or first patient in database.
                 </Typography>
+
+                <Button
+                  variant="outlined"
+                  color="secondary"
+                  onClick={handlePatchPatientMustSupport}
+                  disabled={loading || !selectedPatient}
+                  sx={{ mr: 2, mt: 2 }}
+                >
+                  {loading ? 'Patching...' : 'Patch Patient MustSupport'}
+                </Button>
+                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
+                  Adds name.use:"old" with suffix and period.end, address.use:"old" with period.end, and deceasedDateTime for test 12.2.09 (Patient MustSupport elements).
+                </Typography>
+
+                {/* Seed Missing References Accordion */}
+                <Accordion sx={{ mt: 3 }}>
+                  <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                    <Typography variant="subtitle2">Seed Missing References (from 403 URLs)</Typography>
+                  </AccordionSummary>
+                  <AccordionDetails>
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                      Paste URLs that returned 403 errors (one per line). The resource type and ID will be parsed and stub resources will be created.
+                    </Typography>
+                    <TextField
+                      fullWidth
+                      multiline
+                      rows={4}
+                      placeholder="https://server.com/baseR4/Organization/org-123&#10;https://server.com/baseR4/Practitioner/prac-456&#10;https://server.com/baseR4/Location/loc-789"
+                      value={missingReferencesUrls}
+                      onChange={(e) => setMissingReferencesUrls(e.target.value)}
+                      sx={{ mb: 2, fontFamily: 'monospace' }}
+                      InputProps={{
+                        sx: { fontFamily: 'monospace', fontSize: '0.85rem' }
+                      }}
+                    />
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      onClick={handleSeedMissingReferences}
+                      disabled={loading || !missingReferencesUrls.trim()}
+                    >
+                      {loading ? 'Creating...' : 'Create Stub Resources'}
+                    </Button>
+                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
+                      Creates minimal stub resources with the specified IDs. Useful for satisfying MustSupport reference requirements.
+                    </Typography>
+                  </AccordionDetails>
+                </Accordion>
+
+                <Box sx={{ mt: 3, pt: 2, borderTop: '1px solid', borderColor: 'divider' }}>
+                  <Typography variant="subtitle2" gutterBottom>
+                    Daisey Test Patient (Recommended)
+                  </Typography>
+                  <Alert severity="info" sx={{ mb: 2 }}>
+                    <Typography variant="body2">
+                      <strong>Daisey Koelpin</strong> is a fully prepared test patient with 367 resources covering all ONC (g)(10) requirements.<br/>
+                      <strong>Patient ID:</strong> <code>958c63b0-4a7f-2ee7-ef6a-e04df5931b4c</code>
+                    </Typography>
+                  </Alert>
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    onClick={handleLoadDaiseyPatient}
+                    disabled={loading}
+                    sx={{ mr: 2 }}
+                  >
+                    {loading ? 'Loading...' : 'Load Daisey Test Patient'}
+                  </Button>
+                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
+                    Loads all 367 resources from the Daisey bundle into the database. Already has all MustSupport elements, RelatedPerson references, and coverage for all test sections.
+                  </Typography>
+                </Box>
               </Box>
 
               <Typography variant="h6" gutterBottom>
