@@ -3,7 +3,98 @@
 import { Meteor } from 'meteor/meteor';
 import { check, Match } from 'meteor/check';
 import { Random } from 'meteor/random';
-import { get, set } from 'lodash';
+import { get, set, has } from 'lodash';
+
+// =============================================================================
+// CONDITIONAL REFERENCE RESOLUTION HELPERS
+// =============================================================================
+
+/**
+ * Build a lookup map from conditional reference patterns to actual resource IDs.
+ * Synthea generates bundles with conditional references like:
+ *   "Practitioner?identifier=http://hl7.org/fhir/sid/us-npi|9999994293"
+ *
+ * This function scans the bundle and builds a map:
+ *   Key: "Practitioner?identifier=http://hl7.org/fhir/sid/us-npi|9999994293"
+ *   Value: "abc-123-def" (the actual resource ID)
+ *
+ * @param {Object} bundle - FHIR Bundle with entry array
+ * @returns {Object} Map of conditional reference patterns to resource IDs
+ */
+function buildConditionalReferenceMap(bundle) {
+  const map = {};
+  const entries = get(bundle, 'entry', []);
+
+  for (const entry of entries) {
+    const resource = get(entry, 'resource');
+    const resourceType = get(resource, 'resourceType');
+    const resourceId = get(resource, 'id');
+    const identifiers = get(resource, 'identifier', []);
+
+    // Only process Practitioner, Organization, Location (common reference targets)
+    if (['Practitioner', 'Organization', 'Location'].includes(resourceType) && resourceId) {
+      for (const identifier of identifiers) {
+        const system = get(identifier, 'system');
+        const value = get(identifier, 'value');
+        if (system && value) {
+          const key = `${resourceType}?identifier=${system}|${value}`;
+          map[key] = resourceId;
+        }
+      }
+    }
+  }
+
+  return map;
+}
+
+/**
+ * Recursively walk an object and resolve conditional references.
+ * Finds any object with a 'reference' property containing '?identifier='
+ * and replaces it with the resolved 'ResourceType/id' format.
+ *
+ * @param {Object|Array} obj - Object to process (modified in place)
+ * @param {Object} refMap - Map from conditional refs to resolved IDs
+ * @param {number} resolvedCount - Counter for tracking resolutions (internal)
+ * @returns {number} Number of references resolved
+ */
+function resolveConditionalRefsInObject(obj, refMap, resolvedCount = 0) {
+  if (!obj || typeof obj !== 'object') {
+    return resolvedCount;
+  }
+
+  // Handle arrays
+  if (Array.isArray(obj)) {
+    for (const item of obj) {
+      resolvedCount = resolveConditionalRefsInObject(item, refMap, resolvedCount);
+    }
+    return resolvedCount;
+  }
+
+  // Check if this object has a conditional reference
+  if (has(obj, 'reference')) {
+    const ref = get(obj, 'reference');
+    if (ref && typeof ref === 'string' && ref.includes('?identifier=')) {
+      const resolvedId = refMap[ref];
+      if (resolvedId) {
+        const resourceType = ref.split('?')[0];
+        obj.reference = `${resourceType}/${resolvedId}`;
+        resolvedCount++;
+      } else {
+        // Log unresolved references for debugging
+        console.warn('[resolveConditionalRefsInObject] Unresolved conditional reference:', ref);
+      }
+    }
+  }
+
+  // Recurse into child properties
+  for (const key of Object.keys(obj)) {
+    if (key !== 'reference' && typeof obj[key] === 'object' && obj[key] !== null) {
+      resolvedCount = resolveConditionalRefsInObject(obj[key], refMap, resolvedCount);
+    }
+  }
+
+  return resolvedCount;
+}
 
 // =============================================================================
 // SERVER METHODS
@@ -452,12 +543,19 @@ Meteor.methods({
   // ---------------------------------------------------------------------------
 
   /**
-   * Seeds RelatedPerson and updates CareTeam for ONC (g)(10) MustSupport reference tests
+   * Seeds MustSupport reference resources for ONC (g)(10) certification tests
+   *
    * Test 12.5.06: CareTeam.participant.member must reference valid RelatedPerson
+   * Test 12.8.05: Coverage.identifier:memberid must be present
+   * Test 12.8.06: Coverage.payor must reference valid Organization
    *
    * Creates:
    * - RelatedPerson resource with us-core-relatedperson profile
    * - Adds RelatedPerson as CareTeam participant with Caregiver role
+   * - Organization resources for insurance payors (Medicaid, BCBS)
+   * - Updates Coverage records to:
+   *   - Reference payor Organizations
+   *   - Add identifier:memberid (MB type code)
    */
   'referenceApp.seedMustSupportReferences': async function(patientId) {
     console.log('referenceApp.seedMustSupportReferences', patientId);
@@ -622,6 +720,237 @@ Meteor.methods({
         console.log('Updated existing CareTeam with RelatedPerson participant');
       }
 
+      // =========================================================================
+      // PART 2: Create Organizations for Coverage payor references
+      // Test 12.8.06: Coverage.payor must reference valid Organization
+      // =========================================================================
+
+      const Organizations = await global.Collections.Organizations;
+      const Coverages = await global.Collections.Coverages;
+
+      let organizationsCreated = [];
+      let coveragesUpdated = [];
+
+      if (Organizations && Coverages) {
+        // Create Medicaid Organization
+        const medicaidOrgId = '958c63b0-4a7f-2ee7-org-medicaid';
+        const existingMedicaidOrg = await Organizations.findOneAsync({ id: medicaidOrgId });
+
+        if (!existingMedicaidOrg) {
+          const medicaidOrg = {
+            _id: medicaidOrgId,
+            id: medicaidOrgId,
+            resourceType: 'Organization',
+            meta: {
+              profile: ['http://hl7.org/fhir/us/core/StructureDefinition/us-core-organization']
+            },
+            active: true,
+            type: [{
+              coding: [{
+                system: 'http://terminology.hl7.org/CodeSystem/organization-type',
+                code: 'ins',
+                display: 'Insurance Company'
+              }],
+              text: 'Insurance Company'
+            }],
+            name: 'State Medicaid Program',
+            telecom: [{
+              system: 'phone',
+              value: '1-800-555-0100',
+              use: 'work'
+            }],
+            address: [{
+              use: 'work',
+              line: ['100 State Capitol Drive'],
+              city: 'Springfield',
+              state: 'IL',
+              postalCode: '62701',
+              country: 'US'
+            }]
+          };
+          await Organizations.insertAsync(medicaidOrg);
+          organizationsCreated.push(medicaidOrgId);
+          console.log('Created Medicaid Organization:', medicaidOrgId);
+        } else {
+          console.log('Medicaid Organization already exists:', medicaidOrgId);
+        }
+
+        // Create BCBS Organization
+        const bcbsOrgId = '958c63b0-4a7f-2ee7-org-bcbs';
+        const existingBcbsOrg = await Organizations.findOneAsync({ id: bcbsOrgId });
+
+        if (!existingBcbsOrg) {
+          const bcbsOrg = {
+            _id: bcbsOrgId,
+            id: bcbsOrgId,
+            resourceType: 'Organization',
+            meta: {
+              profile: ['http://hl7.org/fhir/us/core/StructureDefinition/us-core-organization']
+            },
+            active: true,
+            type: [{
+              coding: [{
+                system: 'http://terminology.hl7.org/CodeSystem/organization-type',
+                code: 'ins',
+                display: 'Insurance Company'
+              }],
+              text: 'Insurance Company'
+            }],
+            name: 'Blue Cross Blue Shield',
+            telecom: [{
+              system: 'phone',
+              value: '1-800-555-0200',
+              use: 'work'
+            }],
+            address: [{
+              use: 'work',
+              line: ['225 North Michigan Avenue'],
+              city: 'Chicago',
+              state: 'IL',
+              postalCode: '60601',
+              country: 'US'
+            }]
+          };
+          await Organizations.insertAsync(bcbsOrg);
+          organizationsCreated.push(bcbsOrgId);
+          console.log('Created BCBS Organization:', bcbsOrgId);
+        } else {
+          console.log('BCBS Organization already exists:', bcbsOrgId);
+        }
+
+        // Update Coverage records to reference Organizations and add identifier:memberid
+        // Find Coverage records for this patient - try multiple query patterns
+        console.log('Looking for Coverage records for patient:', patientFhirId);
+
+        // Try multiple patterns to find Coverage records
+        let coverages = await Coverages.find({
+          $or: [
+            { 'beneficiary.reference': `Patient/${patientFhirId}` },
+            { 'beneficiary.reference': patientFhirId },
+            { 'beneficiary.reference': { $regex: patientFhirId } }
+          ]
+        }).fetchAsync();
+
+        console.log('Found', coverages.length, 'Coverage records by beneficiary.reference');
+
+        // If no coverages found, try finding all coverages and filter
+        if (coverages.length === 0) {
+          console.log('No coverages found by beneficiary, trying all coverages...');
+          const allCoverages = await Coverages.find({}).fetchAsync();
+          console.log('Total coverages in database:', allCoverages.length);
+
+          // Log first few to see structure
+          if (allCoverages.length > 0) {
+            console.log('Sample coverage beneficiary:', JSON.stringify(get(allCoverages[0], 'beneficiary')));
+          }
+
+          // Filter by patient ID in any form
+          coverages = allCoverages.filter(function(cov) {
+            const benefRef = get(cov, 'beneficiary.reference', '');
+            return benefRef.includes(patientFhirId);
+          });
+          console.log('Filtered to', coverages.length, 'coverages for patient');
+        }
+
+        for (const coverage of coverages) {
+          const updateFields = {};
+          const coverageId = get(coverage, 'id') || get(coverage, '_id');
+          console.log('Processing Coverage:', coverageId);
+
+          // Check if payor needs Organization reference
+          const payors = get(coverage, 'payor', []);
+          console.log('  Current payors:', JSON.stringify(payors));
+
+          const updatedPayors = payors.map(function(payor, index) {
+            console.log(`  Payor[${index}]: display="${payor.display}", reference="${payor.reference}"`);
+
+            // If payor has display but no reference, add reference
+            if (payor.display && !payor.reference) {
+              const displayLower = payor.display.toLowerCase();
+              console.log(`  Payor needs reference update, display="${displayLower}"`);
+
+              if (displayLower.includes('medicaid')) {
+                console.log('  -> Matching Medicaid');
+                return {
+                  reference: `Organization/${medicaidOrgId}`,
+                  display: payor.display
+                };
+              } else if (displayLower.includes('blue cross') || displayLower.includes('bcbs')) {
+                console.log('  -> Matching BCBS');
+                return {
+                  reference: `Organization/${bcbsOrgId}`,
+                  display: payor.display
+                };
+              } else {
+                // For any other payor, create a generic reference to one of the orgs
+                console.log('  -> No match, using generic BCBS org');
+                return {
+                  reference: `Organization/${bcbsOrgId}`,
+                  display: payor.display
+                };
+              }
+            }
+            return payor;
+          });
+
+          // Check if payors changed
+          if (JSON.stringify(payors) !== JSON.stringify(updatedPayors)) {
+            updateFields.payor = updatedPayors;
+          }
+
+          // Check if identifier:memberid is missing (Test 12.8.05)
+          const existingIdentifiers = get(coverage, 'identifier', []);
+          const hasMemberIdIdentifier = existingIdentifiers.some(function(id) {
+            return get(id, 'type.coding', []).some(function(coding) {
+              return coding.system === 'http://terminology.hl7.org/CodeSystem/v2-0203' &&
+                     coding.code === 'MB';
+            });
+          });
+
+          if (!hasMemberIdIdentifier) {
+            // Generate a member ID based on coverage ID or subscriberId
+            const subscriberId = get(coverage, 'subscriberId', '');
+            const memberIdValue = subscriberId || `MBR-${get(coverage, 'id', Random.id()).substring(0, 8)}`;
+
+            const newIdentifier = {
+              type: {
+                coding: [{
+                  system: 'http://terminology.hl7.org/CodeSystem/v2-0203',
+                  code: 'MB',
+                  display: 'Member Number'
+                }],
+                text: 'Member Number'
+              },
+              system: 'http://example.org/member-id',
+              value: memberIdValue
+            };
+
+            updateFields.identifier = [...existingIdentifiers, newIdentifier];
+          }
+
+          // Apply updates if any
+          if (Object.keys(updateFields).length > 0) {
+            console.log('  Applying updates:', Object.keys(updateFields).join(', '));
+            console.log('  Update fields:', JSON.stringify(updateFields, null, 2));
+
+            const updateResult = await Coverages.updateAsync(
+              { _id: coverage._id },
+              { $set: updateFields }
+            );
+            console.log('  Update result:', updateResult);
+
+            coveragesUpdated.push(coverageId);
+            console.log('  Successfully updated Coverage:', coverageId);
+          } else {
+            console.log('  No updates needed for Coverage:', coverageId);
+          }
+        }
+
+        console.log('Coverage update summary: Updated', coveragesUpdated.length, 'of', coverages.length, 'coverages');
+      } else {
+        console.warn('Organizations or Coverages collection not available');
+      }
+
       return {
         success: true,
         message: 'MustSupport references seeded successfully',
@@ -629,7 +958,9 @@ Meteor.methods({
         careTeamId: careTeamId,
         careTeamCreated: careTeamCreated,
         patientId: patientFhirId,
-        patientName: patientName
+        patientName: patientName,
+        organizationsCreated: organizationsCreated,
+        coveragesUpdated: coveragesUpdated
       };
 
     } catch (error) {
@@ -803,6 +1134,32 @@ Meteor.methods({
         throw new Meteor.Error('invalid-bundle', 'Bundle has no entries');
       }
 
+      // =======================================================================
+      // RESOLVE CONDITIONAL REFERENCES
+      // =======================================================================
+      // Synthea generates bundles with conditional references like:
+      //   "reference": "Practitioner?identifier=http://hl7.org/fhir/sid/us-npi|9999994293"
+      // These must be resolved to standard "Practitioner/uuid" format before storing.
+      // The Ruby FHIR client (used by Inferno) cannot parse these conditional refs.
+
+      // Pass 1: Build lookup map from conditional reference patterns to resource IDs
+      const refMap = buildConditionalReferenceMap(bundle);
+      console.log('[loadDaiseyPatient] Built conditional reference map with', Object.keys(refMap).length, 'entries');
+
+      // Pass 2: Walk each resource and resolve conditional references
+      let totalResolved = 0;
+      for (const entry of bundle.entry) {
+        const resource = get(entry, 'resource');
+        if (resource) {
+          totalResolved += resolveConditionalRefsInObject(resource, refMap);
+        }
+      }
+      console.log('[loadDaiseyPatient] Resolved', totalResolved, 'conditional references in bundle');
+
+      // =======================================================================
+      // PROCESS AND STORE RESOURCES
+      // =======================================================================
+
       // Process each resource in the bundle
       const results = {
         success: true,
@@ -875,17 +1232,208 @@ Meteor.methods({
 
       console.log('Daisey patient loaded:', results);
 
+      // =======================================================================
+      // PATCH PATIENT WITH MUSTSUPPORT ELEMENTS (Test 12.2.09)
+      // =======================================================================
+      // Add name.use:old, name.suffix, name.period.end, deceasedDateTime,
+      // address.use:old, address.period.end to the Daisey patient
+
+      const daiseyPatientId = '958c63b0-4a7f-2ee7-ef6a-e04df5931b4c';
+      let mustSupportPatched = false;
+
+      try {
+        const Patients = await global.Collections.Patients;
+        if (Patients) {
+          let patient = await Patients.findOneAsync({ id: daiseyPatientId });
+          if (!patient) {
+            patient = await Patients.findOneAsync({ _id: daiseyPatientId });
+          }
+
+          if (patient) {
+            const updateFields = {};
+            const existingNames = get(patient, 'name', []);
+            const existingAddresses = get(patient, 'address', []);
+
+            // Add name.use: "old" with suffix and period.end
+            const hasOldName = existingNames.some(function(n) { return n.use === 'old'; });
+            if (!hasOldName) {
+              const officialName = existingNames.find(function(n) { return n.use === 'official'; }) || existingNames[0] || {};
+              const updatedNames = [...existingNames];
+              updatedNames.push({
+                use: 'old',
+                family: get(officialName, 'family', 'Koelpin'),
+                given: get(officialName, 'given', ['Daisey']),
+                suffix: ['Jr.'],
+                period: {
+                  start: '1970-01-01',
+                  end: '2000-01-01'
+                }
+              });
+              updateFields.name = updatedNames;
+            }
+
+            // Add address.use: "old" with period.end
+            const hasOldAddress = existingAddresses.some(function(a) { return a.use === 'old'; });
+            if (!hasOldAddress) {
+              const updatedAddresses = [...existingAddresses];
+              updatedAddresses.push({
+                use: 'old',
+                line: ['456 Previous Street'],
+                city: 'Boston',
+                state: 'MA',
+                postalCode: '02101',
+                country: 'US',
+                period: {
+                  start: '1990-01-01',
+                  end: '2010-01-01'
+                }
+              });
+              updateFields.address = updatedAddresses;
+            }
+
+            // Add deceasedDateTime
+            if (!get(patient, 'deceasedDateTime') && !get(patient, 'deceasedBoolean')) {
+              updateFields.deceasedDateTime = '2025-12-01T00:00:00Z';
+            }
+
+            // Apply updates if needed
+            if (Object.keys(updateFields).length > 0) {
+              await Patients.updateAsync(
+                { _id: get(patient, '_id') },
+                { $set: updateFields }
+              );
+              mustSupportPatched = true;
+              console.log('[loadDaiseyPatient] Patched Daisey with MustSupport elements:', Object.keys(updateFields));
+            } else {
+              console.log('[loadDaiseyPatient] Daisey already has MustSupport elements');
+            }
+          }
+        }
+      } catch (patchError) {
+        console.warn('[loadDaiseyPatient] Failed to patch MustSupport elements:', patchError.message);
+      }
+
       return {
         success: true,
-        message: `Loaded Daisey test patient: ${results.inserted} inserted, ${results.updated} updated, ${results.errors} errors`,
-        patientId: '958c63b0-4a7f-2ee7-ef6a-e04df5931b4c',
+        message: `Loaded Daisey test patient: ${results.inserted} inserted, ${results.updated} updated, ${results.errors} errors, ${totalResolved} conditional refs resolved${mustSupportPatched ? ', MustSupport patched' : ''}`,
+        patientId: daiseyPatientId,
         patientName: 'Daisey627 Jackelyn13 Koelpin146',
+        conditionalRefsResolved: totalResolved,
+        refMapSize: Object.keys(refMap).length,
+        mustSupportPatched: mustSupportPatched,
         ...results
       };
 
     } catch (error) {
       console.error('Error in referenceApp.loadDaiseyPatient:', error);
       throw new Meteor.Error('load-failed', error.message || 'Failed to load Daisey test patient');
+    }
+  },
+
+  // ---------------------------------------------------------------------------
+  // REMOVE DAISEY TEST PATIENT DATA
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Removes all Daisey test patient data from the database.
+   * Parses the Daisey bundle file and removes each resource by ID.
+   * Patient ID: 958c63b0-4a7f-2ee7-ef6a-e04df5931b4c
+   */
+  'referenceApp.removeDaiseyPatient': async function() {
+    console.log('referenceApp.removeDaiseyPatient');
+
+    // Check authorization
+    if (!this.userId) {
+      throw new Meteor.Error('unauthorized', 'User must be logged in');
+    }
+
+    try {
+      // Read the Daisey bundle from package assets
+      const assetPath = 'data/Daisy/Daisey627_Jackelyn13_Koelpin146_958c63b0-4a7f-2ee7-ef6a-e04df5931b4c.json';
+
+      let bundleJson;
+      try {
+        bundleJson = await Assets.getTextAsync(assetPath);
+      } catch (assetError) {
+        console.error('Failed to read bundle from assets:', assetError.message);
+        throw new Meteor.Error('asset-not-found', `Daisey bundle not found at ${assetPath}`);
+      }
+
+      const bundle = JSON.parse(bundleJson);
+      console.log('[removeDaiseyPatient] Loaded bundle with', get(bundle, 'entry.length', 0), 'entries');
+
+      if (!bundle.entry || !Array.isArray(bundle.entry)) {
+        throw new Meteor.Error('invalid-bundle', 'Bundle has no entries');
+      }
+
+      const results = {
+        success: true,
+        total: bundle.entry.length,
+        removed: 0,
+        notFound: 0,
+        errors: 0,
+        byResourceType: {}
+      };
+
+      // Process each resource in the bundle
+      for (const entry of bundle.entry) {
+        const resource = get(entry, 'resource');
+        if (!resource) {
+          results.errors++;
+          continue;
+        }
+
+        const resourceType = get(resource, 'resourceType');
+        const resourceId = get(resource, 'id');
+
+        if (!resourceType || !resourceId) {
+          results.errors++;
+          continue;
+        }
+
+        // Get the appropriate collection
+        const collectionName = resourceType + 's'; // e.g., "Patient" -> "Patients"
+        const collection = await global.Collections[collectionName];
+
+        if (!collection) {
+          console.warn(`[removeDaiseyPatient] Collection not found for ${resourceType}, skipping`);
+          continue;
+        }
+
+        try {
+          // Try to find and remove by FHIR id first, then by _id
+          let removeResult = await collection.removeAsync({ id: resourceId });
+
+          if (removeResult === 0) {
+            // Try by _id if id field didn't match
+            removeResult = await collection.removeAsync({ _id: resourceId });
+          }
+
+          if (removeResult > 0) {
+            results.removed++;
+            results.byResourceType[resourceType] = (results.byResourceType[resourceType] || 0) + 1;
+          } else {
+            results.notFound++;
+          }
+
+        } catch (resourceError) {
+          console.error(`[removeDaiseyPatient] Error removing ${resourceType}/${resourceId}:`, resourceError.message);
+          results.errors++;
+        }
+      }
+
+      console.log('[removeDaiseyPatient] Complete:', results);
+
+      return {
+        success: true,
+        message: `Removed Daisey test patient: ${results.removed} removed, ${results.notFound} not found, ${results.errors} errors`,
+        patientId: '958c63b0-4a7f-2ee7-ef6a-e04df5931b4c',
+        ...results
+      };
+
+    } catch (error) {
+      console.error('Error in referenceApp.removeDaiseyPatient:', error);
+      throw new Meteor.Error('remove-failed', error.message || 'Failed to remove Daisey test patient');
     }
   },
 

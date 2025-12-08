@@ -261,9 +261,25 @@
           "id": "958c63b0-4a7f-2ee7-coverage-001",
           "meta": {
             "profile": [
-              "http://hl7.org/fhir/us/core/StructureDefinition/us-core-coverage"
+              "http://hl7.org/fhir/us/core/StructureDefinition/us-core-coverage|7.0.0"
             ]
           },
+          "identifier": [
+            {
+              "type": {
+                "coding": [
+                  {
+                    "system": "http://terminology.hl7.org/CodeSystem/v2-0203",
+                    "code": "MB",
+                    "display": "Member Number"
+                  }
+                ],
+                "text": "Member Number"
+              },
+              "system": "https://www.medicaid.gov/member-id",
+              "value": "MC-958C63B0-001"
+            }
+          ],
           "status": "cancelled",
           "type": {
             "coding": [
@@ -297,6 +313,7 @@
           },
           "payor": [
             {
+              "reference": "Organization/958c63b0-4a7f-2ee7-org-medicaid",
               "display": "State Medicaid Program"
             }
           ],
@@ -342,9 +359,25 @@
           "id": "958c63b0-4a7f-2ee7-coverage-002",
           "meta": {
             "profile": [
-              "http://hl7.org/fhir/us/core/StructureDefinition/us-core-coverage"
+              "http://hl7.org/fhir/us/core/StructureDefinition/us-core-coverage|7.0.0"
             ]
           },
+          "identifier": [
+            {
+              "type": {
+                "coding": [
+                  {
+                    "system": "http://terminology.hl7.org/CodeSystem/v2-0203",
+                    "code": "MB",
+                    "display": "Member Number"
+                  }
+                ],
+                "text": "Member Number"
+              },
+              "system": "https://www.bcbs.com/member-id",
+              "value": "BCBS-2020-KOP-DJK"
+            }
+          ],
           "status": "active",
           "type": {
             "coding": [
@@ -377,6 +410,7 @@
           },
           "payor": [
             {
+              "reference": "Organization/958c63b0-4a7f-2ee7-org-bcbs",
               "display": "Blue Cross Blue Shield"
             }
           ],
@@ -413,6 +447,102 @@
         "request": {
           "method": "POST",
           "url": "Coverage"
+        }
+      }
+    ],
+    "organizations": [
+      {
+        "fullUrl": "urn:uuid:958c63b0-4a7f-2ee7-org-medicaid",
+        "resource": {
+          "resourceType": "Organization",
+          "id": "958c63b0-4a7f-2ee7-org-medicaid",
+          "meta": {
+            "profile": [
+              "http://hl7.org/fhir/us/core/StructureDefinition/us-core-organization"
+            ]
+          },
+          "active": true,
+          "type": [
+            {
+              "coding": [
+                {
+                  "system": "http://terminology.hl7.org/CodeSystem/organization-type",
+                  "code": "ins",
+                  "display": "Insurance Company"
+                }
+              ],
+              "text": "Insurance Company"
+            }
+          ],
+          "name": "State Medicaid Program",
+          "telecom": [
+            {
+              "system": "phone",
+              "value": "1-800-555-0100",
+              "use": "work"
+            }
+          ],
+          "address": [
+            {
+              "use": "work",
+              "line": ["100 State Capitol Drive"],
+              "city": "Springfield",
+              "state": "IL",
+              "postalCode": "62701",
+              "country": "US"
+            }
+          ]
+        },
+        "request": {
+          "method": "POST",
+          "url": "Organization"
+        }
+      },
+      {
+        "fullUrl": "urn:uuid:958c63b0-4a7f-2ee7-org-bcbs",
+        "resource": {
+          "resourceType": "Organization",
+          "id": "958c63b0-4a7f-2ee7-org-bcbs",
+          "meta": {
+            "profile": [
+              "http://hl7.org/fhir/us/core/StructureDefinition/us-core-organization"
+            ]
+          },
+          "active": true,
+          "type": [
+            {
+              "coding": [
+                {
+                  "system": "http://terminology.hl7.org/CodeSystem/organization-type",
+                  "code": "ins",
+                  "display": "Insurance Company"
+                }
+              ],
+              "text": "Insurance Company"
+            }
+          ],
+          "name": "Blue Cross Blue Shield",
+          "telecom": [
+            {
+              "system": "phone",
+              "value": "1-800-555-0200",
+              "use": "work"
+            }
+          ],
+          "address": [
+            {
+              "use": "work",
+              "line": ["225 North Michigan Avenue"],
+              "city": "Chicago",
+              "state": "IL",
+              "postalCode": "60601",
+              "country": "US"
+            }
+          ]
+        },
+        "request": {
+          "method": "POST",
+          "url": "Organization"
         }
       }
     ],

@@ -229,6 +229,295 @@
       }
     },
     {
+      "fullUrl": "urn:uuid:958c63b0-4a7f-2ee7-org-medicaid",
+      "resource": {
+        "resourceType": "Organization",
+        "id": "958c63b0-4a7f-2ee7-org-medicaid",
+        "meta": {
+          "profile": [
+            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-organization"
+          ]
+        },
+        "active": true,
+        "type": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/organization-type",
+                "code": "ins",
+                "display": "Insurance Company"
+              }
+            ],
+            "text": "Insurance Company"
+          }
+        ],
+        "name": "State Medicaid Program",
+        "telecom": [
+          {
+            "system": "phone",
+            "value": "1-800-555-0100",
+            "use": "work"
+          }
+        ],
+        "address": [
+          {
+            "use": "work",
+            "line": ["100 State Capitol Drive"],
+            "city": "Springfield",
+            "state": "IL",
+            "postalCode": "62701",
+            "country": "US"
+          }
+        ]
+      },
+      "request": {
+        "method": "POST",
+        "url": "Organization"
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:958c63b0-4a7f-2ee7-org-bcbs",
+      "resource": {
+        "resourceType": "Organization",
+        "id": "958c63b0-4a7f-2ee7-org-bcbs",
+        "meta": {
+          "profile": [
+            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-organization"
+          ]
+        },
+        "active": true,
+        "type": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/organization-type",
+                "code": "ins",
+                "display": "Insurance Company"
+              }
+            ],
+            "text": "Insurance Company"
+          }
+        ],
+        "name": "Blue Cross Blue Shield",
+        "telecom": [
+          {
+            "system": "phone",
+            "value": "1-800-555-0200",
+            "use": "work"
+          }
+        ],
+        "address": [
+          {
+            "use": "work",
+            "line": ["225 North Michigan Avenue"],
+            "city": "Chicago",
+            "state": "IL",
+            "postalCode": "60601",
+            "country": "US"
+          }
+        ]
+      },
+      "request": {
+        "method": "POST",
+        "url": "Organization"
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:958c63b0-4a7f-2ee7-coverage-001",
+      "resource": {
+        "resourceType": "Coverage",
+        "id": "958c63b0-4a7f-2ee7-coverage-001",
+        "meta": {
+          "profile": [
+            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-coverage|7.0.0"
+          ]
+        },
+        "identifier": [
+          {
+            "type": {
+              "coding": [
+                {
+                  "system": "http://terminology.hl7.org/CodeSystem/v2-0203",
+                  "code": "MB",
+                  "display": "Member Number"
+                }
+              ],
+              "text": "Member Number"
+            },
+            "system": "https://www.medicaid.gov/member-id",
+            "value": "MC-958C63B0-001"
+          }
+        ],
+        "status": "cancelled",
+        "type": {
+          "coding": [
+            {
+              "system": "http://terminology.hl7.org/CodeSystem/v3-ActCode",
+              "code": "MEDICAID",
+              "display": "Medicaid"
+            }
+          ],
+          "text": "Medicaid"
+        },
+        "subscriber": {
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+        },
+        "subscriberId": "MC-958C63B0-001",
+        "beneficiary": {
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+        },
+        "relationship": {
+          "coding": [
+            {
+              "system": "http://terminology.hl7.org/CodeSystem/subscriber-relationship",
+              "code": "self",
+              "display": "Self"
+            }
+          ]
+        },
+        "period": {
+          "start": "2011-09-01",
+          "end": "2019-12-31"
+        },
+        "payor": [
+          {
+            "reference": "Organization/958c63b0-4a7f-2ee7-org-medicaid",
+            "display": "State Medicaid Program"
+          }
+        ],
+        "class": [
+          {
+            "type": {
+              "coding": [
+                {
+                  "system": "http://terminology.hl7.org/CodeSystem/coverage-class",
+                  "code": "group",
+                  "display": "Group"
+                }
+              ]
+            },
+            "value": "Medicaid Pregnancy/Young Adult",
+            "name": "Medicaid Pregnancy/Young Adult"
+          },
+          {
+            "type": {
+              "coding": [
+                {
+                  "system": "http://terminology.hl7.org/CodeSystem/coverage-class",
+                  "code": "plan",
+                  "display": "Plan"
+                }
+              ]
+            },
+            "value": "Medicaid Managed Care",
+            "name": "Medicaid Managed Care"
+          }
+        ],
+        "order": 1
+      },
+      "request": {
+        "method": "POST",
+        "url": "Coverage"
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:958c63b0-4a7f-2ee7-coverage-002",
+      "resource": {
+        "resourceType": "Coverage",
+        "id": "958c63b0-4a7f-2ee7-coverage-002",
+        "meta": {
+          "profile": [
+            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-coverage|7.0.0"
+          ]
+        },
+        "identifier": [
+          {
+            "type": {
+              "coding": [
+                {
+                  "system": "http://terminology.hl7.org/CodeSystem/v2-0203",
+                  "code": "MB",
+                  "display": "Member Number"
+                }
+              ],
+              "text": "Member Number"
+            },
+            "system": "https://www.bcbs.com/member-id",
+            "value": "BCBS-2020-KOP-DJK"
+          }
+        ],
+        "status": "active",
+        "type": {
+          "coding": [
+            {
+              "system": "http://terminology.hl7.org/CodeSystem/v3-ActCode",
+              "code": "HIP",
+              "display": "Health Insurance Plan"
+            }
+          ],
+          "text": "Employer Group Health Plan"
+        },
+        "subscriber": {
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+        },
+        "subscriberId": "EMP-2020-KOP-DJK",
+        "beneficiary": {
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+        },
+        "relationship": {
+          "coding": [
+            {
+              "system": "http://terminology.hl7.org/CodeSystem/subscriber-relationship",
+              "code": "self",
+              "display": "Self"
+            }
+          ]
+        },
+        "period": {
+          "start": "2020-01-01"
+        },
+        "payor": [
+          {
+            "reference": "Organization/958c63b0-4a7f-2ee7-org-bcbs",
+            "display": "Blue Cross Blue Shield"
+          }
+        ],
+        "class": [
+          {
+            "type": {
+              "coding": [
+                {
+                  "system": "http://terminology.hl7.org/CodeSystem/coverage-class",
+                  "code": "group",
+                  "display": "Group"
+                }
+              ]
+            },
+            "value": "Employer Group Health Plan",
+            "name": "Employer Group Health Plan"
+          },
+          {
+            "type": {
+              "coding": [
+                {
+                  "system": "http://terminology.hl7.org/CodeSystem/coverage-class",
+                  "code": "plan",
+                  "display": "Plan"
+                }
+              ]
+            },
+            "value": "PPO Standard",
+            "name": "PPO Standard"
+          }
+        ],
+        "order": 1
+      },
+      "request": {
+        "method": "POST",
+        "url": "Coverage"
+      }
+    },
+    {
       "fullUrl": "urn:uuid:958c63b0-4a7f-2ee7-e3a7-067647287b2b",
       "resource": {
         "resourceType": "Encounter",
@@ -329,6 +618,7 @@
         "resourceType": "Condition",
         "id": "958c63b0-4a7f-2ee7-c698-aaee9da5bb35",
         "meta": {
+          "lastUpdated": "2024-12-01T00:00:00.000Z",
           "profile": [
             "http://hl7.org/fhir/us/core/StructureDefinition/us-core-condition-encounter-diagnosis"
           ]
@@ -337,7 +627,7 @@
           "coding": [
             {
               "system": "http://terminology.hl7.org/CodeSystem/condition-clinical",
-              "code": "active"
+              "code": "resolved"
             }
           ]
         },
@@ -377,6 +667,7 @@
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-e3a7-067647287b2b"
         },
         "onsetDateTime": "2011-09-30T10:20:48-06:00",
+        "abatementDateTime": "2011-10-15T00:00:00-06:00",
         "recordedDate": "2011-09-30T10:20:48-06:00"
       },
       "request": {
@@ -980,6 +1271,7 @@
         "resourceType": "Condition",
         "id": "958c63b0-4a7f-2ee7-def0-777faf7f137b",
         "meta": {
+          "lastUpdated": "2024-12-01T00:00:00.000Z",
           "profile": [
             "http://hl7.org/fhir/us/core/StructureDefinition/us-core-condition-encounter-diagnosis"
           ]
@@ -1041,6 +1333,7 @@
         "resourceType": "Condition",
         "id": "958c63b0-4a7f-2ee7-8d49-026f5d326b5d",
         "meta": {
+          "lastUpdated": "2024-12-01T00:00:00.000Z",
           "profile": [
             "http://hl7.org/fhir/us/core/StructureDefinition/us-core-condition-encounter-diagnosis"
           ]
@@ -1757,8 +2050,9 @@
         "resourceType": "Condition",
         "id": "958c63b0-4a7f-2ee7-5176-e0b9528de6a6",
         "meta": {
+          "lastUpdated": "2024-12-01T00:00:00.000Z",
           "profile": [
-            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-condition-encounter-diagnosis"
+            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-condition-problems-health-concerns"
           ]
         },
         "clinicalStatus": {
@@ -1782,8 +2076,17 @@
             "coding": [
               {
                 "system": "http://terminology.hl7.org/CodeSystem/condition-category",
-                "code": "encounter-diagnosis",
-                "display": "Encounter Diagnosis"
+                "code": "problem-list-item",
+                "display": "Problem List Item"
+              }
+            ]
+          },
+          {
+            "coding": [
+              {
+                "system": "http://hl7.org/fhir/us/core/CodeSystem/us-core-category",
+                "code": "sdoh",
+                "display": "SDOH"
               }
             ]
           }
@@ -2397,6 +2700,7 @@
         "resourceType": "Condition",
         "id": "958c63b0-4a7f-2ee7-fe6f-ecbd2a4b3713",
         "meta": {
+          "lastUpdated": "2024-12-01T00:00:00.000Z",
           "profile": [
             "http://hl7.org/fhir/us/core/StructureDefinition/us-core-condition-encounter-diagnosis"
           ]
@@ -2459,6 +2763,7 @@
         "resourceType": "Condition",
         "id": "958c63b0-4a7f-2ee7-b89f-27d5b0294c8b",
         "meta": {
+          "lastUpdated": "2024-12-01T00:00:00.000Z",
           "profile": [
             "http://hl7.org/fhir/us/core/StructureDefinition/us-core-condition-encounter-diagnosis"
           ]
@@ -2521,6 +2826,7 @@
         "resourceType": "Condition",
         "id": "958c63b0-4a7f-2ee7-c221-6d7ae354783f",
         "meta": {
+          "lastUpdated": "2024-12-01T00:00:00.000Z",
           "profile": [
             "http://hl7.org/fhir/us/core/StructureDefinition/us-core-condition-encounter-diagnosis"
           ]
@@ -4379,6 +4685,7 @@
         "resourceType": "Condition",
         "id": "958c63b0-4a7f-2ee7-6941-b70a37352942",
         "meta": {
+          "lastUpdated": "2024-12-01T00:00:00.000Z",
           "profile": [
             "http://hl7.org/fhir/us/core/StructureDefinition/us-core-condition-encounter-diagnosis"
           ]
@@ -6443,6 +6750,11 @@
                 "system": "http://terminology.hl7.org/CodeSystem/v2-0074",
                 "code": "LAB",
                 "display": "Laboratory"
+              },
+              {
+                "system": "http://loinc.org",
+                "code": "LP7839-6",
+                "display": "Pathology"
               }
             ]
           }
@@ -6458,7 +6770,7 @@
           "text": "CBC panel - Blood by Automated count"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-258e-0ffacbc90453"
@@ -13391,6 +13703,7 @@
         "resourceType": "Condition",
         "id": "958c63b0-4a7f-2ee7-fe66-e99f71348ac8",
         "meta": {
+          "lastUpdated": "2024-12-01T00:00:00.000Z",
           "profile": [
             "http://hl7.org/fhir/us/core/StructureDefinition/us-core-condition-encounter-diagnosis"
           ]
@@ -13453,6 +13766,7 @@
         "resourceType": "Condition",
         "id": "958c63b0-4a7f-2ee7-98f4-067107d0e4e5",
         "meta": {
+          "lastUpdated": "2024-12-01T00:00:00.000Z",
           "profile": [
             "http://hl7.org/fhir/us/core/StructureDefinition/us-core-condition-encounter-diagnosis"
           ]
@@ -36173,6 +36487,356 @@
       }
     },
     {
+      "fullUrl": "urn:uuid:958c63b0-4a7f-2ee7-pli1-000000000001",
+      "resource": {
+        "resourceType": "Condition",
+        "id": "958c63b0-4a7f-2ee7-pli1-000000000001",
+        "meta": {
+          "profile": [
+            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-condition-problems-health-concerns"
+          ]
+        },
+        "clinicalStatus": {
+          "coding": [
+            {
+              "system": "http://terminology.hl7.org/CodeSystem/condition-clinical",
+              "code": "active"
+            }
+          ]
+        },
+        "verificationStatus": {
+          "coding": [
+            {
+              "system": "http://terminology.hl7.org/CodeSystem/condition-ver-status",
+              "code": "confirmed"
+            }
+          ]
+        },
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/condition-category",
+                "code": "problem-list-item",
+                "display": "Problem List Item"
+              }
+            ]
+          }
+        ],
+        "code": {
+          "coding": [
+            {
+              "system": "http://snomed.info/sct",
+              "code": "44054006",
+              "display": "Diabetes mellitus type 2 (disorder)"
+            }
+          ],
+          "text": "Diabetes mellitus type 2"
+        },
+        "subject": {
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+        },
+        "onsetDateTime": "2020-03-15",
+        "recordedDate": "2020-03-15"
+      },
+      "request": {
+        "method": "POST",
+        "url": "Condition"
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:958c63b0-4a7f-2ee7-pli2-000000000002",
+      "resource": {
+        "resourceType": "Condition",
+        "id": "958c63b0-4a7f-2ee7-pli2-000000000002",
+        "meta": {
+          "profile": [
+            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-condition-problems-health-concerns"
+          ]
+        },
+        "clinicalStatus": {
+          "coding": [
+            {
+              "system": "http://terminology.hl7.org/CodeSystem/condition-clinical",
+              "code": "active"
+            }
+          ]
+        },
+        "verificationStatus": {
+          "coding": [
+            {
+              "system": "http://terminology.hl7.org/CodeSystem/condition-ver-status",
+              "code": "confirmed"
+            }
+          ]
+        },
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/condition-category",
+                "code": "problem-list-item",
+                "display": "Problem List Item"
+              }
+            ]
+          }
+        ],
+        "code": {
+          "coding": [
+            {
+              "system": "http://snomed.info/sct",
+              "code": "38341003",
+              "display": "Hypertensive disorder, systemic arterial (disorder)"
+            }
+          ],
+          "text": "Hypertension"
+        },
+        "subject": {
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+        },
+        "onsetDateTime": "2018-06-20",
+        "recordedDate": "2018-06-20"
+      },
+      "request": {
+        "method": "POST",
+        "url": "Condition"
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:958c63b0-4a7f-2ee7-pli3-000000000003",
+      "resource": {
+        "resourceType": "Condition",
+        "id": "958c63b0-4a7f-2ee7-pli3-000000000003",
+        "meta": {
+          "profile": [
+            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-condition-problems-health-concerns"
+          ]
+        },
+        "clinicalStatus": {
+          "coding": [
+            {
+              "system": "http://terminology.hl7.org/CodeSystem/condition-clinical",
+              "code": "resolved"
+            }
+          ]
+        },
+        "verificationStatus": {
+          "coding": [
+            {
+              "system": "http://terminology.hl7.org/CodeSystem/condition-ver-status",
+              "code": "confirmed"
+            }
+          ]
+        },
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/condition-category",
+                "code": "problem-list-item",
+                "display": "Problem List Item"
+              }
+            ]
+          }
+        ],
+        "code": {
+          "coding": [
+            {
+              "system": "http://snomed.info/sct",
+              "code": "195967001",
+              "display": "Asthma (disorder)"
+            }
+          ],
+          "text": "Asthma - resolved"
+        },
+        "subject": {
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+        },
+        "onsetDateTime": "2015-04-10",
+        "abatementDateTime": "2022-08-15",
+        "recordedDate": "2015-04-10"
+      },
+      "request": {
+        "method": "POST",
+        "url": "Condition"
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:958c63b0-4a7f-2ee7-hc01-000000000003",
+      "resource": {
+        "resourceType": "Condition",
+        "id": "958c63b0-4a7f-2ee7-hc01-000000000003",
+        "meta": {
+          "profile": [
+            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-condition-problems-health-concerns"
+          ]
+        },
+        "clinicalStatus": {
+          "coding": [
+            {
+              "system": "http://terminology.hl7.org/CodeSystem/condition-clinical",
+              "code": "active"
+            }
+          ]
+        },
+        "verificationStatus": {
+          "coding": [
+            {
+              "system": "http://terminology.hl7.org/CodeSystem/condition-ver-status",
+              "code": "confirmed"
+            }
+          ]
+        },
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://hl7.org/fhir/us/core/CodeSystem/condition-category",
+                "code": "health-concern",
+                "display": "Health Concern"
+              }
+            ]
+          }
+        ],
+        "code": {
+          "coding": [
+            {
+              "system": "http://snomed.info/sct",
+              "code": "414916001",
+              "display": "Obesity (disorder)"
+            }
+          ],
+          "text": "Obesity"
+        },
+        "subject": {
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+        },
+        "onsetDateTime": "2019-01-10",
+        "recordedDate": "2019-01-10"
+      },
+      "request": {
+        "method": "POST",
+        "url": "Condition"
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:958c63b0-4a7f-2ee7-hc02-000000000004",
+      "resource": {
+        "resourceType": "Condition",
+        "id": "958c63b0-4a7f-2ee7-hc02-000000000004",
+        "meta": {
+          "profile": [
+            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-condition-problems-health-concerns"
+          ]
+        },
+        "clinicalStatus": {
+          "coding": [
+            {
+              "system": "http://terminology.hl7.org/CodeSystem/condition-clinical",
+              "code": "active"
+            }
+          ]
+        },
+        "verificationStatus": {
+          "coding": [
+            {
+              "system": "http://terminology.hl7.org/CodeSystem/condition-ver-status",
+              "code": "confirmed"
+            }
+          ]
+        },
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://hl7.org/fhir/us/core/CodeSystem/condition-category",
+                "code": "health-concern",
+                "display": "Health Concern"
+              }
+            ]
+          }
+        ],
+        "code": {
+          "coding": [
+            {
+              "system": "http://snomed.info/sct",
+              "code": "706893006",
+              "display": "Concern about falling (finding)"
+            }
+          ],
+          "text": "Fall risk concern"
+        },
+        "subject": {
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+        },
+        "onsetDateTime": "2023-08-05",
+        "recordedDate": "2023-08-05"
+      },
+      "request": {
+        "method": "POST",
+        "url": "Condition"
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:958c63b0-4a7f-2ee7-hc03-000000000005",
+      "resource": {
+        "resourceType": "Condition",
+        "id": "958c63b0-4a7f-2ee7-hc03-000000000005",
+        "meta": {
+          "profile": [
+            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-condition-problems-health-concerns"
+          ]
+        },
+        "clinicalStatus": {
+          "coding": [
+            {
+              "system": "http://terminology.hl7.org/CodeSystem/condition-clinical",
+              "code": "resolved"
+            }
+          ]
+        },
+        "verificationStatus": {
+          "coding": [
+            {
+              "system": "http://terminology.hl7.org/CodeSystem/condition-ver-status",
+              "code": "confirmed"
+            }
+          ]
+        },
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://hl7.org/fhir/us/core/CodeSystem/condition-category",
+                "code": "health-concern",
+                "display": "Health Concern"
+              }
+            ]
+          }
+        ],
+        "code": {
+          "coding": [
+            {
+              "system": "http://snomed.info/sct",
+              "code": "266919005",
+              "display": "Tobacco smoking behavior - stopped"
+            }
+          ],
+          "text": "Smoking cessation - resolved"
+        },
+        "subject": {
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+        },
+        "onsetDateTime": "2010-01-15",
+        "abatementDateTime": "2021-06-30",
+        "recordedDate": "2010-01-15"
+      },
+      "request": {
+        "method": "POST",
+        "url": "Condition"
+      }
+    },
+    {
       "fullUrl": "urn:uuid:958c63b0-4a7f-2ee7-4ea7-c9e6729c23da",
       "resource": {
         "resourceType": "Observation",
@@ -43250,167 +43914,6 @@
       }
     },
     {
-      "fullUrl": "urn:uuid:958c63b0-4a7f-2ee7-coverage-001",
-      "resource": {
-        "resourceType": "Coverage",
-        "id": "958c63b0-4a7f-2ee7-coverage-001",
-        "meta": {
-          "profile": [
-            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-coverage"
-          ]
-        },
-        "status": "cancelled",
-        "type": {
-          "coding": [
-            {
-              "system": "http://terminology.hl7.org/CodeSystem/v3-ActCode",
-              "code": "MEDICAID",
-              "display": "Medicaid"
-            }
-          ],
-          "text": "Medicaid"
-        },
-        "subscriber": {
-          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
-        },
-        "subscriberId": "MC-958C63B0-001",
-        "beneficiary": {
-          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
-        },
-        "relationship": {
-          "coding": [
-            {
-              "system": "http://terminology.hl7.org/CodeSystem/subscriber-relationship",
-              "code": "self",
-              "display": "Self"
-            }
-          ]
-        },
-        "period": {
-          "start": "2011-09-01",
-          "end": "2019-12-31"
-        },
-        "payor": [
-          {
-            "display": "State Medicaid Program"
-          }
-        ],
-        "class": [
-          {
-            "type": {
-              "coding": [
-                {
-                  "system": "http://terminology.hl7.org/CodeSystem/coverage-class",
-                  "code": "group",
-                  "display": "Group"
-                }
-              ]
-            },
-            "value": "Medicaid Pregnancy/Young Adult",
-            "name": "Medicaid Pregnancy/Young Adult"
-          },
-          {
-            "type": {
-              "coding": [
-                {
-                  "system": "http://terminology.hl7.org/CodeSystem/coverage-class",
-                  "code": "plan",
-                  "display": "Plan"
-                }
-              ]
-            },
-            "value": "Medicaid Managed Care",
-            "name": "Medicaid Managed Care"
-          }
-        ],
-        "order": 1
-      },
-      "request": {
-        "method": "POST",
-        "url": "Coverage"
-      }
-    },
-    {
-      "fullUrl": "urn:uuid:958c63b0-4a7f-2ee7-coverage-002",
-      "resource": {
-        "resourceType": "Coverage",
-        "id": "958c63b0-4a7f-2ee7-coverage-002",
-        "meta": {
-          "profile": [
-            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-coverage"
-          ]
-        },
-        "status": "active",
-        "type": {
-          "coding": [
-            {
-              "system": "http://terminology.hl7.org/CodeSystem/v3-ActCode",
-              "code": "HIP",
-              "display": "Health Insurance Plan"
-            }
-          ],
-          "text": "Employer Group Health Plan"
-        },
-        "subscriber": {
-          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
-        },
-        "subscriberId": "EMP-2020-KOP-DJK",
-        "beneficiary": {
-          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
-        },
-        "relationship": {
-          "coding": [
-            {
-              "system": "http://terminology.hl7.org/CodeSystem/subscriber-relationship",
-              "code": "self",
-              "display": "Self"
-            }
-          ]
-        },
-        "period": {
-          "start": "2020-01-01"
-        },
-        "payor": [
-          {
-            "display": "Blue Cross Blue Shield"
-          }
-        ],
-        "class": [
-          {
-            "type": {
-              "coding": [
-                {
-                  "system": "http://terminology.hl7.org/CodeSystem/coverage-class",
-                  "code": "group",
-                  "display": "Group"
-                }
-              ]
-            },
-            "value": "Employer Group Health Plan",
-            "name": "Employer Group Health Plan"
-          },
-          {
-            "type": {
-              "coding": [
-                {
-                  "system": "http://terminology.hl7.org/CodeSystem/coverage-class",
-                  "code": "plan",
-                  "display": "Plan"
-                }
-              ]
-            },
-            "value": "PPO Standard",
-            "name": "PPO Standard"
-          }
-        ],
-        "order": 1
-      },
-      "request": {
-        "method": "POST",
-        "url": "Coverage"
-      }
-    },
-    {
       "fullUrl": "urn:uuid:958c63b0-4a7f-2ee7-goal-001",
       "resource": {
         "resourceType": "Goal",
@@ -45165,6 +45668,179 @@
       "request": {
         "method": "POST",
         "url": "Observation"
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:958c63b0-4a7f-2ee7-diag-radiology-001",
+      "resource": {
+        "resourceType": "DiagnosticReport",
+        "id": "958c63b0-4a7f-2ee7-diag-radiology-001",
+        "meta": {
+          "profile": [
+            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-diagnosticreport-note"
+          ]
+        },
+        "status": "final",
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://loinc.org",
+                "code": "LP29684-5",
+                "display": "Radiology"
+              }
+            ]
+          }
+        ],
+        "code": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "30746-2",
+              "display": "Portable XR Chest Views"
+            }
+          ],
+          "text": "Chest X-ray"
+        },
+        "subject": {
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
+          "display": "Mrs. Daisey627 Jackelyn13 Koelpin146"
+        },
+        "effectiveDateTime": "2024-06-10T09:30:00-06:00",
+        "issued": "2024-06-10T10:15:00-06:00",
+        "performer": [
+          {
+            "display": "Dr. Radiologist, MD"
+          }
+        ],
+        "conclusion": "No acute cardiopulmonary abnormality. Heart size normal. Lungs clear.",
+        "presentedForm": [
+          {
+            "contentType": "text/plain",
+            "data": "Q2hlc3QgWC1yYXkgUmVwb3J0CgpGSU5ESU5HUzoKLSBIZWFydCBzaXplIGlzIG5vcm1hbAotIEx1bmdzIGFyZSBjbGVhcgotIE5vIHBsZXVyYWwgZWZmdXNpb24KLSBObyBwbmV1bW90aG9yYXgKCklNUFJFU1NJT046IE5vIGFjdXRlIGNhcmRpb3B1bG1vbmFyeSBhYm5vcm1hbGl0eS4="
+          }
+        ]
+      },
+      "request": {
+        "method": "POST",
+        "url": "DiagnosticReport"
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:958c63b0-4a7f-2ee7-diag-cardiology-001",
+      "resource": {
+        "resourceType": "DiagnosticReport",
+        "id": "958c63b0-4a7f-2ee7-diag-cardiology-001",
+        "meta": {
+          "profile": [
+            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-diagnosticreport-note"
+          ]
+        },
+        "status": "final",
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://loinc.org",
+                "code": "LP29708-2",
+                "display": "Cardiology"
+              }
+            ]
+          }
+        ],
+        "code": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "11524-6",
+              "display": "EKG study"
+            }
+          ],
+          "text": "Electrocardiogram (EKG/ECG)"
+        },
+        "subject": {
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
+          "display": "Mrs. Daisey627 Jackelyn13 Koelpin146"
+        },
+        "effectiveDateTime": "2024-06-15T11:00:00-06:00",
+        "issued": "2024-06-15T11:30:00-06:00",
+        "performer": [
+          {
+            "display": "Dr. Cardiologist, MD"
+          }
+        ],
+        "conclusion": "Normal sinus rhythm. No acute ischemic changes. Normal QRS duration.",
+        "presentedForm": [
+          {
+            "contentType": "text/plain",
+            "data": "RUtHIFJlcG9ydAoKUmh5dGhtOiBOb3JtYWwgc2ludXMgcmh5dGhtClJhdGU6IDcyIGJwbQpQUiBJbnRlcnZhbDogMTYwIG1zClFSUyBEdXJhdGlvbjogODggbXMKUVQvUVRjOiA0MDAvNDIwIG1zCgpGSU5ESU5HUzoKLSBOb3JtYWwgYXhpcwotIE5vIFNUIGNoYW5nZXMKLSBObyBULXdhdmUgYWJub3JtYWxpdGllcwoKSU1QUkVTU0lPTjogTm9ybWFsIEVLRy4gTm8gYWN1dGUgaXNjaGVtaWMgY2hhbmdlcy4="
+          }
+        ]
+      },
+      "request": {
+        "method": "POST",
+        "url": "DiagnosticReport"
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:958c63b0-4a7f-2ee7-diag-lab-002",
+      "resource": {
+        "resourceType": "DiagnosticReport",
+        "id": "958c63b0-4a7f-2ee7-diag-lab-002",
+        "meta": {
+          "profile": [
+            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-diagnosticreport-lab"
+          ]
+        },
+        "status": "final",
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/v2-0074",
+                "code": "LAB",
+                "display": "Laboratory"
+              },
+              {
+                "system": "http://loinc.org",
+                "code": "LP7839-6",
+                "display": "Pathology"
+              }
+            ]
+          }
+        ],
+        "code": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "24323-8",
+              "display": "Comprehensive metabolic panel - Serum or Plasma"
+            }
+          ],
+          "text": "Comprehensive Metabolic Panel"
+        },
+        "subject": {
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
+          "display": "Mrs. Daisey627 Jackelyn13 Koelpin146"
+        },
+        "effectiveDateTime": "2024-06-12T08:00:00-06:00",
+        "issued": "2024-06-12T14:00:00-06:00",
+        "performer": [
+          {
+            "display": "Quest Diagnostics Laboratory"
+          }
+        ],
+        "conclusion": "All values within normal limits.",
+        "presentedForm": [
+          {
+            "contentType": "text/plain",
+            "data": "Q29tcHJlaGVuc2l2ZSBNZXRhYm9saWMgUGFuZWwgUmVzdWx0cwoKR2x1Y29zZTogOTIgbWcvZEwgKDcwLTEwMCkKQlVOOiAxNCBtZy9kTCAoNy0yMCkKQ3JlYXRpbmluZTogMC45IG1nL2RMICgwLjYtMS4yKQpTb2RpdW06IDE0MCBtRXEvTCAoMTM2LTE0NSkKUG90YXNzaXVtOiA0LjIgbUVxL0wgKDMuNS01LjApCkNhbGNpdW06IDkuNCBtZy9kTCAoOC41LTEwLjUpCgpBbGwgdmFsdWVzIHdpdGhpbiBub3JtYWwgbGltaXRzLg=="
+          }
+        ]
+      },
+      "request": {
+        "method": "POST",
+        "url": "DiagnosticReport"
       }
     }
   ]

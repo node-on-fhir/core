@@ -285,6 +285,7 @@ const SearchParametersEngine = {
       'SearchParameter-appointment-patient.json',
       'SearchParameter-careplan-patient.json',
       'SearchParameter-consent-patient.json',
+      'SearchParameter-coverage-patient.json',
       'SearchParameter-device-patient.json',
       'SearchParameter-diagnosticreport-patient.json',
       'SearchParameter-documentreference-patient.json',

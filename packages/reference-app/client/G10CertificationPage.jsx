@@ -500,42 +500,6 @@ function G10CertificationPage(props) {
     }
   }
 
-  async function handleAddUscdiFields() {
-    if (!selectedPatient) {
-      setSnackbarMessage('No patient selected. Please select a patient from the Patient Directory first.');
-      setSnackbarSeverity('warning');
-      setSnackbarOpen(true);
-      return;
-    }
-
-    const patientId = get(selectedPatient, 'id') || get(selectedPatient, '_id');
-    const patientName = get(selectedPatient, 'name[0].family', 'Unknown');
-
-    try {
-      setLoading(true);
-      console.log('Adding USCDI fields to patient:', patientId, patientName);
-
-      const result = await Meteor.callAsync('referenceApp.addUscdiFieldsToPatient', patientId);
-      console.log('USCDI fields result:', result);
-
-      if (result.updated) {
-        setSnackbarMessage(`Patient "${patientName}" updated with USCDI fields: ${result.fieldsAdded.join(', ')}`);
-        setSnackbarSeverity('success');
-      } else {
-        setSnackbarMessage(`Patient "${patientName}" already has all required USCDI fields.`);
-        setSnackbarSeverity('info');
-      }
-      setSnackbarOpen(true);
-    } catch (error) {
-      console.error('Error adding USCDI fields:', error);
-      setSnackbarMessage('Error: ' + (error.reason || error.message));
-      setSnackbarSeverity('error');
-      setSnackbarOpen(true);
-    } finally {
-      setLoading(false);
-    }
-  }
-
   async function handleSeedMustSupportReferences() {
     try {
       setLoading(true);
@@ -549,8 +513,18 @@ function G10CertificationPage(props) {
       let message = `MustSupport references seeded for ${result.patientName}:\n`;
       message += `• RelatedPerson created: ${result.relatedPersonId}\n`;
       message += result.careTeamCreated
-        ? `• CareTeam created: ${result.careTeamId}`
-        : `• CareTeam updated: ${result.careTeamId}`;
+        ? `• CareTeam created: ${result.careTeamId}\n`
+        : `• CareTeam updated: ${result.careTeamId}\n`;
+
+      // Show Organization and Coverage updates
+      if (result.organizationsCreated && result.organizationsCreated.length > 0) {
+        message += `• Organizations created: ${result.organizationsCreated.length}\n`;
+      }
+      if (result.coveragesUpdated && result.coveragesUpdated.length > 0) {
+        message += `• Coverages updated: ${result.coveragesUpdated.length} (payor refs + identifier:memberid)`;
+      } else {
+        message += `• Coverages: No updates needed or no coverages found`;
+      }
 
       setSnackbarMessage(message);
       setSnackbarSeverity('success');
@@ -622,6 +596,34 @@ function G10CertificationPage(props) {
       setSnackbarOpen(true);
     } catch (error) {
       console.error('Error loading Daisey patient:', error);
+      setSnackbarMessage('Error: ' + (error.reason || error.message));
+      setSnackbarSeverity('error');
+      setSnackbarOpen(true);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleRemoveDaiseyPatient() {
+    try {
+      setLoading(true);
+      console.log('Removing Daisey test patient data...');
+
+      const result = await Meteor.callAsync('referenceApp.removeDaiseyPatient');
+      console.log('Remove Daisey result:', result);
+
+      let message = `Daisey test patient data removed!\n`;
+      message += `• Total in bundle: ${result.total}\n`;
+      message += `• Removed: ${result.removed}, Not found: ${result.notFound}`;
+      if (result.errors > 0) {
+        message += `\n• Errors: ${result.errors}`;
+      }
+
+      setSnackbarMessage(message);
+      setSnackbarSeverity(result.errors > 0 ? 'warning' : 'success');
+      setSnackbarOpen(true);
+    } catch (error) {
+      console.error('Error removing Daisey patient:', error);
       setSnackbarMessage('Error: ' + (error.reason || error.message));
       setSnackbarSeverity('error');
       setSnackbarOpen(true);
@@ -1648,21 +1650,9 @@ function G10CertificationPage(props) {
                 <Button
                   variant="outlined"
                   color="secondary"
-                  onClick={handleAddUscdiFields}
-                  disabled={loading || !selectedPatient}
-                  sx={{ mr: 2 }}
-                >
-                  {loading ? 'Updating...' : 'Add USCDI Fields to Patient'}
-                </Button>
-                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
-                  Adds name.suffix, name.use:old, address.use:old, period.end fields, and deceasedDateTime for (g)(10) certification compliance.
-                </Typography>
-                <Button
-                  variant="outlined"
-                  color="secondary"
                   onClick={handleSeedMustSupportReferences}
                   disabled={loading}
-                  sx={{ mr: 2, mt: 2 }}
+                  sx={{ mr: 2 }}
                 >
                   {loading ? 'Seeding...' : 'Seed MustSupport References'}
                 </Button>
@@ -1737,8 +1727,17 @@ function G10CertificationPage(props) {
                   >
                     {loading ? 'Loading...' : 'Load Daisey Test Patient'}
                   </Button>
+                  <Button
+                    variant="outlined"
+                    color="error"
+                    onClick={handleRemoveDaiseyPatient}
+                    disabled={loading}
+                    sx={{ mr: 2 }}
+                  >
+                    {loading ? 'Removing...' : 'Remove Daisey Data'}
+                  </Button>
                   <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
-                    Loads all 367 resources from the Daisey bundle into the database. Already has all MustSupport elements, RelatedPerson references, and coverage for all test sections.
+                    Load: Inserts/updates all 367 resources with resolved conditional references. Remove: Deletes all Daisey resources by ID.
                   </Typography>
                 </Box>
               </Box>

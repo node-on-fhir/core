@@ -207,17 +207,21 @@ function initializeAccessControl() {
   // Grant SYSTEM role full access to all resources
   // SYSTEM role is used for internal services and administrative access
   console.log('Granting SYSTEM role full access to all resources');
-  const allFhirResources = ['Patient', 'Practitioner', 'Organization', 'Observation', 'Condition', 
+  // All FHIR resources - used for SYSTEM and healthcare practitioner/provider roles
+  // IMPORTANT: Keep in sync with patientAccessResources and enabled resources in settings
+  const allFhirResources = ['Patient', 'Practitioner', 'Organization', 'Observation', 'Condition',
                             'Procedure', 'Medication', 'MedicationRequest', 'MedicationStatement',
-                            'AllergyIntolerance', 'Immunization', 'DiagnosticReport', 'DocumentReference', 
-                            'SearchParameter', 'Bundle', 'CareTeam', 'CarePlan', 'CodeSystem', 
+                            'AllergyIntolerance', 'Immunization', 'DiagnosticReport', 'DocumentReference',
+                            'SearchParameter', 'Bundle', 'CareTeam', 'CarePlan', 'CodeSystem',
                             'Communication', 'CommunicationRequest', 'Composition', 'Consent',
-                            'Encounter', 'Endpoint', 'Goal', 'Group', 'HealthcareService', 
+                            'Encounter', 'Endpoint', 'Goal', 'Group', 'HealthcareService',
                             'InsurancePlan', 'List', 'Location', 'MeasureReport', 'Measure',
-                            'NutritionOrder', 'OrganizationAffiliation', 'PractitionerRole', 
+                            'NutritionOrder', 'OrganizationAffiliation', 'PractitionerRole',
                             'Provenance', 'Questionnaire', 'QuestionnaireResponse', 'RelatedPerson',
-                            'RiskAssessment', 'ServiceRequest', 'StructureDefinition', 'Subscription', 
-                            'Task', 'ValueSet', 'VerificationResult'];
+                            'RiskAssessment', 'ServiceRequest', 'StructureDefinition', 'Subscription',
+                            'Task', 'ValueSet', 'VerificationResult',
+                            // USCDI resources required for (g)(10) certification - added for Coverage tests
+                            'Binary', 'Coverage', 'Device', 'MedicationDispense', 'Specimen'];
   allFhirResources.forEach(function(resource) {
     acl.grant('SYSTEM').execute('access').on(resource, ['*']);
   });
@@ -1043,13 +1047,31 @@ async function signProvenance(record){
 
 // Configure body-parser middleware for FHIR endpoints
 // This needs to be registered before routes are defined
+// Using verify callback to preserve raw body for debugging
+
+// Add text body parser for form-urlencoded as fallback
+// This captures the raw text body, which we can parse manually if needed
+WebApp.handlers.use(bodyParser.text({
+  limit: '50mb',
+  type: ['application/x-www-form-urlencoded'],
+  verify: function(req, res, buf) {
+    req.rawBody = buf.toString();
+  }
+}));
+
 WebApp.handlers.use(bodyParser.json({
   limit: '50mb',
-  type: ['application/json', 'application/fhir+json']
+  type: ['application/json', 'application/fhir+json'],
+  verify: function(req, res, buf) {
+    req.rawBody = buf.toString();
+  }
 }));
 WebApp.handlers.use(bodyParser.urlencoded({
   limit: '50mb',
-  extended: true
+  extended: true,
+  verify: function(req, res, buf) {
+    req.rawBody = buf.toString();
+  }
 }));
 
 WebApp.handlers.post("/" + fhirPath + "/ping", async (req, res) => {
@@ -1789,7 +1811,8 @@ if(typeof serverRouteManifest === "object"){
                       // FHIR resources use different reference paths for patients:
                       // - Some use 'subject.reference' (Observation, Condition, Procedure, DiagnosticReport, etc.)
                       // - Some use 'patient.reference' (AllergyIntolerance, CarePlan, CareTeam, Encounter, Immunization, MedicationRequest, etc.)
-                      // We check both to properly filter by patient authorization
+                      // - Coverage uses 'beneficiary.reference'
+                      // We check all to properly filter by patient authorization
                       // References may be stored as: Patient/uuid, urn:uuid:uuid, or just uuid
                       if(get(authorizationContext, 'patientId')){
                         let patientId = get(authorizationContext, 'patientId');
@@ -1800,6 +1823,7 @@ if(typeof serverRouteManifest === "object"){
                         ];
                         authQuery.$or.push({'subject.reference': { $in: patientRefs }});
                         authQuery.$or.push({'patient.reference': { $in: patientRefs }});
+                        authQuery.$or.push({'beneficiary.reference': { $in: patientRefs }});
                       }
                     }
 
@@ -2687,9 +2711,15 @@ if(typeof serverRouteManifest === "object"){
       // https://www.hl7.org/fhir/http.html#search
       if(serverRouteManifest[routeResourceType].search){
         WebApp.handlers.post("/" + fhirPath + "/" + routeResourceType + "/:param", async (req, res) => {
-          if(get(Meteor, 'settings.private.debug') === true) { console.log('================================================================'); }
-          if(get(Meteor, 'settings.private.debug') === true) { console.log('POST /' + fhirPath + '/' + routeResourceType + '/' + JSON.stringify(req.query)); }
-          
+          // Always log POST requests to debug body parsing issues
+          console.log('================================================================');
+          console.log('POST /' + fhirPath + '/' + routeResourceType + '/:param');
+          console.log('POST req.params.param:', req.params.param);
+          console.log('POST req.body:', JSON.stringify(req.body));
+          console.log('POST req.body type:', typeof req.body);
+          console.log('POST req.rawBody:', req.rawBody);
+          console.log('POST content-type:', req.headers['content-type']);
+
           logToInboundQueue(req);
 
           process.env.DEBUG && console.log('---------------------------------------')
@@ -2728,39 +2758,68 @@ if(typeof serverRouteManifest === "object"){
 
               if (req.params.param.includes('_search')) {
                 // Debug: Log what we're receiving in the POST body
+                console.log('================================================================');
+                console.log('POST _search DEBUG - routeResourceType:', routeResourceType);
                 console.log('POST _search DEBUG - req.body:', JSON.stringify(req.body));
+                console.log('POST _search DEBUG - req.body type:', typeof req.body);
+                console.log('POST _search DEBUG - req.body length:', typeof req.body === 'string' ? req.body.length : (req.body ? Object.keys(req.body).length : 0));
                 console.log('POST _search DEBUG - req.query:', JSON.stringify(req.query));
+                console.log('POST _search DEBUG - req.rawBody:', req.rawBody);
                 console.log('POST _search DEBUG - content-type:', req.headers['content-type']);
+                console.log('POST _search DEBUG - content-length:', req.headers['content-length']);
+                console.log('POST _search DEBUG - transfer-encoding:', req.headers['transfer-encoding']);
 
-                // Manual body parsing fallback for application/x-www-form-urlencoded
-                // This handles cases where body-parser middleware may not have processed the request
-                let parsedBody = req.body || {};
-                if ((!req.body || Object.keys(req.body).length === 0) && req.headers['content-type']?.includes('application/x-www-form-urlencoded')) {
+                // Body parsing for POST _search
+                // bodyParser middleware should have already parsed the body, but we add fallbacks
+                let parsedBody = {};
+
+                // First, try to use req.body if it was parsed by bodyParser as an object with content
+                if (req.body && typeof req.body === 'object' && Object.keys(req.body).length > 0) {
+                  parsedBody = req.body;
+                  console.log('POST _search DEBUG - using req.body from bodyParser (object):', JSON.stringify(parsedBody));
+                }
+                // Second, try to use req.body if it's a string (from bodyParser.text())
+                else if (req.body && typeof req.body === 'string' && req.body.length > 0) {
                   try {
-                    // Read the raw body if available
-                    let rawBody = '';
-                    if (req._body && typeof req.body === 'string') {
-                      rawBody = req.body;
-                    } else if (req.rawBody) {
-                      rawBody = req.rawBody;
+                    parsedBody = querystring.parse(req.body);
+                    console.log('POST _search DEBUG - parsed req.body string:', JSON.stringify(parsedBody));
+                  } catch (parseErr) {
+                    console.error('POST _search DEBUG - error parsing req.body string:', parseErr);
+                  }
+                }
+                // Third, try to use rawBody if available (from verify callback)
+                // This is the most reliable method since it captures the raw buffer
+                if (Object.keys(parsedBody).length === 0 && req.rawBody && req.headers['content-type']?.includes('application/x-www-form-urlencoded')) {
+                  try {
+                    parsedBody = querystring.parse(req.rawBody);
+                    console.log('POST _search DEBUG - parsed from rawBody:', JSON.stringify(parsedBody));
+                  } catch (parseErr) {
+                    console.error('POST _search DEBUG - error parsing rawBody:', parseErr);
+                  }
+                }
+                // Fourth, try to read from stream as last resort
+                if (Object.keys(parsedBody).length === 0 && req.readable && req.headers['content-type']?.includes('application/x-www-form-urlencoded')) {
+                  try {
+                    const chunks = [];
+                    for await (const chunk of req) {
+                      chunks.push(chunk);
                     }
-
-                    // If we still don't have body, try to read from the stream
-                    if (!rawBody && req.readable) {
-                      const chunks = [];
-                      for await (const chunk of req) {
-                        chunks.push(chunk);
-                      }
-                      rawBody = Buffer.concat(chunks).toString();
-                    }
-
+                    const rawBody = Buffer.concat(chunks).toString();
                     if (rawBody) {
                       parsedBody = querystring.parse(rawBody);
-                      console.log('POST _search DEBUG - manually parsed body:', JSON.stringify(parsedBody));
+                      console.log('POST _search DEBUG - parsed from stream:', JSON.stringify(parsedBody));
                     }
                   } catch (parseErr) {
-                    console.error('POST _search DEBUG - error parsing body:', parseErr);
+                    console.error('POST _search DEBUG - error reading stream:', parseErr);
                   }
+                }
+
+                // Log if no body params were found
+                if (Object.keys(parsedBody).length === 0) {
+                  console.warn('POST _search WARNING - No body params found! Check body-parser middleware.');
+                  console.warn('POST _search WARNING - req.body:', req.body);
+                  console.warn('POST _search WARNING - req.rawBody:', req.rawBody);
+                  console.warn('POST _search WARNING - content-type:', req.headers['content-type']);
                 }
 
                 // Merge URL query params with POST body params (FHIR allows both for POST _search)
@@ -2796,7 +2855,8 @@ if(typeof serverRouteManifest === "object"){
 
                   // Handle patient parameter if not handled by SearchParametersEngine
                   // (some resources don't have explicit patient SearchParameter definitions)
-                  if (get(searchParams, 'patient') && !searchQuery['subject.reference'] && !searchQuery.$or && !searchQuery.$and) {
+                  // Note: Coverage uses beneficiary.reference, so we must check for it too
+                  if (get(searchParams, 'patient') && !searchQuery['subject.reference'] && !searchQuery['beneficiary.reference'] && !searchQuery.$or && !searchQuery.$and) {
                     let patientId = get(searchParams, 'patient').replace(/^Patient\//, '');
                     console.log('POST _search: Adding patient filter via FhirUtilities.addPatientFilterToQuery()');
                     searchQuery = FhirUtilities.addPatientFilterToQuery(patientId, searchQuery);
@@ -2806,8 +2866,9 @@ if(typeof serverRouteManifest === "object"){
                     let patientQuery = FhirUtilities.addPatientFilterToQuery(patientId, {});
                     if (Object.keys(patientQuery).length > 0) {
                       // Check if patient filter wasn't already handled by the engine
+                      // Include beneficiary.reference check for Coverage resources
                       let queryStr = JSON.stringify(searchQuery);
-                      if (!queryStr.includes('subject.reference') && !queryStr.includes('patient.reference')) {
+                      if (!queryStr.includes('subject.reference') && !queryStr.includes('patient.reference') && !queryStr.includes('beneficiary.reference')) {
                         console.log('POST _search: Combining existing query with patient filter');
                         searchQuery = { $and: [searchQuery, patientQuery] };
                       }
@@ -2865,7 +2926,10 @@ if(typeof serverRouteManifest === "object"){
                       authQuery.$or.push({'id': get(authorizationContext, 'patientId')});
                     }
                   } else {
-                    // FHIR resources use different reference paths for patients
+                    // FHIR resources use different reference paths for patients:
+                    // - Some use 'subject.reference' (Observation, Condition, Procedure, DiagnosticReport, etc.)
+                    // - Some use 'patient.reference' (AllergyIntolerance, CarePlan, CareTeam, Encounter, Immunization, MedicationRequest, etc.)
+                    // - Coverage uses 'beneficiary.reference'
                     // References may be stored as: Patient/uuid, urn:uuid:uuid, or just uuid
                     if(get(authorizationContext, 'patientId')){
                       let patientId = get(authorizationContext, 'patientId');
@@ -2876,6 +2940,7 @@ if(typeof serverRouteManifest === "object"){
                       ];
                       authQuery.$or.push({'subject.reference': { $in: patientRefs }});
                       authQuery.$or.push({'patient.reference': { $in: patientRefs }});
+                      authQuery.$or.push({'beneficiary.reference': { $in: patientRefs }});
                     }
                   }
 
@@ -3302,7 +3367,7 @@ if(typeof serverRouteManifest === "object"){
         { collection: 'ClinicalImpressions', paths: ['subject.reference'] },
         { collection: 'FamilyMemberHistories', paths: ['patient.reference'] },
         { collection: 'DeviceUseStatements', paths: ['subject.reference'] },
-        { collection: 'Coverage', paths: ['beneficiary.reference'] },
+        { collection: 'Coverages', paths: ['beneficiary.reference'] },
         { collection: 'ExplanationOfBenefits', paths: ['patient.reference'] }
       ];
 
