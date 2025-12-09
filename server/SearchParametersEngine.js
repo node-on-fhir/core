@@ -302,7 +302,9 @@ const SearchParametersEngine = {
       'SearchParameter-careteam-patient.json',
       'SearchParameter-careteam-status.json',
       'SearchParameter-condition-category.json',
-      'SearchParameter-diagnosticreport-category.json'
+      'SearchParameter-diagnosticreport-category.json',
+      'SearchParameter-diagnosticreport-code.json',
+      'SearchParameter-diagnosticreport-date.json'
     ];
 
     for (const fileName of searchParameterFiles) {
@@ -581,8 +583,8 @@ const SearchParametersEngine = {
         nextDay.setDate(nextDay.getDate() + 1);
 
         query.$or = [
-          // String exact match
-          { [baseField]: dateStrNormalized },
+          // String prefix match (matches "2018-06-10" and "2018-06-10T10:20:48-06:00")
+          { [baseField]: { $regex: '^' + dateStrNormalized } },
           // Date range match (whole day)
           { $and: [
             { [baseField]: { $gte: date } },

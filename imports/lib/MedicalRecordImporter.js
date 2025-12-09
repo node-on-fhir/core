@@ -1,6 +1,7 @@
 import { get, has } from 'lodash';
 import { Meteor } from 'meteor/meteor';
 
+import { resolveConditionalReferencesInBundle } from './ConditionalReferenceResolver.js';
 
 import AllergyIntolerances from './schemas/SimpleSchemas/AllergyIntolerances';
 import Conditions from './schemas/SimpleSchemas/Conditions';
@@ -118,6 +119,11 @@ const MedicalRecordImporter = {
     
     if(get(parsedResults, 'resourceType') === "Bundle"){
       console.log('Found a FHIR bundle! There appear to be ' + parsedResults.entry.length + ' resources in the bundle.  Attempting import...')
+
+      // Resolve conditional references (e.g., "Organization?identifier=system|value" -> "Organization/id")
+      // This is necessary because Synthea generates conditional references that some FHIR clients cannot parse
+      console.log('[MedicalRecordImporter] Resolving conditional references in bundle...');
+      parsedResults = resolveConditionalReferencesInBundle(parsedResults);
 
       // // EXPERIMENTAL:  Send the bundle to the bundle service.  Probablly want to disable this.
       // Meteor.call('proxyInsert', parsedResults, function(error, result){

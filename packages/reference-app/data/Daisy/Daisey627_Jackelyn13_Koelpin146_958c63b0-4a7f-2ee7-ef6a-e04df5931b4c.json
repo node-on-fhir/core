@@ -262,7 +262,9 @@
         "address": [
           {
             "use": "work",
-            "line": ["100 State Capitol Drive"],
+            "line": [
+              "100 State Capitol Drive"
+            ],
             "city": "Springfield",
             "state": "IL",
             "postalCode": "62701",
@@ -309,7 +311,9 @@
         "address": [
           {
             "use": "work",
-            "line": ["225 North Michigan Avenue"],
+            "line": [
+              "225 North Michigan Avenue"
+            ],
             "city": "Chicago",
             "state": "IL",
             "postalCode": "60601",
@@ -683,7 +687,8 @@
         "meta": {
           "profile": [
             "http://hl7.org/fhir/us/core/StructureDefinition/us-core-diagnosticreport-note"
-          ]
+          ],
+          "lastUpdated": "2011-09-30T10:20:48.000-06:00"
         },
         "status": "final",
         "category": [
@@ -734,6 +739,22 @@
           {
             "contentType": "text/plain; charset=utf-8",
             "data": "CjIwMTEtMDktMzAKCiMgQ2hpZWYgQ29tcGxhaW50Ck5vIGNvbXBsYWludHMuCgojIEhpc3Rvcnkgb2YgUHJlc2VudCBJbGxuZXNzCkRhaXNleTYyNyBKYWNrZWx5bjEzIGlzIGEgMTUgeWVhci1vbGQgbm9uaGlzcGFuaWMgd2hpdGUgZmVtYWxlLgoKIyBTb2NpYWwgSGlzdG9yeQogUGF0aWVudCBoYXMgbmV2ZXIgc21va2VkIGFuZCBpcyBhbiBhbGNvaG9saWMuCgoKUGF0aWVudCBjb21lcyBmcm9tIGEgaGlnaCBzb2Npb2Vjb25vbWljIGJhY2tncm91bmQuCgpQYXRpZW50IGN1cnJlbnRseSBoYXMgQ2lnbmEgSGVhbHRoLgoKIyBBbGxlcmdpZXMKTm8gS25vd24gQWxsZXJnaWVzLgoKIyBNZWRpY2F0aW9ucwpObyBBY3RpdmUgTWVkaWNhdGlvbnMuCgojIEFzc2Vzc21lbnQgYW5kIFBsYW4KUGF0aWVudCBpcyBwcmVzZW50aW5nIHdpdGggcGFzdCBwcmVnbmFuY3kgaGlzdG9yeSBvZiBtaXNjYXJyaWFnZSAoc2l0dWF0aW9uKS4gCgoKIyMgUGxhbgoK"
+          }
+        ],
+        "media": [
+          {
+            "comment": "Chest X-ray image",
+            "link": {
+              "reference": "Media/958c63b0-4a7f-2ee7-media-001",
+              "display": "Chest X-ray PA view"
+            }
+          },
+          {
+            "comment": "Chest X-ray image",
+            "link": {
+              "reference": "Media/958c63b0-4a7f-2ee7-media-001",
+              "display": "Chest X-ray PA view"
+            }
           }
         ]
       },
@@ -1397,7 +1418,8 @@
         "meta": {
           "profile": [
             "http://hl7.org/fhir/us/core/StructureDefinition/us-core-diagnosticreport-note"
-          ]
+          ],
+          "lastUpdated": "2014-05-13T10:20:48.000-06:00"
         },
         "status": "final",
         "category": [
@@ -2123,7 +2145,8 @@
         "meta": {
           "profile": [
             "http://hl7.org/fhir/us/core/StructureDefinition/us-core-diagnosticreport-note"
-          ]
+          ],
+          "lastUpdated": "2014-06-01T10:20:48.000-06:00"
         },
         "status": "final",
         "category": [
@@ -2890,7 +2913,8 @@
         "meta": {
           "profile": [
             "http://hl7.org/fhir/us/core/StructureDefinition/us-core-diagnosticreport-note"
-          ]
+          ],
+          "lastUpdated": "2015-06-07T10:20:48.000-06:00"
         },
         "status": "final",
         "category": [
@@ -4033,7 +4057,8 @@
         "meta": {
           "profile": [
             "http://hl7.org/fhir/us/core/StructureDefinition/us-core-diagnosticreport-note"
-          ]
+          ],
+          "lastUpdated": "2018-03-29T10:20:48.000-06:00"
         },
         "status": "final",
         "category": [
@@ -6740,7 +6765,8 @@
         "meta": {
           "profile": [
             "http://hl7.org/fhir/us/core/StructureDefinition/us-core-diagnosticreport-lab"
-          ]
+          ],
+          "lastUpdated": "2018-06-10T10:20:48.000-06:00"
         },
         "status": "final",
         "category": [
@@ -6781,51 +6807,55 @@
           {
             "reference": "Organization?identifier=https://github.com/synthetichealth/synthea|ee691ea5-61a0-3ae2-bacf-38185afca1ed",
             "display": "ESPERANZA HEALTH CENTERS"
+          },
+          {
+            "reference": "Practitioner/958c63b0-4a7f-2ee7-prac-9999928895",
+            "display": "Dr. Bernardo333 Stanton715"
           }
         ],
         "result": [
           {
-            "reference": "urn:uuid:958c63b0-4a7f-2ee7-f2c0-f89425fb481d",
+            "reference": "Observation/958c63b0-4a7f-2ee7-f2c0-f89425fb481d",
             "display": "Leukocytes [#/volume] in Blood by Automated count"
           },
           {
-            "reference": "urn:uuid:958c63b0-4a7f-2ee7-fb67-6be40776b4d5",
+            "reference": "Observation/958c63b0-4a7f-2ee7-fb67-6be40776b4d5",
             "display": "Erythrocytes [#/volume] in Blood by Automated count"
           },
           {
-            "reference": "urn:uuid:958c63b0-4a7f-2ee7-1769-af93f71b6b0f",
+            "reference": "Observation/958c63b0-4a7f-2ee7-1769-af93f71b6b0f",
             "display": "Hemoglobin [Mass/volume] in Blood"
           },
           {
-            "reference": "urn:uuid:958c63b0-4a7f-2ee7-d43f-1cab6283ed2d",
+            "reference": "Observation/958c63b0-4a7f-2ee7-d43f-1cab6283ed2d",
             "display": "Hematocrit [Volume Fraction] of Blood by Automated count"
           },
           {
-            "reference": "urn:uuid:958c63b0-4a7f-2ee7-8bd4-73002147d0e4",
+            "reference": "Observation/958c63b0-4a7f-2ee7-8bd4-73002147d0e4",
             "display": "MCV [Entitic mean volume] in Red Blood Cells by Automated count"
           },
           {
-            "reference": "urn:uuid:958c63b0-4a7f-2ee7-083b-cfd8d5af1b0c",
+            "reference": "Observation/958c63b0-4a7f-2ee7-083b-cfd8d5af1b0c",
             "display": "MCH [Entitic mass] by Automated count"
           },
           {
-            "reference": "urn:uuid:958c63b0-4a7f-2ee7-4f12-ead43c1f04b6",
+            "reference": "Observation/958c63b0-4a7f-2ee7-4f12-ead43c1f04b6",
             "display": "MCHC [Entitic Mass/volume] in Red Blood Cells by Automated count"
           },
           {
-            "reference": "urn:uuid:958c63b0-4a7f-2ee7-8715-bd09f9e57d83",
+            "reference": "Observation/958c63b0-4a7f-2ee7-8715-bd09f9e57d83",
             "display": "Erythrocyte [DistWidth] in Blood by Automated count"
           },
           {
-            "reference": "urn:uuid:958c63b0-4a7f-2ee7-1911-f6705089ff33",
+            "reference": "Observation/958c63b0-4a7f-2ee7-1911-f6705089ff33",
             "display": "Platelets [#/volume] in Blood by Automated count"
           },
           {
-            "reference": "urn:uuid:958c63b0-4a7f-2ee7-e1d1-e5812e1f867c",
+            "reference": "Observation/958c63b0-4a7f-2ee7-e1d1-e5812e1f867c",
             "display": "Platelet distribution width [Entitic volume] in Blood by Automated count"
           },
           {
-            "reference": "urn:uuid:958c63b0-4a7f-2ee7-badb-b518fe7cc51c",
+            "reference": "Observation/958c63b0-4a7f-2ee7-badb-b518fe7cc51c",
             "display": "Platelet [Entitic mean volume] in Blood by Automated count"
           }
         ]
@@ -6864,7 +6894,10 @@
             "reference": "urn:uuid:958c63b0-4a7f-2ee7-9f1b-414e4912cd28",
             "display": "Generalized anxiety disorder 7 item (GAD-7) total score [Reported.PHQ]"
           }
-        ]
+        ],
+        "meta": {
+          "lastUpdated": "2018-06-10T11:17:53.000-06:00"
+        }
       },
       "request": {
         "method": "POST",
@@ -6900,7 +6933,10 @@
             "reference": "urn:uuid:958c63b0-4a7f-2ee7-5d00-aac902ab816a",
             "display": "Total score [AUDIT-C]"
           }
-        ]
+        ],
+        "meta": {
+          "lastUpdated": "2018-06-10T11:56:01.000-06:00"
+        }
       },
       "request": {
         "method": "POST",
@@ -6915,7 +6951,8 @@
         "meta": {
           "profile": [
             "http://hl7.org/fhir/us/core/StructureDefinition/us-core-diagnosticreport-note"
-          ]
+          ],
+          "lastUpdated": "2018-06-10T10:20:48.000-06:00"
         },
         "status": "final",
         "category": [
@@ -9454,7 +9491,8 @@
         "meta": {
           "profile": [
             "http://hl7.org/fhir/us/core/StructureDefinition/us-core-diagnosticreport-note"
-          ]
+          ],
+          "lastUpdated": "2018-07-08T10:20:48.000-06:00"
         },
         "status": "final",
         "category": [
@@ -10160,7 +10198,8 @@
         "meta": {
           "profile": [
             "http://hl7.org/fhir/us/core/StructureDefinition/us-core-diagnosticreport-note"
-          ]
+          ],
+          "lastUpdated": "2018-10-07T10:20:48.000-06:00"
         },
         "status": "final",
         "category": [
@@ -10866,7 +10905,8 @@
         "meta": {
           "profile": [
             "http://hl7.org/fhir/us/core/StructureDefinition/us-core-diagnosticreport-note"
-          ]
+          ],
+          "lastUpdated": "2019-01-06T09:20:48.000-07:00"
         },
         "status": "final",
         "category": [
@@ -11572,7 +11612,8 @@
         "meta": {
           "profile": [
             "http://hl7.org/fhir/us/core/StructureDefinition/us-core-diagnosticreport-note"
-          ]
+          ],
+          "lastUpdated": "2019-04-07T10:20:48.000-06:00"
         },
         "status": "final",
         "category": [
@@ -12278,7 +12319,8 @@
         "meta": {
           "profile": [
             "http://hl7.org/fhir/us/core/StructureDefinition/us-core-diagnosticreport-note"
-          ]
+          ],
+          "lastUpdated": "2019-07-07T10:20:48.000-06:00"
         },
         "status": "final",
         "category": [
@@ -13040,7 +13082,8 @@
         "meta": {
           "profile": [
             "http://hl7.org/fhir/us/core/StructureDefinition/us-core-diagnosticreport-note"
-          ]
+          ],
+          "lastUpdated": "2019-10-06T10:20:48.000-06:00"
         },
         "status": "final",
         "category": [
@@ -14973,7 +15016,8 @@
         "meta": {
           "profile": [
             "http://hl7.org/fhir/us/core/StructureDefinition/us-core-diagnosticreport-note"
-          ]
+          ],
+          "lastUpdated": "2019-12-01T09:20:48.000-07:00"
         },
         "status": "final",
         "category": [
@@ -19448,7 +19492,8 @@
         "meta": {
           "profile": [
             "http://hl7.org/fhir/us/core/StructureDefinition/us-core-diagnosticreport-lab"
-          ]
+          ],
+          "lastUpdated": "2019-12-01T09:20:48.000-07:00"
         },
         "status": "final",
         "category": [
@@ -19488,47 +19533,47 @@
         ],
         "result": [
           {
-            "reference": "urn:uuid:958c63b0-4a7f-2ee7-226e-8284ecffbb29",
+            "reference": "Observation/958c63b0-4a7f-2ee7-226e-8284ecffbb29",
             "display": "Hemoglobin [Mass/volume] in Blood"
           },
           {
-            "reference": "urn:uuid:958c63b0-4a7f-2ee7-231c-02444f199e07",
+            "reference": "Observation/958c63b0-4a7f-2ee7-231c-02444f199e07",
             "display": "Hematocrit [Volume Fraction] of Blood by calculation"
           },
           {
-            "reference": "urn:uuid:958c63b0-4a7f-2ee7-8d5a-5bbe821734a8",
+            "reference": "Observation/958c63b0-4a7f-2ee7-8d5a-5bbe821734a8",
             "display": "Leukocytes [#/volume] in Blood by Automated count"
           },
           {
-            "reference": "urn:uuid:958c63b0-4a7f-2ee7-e23e-ed16ab8904bb",
+            "reference": "Observation/958c63b0-4a7f-2ee7-e23e-ed16ab8904bb",
             "display": "Erythrocytes [#/volume] in Blood by Automated count"
           },
           {
-            "reference": "urn:uuid:958c63b0-4a7f-2ee7-9465-80198f564757",
+            "reference": "Observation/958c63b0-4a7f-2ee7-9465-80198f564757",
             "display": "MCV [Entitic mean volume] in Red Blood Cells by Automated count"
           },
           {
-            "reference": "urn:uuid:958c63b0-4a7f-2ee7-de7a-91b49bbf8d60",
+            "reference": "Observation/958c63b0-4a7f-2ee7-de7a-91b49bbf8d60",
             "display": "MCH [Entitic mass] by Automated count"
           },
           {
-            "reference": "urn:uuid:958c63b0-4a7f-2ee7-86de-1ca76dbcc62f",
+            "reference": "Observation/958c63b0-4a7f-2ee7-86de-1ca76dbcc62f",
             "display": "MCHC [Entitic Mass/volume] in Red Blood Cells by Automated count"
           },
           {
-            "reference": "urn:uuid:958c63b0-4a7f-2ee7-c99b-db76dfe28c71",
+            "reference": "Observation/958c63b0-4a7f-2ee7-c99b-db76dfe28c71",
             "display": "Erythrocyte [DistWidth] in Blood by Automated count"
           },
           {
-            "reference": "urn:uuid:958c63b0-4a7f-2ee7-c451-35a85254dd4f",
+            "reference": "Observation/958c63b0-4a7f-2ee7-c451-35a85254dd4f",
             "display": "Platelets [#/volume] in Blood by Automated count"
           },
           {
-            "reference": "urn:uuid:958c63b0-4a7f-2ee7-e468-4c29ba0b9dcf",
+            "reference": "Observation/958c63b0-4a7f-2ee7-e468-4c29ba0b9dcf",
             "display": "Platelet distribution width [Entitic volume] in Blood by Automated count"
           },
           {
-            "reference": "urn:uuid:958c63b0-4a7f-2ee7-3292-d9127b0f9279",
+            "reference": "Observation/958c63b0-4a7f-2ee7-3292-d9127b0f9279",
             "display": "Platelet [Entitic mean volume] in Blood by Automated count"
           }
         ]
@@ -19546,7 +19591,8 @@
         "meta": {
           "profile": [
             "http://hl7.org/fhir/us/core/StructureDefinition/us-core-diagnosticreport-note"
-          ]
+          ],
+          "lastUpdated": "2019-12-01T09:20:48.000-07:00"
         },
         "status": "final",
         "category": [
@@ -20974,7 +21020,8 @@
         "meta": {
           "profile": [
             "http://hl7.org/fhir/us/core/StructureDefinition/us-core-diagnosticreport-note"
-          ]
+          ],
+          "lastUpdated": "2019-12-29T10:28:19.000-07:00"
         },
         "status": "final",
         "category": [
@@ -22133,7 +22180,8 @@
         "meta": {
           "profile": [
             "http://hl7.org/fhir/us/core/StructureDefinition/us-core-diagnosticreport-note"
-          ]
+          ],
+          "lastUpdated": "2020-01-26T10:28:19.000-07:00"
         },
         "status": "final",
         "category": [
@@ -23351,7 +23399,8 @@
         "meta": {
           "profile": [
             "http://hl7.org/fhir/us/core/StructureDefinition/us-core-diagnosticreport-note"
-          ]
+          ],
+          "lastUpdated": "2020-02-23T10:28:19.000-07:00"
         },
         "status": "final",
         "category": [
@@ -24263,7 +24312,8 @@
         "meta": {
           "profile": [
             "http://hl7.org/fhir/us/core/StructureDefinition/us-core-diagnosticreport-note"
-          ]
+          ],
+          "lastUpdated": "2020-03-22T11:28:19.000-06:00"
         },
         "status": "final",
         "category": [
@@ -25316,7 +25366,8 @@
         "meta": {
           "profile": [
             "http://hl7.org/fhir/us/core/StructureDefinition/us-core-diagnosticreport-note"
-          ]
+          ],
+          "lastUpdated": "2020-04-19T11:28:19.000-06:00"
         },
         "status": "final",
         "category": [
@@ -26687,7 +26738,8 @@
         "meta": {
           "profile": [
             "http://hl7.org/fhir/us/core/StructureDefinition/us-core-diagnosticreport-note"
-          ]
+          ],
+          "lastUpdated": "2020-05-17T11:28:19.000-06:00"
         },
         "status": "final",
         "category": [
@@ -27708,7 +27760,8 @@
         "meta": {
           "profile": [
             "http://hl7.org/fhir/us/core/StructureDefinition/us-core-diagnosticreport-note"
-          ]
+          ],
+          "lastUpdated": "2020-06-14T11:28:19.000-06:00"
         },
         "status": "final",
         "category": [
@@ -28853,7 +28906,8 @@
         "meta": {
           "profile": [
             "http://hl7.org/fhir/us/core/StructureDefinition/us-core-diagnosticreport-note"
-          ]
+          ],
+          "lastUpdated": "2020-06-28T11:28:19.000-06:00"
         },
         "status": "final",
         "category": [
@@ -29742,7 +29796,8 @@
         "meta": {
           "profile": [
             "http://hl7.org/fhir/us/core/StructureDefinition/us-core-diagnosticreport-note"
-          ]
+          ],
+          "lastUpdated": "2020-08-09T11:28:19.000-06:00"
         },
         "status": "final",
         "category": [
@@ -30871,7 +30926,8 @@
         "meta": {
           "profile": [
             "http://hl7.org/fhir/us/core/StructureDefinition/us-core-diagnosticreport-note"
-          ]
+          ],
+          "lastUpdated": "2020-08-23T10:20:48.000-06:00"
         },
         "status": "final",
         "category": [
@@ -31409,7 +31465,8 @@
         "meta": {
           "profile": [
             "http://hl7.org/fhir/us/core/StructureDefinition/us-core-diagnosticreport-note"
-          ]
+          ],
+          "lastUpdated": "2021-05-23T10:20:48.000-06:00"
         },
         "status": "final",
         "category": [
@@ -33683,7 +33740,10 @@
             "reference": "urn:uuid:958c63b0-4a7f-2ee7-d5c0-20c9c3ee24a9",
             "display": "Total score [HARK]"
           }
-        ]
+        ],
+        "meta": {
+          "lastUpdated": "2021-06-13T11:54:38.000-06:00"
+        }
       },
       "request": {
         "method": "POST",
@@ -33719,7 +33779,10 @@
             "reference": "urn:uuid:958c63b0-4a7f-2ee7-d1aa-0104094047d2",
             "display": "Patient Health Questionnaire 2 item (PHQ-2) total score [Reported]"
           }
-        ]
+        ],
+        "meta": {
+          "lastUpdated": "2021-06-13T12:32:18.000-06:00"
+        }
       },
       "request": {
         "method": "POST",
@@ -33755,7 +33818,10 @@
             "reference": "urn:uuid:958c63b0-4a7f-2ee7-e1be-37776fa0be41",
             "display": "Total score [DAST-10]"
           }
-        ]
+        ],
+        "meta": {
+          "lastUpdated": "2021-06-13T13:07:12.000-06:00"
+        }
       },
       "request": {
         "method": "POST",
@@ -33770,7 +33836,8 @@
         "meta": {
           "profile": [
             "http://hl7.org/fhir/us/core/StructureDefinition/us-core-diagnosticreport-note"
-          ]
+          ],
+          "lastUpdated": "2021-06-13T10:20:48.000-06:00"
         },
         "status": "final",
         "category": [
@@ -39389,7 +39456,8 @@
         "meta": {
           "profile": [
             "http://hl7.org/fhir/us/core/StructureDefinition/us-core-diagnosticreport-lab"
-          ]
+          ],
+          "lastUpdated": "2024-06-16T10:20:48.000-06:00"
         },
         "status": "final",
         "category": [
@@ -39429,35 +39497,35 @@
         ],
         "result": [
           {
-            "reference": "urn:uuid:958c63b0-4a7f-2ee7-b35c-6b2f9579216f",
+            "reference": "Observation/958c63b0-4a7f-2ee7-b35c-6b2f9579216f",
             "display": "Glucose [Mass/volume] in Blood"
           },
           {
-            "reference": "urn:uuid:958c63b0-4a7f-2ee7-76f7-906f52f958cb",
+            "reference": "Observation/958c63b0-4a7f-2ee7-76f7-906f52f958cb",
             "display": "Urea nitrogen [Mass/volume] in Blood"
           },
           {
-            "reference": "urn:uuid:958c63b0-4a7f-2ee7-05d0-dc49c083f043",
+            "reference": "Observation/958c63b0-4a7f-2ee7-05d0-dc49c083f043",
             "display": "Creatinine [Mass/volume] in Blood"
           },
           {
-            "reference": "urn:uuid:958c63b0-4a7f-2ee7-cefe-b409b33fb5ca",
+            "reference": "Observation/958c63b0-4a7f-2ee7-cefe-b409b33fb5ca",
             "display": "Calcium [Mass/volume] in Blood"
           },
           {
-            "reference": "urn:uuid:958c63b0-4a7f-2ee7-7384-f505e9e559a9",
+            "reference": "Observation/958c63b0-4a7f-2ee7-7384-f505e9e559a9",
             "display": "Sodium [Moles/volume] in Blood"
           },
           {
-            "reference": "urn:uuid:958c63b0-4a7f-2ee7-eaa3-bac4d4d233d8",
+            "reference": "Observation/958c63b0-4a7f-2ee7-eaa3-bac4d4d233d8",
             "display": "Potassium [Moles/volume] in Blood"
           },
           {
-            "reference": "urn:uuid:958c63b0-4a7f-2ee7-8820-124858fca65e",
+            "reference": "Observation/958c63b0-4a7f-2ee7-8820-124858fca65e",
             "display": "Chloride [Moles/volume] in Blood"
           },
           {
-            "reference": "urn:uuid:958c63b0-4a7f-2ee7-95b2-39d452746c10",
+            "reference": "Observation/958c63b0-4a7f-2ee7-95b2-39d452746c10",
             "display": "Carbon dioxide, total [Moles/volume] in Blood"
           }
         ]
@@ -39475,7 +39543,8 @@
         "meta": {
           "profile": [
             "http://hl7.org/fhir/us/core/StructureDefinition/us-core-diagnosticreport-lab"
-          ]
+          ],
+          "lastUpdated": "2024-06-16T10:20:48.000-06:00"
         },
         "status": "final",
         "category": [
@@ -39515,47 +39584,47 @@
         ],
         "result": [
           {
-            "reference": "urn:uuid:958c63b0-4a7f-2ee7-7568-11417cdab56d",
+            "reference": "Observation/958c63b0-4a7f-2ee7-7568-11417cdab56d",
             "display": "Leukocytes [#/volume] in Blood by Automated count"
           },
           {
-            "reference": "urn:uuid:958c63b0-4a7f-2ee7-d9de-1a7629ceca0f",
+            "reference": "Observation/958c63b0-4a7f-2ee7-d9de-1a7629ceca0f",
             "display": "Erythrocytes [#/volume] in Blood by Automated count"
           },
           {
-            "reference": "urn:uuid:958c63b0-4a7f-2ee7-ccfd-acb84ad26173",
+            "reference": "Observation/958c63b0-4a7f-2ee7-ccfd-acb84ad26173",
             "display": "Hemoglobin [Mass/volume] in Blood"
           },
           {
-            "reference": "urn:uuid:958c63b0-4a7f-2ee7-44ad-3b382107ddde",
+            "reference": "Observation/958c63b0-4a7f-2ee7-44ad-3b382107ddde",
             "display": "Hematocrit [Volume Fraction] of Blood by Automated count"
           },
           {
-            "reference": "urn:uuid:958c63b0-4a7f-2ee7-ca27-d89584f99105",
+            "reference": "Observation/958c63b0-4a7f-2ee7-ca27-d89584f99105",
             "display": "MCV [Entitic mean volume] in Red Blood Cells by Automated count"
           },
           {
-            "reference": "urn:uuid:958c63b0-4a7f-2ee7-7d24-17837b2ab9e4",
+            "reference": "Observation/958c63b0-4a7f-2ee7-7d24-17837b2ab9e4",
             "display": "MCH [Entitic mass] by Automated count"
           },
           {
-            "reference": "urn:uuid:958c63b0-4a7f-2ee7-8ef5-d1a60c5a0bcd",
+            "reference": "Observation/958c63b0-4a7f-2ee7-8ef5-d1a60c5a0bcd",
             "display": "MCHC [Entitic Mass/volume] in Red Blood Cells by Automated count"
           },
           {
-            "reference": "urn:uuid:958c63b0-4a7f-2ee7-23ca-f8c2d57d12c3",
+            "reference": "Observation/958c63b0-4a7f-2ee7-23ca-f8c2d57d12c3",
             "display": "Erythrocyte [DistWidth] in Blood by Automated count"
           },
           {
-            "reference": "urn:uuid:958c63b0-4a7f-2ee7-8781-d61a2c1d0908",
+            "reference": "Observation/958c63b0-4a7f-2ee7-8781-d61a2c1d0908",
             "display": "Platelets [#/volume] in Blood by Automated count"
           },
           {
-            "reference": "urn:uuid:958c63b0-4a7f-2ee7-9299-5c0d7d32f1f4",
+            "reference": "Observation/958c63b0-4a7f-2ee7-9299-5c0d7d32f1f4",
             "display": "Platelet distribution width [Entitic volume] in Blood by Automated count"
           },
           {
-            "reference": "urn:uuid:958c63b0-4a7f-2ee7-d0a2-6e04702a0e07",
+            "reference": "Observation/958c63b0-4a7f-2ee7-d0a2-6e04702a0e07",
             "display": "Platelet [Entitic mean volume] in Blood by Automated count"
           }
         ]
@@ -39594,7 +39663,10 @@
             "reference": "urn:uuid:958c63b0-4a7f-2ee7-6d8b-02666d2c6621",
             "display": "Patient Health Questionnaire 2 item (PHQ-2) total score [Reported]"
           }
-        ]
+        ],
+        "meta": {
+          "lastUpdated": "2024-06-16T11:45:23.000-06:00"
+        }
       },
       "request": {
         "method": "POST",
@@ -39630,7 +39702,10 @@
             "reference": "urn:uuid:958c63b0-4a7f-2ee7-1550-f86d1c2872b1",
             "display": "Patient Health Questionnaire 9 item (PHQ-9) total score [Reported]"
           }
-        ]
+        ],
+        "meta": {
+          "lastUpdated": "2024-06-16T12:09:33.000-06:00"
+        }
       },
       "request": {
         "method": "POST",
@@ -39666,7 +39741,10 @@
             "reference": "urn:uuid:958c63b0-4a7f-2ee7-90fe-e8185a1d8e3e",
             "display": "Total score [AUDIT-C]"
           }
-        ]
+        ],
+        "meta": {
+          "lastUpdated": "2024-06-16T12:40:22.000-06:00"
+        }
       },
       "request": {
         "method": "POST",
@@ -39890,7 +39968,8 @@
         "meta": {
           "profile": [
             "http://hl7.org/fhir/us/core/StructureDefinition/us-core-diagnosticreport-note"
-          ]
+          ],
+          "lastUpdated": "2024-06-16T10:20:48.000-06:00"
         },
         "status": "final",
         "category": [
@@ -45678,7 +45757,8 @@
         "meta": {
           "profile": [
             "http://hl7.org/fhir/us/core/StructureDefinition/us-core-diagnosticreport-note"
-          ]
+          ],
+          "lastUpdated": "2024-06-10T10:15:00-06:00"
         },
         "status": "final",
         "category": [
@@ -45719,6 +45799,15 @@
             "contentType": "text/plain",
             "data": "Q2hlc3QgWC1yYXkgUmVwb3J0CgpGSU5ESU5HUzoKLSBIZWFydCBzaXplIGlzIG5vcm1hbAotIEx1bmdzIGFyZSBjbGVhcgotIE5vIHBsZXVyYWwgZWZmdXNpb24KLSBObyBwbmV1bW90aG9yYXgKCklNUFJFU1NJT046IE5vIGFjdXRlIGNhcmRpb3B1bG1vbmFyeSBhYm5vcm1hbGl0eS4="
           }
+        ],
+        "media": [
+          {
+            "comment": "Chest X-ray image",
+            "link": {
+              "reference": "Media/958c63b0-4a7f-2ee7-media-001",
+              "display": "Chest X-ray PA view"
+            }
+          }
         ]
       },
       "request": {
@@ -45734,7 +45823,8 @@
         "meta": {
           "profile": [
             "http://hl7.org/fhir/us/core/StructureDefinition/us-core-diagnosticreport-note"
-          ]
+          ],
+          "lastUpdated": "2024-06-15T11:30:00-06:00"
         },
         "status": "final",
         "category": [
@@ -45790,7 +45880,8 @@
         "meta": {
           "profile": [
             "http://hl7.org/fhir/us/core/StructureDefinition/us-core-diagnosticreport-lab"
-          ]
+          ],
+          "lastUpdated": "2024-06-12T14:00:00-06:00"
         },
         "status": "final",
         "category": [
@@ -45841,6 +45932,436 @@
       "request": {
         "method": "POST",
         "url": "DiagnosticReport"
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:ee691ea5-61a0-3ae2-bacf-38185afca1ed",
+      "resource": {
+        "resourceType": "Organization",
+        "id": "ee691ea5-61a0-3ae2-bacf-38185afca1ed",
+        "meta": {
+          "profile": [
+            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-organization"
+          ]
+        },
+        "identifier": [
+          {
+            "system": "https://github.com/synthetichealth/synthea",
+            "value": "ee691ea5-61a0-3ae2-bacf-38185afca1ed"
+          }
+        ],
+        "active": true,
+        "type": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/organization-type",
+                "code": "prov",
+                "display": "Healthcare Provider"
+              }
+            ]
+          }
+        ],
+        "name": "ESPERANZA HEALTH CENTERS",
+        "telecom": [
+          {
+            "system": "phone",
+            "value": "773-584-6200"
+          }
+        ],
+        "address": [
+          {
+            "line": [
+              "2001 S California Ave"
+            ],
+            "city": "Chicago",
+            "state": "IL",
+            "postalCode": "60608",
+            "country": "US"
+          }
+        ]
+      },
+      "request": {
+        "method": "POST",
+        "url": "Organization"
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:0b9c0333-82df-33e1-8917-959af53479cb",
+      "resource": {
+        "resourceType": "Organization",
+        "id": "0b9c0333-82df-33e1-8917-959af53479cb",
+        "meta": {
+          "profile": [
+            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-organization"
+          ]
+        },
+        "identifier": [
+          {
+            "system": "https://github.com/synthetichealth/synthea",
+            "value": "0b9c0333-82df-33e1-8917-959af53479cb"
+          }
+        ],
+        "active": true,
+        "type": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/organization-type",
+                "code": "prov",
+                "display": "Healthcare Provider"
+              }
+            ]
+          }
+        ],
+        "name": "HOLY CROSS HOSPITAL",
+        "telecom": [
+          {
+            "system": "phone",
+            "value": "773-471-8000"
+          }
+        ],
+        "address": [
+          {
+            "line": [
+              "2701 W 68th St"
+            ],
+            "city": "Chicago",
+            "state": "IL",
+            "postalCode": "60629",
+            "country": "US"
+          }
+        ]
+      },
+      "request": {
+        "method": "POST",
+        "url": "Organization"
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:afa7dd1c-6966-333f-9892-9eeb88042cc9",
+      "resource": {
+        "resourceType": "Organization",
+        "id": "afa7dd1c-6966-333f-9892-9eeb88042cc9",
+        "meta": {
+          "profile": [
+            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-organization"
+          ]
+        },
+        "identifier": [
+          {
+            "system": "https://github.com/synthetichealth/synthea",
+            "value": "afa7dd1c-6966-333f-9892-9eeb88042cc9"
+          }
+        ],
+        "active": true,
+        "type": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/organization-type",
+                "code": "prov",
+                "display": "Healthcare Provider"
+              }
+            ]
+          }
+        ],
+        "name": "KEDZIE FAMILY HEALTH CENTER",
+        "telecom": [
+          {
+            "system": "phone",
+            "value": "773-925-9206"
+          }
+        ],
+        "address": [
+          {
+            "line": [
+              "3512 W 63rd St"
+            ],
+            "city": "Chicago",
+            "state": "IL",
+            "postalCode": "60629",
+            "country": "US"
+          }
+        ]
+      },
+      "request": {
+        "method": "POST",
+        "url": "Organization"
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:f55f7bf4-0aff-31c9-a1d3-b16d4bd8a881",
+      "resource": {
+        "resourceType": "Location",
+        "id": "f55f7bf4-0aff-31c9-a1d3-b16d4bd8a881",
+        "meta": {
+          "profile": [
+            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-location"
+          ]
+        },
+        "identifier": [
+          {
+            "system": "https://github.com/synthetichealth/synthea",
+            "value": "f55f7bf4-0aff-31c9-a1d3-b16d4bd8a881"
+          }
+        ],
+        "status": "active",
+        "name": "ESPERANZA HEALTH CENTERS",
+        "telecom": [
+          {
+            "system": "phone",
+            "value": "773-584-6200"
+          }
+        ],
+        "address": {
+          "line": [
+            "2001 S California Ave"
+          ],
+          "city": "Chicago",
+          "state": "IL",
+          "postalCode": "60608",
+          "country": "US"
+        },
+        "managingOrganization": {
+          "reference": "Organization/ee691ea5-61a0-3ae2-bacf-38185afca1ed",
+          "display": "ESPERANZA HEALTH CENTERS"
+        }
+      },
+      "request": {
+        "method": "POST",
+        "url": "Location"
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:3aeaa776-51ed-39b2-a306-42f819ec9902",
+      "resource": {
+        "resourceType": "Location",
+        "id": "3aeaa776-51ed-39b2-a306-42f819ec9902",
+        "meta": {
+          "profile": [
+            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-location"
+          ]
+        },
+        "identifier": [
+          {
+            "system": "https://github.com/synthetichealth/synthea",
+            "value": "3aeaa776-51ed-39b2-a306-42f819ec9902"
+          }
+        ],
+        "status": "active",
+        "name": "KEDZIE FAMILY HEALTH CENTER",
+        "telecom": [
+          {
+            "system": "phone",
+            "value": "773-925-9206"
+          }
+        ],
+        "address": {
+          "line": [
+            "3512 W 63rd St"
+          ],
+          "city": "Chicago",
+          "state": "IL",
+          "postalCode": "60629",
+          "country": "US"
+        },
+        "managingOrganization": {
+          "reference": "Organization/afa7dd1c-6966-333f-9892-9eeb88042cc9",
+          "display": "KEDZIE FAMILY HEALTH CENTER"
+        }
+      },
+      "request": {
+        "method": "POST",
+        "url": "Location"
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:8a2c3057-4b23-3721-8aff-06f500e93c43",
+      "resource": {
+        "resourceType": "Location",
+        "id": "8a2c3057-4b23-3721-8aff-06f500e93c43",
+        "meta": {
+          "profile": [
+            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-location"
+          ]
+        },
+        "identifier": [
+          {
+            "system": "https://github.com/synthetichealth/synthea",
+            "value": "8a2c3057-4b23-3721-8aff-06f500e93c43"
+          }
+        ],
+        "status": "active",
+        "name": "HOLY CROSS HOSPITAL",
+        "telecom": [
+          {
+            "system": "phone",
+            "value": "773-471-8000"
+          }
+        ],
+        "address": {
+          "line": [
+            "2701 W 68th St"
+          ],
+          "city": "Chicago",
+          "state": "IL",
+          "postalCode": "60629",
+          "country": "US"
+        },
+        "managingOrganization": {
+          "reference": "Organization/0b9c0333-82df-33e1-8917-959af53479cb",
+          "display": "HOLY CROSS HOSPITAL"
+        }
+      },
+      "request": {
+        "method": "POST",
+        "url": "Location"
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:958c63b0-4a7f-2ee7-prac-9999928895",
+      "resource": {
+        "resourceType": "Practitioner",
+        "id": "958c63b0-4a7f-2ee7-prac-9999928895",
+        "meta": {
+          "profile": [
+            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-practitioner"
+          ]
+        },
+        "identifier": [
+          {
+            "system": "http://hl7.org/fhir/sid/us-npi",
+            "value": "9999928895"
+          }
+        ],
+        "active": true,
+        "name": [
+          {
+            "family": "Dooley",
+            "given": [
+              "Marna"
+            ],
+            "prefix": [
+              "Dr."
+            ]
+          }
+        ]
+      },
+      "request": {
+        "method": "POST",
+        "url": "Practitioner"
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:958c63b0-4a7f-2ee7-prac-9999959494",
+      "resource": {
+        "resourceType": "Practitioner",
+        "id": "958c63b0-4a7f-2ee7-prac-9999959494",
+        "meta": {
+          "profile": [
+            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-practitioner"
+          ]
+        },
+        "identifier": [
+          {
+            "system": "http://hl7.org/fhir/sid/us-npi",
+            "value": "9999959494"
+          }
+        ],
+        "active": true,
+        "name": [
+          {
+            "family": "McDermott",
+            "given": [
+              "Georgeanna"
+            ],
+            "prefix": [
+              "Dr."
+            ]
+          }
+        ]
+      },
+      "request": {
+        "method": "POST",
+        "url": "Practitioner"
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:958c63b0-4a7f-2ee7-prac-9999994293",
+      "resource": {
+        "resourceType": "Practitioner",
+        "id": "958c63b0-4a7f-2ee7-prac-9999994293",
+        "meta": {
+          "profile": [
+            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-practitioner"
+          ]
+        },
+        "identifier": [
+          {
+            "system": "http://hl7.org/fhir/sid/us-npi",
+            "value": "9999994293"
+          }
+        ],
+        "active": true,
+        "name": [
+          {
+            "family": "Goodwin",
+            "given": [
+              "Lynn"
+            ],
+            "prefix": [
+              "Dr."
+            ]
+          }
+        ]
+      },
+      "request": {
+        "method": "POST",
+        "url": "Practitioner"
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:958c63b0-4a7f-2ee7-media-001",
+      "resource": {
+        "resourceType": "Media",
+        "id": "958c63b0-4a7f-2ee7-media-001",
+        "meta": {
+          "profile": [
+            "http://hl7.org/fhir/StructureDefinition/Media"
+          ],
+          "lastUpdated": "2024-06-10T10:30:00.000-06:00"
+        },
+        "status": "completed",
+        "type": {
+          "coding": [
+            {
+              "system": "http://terminology.hl7.org/CodeSystem/media-type",
+              "code": "image",
+              "display": "Image"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
+          "display": "Mrs. Daisey627 Jackelyn13 Koelpin146"
+        },
+        "createdDateTime": "2024-06-10T09:30:00-06:00",
+        "issued": "2024-06-10T10:15:00-06:00",
+        "content": {
+          "contentType": "image/jpeg",
+          "url": "https://example.org/imaging/chest-xray-001.jpg",
+          "title": "Chest X-ray PA view"
+        },
+        "note": [
+          {
+            "text": "Portable chest X-ray performed for routine screening"
+          }
+        ]
+      },
+      "request": {
+        "method": "POST",
+        "url": "Media"
       }
     }
   ]

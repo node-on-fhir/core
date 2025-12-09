@@ -1,0 +1,28 @@
+{
+  "resourceType": "SearchParameter",
+  "id": "diagnosticreport-code",
+  "url": "http://hl7.org/fhir/SearchParameter/DiagnosticReport-code",
+  "version": "4.0.1",
+  "name": "HoneycombDiagnosticReportCode",
+  "status": "active",
+  "date": "2024-12-08",
+  "publisher": "github.com/node-on-fhir",
+  "contact": [
+    {
+      "telecom": [
+        {
+          "system": "url",
+          "value": "http://github.com/node-on-fhir/honeycomb"
+        }
+      ]
+    }
+  ],
+  "description": "The code for the report as a whole, as opposed to codes for the atomic results, which are the names on the observation resource referred to from the result",
+  "code": "code",
+  "base": ["DiagnosticReport"],
+  "type": "token",
+  "expression": "DiagnosticReport.code",
+  "xpath": "code",
+  "multipleOr": true,
+  "multipleAnd": true
+}

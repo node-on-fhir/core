@@ -55,6 +55,7 @@ import { MedicationOrders } from '../imports/lib/schemas/SimpleSchemas/Medicatio
 import { MedicationRequests } from '../imports/lib/schemas/SimpleSchemas/MedicationRequests';
 import { Measures } from '../imports/lib/schemas/SimpleSchemas/Measures';
 import { MeasureReports } from '../imports/lib/schemas/SimpleSchemas/MeasureReports';
+import { Medias } from '../imports/lib/schemas/SimpleSchemas/Medias';
 import { NutritionOrders } from '../imports/lib/schemas/SimpleSchemas/NutritionOrders';
 import { NutritionIntakes } from '../imports/lib/schemas/SimpleSchemas/NutritionIntakes';
 import { Networks } from '../imports/lib/schemas/SimpleSchemas/Networks';
@@ -221,7 +222,7 @@ function initializeAccessControl() {
                             'RiskAssessment', 'ServiceRequest', 'StructureDefinition', 'Subscription',
                             'Task', 'ValueSet', 'VerificationResult',
                             // USCDI resources required for (g)(10) certification - added for Coverage tests
-                            'Binary', 'Coverage', 'Device', 'MedicationDispense', 'Specimen'];
+                            'Binary', 'Coverage', 'Device', 'Media', 'MedicationDispense', 'Specimen'];
   allFhirResources.forEach(function(resource) {
     acl.grant('SYSTEM').execute('access').on(resource, ['*']);
   });
@@ -243,7 +244,7 @@ function initializeAccessControl() {
     'Device', 'DiagnosticReport', 'DocumentReference', 'Encounter', 'Goal',
     'Immunization', 'Location', 'Medication', 'MedicationDispense', 'MedicationRequest',
     'Observation', 'Organization', 'Practitioner', 'PractitionerRole', 'Procedure',
-    'Provenance', 'RelatedPerson', 'ServiceRequest', 'Specimen'
+    'Provenance', 'RelatedPerson', 'ServiceRequest', 'Media', 'Specimen'
   ];
   patientAccessResources.forEach(function(resource) {
     acl.grant('patient').execute('access').on(resource, ['*']);
@@ -352,6 +353,7 @@ if(Meteor.isServer){
   Collections.MedicationRequests = MedicationRequests;
   Collections.Measures = Measures;
   Collections.MeasureReports = MeasureReports;
+  Collections.Medias = Medias;
   Collections.Patients = Patients;
   Collections.Practitioners = Practitioners;
   Collections.PractitionerRoles = PractitionerRoles;
