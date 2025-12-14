@@ -376,6 +376,18 @@ if(Meteor.isServer){
   // Collections.VerificationResults = VerificationResults;
 }
 
+//==========================================================================================
+// _include Field Mappings
+// Maps FHIR _include search parameter names to actual field paths in resources
+// Format: { ResourceType: { searchParamName: 'fieldPath' } }
+// Example: MedicationRequest:medication -> medicationReference field
+
+const includeFieldMappings = {
+  'MedicationRequest': {
+    'medication': 'medicationReference'
+  }
+};
+
 
 //==========================================================================================
 // Middleware
@@ -1961,44 +1973,57 @@ if(typeof serverRouteManifest === "object"){
                     } 
     
                     
-                    // lets check for any _include references
-                    // process.env.DEBUG && console.log('req.query', req.query);
-                    if(Array.isArray(req.query._include)){
-                      req.query._include.forEach(async function(_includeRef){
+                    // Handle _include (similar pattern to _revInclude below)
+                    let includeParam = get(req, 'query._include');
+                    if(includeParam){
+                      let includes = Array.isArray(includeParam) ? includeParam : [includeParam];
+
+                      for(let _includeRef of includes){
                         let includeParts = _includeRef.split(":");
-                        let referenceBase;
-                        if(includeParts.length === 2){
-                          referenceBase = includeParts[1];
-                        } else if (includeParts.length === 2){
-                          referenceBase = includeParts[0];
-                        }
-    
-                        if(get(record, referenceBase + ".reference")){
-                          console.log("_include reference: ", get(record, referenceBase + ".reference"))
-    
-                          let includeReferenceParts = (get(record, referenceBase + ".reference")).split("/");
-                          console.log('includeReferenceParts.length', includeReferenceParts.length);
-    
-                          let pluralizedReferenceBase = FhirUtilities.pluralizeResourceName(capitalize(referenceBase));
-                          console.log('pluralizedReferenceBase', pluralizedReferenceBase);
-    
-                          if(Collections[pluralizedReferenceBase]){
-                            if(includeReferenceParts.length = 2){
-                              let _includeReferenceRecord = await Collections[pluralizedReferenceBase].findOneAsync({id: includeReferenceParts[1]})
-                              if(_includeReferenceRecord){
-                                let newEntry = {
-                                  fullUrl: get(record, referenceBase + ".reference"),
-                                  resource: RestHelpers.prepForFhirTransfer(_includeReferenceRecord),
-                                  search: {
-                                    mode: "include"
-                                  }
+
+                        if(includeParts.length >= 2){
+                          let sourceResource = includeParts[0];  // e.g., "MedicationRequest"
+                          let searchParamName = includeParts[1]; // e.g., "medication"
+
+                          // Map search parameter name to actual field path
+                          // Example: "medication" -> "medicationReference" for MedicationRequest
+                          let fieldPath = searchParamName;
+                          if(includeFieldMappings[sourceResource] && includeFieldMappings[sourceResource][searchParamName]){
+                            fieldPath = includeFieldMappings[sourceResource][searchParamName];
+                          }
+
+                          let referenceValue = get(record, fieldPath + ".reference");
+                          if(referenceValue){
+                            process.env.DEBUG && console.log("_include reference: ", referenceValue);
+
+                            let includeReferenceParts = referenceValue.split("/");
+                            if(includeReferenceParts.length === 2){
+                              let referencedResourceType = includeReferenceParts[0];
+                              let referencedResourceId = includeReferenceParts[1];
+
+                              let pluralizedResourceType = FhirUtilities.pluralizeResourceName(referencedResourceType);
+                              process.env.DEBUG && console.log('_include pluralizedResourceType', pluralizedResourceType);
+
+                              if(Collections[pluralizedResourceType]){
+                                let _includeReferenceRecord = await Collections[pluralizedResourceType].findOneAsync({id: referencedResourceId});
+                                if(_includeReferenceRecord){
+                                  payload.push({
+                                    fullUrl: referencedResourceType + "/" + referencedResourceId,
+                                    resource: RestHelpers.prepForFhirTransfer(_includeReferenceRecord),
+                                    search: {
+                                      mode: "include"
+                                    }
+                                  });
+                                } else {
+                                  console.warn('_include: Referenced resource not found:', referenceValue);
                                 }
-                                payload.push(newEntry);
+                              } else {
+                                console.warn('_include: Collection not found for:', pluralizedResourceType);
                               }
                             }
                           }
                         }
-                      })
+                      }
                     }
                   }
 

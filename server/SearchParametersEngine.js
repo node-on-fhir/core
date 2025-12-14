@@ -281,6 +281,7 @@ const SearchParametersEngine = {
       'SearchParameter-procedure-patient.json',
       'SearchParameter-encounter-patient.json',
       'SearchParameter-medicationrequest-patient.json',
+      'SearchParameter-medicationrequest-intent.json',
       'SearchParameter-allergyintolerance-patient.json',
       'SearchParameter-appointment-patient.json',
       'SearchParameter-careplan-patient.json',
@@ -293,6 +294,7 @@ const SearchParametersEngine = {
       'SearchParameter-immunization-patient.json',
       'SearchParameter-media-patient.json',
       'SearchParameter-medicationadministration-patient.json',
+      'SearchParameter-medicationdispense-patient.json',
       'SearchParameter-nutritionorder-patient.json',
       'SearchParameter-questionnaireresponse-patient.json',
       'SearchParameter-researchsubject-patient.json',
@@ -304,7 +306,9 @@ const SearchParametersEngine = {
       'SearchParameter-condition-category.json',
       'SearchParameter-diagnosticreport-category.json',
       'SearchParameter-diagnosticreport-code.json',
-      'SearchParameter-diagnosticreport-date.json'
+      'SearchParameter-diagnosticreport-date.json',
+      'SearchParameter-documentreference-date.json',
+      'SearchParameter-encounter-date.json'
     ];
 
     for (const fileName of searchParameterFiles) {
@@ -695,7 +699,18 @@ const SearchParametersEngine = {
         return this.buildReferenceQuery(baseField, searchValue, target);
 
       case 'date':
-        return this.buildDateQuery(baseField, searchValue);
+        // For date types, use the full path from expression instead of truncated baseField
+        // e.g., "Encounter.period.start" -> "period.start" (not just "period")
+        let datePath = baseField;
+        if (param.expression) {
+          const first = param.expression.split('|')[0].trim();
+          const cleanPath = first.replace(/\.where\(.*\)$/g, '');
+          const prefix = resourceType + '.';
+          if (cleanPath.startsWith(prefix)) {
+            datePath = cleanPath.substring(prefix.length);
+          }
+        }
+        return this.buildDateQuery(datePath, searchValue);
 
       default:
         console.warn('[SearchParametersEngine] Unsupported search type: ' + type + ' for ' + resourceType + '.' + code);

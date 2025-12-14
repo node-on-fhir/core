@@ -29,9 +29,15 @@ function buildConditionalReferenceMap(bundle) {
     const resource = get(entry, 'resource');
     const resourceType = get(resource, 'resourceType');
     const resourceId = get(resource, 'id');
+    const fullUrl = get(entry, 'fullUrl');
     const identifiers = get(resource, 'identifier', []);
 
-    // Only process Practitioner, Organization, Location (common reference targets)
+    // Index by fullUrl for urn:uuid: references (handles ALL resource types)
+    if (fullUrl && resourceType && resourceId) {
+      map[fullUrl] = { resourceType, id: resourceId };
+    }
+
+    // Only process Practitioner, Organization, Location for identifier-based refs
     if (['Practitioner', 'Organization', 'Location'].includes(resourceType) && resourceId) {
       for (const identifier of identifiers) {
         const system = get(identifier, 'system');
@@ -48,8 +54,8 @@ function buildConditionalReferenceMap(bundle) {
 }
 
 /**
- * Recursively walk an object and resolve conditional references.
- * Finds any object with a 'reference' property containing '?identifier='
+ * Recursively walk an object and resolve conditional and urn:uuid references.
+ * Finds any object with a 'reference' property containing '?identifier=' or 'urn:uuid:'
  * and replaces it with the resolved 'ResourceType/id' format.
  *
  * @param {Object|Array} obj - Object to process (modified in place)
@@ -70,18 +76,30 @@ function resolveConditionalRefsInObject(obj, refMap, resolvedCount = 0) {
     return resolvedCount;
   }
 
-  // Check if this object has a conditional reference
+  // Check if this object has a reference
   if (has(obj, 'reference')) {
     const ref = get(obj, 'reference');
-    if (ref && typeof ref === 'string' && ref.includes('?identifier=')) {
-      const resolvedId = refMap[ref];
-      if (resolvedId) {
-        const resourceType = ref.split('?')[0];
-        obj.reference = `${resourceType}/${resolvedId}`;
-        resolvedCount++;
-      } else {
-        // Log unresolved references for debugging
-        console.warn('[resolveConditionalRefsInObject] Unresolved conditional reference:', ref);
+    if (ref && typeof ref === 'string') {
+      // Handle conditional references (e.g., "Practitioner?identifier=...")
+      if (ref.includes('?identifier=')) {
+        const resolvedId = refMap[ref];
+        if (resolvedId) {
+          const resourceType = ref.split('?')[0];
+          obj.reference = `${resourceType}/${resolvedId}`;
+          resolvedCount++;
+        } else {
+          console.warn('[resolveConditionalRefsInObject] Unresolved conditional reference:', ref);
+        }
+      }
+      // Handle urn:uuid: references (e.g., "urn:uuid:xxx")
+      else if (ref.startsWith('urn:uuid:')) {
+        const mapping = refMap[ref];
+        if (mapping && mapping.resourceType && mapping.id) {
+          obj.reference = `${mapping.resourceType}/${mapping.id}`;
+          resolvedCount++;
+        } else {
+          console.warn('[resolveConditionalRefsInObject] Unresolved urn:uuid reference:', ref);
+        }
       }
     }
   }

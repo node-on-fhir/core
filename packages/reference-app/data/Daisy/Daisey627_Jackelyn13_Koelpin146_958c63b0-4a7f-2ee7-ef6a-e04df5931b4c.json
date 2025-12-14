@@ -327,6 +327,104 @@
       }
     },
     {
+      "fullUrl": "urn:uuid:958c63b0-4a7f-2ee7-org-cvs",
+      "resource": {
+        "resourceType": "Organization",
+        "id": "958c63b0-4a7f-2ee7-org-cvs",
+        "meta": {
+          "profile": [
+            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-organization"
+          ]
+        },
+        "active": true,
+        "type": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/organization-type",
+                "code": "prov",
+                "display": "Healthcare Provider"
+              }
+            ],
+            "text": "Pharmacy"
+          }
+        ],
+        "name": "CVS Pharmacy #8472",
+        "telecom": [
+          {
+            "system": "phone",
+            "value": "1-800-746-7287",
+            "use": "work"
+          }
+        ],
+        "address": [
+          {
+            "use": "work",
+            "line": [
+              "1234 Main Street"
+            ],
+            "city": "Springfield",
+            "state": "IL",
+            "postalCode": "62701",
+            "country": "US"
+          }
+        ]
+      },
+      "request": {
+        "method": "POST",
+        "url": "Organization"
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:958c63b0-4a7f-2ee7-org-walgreens",
+      "resource": {
+        "resourceType": "Organization",
+        "id": "958c63b0-4a7f-2ee7-org-walgreens",
+        "meta": {
+          "profile": [
+            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-organization"
+          ]
+        },
+        "active": true,
+        "type": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/organization-type",
+                "code": "prov",
+                "display": "Healthcare Provider"
+              }
+            ],
+            "text": "Pharmacy"
+          }
+        ],
+        "name": "Walgreens #5621",
+        "telecom": [
+          {
+            "system": "phone",
+            "value": "1-800-925-4733",
+            "use": "work"
+          }
+        ],
+        "address": [
+          {
+            "use": "work",
+            "line": [
+              "5678 Oak Avenue"
+            ],
+            "city": "Springfield",
+            "state": "IL",
+            "postalCode": "62702",
+            "country": "US"
+          }
+        ]
+      },
+      "request": {
+        "method": "POST",
+        "url": "Organization"
+      }
+    },
+    {
       "fullUrl": "urn:uuid:958c63b0-4a7f-2ee7-coverage-001",
       "resource": {
         "resourceType": "Coverage",
@@ -527,6 +625,7 @@
         "resourceType": "Encounter",
         "id": "958c63b0-4a7f-2ee7-e3a7-067647287b2b",
         "meta": {
+          "lastUpdated": "2024-12-01T00:00:00.000Z",
           "profile": [
             "http://hl7.org/fhir/us/core/StructureDefinition/us-core-encounter"
           ]
@@ -609,6 +708,18 @@
         "serviceProvider": {
           "reference": "Organization?identifier=https://github.com/synthetichealth/synthea|0b9c0333-82df-33e1-8917-959af53479cb",
           "display": "HOLY CROSS HOSPITAL"
+        },
+        "hospitalization": {
+          "dischargeDisposition": {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/discharge-disposition",
+                "code": "home",
+                "display": "Home"
+              }
+            ],
+            "text": "Home"
+          }
         }
       },
       "request": {
@@ -1197,6 +1308,7 @@
         "resourceType": "Encounter",
         "id": "958c63b0-4a7f-2ee7-f891-781df5a329d3",
         "meta": {
+          "lastUpdated": "2024-12-01T00:00:00.000Z",
           "profile": [
             "http://hl7.org/fhir/us/core/StructureDefinition/us-core-encounter"
           ]
@@ -1988,6 +2100,7 @@
         "resourceType": "Encounter",
         "id": "958c63b0-4a7f-2ee7-7c5f-d583df730d02",
         "meta": {
+          "lastUpdated": "2024-12-01T00:00:00.000Z",
           "profile": [
             "http://hl7.org/fhir/us/core/StructureDefinition/us-core-encounter"
           ]
@@ -2639,6 +2752,7 @@
         "resourceType": "Encounter",
         "id": "958c63b0-4a7f-2ee7-5f29-584e61a78ef0",
         "meta": {
+          "lastUpdated": "2024-12-01T00:00:00.000Z",
           "profile": [
             "http://hl7.org/fhir/us/core/StructureDefinition/us-core-encounter"
           ]
@@ -3559,6 +3673,7 @@
         "resourceType": "Encounter",
         "id": "958c63b0-4a7f-2ee7-a020-b228cc1f5828",
         "meta": {
+          "lastUpdated": "2024-12-01T00:00:00.000Z",
           "profile": [
             "http://hl7.org/fhir/us/core/StructureDefinition/us-core-encounter"
           ]
@@ -3726,6 +3841,29 @@
             "http://hl7.org/fhir/us/core/StructureDefinition/us-core-medicationrequest"
           ]
         },
+        "extension": [
+          {
+            "url": "http://hl7.org/fhir/us/core/StructureDefinition/us-core-medication-adherence",
+            "extension": [
+              {
+                "url": "medicationAdherence",
+                "valueCodeableConcept": {
+                  "coding": [
+                    {
+                      "system": "http://snomed.info/sct",
+                      "code": "275928001",
+                      "display": "Medication compliance good"
+                    }
+                  ]
+                }
+              },
+              {
+                "url": "dateAsserted",
+                "valueDateTime": "2018-03-29T10:20:48-06:00"
+              }
+            ]
+          }
+        ],
         "status": "completed",
         "intent": "order",
         "category": [
@@ -3740,6 +3878,7 @@
             "text": "Outpatient"
           }
         ],
+        "reportedBoolean": true,
         "medicationReference": {
           "reference": "urn:uuid:f030443f-8ec8-f08b-225f-1926ca2d40ad"
         },
@@ -3753,6 +3892,49 @@
         "requester": {
           "reference": "Practitioner?identifier=http://hl7.org/fhir/sid/us-npi|9999994293",
           "display": "Dr. Lynn917 Goodwin327"
+        },
+        "reasonCode": [
+          {
+            "coding": [
+              {
+                "system": "http://snomed.info/sct",
+                "code": "161901003",
+                "display": "History of contraception (situation)"
+              }
+            ],
+            "text": "Contraception"
+          }
+        ],
+        "dosageInstruction": [
+          {
+            "text": "Take one tablet by mouth once daily",
+            "timing": {
+              "repeat": {
+                "frequency": 1,
+                "period": 1,
+                "periodUnit": "d"
+              }
+            },
+            "doseAndRate": [
+              {
+                "doseQuantity": {
+                  "value": 1,
+                  "unit": "tablet",
+                  "system": "http://unitsofmeasure.org",
+                  "code": "{tablet}"
+                }
+              }
+            ]
+          }
+        ],
+        "dispenseRequest": {
+          "numberOfRepeatsAllowed": 3,
+          "quantity": {
+            "value": 28,
+            "unit": "tablet",
+            "system": "http://unitsofmeasure.org",
+            "code": "{tablet}"
+          }
         }
       },
       "request": {
@@ -4626,6 +4808,7 @@
         "resourceType": "Encounter",
         "id": "958c63b0-4a7f-2ee7-258e-0ffacbc90453",
         "meta": {
+          "lastUpdated": "2024-12-01T00:00:00.000Z",
           "profile": [
             "http://hl7.org/fhir/us/core/StructureDefinition/us-core-encounter"
           ]
@@ -6611,7 +6794,17 @@
             "http://hl7.org/fhir/us/core/StructureDefinition/us-core-immunization"
           ]
         },
-        "status": "completed",
+        "status": "not-done",
+        "statusReason": {
+          "coding": [
+            {
+              "system": "http://terminology.hl7.org/CodeSystem/v3-ActReason",
+              "code": "MEDPREC",
+              "display": "medical precaution"
+            }
+          ],
+          "text": "Medical precaution"
+        },
         "vaccineCode": {
           "coding": [
             {
@@ -9353,6 +9546,7 @@
         "resourceType": "Encounter",
         "id": "958c63b0-4a7f-2ee7-e8b0-45a290b20950",
         "meta": {
+          "lastUpdated": "2024-12-01T00:00:00.000Z",
           "profile": [
             "http://hl7.org/fhir/us/core/StructureDefinition/us-core-encounter"
           ]
@@ -10060,6 +10254,7 @@
         "resourceType": "Encounter",
         "id": "958c63b0-4a7f-2ee7-a72a-b9eeecf0c297",
         "meta": {
+          "lastUpdated": "2024-12-01T00:00:00.000Z",
           "profile": [
             "http://hl7.org/fhir/us/core/StructureDefinition/us-core-encounter"
           ]
@@ -10767,6 +10962,7 @@
         "resourceType": "Encounter",
         "id": "958c63b0-4a7f-2ee7-1019-9a2e4fdb262b",
         "meta": {
+          "lastUpdated": "2024-12-01T00:00:00.000Z",
           "profile": [
             "http://hl7.org/fhir/us/core/StructureDefinition/us-core-encounter"
           ]
@@ -11474,6 +11670,7 @@
         "resourceType": "Encounter",
         "id": "958c63b0-4a7f-2ee7-36c6-374133dca112",
         "meta": {
+          "lastUpdated": "2024-12-01T00:00:00.000Z",
           "profile": [
             "http://hl7.org/fhir/us/core/StructureDefinition/us-core-encounter"
           ]
@@ -12181,6 +12378,7 @@
         "resourceType": "Encounter",
         "id": "958c63b0-4a7f-2ee7-2ca7-ce356a26e074",
         "meta": {
+          "lastUpdated": "2024-12-01T00:00:00.000Z",
           "profile": [
             "http://hl7.org/fhir/us/core/StructureDefinition/us-core-encounter"
           ]
@@ -12888,6 +13086,7 @@
         "resourceType": "Encounter",
         "id": "958c63b0-4a7f-2ee7-2dbc-bd8196cd03b2",
         "meta": {
+          "lastUpdated": "2024-12-01T00:00:00.000Z",
           "profile": [
             "http://hl7.org/fhir/us/core/StructureDefinition/us-core-encounter"
           ]
@@ -13651,6 +13850,7 @@
         "resourceType": "Encounter",
         "id": "958c63b0-4a7f-2ee7-6de8-aca96e8fdfc8",
         "meta": {
+          "lastUpdated": "2024-12-01T00:00:00.000Z",
           "profile": [
             "http://hl7.org/fhir/us/core/StructureDefinition/us-core-encounter"
           ]
@@ -18648,6 +18848,7 @@
         "resourceType": "Encounter",
         "id": "958c63b0-4a7f-2ee7-bc39-251fdc043c14",
         "meta": {
+          "lastUpdated": "2024-12-01T00:00:00.000Z",
           "profile": [
             "http://hl7.org/fhir/us/core/StructureDefinition/us-core-encounter"
           ]
@@ -20782,6 +20983,7 @@
         "resourceType": "Encounter",
         "id": "958c63b0-4a7f-2ee7-7360-21c0fe3039ad",
         "meta": {
+          "lastUpdated": "2024-12-01T00:00:00.000Z",
           "profile": [
             "http://hl7.org/fhir/us/core/StructureDefinition/us-core-encounter"
           ]
@@ -21895,6 +22097,7 @@
         "resourceType": "Encounter",
         "id": "958c63b0-4a7f-2ee7-9402-fea392272da4",
         "meta": {
+          "lastUpdated": "2024-12-01T00:00:00.000Z",
           "profile": [
             "http://hl7.org/fhir/us/core/StructureDefinition/us-core-encounter"
           ]
@@ -23208,6 +23411,7 @@
         "resourceType": "Encounter",
         "id": "958c63b0-4a7f-2ee7-af89-b625b6cab194",
         "meta": {
+          "lastUpdated": "2024-12-01T00:00:00.000Z",
           "profile": [
             "http://hl7.org/fhir/us/core/StructureDefinition/us-core-encounter"
           ]
@@ -24121,6 +24325,7 @@
         "resourceType": "Encounter",
         "id": "958c63b0-4a7f-2ee7-4a4e-a9ed34fa527b",
         "meta": {
+          "lastUpdated": "2024-12-01T00:00:00.000Z",
           "profile": [
             "http://hl7.org/fhir/us/core/StructureDefinition/us-core-encounter"
           ]
@@ -25034,6 +25239,7 @@
         "resourceType": "Encounter",
         "id": "958c63b0-4a7f-2ee7-e50b-062c598ac032",
         "meta": {
+          "lastUpdated": "2024-12-01T00:00:00.000Z",
           "profile": [
             "http://hl7.org/fhir/us/core/StructureDefinition/us-core-encounter"
           ]
@@ -26547,6 +26753,7 @@
         "resourceType": "Encounter",
         "id": "958c63b0-4a7f-2ee7-46ca-21a9583492e1",
         "meta": {
+          "lastUpdated": "2024-12-01T00:00:00.000Z",
           "profile": [
             "http://hl7.org/fhir/us/core/StructureDefinition/us-core-encounter"
           ]
@@ -27460,6 +27667,7 @@
         "resourceType": "Encounter",
         "id": "958c63b0-4a7f-2ee7-8e63-d3c0bcf9f776",
         "meta": {
+          "lastUpdated": "2024-12-01T00:00:00.000Z",
           "profile": [
             "http://hl7.org/fhir/us/core/StructureDefinition/us-core-encounter"
           ]
@@ -28715,6 +28923,7 @@
         "resourceType": "Encounter",
         "id": "958c63b0-4a7f-2ee7-c2d1-8fec3263fa7a",
         "meta": {
+          "lastUpdated": "2024-12-01T00:00:00.000Z",
           "profile": [
             "http://hl7.org/fhir/us/core/StructureDefinition/us-core-encounter"
           ]
@@ -29628,6 +29837,7 @@
         "resourceType": "Encounter",
         "id": "958c63b0-4a7f-2ee7-d2f1-6a2885f3bc29",
         "meta": {
+          "lastUpdated": "2024-12-01T00:00:00.000Z",
           "profile": [
             "http://hl7.org/fhir/us/core/StructureDefinition/us-core-encounter"
           ]
@@ -30518,6 +30728,7 @@
         "resourceType": "Encounter",
         "id": "958c63b0-4a7f-2ee7-63e3-e976c6f40185",
         "meta": {
+          "lastUpdated": "2024-12-01T00:00:00.000Z",
           "profile": [
             "http://hl7.org/fhir/us/core/StructureDefinition/us-core-encounter"
           ]
@@ -30617,6 +30828,29 @@
             "http://hl7.org/fhir/us/core/StructureDefinition/us-core-medicationrequest"
           ]
         },
+        "extension": [
+          {
+            "url": "http://hl7.org/fhir/us/core/StructureDefinition/us-core-medication-adherence",
+            "extension": [
+              {
+                "url": "medicationAdherence",
+                "valueCodeableConcept": {
+                  "coding": [
+                    {
+                      "system": "http://snomed.info/sct",
+                      "code": "275928001",
+                      "display": "Medication compliance good"
+                    }
+                  ]
+                }
+              },
+              {
+                "url": "dateAsserted",
+                "valueDateTime": "2020-08-23T10:20:48-06:00"
+              }
+            ]
+          }
+        ],
         "status": "completed",
         "intent": "order",
         "category": [
@@ -30631,6 +30865,7 @@
             "text": "Community"
           }
         ],
+        "reportedBoolean": true,
         "medicationCodeableConcept": {
           "coding": [
             {
@@ -30651,7 +30886,134 @@
         "requester": {
           "reference": "Practitioner?identifier=http://hl7.org/fhir/sid/us-npi|9999994293",
           "display": "Dr. Lynn917 Goodwin327"
+        },
+        "reasonCode": [
+          {
+            "coding": [
+              {
+                "system": "http://snomed.info/sct",
+                "code": "161901003",
+                "display": "History of contraception (situation)"
+              }
+            ],
+            "text": "Contraception"
+          }
+        ],
+        "dosageInstruction": [
+          {
+            "text": "Take one tablet by mouth once daily at same time each day",
+            "timing": {
+              "repeat": {
+                "frequency": 1,
+                "period": 1,
+                "periodUnit": "d"
+              }
+            },
+            "doseAndRate": [
+              {
+                "doseQuantity": {
+                  "value": 1,
+                  "unit": "tablet",
+                  "system": "http://unitsofmeasure.org",
+                  "code": "{tablet}"
+                }
+              }
+            ]
+          }
+        ],
+        "dispenseRequest": {
+          "numberOfRepeatsAllowed": 12,
+          "quantity": {
+            "value": 84,
+            "unit": "tablet",
+            "system": "http://unitsofmeasure.org",
+            "code": "{tablet}"
+          }
         }
+      },
+      "request": {
+        "method": "POST",
+        "url": "MedicationRequest"
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:958c63b0-4a7f-2ee7-medr-proposal001",
+      "resource": {
+        "resourceType": "MedicationRequest",
+        "id": "958c63b0-4a7f-2ee7-medr-proposal001",
+        "meta": {
+          "profile": [
+            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-medicationrequest"
+          ]
+        },
+        "status": "active",
+        "intent": "proposal",
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/medicationrequest-category",
+                "code": "outpatient",
+                "display": "Outpatient"
+              }
+            ],
+            "text": "Outpatient"
+          }
+        ],
+        "reportedBoolean": false,
+        "medicationCodeableConcept": {
+          "coding": [
+            {
+              "system": "http://www.nlm.nih.gov/research/umls/rxnorm",
+              "code": "849574",
+              "display": "Naproxen sodium 220 MG Oral Tablet"
+            }
+          ],
+          "text": "Naproxen sodium 220 MG Oral Tablet"
+        },
+        "subject": {
+          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+        },
+        "authoredOn": "2024-11-15T14:30:00-06:00",
+        "requester": {
+          "reference": "Practitioner?identifier=http://hl7.org/fhir/sid/us-npi|9999994293",
+          "display": "Dr. Lynn917 Goodwin327"
+        },
+        "reasonCode": [
+          {
+            "coding": [
+              {
+                "system": "http://snomed.info/sct",
+                "code": "161891005",
+                "display": "Backache (finding)"
+              }
+            ],
+            "text": "Back pain management"
+          }
+        ],
+        "dosageInstruction": [
+          {
+            "text": "Take one tablet by mouth twice daily as needed for pain",
+            "timing": {
+              "repeat": {
+                "frequency": 2,
+                "period": 1,
+                "periodUnit": "d"
+              }
+            },
+            "asNeededBoolean": true,
+            "doseAndRate": [
+              {
+                "doseQuantity": {
+                  "value": 1,
+                  "unit": "tablet",
+                  "system": "http://unitsofmeasure.org",
+                  "code": "{tablet}"
+                }
+              }
+            ]
+          }
+        ]
       },
       "request": {
         "method": "POST",
@@ -31340,6 +31702,7 @@
         "resourceType": "Encounter",
         "id": "958c63b0-4a7f-2ee7-5ce3-a925be7210da",
         "meta": {
+          "lastUpdated": "2024-12-01T00:00:00.000Z",
           "profile": [
             "http://hl7.org/fhir/us/core/StructureDefinition/us-core-encounter"
           ]
@@ -32045,6 +32408,7 @@
         "resourceType": "Encounter",
         "id": "958c63b0-4a7f-2ee7-a564-3bc711f0c566",
         "meta": {
+          "lastUpdated": "2024-12-01T00:00:00.000Z",
           "profile": [
             "http://hl7.org/fhir/us/core/StructureDefinition/us-core-encounter"
           ]
@@ -36292,6 +36656,7 @@
         "resourceType": "Encounter",
         "id": "958c63b0-4a7f-2ee7-4de2-762976c8fec3",
         "meta": {
+          "lastUpdated": "2024-12-01T00:00:00.000Z",
           "profile": [
             "http://hl7.org/fhir/us/core/StructureDefinition/us-core-encounter"
           ]
@@ -44336,9 +44701,18 @@
           "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
           "display": "Mrs. Daisey627 Jackelyn13 Koelpin146"
         },
+        "context": {
+          "reference": "Encounter/958c63b0-4a7f-2ee7-258e-0ffacbc90453"
+        },
+        "authorizingPrescription": [
+          {
+            "reference": "MedicationRequest/958c63b0-4a7f-2ee7-ac5a-47f1fb73b92a"
+          }
+        ],
         "performer": [
           {
             "actor": {
+              "reference": "Organization/958c63b0-4a7f-2ee7-org-cvs",
               "display": "CVS Pharmacy #8472"
             }
           }
@@ -44432,9 +44806,18 @@
           "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
           "display": "Mrs. Daisey627 Jackelyn13 Koelpin146"
         },
+        "context": {
+          "reference": "Encounter/958c63b0-4a7f-2ee7-7c5f-d583df730d02"
+        },
+        "authorizingPrescription": [
+          {
+            "reference": "MedicationRequest/958c63b0-4a7f-2ee7-ce34-cc979135f480"
+          }
+        ],
         "performer": [
           {
             "actor": {
+              "reference": "Organization/958c63b0-4a7f-2ee7-org-walgreens",
               "display": "Walgreens #5621"
             }
           }
