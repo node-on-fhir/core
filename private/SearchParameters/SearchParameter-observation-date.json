@@ -1,0 +1,29 @@
+{
+  "resourceType": "SearchParameter",
+  "id": "observation-date",
+  "url": "http://hl7.org/fhir/SearchParameter/Observation-date",
+  "version": "4.0.1",
+  "name": "HoneycombObservationDate",
+  "status": "active",
+  "date": "2024-12-16",
+  "publisher": "github.com/node-on-fhir",
+  "contact": [
+    {
+      "telecom": [
+        {
+          "system": "url",
+          "value": "http://github.com/node-on-fhir/honeycomb"
+        }
+      ]
+    }
+  ],
+  "description": "Obtained date/time. If the obtained element is a period, a date that falls in the period",
+  "code": "date",
+  "base": ["Observation"],
+  "type": "date",
+  "expression": "Observation.effectiveDateTime",
+  "xpath": "effectiveDateTime",
+  "multipleOr": true,
+  "multipleAnd": true,
+  "comparator": ["eq", "ne", "gt", "lt", "ge", "le", "sa", "eb", "ap"]
+}
