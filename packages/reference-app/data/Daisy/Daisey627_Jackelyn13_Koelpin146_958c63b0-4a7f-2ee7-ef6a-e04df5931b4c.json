@@ -235,7 +235,7 @@
         "id": "958c63b0-4a7f-2ee7-org-medicaid",
         "meta": {
           "profile": [
-            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-organization"
+            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-organization|7.0.0"
           ]
         },
         "active": true,
@@ -270,6 +270,12 @@
             "postalCode": "62701",
             "country": "US"
           }
+        ],
+        "identifier": [
+          {
+            "system": "http://hl7.org/fhir/sid/us-npi",
+            "value": "1234567891"
+          }
         ]
       },
       "request": {
@@ -284,7 +290,7 @@
         "id": "958c63b0-4a7f-2ee7-org-bcbs",
         "meta": {
           "profile": [
-            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-organization"
+            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-organization|7.0.0"
           ]
         },
         "active": true,
@@ -319,6 +325,12 @@
             "postalCode": "60601",
             "country": "US"
           }
+        ],
+        "identifier": [
+          {
+            "system": "http://hl7.org/fhir/sid/us-npi",
+            "value": "1234567892"
+          }
         ]
       },
       "request": {
@@ -333,7 +345,7 @@
         "id": "958c63b0-4a7f-2ee7-org-cvs",
         "meta": {
           "profile": [
-            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-organization"
+            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-organization|7.0.0"
           ]
         },
         "active": true,
@@ -368,6 +380,12 @@
             "postalCode": "62701",
             "country": "US"
           }
+        ],
+        "identifier": [
+          {
+            "system": "http://hl7.org/fhir/sid/us-npi",
+            "value": "1234567893"
+          }
         ]
       },
       "request": {
@@ -382,7 +400,7 @@
         "id": "958c63b0-4a7f-2ee7-org-walgreens",
         "meta": {
           "profile": [
-            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-organization"
+            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-organization|7.0.0"
           ]
         },
         "active": true,
@@ -416,6 +434,12 @@
             "state": "IL",
             "postalCode": "62702",
             "country": "US"
+          }
+        ],
+        "identifier": [
+          {
+            "system": "http://hl7.org/fhir/sid/us-npi",
+            "value": "1234567894"
           }
         ]
       },
@@ -3797,7 +3821,14 @@
         "location": {
           "reference": "Location?identifier=https://github.com/synthetichealth/synthea|8a2c3057-4b23-3721-8aff-06f500e93c43",
           "display": "HOLY CROSS HOSPITAL"
-        }
+        },
+        "basedOn": [
+          {
+            "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
+            "display": "Order for lab panel"
+          }
+        ],
+        "performedDateTime": "2018-03-29T10:20:48-06:00"
       },
       "request": {
         "method": "POST",
@@ -5350,7 +5381,8 @@
           "profile": [
             "http://hl7.org/fhir/us/core/StructureDefinition/us-core-observation-lab",
             "http://hl7.org/fhir/us/core/StructureDefinition/us-core-observation-lab"
-          ]
+          ],
+          "lastUpdated": "2018-06-10T10:30:00.000Z"
         },
         "status": "final",
         "category": [
@@ -5387,7 +5419,38 @@
           "unit": "10*3/uL",
           "system": "http://unitsofmeasure.org",
           "code": "10*3/uL"
-        }
+        },
+        "interpretation": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/v3-ObservationInterpretation",
+                "code": "L",
+                "display": "Low"
+              }
+            ]
+          }
+        ],
+        "specimen": {
+          "reference": "Specimen/958c63b0-4a7f-2ee7-specimen-001"
+        },
+        "referenceRange": [
+          {
+            "low": {
+              "value": 4.5,
+              "unit": "10*3/uL",
+              "system": "http://unitsofmeasure.org",
+              "code": "10*3/uL"
+            },
+            "high": {
+              "value": 11.0,
+              "unit": "10*3/uL",
+              "system": "http://unitsofmeasure.org",
+              "code": "10*3/uL"
+            },
+            "text": "4.5 - 11.0 10*3/uL"
+          }
+        ]
       },
       "request": {
         "method": "POST",
@@ -6613,7 +6676,14 @@
         "location": {
           "reference": "Location?identifier=https://github.com/synthetichealth/synthea|f55f7bf4-0aff-31c9-a1d3-b16d4bd8a881",
           "display": "ESPERANZA HEALTH CENTERS"
-        }
+        },
+        "basedOn": [
+          {
+            "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
+            "display": "Order for lab panel"
+          }
+        ],
+        "performedDateTime": "2018-06-10T10:20:48-06:00"
       },
       "request": {
         "method": "POST",
@@ -6654,7 +6724,14 @@
         "location": {
           "reference": "Location?identifier=https://github.com/synthetichealth/synthea|f55f7bf4-0aff-31c9-a1d3-b16d4bd8a881",
           "display": "ESPERANZA HEALTH CENTERS"
-        }
+        },
+        "basedOn": [
+          {
+            "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
+            "display": "Order for lab panel"
+          }
+        ],
+        "performedDateTime": "2018-06-10T10:20:48-06:00"
       },
       "request": {
         "method": "POST",
@@ -6695,7 +6772,14 @@
         "location": {
           "reference": "Location?identifier=https://github.com/synthetichealth/synthea|f55f7bf4-0aff-31c9-a1d3-b16d4bd8a881",
           "display": "ESPERANZA HEALTH CENTERS"
-        }
+        },
+        "basedOn": [
+          {
+            "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
+            "display": "Order for lab panel"
+          }
+        ],
+        "performedDateTime": "2018-06-10T10:58:52-06:00"
       },
       "request": {
         "method": "POST",
@@ -6736,7 +6820,14 @@
         "location": {
           "reference": "Location?identifier=https://github.com/synthetichealth/synthea|f55f7bf4-0aff-31c9-a1d3-b16d4bd8a881",
           "display": "ESPERANZA HEALTH CENTERS"
-        }
+        },
+        "basedOn": [
+          {
+            "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
+            "display": "Order for lab panel"
+          }
+        ],
+        "performedDateTime": "2018-06-10T11:17:53-06:00"
       },
       "request": {
         "method": "POST",
@@ -6777,7 +6868,14 @@
         "location": {
           "reference": "Location?identifier=https://github.com/synthetichealth/synthea|f55f7bf4-0aff-31c9-a1d3-b16d4bd8a881",
           "display": "ESPERANZA HEALTH CENTERS"
-        }
+        },
+        "basedOn": [
+          {
+            "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
+            "display": "Order for lab panel"
+          }
+        ],
+        "performedDateTime": "2018-06-10T11:28:52-06:00"
       },
       "request": {
         "method": "POST",
@@ -9670,7 +9768,14 @@
         "location": {
           "reference": "Location?identifier=https://github.com/synthetichealth/synthea|8a2c3057-4b23-3721-8aff-06f500e93c43",
           "display": "HOLY CROSS HOSPITAL"
-        }
+        },
+        "basedOn": [
+          {
+            "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
+            "display": "Order for lab panel"
+          }
+        ],
+        "performedDateTime": "2018-07-08T10:20:48-06:00"
       },
       "request": {
         "method": "POST",
@@ -10378,7 +10483,14 @@
         "location": {
           "reference": "Location?identifier=https://github.com/synthetichealth/synthea|8a2c3057-4b23-3721-8aff-06f500e93c43",
           "display": "HOLY CROSS HOSPITAL"
-        }
+        },
+        "basedOn": [
+          {
+            "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
+            "display": "Order for lab panel"
+          }
+        ],
+        "performedDateTime": "2018-10-07T10:20:48-06:00"
       },
       "request": {
         "method": "POST",
@@ -11086,7 +11198,14 @@
         "location": {
           "reference": "Location?identifier=https://github.com/synthetichealth/synthea|8a2c3057-4b23-3721-8aff-06f500e93c43",
           "display": "HOLY CROSS HOSPITAL"
-        }
+        },
+        "basedOn": [
+          {
+            "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
+            "display": "Order for lab panel"
+          }
+        ],
+        "performedDateTime": "2019-01-06T09:20:48-07:00"
       },
       "request": {
         "method": "POST",
@@ -11794,7 +11913,14 @@
         "location": {
           "reference": "Location?identifier=https://github.com/synthetichealth/synthea|8a2c3057-4b23-3721-8aff-06f500e93c43",
           "display": "HOLY CROSS HOSPITAL"
-        }
+        },
+        "basedOn": [
+          {
+            "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
+            "display": "Order for lab panel"
+          }
+        ],
+        "performedDateTime": "2019-04-07T10:20:48-06:00"
       },
       "request": {
         "method": "POST",
@@ -12502,7 +12628,14 @@
         "location": {
           "reference": "Location?identifier=https://github.com/synthetichealth/synthea|8a2c3057-4b23-3721-8aff-06f500e93c43",
           "display": "HOLY CROSS HOSPITAL"
-        }
+        },
+        "basedOn": [
+          {
+            "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
+            "display": "Order for lab panel"
+          }
+        ],
+        "performedDateTime": "2019-07-07T10:20:48-06:00"
       },
       "request": {
         "method": "POST",
@@ -13266,7 +13399,14 @@
         "location": {
           "reference": "Location?identifier=https://github.com/synthetichealth/synthea|8a2c3057-4b23-3721-8aff-06f500e93c43",
           "display": "HOLY CROSS HOSPITAL"
-        }
+        },
+        "basedOn": [
+          {
+            "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
+            "display": "Order for lab panel"
+          }
+        ],
+        "performedDateTime": "2019-10-06T10:20:48-06:00"
       },
       "request": {
         "method": "POST",
@@ -14106,7 +14246,14 @@
             "reference": "urn:uuid:958c63b0-4a7f-2ee7-fe66-e99f71348ac8",
             "display": "Normal pregnancy (finding)"
           }
-        ]
+        ],
+        "basedOn": [
+          {
+            "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
+            "display": "Order for lab panel"
+          }
+        ],
+        "performedDateTime": "2019-12-01T09:20:48-07:00"
       },
       "request": {
         "method": "POST",
@@ -14153,7 +14300,14 @@
             "reference": "urn:uuid:958c63b0-4a7f-2ee7-fe66-e99f71348ac8",
             "display": "Normal pregnancy (finding)"
           }
-        ]
+        ],
+        "basedOn": [
+          {
+            "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
+            "display": "Order for lab panel"
+          }
+        ],
+        "performedDateTime": "2019-12-01T09:20:48-07:00"
       },
       "request": {
         "method": "POST",
@@ -14200,7 +14354,14 @@
             "reference": "urn:uuid:958c63b0-4a7f-2ee7-fe66-e99f71348ac8",
             "display": "Normal pregnancy (finding)"
           }
-        ]
+        ],
+        "basedOn": [
+          {
+            "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
+            "display": "Order for lab panel"
+          }
+        ],
+        "performedDateTime": "2019-12-01T09:20:48-07:00"
       },
       "request": {
         "method": "POST",
@@ -14247,7 +14408,14 @@
             "reference": "urn:uuid:958c63b0-4a7f-2ee7-fe66-e99f71348ac8",
             "display": "Normal pregnancy (finding)"
           }
-        ]
+        ],
+        "basedOn": [
+          {
+            "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
+            "display": "Order for lab panel"
+          }
+        ],
+        "performedDateTime": "2019-12-01T09:20:48-07:00"
       },
       "request": {
         "method": "POST",
@@ -14294,7 +14462,14 @@
             "reference": "urn:uuid:958c63b0-4a7f-2ee7-fe66-e99f71348ac8",
             "display": "Normal pregnancy (finding)"
           }
-        ]
+        ],
+        "basedOn": [
+          {
+            "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
+            "display": "Order for lab panel"
+          }
+        ],
+        "performedDateTime": "2019-12-01T09:20:48-07:00"
       },
       "request": {
         "method": "POST",
@@ -14341,7 +14516,14 @@
             "reference": "urn:uuid:958c63b0-4a7f-2ee7-fe66-e99f71348ac8",
             "display": "Normal pregnancy (finding)"
           }
-        ]
+        ],
+        "basedOn": [
+          {
+            "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
+            "display": "Order for lab panel"
+          }
+        ],
+        "performedDateTime": "2019-12-01T09:20:48-07:00"
       },
       "request": {
         "method": "POST",
@@ -14388,7 +14570,14 @@
             "reference": "urn:uuid:958c63b0-4a7f-2ee7-fe66-e99f71348ac8",
             "display": "Normal pregnancy (finding)"
           }
-        ]
+        ],
+        "basedOn": [
+          {
+            "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
+            "display": "Order for lab panel"
+          }
+        ],
+        "performedDateTime": "2019-12-01T09:20:48-07:00"
       },
       "request": {
         "method": "POST",
@@ -14435,7 +14624,14 @@
             "reference": "urn:uuid:958c63b0-4a7f-2ee7-fe66-e99f71348ac8",
             "display": "Normal pregnancy (finding)"
           }
-        ]
+        ],
+        "basedOn": [
+          {
+            "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
+            "display": "Order for lab panel"
+          }
+        ],
+        "performedDateTime": "2019-12-01T09:20:48-07:00"
       },
       "request": {
         "method": "POST",
@@ -14482,7 +14678,14 @@
             "reference": "urn:uuid:958c63b0-4a7f-2ee7-fe66-e99f71348ac8",
             "display": "Normal pregnancy (finding)"
           }
-        ]
+        ],
+        "basedOn": [
+          {
+            "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
+            "display": "Order for lab panel"
+          }
+        ],
+        "performedDateTime": "2019-12-01T09:20:48-07:00"
       },
       "request": {
         "method": "POST",
@@ -14529,7 +14732,14 @@
             "reference": "urn:uuid:958c63b0-4a7f-2ee7-fe66-e99f71348ac8",
             "display": "Normal pregnancy (finding)"
           }
-        ]
+        ],
+        "basedOn": [
+          {
+            "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
+            "display": "Order for lab panel"
+          }
+        ],
+        "performedDateTime": "2019-12-01T09:20:48-07:00"
       },
       "request": {
         "method": "POST",
@@ -14576,7 +14786,14 @@
             "reference": "urn:uuid:958c63b0-4a7f-2ee7-fe66-e99f71348ac8",
             "display": "Normal pregnancy (finding)"
           }
-        ]
+        ],
+        "basedOn": [
+          {
+            "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
+            "display": "Order for lab panel"
+          }
+        ],
+        "performedDateTime": "2019-12-01T09:20:48-07:00"
       },
       "request": {
         "method": "POST",
@@ -14623,7 +14840,14 @@
             "reference": "urn:uuid:958c63b0-4a7f-2ee7-fe66-e99f71348ac8",
             "display": "Normal pregnancy (finding)"
           }
-        ]
+        ],
+        "basedOn": [
+          {
+            "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
+            "display": "Order for lab panel"
+          }
+        ],
+        "performedDateTime": "2019-12-01T09:20:48-07:00"
       },
       "request": {
         "method": "POST",
@@ -14670,7 +14894,14 @@
             "reference": "urn:uuid:958c63b0-4a7f-2ee7-fe66-e99f71348ac8",
             "display": "Normal pregnancy (finding)"
           }
-        ]
+        ],
+        "basedOn": [
+          {
+            "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
+            "display": "Order for lab panel"
+          }
+        ],
+        "performedDateTime": "2019-12-01T09:20:48-07:00"
       },
       "request": {
         "method": "POST",
@@ -14717,7 +14948,14 @@
             "reference": "urn:uuid:958c63b0-4a7f-2ee7-fe66-e99f71348ac8",
             "display": "Normal pregnancy (finding)"
           }
-        ]
+        ],
+        "basedOn": [
+          {
+            "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
+            "display": "Order for lab panel"
+          }
+        ],
+        "performedDateTime": "2019-12-01T09:20:48-07:00"
       },
       "request": {
         "method": "POST",
@@ -14764,7 +15002,14 @@
             "reference": "urn:uuid:958c63b0-4a7f-2ee7-fe66-e99f71348ac8",
             "display": "Normal pregnancy (finding)"
           }
-        ]
+        ],
+        "basedOn": [
+          {
+            "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
+            "display": "Order for lab panel"
+          }
+        ],
+        "performedDateTime": "2019-12-01T09:20:48-07:00"
       },
       "request": {
         "method": "POST",
@@ -14811,7 +15056,14 @@
             "reference": "urn:uuid:958c63b0-4a7f-2ee7-fe66-e99f71348ac8",
             "display": "Normal pregnancy (finding)"
           }
-        ]
+        ],
+        "basedOn": [
+          {
+            "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
+            "display": "Order for lab panel"
+          }
+        ],
+        "performedDateTime": "2019-12-01T09:20:48-07:00"
       },
       "request": {
         "method": "POST",
@@ -14858,7 +15110,14 @@
             "reference": "urn:uuid:958c63b0-4a7f-2ee7-fe66-e99f71348ac8",
             "display": "Normal pregnancy (finding)"
           }
-        ]
+        ],
+        "basedOn": [
+          {
+            "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
+            "display": "Order for lab panel"
+          }
+        ],
+        "performedDateTime": "2019-12-01T09:20:48-07:00"
       },
       "request": {
         "method": "POST",
@@ -14905,7 +15164,14 @@
             "reference": "urn:uuid:958c63b0-4a7f-2ee7-fe66-e99f71348ac8",
             "display": "Normal pregnancy (finding)"
           }
-        ]
+        ],
+        "basedOn": [
+          {
+            "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
+            "display": "Order for lab panel"
+          }
+        ],
+        "performedDateTime": "2019-12-01T09:20:48-07:00"
       },
       "request": {
         "method": "POST",
@@ -14952,7 +15218,14 @@
             "reference": "urn:uuid:958c63b0-4a7f-2ee7-fe66-e99f71348ac8",
             "display": "Normal pregnancy (finding)"
           }
-        ]
+        ],
+        "basedOn": [
+          {
+            "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
+            "display": "Order for lab panel"
+          }
+        ],
+        "performedDateTime": "2019-12-01T09:20:48-07:00"
       },
       "request": {
         "method": "POST",
@@ -14999,7 +15272,14 @@
             "reference": "urn:uuid:958c63b0-4a7f-2ee7-fe66-e99f71348ac8",
             "display": "Normal pregnancy (finding)"
           }
-        ]
+        ],
+        "basedOn": [
+          {
+            "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
+            "display": "Order for lab panel"
+          }
+        ],
+        "performedDateTime": "2019-12-01T09:20:48-07:00"
       },
       "request": {
         "method": "POST",
@@ -19555,7 +19835,14 @@
         "location": {
           "reference": "Location?identifier=https://github.com/synthetichealth/synthea|8a2c3057-4b23-3721-8aff-06f500e93c43",
           "display": "HOLY CROSS HOSPITAL"
-        }
+        },
+        "basedOn": [
+          {
+            "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
+            "display": "Order for lab panel"
+          }
+        ],
+        "performedDateTime": "2019-12-01T09:20:48-07:00"
       },
       "request": {
         "method": "POST",
@@ -19596,7 +19883,14 @@
         "location": {
           "reference": "Location?identifier=https://github.com/synthetichealth/synthea|8a2c3057-4b23-3721-8aff-06f500e93c43",
           "display": "HOLY CROSS HOSPITAL"
-        }
+        },
+        "basedOn": [
+          {
+            "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
+            "display": "Order for lab panel"
+          }
+        ],
+        "performedDateTime": "2019-12-01T09:50:48-07:00"
       },
       "request": {
         "method": "POST",
@@ -19637,7 +19931,14 @@
         "location": {
           "reference": "Location?identifier=https://github.com/synthetichealth/synthea|8a2c3057-4b23-3721-8aff-06f500e93c43",
           "display": "HOLY CROSS HOSPITAL"
-        }
+        },
+        "basedOn": [
+          {
+            "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
+            "display": "Order for lab panel"
+          }
+        ],
+        "performedDateTime": "2019-12-01T10:06:35-07:00"
       },
       "request": {
         "method": "POST",
@@ -19678,7 +19979,14 @@
         "location": {
           "reference": "Location?identifier=https://github.com/synthetichealth/synthea|8a2c3057-4b23-3721-8aff-06f500e93c43",
           "display": "HOLY CROSS HOSPITAL"
-        }
+        },
+        "basedOn": [
+          {
+            "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
+            "display": "Order for lab panel"
+          }
+        ],
+        "performedDateTime": "2019-12-01T10:15:54-07:00"
       },
       "request": {
         "method": "POST",
@@ -21113,7 +21421,14 @@
             "reference": "urn:uuid:958c63b0-4a7f-2ee7-fe66-e99f71348ac8",
             "display": "Normal pregnancy (finding)"
           }
-        ]
+        ],
+        "basedOn": [
+          {
+            "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
+            "display": "Order for lab panel"
+          }
+        ],
+        "performedDateTime": "2019-12-29T10:28:19-07:00"
       },
       "request": {
         "method": "POST",
@@ -21160,7 +21475,14 @@
             "reference": "urn:uuid:958c63b0-4a7f-2ee7-fe66-e99f71348ac8",
             "display": "Normal pregnancy (finding)"
           }
-        ]
+        ],
+        "basedOn": [
+          {
+            "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
+            "display": "Order for lab panel"
+          }
+        ],
+        "performedDateTime": "2019-12-29T10:28:19-07:00"
       },
       "request": {
         "method": "POST",
@@ -21207,7 +21529,14 @@
             "reference": "urn:uuid:958c63b0-4a7f-2ee7-fe66-e99f71348ac8",
             "display": "Normal pregnancy (finding)"
           }
-        ]
+        ],
+        "basedOn": [
+          {
+            "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
+            "display": "Order for lab panel"
+          }
+        ],
+        "performedDateTime": "2019-12-29T10:28:19-07:00"
       },
       "request": {
         "method": "POST",
@@ -22227,7 +22556,14 @@
             "reference": "urn:uuid:958c63b0-4a7f-2ee7-fe66-e99f71348ac8",
             "display": "Normal pregnancy (finding)"
           }
-        ]
+        ],
+        "basedOn": [
+          {
+            "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
+            "display": "Order for lab panel"
+          }
+        ],
+        "performedDateTime": "2020-01-26T10:28:19-07:00"
       },
       "request": {
         "method": "POST",
@@ -22274,7 +22610,14 @@
             "reference": "urn:uuid:958c63b0-4a7f-2ee7-fe66-e99f71348ac8",
             "display": "Normal pregnancy (finding)"
           }
-        ]
+        ],
+        "basedOn": [
+          {
+            "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
+            "display": "Order for lab panel"
+          }
+        ],
+        "performedDateTime": "2020-01-26T10:28:19-07:00"
       },
       "request": {
         "method": "POST",
@@ -22321,7 +22664,14 @@
             "reference": "urn:uuid:958c63b0-4a7f-2ee7-fe66-e99f71348ac8",
             "display": "Normal pregnancy (finding)"
           }
-        ]
+        ],
+        "basedOn": [
+          {
+            "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
+            "display": "Order for lab panel"
+          }
+        ],
+        "performedDateTime": "2020-01-26T10:28:19-07:00"
       },
       "request": {
         "method": "POST",
@@ -22368,7 +22718,14 @@
             "reference": "urn:uuid:958c63b0-4a7f-2ee7-fe66-e99f71348ac8",
             "display": "Normal pregnancy (finding)"
           }
-        ]
+        ],
+        "basedOn": [
+          {
+            "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
+            "display": "Order for lab panel"
+          }
+        ],
+        "performedDateTime": "2020-01-26T10:28:19-07:00"
       },
       "request": {
         "method": "POST",
@@ -23541,7 +23898,14 @@
             "reference": "urn:uuid:958c63b0-4a7f-2ee7-fe66-e99f71348ac8",
             "display": "Normal pregnancy (finding)"
           }
-        ]
+        ],
+        "basedOn": [
+          {
+            "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
+            "display": "Order for lab panel"
+          }
+        ],
+        "performedDateTime": "2020-02-23T10:28:19-07:00"
       },
       "request": {
         "method": "POST",
@@ -23588,7 +23952,14 @@
             "reference": "urn:uuid:958c63b0-4a7f-2ee7-fe66-e99f71348ac8",
             "display": "Normal pregnancy (finding)"
           }
-        ]
+        ],
+        "basedOn": [
+          {
+            "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
+            "display": "Order for lab panel"
+          }
+        ],
+        "performedDateTime": "2020-02-23T10:28:19-07:00"
       },
       "request": {
         "method": "POST",
@@ -24455,7 +24826,14 @@
             "reference": "urn:uuid:958c63b0-4a7f-2ee7-fe66-e99f71348ac8",
             "display": "Normal pregnancy (finding)"
           }
-        ]
+        ],
+        "basedOn": [
+          {
+            "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
+            "display": "Order for lab panel"
+          }
+        ],
+        "performedDateTime": "2020-03-22T11:28:19-06:00"
       },
       "request": {
         "method": "POST",
@@ -24502,7 +24880,14 @@
             "reference": "urn:uuid:958c63b0-4a7f-2ee7-fe66-e99f71348ac8",
             "display": "Normal pregnancy (finding)"
           }
-        ]
+        ],
+        "basedOn": [
+          {
+            "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
+            "display": "Order for lab panel"
+          }
+        ],
+        "performedDateTime": "2020-03-22T11:28:19-06:00"
       },
       "request": {
         "method": "POST",
@@ -25369,7 +25754,14 @@
             "reference": "urn:uuid:958c63b0-4a7f-2ee7-fe66-e99f71348ac8",
             "display": "Normal pregnancy (finding)"
           }
-        ]
+        ],
+        "basedOn": [
+          {
+            "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
+            "display": "Order for lab panel"
+          }
+        ],
+        "performedDateTime": "2020-04-19T11:28:19-06:00"
       },
       "request": {
         "method": "POST",
@@ -25416,7 +25808,14 @@
             "reference": "urn:uuid:958c63b0-4a7f-2ee7-fe66-e99f71348ac8",
             "display": "Normal pregnancy (finding)"
           }
-        ]
+        ],
+        "basedOn": [
+          {
+            "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
+            "display": "Order for lab panel"
+          }
+        ],
+        "performedDateTime": "2020-04-19T11:28:19-06:00"
       },
       "request": {
         "method": "POST",
@@ -25463,7 +25862,14 @@
             "reference": "urn:uuid:958c63b0-4a7f-2ee7-fe66-e99f71348ac8",
             "display": "Normal pregnancy (finding)"
           }
-        ]
+        ],
+        "basedOn": [
+          {
+            "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
+            "display": "Order for lab panel"
+          }
+        ],
+        "performedDateTime": "2020-04-19T11:28:19-06:00"
       },
       "request": {
         "method": "POST",
@@ -25510,7 +25916,14 @@
             "reference": "urn:uuid:958c63b0-4a7f-2ee7-fe66-e99f71348ac8",
             "display": "Normal pregnancy (finding)"
           }
-        ]
+        ],
+        "basedOn": [
+          {
+            "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
+            "display": "Order for lab panel"
+          }
+        ],
+        "performedDateTime": "2020-04-19T11:28:19-06:00"
       },
       "request": {
         "method": "POST",
@@ -25557,7 +25970,14 @@
             "reference": "urn:uuid:958c63b0-4a7f-2ee7-fe66-e99f71348ac8",
             "display": "Normal pregnancy (finding)"
           }
-        ]
+        ],
+        "basedOn": [
+          {
+            "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
+            "display": "Order for lab panel"
+          }
+        ],
+        "performedDateTime": "2020-04-19T11:28:19-06:00"
       },
       "request": {
         "method": "POST",
@@ -26883,7 +27303,14 @@
             "reference": "urn:uuid:958c63b0-4a7f-2ee7-fe66-e99f71348ac8",
             "display": "Normal pregnancy (finding)"
           }
-        ]
+        ],
+        "basedOn": [
+          {
+            "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
+            "display": "Order for lab panel"
+          }
+        ],
+        "performedDateTime": "2020-05-17T11:28:19-06:00"
       },
       "request": {
         "method": "POST",
@@ -26930,7 +27357,14 @@
             "reference": "urn:uuid:958c63b0-4a7f-2ee7-fe66-e99f71348ac8",
             "display": "Normal pregnancy (finding)"
           }
-        ]
+        ],
+        "basedOn": [
+          {
+            "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
+            "display": "Order for lab panel"
+          }
+        ],
+        "performedDateTime": "2020-05-17T11:28:19-06:00"
       },
       "request": {
         "method": "POST",
@@ -27859,7 +28293,14 @@
             "reference": "urn:uuid:958c63b0-4a7f-2ee7-fe66-e99f71348ac8",
             "display": "Normal pregnancy (finding)"
           }
-        ]
+        ],
+        "basedOn": [
+          {
+            "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
+            "display": "Order for lab panel"
+          }
+        ],
+        "performedDateTime": "2020-06-14T11:28:19-06:00"
       },
       "request": {
         "method": "POST",
@@ -27906,7 +28347,14 @@
             "reference": "urn:uuid:958c63b0-4a7f-2ee7-fe66-e99f71348ac8",
             "display": "Normal pregnancy (finding)"
           }
-        ]
+        ],
+        "basedOn": [
+          {
+            "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
+            "display": "Order for lab panel"
+          }
+        ],
+        "performedDateTime": "2020-06-14T11:28:19-06:00"
       },
       "request": {
         "method": "POST",
@@ -27953,7 +28401,14 @@
             "reference": "urn:uuid:958c63b0-4a7f-2ee7-fe66-e99f71348ac8",
             "display": "Normal pregnancy (finding)"
           }
-        ]
+        ],
+        "basedOn": [
+          {
+            "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
+            "display": "Order for lab panel"
+          }
+        ],
+        "performedDateTime": "2020-06-14T11:28:19-06:00"
       },
       "request": {
         "method": "POST",
@@ -29053,7 +29508,14 @@
             "reference": "urn:uuid:958c63b0-4a7f-2ee7-fe66-e99f71348ac8",
             "display": "Normal pregnancy (finding)"
           }
-        ]
+        ],
+        "basedOn": [
+          {
+            "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
+            "display": "Order for lab panel"
+          }
+        ],
+        "performedDateTime": "2020-06-28T11:28:19-06:00"
       },
       "request": {
         "method": "POST",
@@ -29100,7 +29562,14 @@
             "reference": "urn:uuid:958c63b0-4a7f-2ee7-fe66-e99f71348ac8",
             "display": "Normal pregnancy (finding)"
           }
-        ]
+        ],
+        "basedOn": [
+          {
+            "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
+            "display": "Order for lab panel"
+          }
+        ],
+        "performedDateTime": "2020-06-28T11:28:19-06:00"
       },
       "request": {
         "method": "POST",
@@ -29950,7 +30419,14 @@
         "location": {
           "reference": "Location?identifier=https://github.com/synthetichealth/synthea|8a2c3057-4b23-3721-8aff-06f500e93c43",
           "display": "HOLY CROSS HOSPITAL"
-        }
+        },
+        "basedOn": [
+          {
+            "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
+            "display": "Order for lab panel"
+          }
+        ],
+        "performedDateTime": "2020-08-09T11:28:19-06:00"
       },
       "request": {
         "method": "POST",
@@ -29991,7 +30467,14 @@
         "location": {
           "reference": "Location?identifier=https://github.com/synthetichealth/synthea|8a2c3057-4b23-3721-8aff-06f500e93c43",
           "display": "HOLY CROSS HOSPITAL"
-        }
+        },
+        "basedOn": [
+          {
+            "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
+            "display": "Order for lab panel"
+          }
+        ],
+        "performedDateTime": "2020-08-09T11:28:19-06:00"
       },
       "request": {
         "method": "POST",
@@ -33744,7 +34227,14 @@
         "location": {
           "reference": "Location?identifier=https://github.com/synthetichealth/synthea|f55f7bf4-0aff-31c9-a1d3-b16d4bd8a881",
           "display": "ESPERANZA HEALTH CENTERS"
-        }
+        },
+        "basedOn": [
+          {
+            "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
+            "display": "Order for lab panel"
+          }
+        ],
+        "performedDateTime": "2021-06-13T10:20:48-06:00"
       },
       "request": {
         "method": "POST",
@@ -33785,7 +34275,14 @@
         "location": {
           "reference": "Location?identifier=https://github.com/synthetichealth/synthea|f55f7bf4-0aff-31c9-a1d3-b16d4bd8a881",
           "display": "ESPERANZA HEALTH CENTERS"
-        }
+        },
+        "basedOn": [
+          {
+            "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
+            "display": "Order for lab panel"
+          }
+        ],
+        "performedDateTime": "2021-06-13T10:20:48-06:00"
       },
       "request": {
         "method": "POST",
@@ -33826,7 +34323,14 @@
         "location": {
           "reference": "Location?identifier=https://github.com/synthetichealth/synthea|f55f7bf4-0aff-31c9-a1d3-b16d4bd8a881",
           "display": "ESPERANZA HEALTH CENTERS"
-        }
+        },
+        "basedOn": [
+          {
+            "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
+            "display": "Order for lab panel"
+          }
+        ],
+        "performedDateTime": "2021-06-13T11:14:18-06:00"
       },
       "request": {
         "method": "POST",
@@ -33867,7 +34371,14 @@
         "location": {
           "reference": "Location?identifier=https://github.com/synthetichealth/synthea|f55f7bf4-0aff-31c9-a1d3-b16d4bd8a881",
           "display": "ESPERANZA HEALTH CENTERS"
-        }
+        },
+        "basedOn": [
+          {
+            "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
+            "display": "Order for lab panel"
+          }
+        ],
+        "performedDateTime": "2021-06-13T11:54:38-06:00"
       },
       "request": {
         "method": "POST",
@@ -33908,7 +34419,14 @@
         "location": {
           "reference": "Location?identifier=https://github.com/synthetichealth/synthea|f55f7bf4-0aff-31c9-a1d3-b16d4bd8a881",
           "display": "ESPERANZA HEALTH CENTERS"
-        }
+        },
+        "basedOn": [
+          {
+            "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
+            "display": "Order for lab panel"
+          }
+        ],
+        "performedDateTime": "2021-06-13T12:05:55-06:00"
       },
       "request": {
         "method": "POST",
@@ -33949,7 +34467,14 @@
         "location": {
           "reference": "Location?identifier=https://github.com/synthetichealth/synthea|f55f7bf4-0aff-31c9-a1d3-b16d4bd8a881",
           "display": "ESPERANZA HEALTH CENTERS"
-        }
+        },
+        "basedOn": [
+          {
+            "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
+            "display": "Order for lab panel"
+          }
+        ],
+        "performedDateTime": "2021-06-13T12:32:18-06:00"
       },
       "request": {
         "method": "POST",
@@ -33990,7 +34515,14 @@
         "location": {
           "reference": "Location?identifier=https://github.com/synthetichealth/synthea|f55f7bf4-0aff-31c9-a1d3-b16d4bd8a881",
           "display": "ESPERANZA HEALTH CENTERS"
-        }
+        },
+        "basedOn": [
+          {
+            "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
+            "display": "Order for lab panel"
+          }
+        ],
+        "performedDateTime": "2021-06-13T12:46:57-06:00"
       },
       "request": {
         "method": "POST",
@@ -38776,6 +39308,60 @@
       }
     },
     {
+      "fullUrl": "urn:uuid:958c63b0-4a7f-2ee7-obs-packyears-001",
+      "resource": {
+        "resourceType": "Observation",
+        "id": "958c63b0-4a7f-2ee7-obs-packyears-001",
+        "meta": {
+          "profile": [
+            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-smokingstatus"
+          ]
+        },
+        "status": "final",
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+                "code": "social-history",
+                "display": "Social History"
+              }
+            ]
+          }
+        ],
+        "code": {
+          "coding": [
+            {
+              "system": "http://snomed.info/sct",
+              "code": "401201003",
+              "display": "Cigarette pack-years (observable entity)"
+            }
+          ],
+          "text": "Cigarette Pack-Years"
+        },
+        "subject": {
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
+          "display": "Mrs. Daisey627 Jackelyn13 Koelpin146"
+        },
+        "effectiveDateTime": "2024-06-16",
+        "performer": [
+          {
+            "display": "Primary Care Physician"
+          }
+        ],
+        "valueQuantity": {
+          "value": 0,
+          "unit": "pack-years",
+          "system": "http://unitsofmeasure.org",
+          "code": "{pack-years}"
+        }
+      },
+      "request": {
+        "method": "POST",
+        "url": "Observation"
+      }
+    },
+    {
       "fullUrl": "urn:uuid:958c63b0-4a7f-2ee7-a13b-549c552dd6cc",
       "resource": {
         "resourceType": "Observation",
@@ -39515,7 +40101,14 @@
         "location": {
           "reference": "Location?identifier=https://github.com/synthetichealth/synthea|f55f7bf4-0aff-31c9-a1d3-b16d4bd8a881",
           "display": "ESPERANZA HEALTH CENTERS"
-        }
+        },
+        "basedOn": [
+          {
+            "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
+            "display": "Order for lab panel"
+          }
+        ],
+        "performedDateTime": "2024-06-16T10:20:48-06:00"
       },
       "request": {
         "method": "POST",
@@ -39556,7 +40149,14 @@
         "location": {
           "reference": "Location?identifier=https://github.com/synthetichealth/synthea|f55f7bf4-0aff-31c9-a1d3-b16d4bd8a881",
           "display": "ESPERANZA HEALTH CENTERS"
-        }
+        },
+        "basedOn": [
+          {
+            "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
+            "display": "Order for lab panel"
+          }
+        ],
+        "performedDateTime": "2024-06-16T11:07:07-06:00"
       },
       "request": {
         "method": "POST",
@@ -39597,7 +40197,14 @@
         "location": {
           "reference": "Location?identifier=https://github.com/synthetichealth/synthea|f55f7bf4-0aff-31c9-a1d3-b16d4bd8a881",
           "display": "ESPERANZA HEALTH CENTERS"
-        }
+        },
+        "basedOn": [
+          {
+            "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
+            "display": "Order for lab panel"
+          }
+        ],
+        "performedDateTime": "2024-06-16T11:21:59-06:00"
       },
       "request": {
         "method": "POST",
@@ -39638,7 +40245,14 @@
         "location": {
           "reference": "Location?identifier=https://github.com/synthetichealth/synthea|f55f7bf4-0aff-31c9-a1d3-b16d4bd8a881",
           "display": "ESPERANZA HEALTH CENTERS"
-        }
+        },
+        "basedOn": [
+          {
+            "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
+            "display": "Order for lab panel"
+          }
+        ],
+        "performedDateTime": "2024-06-16T11:45:23-06:00"
       },
       "request": {
         "method": "POST",
@@ -39679,7 +40293,14 @@
         "location": {
           "reference": "Location?identifier=https://github.com/synthetichealth/synthea|f55f7bf4-0aff-31c9-a1d3-b16d4bd8a881",
           "display": "ESPERANZA HEALTH CENTERS"
-        }
+        },
+        "basedOn": [
+          {
+            "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
+            "display": "Order for lab panel"
+          }
+        ],
+        "performedDateTime": "2024-06-16T12:09:33-06:00"
       },
       "request": {
         "method": "POST",
@@ -39720,7 +40341,14 @@
         "location": {
           "reference": "Location?identifier=https://github.com/synthetichealth/synthea|f55f7bf4-0aff-31c9-a1d3-b16d4bd8a881",
           "display": "ESPERANZA HEALTH CENTERS"
-        }
+        },
+        "basedOn": [
+          {
+            "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
+            "display": "Order for lab panel"
+          }
+        ],
+        "performedDateTime": "2024-06-16T12:19:39-06:00"
       },
       "request": {
         "method": "POST",
@@ -44954,7 +45582,15 @@
           {
             "text": "Annual metabolic screening for patient with prediabetes. Monitor glucose, renal function, electrolytes."
           }
-        ]
+        ],
+        "encounter": {
+          "reference": "urn:uuid:958c63b0-4a7f-2ee7-e3a7-067647287b2b"
+        },
+        "authoredOn": "2018-06-10T09:00:00-06:00",
+        "occurrencePeriod": {
+          "start": "2018-06-10T09:00:00-06:00",
+          "end": "2018-06-10T09:00:00-06:00"
+        }
       },
       "request": {
         "method": "POST",
@@ -45025,7 +45661,15 @@
           {
             "text": "Evaluate persistent fatigue and previously documented anemia."
           }
-        ]
+        ],
+        "encounter": {
+          "reference": "urn:uuid:958c63b0-4a7f-2ee7-e3a7-067647287b2b"
+        },
+        "authoredOn": "2018-06-10T09:00:00-06:00",
+        "occurrencePeriod": {
+          "start": "2018-06-10T09:00:00-06:00",
+          "end": "2018-06-10T09:00:00-06:00"
+        }
       },
       "request": {
         "method": "POST",
@@ -45096,7 +45740,15 @@
           {
             "text": "Quarterly monitoring per diabetes prevention protocol."
           }
-        ]
+        ],
+        "encounter": {
+          "reference": "urn:uuid:958c63b0-4a7f-2ee7-e3a7-067647287b2b"
+        },
+        "authoredOn": "2021-06-13T09:00:00-06:00",
+        "occurrencePeriod": {
+          "start": "2021-06-13T09:00:00-06:00",
+          "end": "2021-06-13T09:00:00-06:00"
+        }
       },
       "request": {
         "method": "POST",
@@ -45167,7 +45819,15 @@
           {
             "text": "Initial prenatal labs including blood type, Rh, antibody screen, infectious disease screening."
           }
-        ]
+        ],
+        "encounter": {
+          "reference": "urn:uuid:958c63b0-4a7f-2ee7-e3a7-067647287b2b"
+        },
+        "authoredOn": "2011-09-30T10:30:00-06:00",
+        "occurrencePeriod": {
+          "start": "2011-09-30T10:30:00-06:00",
+          "end": "2011-09-30T10:30:00-06:00"
+        }
       },
       "request": {
         "method": "POST",
@@ -45181,8 +45841,18 @@
         "id": "958c63b0-4a7f-2ee7-specimen-001",
         "meta": {
           "profile": [
-            "http://hl7.org/fhir/StructureDefinition/Specimen"
+            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-specimen|7.0.0"
           ]
+        },
+        "identifier": [
+          {
+            "system": "http://example.org/specimen-ids",
+            "value": "SPEC-2018-001-BLOOD"
+          }
+        ],
+        "accessionIdentifier": {
+          "system": "http://example.org/lab-accession",
+          "value": "ACC-2018-06-10-001"
         },
         "status": "available",
         "type": {
@@ -45224,6 +45894,18 @@
             ]
           }
         },
+        "condition": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/v2-0493",
+                "code": "SAT",
+                "display": "Satisfactory"
+              }
+            ],
+            "text": "Satisfactory"
+          }
+        ],
         "container": [
           {
             "type": {
@@ -45261,8 +45943,18 @@
         "id": "958c63b0-4a7f-2ee7-specimen-002",
         "meta": {
           "profile": [
-            "http://hl7.org/fhir/StructureDefinition/Specimen"
+            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-specimen|7.0.0"
           ]
+        },
+        "identifier": [
+          {
+            "system": "http://example.org/specimen-ids",
+            "value": "SPEC-2018-002-BLOOD"
+          }
+        ],
+        "accessionIdentifier": {
+          "system": "http://example.org/lab-accession",
+          "value": "ACC-2018-06-10-002"
         },
         "status": "available",
         "type": {
@@ -45304,6 +45996,18 @@
             ]
           }
         },
+        "condition": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/v2-0493",
+                "code": "SAT",
+                "display": "Satisfactory"
+              }
+            ],
+            "text": "Satisfactory"
+          }
+        ],
         "container": [
           {
             "type": {
@@ -45341,8 +46045,18 @@
         "id": "958c63b0-4a7f-2ee7-specimen-003",
         "meta": {
           "profile": [
-            "http://hl7.org/fhir/StructureDefinition/Specimen"
+            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-specimen|7.0.0"
           ]
+        },
+        "identifier": [
+          {
+            "system": "http://example.org/specimen-ids",
+            "value": "SPEC-2018-003-CERV"
+          }
+        ],
+        "accessionIdentifier": {
+          "system": "http://example.org/lab-accession",
+          "value": "ACC-2018-06-10-003"
         },
         "status": "available",
         "type": {
@@ -45384,6 +46098,18 @@
             ]
           }
         },
+        "condition": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/v2-0493",
+                "code": "SAT",
+                "display": "Satisfactory"
+              }
+            ],
+            "text": "Satisfactory"
+          }
+        ],
         "container": [
           {
             "type": {
@@ -45409,8 +46135,18 @@
         "id": "958c63b0-4a7f-2ee7-specimen-004",
         "meta": {
           "profile": [
-            "http://hl7.org/fhir/StructureDefinition/Specimen"
+            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-specimen|7.0.0"
           ]
+        },
+        "identifier": [
+          {
+            "system": "http://example.org/specimen-ids",
+            "value": "SPEC-2011-004-URINE"
+          }
+        ],
+        "accessionIdentifier": {
+          "system": "http://example.org/lab-accession",
+          "value": "ACC-2011-09-30-001"
         },
         "status": "available",
         "type": {
@@ -45438,8 +46174,29 @@
                 "display": "Urine specimen collection, clean catch"
               }
             ]
+          },
+          "bodySite": {
+            "coding": [
+              {
+                "system": "http://snomed.info/sct",
+                "code": "119297000",
+                "display": "Urinary system structure"
+              }
+            ]
           }
         },
+        "condition": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/v2-0493",
+                "code": "SAT",
+                "display": "Satisfactory"
+              }
+            ],
+            "text": "Satisfactory"
+          }
+        ],
         "container": [
           {
             "type": {
@@ -45965,6 +46722,11 @@
           "coding": [
             {
               "system": "http://loinc.org",
+              "code": "2708-6",
+              "display": "Oxygen saturation in Arterial blood"
+            },
+            {
+              "system": "http://loinc.org",
               "code": "2710-2",
               "display": "Oxygen saturation in Capillary blood by Pulse oximetry"
             },
@@ -46021,11 +46783,28 @@
               "system": "http://unitsofmeasure.org",
               "code": "%"
             }
+          },
+          {
+            "code": {
+              "coding": [
+                {
+                  "system": "http://loinc.org",
+                  "code": "3151-8",
+                  "display": "Inhaled oxygen flow rate"
+                }
+              ]
+            },
+            "valueQuantity": {
+              "value": 2,
+              "unit": "L/min",
+              "system": "http://unitsofmeasure.org",
+              "code": "L/min"
+            }
           }
         ],
         "note": [
           {
-            "text": "Good oxygenation on ambient air."
+            "text": "Good oxygenation on supplemental oxygen via nasal cannula at 2 L/min."
           }
         ]
       },
@@ -46054,14 +46833,23 @@
                 "display": "Survey"
               }
             ]
+          },
+          {
+            "coding": [
+              {
+                "system": "http://hl7.org/fhir/us/core/CodeSystem/us-core-category",
+                "code": "treatment-intervention-preference",
+                "display": "Treatment Intervention Preference"
+              }
+            ]
           }
         ],
         "code": {
           "coding": [
             {
               "system": "http://loinc.org",
-              "code": "96842-0",
-              "display": "Treatment intervention preference"
+              "code": "75773-2",
+              "display": "Goals, preferences, and priorities for medical treatment [Reported]"
             }
           ],
           "text": "Treatment Intervention Preference"
@@ -46071,12 +46859,74 @@
           "display": "Mrs. Daisey627 Jackelyn13 Koelpin146"
         },
         "effectiveDateTime": "2024-06-16",
-        "valueString": "Prefers non-pharmacological interventions when possible. Requests lifestyle modifications, physical therapy, and conservative management before escalating to medications. Prefers shared decision-making for treatment plans.",
+        "valueCodeableConcept": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "LA33-6",
+              "display": "Yes"
+            }
+          ],
+          "text": "Prefers non-pharmacological interventions when possible"
+        },
         "note": [
           {
             "text": "Patient expresses preference for lifestyle modifications, physical therapy, and conservative management before escalating to medications. Requests shared decision-making for treatment plans."
           }
         ]
+      },
+      "request": {
+        "method": "POST",
+        "url": "Observation"
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:958c63b0-4a7f-2ee7-obs-treatpref-002",
+      "resource": {
+        "resourceType": "Observation",
+        "id": "958c63b0-4a7f-2ee7-obs-treatpref-002",
+        "meta": {
+          "profile": [
+            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-treatment-intervention-preference"
+          ]
+        },
+        "status": "final",
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+                "code": "survey",
+                "display": "Survey"
+              }
+            ]
+          },
+          {
+            "coding": [
+              {
+                "system": "http://hl7.org/fhir/us/core/CodeSystem/us-core-category",
+                "code": "treatment-intervention-preference",
+                "display": "Treatment Intervention Preference"
+              }
+            ]
+          }
+        ],
+        "code": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "75773-2",
+              "display": "Goals, preferences, and priorities for medical treatment [Reported]"
+            }
+          ],
+          "text": "Treatment Intervention Preference"
+        },
+        "subject": {
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
+          "display": "Mrs. Daisey627 Jackelyn13 Koelpin146"
+        },
+        "effectiveDateTime": "2024-07-16",
+        "valueString": "Patient prefers non-pharmacological interventions when possible. Requests lifestyle modifications, physical therapy, and conservative management before escalating to medications. Values shared decision-making for all treatment plans."
       },
       "request": {
         "method": "POST",
@@ -46109,7 +46959,7 @@
           "coding": [
             {
               "system": "http://loinc.org",
-              "code": "75773-2",
+              "code": "95541-9",
               "display": "Care experience preference"
             }
           ],
@@ -46324,13 +47174,17 @@
         "id": "ee691ea5-61a0-3ae2-bacf-38185afca1ed",
         "meta": {
           "profile": [
-            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-organization"
+            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-organization|7.0.0"
           ]
         },
         "identifier": [
           {
             "system": "https://github.com/synthetichealth/synthea",
             "value": "ee691ea5-61a0-3ae2-bacf-38185afca1ed"
+          },
+          {
+            "system": "http://hl7.org/fhir/sid/us-npi",
+            "value": "1234568271"
           }
         ],
         "active": true,
@@ -46376,13 +47230,17 @@
         "id": "0b9c0333-82df-33e1-8917-959af53479cb",
         "meta": {
           "profile": [
-            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-organization"
+            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-organization|7.0.0"
           ]
         },
         "identifier": [
           {
             "system": "https://github.com/synthetichealth/synthea",
             "value": "0b9c0333-82df-33e1-8917-959af53479cb"
+          },
+          {
+            "system": "http://hl7.org/fhir/sid/us-npi",
+            "value": "1234568272"
           }
         ],
         "active": true,
@@ -46428,13 +47286,17 @@
         "id": "afa7dd1c-6966-333f-9892-9eeb88042cc9",
         "meta": {
           "profile": [
-            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-organization"
+            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-organization|7.0.0"
           ]
         },
         "identifier": [
           {
             "system": "https://github.com/synthetichealth/synthea",
             "value": "afa7dd1c-6966-333f-9892-9eeb88042cc9"
+          },
+          {
+            "system": "http://hl7.org/fhir/sid/us-npi",
+            "value": "1234568273"
           }
         ],
         "active": true,
@@ -46509,7 +47371,18 @@
         "managingOrganization": {
           "reference": "Organization/ee691ea5-61a0-3ae2-bacf-38185afca1ed",
           "display": "ESPERANZA HEALTH CENTERS"
-        }
+        },
+        "type": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/v3-RoleCode",
+                "code": "CHC",
+                "display": "Community Health Center"
+              }
+            ]
+          }
+        ]
       },
       "request": {
         "method": "POST",
@@ -46552,7 +47425,18 @@
         "managingOrganization": {
           "reference": "Organization/afa7dd1c-6966-333f-9892-9eeb88042cc9",
           "display": "KEDZIE FAMILY HEALTH CENTER"
-        }
+        },
+        "type": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/v3-RoleCode",
+                "code": "CHC",
+                "display": "Community Health Center"
+              }
+            ]
+          }
+        ]
       },
       "request": {
         "method": "POST",
@@ -46595,7 +47479,18 @@
         "managingOrganization": {
           "reference": "Organization/0b9c0333-82df-33e1-8917-959af53479cb",
           "display": "HOLY CROSS HOSPITAL"
-        }
+        },
+        "type": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/v3-RoleCode",
+                "code": "HOSP",
+                "display": "Hospital"
+              }
+            ]
+          }
+        ]
       },
       "request": {
         "method": "POST",
@@ -46628,6 +47523,17 @@
             "prefix": [
               "Dr."
             ]
+          }
+        ],
+        "telecom": [
+          {
+            "system": "phone",
+            "value": "555-555-1234",
+            "use": "work"
+          },
+          {
+            "system": "email",
+            "value": "provider@healthcare.org"
           }
         ]
       },
@@ -46663,6 +47569,17 @@
               "Dr."
             ]
           }
+        ],
+        "telecom": [
+          {
+            "system": "phone",
+            "value": "555-555-1234",
+            "use": "work"
+          },
+          {
+            "system": "email",
+            "value": "provider@healthcare.org"
+          }
         ]
       },
       "request": {
@@ -46696,6 +47613,17 @@
             "prefix": [
               "Dr."
             ]
+          }
+        ],
+        "telecom": [
+          {
+            "system": "phone",
+            "value": "555-555-1234",
+            "use": "work"
+          },
+          {
+            "system": "email",
+            "value": "provider@healthcare.org"
           }
         ]
       },
@@ -46745,6 +47673,850 @@
       "request": {
         "method": "POST",
         "url": "Media"
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:958c63b0-4a7f-2ee7-obs-urine-glucose-001",
+      "resource": {
+        "resourceType": "Observation",
+        "id": "958c63b0-4a7f-2ee7-obs-urine-glucose-001",
+        "meta": {
+          "profile": [
+            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-observation-lab"
+          ],
+          "lastUpdated": "2024-06-16T11:00:00.000Z"
+        },
+        "status": "final",
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+                "code": "laboratory",
+                "display": "Laboratory"
+              }
+            ]
+          }
+        ],
+        "code": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "2349-9",
+              "display": "Glucose [Presence] in Urine by Test strip"
+            }
+          ],
+          "text": "Urine Glucose"
+        },
+        "subject": {
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+        },
+        "encounter": {
+          "reference": "urn:uuid:958c63b0-4a7f-2ee7-258e-0ffacbc90453"
+        },
+        "effectiveDateTime": "2024-06-16T10:30:00-06:00",
+        "issued": "2024-06-16T10:45:00.000-06:00",
+        "valueCodeableConcept": {
+          "coding": [
+            {
+              "system": "http://snomed.info/sct",
+              "code": "260385009",
+              "display": "Negative"
+            }
+          ],
+          "text": "Negative"
+        },
+        "interpretation": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/v3-ObservationInterpretation",
+                "code": "N",
+                "display": "Normal"
+              }
+            ]
+          }
+        ],
+        "specimen": {
+          "reference": "Specimen/958c63b0-4a7f-2ee7-specimen-002"
+        }
+      },
+      "request": {
+        "method": "POST",
+        "url": "Observation"
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:958c63b0-4a7f-2ee7-obs-urine-micro-001",
+      "resource": {
+        "resourceType": "Observation",
+        "id": "958c63b0-4a7f-2ee7-obs-urine-micro-001",
+        "meta": {
+          "profile": [
+            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-observation-lab"
+          ],
+          "lastUpdated": "2024-06-16T11:15:00.000Z"
+        },
+        "status": "final",
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+                "code": "laboratory",
+                "display": "Laboratory"
+              }
+            ]
+          }
+        ],
+        "code": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "12235-8",
+              "display": "Microscopic observation [Identifier] in Urine sediment by Light microscopy"
+            }
+          ],
+          "text": "Urine Microscopy"
+        },
+        "subject": {
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+        },
+        "encounter": {
+          "reference": "urn:uuid:958c63b0-4a7f-2ee7-258e-0ffacbc90453"
+        },
+        "effectiveDateTime": "2024-06-16T10:30:00-06:00",
+        "issued": "2024-06-16T11:00:00.000-06:00",
+        "valueString": "No abnormal cells seen. Rare epithelial cells. No bacteria observed.",
+        "interpretation": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/v3-ObservationInterpretation",
+                "code": "N",
+                "display": "Normal"
+              }
+            ]
+          }
+        ],
+        "specimen": {
+          "reference": "Specimen/958c63b0-4a7f-2ee7-specimen-002"
+        }
+      },
+      "request": {
+        "method": "POST",
+        "url": "Observation"
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:958c63b0-4a7f-2ee7-obs-packyears-001",
+      "resource": {
+        "resourceType": "Observation",
+        "id": "958c63b0-4a7f-2ee7-obs-packyears-001",
+        "meta": {
+          "profile": [
+            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-simple-observation"
+          ]
+        },
+        "status": "final",
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+                "code": "social-history",
+                "display": "Social History"
+              }
+            ]
+          }
+        ],
+        "code": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "8663-7",
+              "display": "Cigarettes smoked current (pack per day) - Reported"
+            }
+          ],
+          "text": "Cigarettes smoked per day"
+        },
+        "subject": {
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
+          "display": "Mrs. Daisey627 Jackelyn13 Koelpin146"
+        },
+        "effectiveDateTime": "2024-06-16",
+        "valueQuantity": {
+          "value": 0,
+          "unit": "{pack}/d",
+          "system": "http://unitsofmeasure.org",
+          "code": "{pack}/d"
+        },
+        "note": [
+          {
+            "text": "Patient reports never having smoked tobacco."
+          }
+        ]
+      },
+      "request": {
+        "method": "POST",
+        "url": "Observation"
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:958c63b0-4a7f-2ee7-obs-occup-industry-001",
+      "resource": {
+        "resourceType": "Observation",
+        "id": "958c63b0-4a7f-2ee7-obs-occup-industry-001",
+        "meta": {
+          "profile": [
+            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-observation-occupation"
+          ]
+        },
+        "status": "final",
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+                "code": "social-history",
+                "display": "Social History"
+              }
+            ]
+          }
+        ],
+        "code": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "11341-5",
+              "display": "History of Occupation industry"
+            }
+          ],
+          "text": "History of Occupation Industry"
+        },
+        "subject": {
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
+          "display": "Mrs. Daisey627 Jackelyn13 Koelpin146"
+        },
+        "effectivePeriod": {
+          "start": "2015-01-01",
+          "end": "2024-06-16"
+        },
+        "valueCodeableConcept": {
+          "coding": [
+            {
+              "system": "urn:oid:2.16.840.1.114222.4.5.314",
+              "code": "29-1141",
+              "display": "Registered Nurses"
+            }
+          ],
+          "text": "Registered Nurse"
+        },
+        "component": [
+          {
+            "code": {
+              "coding": [
+                {
+                  "system": "http://loinc.org",
+                  "code": "86188-0",
+                  "display": "History of Occupation industry"
+                }
+              ]
+            },
+            "valueCodeableConcept": {
+              "coding": [
+                {
+                  "system": "urn:oid:2.16.840.1.114222.4.5.315",
+                  "code": "622110",
+                  "display": "General Medical and Surgical Hospitals"
+                }
+              ],
+              "text": "Healthcare - Hospital"
+            }
+          }
+        ]
+      },
+      "request": {
+        "method": "POST",
+        "url": "Observation"
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:958c63b0-4a7f-2ee7-obs-careexp-95541-001",
+      "resource": {
+        "resourceType": "Observation",
+        "id": "958c63b0-4a7f-2ee7-obs-careexp-95541-001",
+        "meta": {
+          "profile": [
+            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-care-experience-preference"
+          ]
+        },
+        "status": "final",
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+                "code": "survey",
+                "display": "Survey"
+              }
+            ]
+          },
+          {
+            "coding": [
+              {
+                "system": "http://hl7.org/fhir/us/core/CodeSystem/us-core-category",
+                "code": "care-experience-preference",
+                "display": "Care Experience Preference"
+              }
+            ]
+          }
+        ],
+        "code": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "95541-9",
+              "display": "Care experience preference"
+            }
+          ],
+          "text": "Care Experience Preference"
+        },
+        "subject": {
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
+          "display": "Mrs. Daisey627 Jackelyn13 Koelpin146"
+        },
+        "effectiveDateTime": "2024-06-16",
+        "valueString": "Patient prefers female providers for sensitive examinations. Values continuity of care and long-term relationships with care team."
+      },
+      "request": {
+        "method": "POST",
+        "url": "Observation"
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:958c63b0-4a7f-2ee7-obs-careexp-coded-001",
+      "resource": {
+        "resourceType": "Observation",
+        "id": "958c63b0-4a7f-2ee7-obs-careexp-coded-001",
+        "meta": {
+          "profile": [
+            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-care-experience-preference"
+          ]
+        },
+        "status": "final",
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+                "code": "survey",
+                "display": "Survey"
+              }
+            ]
+          },
+          {
+            "coding": [
+              {
+                "system": "http://hl7.org/fhir/us/core/CodeSystem/us-core-category",
+                "code": "care-experience-preference",
+                "display": "Care Experience Preference"
+              }
+            ]
+          }
+        ],
+        "code": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "95541-9",
+              "display": "Care experience preference"
+            }
+          ],
+          "text": "Care Experience Preference"
+        },
+        "subject": {
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
+          "display": "Mrs. Daisey627 Jackelyn13 Koelpin146"
+        },
+        "effectiveDateTime": "2024-06-16",
+        "valueCodeableConcept": {
+          "coding": [
+            {
+              "system": "http://snomed.info/sct",
+              "code": "183919006",
+              "display": "Prefers doctor of same gender"
+            }
+          ],
+          "text": "Patient prefers care providers of same gender when possible"
+        }
+      },
+      "request": {
+        "method": "POST",
+        "url": "Observation"
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:958c63b0-4a7f-2ee7-obs-wfl-percentile-001",
+      "resource": {
+        "resourceType": "Observation",
+        "id": "958c63b0-4a7f-2ee7-obs-wfl-percentile-001",
+        "meta": {
+          "profile": [
+            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-pediatric-weight-for-height"
+          ]
+        },
+        "status": "final",
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+                "code": "vital-signs",
+                "display": "Vital Signs"
+              }
+            ]
+          }
+        ],
+        "code": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "77606-2",
+              "display": "Weight-for-length Per age and sex"
+            }
+          ],
+          "text": "Weight-for-length Percentile"
+        },
+        "subject": {
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
+          "display": "Mrs. Daisey627 Jackelyn13 Koelpin146"
+        },
+        "effectiveDateTime": "2024-06-16",
+        "valueQuantity": {
+          "value": 55,
+          "unit": "%",
+          "system": "http://unitsofmeasure.org",
+          "code": "%"
+        },
+        "note": [
+          {
+            "text": "Historical pediatric measurement from patient records."
+          }
+        ]
+      },
+      "request": {
+        "method": "POST",
+        "url": "Observation"
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:958c63b0-4a7f-2ee7-obs-head-circ-001",
+      "resource": {
+        "resourceType": "Observation",
+        "id": "958c63b0-4a7f-2ee7-obs-head-circ-001",
+        "meta": {
+          "profile": [
+            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-head-circumference"
+          ]
+        },
+        "status": "final",
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+                "code": "vital-signs",
+                "display": "Vital Signs"
+              }
+            ]
+          }
+        ],
+        "code": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "9843-4",
+              "display": "Head Occipital-frontal circumference"
+            }
+          ],
+          "text": "Head Circumference"
+        },
+        "subject": {
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
+          "display": "Mrs. Daisey627 Jackelyn13 Koelpin146"
+        },
+        "effectiveDateTime": "2024-06-16",
+        "valueQuantity": {
+          "value": 55,
+          "unit": "cm",
+          "system": "http://unitsofmeasure.org",
+          "code": "cm"
+        }
+      },
+      "request": {
+        "method": "POST",
+        "url": "Observation"
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:958c63b0-4a7f-2ee7-obs-sdoh-assess-001",
+      "resource": {
+        "resourceType": "Observation",
+        "id": "958c63b0-4a7f-2ee7-obs-sdoh-assess-001",
+        "meta": {
+          "profile": [
+            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-observation-sdoh-assessment"
+          ]
+        },
+        "status": "final",
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+                "code": "survey",
+                "display": "Survey"
+              }
+            ]
+          },
+          {
+            "coding": [
+              {
+                "system": "http://hl7.org/fhir/us/core/CodeSystem/us-core-category",
+                "code": "sdoh",
+                "display": "SDOH"
+              }
+            ]
+          }
+        ],
+        "code": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "96607-7",
+              "display": "SDOH Assessment"
+            }
+          ],
+          "text": "Social Determinants of Health Assessment"
+        },
+        "subject": {
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
+          "display": "Mrs. Daisey627 Jackelyn13 Koelpin146"
+        },
+        "effectiveDateTime": "2024-06-16",
+        "valueCodeableConcept": {
+          "coding": [
+            {
+              "system": "http://snomed.info/sct",
+              "code": "160903007",
+              "display": "Full-time employment"
+            }
+          ],
+          "text": "Employed full-time, stable housing, adequate food access"
+        }
+      },
+      "request": {
+        "method": "POST",
+        "url": "Observation"
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:958c63b0-4a7f-2ee7-obs-bmi-percentile-001",
+      "resource": {
+        "resourceType": "Observation",
+        "id": "958c63b0-4a7f-2ee7-obs-bmi-percentile-001",
+        "meta": {
+          "profile": [
+            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-pediatric-bmi-for-age"
+          ]
+        },
+        "status": "final",
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+                "code": "vital-signs",
+                "display": "Vital Signs"
+              }
+            ]
+          }
+        ],
+        "code": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "59576-9",
+              "display": "Body mass index (BMI) [Percentile] Per age and sex"
+            }
+          ],
+          "text": "BMI Percentile"
+        },
+        "subject": {
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
+          "display": "Mrs. Daisey627 Jackelyn13 Koelpin146"
+        },
+        "effectiveDateTime": "2024-06-16",
+        "valueQuantity": {
+          "value": 62,
+          "unit": "%",
+          "system": "http://unitsofmeasure.org",
+          "code": "%"
+        },
+        "note": [
+          {
+            "text": "Historical pediatric measurement from patient records."
+          }
+        ]
+      },
+      "request": {
+        "method": "POST",
+        "url": "Observation"
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:958c63b0-4a7f-2ee7-obs-head-circ-pctl-001",
+      "resource": {
+        "resourceType": "Observation",
+        "id": "958c63b0-4a7f-2ee7-obs-head-circ-pctl-001",
+        "meta": {
+          "profile": [
+            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-head-circumference-percentile"
+          ]
+        },
+        "status": "final",
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+                "code": "vital-signs",
+                "display": "Vital Signs"
+              }
+            ]
+          }
+        ],
+        "code": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "8289-1",
+              "display": "Head Occipital-frontal circumference Percentile"
+            }
+          ],
+          "text": "Head Circumference Percentile"
+        },
+        "subject": {
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
+          "display": "Mrs. Daisey627 Jackelyn13 Koelpin146"
+        },
+        "effectiveDateTime": "2024-06-16",
+        "valueQuantity": {
+          "value": 50,
+          "unit": "%",
+          "system": "http://unitsofmeasure.org",
+          "code": "%"
+        },
+        "note": [
+          {
+            "text": "Historical pediatric measurement from patient records."
+          }
+        ]
+      },
+      "request": {
+        "method": "POST",
+        "url": "Observation"
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:958c63b0-4a7f-2ee7-bp-absent-001",
+      "resource": {
+        "resourceType": "Observation",
+        "id": "958c63b0-4a7f-2ee7-bp-absent-001",
+        "meta": {
+          "profile": [
+            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-blood-pressure"
+          ]
+        },
+        "status": "final",
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+                "code": "vital-signs",
+                "display": "Vital Signs"
+              }
+            ],
+            "text": "Vital Signs"
+          }
+        ],
+        "code": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "85354-9",
+              "display": "Blood pressure panel with all children optional"
+            }
+          ],
+          "text": "Blood pressure panel with all children optional"
+        },
+        "subject": {
+          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+        },
+        "encounter": {
+          "reference": "urn:uuid:958c63b0-4a7f-2ee7-e3a7-067647287b2b"
+        },
+        "effectiveDateTime": "2020-06-14T10:20:48-06:00",
+        "issued": "2020-06-14T10:20:48.254-06:00",
+        "component": [
+          {
+            "code": {
+              "coding": [
+                {
+                  "system": "http://loinc.org",
+                  "code": "8480-6",
+                  "display": "Systolic Blood Pressure"
+                }
+              ],
+              "text": "Systolic Blood Pressure"
+            },
+            "dataAbsentReason": {
+              "coding": [
+                {
+                  "system": "http://terminology.hl7.org/CodeSystem/data-absent-reason",
+                  "code": "not-performed",
+                  "display": "Not Performed"
+                }
+              ],
+              "text": "Not Performed"
+            }
+          },
+          {
+            "code": {
+              "coding": [
+                {
+                  "system": "http://loinc.org",
+                  "code": "8462-4",
+                  "display": "Diastolic Blood Pressure"
+                }
+              ],
+              "text": "Diastolic Blood Pressure"
+            },
+            "dataAbsentReason": {
+              "coding": [
+                {
+                  "system": "http://terminology.hl7.org/CodeSystem/data-absent-reason",
+                  "code": "not-performed",
+                  "display": "Not Performed"
+                }
+              ],
+              "text": "Not Performed"
+            }
+          }
+        ]
+      },
+      "request": {
+        "method": "POST",
+        "url": "Observation"
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:958c63b0-4a7f-2ee7-obs-simple-string-001",
+      "resource": {
+        "resourceType": "Observation",
+        "id": "958c63b0-4a7f-2ee7-obs-simple-string-001",
+        "meta": {
+          "profile": [
+            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-simple-observation"
+          ]
+        },
+        "status": "final",
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+                "code": "social-history",
+                "display": "Social History"
+              }
+            ],
+            "text": "Social History"
+          }
+        ],
+        "code": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "69453-9",
+              "display": "Cause of Death [US Standard Certificate of Death]"
+            }
+          ],
+          "text": "Clinical comment"
+        },
+        "subject": {
+          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+        },
+        "effectiveDateTime": "2024-06-16T10:30:00-06:00",
+        "valueString": "Patient reports excellent adherence to treatment plan and lifestyle modifications. No concerns at this time."
+      },
+      "request": {
+        "method": "POST",
+        "url": "Observation"
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:958c63b0-4a7f-2ee7-obs-simple-coded-001",
+      "resource": {
+        "resourceType": "Observation",
+        "id": "958c63b0-4a7f-2ee7-obs-simple-coded-001",
+        "meta": {
+          "profile": [
+            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-simple-observation"
+          ]
+        },
+        "status": "final",
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+                "code": "social-history",
+                "display": "Social History"
+              }
+            ],
+            "text": "Social History"
+          }
+        ],
+        "code": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "76690-7",
+              "display": "Sexual orientation"
+            }
+          ],
+          "text": "Sexual orientation"
+        },
+        "subject": {
+          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+        },
+        "effectiveDateTime": "2024-06-16T10:35:00-06:00",
+        "valueCodeableConcept": {
+          "coding": [
+            {
+              "system": "http://snomed.info/sct",
+              "code": "38628009",
+              "display": "Heterosexual (finding)"
+            }
+          ],
+          "text": "Heterosexual"
+        }
+      },
+      "request": {
+        "method": "POST",
+        "url": "Observation"
       }
     }
   ]
