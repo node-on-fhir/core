@@ -881,7 +881,12 @@ WebApp.handlers.post("/oauth/token", async (req, res) => {
         }
         
         // Check if client is registered in our system
-        let registeredClient = await OAuthClients.findOneAsync({ client_id: clientId });
+        // Security: Try _id first (original owner wins), then fall back to client_id field
+        // This prevents impersonation if attacker registers client_id matching existing _id
+        let registeredClient = await OAuthClients.findOneAsync({ _id: clientId });
+        if (!registeredClient) {
+          registeredClient = await OAuthClients.findOneAsync({ client_id: clientId });
+        }
         
         if (!registeredClient) {
           res.status(400).json({
