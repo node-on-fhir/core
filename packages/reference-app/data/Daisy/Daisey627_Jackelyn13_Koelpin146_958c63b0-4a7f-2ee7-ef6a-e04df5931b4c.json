@@ -274,7 +274,7 @@
         "identifier": [
           {
             "system": "http://hl7.org/fhir/sid/us-npi",
-            "value": "1234567891"
+            "value": "1234567018"
           }
         ]
       },
@@ -329,7 +329,7 @@
         "identifier": [
           {
             "system": "http://hl7.org/fhir/sid/us-npi",
-            "value": "1234567892"
+            "value": "1234567034"
           }
         ]
       },
@@ -384,7 +384,7 @@
         "identifier": [
           {
             "system": "http://hl7.org/fhir/sid/us-npi",
-            "value": "1234567893"
+            "value": "1234567026"
           }
         ]
       },
@@ -439,7 +439,7 @@
         "identifier": [
           {
             "system": "http://hl7.org/fhir/sid/us-npi",
-            "value": "1234567894"
+            "value": "1234567042"
           }
         ]
       },
@@ -3831,8 +3831,7 @@
             "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
             "display": "Order for lab panel"
           }
-        ],
-        "performedDateTime": "2018-03-29T10:20:48-06:00"
+        ]
       },
       "request": {
         "method": "POST",
@@ -6688,8 +6687,7 @@
             "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
             "display": "Order for lab panel"
           }
-        ],
-        "performedDateTime": "2018-06-10T10:20:48-06:00"
+        ]
       },
       "request": {
         "method": "POST",
@@ -6736,8 +6734,7 @@
             "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
             "display": "Order for lab panel"
           }
-        ],
-        "performedDateTime": "2018-06-10T10:20:48-06:00"
+        ]
       },
       "request": {
         "method": "POST",
@@ -6784,8 +6781,7 @@
             "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
             "display": "Order for lab panel"
           }
-        ],
-        "performedDateTime": "2018-06-10T10:58:52-06:00"
+        ]
       },
       "request": {
         "method": "POST",
@@ -6832,8 +6828,7 @@
             "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
             "display": "Order for lab panel"
           }
-        ],
-        "performedDateTime": "2018-06-10T11:17:53-06:00"
+        ]
       },
       "request": {
         "method": "POST",
@@ -6880,8 +6875,7 @@
             "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
             "display": "Order for lab panel"
           }
-        ],
-        "performedDateTime": "2018-06-10T11:28:52-06:00"
+        ]
       },
       "request": {
         "method": "POST",
@@ -9781,8 +9775,7 @@
             "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
             "display": "Order for lab panel"
           }
-        ],
-        "performedDateTime": "2018-07-08T10:20:48-06:00"
+        ]
       },
       "request": {
         "method": "POST",
@@ -10497,8 +10490,7 @@
             "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
             "display": "Order for lab panel"
           }
-        ],
-        "performedDateTime": "2018-10-07T10:20:48-06:00"
+        ]
       },
       "request": {
         "method": "POST",
@@ -11213,8 +11205,7 @@
             "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
             "display": "Order for lab panel"
           }
-        ],
-        "performedDateTime": "2019-01-06T09:20:48-07:00"
+        ]
       },
       "request": {
         "method": "POST",
@@ -11929,8 +11920,7 @@
             "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
             "display": "Order for lab panel"
           }
-        ],
-        "performedDateTime": "2019-04-07T10:20:48-06:00"
+        ]
       },
       "request": {
         "method": "POST",
@@ -12645,8 +12635,7 @@
             "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
             "display": "Order for lab panel"
           }
-        ],
-        "performedDateTime": "2019-07-07T10:20:48-06:00"
+        ]
       },
       "request": {
         "method": "POST",
@@ -13417,8 +13406,7 @@
             "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
             "display": "Order for lab panel"
           }
-        ],
-        "performedDateTime": "2019-10-06T10:20:48-06:00"
+        ]
       },
       "request": {
         "method": "POST",
@@ -14265,8 +14253,7 @@
             "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
             "display": "Order for lab panel"
           }
-        ],
-        "performedDateTime": "2019-12-01T09:20:48-07:00"
+        ]
       },
       "request": {
         "method": "POST",
@@ -14319,8 +14306,7 @@
             "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
             "display": "Order for lab panel"
           }
-        ],
-        "performedDateTime": "2019-12-01T09:20:48-07:00"
+        ]
       },
       "request": {
         "method": "POST",
@@ -14373,8 +14359,7 @@
             "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
             "display": "Order for lab panel"
           }
-        ],
-        "performedDateTime": "2019-12-01T09:20:48-07:00"
+        ]
       },
       "request": {
         "method": "POST",
@@ -14427,8 +14412,7 @@
             "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
             "display": "Order for lab panel"
           }
-        ],
-        "performedDateTime": "2019-12-01T09:20:48-07:00"
+        ]
       },
       "request": {
         "method": "POST",
@@ -14481,8 +14465,7 @@
             "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
             "display": "Order for lab panel"
           }
-        ],
-        "performedDateTime": "2019-12-01T09:20:48-07:00"
+        ]
       },
       "request": {
         "method": "POST",
@@ -14535,8 +14518,7 @@
             "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
             "display": "Order for lab panel"
           }
-        ],
-        "performedDateTime": "2019-12-01T09:20:48-07:00"
+        ]
       },
       "request": {
         "method": "POST",
@@ -14589,8 +14571,7 @@
             "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
             "display": "Order for lab panel"
           }
-        ],
-        "performedDateTime": "2019-12-01T09:20:48-07:00"
+        ]
       },
       "request": {
         "method": "POST",
@@ -14643,8 +14624,7 @@
             "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
             "display": "Order for lab panel"
           }
-        ],
-        "performedDateTime": "2019-12-01T09:20:48-07:00"
+        ]
       },
       "request": {
         "method": "POST",
@@ -14697,8 +14677,7 @@
             "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
             "display": "Order for lab panel"
           }
-        ],
-        "performedDateTime": "2019-12-01T09:20:48-07:00"
+        ]
       },
       "request": {
         "method": "POST",
@@ -14751,8 +14730,7 @@
             "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
             "display": "Order for lab panel"
           }
-        ],
-        "performedDateTime": "2019-12-01T09:20:48-07:00"
+        ]
       },
       "request": {
         "method": "POST",
@@ -14805,8 +14783,7 @@
             "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
             "display": "Order for lab panel"
           }
-        ],
-        "performedDateTime": "2019-12-01T09:20:48-07:00"
+        ]
       },
       "request": {
         "method": "POST",
@@ -14859,8 +14836,7 @@
             "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
             "display": "Order for lab panel"
           }
-        ],
-        "performedDateTime": "2019-12-01T09:20:48-07:00"
+        ]
       },
       "request": {
         "method": "POST",
@@ -14913,8 +14889,7 @@
             "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
             "display": "Order for lab panel"
           }
-        ],
-        "performedDateTime": "2019-12-01T09:20:48-07:00"
+        ]
       },
       "request": {
         "method": "POST",
@@ -14967,8 +14942,7 @@
             "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
             "display": "Order for lab panel"
           }
-        ],
-        "performedDateTime": "2019-12-01T09:20:48-07:00"
+        ]
       },
       "request": {
         "method": "POST",
@@ -15021,8 +14995,7 @@
             "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
             "display": "Order for lab panel"
           }
-        ],
-        "performedDateTime": "2019-12-01T09:20:48-07:00"
+        ]
       },
       "request": {
         "method": "POST",
@@ -15075,8 +15048,7 @@
             "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
             "display": "Order for lab panel"
           }
-        ],
-        "performedDateTime": "2019-12-01T09:20:48-07:00"
+        ]
       },
       "request": {
         "method": "POST",
@@ -15129,8 +15101,7 @@
             "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
             "display": "Order for lab panel"
           }
-        ],
-        "performedDateTime": "2019-12-01T09:20:48-07:00"
+        ]
       },
       "request": {
         "method": "POST",
@@ -15183,8 +15154,7 @@
             "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
             "display": "Order for lab panel"
           }
-        ],
-        "performedDateTime": "2019-12-01T09:20:48-07:00"
+        ]
       },
       "request": {
         "method": "POST",
@@ -15237,8 +15207,7 @@
             "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
             "display": "Order for lab panel"
           }
-        ],
-        "performedDateTime": "2019-12-01T09:20:48-07:00"
+        ]
       },
       "request": {
         "method": "POST",
@@ -15291,8 +15260,7 @@
             "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
             "display": "Order for lab panel"
           }
-        ],
-        "performedDateTime": "2019-12-01T09:20:48-07:00"
+        ]
       },
       "request": {
         "method": "POST",
@@ -19855,8 +19823,7 @@
             "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
             "display": "Order for lab panel"
           }
-        ],
-        "performedDateTime": "2019-12-01T09:20:48-07:00"
+        ]
       },
       "request": {
         "method": "POST",
@@ -19903,8 +19870,7 @@
             "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
             "display": "Order for lab panel"
           }
-        ],
-        "performedDateTime": "2019-12-01T09:50:48-07:00"
+        ]
       },
       "request": {
         "method": "POST",
@@ -19951,8 +19917,7 @@
             "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
             "display": "Order for lab panel"
           }
-        ],
-        "performedDateTime": "2019-12-01T10:06:35-07:00"
+        ]
       },
       "request": {
         "method": "POST",
@@ -19999,8 +19964,7 @@
             "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
             "display": "Order for lab panel"
           }
-        ],
-        "performedDateTime": "2019-12-01T10:15:54-07:00"
+        ]
       },
       "request": {
         "method": "POST",
@@ -21442,8 +21406,7 @@
             "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
             "display": "Order for lab panel"
           }
-        ],
-        "performedDateTime": "2019-12-29T10:28:19-07:00"
+        ]
       },
       "request": {
         "method": "POST",
@@ -21496,8 +21459,7 @@
             "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
             "display": "Order for lab panel"
           }
-        ],
-        "performedDateTime": "2019-12-29T10:28:19-07:00"
+        ]
       },
       "request": {
         "method": "POST",
@@ -21550,8 +21512,7 @@
             "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
             "display": "Order for lab panel"
           }
-        ],
-        "performedDateTime": "2019-12-29T10:28:19-07:00"
+        ]
       },
       "request": {
         "method": "POST",
@@ -22578,8 +22539,7 @@
             "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
             "display": "Order for lab panel"
           }
-        ],
-        "performedDateTime": "2020-01-26T10:28:19-07:00"
+        ]
       },
       "request": {
         "method": "POST",
@@ -22632,8 +22592,7 @@
             "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
             "display": "Order for lab panel"
           }
-        ],
-        "performedDateTime": "2020-01-26T10:28:19-07:00"
+        ]
       },
       "request": {
         "method": "POST",
@@ -22686,8 +22645,7 @@
             "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
             "display": "Order for lab panel"
           }
-        ],
-        "performedDateTime": "2020-01-26T10:28:19-07:00"
+        ]
       },
       "request": {
         "method": "POST",
@@ -22740,8 +22698,7 @@
             "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
             "display": "Order for lab panel"
           }
-        ],
-        "performedDateTime": "2020-01-26T10:28:19-07:00"
+        ]
       },
       "request": {
         "method": "POST",
@@ -23921,8 +23878,7 @@
             "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
             "display": "Order for lab panel"
           }
-        ],
-        "performedDateTime": "2020-02-23T10:28:19-07:00"
+        ]
       },
       "request": {
         "method": "POST",
@@ -23975,8 +23931,7 @@
             "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
             "display": "Order for lab panel"
           }
-        ],
-        "performedDateTime": "2020-02-23T10:28:19-07:00"
+        ]
       },
       "request": {
         "method": "POST",
@@ -24850,8 +24805,7 @@
             "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
             "display": "Order for lab panel"
           }
-        ],
-        "performedDateTime": "2020-03-22T11:28:19-06:00"
+        ]
       },
       "request": {
         "method": "POST",
@@ -24904,8 +24858,7 @@
             "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
             "display": "Order for lab panel"
           }
-        ],
-        "performedDateTime": "2020-03-22T11:28:19-06:00"
+        ]
       },
       "request": {
         "method": "POST",
@@ -25779,8 +25732,7 @@
             "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
             "display": "Order for lab panel"
           }
-        ],
-        "performedDateTime": "2020-04-19T11:28:19-06:00"
+        ]
       },
       "request": {
         "method": "POST",
@@ -25833,8 +25785,7 @@
             "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
             "display": "Order for lab panel"
           }
-        ],
-        "performedDateTime": "2020-04-19T11:28:19-06:00"
+        ]
       },
       "request": {
         "method": "POST",
@@ -25887,8 +25838,7 @@
             "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
             "display": "Order for lab panel"
           }
-        ],
-        "performedDateTime": "2020-04-19T11:28:19-06:00"
+        ]
       },
       "request": {
         "method": "POST",
@@ -25941,8 +25891,7 @@
             "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
             "display": "Order for lab panel"
           }
-        ],
-        "performedDateTime": "2020-04-19T11:28:19-06:00"
+        ]
       },
       "request": {
         "method": "POST",
@@ -25995,8 +25944,7 @@
             "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
             "display": "Order for lab panel"
           }
-        ],
-        "performedDateTime": "2020-04-19T11:28:19-06:00"
+        ]
       },
       "request": {
         "method": "POST",
@@ -27329,8 +27277,7 @@
             "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
             "display": "Order for lab panel"
           }
-        ],
-        "performedDateTime": "2020-05-17T11:28:19-06:00"
+        ]
       },
       "request": {
         "method": "POST",
@@ -27383,8 +27330,7 @@
             "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
             "display": "Order for lab panel"
           }
-        ],
-        "performedDateTime": "2020-05-17T11:28:19-06:00"
+        ]
       },
       "request": {
         "method": "POST",
@@ -28320,8 +28266,7 @@
             "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
             "display": "Order for lab panel"
           }
-        ],
-        "performedDateTime": "2020-06-14T11:28:19-06:00"
+        ]
       },
       "request": {
         "method": "POST",
@@ -28374,8 +28319,7 @@
             "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
             "display": "Order for lab panel"
           }
-        ],
-        "performedDateTime": "2020-06-14T11:28:19-06:00"
+        ]
       },
       "request": {
         "method": "POST",
@@ -28428,8 +28372,7 @@
             "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
             "display": "Order for lab panel"
           }
-        ],
-        "performedDateTime": "2020-06-14T11:28:19-06:00"
+        ]
       },
       "request": {
         "method": "POST",
@@ -29536,8 +29479,7 @@
             "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
             "display": "Order for lab panel"
           }
-        ],
-        "performedDateTime": "2020-06-28T11:28:19-06:00"
+        ]
       },
       "request": {
         "method": "POST",
@@ -29590,8 +29532,7 @@
             "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
             "display": "Order for lab panel"
           }
-        ],
-        "performedDateTime": "2020-06-28T11:28:19-06:00"
+        ]
       },
       "request": {
         "method": "POST",
@@ -30448,8 +30389,7 @@
             "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
             "display": "Order for lab panel"
           }
-        ],
-        "performedDateTime": "2020-08-09T11:28:19-06:00"
+        ]
       },
       "request": {
         "method": "POST",
@@ -30496,8 +30436,7 @@
             "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
             "display": "Order for lab panel"
           }
-        ],
-        "performedDateTime": "2020-08-09T11:28:19-06:00"
+        ]
       },
       "request": {
         "method": "POST",
@@ -34260,8 +34199,7 @@
             "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
             "display": "Order for lab panel"
           }
-        ],
-        "performedDateTime": "2021-06-13T10:20:48-06:00"
+        ]
       },
       "request": {
         "method": "POST",
@@ -34308,8 +34246,7 @@
             "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
             "display": "Order for lab panel"
           }
-        ],
-        "performedDateTime": "2021-06-13T10:20:48-06:00"
+        ]
       },
       "request": {
         "method": "POST",
@@ -34356,8 +34293,7 @@
             "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
             "display": "Order for lab panel"
           }
-        ],
-        "performedDateTime": "2021-06-13T11:14:18-06:00"
+        ]
       },
       "request": {
         "method": "POST",
@@ -34404,8 +34340,7 @@
             "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
             "display": "Order for lab panel"
           }
-        ],
-        "performedDateTime": "2021-06-13T11:54:38-06:00"
+        ]
       },
       "request": {
         "method": "POST",
@@ -34452,8 +34387,7 @@
             "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
             "display": "Order for lab panel"
           }
-        ],
-        "performedDateTime": "2021-06-13T12:05:55-06:00"
+        ]
       },
       "request": {
         "method": "POST",
@@ -34500,8 +34434,7 @@
             "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
             "display": "Order for lab panel"
           }
-        ],
-        "performedDateTime": "2021-06-13T12:32:18-06:00"
+        ]
       },
       "request": {
         "method": "POST",
@@ -34548,8 +34481,7 @@
             "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
             "display": "Order for lab panel"
           }
-        ],
-        "performedDateTime": "2021-06-13T12:46:57-06:00"
+        ]
       },
       "request": {
         "method": "POST",
@@ -40135,8 +40067,7 @@
             "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
             "display": "Order for lab panel"
           }
-        ],
-        "performedDateTime": "2024-06-16T10:20:48-06:00"
+        ]
       },
       "request": {
         "method": "POST",
@@ -40183,8 +40114,7 @@
             "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
             "display": "Order for lab panel"
           }
-        ],
-        "performedDateTime": "2024-06-16T11:07:07-06:00"
+        ]
       },
       "request": {
         "method": "POST",
@@ -40231,8 +40161,7 @@
             "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
             "display": "Order for lab panel"
           }
-        ],
-        "performedDateTime": "2024-06-16T11:21:59-06:00"
+        ]
       },
       "request": {
         "method": "POST",
@@ -40279,8 +40208,7 @@
             "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
             "display": "Order for lab panel"
           }
-        ],
-        "performedDateTime": "2024-06-16T11:45:23-06:00"
+        ]
       },
       "request": {
         "method": "POST",
@@ -40327,8 +40255,7 @@
             "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
             "display": "Order for lab panel"
           }
-        ],
-        "performedDateTime": "2024-06-16T12:09:33-06:00"
+        ]
       },
       "request": {
         "method": "POST",
@@ -40375,8 +40302,7 @@
             "reference": "urn:uuid:958c63b0-4a7f-2ee7-service-001",
             "display": "Order for lab panel"
           }
-        ],
-        "performedDateTime": "2024-06-16T12:19:39-06:00"
+        ]
       },
       "request": {
         "method": "POST",
@@ -45615,11 +45541,7 @@
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-e3a7-067647287b2b"
         },
-        "authoredOn": "2018-06-10T09:00:00-06:00",
-        "occurrencePeriod": {
-          "start": "2018-06-10T09:00:00-06:00",
-          "end": "2018-06-10T09:00:00-06:00"
-        }
+        "authoredOn": "2018-06-10T09:00:00-06:00"
       },
       "request": {
         "method": "POST",
@@ -45694,11 +45616,7 @@
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-e3a7-067647287b2b"
         },
-        "authoredOn": "2018-06-10T09:00:00-06:00",
-        "occurrencePeriod": {
-          "start": "2018-06-10T09:00:00-06:00",
-          "end": "2018-06-10T09:00:00-06:00"
-        }
+        "authoredOn": "2018-06-10T09:00:00-06:00"
       },
       "request": {
         "method": "POST",
@@ -45773,11 +45691,7 @@
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-e3a7-067647287b2b"
         },
-        "authoredOn": "2021-06-13T09:00:00-06:00",
-        "occurrencePeriod": {
-          "start": "2021-06-13T09:00:00-06:00",
-          "end": "2021-06-13T09:00:00-06:00"
-        }
+        "authoredOn": "2021-06-13T09:00:00-06:00"
       },
       "request": {
         "method": "POST",
@@ -45852,11 +45766,7 @@
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-e3a7-067647287b2b"
         },
-        "authoredOn": "2011-09-30T10:30:00-06:00",
-        "occurrencePeriod": {
-          "start": "2011-09-30T10:30:00-06:00",
-          "end": "2011-09-30T10:30:00-06:00"
-        }
+        "authoredOn": "2011-09-30T10:30:00-06:00"
       },
       "request": {
         "method": "POST",
@@ -45875,12 +45785,12 @@
         },
         "identifier": [
           {
-            "system": "http://example.org/specimen-ids",
+            "system": "urn:oid:2.16.840.1.113883.3.7418.2.1",
             "value": "SPEC-2018-001-BLOOD"
           }
         ],
         "accessionIdentifier": {
-          "system": "http://example.org/lab-accession",
+          "system": "urn:oid:2.16.840.1.113883.3.7418.2.2",
           "value": "ACC-2018-06-10-001"
         },
         "status": "available",
@@ -45977,12 +45887,12 @@
         },
         "identifier": [
           {
-            "system": "http://example.org/specimen-ids",
+            "system": "urn:oid:2.16.840.1.113883.3.7418.2.1",
             "value": "SPEC-2018-002-BLOOD"
           }
         ],
         "accessionIdentifier": {
-          "system": "http://example.org/lab-accession",
+          "system": "urn:oid:2.16.840.1.113883.3.7418.2.2",
           "value": "ACC-2018-06-10-002"
         },
         "status": "available",
@@ -46079,12 +45989,12 @@
         },
         "identifier": [
           {
-            "system": "http://example.org/specimen-ids",
+            "system": "urn:oid:2.16.840.1.113883.3.7418.2.1",
             "value": "SPEC-2018-003-CERV"
           }
         ],
         "accessionIdentifier": {
-          "system": "http://example.org/lab-accession",
+          "system": "urn:oid:2.16.840.1.113883.3.7418.2.2",
           "value": "ACC-2018-06-10-003"
         },
         "status": "available",
@@ -46169,12 +46079,12 @@
         },
         "identifier": [
           {
-            "system": "http://example.org/specimen-ids",
+            "system": "urn:oid:2.16.840.1.113883.3.7418.2.1",
             "value": "SPEC-2011-004-URINE"
           }
         ],
         "accessionIdentifier": {
-          "system": "http://example.org/lab-accession",
+          "system": "urn:oid:2.16.840.1.113883.3.7418.2.2",
           "value": "ACC-2011-09-30-001"
         },
         "status": "available",
@@ -47213,7 +47123,7 @@
           },
           {
             "system": "http://hl7.org/fhir/sid/us-npi",
-            "value": "1234568271"
+            "value": "1234567075"
           }
         ],
         "active": true,
@@ -47269,7 +47179,7 @@
           },
           {
             "system": "http://hl7.org/fhir/sid/us-npi",
-            "value": "1234568272"
+            "value": "1234567059"
           }
         ],
         "active": true,
@@ -47325,7 +47235,7 @@
           },
           {
             "system": "http://hl7.org/fhir/sid/us-npi",
-            "value": "1234568273"
+            "value": "1234567067"
           }
         ],
         "active": true,
@@ -48244,6 +48154,87 @@
           ],
           "text": "Employed full-time, stable housing, adequate food access"
         }
+      },
+      "request": {
+        "method": "POST",
+        "url": "Observation"
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:958c63b0-4a7f-2ee7-obs-avg-bp-001",
+      "resource": {
+        "resourceType": "Observation",
+        "id": "958c63b0-4a7f-2ee7-obs-avg-bp-001",
+        "meta": {
+          "profile": [
+            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-average-blood-pressure"
+          ]
+        },
+        "status": "final",
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+                "code": "vital-signs",
+                "display": "Vital Signs"
+              }
+            ]
+          }
+        ],
+        "code": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "96607-7",
+              "display": "Blood pressure panel mean systolic and mean diastolic"
+            }
+          ],
+          "text": "Average Blood Pressure"
+        },
+        "subject": {
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
+          "display": "Mrs. Daisey627 Jackelyn13 Koelpin146"
+        },
+        "effectiveDateTime": "2024-06-16",
+        "component": [
+          {
+            "code": {
+              "coding": [
+                {
+                  "system": "http://loinc.org",
+                  "code": "96608-5",
+                  "display": "Systolic blood pressure mean"
+                }
+              ],
+              "text": "Systolic Blood Pressure Mean"
+            },
+            "valueQuantity": {
+              "value": 120,
+              "unit": "mm[Hg]",
+              "system": "http://unitsofmeasure.org",
+              "code": "mm[Hg]"
+            }
+          },
+          {
+            "code": {
+              "coding": [
+                {
+                  "system": "http://loinc.org",
+                  "code": "96609-3",
+                  "display": "Diastolic blood pressure mean"
+                }
+              ],
+              "text": "Diastolic Blood Pressure Mean"
+            },
+            "valueQuantity": {
+              "value": 80,
+              "unit": "mm[Hg]",
+              "system": "http://unitsofmeasure.org",
+              "code": "mm[Hg]"
+            }
+          }
+        ]
       },
       "request": {
         "method": "POST",
