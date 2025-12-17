@@ -334,7 +334,7 @@ if(Meteor.isServer){
   Collections.Encounters = Encounters;
   Collections.Endpoints = Endpoints;
   Collections.Goals = Goals;
-  Collections.Groups = Goals;
+  Collections.Groups = Groups;
   Collections.HealthcareServices = HealthcareServices;
   Collections.Immunizations = Immunizations;
   Collections.InsurancePlans = InsurancePlans;
@@ -3532,6 +3532,13 @@ if(typeof serverRouteManifest === "object"){
       });
     }
   });
+
+  // =============================================================================
+  // BULK DATA EXPORT OPERATIONS
+  // =============================================================================
+  // Bulk Data endpoints are implemented in server/BulkData.js
+  // See that file for: Group/$export, status polling, file download, cancellation
+  // =============================================================================
 
   // Catch-all handler for unmatched FHIR routes
   // This prevents falling through to the Meteor app HTML

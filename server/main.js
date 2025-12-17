@@ -30,6 +30,7 @@ import './CdsHooksEndpoints.js';
 import './Methods.js';
 import './Metadata.js';
 import './RestEndpoints.js';
+import './BulkData.js';  // Must be before FhirEndpoints (catch-all handler)
 import './FhirEndpoints.js';
 import './OAuthEndpoints.js';
 // import './DebugCommunications.js';
@@ -150,6 +151,7 @@ import { Endpoints } from '../imports/lib/schemas/SimpleSchemas/Endpoints';
 import { Evidences } from '../imports/lib/schemas/SimpleSchemas/Evidences';
 import { ExplanationOfBenefits } from '../imports/lib/schemas/SimpleSchemas/ExplanationOfBenefits';
 import { Goals } from '../imports/lib/schemas/SimpleSchemas/Goals';
+import { Groups } from '../imports/lib/schemas/SimpleSchemas/Groups';
 import { GuidanceResponses } from '../imports/lib/schemas/SimpleSchemas/GuidanceResponses';
 import { Immunizations } from '../imports/lib/schemas/SimpleSchemas/Immunizations';
 import { ImagingStudies } from '../imports/lib/schemas/SimpleSchemas/ImagingStudies';
@@ -284,6 +286,7 @@ Object.assign(global.Collections, {
   Evidences,
   ExplanationOfBenefits,
   Goals,
+  Groups,
   GuidanceResponses,
   Immunizations,
   ImagingStudies,

@@ -244,7 +244,8 @@ function G10CertificationPage(props) {
       bulk_server_url: '',
       backend_services_token_endpoint: '',
       bulk_timeout: '600',
-      group_id: 'inferno-test-group'
+      group_id: 'inferno-test-group',
+      bulk_patient_ids_in_group: ''
     },
     // Tab 9: Additional Authorization
     additional_auth: {
@@ -663,6 +664,44 @@ function G10CertificationPage(props) {
     }
   }
 
+  async function handleCreateBulkExportGroup() {
+    try {
+      setLoading(true);
+      const groupId = testConfig.bulk_data.group_id || 'inferno-test-group';
+      console.log('Creating bulk export group:', groupId);
+
+      const result = await Meteor.callAsync('referenceApp.createBulkExportGroup', groupId);
+      console.log('Create bulk export group result:', result);
+
+      // Auto-populate bulk_patient_ids_in_group field for Inferno config
+      if (result.patientIds && result.patientIds.length > 0) {
+        const patientIdsCsv = result.patientIds.join(',');
+        setTestConfig(function(prev) {
+          return {
+            ...prev,
+            bulk_data: {
+              ...prev.bulk_data,
+              bulk_patient_ids_in_group: patientIdsCsv
+            }
+          };
+        });
+        console.log(`[handleCreateBulkExportGroup] Set bulk_patient_ids_in_group with ${result.patientIds.length} patient IDs`);
+      }
+
+      const message = `${result.action === 'created' ? 'Created' : 'Updated'} Group "${groupId}" with ${result.patientCount} patients`;
+      setSnackbarMessage(message);
+      setSnackbarSeverity('success');
+      setSnackbarOpen(true);
+    } catch (error) {
+      console.error('Error creating bulk export group:', error);
+      setSnackbarMessage('Error: ' + (error.reason || error.message));
+      setSnackbarSeverity('error');
+      setSnackbarOpen(true);
+    } finally {
+      setLoading(false);
+    }
+  }
+
   /**
    * Parses FHIR URLs to extract ResourceType and ID
    * Example: https://www.care-commons.app/baseR4/RelatedPerson/n7h275DFkFKD4kPrn
@@ -947,6 +986,10 @@ function G10CertificationPage(props) {
 
     const granularScopesSelection = "launch/patient openid fhirUser offline_access patient/Condition.rs patient/Observation.rs patient/Patient.rs";
 
+    // System scopes for bulk data export (backend services)
+    // Note: No OIDC scopes (launch, openid, fhirUser, offline_access) - those are for interactive flows
+    const bulkScopes = "system/Patient.rs system/AllergyIntolerance.rs system/CarePlan.rs system/CareTeam.rs system/Condition.rs system/Coverage.rs system/Device.rs system/DiagnosticReport.rs system/DocumentReference.rs system/Encounter.rs system/Goal.rs system/Immunization.rs system/Location.rs system/Medication.rs system/MedicationDispense.rs system/MedicationRequest.rs system/Observation.rs system/Organization.rs system/Practitioner.rs system/PractitionerRole.rs system/Procedure.rs system/Provenance.rs system/RelatedPerson.rs system/ServiceRequest.rs system/Specimen.rs system/Media.rs";
+
     // Build complete Inferno preset configuration array
     const exportConfig = [
       // FHIR Endpoint URL
@@ -1076,7 +1119,7 @@ function G10CertificationPage(props) {
         optional: true,
         title: "Patient IDs in exported Group",
         type: "text",
-        value: ""
+        value: testConfig.bulk_data.bulk_patient_ids_in_group || ""
       },
 
       // Bulk Device Types in Group
@@ -1127,7 +1170,7 @@ function G10CertificationPage(props) {
           encryption_algorithm: "ES384",
           auth_type: "backend_services",
           token_url: tokenUrl,
-          requested_scopes: ehrScopes,
+          requested_scopes: bulkScopes,
           client_id: clientId
         }),
         default: {}
@@ -2205,6 +2248,19 @@ function G10CertificationPage(props) {
                 helperText="Optional: FHIR Group ID for group-level export"
                 sx={{ mb: 2 }}
               />
+
+              <Button
+                variant="outlined"
+                color="primary"
+                onClick={handleCreateBulkExportGroup}
+                disabled={loading}
+                sx={{ mb: 2 }}
+              >
+                Create Bulk Export Group
+              </Button>
+              <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 2 }}>
+                Creates a Group resource with all patients in the database for bulk export testing
+              </Typography>
 
               <Alert severity="info" sx={{ mt: 2 }}>
                 <Typography variant="body2">

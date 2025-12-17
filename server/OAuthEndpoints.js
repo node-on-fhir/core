@@ -910,11 +910,12 @@ WebApp.handlers.post("/oauth/token", async (req, res) => {
         // Update client record with new access token
         await OAuthClients.updateAsync(
           { _id: registeredClient._id },
-          { 
+          {
             $set: {
               access_token: access_token,
               access_token_created_at: new Date(),
-              scope: scopes
+              scope: scopes,
+              requested_scope: scopes  // Also update requested_scope for consistency with BulkData.js
             }
           }
         );
