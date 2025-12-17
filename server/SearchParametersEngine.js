@@ -304,6 +304,8 @@ const SearchParametersEngine = {
       'SearchParameter-researchsubject-patient.json',
       'SearchParameter-servicerequest-patient.json',
       'SearchParameter-servicerequest-code.json',
+      'SearchParameter-servicerequest-category.json',
+      'SearchParameter-servicerequest-authored.json',
       'SearchParameter-supplydelivery-patient.json',
       'SearchParameter-careplan-category.json',
       'SearchParameter-careteam-patient.json',

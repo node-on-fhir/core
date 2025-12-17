@@ -1329,6 +1329,70 @@ if(typeof serverRouteManifest === "object"){
                 // could we find it?
                 if(Array.isArray(records)){
                   if(records.length === 0){
+                    // Special handling for Provenance: generate on-demand if ID matches pattern
+                    if(collectionName === "Provenances" && req.params.id && req.params.id.startsWith("provenance-")){
+                      // Extract the target resource ID from the Provenance ID
+                      let targetResourceId = req.params.id.replace("provenance-", "");
+                      console.log("Provenance read: generating on-demand for target ID:", targetResourceId);
+
+                      // Try to find the target resource in any collection
+                      let targetResource = null;
+                      let targetResourceType = null;
+
+                      // Search through patient-accessible collections for the target resource
+                      const searchCollections = ['Patients', 'Observations', 'Conditions', 'Procedures',
+                        'Encounters', 'MedicationRequests', 'Immunizations', 'DiagnosticReports',
+                        'DocumentReferences', 'CarePlans', 'CareTeams', 'Goals', 'AllergyIntolerances',
+                        'Devices', 'ServiceRequests', 'Coverages', 'MedicationDispenses', 'Specimens'];
+
+                      for(let searchCollName of searchCollections){
+                        if(Collections[searchCollName]){
+                          let found = await Collections[searchCollName].findOneAsync({id: targetResourceId});
+                          if(found){
+                            targetResource = found;
+                            targetResourceType = searchCollName.replace(/s$/, ''); // Remove trailing 's'
+                            // Handle special plurals
+                            if(searchCollName === 'Coverages') targetResourceType = 'Coverage';
+                            if(searchCollName === 'Allergies') targetResourceType = 'AllergyIntolerance';
+                            break;
+                          }
+                        }
+                      }
+
+                      if(targetResource){
+                        // Generate the Provenance dynamically
+                        let provenance = {
+                          resourceType: "Provenance",
+                          id: req.params.id,
+                          meta: {
+                            profile: ["http://hl7.org/fhir/us/core/StructureDefinition/us-core-provenance"],
+                            lastUpdated: get(targetResource, 'meta.lastUpdated') || new Date().toISOString()
+                          },
+                          target: [{
+                            reference: targetResourceType + "/" + targetResourceId
+                          }],
+                          recorded: get(targetResource, 'meta.lastUpdated') || new Date().toISOString(),
+                          agent: [{
+                            type: {
+                              coding: [{
+                                system: "http://terminology.hl7.org/CodeSystem/provenance-participant-type",
+                                code: "author",
+                                display: "Author"
+                              }]
+                            },
+                            who: {
+                              display: "Vault Server"
+                            }
+                          }]
+                        };
+
+                        res.setHeader("Content-type", 'application/fhir+json');
+                        res.setHeader("Last-Modified", get(targetResource, 'meta.lastUpdated') || new Date().toISOString());
+                        res.status(200).json(RestHelpers.prepForFhirTransfer(provenance));
+                        return;
+                      }
+                    }
+
                     // no content
                     res.status(204).json()
                   } else if (records.length === 1){
