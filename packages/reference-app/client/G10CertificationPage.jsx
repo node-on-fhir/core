@@ -632,6 +632,37 @@ function G10CertificationPage(props) {
     }
   }
 
+  async function handleDownloadDaiseyData() {
+    try {
+      setLoading(true);
+      console.log('Downloading Daisey test patient data...');
+
+      const bundleJson = await Meteor.callAsync('referenceApp.getDaiseyBundleJson');
+
+      // Create blob and trigger download
+      const blob = new Blob([bundleJson], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'daisey-test-patient.json';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      setSnackbarMessage('Daisey test patient bundle downloaded!');
+      setSnackbarSeverity('success');
+      setSnackbarOpen(true);
+    } catch (error) {
+      console.error('Error downloading Daisey data:', error);
+      setSnackbarMessage('Error: ' + (error.reason || error.message));
+      setSnackbarSeverity('error');
+      setSnackbarOpen(true);
+    } finally {
+      setLoading(false);
+    }
+  }
+
   /**
    * Parses FHIR URLs to extract ResourceType and ID
    * Example: https://www.care-commons.app/baseR4/RelatedPerson/n7h275DFkFKD4kPrn
@@ -1726,6 +1757,15 @@ function G10CertificationPage(props) {
                     sx={{ mr: 2 }}
                   >
                     {loading ? 'Loading...' : 'Load Daisey Test Patient'}
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    color="secondary"
+                    onClick={handleDownloadDaiseyData}
+                    disabled={loading}
+                    sx={{ mr: 2 }}
+                  >
+                    {loading ? 'Downloading...' : 'Download Daisey Data'}
                   </Button>
                   <Button
                     variant="outlined"

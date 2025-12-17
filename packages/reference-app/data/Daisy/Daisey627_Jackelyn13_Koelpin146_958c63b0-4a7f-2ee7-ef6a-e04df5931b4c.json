@@ -235,7 +235,7 @@
         "id": "958c63b0-4a7f-2ee7-org-medicaid",
         "meta": {
           "profile": [
-            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-organization|7.0.0"
+            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-organization"
           ]
         },
         "active": true,
@@ -290,7 +290,7 @@
         "id": "958c63b0-4a7f-2ee7-org-bcbs",
         "meta": {
           "profile": [
-            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-organization|7.0.0"
+            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-organization"
           ]
         },
         "active": true,
@@ -345,7 +345,7 @@
         "id": "958c63b0-4a7f-2ee7-org-cvs",
         "meta": {
           "profile": [
-            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-organization|7.0.0"
+            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-organization"
           ]
         },
         "active": true,
@@ -400,7 +400,7 @@
         "id": "958c63b0-4a7f-2ee7-org-walgreens",
         "meta": {
           "profile": [
-            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-organization|7.0.0"
+            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-organization"
           ]
         },
         "active": true,
@@ -455,7 +455,7 @@
         "id": "958c63b0-4a7f-2ee7-coverage-001",
         "meta": {
           "profile": [
-            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-coverage|7.0.0"
+            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-coverage"
           ]
         },
         "identifier": [
@@ -553,7 +553,7 @@
         "id": "958c63b0-4a7f-2ee7-coverage-002",
         "meta": {
           "profile": [
-            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-coverage|7.0.0"
+            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-coverage"
           ]
         },
         "identifier": [
@@ -1122,6 +1122,7 @@
             },
             "payor": [
               {
+                "reference": "Organization/958c63b0-4a7f-2ee7-org-bcbs",
                 "display": "Cigna Health"
               }
             ]
@@ -1860,6 +1861,7 @@
             },
             "payor": [
               {
+                "reference": "Organization/958c63b0-4a7f-2ee7-org-bcbs",
                 "display": "Cigna Health"
               }
             ]
@@ -2566,6 +2568,7 @@
             },
             "payor": [
               {
+                "reference": "Organization/958c63b0-4a7f-2ee7-org-bcbs",
                 "display": "Cigna Health"
               }
             ]
@@ -3379,6 +3382,7 @@
             },
             "payor": [
               {
+                "reference": "Organization/958c63b0-4a7f-2ee7-org-bcbs",
                 "display": "Cigna Health"
               }
             ]
@@ -4085,6 +4089,7 @@
             },
             "payor": [
               {
+                "reference": "Organization/958c63b0-4a7f-2ee7-org-bcbs",
                 "display": "Anthem"
               }
             ]
@@ -4558,6 +4563,7 @@
             },
             "payor": [
               {
+                "reference": "Organization/958c63b0-4a7f-2ee7-org-bcbs",
                 "display": "Anthem"
               }
             ]
@@ -7889,6 +7895,7 @@
             },
             "payor": [
               {
+                "reference": "Organization/958c63b0-4a7f-2ee7-org-bcbs",
                 "display": "Cigna Health"
               }
             ]
@@ -10078,6 +10085,7 @@
             },
             "payor": [
               {
+                "reference": "Organization/958c63b0-4a7f-2ee7-org-bcbs",
                 "display": "Cigna Health"
               }
             ]
@@ -10793,6 +10801,7 @@
             },
             "payor": [
               {
+                "reference": "Organization/958c63b0-4a7f-2ee7-org-bcbs",
                 "display": "Cigna Health"
               }
             ]
@@ -11508,6 +11517,7 @@
             },
             "payor": [
               {
+                "reference": "Organization/958c63b0-4a7f-2ee7-org-bcbs",
                 "display": "Cigna Health"
               }
             ]
@@ -12223,6 +12233,7 @@
             },
             "payor": [
               {
+                "reference": "Organization/958c63b0-4a7f-2ee7-org-bcbs",
                 "display": "Cigna Health"
               }
             ]
@@ -12938,6 +12949,7 @@
             },
             "payor": [
               {
+                "reference": "Organization/958c63b0-4a7f-2ee7-org-bcbs",
                 "display": "Cigna Health"
               }
             ]
@@ -13709,6 +13721,7 @@
             },
             "payor": [
               {
+                "reference": "Organization/958c63b0-4a7f-2ee7-org-bcbs",
                 "display": "Cigna Health"
               }
             ]
@@ -16324,6 +16337,7 @@
             },
             "payor": [
               {
+                "reference": "Organization/958c63b0-4a7f-2ee7-org-bcbs",
                 "display": "Cigna Health"
               }
             ]
@@ -20499,6 +20513,7 @@
             },
             "payor": [
               {
+                "reference": "Organization/958c63b0-4a7f-2ee7-org-bcbs",
                 "display": "Cigna Health"
               }
             ]
@@ -21891,6 +21906,7 @@
             },
             "payor": [
               {
+                "reference": "Organization/958c63b0-4a7f-2ee7-org-bcbs",
                 "display": "Cigna Health"
               }
             ]
@@ -23106,6 +23122,7 @@
             },
             "payor": [
               {
+                "reference": "Organization/958c63b0-4a7f-2ee7-org-bcbs",
                 "display": "Cigna Health"
               }
             ]
@@ -24288,6 +24305,7 @@
             },
             "payor": [
               {
+                "reference": "Organization/958c63b0-4a7f-2ee7-org-bcbs",
                 "display": "Cigna Health"
               }
             ]
@@ -25216,6 +25234,7 @@
             },
             "payor": [
               {
+                "reference": "Organization/958c63b0-4a7f-2ee7-org-bcbs",
                 "display": "Cigna Health"
               }
             ]
@@ -26384,6 +26403,7 @@
             },
             "payor": [
               {
+                "reference": "Organization/958c63b0-4a7f-2ee7-org-bcbs",
                 "display": "Cigna Health"
               }
             ]
@@ -27693,6 +27713,7 @@
             },
             "payor": [
               {
+                "reference": "Organization/958c63b0-4a7f-2ee7-org-bcbs",
                 "display": "Cigna Health"
               }
             ]
@@ -28787,6 +28808,7 @@
             },
             "payor": [
               {
+                "reference": "Organization/958c63b0-4a7f-2ee7-org-bcbs",
                 "display": "Cigna Health"
               }
             ]
@@ -29898,6 +29920,7 @@
             },
             "payor": [
               {
+                "reference": "Organization/958c63b0-4a7f-2ee7-org-bcbs",
                 "display": "Cigna Health"
               }
             ]
@@ -30803,6 +30826,7 @@
             },
             "payor": [
               {
+                "reference": "Organization/958c63b0-4a7f-2ee7-org-bcbs",
                 "display": "Cigna Health"
               }
             ]
@@ -31615,6 +31639,7 @@
             },
             "payor": [
               {
+                "reference": "Organization/958c63b0-4a7f-2ee7-org-bcbs",
                 "display": "Cigna Health"
               }
             ]
@@ -32031,6 +32056,7 @@
             },
             "payor": [
               {
+                "reference": "Organization/958c63b0-4a7f-2ee7-org-bcbs",
                 "display": "Cigna Health"
               }
             ]
@@ -32607,6 +32633,7 @@
             },
             "payor": [
               {
+                "reference": "Organization/958c63b0-4a7f-2ee7-org-bcbs",
                 "display": "Cigna Health"
               }
             ]
@@ -35385,6 +35412,7 @@
             },
             "payor": [
               {
+                "reference": "Organization/958c63b0-4a7f-2ee7-org-bcbs",
                 "display": "Cigna Health"
               }
             ]
@@ -41669,6 +41697,7 @@
             },
             "payor": [
               {
+                "reference": "Organization/958c63b0-4a7f-2ee7-org-bcbs",
                 "display": "Aetna"
               }
             ]
@@ -45841,7 +45870,7 @@
         "id": "958c63b0-4a7f-2ee7-specimen-001",
         "meta": {
           "profile": [
-            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-specimen|7.0.0"
+            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-specimen"
           ]
         },
         "identifier": [
@@ -45943,7 +45972,7 @@
         "id": "958c63b0-4a7f-2ee7-specimen-002",
         "meta": {
           "profile": [
-            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-specimen|7.0.0"
+            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-specimen"
           ]
         },
         "identifier": [
@@ -46045,7 +46074,7 @@
         "id": "958c63b0-4a7f-2ee7-specimen-003",
         "meta": {
           "profile": [
-            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-specimen|7.0.0"
+            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-specimen"
           ]
         },
         "identifier": [
@@ -46135,7 +46164,7 @@
         "id": "958c63b0-4a7f-2ee7-specimen-004",
         "meta": {
           "profile": [
-            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-specimen|7.0.0"
+            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-specimen"
           ]
         },
         "identifier": [
@@ -47174,7 +47203,7 @@
         "id": "ee691ea5-61a0-3ae2-bacf-38185afca1ed",
         "meta": {
           "profile": [
-            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-organization|7.0.0"
+            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-organization"
           ]
         },
         "identifier": [
@@ -47230,7 +47259,7 @@
         "id": "0b9c0333-82df-33e1-8917-959af53479cb",
         "meta": {
           "profile": [
-            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-organization|7.0.0"
+            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-organization"
           ]
         },
         "identifier": [
@@ -47286,7 +47315,7 @@
         "id": "afa7dd1c-6966-333f-9892-9eeb88042cc9",
         "meta": {
           "profile": [
-            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-organization|7.0.0"
+            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-organization"
           ]
         },
         "identifier": [

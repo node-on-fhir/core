@@ -1455,6 +1455,29 @@ Meteor.methods({
     }
   },
 
+  /**
+   * Returns the Daisey test patient bundle JSON for download.
+   * @returns {String} The raw JSON content of the Daisey bundle
+   */
+  'referenceApp.getDaiseyBundleJson': async function() {
+    console.log('referenceApp.getDaiseyBundleJson');
+
+    // Check authorization
+    if (!this.userId) {
+      throw new Meteor.Error('unauthorized', 'User must be logged in');
+    }
+
+    try {
+      const assetPath = 'data/Daisy/Daisey627_Jackelyn13_Koelpin146_958c63b0-4a7f-2ee7-ef6a-e04df5931b4c.json';
+      const bundleJson = await Assets.getTextAsync(assetPath);
+      console.log('Returning Daisey bundle JSON for download');
+      return bundleJson;
+    } catch (error) {
+      console.error('Error in referenceApp.getDaiseyBundleJson:', error);
+      throw new Meteor.Error('download-failed', error.message || 'Failed to get Daisey bundle');
+    }
+  },
+
   // ---------------------------------------------------------------------------
   // SEED MISSING REFERENCES FROM PARSED URLs
   // ---------------------------------------------------------------------------
