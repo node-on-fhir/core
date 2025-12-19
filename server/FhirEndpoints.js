@@ -570,25 +570,37 @@ async function parseUserAuthorization(req){
     if (oauthClient) {
       console.log('>>> Bearer token found for client:', oauthClient.client_id);
 
-      // Check if token is expired
-      const tokenCreatedAt = get(oauthClient, 'access_token_created_at');
-      const expiresIn = get(Meteor, 'settings.private.fhir.tokenTimeout', 86400); // Default 24 hours
-      const isExpired = tokenCreatedAt && (new Date() - new Date(tokenCreatedAt)) > (expiresIn * 1000);
+      // Check if authorization was revoked - ONC g(10) 9.3.01 compliance
+      if (oauthClient.revoked_at) {
+        console.log('>>> Bearer token revoked for client:', oauthClient.client_id, 'at:', oauthClient.revoked_at);
+        // Token was explicitly revoked by patient - do not authorize
+      }
+      // Check if authorization has expired (user-selected duration)
+      else if (oauthClient.authorization_expires_at && new Date(oauthClient.authorization_expires_at) < new Date()) {
+        console.log('>>> Authorization expired for client:', oauthClient.client_id, 'at:', oauthClient.authorization_expires_at);
+        // User-selected authorization duration has expired - do not authorize
+      }
+      // Check if token is expired (system default timeout)
+      else {
+        const tokenCreatedAt = get(oauthClient, 'access_token_created_at');
+        const expiresIn = get(Meteor, 'settings.private.fhir.tokenTimeout', 86400); // Default 24 hours
+        const isExpired = tokenCreatedAt && (new Date() - new Date(tokenCreatedAt)) > (expiresIn * 1000);
 
-      if (isExpired) {
-        console.log('>>> Bearer token expired for client:', oauthClient.client_id);
-      } else {
-        // Token is valid - set authorization context
-        // Use 'patient' role for patient-level access (matches isAuthorized authorized roles)
-        authorizationContext = {
-          role: 'patient',
-          userId: oauthClient.user_id || oauthClient.client_id,
-          patientId: oauthClient.patient_id || '',
-          clientId: oauthClient.client_id,
-          scope: oauthClient.requested_scope || oauthClient.scope || '',
-          isOAuthToken: true
-        };
-        console.log('>>> Bearer token authenticated. Role: patient, Patient ID:', authorizationContext.patientId);
+        if (isExpired) {
+          console.log('>>> Bearer token expired for client:', oauthClient.client_id);
+        } else {
+          // Token is valid - set authorization context
+          // Use 'patient' role for patient-level access (matches isAuthorized authorized roles)
+          authorizationContext = {
+            role: 'patient',
+            userId: oauthClient.user_id || oauthClient.client_id,
+            patientId: oauthClient.patient_id || '',
+            clientId: oauthClient.client_id,
+            scope: oauthClient.requested_scope || oauthClient.scope || '',
+            isOAuthToken: true
+          };
+          console.log('>>> Bearer token authenticated. Role: patient, Patient ID:', authorizationContext.patientId);
+        }
       }
     } else {
       console.log('>>> Bearer token not found in OAuthClients collection');
@@ -1325,7 +1337,28 @@ if(typeof serverRouteManifest === "object"){
 
                 // plain ol regular approach
                 if(get(Meteor, 'settings.private.debug') === true) { console.log('records', records); }
-    
+
+                // ONC g(10): Apply granular scope filtering for reads
+                // If the client has granular scopes (e.g., patient/Condition.rs?category=encounter-diagnosis),
+                // the read should fail if the resource doesn't match the allowed categories
+                const granularFilters = getGranularFiltersForResource(authorizationContext, routeResourceType);
+                if (granularFilters.length > 0 && records.length > 0) {
+                  console.log('[GranularScope] Checking read access for', routeResourceType, 'with', granularFilters.length, 'filters');
+                  records = applyGranularScopeFilters(records, granularFilters);
+                  if (records.length === 0) {
+                    console.log('[GranularScope] Read denied - resource does not match granular scope filters');
+                    res.status(403).json({
+                      resourceType: "OperationOutcome",
+                      issue: [{
+                        severity: "error",
+                        code: "forbidden",
+                        diagnostics: `Access to this ${routeResourceType} resource is not authorized by the granted granular scopes`
+                      }]
+                    });
+                    return;
+                  }
+                }
+
                 // could we find it?
                 if(Array.isArray(records)){
                   if(records.length === 0){

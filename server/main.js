@@ -622,4 +622,45 @@ Meteor.startup(async () => {
     return OAuthClients.find();
   });
 
+  // Patient-specific OAuth authorizations publication
+  // ONC g(10) 9.3.01 - Patient access to view authorized applications
+  Meteor.publish('OAuthClients.forPatient', function() {
+    if (!this.userId) {
+      return this.ready();
+    }
+
+    // Get user synchronously for publication
+    const user = Meteor.users.findOne({ _id: this.userId });
+    const patientId = get(user, 'patientId');
+
+    if (!patientId) {
+      console.log('OAuthClients.forPatient - No linked patient for user:', this.userId);
+      return this.ready();
+    }
+
+    // Return only active authorizations for this patient
+    // Exclude sensitive fields (tokens, secrets)
+    return OAuthClients.find(
+      {
+        patient_id: patientId,
+        access_token: { $exists: true, $ne: null },
+        revoked_at: { $exists: false }
+      },
+      {
+        fields: {
+          client_name: 1,
+          client_id: 1,
+          access_token_created_at: 1,
+          created_at: 1,
+          authorization_expires_at: 1,
+          requested_scope: 1,
+          scope: 1,
+          launch_type: 1,
+          patient_id: 1
+          // Explicitly exclude: access_token, refresh_token, client_secret
+        }
+      }
+    );
+  });
+
 });
