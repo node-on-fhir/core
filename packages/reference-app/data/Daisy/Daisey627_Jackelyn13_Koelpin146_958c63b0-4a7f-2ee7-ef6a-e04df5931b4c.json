@@ -74,6 +74,31 @@
           {
             "url": "http://synthetichealth.github.io/synthea/quality-adjusted-life-years",
             "valueDecimal": 27.576349684465026
+          },
+          {
+            "url": "http://hl7.org/fhir/us/core/StructureDefinition/us-core-tribal-affiliation",
+            "extension": [
+              {
+                "url": "tribalAffiliation",
+                "valueCodeableConcept": {
+                  "coding": [
+                    {
+                      "system": "http://terminology.hl7.org/CodeSystem/data-absent-reason",
+                      "code": "asked-unknown",
+                      "display": "Asked But Unknown"
+                    }
+                  ]
+                }
+              },
+              {
+                "url": "isEnrolled",
+                "valueBoolean": false
+              }
+            ]
+          },
+          {
+            "url": "http://hl7.org/fhir/us/core/StructureDefinition/us-core-sex",
+            "valueCode": "female"
           }
         ],
         "identifier": [
@@ -3818,10 +3843,7 @@
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-a020-b228cc1f5828"
         },
-        "performedPeriod": {
-          "start": "2018-03-29T10:20:48-06:00",
-          "end": "2018-03-29T10:33:17-06:00"
-        },
+        "performedDateTime": "2018-03-29T10:20:48-06:00",
         "location": {
           "reference": "Location?identifier=https://github.com/synthetichealth/synthea|8a2c3057-4b23-3721-8aff-06f500e93c43",
           "display": "HOLY CROSS HOSPITAL"
@@ -6090,6 +6112,16 @@
         },
         "effectiveDateTime": "2018-06-10T10:58:52-06:00",
         "issued": "2018-06-10T10:58:52.254-06:00",
+        "performer": [
+          {
+            "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          }
+        ],
+        "hasMember": [
+          {
+            "reference": "Observation/958c63b0-4a7f-2ee7-9f1b-414e4912cd28"
+          }
+        ],
         "component": [
           {
             "code": {
@@ -6583,6 +6615,16 @@
         },
         "effectiveDateTime": "2018-06-10T11:17:53-06:00",
         "issued": "2018-06-10T11:17:53.254-06:00",
+        "performer": [
+          {
+            "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          }
+        ],
+        "derivedFrom": [
+          {
+            "reference": "Observation/958c63b0-4a7f-2ee7-31cb-1c010bc18041"
+          }
+        ],
         "valueQuantity": {
           "value": 3,
           "unit": "{score}",
@@ -6635,6 +6677,11 @@
         },
         "effectiveDateTime": "2018-06-10T11:56:01-06:00",
         "issued": "2018-06-10T11:56:01.254-06:00",
+        "performer": [
+          {
+            "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          }
+        ],
         "valueQuantity": {
           "value": 2,
           "unit": "{score}",
@@ -33549,6 +33596,16 @@
         },
         "effectiveDateTime": "2021-06-13T11:14:18-06:00",
         "issued": "2021-06-13T11:14:18.254-06:00",
+        "performer": [
+          {
+            "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          }
+        ],
+        "hasMember": [
+          {
+            "reference": "Observation/958c63b0-4a7f-2ee7-d1aa-0104094047d2"
+          }
+        ],
         "component": [
           {
             "code": {
@@ -34043,6 +34100,11 @@
         },
         "effectiveDateTime": "2021-06-13T11:54:38-06:00",
         "issued": "2021-06-13T11:54:38.254-06:00",
+        "performer": [
+          {
+            "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          }
+        ],
         "valueQuantity": {
           "value": 0,
           "unit": "{score}",
@@ -34095,6 +34157,16 @@
         },
         "effectiveDateTime": "2021-06-13T12:32:18-06:00",
         "issued": "2021-06-13T12:32:18.254-06:00",
+        "performer": [
+          {
+            "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          }
+        ],
+        "derivedFrom": [
+          {
+            "reference": "Observation/958c63b0-4a7f-2ee7-afdb-3ee809625ed5"
+          }
+        ],
         "valueQuantity": {
           "value": 1,
           "unit": "{score}",
@@ -34147,6 +34219,11 @@
         },
         "effectiveDateTime": "2021-06-13T13:07:12-06:00",
         "issued": "2021-06-13T13:07:12.254-06:00",
+        "performer": [
+          {
+            "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          }
+        ],
         "valueQuantity": {
           "value": 1,
           "unit": "{score}",
@@ -39362,6 +39439,16 @@
         },
         "effectiveDateTime": "2024-06-16T11:07:07-06:00",
         "issued": "2024-06-16T11:07:07.254-06:00",
+        "performer": [
+          {
+            "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          }
+        ],
+        "hasMember": [
+          {
+            "reference": "Observation/958c63b0-4a7f-2ee7-6d8b-02666d2c6621"
+          }
+        ],
         "component": [
           {
             "code": {
@@ -39855,6 +39942,16 @@
         },
         "effectiveDateTime": "2024-06-16T11:45:23-06:00",
         "issued": "2024-06-16T11:45:23.254-06:00",
+        "performer": [
+          {
+            "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          }
+        ],
+        "derivedFrom": [
+          {
+            "reference": "Observation/958c63b0-4a7f-2ee7-a13b-549c552dd6cc"
+          }
+        ],
         "valueQuantity": {
           "value": 5,
           "unit": "{score}",
@@ -44648,11 +44745,11 @@
               "text": "Author"
             },
             "who": {
-              "reference": "Practitioner?identifier=http://hl7.org/fhir/sid/us-npi|9999928895",
+              "reference": "Practitioner/0b9c0333-82df-33e1-8917-959af53479cc",
               "display": "Dr. Marna905 Dooley940"
             },
             "onBehalfOf": {
-              "reference": "Organization?identifier=https://github.com/synthetichealth/synthea|ee691ea5-61a0-3ae2-bacf-38185afca1ed",
+              "reference": "Organization/ee691ea5-61a0-3ae2-bacf-38185afca1ed",
               "display": "ESPERANZA HEALTH CENTERS"
             }
           },
@@ -44668,11 +44765,11 @@
               "text": "Transmitter"
             },
             "who": {
-              "reference": "Practitioner?identifier=http://hl7.org/fhir/sid/us-npi|9999928895",
-              "display": "Dr. Marna905 Dooley940"
+              "reference": "Organization/ee691ea5-61a0-3ae2-bacf-38185afca1ed",
+              "display": "ESPERANZA HEALTH CENTERS"
             },
             "onBehalfOf": {
-              "reference": "Organization?identifier=https://github.com/synthetichealth/synthea|ee691ea5-61a0-3ae2-bacf-38185afca1ed",
+              "reference": "Organization/ee691ea5-61a0-3ae2-bacf-38185afca1ed",
               "display": "ESPERANZA HEALTH CENTERS"
             }
           }
@@ -45519,9 +45616,13 @@
           "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
           "display": "Mrs. Daisey627 Jackelyn13 Koelpin146"
         },
-        "occurrenceDateTime": "2018-06-10T09:00:00-06:00",
+        "occurrencePeriod": {
+          "start": "2018-06-10T09:00:00-06:00",
+          "end": "2018-06-10T10:00:00-06:00"
+        },
         "requester": {
-          "display": "Primary Care Physician"
+          "reference": "Practitioner/958c63b0-4a7f-2ee7-prac-9999928895",
+          "display": "Dr. Marna Dooley"
         },
         "performer": [
           {
@@ -45587,9 +45688,13 @@
           "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
           "display": "Mrs. Daisey627 Jackelyn13 Koelpin146"
         },
-        "occurrenceDateTime": "2018-06-10T09:00:00-06:00",
+        "occurrencePeriod": {
+          "start": "2018-06-10T09:00:00-06:00",
+          "end": "2018-06-10T10:00:00-06:00"
+        },
         "requester": {
-          "display": "Primary Care Physician"
+          "reference": "Practitioner/958c63b0-4a7f-2ee7-prac-9999928895",
+          "display": "Dr. Marna Dooley"
         },
         "performer": [
           {
@@ -45664,7 +45769,8 @@
         },
         "occurrenceDateTime": "2021-06-13T09:00:00-06:00",
         "requester": {
-          "display": "Primary Care Physician"
+          "reference": "Practitioner/958c63b0-4a7f-2ee7-prac-9999928895",
+          "display": "Dr. Marna Dooley"
         },
         "performer": [
           {
@@ -45739,7 +45845,8 @@
         },
         "occurrenceDateTime": "2011-09-30T10:30:00-06:00",
         "requester": {
-          "display": "Obstetrics Provider"
+          "reference": "Practitioner/958c63b0-4a7f-2ee7-prac-9999959494",
+          "display": "Dr. Georgeanna McDermott"
         },
         "performer": [
           {
@@ -47778,10 +47885,10 @@
       }
     },
     {
-      "fullUrl": "urn:uuid:958c63b0-4a7f-2ee7-obs-packyears-001",
+      "fullUrl": "urn:uuid:958c63b0-4a7f-2ee7-obs-cigsperday-001",
       "resource": {
         "resourceType": "Observation",
-        "id": "958c63b0-4a7f-2ee7-obs-packyears-001",
+        "id": "958c63b0-4a7f-2ee7-obs-cigsperday-001",
         "meta": {
           "profile": [
             "http://hl7.org/fhir/us/core/StructureDefinition/us-core-simple-observation"
@@ -48226,7 +48333,15 @@
           "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
           "display": "Mrs. Daisey627 Jackelyn13 Koelpin146"
         },
-        "effectiveDateTime": "2024-06-16",
+        "effectivePeriod": {
+          "start": "2024-06-09T00:00:00-07:00",
+          "end": "2024-06-16T00:00:00-07:00"
+        },
+        "note": [
+          {
+            "text": "Average blood pressure measured over 7 days using home blood pressure monitor"
+          }
+        ],
         "component": [
           {
             "code": {
@@ -48262,6 +48377,99 @@
               "unit": "mm[Hg]",
               "system": "http://unitsofmeasure.org",
               "code": "mm[Hg]"
+            }
+          }
+        ]
+      },
+      "request": {
+        "method": "POST",
+        "url": "Observation"
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:958c63b0-4a7f-2ee7-obs-avg-bp-002",
+      "resource": {
+        "resourceType": "Observation",
+        "id": "958c63b0-4a7f-2ee7-obs-avg-bp-002",
+        "meta": {
+          "profile": [
+            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-average-blood-pressure"
+          ]
+        },
+        "status": "final",
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+                "code": "vital-signs",
+                "display": "Vital Signs"
+              }
+            ]
+          }
+        ],
+        "code": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "96607-7",
+              "display": "Blood pressure panel mean systolic and mean diastolic"
+            }
+          ],
+          "text": "Average Blood Pressure"
+        },
+        "subject": {
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
+          "display": "Mrs. Daisey627 Jackelyn13 Koelpin146"
+        },
+        "effectivePeriod": {
+          "start": "2024-05-01T00:00:00-07:00",
+          "end": "2024-05-08T00:00:00-07:00"
+        },
+        "note": [
+          {
+            "text": "Partial average blood pressure - diastolic measurements unavailable due to equipment malfunction"
+          }
+        ],
+        "component": [
+          {
+            "code": {
+              "coding": [
+                {
+                  "system": "http://loinc.org",
+                  "code": "96608-5",
+                  "display": "Systolic blood pressure mean"
+                }
+              ],
+              "text": "Systolic Blood Pressure Mean"
+            },
+            "valueQuantity": {
+              "value": 118,
+              "unit": "mm[Hg]",
+              "system": "http://unitsofmeasure.org",
+              "code": "mm[Hg]"
+            }
+          },
+          {
+            "code": {
+              "coding": [
+                {
+                  "system": "http://loinc.org",
+                  "code": "96609-3",
+                  "display": "Diastolic blood pressure mean"
+                }
+              ],
+              "text": "Diastolic Blood Pressure Mean"
+            },
+            "dataAbsentReason": {
+              "coding": [
+                {
+                  "system": "http://terminology.hl7.org/CodeSystem/data-absent-reason",
+                  "code": "error",
+                  "display": "Error"
+                }
+              ],
+              "text": "Equipment malfunction during diastolic measurements"
             }
           }
         ]
@@ -48732,6 +48940,677 @@
       "request": {
         "method": "POST",
         "url": "Observation"
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:958c63b0-4a7f-2ee7-obs-func-001",
+      "resource": {
+        "resourceType": "Observation",
+        "id": "958c63b0-4a7f-2ee7-obs-func-001",
+        "meta": {
+          "profile": [
+            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-simple-observation"
+          ]
+        },
+        "status": "final",
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://hl7.org/fhir/us/core/CodeSystem/us-core-category",
+                "code": "functional-status",
+                "display": "Functional Status"
+              }
+            ]
+          }
+        ],
+        "code": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "75276-6",
+              "display": "Functional status [Interpretation]"
+            }
+          ],
+          "text": "Functional Status Assessment"
+        },
+        "subject": {
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
+          "display": "Mrs. Daisey627 Jackelyn13 Koelpin146"
+        },
+        "effectiveDateTime": "2024-06-16",
+        "valueCodeableConcept": {
+          "coding": [
+            {
+              "system": "http://snomed.info/sct",
+              "code": "129035000",
+              "display": "Independent with dressing (finding)"
+            }
+          ],
+          "text": "Patient is independent with dressing and other activities of daily living"
+        }
+      },
+      "request": {
+        "method": "POST",
+        "url": "Observation"
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:958c63b0-4a7f-2ee7-obs-disab-001",
+      "resource": {
+        "resourceType": "Observation",
+        "id": "958c63b0-4a7f-2ee7-obs-disab-001",
+        "meta": {
+          "profile": [
+            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-simple-observation"
+          ]
+        },
+        "status": "final",
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://hl7.org/fhir/us/core/CodeSystem/us-core-category",
+                "code": "disability-status",
+                "display": "Disability Status"
+              }
+            ]
+          }
+        ],
+        "code": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "69858-9",
+              "display": "Disability status [NHIS]"
+            }
+          ],
+          "text": "Disability Status Assessment"
+        },
+        "subject": {
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
+          "display": "Mrs. Daisey627 Jackelyn13 Koelpin146"
+        },
+        "effectiveDateTime": "2024-06-16",
+        "valueCodeableConcept": {
+          "coding": [
+            {
+              "system": "http://snomed.info/sct",
+              "code": "262066000",
+              "display": "No disability"
+            }
+          ],
+          "text": "No disability identified"
+        }
+      },
+      "request": {
+        "method": "POST",
+        "url": "Observation"
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:958c63b0-4a7f-2ee7-obs-cog-001",
+      "resource": {
+        "resourceType": "Observation",
+        "id": "958c63b0-4a7f-2ee7-obs-cog-001",
+        "meta": {
+          "profile": [
+            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-simple-observation"
+          ]
+        },
+        "status": "final",
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://hl7.org/fhir/us/core/CodeSystem/us-core-category",
+                "code": "cognitive-status",
+                "display": "Cognitive Status"
+              }
+            ]
+          }
+        ],
+        "code": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "11332-4",
+              "display": "History of Cognitive Function Narrative"
+            }
+          ],
+          "text": "Cognitive Function Assessment"
+        },
+        "subject": {
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
+          "display": "Mrs. Daisey627 Jackelyn13 Koelpin146"
+        },
+        "effectiveDateTime": "2024-06-16",
+        "valueString": "Alert and oriented x 3. Independent in household finances and activities of daily living. Coherent and appropriate communication."
+      },
+      "request": {
+        "method": "POST",
+        "url": "Observation"
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:958c63b0-4a7f-2ee7-obs-activity-001",
+      "resource": {
+        "resourceType": "Observation",
+        "id": "958c63b0-4a7f-2ee7-obs-activity-001",
+        "meta": {
+          "profile": [
+            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-simple-observation"
+          ]
+        },
+        "status": "final",
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+                "code": "activity",
+                "display": "Activity"
+              }
+            ],
+            "text": "Physical Activity"
+          },
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+                "code": "social-history",
+                "display": "Social History"
+              }
+            ],
+            "text": "Social History"
+          }
+        ],
+        "code": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "89555-7",
+              "display": "How many days per week did you engage in moderate to strenuous physical activity in the last 30 days"
+            }
+          ],
+          "text": "Physical Activity Level"
+        },
+        "subject": {
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
+          "display": "Mrs. Daisey627 Jackelyn13 Koelpin146"
+        },
+        "effectiveDateTime": "2024-06-16",
+        "valueQuantity": {
+          "value": 3,
+          "unit": "days per week",
+          "system": "http://unitsofmeasure.org",
+          "code": "d/wk"
+        }
+      },
+      "request": {
+        "method": "POST",
+        "url": "Observation"
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:958c63b0-4a7f-2ee7-obs-sochx-001",
+      "resource": {
+        "resourceType": "Observation",
+        "id": "958c63b0-4a7f-2ee7-obs-sochx-001",
+        "meta": {
+          "profile": [
+            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-observation-occupation"
+          ]
+        },
+        "status": "final",
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+                "code": "social-history",
+                "display": "Social History"
+              }
+            ]
+          }
+        ],
+        "code": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "11341-5",
+              "display": "History of Occupation"
+            }
+          ],
+          "text": "Occupation History"
+        },
+        "subject": {
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
+          "display": "Mrs. Daisey627 Jackelyn13 Koelpin146"
+        },
+        "effectiveDateTime": "2024-06-16",
+        "valueCodeableConcept": {
+          "coding": [
+            {
+              "system": "https://terminology.hl7.org/CodeSystem/PHOccupationalDataForHealthODH",
+              "code": "43-6014.00.007136",
+              "display": "Administrative Assistant"
+            }
+          ],
+          "text": "Full-time administrative assistant at local healthcare organization"
+        },
+        "component": [
+          {
+            "code": {
+              "coding": [
+                {
+                  "system": "http://loinc.org",
+                  "code": "86188-0",
+                  "display": "History of Occupation Industry"
+                }
+              ]
+            },
+            "valueCodeableConcept": {
+              "coding": [
+                {
+                  "system": "https://terminology.hl7.org/CodeSystem/PHOccupationalDataForHealthODH",
+                  "code": "621",
+                  "display": "Ambulatory Health Care Services"
+                }
+              ],
+              "text": "Healthcare organization"
+            }
+          }
+        ]
+      },
+      "request": {
+        "method": "POST",
+        "url": "Observation"
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:958c63b0-4a7f-2ee7-doc-consult-001",
+      "resource": {
+        "resourceType": "DocumentReference",
+        "id": "958c63b0-4a7f-2ee7-doc-consult-001",
+        "meta": {
+          "profile": [
+            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-documentreference"
+          ]
+        },
+        "status": "current",
+        "type": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "11488-4",
+              "display": "Consultation Note"
+            }
+          ]
+        },
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://hl7.org/fhir/us/core/CodeSystem/us-core-documentreference-category",
+                "code": "clinical-note",
+                "display": "Clinical Note"
+              }
+            ]
+          }
+        ],
+        "subject": {
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
+          "display": "Mrs. Daisey627 Jackelyn13 Koelpin146"
+        },
+        "date": "2024-06-16T10:30:00-06:00",
+        "author": [
+          {
+            "display": "Dr. Cardiology Consultant"
+          }
+        ],
+        "content": [
+          {
+            "attachment": {
+              "contentType": "text/plain",
+              "data": "Q29uc3VsdGF0aW9uIE5vdGU6IFBhdGllbnQgcmVmZXJyZWQgZm9yIGNhcmRpb2xvZ3kgZXZhbHVhdGlvbi4gTm8gYWN1dGUgY2FyZGlhYyBpc3N1ZXMgaWRlbnRpZmllZC4="
+            }
+          }
+        ]
+      },
+      "request": {
+        "method": "POST",
+        "url": "DocumentReference"
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:958c63b0-4a7f-2ee7-doc-discharge-001",
+      "resource": {
+        "resourceType": "DocumentReference",
+        "id": "958c63b0-4a7f-2ee7-doc-discharge-001",
+        "meta": {
+          "profile": [
+            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-documentreference"
+          ]
+        },
+        "status": "current",
+        "type": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "18842-5",
+              "display": "Discharge Summary"
+            }
+          ]
+        },
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://hl7.org/fhir/us/core/CodeSystem/us-core-documentreference-category",
+                "code": "clinical-note",
+                "display": "Clinical Note"
+              }
+            ]
+          }
+        ],
+        "subject": {
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
+          "display": "Mrs. Daisey627 Jackelyn13 Koelpin146"
+        },
+        "date": "2024-06-17T14:00:00-06:00",
+        "author": [
+          {
+            "display": "Dr. Attending Physician"
+          }
+        ],
+        "content": [
+          {
+            "attachment": {
+              "contentType": "text/plain",
+              "data": "RGlzY2hhcmdlIFN1bW1hcnk6IFBhdGllbnQgZGlzY2hhcmdlZCBpbiBzdGFibGUgY29uZGl0aW9uLiBGb2xsb3cgdXAgaW4gMiB3ZWVrcy4="
+            }
+          }
+        ]
+      },
+      "request": {
+        "method": "POST",
+        "url": "DocumentReference"
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:958c63b0-4a7f-2ee7-doc-procedure-001",
+      "resource": {
+        "resourceType": "DocumentReference",
+        "id": "958c63b0-4a7f-2ee7-doc-procedure-001",
+        "meta": {
+          "profile": [
+            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-documentreference"
+          ]
+        },
+        "status": "current",
+        "type": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "28570-0",
+              "display": "Procedure Note"
+            }
+          ]
+        },
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://hl7.org/fhir/us/core/CodeSystem/us-core-documentreference-category",
+                "code": "clinical-note",
+                "display": "Clinical Note"
+              }
+            ]
+          }
+        ],
+        "subject": {
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
+          "display": "Mrs. Daisey627 Jackelyn13 Koelpin146"
+        },
+        "date": "2024-06-15T09:00:00-06:00",
+        "author": [
+          {
+            "display": "Dr. Surgeon"
+          }
+        ],
+        "content": [
+          {
+            "attachment": {
+              "contentType": "text/plain",
+              "data": "UHJvY2VkdXJlIE5vdGU6IE1pbm9yIG91dHBhdGllbnQgcHJvY2VkdXJlIGNvbXBsZXRlZCB3aXRob3V0IGNvbXBsaWNhdGlvbnMu"
+            }
+          }
+        ]
+      },
+      "request": {
+        "method": "POST",
+        "url": "DocumentReference"
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:958c63b0-4a7f-2ee7-doc-progress-001",
+      "resource": {
+        "resourceType": "DocumentReference",
+        "id": "958c63b0-4a7f-2ee7-doc-progress-001",
+        "meta": {
+          "profile": [
+            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-documentreference"
+          ]
+        },
+        "status": "current",
+        "type": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "11506-3",
+              "display": "Progress Note"
+            }
+          ]
+        },
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://hl7.org/fhir/us/core/CodeSystem/us-core-documentreference-category",
+                "code": "clinical-note",
+                "display": "Clinical Note"
+              }
+            ]
+          }
+        ],
+        "subject": {
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
+          "display": "Mrs. Daisey627 Jackelyn13 Koelpin146"
+        },
+        "date": "2024-06-18T11:00:00-06:00",
+        "author": [
+          {
+            "display": "Dr. Primary Care"
+          }
+        ],
+        "content": [
+          {
+            "attachment": {
+              "contentType": "text/plain",
+              "data": "UHJvZ3Jlc3MgTm90ZTogUGF0aWVudCBjb250aW51ZXMgdG8gaW1wcm92ZS4gTWVkaWNhdGlvbnMgYWRqdXN0ZWQu"
+            }
+          }
+        ]
+      },
+      "request": {
+        "method": "POST",
+        "url": "DocumentReference"
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:958c63b0-4a7f-2ee7-doc-imaging-001",
+      "resource": {
+        "resourceType": "DocumentReference",
+        "id": "958c63b0-4a7f-2ee7-doc-imaging-001",
+        "meta": {
+          "profile": [
+            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-documentreference"
+          ]
+        },
+        "status": "current",
+        "type": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "18748-4",
+              "display": "Diagnostic Imaging Study"
+            }
+          ]
+        },
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://hl7.org/fhir/us/core/CodeSystem/us-core-documentreference-category",
+                "code": "clinical-note",
+                "display": "Clinical Note"
+              }
+            ]
+          }
+        ],
+        "subject": {
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
+          "display": "Mrs. Daisey627 Jackelyn13 Koelpin146"
+        },
+        "date": "2024-06-14T08:00:00-06:00",
+        "author": [
+          {
+            "display": "Dr. Radiologist"
+          }
+        ],
+        "content": [
+          {
+            "attachment": {
+              "contentType": "text/plain",
+              "data": "SW1hZ2luZyBTdHVkeTogQ2hlc3QgWC1yYXkgc2hvd3Mgbm8gYWN1dGUgYWJub3JtYWxpdGllcy4="
+            }
+          }
+        ]
+      },
+      "request": {
+        "method": "POST",
+        "url": "DocumentReference"
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:958c63b0-4a7f-2ee7-doc-lab-001",
+      "resource": {
+        "resourceType": "DocumentReference",
+        "id": "958c63b0-4a7f-2ee7-doc-lab-001",
+        "meta": {
+          "profile": [
+            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-documentreference"
+          ]
+        },
+        "status": "current",
+        "type": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "11502-2",
+              "display": "Laboratory Report"
+            }
+          ]
+        },
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://hl7.org/fhir/us/core/CodeSystem/us-core-documentreference-category",
+                "code": "clinical-note",
+                "display": "Clinical Note"
+              }
+            ]
+          }
+        ],
+        "subject": {
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
+          "display": "Mrs. Daisey627 Jackelyn13 Koelpin146"
+        },
+        "date": "2024-06-13T07:30:00-06:00",
+        "author": [
+          {
+            "display": "Lab Director"
+          }
+        ],
+        "content": [
+          {
+            "attachment": {
+              "contentType": "text/plain",
+              "data": "TGFib3JhdG9yeSBSZXBvcnQ6IENvbXByZWhlbnNpdmUgbWV0YWJvbGljIHBhbmVsIHdpdGhpbiBub3JtYWwgbGltaXRzLg=="
+            }
+          }
+        ]
+      },
+      "request": {
+        "method": "POST",
+        "url": "DocumentReference"
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:958c63b0-4a7f-2ee7-doc-pathology-001",
+      "resource": {
+        "resourceType": "DocumentReference",
+        "id": "958c63b0-4a7f-2ee7-doc-pathology-001",
+        "meta": {
+          "profile": [
+            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-documentreference"
+          ]
+        },
+        "status": "current",
+        "type": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "11526-1",
+              "display": "Pathology Study"
+            }
+          ]
+        },
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://hl7.org/fhir/us/core/CodeSystem/us-core-documentreference-category",
+                "code": "clinical-note",
+                "display": "Clinical Note"
+              }
+            ]
+          }
+        ],
+        "subject": {
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
+          "display": "Mrs. Daisey627 Jackelyn13 Koelpin146"
+        },
+        "date": "2024-06-12T15:00:00-06:00",
+        "author": [
+          {
+            "display": "Dr. Pathologist"
+          }
+        ],
+        "content": [
+          {
+            "attachment": {
+              "contentType": "text/plain",
+              "data": "UGF0aG9sb2d5IFN0dWR5OiBTa2luIGJpb3BzeSBzaG93cyBiZW5pZ24gbmV2dXMuIE5vIG1hbGlnbmFuY3ku"
+            }
+          }
+        ]
+      },
+      "request": {
+        "method": "POST",
+        "url": "DocumentReference"
       }
     }
   ]

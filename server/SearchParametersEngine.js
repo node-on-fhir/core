@@ -187,9 +187,17 @@ const SearchParametersEngine = {
 
     // String type can be: HumanName, Address, string
     if (searchParamType === 'string') {
+      // HumanName is only used for Person-like resources (Patient, Practitioner, RelatedPerson)
+      // Location.name and Organization.name are simple strings
       if (baseField === 'name') {
-        return 'HumanName';
+        // Check expression to determine resource type
+        const humanNameResources = ['Patient', 'Practitioner', 'RelatedPerson', 'Person'];
+        const isHumanName = humanNameResources.some(function(res) {
+          return expression && expression.startsWith(res + '.');
+        });
+        return isHumanName ? 'HumanName' : 'string';
       }
+      // Address is used for Person-like resources and Location
       if (baseField === 'address') {
         return 'Address';
       }
@@ -294,6 +302,8 @@ const SearchParametersEngine = {
       'SearchParameter-device-patient.json',
       'SearchParameter-diagnosticreport-patient.json',
       'SearchParameter-documentreference-patient.json',
+      'SearchParameter-documentreference-type.json',
+      'SearchParameter-documentreference-category.json',
       'SearchParameter-imagingstudy-patient.json',
       'SearchParameter-immunization-patient.json',
       'SearchParameter-media-patient.json',
@@ -315,7 +325,9 @@ const SearchParametersEngine = {
       'SearchParameter-diagnosticreport-code.json',
       'SearchParameter-diagnosticreport-date.json',
       'SearchParameter-documentreference-date.json',
-      'SearchParameter-encounter-date.json'
+      'SearchParameter-encounter-date.json',
+      'SearchParameter-location-address.json',
+      'SearchParameter-location-name.json'
     ];
 
     for (const fileName of searchParameterFiles) {
@@ -774,8 +786,7 @@ const SearchParametersEngine = {
           case 'HumanName':
             return RestHelpers.buildHumanNameStringQuery(baseField, searchValue);
           case 'Address':
-            // TODO: Implement Address-specific search
-            return this.buildStringQuery(baseField, searchValue);
+            return RestHelpers.buildAddressStringQuery(baseField, searchValue);
           default:
             return this.buildStringQuery(baseField, searchValue);
         }

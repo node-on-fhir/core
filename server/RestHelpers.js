@@ -369,6 +369,37 @@ function buildHumanNameStringQuery(mongoPath, searchValue) {
   };
 }
 
+/**
+ * Build MongoDB query for string search on Address field
+ * Searches text, line, city, district, state, postalCode, and country fields
+ * FHIR address search should match any part of the address
+ * @param {string} mongoPath - e.g., "address"
+ * @param {string} searchValue - e.g., "Chicago"
+ * @returns {Object} - MongoDB query object
+ */
+function buildAddressStringQuery(mongoPath, searchValue) {
+  if (!mongoPath || !searchValue) {
+    console.warn('buildAddressStringQuery: Missing mongoPath or searchValue');
+    return {};
+  }
+
+  // Search text, line, city, district, state, postalCode, and country fields
+  // with case-insensitive regex (FHIR default for string search)
+  let regex = { $regex: searchValue, $options: 'i' };
+
+  return {
+    $or: [
+      { [mongoPath + '.text']: regex },
+      { [mongoPath + '.line']: regex },
+      { [mongoPath + '.city']: regex },
+      { [mongoPath + '.district']: regex },
+      { [mongoPath + '.state']: regex },
+      { [mongoPath + '.postalCode']: regex },
+      { [mongoPath + '.country']: regex }
+    ]
+  };
+}
+
 // =============================================================================
 
 export const RestHelpers = {
@@ -387,6 +418,8 @@ export const RestHelpers = {
     // HumanName search helpers
     isHumanNameField: isHumanNameField,
     buildHumanNameStringQuery: buildHumanNameStringQuery,
+    // Address search helpers
+    buildAddressStringQuery: buildAddressStringQuery,
 
     logging: function(req, route){
         if(this.isDebug){

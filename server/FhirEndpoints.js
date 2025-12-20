@@ -1075,11 +1075,11 @@ async function signProvenance(record){
 // This needs to be registered before routes are defined
 // Using verify callback to preserve raw body for debugging
 
-// Add text body parser for form-urlencoded as fallback
-// This captures the raw text body, which we can parse manually if needed
+// Add text body parser for plain text requests
+// Note: form-urlencoded should be handled by bodyParser.urlencoded() below
 WebApp.handlers.use(bodyParser.text({
   limit: '50mb',
-  type: ['application/x-www-form-urlencoded'],
+  type: ['text/plain'],
   verify: function(req, res, buf) {
     req.rawBody = buf.toString();
   }
@@ -1138,7 +1138,8 @@ let serverRouteManifest = get(Meteor, 'settings.private.fhir.rest', {
     "interactions": ["read", "create", "update", "delete"]
   },
   "Location": {
-    "interactions": ["read", "create", "update", "delete"]
+    "interactions": ["read", "create", "update", "delete"],
+    "search": true
   },
   "Organization": {
     "interactions": ["read", "create", "update", "delete"]
@@ -1393,6 +1394,23 @@ if(typeof serverRouteManifest === "object"){
                       }
 
                       if(targetResource){
+                        // Find an Organization to reference in Provenance agent
+                        // Try to find one with US Core profile for best compatibility
+                        let provenanceOrg = await Organizations.findOneAsync({
+                          'meta.profile': 'http://hl7.org/fhir/us/core/StructureDefinition/us-core-organization'
+                        });
+                        // Fall back to any Organization if no US Core profile found
+                        if(!provenanceOrg){
+                          provenanceOrg = await Organizations.findOneAsync({});
+                        }
+
+                        let orgReference = provenanceOrg ? {
+                          reference: "Organization/" + get(provenanceOrg, 'id'),
+                          display: get(provenanceOrg, 'name', get(Meteor, 'settings.public.title', 'Honeycomb EHR'))
+                        } : {
+                          display: get(Meteor, 'settings.public.title', 'Honeycomb EHR')
+                        };
+
                         // Generate the Provenance dynamically
                         let provenance = {
                           resourceType: "Provenance",
@@ -1405,18 +1423,30 @@ if(typeof serverRouteManifest === "object"){
                             reference: targetResourceType + "/" + targetResourceId
                           }],
                           recorded: get(targetResource, 'meta.lastUpdated') || new Date().toISOString(),
-                          agent: [{
-                            type: {
-                              coding: [{
-                                system: "http://terminology.hl7.org/CodeSystem/provenance-participant-type",
-                                code: "author",
-                                display: "Author"
-                              }]
+                          agent: [
+                            {
+                              type: {
+                                coding: [{
+                                  system: "http://terminology.hl7.org/CodeSystem/provenance-participant-type",
+                                  code: "author",
+                                  display: "Author"
+                                }]
+                              },
+                              who: orgReference,
+                              onBehalfOf: orgReference
                             },
-                            who: {
-                              display: "Vault Server"
+                            {
+                              type: {
+                                coding: [{
+                                  system: "http://hl7.org/fhir/us/core/CodeSystem/us-core-provenance-participant-type",
+                                  code: "transmitter",
+                                  display: "Transmitter"
+                                }]
+                              },
+                              who: orgReference,
+                              onBehalfOf: orgReference
                             }
-                          }]
+                          ]
                         };
 
                         res.setHeader("Content-type", 'application/fhir+json');
@@ -1902,10 +1932,21 @@ if(typeof serverRouteManifest === "object"){
                   const isPractitioner = (userRole === 'healthcare practitioner' || userRole === 'healthcare provider');
                   const practitionerFullAccess = get(Meteor, 'settings.private.accessControl.practitionerFullAccess', true);
 
+                  // Reference resources that don't belong to patient compartment per FHIR R4 spec
+                  // These are organizational resources accessible with appropriate scope without patient references
+                  const referenceResources = ['Location', 'Practitioner', 'PractitionerRole',
+                                              'Organization', 'HealthcareService', 'Endpoint'];
+                  const isReferenceResource = referenceResources.includes(routeResourceType);
+
                   if (isPractitioner && practitionerFullAccess) {
                     // Healthcare practitioner with full access - use search query as-is
                     mongoQuery = searchQuery;
                     console.log('Practitioner full access - no authorization filter applied');
+                  } else if (isReferenceResource) {
+                    // Reference resources bypass patient compartment filtering
+                    // The scope check (isResourceScopeAuthorized) already verified access
+                    mongoQuery = searchQuery;
+                    console.log('Reference resource - no patient compartment filter applied for:', routeResourceType);
                   } else {
                     // Apply authorization filters
                     let authQuery = {$or: [
@@ -2134,6 +2175,21 @@ if(typeof serverRouteManifest === "object"){
                       let revIncludeParts = _revIncludeRef.split(":");
 
                       if(revIncludeParts.length >= 2 && revIncludeParts[0] === "Provenance" && revIncludeParts[1] === "target"){
+                        // Find an Organization to reference in Provenance agent (lookup once, use for all)
+                        let provenanceOrg = await Organizations.findOneAsync({
+                          'meta.profile': 'http://hl7.org/fhir/us/core/StructureDefinition/us-core-organization'
+                        });
+                        if(!provenanceOrg){
+                          provenanceOrg = await Organizations.findOneAsync({});
+                        }
+
+                        let orgReference = provenanceOrg ? {
+                          reference: "Organization/" + get(provenanceOrg, 'id'),
+                          display: get(provenanceOrg, 'name', get(Meteor, 'settings.public.title', 'Honeycomb EHR'))
+                        } : {
+                          display: get(Meteor, 'settings.public.title', 'Honeycomb EHR')
+                        };
+
                         // Generate Provenance for each matched record (just-in-time)
                         for(let matchedRecord of records){
                           let provenanceId = "provenance-" + get(matchedRecord, 'id');
@@ -2148,21 +2204,30 @@ if(typeof serverRouteManifest === "object"){
                               reference: routeResourceType + "/" + get(matchedRecord, 'id')
                             }],
                             recorded: get(matchedRecord, 'meta.lastUpdated') || new Date().toISOString(),
-                            agent: [{
-                              type: {
-                                coding: [{
-                                  system: "http://terminology.hl7.org/CodeSystem/provenance-participant-type",
-                                  code: "author",
-                                  display: "Author"
-                                }]
+                            agent: [
+                              {
+                                type: {
+                                  coding: [{
+                                    system: "http://terminology.hl7.org/CodeSystem/provenance-participant-type",
+                                    code: "author",
+                                    display: "Author"
+                                  }]
+                                },
+                                who: orgReference,
+                                onBehalfOf: orgReference
                               },
-                              who: {
-                                display: get(Meteor, 'settings.public.title', 'Honeycomb EHR')
-                              },
-                              onBehalfOf: {
-                                display: get(Meteor, 'settings.public.title', 'Honeycomb EHR')
+                              {
+                                type: {
+                                  coding: [{
+                                    system: "http://hl7.org/fhir/us/core/CodeSystem/us-core-provenance-participant-type",
+                                    code: "transmitter",
+                                    display: "Transmitter"
+                                  }]
+                                },
+                                who: orgReference,
+                                onBehalfOf: orgReference
                               }
-                            }]
+                            ]
                           };
 
                           payload.push({
@@ -2874,7 +2939,7 @@ if(typeof serverRouteManifest === "object"){
             if (await isAuthorized(authorizationContext)){
               let matchingRecords = [];
               let payload = [];
-              let searchLimit = 100; // Default to 100 for search operations, not 1
+              let searchLimit = 1000; // Match GET handler default from RestHelpers.generateMongoSearchOptions
 
               if (get(req, 'query._count') || get(req, 'body._count')) {
                 searchLimit = parseInt(get(req, 'query._count') || get(req, 'body._count'));
@@ -3023,6 +3088,40 @@ if(typeof serverRouteManifest === "object"){
 
                 console.log('POST _search DEBUG - generated searchQuery:', JSON.stringify(searchQuery));
 
+                // TEMPORARY DIAGNOSTIC - Remove after debugging test 12.43.02
+                // Adds diagnostic info to response header for debugging without server logs
+                console.log('=== DIAGNOSTIC OUTPUT ===');
+                const diagnostic = {
+                  timestamp: new Date().toISOString(),
+                  resourceType: routeResourceType,
+                  body: {
+                    reqBody: req.body,
+                    reqBodyType: typeof req.body,
+                    rawBody: req.rawBody ? req.rawBody.substring(0, 200) : null,  // Truncate for header
+                    contentType: req.headers['content-type'],
+                    contentLength: req.headers['content-length']
+                  },
+                  parsing: {
+                    parsedBody: parsedBody,
+                    parsedBodyKeys: Object.keys(parsedBody),
+                    searchParams: searchParams,
+                    searchParamsKeys: Object.keys(searchParams)
+                  },
+                  query: {
+                    searchQuery: searchQuery,
+                    searchQueryKeys: Object.keys(searchQuery),
+                    engineEnabled: SearchParametersEngine.isEnabled(),
+                    engineCompiled: SearchParametersEngine.isCompiled()
+                  }
+                };
+                console.log('DIAGNOSTIC:', JSON.stringify(diagnostic, null, 2));
+                // Note: Headers can be max ~8KB, so we truncate the diagnostic
+                try {
+                  res.setHeader('X-Debug-Diagnostic', JSON.stringify(diagnostic));
+                } catch (headerErr) {
+                  console.error('Could not set diagnostic header:', headerErr.message);
+                }
+
                 // Apply authorization filter (same as GET search)
                 let userRole = get(authorizationContext, 'role', 'PAT');
                 let mongoQuery = searchQuery;
@@ -3030,6 +3129,12 @@ if(typeof serverRouteManifest === "object"){
                 // Check if healthcare practitioner/provider with full access
                 const isPractitioner = (userRole === 'healthcare practitioner' || userRole === 'healthcare provider');
                 const practitionerFullAccess = get(Meteor, 'settings.private.accessControl.practitionerFullAccess', true);
+
+                // Reference resources that don't belong to patient compartment per FHIR R4 spec
+                // These are organizational resources accessible with appropriate scope without patient references
+                const referenceResources = ['Location', 'Practitioner', 'PractitionerRole',
+                                            'Organization', 'HealthcareService', 'Endpoint'];
+                const isReferenceResource = referenceResources.includes(routeResourceType);
 
                 if (userRole === "noauth" || userRole === "SYSTEM") {
                   // For noauth/SYSTEM, use the search query as-is (no auth restrictions)
@@ -3039,6 +3144,11 @@ if(typeof serverRouteManifest === "object"){
                   // Healthcare practitioner with full access - use search query as-is
                   mongoQuery = searchQuery;
                   console.log('POST _search: Practitioner full access - no auth filter applied');
+                } else if (isReferenceResource) {
+                  // Reference resources bypass patient compartment filtering
+                  // The scope check (isResourceScopeAuthorized) already verified access
+                  mongoQuery = searchQuery;
+                  console.log('POST _search: Reference resource - no patient compartment filter applied for:', routeResourceType);
                 } else {
                   // Apply authorization filters
                   let authQuery = {$or: [

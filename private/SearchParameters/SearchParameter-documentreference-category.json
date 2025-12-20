@@ -1,0 +1,28 @@
+{
+  "resourceType": "SearchParameter",
+  "id": "documentreference-category",
+  "url": "http://hl7.org/fhir/SearchParameter/DocumentReference-category",
+  "version": "4.0.1",
+  "name": "HoneycombDocumentReferenceCategory",
+  "status": "active",
+  "date": "2024-12-20",
+  "publisher": "github.com/node-on-fhir",
+  "contact": [
+    {
+      "telecom": [
+        {
+          "system": "url",
+          "value": "http://github.com/node-on-fhir/honeycomb"
+        }
+      ]
+    }
+  ],
+  "description": "Categorization of document",
+  "code": "category",
+  "base": ["DocumentReference"],
+  "type": "token",
+  "expression": "DocumentReference.category",
+  "xpath": "category",
+  "multipleOr": true,
+  "multipleAnd": true
+}
