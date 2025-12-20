@@ -301,6 +301,66 @@ const MetadataServerMethods = {
           newResourceStatement.supportedProfile = resourceProfiles;
         }
 
+        // Add searchParam declarations for resources that support search
+        // This is required for ONC (g)(10) certification test 12.50.01 (Screening and Assessments)
+        if (key === 'Observation') {
+          newResourceStatement.searchParam = [
+            {
+              "name": "patient",
+              "type": "reference",
+              "documentation": "The subject that the observation is about (if patient)"
+            },
+            {
+              "name": "category",
+              "type": "token",
+              "documentation": "The classification of the type of observation"
+            },
+            {
+              "name": "code",
+              "type": "token",
+              "documentation": "The code of the observation type"
+            },
+            {
+              "name": "date",
+              "type": "date",
+              "documentation": "Obtained date/time. If the obtained element is a period, a date that falls in the period"
+            },
+            {
+              "name": "status",
+              "type": "token",
+              "documentation": "The status of the observation"
+            }
+          ];
+        } else if (key === 'Condition') {
+          newResourceStatement.searchParam = [
+            {
+              "name": "patient",
+              "type": "reference",
+              "documentation": "Who has the condition?"
+            },
+            {
+              "name": "category",
+              "type": "token",
+              "documentation": "The category of the condition"
+            },
+            {
+              "name": "clinical-status",
+              "type": "token",
+              "documentation": "The clinical status of the condition"
+            },
+            {
+              "name": "code",
+              "type": "token",
+              "documentation": "Code for the condition"
+            },
+            {
+              "name": "onset-date",
+              "type": "date",
+              "documentation": "Date related onsets (dateTime and Period)"
+            }
+          ];
+        }
+
         CapabilityStatement.rest[0].resource.push(newResourceStatement);
       })
     }

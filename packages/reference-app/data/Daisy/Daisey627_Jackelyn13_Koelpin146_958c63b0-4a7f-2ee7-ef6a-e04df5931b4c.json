@@ -3,7 +3,7 @@
   "type": "transaction",
   "entry": [
     {
-      "fullUrl": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
+      "fullUrl": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
       "resource": {
         "resourceType": "Patient",
         "id": "958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
@@ -704,7 +704,7 @@
           }
         ],
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
           "display": "Mrs. Daisey627 Jackelyn13 Koelpin146"
         },
         "participant": [
@@ -825,7 +825,7 @@
           "text": "Past pregnancy history of miscarriage (situation)"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-e3a7-067647287b2b"
@@ -882,7 +882,7 @@
           ]
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-e3a7-067647287b2b"
@@ -966,7 +966,7 @@
           }
         ],
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "date": "2011-09-30T10:20:48.254-06:00",
         "author": [
@@ -1025,7 +1025,7 @@
         },
         "use": "claim",
         "patient": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
           "display": "Daisey627 Jackelyn13 Koelpin146"
         },
         "billablePeriod": {
@@ -1124,7 +1124,7 @@
             "status": "completed",
             "intent": "order",
             "subject": {
-              "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+              "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
             },
             "requester": {
               "reference": "Practitioner?identifier=http://hl7.org/fhir/sid/us-npi|9999994293"
@@ -1143,7 +1143,7 @@
               "text": "Cigna Health"
             },
             "beneficiary": {
-              "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+              "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
             },
             "payor": [
               {
@@ -1174,7 +1174,7 @@
         },
         "use": "claim",
         "patient": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "billablePeriod": {
           "start": "2011-09-30T10:35:48-06:00",
@@ -1388,7 +1388,7 @@
           }
         ],
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
           "display": "Mrs. Daisey627 Jackelyn13 Koelpin146"
         },
         "participant": [
@@ -1497,7 +1497,7 @@
           "text": "Chronic pain (finding)"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-f891-781df5a329d3"
@@ -1559,7 +1559,7 @@
           "text": "Chronic low back pain (finding)"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-f891-781df5a329d3"
@@ -1615,7 +1615,7 @@
           ]
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-f891-781df5a329d3"
@@ -1683,7 +1683,7 @@
           }
         ],
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "date": "2014-05-13T10:20:48.254-06:00",
         "author": [
@@ -1742,7 +1742,7 @@
         },
         "use": "claim",
         "patient": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
           "display": "Daisey627 Jackelyn13 Koelpin146"
         },
         "billablePeriod": {
@@ -1863,7 +1863,7 @@
             "status": "completed",
             "intent": "order",
             "subject": {
-              "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+              "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
             },
             "requester": {
               "reference": "Practitioner?identifier=http://hl7.org/fhir/sid/us-npi|9999994293"
@@ -1882,7 +1882,7 @@
               "text": "Cigna Health"
             },
             "beneficiary": {
-              "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+              "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
             },
             "payor": [
               {
@@ -1913,7 +1913,7 @@
         },
         "use": "claim",
         "patient": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "billablePeriod": {
           "start": "2014-05-13T10:35:48-06:00",
@@ -2181,7 +2181,7 @@
           }
         ],
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
           "display": "Mrs. Daisey627 Jackelyn13 Koelpin146"
         },
         "participant": [
@@ -2288,7 +2288,7 @@
           "text": "Received higher education (finding)"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-7c5f-d583df730d02"
@@ -2344,7 +2344,7 @@
           ]
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-7c5f-d583df730d02"
@@ -2412,7 +2412,7 @@
           }
         ],
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "date": "2014-06-01T10:20:48.254-06:00",
         "author": [
@@ -2471,7 +2471,7 @@
         },
         "use": "claim",
         "patient": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
           "display": "Daisey627 Jackelyn13 Koelpin146"
         },
         "billablePeriod": {
@@ -2570,7 +2570,7 @@
             "status": "completed",
             "intent": "order",
             "subject": {
-              "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+              "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
             },
             "requester": {
               "reference": "Practitioner?identifier=http://hl7.org/fhir/sid/us-npi|9999928895"
@@ -2589,7 +2589,7 @@
               "text": "Cigna Health"
             },
             "beneficiary": {
-              "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+              "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
             },
             "payor": [
               {
@@ -2620,7 +2620,7 @@
         },
         "use": "claim",
         "patient": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "billablePeriod": {
           "start": "2014-06-01T11:06:51-06:00",
@@ -2834,7 +2834,7 @@
           }
         ],
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
           "display": "Mrs. Daisey627 Jackelyn13 Koelpin146"
         },
         "participant": [
@@ -2932,7 +2932,7 @@
           "text": "Medication review due (situation)"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-5f29-584e61a78ef0"
@@ -2995,7 +2995,7 @@
           "text": "Full-time employment (finding)"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-5f29-584e61a78ef0"
@@ -3058,7 +3058,7 @@
           "text": "Stress (finding)"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-5f29-584e61a78ef0"
@@ -3114,7 +3114,7 @@
           ]
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-5f29-584e61a78ef0"
@@ -3182,7 +3182,7 @@
           }
         ],
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "date": "2015-06-07T10:20:48.254-06:00",
         "author": [
@@ -3241,7 +3241,7 @@
         },
         "use": "claim",
         "patient": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
           "display": "Daisey627 Jackelyn13 Koelpin146"
         },
         "billablePeriod": {
@@ -3384,7 +3384,7 @@
             "status": "completed",
             "intent": "order",
             "subject": {
-              "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+              "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
             },
             "requester": {
               "reference": "Practitioner?identifier=http://hl7.org/fhir/sid/us-npi|9999928895"
@@ -3403,7 +3403,7 @@
               "text": "Cigna Health"
             },
             "beneficiary": {
-              "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+              "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
             },
             "payor": [
               {
@@ -3434,7 +3434,7 @@
         },
         "use": "claim",
         "patient": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "billablePeriod": {
           "start": "2015-06-07T11:18:03-06:00",
@@ -3756,7 +3756,7 @@
           }
         ],
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
           "display": "Mrs. Daisey627 Jackelyn13 Koelpin146"
         },
         "participant": [
@@ -3838,7 +3838,7 @@
           "text": "Intramuscular injection (procedure)"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-a020-b228cc1f5828"
@@ -3939,7 +3939,7 @@
           "reference": "urn:uuid:f030443f-8ec8-f08b-225f-1926ca2d40ad"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-a020-b228cc1f5828"
@@ -4014,7 +4014,7 @@
         },
         "use": "claim",
         "patient": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "billablePeriod": {
           "start": "2018-03-29T10:20:48-06:00",
@@ -4087,7 +4087,7 @@
             "status": "completed",
             "intent": "order",
             "subject": {
-              "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+              "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
             },
             "requester": {
               "reference": "Practitioner?identifier=http://hl7.org/fhir/sid/us-npi|9999994293"
@@ -4106,7 +4106,7 @@
               "text": "Anthem"
             },
             "beneficiary": {
-              "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+              "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
             },
             "payor": [
               {
@@ -4137,7 +4137,7 @@
         },
         "use": "claim",
         "patient": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "billablePeriod": {
           "start": "2018-03-29T10:35:48-06:00",
@@ -4276,7 +4276,7 @@
           "text": "1 ML medroxyprogesterone acetate 150 MG/ML Injection"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "context": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-a020-b228cc1f5828"
@@ -4331,7 +4331,7 @@
           ]
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-a020-b228cc1f5828"
@@ -4399,7 +4399,7 @@
           }
         ],
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "date": "2018-03-29T10:20:48.254-06:00",
         "author": [
@@ -4458,7 +4458,7 @@
         },
         "use": "claim",
         "patient": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
           "display": "Daisey627 Jackelyn13 Koelpin146"
         },
         "billablePeriod": {
@@ -4561,7 +4561,7 @@
             "status": "completed",
             "intent": "order",
             "subject": {
-              "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+              "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
             },
             "requester": {
               "reference": "Practitioner?identifier=http://hl7.org/fhir/sid/us-npi|9999994293"
@@ -4580,7 +4580,7 @@
               "text": "Anthem"
             },
             "beneficiary": {
-              "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+              "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
             },
             "payor": [
               {
@@ -4611,7 +4611,7 @@
         },
         "use": "claim",
         "patient": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "billablePeriod": {
           "start": "2018-03-29T10:35:48-06:00",
@@ -4896,7 +4896,7 @@
           }
         ],
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
           "display": "Mrs. Daisey627 Jackelyn13 Koelpin146"
         },
         "participant": [
@@ -4994,7 +4994,7 @@
           "text": "Victim of intimate partner abuse (finding)"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-258e-0ffacbc90453"
@@ -5041,7 +5041,7 @@
           "text": "Body Height"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-258e-0ffacbc90453"
@@ -5088,7 +5088,7 @@
           "text": "Pain severity - 0-10 verbal numeric rating [Score] - Reported"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-258e-0ffacbc90453"
@@ -5140,7 +5140,7 @@
           "text": "Body Weight"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-258e-0ffacbc90453"
@@ -5192,7 +5192,7 @@
           "text": "Body mass index (BMI) [Ratio]"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-258e-0ffacbc90453"
@@ -5244,7 +5244,7 @@
           "text": "Blood pressure panel with all children optional"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-258e-0ffacbc90453"
@@ -5328,7 +5328,7 @@
           "text": "Heart rate"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-258e-0ffacbc90453"
@@ -5380,7 +5380,7 @@
           "text": "Respiratory rate"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-258e-0ffacbc90453"
@@ -5434,7 +5434,7 @@
           "text": "Leukocytes [#/volume] in Blood by Automated count"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-258e-0ffacbc90453"
@@ -5518,7 +5518,7 @@
           "text": "Erythrocytes [#/volume] in Blood by Automated count"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-258e-0ffacbc90453"
@@ -5571,7 +5571,7 @@
           "text": "Hemoglobin [Mass/volume] in Blood"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-258e-0ffacbc90453"
@@ -5624,7 +5624,7 @@
           "text": "Hematocrit [Volume Fraction] of Blood by Automated count"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-258e-0ffacbc90453"
@@ -5677,7 +5677,7 @@
           "text": "MCV [Entitic mean volume] in Red Blood Cells by Automated count"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-258e-0ffacbc90453"
@@ -5730,7 +5730,7 @@
           "text": "MCH [Entitic mass] by Automated count"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-258e-0ffacbc90453"
@@ -5783,7 +5783,7 @@
           "text": "MCHC [Entitic Mass/volume] in Red Blood Cells by Automated count"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-258e-0ffacbc90453"
@@ -5836,7 +5836,7 @@
           "text": "Erythrocyte [DistWidth] in Blood by Automated count"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-258e-0ffacbc90453"
@@ -5889,7 +5889,7 @@
           "text": "Platelets [#/volume] in Blood by Automated count"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-258e-0ffacbc90453"
@@ -5942,7 +5942,7 @@
           "text": "Platelet distribution width [Entitic volume] in Blood by Automated count"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-258e-0ffacbc90453"
@@ -5995,7 +5995,7 @@
           "text": "Platelet [Entitic mean volume] in Blood by Automated count"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-258e-0ffacbc90453"
@@ -6048,7 +6048,7 @@
           "text": "Tobacco smoking status"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-258e-0ffacbc90453"
@@ -6105,7 +6105,7 @@
           "text": "Protocol for Responding to and Assessing Patients' Assets, Risks, and Experiences [PRAPARE]"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-258e-0ffacbc90453"
@@ -6608,7 +6608,7 @@
           "text": "Generalized anxiety disorder 7 item (GAD-7) total score [Reported.PHQ]"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-258e-0ffacbc90453"
@@ -6670,7 +6670,7 @@
           "text": "Total score [AUDIT-C]"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-258e-0ffacbc90453"
@@ -6716,7 +6716,7 @@
           "text": "Medication reconciliation (procedure)"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-258e-0ffacbc90453"
@@ -6763,7 +6763,7 @@
           "text": "Assessment of health and social care needs (procedure)"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-258e-0ffacbc90453"
@@ -6810,7 +6810,7 @@
           "text": "Assessment of anxiety (procedure)"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-258e-0ffacbc90453"
@@ -6857,7 +6857,7 @@
           "text": "Assessment of substance use (procedure)"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-258e-0ffacbc90453"
@@ -6904,7 +6904,7 @@
           "text": "Assessment using Alcohol Use Disorders Identification Test - Consumption (procedure)"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-258e-0ffacbc90453"
@@ -6961,7 +6961,7 @@
           "text": "Influenza, split virus, trivalent, PF"
         },
         "patient": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-258e-0ffacbc90453"
@@ -7000,7 +7000,7 @@
           "text": "Td (adult), 5 Lf tetanus toxoid, preservative free, adsorbed"
         },
         "patient": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-258e-0ffacbc90453"
@@ -7039,7 +7039,7 @@
           "text": "Hep B, adult"
         },
         "patient": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-258e-0ffacbc90453"
@@ -7078,7 +7078,7 @@
           "text": "meningococcal MCV4P"
         },
         "patient": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-258e-0ffacbc90453"
@@ -7220,7 +7220,7 @@
           "text": "Generalized anxiety disorder 7 item (GAD-7)"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-258e-0ffacbc90453"
@@ -7259,7 +7259,7 @@
           "text": "Alcohol Use Disorder Identification Test - Consumption [AUDIT-C]"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-258e-0ffacbc90453"
@@ -7324,7 +7324,7 @@
           ]
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-258e-0ffacbc90453"
@@ -7392,7 +7392,7 @@
           }
         ],
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "date": "2018-06-10T10:20:48.254-06:00",
         "author": [
@@ -7451,7 +7451,7 @@
         },
         "use": "claim",
         "patient": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
           "display": "Daisey627 Jackelyn13 Koelpin146"
         },
         "billablePeriod": {
@@ -7913,7 +7913,7 @@
             "status": "completed",
             "intent": "order",
             "subject": {
-              "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+              "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
             },
             "requester": {
               "reference": "Practitioner?identifier=http://hl7.org/fhir/sid/us-npi|9999928895"
@@ -7932,7 +7932,7 @@
               "text": "Cigna Health"
             },
             "beneficiary": {
-              "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+              "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
             },
             "payor": [
               {
@@ -7963,7 +7963,7 @@
         },
         "use": "claim",
         "patient": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "billablePeriod": {
           "start": "2018-06-10T10:58:52-06:00",
@@ -9722,7 +9722,7 @@
           }
         ],
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
           "display": "Mrs. Daisey627 Jackelyn13 Koelpin146"
         },
         "participant": [
@@ -9804,7 +9804,7 @@
           "text": "Intramuscular injection (procedure)"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-e8b0-45a290b20950"
@@ -9872,7 +9872,7 @@
           ]
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-e8b0-45a290b20950"
@@ -9940,7 +9940,7 @@
           }
         ],
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "date": "2018-07-08T10:20:48.254-06:00",
         "author": [
@@ -9999,7 +9999,7 @@
         },
         "use": "claim",
         "patient": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
           "display": "Daisey627 Jackelyn13 Koelpin146"
         },
         "billablePeriod": {
@@ -10102,7 +10102,7 @@
             "status": "completed",
             "intent": "order",
             "subject": {
-              "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+              "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
             },
             "requester": {
               "reference": "Practitioner?identifier=http://hl7.org/fhir/sid/us-npi|9999994293"
@@ -10121,7 +10121,7 @@
               "text": "Cigna Health"
             },
             "beneficiary": {
-              "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+              "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
             },
             "payor": [
               {
@@ -10152,7 +10152,7 @@
         },
         "use": "claim",
         "patient": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "billablePeriod": {
           "start": "2018-07-08T10:35:48-06:00",
@@ -10437,7 +10437,7 @@
           }
         ],
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
           "display": "Mrs. Daisey627 Jackelyn13 Koelpin146"
         },
         "participant": [
@@ -10519,7 +10519,7 @@
           "text": "Intramuscular injection (procedure)"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-a72a-b9eeecf0c297"
@@ -10587,7 +10587,7 @@
           ]
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-a72a-b9eeecf0c297"
@@ -10655,7 +10655,7 @@
           }
         ],
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "date": "2018-10-07T10:20:48.254-06:00",
         "author": [
@@ -10714,7 +10714,7 @@
         },
         "use": "claim",
         "patient": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
           "display": "Daisey627 Jackelyn13 Koelpin146"
         },
         "billablePeriod": {
@@ -10817,7 +10817,7 @@
             "status": "completed",
             "intent": "order",
             "subject": {
-              "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+              "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
             },
             "requester": {
               "reference": "Practitioner?identifier=http://hl7.org/fhir/sid/us-npi|9999994293"
@@ -10836,7 +10836,7 @@
               "text": "Cigna Health"
             },
             "beneficiary": {
-              "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+              "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
             },
             "payor": [
               {
@@ -10867,7 +10867,7 @@
         },
         "use": "claim",
         "patient": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "billablePeriod": {
           "start": "2018-10-07T10:35:48-06:00",
@@ -11152,7 +11152,7 @@
           }
         ],
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
           "display": "Mrs. Daisey627 Jackelyn13 Koelpin146"
         },
         "participant": [
@@ -11234,7 +11234,7 @@
           "text": "Intramuscular injection (procedure)"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-1019-9a2e4fdb262b"
@@ -11302,7 +11302,7 @@
           ]
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-1019-9a2e4fdb262b"
@@ -11370,7 +11370,7 @@
           }
         ],
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "date": "2019-01-06T09:20:48.254-07:00",
         "author": [
@@ -11429,7 +11429,7 @@
         },
         "use": "claim",
         "patient": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
           "display": "Daisey627 Jackelyn13 Koelpin146"
         },
         "billablePeriod": {
@@ -11532,7 +11532,7 @@
             "status": "completed",
             "intent": "order",
             "subject": {
-              "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+              "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
             },
             "requester": {
               "reference": "Practitioner?identifier=http://hl7.org/fhir/sid/us-npi|9999994293"
@@ -11551,7 +11551,7 @@
               "text": "Cigna Health"
             },
             "beneficiary": {
-              "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+              "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
             },
             "payor": [
               {
@@ -11582,7 +11582,7 @@
         },
         "use": "claim",
         "patient": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "billablePeriod": {
           "start": "2019-01-06T09:37:33-07:00",
@@ -11867,7 +11867,7 @@
           }
         ],
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
           "display": "Mrs. Daisey627 Jackelyn13 Koelpin146"
         },
         "participant": [
@@ -11949,7 +11949,7 @@
           "text": "Intramuscular injection (procedure)"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-36c6-374133dca112"
@@ -12017,7 +12017,7 @@
           ]
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-36c6-374133dca112"
@@ -12085,7 +12085,7 @@
           }
         ],
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "date": "2019-04-07T10:20:48.254-06:00",
         "author": [
@@ -12144,7 +12144,7 @@
         },
         "use": "claim",
         "patient": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
           "display": "Daisey627 Jackelyn13 Koelpin146"
         },
         "billablePeriod": {
@@ -12247,7 +12247,7 @@
             "status": "completed",
             "intent": "order",
             "subject": {
-              "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+              "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
             },
             "requester": {
               "reference": "Practitioner?identifier=http://hl7.org/fhir/sid/us-npi|9999994293"
@@ -12266,7 +12266,7 @@
               "text": "Cigna Health"
             },
             "beneficiary": {
-              "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+              "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
             },
             "payor": [
               {
@@ -12297,7 +12297,7 @@
         },
         "use": "claim",
         "patient": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "billablePeriod": {
           "start": "2019-04-07T10:35:48-06:00",
@@ -12582,7 +12582,7 @@
           }
         ],
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
           "display": "Mrs. Daisey627 Jackelyn13 Koelpin146"
         },
         "participant": [
@@ -12664,7 +12664,7 @@
           "text": "Intramuscular injection (procedure)"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-2ca7-ce356a26e074"
@@ -12732,7 +12732,7 @@
           ]
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-2ca7-ce356a26e074"
@@ -12800,7 +12800,7 @@
           }
         ],
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "date": "2019-07-07T10:20:48.254-06:00",
         "author": [
@@ -12859,7 +12859,7 @@
         },
         "use": "claim",
         "patient": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
           "display": "Daisey627 Jackelyn13 Koelpin146"
         },
         "billablePeriod": {
@@ -12962,7 +12962,7 @@
             "status": "completed",
             "intent": "order",
             "subject": {
-              "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+              "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
             },
             "requester": {
               "reference": "Practitioner?identifier=http://hl7.org/fhir/sid/us-npi|9999994293"
@@ -12981,7 +12981,7 @@
               "text": "Cigna Health"
             },
             "beneficiary": {
-              "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+              "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
             },
             "payor": [
               {
@@ -13012,7 +13012,7 @@
         },
         "use": "claim",
         "patient": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "billablePeriod": {
           "start": "2019-07-07T10:35:48-06:00",
@@ -13297,7 +13297,7 @@
           }
         ],
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
           "display": "Mrs. Daisey627 Jackelyn13 Koelpin146"
         },
         "participant": [
@@ -13390,7 +13390,7 @@
           "text": "Pregnancy status"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-2dbc-bd8196cd03b2"
@@ -13435,7 +13435,7 @@
           "text": "Intramuscular injection (procedure)"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-2dbc-bd8196cd03b2"
@@ -13503,7 +13503,7 @@
           ]
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-2dbc-bd8196cd03b2"
@@ -13571,7 +13571,7 @@
           }
         ],
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "date": "2019-10-06T10:20:48.254-06:00",
         "author": [
@@ -13630,7 +13630,7 @@
         },
         "use": "claim",
         "patient": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
           "display": "Daisey627 Jackelyn13 Koelpin146"
         },
         "billablePeriod": {
@@ -13733,7 +13733,7 @@
             "status": "completed",
             "intent": "order",
             "subject": {
-              "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+              "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
             },
             "requester": {
               "reference": "Practitioner?identifier=http://hl7.org/fhir/sid/us-npi|9999994293"
@@ -13752,7 +13752,7 @@
               "text": "Cigna Health"
             },
             "beneficiary": {
-              "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+              "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
             },
             "payor": [
               {
@@ -13783,7 +13783,7 @@
         },
         "use": "claim",
         "patient": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "billablePeriod": {
           "start": "2019-10-06T10:35:48-06:00",
@@ -14068,7 +14068,7 @@
           }
         ],
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
           "display": "Mrs. Daisey627 Jackelyn13 Koelpin146"
         },
         "participant": [
@@ -14177,7 +14177,7 @@
           "text": "Normal pregnancy (finding)"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-6de8-aca96e8fdfc8"
@@ -14240,7 +14240,7 @@
           "text": "Anemia (disorder)"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-6de8-aca96e8fdfc8"
@@ -14276,7 +14276,7 @@
           "text": "Standard pregnancy test (procedure)"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-6de8-aca96e8fdfc8"
@@ -14329,7 +14329,7 @@
           "text": "Ultrasound scan for fetal viability (procedure)"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-6de8-aca96e8fdfc8"
@@ -14382,7 +14382,7 @@
           "text": "Evaluation of uterine fundal height (procedure)"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-6de8-aca96e8fdfc8"
@@ -14435,7 +14435,7 @@
           "text": "Auscultation of the fetal heart (procedure)"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-6de8-aca96e8fdfc8"
@@ -14488,7 +14488,7 @@
           "text": "Blood group typing (procedure)"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-6de8-aca96e8fdfc8"
@@ -14541,7 +14541,7 @@
           "text": "Hemogram, automated, with red blood cells, white blood cells, hemoglobin, hematocrit, indices, platelet count, and manual white blood cell differential (procedure)"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-6de8-aca96e8fdfc8"
@@ -14594,7 +14594,7 @@
           "text": "Hepatitis B surface antigen measurement (procedure)"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-6de8-aca96e8fdfc8"
@@ -14647,7 +14647,7 @@
           "text": "Human immunodeficiency virus antigen test (procedure)"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-6de8-aca96e8fdfc8"
@@ -14700,7 +14700,7 @@
           "text": "Chlamydia antigen test (procedure)"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-6de8-aca96e8fdfc8"
@@ -14753,7 +14753,7 @@
           "text": "Gonorrhea infection titer test (procedure)"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-6de8-aca96e8fdfc8"
@@ -14806,7 +14806,7 @@
           "text": "Syphilis infectious titer test (procedure)"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-6de8-aca96e8fdfc8"
@@ -14859,7 +14859,7 @@
           "text": "Urine culture (procedure)"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-6de8-aca96e8fdfc8"
@@ -14912,7 +14912,7 @@
           "text": "Cytopathology procedure, preparation of smear, genital source (procedure)"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-6de8-aca96e8fdfc8"
@@ -14965,7 +14965,7 @@
           "text": "Urine screening test for diabetes (procedure)"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-6de8-aca96e8fdfc8"
@@ -15018,7 +15018,7 @@
           "text": "Hepatitis C antibody, confirmatory test (procedure)"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-6de8-aca96e8fdfc8"
@@ -15071,7 +15071,7 @@
           "text": "Rubella screening test (procedure)"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-6de8-aca96e8fdfc8"
@@ -15124,7 +15124,7 @@
           "text": "Measurement of Varicella-zoster virus antibody (procedure)"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-6de8-aca96e8fdfc8"
@@ -15177,7 +15177,7 @@
           "text": "Skin test for tuberculosis, Tine test (procedure)"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-6de8-aca96e8fdfc8"
@@ -15230,7 +15230,7 @@
           "text": "Urinalysis, protein, qualitative (procedure)"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-6de8-aca96e8fdfc8"
@@ -15283,7 +15283,7 @@
           "text": "Physical examination procedure (procedure)"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-6de8-aca96e8fdfc8"
@@ -15326,7 +15326,7 @@
         },
         "status": "inactive",
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-6de8-aca96e8fdfc8"
@@ -15350,7 +15350,7 @@
               }
             ],
             "member": {
-              "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
+              "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
               "display": "Mrs. Daisey627 Jackelyn13 Koelpin146"
             }
           },
@@ -15440,7 +15440,7 @@
           }
         ],
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-6de8-aca96e8fdfc8"
@@ -15559,7 +15559,7 @@
           ]
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-6de8-aca96e8fdfc8"
@@ -15627,7 +15627,7 @@
           }
         ],
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "date": "2019-12-01T09:20:48.254-07:00",
         "author": [
@@ -15686,7 +15686,7 @@
         },
         "use": "claim",
         "patient": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
           "display": "Daisey627 Jackelyn13 Koelpin146"
         },
         "billablePeriod": {
@@ -16329,7 +16329,7 @@
             "status": "completed",
             "intent": "order",
             "subject": {
-              "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+              "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
             },
             "requester": {
               "reference": "Practitioner?identifier=http://hl7.org/fhir/sid/us-npi|9999994293"
@@ -16348,7 +16348,7 @@
               "text": "Cigna Health"
             },
             "beneficiary": {
-              "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+              "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
             },
             "payor": [
               {
@@ -16379,7 +16379,7 @@
         },
         "use": "claim",
         "patient": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "billablePeriod": {
           "start": "2019-12-01T09:35:48-07:00",
@@ -19187,7 +19187,7 @@
           }
         ],
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
           "display": "Mrs. Daisey627 Jackelyn13 Koelpin146"
         },
         "participant": [
@@ -19281,7 +19281,7 @@
           "text": "Hemoglobin [Mass/volume] in Blood"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-bc39-251fdc043c14"
@@ -19334,7 +19334,7 @@
           "text": "Hematocrit [Volume Fraction] of Blood by calculation"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-bc39-251fdc043c14"
@@ -19387,7 +19387,7 @@
           "text": "Leukocytes [#/volume] in Blood by Automated count"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-bc39-251fdc043c14"
@@ -19440,7 +19440,7 @@
           "text": "Erythrocytes [#/volume] in Blood by Automated count"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-bc39-251fdc043c14"
@@ -19493,7 +19493,7 @@
           "text": "MCV [Entitic mean volume] in Red Blood Cells by Automated count"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-bc39-251fdc043c14"
@@ -19546,7 +19546,7 @@
           "text": "MCH [Entitic mass] by Automated count"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-bc39-251fdc043c14"
@@ -19599,7 +19599,7 @@
           "text": "MCHC [Entitic Mass/volume] in Red Blood Cells by Automated count"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-bc39-251fdc043c14"
@@ -19652,7 +19652,7 @@
           "text": "Erythrocyte [DistWidth] in Blood by Automated count"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-bc39-251fdc043c14"
@@ -19705,7 +19705,7 @@
           "text": "Platelets [#/volume] in Blood by Automated count"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-bc39-251fdc043c14"
@@ -19758,7 +19758,7 @@
           "text": "Platelet distribution width [Entitic volume] in Blood by Automated count"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-bc39-251fdc043c14"
@@ -19811,7 +19811,7 @@
           "text": "Platelet [Entitic mean volume] in Blood by Automated count"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-bc39-251fdc043c14"
@@ -19852,7 +19852,7 @@
           "text": "Peripheral blood smear interpretation (procedure)"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-bc39-251fdc043c14"
@@ -19899,7 +19899,7 @@
           "text": "Review of systems (procedure)"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-bc39-251fdc043c14"
@@ -19946,7 +19946,7 @@
           "text": "Medication reconciliation (procedure)"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-bc39-251fdc043c14"
@@ -19993,7 +19993,7 @@
           "text": "Brief general examination (procedure)"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-bc39-251fdc043c14"
@@ -20052,7 +20052,7 @@
           "text": "CBC panel - Blood by Automated count"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-bc39-251fdc043c14"
@@ -20160,7 +20160,7 @@
           ]
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-bc39-251fdc043c14"
@@ -20228,7 +20228,7 @@
           }
         ],
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "date": "2019-12-01T09:20:48.254-07:00",
         "author": [
@@ -20287,7 +20287,7 @@
         },
         "use": "claim",
         "patient": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
           "display": "Daisey627 Jackelyn13 Koelpin146"
         },
         "billablePeriod": {
@@ -20501,7 +20501,7 @@
             "status": "completed",
             "intent": "order",
             "subject": {
-              "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+              "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
             },
             "requester": {
               "reference": "Practitioner?identifier=http://hl7.org/fhir/sid/us-npi|9999994293"
@@ -20520,7 +20520,7 @@
               "text": "Cigna Health"
             },
             "beneficiary": {
-              "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+              "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
             },
             "payor": [
               {
@@ -20551,7 +20551,7 @@
         },
         "use": "claim",
         "patient": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "billablePeriod": {
           "start": "2019-12-01T10:28:19-07:00",
@@ -21347,7 +21347,7 @@
           }
         ],
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
           "display": "Mrs. Daisey627 Jackelyn13 Koelpin146"
         },
         "participant": [
@@ -21429,7 +21429,7 @@
           "text": "Evaluation of uterine fundal height (procedure)"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-7360-21c0fe3039ad"
@@ -21482,7 +21482,7 @@
           "text": "Auscultation of the fetal heart (procedure)"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-7360-21c0fe3039ad"
@@ -21535,7 +21535,7 @@
           "text": "Detection of chromosomal aneuploidy in prenatal amniotic fluid specimen using fluorescence in situ hybridization screening technique (procedure)"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-7360-21c0fe3039ad"
@@ -21609,7 +21609,7 @@
           ]
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-7360-21c0fe3039ad"
@@ -21677,7 +21677,7 @@
           }
         ],
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "date": "2019-12-29T10:28:19.254-07:00",
         "author": [
@@ -21736,7 +21736,7 @@
         },
         "use": "claim",
         "patient": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
           "display": "Daisey627 Jackelyn13 Koelpin146"
         },
         "billablePeriod": {
@@ -21891,7 +21891,7 @@
             "status": "completed",
             "intent": "order",
             "subject": {
-              "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+              "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
             },
             "requester": {
               "reference": "Practitioner?identifier=http://hl7.org/fhir/sid/us-npi|9999994293"
@@ -21910,7 +21910,7 @@
               "text": "Cigna Health"
             },
             "beneficiary": {
-              "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+              "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
             },
             "payor": [
               {
@@ -21941,7 +21941,7 @@
         },
         "use": "claim",
         "patient": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "billablePeriod": {
           "start": "2019-12-29T10:43:19-07:00",
@@ -22480,7 +22480,7 @@
           }
         ],
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
           "display": "Mrs. Daisey627 Jackelyn13 Koelpin146"
         },
         "participant": [
@@ -22562,7 +22562,7 @@
           "text": "Fetal anatomy study (procedure)"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-9402-fea392272da4"
@@ -22615,7 +22615,7 @@
           "text": "Alpha-fetoprotein test - antenatal (procedure)"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-9402-fea392272da4"
@@ -22668,7 +22668,7 @@
           "text": "Evaluation of uterine fundal height (procedure)"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-9402-fea392272da4"
@@ -22721,7 +22721,7 @@
           "text": "Auscultation of the fetal heart (procedure)"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-9402-fea392272da4"
@@ -22795,7 +22795,7 @@
           ]
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-9402-fea392272da4"
@@ -22863,7 +22863,7 @@
           }
         ],
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "date": "2020-01-26T10:28:19.254-07:00",
         "author": [
@@ -22922,7 +22922,7 @@
         },
         "use": "claim",
         "patient": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
           "display": "Daisey627 Jackelyn13 Koelpin146"
         },
         "billablePeriod": {
@@ -23103,7 +23103,7 @@
             "status": "completed",
             "intent": "order",
             "subject": {
-              "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+              "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
             },
             "requester": {
               "reference": "Practitioner?identifier=http://hl7.org/fhir/sid/us-npi|9999994293"
@@ -23122,7 +23122,7 @@
               "text": "Cigna Health"
             },
             "beneficiary": {
-              "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+              "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
             },
             "payor": [
               {
@@ -23153,7 +23153,7 @@
         },
         "use": "claim",
         "patient": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "billablePeriod": {
           "start": "2020-01-26T10:43:19-07:00",
@@ -23819,7 +23819,7 @@
           }
         ],
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
           "display": "Mrs. Daisey627 Jackelyn13 Koelpin146"
         },
         "participant": [
@@ -23901,7 +23901,7 @@
           "text": "Evaluation of uterine fundal height (procedure)"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-af89-b625b6cab194"
@@ -23954,7 +23954,7 @@
           "text": "Auscultation of the fetal heart (procedure)"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-af89-b625b6cab194"
@@ -24028,7 +24028,7 @@
           ]
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-af89-b625b6cab194"
@@ -24096,7 +24096,7 @@
           }
         ],
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "date": "2020-02-23T10:28:19.254-07:00",
         "author": [
@@ -24155,7 +24155,7 @@
         },
         "use": "claim",
         "patient": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
           "display": "Daisey627 Jackelyn13 Koelpin146"
         },
         "billablePeriod": {
@@ -24284,7 +24284,7 @@
             "status": "completed",
             "intent": "order",
             "subject": {
-              "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+              "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
             },
             "requester": {
               "reference": "Practitioner?identifier=http://hl7.org/fhir/sid/us-npi|9999994293"
@@ -24303,7 +24303,7 @@
               "text": "Cigna Health"
             },
             "beneficiary": {
-              "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+              "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
             },
             "payor": [
               {
@@ -24334,7 +24334,7 @@
         },
         "use": "claim",
         "patient": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "billablePeriod": {
           "start": "2020-02-23T10:43:19-07:00",
@@ -24746,7 +24746,7 @@
           }
         ],
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
           "display": "Mrs. Daisey627 Jackelyn13 Koelpin146"
         },
         "participant": [
@@ -24828,7 +24828,7 @@
           "text": "Evaluation of uterine fundal height (procedure)"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-4a4e-a9ed34fa527b"
@@ -24881,7 +24881,7 @@
           "text": "Auscultation of the fetal heart (procedure)"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-4a4e-a9ed34fa527b"
@@ -24955,7 +24955,7 @@
           ]
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-4a4e-a9ed34fa527b"
@@ -25023,7 +25023,7 @@
           }
         ],
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "date": "2020-03-22T11:28:19.254-06:00",
         "author": [
@@ -25082,7 +25082,7 @@
         },
         "use": "claim",
         "patient": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
           "display": "Daisey627 Jackelyn13 Koelpin146"
         },
         "billablePeriod": {
@@ -25211,7 +25211,7 @@
             "status": "completed",
             "intent": "order",
             "subject": {
-              "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+              "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
             },
             "requester": {
               "reference": "Practitioner?identifier=http://hl7.org/fhir/sid/us-npi|9999994293"
@@ -25230,7 +25230,7 @@
               "text": "Cigna Health"
             },
             "beneficiary": {
-              "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+              "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
             },
             "payor": [
               {
@@ -25261,7 +25261,7 @@
         },
         "use": "claim",
         "patient": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "billablePeriod": {
           "start": "2020-03-22T11:43:19-06:00",
@@ -25673,7 +25673,7 @@
           }
         ],
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
           "display": "Mrs. Daisey627 Jackelyn13 Koelpin146"
         },
         "participant": [
@@ -25755,7 +25755,7 @@
           "text": "Hemogram, automated, with red blood cells, white blood cells, hemoglobin, hematocrit, indices, platelet count, and manual white blood cell differential (procedure)"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-e50b-062c598ac032"
@@ -25808,7 +25808,7 @@
           "text": "Administration of vaccine product containing only Bordetella pertussis and Clostridium tetani and Corynebacterium diphtheriae antigens (procedure)"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-e50b-062c598ac032"
@@ -25861,7 +25861,7 @@
           "text": "Urine screening for glucose (procedure)"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-e50b-062c598ac032"
@@ -25914,7 +25914,7 @@
           "text": "Evaluation of uterine fundal height (procedure)"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-e50b-062c598ac032"
@@ -25967,7 +25967,7 @@
           "text": "Auscultation of the fetal heart (procedure)"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-e50b-062c598ac032"
@@ -26041,7 +26041,7 @@
           ]
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-e50b-062c598ac032"
@@ -26109,7 +26109,7 @@
           }
         ],
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "date": "2020-04-19T11:28:19.254-06:00",
         "author": [
@@ -26168,7 +26168,7 @@
         },
         "use": "claim",
         "patient": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
           "display": "Daisey627 Jackelyn13 Koelpin146"
         },
         "billablePeriod": {
@@ -26375,7 +26375,7 @@
             "status": "completed",
             "intent": "order",
             "subject": {
-              "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+              "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
             },
             "requester": {
               "reference": "Practitioner?identifier=http://hl7.org/fhir/sid/us-npi|9999994293"
@@ -26394,7 +26394,7 @@
               "text": "Cigna Health"
             },
             "beneficiary": {
-              "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+              "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
             },
             "payor": [
               {
@@ -26425,7 +26425,7 @@
         },
         "use": "claim",
         "patient": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "billablePeriod": {
           "start": "2020-04-19T11:43:19-06:00",
@@ -27218,7 +27218,7 @@
           }
         ],
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
           "display": "Mrs. Daisey627 Jackelyn13 Koelpin146"
         },
         "participant": [
@@ -27300,7 +27300,7 @@
           "text": "Evaluation of uterine fundal height (procedure)"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-46ca-21a9583492e1"
@@ -27353,7 +27353,7 @@
           "text": "Auscultation of the fetal heart (procedure)"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-46ca-21a9583492e1"
@@ -27427,7 +27427,7 @@
           ]
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-46ca-21a9583492e1"
@@ -27495,7 +27495,7 @@
           }
         ],
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "date": "2020-05-17T11:28:19.254-06:00",
         "author": [
@@ -27554,7 +27554,7 @@
         },
         "use": "claim",
         "patient": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
           "display": "Daisey627 Jackelyn13 Koelpin146"
         },
         "billablePeriod": {
@@ -27683,7 +27683,7 @@
             "status": "completed",
             "intent": "order",
             "subject": {
-              "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+              "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
             },
             "requester": {
               "reference": "Practitioner?identifier=http://hl7.org/fhir/sid/us-npi|9999994293"
@@ -27702,7 +27702,7 @@
               "text": "Cigna Health"
             },
             "beneficiary": {
-              "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+              "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
             },
             "payor": [
               {
@@ -27733,7 +27733,7 @@
         },
         "use": "claim",
         "patient": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "billablePeriod": {
           "start": "2020-05-17T11:43:19-06:00",
@@ -28145,7 +28145,7 @@
           }
         ],
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
           "display": "Mrs. Daisey627 Jackelyn13 Koelpin146"
         },
         "participant": [
@@ -28253,7 +28253,7 @@
           "text": "Eclampsia in pregnancy (disorder)"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-8e63-d3c0bcf9f776"
@@ -28289,7 +28289,7 @@
           "text": "Streptococcus pneumoniae group B antigen assay (procedure)"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-8e63-d3c0bcf9f776"
@@ -28342,7 +28342,7 @@
           "text": "Evaluation of uterine fundal height (procedure)"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-8e63-d3c0bcf9f776"
@@ -28395,7 +28395,7 @@
           "text": "Auscultation of the fetal heart (procedure)"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-8e63-d3c0bcf9f776"
@@ -28469,7 +28469,7 @@
           ]
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-8e63-d3c0bcf9f776"
@@ -28537,7 +28537,7 @@
           }
         ],
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "date": "2020-06-14T11:28:19.254-06:00",
         "author": [
@@ -28596,7 +28596,7 @@
         },
         "use": "claim",
         "patient": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
           "display": "Daisey627 Jackelyn13 Koelpin146"
         },
         "billablePeriod": {
@@ -28775,7 +28775,7 @@
             "status": "completed",
             "intent": "order",
             "subject": {
-              "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+              "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
             },
             "requester": {
               "reference": "Practitioner?identifier=http://hl7.org/fhir/sid/us-npi|9999994293"
@@ -28794,7 +28794,7 @@
               "text": "Cigna Health"
             },
             "beneficiary": {
-              "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+              "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
             },
             "payor": [
               {
@@ -28825,7 +28825,7 @@
         },
         "use": "claim",
         "patient": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "billablePeriod": {
           "start": "2020-06-14T11:43:19-06:00",
@@ -29420,7 +29420,7 @@
           }
         ],
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
           "display": "Mrs. Daisey627 Jackelyn13 Koelpin146"
         },
         "participant": [
@@ -29502,7 +29502,7 @@
           "text": "Medical induction of labor (procedure)"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-c2d1-8fec3263fa7a"
@@ -29555,7 +29555,7 @@
           "text": "Human parturition, function (observable entity)"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-c2d1-8fec3263fa7a"
@@ -29629,7 +29629,7 @@
           ]
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-c2d1-8fec3263fa7a"
@@ -29697,7 +29697,7 @@
           }
         ],
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "date": "2020-06-28T11:28:19.254-06:00",
         "author": [
@@ -29756,7 +29756,7 @@
         },
         "use": "claim",
         "patient": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
           "display": "Daisey627 Jackelyn13 Koelpin146"
         },
         "billablePeriod": {
@@ -29885,7 +29885,7 @@
             "status": "completed",
             "intent": "order",
             "subject": {
-              "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+              "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
             },
             "requester": {
               "reference": "Practitioner?identifier=http://hl7.org/fhir/sid/us-npi|9999959494"
@@ -29904,7 +29904,7 @@
               "text": "Cigna Health"
             },
             "beneficiary": {
-              "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+              "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
             },
             "payor": [
               {
@@ -29935,7 +29935,7 @@
         },
         "use": "claim",
         "patient": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "billablePeriod": {
           "start": "2020-06-28T12:28:19-06:00",
@@ -30347,7 +30347,7 @@
           }
         ],
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
           "display": "Mrs. Daisey627 Jackelyn13 Koelpin146"
         },
         "participant": [
@@ -30418,7 +30418,7 @@
           "text": "Physical examination procedure (procedure)"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-d2f1-6a2885f3bc29"
@@ -30465,7 +30465,7 @@
           "text": "Depression screening (procedure)"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-d2f1-6a2885f3bc29"
@@ -30533,7 +30533,7 @@
           ]
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-d2f1-6a2885f3bc29"
@@ -30601,7 +30601,7 @@
           }
         ],
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "date": "2020-08-09T11:28:19.254-06:00",
         "author": [
@@ -30660,7 +30660,7 @@
         },
         "use": "claim",
         "patient": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
           "display": "Daisey627 Jackelyn13 Koelpin146"
         },
         "billablePeriod": {
@@ -30789,7 +30789,7 @@
             "status": "completed",
             "intent": "order",
             "subject": {
-              "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+              "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
             },
             "requester": {
               "reference": "Practitioner?identifier=http://hl7.org/fhir/sid/us-npi|9999994293"
@@ -30808,7 +30808,7 @@
               "text": "Cigna Health"
             },
             "beneficiary": {
-              "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+              "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
             },
             "payor": [
               {
@@ -30839,7 +30839,7 @@
         },
         "use": "claim",
         "patient": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "billablePeriod": {
           "start": "2020-08-09T11:43:19-06:00",
@@ -31251,7 +31251,7 @@
           }
         ],
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
           "display": "Mrs. Daisey627 Jackelyn13 Koelpin146"
         },
         "participant": [
@@ -31370,7 +31370,7 @@
           "text": "{28 (norethindrone 0.35 MG Oral Tablet) } Pack [Jolivette 28 Day]"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-63e3-e976c6f40185"
@@ -31465,7 +31465,7 @@
           "text": "Naproxen sodium 220 MG Oral Tablet"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "authoredOn": "2024-11-15T14:30:00-06:00",
         "requester": {
@@ -31529,7 +31529,7 @@
         },
         "use": "claim",
         "patient": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "billablePeriod": {
           "start": "2020-08-23T10:20:48-06:00",
@@ -31602,7 +31602,7 @@
             "status": "completed",
             "intent": "order",
             "subject": {
-              "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+              "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
             },
             "requester": {
               "reference": "Practitioner?identifier=http://hl7.org/fhir/sid/us-npi|9999994293"
@@ -31621,7 +31621,7 @@
               "text": "Cigna Health"
             },
             "beneficiary": {
-              "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+              "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
             },
             "payor": [
               {
@@ -31652,7 +31652,7 @@
         },
         "use": "claim",
         "patient": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "billablePeriod": {
           "start": "2020-08-23T10:35:48-06:00",
@@ -31817,7 +31817,7 @@
           ]
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-63e3-e976c6f40185"
@@ -31885,7 +31885,7 @@
           }
         ],
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "date": "2020-08-23T10:20:48.254-06:00",
         "author": [
@@ -31944,7 +31944,7 @@
         },
         "use": "claim",
         "patient": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
           "display": "Daisey627 Jackelyn13 Koelpin146"
         },
         "billablePeriod": {
@@ -32019,7 +32019,7 @@
             "status": "completed",
             "intent": "order",
             "subject": {
-              "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+              "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
             },
             "requester": {
               "reference": "Practitioner?identifier=http://hl7.org/fhir/sid/us-npi|9999994293"
@@ -32038,7 +32038,7 @@
               "text": "Cigna Health"
             },
             "beneficiary": {
-              "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+              "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
             },
             "payor": [
               {
@@ -32069,7 +32069,7 @@
         },
         "use": "claim",
         "patient": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "billablePeriod": {
           "start": "2020-08-23T10:35:48-06:00",
@@ -32227,7 +32227,7 @@
           }
         ],
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
           "display": "Mrs. Daisey627 Jackelyn13 Koelpin146"
         },
         "participant": [
@@ -32298,7 +32298,7 @@
           "text": "COVID-19, mRNA, LNP-S, PF, 30 mcg/0.3 mL dose"
         },
         "patient": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-5ce3-a925be7210da"
@@ -32358,7 +32358,7 @@
           ]
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-5ce3-a925be7210da"
@@ -32426,7 +32426,7 @@
           }
         ],
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "date": "2021-05-23T10:20:48.254-06:00",
         "author": [
@@ -32485,7 +32485,7 @@
         },
         "use": "claim",
         "patient": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
           "display": "Daisey627 Jackelyn13 Koelpin146"
         },
         "billablePeriod": {
@@ -32596,7 +32596,7 @@
             "status": "completed",
             "intent": "order",
             "subject": {
-              "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+              "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
             },
             "requester": {
               "reference": "Practitioner?identifier=http://hl7.org/fhir/sid/us-npi|9999994293"
@@ -32615,7 +32615,7 @@
               "text": "Cigna Health"
             },
             "beneficiary": {
-              "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+              "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
             },
             "payor": [
               {
@@ -32646,7 +32646,7 @@
         },
         "use": "claim",
         "patient": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "billablePeriod": {
           "start": "2021-05-23T10:35:48-06:00",
@@ -32934,7 +32934,7 @@
           }
         ],
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
           "display": "Mrs. Daisey627 Jackelyn13 Koelpin146"
         },
         "participant": [
@@ -33031,7 +33031,7 @@
           "text": "Medication review due (situation)"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-a564-3bc711f0c566"
@@ -33093,7 +33093,7 @@
           "text": "Part-time employment (finding)"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-a564-3bc711f0c566"
@@ -33140,7 +33140,7 @@
           "text": "Body Height"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-a564-3bc711f0c566"
@@ -33187,7 +33187,7 @@
           "text": "Pain severity - 0-10 verbal numeric rating [Score] - Reported"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-a564-3bc711f0c566"
@@ -33239,7 +33239,7 @@
           "text": "Body Weight"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-a564-3bc711f0c566"
@@ -33291,7 +33291,7 @@
           "text": "Body mass index (BMI) [Ratio]"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-a564-3bc711f0c566"
@@ -33343,7 +33343,7 @@
           "text": "Blood pressure panel with all children optional"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-a564-3bc711f0c566"
@@ -33427,7 +33427,7 @@
           "text": "Heart rate"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-a564-3bc711f0c566"
@@ -33479,7 +33479,7 @@
           "text": "Respiratory rate"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-a564-3bc711f0c566"
@@ -33532,7 +33532,7 @@
           "text": "Tobacco smoking status"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-a564-3bc711f0c566"
@@ -33589,7 +33589,7 @@
           "text": "Protocol for Responding to and Assessing Patients' Assets, Risks, and Experiences [PRAPARE]"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-a564-3bc711f0c566"
@@ -34093,7 +34093,7 @@
           "text": "Total score [HARK]"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-a564-3bc711f0c566"
@@ -34150,7 +34150,7 @@
           "text": "Patient Health Questionnaire 2 item (PHQ-2) total score [Reported]"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-a564-3bc711f0c566"
@@ -34212,7 +34212,7 @@
           "text": "Total score [DAST-10]"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-a564-3bc711f0c566"
@@ -34258,7 +34258,7 @@
           "text": "Medication reconciliation (procedure)"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-a564-3bc711f0c566"
@@ -34305,7 +34305,7 @@
           "text": "Assessment of health and social care needs (procedure)"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-a564-3bc711f0c566"
@@ -34352,7 +34352,7 @@
           "text": "Screening for domestic abuse (procedure)"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-a564-3bc711f0c566"
@@ -34399,7 +34399,7 @@
           "text": "Depression screening (procedure)"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-a564-3bc711f0c566"
@@ -34446,7 +34446,7 @@
           "text": "Depression screening (procedure)"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-a564-3bc711f0c566"
@@ -34493,7 +34493,7 @@
           "text": "Assessment of substance use (procedure)"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-a564-3bc711f0c566"
@@ -34540,7 +34540,7 @@
           "text": "Screening for drug abuse (procedure)"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-a564-3bc711f0c566"
@@ -34587,7 +34587,7 @@
           "text": "Influenza, split virus, trivalent, PF"
         },
         "patient": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-a564-3bc711f0c566"
@@ -34626,7 +34626,7 @@
           "text": "COVID-19, mRNA, LNP-S, PF, 30 mcg/0.3 mL dose"
         },
         "patient": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-a564-3bc711f0c566"
@@ -34660,7 +34660,7 @@
           "text": "Humiliation, Afraid, Rape, and Kick questionnaire [HARK]"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-a564-3bc711f0c566"
@@ -34699,7 +34699,7 @@
           "text": "Patient Health Questionnaire 2 item (PHQ-2) [Reported]"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-a564-3bc711f0c566"
@@ -34738,7 +34738,7 @@
           "text": "Drug Abuse Screening Test-10 [DAST-10]"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-a564-3bc711f0c566"
@@ -34803,7 +34803,7 @@
           ]
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-a564-3bc711f0c566"
@@ -34871,7 +34871,7 @@
           }
         ],
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "date": "2021-06-13T10:20:48.254-06:00",
         "author": [
@@ -34930,7 +34930,7 @@
         },
         "use": "claim",
         "patient": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
           "display": "Daisey627 Jackelyn13 Koelpin146"
         },
         "billablePeriod": {
@@ -35398,7 +35398,7 @@
             "status": "completed",
             "intent": "order",
             "subject": {
-              "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+              "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
             },
             "requester": {
               "reference": "Practitioner?identifier=http://hl7.org/fhir/sid/us-npi|9999928895"
@@ -35417,7 +35417,7 @@
               "text": "Cigna Health"
             },
             "beneficiary": {
-              "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+              "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
             },
             "payor": [
               {
@@ -35448,7 +35448,7 @@
         },
         "use": "claim",
         "patient": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "billablePeriod": {
           "start": "2021-06-13T11:14:18-06:00",
@@ -37255,7 +37255,7 @@
           }
         ],
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
           "display": "Mrs. Daisey627 Jackelyn13 Koelpin146"
         },
         "participant": [
@@ -37352,7 +37352,7 @@
           "text": "Medication review due (situation)"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-4de2-762976c8fec3"
@@ -37413,7 +37413,7 @@
           "text": "Prediabetes (finding)"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-4de2-762976c8fec3"
@@ -37474,7 +37474,7 @@
           "text": "Full-time employment (finding)"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-4de2-762976c8fec3"
@@ -37870,7 +37870,7 @@
           "text": "Hemoglobin A1c/Hemoglobin.total in Blood"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-4de2-762976c8fec3"
@@ -37922,7 +37922,7 @@
           "text": "Body Height"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-4de2-762976c8fec3"
@@ -37969,7 +37969,7 @@
           "text": "Pain severity - 0-10 verbal numeric rating [Score] - Reported"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-4de2-762976c8fec3"
@@ -38021,7 +38021,7 @@
           "text": "Body Weight"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-4de2-762976c8fec3"
@@ -38073,7 +38073,7 @@
           "text": "Body mass index (BMI) [Ratio]"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-4de2-762976c8fec3"
@@ -38125,7 +38125,7 @@
           "text": "Blood pressure panel with all children optional"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-4de2-762976c8fec3"
@@ -38209,7 +38209,7 @@
           "text": "Heart rate"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-4de2-762976c8fec3"
@@ -38261,7 +38261,7 @@
           "text": "Respiratory rate"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-4de2-762976c8fec3"
@@ -38314,7 +38314,7 @@
           "text": "Glucose [Mass/volume] in Blood"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-4de2-762976c8fec3"
@@ -38367,7 +38367,7 @@
           "text": "Urea nitrogen [Mass/volume] in Blood"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-4de2-762976c8fec3"
@@ -38420,7 +38420,7 @@
           "text": "Creatinine [Mass/volume] in Blood"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-4de2-762976c8fec3"
@@ -38473,7 +38473,7 @@
           "text": "Calcium [Mass/volume] in Blood"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-4de2-762976c8fec3"
@@ -38526,7 +38526,7 @@
           "text": "Sodium [Moles/volume] in Blood"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-4de2-762976c8fec3"
@@ -38579,7 +38579,7 @@
           "text": "Potassium [Moles/volume] in Blood"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-4de2-762976c8fec3"
@@ -38632,7 +38632,7 @@
           "text": "Chloride [Moles/volume] in Blood"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-4de2-762976c8fec3"
@@ -38685,7 +38685,7 @@
           "text": "Carbon dioxide, total [Moles/volume] in Blood"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-4de2-762976c8fec3"
@@ -38738,7 +38738,7 @@
           "text": "Leukocytes [#/volume] in Blood by Automated count"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-4de2-762976c8fec3"
@@ -38791,7 +38791,7 @@
           "text": "Erythrocytes [#/volume] in Blood by Automated count"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-4de2-762976c8fec3"
@@ -38844,7 +38844,7 @@
           "text": "Hemoglobin [Mass/volume] in Blood"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-4de2-762976c8fec3"
@@ -38897,7 +38897,7 @@
           "text": "Hematocrit [Volume Fraction] of Blood by Automated count"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-4de2-762976c8fec3"
@@ -38950,7 +38950,7 @@
           "text": "MCV [Entitic mean volume] in Red Blood Cells by Automated count"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-4de2-762976c8fec3"
@@ -39003,7 +39003,7 @@
           "text": "MCH [Entitic mass] by Automated count"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-4de2-762976c8fec3"
@@ -39056,7 +39056,7 @@
           "text": "MCHC [Entitic Mass/volume] in Red Blood Cells by Automated count"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-4de2-762976c8fec3"
@@ -39109,7 +39109,7 @@
           "text": "Erythrocyte [DistWidth] in Blood by Automated count"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-4de2-762976c8fec3"
@@ -39162,7 +39162,7 @@
           "text": "Platelets [#/volume] in Blood by Automated count"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-4de2-762976c8fec3"
@@ -39215,7 +39215,7 @@
           "text": "Platelet distribution width [Entitic volume] in Blood by Automated count"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-4de2-762976c8fec3"
@@ -39268,7 +39268,7 @@
           "text": "Platelet [Entitic mean volume] in Blood by Automated count"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-4de2-762976c8fec3"
@@ -39321,7 +39321,7 @@
           "text": "Tobacco smoking status"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-4de2-762976c8fec3"
@@ -39432,7 +39432,7 @@
           "text": "Protocol for Responding to and Assessing Patients' Assets, Risks, and Experiences [PRAPARE]"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-4de2-762976c8fec3"
@@ -39935,7 +39935,7 @@
           "text": "Patient Health Questionnaire 2 item (PHQ-2) total score [Reported]"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-4de2-762976c8fec3"
@@ -39997,7 +39997,7 @@
           "text": "Patient Health Questionnaire 9 item (PHQ-9) total score [Reported]"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-4de2-762976c8fec3"
@@ -40049,7 +40049,7 @@
           "text": "Total score [AUDIT-C]"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-4de2-762976c8fec3"
@@ -40101,7 +40101,7 @@
           "text": "Pregnancy status"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-4de2-762976c8fec3"
@@ -40146,7 +40146,7 @@
           "text": "Assessment of health and social care needs (procedure)"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-4de2-762976c8fec3"
@@ -40193,7 +40193,7 @@
           "text": "Depression screening (procedure)"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-4de2-762976c8fec3"
@@ -40240,7 +40240,7 @@
           "text": "Depression screening (procedure)"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-4de2-762976c8fec3"
@@ -40287,7 +40287,7 @@
           "text": "Depression screening using Patient Health Questionnaire Nine Item score (procedure)"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-4de2-762976c8fec3"
@@ -40334,7 +40334,7 @@
           "text": "Assessment of substance use (procedure)"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-4de2-762976c8fec3"
@@ -40381,7 +40381,7 @@
           "text": "Assessment using Alcohol Use Disorders Identification Test - Consumption (procedure)"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-4de2-762976c8fec3"
@@ -40445,7 +40445,7 @@
           "text": "Blood glucose meter (physical object)"
         },
         "patient": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         }
       },
       "request": {
@@ -40475,7 +40475,7 @@
           "text": "Influenza, split virus, trivalent, PF"
         },
         "patient": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-4de2-762976c8fec3"
@@ -40526,7 +40526,7 @@
           "text": "Basic metabolic panel - Blood"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-4de2-762976c8fec3"
@@ -40613,7 +40613,7 @@
           "text": "CBC panel - Blood by Automated count"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-4de2-762976c8fec3"
@@ -40695,7 +40695,7 @@
           "text": "Patient Health Questionnaire 2 item (PHQ-2) [Reported]"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-4de2-762976c8fec3"
@@ -40734,7 +40734,7 @@
           "text": "PHQ-9 quick depression assessment panel [Reported.PHQ]"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-4de2-762976c8fec3"
@@ -40773,7 +40773,7 @@
           "text": "Alcohol Use Disorder Identification Test - Consumption [AUDIT-C]"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-4de2-762976c8fec3"
@@ -40807,7 +40807,7 @@
         },
         "status": "active",
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-4de2-762976c8fec3"
@@ -40830,7 +40830,7 @@
               }
             ],
             "member": {
-              "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
+              "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
               "display": "Mrs. Daisey627 Jackelyn13 Koelpin146"
             }
           },
@@ -40932,7 +40932,7 @@
           }
         ],
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-4de2-762976c8fec3"
@@ -41047,7 +41047,7 @@
           ]
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "encounter": {
           "reference": "urn:uuid:958c63b0-4a7f-2ee7-4de2-762976c8fec3"
@@ -41115,7 +41115,7 @@
           }
         ],
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "date": "2024-06-16T10:20:48.254-06:00",
         "author": [
@@ -41174,7 +41174,7 @@
         },
         "use": "claim",
         "patient": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
           "display": "Daisey627 Jackelyn13 Koelpin146"
         },
         "billablePeriod": {
@@ -41697,7 +41697,7 @@
             "status": "completed",
             "intent": "order",
             "subject": {
-              "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+              "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
             },
             "requester": {
               "reference": "Practitioner?identifier=http://hl7.org/fhir/sid/us-npi|9999928895"
@@ -41716,7 +41716,7 @@
               "text": "Aetna"
             },
             "beneficiary": {
-              "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+              "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
             },
             "payor": [
               {
@@ -41747,7 +41747,7 @@
         },
         "use": "claim",
         "patient": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "billablePeriod": {
           "start": "2024-06-16T11:07:07-06:00",
@@ -43717,7 +43717,7 @@
         },
         "target": [
           {
-            "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+            "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
           },
           {
             "reference": "urn:uuid:958c63b0-4a7f-2ee7-e3a7-067647287b2b"
@@ -48715,7 +48715,7 @@
           "text": "Clinical comment"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "effectiveDateTime": "2024-06-16T10:30:00-06:00",
         "valueString": "Patient reports excellent adherence to treatment plan and lifestyle modifications. No concerns at this time."
@@ -48759,7 +48759,7 @@
           "text": "Sexual orientation"
         },
         "subject": {
-          "reference": "urn:uuid:958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c"
         },
         "effectiveDateTime": "2024-06-16T10:35:00-06:00",
         "valueCodeableConcept": {
@@ -48957,6 +48957,15 @@
           {
             "coding": [
               {
+                "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+                "code": "survey",
+                "display": "Survey"
+              }
+            ]
+          },
+          {
+            "coding": [
+              {
                 "system": "http://hl7.org/fhir/us/core/CodeSystem/us-core-category",
                 "code": "functional-status",
                 "display": "Functional Status"
@@ -49007,6 +49016,15 @@
         },
         "status": "final",
         "category": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+                "code": "survey",
+                "display": "Survey"
+              }
+            ]
+          },
           {
             "coding": [
               {
@@ -49063,6 +49081,15 @@
           {
             "coding": [
               {
+                "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+                "code": "survey",
+                "display": "Survey"
+              }
+            ]
+          },
+          {
+            "coding": [
+              {
                 "system": "http://hl7.org/fhir/us/core/CodeSystem/us-core-category",
                 "code": "cognitive-status",
                 "display": "Cognitive Status"
@@ -49104,6 +49131,15 @@
         },
         "status": "final",
         "category": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+                "code": "survey",
+                "display": "Survey"
+              }
+            ]
+          },
           {
             "coding": [
               {
@@ -49611,6 +49647,128 @@
       "request": {
         "method": "POST",
         "url": "DocumentReference"
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:958c63b0-4a7f-2ee7-obs-alcohol-use-001",
+      "resource": {
+        "resourceType": "Observation",
+        "id": "958c63b0-4a7f-2ee7-obs-alcohol-use-001",
+        "meta": {
+          "profile": [
+            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-simple-observation"
+          ]
+        },
+        "status": "final",
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+                "code": "survey",
+                "display": "Survey"
+              }
+            ]
+          },
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+                "code": "social-history",
+                "display": "Social History"
+              }
+            ],
+            "text": "Social History"
+          }
+        ],
+        "code": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "74013-4",
+              "display": "Alcoholic drinks per day"
+            }
+          ],
+          "text": "Alcohol Use"
+        },
+        "subject": {
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
+          "display": "Mrs. Daisey627 Jackelyn13 Koelpin146"
+        },
+        "effectiveDateTime": "2024-06-16T10:30:00-06:00",
+        "valueQuantity": {
+          "value": 0.5,
+          "unit": "drinks/day",
+          "system": "http://unitsofmeasure.org",
+          "code": "{drinks}/d"
+        }
+      },
+      "request": {
+        "method": "POST",
+        "url": "Observation"
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:958c63b0-4a7f-2ee7-obs-substance-use-001",
+      "resource": {
+        "resourceType": "Observation",
+        "id": "958c63b0-4a7f-2ee7-obs-substance-use-001",
+        "meta": {
+          "profile": [
+            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-simple-observation"
+          ]
+        },
+        "status": "final",
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+                "code": "survey",
+                "display": "Survey"
+              }
+            ]
+          },
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+                "code": "social-history",
+                "display": "Social History"
+              }
+            ],
+            "text": "Social History"
+          }
+        ],
+        "code": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "74204-9",
+              "display": "Drug use"
+            }
+          ],
+          "text": "Substance Use"
+        },
+        "subject": {
+          "reference": "Patient/958c63b0-4a7f-2ee7-ef6a-e04df5931b4c",
+          "display": "Mrs. Daisey627 Jackelyn13 Koelpin146"
+        },
+        "effectiveDateTime": "2024-06-16T10:30:00-06:00",
+        "valueCodeableConcept": {
+          "coding": [
+            {
+              "system": "http://snomed.info/sct",
+              "code": "373067005",
+              "display": "No (qualifier value)"
+            }
+          ],
+          "text": "No current substance use"
+        }
+      },
+      "request": {
+        "method": "POST",
+        "url": "Observation"
       }
     }
   ]

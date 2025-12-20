@@ -167,6 +167,32 @@ function isCodeableConceptField(fieldName, searchParamCode) {
 }
 
 /**
+ * Check if a CodeableConcept field is typically an array in FHIR resources
+ * Array fields need $elemMatch for proper MongoDB querying
+ * @param {string} fieldName - The field name (e.g., "category", "code")
+ * @returns {boolean}
+ */
+function isArrayCodeableConceptField(fieldName) {
+  // Fields that are arrays of CodeableConcept in FHIR R4
+  // Note: 'type' is NOT included - DocumentReference.type is a single CodeableConcept
+  const arrayFields = [
+    'category',      // Observation, Condition, DiagnosticReport, DocumentReference, etc.
+    'serviceType',   // HealthcareService, Appointment
+    'specialty',     // PractitionerRole, HealthcareService
+    'classification' // Device
+  ];
+
+  if (!fieldName) {
+    return false;
+  }
+
+  let normalizedField = fieldName.toLowerCase();
+  return arrayFields.some(function(f) {
+    return normalizedField === f.toLowerCase();
+  });
+}
+
+/**
  * Build MongoDB query for token search on CodeableConcept field
  * Supports: bare code, system|code, and comma-separated values
  * @param {string} mongoPath - e.g., "category"
@@ -178,6 +204,9 @@ function buildCodeableConceptTokenQuery(mongoPath, searchValue) {
     console.warn('buildCodeableConceptTokenQuery: Missing mongoPath or searchValue');
     return {};
   }
+
+  // Check if this field is typically an array of CodeableConcepts
+  let isArrayField = isArrayCodeableConceptField(mongoPath);
 
   let searchValues = searchValue.split(',').map(function(v) { return v.trim(); });
   let orConditions = [];
@@ -192,12 +221,23 @@ function buildCodeableConceptTokenQuery(mongoPath, searchValue) {
       if (system && code) {
         // Both system and code specified - match both
         let condition = {};
-        condition[mongoPath + '.coding'] = {
-          $elemMatch: {
-            'system': system,
-            'code': code
-          }
-        };
+        if (isArrayField) {
+          // For array fields, use $elemMatch on the array itself
+          condition[mongoPath] = {
+            $elemMatch: {
+              'coding.system': system,
+              'coding.code': code
+            }
+          };
+        } else {
+          // For single CodeableConcept fields, use $elemMatch on the coding array
+          condition[mongoPath + '.coding'] = {
+            $elemMatch: {
+              'system': system,
+              'code': code
+            }
+          };
+        }
         orConditions.push(condition);
       } else if (system && !code) {
         // System only (ends with |) - match any code in that system
@@ -206,11 +246,11 @@ function buildCodeableConceptTokenQuery(mongoPath, searchValue) {
         orConditions.push(condition);
       } else if (!system && code) {
         // Code only (starts with |) - same as bare code
-        orConditions.push(buildCodeOnlyCondition(mongoPath, code));
+        orConditions.push(buildCodeOnlyCondition(mongoPath, code, isArrayField));
       }
     } else {
       // Bare code - match coding.code or text
-      orConditions.push(buildCodeOnlyCondition(mongoPath, val));
+      orConditions.push(buildCodeOnlyCondition(mongoPath, val, isArrayField));
     }
   });
 
@@ -229,16 +269,32 @@ function buildCodeableConceptTokenQuery(mongoPath, searchValue) {
  * Matches either coding.code or text field
  * @param {string} mongoPath - e.g., "category"
  * @param {string} code - e.g., "assess-plan"
+ * @param {boolean} isArrayField - true if the field is an array of CodeableConcepts
  * @returns {Object} - MongoDB query condition
  */
-function buildCodeOnlyCondition(mongoPath, code) {
-  // Match in coding.code (handles array of codings)
+function buildCodeOnlyCondition(mongoPath, code, isArrayField) {
   let codingCondition = {};
-  codingCondition[mongoPath + '.coding.code'] = code;
-
-  // Match in text (fallback for CodeableConcept.text)
   let textCondition = {};
-  textCondition[mongoPath + '.text'] = code;
+
+  if (isArrayField) {
+    // For array fields (like category[]), use $elemMatch on the array
+    // to properly match within each CodeableConcept element
+    codingCondition[mongoPath] = {
+      $elemMatch: {
+        'coding.code': code
+      }
+    };
+    // Text match also needs $elemMatch for array fields
+    textCondition[mongoPath] = {
+      $elemMatch: {
+        'text': code
+      }
+    };
+  } else {
+    // For single CodeableConcept fields (like code), use dot notation
+    codingCondition[mongoPath + '.coding.code'] = code;
+    textCondition[mongoPath + '.text'] = code;
+  }
 
   return { $or: [codingCondition, textCondition] };
 }
