@@ -1,0 +1,485 @@
+# Slash Command: /create-crud-microservice
+
+Generate a complete FHIR resource CRUD microservice with all necessary files for the Honeycomb application.
+
+## Description
+
+This command creates a full-stack implementation for a new FHIR resource type, following all established patterns from existing resources. It's the "everything but tests" companion to `/create-crud-tests`.
+
+## Usage
+
+```
+/create-crud-microservice Observation
+/create-crud-microservice MedicationAdministration --archetype=patient-owned
+```
+
+## What It Generates
+
+A complete FHIR resource implementation across 15+ files:
+
+### 1. Collection Registration (3 files)
+- `server/main.js` - Register in Meteor.Collections and global.Collections
+- `imports/startup/client/collections.js` - Client-side registration
+- `server/publications/autopublish.js` - Add to collectionsMap
+
+### 2. UI Components (3 files)
+- `imports/ui-fhir/{resourceTypes}/{ResourceTypes}Page.jsx` - List view with search/filters
+- `imports/ui-fhir/{resourceTypes}/{ResourceTypes}Table.jsx` - Table with column visibility
+- `imports/ui-fhir/{resourceTypes}/{ResourceType}Detail.jsx` - Create/Edit form
+
+### 3. Routes (1 file)
+- `imports/ui/App.jsx` - Add 3 routes (list, new, detail)
+
+### 4. Server Methods (1 file)
+- `imports/api/{resourceTypes}/methods.js` - CRUD operations with async patterns
+
+### 5. Data Layer (1 file)
+- `imports/lib/FhirDehydrator.js` - Add `flatten{ResourceType}()` function
+
+### 6. Configuration (2 files)
+- `configs/settings.honeycomb.localhost.json` - Enable module + REST config
+- `configs/settings.honeycomb.dicom.localhost.json` - Same for dark mode
+
+### 7. Method Imports (1 file)
+- `server/main.js` - Import methods file
+
+**Total: ~15 files modified/created**
+
+## Interactive Prompts
+
+### 1. Resource Name
+```
+What FHIR resource type? (e.g., Observation, Immunization)
+> Observation
+```
+
+### 2. Archetype Detection
+```
+Detected: Patient-Owned (requires patient context)
+
+Confirm archetype:
+a) Patient-Owned (Condition, Observation, etc.) - requires patient
+b) Patient-Agnostic (Medication, Organization, etc.) - global data
+c) Clinician-Mediated (ServiceRequest, etc.) - requires practitioner + patient
+
+[a/b/c] >
+```
+
+### 3. Core Fields
+```
+Select core FHIR fields for {ResourceType}:
+
+✅ Auto-included:
+   - id, resourceType, meta
+   - status (required for most resources)
+
+Optional (check to include):
+[ ] code (CodeableConcept)
+[ ] category (CodeableConcept[])
+[x] effectiveDateTime (dateTime)
+[ ] issued (instant)
+[ ] value (Quantity/string/etc)
+[ ] bodySite (CodeableConcept)
+[ ] note (Annotation[])
+[x] subject (Reference - Patient)
+[ ] encounter (Reference)
+[ ] performer (Reference[])
+
+Continue with selected fields? [yes/no]
+```
+
+### 4. UI Columns
+```
+Which fields should appear as table columns?
+
+[x] Status
+[x] Code
+[x] Display/Text
+[x] Effective Date
+[x] Patient Name
+[ ] Patient Reference
+[ ] Category
+[ ] System ID (barcode)
+
+Sort order: [Most recent first]
+```
+
+### 5. Search Strategy
+```
+What fields should be searchable?
+
+[x] _id
+[x] id
+[x] code
+[x] display/text
+[x] status
+[x] patient.display
+[ ] category
+[ ] date range
+
+OK to proceed? [yes]
+```
+
+## Generated File Structure
+
+```
+honeycomb-ehr/
+├── imports/
+│   ├── api/
+│   │   └── observations/
+│   │       └── methods.js                    ✨ NEW - CRUD methods
+│   ├── lib/
+│   │   └── FhirDehydrator.js                 📝 UPDATED - add flattenObservation()
+│   ├── ui/
+│   │   └── App.jsx                           📝 UPDATED - add 3 routes
+│   ├── ui-fhir/
+│   │   └── observations/                     ✨ NEW directory
+│   │       ├── ObservationsPage.jsx          ✨ NEW - List view
+│   │       ├── ObservationsTable.jsx         ✨ NEW - Table component
+│   │       └── ObservationDetail.jsx         ✨ NEW - Form component
+│   └── startup/
+│       └── client/
+│           └── collections.js                📝 UPDATED - register client-side
+├── server/
+│   ├── main.js                               📝 UPDATED - register + import methods
+│   └── publications/
+│       └── autopublish.js                    📝 UPDATED - add to collectionsMap
+└── configs/
+    ├── settings.honeycomb.localhost.json     📝 UPDATED - enable module
+    └── settings.honeycomb.dicom.localhost.json 📝 UPDATED - enable module
+```
+
+## Example: Generated ObservationDetail.jsx (Simplified)
+
+```jsx
+// imports/ui-fhir/observations/ObservationDetail.jsx
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { useTracker } from 'meteor/react-meteor-data';
+import { Observations } from '/imports/lib/schemas/SimpleSchemas/Observations';
+import { Container, Card, CardHeader, CardContent, CardActions, TextField, Button } from '@mui/material';
+import { get } from 'lodash';
+
+export default function ObservationDetail() {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const [observation, setObservation] = useState({});
+  const [isEditing, setIsEditing] = useState(id === 'new');
+
+  // Subscribe to observations
+  const isSubscriptionReady = useTracker(() => {
+    const handle = Meteor.subscribe('autopublish.Observations', {}, {});
+    return handle.ready();
+  }, []);
+
+  // Load data
+  useEffect(() => {
+    if (id && id !== 'new') {
+      const existing = Observations.findOne({_id: id});
+      if (existing) {
+        setObservation(existing);
+        setIsEditing(false);
+      } else {
+        const byId = Observations.findOne({id: id});
+        if (byId) {
+          setObservation(byId);
+          setIsEditing(false);
+        }
+      }
+    }
+  }, [id]);
+
+  // Save handler
+  async function handleSave() {
+    const dataToSave = {
+      resourceType: 'Observation',
+      status: get(observation, 'status', 'final'),
+      code: {
+        coding: [{
+          system: 'http://loinc.org',
+          code: get(observation, 'code.coding.0.code', ''),
+          display: get(observation, 'code.text', '')
+        }],
+        text: get(observation, 'code.text', '')
+      },
+      effectiveDateTime: get(observation, 'effectiveDateTime', ''),
+      subject: {
+        reference: get(Session.get('selectedPatient'), 'id') ?
+          `Patient/${Session.get('selectedPatient').id}` : '',
+        display: get(Session.get('selectedPatient'), 'name.0.text', '')
+      },
+      note: get(observation, 'note', [])
+    };
+
+    try {
+      if (id && id !== 'new') {
+        await Meteor.callAsync('observations.update', id, dataToSave);
+        setIsEditing(false);
+      } else {
+        await Meteor.callAsync('observations.insert', dataToSave);
+        navigate('/observations');
+      }
+    } catch (error) {
+      console.error('Error saving observation:', error);
+    }
+  }
+
+  return (
+    <Container id="observationDetailPage" maxWidth="md" sx={{ py: 4 }}>
+      <Card sx={{ boxShadow: 3 }}>
+        <CardHeader
+          title={id && id !== 'new' ? 'Edit Observation' : 'New Observation'}
+          sx={{ bgcolor: 'primary.main', color: 'primary.contrastText' }}
+        />
+        <CardContent>
+          {(id && id !== 'new') && (
+            <Box sx={{ mb: 3, textAlign: 'right' }}>
+              <span className="barcode helveticas" style={{ fontSize: '2rem' }}>{id}</span>
+            </Box>
+          )}
+
+          <TextField
+            id="codeInput"
+            fullWidth
+            label="Code"
+            value={get(observation, 'code.coding.0.code', '')}
+            onChange={(e) => setObservation({
+              ...observation,
+              code: {
+                ...get(observation, 'code', {}),
+                coding: [{ code: e.target.value }]
+              }
+            })}
+            disabled={!isEditing}
+            sx={{ mb: 2 }}
+          />
+
+          <TextField
+            id="codeDisplayInput"
+            fullWidth
+            label="Display"
+            value={get(observation, 'code.text', '')}
+            onChange={(e) => setObservation({
+              ...observation,
+              code: {
+                ...get(observation, 'code', {}),
+                text: e.target.value
+              }
+            })}
+            disabled={!isEditing}
+            sx={{ mb: 2 }}
+          />
+
+          {/* More fields... */}
+        </CardContent>
+
+        <CardActions sx={{ justifyContent: 'flex-end', p: 2 }}>
+          {!isEditing ? (
+            <>
+              <Button onClick={() => navigate('/observations')}>Back</Button>
+              <Button onClick={() => setIsEditing(true)}>Edit</Button>
+              <Button color="error" onClick={handleDelete}>Delete</Button>
+            </>
+          ) : (
+            <>
+              <Button onClick={() => setIsEditing(false)}>Cancel</Button>
+              <Button variant="contained" onClick={handleSave}>Save</Button>
+            </>
+          )}
+        </CardActions>
+      </Card>
+    </Container>
+  );
+}
+```
+
+## Example: Generated methods.js
+
+```javascript
+// imports/api/observations/methods.js
+import { Meteor } from 'meteor/meteor';
+import { check } from 'meteor/check';
+import { Observations } from '/imports/lib/schemas/SimpleSchemas/Observations';
+import { get } from 'lodash';
+
+Meteor.methods({
+  'observations.insert': async function(observationData) {
+    check(observationData, Object);
+
+    if (!this.userId) {
+      throw new Meteor.Error('not-authorized');
+    }
+
+    const cleanObservation = {
+      resourceType: 'Observation',
+      status: get(observationData, 'status', 'final'),
+      code: get(observationData, 'code', {}),
+      effectiveDateTime: get(observationData, 'effectiveDateTime', ''),
+      subject: get(observationData, 'subject', {}),
+      note: get(observationData, 'note', [])
+    };
+
+    // Generate IDs
+    cleanObservation.id = Random.id();
+    cleanObservation._id = cleanObservation.id;
+
+    console.log('[observations.insert] Inserting:', cleanObservation._id);
+    const result = await Observations.insertAsync(cleanObservation);
+    return result;
+  },
+
+  'observations.update': async function(observationId, observationData) {
+    check(observationId, String);
+    check(observationData, Object);
+
+    if (!this.userId) {
+      throw new Meteor.Error('not-authorized');
+    }
+
+    const existing = await Observations.findOneAsync({_id: observationId});
+    if (!existing) {
+      throw new Meteor.Error('not-found');
+    }
+
+    const updates = {
+      status: get(observationData, 'status', existing.status),
+      code: get(observationData, 'code', existing.code),
+      effectiveDateTime: get(observationData, 'effectiveDateTime', existing.effectiveDateTime),
+      subject: get(observationData, 'subject', existing.subject),
+      note: get(observationData, 'note', existing.note)
+    };
+
+    console.log('[observations.update] Updating:', observationId);
+    const result = await Observations.updateAsync(
+      {_id: observationId},
+      {$set: updates}
+    );
+    return result;
+  },
+
+  'observations.remove': async function(observationId) {
+    check(observationId, String);
+
+    if (!this.userId) {
+      throw new Meteor.Error('not-authorized');
+    }
+
+    console.log('[observations.remove] Removing:', observationId);
+    const result = await Observations.removeAsync({_id: observationId});
+    return result;
+  }
+});
+```
+
+## Archetype Adaptations
+
+### Patient-Agnostic Resources
+- ❌ No patient reference in schema
+- ❌ No patient filtering in Page component
+- ❌ No Session.get('selectedPatient') usage
+- ✅ Global queries (no patient scope)
+
+### Patient-Owned Resources
+- ✅ Subject field (Reference to Patient)
+- ✅ Patient filtering in Page component
+- ✅ Auto-populate patient from Session in Detail
+- ✅ Use FhirUtilities.addPatientFilterToQuery()
+
+### Clinician-Mediated Resources
+- ✅ Subject field (Reference to Patient)
+- ✅ Requester/Author field (Reference to Practitioner)
+- ✅ Auto-populate both from Session
+- ✅ Verify practitioner role on save
+- ⚠️ Status workflow (draft → active)
+
+## Settings Configuration
+
+Adds to BOTH light and dark mode configs:
+
+```json
+{
+  "public": {
+    "modules": {
+      "fhir": {
+        "Observations": true
+      }
+    }
+  },
+  "private": {
+    "fhir": {
+      "rest": {
+        "Observation": {
+          "interactions": ["read", "create", "update", "delete", "search"],
+          "search": true,
+          "publication": true
+        }
+      }
+    }
+  }
+}
+```
+
+## Verification Steps
+
+After generation, the command will:
+
+1. **Verify compilation:**
+   ```bash
+   # Check for syntax errors
+   meteor npm run lint imports/ui-fhir/observations/*.jsx
+   ```
+
+2. **Suggest next steps:**
+   ```
+   ✅ Generated Observation FHIR microservice!
+
+   Next steps:
+   1. Restart Meteor server
+   2. Navigate to http://localhost:3000/observations
+   3. Test CRUD operations
+   4. Run /create-crud-tests Observation
+   5. Verify in browser console: window.Observations
+
+   Would you like me to:
+   a) Create tests now (/create-crud-tests)
+   b) Generate audit report (/audit-theme observations)
+   c) Just show me what was created
+
+   [a/b/c] >
+   ```
+
+## Template Sources
+
+The command uses these resources as templates:
+- **Page:** MedicationAdministrationPage.jsx (modern, complete)
+- **Table:** AllergyIntolerancesTable.jsx (column visibility)
+- **Detail:** MedicationAdministrationDetail.jsx (styling, barcode)
+- **Methods:** imports/api/communications/methods.js (async patterns)
+
+## Common Issues
+
+After generation, watch for:
+- ✅ Schema exists in `/imports/lib/schemas/SimpleSchemas/`
+- ✅ Collection imported in server/main.js
+- ✅ Routes added to App.jsx
+- ✅ Methods file imported in server/main.js
+- ✅ Settings updated in BOTH config files
+- ✅ Restart Meteor after changes
+
+## Related Commands
+
+- Use `/create-crud-tests {Resource}` after microservice generation
+- Use `/audit-theme imports/ui-fhir/{resourceTypes}` to check styling
+- Use `/audit-id-lookups` to verify no anti-patterns
+- See `fhir-schema-expert` subagent for FHIR spec questions
+
+## When to Use
+
+- Implementing new FHIR resource types
+- Adding HealthIT certification requirements
+- Expanding FHIR API coverage
+- Creating custom extensions
+
+---
+
+**Note:** This generates production-ready code following all Honeycomb patterns. Review before committing.

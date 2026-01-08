@@ -1786,26 +1786,27 @@ export function ImportEditorBindings(props){
           if(selectedCollectionsToExport[resourceName] === true){
             let collectionName = pluralizeResourceName(resourceName);
             console.log('collectionName', collectionName);
-            
+
             if(window[collectionName]){
-              if(window[collectionName].find().count()){
-                window[collectionName].find().forEach(function(record){
+              const records = window[collectionName].find().fetch();
+              if(records.length > 0){
+                records.forEach(function(record){
                   console.log('----------------------------------')
                   console.log('record', record);
                   let channelUrl = get(Meteor, 'settings.public.interfaces.fhirRelay.channel.endpoint');
-                  
+
                     console.log('channelUrl.length', channelUrl.length);
-                  
+
                     if(channelUrl[channelUrl.length] === "/"){
                       channelUrl = channelUrl.substring(0, channelUrl.length - 1);
-    
+
                     }
                     console.log('channelUrl', channelUrl);
-    
+
                     if(get(record, 'id')){
                       let putUrl = channelUrl + '/' + resourceName + "/" + get(record, 'id');
                       console.log('PUT ' + putUrl)
-                      
+
                       HTTP.put(putUrl, {data: record}, function(error, result){
                         if(error) {console.log('HTTP.put.error', error)}
                         if(result) {console.log('HTTP.put.result', result)}
@@ -1817,7 +1818,7 @@ export function ImportEditorBindings(props){
                         if(error) {console.log('HTTP.put.error', error)}
                         if(result) {console.log('HTTP.put.result', result)}
                       })
-                    }  
+                    }
                 })
               }
             }
@@ -1911,7 +1912,7 @@ export function ImportEditorBindings(props){
     console.log('toggleAutoSelectPatient', event.currentTarget.value, newValue)
     setAutoSelectFirstPatient(newValue)
   }
-  function sendBundleToDataWarehouse() {
+  async function sendBundleToDataWarehouse() {
     console.log('Sending to data warehouse....');
 
     // replace with fetch to /metadata route
@@ -1919,22 +1920,40 @@ export function ImportEditorBindings(props){
 
     let resourceList = get(Meteor, 'settings.public.capabilityStatement.resourceTypes');
     if(Array.isArray(resourceList)){
-      resourceList.forEach(function(resourceType){
-        
+      for(const resourceType of resourceList){
+
         let pluralizedCollectionName = MedicalRecordImporter.pluralizeResourceName(resourceType);
           console.log('ImportEditorBindings.pluralizedCollectionName', pluralizedCollectionName)
-          
+
           if(window[pluralizedCollectionName] && window[pluralizedCollectionName]._collection){
-            window[pluralizedCollectionName]._collection.find().forEach(function(record){                        
-              Meteor.call('proxyInsertResource', record, async function(err, res){
-                if(err) console.log('proxyInsert.err', err)
+            // Use synchronous fetch() on client-side cursors
+            const records = window[pluralizedCollectionName]._collection.find().fetch();
+            console.log(`Found ${records.length} records in ${pluralizedCollectionName}`);
+
+            for(const record of records){
+              try {
+                const res = await new Promise((resolve, reject) => {
+                  Meteor.call('proxyInsertResource', record, function(err, result){
+                    if(err) {
+                      console.log('proxyInsert.err', err);
+                      reject(err);
+                    } else {
+                      resolve(result);
+                    }
+                  });
+                });
+
                 if(res){
                   await window[pluralizedCollectionName].removeAsync({_id: record._id})
                 }
-              })
-            });        
+              } catch(error) {
+                console.error('Error processing record:', error);
+              }
+            }
+          } else {
+            console.log('Collection not found or missing _collection:', pluralizedCollectionName);
           }
-      })
+      }
     }
 
   }
