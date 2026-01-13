@@ -7,9 +7,9 @@ import { get } from 'lodash';
 import { Meteor } from 'meteor/meteor';
 
 // Import components
-import AuditLogPage from './client/AuditLogPage';
-import PolicyMenuPage from './client/PolicyMenuPage';
-import PolicyPage from './client/PolicyPage';
+import AuditLogPage from './client/AuditLogPage.jsx';
+import PolicyMenuPage from './client/PolicyMenuPage.jsx';
+import PolicyPage from './client/PolicyPage.jsx';
 
 // Dynamic route injection for Honeycomb
 let DynamicRoutes = [{

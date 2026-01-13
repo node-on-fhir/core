@@ -11,8 +11,14 @@ caching-compiler@2.0.1
 callback-hook@1.6.1
 check@1.4.4
 clinical:extended-api@3.0.0
+clinical:family-health-history@1.0.0
 clinical:fonts@1.2.0
+clinical:hipaa-compliance@0.1.0
 clinical:hl7-resource-datatypes@4.0.8
+clinical:implantable-devices@0.1.0
+clinical:order-catalog@0.1.0
+clinical:pacio-core@0.1.0
+clinical:reference-app@0.1.0
 clinical:us-core@7.0.1
 core-runtime@1.0.0
 ddp@1.4.2
@@ -52,6 +58,7 @@ modern-browsers@0.2.3
 modules@0.20.3
 modules-runtime@0.13.2
 modules-runtime-hot@0.14.3
+momentjs:moment@2.8.4
 mongo@2.2.0-beta340.12
 mongo-decimal@0.2.0
 mongo-dev-server@1.1.1

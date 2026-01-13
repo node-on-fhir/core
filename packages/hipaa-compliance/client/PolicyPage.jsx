@@ -1,7 +1,6 @@
 // packages/hipaa-compliance/client/PolicyPage.jsx
 
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
 import { get } from 'lodash';
 import {
   Container,
@@ -10,7 +9,8 @@ import {
   Box,
   Breadcrumbs,
   Link,
-  CircularProgress
+  CircularProgress,
+  Card
 } from '@mui/material';
 // Removed dependency on hl7-fhir-data-infrastructure
 
@@ -102,14 +102,17 @@ const policyDefinitions = {
   }
 };
 
-// Dynamic spacer
+// Dynamic spacer and routing
 let DynamicSpacer;
+let useParams;
 Meteor.startup(function(){
   DynamicSpacer = Meteor.DynamicSpacer;
+  useParams = Meteor.useParams;
 });
 
 export default function PolicyPage(props) {
-  const { policyId } = useParams();
+  const params = useParams ? useParams() : {};
+  const { policyId } = params;
   const [policyContent, setPolicyContent] = useState('');
   const [loading, setLoading] = useState(true);
 
