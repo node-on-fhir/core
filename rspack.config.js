@@ -11,8 +11,19 @@ const { defineConfig } = require('@meteorjs/rspack');
  * Use these flags to adjust your build settings based on environment.
  */
 module.exports = defineConfig(Meteor => {
+  const isCI = process.env.CI === 'true' || process.env.CIRCLECI === 'true';
+
   const config = {
-    plugins: []
+    plugins: [],
+    // CI-specific memory optimizations
+    ...(isCI && {
+      // Disable source maps in CI to reduce memory usage
+      devtool: false,
+      // Reduce parallelism to avoid memory spikes
+      optimization: {
+        minimize: false, // Skip minification in test builds
+      }
+    })
   };
 
   // Client-specific configuration
