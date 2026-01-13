@@ -177,8 +177,9 @@ describe('ImagingStudies CRUD Operations', function() {
   });
 
   it('02. Verify imaging studies list page loads', browser => {
+    // Use client-side navigation to preserve Meteor/Session state
+    testUtils.navigateUrl(browser, '/imaging-studies');
     browser
-      .url('http://localhost:3000/imaging-studies')
       .waitForElementVisible('#imagingStudiesPage', 5000)
       .pause(500)
       // Re-establish patient context after navigation

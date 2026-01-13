@@ -179,8 +179,9 @@ describe('Immunizations CRUD Operations', function() {
   });
 
   it('02. Verify immunizations list page loads', browser => {
+    // Use client-side navigation to preserve Meteor/Session state
+    testUtils.navigateUrl(browser, '/immunizations');
     browser
-      .url('http://localhost:3000/immunizations')
       .waitForElementVisible('#immunizationsPage', 5000);
 
     // Re-establish patient context after navigation (browser.url clears Session)

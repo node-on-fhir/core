@@ -121,8 +121,9 @@ describe('Observations CRUD Operations', function() {
   });
 
   it('02. Verify observations list page loads', browser => {
+    // Use client-side navigation to preserve Meteor/Session state
+    testUtils.navigateUrl(browser, '/observations');
     browser
-      .url('http://localhost:3000/observations')
       .waitForElementVisible('#observationsPage', 5000)
       .execute(function() {
         const hasTable = document.querySelector('#observationsTable') !== null;

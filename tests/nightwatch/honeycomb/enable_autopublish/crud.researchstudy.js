@@ -70,8 +70,9 @@ describe('ResearchStudy CRUD Operations', function() {
   });
 
   it('02. Verify research studies list page loads', browser => {
+    // Use client-side navigation to preserve Meteor/Session state
+    testUtils.navigateUrl(browser, '/research-studies');
     browser
-      .url('http://localhost:3000/research-studies')
       .waitForElementVisible('#researchStudiesPage', 5000)
       .pause(500)  // Allow data to load
       .execute(function() {

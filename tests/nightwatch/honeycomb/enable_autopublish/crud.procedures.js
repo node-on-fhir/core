@@ -145,8 +145,9 @@ describe('Procedures CRUD Operations', function() {
   });
 
   it('02. Verify procedures list page loads', browser => {
+    // Use client-side navigation to preserve Meteor/Session state
+    testUtils.navigateUrl(browser, '/procedures');
     browser
-      .url('http://localhost:3000/procedures')
       .waitForElementVisible('#proceduresPage', 5000)
             .execute(function() {
         const hasTable = document.querySelector('#proceduresTable') !== null;
@@ -686,11 +687,10 @@ describe('Procedures CRUD Operations', function() {
       }, [], function(result) {
         console.log('Navigation attempt:', result.value);
         
-        // If the above didn't work, fall back to url navigation
+        // If the above didn't work, fall back to client-side navigation
         if (!result.value.clicked || result.value.method === 'none') {
-          browser
-            .url('http://localhost:3000/procedures')
-            .pause(2000); // Give time for page to load
+          testUtils.navigateUrl(browser, '/procedures');
+          browser.pause(2000); // Give time for page to load
         }
       });
     
@@ -810,8 +810,9 @@ describe('Procedures CRUD Operations', function() {
         browser.assert.equal(result.value, true, 'Clicked Save button');
       });
 
+    // Use client-side navigation to preserve Meteor/Session state
+    testUtils.navigateUrl(browser, '/procedures');
     browser
-      .url('http://localhost:3000/procedures')
       .waitForElementVisible('#proceduresPage', 10000)
       .pause(2000) // Give time for data to load
       .execute(function() {

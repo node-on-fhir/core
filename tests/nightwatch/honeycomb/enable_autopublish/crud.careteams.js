@@ -125,8 +125,9 @@ describe('CareTeams CRUD Operations', function() {
   });
 
   it('02. Verify care teams list page loads', browser => {
+    // Use client-side navigation to preserve Meteor/Session state
+    testUtils.navigateUrl(browser, '/care-teams');
     browser
-      .url('http://localhost:3000/care-teams')
       .waitForElementVisible('body', 5000)
       .execute(function() {
         // Check for JavaScript errors

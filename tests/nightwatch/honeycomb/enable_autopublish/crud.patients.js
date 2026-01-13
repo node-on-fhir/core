@@ -80,8 +80,9 @@ describe('Patients CRUD Operations', function() {
   });
 
   it('02. Verify patients list page loads', browser => {
+    // Use client-side navigation to preserve Meteor/Session state
+    testUtils.navigateUrl(browser, '/patients');
     browser
-      .url('http://localhost:3000/patients')
       .waitForElementVisible('#patientsPage', 5000)
       .pause(3000)  // Give more time for subscriptions and React to render in CI
       .execute(function() {
@@ -630,9 +631,9 @@ describe('Patients CRUD Operations', function() {
       .assert.valueContains('#identifierInput', testPatient.identifier)
       .saveScreenshot('tests/nightwatch/screenshots/patients/07-view-patient-details.png');
     
-    // Navigate back to patients list
+    // Navigate back to patients list using client-side navigation
+    testUtils.navigateUrl(browser, '/patients');
     browser
-      .url('http://localhost:3000/patients')
       .waitForElementVisible('#patientsPage', 5000);
   });
 
@@ -796,8 +797,10 @@ describe('Patients CRUD Operations', function() {
       });
 
     browser
-      .pause(2000)
-      .url('http://localhost:3000/patients')
+      .pause(2000);
+    // Use client-side navigation to preserve Meteor/Session state
+    testUtils.navigateUrl(browser, '/patients');
+    browser
       .waitForElementVisible('#patientsTable', 5000)
       .saveScreenshot('tests/nightwatch/screenshots/patients/09-patient-updated.png');
   });

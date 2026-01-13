@@ -119,8 +119,9 @@ describe('Communications CRUD Operations', function() {
   });
 
   it('02. Verify communications list page loads', browser => {
+    // Use client-side navigation to preserve Meteor/Session state
+    testUtils.navigateUrl(browser, '/communications');
     browser
-      .url('http://localhost:3000/communications')
       .waitForElementVisible('body', 5000)
       .execute(function() {
         // Check for JavaScript errors
@@ -636,8 +637,9 @@ describe('Communications CRUD Operations', function() {
       })
       .saveScreenshot('tests/nightwatch/screenshots/communications/07-view-communication-details.png');
     
+    // Use client-side navigation to preserve Meteor/Session state
+    testUtils.navigateUrl(browser, '/communications');
     browser
-      .url('http://localhost:3000/communications')
       .waitForElementVisible('#communicationsPage', 5000);
   });
 

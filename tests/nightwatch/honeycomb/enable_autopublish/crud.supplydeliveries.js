@@ -139,8 +139,8 @@ describe('SupplyDeliveries CRUD Operations', function() {
   });
 
   it('02. Navigate to supply deliveries list page', browser => {
+    testUtils.navigateUrl(browser, '/supply-deliveries');
     browser
-      .url('http://localhost:3000/supply-deliveries')
       .waitForElementVisible('body', 5000)
       .windowSize('current', 1400, 900)
       .pause(1000);
@@ -182,8 +182,8 @@ describe('SupplyDeliveries CRUD Operations', function() {
           .waitForElementVisible('#supplyDeliveryDetailsPage', 5000);
       } else {
         console.log('Add button not found, attempting direct navigation');
+        testUtils.navigateUrl(browser, '/supply-deliveries/new');
         browser
-          .url('http://localhost:3000/supply-deliveries/new')
           .waitForElementVisible('#supplyDeliveryDetailsPage', 5000);
       }
     });
@@ -330,8 +330,8 @@ describe('SupplyDeliveries CRUD Operations', function() {
   });
 
   it('05. Verify supply delivery was created', browser => {
+    testUtils.navigateUrl(browser, '/supply-deliveries');
     browser
-      .url('http://localhost:3000/supply-deliveries')
       .waitForElementVisible('body', 5000)
       .pause(1500);
 
