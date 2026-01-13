@@ -174,6 +174,9 @@ const MetadataServerMethods = {
       "kind": "capability",
       "date": new Date(),
       "contact": get(Meteor, 'settings.public.contact'),
+      "instantiates": [
+        "http://hl7.org/fhir/uv/bulkdata/CapabilityStatement/bulk-data"
+      ],
       "software": {
         "version" : "6.1.0",
         "name" : "Vault Server",
@@ -298,6 +301,66 @@ const MetadataServerMethods = {
           newResourceStatement.supportedProfile = resourceProfiles;
         }
 
+        // Add searchParam declarations for resources that support search
+        // This is required for ONC (g)(10) certification test 12.50.01 (Screening and Assessments)
+        if (key === 'Observation') {
+          newResourceStatement.searchParam = [
+            {
+              "name": "patient",
+              "type": "reference",
+              "documentation": "The subject that the observation is about (if patient)"
+            },
+            {
+              "name": "category",
+              "type": "token",
+              "documentation": "The classification of the type of observation"
+            },
+            {
+              "name": "code",
+              "type": "token",
+              "documentation": "The code of the observation type"
+            },
+            {
+              "name": "date",
+              "type": "date",
+              "documentation": "Obtained date/time. If the obtained element is a period, a date that falls in the period"
+            },
+            {
+              "name": "status",
+              "type": "token",
+              "documentation": "The status of the observation"
+            }
+          ];
+        } else if (key === 'Condition') {
+          newResourceStatement.searchParam = [
+            {
+              "name": "patient",
+              "type": "reference",
+              "documentation": "Who has the condition?"
+            },
+            {
+              "name": "category",
+              "type": "token",
+              "documentation": "The category of the condition"
+            },
+            {
+              "name": "clinical-status",
+              "type": "token",
+              "documentation": "The clinical status of the condition"
+            },
+            {
+              "name": "code",
+              "type": "token",
+              "documentation": "Code for the condition"
+            },
+            {
+              "name": "onset-date",
+              "type": "date",
+              "documentation": "Date related onsets (dateTime and Period)"
+            }
+          ];
+        }
+
         CapabilityStatement.rest[0].resource.push(newResourceStatement);
       })
     }
@@ -307,6 +370,78 @@ const MetadataServerMethods = {
         CapabilityStatement.rest[0].operation = [];
         Meteor.settings.private.fhir.systemOperations.forEach(function(op){
           CapabilityStatement.rest[0].operation.push(op);
+        });
+      }
+    }
+
+    // =============================================================================
+    // BULK DATA EXPORT SUPPORT
+    // =============================================================================
+    // This section adds Group resource with $export operation to comply with:
+    // - FHIR Bulk Data Access IG (http://hl7.org/fhir/uv/bulkdata/)
+    // - ONC 21st Century Cures Act certification requirements (170.315(g)(10))
+    //
+    // OPEN QUESTIONS / TODO:
+    // 1. Settings Configuration: Should bulk data be toggle-able via settings file?
+    //    e.g., Meteor.settings.private.fhir.enableBulkData: true
+    //
+    // 2. Getting Started: Should this be documented in a Getting Started guide?
+    //    Users need to understand Group/$export workflow.
+    //
+    // 3. Group Auto-Selection: Should we auto-select Group resource in UI?
+    //    Or require explicit patient group membership management?
+    //
+    // 4. Additional Endpoints Required:
+    //    - POST/GET Group/[id]/$export (kick off export)
+    //    - GET [polling location] (check export status)
+    //    - GET [file location] (download NDJSON files)
+    //    - DELETE [polling location] (cancel export)
+    //
+    // 5. Dynamic Groups: Can we dynamically generate Groups like Provenance?
+    //    e.g., virtual groups based on Condition, Location, Practitioner, etc.
+    //    Similar pattern to how Provenance is auto-generated for audit trail.
+    //
+    // 6. Patient Export: Also support Patient/$export for all patients?
+    //
+    // Reference: http://hl7.org/fhir/uv/bulkdata/OperationDefinition/group-export
+    // =============================================================================
+
+    // Add Group resource with $export operation for Bulk Data IG compliance
+    // Check if Group is already declared, if not add it
+    let groupResourceExists = CapabilityStatement.rest[0].resource.some(function(r){
+      return r.type === 'Group';
+    });
+
+    if (!groupResourceExists) {
+      CapabilityStatement.rest[0].resource.push({
+        "type": "Group",
+        "interaction": [
+          { "code": "read" },
+          { "code": "search-type" }
+        ],
+        "versioning": "no-version",
+        "operation": [
+          {
+            "name": "export",
+            "definition": "http://hl7.org/fhir/uv/bulkdata/OperationDefinition/group-export"
+          }
+        ]
+      });
+    } else {
+      // Group exists but may not have the $export operation - add it if missing
+      let groupResource = CapabilityStatement.rest[0].resource.find(function(r){
+        return r.type === 'Group';
+      });
+      if (!groupResource.operation) {
+        groupResource.operation = [];
+      }
+      let hasExportOp = groupResource.operation.some(function(op){
+        return op.name === 'export';
+      });
+      if (!hasExportOp) {
+        groupResource.operation.push({
+          "name": "export",
+          "definition": "http://hl7.org/fhir/uv/bulkdata/OperationDefinition/group-export"
         });
       }
     }

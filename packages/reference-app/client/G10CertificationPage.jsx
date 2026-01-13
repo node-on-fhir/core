@@ -29,7 +29,8 @@ import {
   RadioGroup,
   Radio,
   Grid,
-  Chip
+  Chip,
+  Paper
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
@@ -244,7 +245,8 @@ function G10CertificationPage(props) {
       bulk_server_url: '',
       backend_services_token_endpoint: '',
       bulk_timeout: '600',
-      group_id: 'inferno-test-group'
+      group_id: 'inferno-test-group',
+      bulk_patient_ids_in_group: ''
     },
     // Tab 9: Additional Authorization
     additional_auth: {
@@ -276,6 +278,41 @@ function G10CertificationPage(props) {
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [snackbarSeverity, setSnackbarSeverity] = useState('success');
+
+  // Attestation state for Visual Inspection tab (exported to Inferno)
+  const [attestations, setAttestations] = useState({
+    token_revocation_attestation: 'false',
+    token_revocation_notes: '',
+    single_patient_registration_supported: 'false',
+    single_patient_registration_notes: '',
+    multiple_patient_registration_supported: 'false',
+    multiple_patient_registration_notes: '',
+    resource_authorization_gui_supported: 'false',
+    resource_authorization_gui_notes: '',
+    offline_access_notification_supported: 'false',
+    offline_access_notification_notes: '',
+    refresh_token_period_attestation: 'false',
+    refresh_token_period_notes: '',
+    information_accuracy_attestation: 'false',
+    information_accuracy_notes: '',
+    multi_patient_scopes_attestation: 'false',
+    multi_patient_scopes_notes: '',
+    developer_documentation_attestation: 'false',
+    developer_documentation_notes: '',
+    jwks_cache_attestation: 'false',
+    jwks_cache_notes: '',
+    native_refresh_attestation: 'false',
+    native_refresh_notes: '',
+    public_url_attestation: 'false',
+    public_url_attestation_notes: '',
+    tls_version_attestation_notes: '',
+    refresh_token_refresh_attestation: 'false',
+    refresh_token_refresh_notes: '',
+    bulk_v2_since_attestation: 'false',
+    bulk_v2_since_attestation_notes: '',
+    clinical_test_scope_attestation: 'false',
+    clinical_test_scope_attestation_notes: ''
+  });
 
   // Track reactive data from collections
   const {
@@ -316,6 +353,11 @@ function G10CertificationPage(props) {
         // Restore server config if available
         if (parsed.serverConfig) {
           setServerConfig(parsed.serverConfig);
+        }
+
+        // Restore attestations if available
+        if (parsed.attestations) {
+          setAttestations(prev => ({ ...prev, ...parsed.attestations }));
         }
 
         console.log('Loaded saved configuration from localStorage');
@@ -380,7 +422,7 @@ function G10CertificationPage(props) {
     }
   }, [selectedPatient]);
 
-  // Auto-save configuration to localStorage whenever testConfig changes
+  // Auto-save configuration to localStorage whenever testConfig or attestations change
   useEffect(() => {
     try {
       const toSave = {
@@ -388,6 +430,7 @@ function G10CertificationPage(props) {
         configJson,
         infernoClient,
         serverConfig,
+        attestations,
         savedAt: new Date().toISOString()
       };
       localStorage.setItem('infernoG10Config', JSON.stringify(toSave));
@@ -395,7 +438,7 @@ function G10CertificationPage(props) {
     } catch (error) {
       console.error('Error auto-saving configuration:', error);
     }
-  }, [testConfig, configJson, serverConfig]);
+  }, [testConfig, configJson, serverConfig, attestations]);
 
   // =============================================================================
   // HANDLER FUNCTIONS
@@ -624,6 +667,75 @@ function G10CertificationPage(props) {
       setSnackbarOpen(true);
     } catch (error) {
       console.error('Error removing Daisey patient:', error);
+      setSnackbarMessage('Error: ' + (error.reason || error.message));
+      setSnackbarSeverity('error');
+      setSnackbarOpen(true);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleDownloadDaiseyData() {
+    try {
+      setLoading(true);
+      console.log('Downloading Daisey test patient data...');
+
+      const bundleJson = await Meteor.callAsync('referenceApp.getDaiseyBundleJson');
+
+      // Create blob and trigger download
+      const blob = new Blob([bundleJson], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'daisey-test-patient.json';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      setSnackbarMessage('Daisey test patient bundle downloaded!');
+      setSnackbarSeverity('success');
+      setSnackbarOpen(true);
+    } catch (error) {
+      console.error('Error downloading Daisey data:', error);
+      setSnackbarMessage('Error: ' + (error.reason || error.message));
+      setSnackbarSeverity('error');
+      setSnackbarOpen(true);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleCreateBulkExportGroup() {
+    try {
+      setLoading(true);
+      const groupId = testConfig.bulk_data.group_id || 'inferno-test-group';
+      console.log('Creating bulk export group:', groupId);
+
+      const result = await Meteor.callAsync('referenceApp.createBulkExportGroup', groupId);
+      console.log('Create bulk export group result:', result);
+
+      // Auto-populate bulk_patient_ids_in_group field for Inferno config
+      if (result.patientIds && result.patientIds.length > 0) {
+        const patientIdsCsv = result.patientIds.join(',');
+        setTestConfig(function(prev) {
+          return {
+            ...prev,
+            bulk_data: {
+              ...prev.bulk_data,
+              bulk_patient_ids_in_group: patientIdsCsv
+            }
+          };
+        });
+        console.log(`[handleCreateBulkExportGroup] Set bulk_patient_ids_in_group with ${result.patientIds.length} patient IDs`);
+      }
+
+      const message = `${result.action === 'created' ? 'Created' : 'Updated'} Group "${groupId}" with ${result.patientCount} patients`;
+      setSnackbarMessage(message);
+      setSnackbarSeverity('success');
+      setSnackbarOpen(true);
+    } catch (error) {
+      console.error('Error creating bulk export group:', error);
       setSnackbarMessage('Error: ' + (error.reason || error.message));
       setSnackbarSeverity('error');
       setSnackbarOpen(true);
@@ -912,9 +1024,13 @@ function G10CertificationPage(props) {
     // Granular scopes for testing fine-grained access
     const granularScopes1 = "launch/patient openid fhirUser offline_access patient/Condition.rs?category=http://terminology.hl7.org/CodeSystem/condition-category|encounter-diagnosis patient/Condition.rs?category=http://hl7.org/fhir/us/core/CodeSystem/condition-category|health-concern patient/Observation.rs?category=http://terminology.hl7.org/CodeSystem/observation-category|laboratory patient/Observation.rs?category=http://terminology.hl7.org/CodeSystem/observation-category|social-history";
 
-    const granularScopes2 = "launch/patient openid fhirUser offline_access patient/Condition.rs?category=http://terminology.hl7.org/CodeSystem/condition-category|problem-list-item patient/Observation.rs?category=http://terminology.hl7.org/CodeSystem/observation-category|vital-signs patient/Observation.rs?category=http://terminology.hl7.org/CodeSystem/observation-category|survey patient/Observation.rs?category=http://hl7.org/fhir/us/core/CodeSystem/us-core-category|sdoh";
+    const granularScopes2 = "launch/patient openid fhirUser offline_access patient/Condition.rs?category=http://terminology.hl7.org/CodeSystem/condition-category|problem-list-item patient/Observation.rs?category=http://terminology.hl7.org/CodeSystem/observation-category|vital-signs patient/Observation.rs?category=http://terminology.hl7.org/CodeSystem/observation-category|survey patient/Observation.rs?category=http://hl7.org/fhir/us/core/CodeSystem/us-core-category|sdoh patient/Observation.rs?category=http://hl7.org/fhir/us/core/CodeSystem/us-core-category|functional-status patient/Observation.rs?category=http://hl7.org/fhir/us/core/CodeSystem/us-core-category|disability-status patient/Observation.rs?category=http://hl7.org/fhir/us/core/CodeSystem/us-core-category|cognitive-status patient/Observation.rs?category=http://terminology.hl7.org/CodeSystem/observation-category|activity";
 
     const granularScopesSelection = "launch/patient openid fhirUser offline_access patient/Condition.rs patient/Observation.rs patient/Patient.rs";
+
+    // System scopes for bulk data export (backend services)
+    // Note: No OIDC scopes (launch, openid, fhirUser, offline_access) - those are for interactive flows
+    const bulkScopes = "system/Patient.rs system/AllergyIntolerance.rs system/CarePlan.rs system/CareTeam.rs system/Condition.rs system/Coverage.rs system/Device.rs system/DiagnosticReport.rs system/DocumentReference.rs system/Encounter.rs system/Goal.rs system/Immunization.rs system/Location.rs system/Medication.rs system/MedicationDispense.rs system/MedicationRequest.rs system/Observation.rs system/Organization.rs system/Practitioner.rs system/PractitionerRole.rs system/Procedure.rs system/Provenance.rs system/RelatedPerson.rs system/ServiceRequest.rs system/Specimen.rs system/Media.rs";
 
     // Build complete Inferno preset configuration array
     const exportConfig = [
@@ -1045,7 +1161,7 @@ function G10CertificationPage(props) {
         optional: true,
         title: "Patient IDs in exported Group",
         type: "text",
-        value: ""
+        value: testConfig.bulk_data.bulk_patient_ids_in_group || ""
       },
 
       // Bulk Device Types in Group
@@ -1096,7 +1212,7 @@ function G10CertificationPage(props) {
           encryption_algorithm: "ES384",
           auth_type: "backend_services",
           token_url: tokenUrl,
-          requested_scopes: ehrScopes,
+          requested_scopes: bulkScopes,
           client_id: clientId
         }),
         default: {}
@@ -1152,14 +1268,14 @@ function G10CertificationPage(props) {
         },
         title: "The Health IT developer demonstrated a patient's request for revoking the tokens provided during the patient standalone launch within the last hour",
         type: "radio",
-        value: "false"
+        value: attestations.token_revocation_attestation
       },
       {
         name: "token_revocation_notes",
         optional: true,
         title: "Notes, if applicable:",
         type: "textarea",
-        value: ""
+        value: attestations.token_revocation_notes
       },
 
       // EHR Launch with Patient Scopes
@@ -1364,9 +1480,9 @@ function G10CertificationPage(props) {
         options: { list_options: [{ label: "Yes", value: "true" }, { label: "No", value: "false" }] },
         title: "Health IT Module demonstrated support for application registration for single patients.",
         type: "radio",
-        value: "false"
+        value: attestations.single_patient_registration_supported
       },
-      { name: "single_patient_registration_notes", optional: true, title: "Notes, if applicable:", type: "textarea", value: "" },
+      { name: "single_patient_registration_notes", optional: true, title: "Notes, if applicable:", type: "textarea", value: attestations.single_patient_registration_notes },
 
       {
         name: "multiple_patient_registration_supported",
@@ -1374,9 +1490,9 @@ function G10CertificationPage(props) {
         options: { list_options: [{ label: "Yes", value: "true" }, { label: "No", value: "false" }] },
         title: "Health IT Module demonstrated support for application registration for multiple patients.",
         type: "radio",
-        value: "false"
+        value: attestations.multiple_patient_registration_supported
       },
-      { name: "multiple_patient_registration_notes", optional: true, title: "Notes, if applicable:", type: "textarea", value: "" },
+      { name: "multiple_patient_registration_notes", optional: true, title: "Notes, if applicable:", type: "textarea", value: attestations.multiple_patient_registration_notes },
 
       {
         name: "resource_authorization_gui_supported",
@@ -1384,9 +1500,9 @@ function G10CertificationPage(props) {
         options: { list_options: [{ label: "Yes", value: "true" }, { label: "No", value: "false" }] },
         title: "Health IT Module demonstrated a graphical user interface for user to authorize FHIR resources.",
         type: "radio",
-        value: "false"
+        value: attestations.resource_authorization_gui_supported
       },
-      { name: "resource_authorization_gui_notes", optional: true, title: "Notes, if applicable:", type: "textarea", value: "" },
+      { name: "resource_authorization_gui_notes", optional: true, title: "Notes, if applicable:", type: "textarea", value: attestations.resource_authorization_gui_notes },
 
       {
         name: "offline_access_notification_supported",
@@ -1394,9 +1510,9 @@ function G10CertificationPage(props) {
         options: { list_options: [{ label: "Yes", value: "true" }, { label: "No", value: "false" }] },
         title: "Health IT Module informed patient when \"offline_access\" scope is being granted during authorization.",
         type: "radio",
-        value: "false"
+        value: attestations.offline_access_notification_supported
       },
-      { name: "offline_access_notification_notes", optional: true, title: "Notes, if applicable:", type: "textarea", value: "" },
+      { name: "offline_access_notification_notes", optional: true, title: "Notes, if applicable:", type: "textarea", value: attestations.offline_access_notification_notes },
 
       {
         name: "refresh_token_period_attestation",
@@ -1404,9 +1520,9 @@ function G10CertificationPage(props) {
         options: { list_options: [{ label: "Yes", value: "true" }, { label: "No", value: "false" }] },
         title: "Health IT Module attested that it is capable of issuing refresh tokens that are valid for a period of no shorter than three months.",
         type: "radio",
-        value: "false"
+        value: attestations.refresh_token_period_attestation
       },
-      { name: "refresh_token_period_notes", optional: true, title: "Notes, if applicable:", type: "textarea", value: "" },
+      { name: "refresh_token_period_notes", optional: true, title: "Notes, if applicable:", type: "textarea", value: attestations.refresh_token_period_notes },
 
       {
         name: "information_accuracy_attestation",
@@ -1414,9 +1530,9 @@ function G10CertificationPage(props) {
         options: { list_options: [{ label: "Yes", value: "true" }, { label: "No", value: "false" }] },
         title: "Tester verifies that all information is accurate and without omission.",
         type: "radio",
-        value: "false"
+        value: attestations.information_accuracy_attestation
       },
-      { name: "information_accuracy_notes", optional: true, title: "Notes, if applicable:", type: "textarea", value: "" },
+      { name: "information_accuracy_notes", optional: true, title: "Notes, if applicable:", type: "textarea", value: attestations.information_accuracy_notes },
 
       {
         name: "multi_patient_scopes_attestation",
@@ -1424,9 +1540,9 @@ function G10CertificationPage(props) {
         options: { list_options: [{ label: "Yes", value: "true" }, { label: "No", value: "false" }] },
         title: "Information returned no greater than scopes pre-authorized for multi-patient queries.",
         type: "radio",
-        value: "false"
+        value: attestations.multi_patient_scopes_attestation
       },
-      { name: "multi_patient_scopes_notes", optional: true, title: "Notes, if applicable:", type: "textarea", value: "" },
+      { name: "multi_patient_scopes_notes", optional: true, title: "Notes, if applicable:", type: "textarea", value: attestations.multi_patient_scopes_notes },
 
       {
         name: "developer_documentation_attestation",
@@ -1434,9 +1550,9 @@ function G10CertificationPage(props) {
         options: { list_options: [{ label: "Yes", value: "true" }, { label: "No", value: "false" }] },
         title: "Health IT developer demonstrated the documentation is available at a publicly accessible URL.",
         type: "radio",
-        value: "false"
+        value: attestations.developer_documentation_attestation
       },
-      { name: "developer_documentation_notes", optional: true, title: "Notes, if applicable:", type: "textarea", value: "" },
+      { name: "developer_documentation_notes", optional: true, title: "Notes, if applicable:", type: "textarea", value: attestations.developer_documentation_notes },
 
       {
         name: "jwks_cache_attestation",
@@ -1444,9 +1560,9 @@ function G10CertificationPage(props) {
         options: { list_options: [{ label: "Yes", value: "true" }, { label: "No", value: "false" }] },
         title: "Health IT developer confirms the Health IT Module does not cache the JWK Set received via a TLS-protected URL for longer than the cache-control header indicates.",
         type: "radio",
-        value: "false"
+        value: attestations.jwks_cache_attestation
       },
-      { name: "jwks_cache_notes", optional: true, title: "Notes, if applicable:", type: "textarea", value: "" },
+      { name: "jwks_cache_notes", optional: true, title: "Notes, if applicable:", type: "textarea", value: attestations.jwks_cache_notes },
 
       {
         name: "native_refresh_attestation",
@@ -1454,9 +1570,9 @@ function G10CertificationPage(props) {
         options: { list_options: [{ label: "Yes", value: "true" }, { label: "No", value: "false" }] },
         title: "Health IT developer demonstrates support for issuing refresh tokens to native applications.",
         type: "radio",
-        value: "false"
+        value: attestations.native_refresh_attestation
       },
-      { name: "native_refresh_notes", optional: true, title: "Notes, if applicable:", type: "textarea", value: "" },
+      { name: "native_refresh_notes", optional: true, title: "Notes, if applicable:", type: "textarea", value: attestations.native_refresh_notes },
 
       {
         name: "public_url_attestation",
@@ -1464,11 +1580,11 @@ function G10CertificationPage(props) {
         options: { list_options: [{ label: "Yes", value: "true" }, { label: "No", value: "false" }] },
         title: "Health IT developer demonstrates the public location of its certified API technology service base URLs",
         type: "radio",
-        value: "false"
+        value: attestations.public_url_attestation
       },
-      { name: "public_url_attestation_notes", optional: true, title: "Notes, if applicable:", type: "textarea", value: "" },
+      { name: "public_url_attestation_notes", optional: true, title: "Notes, if applicable:", type: "textarea", value: attestations.public_url_attestation_notes },
 
-      { name: "tls_version_attestation_notes", optional: true, title: "Document how TLS version 1.2 or above is enforced, if required:", type: "textarea", value: "" },
+      { name: "tls_version_attestation_notes", optional: true, title: "Document how TLS version 1.2 or above is enforced, if required:", type: "textarea", value: attestations.tls_version_attestation_notes },
 
       {
         name: "refresh_token_refresh_attestation",
@@ -1476,9 +1592,9 @@ function G10CertificationPage(props) {
         options: { list_options: [{ label: "Yes", value: "true" }, { label: "No", value: "false" }] },
         title: "Health IT developer attested that the Health IT Module is capable of issuing refresh tokens valid for a new period of no shorter than three months without requiring re-authentication and re-authorization when a valid refresh token is supplied by the application.",
         type: "radio",
-        value: "false"
+        value: attestations.refresh_token_refresh_attestation
       },
-      { name: "refresh_token_refresh_notes", optional: true, title: "Notes, if applicable:", type: "textarea", value: "" },
+      { name: "refresh_token_refresh_notes", optional: true, title: "Notes, if applicable:", type: "textarea", value: attestations.refresh_token_refresh_notes },
 
       {
         name: "bulk_v2_since_attestation",
@@ -1486,9 +1602,9 @@ function G10CertificationPage(props) {
         options: { list_options: [{ label: "Yes", value: "true" }, { label: "No", value: "false" }] },
         title: "Health IT developer attested that the Health IT Module meets the requirements for supporting the `_since` parameter for bulk data exports.",
         type: "radio",
-        value: "false"
+        value: attestations.bulk_v2_since_attestation
       },
-      { name: "bulk_v2_since_attestation_notes", optional: true, title: "Notes, if applicable:", type: "textarea", value: "" },
+      { name: "bulk_v2_since_attestation_notes", optional: true, title: "Notes, if applicable:", type: "textarea", value: attestations.bulk_v2_since_attestation_notes },
 
       {
         name: "clinical_test_scope_attestation",
@@ -1496,9 +1612,9 @@ function G10CertificationPage(props) {
         options: { list_options: [{ label: "Yes", value: "true" }, { label: "No", value: "false" }] },
         title: "Health IT developer attested that the Health IT Module supports granting a sub resource scope for Clinical Test Observations.",
         type: "radio",
-        value: "false"
+        value: attestations.clinical_test_scope_attestation
       },
-      { name: "clinical_test_scope_attestation_notes", optional: true, title: "Notes, if applicable:", type: "textarea", value: "" }
+      { name: "clinical_test_scope_attestation_notes", optional: true, title: "Notes, if applicable:", type: "textarea", value: attestations.clinical_test_scope_attestation_notes }
     ];
 
     // Final cleanup: remove empty string values from auth_info value objects
@@ -1726,6 +1842,15 @@ function G10CertificationPage(props) {
                     sx={{ mr: 2 }}
                   >
                     {loading ? 'Loading...' : 'Load Daisey Test Patient'}
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    color="secondary"
+                    onClick={handleDownloadDaiseyData}
+                    disabled={loading}
+                    sx={{ mr: 2 }}
+                  >
+                    {loading ? 'Downloading...' : 'Download Daisey Data'}
                   </Button>
                   <Button
                     variant="outlined"
@@ -2166,6 +2291,19 @@ function G10CertificationPage(props) {
                 sx={{ mb: 2 }}
               />
 
+              <Button
+                variant="outlined"
+                color="primary"
+                onClick={handleCreateBulkExportGroup}
+                disabled={loading}
+                sx={{ mb: 2 }}
+              >
+                Create Bulk Export Group
+              </Button>
+              <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 2 }}>
+                Creates a Group resource with all patients in the database for bulk export testing
+              </Typography>
+
               <Alert severity="info" sx={{ mt: 2 }}>
                 <Typography variant="body2">
                   <strong>Backend Services:</strong> Tests system-level access using SMART Backend Services authorization for bulk data export operations.
@@ -2223,144 +2361,482 @@ function G10CertificationPage(props) {
               <Typography variant="h6" gutterBottom>
                 Visual Inspection Checklist
               </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                Complete these attestations and they will be included in the exported Inferno configuration.
+              </Typography>
 
-              <Box sx={{ mt: 3 }}>
-                <Typography variant="body1" fontWeight="bold" gutterBottom>
+              {/* 9.3.01 - Token Revocation Attestation */}
+              <Paper variant="outlined" sx={{ p: 2, mb: 2 }}>
+                <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
+                  9.3.01 - Token Revocation
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                  The Health IT developer demonstrated a patient's request for revoking the tokens provided during the patient standalone launch within the last hour.
+                </Typography>
+                <FormControl component="fieldset">
+                  <RadioGroup
+                    row
+                    value={attestations.token_revocation_attestation}
+                    onChange={(e) => setAttestations(prev => ({ ...prev, token_revocation_attestation: e.target.value }))}
+                  >
+                    <FormControlLabel value="true" control={<Radio size="small" />} label="Yes" />
+                    <FormControlLabel value="false" control={<Radio size="small" />} label="No" />
+                  </RadioGroup>
+                </FormControl>
+                <TextField
+                  fullWidth
+                  multiline
+                  rows={2}
+                  size="small"
+                  label="Notes"
+                  placeholder="Patient-initiated token revocation available via My Profile > Authorized Apps section."
+                  value={attestations.token_revocation_notes}
+                  onChange={(e) => setAttestations(prev => ({ ...prev, token_revocation_notes: e.target.value }))}
+                  sx={{ mt: 1 }}
+                />
+              </Paper>
+
+              {/* Single Patient Registration */}
+              <Paper variant="outlined" sx={{ p: 2, mb: 2 }}>
+                <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
+                  Single Patient Registration
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
                   Health IT Module demonstrated support for application registration for single patients.
                 </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Yes / No - Notes, if applicable:
-                </Typography>
-              </Box>
+                <FormControl component="fieldset">
+                  <RadioGroup
+                    row
+                    value={attestations.single_patient_registration_supported}
+                    onChange={(e) => setAttestations(prev => ({ ...prev, single_patient_registration_supported: e.target.value }))}
+                  >
+                    <FormControlLabel value="true" control={<Radio size="small" />} label="Yes" />
+                    <FormControlLabel value="false" control={<Radio size="small" />} label="No" />
+                  </RadioGroup>
+                </FormControl>
+                <TextField
+                  fullWidth
+                  multiline
+                  rows={2}
+                  size="small"
+                  label="Notes"
+                  value={attestations.single_patient_registration_notes}
+                  onChange={(e) => setAttestations(prev => ({ ...prev, single_patient_registration_notes: e.target.value }))}
+                  sx={{ mt: 1 }}
+                />
+              </Paper>
 
-              <Box sx={{ mt: 3 }}>
-                <Typography variant="body1" fontWeight="bold" gutterBottom>
+              {/* Multiple Patient Registration */}
+              <Paper variant="outlined" sx={{ p: 2, mb: 2 }}>
+                <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
+                  Multiple Patient Registration
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
                   Health IT Module demonstrated support for application registration for multiple patients.
                 </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Yes / No - Notes, if applicable:
-                </Typography>
-              </Box>
+                <FormControl component="fieldset">
+                  <RadioGroup
+                    row
+                    value={attestations.multiple_patient_registration_supported}
+                    onChange={(e) => setAttestations(prev => ({ ...prev, multiple_patient_registration_supported: e.target.value }))}
+                  >
+                    <FormControlLabel value="true" control={<Radio size="small" />} label="Yes" />
+                    <FormControlLabel value="false" control={<Radio size="small" />} label="No" />
+                  </RadioGroup>
+                </FormControl>
+                <TextField
+                  fullWidth
+                  multiline
+                  rows={2}
+                  size="small"
+                  label="Notes"
+                  value={attestations.multiple_patient_registration_notes}
+                  onChange={(e) => setAttestations(prev => ({ ...prev, multiple_patient_registration_notes: e.target.value }))}
+                  sx={{ mt: 1 }}
+                />
+              </Paper>
 
-              <Box sx={{ mt: 3 }}>
-                <Typography variant="body1" fontWeight="bold" gutterBottom>
+              {/* Resource Authorization GUI */}
+              <Paper variant="outlined" sx={{ p: 2, mb: 2 }}>
+                <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
+                  Resource Authorization GUI
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
                   Health IT Module demonstrated a graphical user interface for user to authorize FHIR resources.
                 </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Yes / No - Notes, if applicable:
-                </Typography>
-              </Box>
+                <FormControl component="fieldset">
+                  <RadioGroup
+                    row
+                    value={attestations.resource_authorization_gui_supported}
+                    onChange={(e) => setAttestations(prev => ({ ...prev, resource_authorization_gui_supported: e.target.value }))}
+                  >
+                    <FormControlLabel value="true" control={<Radio size="small" />} label="Yes" />
+                    <FormControlLabel value="false" control={<Radio size="small" />} label="No" />
+                  </RadioGroup>
+                </FormControl>
+                <TextField
+                  fullWidth
+                  multiline
+                  rows={2}
+                  size="small"
+                  label="Notes"
+                  value={attestations.resource_authorization_gui_notes}
+                  onChange={(e) => setAttestations(prev => ({ ...prev, resource_authorization_gui_notes: e.target.value }))}
+                  sx={{ mt: 1 }}
+                />
+              </Paper>
 
-              <Box sx={{ mt: 3 }}>
-                <Typography variant="body1" fontWeight="bold" gutterBottom>
+              {/* Offline Access Notification */}
+              <Paper variant="outlined" sx={{ p: 2, mb: 2 }}>
+                <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
+                  Offline Access Notification
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
                   Health IT Module informed patient when "offline_access" scope is being granted during authorization.
                 </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Yes / No - Notes, if applicable:
-                </Typography>
-              </Box>
+                <FormControl component="fieldset">
+                  <RadioGroup
+                    row
+                    value={attestations.offline_access_notification_supported}
+                    onChange={(e) => setAttestations(prev => ({ ...prev, offline_access_notification_supported: e.target.value }))}
+                  >
+                    <FormControlLabel value="true" control={<Radio size="small" />} label="Yes" />
+                    <FormControlLabel value="false" control={<Radio size="small" />} label="No" />
+                  </RadioGroup>
+                </FormControl>
+                <TextField
+                  fullWidth
+                  multiline
+                  rows={2}
+                  size="small"
+                  label="Notes"
+                  value={attestations.offline_access_notification_notes}
+                  onChange={(e) => setAttestations(prev => ({ ...prev, offline_access_notification_notes: e.target.value }))}
+                  sx={{ mt: 1 }}
+                />
+              </Paper>
 
-              <Box sx={{ mt: 3 }}>
-                <Typography variant="body1" fontWeight="bold" gutterBottom>
+              {/* Refresh Token Period */}
+              <Paper variant="outlined" sx={{ p: 2, mb: 2 }}>
+                <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
+                  Refresh Token Period
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
                   Health IT Module attested that it is capable of issuing refresh tokens that are valid for a period of no shorter than three months.
                 </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Yes / No - Notes, if applicable:
-                </Typography>
-              </Box>
+                <FormControl component="fieldset">
+                  <RadioGroup
+                    row
+                    value={attestations.refresh_token_period_attestation}
+                    onChange={(e) => setAttestations(prev => ({ ...prev, refresh_token_period_attestation: e.target.value }))}
+                  >
+                    <FormControlLabel value="true" control={<Radio size="small" />} label="Yes" />
+                    <FormControlLabel value="false" control={<Radio size="small" />} label="No" />
+                  </RadioGroup>
+                </FormControl>
+                <TextField
+                  fullWidth
+                  multiline
+                  rows={2}
+                  size="small"
+                  label="Notes"
+                  value={attestations.refresh_token_period_notes}
+                  onChange={(e) => setAttestations(prev => ({ ...prev, refresh_token_period_notes: e.target.value }))}
+                  sx={{ mt: 1 }}
+                />
+              </Paper>
 
-              <Box sx={{ mt: 3 }}>
-                <Typography variant="body1" fontWeight="bold" gutterBottom>
+              {/* Information Accuracy */}
+              <Paper variant="outlined" sx={{ p: 2, mb: 2 }}>
+                <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
+                  Information Accuracy
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
                   Tester verifies that all information is accurate and without omission.
                 </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Yes / No - Notes, if applicable:
-                </Typography>
-              </Box>
+                <FormControl component="fieldset">
+                  <RadioGroup
+                    row
+                    value={attestations.information_accuracy_attestation}
+                    onChange={(e) => setAttestations(prev => ({ ...prev, information_accuracy_attestation: e.target.value }))}
+                  >
+                    <FormControlLabel value="true" control={<Radio size="small" />} label="Yes" />
+                    <FormControlLabel value="false" control={<Radio size="small" />} label="No" />
+                  </RadioGroup>
+                </FormControl>
+                <TextField
+                  fullWidth
+                  multiline
+                  rows={2}
+                  size="small"
+                  label="Notes"
+                  value={attestations.information_accuracy_notes}
+                  onChange={(e) => setAttestations(prev => ({ ...prev, information_accuracy_notes: e.target.value }))}
+                  sx={{ mt: 1 }}
+                />
+              </Paper>
 
-              <Box sx={{ mt: 3 }}>
-                <Typography variant="body1" fontWeight="bold" gutterBottom>
+              {/* Multi-Patient Scopes */}
+              <Paper variant="outlined" sx={{ p: 2, mb: 2 }}>
+                <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
+                  Multi-Patient Scope Compliance
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
                   Information returned no greater than scopes pre-authorized for multi-patient queries.
                 </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Yes / No - Notes, if applicable:
-                </Typography>
-              </Box>
+                <FormControl component="fieldset">
+                  <RadioGroup
+                    row
+                    value={attestations.multi_patient_scopes_attestation}
+                    onChange={(e) => setAttestations(prev => ({ ...prev, multi_patient_scopes_attestation: e.target.value }))}
+                  >
+                    <FormControlLabel value="true" control={<Radio size="small" />} label="Yes" />
+                    <FormControlLabel value="false" control={<Radio size="small" />} label="No" />
+                  </RadioGroup>
+                </FormControl>
+                <TextField
+                  fullWidth
+                  multiline
+                  rows={2}
+                  size="small"
+                  label="Notes"
+                  value={attestations.multi_patient_scopes_notes}
+                  onChange={(e) => setAttestations(prev => ({ ...prev, multi_patient_scopes_notes: e.target.value }))}
+                  sx={{ mt: 1 }}
+                />
+              </Paper>
 
-              <Box sx={{ mt: 3 }}>
-                <Typography variant="body1" fontWeight="bold" gutterBottom>
+              {/* Developer Documentation */}
+              <Paper variant="outlined" sx={{ p: 2, mb: 2 }}>
+                <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
+                  Developer Documentation
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
                   Health IT developer demonstrated the documentation is available at a publicly accessible URL.
                 </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Yes / No - Notes, if applicable:
-                </Typography>
-              </Box>
+                <FormControl component="fieldset">
+                  <RadioGroup
+                    row
+                    value={attestations.developer_documentation_attestation}
+                    onChange={(e) => setAttestations(prev => ({ ...prev, developer_documentation_attestation: e.target.value }))}
+                  >
+                    <FormControlLabel value="true" control={<Radio size="small" />} label="Yes" />
+                    <FormControlLabel value="false" control={<Radio size="small" />} label="No" />
+                  </RadioGroup>
+                </FormControl>
+                <TextField
+                  fullWidth
+                  multiline
+                  rows={2}
+                  size="small"
+                  label="Notes"
+                  value={attestations.developer_documentation_notes}
+                  onChange={(e) => setAttestations(prev => ({ ...prev, developer_documentation_notes: e.target.value }))}
+                  sx={{ mt: 1 }}
+                />
+              </Paper>
 
-              <Box sx={{ mt: 3 }}>
-                <Typography variant="body1" fontWeight="bold" gutterBottom>
+              {/* JWKS Cache */}
+              <Paper variant="outlined" sx={{ p: 2, mb: 2 }}>
+                <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
+                  JWKS Cache Control
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
                   Health IT developer confirms the Health IT Module does not cache the JWK Set received via a TLS-protected URL for longer than the cache-control header indicates.
                 </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Yes / No - Notes, if applicable:
-                </Typography>
-              </Box>
+                <FormControl component="fieldset">
+                  <RadioGroup
+                    row
+                    value={attestations.jwks_cache_attestation}
+                    onChange={(e) => setAttestations(prev => ({ ...prev, jwks_cache_attestation: e.target.value }))}
+                  >
+                    <FormControlLabel value="true" control={<Radio size="small" />} label="Yes" />
+                    <FormControlLabel value="false" control={<Radio size="small" />} label="No" />
+                  </RadioGroup>
+                </FormControl>
+                <TextField
+                  fullWidth
+                  multiline
+                  rows={2}
+                  size="small"
+                  label="Notes"
+                  value={attestations.jwks_cache_notes}
+                  onChange={(e) => setAttestations(prev => ({ ...prev, jwks_cache_notes: e.target.value }))}
+                  sx={{ mt: 1 }}
+                />
+              </Paper>
 
-              <Box sx={{ mt: 3 }}>
-                <Typography variant="body1" fontWeight="bold" gutterBottom>
+              {/* Native Refresh Tokens */}
+              <Paper variant="outlined" sx={{ p: 2, mb: 2 }}>
+                <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
+                  Native App Refresh Tokens
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
                   Health IT developer demonstrates support for issuing refresh tokens to native applications.
                 </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Yes / No - Notes, if applicable:
-                </Typography>
-              </Box>
+                <FormControl component="fieldset">
+                  <RadioGroup
+                    row
+                    value={attestations.native_refresh_attestation}
+                    onChange={(e) => setAttestations(prev => ({ ...prev, native_refresh_attestation: e.target.value }))}
+                  >
+                    <FormControlLabel value="true" control={<Radio size="small" />} label="Yes" />
+                    <FormControlLabel value="false" control={<Radio size="small" />} label="No" />
+                  </RadioGroup>
+                </FormControl>
+                <TextField
+                  fullWidth
+                  multiline
+                  rows={2}
+                  size="small"
+                  label="Notes"
+                  value={attestations.native_refresh_notes}
+                  onChange={(e) => setAttestations(prev => ({ ...prev, native_refresh_notes: e.target.value }))}
+                  sx={{ mt: 1 }}
+                />
+              </Paper>
 
-              <Box sx={{ mt: 3 }}>
-                <Typography variant="body1" fontWeight="bold" gutterBottom>
-                  Health IT developer demonstrates the public location of its certified API technology service base URLs
+              {/* Public URL */}
+              <Paper variant="outlined" sx={{ p: 2, mb: 2 }}>
+                <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
+                  Public Service Base URLs
                 </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Yes / No - Notes, if applicable:
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                  Health IT developer demonstrates the public location of its certified API technology service base URLs.
                 </Typography>
-              </Box>
+                <FormControl component="fieldset">
+                  <RadioGroup
+                    row
+                    value={attestations.public_url_attestation}
+                    onChange={(e) => setAttestations(prev => ({ ...prev, public_url_attestation: e.target.value }))}
+                  >
+                    <FormControlLabel value="true" control={<Radio size="small" />} label="Yes" />
+                    <FormControlLabel value="false" control={<Radio size="small" />} label="No" />
+                  </RadioGroup>
+                </FormControl>
+                <TextField
+                  fullWidth
+                  multiline
+                  rows={2}
+                  size="small"
+                  label="Notes"
+                  value={attestations.public_url_attestation_notes}
+                  onChange={(e) => setAttestations(prev => ({ ...prev, public_url_attestation_notes: e.target.value }))}
+                  sx={{ mt: 1 }}
+                />
+              </Paper>
 
-              <Box sx={{ mt: 3 }}>
+              {/* TLS Version */}
+              <Paper variant="outlined" sx={{ p: 2, mb: 2 }}>
                 <Typography variant="h6" gutterBottom>
                   TLS Issues
                 </Typography>
-                <Typography variant="body1" fontWeight="bold" gutterBottom>
+                <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
+                  TLS Version Enforcement
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
                   Health IT developers must document how the Health IT Module enforces TLS version 1.2 or above.
                 </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Yes / No - Document how TLS version 1.2 or above is enforced, if required:
-                </Typography>
-              </Box>
+                <TextField
+                  fullWidth
+                  multiline
+                  rows={3}
+                  size="small"
+                  label="Document how TLS version 1.2 or above is enforced"
+                  value={attestations.tls_version_attestation_notes}
+                  onChange={(e) => setAttestations(prev => ({ ...prev, tls_version_attestation_notes: e.target.value }))}
+                />
+              </Paper>
 
-              <Box sx={{ mt: 3 }}>
-                <Typography variant="body1" fontWeight="bold" gutterBottom>
+              {/* Refresh Token Renewal */}
+              <Paper variant="outlined" sx={{ p: 2, mb: 2 }}>
+                <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
+                  Refresh Token Renewal
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
                   Health IT developer attested that the Health IT Module is capable of issuing refresh tokens valid for a new period of no shorter than three months without requiring re-authentication and re-authorization when a valid refresh token is supplied by the application.
                 </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Yes / No - Notes, if applicable:
-                </Typography>
-              </Box>
+                <FormControl component="fieldset">
+                  <RadioGroup
+                    row
+                    value={attestations.refresh_token_refresh_attestation}
+                    onChange={(e) => setAttestations(prev => ({ ...prev, refresh_token_refresh_attestation: e.target.value }))}
+                  >
+                    <FormControlLabel value="true" control={<Radio size="small" />} label="Yes" />
+                    <FormControlLabel value="false" control={<Radio size="small" />} label="No" />
+                  </RadioGroup>
+                </FormControl>
+                <TextField
+                  fullWidth
+                  multiline
+                  rows={2}
+                  size="small"
+                  label="Notes"
+                  value={attestations.refresh_token_refresh_notes}
+                  onChange={(e) => setAttestations(prev => ({ ...prev, refresh_token_refresh_notes: e.target.value }))}
+                  sx={{ mt: 1 }}
+                />
+              </Paper>
 
-              <Box sx={{ mt: 3 }}>
-                <Typography variant="body1" fontWeight="bold" gutterBottom>
+              {/* Bulk Data _since Parameter */}
+              <Paper variant="outlined" sx={{ p: 2, mb: 2 }}>
+                <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
+                  Bulk Data _since Parameter
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
                   Health IT developer attested that the Health IT Module meets the requirements for supporting the `_since` parameter for bulk data exports.
                 </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Yes / No - Notes, if applicable:
-                </Typography>
-              </Box>
+                <FormControl component="fieldset">
+                  <RadioGroup
+                    row
+                    value={attestations.bulk_v2_since_attestation}
+                    onChange={(e) => setAttestations(prev => ({ ...prev, bulk_v2_since_attestation: e.target.value }))}
+                  >
+                    <FormControlLabel value="true" control={<Radio size="small" />} label="Yes" />
+                    <FormControlLabel value="false" control={<Radio size="small" />} label="No" />
+                  </RadioGroup>
+                </FormControl>
+                <TextField
+                  fullWidth
+                  multiline
+                  rows={2}
+                  size="small"
+                  label="Notes"
+                  value={attestations.bulk_v2_since_attestation_notes}
+                  onChange={(e) => setAttestations(prev => ({ ...prev, bulk_v2_since_attestation_notes: e.target.value }))}
+                  sx={{ mt: 1 }}
+                />
+              </Paper>
 
-              <Box sx={{ mt: 3 }}>
-                <Typography variant="body1" fontWeight="bold" gutterBottom>
+              {/* Clinical Test Scope */}
+              <Paper variant="outlined" sx={{ p: 2, mb: 2 }}>
+                <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
+                  Clinical Test Observations Scope
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
                   Health IT developer attested that the Health IT Module supports granting a sub resource scope for Clinical Test Observations.
                 </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Yes / No - Notes, if applicable:
-                </Typography>
-              </Box>
+                <FormControl component="fieldset">
+                  <RadioGroup
+                    row
+                    value={attestations.clinical_test_scope_attestation}
+                    onChange={(e) => setAttestations(prev => ({ ...prev, clinical_test_scope_attestation: e.target.value }))}
+                  >
+                    <FormControlLabel value="true" control={<Radio size="small" />} label="Yes" />
+                    <FormControlLabel value="false" control={<Radio size="small" />} label="No" />
+                  </RadioGroup>
+                </FormControl>
+                <TextField
+                  fullWidth
+                  multiline
+                  rows={2}
+                  size="small"
+                  label="Notes"
+                  value={attestations.clinical_test_scope_attestation_notes}
+                  onChange={(e) => setAttestations(prev => ({ ...prev, clinical_test_scope_attestation_notes: e.target.value }))}
+                  sx={{ mt: 1 }}
+                />
+              </Paper>
             </Box>
           )}
         </CardContent>

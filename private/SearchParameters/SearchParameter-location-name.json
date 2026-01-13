@@ -1,0 +1,29 @@
+{
+  "resourceType": "SearchParameter",
+  "id": "location-name",
+  "url": "http://github.com/node-on-fhir/honeycomb/private/SearchParameters/SearchParameter-location-name",
+  "version": "1.0.0",
+  "name": "HoneycombLocationName",
+  "status": "active",
+  "date": "2025-12-19",
+  "publisher": "github.com/node-on-fhir",
+  "contact": [
+    {
+      "telecom": [
+        {
+          "system": "url",
+          "value": "http://github.com/node-on-fhir/honeycomb"
+        }
+      ]
+    }
+  ],
+  "description": "A portion of the location's name or alias",
+  "code": "name",
+  "base": ["Location"],
+  "type": "string",
+  "expression": "Location.name | Location.alias",
+  "xpath": "name",
+  "multipleOr": true,
+  "multipleAnd": false,
+  "modifier": ["exact", "contains"]
+}

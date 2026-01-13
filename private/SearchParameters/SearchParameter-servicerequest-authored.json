@@ -1,0 +1,18 @@
+{
+  "resourceType": "SearchParameter",
+  "id": "servicerequest-authored",
+  "url": "http://hl7.org/fhir/SearchParameter/ServiceRequest-authored",
+  "version": "4.0.1",
+  "name": "HoneycombServiceRequestAuthored",
+  "status": "active",
+  "date": "2024-12-17",
+  "description": "Date request signed",
+  "code": "authored",
+  "base": ["ServiceRequest"],
+  "type": "date",
+  "expression": "ServiceRequest.authoredOn",
+  "xpath": "authoredOn",
+  "multipleOr": true,
+  "multipleAnd": true,
+  "comparator": ["eq", "ne", "gt", "lt", "ge", "le", "sa", "eb", "ap"]
+}

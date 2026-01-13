@@ -1,0 +1,17 @@
+{
+  "resourceType": "SearchParameter",
+  "id": "servicerequest-code",
+  "url": "http://hl7.org/fhir/SearchParameter/ServiceRequest-code",
+  "version": "4.0.1",
+  "name": "HoneycombServiceRequestCode",
+  "status": "active",
+  "date": "2024-12-17",
+  "description": "What is being requested/ordered",
+  "code": "code",
+  "base": ["ServiceRequest"],
+  "type": "token",
+  "expression": "ServiceRequest.code",
+  "xpath": "code",
+  "multipleOr": true,
+  "multipleAnd": true
+}

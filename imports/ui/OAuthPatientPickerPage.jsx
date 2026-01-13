@@ -30,11 +30,42 @@ import {
   FormGroup,
   FormControlLabel,
   Checkbox,
-  Grid
+  Grid,
+  Select,
+  MenuItem
 } from '@mui/material';
 import PersonIcon from '@mui/icons-material/Person';
 import LocalHospitalIcon from '@mui/icons-material/LocalHospital';
 import WarningIcon from '@mui/icons-material/Warning';
+import AccessTimeIcon from '@mui/icons-material/AccessTime';
+
+// Session duration options for ONC g(10) 9.3.01 compliance
+const SESSION_DURATION_OPTIONS = [
+  { value: 60, label: '1 hour' },
+  { value: 480, label: '8 hours' },
+  { value: 1440, label: '1 day' },
+  { value: 10080, label: '1 week' },
+  { value: 43200, label: '30 days' },
+  { value: 129600, label: '90 days' }
+];
+
+// ONC g(10) 9.28.4.10 - Granular scope options for Condition and Observation
+// When resource-level scopes are requested, present sub-resource scope options
+const GRANULAR_SCOPE_OPTIONS = {
+  'patient/Condition.rs': [
+    { value: 'patient/Condition.rs?category=encounter-diagnosis', label: 'Encounter Diagnosis' },
+    { value: 'patient/Condition.rs?category=problem-list-item', label: 'Problem List' },
+    { value: 'patient/Condition.rs?category=health-concern', label: 'Health Concern' }
+  ],
+  'patient/Observation.rs': [
+    { value: 'patient/Observation.rs?category=clinical-test', label: 'Clinical Test' },
+    { value: 'patient/Observation.rs?category=laboratory', label: 'Laboratory' },
+    { value: 'patient/Observation.rs?category=social-history', label: 'Social History' },
+    { value: 'patient/Observation.rs?category=sdoh', label: 'SDOH' },
+    { value: 'patient/Observation.rs?category=survey', label: 'Survey' },
+    { value: 'patient/Observation.rs?category=vital-signs', label: 'Vital Signs' }
+  ]
+};
 
 import { Meteor } from 'meteor/meteor';
 import { get } from 'lodash';
@@ -57,6 +88,11 @@ export function OAuthPatientPickerPage(props) {
   const [selectedResourceScopes, setSelectedResourceScopes] = useState([]);
   const [nonResourceScopes, setNonResourceScopes] = useState([]);
   const [allResourceScopes, setAllResourceScopes] = useState([]);
+  // ONC g(10) 9.28.4.10 - Granular scope selection for Condition/Observation
+  // Keys are resource-level scopes, values are arrays of selected granular sub-scopes
+  const [selectedGranularScopes, setSelectedGranularScopes] = useState({});
+  // Session duration for ONC g(10) 9.3.01 token revocation compliance
+  const [sessionDuration, setSessionDuration] = useState(1440); // Default 24 hours (in minutes)
 
   // Authentication and user role check
   // Determines what patients the user can authorize access to:
@@ -135,16 +171,27 @@ export function OAuthPatientPickerPage(props) {
 
   // Parse scopes into resource and non-resource categories for granular selection
   // ONC g(10) AUT-PAT-18 requires patients to be able to deny specific resource scopes
+  // ONC g(10) 9.28.4.10 requires granular scope options for Condition and Observation
   useEffect(function() {
     if (oauthParams.scope) {
       const scopes = oauthParams.scope.split(' ').filter(function(s) { return s.trim(); });
       const resourceScopes = [];
       const otherScopes = [];
+      const granularScopesInit = {};
 
       scopes.forEach(function(scope) {
         // Resource scopes follow pattern: patient/Resource.rs or user/Resource.rs
         if (scope.match(/^(patient|user|system)\/[A-Za-z]+\.(rs|read|write|c?r?u?d?s?)$/)) {
-          resourceScopes.push(scope);
+          // Check if this scope has granular options (Condition or Observation)
+          if (GRANULAR_SCOPE_OPTIONS[scope]) {
+            // Initialize with all granular sub-scopes selected by default
+            granularScopesInit[scope] = GRANULAR_SCOPE_OPTIONS[scope].map(function(opt) {
+              return opt.value;
+            });
+          } else {
+            // Regular resource scope - add to normal list
+            resourceScopes.push(scope);
+          }
         } else {
           // Non-resource scopes: launch/patient, openid, fhirUser, offline_access, etc.
           otherScopes.push(scope);
@@ -154,6 +201,7 @@ export function OAuthPatientPickerPage(props) {
       setAllResourceScopes(resourceScopes);
       setSelectedResourceScopes(resourceScopes); // Default: all selected
       setNonResourceScopes(otherScopes);
+      setSelectedGranularScopes(granularScopesInit);
     }
   }, [oauthParams.scope]);
 
@@ -176,6 +224,49 @@ export function OAuthPatientPickerPage(props) {
   // Deselect all resource scopes
   function handleDeselectAllScopes() {
     setSelectedResourceScopes([]);
+  }
+
+  // Toggle a granular sub-scope on/off (ONC g(10) 9.28.4.10)
+  // resourceScope: the parent resource scope (e.g., 'patient/Condition.rs')
+  // granularScope: the specific sub-scope (e.g., 'patient/Condition.rs?category=health-concern')
+  function handleGranularScopeToggle(resourceScope, granularScope) {
+    setSelectedGranularScopes(function(prev) {
+      const currentScopes = prev[resourceScope] || [];
+      if (currentScopes.includes(granularScope)) {
+        return {
+          ...prev,
+          [resourceScope]: currentScopes.filter(function(s) { return s !== granularScope; })
+        };
+      } else {
+        return {
+          ...prev,
+          [resourceScope]: [...currentScopes, granularScope]
+        };
+      }
+    });
+  }
+
+  // Select all granular sub-scopes for a resource
+  function handleSelectAllGranularScopes(resourceScope) {
+    const allGranular = GRANULAR_SCOPE_OPTIONS[resourceScope].map(function(opt) {
+      return opt.value;
+    });
+    setSelectedGranularScopes(function(prev) {
+      return {
+        ...prev,
+        [resourceScope]: allGranular
+      };
+    });
+  }
+
+  // Deselect all granular sub-scopes for a resource
+  function handleDeselectAllGranularScopes(resourceScope) {
+    setSelectedGranularScopes(function(prev) {
+      return {
+        ...prev,
+        [resourceScope]: []
+      };
+    });
   }
 
   // Extract resource name from scope string (e.g., "patient/Observation.rs" -> "Observation")
@@ -214,10 +305,13 @@ export function OAuthPatientPickerPage(props) {
     setIsProcessing(true);
     setConfirmDialogOpen(false);
 
-    // Build authorized scope from user selections (ONC g(10) AUT-PAT-18)
+    // Build authorized scope from user selections (ONC g(10) AUT-PAT-18 and 9.28.4.10)
     // Combine non-resource scopes (always granted) with user-selected resource scopes
-    const authorizedScope = [...nonResourceScopes, ...selectedResourceScopes].join(' ');
+    // and any selected granular sub-scopes (instead of their parent resource-level scopes)
+    const allSelectedGranular = Object.values(selectedGranularScopes).flat();
+    const authorizedScope = [...nonResourceScopes, ...selectedResourceScopes, ...allSelectedGranular].join(' ');
     console.log('OAuthPatientPickerPage - authorizedScope:', authorizedScope);
+    console.log('OAuthPatientPickerPage - granular scopes:', allSelectedGranular);
 
     try {
       // Call server method to complete OAuth with patient selection
@@ -229,7 +323,8 @@ export function OAuthPatientPickerPage(props) {
         redirectUri: oauthParams.redirectUri,
         scope: authorizedScope,
         codeChallenge: oauthParams.codeChallenge,
-        codeChallengeMethod: oauthParams.codeChallengeMethod
+        codeChallengeMethod: oauthParams.codeChallengeMethod,
+        sessionDurationMinutes: sessionDuration  // ONC g(10) 9.3.01 - Token expiration
       });
 
       console.log('OAuth.completeWithPatient result:', result);
@@ -573,11 +668,88 @@ export function OAuthPatientPickerPage(props) {
               </Box>
             )}
 
+            {/* ONC g(10) 9.28.4.10 - Granular sub-scope selection for Condition/Observation */}
+            {Object.keys(selectedGranularScopes).length > 0 && (
+              <Box sx={{ mb: 2 }}>
+                {Object.keys(selectedGranularScopes).map(function(resourceScope) {
+                  const resourceName = getResourceNameFromScope(resourceScope);
+                  const options = GRANULAR_SCOPE_OPTIONS[resourceScope] || [];
+                  const selectedScopes = selectedGranularScopes[resourceScope] || [];
+                  return (
+                    <Box key={resourceScope} sx={{ mb: 2 }}>
+                      <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                        {resourceName} Categories:
+                      </Typography>
+                      <Box sx={{ mb: 1 }}>
+                        <Button size="small" onClick={function() { handleSelectAllGranularScopes(resourceScope); }} sx={{ mr: 1 }}>
+                          Select All
+                        </Button>
+                        <Button size="small" onClick={function() { handleDeselectAllGranularScopes(resourceScope); }}>
+                          Deselect All
+                        </Button>
+                      </Box>
+                      <FormControl component="fieldset" sx={{ width: '100%' }}>
+                        <FormGroup>
+                          <Grid container spacing={1}>
+                            {options.map(function(opt) {
+                              return (
+                                <Grid item xs={6} sm={4} key={opt.value}>
+                                  <FormControlLabel
+                                    control={
+                                      <Checkbox
+                                        checked={selectedScopes.includes(opt.value)}
+                                        onChange={function() { handleGranularScopeToggle(resourceScope, opt.value); }}
+                                        size="small"
+                                      />
+                                    }
+                                    label={opt.label}
+                                    sx={{ '& .MuiFormControlLabel-label': { fontSize: '0.875rem' } }}
+                                  />
+                                </Grid>
+                              );
+                            })}
+                          </Grid>
+                        </FormGroup>
+                      </FormControl>
+                    </Box>
+                  );
+                })}
+              </Box>
+            )}
+
             {nonResourceScopes.length > 0 && (
               <Typography variant="body2" color="text.secondary">
                 <strong>Also granting:</strong> {nonResourceScopes.join(', ')}
               </Typography>
             )}
+
+            {/* Session Duration Picker - ONC g(10) 9.3.01 compliance */}
+            <Box sx={{ mt: 2, mb: 1 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                <AccessTimeIcon sx={{ mr: 1, fontSize: 20 }} color="action" />
+                <Typography variant="subtitle2">
+                  Authorization Duration
+                </Typography>
+              </Box>
+              <FormControl fullWidth size="small">
+                <Select
+                  value={sessionDuration}
+                  onChange={function(e) { setSessionDuration(e.target.value); }}
+                >
+                  {SESSION_DURATION_OPTIONS.map(function(option) {
+                    return (
+                      <MenuItem key={option.value} value={option.value}>
+                        {option.label}
+                      </MenuItem>
+                    );
+                  })}
+                </Select>
+              </FormControl>
+              <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
+                After this time, the application will need to request access again.
+                You can revoke access at any time from your profile.
+              </Typography>
+            </Box>
           </DialogContent>
           <DialogActions>
             <Button onClick={function() { setConfirmDialogOpen(false); }} color="inherit">
@@ -693,11 +865,88 @@ export function OAuthPatientPickerPage(props) {
             </Box>
           )}
 
+          {/* ONC g(10) 9.28.4.10 - Granular sub-scope selection for Condition/Observation */}
+          {Object.keys(selectedGranularScopes).length > 0 && (
+            <Box sx={{ mb: 2 }}>
+              {Object.keys(selectedGranularScopes).map(function(resourceScope) {
+                const resourceName = getResourceNameFromScope(resourceScope);
+                const options = GRANULAR_SCOPE_OPTIONS[resourceScope] || [];
+                const selectedScopes = selectedGranularScopes[resourceScope] || [];
+                return (
+                  <Box key={resourceScope} sx={{ mb: 2 }}>
+                    <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                      {resourceName} Categories:
+                    </Typography>
+                    <Box sx={{ mb: 1 }}>
+                      <Button size="small" onClick={function() { handleSelectAllGranularScopes(resourceScope); }} sx={{ mr: 1 }}>
+                        Select All
+                      </Button>
+                      <Button size="small" onClick={function() { handleDeselectAllGranularScopes(resourceScope); }}>
+                        Deselect All
+                      </Button>
+                    </Box>
+                    <FormControl component="fieldset" sx={{ width: '100%' }}>
+                      <FormGroup>
+                        <Grid container spacing={1}>
+                          {options.map(function(opt) {
+                            return (
+                              <Grid item xs={6} sm={4} key={opt.value}>
+                                <FormControlLabel
+                                  control={
+                                    <Checkbox
+                                      checked={selectedScopes.includes(opt.value)}
+                                      onChange={function() { handleGranularScopeToggle(resourceScope, opt.value); }}
+                                      size="small"
+                                    />
+                                  }
+                                  label={opt.label}
+                                  sx={{ '& .MuiFormControlLabel-label': { fontSize: '0.875rem' } }}
+                                />
+                              </Grid>
+                            );
+                          })}
+                        </Grid>
+                      </FormGroup>
+                    </FormControl>
+                  </Box>
+                );
+              })}
+            </Box>
+          )}
+
           {nonResourceScopes.length > 0 && (
             <Typography variant="body2" color="text.secondary">
               <strong>Also granting:</strong> {nonResourceScopes.join(', ')}
             </Typography>
           )}
+
+          {/* Session Duration Picker - ONC g(10) 9.3.01 compliance */}
+          <Box sx={{ mt: 2, mb: 1 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+              <AccessTimeIcon sx={{ mr: 1, fontSize: 20 }} color="action" />
+              <Typography variant="subtitle2">
+                Authorization Duration
+              </Typography>
+            </Box>
+            <FormControl fullWidth size="small">
+              <Select
+                value={sessionDuration}
+                onChange={function(e) { setSessionDuration(e.target.value); }}
+              >
+                {SESSION_DURATION_OPTIONS.map(function(option) {
+                  return (
+                    <MenuItem key={option.value} value={option.value}>
+                      {option.label}
+                    </MenuItem>
+                  );
+                })}
+              </Select>
+            </FormControl>
+            <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
+              After this time, the application will need to request access again.
+              You can revoke access at any time from your profile.
+            </Typography>
+          </Box>
         </DialogContent>
         <DialogActions>
           <Button onClick={function() { setConfirmDialogOpen(false); }} color="inherit">

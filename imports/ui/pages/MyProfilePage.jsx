@@ -33,8 +33,11 @@ import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import ScannerIcon from '@mui/icons-material/Scanner';
+import DeleteIcon from '@mui/icons-material/Delete';
+import SecurityIcon from '@mui/icons-material/Security';
 
 import { get } from 'lodash';
+import moment from 'moment';
 import { useTracker } from 'meteor/react-meteor-data';
 import { useNavigate } from 'react-router-dom';
 
@@ -48,6 +51,7 @@ import PractitionerSearchDialog from '../../components/PractitionerSearchDialog.
 import { Patients } from '../../lib/schemas/SimpleSchemas/Patients';
 import { Practitioners } from '../../lib/schemas/SimpleSchemas/Practitioners';
 import { PractitionerRoles } from '../../lib/schemas/SimpleSchemas/PractitionerRoles';
+import { OAuthClients } from '../../collections/OAuthClients';
 
 function MyProfilePage(props) {
   console.info('Rendering the MyProfilePage');
@@ -72,6 +76,10 @@ function MyProfilePage(props) {
     loinc: [],
     icd10: []
   });
+  // Authorized Apps state for ONC g(10) 9.3.01 token revocation
+  const [revokeDialogOpen, setRevokeDialogOpen] = useState(false);
+  const [authToRevoke, setAuthToRevoke] = useState(null);
+  const [revokingAuth, setRevokingAuth] = useState(false);
   const navigate = useNavigate();
   const theme = useTheme();
   
@@ -80,7 +88,8 @@ function MyProfilePage(props) {
     const handles = [
       Meteor.subscribe('accounts.currentUser'),
       Meteor.subscribe('practitioners.current'),
-      Meteor.subscribe('practitionerRoles.current')
+      Meteor.subscribe('practitionerRoles.current'),
+      Meteor.subscribe('OAuthClients.forPatient')  // ONC g(10) 9.3.01 - Patient's authorized apps
     ];
     return handles.every(h => h.ready());
   }, []);
@@ -121,6 +130,24 @@ function MyProfilePage(props) {
       });
     }
   }, [currentUser]);
+
+  // Get patient's authorized applications - ONC g(10) 9.3.01
+  const patientAuthorizations = useTracker(function() {
+    const user = Meteor.user();
+    const patientId = get(user, 'patientId');
+
+    if (!patientId) {
+      return [];
+    }
+
+    return OAuthClients.find(
+      {
+        patient_id: patientId,
+        revoked_at: { $exists: false }
+      },
+      { sort: { access_token_created_at: -1 } }
+    ).fetch();
+  }, []);
 
   let accountsAccessToken = useTracker(function(){
     const sessionToken = Session.get('accountsAccessToken');
@@ -462,11 +489,33 @@ function MyProfilePage(props) {
           // trigger refresh on UI elements
           Session.set('lastUpdated', new Date());
         }
-      })  
+      })
     }
   }
 
-  
+  // Handle token revocation - ONC g(10) 9.3.01
+  async function handleRevokeAuthorization() {
+    if (!authToRevoke) {
+      console.warn('handleRevokeAuthorization - No authorization selected');
+      return;
+    }
+
+    setRevokingAuth(true);
+    try {
+      await Meteor.callAsync('OAuth.revokePatientAuthorization', authToRevoke._id);
+      setSuccessMessage('Application access revoked successfully');
+      setRevokeDialogOpen(false);
+      setAuthToRevoke(null);
+      console.log('handleRevokeAuthorization - Successfully revoked:', authToRevoke._id);
+    } catch (error) {
+      console.error('handleRevokeAuthorization - Error:', error);
+      setError(error.reason || error.message || 'Failed to revoke access');
+    } finally {
+      setRevokingAuth(false);
+    }
+  }
+
+
   return (
     <Box sx={{ 
       minHeight: '100vh', 
@@ -989,6 +1038,122 @@ curl -H "session:${accountsAccessToken}" \\
           No consent records found.
         </Typography>
       </Paper>
+
+      {/* Authorized Applications - ONC 170.315(g)(10) 9.3.01 Token Revocation */}
+      <Paper elevation={3} sx={{ p: 3, mb: 3, backgroundColor: theme.palette.mode === 'dark' ? 'background.paper' : 'background.default' }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+          <SecurityIcon sx={{ mr: 1 }} color="primary" />
+          <Typography variant="h6">
+            Authorized Apps
+          </Typography>
+        </Box>
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+          Third-party applications that have been granted access to your health data.
+          You can revoke access at any time - revocation takes effect immediately.
+        </Typography>
+
+        {patientAuthorizations.length === 0 ? (
+          <Typography variant="body2" color="text.secondary">
+            No applications currently have access to your health data.
+          </Typography>
+        ) : (
+          <Stack spacing={2}>
+            {patientAuthorizations.map(function(auth) {
+              const authorizedDate = get(auth, 'access_token_created_at') || get(auth, 'created_at');
+              const expiresDate = get(auth, 'authorization_expires_at');
+              const isExpired = expiresDate && moment(expiresDate).isBefore(moment());
+
+              return (
+                <Card key={auth._id} variant="outlined" sx={{ opacity: isExpired ? 0.6 : 1 }}>
+                  <CardContent sx={{ pb: 1 }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                      <Box>
+                        <Typography variant="subtitle1" fontWeight="bold">
+                          {get(auth, 'client_name') || get(auth, 'client_id', 'Unknown Application')}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          Authorized: {authorizedDate ? moment(authorizedDate).format('MMM D, YYYY h:mm A') : 'Unknown'}
+                        </Typography>
+                        {expiresDate && (
+                          <Typography variant="body2" color={isExpired ? 'error' : 'text.secondary'}>
+                            {isExpired ? 'Expired: ' : 'Expires: '}
+                            {moment(expiresDate).format('MMM D, YYYY h:mm A')}
+                          </Typography>
+                        )}
+                      </Box>
+                      <Button
+                        variant="outlined"
+                        color="error"
+                        size="small"
+                        startIcon={<DeleteIcon />}
+                        onClick={function() {
+                          setAuthToRevoke(auth);
+                          setRevokeDialogOpen(true);
+                        }}
+                        disabled={isExpired}
+                      >
+                        Revoke
+                      </Button>
+                    </Box>
+
+                    {/* Scopes granted */}
+                    <Box sx={{ mt: 1 }}>
+                      <Typography variant="caption" color="text.secondary">
+                        Access granted to:
+                      </Typography>
+                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mt: 0.5 }}>
+                        {(get(auth, 'requested_scope') || get(auth, 'scope', '')).split(' ')
+                          .filter(function(s) { return s && s.includes('/'); })
+                          .slice(0, 5)
+                          .map(function(scope) {
+                            const resourceName = scope.split('/').pop().split('.')[0];
+                            return (
+                              <Chip
+                                key={scope}
+                                label={resourceName}
+                                size="small"
+                                variant="outlined"
+                              />
+                            );
+                          })}
+                      </Box>
+                    </Box>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </Stack>
+        )}
+      </Paper>
+
+      {/* Revoke Confirmation Dialog */}
+      <Dialog
+        open={revokeDialogOpen}
+        onClose={function() { setRevokeDialogOpen(false); }}
+      >
+        <DialogTitle>Revoke Application Access</DialogTitle>
+        <Box sx={{ px: 3, pb: 2 }}>
+          <Typography>
+            Are you sure you want to revoke access for <strong>{get(authToRevoke, 'client_name') || get(authToRevoke, 'client_id', 'this application')}</strong>?
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+            This application will immediately lose access to your health data.
+          </Typography>
+        </Box>
+        <DialogActions>
+          <Button onClick={function() { setRevokeDialogOpen(false); }} color="inherit">
+            Cancel
+          </Button>
+          <Button
+            onClick={handleRevokeAuthorization}
+            color="error"
+            variant="contained"
+            disabled={revokingAuth}
+          >
+            {revokingAuth ? 'Revoking...' : 'Revoke Access'}
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Terminology Relevant to My Care */}
       <Paper elevation={3} sx={{ p: 3, mb: 3, backgroundColor: theme.palette.mode === 'dark' ? 'background.paper' : 'background.default' }}>

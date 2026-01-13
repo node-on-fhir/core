@@ -334,7 +334,7 @@ if(Meteor.isServer){
   Collections.Encounters = Encounters;
   Collections.Endpoints = Endpoints;
   Collections.Goals = Goals;
-  Collections.Groups = Goals;
+  Collections.Groups = Groups;
   Collections.HealthcareServices = HealthcareServices;
   Collections.Immunizations = Immunizations;
   Collections.InsurancePlans = InsurancePlans;
@@ -570,25 +570,37 @@ async function parseUserAuthorization(req){
     if (oauthClient) {
       console.log('>>> Bearer token found for client:', oauthClient.client_id);
 
-      // Check if token is expired
-      const tokenCreatedAt = get(oauthClient, 'access_token_created_at');
-      const expiresIn = get(Meteor, 'settings.private.fhir.tokenTimeout', 86400); // Default 24 hours
-      const isExpired = tokenCreatedAt && (new Date() - new Date(tokenCreatedAt)) > (expiresIn * 1000);
+      // Check if authorization was revoked - ONC g(10) 9.3.01 compliance
+      if (oauthClient.revoked_at) {
+        console.log('>>> Bearer token revoked for client:', oauthClient.client_id, 'at:', oauthClient.revoked_at);
+        // Token was explicitly revoked by patient - do not authorize
+      }
+      // Check if authorization has expired (user-selected duration)
+      else if (oauthClient.authorization_expires_at && new Date(oauthClient.authorization_expires_at) < new Date()) {
+        console.log('>>> Authorization expired for client:', oauthClient.client_id, 'at:', oauthClient.authorization_expires_at);
+        // User-selected authorization duration has expired - do not authorize
+      }
+      // Check if token is expired (system default timeout)
+      else {
+        const tokenCreatedAt = get(oauthClient, 'access_token_created_at');
+        const expiresIn = get(Meteor, 'settings.private.fhir.tokenTimeout', 86400); // Default 24 hours
+        const isExpired = tokenCreatedAt && (new Date() - new Date(tokenCreatedAt)) > (expiresIn * 1000);
 
-      if (isExpired) {
-        console.log('>>> Bearer token expired for client:', oauthClient.client_id);
-      } else {
-        // Token is valid - set authorization context
-        // Use 'patient' role for patient-level access (matches isAuthorized authorized roles)
-        authorizationContext = {
-          role: 'patient',
-          userId: oauthClient.user_id || oauthClient.client_id,
-          patientId: oauthClient.patient_id || '',
-          clientId: oauthClient.client_id,
-          scope: oauthClient.requested_scope || oauthClient.scope || '',
-          isOAuthToken: true
-        };
-        console.log('>>> Bearer token authenticated. Role: patient, Patient ID:', authorizationContext.patientId);
+        if (isExpired) {
+          console.log('>>> Bearer token expired for client:', oauthClient.client_id);
+        } else {
+          // Token is valid - set authorization context
+          // Use 'patient' role for patient-level access (matches isAuthorized authorized roles)
+          authorizationContext = {
+            role: 'patient',
+            userId: oauthClient.user_id || oauthClient.client_id,
+            patientId: oauthClient.patient_id || '',
+            clientId: oauthClient.client_id,
+            scope: oauthClient.requested_scope || oauthClient.scope || '',
+            isOAuthToken: true
+          };
+          console.log('>>> Bearer token authenticated. Role: patient, Patient ID:', authorizationContext.patientId);
+        }
       }
     } else {
       console.log('>>> Bearer token not found in OAuthClients collection');
@@ -1063,11 +1075,11 @@ async function signProvenance(record){
 // This needs to be registered before routes are defined
 // Using verify callback to preserve raw body for debugging
 
-// Add text body parser for form-urlencoded as fallback
-// This captures the raw text body, which we can parse manually if needed
+// Add text body parser for plain text requests
+// Note: form-urlencoded should be handled by bodyParser.urlencoded() below
 WebApp.handlers.use(bodyParser.text({
   limit: '50mb',
-  type: ['application/x-www-form-urlencoded'],
+  type: ['text/plain'],
   verify: function(req, res, buf) {
     req.rawBody = buf.toString();
   }
@@ -1126,7 +1138,8 @@ let serverRouteManifest = get(Meteor, 'settings.private.fhir.rest', {
     "interactions": ["read", "create", "update", "delete"]
   },
   "Location": {
-    "interactions": ["read", "create", "update", "delete"]
+    "interactions": ["read", "create", "update", "delete"],
+    "search": true
   },
   "Organization": {
     "interactions": ["read", "create", "update", "delete"]
@@ -1325,10 +1338,124 @@ if(typeof serverRouteManifest === "object"){
 
                 // plain ol regular approach
                 if(get(Meteor, 'settings.private.debug') === true) { console.log('records', records); }
-    
+
+                // ONC g(10): Apply granular scope filtering for reads
+                // If the client has granular scopes (e.g., patient/Condition.rs?category=encounter-diagnosis),
+                // the read should fail if the resource doesn't match the allowed categories
+                const granularFilters = getGranularFiltersForResource(authorizationContext, routeResourceType);
+                if (granularFilters.length > 0 && records.length > 0) {
+                  console.log('[GranularScope] Checking read access for', routeResourceType, 'with', granularFilters.length, 'filters');
+                  records = applyGranularScopeFilters(records, granularFilters);
+                  if (records.length === 0) {
+                    console.log('[GranularScope] Read denied - resource does not match granular scope filters');
+                    res.status(403).json({
+                      resourceType: "OperationOutcome",
+                      issue: [{
+                        severity: "error",
+                        code: "forbidden",
+                        diagnostics: `Access to this ${routeResourceType} resource is not authorized by the granted granular scopes`
+                      }]
+                    });
+                    return;
+                  }
+                }
+
                 // could we find it?
                 if(Array.isArray(records)){
                   if(records.length === 0){
+                    // Special handling for Provenance: generate on-demand if ID matches pattern
+                    if(collectionName === "Provenances" && req.params.id && req.params.id.startsWith("provenance-")){
+                      // Extract the target resource ID from the Provenance ID
+                      let targetResourceId = req.params.id.replace("provenance-", "");
+                      console.log("Provenance read: generating on-demand for target ID:", targetResourceId);
+
+                      // Try to find the target resource in any collection
+                      let targetResource = null;
+                      let targetResourceType = null;
+
+                      // Search through patient-accessible collections for the target resource
+                      const searchCollections = ['Patients', 'Observations', 'Conditions', 'Procedures',
+                        'Encounters', 'MedicationRequests', 'Immunizations', 'DiagnosticReports',
+                        'DocumentReferences', 'CarePlans', 'CareTeams', 'Goals', 'AllergyIntolerances',
+                        'Devices', 'ServiceRequests', 'Coverages', 'MedicationDispenses', 'Specimens'];
+
+                      for(let searchCollName of searchCollections){
+                        if(Collections[searchCollName]){
+                          let found = await Collections[searchCollName].findOneAsync({id: targetResourceId});
+                          if(found){
+                            targetResource = found;
+                            targetResourceType = searchCollName.replace(/s$/, ''); // Remove trailing 's'
+                            // Handle special plurals
+                            if(searchCollName === 'Coverages') targetResourceType = 'Coverage';
+                            if(searchCollName === 'Allergies') targetResourceType = 'AllergyIntolerance';
+                            break;
+                          }
+                        }
+                      }
+
+                      if(targetResource){
+                        // Find an Organization to reference in Provenance agent
+                        // Try to find one with US Core profile for best compatibility
+                        let provenanceOrg = await Organizations.findOneAsync({
+                          'meta.profile': 'http://hl7.org/fhir/us/core/StructureDefinition/us-core-organization'
+                        });
+                        // Fall back to any Organization if no US Core profile found
+                        if(!provenanceOrg){
+                          provenanceOrg = await Organizations.findOneAsync({});
+                        }
+
+                        let orgReference = provenanceOrg ? {
+                          reference: "Organization/" + get(provenanceOrg, 'id'),
+                          display: get(provenanceOrg, 'name', get(Meteor, 'settings.public.title', 'Honeycomb EHR'))
+                        } : {
+                          display: get(Meteor, 'settings.public.title', 'Honeycomb EHR')
+                        };
+
+                        // Generate the Provenance dynamically
+                        let provenance = {
+                          resourceType: "Provenance",
+                          id: req.params.id,
+                          meta: {
+                            profile: ["http://hl7.org/fhir/us/core/StructureDefinition/us-core-provenance"],
+                            lastUpdated: get(targetResource, 'meta.lastUpdated') || new Date().toISOString()
+                          },
+                          target: [{
+                            reference: targetResourceType + "/" + targetResourceId
+                          }],
+                          recorded: get(targetResource, 'meta.lastUpdated') || new Date().toISOString(),
+                          agent: [
+                            {
+                              type: {
+                                coding: [{
+                                  system: "http://terminology.hl7.org/CodeSystem/provenance-participant-type",
+                                  code: "author",
+                                  display: "Author"
+                                }]
+                              },
+                              who: orgReference,
+                              onBehalfOf: orgReference
+                            },
+                            {
+                              type: {
+                                coding: [{
+                                  system: "http://hl7.org/fhir/us/core/CodeSystem/us-core-provenance-participant-type",
+                                  code: "transmitter",
+                                  display: "Transmitter"
+                                }]
+                              },
+                              who: orgReference,
+                              onBehalfOf: orgReference
+                            }
+                          ]
+                        };
+
+                        res.setHeader("Content-type", 'application/fhir+json');
+                        res.setHeader("Last-Modified", get(targetResource, 'meta.lastUpdated') || new Date().toISOString());
+                        res.status(200).json(RestHelpers.prepForFhirTransfer(provenance));
+                        return;
+                      }
+                    }
+
                     // no content
                     res.status(204).json()
                   } else if (records.length === 1){
@@ -1805,10 +1932,21 @@ if(typeof serverRouteManifest === "object"){
                   const isPractitioner = (userRole === 'healthcare practitioner' || userRole === 'healthcare provider');
                   const practitionerFullAccess = get(Meteor, 'settings.private.accessControl.practitionerFullAccess', true);
 
+                  // Reference resources that don't belong to patient compartment per FHIR R4 spec
+                  // These are organizational resources accessible with appropriate scope without patient references
+                  const referenceResources = ['Location', 'Practitioner', 'PractitionerRole',
+                                              'Organization', 'HealthcareService', 'Endpoint'];
+                  const isReferenceResource = referenceResources.includes(routeResourceType);
+
                   if (isPractitioner && practitionerFullAccess) {
                     // Healthcare practitioner with full access - use search query as-is
                     mongoQuery = searchQuery;
                     console.log('Practitioner full access - no authorization filter applied');
+                  } else if (isReferenceResource) {
+                    // Reference resources bypass patient compartment filtering
+                    // The scope check (isResourceScopeAuthorized) already verified access
+                    mongoQuery = searchQuery;
+                    console.log('Reference resource - no patient compartment filter applied for:', routeResourceType);
                   } else {
                     // Apply authorization filters
                     let authQuery = {$or: [
@@ -2037,6 +2175,21 @@ if(typeof serverRouteManifest === "object"){
                       let revIncludeParts = _revIncludeRef.split(":");
 
                       if(revIncludeParts.length >= 2 && revIncludeParts[0] === "Provenance" && revIncludeParts[1] === "target"){
+                        // Find an Organization to reference in Provenance agent (lookup once, use for all)
+                        let provenanceOrg = await Organizations.findOneAsync({
+                          'meta.profile': 'http://hl7.org/fhir/us/core/StructureDefinition/us-core-organization'
+                        });
+                        if(!provenanceOrg){
+                          provenanceOrg = await Organizations.findOneAsync({});
+                        }
+
+                        let orgReference = provenanceOrg ? {
+                          reference: "Organization/" + get(provenanceOrg, 'id'),
+                          display: get(provenanceOrg, 'name', get(Meteor, 'settings.public.title', 'Honeycomb EHR'))
+                        } : {
+                          display: get(Meteor, 'settings.public.title', 'Honeycomb EHR')
+                        };
+
                         // Generate Provenance for each matched record (just-in-time)
                         for(let matchedRecord of records){
                           let provenanceId = "provenance-" + get(matchedRecord, 'id');
@@ -2051,21 +2204,30 @@ if(typeof serverRouteManifest === "object"){
                               reference: routeResourceType + "/" + get(matchedRecord, 'id')
                             }],
                             recorded: get(matchedRecord, 'meta.lastUpdated') || new Date().toISOString(),
-                            agent: [{
-                              type: {
-                                coding: [{
-                                  system: "http://terminology.hl7.org/CodeSystem/provenance-participant-type",
-                                  code: "author",
-                                  display: "Author"
-                                }]
+                            agent: [
+                              {
+                                type: {
+                                  coding: [{
+                                    system: "http://terminology.hl7.org/CodeSystem/provenance-participant-type",
+                                    code: "author",
+                                    display: "Author"
+                                  }]
+                                },
+                                who: orgReference,
+                                onBehalfOf: orgReference
                               },
-                              who: {
-                                display: get(Meteor, 'settings.public.title', 'Honeycomb EHR')
-                              },
-                              onBehalfOf: {
-                                display: get(Meteor, 'settings.public.title', 'Honeycomb EHR')
+                              {
+                                type: {
+                                  coding: [{
+                                    system: "http://hl7.org/fhir/us/core/CodeSystem/us-core-provenance-participant-type",
+                                    code: "transmitter",
+                                    display: "Transmitter"
+                                  }]
+                                },
+                                who: orgReference,
+                                onBehalfOf: orgReference
                               }
-                            }]
+                            ]
                           };
 
                           payload.push({
@@ -2777,7 +2939,7 @@ if(typeof serverRouteManifest === "object"){
             if (await isAuthorized(authorizationContext)){
               let matchingRecords = [];
               let payload = [];
-              let searchLimit = 100; // Default to 100 for search operations, not 1
+              let searchLimit = 1000; // Match GET handler default from RestHelpers.generateMongoSearchOptions
 
               if (get(req, 'query._count') || get(req, 'body._count')) {
                 searchLimit = parseInt(get(req, 'query._count') || get(req, 'body._count'));
@@ -2926,6 +3088,40 @@ if(typeof serverRouteManifest === "object"){
 
                 console.log('POST _search DEBUG - generated searchQuery:', JSON.stringify(searchQuery));
 
+                // TEMPORARY DIAGNOSTIC - Remove after debugging test 12.43.02
+                // Adds diagnostic info to response header for debugging without server logs
+                console.log('=== DIAGNOSTIC OUTPUT ===');
+                const diagnostic = {
+                  timestamp: new Date().toISOString(),
+                  resourceType: routeResourceType,
+                  body: {
+                    reqBody: req.body,
+                    reqBodyType: typeof req.body,
+                    rawBody: req.rawBody ? req.rawBody.substring(0, 200) : null,  // Truncate for header
+                    contentType: req.headers['content-type'],
+                    contentLength: req.headers['content-length']
+                  },
+                  parsing: {
+                    parsedBody: parsedBody,
+                    parsedBodyKeys: Object.keys(parsedBody),
+                    searchParams: searchParams,
+                    searchParamsKeys: Object.keys(searchParams)
+                  },
+                  query: {
+                    searchQuery: searchQuery,
+                    searchQueryKeys: Object.keys(searchQuery),
+                    engineEnabled: SearchParametersEngine.isEnabled(),
+                    engineCompiled: SearchParametersEngine.isCompiled()
+                  }
+                };
+                console.log('DIAGNOSTIC:', JSON.stringify(diagnostic, null, 2));
+                // Note: Headers can be max ~8KB, so we truncate the diagnostic
+                try {
+                  res.setHeader('X-Debug-Diagnostic', JSON.stringify(diagnostic));
+                } catch (headerErr) {
+                  console.error('Could not set diagnostic header:', headerErr.message);
+                }
+
                 // Apply authorization filter (same as GET search)
                 let userRole = get(authorizationContext, 'role', 'PAT');
                 let mongoQuery = searchQuery;
@@ -2933,6 +3129,12 @@ if(typeof serverRouteManifest === "object"){
                 // Check if healthcare practitioner/provider with full access
                 const isPractitioner = (userRole === 'healthcare practitioner' || userRole === 'healthcare provider');
                 const practitionerFullAccess = get(Meteor, 'settings.private.accessControl.practitionerFullAccess', true);
+
+                // Reference resources that don't belong to patient compartment per FHIR R4 spec
+                // These are organizational resources accessible with appropriate scope without patient references
+                const referenceResources = ['Location', 'Practitioner', 'PractitionerRole',
+                                            'Organization', 'HealthcareService', 'Endpoint'];
+                const isReferenceResource = referenceResources.includes(routeResourceType);
 
                 if (userRole === "noauth" || userRole === "SYSTEM") {
                   // For noauth/SYSTEM, use the search query as-is (no auth restrictions)
@@ -2942,6 +3144,11 @@ if(typeof serverRouteManifest === "object"){
                   // Healthcare practitioner with full access - use search query as-is
                   mongoQuery = searchQuery;
                   console.log('POST _search: Practitioner full access - no auth filter applied');
+                } else if (isReferenceResource) {
+                  // Reference resources bypass patient compartment filtering
+                  // The scope check (isResourceScopeAuthorized) already verified access
+                  mongoQuery = searchQuery;
+                  console.log('POST _search: Reference resource - no patient compartment filter applied for:', routeResourceType);
                 } else {
                   // Apply authorization filters
                   let authQuery = {$or: [
@@ -3468,6 +3675,13 @@ if(typeof serverRouteManifest === "object"){
       });
     }
   });
+
+  // =============================================================================
+  // BULK DATA EXPORT OPERATIONS
+  // =============================================================================
+  // Bulk Data endpoints are implemented in server/BulkData.js
+  // See that file for: Group/$export, status polling, file download, cancellation
+  // =============================================================================
 
   // Catch-all handler for unmatched FHIR routes
   // This prevents falling through to the Meteor app HTML
