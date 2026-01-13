@@ -25,6 +25,7 @@ import './Cron.js';
 import './ConsentEngineMethods.js';
 import './SearchParameterMethods.js';
 import './SyntheaMethods.js';
+import './RadiologyCatalogInitializer.js';
 import './ConsentEngineHttp.js';
 import './CdsHooksEndpoints.js';
 import './Methods.js';
@@ -439,6 +440,19 @@ Meteor.startup(async function(){
     } else {
       console.log('[Encounters] Default Encounter already exists:', defaultEncounter.id);
     }
+  }
+
+  // Initialize Radiology Catalog (populate PlanDefinitions for CPOE Diagnostic Imaging)
+  // ONC §170.315(a)(3) - CPOE Diagnostic Imaging
+  if (process.env.INITIALIZE_RADIOLOGY_CATALOG ||
+      get(Meteor, 'settings.private.fhir.autoPopulate.radiologyCatalog')) {
+    console.log('==========================================================================================');
+    console.log('[RadiologyCatalog] Initialization ENABLED');
+    console.log('[RadiologyCatalog] Source: LOINC/RSNA Radiology Playbook (free, no CPT license)');
+    console.log('==========================================================================================');
+
+    const { RadiologyCatalogInitializer } = await import('./RadiologyCatalogInitializer.js');
+    await RadiologyCatalogInitializer.initializeRadiologyCatalog();
   }
 
   // Establish a database connection

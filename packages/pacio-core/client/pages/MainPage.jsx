@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Meteor } from 'meteor/meteor';
+import { Session } from 'meteor/session';
 import { useTracker } from 'meteor/react-meteor-data';
 import { useSubscribe } from 'meteor/react-meteor-data';
 import { get } from 'lodash';
@@ -485,6 +486,45 @@ export function MainPage() {
     }
   };
 
+  // Handle select patient
+  const handleSelectPatient = async () => {
+    const bed = facilityData.beds.find(b => b._id === menuBedId);
+    if (bed && bed.patientId) {
+      console.log('Looking up patient with ID:', bed.patientId);
+
+      // Get Patients collection
+      const Patients = get(Meteor, 'Collections.Patients') || global.Collections?.Patients;
+
+      if (Patients) {
+        // Look up the full patient resource using the MongoDB _id
+        const patient = Patients.findOne({ _id: bed.patientId });
+
+        if (patient) {
+          // Extract both FHIR id and MongoDB _id (matching PatientDirectory pattern)
+          const fhirId = patient.id;  // FHIR identifier
+          const mongoId = patient._id && patient._id._str ? patient._id._str : patient._id;
+
+          console.log('Setting selected patient:', patient);
+          console.log('FHIR id:', fhirId);
+          console.log('MongoDB _id:', mongoId);
+
+          // Set Session variables in same order as PatientDirectory
+          // This triggers the global patient subscription tracker
+          Session.set('selectedPatientId', fhirId);  // ← TRIGGERS SUBSCRIPTIONS
+          Session.set('selectedPatientMongoId', mongoId);  // MongoDB _id for compatibility
+          Session.set('selectedPatient', patient);  // Full patient object
+
+          console.log('✓ Patient subscriptions will activate for:', fhirId);
+        } else {
+          console.warn('Patient not found with _id:', bed.patientId);
+        }
+      } else {
+        console.warn('Patients collection not available');
+      }
+    }
+    handleMenuClose();
+  };
+
   // Handle edit patient
   const handleEditPatient = () => {
     const bed = facilityData.beds.find(b => b._id === menuBedId);
@@ -537,12 +577,42 @@ export function MainPage() {
         </Box>
         {userId && (
           <Box display="flex" gap={2} alignItems="center">
-            <FormControl size="small" sx={{ minWidth: 120 }}>
+            <FormControl
+              size="small"
+              sx={{
+                minWidth: 120,
+                '& .MuiInputLabel-root': { color: cardTextColor },
+                '& .MuiSelect-root': { color: cardTextColor },
+                '& .MuiSelect-icon': { color: cardTextColor },
+                '& .MuiOutlinedInput-notchedOutline': {
+                  borderColor: isDark ? 'rgba(255, 255, 255, 0.23)' : 'rgba(0, 0, 0, 0.23)'
+                }
+              }}
+            >
               <InputLabel>Filter</InputLabel>
               <Select
                 value={selectedFilter}
                 onChange={(e) => setSelectedFilter(e.target.value)}
                 label="Filter"
+                MenuProps={{
+                  PaperProps: {
+                    sx: {
+                      bgcolor: isDark ? '#2a2a2a' : '#ffffff',
+                      '& .MuiMenuItem-root': {
+                        color: cardTextColor,
+                        '&:hover': {
+                          bgcolor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.04)'
+                        },
+                        '&.Mui-selected': {
+                          bgcolor: isDark ? 'rgba(33, 150, 243, 0.16)' : 'rgba(33, 150, 243, 0.08)',
+                          '&:hover': {
+                            bgcolor: isDark ? 'rgba(33, 150, 243, 0.24)' : 'rgba(33, 150, 243, 0.12)'
+                          }
+                        }
+                      }
+                    }
+                  }
+                }}
               >
                 <MenuItem value="all">All Beds</MenuItem>
                 <MenuItem value="occupied">Occupied</MenuItem>
@@ -785,9 +855,12 @@ export function MainPage() {
                                 {bed.patientMRN} • Admitted {bed.admissionDate ? moment(bed.admissionDate).fromNow() : 'N/A'}
                               </Typography>
                             </Box>
-                            <IconButton 
+                            <IconButton
                               size="small"
                               onClick={(e) => handleMenuOpen(e, bed._id)}
+                              sx={{
+                                color: cardTextColor
+                              }}
                             >
                               <MoreVertIcon />
                             </IconButton>
@@ -827,33 +900,50 @@ export function MainPage() {
                                 VITALS {bed.vitals && bed.vitals.lastChecked ? `(${moment(bed.vitals.lastChecked).fromNow()})` : ''}
                               </Typography>
                               <Box display="flex" flexWrap="wrap" gap={1}>
-                                <Chip 
-                                  label={`BP: ${bed.vitals?.bp || 'N/A'}`} 
-                                  size="small" 
+                                <Chip
+                                  label={`BP: ${bed.vitals?.bp || 'N/A'}`}
+                                  size="small"
                                   variant="outlined"
+                                  sx={{
+                                    color: cardTextColor,
+                                    borderColor: isDark ? 'rgba(255,255,255,0.23)' : 'rgba(0,0,0,0.23)'
+                                  }}
                                 />
-                                <Chip 
-                                  label={`HR: ${bed.vitals?.hr || 'N/A'}`} 
-                                  size="small" 
+                                <Chip
+                                  label={`HR: ${bed.vitals?.hr || 'N/A'}`}
+                                  size="small"
                                   variant="outlined"
-                                  sx={{ borderColor: getVitalColor('hr', bed.vitals?.hr) }}
+                                  sx={{
+                                    color: cardTextColor,
+                                    borderColor: getVitalColor('hr', bed.vitals?.hr)
+                                  }}
                                 />
-                                <Chip 
-                                  label={`Temp: ${bed.vitals?.temp || 'N/A'}°F`} 
-                                  size="small" 
+                                <Chip
+                                  label={`Temp: ${bed.vitals?.temp || 'N/A'}°F`}
+                                  size="small"
                                   variant="outlined"
-                                  sx={{ borderColor: getVitalColor('temp', bed.vitals?.temp) }}
+                                  sx={{
+                                    color: cardTextColor,
+                                    borderColor: getVitalColor('temp', bed.vitals?.temp)
+                                  }}
                                 />
-                                <Chip 
-                                  label={`O2: ${bed.vitals?.o2 || 'N/A'}%`} 
-                                  size="small" 
+                                <Chip
+                                  label={`O2: ${bed.vitals?.o2 || 'N/A'}%`}
+                                  size="small"
                                   variant="outlined"
-                                  sx={{ borderColor: getVitalColor('o2', bed.vitals?.o2) }}
+                                  sx={{
+                                    color: cardTextColor,
+                                    borderColor: getVitalColor('o2', bed.vitals?.o2)
+                                  }}
                                 />
-                                <Chip 
-                                  label={`RR: ${bed.vitals?.rr || 'N/A'}`} 
-                                  size="small" 
+                                <Chip
+                                  label={`RR: ${bed.vitals?.rr || 'N/A'}`}
+                                  size="small"
                                   variant="outlined"
+                                  sx={{
+                                    color: cardTextColor,
+                                    borderColor: isDark ? 'rgba(255,255,255,0.23)' : 'rgba(0,0,0,0.23)'
+                                  }}
                                 />
                               </Box>
                               <Box display="flex" gap={1} mt={1}>
@@ -875,20 +965,20 @@ export function MainPage() {
                               </Typography>
                               <Box display="flex" flexDirection="column" gap={0.5}>
                                 <Box display="flex" alignItems="center" gap={1}>
-                                  <LocalPharmacyIcon fontSize="small" color="action" />
+                                  <LocalPharmacyIcon fontSize="small" sx={{ color: cardTextColor }} />
                                   <Typography variant="body2">
                                     Next med: {bed.medications?.nextDue ? moment(bed.medications.nextDue).format('h:mm A') : 'N/A'}
                                   </Typography>
                                 </Box>
                                 {bed.labs?.pending > 0 && (
                                   <Box display="flex" alignItems="center" gap={1}>
-                                    <AssessmentIcon fontSize="small" color="action" />
+                                    <AssessmentIcon fontSize="small" sx={{ color: cardTextColor }} />
                                     <Typography variant="body2">
                                       {bed.labs.pending} lab{bed.labs.pending > 1 ? 's' : ''} pending
                                       {bed.labs?.critical > 0 && (
-                                        <Chip 
-                                          label="Critical" 
-                                          size="small" 
+                                        <Chip
+                                          label="Critical"
+                                          size="small"
                                           color="error"
                                           sx={{ ml: 1, height: 20 }}
                                         />
@@ -898,7 +988,7 @@ export function MainPage() {
                                 )}
                                 {bed.tasks?.pending > 0 && (
                                   <Box display="flex" alignItems="center" gap={1}>
-                                    <AssignmentIcon fontSize="small" color={bed.tasks?.overdue > 0 ? 'error' : 'action'} />
+                                    <AssignmentIcon fontSize="small" color={bed.tasks?.overdue > 0 ? 'error' : undefined} sx={{ color: bed.tasks?.overdue > 0 ? undefined : cardTextColor }} />
                                     <Typography variant="body2" color={bed.tasks?.overdue > 0 ? 'error' : 'textPrimary'}>
                                       {bed.tasks.pending} task{bed.tasks.pending > 1 ? 's' : ''}
                                       {bed.tasks?.overdue > 0 && ` (${bed.tasks.overdue} overdue)`}
@@ -1127,7 +1217,34 @@ export function MainPage() {
         anchorEl={anchorEl}
         open={Boolean(anchorEl)}
         onClose={handleMenuClose}
+        PaperProps={{
+          sx: {
+            bgcolor: isDark ? '#2a2a2a' : '#ffffff',
+            '& .MuiMenuItem-root': {
+              color: cardTextColor,
+              '&:hover': {
+                bgcolor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.04)'
+              }
+            },
+            '& .MuiListItemIcon-root': {
+              color: cardTextColor
+            },
+            '& .MuiListItemText-root': {
+              color: cardTextColor
+            },
+            '& .MuiDivider-root': {
+              borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.12)'
+            }
+          }
+        }}
       >
+        <MenuItem onClick={handleSelectPatient}>
+          <ListItemIcon>
+            <CheckCircleIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText>Select Patient</ListItemText>
+        </MenuItem>
+        <Divider />
         <MenuItem onClick={handleEditPatient}>
           <ListItemIcon>
             <PeopleIcon fontSize="small" />

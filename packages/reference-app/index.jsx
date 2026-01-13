@@ -62,21 +62,7 @@ let SidebarWorkflows = [{
   requireAuth: true
 }];
 
-// FHIR resource navigation - appears in resources section
-let SidebarElements = [{
-  primaryText: "Reference Resources",
-  to: '/reference-app/resources',
-  iconName: 'list',
-  collectionName: 'ReferenceResources',
-  requireAuth: true
-}];
 
-// Clinician workflows - OPTIONAL (for clinician-specific features)
-let ClinicianWorkflows = [{
-  primaryText: "Clinical Reference",
-  to: '/reference-app/clinical',
-  iconName: 'stethoscope'
-}];
 
 // Admin sidebar elements - OPTIONAL
 let AdminSidebarElements = [{
@@ -209,13 +195,12 @@ export {
   
   // RECOMMENDED
   SidebarWorkflows,
-  SidebarElements,
+  // SidebarElements,
   // FooterButtons,
   
   // OPTIONAL - Admin features
   AdminDynamicRoutes,
   AdminSidebarElements,
-  ClinicianWorkflows,
   
   // OPTIONAL - Advanced features
   MainPage,

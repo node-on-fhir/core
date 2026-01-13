@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Button } from '@mui/material';
-import OrderCatalogPage from './client/OrderCatalogPage';
+import OrderCatalogPage from './client/OrderCatalogPage.jsx';
 
 // =============================================================================
 // ROUTE DEFINITIONS
@@ -27,6 +27,12 @@ let DynamicRoutes = [{
   element: <OrderCatalogPage defaultType="laboratory" />,
   requireAuth: true,
   description: 'CPOE - Laboratory (ONC §170.315(a)(2))'
+}, {
+  name: 'CPOEDiagnosticImaging',
+  path: '/cpoe/diagnostic-imaging',
+  element: <OrderCatalogPage defaultType="radiology" />,
+  requireAuth: true,
+  description: 'CPOE - Diagnostic Imaging (ONC §170.315(a)(3))'
 }];
 
 // =============================================================================
@@ -51,6 +57,11 @@ let ClinicianWorkflows = [{
   primaryText: "CPOE - Laboratory",
   to: '/cpoe/laboratory',
   iconName: 'laboratory',
+  requireAuth: true
+}, {
+  primaryText: "CPOE - Diagnostic Imaging",
+  to: '/cpoe/diagnostic-imaging',
+  iconName: 'imaging',
   requireAuth: true
 }];
 
@@ -87,6 +98,7 @@ const ModuleConfig = {
   certificationCriteria: [
     '170.315(a)(1) - CPOE Medications',
     '170.315(a)(2) - CPOE Laboratory',
+    '170.315(a)(3) - CPOE Diagnostic Imaging',
     '170.315(a)(4) - Drug-Drug, Drug-Allergy Interaction Checks'
   ],
   fhirResources: [
@@ -94,7 +106,8 @@ const ModuleConfig = {
     'MedicationRequest',
     'PlanDefinition',
     'ActivityDefinition',
-    'SpecimenDefinition'
+    'SpecimenDefinition',
+    'ImagingStudy'
   ],
   settings: {
     enableDrugInteractionChecks: true,

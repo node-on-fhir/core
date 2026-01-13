@@ -33,20 +33,21 @@ accounts-base
 mdg:validated-method
 fetch
 
-# clinical:data-importer
-# clinical:data-exporter
+clinical:data-importer
+clinical:data-exporter
+clinical:international-patient-summary
+
 # clinical:pacio-core
 # clinical:request-for-corrections
-# clinical:international-patient-summary
 # clinical:synthea
 # clinical:patient-matching
 # clinical:structured-data-capture
 
-# symptomatic:timelines
-# symptomatic:symptom-tracking
-# symptomatic:mcp
+symptomatic:timelines
+symptomatic:symptom-tracking
+symptomatic:mcp
 
-clinical:reference-app
+
 # clinical:secure-messaging
 # clinical:request-for-corrections
 # clinical:ccda-export
@@ -62,13 +63,15 @@ clinical:reference-app
 # clinical:lab-test-reporting
 # clinical:immunization-registry
 # clinical:antimicrobial-reporting
-clinical:pacio-core
 # clinical:accounts-management
 # clinical:multi-factor-auth
 # clinical:patient-matching
 
+clinical:reference-app
+clinical:pacio-core
 clinical:family-health-history
 clinical:order-catalog
+
 # clinical:hipaa-compliance
 # clinical:implantable-devices
 # clinical:drug-interactions
