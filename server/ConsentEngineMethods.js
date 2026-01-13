@@ -14,16 +14,20 @@ Meteor.startup(function(){
 
 
 Meteor.methods({
-  saveConsent: function(updatedConsent){
+  saveConsent: async function(updatedConsent){
     console.log('Meteor.methods.saveConsent', updatedConsent)
     if(updatedConsent){
-      Consents.insert(updatedConsent)
+      await Consents.insertAsync(updatedConsent)
+    } else {
+      console.warn('Meteor.methods.saveConsent: No consent data provided')
     }
   },
-  revokeConsent: function(consentId){
+  revokeConsent: async function(consentId){
     console.log('Meteor.methods.revokeConsent', consentId)
     if(consentId){
-      Consents.remove({_id: consentId})
+      await Consents.removeAsync({_id: consentId})
+    } else {
+      console.warn('Meteor.methods.revokeConsent: No consent ID provided')
     }
   },
   initConsentInfrastructure: function(){
