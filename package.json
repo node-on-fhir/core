@@ -23,7 +23,7 @@
     "@emotion/react": "^11.13.0",
     "@emotion/styled": "^11.13.0",
     "@langchain/community": "0.3.0",
-    "@langchain/core": "0.3.0",
+    "@langchain/core": "0.3.80",
     "@langchain/mongodb": "0.1.0",
     "@langchain/openai": "0.3.16",
     "@meteorjs/ddp-graceful-shutdown": "^0.9.2",
