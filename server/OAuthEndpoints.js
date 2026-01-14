@@ -325,12 +325,12 @@ WebApp.handlers.post("/oauth/registration", async (req, res) => {
       function formatPEM(pemString) {
         if (typeof pemString !== 'string') {
           pemString = String(pemString); // Convert to string if it's not already
-
-          // Add line breaks every 64 characters to comply with PEM format
-          return pemString.match(/.{1,64}/g).join('\r\n');
-        } else {
-          return "";
         }
+        // Add line breaks every 64 characters to comply with PEM format
+        if (pemString && pemString.length > 0) {
+          return pemString.match(/.{1,64}/g).join('\r\n');
+        }
+        return "";
       }
 
 
@@ -460,7 +460,21 @@ WebApp.handlers.post("/oauth/registration", async (req, res) => {
         console.log('')
 
         if(typeof combinedSoftwareStatementPem === 'string'){
-          const softwareStatementCert = forge.pki.certificateFromPem(combinedSoftwareStatementPem);
+          let softwareStatementCert;
+          try {
+            softwareStatementCert = forge.pki.certificateFromPem(combinedSoftwareStatementPem);
+          } catch (certParseError) {
+            console.error('Certificate parsing error:', certParseError.message);
+            console.error('combinedSoftwareStatementPem length:', combinedSoftwareStatementPem.length);
+            if (!res.headersSent) {
+              return res.status(400).json({
+                "error": "invalid_software_statement",
+                "error_description": "Unable to parse x5c certificate: " + certParseError.message,
+                "udap_testscript_step": "IIA3a2"
+              }).end();
+            }
+            return;
+          }
           console.log('---------------------------------------------------')
           console.log('Software Statement Cert', softwareStatementCert)
 
