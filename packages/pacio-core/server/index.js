@@ -22,16 +22,26 @@ export * from '../lib/collections/BedsCollection';
 // Initialize sample beds on startup
 import { Beds } from '../lib/collections/BedsCollection';
 import { Meteor } from 'meteor/meteor';
+import { get } from 'lodash';
 import { initializeSampleBeds, assignSamplePatientsToBeds } from './sampleData/initializeBeds';
 
 Meteor.startup(async function() {
-  // Initialize sample beds if needed
-  await initializeSampleBeds();
-  
-  // Try to assign patients to beds if available
-  await assignSamplePatientsToBeds();
-  
-  // Make Beds collection available globally on server
+  // Skip bed initialization in CI environments to reduce memory pressure
+  // Can also be disabled via settings.private.pacio.skipBedInitialization
+  const skipBedInit = process.env.CI ||
+    get(Meteor, 'settings.private.pacio.skipBedInitialization', false);
+
+  if (!skipBedInit) {
+    // Initialize sample beds if needed
+    await initializeSampleBeds();
+
+    // Try to assign patients to beds if available
+    await assignSamplePatientsToBeds();
+  } else {
+    console.log('PACIO bed initialization skipped (CI environment or disabled in settings)');
+  }
+
+  // Make Beds collection available globally on server (always needed for tests/code)
   if (!global.Collections) {
     global.Collections = {};
   }
