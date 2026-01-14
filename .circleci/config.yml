@@ -402,7 +402,7 @@ jobs:
             # Add periodic output to prevent timeout
             (
               meteor run --settings configs/settings.honeycomb.tdd.json --port 3000 \
-                --extra-packages "clinical:reference-app, clinical:us-core, clinical:pacio-core" &
+                --extra-packages "clinical:reference-app, clinical:us-core" &
               METEOR_PID=$!
 
               # Output progress every 30 seconds to prevent timeout
