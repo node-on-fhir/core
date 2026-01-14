@@ -579,16 +579,6 @@ const MetadataServerMethods = {
       "registration_endpoint": Meteor.absoluteUrl() + get(Meteor, 'settings.private.fhir.security.registrationEndpoint', "oauth/registration"),
       "registration_endpoint_jwt_signing_alg_values_supported": ["RS256", "ES384"],
       "signed_metadata": null,
-      "raw_metadata": {
-        "iss": Meteor.absoluteUrl(),
-        "sub": Meteor.absoluteUrl(),
-        "exp": moment().unix(),
-        "iat": moment().unix(),
-        "jti": "random-value-" + Random.id(),
-        "authorization_endpoint": Meteor.absoluteUrl() + get(Meteor, 'settings.private.fhir.security.authorization_endpoint', "oauth/authorize"),
-        "token_endpoint": Meteor.absoluteUrl() + get(Meteor, 'settings.private.fhir.security.tokenEndpoint', "oauth/token"),
-        "registration_endpoint": Meteor.absoluteUrl() + get(Meteor, 'settings.private.fhir.security.registrationEndpoint', "oauth/registration")
-      },
       "udap_profiles_supported": ["udap_authz", "udap_dcr"],
       "udap_authorization_extensions_supported": [],
       "udap_authorization_extensions_required": [],
@@ -602,10 +592,62 @@ const MetadataServerMethods = {
       })
     }
 
-    let x509publicCert = get(Meteor, 'settings.private.x509.publicCertPem');
-    console.log('x509publicCert', x509publicCert)
-    response.x5c.push(x509publicCert)
+    // Get x509 credentials from settings
+    let privateKey = get(Meteor, 'settings.private.x509.privateKey', '');
+    let x509publicCert = get(Meteor, 'settings.private.x509.publicCertPem', '');
+    console.log('x509publicCert', x509publicCert ? 'present' : 'missing');
+    console.log('privateKey', privateKey ? 'present' : 'missing');
 
+    // Add certificate to x5c array
+    if (x509publicCert) {
+      response.x5c.push(x509publicCert);
+    }
+
+    // Sign the metadata JWT if private key is available
+    if (privateKey) {
+      // Normalize line endings
+      privateKey = privateKey.replace(/\\r\\n/g, '\n').replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+
+      // Build the metadata to sign (per UDAP spec)
+      let metadataToSign = {
+        "iss": Meteor.absoluteUrl(),
+        "sub": Meteor.absoluteUrl(),
+        "exp": moment().add(1, 'year').unix(),
+        "iat": moment().unix(),
+        "jti": Random.id(),
+        "authorization_endpoint": Meteor.absoluteUrl() + get(Meteor, 'settings.private.fhir.security.authorization_endpoint', "oauth/authorize"),
+        "token_endpoint": Meteor.absoluteUrl() + get(Meteor, 'settings.private.fhir.security.tokenEndpoint', "oauth/token"),
+        "registration_endpoint": Meteor.absoluteUrl() + get(Meteor, 'settings.private.fhir.security.registrationEndpoint', "oauth/registration")
+      };
+
+      // Get x5c value (base64 DER certificate without PEM headers)
+      let x5cValue = '';
+      if (x509publicCert) {
+        x5cValue = x509publicCert
+          .replace(/\\r\\n/g, '\n')
+          .replace(/\r\n/g, '\n')
+          .replace('-----BEGIN CERTIFICATE-----', '')
+          .replace('-----END CERTIFICATE-----', '')
+          .replace(/\n/g, '')
+          .trim();
+      }
+
+      try {
+        response.signed_metadata = jwt.sign(metadataToSign, privateKey, {
+          algorithm: 'RS256',
+          header: {
+            alg: 'RS256',
+            x5c: x5cValue ? [x5cValue] : undefined
+          }
+        });
+        console.log('UDAP signed_metadata generated successfully');
+      } catch (error) {
+        console.error('Error signing UDAP metadata:', error.message);
+        response.signed_metadata = null;
+      }
+    } else {
+      console.warn('UDAP: No private key configured, signed_metadata will be null');
+    }
 
     return response;
   }
