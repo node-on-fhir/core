@@ -1,0 +1,1012 @@
+---
+#No BCG primary series dose was administered
+#   Count of vaccines administered (where "Vaccine type" = "BCG vaccines" and "Type of dose" = "Primary series") = 0
+#Client's age is less than or equal to 28 days
+#   Today's date − "Date of birth" ≤ 28 days
+#Client's HIV status is negative or unknown
+#   "HIV status" ≠ "HIV-positive"
+#No live vaccine was administered
+#   Today's date − latest "Date and time of vaccination" (where "Live vaccine" = TRUE) IS NULL
+### Client is due for BCG vaccination
+### "Immunization recommendation status" = "Due"
+id: BCG07.4
+birth: -1d
+patient:
+  fhir:
+    gender: female
+---
+#No BCG primary series dose was administered
+#   Count of vaccines administered (where "Vaccine type" = "BCG vaccines" and "Type of dose" = "Primary series") = 0
+#Client's age is less than or equal to 28 days
+#   Today's date − "Date of birth" ≤ 28 days
+#Client's HIV status is negative or unknown
+#   "HIV status" ≠ "HIV-positive"
+#Live vaccine was administered in the last four weeks
+#   Today's date − latest "Date and time of vaccination" (where "Live vaccine" = TRUE) < 4 weeks
+### Client is not due for BCG vaccination
+### "Immunization recommendation status" = "Not due"
+id: BCG08.4
+birth: -3w
+patient:
+  fhir:
+    gender: female
+immunization:
+  flu:
+    vaccine:
+      code: XM5V64
+      system: http://id.who.int/icd/release/11/mms
+      display: Influenza vaccines, live attenuated
+    fhir:
+      expirationDate: 1y
+      occurrenceDateTime: -2w
+---
+#No BCG primary series dose was administered
+#   Count of vaccines administered (where "Vaccine type" = "BCG vaccines" and "Type of dose" = "Primary series") = 0
+#Client's age is less than or equal to 28 days
+#   Today's date − "Date of birth" ≤ 28 days
+#Client's HIV status is positive
+#   "HIV status" = "HIV-positive"
+#Client is currently receiving antiretroviral therapy
+#   "Currently on ART" = TRUE
+#Client is immunologically stable
+#   "Immunologically stable" = TRUE
+#No live vaccine was administered
+#   Today's date − latest "Date and time of vaccination" (where "Live vaccine" = TRUE) IS NULL
+### Client is due for BCG vaccination
+### "Immunization recommendation status" = "Due"
+id: BCG09.6
+birth: -2w
+patient:
+  fhir:
+    gender: female
+observation:
+  hiv:
+    code:
+      code: DE204
+      system: http://smart.who.int/immunizations/CodeSystem/IMMZ.D
+      display: HIV status
+    fhir:
+      effectiveDateTime: -2w
+      valueCodeableConcept:
+        coding:
+          - code: DE205
+            system: http://smart.who.int/immunizations/CodeSystem/IMMZ.D
+            display: HIV-positive
+  art:
+    code:
+      code: DE210
+      system: http://smart.who.int/immunizations/CodeSystem/IMMZ.D
+      display: Currently on ART
+    fhir:
+      effectiveDateTime: -2w
+      valueBoolean: true
+  immstable:
+    code:
+      code: DE249
+      system: http://smart.who.int/immunizations/CodeSystem/IMMZ.D
+      display: Immunologically stable
+    fhir:
+      effectiveDateTime: -2w
+      valueBoolean: true
+---
+#No BCG primary series dose was administered
+#   Count of vaccines administered (where "Vaccine type" = "BCG vaccines" and "Type of dose" = "Primary series") = 0
+#Client's age is less than or equal to 28 days
+#   Today's date − "Date of birth" ≤ 28 days
+#Client's HIV status is positive
+#   "HIV status" = "HIV-positive"
+#Client is currently receiving antiretroviral therapy
+#   "Currently on ART" = TRUE
+#Client is immunologically stable
+#   "Immunologically stable" = TRUE
+#Live vaccine was administered in the last four weeks
+#   Today's date − latest "Date and time of vaccination" (where "Live vaccine" = TRUE) < 4 weeks
+### Client is not due for BCG vaccination
+### "Immunization recommendation status" = "Not due"
+id: BCG10.6
+birth: -2w
+patient:
+  fhir:
+    gender: female
+observation:
+  hiv:
+    code:
+      code: DE204
+      system: http://smart.who.int/immunizations/CodeSystem/IMMZ.D
+      display: HIV status
+    fhir:
+      effectiveDateTime: -2w
+      valueCodeableConcept:
+        coding:
+          - code: DE205
+            system: http://smart.who.int/immunizations/CodeSystem/IMMZ.D
+            display: HIV-positive
+  art:
+    code:
+      code: DE210
+      system: http://smart.who.int/immunizations/CodeSystem/IMMZ.D
+      display: Currently on ART
+    fhir:
+      effectiveDateTime: -2w
+      valueBoolean: true
+  immstable:
+    code:
+      code: DE249
+      system: http://smart.who.int/immunizations/CodeSystem/IMMZ.D
+      display: Immunologically stable
+    fhir:
+      effectiveDateTime: -2w
+      valueBoolean: true
+immunization:
+  flu:
+    vaccine:
+      code: XM5V64
+      system: http://id.who.int/icd/release/11/mms
+      display: Influenza vaccines, live attenuated
+    fhir:
+      expirationDate: 1y
+      occurrenceDateTime: -2w
+---
+#No BCG primary series dose was administered
+#   Count of vaccines administered (where "Vaccine type" = "BCG vaccines" and "Type of dose" = "Primary series") = 0
+#Client's age is less than or equal to 28 days
+#   Today's date − "Date of birth" ≤ 28 days
+#Client's HIV status is positive
+#   "HIV status" = "HIV-positive"
+#Client is currently receiving antiretroviral therapy
+#   "Currently on ART" = TRUE
+#Client is not immunologically stable
+#   "Immunologically stable" = FALSE
+### Client is not due for BCG vaccination
+### "Immunization recommendation status" = "Not due"
+id: BCG11.5
+birth: -2w
+patient:
+  fhir:
+    gender: female
+observation:
+  hiv:
+    code:
+      code: DE204
+      system: http://smart.who.int/immunizations/CodeSystem/IMMZ.D
+      display: HIV status
+    fhir:
+      effectiveDateTime: -2w
+      valueCodeableConcept:
+        coding:
+          - code: DE205
+            system: http://smart.who.int/immunizations/CodeSystem/IMMZ.D
+            display: HIV-positive
+  art:
+    code:
+      code: DE210
+      system: http://smart.who.int/immunizations/CodeSystem/IMMZ.D
+      display: Currently on ART
+    fhir:
+      effectiveDateTime: -2w
+      valueBoolean: true
+  immstable:
+    code:
+      code: DE249
+      system: http://smart.who.int/immunizations/CodeSystem/IMMZ.D
+      display: Immunologically stable
+    fhir:
+      effectiveDateTime: -2w
+      valueBoolean: false
+---
+#No BCG primary series dose was administered
+#   Count of vaccines administered (where "Vaccine type" = "BCG vaccines" and "Type of dose" = "Primary series") = 0
+#Client's age is less than or equal to 28 days
+#   Today's date − "Date of birth" ≤ 28 days
+#Client's HIV status is positive
+#   "HIV status" = "HIV-positive"
+#Client is currently not receiving antiretroviral therapy
+#   "Currently on ART" = FALSE
+### Client is not due for BCG vaccination
+### "Immunization recommendation status" = "Not due"
+id: BCG12.4
+birth: -2w
+patient:
+  fhir:
+    gender: female
+observation:
+  hiv:
+    code:
+      code: DE204
+      system: http://smart.who.int/immunizations/CodeSystem/IMMZ.D
+      display: HIV status
+    fhir:
+      effectiveDateTime: -2w
+      valueCodeableConcept:
+        coding:
+          - code: DE205
+            system: http://smart.who.int/immunizations/CodeSystem/IMMZ.D
+            display: HIV-positive
+  art:
+    code:
+      code: DE210
+      system: http://smart.who.int/immunizations/CodeSystem/IMMZ.D
+      display: Currently on ART
+    fhir:
+      effectiveDateTime: -2w
+      valueBoolean: false
+---
+#No BCG primary series dose was administered
+#   Count of vaccines administered (where "Vaccine type" = "BCG vaccines" and "Type of dose" = "Primary series") = 0
+#Client's age is between 28 days and 5 years
+#   28 days < Today's date − "Date of birth" < 5 years
+#Client's HIV status is negative or unknown
+#   "HIV status" ≠ "HIV-positive"
+#Client's TB infection test result is negative
+#   "TB infection test result" = "Negative"
+#No live vaccine was administered in the last four weeks
+#   Today's date − latest "Date and time of vaccination" (where "Live vaccine" = TRUE) ≥ 4 weeks
+### Client is due for BCG vaccination
+### "Immunization recommendation status" = "Due"
+id: BCG13.5
+birth: -1y
+patient:
+  fhir:
+    gender: female
+observation:
+  tb:
+    code:
+      code: DE246
+      system: http://smart.who.int/immunizations/CodeSystem/IMMZ.D
+      display: TB infection test result
+    fhir:
+      effectiveDateTime: -2w
+      valueCodeableConcept:
+        coding:
+          - code: DE248
+            system: http://smart.who.int/immunizations/CodeSystem/IMMZ.D
+            display: Negative
+---
+#No BCG primary series dose was administered
+#   Count of vaccines administered (where "Vaccine type" = "BCG vaccines" and "Type of dose" = "Primary series") = 0
+#Client's age is between 28 days and 5 years
+#   28 days < Today's date − "Date of birth" < 5 years
+#Client's HIV status is negative or unknown
+#   "HIV status" ≠ "HIV-positive"
+#Client's TB infection test result is negative
+#   "TB infection test result" = "Negative"
+#Live vaccine was administered in the last four weeks
+#   Today's date − latest "Date and time of vaccination" (where "Live vaccine" = TRUE) < 4 weeks
+### Client is not due for BCG vaccination
+### "Immunization recommendation status" = "Not due"
+id: BCG14.5
+birth: -1y
+patient:
+  fhir:
+    gender: female
+observation:
+  tb:
+    code:
+      code: DE246
+      system: http://smart.who.int/immunizations/CodeSystem/IMMZ.D
+      display: TB infection test result
+    fhir:
+      effectiveDateTime: -2w
+      valueCodeableConcept:
+        coding:
+          - code: DE248
+            system: http://smart.who.int/immunizations/CodeSystem/IMMZ.D
+            display: Negative
+immunization:
+  flu:
+    vaccine:
+      code: XM5V64
+      system: http://id.who.int/icd/release/11/mms
+      display: Influenza vaccines, live attenuated
+    fhir:
+      expirationDate: 1y
+      occurrenceDateTime: -2w
+---
+#No BCG primary series dose was administered
+#   Count of vaccines administered (where "Vaccine type" = "BCG vaccines" and "Type of dose" = "Primary series") = 0
+#Client's age is between 28 days and 5 years
+#   28 days < Today's date − "Date of birth" < 5 years
+#Client's HIV status is negative or unknown
+#   "HIV status" ≠ "HIV-positive"
+#Client's TB infection test result is unknown (test not done or no result yet)
+#   "TB infection test result" IS NULL
+### Clinical judgement is required. Create clinical note.
+### "Immunization recommendation status" = "Further evaluation needed"
+id: BCG15.4
+birth: -1y
+patient:
+  fhir:
+    gender: female
+---
+#No BCG primary series dose was administered
+#   Count of vaccines administered (where "Vaccine type" = "BCG vaccines" and "Type of dose" = "Primary series") = 0
+#Client's age is between 28 days and 5 years
+#   28 days < Today's date − "Date of birth" < 5 years
+#Client's HIV status is negative or unknown
+#   "HIV status" ≠ "HIV-positive"
+#Client's TB infection test result is positive
+#   "TB infection test result" = "Positive"
+### Client is not due for BCG vaccination
+### "Immunization recommendation status" = "Not due"
+id: BCG16.4
+birth: -1y
+patient:
+  fhir:
+    gender: female
+observation:
+  tb:
+    code:
+      code: DE246
+      system: http://smart.who.int/immunizations/CodeSystem/IMMZ.D
+      display: TB infection test result
+    fhir:
+      effectiveDateTime: -2w
+      valueCodeableConcept:
+        coding:
+          - code: DE247
+            system: http://smart.who.int/immunizations/CodeSystem/IMMZ.D
+            display: Positive
+---
+#No BCG primary series dose was administered
+#   Count of vaccines administered (where "Vaccine type" = "BCG vaccines" and "Type of dose" = "Primary series") = 0
+#Client's age is between 28 days and 5 years
+#   28 days < Today's date − "Date of birth" < 5 years
+#Client's HIV status is positive
+#   "HIV status" = "HIV-positive"
+#Client is currently receiving antiretroviral therapy
+#   "Currently on ART" = TRUE
+#Client is not immunologically stable
+#   "Immunologically stable" = FALSE
+### Client is not due for BCG vaccination
+### "Immunization recommendation status" = "Not due"
+id: BCG17.5
+birth: -1y
+patient:
+  fhir:
+    gender: female
+observation:
+  hiv:
+    code:
+      code: DE204
+      system: http://smart.who.int/immunizations/CodeSystem/IMMZ.D
+      display: HIV status
+    fhir:
+      effectiveDateTime: -2w
+      valueCodeableConcept:
+        coding:
+          - code: DE205
+            system: http://smart.who.int/immunizations/CodeSystem/IMMZ.D
+            display: HIV-positive
+  art:
+    code:
+      code: DE210
+      system: http://smart.who.int/immunizations/CodeSystem/IMMZ.D
+      display: Currently on ART
+    fhir:
+      effectiveDateTime: -2w
+      valueBoolean: true
+  immstable:
+    code:
+      code: DE249
+      system: http://smart.who.int/immunizations/CodeSystem/IMMZ.D
+      display: Immunologically stable
+    fhir:
+      effectiveDateTime: -2w
+      valueBoolean: false
+---
+#No BCG primary series dose was administered
+#   Count of vaccines administered (where "Vaccine type" = "BCG vaccines" and "Type of dose" = "Primary series") = 0
+#Client's age is between 28 days and 5 years
+#   28 days < Today's date − "Date of birth" < 5 years
+#Client's HIV status is positive
+#   "HIV status" = "HIV-positive"
+#Client is currently receiving antiretroviral therapy
+#   "Currently on ART" = TRUE
+#Client is not clinically well
+#   "Clinically well" = FALSE
+### Client is not due for BCG vaccination
+### "Immunization recommendation status" = "Not due"
+id: BCG18.5
+birth: -1y
+patient:
+  fhir:
+    gender: female
+observation:
+  hiv:
+    code:
+      code: DE204
+      system: http://smart.who.int/immunizations/CodeSystem/IMMZ.D
+      display: HIV status
+    fhir:
+      effectiveDateTime: -2w
+      valueCodeableConcept:
+        coding:
+          - code: DE205
+            system: http://smart.who.int/immunizations/CodeSystem/IMMZ.D
+            display: HIV-positive
+  art:
+    code:
+      code: DE210
+      system: http://smart.who.int/immunizations/CodeSystem/IMMZ.D
+      display: Currently on ART
+    fhir:
+      effectiveDateTime: -2w
+      valueBoolean: true
+  well:
+    code:
+      code: DE250
+      system: http://smart.who.int/immunizations/CodeSystem/IMMZ.D
+      display: Clinically well
+    fhir:
+      effectiveDateTime: -2w
+      valueBoolean: false
+---
+#No BCG primary series dose was administered
+#   Count of vaccines administered (where "Vaccine type" = "BCG vaccines" and "Type of dose" = "Primary series") = 0
+#Client's age is between 28 days and 5 years
+#   28 days < Today's date − "Date of birth" < 5 years
+#Client's HIV status is positive
+#   "HIV status" = "HIV-positive"
+#Client is currently receiving antiretroviral therapy
+#   "Currently on ART" = TRUE
+#Client is immunologically stable
+#   "Immunologically stable" = TRUE
+#No live vaccine was administered in the last four weeks
+#   Today's date − latest "Date and time of vaccination" (where "Live vaccine" = TRUE) ≥ 4 weeks
+#Client is clinically well
+#   "Clinically well" = TRUE
+### Client is due for BCG vaccination
+### "Immunization recommendation status" = "Due"
+id: BCG19.7
+birth: -1y
+patient:
+  fhir:
+    gender: female
+observation:
+  hiv:
+    code:
+      code: DE204
+      system: http://smart.who.int/immunizations/CodeSystem/IMMZ.D
+      display: HIV status
+    fhir:
+      effectiveDateTime: -2w
+      valueCodeableConcept:
+        coding:
+          - code: DE205
+            system: http://smart.who.int/immunizations/CodeSystem/IMMZ.D
+            display: HIV-positive
+  art:
+    code:
+      code: DE210
+      system: http://smart.who.int/immunizations/CodeSystem/IMMZ.D
+      display: Currently on ART
+    fhir:
+      effectiveDateTime: -2w
+      valueBoolean: true
+  immstable:
+    code:
+      code: DE249
+      system: http://smart.who.int/immunizations/CodeSystem/IMMZ.D
+      display: Immunologically stable
+    fhir:
+      effectiveDateTime: -2w
+      valueBoolean: true
+  well:
+    code:
+      code: DE250
+      system: http://smart.who.int/immunizations/CodeSystem/IMMZ.D
+      display: Clinically well
+    fhir:
+      effectiveDateTime: -2w
+      valueBoolean: true
+---
+#No BCG primary series dose was administered
+#   Count of vaccines administered (where "Vaccine type" = "BCG vaccines" and "Type of dose" = "Primary series") = 0
+#Client's age is between 28 days and 5 years
+#   28 days < Today's date − "Date of birth" < 5 years
+#Client's HIV status is positive
+#   "HIV status" = "HIV-positive"
+#Client is currently receiving antiretroviral therapy
+#   "Currently on ART" = TRUE
+#Client is immunologically stable
+#   "Immunologically stable" = TRUE
+#Live vaccine was administered in the last four weeks
+#   Today's date − latest "Date and time of vaccination" (where "Live vaccine" = TRUE) < 4 weeks
+#Client is clinically well
+#   "Clinically well" = TRUE
+### Client is not due for BCG vaccination
+### "Immunization recommendation status" = "Not due"
+id: BCG20.7
+birth: -1y
+patient:
+  fhir:
+    gender: female
+observation:
+  hiv:
+    code:
+      code: DE204
+      system: http://smart.who.int/immunizations/CodeSystem/IMMZ.D
+      display: HIV status
+    fhir:
+      effectiveDateTime: -2w
+      valueCodeableConcept:
+        coding:
+          - code: DE205
+            system: http://smart.who.int/immunizations/CodeSystem/IMMZ.D
+            display: HIV-positive
+  art:
+    code:
+      code: DE210
+      system: http://smart.who.int/immunizations/CodeSystem/IMMZ.D
+      display: Currently on ART
+    fhir:
+      effectiveDateTime: -2w
+      valueBoolean: true
+  immstable:
+    code:
+      code: DE249
+      system: http://smart.who.int/immunizations/CodeSystem/IMMZ.D
+      display: Immunologically stable
+    fhir:
+      effectiveDateTime: -2w
+      valueBoolean: true
+  well:
+    code:
+      code: DE250
+      system: http://smart.who.int/immunizations/CodeSystem/IMMZ.D
+      display: Clinically well
+    fhir:
+      effectiveDateTime: -2w
+      valueBoolean: true
+immunization:
+  flu:
+    vaccine:
+      code: XM5V64
+      system: http://id.who.int/icd/release/11/mms
+      display: Influenza vaccines, live attenuated
+    fhir:
+      expirationDate: 1y
+      occurrenceDateTime: -2w
+---
+#No BCG primary series dose was administered
+#   Count of vaccines administered (where "Vaccine type" = "BCG vaccines" and "Type of dose" = "Primary series") = 0
+#Client's age is between 28 days and 5 years
+#   28 days < Today's date − "Date of birth" < 5 years
+#Client's HIV status is positive
+#   "HIV status" = "HIV-positive"
+#Client is currently not receiving antiretroviral therapy
+#   "Currently on ART" = FALSE
+### Client is not due for BCG vaccination
+### "Immunization recommendation status" = "Not due"
+id: BCG21.4
+birth: -1y
+patient:
+  fhir:
+    gender: female
+observation:
+  hiv:
+    code:
+      code: DE204
+      system: http://smart.who.int/immunizations/CodeSystem/IMMZ.D
+      display: HIV status
+    fhir:
+      effectiveDateTime: -2w
+      valueCodeableConcept:
+        coding:
+          - code: DE205
+            system: http://smart.who.int/immunizations/CodeSystem/IMMZ.D
+            display: HIV-positive
+  art:
+    code:
+      code: DE210
+      system: http://smart.who.int/immunizations/CodeSystem/IMMZ.D
+      display: Currently on ART
+    fhir:
+      effectiveDateTime: -2w
+      valueBoolean: false
+---
+#No BCG primary series dose was administered
+#   Count of vaccines administered (where "Vaccine type" = "BCG vaccines" and "Type of dose" = "Primary series") = 0
+#Client's age is more than 5 years
+#   Today's date − "Date of birth" ≥ 5 years
+#Client's HIV status is negative or unknown
+#   "HIV status" ≠ "HIV-positive"
+#Client's TB infection test result is negative
+#   "TB infection test result" = "Negative"
+#No live vaccine was administered in the last four weeks
+#   Today's date − latest "Date and time of vaccination" (where "Live vaccine" = TRUE) ≥ 4 weeks
+### Client is due for BCG vaccination
+### "Immunization recommendation status" = "Due"
+id: BCG22.5
+birth: -6y
+patient:
+  fhir:
+    gender: female
+observation:
+  tb:
+    code:
+      code: DE246
+      system: http://smart.who.int/immunizations/CodeSystem/IMMZ.D
+      display: TB infection test result
+    fhir:
+      effectiveDateTime: -2w
+      valueCodeableConcept:
+        coding:
+          - code: DE248
+            system: http://smart.who.int/immunizations/CodeSystem/IMMZ.D
+            display: Negative
+---
+#No BCG primary series dose was administered
+#   Count of vaccines administered (where "Vaccine type" = "BCG vaccines" and "Type of dose" = "Primary series") = 0
+#Client's age is more than 5 years
+#   Today's date − "Date of birth" ≥ 5 years
+#Client's HIV status is negative or unknown
+#   "HIV status" ≠ "HIV-positive"
+#Client's TB infection test result is negative
+#   "TB infection test result" = "Negative"
+#Live vaccine was administered in the last four weeks
+#   Today's date − latest "Date and time of vaccination" (where "Live vaccine" = TRUE) < 4 weeks
+### Client is not due for BCG vaccination
+### "Immunization recommendation status" = "Not due"
+id: BCG23.5
+birth: -6y
+patient:
+  fhir:
+    gender: female
+observation:
+  tb:
+    code:
+      code: DE246
+      system: http://smart.who.int/immunizations/CodeSystem/IMMZ.D
+      display: TB infection test result
+    fhir:
+      effectiveDateTime: -2w
+      valueCodeableConcept:
+        coding:
+          - code: DE248
+            system: http://smart.who.int/immunizations/CodeSystem/IMMZ.D
+            display: Negative
+immunization:
+  flu:
+    vaccine:
+      code: XM5V64
+      system: http://id.who.int/icd/release/11/mms
+      display: Influenza vaccines, live attenuated
+    fhir:
+      expirationDate: 1y
+      occurrenceDateTime: -2w
+---
+#No BCG primary series dose was administered
+#   Count of vaccines administered (where "Vaccine type" = "BCG vaccines" and "Type of dose" = "Primary series") = 0
+#Client's age is more than 5 years
+#   Today's date − "Date of birth" ≥ 5 years
+#Client's HIV status is negative or unknown
+#   "HIV status" ≠ "HIV-positive"
+#Client's TB infection test result is unknown (test not done or no result yet)
+#   "TB infection test result" IS NULL
+### Clinical judgement is required. Create clinical note.
+### '"Immunization recommendation status" = "Further evaluation needed"
+id: BCG24.4
+birth: -6y
+patient:
+  fhir:
+    gender: female
+---
+#No BCG primary series dose was administered
+#   Count of vaccines administered (where "Vaccine type" = "BCG vaccines" and "Type of dose" = "Primary series") = 0
+#Client's age is more than 5 years
+#   Today's date − "Date of birth" ≥ 5 years
+#Client's HIV status is negative or unknown
+#   "HIV status" ≠ "HIV-positive"
+#Client's TB infection test result is positive
+#   "TB infection test result" = "Positive"
+### Client is not due for BCG vaccination
+### "Immunization recommendation status" = "Not due"
+id: BCG25.4
+birth: -6y
+patient:
+  fhir:
+    gender: female
+observation:
+  tb:
+    code:
+      code: DE246
+      system: http://smart.who.int/immunizations/CodeSystem/IMMZ.D
+      display: TB infection test result
+    fhir:
+      effectiveDateTime: -2w
+      valueCodeableConcept:
+        coding:
+          - code: DE247
+            system: http://smart.who.int/immunizations/CodeSystem/IMMZ.D
+            display: Positive
+---
+#No BCG primary series dose was administered
+#   Count of vaccines administered (where "Vaccine type" = "BCG vaccines" and "Type of dose" = "Primary series") = 0
+#Client's age is more than 5 years
+#   Today's date − "Date of birth" ≥ 5 years
+#Client's HIV status is positive
+#   "HIV status" = "HIV-positive"
+#Client is currently receiving antiretroviral therapy
+#   "Currently on ART" = TRUE
+#Client is not immunologically stable
+#   "Immunologically stable" = FALSE
+### Client is not due for BCG vaccination
+### "Immunization recommendation status" = "Not due"
+id: BCG26.5
+birth: -6y
+patient:
+  fhir:
+    gender: female
+observation:
+  hiv:
+    code:
+      code: DE204
+      system: http://smart.who.int/immunizations/CodeSystem/IMMZ.D
+      display: HIV status
+    fhir:
+      effectiveDateTime: -2w
+      valueCodeableConcept:
+        coding:
+          - code: DE205
+            system: http://smart.who.int/immunizations/CodeSystem/IMMZ.D
+            display: HIV-positive
+  art:
+    code:
+      code: DE210
+      system: http://smart.who.int/immunizations/CodeSystem/IMMZ.D
+      display: Currently on ART
+    fhir:
+      effectiveDateTime: -2w
+      valueBoolean: true
+  immstable:
+    code:
+      code: DE249
+      system: http://smart.who.int/immunizations/CodeSystem/IMMZ.D
+      display: Immunologically stable
+    fhir:
+      effectiveDateTime: -2w
+      valueBoolean: false
+---
+#No BCG primary series dose was administered
+#   Count of vaccines administered (where "Vaccine type" = "BCG vaccines" and "Type of dose" = "Primary series") = 0
+#Client's age is more than 5 years
+#   Today's date − "Date of birth" ≥ 5 years
+#Client's HIV status is positive
+#   "HIV status" = "HIV-positive"
+#Client is currently receiving antiretroviral therapy
+#   "Currently on ART" = TRUE
+#Client is not clinically well
+#   "Clinically well" = FALSE
+### Client is not due for BCG vaccination
+### "Immunization recommendation status" = "Not due"
+id: BCG27.5
+birth: -6y
+patient:
+  fhir:
+    gender: female
+observation:
+  hiv:
+    code:
+      code: DE204
+      system: http://smart.who.int/immunizations/CodeSystem/IMMZ.D
+      display: HIV status
+    fhir:
+      effectiveDateTime: -2w
+      valueCodeableConcept:
+        coding:
+          - code: DE205
+            system: http://smart.who.int/immunizations/CodeSystem/IMMZ.D
+            display: HIV-positive
+  art:
+    code:
+      code: DE210
+      system: http://smart.who.int/immunizations/CodeSystem/IMMZ.D
+      display: Currently on ART
+    fhir:
+      effectiveDateTime: -2w
+      valueBoolean: true
+  well:
+    code:
+      code: DE250
+      system: http://smart.who.int/immunizations/CodeSystem/IMMZ.D
+      display: Clinically well
+    fhir:
+      effectiveDateTime: -2w
+      valueBoolean: false
+---
+#No BCG primary series dose was administered
+#   Count of vaccines administered (where "Vaccine type" = "BCG vaccines" and "Type of dose" = "Primary series") = 0
+#Client's age is more than 5 years
+#   Today's date − "Date of birth" ≥ 5 years
+#Client's HIV status is positive
+#   "HIV status" = "HIV-positive"
+#Client is currently receiving antiretroviral therapy
+#   "Currently on ART" = TRUE
+#Client is immunologically stable
+#   "Immunologically stable" = TRUE
+#No live vaccine was administered in the last four weeks
+#   Today's date − latest "Date and time of vaccination" (where "Live vaccine" = TRUE) ≥ 4 weeks
+#Client is clinically well
+#   "Clinically well" = TRUE
+### Client is due for BCG vaccination
+### "Immunization recommendation status" = "Due"
+id: BCG28.7
+birth: -6y
+patient:
+  fhir:
+    gender: female
+observation:
+  hiv:
+    code:
+      code: DE204
+      system: http://smart.who.int/immunizations/CodeSystem/IMMZ.D
+      display: HIV status
+    fhir:
+      effectiveDateTime: -2w
+      valueCodeableConcept:
+        coding:
+          - code: DE205
+            system: http://smart.who.int/immunizations/CodeSystem/IMMZ.D
+            display: HIV-positive
+  art:
+    code:
+      code: DE210
+      system: http://smart.who.int/immunizations/CodeSystem/IMMZ.D
+      display: Currently on ART
+    fhir:
+      effectiveDateTime: -2w
+      valueBoolean: true
+  immstable:
+    code:
+      code: DE249
+      system: http://smart.who.int/immunizations/CodeSystem/IMMZ.D
+      display: Immunologically stable
+    fhir:
+      effectiveDateTime: -2w
+      valueBoolean: true
+  well:
+    code:
+      code: DE250
+      system: http://smart.who.int/immunizations/CodeSystem/IMMZ.D
+      display: Clinically well
+    fhir:
+      effectiveDateTime: -2w
+      valueBoolean: true
+---
+#No BCG primary series dose was administered
+#   Count of vaccines administered (where "Vaccine type" = "BCG vaccines" and "Type of dose" = "Primary series") = 0
+#Client's age is more than 5 years
+#   Today's date − "Date of birth" ≥ 5 years
+#Client's HIV status is positive
+#   "HIV status" = "HIV-positive"
+#Client is currently receiving antiretroviral therapy
+#   "Currently on ART" = TRUE
+#Client is immunologically stable
+#   "Immunologically stable" = TRUE
+#Live vaccine was administered in the last four weeks
+#   Today's date − latest "Date and time of vaccination" (where "Live vaccine" = TRUE) < 4 weeks
+#Client is clinically well
+#   "Clinically well" = TRUE
+### Client is not due for BCG vaccination
+### "Immunization recommendation status" = "Not due"
+id: BCG29.7
+birth: -6y
+patient:
+  fhir:
+    gender: female
+observation:
+  hiv:
+    code:
+      code: DE204
+      system: http://smart.who.int/immunizations/CodeSystem/IMMZ.D
+      display: HIV status
+    fhir:
+      effectiveDateTime: -2w
+      valueCodeableConcept:
+        coding:
+          - code: DE205
+            system: http://smart.who.int/immunizations/CodeSystem/IMMZ.D
+            display: HIV-positive
+  art:
+    code:
+      code: DE210
+      system: http://smart.who.int/immunizations/CodeSystem/IMMZ.D
+      display: Currently on ART
+    fhir:
+      effectiveDateTime: -2w
+      valueBoolean: true
+  immstable:
+    code:
+      code: DE249
+      system: http://smart.who.int/immunizations/CodeSystem/IMMZ.D
+      display: Immunologically stable
+    fhir:
+      effectiveDateTime: -2w
+      valueBoolean: false
+  immstable2:
+    code:
+      code: DE249
+      system: http://smart.who.int/immunizations/CodeSystem/IMMZ.D
+      display: Immunologically stable
+    fhir:
+      effectiveDateTime: -1w
+      valueBoolean: true
+  well:
+    code:
+      code: DE250
+      system: http://smart.who.int/immunizations/CodeSystem/IMMZ.D
+      display: Clinically well
+    fhir:
+      effectiveDateTime: -2w
+      valueBoolean: true
+immunization:
+  flu:
+    vaccine:
+      code: XM5V64
+      system: http://id.who.int/icd/release/11/mms
+      display: Influenza vaccines, live attenuated
+    fhir:
+      expirationDate: 1y
+      occurrenceDateTime: -2w
+---
+#No BCG primary series dose was administered
+#   Count of vaccines administered (where "Vaccine type" = "BCG vaccines" and "Type of dose" = "Primary series") = 0
+#Client's age is more than 5 years
+#   Today's date − "Date of birth" ≥ 5 years
+#Client's HIV status is positive
+#   "HIV status" = "HIV-positive"
+#Client is currently not receiving antiretroviral therapy
+#   "Currently on ART" = FALSE
+### Client is not due for BCG vaccination
+### "Immunization recommendation status" = "Not due"
+id: BCG30.4
+birth: -6y
+patient:
+  fhir:
+    gender: female
+observation:
+  hiv:
+    code:
+      code: DE204
+      system: http://smart.who.int/immunizations/CodeSystem/IMMZ.D
+      display: HIV status
+    fhir:
+      effectiveDateTime: -2w
+      valueCodeableConcept:
+        coding:
+          - code: DE205
+            system: http://smart.who.int/immunizations/CodeSystem/IMMZ.D
+            display: HIV-positive
+  art:
+    code:
+      code: DE210
+      system: http://smart.who.int/immunizations/CodeSystem/IMMZ.D
+      display: Currently on ART
+    fhir:
+      effectiveDateTime: -2w
+      valueBoolean: false
+---
+#One BCG primary series dose was administered
+#   Count of vaccines administered (where "Vaccine type" = "BCG vaccines" and "Type of dose" = "Primary series") = 1
+### BCG immunization schedule is complete
+### '"Immunization recommendation status" = "Complete"
+### "Completed the primary vaccination series" = TRUE (where "Vaccine type" = "BCG vaccines")
+id: BCG31.1
+birth: -6y
+patient:
+  fhir:
+    gender: female
+immunization:
+  bcg:
+    vaccine:
+      code: XM8142
+      system: http://id.who.int/icd/release/11/mms
+      display: Tuberculosis, live attenuated vaccines
+    fhir:
+      expirationDate: 1y
+      occurrenceDateTime: -2w
+      protocolApplied:
+        - doseNumberString: "1"
+          seriesDosesString: "1"
+          series: Primary series

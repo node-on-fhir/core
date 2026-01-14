@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useTracker } from 'meteor/react-meteor-data';
 import { useNavigate } from 'react-router-dom';
 
-import { 
+import {
   Grid,
   Container,
   Divider,
@@ -15,10 +15,22 @@ import {
   Box,
   Typography,
   TextField,
-  InputAdornment
+  InputAdornment,
+  ToggleButton,
+  ToggleButtonGroup
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import SearchIcon from '@mui/icons-material/Search';
+import LaunchIcon from '@mui/icons-material/Launch';
+import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
+import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
+import BadgeIcon from '@mui/icons-material/Badge';
+import FingerprintIcon from '@mui/icons-material/Fingerprint';
+import LocationCityIcon from '@mui/icons-material/LocationCity';
+import PeopleIcon from '@mui/icons-material/People';
+import NumbersIcon from '@mui/icons-material/Numbers';
+import WcIcon from '@mui/icons-material/Wc';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 
 import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
@@ -26,6 +38,7 @@ import { Session } from 'meteor/session';
 import { PatientsTable } from '../ui-tables';
 import LayoutHelpers from '../lib/LayoutHelpers.jsx';
 import { Patients } from '../lib/schemas/SimpleSchemas/Patients';
+import LaunchAppsModal from '../components/LaunchAppsModal.jsx';
 
 import { get, has, set } from 'lodash';
 
@@ -68,6 +81,28 @@ export function PatientsDirectory(props){
   const [searchFilter, setSearchFilter] = useState('');
   const [debouncedSearchFilter, setDebouncedSearchFilter] = useState('');
   const searchTimeoutRef = useRef(null);
+  const [launchModalOpen, setLaunchModalOpen] = useState(false);
+  const [launchPatient, setLaunchPatient] = useState(null);
+
+  // Sorting and column visibility state
+  const [sortOrder, setSortOrder] = useState('descending');
+  const [showIdentifier, setShowIdentifier] = useState(false);
+  const [showGender, setShowGender] = useState(true);
+  const [showBirthSex, setShowBirthSex] = useState(false);
+  const [showActive, setShowActive] = useState(false);
+  const [showSystemId, setShowSystemId] = useState(false);
+  const [showFhirId, setShowFhirId] = useState(true);
+  const [showAddress, setShowAddress] = useState(true);
+  const [showDemographics, setShowDemographics] = useState(false);
+
+  // Get theme for dark mode support
+  const useTheme = Meteor.useTheme;
+  const appTheme = useTheme ? useTheme() : { theme: 'light' };
+  const isDark = appTheme.theme === 'dark';
+
+  // Theme-aware colors
+  const cardBgColor = isDark ? '#1e1e1e' : '#ffffff';
+  const cardTextColor = isDark ? 'rgba(255, 255, 255, 0.87)' : 'rgba(0, 0, 0, 0.87)';
 
   // Debounce the search filter to prevent rapid re-subscriptions
   useEffect(() => {
@@ -120,27 +155,29 @@ export function PatientsDirectory(props){
         console.log('Exact ID search query:', query);
       } else {
         // Regex search for other fields
-        const searchRegex = new RegExp(debouncedSearchFilter, 'i');
+        // Use string pattern instead of RegExp object for Meteor subscription serialization
+        const searchPattern = debouncedSearchFilter;
         query = {
           $or: [
-            {'id': {$regex: searchRegex}},
-            {'_id': {$regex: searchRegex}},
-            {'name.text': {$regex: searchRegex}},
-            {'name.0.text': {$regex: searchRegex}},
-            {'name.given': {$regex: searchRegex}},
-            {'name.0.given': {$regex: searchRegex}},
-            {'name.family': {$regex: searchRegex}},
-            {'name.0.family': {$regex: searchRegex}},
-            {'identifier.value': {$regex: searchRegex}},
-            {'identifier.0.value': {$regex: searchRegex}},
-            {'telecom.value': {$regex: searchRegex}},
-            {'telecom.0.value': {$regex: searchRegex}},
-            {'address.city': {$regex: searchRegex}},
-            {'address.0.city': {$regex: searchRegex}},
-            {'address.state': {$regex: searchRegex}},
-            {'address.0.state': {$regex: searchRegex}},
-            {'address.postalCode': {$regex: searchRegex}},
-            {'address.0.postalCode': {$regex: searchRegex}}
+            {'id': {$regex: searchPattern, $options: 'i'}},
+            {'_id': {$regex: searchPattern, $options: 'i'}},
+            {'name.text': {$regex: searchPattern, $options: 'i'}},
+            {'name.0.text': {$regex: searchPattern, $options: 'i'}},
+            {'name.given': {$regex: searchPattern, $options: 'i'}},
+            {'name.0.given': {$regex: searchPattern, $options: 'i'}},
+            {'name.0.given.0': {$regex: searchPattern, $options: 'i'}},
+            {'name.family': {$regex: searchPattern, $options: 'i'}},
+            {'name.0.family': {$regex: searchPattern, $options: 'i'}},
+            {'identifier.value': {$regex: searchPattern, $options: 'i'}},
+            {'identifier.0.value': {$regex: searchPattern, $options: 'i'}},
+            {'telecom.value': {$regex: searchPattern, $options: 'i'}},
+            {'telecom.0.value': {$regex: searchPattern, $options: 'i'}},
+            {'address.city': {$regex: searchPattern, $options: 'i'}},
+            {'address.0.city': {$regex: searchPattern, $options: 'i'}},
+            {'address.state': {$regex: searchPattern, $options: 'i'}},
+            {'address.0.state': {$regex: searchPattern, $options: 'i'}},
+            {'address.postalCode': {$regex: searchPattern, $options: 'i'}},
+            {'address.0.postalCode': {$regex: searchPattern, $options: 'i'}}
           ]
         };
       }
@@ -148,28 +185,21 @@ export function PatientsDirectory(props){
     
     // Choose the appropriate publication based on configuration
     let handle;
+    console.log('PatientsDirectory - autoPublishEnabled:', autoPublishEnabled);
+    console.log('PatientsDirectory - query keys:', Object.keys(query).length);
+    console.log('PatientsDirectory - full query:', JSON.stringify(query, null, 2));
+
     if(autoPublishEnabled){
-      // Use autopublish if enabled (development mode)
+      // Use autopublish if explicitly enabled via settings
+      // This bypasses ACL - only use for development when needed
       console.log('Using autopublish.Patients with query:', JSON.stringify(query));
       handle = Meteor.subscribe('autopublish.Patients', query, { limit: 1000 });
     } else {
-      // Use the proper authenticated publication
-      const isDevelopment = get(Meteor, 'settings.public.environment') === 'development' || !get(Meteor, 'settings.public.environment');
-      
-      if (isDevelopment) {
-        // In development, use patients.all for simplicity if no search
-        if (Object.keys(query).length === 0) {
-          console.log('Using patients.all publication (development)');
-          handle = Meteor.subscribe('patients.all');
-        } else {
-          console.log('Using patients.search publication with query:', JSON.stringify(query));
-          handle = Meteor.subscribe('patients.search', query, { limit: 1000 });
-        }
-      } else {
-        // In production, always use patients.search with authentication
-        console.log('Using patients.search publication with query:', JSON.stringify(query));
-        handle = Meteor.subscribe('patients.search', query, { limit: 1000 });
-      }
+      // Always use patients.search which has role-based ACL
+      // - Practitioners: full access (configurable)
+      // - Patients: only see their own record
+      console.log('Using patients.search publication with query:', JSON.stringify(query));
+      handle = Meteor.subscribe('patients.search', query, { limit: 1000 });
     }
     
     return !handle.ready();
@@ -337,6 +367,7 @@ export function PatientsDirectory(props){
           };
         } else {
           // Regex search for other fields
+          // Client-side query can use RegExp objects directly
           const searchRegex = new RegExp(debouncedSearchFilter, 'i');
           query = {
             $or: [
@@ -346,6 +377,7 @@ export function PatientsDirectory(props){
               {'name.0.text': {$regex: searchRegex}},
               {'name.given': {$regex: searchRegex}},
               {'name.0.given': {$regex: searchRegex}},
+              {'name.0.given.0': {$regex: searchRegex}},
               {'name.family': {$regex: searchRegex}},
               {'name.0.family': {$regex: searchRegex}},
               {'identifier.value': {$regex: searchRegex}},
@@ -362,7 +394,8 @@ export function PatientsDirectory(props){
           };
         }
       }
-      
+
+      console.log('PatientsDirectory client-side query:', JSON.stringify(query));
       return Patients.find(query, { sort: { _id: -1 } }).fetch();
     }
   }, [debouncedSearchFilter])
@@ -417,17 +450,88 @@ export function PatientsDirectory(props){
             </Typography>
           </Grid>
           <Grid item>
-            <Button
-              variant="contained"
-              color="primary"
-              startIcon={<AddIcon />}
-              onClick={handleAddPatient}
-            >
-              Add Patient
-            </Button>
+            <Box display="flex" gap={2} alignItems="center">
+              <ToggleButtonGroup
+                value={sortOrder}
+                exclusive
+                onChange={function(event, newOrder) {
+                  if (newOrder !== null) {
+                    setSortOrder(newOrder);
+                  }
+                }}
+                aria-label="sort order"
+                size="small"
+              >
+                <ToggleButton value="ascending" aria-label="ascending order">
+                  <ArrowUpwardIcon />
+                </ToggleButton>
+                <ToggleButton value="descending" aria-label="descending order">
+                  <ArrowDownwardIcon />
+                </ToggleButton>
+              </ToggleButtonGroup>
+
+              <ToggleButtonGroup
+                value={[
+                  showIdentifier && 'identifier',
+                  showGender && 'gender',
+                  showBirthSex && 'birthSex',
+                  showActive && 'active',
+                  showSystemId && 'systemId',
+                  showFhirId && 'fhirId',
+                  showAddress && 'address',
+                  showDemographics && 'demographics'
+                ].filter(Boolean)}
+                onChange={function(event, newFormats) {
+                  setShowIdentifier(newFormats.includes('identifier'));
+                  setShowGender(newFormats.includes('gender'));
+                  setShowBirthSex(newFormats.includes('birthSex'));
+                  setShowActive(newFormats.includes('active'));
+                  setShowSystemId(newFormats.includes('systemId'));
+                  setShowFhirId(newFormats.includes('fhirId'));
+                  setShowAddress(newFormats.includes('address'));
+                  setShowDemographics(newFormats.includes('demographics'));
+                }}
+                aria-label="column visibility"
+                size="small"
+              >
+                <ToggleButton value="identifier" aria-label="show identifier">
+                  <NumbersIcon />
+                </ToggleButton>
+                <ToggleButton value="gender" aria-label="show gender">
+                  <span style={{ fontSize: '1.25rem', lineHeight: 1 }}>⚤</span>
+                </ToggleButton>
+                <ToggleButton value="birthSex" aria-label="show birth sex">
+                  <WcIcon />
+                </ToggleButton>
+                <ToggleButton value="active" aria-label="show active status">
+                  <CheckCircleIcon />
+                </ToggleButton>
+                <ToggleButton value="systemId" aria-label="show system ID">
+                  <BadgeIcon />
+                </ToggleButton>
+                <ToggleButton value="fhirId" aria-label="show FHIR ID">
+                  <FingerprintIcon />
+                </ToggleButton>
+                <ToggleButton value="address" aria-label="show address columns">
+                  <LocationCityIcon />
+                </ToggleButton>
+                <ToggleButton value="demographics" aria-label="show demographics">
+                  <PeopleIcon />
+                </ToggleButton>
+              </ToggleButtonGroup>
+
+              <Button
+                variant="contained"
+                color="primary"
+                startIcon={<AddIcon />}
+                onClick={handleAddPatient}
+              >
+                Add Patient
+              </Button>
+            </Box>
           </Grid>
         </Grid>
-        
+
         <Box mt={3}>
           <TextField
             id="patientSearchInput"
@@ -447,16 +551,22 @@ export function PatientsDirectory(props){
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
-                  <SearchIcon />
+                  <SearchIcon sx={{ color: cardTextColor }} />
                 </InputAdornment>
               ),
             }}
             sx={{
-              backgroundColor: 'background.paper',
+              backgroundColor: cardBgColor,
+              '& .MuiInputBase-root': { color: cardTextColor },
+              '& .MuiInputBase-input': { color: cardTextColor },
+              '& .MuiInputBase-input::placeholder': {
+                color: isDark ? 'rgba(255, 255, 255, 0.5)' : 'rgba(0, 0, 0, 0.5)',
+                opacity: 1
+              },
               '& .MuiOutlinedInput-root': {
                 borderRadius: 2,
                 '& fieldset': {
-                  borderColor: 'divider',
+                  borderColor: isDark ? 'rgba(255, 255, 255, 0.23)' : 'rgba(0, 0, 0, 0.23)',
                 },
                 '&:hover fieldset': {
                   borderColor: 'primary.main',
@@ -471,14 +581,25 @@ export function PatientsDirectory(props){
 
   let layoutContent;
   if(data.patients.length > 0){
-    layoutContent = <Card 
-      sx={{ 
+    layoutContent = <Card
+      sx={{
         width: '100%',
         borderRadius: 3,
         boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
         border: '1px solid',
         borderColor: 'divider',
-        overflow: 'hidden'
+        overflow: 'hidden',
+        bgcolor: cardBgColor,
+        color: cardTextColor,
+        '& .MuiTableCell-root': {
+          color: cardTextColor,
+          borderColor: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.12)'
+        },
+        '& .MuiTableCell-head': {
+          backgroundColor: isDark ? '#2a2a2a' : '#f5f5f5',
+          color: cardTextColor,
+          fontWeight: 600
+        }
       }}
     >
       <CardContent sx={{ p: 0 }}>
@@ -537,6 +658,24 @@ export function PatientsDirectory(props){
           page={data.patientsIndex}
           logger={window.logger ? window.logger : null}
           size="medium"
+          onLaunchClick={function(patient){
+            console.log('Launch clicked for patient:', patient);
+            setLaunchPatient(patient);
+            setLaunchModalOpen(true);
+          }}
+          order={sortOrder}
+          hideIdentifier={!showIdentifier}
+          hideGender={!showGender}
+          hideBirthSex={!showBirthSex}
+          hideActive={!showActive}
+          hideSystemBarcode={!showSystemId}
+          hideFhirBarcode={!showFhirId}
+          hideCity={!showAddress}
+          hideState={!showAddress}
+          hidePostalCode={!showAddress}
+          hideCountry={!showAddress}
+          hideMaritalStatus={!showDemographics}
+          hideLanguage={!showDemographics}
         />
       </CardContent>
     </Card>
@@ -626,6 +765,13 @@ export function PatientsDirectory(props){
         { renderHeader() }
         { layoutContent }
       </Box>
+
+      {/* Launch Apps Modal */}
+      <LaunchAppsModal
+        open={launchModalOpen}
+        onClose={function() { setLaunchModalOpen(false); }}
+        patient={launchPatient}
+      />
     </Box>
   );
 }

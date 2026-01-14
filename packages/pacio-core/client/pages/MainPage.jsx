@@ -4,7 +4,6 @@ import React, { useState, useEffect } from 'react';
 import { Meteor } from 'meteor/meteor';
 import { useTracker } from 'meteor/react-meteor-data';
 import { useSubscribe } from 'meteor/react-meteor-data';
-import { useNavigate } from 'react-router-dom';
 import { get } from 'lodash';
 import moment from 'moment';
 import {
@@ -71,9 +70,15 @@ import {
   LocalPharmacy as LocalPharmacyIcon
 } from '@mui/icons-material';
 import { Beds } from '../../lib/collections/BedsCollection';
-import { Communications } from '/imports/lib/schemas/SimpleSchemas/Communications';
 import { SearchPatientsModalDialog } from '../components/SearchPatientsModalDialog';
 import LocationMap from '../components/LocationMap';
+
+// Access Communications from global namespace (initialized by main app)
+// Packages cannot directly import from /imports/ with Meteor 3 + RSPack
+let Communications;
+if (Meteor.isClient) {
+  Communications = window.Communications || get(Meteor, 'Collections.Communications');
+}
 
 // Inspirational quotes for healthcare
 const inspirationalQuotes = [
@@ -112,7 +117,20 @@ const inspirationalQuotes = [
 ];
 
 export function MainPage() {
-  const navigate = useNavigate();
+  // Access useNavigate from Meteor object (packages can't directly import from react-router-dom)
+  const useNavigate = Meteor.useNavigate;
+  const navigate = useNavigate ? useNavigate() : () => console.warn('useNavigate not available');
+
+  // Get Honeycomb theme for dark mode support
+  const useAppTheme = Meteor.useTheme;
+  const appTheme = useAppTheme ? useAppTheme() : { theme: 'light' };
+  const isDark = appTheme.theme === 'dark';
+
+  // Theme-aware colors for cards and papers
+  const cardBgColor = isDark ? '#1e1e1e' : '#ffffff';
+  const cardTextColor = isDark ? 'rgba(255, 255, 255, 0.87)' : 'rgba(0, 0, 0, 0.87)';
+  const paperBgColor = isDark ? '#2a2a2a' : '#f5f5f5';
+
   const [selectedFilter, setSelectedFilter] = useState('all');
   const [bedStatusHeight, setBedStatusHeight] = useState(600);
   const [patientModalOpen, setPatientModalOpen] = useState(false);
@@ -499,15 +517,21 @@ export function MainPage() {
   }
 
   return (
-    <Box sx={{ p: 2, height: '100vh', overflow: 'hidden', bgcolor: theme => theme.palette.mode === 'light' ? theme.palette.grey[50] : theme.palette.background.default }}>
+    <Box sx={{ p: 2, minHeight: '100vh', overflow: 'hidden' }}>
       {/* Header */}
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
         <Box>
-          <Typography variant="h4" component="h1">
+          <Typography variant="h4" component="h1" sx={{ color: cardTextColor }}>
             {facilityData.facility.name}
           </Typography>
-          <Typography variant="body2" color="textSecondary">
-            <LocationOnIcon fontSize="small" sx={{ verticalAlign: 'middle', mr: 0.5 }} />
+          <Typography variant="body2" sx={{
+            color: isDark ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)'
+          }}>
+            <LocationOnIcon fontSize="small" sx={{
+              verticalAlign: 'middle',
+              mr: 0.5,
+              color: isDark ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)'
+            }} />
             {facilityData.facility.address}
           </Typography>
         </Box>
@@ -543,7 +567,14 @@ export function MainPage() {
       {userId && (
         <Grid container spacing={2} mb={2}>
         <Grid item xs={6} sm={3}>
-          <Card>
+          <Card sx={{
+            bgcolor: cardBgColor,
+            color: cardTextColor,
+            '& .MuiTypography-root': { color: cardTextColor },
+            '& .MuiTypography-body2': {
+              color: isDark ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)'
+            }
+          }}>
             <CardContent sx={{ p: 2 }}>
               <Box display="flex" alignItems="center" justifyContent="space-between">
                 <Box>
@@ -560,7 +591,14 @@ export function MainPage() {
           </Card>
         </Grid>
         <Grid item xs={6} sm={3}>
-          <Card>
+          <Card sx={{
+            bgcolor: cardBgColor,
+            color: cardTextColor,
+            '& .MuiTypography-root': { color: cardTextColor },
+            '& .MuiTypography-body2': {
+              color: isDark ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)'
+            }
+          }}>
             <CardContent sx={{ p: 2 }}>
               <Box display="flex" alignItems="center" justifyContent="space-between">
                 <Box>
@@ -577,7 +615,14 @@ export function MainPage() {
           </Card>
         </Grid>
         <Grid item xs={6} sm={3}>
-          <Card>
+          <Card sx={{
+            bgcolor: cardBgColor,
+            color: cardTextColor,
+            '& .MuiTypography-root': { color: cardTextColor },
+            '& .MuiTypography-body2': {
+              color: isDark ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)'
+            }
+          }}>
             <CardContent sx={{ p: 2 }}>
               <Box display="flex" alignItems="center" justifyContent="space-between">
                 <Box>
@@ -596,7 +641,14 @@ export function MainPage() {
           </Card>
         </Grid>
         <Grid item xs={6} sm={3}>
-          <Card>
+          <Card sx={{
+            bgcolor: cardBgColor,
+            color: cardTextColor,
+            '& .MuiTypography-root': { color: cardTextColor },
+            '& .MuiTypography-body2': {
+              color: isDark ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)'
+            }
+          }}>
             <CardContent sx={{ p: 2 }}>
               <Box display="flex" alignItems="center" justifyContent="space-between">
                 <Box>
@@ -634,7 +686,17 @@ export function MainPage() {
       <Grid container spacing={2}>
         {/* Bed Status Cards */}
         <Grid item xs={12} md={8}>
-          <Paper sx={{ p: 2, height: `${bedStatusHeight}px`, overflow: 'auto' }}>
+          <Paper sx={{
+            p: 2,
+            height: `${bedStatusHeight}px`,
+            overflow: 'auto',
+            bgcolor: paperBgColor,
+            color: cardTextColor,
+            '& .MuiTypography-root': { color: cardTextColor },
+            '& .MuiTypography-body2': {
+              color: isDark ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)'
+            }
+          }}>
             <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
               <Typography variant="h6">
                 Bed Status {userId && filteredBeds ? `(${filteredBeds.length} beds)` : ''}
@@ -676,11 +738,17 @@ export function MainPage() {
                 
                 return (
                 <Grid item xs={12} key={bed._id || bed.bedId}>
-                  <Card 
-                    variant="outlined" 
-                    sx={{ 
+                  <Card
+                    variant="outlined"
+                    sx={{
                       borderLeft: bed.status === 'occupied' ? `4px solid ${getAcuityColor(bed.acuityLevel || 'Stable')}` : theme => `4px solid ${theme.palette.divider}`,
-                      '&:hover': { boxShadow: 2 }
+                      '&:hover': { boxShadow: 2 },
+                      bgcolor: cardBgColor,
+                      color: cardTextColor,
+                      '& .MuiTypography-root': { color: cardTextColor },
+                      '& .MuiTypography-body2': {
+                        color: isDark ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)'
+                      }
                     }}
                   >
                     <CardContent>
@@ -910,7 +978,13 @@ export function MainPage() {
             {/* Map View - Only show if API key is available */}
             {hasMapApiKey && (
               <Grid item xs={12}>
-                <Paper sx={{ p: 2, height: `${(bedStatusHeight - 10) / 2}px` }}>
+                <Paper sx={{
+                  p: 2,
+                  height: `${(bedStatusHeight - 10) / 2}px`,
+                  bgcolor: paperBgColor,
+                  color: cardTextColor,
+                  '& .MuiTypography-root': { color: cardTextColor }
+                }}>
                   <Typography variant="h6" gutterBottom>
                     {customMapConfig ? customMapConfig.defaultProps?.title || 'Lunar Surface Map' : 'Facility Location'}
                   </Typography>
@@ -956,7 +1030,17 @@ export function MainPage() {
             {/* Recent Alerts - Only show if authenticated */}
             {userId && (
               <Grid item xs={12}>
-              <Paper sx={{ p: 2, height: hasMapApiKey ? `${(bedStatusHeight - 10) / 2}px` : `${bedStatusHeight}px`, overflow: 'auto' }}>
+              <Paper sx={{
+                p: 2,
+                height: hasMapApiKey ? `${(bedStatusHeight - 10) / 2}px` : `${bedStatusHeight}px`,
+                overflow: 'auto',
+                bgcolor: paperBgColor,
+                color: cardTextColor,
+                '& .MuiTypography-root': { color: cardTextColor },
+                '& .MuiListItemText-root': {
+                  '& .MuiTypography-root': { color: cardTextColor }
+                }
+              }}>
                 <Typography variant="h6" gutterBottom>
                   Recent Alerts
                 </Typography>
@@ -992,11 +1076,11 @@ export function MainPage() {
                   alignItems: 'center',
                   justifyContent: 'center'
                 }}>
-                  <Typography 
-                    variant="h6" 
-                    sx={{ 
+                  <Typography
+                    variant="h6"
+                    sx={{
                       fontStyle: 'italic',
-                      color: 'text.secondary',
+                      color: isDark ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)',
                       textAlign: 'center',
                       maxWidth: 500,
                       mb: 2,
@@ -1008,10 +1092,10 @@ export function MainPage() {
                   >
                     "{inspirationalQuotes[currentQuoteIndex].text}"
                   </Typography>
-                  <Typography 
-                    variant="body2" 
-                    sx={{ 
-                      color: 'text.disabled',
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      color: isDark ? 'rgba(255, 255, 255, 0.4)' : 'rgba(0, 0, 0, 0.4)',
                       textAlign: 'center',
                       transition: 'opacity 0.5s ease-in-out',
                       opacity: 1

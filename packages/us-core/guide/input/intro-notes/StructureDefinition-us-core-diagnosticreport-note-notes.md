@@ -1,0 +1,1 @@
+{% include diagnosticreport-quickstart.md system="http://loinc.org" category="LP29708-2" code="http://loinc.org\|45033-8" %} 

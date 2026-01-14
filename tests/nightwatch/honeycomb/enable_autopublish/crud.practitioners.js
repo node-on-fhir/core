@@ -1,6 +1,7 @@
 // tests/nightwatch/honeycomb/enable_autopublish/crud.practitioners.js
 
 const testUtils = require('./shared-test-utils');
+const loginHelper = require('../../helpers/login-helper');
 
 describe('Practitioners CRUD Operations', function() {
   const timestamp = Date.now();
@@ -50,69 +51,18 @@ describe('Practitioners CRUD Operations', function() {
         window.testTimestamp = ts;
       }, [timestamp]);
 
-    // Check if we're logged in
-    browser.execute(function() {
-      return {
-        isLoggedIn: typeof Meteor !== 'undefined' && !!Meteor.userId(),
-        userId: Meteor.userId ? Meteor.userId() : null,
-        username: Meteor.user ? (Meteor.user() ? Meteor.user().username : null) : null
-      };
-    }, [], function(result) {
-      console.log('Initial login state:', result.value);
-      
-      if (!result.value.isLoggedIn) {
-        console.log('Not logged in, attempting programmatic login...');
-        
-        browser.executeAsync(function(done) {
-          if (typeof Meteor !== 'undefined') {
-            Meteor.call('test.createTestUser', {
-              username: 'janedoe',
-              email: 'janedoe@test.org',
-              password: 'janedoe123'
-            }, function(err, userId) {
-              if (err) {
-                console.error('Failed to create test user:', err);
-                done({ userCreated: false, error: err.message });
-              } else {
-                console.log('Test user ready, userId:', userId);
-                Meteor.loginWithPassword('janedoe', 'janedoe123', function(loginErr) {
-                  if (loginErr) {
-                    console.error('Login failed:', loginErr);
-                    done({ userCreated: true, loginSuccess: false, error: loginErr.message });
-                  } else {
-                    console.log('Login successful');
-                    done({ 
-                      userCreated: true,
-                      loginSuccess: true, 
-                      userId: Meteor.userId(), 
-                      username: Meteor.user() ? Meteor.user().username : null 
-                    });
-                  }
-                });
-              }
-            });
-          } else {
-            done({ userCreated: false, loginSuccess: false, error: 'Meteor not available' });
-          }
-        }, [], function(result) {
-          if (result.value.loginSuccess) {
-            browser.assert.ok(true, 'Successfully created test user and logged in');
-            console.log('Logged in as:', result.value.username, 'userId:', result.value.userId);
-          } else {
-            browser.assert.fail('Setup failed: ' + result.value.error);
-          }
-        });
-        
-        browser.pause(1000);
+    // Use login helper with built-in retry logic and null checks
+    loginHelper.ensureLoggedIn(browser, function(isLoggedIn) {
+      if (!isLoggedIn) {
+        browser.assert.fail('Failed to ensure user is logged in');
       } else {
-        browser.assert.ok(true, 'Already logged in (autologin enabled)');
-        console.log('Already logged in as:', result.value.username, 'userId:', result.value.userId);
+        browser.assert.ok(true, 'User is logged in');
       }
-      
+
       // Clean up any existing test data
       browser.executeAsync(function(done) {
         if (typeof Practitioners !== 'undefined') {
-          const testPractitioners = Practitioners.find({ 
+          const testPractitioners = Practitioners.find({
             $or: [
               { 'name.0.family': { $regex: 'Practitioner.*' } },
               { 'identifier.0.value': { $regex: 'NPI.*' } }
@@ -125,7 +75,7 @@ describe('Practitioners CRUD Operations', function() {
         }
         done();
       });
-      
+
       // Create a test patient for practitioner association
       testUtils.createTestPatient(browser, {
         name: 'John Doe',
@@ -149,22 +99,24 @@ describe('Practitioners CRUD Operations', function() {
           }, [result.result]);
         }
       });
-      
+
       browser.pause(1000);
     });
   });
 
   it('02. Verify practitioners list page loads', browser => {
+    // CRITICAL: Use testUtils.navigateUrl instead of browser.url to preserve Session
+    testUtils.navigateUrl(browser, '/practitioners');
+
     browser
-      .url('http://localhost:3000/practitioners')
-      .waitForElementVisible('#practitionersPage', 5000)
+      .waitForElementVisible('#practitionersPage', 10000)
       .pause(1000)
       .execute(function() {
         const hasTable = document.querySelector('#practitionersTable') !== null;
         const hasNoDataCard = document.querySelector('.no-data-card') !== null ||
                             document.querySelector('.no-data-available') !== null ||
                             document.querySelector('[id*="no-data"]') !== null ||
-                            (document.querySelector('#practitionersPage') && 
+                            (document.querySelector('#practitionersPage') &&
                              document.querySelector('#practitionersPage').textContent.includes('No Data Available'));
         return {
           hasTable: hasTable,
@@ -172,6 +124,11 @@ describe('Practitioners CRUD Operations', function() {
           hasEitherElement: hasTable || hasNoDataCard
         };
       }, [], function(result) {
+        // ADD NULL CHECK - execute can return null
+        if (!result || !result.value) {
+          browser.assert.fail('Failed to check practitioners page state - execute returned null');
+          return;
+        }
         browser.assert.equal(result.value.hasEitherElement, true, 'Either practitioners table or no-data message is present');
       })
       .saveScreenshot('tests/nightwatch/screenshots/practitioners/02-practitioners-list.png');
@@ -319,9 +276,9 @@ describe('Practitioners CRUD Operations', function() {
         browser.assert.equal(result.value, true, 'Clicked Save button');
       });
 
-    // Debug: Check current URL and page state after save
+    // Check post-save state and handle navigation
     browser
-      .pause(2000)  // Give more time for navigation
+      .pause(2000)  // Give time for navigation
       .execute(function() {
         const currentUrl = window.location.pathname;
         const hasPractitionersPage = document.querySelector('#practitionersPage') !== null;
@@ -331,7 +288,7 @@ describe('Practitioners CRUD Operations', function() {
         errorElements.forEach(el => {
           if (el.textContent) errorText += el.textContent + ' ';
         });
-        
+
         return {
           url: currentUrl,
           hasPractitionersPage: hasPractitionersPage,
@@ -341,13 +298,24 @@ describe('Practitioners CRUD Operations', function() {
         };
       }, [], function(result) {
         console.log('Post-save state:', result.value);
+
+        // If there's an error, fail immediately
         if (result.value.hasError) {
           browser.assert.fail(`Save failed with error: ${result.value.errorText}`);
         }
+
+        // If still on detail page (navigation didn't happen), force navigation
+        if (result.value.hasPractitionerDetail && !result.value.hasPractitionersPage) {
+          console.log('Navigation did not occur automatically, using fallback navigation');
+          // Use testUtils.navigateUrl for standardized navigation handling
+          testUtils.navigateUrl(browser, '/practitioners');
+          browser.pause(2000); // Wait longer for navigation + component mount
+        }
       });
 
+    // NOW wait for the page - increased timeout for CI environments
     browser
-      .waitForElementVisible('#practitionersPage', 5000)
+      .waitForElementVisible('#practitionersPage', 10000) // Increased from 5s to 10s
       .saveScreenshot('tests/nightwatch/screenshots/practitioners/05-practitioner-saved.png');
     
     // Capture the ID of the newly created practitioner
@@ -457,9 +425,9 @@ describe('Practitioners CRUD Operations', function() {
       .assert.valueContains('#npiInput', testPractitioner.npiIdentifier)
       .saveScreenshot('tests/nightwatch/screenshots/practitioners/07-view-practitioner-details.png');
     
-    // Navigate back to practitioners list
+    // Navigate back to practitioners list using client-side navigation
+    testUtils.navigateUrl(browser, '/practitioners');
     browser
-      .url('http://localhost:3000/practitioners')
       .waitForElementVisible('#practitionersPage', 5000);
   });
 
@@ -549,8 +517,10 @@ describe('Practitioners CRUD Operations', function() {
       });
 
     browser
-      .pause(1000)
-      .url('http://localhost:3000/practitioners')
+      .pause(1000);
+    // Use client-side navigation to preserve Meteor/Session state
+    testUtils.navigateUrl(browser, '/practitioners');
+    browser
       .waitForElementVisible('#practitionersTable', 5000)
       .saveScreenshot('tests/nightwatch/screenshots/practitioners/09-practitioner-updated.png');
   });

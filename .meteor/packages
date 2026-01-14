@@ -33,11 +33,23 @@ accounts-base
 mdg:validated-method
 fetch
 
+## Base EHR
+# clinical:reference-app
+# clinical:us-core
+# clinical:family-health-history
+# clinical:order-catalog
+# clinical:pacio-core
+# clinical:hipaa-compliance
+# clinical:implantable-devices
+# clinical:drug-interactions
+
+
+## Miscellaneous
+# clinical:pacio-core
 # clinical:data-importer
 # clinical:data-exporter
-# clinical:pacio-core
-# clinical:request-for-corrections
 # clinical:international-patient-summary
+# clinical:request-for-corrections
 # clinical:synthea
 # clinical:patient-matching
 # clinical:structured-data-capture
@@ -46,21 +58,31 @@ fetch
 # symptomatic:symptom-tracking
 # symptomatic:mcp
 
-# trialx:hermes-tooling
-
-# clinical:vital-signs
-# clinical:checklist-manifesto
-# clinical:clinical-documents
-# clinical:consent-generator
-# clinical:cqm-reporting
-# clinical:deqm
-# clinical:direct-messaging
-# clinical:drug-interactions
-# clinical:healthcare-surveys
-# clinical:lab-order-entry
-# clinical:order-catalog
-# clinical:patient-matching
+# clinical:secure-messaging
 # clinical:request-for-corrections
-# clinical:provider-directory
-# clinical:saner
-# clinical:workqueues  
+# clinical:ccda-export
+# clinical:e-prescribing
+# clinical:quality-measures
+# clinical:clinical-lists
+# clinical:drug-formulary
+# clinical:syndromic-surveillance
+# clinical:social-determinants
+# clinical:structured-data-capture
+# clinical:case-reporting
+# linical:cancer-registry-reporting
+# clinical:lab-test-reporting
+# clinical:immunization-registry
+# clinical:antimicrobial-reporting
+# clinical:accounts-management
+# clinical:multi-factor-auth
+# clinical:patient-matching
+
+
+# US Core 7.0.0 profiles for CapabilityStatement (ONC g(10) certification)
+
+rspack@1.0.0-beta340.12
+
+
+
+
+

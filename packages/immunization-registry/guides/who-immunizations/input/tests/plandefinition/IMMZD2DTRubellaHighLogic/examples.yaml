@@ -1,0 +1,69 @@
+---
+#2. Client's age is less than 9 months
+#   Today's date − "Date of birth" < 9 months
+### Client is not due for rubella vaccination
+### "Immunization recommendation status" = "Not due"
+id: "08.2"
+birth: -8m
+patient:
+  fhir:
+    gender: female
+---
+#1. No rubella primary series dose was administered
+#   Count of vaccines administered (where "Vaccine type" = "Rubella-containing vaccines" and "Type of dose" = "Primary series") = 0
+#2. Client's age is more than or equal to 9 months
+#   Today's date − "Date of birth" ≥ 9 months
+#3. No live vaccine was administered in the last 4 weeks
+#   Today's date − latest "Date and time of vaccination" (where "Live vaccine" = TRUE) ≥ 4 weeks
+### Client is due for rubella vaccination
+### "Immunization recommendation status" = "Due"
+id: "09.123"
+birth: -9m
+patient:
+  fhir:
+    gender: female
+---
+#1. No rubella primary series dose was administered
+#2. Client's age is more than or equal to 9 months
+#3. Live vaccine was administered in the last 4 weeks
+#   Today's date − latest "Date and time of vaccination" (where "Live vaccine" = TRUE) < 4 weeks
+### Client is not due for rubella vaccination
+### "Immunization recommendation status" = "Not due"
+id: "10.123"
+birth: -9m
+patient:
+  fhir:
+    gender: female
+immunization:
+  flu:
+    vaccine:
+      code: XM5V64
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Influenza vaccines, live attenuated"
+    fhir:
+      expirationDate: 1y
+      occurrenceDateTime: -2w
+---
+#1. One rubella primary series dose was administered
+#   Count of vaccines administered (where "Vaccine type" = "Rubella-containing vaccines" and "Type of dose" = "Primary series") = 1
+### Rubella immunization schedule is complete
+### "Immunization recommendation status" = "Complete"
+### "Completed the primary vaccination series" = TRUE (where "Vaccine type" = "Rubella-containing vaccines")
+id: "11.1"
+birth: -10m
+patient:
+  fhir:
+    gender: female
+immunization:
+  rubella:
+    vaccine:
+      code: XM7PP1
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Rubella vaccine"
+    fhir:
+      expirationDate: 1y
+      occurrenceDateTime: -1m
+      protocolApplied:
+        - doseNumberString: "1"
+          seriesDosesString: "1"
+          series: "Primary series"

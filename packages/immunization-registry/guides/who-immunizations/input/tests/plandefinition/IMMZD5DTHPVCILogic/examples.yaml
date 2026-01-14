@@ -1,0 +1,50 @@
+---
+#0. The client is currently pregnant
+#   "Potential contraindications" = "Currently pregnant"
+### Human papillomavirus (HPV) vaccination is contraindicated
+### "Immunization recommendation status" = "Contraindicated"
+id: "45.0"
+birth: -25y
+patient:
+  fhir:
+    gender: female
+contraindication:
+  currentlypregnant:
+    code: DE162
+    display: "Currently pregnant"
+    effectiveDateTime: -2m
+medicationrequest:
+  hpv:
+    medication:
+      code: XM9QP0
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Papillomavirus vaccine"
+    fhir:
+      authoredOn: 0d
+      status: draft
+      intent: proposal
+---
+#0. The client has history of severe allergic reactions
+#   "Potential contraindications" = "Severe allergic reactions"
+### HPV vaccination could be contraindicated. Clinical judgement is required. Create a clinical note
+### "Immunization recommendation status" = "Further evaluation needed"
+id: "46.0"
+birth: -13y
+patient:
+  fhir:
+    gender: female
+contraindication:
+  severeallergicreactions:
+    code: DE167
+    display: "Severe allergic reactions"
+    effectiveDateTime: -1d
+medicationrequest:
+  hpv:
+    medication:
+      code: XM9QP0
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Papillomavirus vaccine"
+    fhir:
+      authoredOn: 0d
+      status: draft
+      intent: proposal

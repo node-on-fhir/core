@@ -46,6 +46,14 @@ import { Observations } from '../lib/schemas/SimpleSchemas/Observations';
 
 import { ResponsiveLine } from '@nivo/line'
 
+// Get theme from Honeycomb's custom hook
+let useAppTheme;
+if (Meteor.isClient) {
+  Meteor.startup(function(){
+    useAppTheme = Meteor.useTheme;
+  });
+}
+
 // Helper functions to replace clinical:hl7-fhir-data-infrastructure components
 function DynamicSpacer() {
   return <div style={{ height: 20 }} />;
@@ -61,9 +69,16 @@ function calcCanvasPaddingWidth() {
 
 function NoDataWrapper({ dataCount, noDataImagePath, history, title, buttonLabel, redirectPath }) {
   const navigate = useNavigate();
-  
+  const appTheme = useAppTheme ? useAppTheme() : { theme: 'light' };
+  const isDark = appTheme.theme === 'dark';
+
+  // Theme-aware colors
+  const cardBgColor = isDark ? '#1e1e1e' : '#ffffff';
+  const cardTextColor = isDark ? 'rgba(255, 255, 255, 0.87)' : 'rgba(0, 0, 0, 0.87)';
+  const borderColor = isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.12)';
+
   return (
-    <Box 
+    <Box
       sx={{
         display: 'flex',
         flexDirection: 'column',
@@ -73,33 +88,33 @@ function NoDataWrapper({ dataCount, noDataImagePath, history, title, buttonLabel
         textAlign: 'center'
       }}
     >
-      <Card 
-        sx={{ 
+      <Card
+        sx={{
           maxWidth: '600px',
           width: '100%',
           borderRadius: 3,
-          boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+          boxShadow: isDark ? '0 2px 8px rgba(0,0,0,0.3)' : '0 2px 8px rgba(0,0,0,0.08)',
           border: '1px solid',
-          borderColor: 'divider',
-          backgroundColor: 'background.paper'
+          borderColor: borderColor,
+          bgcolor: cardBgColor
         }}
       >
         <CardContent sx={{ p: 6 }}>
           <Box sx={{ mb: 3 }}>
-            <Typography 
-              variant="h5" 
-              sx={{ 
+            <Typography
+              variant="h5"
+              sx={{
                 fontWeight: 500,
-                color: 'text.primary',
+                color: cardTextColor,
                 mb: 2
               }}
             >
               {title}
             </Typography>
-            <Typography 
-              variant="body1" 
-              sx={{ 
-                color: 'text.secondary',
+            <Typography
+              variant="body1"
+              sx={{
+                color: isDark ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)',
                 lineHeight: 1.7,
                 maxWidth: '480px',
                 mx: 'auto'
@@ -108,8 +123,8 @@ function NoDataWrapper({ dataCount, noDataImagePath, history, title, buttonLabel
               Please select a patient to view biomarker data.
             </Typography>
           </Box>
-          <Button 
-            variant="contained" 
+          <Button
+            variant="contained"
             color="primary"
             size="large"
             startIcon={<GroupIcon />}
@@ -138,14 +153,23 @@ function NoDataWrapper({ dataCount, noDataImagePath, history, title, buttonLabel
 
 export function BiomarkerChartingPage(props){
   const navigate = useNavigate();
-  
+
   // State management
   const [timescale, setTimescale] = useState(0);
   const [selectedCodes, setSelectedCodes] = useState([]);
   const [codeAnalysis, setCodeAnalysis] = useState(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
-  
+
+  // Get current theme
+  const appTheme = useAppTheme ? useAppTheme() : { theme: 'light' };
+  const isDark = appTheme.theme === 'dark';
+
+  // Theme-aware colors
+  const cardBgColor = isDark ? '#1e1e1e' : '#ffffff';
+  const cardTextColor = isDark ? 'rgba(255, 255, 255, 0.87)' : 'rgba(0, 0, 0, 0.87)';
+  const borderColor = isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.12)';
+
   // Layout calculations
   const headerHeight = calcHeaderHeight();
   const paddingWidth = calcCanvasPaddingWidth();
@@ -402,11 +426,30 @@ export function BiomarkerChartingPage(props){
     <div id='biomarkerChartingPage' style={{paddingTop: 40, paddingLeft: paddingWidth, paddingRight: paddingWidth}}>
 
       {/* Settings Modal */}
-      <Dialog 
-        open={settingsOpen} 
+      <Dialog
+        open={settingsOpen}
         onClose={() => setSettingsOpen(false)}
         maxWidth="md"
         fullWidth
+        sx={{
+          '& .MuiDialog-paper': {
+            bgcolor: cardBgColor,
+            color: cardTextColor
+          },
+          '& .MuiDialogTitle-root': { color: cardTextColor },
+          '& .MuiDialogContent-root': {
+            borderColor: borderColor
+          },
+          '& .MuiInputLabel-root': { color: cardTextColor },
+          '& .MuiSelect-root': { color: cardTextColor },
+          '& .MuiSelect-icon': { color: cardTextColor },
+          '& .MuiOutlinedInput-notchedOutline': { borderColor: borderColor },
+          '& .MuiMenuItem-root': {
+            color: cardTextColor
+          },
+          '& .MuiIconButton-root': { color: cardTextColor },
+          '& .MuiButton-root': { color: cardTextColor }
+        }}
       >
         <DialogTitle>
           <Box display="flex" alignItems="center" justifyContent="space-between">
@@ -442,19 +485,21 @@ export function BiomarkerChartingPage(props){
               <Typography variant="subtitle1" gutterBottom>
                 Select Biomarkers to Display:
               </Typography>
-              <Typography variant="body2" color="text.secondary" gutterBottom>
+              <Typography variant="body2" sx={{
+                color: isDark ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)'
+              }} gutterBottom>
                 Click chips to toggle biomarkers on/off. Only biomarkers with 2+ measurements will display charts.
               </Typography>
-              <Box sx={{ 
-                display: 'flex', 
-                flexWrap: 'wrap', 
+              <Box sx={{
+                display: 'flex',
+                flexWrap: 'wrap',
                 gap: 1,
                 maxHeight: '300px',
                 overflow: 'auto',
                 padding: '12px',
-                border: '1px solid rgba(0,0,0,0.12)',
+                border: `1px solid ${borderColor}`,
                 borderRadius: '4px',
-                bgcolor: 'background.paper'
+                bgcolor: isDark ? '#2a2a2a' : '#f5f5f5'
               }}>
                 {codeAnalysis?.filter(c => c.latestValue !== null && c.count >= 2).map(code => (
                   <Chip
@@ -464,6 +509,11 @@ export function BiomarkerChartingPage(props){
                     variant={selectedCodes.includes(code.code || code.text) ? "filled" : "outlined"}
                     color={selectedCodes.includes(code.code || code.text) ? "primary" : "default"}
                     size="small"
+                    sx={!selectedCodes.includes(code.code || code.text) ? {
+                      bgcolor: isDark ? 'rgba(255, 255, 255, 0.16)' : 'rgba(0, 0, 0, 0.08)',
+                      color: cardTextColor,
+                      borderColor: borderColor
+                    } : {}}
                   />
                 ))}
               </Box>
@@ -482,17 +532,40 @@ export function BiomarkerChartingPage(props){
           <>
             {/* Left Column - Discovered Observation Codes Table */}
             <Grid item xs={12} md={6}>
-              <Card>
-                <CardHeader 
+              <Card sx={{
+                bgcolor: cardBgColor,
+                color: cardTextColor,
+                '& .MuiCardHeader-title': { color: cardTextColor },
+                '& .MuiTableCell-root': {
+                  color: cardTextColor,
+                  borderColor: borderColor
+                },
+                '& .MuiTableCell-head': {
+                  bgcolor: cardBgColor,
+                  color: cardTextColor,
+                  fontWeight: 'bold'
+                },
+                '& .MuiTypography-root': {
+                  color: cardTextColor
+                },
+                '& .MuiTypography-colorTextSecondary': {
+                  color: isDark ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)'
+                },
+                '& .MuiIconButton-root': {
+                  color: cardTextColor,
+                  borderColor: borderColor
+                }
+              }}>
+                <CardHeader
                   title="Discovered Observation Codes"
                   action={
                     <IconButton
                       onClick={() => setSettingsOpen(true)}
                       aria-label="settings"
                       sx={{
-                        border: '1px solid rgba(0, 0, 0, 0.12)',
+                        border: `1px solid ${borderColor}`,
                         '&:hover': {
-                          backgroundColor: 'action.hover',
+                          backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.04)',
                         }
                       }}
                     >
@@ -501,7 +574,10 @@ export function BiomarkerChartingPage(props){
                   }
                 />
                 <CardContent>
-                  <TableContainer component={Paper} variant="outlined">
+                  <TableContainer component={Paper} variant="outlined" sx={{
+                    bgcolor: cardBgColor,
+                    borderColor: borderColor
+                  }}>
                     <Table>
                       <TableHead>
                         <TableRow>
@@ -520,7 +596,9 @@ export function BiomarkerChartingPage(props){
                                 <Typography variant="body2" fontWeight="medium">
                                   {code.code || 'N/A'}
                                 </Typography>
-                                <Typography variant="caption" color="text.secondary">
+                                <Typography variant="caption" sx={{
+                                  color: isDark ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)'
+                                }}>
                                   {code.system ? code.system.split('/').pop() : 'N/A'}
                                 </Typography>
                               </Box>
@@ -530,7 +608,9 @@ export function BiomarkerChartingPage(props){
                                 <Typography variant="body2">
                                   {code.display || code.text || 'Unknown'}
                                 </Typography>
-                                <Typography variant="caption" color="text.secondary">
+                                <Typography variant="caption" sx={{
+                                  color: isDark ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)'
+                                }}>
                                   {code.dates.length > 0 ? (
                                     <>
                                       {moment(Math.min(...code.dates.map(d => new Date(d)))).format('MMM YYYY')}
@@ -552,11 +632,16 @@ export function BiomarkerChartingPage(props){
                               </Typography>
                             </TableCell>
                             <TableCell sx={{ py: '10px' }} align="center">
-                              <Chip 
-                                label={code.count} 
-                                size="small" 
+                              <Chip
+                                label={code.count}
+                                size="small"
                                 color={code.count >= 10 ? "primary" : "default"}
                                 variant={code.count >= 10 ? "filled" : "outlined"}
+                                sx={code.count < 10 ? {
+                                  bgcolor: isDark ? 'rgba(255, 255, 255, 0.16)' : 'rgba(0, 0, 0, 0.08)',
+                                  color: cardTextColor,
+                                  borderColor: borderColor
+                                } : {}}
                               />
                             </TableCell>
                           </TableRow>
@@ -580,8 +665,15 @@ export function BiomarkerChartingPage(props){
                   
                   return (
                     <Grid item xs={12} key={data.code}>
-                      <Card>
-                <CardHeader 
+                      <Card sx={{
+                        bgcolor: cardBgColor,
+                        color: cardTextColor,
+                        '& .MuiCardHeader-title': { color: cardTextColor },
+                        '& .MuiCardHeader-subheader': {
+                          color: isDark ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)'
+                        }
+                      }}>
+                <CardHeader
                   title={data.display}
                   subheader={`${data.observations.length} measurements`}
                   style={{paddingBottom: '0px'}}
@@ -646,9 +738,10 @@ export function BiomarkerChartingPage(props){
                       motionConfig="gentle"
                       tooltip={({ point }) => (
                         <div style={{
-                          background: 'white',
+                          background: cardBgColor,
+                          color: cardTextColor,
                           padding: '9px 12px',
-                          border: '1px solid #ccc',
+                          border: `1px solid ${borderColor}`,
                           borderRadius: '3px'
                         }}>
                           <div><strong>{point.data.xFormatted}</strong></div>
@@ -665,7 +758,12 @@ export function BiomarkerChartingPage(props){
                 
                 {chartData.length === 0 && (
                   <Grid item xs={12}>
-                    <Alert severity="info">
+                    <Alert severity="info" sx={{
+                      bgcolor: isDark ? 'rgba(33, 150, 243, 0.15)' : 'rgba(33, 150, 243, 0.1)',
+                      color: cardTextColor,
+                      '& .MuiAlert-icon': { color: isDark ? '#90caf9' : '#1976d2' },
+                      '& .MuiAlertTitle-root': { color: cardTextColor }
+                    }}>
                       <AlertTitle>No Charts Selected</AlertTitle>
                       Select biomarkers from the chips above to display their charts. Only biomarkers with 2 or more measurements can be charted.
                     </Alert>

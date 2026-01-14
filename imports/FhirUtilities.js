@@ -24,9 +24,14 @@ export const FhirUtilities = {
               {"subject.reference": "Patient/" + patientId},
               {"subject.reference": "urn:uuid:" + patientId},
 
-              {"patient.reference": { $regex: ".*Patient/" + patientId}}, 
+              // Coverage uses beneficiary.reference for patient
+              {"beneficiary.reference": "Patient/" + patientId},
+              {"beneficiary.reference": "urn:uuid:" + patientId},
+
+              {"patient.reference": { $regex: ".*Patient/" + patientId}},
               {"subject.reference": { $regex: ".*Patient/" + patientId}},
-              
+              {"beneficiary.reference": { $regex: ".*Patient/" + patientId}},
+
               {"agent.who.reference": "Patient/" + patientId}
           ]}      
       } else {

@@ -51,6 +51,7 @@ import HomePage from './HomePage.jsx';
 import ServerConfigurationPage from '../ui-vault-server/ServerConfigurationPage.jsx';
 import UdapRegistrationPage from '../ui-vault-server/UdapRegistrationPage.jsx';
 import OAuthClientsPage from '../ui-vault-server/OAuthClientsPage.jsx';
+import OAuthPatientPickerPage from './OAuthPatientPickerPage.jsx';
 import FhirBasePage from './pages/FhirBasePage.jsx';
 import SwaggerPage from '../ui-vault-server/SwaggerPage.jsx';
 
@@ -70,6 +71,7 @@ import { ForgotPasswordForm } from '../accounts/client/components/ForgotPassword
 
 import PatientQuickChart from '../patient/PatientQuickChart.jsx';
 import PatientChart from '../patient/PatientChart.jsx';
+import EnhancedCarePlanDesigner from '../ui-fhir/carePlans/EnhancedCarePlanDesigner.jsx';
 
 
 //===============================================================================================================
@@ -77,6 +79,11 @@ import PatientChart from '../patient/PatientChart.jsx';
 
 import PatientsDirectory from '../ui-modules/PatientsDirectory.jsx';
 import BiomarkerChartingPage from '../ui-modules/BiomarkerChartingPage.jsx';
+
+// DICOM Viewer
+import StudyListPage from './DICOM/StudyListPage.jsx';
+import UploadPage from './DICOM/UploadPage.jsx';
+import DicomViewerPage from './DICOM/DicomViewerPage.jsx';
 
 // Optional package imports would go here when packages are added
 
@@ -254,6 +261,7 @@ import { Goals } from '../lib/schemas/SimpleSchemas/Goals';
 import { Groups } from '../lib/schemas/SimpleSchemas/Groups';
 import { GuidanceResponses } from '../lib/schemas/SimpleSchemas/GuidanceResponses';
 import { Immunizations } from '../lib/schemas/SimpleSchemas/Immunizations';
+import { ImagingStudies } from '../lib/schemas/SimpleSchemas/ImagingStudies';
 import { Libraries } from '../lib/schemas/SimpleSchemas/Libraries';
 import { Lists } from '../lib/schemas/SimpleSchemas/Lists';
 import { Locations } from '../lib/schemas/SimpleSchemas/Locations';
@@ -282,7 +290,7 @@ import { Specimens } from '../lib/schemas/SimpleSchemas/Specimens';
 import { Tasks } from '../lib/schemas/SimpleSchemas/Tasks';
 import { ValueSets } from '../lib/schemas/SimpleSchemas/ValueSets';
 
-import { PatientCard } from '../patient/PatientCard.jsx'
+import PatientCard from '../patient/PatientCard.jsx'
 import { FhirUtilities } from '../lib/FhirUtilities.js'
 import { FhirDehydrator } from '../lib/FhirDehydrator.js'
 import { LayoutHelpers } from '../lib/LayoutHelpers.js'
@@ -378,6 +386,7 @@ window.Collections = {
   Compositions,
   Devices,
   DiagnosticReports,
+  DocumentReferences,
   Encounters,
   Evidences,
   Endpoints,
@@ -386,6 +395,7 @@ window.Collections = {
   Groups,
   GuidanceResponses,
   Immunizations,
+  ImagingStudies,
   Lists,
   Locations,
   Libraries,
@@ -427,6 +437,10 @@ window.AuditEvents = AuditEvents;
 window.Session = Session;
 
 window.React = React;
+
+// Export React Router hooks for packages to use shared Router context
+import * as ReactRouterDOM from 'react-router-dom';
+window.ReactRouter = ReactRouterDOM;
 
 //===============================================================================================================
 // Router History
@@ -490,6 +504,9 @@ let dynamicRoutes = [
   }, {
     path: "/oauth-clients",
     element: <OAuthClientsPage />
+  }, {
+    path: "/oauth-patient-picker",
+    element: <OAuthPatientPickerPage />
   }, {
     path: "/patient-chart",
     element: <PatientChart />
@@ -604,6 +621,22 @@ if(get(Meteor, 'settings.public.modules.Theming')){
   })
 }
 
+// DICOM Viewer routes
+if(get(Meteor, 'settings.public.modules.DicomViewer')){
+  dynamicRoutes.push({
+    path: "/dicom/studies",
+    element: <AuthenticatedRoute><StudyListPage /></AuthenticatedRoute>
+  })
+  dynamicRoutes.push({
+    path: "/dicom/upload",
+    element: <AuthenticatedRoute><UploadPage /></AuthenticatedRoute>
+  })
+  dynamicRoutes.push({
+    path: "/dicom/viewer/:studyId",
+    element: <AuthenticatedRoute><DicomViewerPage /></AuthenticatedRoute>
+  })
+}
+
 // Optional package routes would be registered here dynamically when packages are added
 
 
@@ -690,6 +723,11 @@ if(get(Meteor, 'settings.public.modules.fhir.CarePlans')){
   dynamicRoutes.push({
     path: "/careplans/:id",
     element: <CarePlanDetail />
+  })
+  dynamicRoutes.push({
+    path: "/care-plan-designer",
+    element: <EnhancedCarePlanDesigner />,
+    requireAuth: true
   })
 }
 if(get(Meteor, 'settings.public.modules.fhir.CodeSystems')){
@@ -1287,9 +1325,25 @@ dynamicRoutes.push({
 // ==============================================================================
 // Dynamic Routes
 
+// Determine which component should render at the root path
+// Check if a default route is specified in settings
+let defaultRoutePath = get(Meteor, 'settings.public.defaults.route', '/');
+let homeRouteElement = <GettingStartedPage />;
+
+// If a specific route is configured (and it's not just "/"),
+// find the corresponding route component
+if (defaultRoutePath && defaultRoutePath !== '/') {
+  const matchingRoute = dynamicRoutes.find(route => route.path === defaultRoutePath);
+  if (matchingRoute && matchingRoute.element) {
+    homeRouteElement = matchingRoute.element;
+  } else {
+    console.warn(`Default route "${defaultRoutePath}" specified in settings but no matching route found. Using GettingStartedPage.`);
+  }
+}
+
 let homeRoute = {
   path: "/",
-  element: <GettingStartedPage />
+  element: homeRouteElement
 }
 
 let headerNavigation;
@@ -1298,10 +1352,11 @@ Object.keys(Package).forEach(function(packageName){
   if(Package[packageName].DynamicRoutes){
     // we try to build up a route from what's specified in the package
     Package[packageName].DynamicRoutes.forEach(function(route){
-      // If route has component instead of element, create the element
-      if(route.component && !route.element) {
-        route.element = React.createElement(route.component);
-      }
+      // Don't create element here - it will be created in the Routes component
+      // Just keep the component reference
+      // if(route.component && !route.element) {
+      //   route.element = React.createElement(route.component);
+      // }
       
       // Debug logging for swarm route
       if(route.path === '/swarm') {
@@ -1518,9 +1573,18 @@ const ThemeContext = createContext();
 export const useTheme = () => useContext(ThemeContext);
 Meteor.useTheme = useTheme;
 
-// this Provider components enables the useTheme() hook in child components 
+// Export React Router hooks via Meteor object for use in packages
+Meteor.useLocation = ReactRouterDOM.useLocation;
+Meteor.useNavigate = ReactRouterDOM.useNavigate;
+Meteor.useParams = ReactRouterDOM.useParams;
+
+// this Provider components enables the useTheme() hook in child components
 export const CustomThemeProvider = ({ children }) => {
-  const [theme, setTheme] = useState('light');
+  const [theme, setTheme] = useState(function() {
+    const settingsMode = get(Meteor, 'settings.public.theme.darkMode', false);
+    const paletteMode = get(Meteor, 'settings.public.theme.palette.mode', '');
+    return settingsMode || paletteMode === 'dark' ? 'dark' : 'light';
+  });
   const [themeRefreshCounter, setThemeRefreshCounter] = useState(0);
 
   // Create themes dynamically based on current Meteor.settings
@@ -1545,11 +1609,22 @@ export const CustomThemeProvider = ({ children }) => {
     const appBarColor = isDark ? appBarColorDark : appBarColorLight;
     const appBarTextColor = isDark ? appBarTextColorDark : appBarTextColorLight;
     
-    // Get background page color with dark mode support
+    // Get background colors with dark mode support
+    const backgroundCanvas = get(Meteor, "settings.public.theme.palette.backgroundCanvas", "");
+    const backgroundCanvasDark = get(Meteor, "settings.public.theme.palette.backgroundCanvasDark", backgroundCanvas);
     const backgroundPageColorLight = get(Meteor, "settings.public.theme.palette.backgroundPageColor", "");
     const backgroundPageColorDark = get(Meteor, "settings.public.theme.palette.backgroundPageColorDark", backgroundPageColorLight);
-    const backgroundPageColor = isDark ? backgroundPageColorDark : backgroundPageColorLight;
-    
+    const backgroundPageColor = isDark ? (backgroundCanvasDark || backgroundPageColorDark) : (backgroundCanvas || backgroundPageColorLight);
+
+    // Get card/paper colors from settings with dark mode support
+    const paperColorLight = get(Meteor, "settings.public.theme.palette.paperColor", "");
+    const paperColorDark = get(Meteor, "settings.public.theme.palette.paperColorDark", "");
+    const paperColorFromSettings = isDark ? paperColorDark : paperColorLight;
+
+    const cardColorLight = get(Meteor, "settings.public.theme.palette.cardColor", "");
+    const cardColorDark = get(Meteor, "settings.public.theme.palette.cardColorDark", "");
+    const cardColorFromSettings = isDark ? cardColorDark : cardColorLight;
+
     const themeConfig = {
       palette: {
         mode: mode,
@@ -1580,6 +1655,48 @@ export const CustomThemeProvider = ({ children }) => {
               color: appBarTextColor
             }
           }
+        },
+        MuiDrawer: {
+          styleOverrides: {
+            paper: {
+              backgroundColor: isDark ? '#1e1e1e' : '#ffffff',
+              color: isDark ? 'rgba(255, 255, 255, 0.87)' : 'rgba(0, 0, 0, 0.87)'
+            }
+          }
+        },
+        MuiCard: {
+          styleOverrides: {
+            root: {
+              backgroundColor: isDark ? '#1e1e1e' : '#ffffff',
+              color: isDark ? 'rgba(255, 255, 255, 0.87)' : 'rgba(0, 0, 0, 0.87)'
+            }
+          }
+        },
+        MuiTableHead: {
+          styleOverrides: {
+            root: {
+              backgroundColor: isDark ? '#2a2a2a' : '#f5f5f5'
+            }
+          }
+        },
+        MuiTableCell: {
+          styleOverrides: {
+            head: {
+              backgroundColor: isDark ? '#2a2a2a' : '#f5f5f5',
+              color: isDark ? 'rgba(255, 255, 255, 0.87)' : 'rgba(0, 0, 0, 0.87)',
+              fontWeight: 600
+            },
+            body: {
+              color: isDark ? 'rgba(255, 255, 255, 0.87)' : 'rgba(0, 0, 0, 0.87)'
+            }
+          }
+        },
+        MuiTableRow: {
+          styleOverrides: {
+            head: {
+              backgroundColor: isDark ? '#2a2a2a' : '#f5f5f5'
+            }
+          }
         }
       },
       typography: {
@@ -1587,13 +1704,15 @@ export const CustomThemeProvider = ({ children }) => {
       }
     };
     
-    // Add background color if specified
-    if (backgroundPageColor) {
-      themeConfig.palette.background = {
-        default: backgroundPageColor,
-        paper: isDark ? '#424242' : '#ffffff'
-      };
-    }
+    // Add background colors from settings (handle empty strings)
+    const backgroundDefault = backgroundPageColor ? backgroundPageColor : (isDark ? '#121212' : '#fafafa');
+    const paperColor = paperColorFromSettings ? paperColorFromSettings.replace(' !important', '').trim() : '';
+    const backgroundPaper = paperColor || (isDark ? '#1e1e1e' : '#ffffff');
+
+    themeConfig.palette.background = {
+      default: backgroundDefault,
+      paper: backgroundPaper
+    };
     
     return createTheme(themeConfig);
   };
@@ -1845,26 +1964,28 @@ export function App(props){
     <div id='primaryFlexPanel' style={{height: '100%', display: 'flex', flexDirection: 'column'}}>
       <CustomThemeProvider>
         <Router>
-          <Header 
-            drawerIsOpen={drawerIsOpen} 
-            handleDrawerOpen={handleDrawerOpen} 
-            headerNavigation={headerNavigation} 
-            history={window.history}
-            { ...otherProps } 
-          />
-          <SideDrawer 
-            drawerIsOpen={drawerIsOpen} 
-            onDrawerClose={function(){setDrawerIsOpen(false)}}  
-            location={props.location} 
-            history={window.history}
-            { ...otherProps } />        
-          <StyledMainRouter style={{flex: 1}} />
-          <Footer 
-            drawerIsOpen={drawerIsOpen} 
-            location={props.location} 
-            history={window.history}
-            { ...otherProps } 
-          />
+          <NavigationProvider>
+            <Header
+              drawerIsOpen={drawerIsOpen}
+              handleDrawerOpen={handleDrawerOpen}
+              headerNavigation={headerNavigation}
+              history={window.history}
+              { ...otherProps }
+            />
+            <SideDrawer
+              drawerIsOpen={drawerIsOpen}
+              onDrawerClose={function(){setDrawerIsOpen(false)}}
+              location={props.location}
+              history={window.history}
+              { ...otherProps } />
+            <StyledMainRouter style={{flex: 1}} />
+            <Footer
+              drawerIsOpen={drawerIsOpen}
+              location={props.location}
+              history={window.history}
+              { ...otherProps }
+            />
+          </NavigationProvider>
         </Router>
       </CustomThemeProvider>      
     </div>
@@ -1888,8 +2009,12 @@ function StyledMainRouter(props){
     return prominentHeaderSetting && hasPatient;
   }, []);
 
-  let backgroundCanvas = get(Meteor, 'settings.public.theme.palette.backgroundCanvas', "#ffffff");
-  let backgroundCanvasDark = get(Meteor, 'settings.public.theme.palette.backgroundCanvasDark', "#ffffff");
+  // Use theme-aware default backgrounds instead of white
+  const backgroundCanvas = get(Meteor, 'settings.public.theme.palette.backgroundCanvas', "#f6f6f6");
+  const backgroundCanvasDark = get(Meteor, 'settings.public.theme.palette.backgroundCanvasDark', "#121212");
+
+  // Compute background based on current theme
+  const backgroundStyle = theme === "light" ? backgroundCanvas : backgroundCanvasDark;
 
   let mainAppStyle = {
     position: 'relative',
@@ -1897,6 +2022,7 @@ function StyledMainRouter(props){
     overflowY: 'auto',
     overflowX: 'hidden',
     transition: 'padding-top 0.3s ease-in-out',
+    background: backgroundStyle, // Set background here so it's part of the object
     ...style // Merge the passed style prop
   }
 
@@ -1906,26 +2032,23 @@ function StyledMainRouter(props){
     mainAppStyle.paddingTop = '64px';
   }
 
-  if(theme === "light"){
-    mainAppStyle.background = backgroundCanvas;
-  } else {
-    mainAppStyle.background = backgroundCanvasDark;
-  }
-
   return (<main id='mainAppRouter' style={mainAppStyle}>
     <Routes>
       {dynamicRoutes.map((route, index) => {
+        // Get the element - create from component if needed
+        const routeElement = route.element || (route.component ? React.createElement(route.component) : null);
+
         // Check if route requires authentication
         if (route.requireAuth) {
           return (
-            <Route 
-              key={index} 
-              path={route.path} 
-              element={<AuthenticatedRoute>{route.element}</AuthenticatedRoute>} 
+            <Route
+              key={index}
+              path={route.path}
+              element={<AuthenticatedRoute>{routeElement}</AuthenticatedRoute>}
             />
           );
         }
-        return <Route key={index} path={route.path} element={route.element} />;
+        return <Route key={index} path={route.path} element={routeElement} />;
       })}
       {/* Fallback route for 404 Not Found */}
       <Route path="*" />

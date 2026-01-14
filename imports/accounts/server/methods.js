@@ -317,25 +317,71 @@ Meteor.methods({
   },
 
   async 'users.linkPatient'(patientId) {
+    // Validate patientId before check() to provide clearer error message
+    if (!patientId || typeof patientId !== 'string') {
+      console.warn('[users.linkPatient] Invalid patientId:', patientId);
+      throw new Meteor.Error(400, 'Patient ID is required and must be a string');
+    }
+
     check(patientId, String);
-    
+
     // Ensure user is logged in
     if (!this.userId) {
       throw new Meteor.Error(401, 'User must be logged in');
     }
-    
+
     try {
       // Update the current user's patientId
       const result = await Meteor.users.updateAsync(
         { _id: this.userId },
         { $set: { patientId: patientId } }
       );
-      
+
       console.log(`[users.linkPatient] Linked patient ${patientId} to user ${this.userId}`);
       return result;
     } catch (error) {
       console.error('[users.linkPatient] Error:', error);
       throw new Meteor.Error(500, 'Failed to link patient to user');
+    }
+  },
+
+  async 'users.clearPatientLink'() {
+    // Ensure user is logged in
+    if (!this.userId) {
+      throw new Meteor.Error(401, 'User must be logged in');
+    }
+
+    try {
+      const result = await Meteor.users.updateAsync(
+        { _id: this.userId },
+        { $unset: { patientId: "" } }
+      );
+
+      console.log(`[users.clearPatientLink] Cleared patient link for user ${this.userId}`);
+      return result;
+    } catch (error) {
+      console.error('[users.clearPatientLink] Error:', error);
+      throw new Meteor.Error(500, 'Failed to clear patient link');
+    }
+  },
+
+  async 'users.clearPractitionerLink'() {
+    // Ensure user is logged in
+    if (!this.userId) {
+      throw new Meteor.Error(401, 'User must be logged in');
+    }
+
+    try {
+      const result = await Meteor.users.updateAsync(
+        { _id: this.userId },
+        { $unset: { practitionerId: "", practitionerRoleId: "" } }
+      );
+
+      console.log(`[users.clearPractitionerLink] Cleared practitioner link for user ${this.userId}`);
+      return result;
+    } catch (error) {
+      console.error('[users.clearPractitionerLink] Error:', error);
+      throw new Meteor.Error(500, 'Failed to clear practitioner link');
     }
   }
 });

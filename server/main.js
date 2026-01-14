@@ -5,6 +5,9 @@ console.log('[server/main.js] TEST_RUN:', process.env.TEST_RUN);
 console.log('[server/main.js] ENABLE_SYNCED_CRON:', process.env.ENABLE_SYNCED_CRON);
 console.log('==========================================================================================');
 
+// Initialize global.Collections early so packages can check for its existence
+global.Collections = {};
+
 // import './ServerSideRendering.js';
 // import './AccountsServer.js';
 // import './SmartHealthCards.js';
@@ -27,6 +30,7 @@ import './CdsHooksEndpoints.js';
 import './Methods.js';
 import './Metadata.js';
 import './RestEndpoints.js';
+import './BulkData.js';  // Must be before FhirEndpoints (catch-all handler)
 import './FhirEndpoints.js';
 import './OAuthEndpoints.js';
 // import './DebugCommunications.js';
@@ -51,6 +55,7 @@ import '../imports/api/communications/methods.js';
 import '../imports/api/compositions/methods.js';
 import '../imports/api/conditions/methods.js';
 import '../imports/api/consents/methods.js';
+import '../imports/api/dicom/server/methods.js';
 import '../imports/api/documentReferences/methods.js';
 import '../imports/api/devices/methods.js'; // Import the methods
 import '../imports/api/encounters/methods.js';
@@ -133,6 +138,7 @@ import { CareTeams } from '../imports/lib/schemas/SimpleSchemas/CareTeams';
 import { Claims } from '../imports/lib/schemas/SimpleSchemas/Claims';
 import { CodeSystems } from '../imports/lib/schemas/SimpleSchemas/CodeSystems';
 import { Conditions } from '../imports/lib/schemas/SimpleSchemas/Conditions';
+import { Coverages } from '../imports/lib/schemas/SimpleSchemas/Coverages';
 import { Consents } from '../imports/lib/schemas/SimpleSchemas/Consents';
 import { Communications } from '../imports/lib/schemas/SimpleSchemas/Communications';
 import { CommunicationRequests } from '../imports/lib/schemas/SimpleSchemas/CommunicationRequests';
@@ -145,6 +151,7 @@ import { Endpoints } from '../imports/lib/schemas/SimpleSchemas/Endpoints';
 import { Evidences } from '../imports/lib/schemas/SimpleSchemas/Evidences';
 import { ExplanationOfBenefits } from '../imports/lib/schemas/SimpleSchemas/ExplanationOfBenefits';
 import { Goals } from '../imports/lib/schemas/SimpleSchemas/Goals';
+import { Groups } from '../imports/lib/schemas/SimpleSchemas/Groups';
 import { GuidanceResponses } from '../imports/lib/schemas/SimpleSchemas/GuidanceResponses';
 import { Immunizations } from '../imports/lib/schemas/SimpleSchemas/Immunizations';
 import { ImagingStudies } from '../imports/lib/schemas/SimpleSchemas/ImagingStudies';
@@ -153,6 +160,7 @@ import { Lists } from '../imports/lib/schemas/SimpleSchemas/Lists';
 import { Locations } from '../imports/lib/schemas/SimpleSchemas/Locations';
 import { Medications } from '../imports/lib/schemas/SimpleSchemas/Medications';
 import { MedicationAdministrations } from '../imports/lib/schemas/SimpleSchemas/MedicationAdministrations';
+import { MedicationDispenses } from '../imports/lib/schemas/SimpleSchemas/MedicationDispenses';
 import { MedicationRequests } from '../imports/lib/schemas/SimpleSchemas/MedicationRequests';
 import { MedicationStatements } from '../imports/lib/schemas/SimpleSchemas/MedicationStatements';
 import { Measures } from '../imports/lib/schemas/SimpleSchemas/Measures';
@@ -175,6 +183,7 @@ import { ResearchSubjects } from '../imports/lib/schemas/SimpleSchemas/ResearchS
 import { Schedules } from '../imports/lib/schemas/SimpleSchemas/Schedules';
 import { SearchParameters } from '../imports/lib/schemas/SimpleSchemas/SearchParameters';
 import { ServiceRequests } from '../imports/lib/schemas/SimpleSchemas/ServiceRequests';
+import { Specimens } from '../imports/lib/schemas/SimpleSchemas/Specimens';
 import { Tasks } from '../imports/lib/schemas/SimpleSchemas/Tasks';
 import { ValueSets } from '../imports/lib/schemas/SimpleSchemas/ValueSets';
 
@@ -198,6 +207,7 @@ Meteor.Collections = {
   CodeSystems,
   Conditions,
   Consents,
+  Coverages,
   Communications,
   CommunicationRequests,
   Compositions,
@@ -217,6 +227,7 @@ Meteor.Collections = {
   Locations,
   Medications,
   MedicationAdministrations,
+  MedicationDispenses,
   MedicationRequests,
   MedicationStatements,
   MessageHeaders,
@@ -239,6 +250,7 @@ Meteor.Collections = {
   Schedules,
   SearchParameters,
   ServiceRequests,
+  Specimens,
   Tasks,
   ValueSets
 }
@@ -248,7 +260,8 @@ global.FhirDehydrator = FhirDehydrator;
 global.LayoutHelpers = LayoutHelpers;
 global.HipaaLogger = HipaaLogger;
 
-global.Collections = {
+// Populate global.Collections with all FHIR resource collections
+Object.assign(global.Collections, {
   ActivityDefinitions,
   AllergyIntolerances,
   Appointments,
@@ -261,6 +274,7 @@ global.Collections = {
   CodeSystems,
   Conditions,
   Consents,
+  Coverages,
   Communications,
   CommunicationRequests,
   Compositions,
@@ -272,6 +286,7 @@ global.Collections = {
   Evidences,
   ExplanationOfBenefits,
   Goals,
+  Groups,
   GuidanceResponses,
   Immunizations,
   ImagingStudies,
@@ -280,6 +295,7 @@ global.Collections = {
   Locations,
   Medications,
   MedicationAdministrations,
+  MedicationDispenses,
   MedicationRequests,
   MedicationStatements,
   MessageHeaders,
@@ -302,9 +318,10 @@ global.Collections = {
   Schedules,
   SearchParameters,
   ServiceRequests,
+  Specimens,
   Tasks,
   ValueSets
-}
+});
 
 
 
@@ -410,6 +427,21 @@ Meteor.startup(async function(){
     
     // Set the Synthea DB utils flag
     Meteor.settings.public.enableSyntheaDbUtils = true;
+  }
+
+  // Seed default Encounter from settings for US Core 6.1.0+ compliance (context-ehr-encounter)
+  // This is needed for ONC g(10) certification test 3.8.16 / AUT-PAT-32
+  let defaultEncounter = get(Meteor, 'settings.private.fhir.defaultEncounter');
+  if (defaultEncounter && defaultEncounter.id) {
+    const existingEncounter = await Encounters.findOneAsync({ id: defaultEncounter.id });
+    if (!existingEncounter) {
+      console.log('==========================================================================================');
+      console.log('[Encounters] Seeding default Encounter from settings:', defaultEncounter.id);
+      console.log('==========================================================================================');
+      await Encounters.insertAsync(defaultEncounter);
+    } else {
+      console.log('[Encounters] Default Encounter already exists:', defaultEncounter.id);
+    }
   }
 
   // Establish a database connection
@@ -588,6 +620,47 @@ Meteor.startup(async () => {
 
   Meteor.publish("OAuthClients", function () {
     return OAuthClients.find();
+  });
+
+  // Patient-specific OAuth authorizations publication
+  // ONC g(10) 9.3.01 - Patient access to view authorized applications
+  Meteor.publish('OAuthClients.forPatient', function() {
+    if (!this.userId) {
+      return this.ready();
+    }
+
+    // Get user synchronously for publication
+    const user = Meteor.users.findOne({ _id: this.userId });
+    const patientId = get(user, 'patientId');
+
+    if (!patientId) {
+      console.log('OAuthClients.forPatient - No linked patient for user:', this.userId);
+      return this.ready();
+    }
+
+    // Return only active authorizations for this patient
+    // Exclude sensitive fields (tokens, secrets)
+    return OAuthClients.find(
+      {
+        patient_id: patientId,
+        access_token: { $exists: true, $ne: null },
+        revoked_at: { $exists: false }
+      },
+      {
+        fields: {
+          client_name: 1,
+          client_id: 1,
+          access_token_created_at: 1,
+          created_at: 1,
+          authorization_expires_at: 1,
+          requested_scope: 1,
+          scope: 1,
+          launch_type: 1,
+          patient_id: 1
+          // Explicitly exclude: access_token, refresh_token, client_secret
+        }
+      }
+    );
   });
 
 });

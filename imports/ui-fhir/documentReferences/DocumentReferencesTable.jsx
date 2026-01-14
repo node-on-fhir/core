@@ -571,8 +571,9 @@ function DocumentReferencesTable(props){
 
   function renderBarcode(id){
     if (!hideBarcode) {
+      const idString = typeof id === 'object' && id._str ? id._str : String(id);
       return (
-        <TableCell><span className="barcode helveticas">{id}</span></TableCell>
+        <TableCell><span className="barcode helveticas">{idString}</span></TableCell>
       );
     }
   }

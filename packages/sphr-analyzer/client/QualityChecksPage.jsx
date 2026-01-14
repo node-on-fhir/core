@@ -2,12 +2,12 @@
 
 import React, { useState } from 'react';
 import { get } from 'lodash';
-import { 
-  Button, 
-  Grid, 
+import {
+  Button,
+  Grid,
   Card,
-  CardHeader, 
-  CardContent, 
+  CardHeader,
+  CardContent,
   Typography,
   Box,
   Chip,
@@ -17,7 +17,8 @@ import {
   Divider,
   Alert,
   Fade,
-  Zoom
+  Zoom,
+  useTheme
 } from '@mui/material';
 import {
   CheckCircle,
@@ -37,7 +38,6 @@ import {
 } from '@mui/icons-material';
 
 import { useTracker } from 'meteor/react-meteor-data';
-import { useNavigate } from 'react-router-dom';
 import { Session } from 'meteor/session';
 import { Meteor } from 'meteor/meteor';
 
@@ -46,6 +46,7 @@ let Compositions;
 let DynamicSpacer;
 let DocumentManifests;
 let Observations;
+let useAppTheme;
 
 Meteor.startup(function(){
   Patients = Meteor.Collections.Patients;
@@ -53,16 +54,25 @@ Meteor.startup(function(){
   DynamicSpacer = Meteor.DynamicSpacer;
   DocumentManifests = Meteor.Collections.DocumentManifests;
   Observations = Meteor.Collections.Observations;
-})
+  useAppTheme = Meteor.useTheme;
+});
 
 
 
 export function QualityChecksPage(props){
-  const navigate = useNavigate();
+  const theme = useTheme();
+  const appTheme = useAppTheme ? useAppTheme() : { theme: 'light' };
+  const isDark = appTheme.theme === 'dark';
+
+  // Theme-aware colors
+  const cardBgColor = isDark ? '#1e1e1e' : '#ffffff';
+  const cardTextColor = isDark ? 'rgba(255, 255, 255, 0.87)' : 'rgba(0, 0, 0, 0.87)';
+  const pageBgColor = isDark ? theme.palette.background.default : '#f5f5f5';
+
   const [selectedCheck, setSelectedCheck] = useState(null);
   const [showSuccessAlert, setShowSuccessAlert] = useState(false);
   const [alertMessage, setAlertMessage] = useState('');
-  
+
   // State for tracking completion status
   const [checksCompleted, setChecksCompleted] = useState({
     demographics: false,
@@ -127,7 +137,7 @@ export function QualityChecksPage(props){
 
   function openLink(url){
     console.log("openLink", url);
-    navigate(url);
+    window.location.href = url;
   }
   
   function handleInitializeData(){
@@ -182,7 +192,7 @@ export function QualityChecksPage(props){
   
   function handleAddDemographics(){
     console.log('Adding patient demographics...');
-    navigate('/patients');
+    window.location.href = '/patients';
   }
   
   function handleEncryptFiles(){
@@ -244,14 +254,14 @@ export function QualityChecksPage(props){
   
   function handleAddPatientSummary(){
     console.log('Adding international patient summary...');
-    navigate('/patient-summary');
+    window.location.href = '/patient-summary';
   }
   
   function handleAddAdvancedDirectives(){
     console.log('Adding advanced directives...');
     // Check if PACIO Core package is available
     if(Package['clinical:pacio-core']){
-      navigate('/advance-directives');
+      window.location.href = '/advance-directives';
     } else {
       setAlertMessage('PACIO Core package required for Advanced Directives');
       setShowSuccessAlert(true);
@@ -377,21 +387,26 @@ export function QualityChecksPage(props){
   const categories = [...new Set(qualityChecks.map(check => check.category))];
 
   return (
-    <div id='QualityChecksPage' style={{ backgroundColor: '#f5f5f5', minHeight: '100vh', paddingTop: '24px' }}>
+    <div id='QualityChecksPage' style={{ minHeight: '100vh', paddingTop: '24px' }}>
       <Box sx={{ maxWidth: 1200, margin: '0 auto', px: 3 }}>
-        
+
         {/* Header Section */}
         <Fade in={true} timeout={800}>
           <Box sx={{ mb: 4 }}>
-            <Typography variant="h4" sx={{ fontWeight: 600, color: '#1a1a1a', mb: 1 }}>
+            <Typography variant="h4" sx={{ fontWeight: 600, color: cardTextColor, mb: 1 }}>
               SPHR Quality Assessment
             </Typography>
-            <Typography variant="body1" sx={{ color: '#666', mb: 3 }}>
+            <Typography variant="body1" sx={{ color: isDark ? 'rgba(255, 255, 255, 0.6)' : '#666', mb: 3 }}>
               Comprehensive validation of your Structured Personal Health Record
             </Typography>
-            
+
             {/* Compliance Score */}
-            <Card elevation={2} sx={{ mb: 3, borderRadius: 2 }}>
+            <Card elevation={2} sx={{
+              mb: 3,
+              borderRadius: 2,
+              bgcolor: cardBgColor,
+              color: cardTextColor
+            }}>
               <CardContent>
                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <Box>
@@ -439,7 +454,7 @@ export function QualityChecksPage(props){
         {categories.map((category, categoryIndex) => (
           <Fade in={true} timeout={800 + categoryIndex * 200} key={category}>
             <Box sx={{ mb: 4 }}>
-              <Typography variant="h6" sx={{ fontWeight: 500, color: '#444', mb: 2 }}>
+              <Typography variant="h6" sx={{ fontWeight: 500, color: isDark ? 'rgba(255, 255, 255, 0.7)' : '#444', mb: 2 }}>
                 {category}
               </Typography>
               
@@ -448,9 +463,11 @@ export function QualityChecksPage(props){
                   .filter(check => check.category === category)
                   .map((check, index) => (
                     <Grid item xs={12} key={check.id}>
-                      <Card 
+                      <Card
                         elevation={selectedCheck === check.id ? 8 : 2}
-                        sx={{ 
+                        sx={{
+                          bgcolor: cardBgColor,
+                          color: cardTextColor,
                           borderRadius: 2,
                           transition: 'all 0.3s ease',
                           border: selectedCheck === check.id ? '2px solid #2196f3' : 'none',
@@ -477,7 +494,7 @@ export function QualityChecksPage(props){
                                     <Typography variant="h6" sx={{ fontWeight: 500 }}>
                                       {check.title}
                                     </Typography>
-                                    <Chip 
+                                    <Chip
                                       label={check.severity}
                                       size="small"
                                       color={
@@ -486,10 +503,18 @@ export function QualityChecksPage(props){
                                         check.severity === 'high' ? 'warning' :
                                         check.severity === 'optional' ? 'info' : 'default'
                                       }
-                                      sx={{ textTransform: 'uppercase', fontSize: '0.7rem' }}
+                                      sx={{
+                                        textTransform: 'uppercase',
+                                        fontSize: '0.7rem',
+                                        ...(check.status === 'success' && {
+                                          bgcolor: isDark ? 'rgba(76, 175, 80, 0.2)' : 'rgba(76, 175, 80, 0.1)',
+                                          color: isDark ? '#81c784' : '#388e3c',
+                                          borderColor: isDark ? '#81c784' : '#4caf50'
+                                        })
+                                      }}
                                     />
                                   </Box>
-                                  <Typography variant="body2" sx={{ color: '#666' }}>
+                                  <Typography variant="body2" sx={{ color: isDark ? 'rgba(255, 255, 255, 0.6)' : '#666' }}>
                                     {check.description}
                                   </Typography>
                                 </Box>
@@ -507,14 +532,26 @@ export function QualityChecksPage(props){
                                   }
                                   onClick={check.action}
                                   disabled={check.status === 'success' || check.disabled}
-                                  startIcon={check.status === 'success' ? <CheckCircle /> : 
-                                           check.status === 'error' || check.status === 'warning' ? 
+                                  startIcon={check.status === 'success' ? <CheckCircle /> :
+                                           check.status === 'error' || check.status === 'warning' ?
                                            check.icon : <Lock />}
-                                  sx={{ 
+                                  sx={{
                                     minWidth: 180,
                                     borderRadius: 2,
                                     textTransform: 'none',
-                                    fontWeight: 500
+                                    fontWeight: 500,
+                                    ...(check.status === 'success' && {
+                                      bgcolor: isDark ? 'rgba(76, 175, 80, 0.15)' : 'transparent',
+                                      color: isDark ? '#81c784' : '#2e7d32',
+                                      borderColor: isDark ? '#66bb6a' : '#4caf50',
+                                      '&:hover': {
+                                        bgcolor: isDark ? 'rgba(76, 175, 80, 0.25)' : 'rgba(76, 175, 80, 0.04)',
+                                        borderColor: isDark ? '#81c784' : '#388e3c'
+                                      },
+                                      '& .MuiButton-startIcon': {
+                                        color: isDark ? '#81c784' : '#4caf50'
+                                      }
+                                    })
                                   }}
                                 >
                                   {check.status === 'success' ? 'Completed' : check.actionLabel}

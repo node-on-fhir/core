@@ -1,6 +1,7 @@
 // tests/nightwatch/honeycomb/enable_autopublish/crud.schedules.js
 
 const testUtils = require('./shared-test-utils');
+const loginHelper = require('../../helpers/login-helper');
 
 describe('Schedules CRUD Operations', function() {
   const timestamp = Date.now();
@@ -59,69 +60,18 @@ describe('Schedules CRUD Operations', function() {
         window.testTimestamp = ts;
       }, [timestamp]);
 
-    // Check if we're logged in
-    browser.execute(function() {
-      return {
-        isLoggedIn: typeof Meteor !== 'undefined' && !!Meteor.userId(),
-        userId: Meteor.userId ? Meteor.userId() : null,
-        username: Meteor.user ? (Meteor.user() ? Meteor.user().username : null) : null
-      };
-    }, [], function(result) {
-      console.log('Initial login state:', result.value);
-      
-      if (!result.value.isLoggedIn) {
-        console.log('Not logged in, attempting programmatic login...');
-        
-        browser.executeAsync(function(done) {
-          if (typeof Meteor !== 'undefined') {
-            Meteor.call('test.createTestUser', {
-              username: 'janedoe',
-              email: 'janedoe@test.org',
-              password: 'janedoe123'
-            }, function(err, userId) {
-              if (err) {
-                console.error('Failed to create test user:', err);
-                done({ userCreated: false, error: err.message });
-              } else {
-                console.log('Test user ready, userId:', userId);
-                Meteor.loginWithPassword('janedoe', 'janedoe123', function(loginErr) {
-                  if (loginErr) {
-                    console.error('Login failed:', loginErr);
-                    done({ userCreated: true, loginSuccess: false, error: loginErr.message });
-                  } else {
-                    console.log('Login successful');
-                    done({ 
-                      userCreated: true,
-                      loginSuccess: true, 
-                      userId: Meteor.userId(), 
-                      username: Meteor.user() ? Meteor.user().username : null 
-                    });
-                  }
-                });
-              }
-            });
-          } else {
-            done({ userCreated: false, loginSuccess: false, error: 'Meteor not available' });
-          }
-        }, [], function(result) {
-          console.log('Programmatic login result:', result.value);
-          if (result.value.loginSuccess) {
-            browser.assert.equal(result.value.loginSuccess, true, 'Successfully logged in programmatically');
-          } else {
-            browser.assert.fail('Setup failed: ' + result.value.error);
-          }
-        });
-        
-        browser.pause(1000);
+    // Use loginHelper to ensure user is logged in with retry logic
+    loginHelper.ensureLoggedIn(browser, function(isLoggedIn) {
+      if (!isLoggedIn) {
+        browser.assert.fail('Failed to ensure user is logged in');
       } else {
-        browser.assert.ok(true, 'Already logged in (autologin enabled)');
-        console.log('Already logged in as:', result.value.username, 'userId:', result.value.userId);
+        browser.assert.ok(true, 'User is logged in');
       }
-      
+
       // Clean up any existing test data - no patient context needed for Schedules
       browser.executeAsync(function(done) {
         if (typeof Schedules !== 'undefined') {
-          const testSchedules = Schedules.find({ 
+          const testSchedules = Schedules.find({
             $or: [
               { 'identifier.0.value': { $regex: 'Schedule-.*' } },
               { 'comment': { $regex: '.*consultation hours.*' } },
@@ -135,14 +85,12 @@ describe('Schedules CRUD Operations', function() {
         }
         done();
       });
-      
-      browser.pause(1000);
     });
   });
 
   it('02. Verify schedules list page loads', browser => {
+    testUtils.navigateUrl(browser, '/schedules');
     browser
-      .url('http://localhost:3000/schedules')
       .waitForElementVisible('body', 10000)
       .pause(2000) // Give React time to render
       .execute(function() {
@@ -482,8 +430,6 @@ describe('Schedules CRUD Operations', function() {
   it('05. Verify new schedule appears in list', browser => {
     browser
       .waitForElementVisible('#schedulesPage', 5000)
-      .refresh() // Force page refresh to ensure data loads
-      .waitForElementVisible('#schedulesPage', 5000)
       .pause(1000); // Give autopublish time to sync
     
     // First check what ID was saved in the previous test
@@ -554,8 +500,8 @@ describe('Schedules CRUD Operations', function() {
       
       // If we found the schedule in the database but UI shows no data, force navigation
       if (result.value && (result.value.count > 0 || result.value.testSchedule || result.value.searchResult)) {
+        testUtils.navigateUrl(browser, '/schedules');
         browser
-          .url('http://localhost:3000/schedules')
           .waitForElementVisible('#schedulesPage', 5000)
           .pause(1000);
       }
@@ -574,12 +520,18 @@ describe('Schedules CRUD Operations', function() {
       };
     }, [], function(result) {
       console.log('Page state:', result.value);
-      
+
+      // Check if result.value exists before accessing properties
+      if (!result.value) {
+        console.warn('Execute block returned null - page state unavailable');
+        return;
+      }
+
       if (result.value.hasNoDataMessage) {
         // No data - let's try searching anyway in case the count is wrong
         console.log('No data message shown, searching will show table view');
       }
-      
+
       // Always try to search if the search input exists
       if (result.value.hasSearchInput) {
         // Search for our specific test schedule using the unique timestamp in comment

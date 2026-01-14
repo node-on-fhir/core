@@ -1,0 +1,65 @@
+---
+#1. Client's age is less than 9 months
+#   Today's date − "Date of birth" < 9 months
+### Client is not due for JE vaccination
+### "Immunization recommendation status" = "Not due"
+id: "31.1"
+birth: -8m
+patient:
+  fhir:
+    gender: female
+---
+#0. No JE primary series doses were administered
+#   Count of vaccines administered (where "Vaccine type" = "JE vaccines" and "Type of dose" = "Primary series") = 0
+#1. Client's age is more than or equal to 9 months 
+#   Today's date − "Date of birth" ≥  9 months
+#2. No live vaccine was administered in the last 4 weeks
+#   Today's date − latest "Date and time of vaccination" (where "Live vaccine" = TRUE) ≥ 4 weeks
+### Client is due for JE vaccination
+### "Immunization recommendation status" = "Due"
+id: "32.012"
+birth: -9m
+patient:
+  fhir:
+    gender: female
+---
+#0. No JE primary series doses were administered
+#1. Client's age is more than or equal to 9 months
+#2. Live vaccine was administered in the last 4 weeks
+#   Today's date − latest "Date and time of vaccination" (where "Live vaccine" = TRUE) < 4 weeks
+### Client is not due for JE vaccination
+### "Immunization recommendation status" = "Not due"
+id: "33.012"
+birth: -9m
+patient:
+  fhir:
+    gender: female
+immunization:
+  flu:
+    vaccine:
+      code: XM5V64
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Influenza vaccines, live attenuated"
+    fhir:
+      expirationDate: 1y
+      occurrenceDateTime: -2w
+---
+#0. One JE primary series doses were administered
+#   Count of vaccines administered (where "Vaccine type" = "JE vaccines" and "Type of dose" = "Primary series") = 1
+### JE immunization schedule is complete
+### "Immunization recommendation status" = "Complete"
+### "Completed the primary vaccination series" = TRUE (where "Vaccine type" = "JE vaccines")
+id: "34.0"
+birth: -9m
+patient:
+  fhir:
+    gender: female
+immunization:
+  je:
+    vaccine:
+      code: XM47S0 
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Encephalitis, Japanese, live attenuated"
+    doses:
+      p2:
+        - 0d

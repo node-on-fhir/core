@@ -125,11 +125,20 @@ const VITAL_SIGNS = [
 ];
 
 export default function TakeVitalSignsPage() {
+    // Get Honeycomb theme for dark mode support
+    const useAppTheme = Meteor.useTheme;
+    const appTheme = useAppTheme ? useAppTheme() : { theme: 'light' };
+    const isDark = appTheme.theme === 'dark';
+
+    // Theme-aware colors for cards
+    const cardBgColor = isDark ? '#1e1e1e' : '#ffffff';
+    const cardTextColor = isDark ? 'rgba(255, 255, 255, 0.87)' : 'rgba(0, 0, 0, 0.87)';
+
     const [showPediatric, setShowPediatric] = useState(false);
     const [vitalSignValues, setVitalSignValues] = useState({});
     const [selectedUnits, setSelectedUnits] = useState({});
     const [isSaving, setIsSaving] = useState(false);
-    
+
     const selectedPatient = useTracker(() => {
         // Check both possible session variables
         const patient = Session.get('ICD10_PATIENT') || Session.get('selectedPatient');
@@ -419,20 +428,14 @@ export default function TakeVitalSignsPage() {
     };
     
     return (
-        <Box sx={{ 
-            bgcolor: theme => theme.palette.mode === 'light' 
-                ? theme.palette.grey[50] 
-                : theme.palette.background.default,
-            minHeight: '100vh',
-            pt: '80px'
-        }}>
+        <Box sx={{ minHeight: '100vh' }}>
             <Container maxWidth="lg">
-                <Typography variant="h4" gutterBottom>
+                <Typography variant="h4" gutterBottom sx={{ color: cardTextColor }}>
                     Take Vital Signs
                 </Typography>
-            
+
             {selectedPatient ? (
-                <Typography variant="subtitle1" gutterBottom>
+                <Typography variant="subtitle1" gutterBottom sx={{ color: cardTextColor }}>
                     Patient: {get(selectedPatient, 'name[0].given[0]', '')} {get(selectedPatient, 'name[0].family', '')}
                 </Typography>
             ) : (
@@ -452,6 +455,9 @@ export default function TakeVitalSignsPage() {
                                 />
                             }
                             label="Show pediatric measurements (Body Height, Head Circumference)"
+                            sx={{
+                                '& .MuiFormControlLabel-label': { color: cardTextColor }
+                            }}
                         />
                     </Grid>
                     <Grid item xs={12} md={6}>
@@ -472,7 +478,29 @@ export default function TakeVitalSignsPage() {
                 </Grid>
             </Box>
             
-            <TableContainer component={Paper}>
+            <TableContainer component={Paper} sx={{
+                bgcolor: cardBgColor,
+                color: cardTextColor,
+                '& .MuiTableCell-root': {
+                    color: cardTextColor,
+                    borderColor: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.12)'
+                },
+                '& .MuiTableCell-head': {
+                    backgroundColor: isDark ? '#2a2a2a' : '#f5f5f5',
+                    color: cardTextColor,
+                    fontWeight: 600
+                },
+                '& .MuiTextField-root': {
+                    '& .MuiInputLabel-root': { color: cardTextColor },
+                    '& .MuiInputBase-root': { color: cardTextColor },
+                    '& .MuiOutlinedInput-notchedOutline': {
+                        borderColor: isDark ? 'rgba(255, 255, 255, 0.23)' : 'rgba(0, 0, 0, 0.23)'
+                    }
+                },
+                '& .MuiSelect-root': { color: cardTextColor },
+                '& .MuiSelect-icon': { color: cardTextColor },
+                '& .MuiTypography-root': { color: cardTextColor }
+            }}>
                 <Table>
                     <TableHead>
                         <TableRow>

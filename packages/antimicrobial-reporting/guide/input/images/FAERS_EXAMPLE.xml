@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE ichicsr SYSTEM "http://www.accessdata.fda.gov/xml/icsr-xml-v2.2.dtd">
+<ichicsr lang="en">
+    <ichicsrmessageheader lang="en">
+        <messagetype>ICHICSR</messagetype>
+        <messageformatversion>2.2</messageformatversion>
+        <messageformatrelease>1</messageformatrelease>
+        <messagenumb>fb169864-e6cf-2d87-1971-389a4bcfc054</messagenumb>
+        <messagesenderidentifier>BEST-Pilot</messagesenderidentifier>
+        <messagereceiveridentifier>ZZFDA</messagereceiveridentifier>
+        <messagedateformat>204</messagedateformat>
+        <messagedate>20210107165737</messagedate>
+    </ichicsrmessageheader>
+    <safetyreport>
+        <safetyreportversion>1</safetyreportversion>
+        <safetyreportid>BEST_fb169864-e6cf-2d87-1971-389a4bcfc054</safetyreportid>
+        <transmissiondateformat>102</transmissiondateformat>
+        <transmissiondate>20210107</transmissiondate>
+        <reporttype>1</reporttype>
+        <serious>1</serious>
+        <seriousnessdeath>2</seriousnessdeath>
+        <seriousnesslifethreatening>2</seriousnesslifethreatening>
+        <seriousnesshospitalization>2</seriousnesshospitalization>
+        <seriousnessdisabling>2</seriousnessdisabling>
+        <seriousnesscongenitalanomali>2</seriousnesscongenitalanomali>
+        <seriousnessother>2</seriousnessother>
+        <receivedateformat>102</receivedateformat>
+        <receivedate>20210107</receivedate>
+        <receiptdateformat>102</receiptdateformat>
+        <receiptdate>20210107</receiptdate>
+        <additionaldocument>2</additionaldocument>
+        <fulfillexpeditecriteria>2</fulfillexpeditecriteria>
+        <companynumb>BEST_fb169864-e6cf-2d87-1971-389a4bcfc054</companynumb>
+        <combinationproductreport>2</combinationproductreport>
+        <primarysource>
+            <reporteremailaddress>admin@admin.com</reporteremailaddress>
+            <qualification>1</qualification>
+        </primarysource>
+        <sender>
+            <senderorganization>BEST-Prototype</senderorganization>
+        </sender>
+        <receiver>
+            <receivertype>2</receivertype>
+            <receiverorganization>FDA</receiverorganization>
+            <receiverdepartment>Office of Surveillance and Epidemiology</receiverdepartment>
+            <receivergivename>FAERS</receivergivename>
+            <receiverstreetaddress>10903 New Hampshire Avenue</receiverstreetaddress>
+            <receivercity>Silver Spring</receivercity>
+            <receiverstate>MD</receiverstate>
+            <receiverpostcode>20993</receiverpostcode>
+            <receivercountrycode>US</receivercountrycode>
+            <receiveremailaddress>faersesub@fda.hhs.gov</receiveremailaddress>
+        </receiver>
+        <patient>
+            <patientinitial>CM</patientinitial>
+            <patientbirthdateformat>102</patientbirthdateformat>
+            <patientbirthdate>19990624</patientbirthdate>
+            <patientonsetage>1</patientonsetage>
+            <patientonsetageunit>801</patientonsetageunit>
+            <patientagegroup>5</patientagegroup>
+            <patientsex>2</patientsex>
+            <patientmedicalhistorytext>NI</patientmedicalhistorytext>
+            <reaction>
+                <primarysourcereaction>Allergic transfusion reaction</primarysourcereaction>
+                <reactionmeddraversionllt>23.0</reactionmeddraversionllt>
+                <reactionmeddrallt>10066173</reactionmeddrallt>
+                <reactionstartdateformat>102</reactionstartdateformat>
+                <reactionstartdate>20000101</reactionstartdate>
+                <reactionenddateformat>102</reactionenddateformat>
+                <reactionenddate>20190120</reactionenddate>
+                <reactionduration>19.05</reactionduration>
+                <reactiondurationunit>801</reactiondurationunit>
+            </reaction>
+            <drug>
+                <drugcharacterization>1</drugcharacterization>
+                <medicinalproduct>E7003-ISBT (Apheresis PLATELETS|ACD-A>PAS-C/XX/20-24C|ResLeu:&lt;5E6|2nd container)</medicinalproduct>
+                <drugenddateformat>102</drugenddateformat>
+                <drugenddate>20020109</drugenddate>
+            </drug>
+            <drug>
+                <drugcharacterization>2</drugcharacterization>
+                <medicinalproduct>3992-MULTUM (Epinephrine)</medicinalproduct>
+                <drugenddateformat>102</drugenddateformat>
+                <drugenddate>20020109</drugenddate>
+            </drug>
+            <drug>
+                <drugcharacterization>2</drugcharacterization>
+                <medicinalproduct>3498-MULTUM (Diphenhydramine)</medicinalproduct>
+                <drugenddateformat>102</drugenddateformat>
+                <drugenddate>20020109</drugenddate>
+            </drug>
+            <summary>
+                <narrativeincludeclinical>Header: FDA CBER BEST Automated AE Reporting Prototype Case
+BEST Detection Phenotype Algorithm: Phenotype link: rules-cd
+BEST Certainty: Definite
+BEST Severity: Severe
+BEST Imputability: Probable
+Form Type: 3500
+Contact Method: Email
+Adverse Event: 1
+Center to which the case is being routed to: CBER
+Whether the case is being sent to DQRS: false
+Whether the report is related to drugs or food/cosmetics: 1
+Whether the blood report is of type Transfusion or Collection: 2
+Patient Race Code: 2f,
+Blood group of patient: N/A,
+Onset location for reaction: MedStar Location
+Description code for blood products: E7003,
+Blood group and type: N/A
+Blood processing type: Apheresis PLATELETS|ACD-A&gt;PAS-C/XX/20-24C|ResLeu:&amp;lt;5E6|2nd container
+Product available for evaluation: 2
+Volume of transfusion: NI
+NHSN Workup: NI
+Preliminary investigation results: Developed rash &amp;#38; stridor following transfusion prbc for anemia. Tx with benadryl &amp;#38; epinephrine &amp;#38; sx improved., Adverse Event Type Imputability: Blood Transfusion - Certainty: Definite;
+Notes: 
+	1. notes, Eval+Plan Note, For admission to Hosp with Dx Anemia.  Transfuse PRBC now., Date 20020109;
+	2. notes, Eval+Plan Note, Patient has developed a new maculopapular rash following transfusion. Will give Benadryl 25 mg., Date 20020109;
+	3. notes, Eval+Plan Note, New onset Stridor following transfusion. Will give Epinephrine .5mg, and do transfusion Rxn workup, Date 20020109;
+	4. notes, Eval+Plan Note, RN note - Administered Benadryl 25mg IV for skin sx. After 30 min pt. reports some improvement in  skin symptoms, Date 20020109
+Labs, Vitals, and Tests: 
+	1. labs, Diastolic Blood Pressure, 75.918 mm[Hg], Date 20020109;
+	2. labs, Systolic Blood Pressure, 123.08 mm[Hg], Date 20020109;
+	3. labs, Physical findings of Skin, generalized rash, Date 20020109;
+	4. labs, Respiratory status finding, Stridor, Date 20020109;
+Illness at Time of Vaccination: 
+	1. illness, Problem, Anemia, Date 20020109;</narrativeincludeclinical>
+            </summary>
+        </patient>
+    </safetyreport>
+</ichicsr>

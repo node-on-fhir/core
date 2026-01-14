@@ -1,0 +1,28 @@
+{
+  "resourceType": "SearchParameter",
+  "id": "careteam-status",
+  "url": "http://hl7.org/fhir/SearchParameter/CareTeam-status",
+  "version": "4.0.1",
+  "name": "HoneycombCareTeamStatus",
+  "status": "active",
+  "date": "2024-12-06",
+  "publisher": "github.com/node-on-fhir",
+  "contact": [
+    {
+      "telecom": [
+        {
+          "system": "url",
+          "value": "http://github.com/node-on-fhir/honeycomb"
+        }
+      ]
+    }
+  ],
+  "description": "proposed | active | suspended | inactive | entered-in-error",
+  "code": "status",
+  "base": ["CareTeam"],
+  "type": "token",
+  "expression": "CareTeam.status",
+  "xpath": "status",
+  "multipleOr": true,
+  "multipleAnd": false
+}

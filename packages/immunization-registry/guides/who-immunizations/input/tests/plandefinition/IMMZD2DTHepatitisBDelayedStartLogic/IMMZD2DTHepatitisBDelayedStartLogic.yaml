@@ -1,0 +1,234 @@
+---
+#No hepatitis B doses were administered
+#   Count of vaccines administered (where "Vaccine type" = "Hepatitis B-containing vaccines") = 0
+#Client's age is more than {Member States defined lower limit}
+#   Today's date − "Date of birth" > Member States defined lower limit
+### Client is due for hepatitis B vaccination
+### "Immunization recommendation status" = "Due"
+id: HepatitisB50.2
+birth: -2d
+patient:
+  fhir:
+    gender: female
+---
+#One hepatitis B dose was administered
+#   Count of vaccines administered (where "Vaccine type" = "Hepatitis B-containing vaccines") = 1
+#The latest hepatitis B dose was administered less than 4 weeks ago
+#   Today's date − latest "Date and time of vaccination" (where "Vaccine type" = "Hepatitis B-containing vaccines") < 4 weeks
+### Client is not due for a hepatitis B vaccination
+### "Immunization recommendation status" = "Not due"
+id: HepatitisB51.2
+birth: -3w
+patient:
+  fhir:
+    gender: female
+immunization:
+  hepb1:
+    vaccine:
+      code: XM9V38
+      system: http://id.who.int/icd/release/11/mms
+      display: Hepatitis B, purified antigen
+    fhir:
+      expirationDate: 1y
+      occurrenceDateTime: b+1w
+      protocolApplied:
+        - doseNumberString: "1"
+          seriesDosesString: "3"
+          series: Primary series
+---
+#One hepatitis B dose was administered
+#   Count of vaccines administered (where "Vaccine type" = "Hepatitis B-containing vaccines") = 1
+#The latest hepatitis B dose was administered more than 4 weeks ago
+#   Today's date − latest "Date and time of vaccination" (where "Vaccine type" = "Hepatitis B-containing vaccines") ≥ 4 weeks
+### Client is due for a hepatitis B vaccination
+### "Immunization recommendation status" = "Due"
+id: HepatitisB52.2
+birth: -6w
+patient:
+  fhir:
+    gender: female
+immunization:
+  hepb1:
+    vaccine:
+      code: XM9V38
+      system: http://id.who.int/icd/release/11/mms
+      display: Hepatitis B, purified antigen
+    fhir:
+      expirationDate: 1y
+      occurrenceDateTime: b+1w
+      protocolApplied:
+        - doseNumberString: "1"
+          seriesDosesString: "3"
+          series: Primary series
+---
+#Two hepatitis B doses were administered
+#   Count of vaccines administered (where "Vaccine type" = "Hepatitis B-containing vaccines") = 2
+#The latest hepatitis B dose was administered less than 4 weeks ago
+#   Today's date − latest "Date and time of vaccination" (where "Vaccine type" = "Hepatitis B-containing vaccines") < 4 weeks
+### Client is not due for a hepatitis B vaccination
+### "Immunization recommendation status" = "Not due"
+id: HepatitisB53.2
+birth: -6w
+patient:
+  fhir:
+    gender: female
+immunization:
+  hepb1:
+    vaccine:
+      code: XM9V38
+      system: http://id.who.int/icd/release/11/mms
+      display: Hepatitis B, purified antigen
+    fhir:
+      expirationDate: 1y
+      occurrenceDateTime: b+1w
+      protocolApplied:
+        - doseNumberString: "1"
+          seriesDosesString: "3"
+          series: Primary series
+  hepb2:
+    vaccine:
+      code: XM9V38
+      system: http://id.who.int/icd/release/11/mms
+      display: Hepatitis B, purified antigen
+    fhir:
+      expirationDate: 1y
+      occurrenceDateTime: b+5w
+      protocolApplied:
+        - doseNumberString: "2"
+          seriesDosesString: "3"
+          series: Primary series
+---
+#Two hepatitis B doses were administered
+#   Count of vaccines administered (where "Vaccine type" = "Hepatitis B-containing vaccines") = 2
+#The latest hepatitis B dose was administered more than 4 weeks ago
+#   Today's date − latest "Date and time of vaccination" (where "Vaccine type" = "Hepatitis B-containing vaccines") ≥ 4 weeks
+#The first hepatitis B dose was administered less than 6 months ago
+#   Today's date − "Date and time of vaccination" (where "Vaccine type" = "Hepatitis B-containing vaccines" and "Dose number" = 1) < 6 months
+### Client is not due for a hepatitis B vaccination
+### "Immunization recommendation status" = "Not due"
+id: HepatitisB54.3
+birth: -13w
+patient:
+  fhir:
+    gender: female
+immunization:
+  hepb1:
+    vaccine:
+      code: XM9V38
+      system: http://id.who.int/icd/release/11/mms
+      display: Hepatitis B, purified antigen
+    fhir:
+      expirationDate: 1y
+      occurrenceDateTime: b+1w
+      protocolApplied:
+        - doseNumberString: "1"
+          seriesDosesString: "3"
+          series: Primary series
+  hepb2:
+    vaccine:
+      code: XM9V38
+      system: http://id.who.int/icd/release/11/mms
+      display: Hepatitis B, purified antigen
+    fhir:
+      expirationDate: 1y
+      occurrenceDateTime: b+5w
+      protocolApplied:
+        - doseNumberString: "2"
+          seriesDosesString: "3"
+          series: Primary series
+---
+#Two hepatitis B doses were administered
+#   Count of vaccines administered (where "Vaccine type" = "Hepatitis B-containing vaccines") = 2
+#The latest hepatitis B dose was administered more than 4 weeks ago
+#   Today's date − latest "Date and time of vaccination" (where "Vaccine type" = "Hepatitis B-containing vaccines") ≥ 4 weeks
+#The first hepatitis B dose was administered more than 6 months ago
+#   Today's date − "Date and time of vaccination" (where "Vaccine type" = "Hepatitis B-containing vaccines" and "Dose number" = 1) ≥ 6 months
+### Client is due for a hepatitis B vaccination
+### "Immunization recommendation status" = "Due"
+id: HepatitisB55.3
+birth: -7m
+patient:
+  fhir:
+    gender: female
+immunization:
+  hepb1:
+    vaccine:
+      code: XM9V38
+      system: http://id.who.int/icd/release/11/mms
+      display: Hepatitis B, purified antigen
+    fhir:
+      expirationDate: 1y
+      occurrenceDateTime: b+1w
+      protocolApplied:
+        - doseNumberString: "1"
+          seriesDosesString: "3"
+          series: Primary series
+  hepb2:
+    vaccine:
+      code: XM9V38
+      system: http://id.who.int/icd/release/11/mms
+      display: Hepatitis B, purified antigen
+    fhir:
+      expirationDate: 1y
+      occurrenceDateTime: b+5w
+      protocolApplied:
+        - doseNumberString: "2"
+          seriesDosesString: "3"
+          series: Primary series
+---
+#Three hepatitis B doses were administered
+#   Count of vaccines administered (where "Vaccine type" = "Hepatitis B-containing vaccines") = 3
+### Hepatitis B immunization schedule is complete
+### '"Immunization recommendation status" = "Complete"
+### "Completed the primary vaccination series" = TRUE (where "Vaccine type" = "Hepatitis B-containing vaccines")
+id: HepatitisB56.1
+birth: -9m
+patient:
+  fhir:
+    gender: female
+observation:
+  premature:
+    code:
+      code: DE208
+      system: http://smart.who.int/immunizations/CodeSystem/IMMZ.D
+      display: Preterm birth
+    fhir:
+      effectiveDateTime: b+1h
+      valueBoolean: true
+immunization:
+  hepb1:
+    vaccine:
+      code: XM9V38
+      system: http://id.who.int/icd/release/11/mms
+      display: Hepatitis B, purified antigen
+    fhir:
+      expirationDate: 1y
+      occurrenceDateTime: b+1w
+      protocolApplied:
+        - doseNumberString: "1"
+          seriesDosesString: "3"
+          series: Primary series
+  hepb2:
+    vaccine:
+      code: XM9V38
+      system: http://id.who.int/icd/release/11/mms
+      display: Hepatitis B, purified antigen
+    fhir:
+      expirationDate: 1y
+      occurrenceDateTime: b+5w
+      protocolApplied:
+        - doseNumberString: "2"
+          seriesDosesString: "3"
+          series: Primary series
+  hepb3:
+    vaccine:
+      code: XM9V38
+      system: http://id.who.int/icd/release/11/mms
+      display: Hepatitis B, purified antigen
+    fhir:
+      expirationDate: 1y
+      occurrenceDateTime: b+8m
+      protocolApplied:
+        - doseNumberString: "3"
+          seriesDosesString: "3"
+          series: Primary series

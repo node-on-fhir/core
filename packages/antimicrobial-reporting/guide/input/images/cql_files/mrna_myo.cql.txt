@@ -1,0 +1,276 @@
+library "mrna_myo" version '1.0.0'
+using FHIR version '4.0.0'
+include "FHIRHelpers" version '4.0.0' called FHIRHelpers
+include "mrna_myo_value_sets" version '1.0.0' called value_sets
+
+// parameter to inject an index date found via the spreadsheets from health systems.
+parameter "hs_index_date" Date
+
+// Functions for filtering a set of clinical resources
+define fluent function during( Observations List<Observation>, Period Interval<DateTime>):
+   Observations O where O.effective.value during Period
+
+define fluent function during( Conditions List<Condition>,Period Interval<DateTime>):
+   Conditions C where (C.onset as FHIR.dateTime).value during Period
+
+define fluent function during( Procedures List<Procedure>, Period Interval<DateTime>):
+   Procedures P where P.performed during Period
+
+define fluent function during(Immunizations List<Immunization>, Period Interval<DateTime>):
+   Immunizations I where I.occurrence during Period
+
+define fluent function during(DiagnosticReports List<DiagnosticReport>, Period Interval<DateTime>):
+   DiagnosticReports D where D.effective.value during Period
+
+// Define value sets
+define vaccine_mrna: value_sets.vaccine_mrna
+
+define myocarditis_dxnonspecific: 
+  Concept {codes: (value_sets.myocarditis_dxnonspecific.codes union value_sets.myopericarditis_dxnonspecific.codes)}
+
+define myocarditis_dxspecific: 
+  Concept {codes: (value_sets.myocarditis_dxspecific.codes union value_sets.myopericarditis_dxspecific.codes)}
+
+define myocarditis_dxchronic:
+  Concept {codes: (value_sets.myocarditis_dxchronic.codes union value_sets.myopericarditis_dxchronic.codes)}
+
+define myocarditis_all:
+  Concept {codes: ((myocarditis_dxnonspecific.codes union myocarditis_dxspecific.codes) union myocarditis_dxchronic.codes)}
+ 
+ define myocarditis_dxspecific_dxchronic:
+    Concept {codes: (myocarditis_dxchronic.codes union myocarditis_dxspecific.codes)}
+
+define lab_troponinI: value_sets.lab_troponinI
+
+define lab_troponinT: value_sets.lab_troponinT
+
+define lab_CKMB: value_sets.lab_CKMB
+
+define myo_biopsy: 
+  Concept {codes: (value_sets.testing_myocardialbiopsy.codes union value_sets.testing_cardiacbiopsy.codes)}
+
+define heart_imaging_procedure:
+    Concept {codes: (value_sets.testing_cardiacMR.codes union value_sets.testing_cardiacUS.codes)}
+
+// Start AE Logic
+context Patient
+
+// Use health system determined index date.
+define index_date:
+    date from hs_index_date
+
+// Get mRNA immunization and procedure resources
+define mrna_imm_list: 
+    [Immunization: vaccine_mrna] I
+    where I.status = 'completed'
+
+define mrna_proc_list: 
+    [Procedure: vaccine_mrna] P
+    where P.status = 'completed'
+
+// Get list of dates
+define mrna_imm_dt_list: mrna_imm_list I
+    return date from Coalesce((I.occurrence as FHIR.dateTime).value, ToDateTime((I.occurrence as FHIR.string).value)) sort asc
+
+define mrna_proc_dt_list: mrna_proc_list P
+    return date from Coalesce((P.performed as FHIR.dateTime).value, (P.performed as FHIR.Period)."start".value, ToDateTime((P.performed as FHIR.string).value))
+
+//By default a query returns a list of distinct results
+define mrna_dt_list: mrna_imm_dt_list union mrna_proc_dt_list
+
+// Query for immunizations that occurred on the index date or the day after
+define mrna_imm_on_index_date:
+  mrna_imm_list I
+    where (date from Coalesce((I.occurrence as FHIR.dateTime).value, ToDateTime((I.occurrence as FHIR.string).value)) 
+           in Interval[index_date, index_date + 1 day])
+    
+// Query for procedures that occurred on the index date or the day after
+define mrna_proc_on_index_date:
+  mrna_proc_list P
+    where (date from Coalesce((P.performed as FHIR.dateTime).value, (P.performed as FHIR.Period)."start".value, ToDateTime((P.performed as FHIR.string).value)) in Interval[index_date, index_date + 1 day])
+
+define exposure:
+  mrna_imm_on_index_date.vaccineCode.coding.code union mrna_proc_on_index_date.code.coding.code
+
+define mRNAImmunization_Evidence:
+    Tuple {
+        definition: 'Patient\'s mRNA immunization exposures',
+        featureType: 'biologic_exposure',
+        evidence: mrna_imm_on_index_date union mrna_proc_on_index_date
+    }
+
+// Clean window for observability
+define clean_window_start:
+  index_date - 365 days
+
+// diagnosis window for evidence
+define diagnosis_window_end:
+  index_date + 42 days
+
+define outcome_evidence_interval:
+    Interval[index_date, diagnosis_window_end]
+
+define function HasDataObservability(Conditions List<Condition>, StartDate DateTime, EndDate DateTime):
+  exists (Conditions C1 where C1.recordedDate < StartDate)
+    and exists (Conditions C2 where C2.recordedDate > EndDate)
+
+define data_observability:
+  HasDataObservability([Condition], clean_window_start, diagnosis_window_end)
+
+// Check for excluded diagnoses
+define no_prior_myocarditis:
+  not exists([Condition: myocarditis_all] C
+    where C.recordedDate is not null
+    and (C.recordedDate as FHIR.dateTime) during Interval[clean_window_start, index_date]
+  )
+
+define no_excluded_myocarditis_in_evidence_window:
+  not exists([Condition: myocarditis_dxspecific_dxchronic] C
+    where C.recordedDate is not null
+    and (C.recordedDate as FHIR.dateTime) during outcome_evidence_interval
+  )
+
+// generic list of confirmatory statuses
+define positive_status: {'final', 'amended', 'corrected', 'registered', 'preliminary', 'completed', 'current'}
+
+// Check for lab evidence
+define elevated_troponinI_threshold: 0.015
+
+define elevated_troponinT_threshold: 0.01
+
+define elevated_CKMB_threshold: 5 // >3.8 ng/mL for men, >2.5 ng/mL for women, >6.3 suggestive for MI
+
+define troponinI_observation: [Observation: lab_troponinI]
+
+define biomarker_troponin_i:
+  exists (troponinI_observation TropI
+    where TropI.effective.value during outcome_evidence_interval
+      and (TropI.value as FHIR.Quantity).value > elevated_troponinI_threshold
+      and TropI.value.unit = 'ng/mL'
+      and TropI.status in positive_status
+  )
+
+define troponinT_observation: [Observation: lab_troponinT]
+
+define biomarker_troponin_t:
+  exists (troponinT_observation TropT
+    where TropT.effective.value during outcome_evidence_interval
+      and (TropT.value as FHIR.Quantity).value > elevated_troponinT_threshold
+      and TropT.value.unit = 'ng/mL'
+      and TropT.status in positive_status
+  )
+
+define CKMB_observation: [Observation: lab_CKMB]
+
+define biomarker_ckmb:
+  exists (CKMB_observation CKMB
+    where CKMB.effective.value during outcome_evidence_interval
+      and (CKMB.value as FHIR.Quantity).value > elevated_CKMB_threshold
+      and CKMB.value.unit = 'ng/mL'
+      and CKMB.status in positive_status
+  )
+
+define labs_evidence:
+    Tuple {
+        definition: 'Patient\'s tropinin I/T and CKMB labs',
+        featureType: 'target_supporting_evidence',
+        evidence: ((troponinI_observation.during(outcome_evidence_interval) union troponinT_observation.during(outcome_evidence_interval)) union CKMB_observation.during(outcome_evidence_interval))
+    }
+
+define positive_lab:
+  biomarker_troponin_i
+    or biomarker_troponin_t
+    or biomarker_ckmb
+
+// Look for biopsy evidence
+define biopsy_procedure: [Procedure: myo_biopsy]
+
+define biopsy_diagnostic_report: [DiagnosticReport: myo_biopsy]
+
+define biopsy_document_reference: [DocumentReference: myo_biopsy]
+
+define biopsy_observation: [Observation: myo_biopsy]
+
+define biopsy_evidence:
+    Tuple {
+        definition: 'Patient\'s myocardial biopsies',
+        featureType: 'target_supporting_evidence',
+        evidence: (biopsy_procedure.during(outcome_evidence_interval) union biopsy_diagnostic_report.during(outcome_evidence_interval))
+    }
+
+define biopsy_performed:
+  exists (biopsy_procedure P
+    where P.performed.value during outcome_evidence_interval
+    and P.status in positive_status
+  )
+  or exists (biopsy_diagnostic_report D
+      where D.effective.value during outcome_evidence_interval
+      and D.status in positive_status
+  )
+  or exists (biopsy_document_reference DR
+      where DR.date.value during outcome_evidence_interval
+      and DR.status in positive_status
+  )
+  or exists (biopsy_observation O
+      where O.effective.value during outcome_evidence_interval
+      and O.status in positive_status
+  )
+
+// Look for imaging evidence
+define imaging_procedure: [Procedure: heart_imaging_procedure]
+
+define imaging_diagnostic_report: [DiagnosticReport: heart_imaging_procedure]
+
+define imaging_observation: [Observation: heart_imaging_procedure]
+
+define imaging_evidence:
+    Tuple {
+        definition: 'Patient\'s heart imaging',
+        featureType: 'target_supporting_evidence',
+        evidence: (imaging_procedure.during(outcome_evidence_interval) union imaging_diagnostic_report.during(outcome_evidence_interval))
+    }
+
+define imaging_performed:
+  exists (imaging_procedure P
+    where P.performed.value during outcome_evidence_interval
+    and P.status in positive_status
+  )
+  or exists (imaging_diagnostic_report D
+      where D.effective.value during outcome_evidence_interval
+      and D.status in positive_status
+  )
+  or exists (imaging_observation O
+      where O.effective.value during outcome_evidence_interval
+      and O.status in positive_status
+  )
+  
+// Make final determinations
+define exposure_determination:
+  Length(exposure) > 0
+
+define outcome_determination:
+  if (
+    (biopsy_performed) or
+    (positive_lab) or
+    (imaging_performed)
+  ) then true
+  else false
+
+// InPopulation is analogous to 'exposure associated with outcome'
+define InPopulation:
+  if (
+    data_observability
+    and exposure_determination
+    and no_prior_myocarditis
+    and no_excluded_myocarditis_in_evidence_window
+    and outcome_determination
+  ) then true
+  else false
+
+// Check to count number of times non-specific dx is found in evidence window.
+define fhir_dx_count:
+  Count(
+    [Condition: myocarditis_dxnonspecific] C
+      where C.recordedDate during outcome_evidence_interval
+
+  )

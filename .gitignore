@@ -39,3 +39,9 @@ workzone
 
 proprietary
 contracted
+
+# Meteor Modern-Tools build context directories
+_build
+*/build-assets
+*/build-chunks
+.rsdoctor

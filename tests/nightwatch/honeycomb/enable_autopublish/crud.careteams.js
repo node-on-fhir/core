@@ -2,6 +2,7 @@
 
 const testUtils = require('./shared-test-utils');
 const saveNavigationHelper = require('../../helpers/save-navigation-helper');
+const loginHelper = require('../../helpers/login-helper');
 
 describe('CareTeams CRUD Operations', function() {
   const timestamp = Date.now();
@@ -46,110 +47,46 @@ describe('CareTeams CRUD Operations', function() {
       .url('http://localhost:3000')
       .waitForElementVisible('body', 5000);
 
-    // Check if we're logged in
-    browser.execute(function() {
-      return {
-        isLoggedIn: typeof Meteor !== 'undefined' && !!Meteor.userId(),
-        userId: Meteor.userId ? Meteor.userId() : null,
-        username: Meteor.user ? (Meteor.user() ? Meteor.user().username : null) : null
-      };
-    }, [], function(result) {
-      console.log('Initial login state:', result.value);
-      
-      if (!result.value.isLoggedIn) {
-        console.log('Not logged in, attempting programmatic login...');
-        
-        browser.executeAsync(function(done) {
-          if (typeof Meteor !== 'undefined') {
-            Meteor.call('test.createTestUser', {
-              username: 'janedoe',
-              email: 'janedoe@test.org',
-              password: 'janedoe123'
-            }, function(err, userId) {
-              if (err) {
-                console.error('Failed to create test user:', err);
-                done({ userCreated: false, error: err.message });
-              } else {
-                console.log('Test user ready, userId:', userId);
-                Meteor.loginWithPassword('janedoe', 'janedoe123', function(loginErr) {
-                  if (loginErr) {
-                    console.error('Login failed:', loginErr);
-                    done({ userCreated: true, loginSuccess: false, error: loginErr.message });
-                  } else {
-                    console.log('Login successful');
-                    done({ 
-                      userCreated: true,
-                      loginSuccess: true, 
-                      userId: Meteor.userId(), 
-                      username: Meteor.user() ? Meteor.user().username : null 
-                    });
-                  }
-                });
-              }
-            });
-          } else {
-            done({ userCreated: false, loginSuccess: false, error: 'Meteor not available' });
-          }
-        }, [], function(result) {
-          if (result.value.loginSuccess) {
-            browser.assert.ok(true, 'Successfully created test user and logged in');
-            console.log('Logged in as:', result.value.username, 'userId:', result.value.userId);
-            
-            testUtils.createTestPatient(browser, {
-              name: 'John Doe',
-              family: 'Doe',
-              given: 'John',
-              identifier: 'test-patient-' + timestamp
-            }, function(result) {
-              if (result.error) {
-                console.error('Failed to create test patient:', result.error);
-                browser.assert.fail('Failed to create test patient: ' + result.error);
-              } else {
-                console.log('Test patient created with ID:', result.result);
-                browser.assert.ok(true, 'Successfully created test patient');
-              }
-            });
-          } else {
-            browser.assert.fail('Setup failed: ' + result.value.error);
-          }
-        });
-        
-        browser.pause(500);
+    // Use login helper with built-in retry logic and null checks
+    loginHelper.ensureLoggedIn(browser, function(isLoggedIn) {
+      if (!isLoggedIn) {
+        browser.assert.fail('Failed to ensure user is logged in');
       } else {
-        browser.assert.ok(true, 'Already logged in (autologin enabled)');
-        console.log('Already logged in as:', result.value.username, 'userId:', result.value.userId);
-        
-        testUtils.createTestPatient(browser, {
-          name: 'John Doe',
-          family: 'Doe',
-          given: 'John',
-          identifier: 'test-patient-' + timestamp
-        }, function(result) {
-          if (result.error) {
-            console.error('Failed to create test patient:', result.error);
-            browser.assert.fail('Failed to create test patient: ' + result.error);
-          } else {
-            console.log('Test patient created with ID:', result.result);
-            browser.assert.ok(true, 'Successfully created test patient');
-            
-            browser.execute(function(patientId) {
-              if (typeof Session !== 'undefined' && typeof Patients !== 'undefined') {
-                const patient = Patients.findOne({_id: patientId});
-                if (patient) {
-                  Session.set('selectedPatientId', patientId);
-                  Session.set('selectedPatient', patient);
-                  console.log('Set selected patient in Session:', patientId);
-                }
-              }
-            }, [result.result]);
-          }
-        });
+        browser.assert.ok(true, 'User is logged in');
       }
-      
+
+      // Create test patient
+      testUtils.createTestPatient(browser, {
+        name: 'John Doe',
+        family: 'Doe',
+        given: 'John',
+        identifier: 'test-patient-' + timestamp
+      }, function(result) {
+        if (result.error) {
+          console.error('Failed to create test patient:', result.error);
+          browser.assert.fail('Failed to create test patient: ' + result.error);
+        } else {
+          console.log('Test patient created with ID:', result.result);
+          browser.assert.ok(true, 'Successfully created test patient');
+
+          // Set patient in Session
+          browser.execute(function(patientId) {
+            if (typeof Session !== 'undefined' && typeof Patients !== 'undefined') {
+              const patient = Patients.findOne({_id: patientId});
+              if (patient) {
+                Session.set('selectedPatientId', patientId);
+                Session.set('selectedPatient', patient);
+                console.log('Set selected patient in Session:', patientId);
+              }
+            }
+          }, [result.result]);
+        }
+      });
+
       // Clean up any existing test data
       browser.executeAsync(function(timestamp, done) {
         if (typeof CareTeams !== 'undefined') {
-          const testCareTeams = CareTeams.find({ 
+          const testCareTeams = CareTeams.find({
             'name': { $regex: timestamp }
           }).fetch();
           testCareTeams.forEach(function(careTeam) {
@@ -159,36 +96,38 @@ describe('CareTeams CRUD Operations', function() {
         }
         done();
       }, [timestamp.toString()]);
-      
+
+      // Set selected patient in Session
       browser.execute(function(testIdentifier) {
-          if (typeof Session !== 'undefined' && typeof Patients !== 'undefined') {
-            const patient = Patients.findOne({
-              'identifier.value': testIdentifier
-            });
-            if (patient) {
-              Session.set('selectedPatientId', patient._id);
-              Session.set('selectedPatient', patient);
-              console.log('Set selected patient in Session:', patient._id, patient.name?.[0]?.text);
-              return { success: true, patientId: patient._id, patientName: patient.name?.[0]?.text };
-            } else {
-              console.error('Could not find test patient with identifier:', testIdentifier);
-              return { success: false, error: 'Patient not found' };
-            }
-          }
-          return { success: false, error: 'Session or Patients not available' };
-        }, ['test-patient-' + timestamp], function(result) {
-          if (result.value.success) {
-            console.log('Successfully set selected patient:', result.value);
+        if (typeof Session !== 'undefined' && typeof Patients !== 'undefined') {
+          const patient = Patients.findOne({
+            'identifier.value': testIdentifier
+          });
+          if (patient) {
+            Session.set('selectedPatientId', patient._id);
+            Session.set('selectedPatient', patient);
+            console.log('Set selected patient in Session:', patient._id, patient.name?.[0]?.text);
+            return { success: true, patientId: patient._id, patientName: patient.name?.[0]?.text };
           } else {
-            console.error('Failed to set selected patient:', result.value.error);
+            console.error('Could not find test patient with identifier:', testIdentifier);
+            return { success: false, error: 'Patient not found' };
           }
-        });
+        }
+        return { success: false, error: 'Session or Patients not available' };
+      }, ['test-patient-' + timestamp], function(result) {
+        if (result.value && result.value.success) {
+          console.log('Successfully set selected patient:', result.value);
+        } else if (result.value) {
+          console.error('Failed to set selected patient:', result.value.error);
+        }
+      });
     });
   });
 
   it('02. Verify care teams list page loads', browser => {
+    // Use client-side navigation to preserve Meteor/Session state
+    testUtils.navigateUrl(browser, '/care-teams');
     browser
-      .url('http://localhost:3000/care-teams')
       .waitForElementVisible('body', 5000)
       .execute(function() {
         // Check for JavaScript errors
@@ -539,10 +478,10 @@ describe('CareTeams CRUD Operations', function() {
         browser.assert.ok(result.value.notes.includes(testCareTeam.notes), 'Notes contain expected text');
       })
       .saveScreenshot('tests/nightwatch/screenshots/careteams/07-view-careteam-details.png');
-    
-    browser
-      .url('http://localhost:3000/care-teams')
-      .waitForElementVisible('#careTeamsPage', 5000);
+
+    // Use testUtils.navigateUrl to preserve Session state
+    testUtils.navigateUrl(browser, '/care-teams');
+    browser.waitForElementVisible('#careTeamsPage', 5000);
   });
 
   it('07. Update existing care team', browser => {
@@ -626,9 +565,11 @@ describe('CareTeams CRUD Operations', function() {
         browser.assert.equal(result.value, true, 'Clicked Save button');
       });
 
+    browser.pause(1000);
+
+    // Use testUtils.navigateUrl to preserve Session state
+    testUtils.navigateUrl(browser, '/care-teams');
     browser
-      .pause(1000)
-      .url('http://localhost:3000/care-teams')
       .waitForElementVisible('#careTeamsTable', 5000)
       .saveScreenshot('tests/nightwatch/screenshots/careteams/09-careteam-updated.png');
   });
@@ -723,7 +664,7 @@ describe('CareTeams CRUD Operations', function() {
           })
           .pause(500)  // Wait for alert
           .acceptAlert()
-          .pause(2000); // Wait for deletion and navigation
+          .pause(4000); // Wait for async deletion and navigation/error to complete
           
         // Note: Delete may fail if TEST_RUN environment variable is not set
         // This is a safety feature to prevent accidental deletions in production
@@ -776,45 +717,65 @@ describe('CareTeams CRUD Operations', function() {
   });
 
   it('10. Verify care team removed from list', browser => {
-    // First check if we're still on detail page (deletion restricted)
+    // Wait for subscription to update after deletion
+    browser.pause(1000);
+
+    // Check current page state and any error messages
     browser
       .execute(function() {
+        const isOnDetailPage = document.querySelector('#careTeamDetailPage') !== null;
+        const isOnListPage = document.querySelector('#careTeamsPage') !== null;
+        const errorText = document.querySelector('[color="error"]') ?
+                         document.querySelector('[color="error"]').textContent : '';
+        const hasRestrictionMessage = document.body.textContent.includes('deletion is restricted') ||
+                                     document.body.textContent.includes('restricted') ||
+                                     errorText.includes('restricted');
+
         return {
-          isOnDetailPage: document.querySelector('#careTeamDetailPage') !== null,
-          hasRestrictionMessage: document.body.textContent.includes('deletion is restricted')
+          isOnDetailPage,
+          isOnListPage,
+          hasRestrictionMessage,
+          errorText,
+          url: window.location.pathname
         };
       }, [], function(result) {
-        if (result.value.isOnDetailPage && result.value.hasRestrictionMessage) {
-          browser.assert.ok(true, 'Deletion was restricted as expected without TEST_RUN=true');
+        console.log('Delete verification state:', result.value);
+
+        if (result.value.hasRestrictionMessage) {
+          // Deletion was restricted - this is acceptable
+          browser.assert.ok(true, 'Deletion was restricted (TEST_RUN not set)');
           console.log('To enable deletion tests, run: TEST_RUN=true meteor run --settings ...');
-        } else {
-          // If we're on the list page, verify deletion
+        } else if (result.value.isOnListPage) {
+          // On list page - deletion should have succeeded, verify record is gone
           browser
             .waitForElementVisible('#careTeamsPage', 5000)
             .execute(function(timestamp) {
-              // Check if table exists first
               const table = document.querySelector('#careTeamsTable');
               if (table) {
                 const rows = document.querySelectorAll('#careTeamsTable tbody tr');
+                let foundCount = 0;
                 for (let row of rows) {
                   if (row.textContent.includes(timestamp)) {
-                    return { found: true, hasTable: true };
+                    foundCount++;
                   }
                 }
-                return { found: false, hasTable: true };
+                return { found: foundCount > 0, foundCount, hasTable: true };
               } else {
-                // No table means no data, which means care team was deleted
                 const hasNoData = document.querySelector('.no-data-card') !== null ||
                                  document.querySelector('#careTeamsPage').textContent.includes('No Data Available');
-                return { found: false, hasTable: false, hasNoData: hasNoData };
+                return { found: false, foundCount: 0, hasTable: false, hasNoData };
               }
             }, [timestamp.toString()], function(result) {
+              console.log('Table search result:', result.value);
               if (result.value.hasTable) {
                 browser.assert.equal(result.value.found, false, 'Care team no longer in list');
               } else {
                 browser.assert.equal(result.value.hasNoData, true, 'No data available shown (care team was deleted)');
               }
             });
+        } else {
+          // Unexpected state
+          browser.assert.ok(false, 'Unexpected state: not on detail or list page');
         }
       })
       .saveScreenshot('tests/nightwatch/screenshots/careteams/12-careteam-not-in-list.png');

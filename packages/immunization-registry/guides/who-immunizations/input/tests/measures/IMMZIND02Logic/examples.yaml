@@ -1,0 +1,91 @@
+---
+id: 01.pentavalent0
+birth: -5w
+patient:
+  fhir:
+    gender: female
+---
+id: 02.pentavalent0
+birth: -6w
+patient:
+  fhir:
+    gender: female
+---
+id: 03.pentavalent1
+birth: -6w
+patient:
+  fhir:
+    gender: female
+immunization:
+  pentavalent:
+    vaccine:
+      code: XM7JP3
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Diphtheria, hemophilus influenzae B, pertussis, tetanus, hepatitis B vaccines"
+    doses:
+      p3:
+        - 0d
+---
+id: 04.pentavalent1
+birth: -3m
+patient:
+  fhir:
+    gender: female
+immunization:
+  pentavalent:
+    vaccine:
+      code: XM7JP3
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Diphtheria, hemophilus influenzae B, pertussis, tetanus, hepatitis B vaccines"
+    doses:
+      p3:
+        - b+6w
+---
+id: 05.pentavalent2
+birth: -3m
+patient:
+  fhir:
+    gender: female
+immunization:
+  pentavalent:
+    vaccine:
+      code: XM7JP3
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Diphtheria, hemophilus influenzae B, pertussis, tetanus, hepatitis B vaccines"
+    doses:
+      p3:
+        - b+6w
+        - 0d
+---
+id: 06.pentavalent2
+birth: -6m
+patient:
+  fhir:
+    gender: female
+immunization:
+  pentavalent:
+    vaccine:
+      code: XM7JP3
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Diphtheria, hemophilus influenzae B, pertussis, tetanus, hepatitis B vaccines"
+    doses:
+      p3:
+        - b+6w
+        - 0d
+---
+id: 07.pentavalent3
+birth: -6m
+patient:
+  fhir:
+    gender: female
+immunization:
+  pentavalent:
+    vaccine:
+      code: XM7JP3
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Diphtheria, hemophilus influenzae B, pertussis, tetanus, hepatitis B vaccines"
+    doses:
+      p3:
+        - b+6w
+        - b+3m
+        - 0d

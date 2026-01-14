@@ -30,7 +30,7 @@ import { BaseSchema, DomainResourceSchema, IdentifierSchema, ContactPointSchema,
 // create the object using our BaseModel
 let Observation = BaseModel.extend();
 
-export let Observations = new Mongo.Collection('Observations');
+let Observations = new Mongo.Collection('Observations');
 
 //Assign a collection so the object knows how to perform CRUD operations
 Observation.prototype._collection = Observations;

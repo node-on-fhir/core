@@ -4,6 +4,7 @@
 
 const loginHelper = require('../helpers/login-helper');
 const saveNavigationHelper = require('../helpers/save-navigation-helper');
+const testUtils = require('./enable_autopublish/shared-test-utils');
 
 describe('PlanDefinitions CRUD Operations', function() {
   const timestamp = Date.now();
@@ -440,8 +441,9 @@ describe('PlanDefinitions CRUD Operations', function() {
     });
     
     // After successful save, navigate back to the list page
+    // CRITICAL: Use testUtils.navigateUrl to preserve Session state
+    testUtils.navigateUrl(browser, '/plan-definitions');
     browser
-      .url('http://localhost:3000/plan-definitions')
       .waitForElementVisible('#planDefinitionsPage', 10000)
       .saveScreenshot('tests/nightwatch/screenshots/plan-definitions/05-plan-definition-saved.png');
   });
@@ -662,14 +664,15 @@ describe('PlanDefinitions CRUD Operations', function() {
       .saveScreenshot('tests/nightwatch/screenshots/plan-definitions/07-view-plan-definition-details.png');
     
     // Navigate back to plan definitions list
+    // CRITICAL: Use testUtils.navigateUrl to preserve Session state
+    testUtils.navigateUrl(browser, '/plan-definitions');
     browser
-      .url('http://localhost:3000/plan-definitions')
-      .waitForElementVisible('#planDefinitionsPage', 5000);
+      .waitForElementVisible('#planDefinitionsPage', 10000);
   });
 
   it('07. Update existing plan definition', browser => {
     browser
-      .waitForElementVisible('#planDefinitionsTable', 5000)
+      .waitForElementVisible('#planDefinitionsTable', 10000)
       .pause(1000);
 
     // Check if search input exists before trying to use it
@@ -783,9 +786,12 @@ describe('PlanDefinitions CRUD Operations', function() {
       });
 
     browser
-      .pause(1000)
-      .url('http://localhost:3000/plan-definitions')
-      .waitForElementVisible('#planDefinitionsTable', 5000)
+      .pause(1000);
+
+    // CRITICAL: Use testUtils.navigateUrl to preserve Session state
+    testUtils.navigateUrl(browser, '/plan-definitions');
+    browser
+      .waitForElementVisible('#planDefinitionsTable', 10000)
       .saveScreenshot('tests/nightwatch/screenshots/plan-definitions/09-plan-definition-updated.png');
   });
 

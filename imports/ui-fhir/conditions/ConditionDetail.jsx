@@ -66,7 +66,7 @@ function ConditionDetail(props) {
   // Subscribe to conditions and patients data
   const subscriptionReady = useTracker(() => {
     const conditionsHandle = Meteor.subscribe('conditions.all');
-    const patientsHandle = Meteor.subscribe('patients.all');
+    const patientsHandle = Meteor.subscribe('patients.search', {});
     return conditionsHandle.ready() && patientsHandle.ready();
   }, []);
 

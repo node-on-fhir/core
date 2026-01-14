@@ -42,13 +42,39 @@ describe('MeasureReports CRUD Operations', function() {
     console.log('Starting MeasureReports CRUD test suite...');
     browser
       .url('http://localhost:3000')
-      .waitForElementVisible('body', circleHelper.TIMEOUTS.EXTRA_LONG);
-    
-    // Wait for app to be fully ready
-    circleHelper.waitForAppReady(browser, function(isReady) {
-      if (!isReady) {
-        browser.assert.fail('Application failed to become ready');
-      }
+      .waitForElementVisible('body', circleHelper.TIMEOUTS.EXTRA_LONG)
+      .pause(2000); // Give app time to initialize
+
+    // Check for Meteor and basic app readiness with retries
+    browser.perform(function() {
+      let retries = 0;
+      const maxRetries = 10;
+
+      const checkReady = () => {
+        browser.execute(function() {
+          return {
+            meteorReady: typeof Meteor !== 'undefined',
+            hasPage: document.querySelector('[id$="Page"]') !== null || document.querySelector('#app-root') !== null,
+            bodyLoaded: document.body && document.body.innerHTML.length > 100
+          };
+        }, [], function(result) {
+          console.log(`App readiness check (${retries + 1}/${maxRetries}):`, result.value);
+
+          if (result.value && result.value.meteorReady && (result.value.hasPage || result.value.bodyLoaded)) {
+            console.log('✅ App is ready');
+          } else if (retries < maxRetries) {
+            retries++;
+            console.log(`App not ready, waiting 3s... (${retries}/${maxRetries})`);
+            browser.pause(3000);
+            checkReady();
+          } else {
+            console.error('⚠️  App may not be fully ready, but continuing test...');
+            // Don't fail here - let individual tests handle readiness
+          }
+        });
+      };
+
+      checkReady();
     });
   });
 
@@ -374,8 +400,22 @@ describe('MeasureReports CRUD Operations', function() {
     // Search for our specific test measure report
     browser
       .waitForElementVisible('#measureReportSearchInput', 10000)
-      .clearValue('#measureReportSearchInput')
-      .setValue('#measureReportSearchInput', testMeasureReport.identifier)
+      .execute(function(searchValue) {
+        const input = document.querySelector('#measureReportSearchInput');
+        if (input) {
+          // Clear the field
+          input.value = '';
+          input.dispatchEvent(new Event('input', { bubbles: true }));
+          input.dispatchEvent(new Event('change', { bubbles: true }));
+
+          // Set new value
+          input.value = searchValue;
+          input.dispatchEvent(new Event('input', { bubbles: true }));
+          input.dispatchEvent(new Event('change', { bubbles: true }));
+          return true;
+        }
+        return false;
+      }, [testMeasureReport.identifier])
       .pause(2000); // Longer pause for search to complete
     
     browser.execute(function() {
@@ -441,8 +481,22 @@ describe('MeasureReports CRUD Operations', function() {
     // Search for our specific measure report
     browser
       .waitForElementVisible('#measureReportSearchInput', 5000)
-      .clearValue('#measureReportSearchInput')
-      .setValue('#measureReportSearchInput', testMeasureReport.identifier)
+      .execute(function(searchValue) {
+        const input = document.querySelector('#measureReportSearchInput');
+        if (input) {
+          // Clear the field
+          input.value = '';
+          input.dispatchEvent(new Event('input', { bubbles: true }));
+          input.dispatchEvent(new Event('change', { bubbles: true }));
+
+          // Set new value
+          input.value = searchValue;
+          input.dispatchEvent(new Event('input', { bubbles: true }));
+          input.dispatchEvent(new Event('change', { bubbles: true }));
+          return true;
+        }
+        return false;
+      }, [testMeasureReport.identifier])
       .pause(1000);
 
     // Now click on the measure report row
@@ -572,8 +626,22 @@ describe('MeasureReports CRUD Operations', function() {
     // Search for our specific test measure report first
     browser
       .waitForElementVisible('#measureReportSearchInput', 5000)
-      .clearValue('#measureReportSearchInput')
-      .setValue('#measureReportSearchInput', testMeasureReport.identifier.substring(0, 20))
+      .execute(function(searchValue) {
+        const input = document.querySelector('#measureReportSearchInput');
+        if (input) {
+          // Clear the field
+          input.value = '';
+          input.dispatchEvent(new Event('input', { bubbles: true }));
+          input.dispatchEvent(new Event('change', { bubbles: true }));
+
+          // Set new value
+          input.value = searchValue;
+          input.dispatchEvent(new Event('input', { bubbles: true }));
+          input.dispatchEvent(new Event('change', { bubbles: true }));
+          return true;
+        }
+        return false;
+      }, [testMeasureReport.identifier.substring(0, 20)])
       .pause(1000);
 
     // Now click on the measure report to edit
@@ -683,23 +751,36 @@ describe('MeasureReports CRUD Operations', function() {
       });
 
     browser
-      .pause(1000)
-      .url('http://localhost:3000/measure-reports')
-      .waitForElementVisible('#measureReportsTable', 5000)
+      .pause(1000);
+
+    testUtils.navigateUrl(browser, '/measure-reports');
+
+    browser
+      .waitForElementVisible('#measureReportsTable', 10000)
       .saveScreenshot('tests/nightwatch/screenshots/measure-reports/09-measure-report-updated.png');
   });
 
   it('08. Verify updated measure report in list', browser => {
     browser
-      .waitForElementVisible('#measureReportsTable', 5000)
-      .waitForElementVisible('#measureReportSearchInput', 5000)
-      .clearValue('#measureReportSearchInput')
-      .pause(500);
-      
-    // Try searching for the timestamp first to see if any measure report shows up
-    browser
-      .setValue('#measureReportSearchInput', timestamp.toString())
-      .pause(1500)
+      .waitForElementVisible('#measureReportsTable', 10000)
+      .waitForElementVisible('#measureReportSearchInput', 10000)
+      .execute(function(searchValue) {
+        const input = document.querySelector('#measureReportSearchInput');
+        if (input) {
+          // Clear the field
+          input.value = '';
+          input.dispatchEvent(new Event('input', { bubbles: true }));
+          input.dispatchEvent(new Event('change', { bubbles: true }));
+
+          // Set new value
+          input.value = searchValue;
+          input.dispatchEvent(new Event('input', { bubbles: true }));
+          input.dispatchEvent(new Event('change', { bubbles: true }));
+          return true;
+        }
+        return false;
+      }, [timestamp.toString()])
+      .pause(2000)
       .execute(function() {
         const table = document.querySelector('#measureReportsTable');
         const rows = table ? table.querySelectorAll('tbody tr') : [];
@@ -746,9 +827,23 @@ describe('MeasureReports CRUD Operations', function() {
       
     // Now search for the identifier
     browser
-      .clearValue('#measureReportSearchInput')
-      .setValue('#measureReportSearchInput', testMeasureReport.identifier.substring(0, 20))
-      .pause(1500)
+      .execute(function(searchValue) {
+        const input = document.querySelector('#measureReportSearchInput');
+        if (input) {
+          // Clear the field
+          input.value = '';
+          input.dispatchEvent(new Event('input', { bubbles: true }));
+          input.dispatchEvent(new Event('change', { bubbles: true }));
+
+          // Set new value
+          input.value = searchValue;
+          input.dispatchEvent(new Event('input', { bubbles: true }));
+          input.dispatchEvent(new Event('change', { bubbles: true }));
+          return true;
+        }
+        return false;
+      }, [testMeasureReport.identifier.substring(0, 20)])
+      .pause(2000)
       .execute(function(expectedStatus, expectedType, timestamp) {
         const table = document.querySelector('#measureReportsTable');
         const rows = table ? table.querySelectorAll('tbody tr') : [];

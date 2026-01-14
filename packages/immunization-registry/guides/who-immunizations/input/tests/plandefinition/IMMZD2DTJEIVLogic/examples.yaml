@@ -1,0 +1,84 @@
+---
+#1. Client's age is less than 6 months
+#   Today's date − "Date of birth" < 6 months
+### Client is not due for JE vaccination
+### "Immunization recommendation status" = "Not due"
+id: "08.1"
+birth: -5m
+patient:
+  fhir:
+    gender: female
+---
+#0. No JE primary series doses were administered
+#   Count of vaccines administered (where "Vaccine type" = "JE vaccines" and "Type of dose" = "Primary series") = 0
+#1. Client's age is more than or equal to 6 months 
+#   Today's date − "Date of birth" ≥ 6 months
+### Client is due for JE vaccination
+### "Immunization recommendation status" = "Due"
+id: "09.01"
+birth: -6m
+patient:
+  fhir:
+    gender: female
+---
+#0. One JE primary series dose was administered
+#   Count of vaccines administered (where "Vaccine type" = "JE vaccines" and "Type of dose" = "Primary series") = 1
+#2. The latest JE dose was administered less than 4 weeks ago
+#   Today's date − "Date and time of vaccination" (where "Vaccine type" = "JE vaccines") < 4 weeks
+### Client is not due for JE vaccination
+### "Immunization recommendation status" = "Not due"
+id: "10.02"
+birth: -6m
+patient:
+  fhir:
+    gender: female
+immunization:
+  je:
+    vaccine:
+      code: XM0LB5
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Encephalitis, Japanese, inactivated, whole virus"
+    doses:
+      p2:
+        - 0d
+---
+#0. One JE primary series dose was administered
+#2. The latest JE dose was administered more than 4 weeks ago
+#   Today's date − "Date and time of vaccination" (where "Vaccine type" = "JE vaccines") ≥ 4 weeks
+### Client is due for JE vaccination
+### "Immunization recommendation status" = "Due"
+id: "11.02"
+birth: -7m
+patient:
+  fhir:
+    gender: female
+immunization:
+  je:
+    vaccine:
+      code: XM0LB5
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Encephalitis, Japanese, inactivated, whole virus"
+    doses:
+      p2:
+        - -4w
+---
+#0. Two JE primary series doses were administered
+#   Count of vaccines administered (where "Vaccine type" = "JE vaccines" and "Type of dose" = "Primary series") = 2
+### JE immunization schedule is complete
+### "Immunization recommendation status" = "Complete"
+### "Completed the primary vaccination series" = TRUE (where "Vaccine type" = "JE vaccines")
+id: "12.0"
+birth: -8m
+patient:
+  fhir:
+    gender: female
+immunization:
+  je:
+    vaccine:
+      code: XM0LB5
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Encephalitis, Japanese, inactivated, whole virus"
+    doses:
+      p2:
+        - -8w
+        - -4w

@@ -3,14 +3,17 @@ import { Random } from 'meteor/random';
 import { WebApp } from "meteor/webapp";
 
 import express from 'express';
+import bodyParser from 'body-parser';
+import querystring from 'querystring';
 
 
 import RestHelpers from './RestHelpers.js';
+import { SearchParametersEngine } from './SearchParametersEngine.js';
 
 import { get, has, set, unset, cloneDeep, capitalize, findIndex, countBy } from 'lodash';
 import moment from 'moment';
 
-import OAuthClientComponents from '../imports/collections/OAuthClients.js';
+import { OAuthClients } from '../imports/collections/OAuthClients.js';
 import OAuthServerConfig from './OAuthServer.js';
 
 
@@ -33,6 +36,7 @@ import { CommunicationRequests } from '../imports/lib/schemas/SimpleSchemas/Comm
 import { Compositions } from '../imports/lib/schemas/SimpleSchemas/Compositions';
 import { Consents } from '../imports/lib/schemas/SimpleSchemas/Consents';
 import { Conditions } from '../imports/lib/schemas/SimpleSchemas/Conditions';
+import { Coverages } from '../imports/lib/schemas/SimpleSchemas/Coverages';
 import { Devices } from '../imports/lib/schemas/SimpleSchemas/Devices';
 import { DiagnosticReports } from '../imports/lib/schemas/SimpleSchemas/DiagnosticReports';
 import { DocumentReferences } from '../imports/lib/schemas/SimpleSchemas/DocumentReferences';
@@ -46,9 +50,12 @@ import { InsurancePlans } from '../imports/lib/schemas/SimpleSchemas/InsurancePl
 import { Lists } from '../imports/lib/schemas/SimpleSchemas/Lists';
 import { Locations } from '../imports/lib/schemas/SimpleSchemas/Locations';
 import { Medications } from '../imports/lib/schemas/SimpleSchemas/Medications';
+import { MedicationDispenses } from '../imports/lib/schemas/SimpleSchemas/MedicationDispenses';
 import { MedicationOrders } from '../imports/lib/schemas/SimpleSchemas/MedicationOrders';
+import { MedicationRequests } from '../imports/lib/schemas/SimpleSchemas/MedicationRequests';
 import { Measures } from '../imports/lib/schemas/SimpleSchemas/Measures';
 import { MeasureReports } from '../imports/lib/schemas/SimpleSchemas/MeasureReports';
+import { Medias } from '../imports/lib/schemas/SimpleSchemas/Medias';
 import { NutritionOrders } from '../imports/lib/schemas/SimpleSchemas/NutritionOrders';
 import { NutritionIntakes } from '../imports/lib/schemas/SimpleSchemas/NutritionIntakes';
 import { Networks } from '../imports/lib/schemas/SimpleSchemas/Networks';
@@ -69,6 +76,7 @@ import { ResearchSubjects } from '../imports/lib/schemas/SimpleSchemas/ResearchS
 import { ResearchStudies } from '../imports/lib/schemas/SimpleSchemas/ResearchStudies';
 import { SearchParameters } from '../imports/lib/schemas/SimpleSchemas/SearchParameters';
 import { ServiceRequests } from '../imports/lib/schemas/SimpleSchemas/ServiceRequests';
+import { Specimens } from '../imports/lib/schemas/SimpleSchemas/Specimens';
 import { StructureDefinitions } from '../imports/lib/schemas/SimpleSchemas/StructureDefinitions';
 import { Subscriptions } from '../imports/lib/schemas/SimpleSchemas/Subscriptions';
 import { Tasks } from '../imports/lib/schemas/SimpleSchemas/Tasks';
@@ -81,7 +89,11 @@ import FhirUtilities from '../imports/lib/FhirUtilities.js';
 
 import { RateLimiter } from "limiter";
 
-const limiter = new RateLimiter({ tokensPerInterval: 150, interval: "hour" });
+// Rate limiter configuration - can be customized via Meteor.settings.private.fhir.rateLimit
+const rateLimitTokens = get(Meteor, 'settings.private.fhir.rateLimit.tokensPerInterval', 1000);
+const rateLimitInterval = get(Meteor, 'settings.private.fhir.rateLimit.interval', 'hour');
+const limiter = new RateLimiter({ tokensPerInterval: rateLimitTokens, interval: rateLimitInterval });
+console.log(`Rate limiter configured: ${rateLimitTokens} tokens per ${rateLimitInterval}`);
 
 //------------------------------------------------------------------------------------------
 // Accounts Subsystem 
@@ -132,7 +144,7 @@ function initializeAccessControl() {
   // Load consent records
   Consents.find({'category.coding.code': 'IDSCL'}).forEach(function(consentRecord){
     let aclRecord = FhirUtilities.consentIntoAccessControl(consentRecord);
-    console.log('Converting Consent to ACL record:', aclRecord);
+    console.log('Converting Consent to ACL record:', JSON.stringify(aclRecord));
     accessControlList.push(aclRecord);
   });
 
@@ -196,19 +208,54 @@ function initializeAccessControl() {
   // Grant SYSTEM role full access to all resources
   // SYSTEM role is used for internal services and administrative access
   console.log('Granting SYSTEM role full access to all resources');
-  const allFhirResources = ['Patient', 'Practitioner', 'Organization', 'Observation', 'Condition', 
+  // All FHIR resources - used for SYSTEM and healthcare practitioner/provider roles
+  // IMPORTANT: Keep in sync with patientAccessResources and enabled resources in settings
+  const allFhirResources = ['Patient', 'Practitioner', 'Organization', 'Observation', 'Condition',
                             'Procedure', 'Medication', 'MedicationRequest', 'MedicationStatement',
-                            'AllergyIntolerance', 'Immunization', 'DiagnosticReport', 'DocumentReference', 
-                            'SearchParameter', 'Bundle', 'CareTeam', 'CarePlan', 'CodeSystem', 
+                            'AllergyIntolerance', 'Immunization', 'DiagnosticReport', 'DocumentReference',
+                            'SearchParameter', 'Bundle', 'CareTeam', 'CarePlan', 'CodeSystem',
                             'Communication', 'CommunicationRequest', 'Composition', 'Consent',
-                            'Encounter', 'Endpoint', 'Goal', 'Group', 'HealthcareService', 
+                            'Encounter', 'Endpoint', 'Goal', 'Group', 'HealthcareService',
                             'InsurancePlan', 'List', 'Location', 'MeasureReport', 'Measure',
-                            'NutritionOrder', 'OrganizationAffiliation', 'PractitionerRole', 
+                            'NutritionOrder', 'OrganizationAffiliation', 'PractitionerRole',
                             'Provenance', 'Questionnaire', 'QuestionnaireResponse', 'RelatedPerson',
-                            'RiskAssessment', 'ServiceRequest', 'StructureDefinition', 'Subscription', 
-                            'Task', 'ValueSet', 'VerificationResult'];
+                            'RiskAssessment', 'ServiceRequest', 'StructureDefinition', 'Subscription',
+                            'Task', 'ValueSet', 'VerificationResult',
+                            // USCDI resources required for (g)(10) certification - added for Coverage tests
+                            'Binary', 'Coverage', 'Device', 'Media', 'MedicationDispense', 'Specimen'];
   allFhirResources.forEach(function(resource) {
     acl.grant('SYSTEM').execute('access').on(resource, ['*']);
+  });
+
+  // Define PAT role for unauthenticated requests (no login, no bearer token, etc.)
+  // When a request comes in without authentication, the code defaults to role 'PAT'
+  // Without this role defined, acl.can('PAT') throws AccessControlError causing 500 errors
+  // Role exists but has NO permissions - unauthenticated requests should be denied
+  console.log('Defining PAT role (no permissions - unauthenticated users)');
+  acl.grant('PAT');  // Role exists but grants no access
+
+  // Grant 'patient' role access to USCDI resources for SMART on FHIR patient-level access
+  // This role is assigned when a valid Bearer token is presented with patient context
+  // Per ONC 170.315(g)(10), patients should be able to access their own clinical data
+  // Full list of USCDI v4 resources required for (g)(10) certification
+  console.log('Granting patient role access to USCDI resources');
+  const patientAccessResources = [
+    'Patient', 'AllergyIntolerance', 'CarePlan', 'CareTeam', 'Condition', 'Coverage',
+    'Device', 'DiagnosticReport', 'DocumentReference', 'Encounter', 'Goal',
+    'Immunization', 'Location', 'Medication', 'MedicationDispense', 'MedicationRequest',
+    'Observation', 'Organization', 'Practitioner', 'PractitionerRole', 'Procedure',
+    'Provenance', 'RelatedPerson', 'ServiceRequest', 'Media', 'Specimen'
+  ];
+  patientAccessResources.forEach(function(resource) {
+    acl.grant('patient').execute('access').on(resource, ['*']);
+  });
+
+  // Grant 'healthcare practitioner' and 'healthcare provider' roles access to all FHIR resources
+  // These roles are assigned to authenticated users with practitioner privileges
+  console.log('Granting healthcare practitioner/provider roles access to all FHIR resources');
+  allFhirResources.forEach(function(resource) {
+    acl.grant('healthcare practitioner').execute('access').on(resource, ['*']);
+    acl.grant('healthcare provider').execute('access').on(resource, ['*']);
   });
 
   console.log('ACL initialized with ' + accessControlList.length + ' access control records');
@@ -280,13 +327,14 @@ if(Meteor.isServer){
   Collections.Compositions = Compositions;
   Collections.Conditions = Conditions;
   Collections.Consents = Consents;
+  Collections.Coverages = Coverages;
   Collections.Devices = Devices;
   Collections.DiagnosticReports = DiagnosticReports;
   Collections.DocumentReferences = DocumentReferences;
   Collections.Encounters = Encounters;
   Collections.Endpoints = Endpoints;
   Collections.Goals = Goals;
-  Collections.Groups = Goals;
+  Collections.Groups = Groups;
   Collections.HealthcareServices = HealthcareServices;
   Collections.Immunizations = Immunizations;
   Collections.InsurancePlans = InsurancePlans;
@@ -298,11 +346,14 @@ if(Meteor.isServer){
   Collections.Observations = Observations;
   Collections.Organizations = Organizations;
   Collections.OrganizationAffiliations = OrganizationAffiliations;
-  Collections.OAuthClients = OAuthClientComponents.OAuthClients;
+  Collections.OAuthClients = OAuthClients;
   Collections.Medications = Medications;
+  Collections.MedicationDispenses = MedicationDispenses;
   Collections.MedicationOrders = MedicationOrders;
+  Collections.MedicationRequests = MedicationRequests;
   Collections.Measures = Measures;
   Collections.MeasureReports = MeasureReports;
+  Collections.Medias = Medias;
   Collections.Patients = Patients;
   Collections.Practitioners = Practitioners;
   Collections.PractitionerRoles = PractitionerRoles;
@@ -317,12 +368,25 @@ if(Meteor.isServer){
   Collections.ResearchStudies = ResearchStudies;
   Collections.SearchParameters = SearchParameters;
   Collections.ServiceRequests = ServiceRequests;
+  Collections.Specimens = Specimens;
   Collections.StructureDefinitions = StructureDefinitions;
   Collections.Subscriptions = Subscriptions;
   Collections.Tasks = Tasks;
   Collections.ValueSets = ValueSets;
   // Collections.VerificationResults = VerificationResults;
 }
+
+//==========================================================================================
+// _include Field Mappings
+// Maps FHIR _include search parameter names to actual field paths in resources
+// Format: { ResourceType: { searchParamName: 'fieldPath' } }
+// Example: MedicationRequest:medication -> medicationReference field
+
+const includeFieldMappings = {
+  'MedicationRequest': {
+    'medication': 'medicationReference'
+  }
+};
 
 
 //==========================================================================================
@@ -359,6 +423,27 @@ let containerAccessTokenOverride = get(Meteor, 'settings.private.fhir.accessToke
 //==========================================================================================
 // Helper Methods
 
+/**
+ * Find the first authorized role from a user's roles array
+ * Roles have semantic meaning:
+ *   - 'user' = authenticated but no specific access level
+ *   - 'patient' = can access own patient record
+ *   - 'healthcare practitioner'/'healthcare provider' = can access all records
+ * @param {Array} userRoles - The user's roles array
+ * @returns {string} - The first matching authorized role, or 'patient' as default
+ */
+function getAuthorizedRole(userRoles) {
+  const authorizedRoles = ['healthcare practitioner', 'healthcare provider', 'patient'];
+  if (Array.isArray(userRoles)) {
+    for (const role of authorizedRoles) {
+      if (userRoles.includes(role)) {
+        return role;
+      }
+    }
+  }
+  return 'patient'; // default if no authorized role found
+}
+
 async function parseUserAuthorization(req){
   process.env.DEBUG && console.log("Core FHIR API parsing user authorization....")
 
@@ -385,7 +470,7 @@ async function parseUserAuthorization(req){
         const user = await Meteor.users.findOneAsync({username: process.env.DEV_AUTO_USERNAME});
         if(user) {
           authorizationContext = {
-            role: get(user, 'roles[0]', 'user'),
+            role: getAuthorizedRole(get(user, 'roles', [])),
             userId: user._id,
             patientId: get(user, 'patientId'),
             practitionerId: get(user, 'practitionerId')
@@ -466,10 +551,60 @@ async function parseUserAuthorization(req){
     }  
   }
 
-  // SMART on FHIR (OAUTH) 
+  // SMART on FHIR (OAUTH)
 
   if(typeof OAuthServerConfig !== "object"){
     console.log('OAuthServerConfig does not exist.')
+  }
+
+  // BEARER TOKEN VALIDATION (SMART on FHIR / OAuth 2.0)
+  // Check for Authorization: Bearer <token> header
+  const authHeader = get(req, 'headers.authorization', '');
+  if (authHeader.startsWith('Bearer ') && !authorizationContext) {
+    const bearerToken = authHeader.substring(7); // Remove 'Bearer ' prefix
+    console.log('>>> Bearer token detected:', bearerToken.substring(0, 8) + '...');
+
+    // Look up the access token in OAuthClients collection
+    const oauthClient = await OAuthClients.findOneAsync({ access_token: bearerToken });
+
+    if (oauthClient) {
+      console.log('>>> Bearer token found for client:', oauthClient.client_id);
+
+      // Check if authorization was revoked - ONC g(10) 9.3.01 compliance
+      if (oauthClient.revoked_at) {
+        console.log('>>> Bearer token revoked for client:', oauthClient.client_id, 'at:', oauthClient.revoked_at);
+        // Token was explicitly revoked by patient - do not authorize
+      }
+      // Check if authorization has expired (user-selected duration)
+      else if (oauthClient.authorization_expires_at && new Date(oauthClient.authorization_expires_at) < new Date()) {
+        console.log('>>> Authorization expired for client:', oauthClient.client_id, 'at:', oauthClient.authorization_expires_at);
+        // User-selected authorization duration has expired - do not authorize
+      }
+      // Check if token is expired (system default timeout)
+      else {
+        const tokenCreatedAt = get(oauthClient, 'access_token_created_at');
+        const expiresIn = get(Meteor, 'settings.private.fhir.tokenTimeout', 86400); // Default 24 hours
+        const isExpired = tokenCreatedAt && (new Date() - new Date(tokenCreatedAt)) > (expiresIn * 1000);
+
+        if (isExpired) {
+          console.log('>>> Bearer token expired for client:', oauthClient.client_id);
+        } else {
+          // Token is valid - set authorization context
+          // Use 'patient' role for patient-level access (matches isAuthorized authorized roles)
+          authorizationContext = {
+            role: 'patient',
+            userId: oauthClient.user_id || oauthClient.client_id,
+            patientId: oauthClient.patient_id || '',
+            clientId: oauthClient.client_id,
+            scope: oauthClient.requested_scope || oauthClient.scope || '',
+            isOAuthToken: true
+          };
+          console.log('>>> Bearer token authenticated. Role: patient, Patient ID:', authorizationContext.patientId);
+        }
+      }
+    } else {
+      console.log('>>> Bearer token not found in OAuthClients collection');
+    }
   }
 
   process.env.TRACE && console.log("")
@@ -499,23 +634,36 @@ async function parseUserAuthorization(req){
   // Simple session token authentication using Meteor's login tokens
   if(sessionToken && !authorizationContext){
     console.log('>>> Checking session token authentication');
-    
+    console.log('>>> Session token (first 20 chars):', sessionToken.substring(0, 20) + '...');
+
     // Find user by their login token
     const hashedToken = Accounts._hashLoginToken(sessionToken);
+    console.log('>>> Hashed token:', hashedToken);
+
     const user = await Meteor.users.findOneAsync({
       'services.resume.loginTokens.hashedToken': hashedToken
     });
-    
+
     if(user) {
       console.log('>>> Session token authenticated for user:', user.username);
+      const authorizedRole = getAuthorizedRole(get(user, 'roles', []));
+      console.log('>>> Authorized role:', authorizedRole);
       authorizationContext = {
-        role: get(user, 'roles[0]', 'user'),
+        role: authorizedRole,
         userId: user._id,
         patientId: get(user, 'patientId', ''),
         practitionerId: get(user, 'practitionerId', '')
       };
     } else {
       console.log('>>> Session token not found or expired');
+      // Debug: Check if any users have login tokens at all
+      const anyUserWithTokens = await Meteor.users.findOneAsync({
+        'services.resume.loginTokens': { $exists: true, $ne: [] }
+      });
+      if(anyUserWithTokens){
+        console.log('>>> Debug: Found user with tokens:', anyUserWithTokens.username);
+        console.log('>>> Debug: Their hashed tokens:', get(anyUserWithTokens, 'services.resume.loginTokens', []).map(t => t.hashedToken));
+      }
     }
   }
 
@@ -543,6 +691,299 @@ async function isAuthorized(authorizationContext){
     return false;
   }
 }
+
+// Check if the requested resource type is authorized by the token's scopes
+// ONC g(10) DAT-PAT-9: Must limit data to only authorized FHIR resources
+function isResourceScopeAuthorized(authorizationContext, resourceType) {
+  // If not an OAuth token request, allow all resources (internal/session auth)
+  if (!get(authorizationContext, 'isOAuthToken')) {
+    return true;
+  }
+
+  const scope = get(authorizationContext, 'scope', '');
+  if (!scope) {
+    console.warn('isResourceScopeAuthorized: No scope found in authorization context');
+    return false;
+  }
+
+  const scopes = scope.split(' ').filter(function(s) { return s.trim(); });
+
+  // Check for wildcard scopes that grant access to all resources
+  // e.g., patient/*.rs, patient/*.read, user/*.rs, system/*.*
+  const hasWildcard = scopes.some(function(s) {
+    return s.match(/^(patient|user|system)\/\*\.(rs|read|write|\*)$/);
+  });
+
+  if (hasWildcard) {
+    return true;
+  }
+
+  // Check for specific resource scope
+  // Scopes can be: patient/Resource.rs, patient/Resource.read, user/Resource.rs, etc.
+  const resourceScopePatterns = [
+    `patient/${resourceType}.rs`,
+    `patient/${resourceType}.read`,
+    `patient/${resourceType}.cruds`,
+    `user/${resourceType}.rs`,
+    `user/${resourceType}.read`,
+    `user/${resourceType}.cruds`,
+    `system/${resourceType}.rs`,
+    `system/${resourceType}.read`,
+    `system/${resourceType}.cruds`
+  ];
+
+  const isAuthorizedForResource = scopes.some(function(s) {
+    return resourceScopePatterns.includes(s);
+  });
+
+  if (!isAuthorizedForResource) {
+    console.log(`isResourceScopeAuthorized: Resource '${resourceType}' not authorized. Scopes: ${scope}`);
+  }
+
+  // SMART 2.x: Also check for granular scopes with query parameters
+  // e.g., patient/Condition.rs?category=health-concern
+  const hasGranularScope = scopes.some(function(s) {
+    // Extract base scope before any query parameters
+    const baseScope = s.split('?')[0];
+    return resourceScopePatterns.includes(baseScope);
+  });
+
+  if (hasGranularScope) {
+    return true;
+  }
+
+  return isAuthorizedForResource;
+}
+
+// =============================================================================
+// SMART 2.x Granular Scopes Support
+// ONC (g)(10) requires filtering results based on granular scope parameters
+// e.g., patient/Condition.rs?category=health-concern
+// =============================================================================
+
+/**
+ * Parse a SMART 2.x granular scope into its components
+ * @param {string} scope - e.g., "patient/Condition.rs?category=health-concern"
+ * @returns {Object|null} - Parsed scope or null if not a valid granular scope
+ */
+function parseGranularScope(scope) {
+  if (!scope || typeof scope !== 'string') {
+    return null;
+  }
+
+  // Check if this is a granular scope (has query parameters)
+  const questionMarkIndex = scope.indexOf('?');
+  if (questionMarkIndex === -1) {
+    return null; // Not a granular scope
+  }
+
+  const baseScope = scope.substring(0, questionMarkIndex);
+  const queryString = scope.substring(questionMarkIndex + 1);
+
+  // Parse base scope: patient/Resource.permission or user/Resource.permission
+  const baseScopeMatch = baseScope.match(/^(patient|user|system)\/([A-Za-z]+)\.(rs|read|write|cruds|\*)$/);
+  if (!baseScopeMatch) {
+    console.warn('[GranularScope] Invalid base scope format:', baseScope);
+    return null;
+  }
+
+  const context = baseScopeMatch[1]; // patient, user, or system
+  const resourceType = baseScopeMatch[2]; // Condition, Observation, etc.
+  const permission = baseScopeMatch[3]; // rs, read, write, cruds, *
+
+  // Parse query parameters
+  const filters = {};
+  const params = queryString.split('&');
+  params.forEach(function(param) {
+    const equalsIndex = param.indexOf('=');
+    if (equalsIndex !== -1) {
+      const key = decodeURIComponent(param.substring(0, equalsIndex));
+      const value = decodeURIComponent(param.substring(equalsIndex + 1));
+      filters[key] = value;
+    }
+  });
+
+  return {
+    context: context,
+    resourceType: resourceType,
+    permission: permission,
+    filters: filters,
+    original: scope
+  };
+}
+
+/**
+ * Get all granular scope filters for a specific resource type
+ * @param {Object} authContext - Authorization context with scope
+ * @param {string} resourceType - e.g., "Condition"
+ * @returns {Array} - Array of filter objects, empty if no granular scopes
+ */
+function getGranularFiltersForResource(authContext, resourceType) {
+  const granularFilters = [];
+
+  // If not an OAuth token request, no granular filtering
+  if (!get(authContext, 'isOAuthToken')) {
+    return granularFilters;
+  }
+
+  const scope = get(authContext, 'scope', '');
+  if (!scope) {
+    return granularFilters;
+  }
+
+  const scopes = scope.split(' ').filter(function(s) { return s.trim(); });
+
+  // Check for wildcard scopes - if present, no granular filtering needed
+  const hasWildcard = scopes.some(function(s) {
+    return s.match(/^(patient|user|system)\/\*\.(rs|read|write|\*)$/);
+  });
+  if (hasWildcard) {
+    return granularFilters; // No filtering for wildcard scopes
+  }
+
+  // Check for non-granular resource scope - if present, no granular filtering
+  const hasFullResourceScope = scopes.some(function(s) {
+    const pattern = new RegExp(`^(patient|user|system)/${resourceType}\\.(rs|read|write|cruds|\\*)$`);
+    return pattern.test(s) && !s.includes('?');
+  });
+  if (hasFullResourceScope) {
+    return granularFilters; // Full access to resource, no filtering
+  }
+
+  // Parse granular scopes for this resource type
+  scopes.forEach(function(s) {
+    const parsed = parseGranularScope(s);
+    if (parsed && parsed.resourceType === resourceType && Object.keys(parsed.filters).length > 0) {
+      granularFilters.push(parsed.filters);
+      process.env.DEBUG && console.log('[GranularScope] Found filter for', resourceType, ':', JSON.stringify(parsed.filters));
+    }
+  });
+
+  return granularFilters;
+}
+
+/**
+ * Check if a resource matches a granular scope filter
+ * @param {Object} resource - FHIR resource
+ * @param {Object} filter - Filter object, e.g., { category: "health-concern" }
+ * @returns {boolean} - True if resource matches the filter
+ */
+function resourceMatchesGranularFilter(resource, filter) {
+  // Each filter key is a search parameter, value is the required value
+  for (const [param, requiredValue] of Object.entries(filter)) {
+    const fieldValue = get(resource, param);
+
+    if (!fieldValue) {
+      // Resource doesn't have this field - doesn't match
+      return false;
+    }
+
+    // Handle CodeableConcept fields (category, code, type, etc.)
+    if (Array.isArray(fieldValue)) {
+      // Array of CodeableConcepts
+      const matches = fieldValue.some(function(cc) {
+        return codeableConceptMatchesValue(cc, requiredValue);
+      });
+      if (!matches) {
+        return false;
+      }
+    } else if (typeof fieldValue === 'object' && (fieldValue.coding || fieldValue.text)) {
+      // Single CodeableConcept
+      if (!codeableConceptMatchesValue(fieldValue, requiredValue)) {
+        return false;
+      }
+    } else if (typeof fieldValue === 'string') {
+      // Simple string/code field
+      if (fieldValue !== requiredValue && !requiredValue.endsWith('|' + fieldValue)) {
+        return false;
+      }
+    } else {
+      // Unknown field type - be conservative and not match
+      console.warn('[GranularScope] Unknown field type for', param, ':', typeof fieldValue);
+      return false;
+    }
+  }
+
+  return true;
+}
+
+/**
+ * Check if a CodeableConcept matches a scope value
+ * Value can be: bare code, system|code, or system| (any code in system)
+ * @param {Object} codeableConcept - FHIR CodeableConcept
+ * @param {string} value - Scope filter value
+ * @returns {boolean}
+ */
+function codeableConceptMatchesValue(codeableConcept, value) {
+  if (!codeableConcept) {
+    return false;
+  }
+
+  // Check text field
+  if (codeableConcept.text && codeableConcept.text === value) {
+    return true;
+  }
+
+  // Check coding array
+  const codings = codeableConcept.coding || [];
+  if (!Array.isArray(codings)) {
+    return false;
+  }
+
+  // Parse value for system|code format
+  const pipeIndex = value.indexOf('|');
+  let requiredSystem = null;
+  let requiredCode = value;
+
+  if (pipeIndex !== -1) {
+    requiredSystem = value.substring(0, pipeIndex);
+    requiredCode = value.substring(pipeIndex + 1);
+  }
+
+  return codings.some(function(coding) {
+    // If system is specified, it must match
+    if (requiredSystem && coding.system !== requiredSystem) {
+      return false;
+    }
+
+    // If code is empty (system| format), any code in that system matches
+    if (requiredCode === '') {
+      return requiredSystem ? coding.system === requiredSystem : false;
+    }
+
+    // Code must match
+    return coding.code === requiredCode;
+  });
+}
+
+/**
+ * Apply granular scope filters to a set of resources
+ * Resources must match at least one of the granular filters (OR logic between filters)
+ * @param {Array} resources - Array of FHIR resources
+ * @param {Array} granularFilters - Array of filter objects
+ * @returns {Array} - Filtered resources
+ */
+function applyGranularScopeFilters(resources, granularFilters) {
+  if (!granularFilters || granularFilters.length === 0) {
+    return resources;
+  }
+
+  if (!Array.isArray(resources)) {
+    return resources;
+  }
+
+  const filteredResources = resources.filter(function(resource) {
+    // Resource must match at least one granular filter
+    return granularFilters.some(function(filter) {
+      return resourceMatchesGranularFilter(resource, filter);
+    });
+  });
+
+  process.env.DEBUG && console.log('[GranularScope] Filtered', resources.length, 'resources to', filteredResources.length, 'based on', granularFilters.length, 'granular filters');
+
+  return filteredResources;
+}
+
 async function logToInboundQueue(request){
   process.env.DEBUG && console.log('request.query', request.query)
   process.env.DEBUG && console.log('request.params', request.params)
@@ -628,8 +1069,36 @@ async function signProvenance(record){
 
 
 //==========================================================================================
-// Route Manifest  
+// Route Manifest
 
+// Configure body-parser middleware for FHIR endpoints
+// This needs to be registered before routes are defined
+// Using verify callback to preserve raw body for debugging
+
+// Add text body parser for plain text requests
+// Note: form-urlencoded should be handled by bodyParser.urlencoded() below
+WebApp.handlers.use(bodyParser.text({
+  limit: '50mb',
+  type: ['text/plain'],
+  verify: function(req, res, buf) {
+    req.rawBody = buf.toString();
+  }
+}));
+
+WebApp.handlers.use(bodyParser.json({
+  limit: '50mb',
+  type: ['application/json', 'application/fhir+json'],
+  verify: function(req, res, buf) {
+    req.rawBody = buf.toString();
+  }
+}));
+WebApp.handlers.use(bodyParser.urlencoded({
+  limit: '50mb',
+  extended: true,
+  verify: function(req, res, buf) {
+    req.rawBody = buf.toString();
+  }
+}));
 
 WebApp.handlers.post("/" + fhirPath + "/ping", async (req, res) => {
 
@@ -641,8 +1110,8 @@ WebApp.handlers.post("/" + fhirPath + "/ping", async (req, res) => {
   res.setHeader('Content-type', 'application/json');
   res.setHeader("Access-Control-Allow-Methods", "PUT, POST, GET, DELETE, PATCH, OPTIONS");
 
-  const remainingRequests = await limiter.removeTokens(1);
-  if (remainingRequests < 0) {
+  const gotToken = limiter.tryRemoveTokens(1);
+  if (!gotToken) {
     res.status(429).json({message: "Too Many Requests - your IP is being rate limited'"});
   } else {
     let returnPayload = {
@@ -669,7 +1138,8 @@ let serverRouteManifest = get(Meteor, 'settings.private.fhir.rest', {
     "interactions": ["read", "create", "update", "delete"]
   },
   "Location": {
-    "interactions": ["read", "create", "update", "delete"]
+    "interactions": ["read", "create", "update", "delete"],
+    "search": true
   },
   "Organization": {
     "interactions": ["read", "create", "update", "delete"]
@@ -708,12 +1178,12 @@ if(typeof serverRouteManifest === "object"){
           res.setHeader("content-type", 'application/fhir+json;charset=utf-8');
           res.setHeader("ETag", fhirVersion);
 
-          const remainingRequests = await limiter.removeTokens(1);
-          if (remainingRequests < 0) {
+          const gotToken = limiter.tryRemoveTokens(1);
+          if (!gotToken) {
             res.status(429).json({message: "429 Too Many Requests - your IP is being rate limited"});
           } else {
             let authorizationContext = await parseUserAuthorization(req)
-            if (isAuthorized(authorizationContext)){
+            if (await isAuthorized(authorizationContext)){
               if(get(Meteor, 'settings.private.debug') === true) { console.log('Security checks completed'); }
   
               process.env.DEBUG && console.log('req.query', req.query)
@@ -745,8 +1215,8 @@ if(typeof serverRouteManifest === "object"){
           res.setHeader('Content-type', 'application/fhir+json;charset=utf-8');
           res.setHeader("ETag", fhirVersion);
           
-          const remainingRequests = await limiter.removeTokens(1);
-          if (remainingRequests < 0) {
+          const gotToken = limiter.tryRemoveTokens(1);
+          if (!gotToken) {
             res.status(429).json({message: "429 Too Many Requests - your IP is being rate limited"});
           } else {
             res.status(501).json();
@@ -767,18 +1237,32 @@ if(typeof serverRouteManifest === "object"){
           res.setHeader("content-type", 'application/fhir+json;charset=utf-8');
           res.setHeader("ETag", fhirVersion);
 
-          const remainingRequests = await limiter.removeTokens(1);
-          if (remainingRequests < 0) {
+          const gotToken = limiter.tryRemoveTokens(1);
+          if (!gotToken) {
             res.status(429).json({message: "429 Too Many Requests - your IP is being rate limited"});
           } else {
             // is this person authorized?
             let authorizationContext = await parseUserAuthorization(req)
-            if (isAuthorized(authorizationContext)){
+            if (await isAuthorized(authorizationContext)){
               if(get(Meteor, 'settings.private.debug') === true) { console.log('Security checks completed'); }
+
+              // ONC g(10) DAT-PAT-9: Check if resource type is in authorized scopes
+              if (!isResourceScopeAuthorized(authorizationContext, routeResourceType)) {
+                res.setHeader("content-type", 'application/fhir+json;charset=utf-8');
+                res.status(403).json({
+                  resourceType: "OperationOutcome",
+                  issue: [{
+                    severity: "error",
+                    code: "forbidden",
+                    diagnostics: `Access to ${routeResourceType} is not authorized by the granted scopes`
+                  }]
+                });
+                return;
+              }
 
               // the person is authorized and known; but do they have permission to access?
               let userRole = get(authorizationContext, 'role', 'PAT');
-              
+
               // TODO:  if logged in, user role becomes 'healthcare provider' etc.
 
               let records;
@@ -854,10 +1338,124 @@ if(typeof serverRouteManifest === "object"){
 
                 // plain ol regular approach
                 if(get(Meteor, 'settings.private.debug') === true) { console.log('records', records); }
-    
+
+                // ONC g(10): Apply granular scope filtering for reads
+                // If the client has granular scopes (e.g., patient/Condition.rs?category=encounter-diagnosis),
+                // the read should fail if the resource doesn't match the allowed categories
+                const granularFilters = getGranularFiltersForResource(authorizationContext, routeResourceType);
+                if (granularFilters.length > 0 && records.length > 0) {
+                  console.log('[GranularScope] Checking read access for', routeResourceType, 'with', granularFilters.length, 'filters');
+                  records = applyGranularScopeFilters(records, granularFilters);
+                  if (records.length === 0) {
+                    console.log('[GranularScope] Read denied - resource does not match granular scope filters');
+                    res.status(403).json({
+                      resourceType: "OperationOutcome",
+                      issue: [{
+                        severity: "error",
+                        code: "forbidden",
+                        diagnostics: `Access to this ${routeResourceType} resource is not authorized by the granted granular scopes`
+                      }]
+                    });
+                    return;
+                  }
+                }
+
                 // could we find it?
                 if(Array.isArray(records)){
                   if(records.length === 0){
+                    // Special handling for Provenance: generate on-demand if ID matches pattern
+                    if(collectionName === "Provenances" && req.params.id && req.params.id.startsWith("provenance-")){
+                      // Extract the target resource ID from the Provenance ID
+                      let targetResourceId = req.params.id.replace("provenance-", "");
+                      console.log("Provenance read: generating on-demand for target ID:", targetResourceId);
+
+                      // Try to find the target resource in any collection
+                      let targetResource = null;
+                      let targetResourceType = null;
+
+                      // Search through patient-accessible collections for the target resource
+                      const searchCollections = ['Patients', 'Observations', 'Conditions', 'Procedures',
+                        'Encounters', 'MedicationRequests', 'Immunizations', 'DiagnosticReports',
+                        'DocumentReferences', 'CarePlans', 'CareTeams', 'Goals', 'AllergyIntolerances',
+                        'Devices', 'ServiceRequests', 'Coverages', 'MedicationDispenses', 'Specimens'];
+
+                      for(let searchCollName of searchCollections){
+                        if(Collections[searchCollName]){
+                          let found = await Collections[searchCollName].findOneAsync({id: targetResourceId});
+                          if(found){
+                            targetResource = found;
+                            targetResourceType = searchCollName.replace(/s$/, ''); // Remove trailing 's'
+                            // Handle special plurals
+                            if(searchCollName === 'Coverages') targetResourceType = 'Coverage';
+                            if(searchCollName === 'Allergies') targetResourceType = 'AllergyIntolerance';
+                            break;
+                          }
+                        }
+                      }
+
+                      if(targetResource){
+                        // Find an Organization to reference in Provenance agent
+                        // Try to find one with US Core profile for best compatibility
+                        let provenanceOrg = await Organizations.findOneAsync({
+                          'meta.profile': 'http://hl7.org/fhir/us/core/StructureDefinition/us-core-organization'
+                        });
+                        // Fall back to any Organization if no US Core profile found
+                        if(!provenanceOrg){
+                          provenanceOrg = await Organizations.findOneAsync({});
+                        }
+
+                        let orgReference = provenanceOrg ? {
+                          reference: "Organization/" + get(provenanceOrg, 'id'),
+                          display: get(provenanceOrg, 'name', get(Meteor, 'settings.public.title', 'Honeycomb EHR'))
+                        } : {
+                          display: get(Meteor, 'settings.public.title', 'Honeycomb EHR')
+                        };
+
+                        // Generate the Provenance dynamically
+                        let provenance = {
+                          resourceType: "Provenance",
+                          id: req.params.id,
+                          meta: {
+                            profile: ["http://hl7.org/fhir/us/core/StructureDefinition/us-core-provenance"],
+                            lastUpdated: get(targetResource, 'meta.lastUpdated') || new Date().toISOString()
+                          },
+                          target: [{
+                            reference: targetResourceType + "/" + targetResourceId
+                          }],
+                          recorded: get(targetResource, 'meta.lastUpdated') || new Date().toISOString(),
+                          agent: [
+                            {
+                              type: {
+                                coding: [{
+                                  system: "http://terminology.hl7.org/CodeSystem/provenance-participant-type",
+                                  code: "author",
+                                  display: "Author"
+                                }]
+                              },
+                              who: orgReference,
+                              onBehalfOf: orgReference
+                            },
+                            {
+                              type: {
+                                coding: [{
+                                  system: "http://hl7.org/fhir/us/core/CodeSystem/us-core-provenance-participant-type",
+                                  code: "transmitter",
+                                  display: "Transmitter"
+                                }]
+                              },
+                              who: orgReference,
+                              onBehalfOf: orgReference
+                            }
+                          ]
+                        };
+
+                        res.setHeader("Content-type", 'application/fhir+json');
+                        res.setHeader("Last-Modified", get(targetResource, 'meta.lastUpdated') || new Date().toISOString());
+                        res.status(200).json(RestHelpers.prepForFhirTransfer(provenance));
+                        return;
+                      }
+                    }
+
                     // no content
                     res.status(204).json()
                   } else if (records.length === 1){
@@ -923,6 +1521,17 @@ if(typeof serverRouteManifest === "object"){
 
                     let mostRecentRecord;
 
+                    // TODO: verify the correctness of the following logic
+                    // Handle ID collision case: multiple records with same FHIR id but different _id
+                    // This can happen when Synthea data (where _id = id) coexists with
+                    // app-created records (where _id is ObjectId). Per CLAUDE.md anti-pattern docs,
+                    // this is a data integrity issue that should be fixed, but we handle gracefully here.
+                    // Log warning and use first record as fallback if versioning is not enabled.
+                    if(get(Meteor, 'settings.private.fhir.rest.' + routeResourceType + '.versioning') !== "versioned"){
+                      console.warn('[FhirEndpoints] WARNING: Found ' + records.length + ' records with same FHIR id "' + req.params.id + '" but versioning is not enabled for ' + routeResourceType + '. This may indicate ID collision. Using first record.');
+                      mostRecentRecord = records[0];
+                    }
+
                     if(get(Meteor, 'settings.private.fhir.rest.' + routeResourceType + '.versioning') === "versioned"){
 
                       if(get(Meteor, 'settings.private.trace') === true) { console.log('records', records); }
@@ -962,12 +1571,24 @@ if(typeof serverRouteManifest === "object"){
                     if (get(Meteor, 'settings.private.fhir.disableAccessControl') === true) {
                       accessGranted = true;
                     } else {
-                      permission = acl.can(userRole).execute('access').with({'securityLevel': recordSecurityLevel}).sync().on(routeResourceType);
-                      console.log('permission.granted: ' + permission.granted);
-    
-                      accessGranted = permission.granted;
+                      // TODO: verify the correctness of the following logic
+                      // Wrap ACL check in try/catch to prevent 500 errors when role doesn't exist
+                      // This mirrors the error handling pattern used in the single-record case above
+                      try {
+                        const roles = acl.getRoles();
+                        if (roles.includes(userRole)) {
+                          permission = acl.can(userRole).execute('access').with({'securityLevel': recordSecurityLevel}).sync().on(routeResourceType);
+                          console.log('permission.granted: ' + permission.granted);
+                          accessGranted = permission.granted;
+                        } else {
+                          console.log('Role not found in ACL:', userRole, '- defaulting to denied (versioned read)');
+                          accessGranted = false;
+                        }
+                      } catch (aclError) {
+                        console.error('ACL Error at versioned read:', aclError.message);
+                        accessGranted = false;
+                      }
                     }
-    
 
                     if(accessGranted){
                       res.setHeader("x-provenance", signProvenance(mostRecentRecord));
@@ -1003,8 +1624,8 @@ if(typeof serverRouteManifest === "object"){
             console.log('Resource Type: ' + routeResourceType);               
           }
 
-          const remainingRequests = await limiter.removeTokens(1);
-          if (remainingRequests < 0) {
+          const gotToken = limiter.tryRemoveTokens(1);
+          if (!gotToken) {
             res.status(429).json({message: "429 Too Many Requests - your IP is being rate limited"});
           } else {
 
@@ -1068,40 +1689,147 @@ if(typeof serverRouteManifest === "object"){
             process.env.TRACE && console.log('chainedIds', chainedIds);
 
             // now search through the query for regular run-of-the-mill queries
-            const searchParametersList = await SearchParameters.find({base: routeResourceType}).fetchAsync();
-            searchParametersList.forEach(function(searchParameter){
-              process.env.DEBUG && console.log('------------------------------------------------------')
-              // process.env.DEBUG && console.log('req.query', req.query);
-              process.env.DEBUG && console.log('SearchParameter');
-              process.env.DEBUG && console.log('id:         ' + get(searchParameter, 'id'));
-              process.env.DEBUG && console.log('code:       ' + get(searchParameter, 'code'));
-              process.env.DEBUG && console.log('expression: ' + get(searchParameter, 'expression'));
-              process.env.DEBUG && console.log('base        ' + get(searchParameter, 'base'));
-              process.env.DEBUG && console.log('target      ' + get(searchParameter, 'target[0]'));
-              process.env.DEBUG && console.log('xpath:      ' + get(searchParameter, 'xpath'));
-              process.env.DEBUG && console.log(' ');
+            // Use SearchParametersEngine if enabled (default), otherwise fallback to MongoDB
+            console.log('========== SearchParametersEngine State ==========');
+            console.log('Engine enabled:', SearchParametersEngine.isEnabled());
+            console.log('Engine compiled:', SearchParametersEngine.isCompiled());
+            console.log('Resource type:', routeResourceType);
+            console.log('Params for this resource:', JSON.stringify(SearchParametersEngine.getParamsForResource(routeResourceType)));
+            console.log('=================================================');
 
-              Object.keys(req.query).forEach(function(queryKey){              
-                // for query keys that dont have a value
-                // just build a mongo query that searches if the key exists or not
-                if(Object.hasOwnProperty(queryKey) && (Object[queryKey] === "")){
+            if (SearchParametersEngine.isEnabled() && SearchParametersEngine.isCompiled()) {
+              // ENGINE-BASED QUERY BUILDING (default)
+              process.env.DEBUG && console.log('[FhirEndpoints] Using SearchParametersEngine for query building');
+
+              Object.keys(req.query).forEach(function(queryKey) {
+                // Skip special FHIR parameters (handled separately)
+                if (queryKey.startsWith('_')) return;
+
+                // Skip empty values
+                const queryValue = req.query[queryKey];
+                if (!queryValue || queryValue === '') {
                   let fieldExistsQuery = {};
                   fieldExistsQuery[queryKey] = {$exists: true};
                   Object.assign(mongoQuery, fieldExistsQuery);
-                } else if(get(searchParameter, 'code') === queryKey){
-                  // otherwise, map the fhirpath to mongo
-                  Object.assign(mongoQuery, RestHelpers.fhirPathToMongo(searchParameter, queryKey, req))
-                }                
-              })       
-              
-              if(get(Meteor, 'settings.private.debug') === true) { console.log('SearchParameters::mongoQuery', JSON.stringify(mongoQuery)); }
-            }) 
+                  return;
+                }
+
+                // Build query using engine
+                const newQueryPart = SearchParametersEngine.buildMongoQuery(routeResourceType, queryKey, queryValue);
+                console.log('[FhirEndpoints] Query for ' + queryKey + '=' + queryValue + ' →', JSON.stringify(newQueryPart));
+
+                if (newQueryPart) {
+                  process.env.DEBUG && console.log('[FhirEndpoints] Engine built query for ' + queryKey + ':', JSON.stringify(newQueryPart));
+
+                  // Smart query combination: properly combine $or clauses with $and
+                  if (mongoQuery.$or && newQueryPart.$or) {
+                    if (!mongoQuery.$and) {
+                      mongoQuery.$and = [{ $or: mongoQuery.$or }];
+                      delete mongoQuery.$or;
+                    }
+                    mongoQuery.$and.push({ $or: newQueryPart.$or });
+                    process.env.DEBUG && console.log('Combined two $or clauses with $and');
+                  } else if (newQueryPart.$or && Object.keys(mongoQuery).length > 0) {
+                    let existingConditions = { ...mongoQuery };
+                    Object.keys(existingConditions).forEach(function(k) { delete mongoQuery[k]; });
+                    mongoQuery.$and = [existingConditions, { $or: newQueryPart.$or }];
+                    process.env.DEBUG && console.log('Wrapped existing conditions with new $or in $and');
+                  } else if (mongoQuery.$or && Object.keys(newQueryPart).length > 0 && !newQueryPart.$or) {
+                    let existingOr = mongoQuery.$or;
+                    delete mongoQuery.$or;
+                    mongoQuery.$and = [{ $or: existingOr }, newQueryPart];
+                    process.env.DEBUG && console.log('Wrapped existing $or with new conditions in $and');
+                  } else {
+                    Object.assign(mongoQuery, newQueryPart);
+                  }
+                } else {
+                  process.env.DEBUG && console.log('[FhirEndpoints] No engine param for ' + routeResourceType + '.' + queryKey);
+                }
+              });
+
+              console.log('========== FINAL ENGINE QUERY ==========');
+              console.log('SearchParametersEngine::mongoQuery', JSON.stringify(mongoQuery, null, 2));
+              console.log('=========================================');
+
+            } else {
+              // FALLBACK: MongoDB-based lookup (when DISABLE_SP_ENGINE=true or engine not compiled)
+              console.warn('[FhirEndpoints] Using MongoDB fallback for SearchParameters (engine disabled or not compiled)');
+
+              const searchParametersList = await SearchParameters.find({base: routeResourceType}).fetchAsync();
+              searchParametersList.forEach(function(searchParameter){
+                process.env.DEBUG && console.log('------------------------------------------------------')
+                process.env.DEBUG && console.log('SearchParameter');
+                process.env.DEBUG && console.log('id:         ' + get(searchParameter, 'id'));
+                process.env.DEBUG && console.log('code:       ' + get(searchParameter, 'code'));
+                process.env.DEBUG && console.log('expression: ' + get(searchParameter, 'expression'));
+                process.env.DEBUG && console.log('base        ' + get(searchParameter, 'base'));
+                process.env.DEBUG && console.log('target      ' + get(searchParameter, 'target[0]'));
+                process.env.DEBUG && console.log('xpath:      ' + get(searchParameter, 'xpath'));
+                process.env.DEBUG && console.log(' ');
+
+                Object.keys(req.query).forEach(function(queryKey){
+                  if(Object.hasOwnProperty(queryKey) && (Object[queryKey] === "")){
+                    let fieldExistsQuery = {};
+                    fieldExistsQuery[queryKey] = {$exists: true};
+                    Object.assign(mongoQuery, fieldExistsQuery);
+                  } else if(get(searchParameter, 'code') === queryKey){
+                    let newQueryPart = RestHelpers.fhirPathToMongo(searchParameter, queryKey, req);
+
+                    if (mongoQuery.$or && newQueryPart.$or) {
+                      if (!mongoQuery.$and) {
+                        mongoQuery.$and = [{ $or: mongoQuery.$or }];
+                        delete mongoQuery.$or;
+                      }
+                      mongoQuery.$and.push({ $or: newQueryPart.$or });
+                      process.env.DEBUG && console.log('Combined two $or clauses with $and');
+                    } else if (newQueryPart.$or && Object.keys(mongoQuery).length > 0) {
+                      let existingConditions = { ...mongoQuery };
+                      Object.keys(existingConditions).forEach(function(k) { delete mongoQuery[k]; });
+                      mongoQuery.$and = [existingConditions, { $or: newQueryPart.$or }];
+                      process.env.DEBUG && console.log('Wrapped existing conditions with new $or in $and');
+                    } else if (mongoQuery.$or && Object.keys(newQueryPart).length > 0 && !newQueryPart.$or) {
+                      let existingOr = mongoQuery.$or;
+                      delete mongoQuery.$or;
+                      mongoQuery.$and = [{ $or: existingOr }, newQueryPart];
+                      process.env.DEBUG && console.log('Wrapped existing $or with new conditions in $and');
+                    } else {
+                      Object.assign(mongoQuery, newQueryPart);
+                    }
+                  }
+                })
+
+                if(get(Meteor, 'settings.private.debug') === true) { console.log('SearchParameters::mongoQuery', JSON.stringify(mongoQuery)); }
+              })
+            }
+
+            // Handle built-in FHIR search parameters not in SearchParameters collection
+            // _id is a special parameter that exists for all FHIR resources
+            if (get(req, 'query._id')) {
+              let searchId = get(req, 'query._id').trim();
+              // Strip resource type prefix if present (e.g., "Patient/abc" → "abc")
+              if (searchId.includes('/')) {
+                searchId = searchId.split('/').pop();
+              }
+              mongoQuery['id'] = searchId;
+              console.log('Built-in _id search parameter applied:', searchId);
+            }
 
             // Log the final mongoQuery after ALL SearchParameters have been processed
             console.log('========== AFTER SearchParameters Processing ==========');
-            console.log('Final mongoQuery after SearchParameters:', JSON.stringify(mongoQuery, null, 2)); 
+            console.log('Final mongoQuery after SearchParameters:', JSON.stringify(mongoQuery, null, 2));
             console.log('mongoQuery keys:', Object.keys(mongoQuery));
             console.log('=====================================================');
+
+            // Fallback: If no SearchParameters matched but we have a patient query param,
+            // use the existing FhirUtilities.addPatientFilterToQuery() helper
+            // This handles cases where SearchParameters aren't initialized in the database
+            if (Object.keys(mongoQuery).length === 0 && get(req, 'query.patient')) {
+              let patientId = get(req, 'query.patient').replace(/^Patient\//, '');
+              console.log('No SearchParameters matched - using FhirUtilities.addPatientFilterToQuery() fallback');
+              console.log('Patient ID:', patientId);
+              mongoQuery = FhirUtilities.addPatientFilterToQuery(patientId, mongoQuery);
+              console.log('Fallback mongoQuery:', JSON.stringify(mongoQuery, null, 2));
+            }
 
             process.env.DEBUG && console.log('Original Url:  ' + req.originalUrl)
             process.env.DEBUG && console.log('Generated Mongo query: ', mongoQuery);
@@ -1129,8 +1857,22 @@ if(typeof serverRouteManifest === "object"){
               };
             }
 
-            if (isAuthorized(authorizationContext)){
-              
+            if (await isAuthorized(authorizationContext)){
+
+              // ONC g(10) DAT-PAT-9: Check if resource type is in authorized scopes
+              if (!isResourceScopeAuthorized(authorizationContext, routeResourceType)) {
+                res.setHeader("content-type", 'application/fhir+json;charset=utf-8');
+                res.status(403).json({
+                  resourceType: "OperationOutcome",
+                  issue: [{
+                    severity: "error",
+                    code: "forbidden",
+                    diagnostics: `Access to ${routeResourceType} is not authorized by the granted scopes`
+                  }]
+                });
+                return;
+              }
+
               let userRole = get(authorizationContext, 'role', 'PAT');
 
 
@@ -1186,49 +1928,84 @@ if(typeof serverRouteManifest === "object"){
                 }
                 
                 if(hipaaAccess.granted){
-                  let authQuery = {$or: [
-                    // {'meta.security.display': {$ne: 'restricted'}}
-                    {'meta.security.display': {$eq: 'unrestricted'}}
-                  ]}
-                  if(routeResourceType === "Patient"){
-                    if(get(authorizationContext, 'patientId')){
-                      authQuery.$or.push({'id': get(authorizationContext, 'patientId')})
-                    }  
-                    if(get(authorizationContext, 'practitionerId')){
-                      authQuery.$or.push({'generalPractitioner.reference': {$regex: get(authorizationContext, 'practitionerId')}})
-                    }
+                  // Check if healthcare practitioner/provider with full access
+                  const isPractitioner = (userRole === 'healthcare practitioner' || userRole === 'healthcare provider');
+                  const practitionerFullAccess = get(Meteor, 'settings.private.accessControl.practitionerFullAccess', true);
+
+                  // Reference resources that don't belong to patient compartment per FHIR R4 spec
+                  // These are organizational resources accessible with appropriate scope without patient references
+                  const referenceResources = ['Location', 'Practitioner', 'PractitionerRole',
+                                              'Organization', 'HealthcareService', 'Endpoint'];
+                  const isReferenceResource = referenceResources.includes(routeResourceType);
+
+                  if (isPractitioner && practitionerFullAccess) {
+                    // Healthcare practitioner with full access - use search query as-is
+                    mongoQuery = searchQuery;
+                    console.log('Practitioner full access - no authorization filter applied');
+                  } else if (isReferenceResource) {
+                    // Reference resources bypass patient compartment filtering
+                    // The scope check (isResourceScopeAuthorized) already verified access
+                    mongoQuery = searchQuery;
+                    console.log('Reference resource - no patient compartment filter applied for:', routeResourceType);
                   } else {
-                    if(get(authorizationContext, 'patientId')){
-                      authQuery.$or.push({'subject.reference': 'Patient/' + get(authorizationContext, 'patientId')})
-                    }  
-                  }
-                  
-                  // Merge authorization query with search query
-                  if(get(Meteor, 'settings.private.debug') === true) { 
-                    console.log('========== MERGING AUTH WITH SEARCH ==========');
-                    console.log('searchQuery keys:', Object.keys(searchQuery));
-                    console.log('searchQuery:', JSON.stringify(searchQuery, null, 2));
-                    console.log('authQuery:', JSON.stringify(authQuery, null, 2));
-                  }
-                  
-                  if(Object.keys(searchQuery).length > 0){
-                    // If we have search criteria, combine it with auth criteria using $and
-                    mongoQuery = {
-                      $and: [searchQuery, authQuery]
+                    // Apply authorization filters
+                    let authQuery = {$or: [
+                      {'meta.security.display': {$eq: 'unrestricted'}}
+                    ]}
+                    if(routeResourceType === "Patient"){
+                      if(get(authorizationContext, 'patientId')){
+                        authQuery.$or.push({'id': get(authorizationContext, 'patientId')})
+                      }
+                      if(get(authorizationContext, 'practitionerId')){
+                        authQuery.$or.push({'generalPractitioner.reference': {$regex: get(authorizationContext, 'practitionerId')}})
+                      }
+                    } else {
+                      // FHIR resources use different reference paths for patients:
+                      // - Some use 'subject.reference' (Observation, Condition, Procedure, DiagnosticReport, etc.)
+                      // - Some use 'patient.reference' (AllergyIntolerance, CarePlan, CareTeam, Encounter, Immunization, MedicationRequest, etc.)
+                      // - Coverage uses 'beneficiary.reference'
+                      // We check all to properly filter by patient authorization
+                      // References may be stored as: Patient/uuid, urn:uuid:uuid, or just uuid
+                      if(get(authorizationContext, 'patientId')){
+                        let patientId = get(authorizationContext, 'patientId');
+                        let patientRefs = [
+                          patientId,
+                          'Patient/' + patientId,
+                          'urn:uuid:' + patientId
+                        ];
+                        authQuery.$or.push({'subject.reference': { $in: patientRefs }});
+                        authQuery.$or.push({'patient.reference': { $in: patientRefs }});
+                        authQuery.$or.push({'beneficiary.reference': { $in: patientRefs }});
+                      }
                     }
-                    if(get(Meteor, 'settings.private.debug') === true) { 
-                      console.log('MERGED with $and - mongoQuery:', JSON.stringify(mongoQuery, null, 2));
+
+                    // Merge authorization query with search query
+                    if(get(Meteor, 'settings.private.debug') === true) {
+                      console.log('========== MERGING AUTH WITH SEARCH ==========');
+                      console.log('searchQuery keys:', Object.keys(searchQuery));
+                      console.log('searchQuery:', JSON.stringify(searchQuery, null, 2));
+                      console.log('authQuery:', JSON.stringify(authQuery, null, 2));
                     }
-                  } else {
-                    // No search criteria, just use auth query
-                    mongoQuery = authQuery
-                    if(get(Meteor, 'settings.private.debug') === true) { 
-                      console.log('NO SEARCH QUERY - using authQuery only');
+
+                    if(Object.keys(searchQuery).length > 0){
+                      // If we have search criteria, combine it with auth criteria using $and
+                      mongoQuery = {
+                        $and: [searchQuery, authQuery]
+                      }
+                      if(get(Meteor, 'settings.private.debug') === true) {
+                        console.log('MERGED with $and - mongoQuery:', JSON.stringify(mongoQuery, null, 2));
+                      }
+                    } else {
+                      // No search criteria, just use auth query
+                      mongoQuery = authQuery
+                      if(get(Meteor, 'settings.private.debug') === true) {
+                        console.log('NO SEARCH QUERY - using authQuery only');
+                      }
                     }
-                  }
-                  
-                  if(get(Meteor, 'settings.private.debug') === true) { 
-                    console.log('==============================================');
+
+                    if(get(Meteor, 'settings.private.debug') === true) {
+                      console.log('==============================================');
+                    }
                   }
                 }    
 
@@ -1271,6 +2048,15 @@ if(typeof serverRouteManifest === "object"){
                   
                   records = await Collections[collectionName].find(mongoQuery, databaseOptions).fetch();
 
+                  // SMART 2.x Granular Scopes: Filter results based on scope parameters
+                  // e.g., patient/Condition.rs?category=health-concern
+                  const granularFilters = getGranularFiltersForResource(authorizationContext, routeResourceType);
+                  if (granularFilters.length > 0) {
+                    console.log('[GranularScope] Applying', granularFilters.length, 'filters to', records.length, routeResourceType, 'records');
+                    records = applyGranularScopeFilters(records, granularFilters);
+                    console.log('[GranularScope] After filtering:', records.length, 'records remain');
+                  }
+
                   process.env.DEBUG && console.log('records', records)
                   // if(collectionName === "Patients"){
                   //   records = await Collections[collectionName].find(mongoQuery, databaseOptions).fetch();
@@ -1283,8 +2069,12 @@ if(typeof serverRouteManifest === "object"){
     
                   process.env.DEBUG && console.log('AccessControlLists - Current userRole: ' + userRole)
                   // payload entries
-                  records.forEach(function(record){
-    
+                  for (let record of records) {
+                    // Resolve conditional references for CareTeam (e.g., Practitioner?identifier=...)
+                    if (routeResourceType === 'CareTeam') {
+                      record = await RestHelpers.resolveConditionalReferences(record);
+                    }
+
                     // check for security labels; otherwise assume normal access patterns
                     let recordSecurityLabel = get(record, 'meta.security[0].display', 'normal');
                     if(process.env.TRACE){
@@ -1321,48 +2111,138 @@ if(typeof serverRouteManifest === "object"){
                     } 
     
                     
-                    // lets check for any _include references
-                    // process.env.DEBUG && console.log('req.query', req.query);
-                    if(Array.isArray(req.query._include)){
-                      req.query._include.forEach(async function(_includeRef){
+                    // Handle _include (similar pattern to _revInclude below)
+                    let includeParam = get(req, 'query._include');
+                    if(includeParam){
+                      let includes = Array.isArray(includeParam) ? includeParam : [includeParam];
+
+                      for(let _includeRef of includes){
                         let includeParts = _includeRef.split(":");
-                        let referenceBase;
-                        if(includeParts.length === 2){
-                          referenceBase = includeParts[1];
-                        } else if (includeParts.length === 2){
-                          referenceBase = includeParts[0];
-                        }
-    
-                        if(get(record, referenceBase + ".reference")){
-                          console.log("_include reference: ", get(record, referenceBase + ".reference"))
-    
-                          let includeReferenceParts = (get(record, referenceBase + ".reference")).split("/");
-                          console.log('includeReferenceParts.length', includeReferenceParts.length);
-    
-                          let pluralizedReferenceBase = FhirUtilities.pluralizeResourceName(capitalize(referenceBase));
-                          console.log('pluralizedReferenceBase', pluralizedReferenceBase);
-    
-                          if(Collections[pluralizedReferenceBase]){
-                            if(includeReferenceParts.length = 2){
-                              let _includeReferenceRecord = await Collections[pluralizedReferenceBase].findOneAsync({id: includeReferenceParts[1]})
-                              if(_includeReferenceRecord){
-                                let newEntry = {
-                                  fullUrl: get(record, referenceBase + ".reference"),
-                                  resource: RestHelpers.prepForFhirTransfer(_includeReferenceRecord),
-                                  search: {
-                                    mode: "include"
-                                  }
+
+                        if(includeParts.length >= 2){
+                          let sourceResource = includeParts[0];  // e.g., "MedicationRequest"
+                          let searchParamName = includeParts[1]; // e.g., "medication"
+
+                          // Map search parameter name to actual field path
+                          // Example: "medication" -> "medicationReference" for MedicationRequest
+                          let fieldPath = searchParamName;
+                          if(includeFieldMappings[sourceResource] && includeFieldMappings[sourceResource][searchParamName]){
+                            fieldPath = includeFieldMappings[sourceResource][searchParamName];
+                          }
+
+                          let referenceValue = get(record, fieldPath + ".reference");
+                          if(referenceValue){
+                            process.env.DEBUG && console.log("_include reference: ", referenceValue);
+
+                            let includeReferenceParts = referenceValue.split("/");
+                            if(includeReferenceParts.length === 2){
+                              let referencedResourceType = includeReferenceParts[0];
+                              let referencedResourceId = includeReferenceParts[1];
+
+                              let pluralizedResourceType = FhirUtilities.pluralizeResourceName(referencedResourceType);
+                              process.env.DEBUG && console.log('_include pluralizedResourceType', pluralizedResourceType);
+
+                              if(Collections[pluralizedResourceType]){
+                                let _includeReferenceRecord = await Collections[pluralizedResourceType].findOneAsync({id: referencedResourceId});
+                                if(_includeReferenceRecord){
+                                  payload.push({
+                                    fullUrl: referencedResourceType + "/" + referencedResourceId,
+                                    resource: RestHelpers.prepForFhirTransfer(_includeReferenceRecord),
+                                    search: {
+                                      mode: "include"
+                                    }
+                                  });
+                                } else {
+                                  console.warn('_include: Referenced resource not found:', referenceValue);
                                 }
-                                payload.push(newEntry);
+                              } else {
+                                console.warn('_include: Collection not found for:', pluralizedResourceType);
                               }
                             }
                           }
                         }
-                      })
+                      }
                     }
-                  });
-    
-    
+                  }
+
+                  // Handle _revInclude (reverse include)
+                  // For Provenance:target, generate Provenance on-demand using resource metadata
+                  let revIncludeParam = get(req, 'query._revinclude') || get(req, 'query._revInclude');
+                  if(revIncludeParam){
+                    let revIncludes = Array.isArray(revIncludeParam) ? revIncludeParam : [revIncludeParam];
+
+                    for(let _revIncludeRef of revIncludes){
+                      let revIncludeParts = _revIncludeRef.split(":");
+
+                      if(revIncludeParts.length >= 2 && revIncludeParts[0] === "Provenance" && revIncludeParts[1] === "target"){
+                        // Find an Organization to reference in Provenance agent (lookup once, use for all)
+                        let provenanceOrg = await Organizations.findOneAsync({
+                          'meta.profile': 'http://hl7.org/fhir/us/core/StructureDefinition/us-core-organization'
+                        });
+                        if(!provenanceOrg){
+                          provenanceOrg = await Organizations.findOneAsync({});
+                        }
+
+                        let orgReference = provenanceOrg ? {
+                          reference: "Organization/" + get(provenanceOrg, 'id'),
+                          display: get(provenanceOrg, 'name', get(Meteor, 'settings.public.title', 'Honeycomb EHR'))
+                        } : {
+                          display: get(Meteor, 'settings.public.title', 'Honeycomb EHR')
+                        };
+
+                        // Generate Provenance for each matched record (just-in-time)
+                        for(let matchedRecord of records){
+                          let provenanceId = "provenance-" + get(matchedRecord, 'id');
+
+                          let provenance = {
+                            resourceType: "Provenance",
+                            id: provenanceId,
+                            meta: {
+                              profile: ["http://hl7.org/fhir/us/core/StructureDefinition/us-core-provenance"]
+                            },
+                            target: [{
+                              reference: routeResourceType + "/" + get(matchedRecord, 'id')
+                            }],
+                            recorded: get(matchedRecord, 'meta.lastUpdated') || new Date().toISOString(),
+                            agent: [
+                              {
+                                type: {
+                                  coding: [{
+                                    system: "http://terminology.hl7.org/CodeSystem/provenance-participant-type",
+                                    code: "author",
+                                    display: "Author"
+                                  }]
+                                },
+                                who: orgReference,
+                                onBehalfOf: orgReference
+                              },
+                              {
+                                type: {
+                                  coding: [{
+                                    system: "http://hl7.org/fhir/us/core/CodeSystem/us-core-provenance-participant-type",
+                                    code: "transmitter",
+                                    display: "Transmitter"
+                                  }]
+                                },
+                                who: orgReference,
+                                onBehalfOf: orgReference
+                              }
+                            ]
+                          };
+
+                          payload.push({
+                            fullUrl: "Provenance/" + provenanceId,
+                            resource: provenance,
+                            search: {
+                              mode: "include"
+                            }
+                          });
+                        }
+                      }
+                    }
+                  }
+
+
                   // add some pagination logic
                   let links = [];
                   links.push({
@@ -1453,12 +2333,12 @@ if(typeof serverRouteManifest === "object"){
           res.setHeader("content-type", 'application/fhir+json;charset=utf-8');
           res.setHeader("ETag", fhirVersion);
 
-          const remainingRequests = await limiter.removeTokens(1);
-          if (remainingRequests < 0) {
+          const gotToken = limiter.tryRemoveTokens(1);
+          if (!gotToken) {
             res.status(429).json({message: "429 Too Many Requests - your IP is being rate limited"});
           } else {
             let authorizationContext = await parseUserAuthorization(req)
-            if (isAuthorized(authorizationContext)){
+            if (await isAuthorized(authorizationContext)){
               if(get(Meteor, 'settings.private.debug') === true) { console.log('Security checks completed'); }
   
               let record;
@@ -1521,14 +2401,14 @@ if(typeof serverRouteManifest === "object"){
           res.setHeader('Content-type', 'application/fhir+json;charset=utf-8');
           res.setHeader("ETag", fhirVersion);          
 
-          const remainingRequests = await limiter.removeTokens(1);
-          if (remainingRequests < 0) {
+          const gotToken = limiter.tryRemoveTokens(1);
+          if (!gotToken) {
             res.status(429).json({message: "429 Too Many Requests - your IP is being rate limited"});
           } else {
             let accessTokenStr = get(req, 'params.access_token') || get(req, 'params.access_token');
 
             let authorizationContext = await parseUserAuthorization(req)
-            if (isAuthorized(authorizationContext)){
+            if (await isAuthorized(authorizationContext)){
   
               //------------------------------------------------------------------------------------------------
   
@@ -1668,15 +2548,15 @@ if(typeof serverRouteManifest === "object"){
           res.setHeader('Content-type', 'application/fhir+json;charset=utf-8');
           res.setHeader("ETag", fhirVersion);
 
-          const remainingRequests = await limiter.removeTokens(1);
-          if (remainingRequests < 0) {
+          const gotToken = limiter.tryRemoveTokens(1);
+          if (!gotToken) {
             res.status(429).json({message: "429 Too Many Requests - your IP is being rate limited"});
           } else {
             let accessTokenStr = (req.params && req.params.access_token) || (req.query && req.query.access_token);
           
             let authorizationContext = await parseUserAuthorization(req)
             
-            if (isAuthorized(authorizationContext)){
+            if (await isAuthorized(authorizationContext)){
         
               if (req.body) {
                 let newRecord = cloneDeep(req.body);
@@ -1862,14 +2742,14 @@ if(typeof serverRouteManifest === "object"){
           res.setHeader('Content-type', 'application/fhir+json;charset=utf-8');
           res.setHeader("ETag", fhirVersion);
 
-          const remainingRequests = await limiter.removeTokens(1);
-          if (remainingRequests < 0) {
+          const gotToken = limiter.tryRemoveTokens(1);
+          if (!gotToken) {
             res.status(429).json({message: "429 Too Many Requests - your IP is being rate limited"});
           } else {
             let accessTokenStr = (req.params && req.params.access_token) || (req.query && req.query.access_token);
         
             let authorizationContext = await parseUserAuthorization(req)
-            if (isAuthorized(authorizationContext)){
+            if (await isAuthorized(authorizationContext)){
   
               if (req.body) {
                 let incomingRecord = cloneDeep(req.body);
@@ -1974,12 +2854,12 @@ if(typeof serverRouteManifest === "object"){
           res.setHeader('Content-type', 'application/fhir+json;charset=utf-8');
           res.setHeader("ETag", fhirVersion);     
           
-          const remainingRequests = await limiter.removeTokens(1);
-          if (remainingRequests < 0) {
+          const gotToken = limiter.tryRemoveTokens(1);
+          if (!gotToken) {
             res.status(429).json({message: "429 Too Many Requests - your IP is being rate limited"});
           } else {
             let authorizationContext = await parseUserAuthorization(req)
-            if (isAuthorized(authorizationContext)){
+            if (await isAuthorized(authorizationContext)){
               if(get(Meteor, 'settings.private.trace') === true) { 
                 console.log('Searching ' + collectionName + ' for ' + req.params.id, Collections[collectionName].find({_id: req.params.id}).countAsync()); 
               }
@@ -2020,17 +2900,23 @@ if(typeof serverRouteManifest === "object"){
       // https://www.hl7.org/fhir/http.html#search
       if(serverRouteManifest[routeResourceType].search){
         WebApp.handlers.post("/" + fhirPath + "/" + routeResourceType + "/:param", async (req, res) => {
-          if(get(Meteor, 'settings.private.debug') === true) { console.log('================================================================'); }
-          if(get(Meteor, 'settings.private.debug') === true) { console.log('POST /' + fhirPath + '/' + routeResourceType + '/' + JSON.stringify(req.query)); }
-          
+          // Always log POST requests to debug body parsing issues
+          console.log('================================================================');
+          console.log('POST /' + fhirPath + '/' + routeResourceType + '/:param');
+          console.log('POST req.params.param:', req.params.param);
+          console.log('POST req.body:', JSON.stringify(req.body));
+          console.log('POST req.body type:', typeof req.body);
+          console.log('POST req.rawBody:', req.rawBody);
+          console.log('POST content-type:', req.headers['content-type']);
+
           logToInboundQueue(req);
 
           process.env.DEBUG && console.log('---------------------------------------')
           process.env.DEBUG && console.log('Checking for chained queries (POST)....')
           process.env.DEBUG && console.log('req.query', req.query);
 
-          const remainingRequests = await limiter.removeTokens(1);
-          if (remainingRequests < 0) {
+          const gotToken = limiter.tryRemoveTokens(1);
+          if (!gotToken) {
             res.status(429).json({message: "429 Too Many Requests - your IP is being rate limited"});
           } else {
             Object.keys(req.query).forEach(function(key){
@@ -2050,27 +2936,271 @@ if(typeof serverRouteManifest === "object"){
             res.setHeader("ETag", fhirVersion);
   
             let authorizationContext = await parseUserAuthorization(req)
-            if (isAuthorized(authorizationContext)){
+            if (await isAuthorized(authorizationContext)){
               let matchingRecords = [];
               let payload = [];
-              let searchLimit = 1;
-  
-              if (get(req, 'query._count')) {
-                searchLimit = parseInt(get(req, 'query._count'));
+              let searchLimit = 1000; // Match GET handler default from RestHelpers.generateMongoSearchOptions
+
+              if (get(req, 'query._count') || get(req, 'body._count')) {
+                searchLimit = parseInt(get(req, 'query._count') || get(req, 'body._count'));
               }
-  
+
               if (req.params.param.includes('_search')) {
-  
-                let databaseQuery = RestHelpers.generateMongoSearchQuery(req.query, routeResourceType);
-                if(get(Meteor, 'settings.private.debug') === true) { console.log('Collections[collectionName].databaseQuery', databaseQuery); }
-  
-                matchingRecords = await Collections[collectionName].find(databaseQuery, {limit: searchLimit}).fetch();
+                // Debug: Log what we're receiving in the POST body
+                console.log('================================================================');
+                console.log('POST _search DEBUG - routeResourceType:', routeResourceType);
+                console.log('POST _search DEBUG - req.body:', JSON.stringify(req.body));
+                console.log('POST _search DEBUG - req.body type:', typeof req.body);
+                console.log('POST _search DEBUG - req.body length:', typeof req.body === 'string' ? req.body.length : (req.body ? Object.keys(req.body).length : 0));
+                console.log('POST _search DEBUG - req.query:', JSON.stringify(req.query));
+                console.log('POST _search DEBUG - req.rawBody:', req.rawBody);
+                console.log('POST _search DEBUG - content-type:', req.headers['content-type']);
+                console.log('POST _search DEBUG - content-length:', req.headers['content-length']);
+                console.log('POST _search DEBUG - transfer-encoding:', req.headers['transfer-encoding']);
+
+                // Body parsing for POST _search
+                // bodyParser middleware should have already parsed the body, but we add fallbacks
+                let parsedBody = {};
+
+                // First, try to use req.body if it was parsed by bodyParser as an object with content
+                if (req.body && typeof req.body === 'object' && Object.keys(req.body).length > 0) {
+                  parsedBody = req.body;
+                  console.log('POST _search DEBUG - using req.body from bodyParser (object):', JSON.stringify(parsedBody));
+                }
+                // Second, try to use req.body if it's a string (from bodyParser.text())
+                else if (req.body && typeof req.body === 'string' && req.body.length > 0) {
+                  try {
+                    parsedBody = querystring.parse(req.body);
+                    console.log('POST _search DEBUG - parsed req.body string:', JSON.stringify(parsedBody));
+                  } catch (parseErr) {
+                    console.error('POST _search DEBUG - error parsing req.body string:', parseErr);
+                  }
+                }
+                // Third, try to use rawBody if available (from verify callback)
+                // This is the most reliable method since it captures the raw buffer
+                if (Object.keys(parsedBody).length === 0 && req.rawBody && req.headers['content-type']?.includes('application/x-www-form-urlencoded')) {
+                  try {
+                    parsedBody = querystring.parse(req.rawBody);
+                    console.log('POST _search DEBUG - parsed from rawBody:', JSON.stringify(parsedBody));
+                  } catch (parseErr) {
+                    console.error('POST _search DEBUG - error parsing rawBody:', parseErr);
+                  }
+                }
+                // Fourth, try to read from stream as last resort
+                if (Object.keys(parsedBody).length === 0 && req.readable && req.headers['content-type']?.includes('application/x-www-form-urlencoded')) {
+                  try {
+                    const chunks = [];
+                    for await (const chunk of req) {
+                      chunks.push(chunk);
+                    }
+                    const rawBody = Buffer.concat(chunks).toString();
+                    if (rawBody) {
+                      parsedBody = querystring.parse(rawBody);
+                      console.log('POST _search DEBUG - parsed from stream:', JSON.stringify(parsedBody));
+                    }
+                  } catch (parseErr) {
+                    console.error('POST _search DEBUG - error reading stream:', parseErr);
+                  }
+                }
+
+                // Log if no body params were found
+                if (Object.keys(parsedBody).length === 0) {
+                  console.warn('POST _search WARNING - No body params found! Check body-parser middleware.');
+                  console.warn('POST _search WARNING - req.body:', req.body);
+                  console.warn('POST _search WARNING - req.rawBody:', req.rawBody);
+                  console.warn('POST _search WARNING - content-type:', req.headers['content-type']);
+                }
+
+                // Merge URL query params with POST body params (FHIR allows both for POST _search)
+                let searchParams = Object.assign({}, req.query, parsedBody);
+                console.log('POST _search DEBUG - merged searchParams:', JSON.stringify(searchParams));
+
+                // Use SearchParametersEngine like GET handler does (instead of legacy generateMongoSearchQuery)
+                let searchQuery = {};
+
+                if (SearchParametersEngine.isEnabled() && SearchParametersEngine.isCompiled()) {
+                  Object.keys(searchParams).forEach(function(queryKey) {
+                    if (queryKey.startsWith('_')) return; // Skip special params like _count
+
+                    const queryValue = searchParams[queryKey];
+                    const newQueryPart = SearchParametersEngine.buildMongoQuery(routeResourceType, queryKey, queryValue);
+
+                    if (newQueryPart) {
+                      // Smart combination of $or clauses with $and (same logic as GET handler)
+                      if (searchQuery.$or && newQueryPart.$or) {
+                        if (!searchQuery.$and) {
+                          searchQuery.$and = [{ $or: searchQuery.$or }];
+                          delete searchQuery.$or;
+                        }
+                        searchQuery.$and.push({ $or: newQueryPart.$or });
+                      } else if (newQueryPart.$or) {
+                        searchQuery.$or = newQueryPart.$or;
+                      } else {
+                        Object.assign(searchQuery, newQueryPart);
+                      }
+                    }
+                  });
+                  console.log('POST _search: Using SearchParametersEngine, query:', JSON.stringify(searchQuery));
+
+                  // Handle patient parameter if not handled by SearchParametersEngine
+                  // (some resources don't have explicit patient SearchParameter definitions)
+                  // Note: Coverage uses beneficiary.reference, so we must check for it too
+                  if (get(searchParams, 'patient') && !searchQuery['subject.reference'] && !searchQuery['beneficiary.reference'] && !searchQuery.$or && !searchQuery.$and) {
+                    let patientId = get(searchParams, 'patient').replace(/^Patient\//, '');
+                    console.log('POST _search: Adding patient filter via FhirUtilities.addPatientFilterToQuery()');
+                    searchQuery = FhirUtilities.addPatientFilterToQuery(patientId, searchQuery);
+                  } else if (get(searchParams, 'patient')) {
+                    // If there's already a query, we need to combine with patient filter using $and
+                    let patientId = get(searchParams, 'patient').replace(/^Patient\//, '');
+                    let patientQuery = FhirUtilities.addPatientFilterToQuery(patientId, {});
+                    if (Object.keys(patientQuery).length > 0) {
+                      // Check if patient filter wasn't already handled by the engine
+                      // Include beneficiary.reference check for Coverage resources
+                      let queryStr = JSON.stringify(searchQuery);
+                      if (!queryStr.includes('subject.reference') && !queryStr.includes('patient.reference') && !queryStr.includes('beneficiary.reference')) {
+                        console.log('POST _search: Combining existing query with patient filter');
+                        searchQuery = { $and: [searchQuery, patientQuery] };
+                      }
+                    }
+                  }
+
+                  // Handle status parameter if not handled by SearchParametersEngine
+                  // (many resources have 'status' but may not have explicit SearchParameter definitions)
+                  if (get(searchParams, 'status') && !searchQuery['status']) {
+                    let statusValue = get(searchParams, 'status');
+                    let queryStr = JSON.stringify(searchQuery);
+                    if (!queryStr.includes('"status"')) {
+                      console.log('POST _search: Adding status filter directly');
+                      if (searchQuery.$and) {
+                        searchQuery.$and.push({ 'status': statusValue });
+                      } else if (Object.keys(searchQuery).length > 0) {
+                        searchQuery = { $and: [searchQuery, { 'status': statusValue }] };
+                      } else {
+                        searchQuery['status'] = statusValue;
+                      }
+                    }
+                  }
+                } else {
+                  // Fallback to legacy query builder if engine not available
+                  searchQuery = RestHelpers.generateMongoSearchQuery(searchParams, routeResourceType);
+                  console.log('POST _search: Using legacy generateMongoSearchQuery (engine not ready)');
+                }
+
+                console.log('POST _search DEBUG - generated searchQuery:', JSON.stringify(searchQuery));
+
+                // TEMPORARY DIAGNOSTIC - Remove after debugging test 12.43.02
+                // Adds diagnostic info to response header for debugging without server logs
+                console.log('=== DIAGNOSTIC OUTPUT ===');
+                const diagnostic = {
+                  timestamp: new Date().toISOString(),
+                  resourceType: routeResourceType,
+                  body: {
+                    reqBody: req.body,
+                    reqBodyType: typeof req.body,
+                    rawBody: req.rawBody ? req.rawBody.substring(0, 200) : null,  // Truncate for header
+                    contentType: req.headers['content-type'],
+                    contentLength: req.headers['content-length']
+                  },
+                  parsing: {
+                    parsedBody: parsedBody,
+                    parsedBodyKeys: Object.keys(parsedBody),
+                    searchParams: searchParams,
+                    searchParamsKeys: Object.keys(searchParams)
+                  },
+                  query: {
+                    searchQuery: searchQuery,
+                    searchQueryKeys: Object.keys(searchQuery),
+                    engineEnabled: SearchParametersEngine.isEnabled(),
+                    engineCompiled: SearchParametersEngine.isCompiled()
+                  }
+                };
+                console.log('DIAGNOSTIC:', JSON.stringify(diagnostic, null, 2));
+                // Note: Headers can be max ~8KB, so we truncate the diagnostic
+                try {
+                  res.setHeader('X-Debug-Diagnostic', JSON.stringify(diagnostic));
+                } catch (headerErr) {
+                  console.error('Could not set diagnostic header:', headerErr.message);
+                }
+
+                // Apply authorization filter (same as GET search)
+                let userRole = get(authorizationContext, 'role', 'PAT');
+                let mongoQuery = searchQuery;
+
+                // Check if healthcare practitioner/provider with full access
+                const isPractitioner = (userRole === 'healthcare practitioner' || userRole === 'healthcare provider');
+                const practitionerFullAccess = get(Meteor, 'settings.private.accessControl.practitionerFullAccess', true);
+
+                // Reference resources that don't belong to patient compartment per FHIR R4 spec
+                // These are organizational resources accessible with appropriate scope without patient references
+                const referenceResources = ['Location', 'Practitioner', 'PractitionerRole',
+                                            'Organization', 'HealthcareService', 'Endpoint'];
+                const isReferenceResource = referenceResources.includes(routeResourceType);
+
+                if (userRole === "noauth" || userRole === "SYSTEM") {
+                  // For noauth/SYSTEM, use the search query as-is (no auth restrictions)
+                  mongoQuery = searchQuery;
+                  console.log('POST _search: NOAUTH/SYSTEM - no auth filter applied');
+                } else if (isPractitioner && practitionerFullAccess) {
+                  // Healthcare practitioner with full access - use search query as-is
+                  mongoQuery = searchQuery;
+                  console.log('POST _search: Practitioner full access - no auth filter applied');
+                } else if (isReferenceResource) {
+                  // Reference resources bypass patient compartment filtering
+                  // The scope check (isResourceScopeAuthorized) already verified access
+                  mongoQuery = searchQuery;
+                  console.log('POST _search: Reference resource - no patient compartment filter applied for:', routeResourceType);
+                } else {
+                  // Apply authorization filters
+                  let authQuery = {$or: [
+                    {'meta.security.display': {$eq: 'unrestricted'}}
+                  ]};
+
+                  if(routeResourceType === "Patient"){
+                    if(get(authorizationContext, 'patientId')){
+                      authQuery.$or.push({'id': get(authorizationContext, 'patientId')});
+                    }
+                  } else {
+                    // FHIR resources use different reference paths for patients:
+                    // - Some use 'subject.reference' (Observation, Condition, Procedure, DiagnosticReport, etc.)
+                    // - Some use 'patient.reference' (AllergyIntolerance, CarePlan, CareTeam, Encounter, Immunization, MedicationRequest, etc.)
+                    // - Coverage uses 'beneficiary.reference'
+                    // References may be stored as: Patient/uuid, urn:uuid:uuid, or just uuid
+                    if(get(authorizationContext, 'patientId')){
+                      let patientId = get(authorizationContext, 'patientId');
+                      let patientRefs = [
+                        patientId,
+                        'Patient/' + patientId,
+                        'urn:uuid:' + patientId
+                      ];
+                      authQuery.$or.push({'subject.reference': { $in: patientRefs }});
+                      authQuery.$or.push({'patient.reference': { $in: patientRefs }});
+                      authQuery.$or.push({'beneficiary.reference': { $in: patientRefs }});
+                    }
+                  }
+
+                  // Merge authorization query with search query
+                  if(Object.keys(searchQuery).length > 0){
+                    mongoQuery = { $and: [searchQuery, authQuery] };
+                  } else {
+                    mongoQuery = authQuery;
+                  }
+
+                  if(get(Meteor, 'settings.private.debug') === true) {
+                    console.log('POST _search mongoQuery with auth:', JSON.stringify(mongoQuery, null, 2));
+                  }
+                }
+
+                console.log('POST _search DEBUG - final mongoQuery:', JSON.stringify(mongoQuery));
+                matchingRecords = await Collections[collectionName].find(mongoQuery, {limit: searchLimit}).fetch();
+                console.log('POST _search DEBUG - matchingRecords count:', matchingRecords.length);
                 console.log('matchingRecords', matchingRecords);
-                
-                let payload = [];
-  
-                matchingRecords.forEach(function(record){
-  
+
+                for (let record of matchingRecords) {
+                  // Resolve conditional references for CareTeam (e.g., Practitioner?identifier=...)
+                  if (routeResourceType === 'CareTeam') {
+                    record = await RestHelpers.resolveConditionalReferences(record);
+                  }
+
                   // check for security labels; otherwise assume normal access patterns
                   let recordSecurityLevel = get(record, 'meta.security[0].display', 'normal');
   
@@ -2098,9 +3228,9 @@ if(typeof serverRouteManifest === "object"){
                         status: "200"
                       }
                     });
-                  }                
-                });
-  
+                  }
+                }
+
                 console.log('payload', payload);
   
                 // Success
@@ -2212,8 +3342,8 @@ if(typeof serverRouteManifest === "object"){
           process.env.DEBUG && console.log('Checking for chained queries (GET)....')
           process.env.DEBUG && console.log('req.query', req.query);
           
-          const remainingRequests = await limiter.removeTokens(1);
-          if (remainingRequests < 0) {
+          const gotToken = limiter.tryRemoveTokens(1);
+          if (!gotToken) {
             res.status(429).json({message: "429 Too Many Requests - your IP is being rate limited"})
           } else {
             Object.keys(req.query).forEach(function(key){
@@ -2232,7 +3362,7 @@ if(typeof serverRouteManifest === "object"){
             res.setHeader('Content-type', 'application/fhir+json;charset=utf-8');
   
             let authorizationContext = await parseUserAuthorization(req)
-            if (isAuthorized(authorizationContext)){
+            if (await isAuthorized(authorizationContext)){
   
               let resourceRecords = [];
   
@@ -2302,8 +3432,8 @@ if(typeof serverRouteManifest === "object"){
     res.setHeader("content-type", 'application/fhir+json;charset=utf-8');
     res.setHeader("ETag", fhirVersion);
 
-    const remainingRequests = await limiter.removeTokens(1);
-    if (remainingRequests < 0) {
+    const gotToken = limiter.tryRemoveTokens(1);
+    if (!gotToken) {
       res.status(429).json({message: "429 Too Many Requests - your IP is being rate limited"});
       return;
     }
@@ -2471,7 +3601,7 @@ if(typeof serverRouteManifest === "object"){
         { collection: 'ClinicalImpressions', paths: ['subject.reference'] },
         { collection: 'FamilyMemberHistories', paths: ['patient.reference'] },
         { collection: 'DeviceUseStatements', paths: ['subject.reference'] },
-        { collection: 'Coverage', paths: ['beneficiary.reference'] },
+        { collection: 'Coverages', paths: ['beneficiary.reference'] },
         { collection: 'ExplanationOfBenefits', paths: ['patient.reference'] }
       ];
 
@@ -2545,6 +3675,13 @@ if(typeof serverRouteManifest === "object"){
       });
     }
   });
+
+  // =============================================================================
+  // BULK DATA EXPORT OPERATIONS
+  // =============================================================================
+  // Bulk Data endpoints are implemented in server/BulkData.js
+  // See that file for: Group/$export, status polling, file download, cancellation
+  // =============================================================================
 
   // Catch-all handler for unmatched FHIR routes
   // This prevents falling through to the Meteor app HTML

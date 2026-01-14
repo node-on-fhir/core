@@ -1,0 +1,1 @@
+{% include documentreference-quickstart.md system="http://hl7.org/fhir/us/core/CodeSystem/us-core-documentreference-category" category="clinical-note" code="http://loinc.org\|18842-5" %}

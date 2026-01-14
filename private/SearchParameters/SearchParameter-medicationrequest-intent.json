@@ -1,0 +1,28 @@
+{
+  "resourceType": "SearchParameter",
+  "id": "medicationrequest-intent",
+  "url": "http://hl7.org/fhir/SearchParameter/MedicationRequest-intent",
+  "version": "4.0.1",
+  "name": "HoneycombMedicationRequestIntent",
+  "status": "active",
+  "date": "2024-12-14",
+  "publisher": "github.com/node-on-fhir",
+  "contact": [
+    {
+      "telecom": [
+        {
+          "system": "url",
+          "value": "http://github.com/node-on-fhir/honeycomb"
+        }
+      ]
+    }
+  ],
+  "description": "proposal | plan | order | original-order | reflex-order | filler-order | instance-order | option",
+  "code": "intent",
+  "base": ["MedicationRequest"],
+  "type": "token",
+  "expression": "MedicationRequest.intent",
+  "xpath": "intent",
+  "multipleOr": true,
+  "multipleAnd": false
+}

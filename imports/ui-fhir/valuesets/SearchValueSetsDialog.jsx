@@ -30,6 +30,7 @@ import JSON5 from 'json5';
 
 
 import { ValueSetSelection } from './ValueSetSelection';
+import { DynamicSpacer } from '../../ui/DynamicSpacer';
 
 
 
@@ -38,8 +39,8 @@ import { ValueSetSelection } from './ValueSetSelection';
 
 //===========================================================================
 
+let ValueSets;
 Meteor.startup(function(){
-  DynamicSpacer = Meteor.DynamicSpacer;
   ValueSets = Meteor.Collections.ValueSets;
 })
 

@@ -1,0 +1,146 @@
+---
+#2. Client's age is less than 9 years
+#   Today's date − "Date of birth" <  9 years
+### Client is not due for dengue vaccination
+### "Immunization recommendation status" = "Not due"
+id: "24.2"
+birth: -8y
+patient:
+  fhir:
+    gender: female
+---
+#2. Client's age is more than 45 years
+#   Today's date − "Date of birth" > 45 years
+### Client is not due for dengue vaccination
+### "Immunization recommendation status" = "Not due"
+id: "25.2"
+birth: -46y
+patient:
+  fhir:
+    gender: female
+---
+#1. No dengue primary series doses were administered
+#   Count of vaccines administered (where "Vaccine type" = "Dengue vaccines" and "Type of dose" = "Primary series") = 0
+#2. Client's age is between 9 years and 45 years
+#   9 years ≤ Today's date − "Date of birth" ≤  45 years
+### Client is due for dengue vaccination
+### "Immunization recommendation status" = "Due"
+id: "26.12"
+birth: -9y
+patient:
+  fhir:
+    gender: female
+---
+#1. One dengue primary series dose was administered
+#   Count of vaccines administered (where "Vaccine type" = "Dengue vaccines" and "Type of dose" = "Primary series") = 1
+#2. Client's age is between 9 years and 45 years
+#   9 years ≤ Today's date − "Date of birth" ≤  45 years
+#3. The latest dengue dose was administered less than 6 months ago
+#   Today's date - Latest "Date and time of vaccination" (where "Vaccine type" = "Dengue vaccines") < 6 months
+### Client is not due for dengue vaccination
+### "Immunization recommendation status" = "Not due"
+id: "27.123"
+birth: -10y
+patient:
+  fhir:
+    gender: female
+immunization:
+  dengue:
+    vaccine:
+      code: XM38G7
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Dengue vaccine"
+    doses:
+      p3:
+        - -4w
+---
+#1. One dengue primary series dose was administered
+#2. Client's age is between 9 years and 45 years
+#3. The latest dengue dose was administered more than 6 months ago
+#   Today's date - Latest "Date and time of vaccination" (where "Vaccine type" = "Dengue vaccines") ≥ 6 months
+### Client is due for dengue vaccination
+### "Immunization recommendation status" = "Due"
+id: "28.123"
+birth: -10y
+patient:
+  fhir:
+    gender: female
+immunization:
+  dengue:
+    vaccine:
+      code: XM38G7
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Dengue vaccine"
+    doses:
+      p3:
+        - -6m
+---
+#1. Two dengue primary series doses were administered
+#   Count of vaccines administered (where "Vaccine type" = "Dengue vaccines" and "Type of dose" = "Primary series") = 2
+#2. Client's age is between 9 years and 45 years
+#   9 years ≤ Today's date − "Date of birth" ≤  45 years
+#3. The latest dengue dose was administered less than 6 months ago
+#   Today's date - Latest "Date and time of vaccination" (where "Vaccine type" = "Dengue vaccines") < 6 months
+### Client is not due for dengue vaccination
+### "Immunization recommendation status" = "Not due"
+id: "29.123"
+birth: -10y
+patient:
+  fhir:
+    gender: female
+immunization:
+  dengue:
+    vaccine:
+      code: XM38G7
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Dengue vaccine"
+    doses:
+      p3:
+        - -7m
+        - -1m
+---
+#1. Two dengue primary series doses were administered
+#2. Client's age is between 9 years and 45 years
+#3. The latest dengue dose was administered more than 6 months ago
+#   Today's date - Latest "Date and time of vaccination" (where "Vaccine type" = "Dengue vaccines") ≥ 6 months
+### Client is due for dengue vaccination
+### "Immunization recommendation status" = "Due"
+id: "30.123"
+birth: -10y
+patient:
+  fhir:
+    gender: female
+immunization:
+  dengue:
+    vaccine:
+      code: XM38G7
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Dengue vaccine"
+    doses:
+      p3:
+        - -12m
+        - -6m
+---
+#1. Three dengue primary series doses were administered
+#   Count of vaccines administered (where "Vaccine type" = "Dengue vaccines" and "Type of dose" = "Primary series") = 3
+#2. Client's age is between 9 years and 45 years
+#   9 years ≤ Today's date − "Date of birth" ≤  45 years
+### Dengue immunization schedule is complete
+### "Immunization recommendation status" = "Complete"
+### "Completed the primary vaccination series" = TRUE (where "Vaccine type" = "Dengue vaccines")"
+id: "31.12"
+birth: -12y
+patient:
+  fhir:
+    gender: female
+immunization:
+  dengue:
+    vaccine:
+      code: XM38G7
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Dengue vaccine"
+    doses:
+      p3:
+        - -18m
+        - -12m
+        - -6m

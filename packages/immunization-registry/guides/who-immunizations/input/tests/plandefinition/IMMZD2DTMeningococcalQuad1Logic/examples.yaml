@@ -1,0 +1,42 @@
+---
+#1. Client's age is less than 2 years
+#   Today's date − "Date of birth" < 2 years
+### Client is not due for meningococcal vaccination
+### "Immunization recommendation status" = "Not due"
+id: "45.1"
+birth: -23m
+patient:
+  fhir:
+    gender: female
+---
+#0. No meningococcal primary series dose was administered
+#   Count of vaccines administered (where "Vaccine type" = "Meningococcal vaccines" and "Type of dose" = "Primary series") = 0
+#1. Client's age is more than or equal to 2 years
+#   Today's date − "Date of birth" ≥ 2 years
+### Client is due for meningococcal vaccination
+### "Immunization recommendation status" = "Due"
+id: "46.01"
+birth: -2y
+patient:
+  fhir:
+    gender: female
+---
+#0. One meningococcal primary series dose was administered
+#   Count of vaccines administered (where "Vaccine type" = "Meningococcal vaccines" and "Type of dose" = "Primary series") = 1
+### Meningococcal immunization schedule is complete
+### "Immunization recommendation status" = "Complete"
+### "Completed the primary vaccination series" (where "Vaccine type" = "Meningococcal vaccines") = TRUE
+id: "47.0"
+birth: -2y
+patient:
+  fhir:
+    gender: female
+immunization:
+  meningococcal:
+    vaccine:
+      code: XM5LC2
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Meningococcal polyvalent purified polysaccharides antigen vaccines"
+    doses:
+      p1:
+        - 0d

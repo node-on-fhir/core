@@ -1,0 +1,28 @@
+{
+  "resourceType": "SearchParameter",
+  "id": "observation-code",
+  "url": "http://hl7.org/fhir/SearchParameter/Observation-code",
+  "version": "4.0.1",
+  "name": "HoneycombObservationCode",
+  "status": "active",
+  "date": "2024-12-16",
+  "publisher": "github.com/node-on-fhir",
+  "contact": [
+    {
+      "telecom": [
+        {
+          "system": "url",
+          "value": "http://github.com/node-on-fhir/honeycomb"
+        }
+      ]
+    }
+  ],
+  "description": "The code of the observation type",
+  "code": "code",
+  "base": ["Observation"],
+  "type": "token",
+  "expression": "Observation.code",
+  "xpath": "code",
+  "multipleOr": true,
+  "multipleAnd": true
+}

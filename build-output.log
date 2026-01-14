@@ -1,0 +1,1791 @@
+ START CAPTURE 0 downloading the command-line tool took NaN
+   START CAPTURE 1 undefined took NaN
+     START 2 checking for meteor-tool@3.4.0-beta.12
+     DONE 2 checking for meteor-tool@3.4.0-beta.12 took 1
+   END CAPTURE 1 undefined took 1
+ END CAPTURE 0 downloading the command-line tool took 1
+ START CAPTURE 0 undefined took NaN
+   START 1 preparing project
+     START 2 reading project metadata
+     DONE 2 reading project metadata took 3
+     START CAPTURE 2 undefined took NaN
+       START 3 scanning local packages
+         START 4 looking for packages
+         DONE 4 looking for packages took 12
+         START 4 initializing packages
+           START 5 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/accounts-management`
+             START 6 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/accounts-management`
+             DONE 6 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/accounts-management` took 0
+           DONE 5 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/accounts-management` took 3
+           START 5 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/antimicrobial-reporting`
+             START 6 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/antimicrobial-reporting`
+             DONE 6 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/antimicrobial-reporting` took 0
+           DONE 5 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/antimicrobial-reporting` took 0
+           START 5 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/cancer-registry-reporting`
+             START 6 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/cancer-registry-reporting`
+             DONE 6 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/cancer-registry-reporting` took 1
+           DONE 5 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/cancer-registry-reporting` took 1
+           START 5 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/case-reporting`
+             START 6 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/case-reporting`
+             DONE 6 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/case-reporting` took 0
+           DONE 5 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/case-reporting` took 0
+           START 5 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/ccda-export`
+             START 6 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/ccda-export`
+             DONE 6 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/ccda-export` took 0
+           DONE 5 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/ccda-export` took 1
+           START 5 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/checklist-manifesto`
+             START 6 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/checklist-manifesto`
+             DONE 6 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/checklist-manifesto` took 0
+           DONE 5 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/checklist-manifesto` took 1
+           START 5 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/clinical-lists`
+             START 6 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/clinical-lists`
+             DONE 6 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/clinical-lists` took 0
+           DONE 5 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/clinical-lists` took 0
+           START 5 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/consent-generator`
+             START 6 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/consent-generator`
+             DONE 6 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/consent-generator` took 0
+           DONE 5 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/consent-generator` took 1
+           START 5 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/data-exporter`
+           DONE 5 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/data-exporter` took 0
+           START 5 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/data-importer`
+           DONE 5 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/data-importer` took 0
+           START 5 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/dicom-viewer-borked`
+             START 6 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/dicom-viewer-borked`
+             DONE 6 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/dicom-viewer-borked` took 0
+           DONE 5 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/dicom-viewer-borked` took 1
+           START 5 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/drug-formulary`
+           DONE 5 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/drug-formulary` took 0
+           START 5 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/drug-interactions`
+             START 6 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/drug-interactions`
+             DONE 6 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/drug-interactions` took 1
+           DONE 5 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/drug-interactions` took 1
+           START 5 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/e-prescribing`
+             START 6 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/e-prescribing`
+             DONE 6 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/e-prescribing` took 0
+           DONE 5 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/e-prescribing` took 0
+           START 5 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/family-health-history`
+           DONE 5 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/family-health-history` took 0
+           START 5 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/force-ssl`
+             START 6 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/force-ssl`
+             DONE 6 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/force-ssl` took 0
+           DONE 5 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/force-ssl` took 0
+           START 5 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/healthcare-surveys`
+             START 6 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/healthcare-surveys`
+             DONE 6 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/healthcare-surveys` took 0
+           DONE 5 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/healthcare-surveys` took 1
+           START 5 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/hermes-tooling`
+             START 6 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/hermes-tooling`
+             DONE 6 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/hermes-tooling` took 0
+           DONE 5 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/hermes-tooling` took 0
+           START 5 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/hipaa-compliance`
+             START 6 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/hipaa-compliance`
+             DONE 6 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/hipaa-compliance` took 0
+           DONE 5 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/hipaa-compliance` took 1
+           START 5 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/immunization-registry`
+             START 6 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/immunization-registry`
+             DONE 6 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/immunization-registry` took 0
+           DONE 5 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/immunization-registry` took 0
+           START 5 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/implantable-devices`
+             START 6 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/implantable-devices`
+             DONE 6 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/implantable-devices` took 0
+           DONE 5 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/implantable-devices` took 0
+           START 5 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/international-patient-summary`
+             START 6 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/international-patient-summary`
+             DONE 6 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/international-patient-summary` took 0
+           DONE 5 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/international-patient-summary` took 1
+           START 5 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/lab-test-reporting`
+             START 6 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/lab-test-reporting`
+             DONE 6 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/lab-test-reporting` took 0
+           DONE 5 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/lab-test-reporting` took 0
+           START 5 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/leaderboard-starter`
+           DONE 5 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/leaderboard-starter` took 0
+           START 5 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/lunar-maps`
+             START 6 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/lunar-maps`
+             DONE 6 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/lunar-maps` took 1
+           DONE 5 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/lunar-maps` took 1
+           START 5 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/mcp`
+             START 6 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/mcp`
+             DONE 6 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/mcp` took 0
+           DONE 5 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/mcp` took 0
+           START 5 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/molekule`
+           DONE 5 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/molekule` took 0
+           START 5 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/multi-factor-auth`
+             START 6 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/multi-factor-auth`
+             DONE 6 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/multi-factor-auth` took 0
+           DONE 5 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/multi-factor-auth` took 1
+           START 5 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/order-catalog`
+           DONE 5 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/order-catalog` took 0
+           START 5 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/pacio-core`
+             START 6 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/pacio-core`
+             DONE 6 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/pacio-core` took 0
+           DONE 5 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/pacio-core` took 0
+           START 5 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/patient-chart-starter`
+           DONE 5 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/patient-chart-starter` took 1
+           START 5 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/patient-matching`
+             START 6 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/patient-matching`
+             DONE 6 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/patient-matching` took 0
+           DONE 5 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/patient-matching` took 0
+           START 5 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/provider-directory`
+           DONE 5 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/provider-directory` took 1
+           START 5 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/quality-measures`
+             START 6 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/quality-measures`
+             DONE 6 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/quality-measures` took 0
+           DONE 5 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/quality-measures` took 1
+           START 5 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/reference-app`
+             START 6 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/reference-app`
+             DONE 6 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/reference-app` took 0
+           DONE 5 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/reference-app` took 1
+           START 5 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/request-for-corrections`
+             START 6 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/request-for-corrections`
+             DONE 6 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/request-for-corrections` took 0
+           DONE 5 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/request-for-corrections` took 0
+           START 5 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/saner`
+             START 6 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/saner`
+             DONE 6 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/saner` took 0
+           DONE 5 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/saner` took 0
+           START 5 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/scheduling-borked`
+             START 6 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/scheduling-borked`
+             DONE 6 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/scheduling-borked` took 0
+           DONE 5 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/scheduling-borked` took 0
+           START 5 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/scheduling`
+             START 6 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/scheduling`
+             DONE 6 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/scheduling` took 0
+           DONE 5 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/scheduling` took 1
+           START 5 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/secure-messaging`
+             START 6 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/secure-messaging`
+             DONE 6 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/secure-messaging` took 0
+           DONE 5 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/secure-messaging` took 0
+           START 5 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/simple-hl7`
+             START 6 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/simple-hl7`
+             DONE 6 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/simple-hl7` took 0
+           DONE 5 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/simple-hl7` took 0
+           START 5 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/smart-web-messaging`
+             START 6 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/smart-web-messaging`
+             DONE 6 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/smart-web-messaging` took 0
+           DONE 5 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/smart-web-messaging` took 1
+           START 5 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/social-determinants`
+           DONE 5 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/social-determinants` took 0
+           START 5 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/sphr-analyzer`
+           DONE 5 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/sphr-analyzer` took 1
+           START 5 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/static-pages`
+             START 6 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/static-pages`
+             DONE 6 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/static-pages` took 0
+           DONE 5 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/static-pages` took 0
+           START 5 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/structured-data-capture`
+             START 6 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/structured-data-capture`
+             DONE 6 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/structured-data-capture` took 0
+           DONE 5 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/structured-data-capture` took 0
+           START 5 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/swarm`
+             START 6 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/swarm`
+             DONE 6 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/swarm` took 1
+           DONE 5 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/swarm` took 1
+           START 5 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/symptom-tracking`
+             START 6 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/symptom-tracking`
+             DONE 6 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/symptom-tracking` took 0
+           DONE 5 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/symptom-tracking` took 0
+           START 5 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/syndromic-surveillance`
+           DONE 5 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/syndromic-surveillance` took 0
+           START 5 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/synthea`
+           DONE 5 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/synthea` took 0
+           START 5 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/terminology`
+             START 6 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/terminology`
+             DONE 6 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/terminology` took 0
+           DONE 5 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/terminology` took 1
+           START 5 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/timelines`
+           DONE 5 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/timelines` took 0
+           START 5 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/trialx-epic-data-fetch`
+             START 6 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/trialx-epic-data-fetch`
+             DONE 6 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/trialx-epic-data-fetch` took 0
+           DONE 5 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/trialx-epic-data-fetch` took 0
+           START 5 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/videoconferencing`
+             START 6 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/videoconferencing`
+             DONE 6 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/videoconferencing` took 1
+           DONE 5 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/videoconferencing` took 1
+           START 5 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/vital-signs`
+             START 6 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/vital-signs`
+             DONE 6 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/vital-signs` took 0
+           DONE 5 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/vital-signs` took 0
+           START 5 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/workqueues`
+             START 6 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/workqueues`
+             DONE 6 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/workqueues` took 0
+           DONE 5 reading package from `/Users/abigailwatson/Code/honeycomb-ehr/packages/workqueues` took 0
+         DONE 4 initializing packages took 26
+       DONE 3 scanning local packages took 39
+     END CAPTURE 2 undefined took 39
+     START CAPTURE 2 undefined took NaN
+       START 3 selecting package versions
+         START CAPTURE 4 loading isopacket `combined` took NaN
+         END CAPTURE 4 loading isopacket `combined` took 310
+       DONE 3 selecting package versions took 376
+     END CAPTURE 2 undefined took 377
+     START CAPTURE 2 undefined took NaN
+       START 3 downloading missing packages
+         START 4 checking for accounts-base@3.2.0-beta340.12
+         DONE 4 checking for accounts-base@3.2.0-beta340.12 took 1
+         START 4 checking for accounts-password@3.2.2-beta340.12
+         DONE 4 checking for accounts-password@3.2.2-beta340.12 took 0
+         START 4 checking for allow-deny@2.1.0
+         DONE 4 checking for allow-deny@2.1.0 took 0
+         START 4 checking for autoupdate@2.0.1
+         DONE 4 checking for autoupdate@2.0.1 took 0
+         START 4 checking for babel-compiler@7.13.0-beta340.12
+         DONE 4 checking for babel-compiler@7.13.0-beta340.12 took 1
+         START 4 checking for babel-runtime@1.5.2
+         DONE 4 checking for babel-runtime@1.5.2 took 1
+         START 4 checking for base64@1.0.13
+         DONE 4 checking for base64@1.0.13 took 0
+         START 4 checking for binary-heap@1.0.12
+         DONE 4 checking for binary-heap@1.0.12 took 1
+         START 4 checking for boilerplate-generator@2.1.0-beta340.12
+         DONE 4 checking for boilerplate-generator@2.1.0-beta340.12 took 1
+         START 4 checking for caching-compiler@2.0.1
+         DONE 4 checking for caching-compiler@2.0.1 took 0
+         START 4 checking for callback-hook@1.6.1
+         DONE 4 checking for callback-hook@1.6.1 took 0
+         START 4 checking for check@1.4.4
+         DONE 4 checking for check@1.4.4 took 1
+         START 4 checking for clinical:extended-api@3.0.0
+         DONE 4 checking for clinical:extended-api@3.0.0 took 0
+         START 4 checking for clinical:fonts@1.2.0
+         DONE 4 checking for clinical:fonts@1.2.0 took 0
+         START 4 checking for clinical:hl7-resource-datatypes@4.0.8
+         DONE 4 checking for clinical:hl7-resource-datatypes@4.0.8 took 0
+         START 4 checking for core-runtime@1.0.0
+         DONE 4 checking for core-runtime@1.0.0 took 0
+         START 4 checking for ddp@1.4.2
+         DONE 4 checking for ddp@1.4.2 took 0
+         START 4 checking for ddp-client@3.1.1
+         DONE 4 checking for ddp-client@3.1.1 took 0
+         START 4 checking for ddp-common@1.4.4
+         DONE 4 checking for ddp-common@1.4.4 took 1
+         START 4 checking for ddp-rate-limiter@1.2.2
+         DONE 4 checking for ddp-rate-limiter@1.2.2 took 0
+         START 4 checking for ddp-server@3.1.2
+         DONE 4 checking for ddp-server@3.1.2 took 0
+         START 4 checking for diff-sequence@1.1.3
+         DONE 4 checking for diff-sequence@1.1.3 took 0
+         START 4 checking for dynamic-import@0.7.4
+         DONE 4 checking for dynamic-import@0.7.4 took 1
+         START 4 checking for ecmascript@0.17.0-beta340.12
+         DONE 4 checking for ecmascript@0.17.0-beta340.12 took 0
+         START 4 checking for ecmascript-runtime@0.8.3
+         DONE 4 checking for ecmascript-runtime@0.8.3 took 0
+         START 4 checking for ecmascript-runtime-client@0.12.3
+         DONE 4 checking for ecmascript-runtime-client@0.12.3 took 0
+         START 4 checking for ecmascript-runtime-server@0.11.1
+         DONE 4 checking for ecmascript-runtime-server@0.11.1 took 0
+         START 4 checking for ejson@1.1.5
+         DONE 4 checking for ejson@1.1.5 took 1
+         START 4 checking for email@3.1.2
+         DONE 4 checking for email@3.1.2 took 0
+         START 4 checking for es5-shim@4.8.1
+         DONE 4 checking for es5-shim@4.8.1 took 0
+         START 4 checking for facts-base@1.0.2
+         DONE 4 checking for facts-base@1.0.2 took 0
+         START 4 checking for fetch@0.1.6
+         DONE 4 checking for fetch@0.1.6 took 0
+         START 4 checking for geojson-utils@1.0.12
+         DONE 4 checking for geojson-utils@1.0.12 took 1
+         START 4 checking for hot-code-push@1.0.5
+         DONE 4 checking for hot-code-push@1.0.5 took 0
+         START 4 checking for hot-module-replacement@0.5.4
+         DONE 4 checking for hot-module-replacement@0.5.4 took 0
+         START 4 checking for id-map@1.2.0
+         DONE 4 checking for id-map@1.2.0 took 0
+         START 4 checking for inter-process-messaging@0.1.2
+         DONE 4 checking for inter-process-messaging@0.1.2 took 0
+         START 4 checking for launch-screen@2.0.1
+         DONE 4 checking for launch-screen@2.0.1 took 0
+         START 4 checking for localstorage@1.2.1
+         DONE 4 checking for localstorage@1.2.1 took 0
+         START 4 checking for logging@1.3.6
+         DONE 4 checking for logging@1.3.6 took 0
+         START 4 checking for matb33:collection-hooks@2.0.0
+         DONE 4 checking for matb33:collection-hooks@2.0.0 took 1
+         START 4 checking for mdg:validated-method@1.3.0
+         DONE 4 checking for mdg:validated-method@1.3.0 took 0
+         START 4 checking for meteor@2.1.1
+         DONE 4 checking for meteor@2.1.1 took 0
+         START 4 checking for meteor-base@1.5.2
+         DONE 4 checking for meteor-base@1.5.2 took 0
+         START 4 checking for minifier-css@2.0.1
+         DONE 4 checking for minifier-css@2.0.1 took 0
+         START 4 checking for minifier-js@3.1.0-beta340.12
+         DONE 4 checking for minifier-js@3.1.0-beta340.12 took 1
+         START 4 checking for minimongo@2.0.5-beta340.12
+         DONE 4 checking for minimongo@2.0.5-beta340.12 took 0
+         START 4 checking for mobile-experience@1.1.2
+         DONE 4 checking for mobile-experience@1.1.2 took 0
+         START 4 checking for mobile-status-bar@1.1.1
+         DONE 4 checking for mobile-status-bar@1.1.1 took 0
+         START 4 checking for modern-browsers@0.2.3
+         DONE 4 checking for modern-browsers@0.2.3 took 0
+         START 4 checking for modules@0.20.3
+         DONE 4 checking for modules@0.20.3 took 0
+         START 4 checking for modules-runtime@0.13.2
+         DONE 4 checking for modules-runtime@0.13.2 took 1
+         START 4 checking for modules-runtime-hot@0.14.3
+         DONE 4 checking for modules-runtime-hot@0.14.3 took 0
+         START 4 checking for mongo@2.2.0-beta340.12
+         DONE 4 checking for mongo@2.2.0-beta340.12 took 0
+         START 4 checking for mongo-decimal@0.2.0
+         DONE 4 checking for mongo-decimal@0.2.0 took 0
+         START 4 checking for mongo-dev-server@1.1.1
+         DONE 4 checking for mongo-dev-server@1.1.1 took 0
+         START 4 checking for mongo-id@1.0.9
+         DONE 4 checking for mongo-id@1.0.9 took 1
+         START 4 checking for npm-mongo@6.16.1
+         DONE 4 checking for npm-mongo@6.16.1 took 0
+         START 4 checking for ordered-dict@1.2.0
+         DONE 4 checking for ordered-dict@1.2.0 took 0
+         START 4 checking for promise@1.0.0
+         DONE 4 checking for promise@1.0.0 took 0
+         START 4 checking for random@1.2.2
+         DONE 4 checking for random@1.2.2 took 0
+         START 4 checking for rate-limit@1.1.2
+         DONE 4 checking for rate-limit@1.1.2 took 1
+         START 4 checking for react-fast-refresh@0.2.9
+         DONE 4 checking for react-fast-refresh@0.2.9 took 0
+         START 4 checking for react-meteor-data@3.0.1
+         DONE 4 checking for react-meteor-data@3.0.1 took 0
+         START 4 checking for reactive-dict@1.3.2
+         DONE 4 checking for reactive-dict@1.3.2 took 0
+         START 4 checking for reactive-var@1.0.13
+         DONE 4 checking for reactive-var@1.0.13 took 0
+         START 4 checking for reload@1.3.2
+         DONE 4 checking for reload@1.3.2 took 0
+         START 4 checking for retry@1.1.1
+         DONE 4 checking for retry@1.1.1 took 0
+         START 4 checking for routepolicy@1.1.2
+         DONE 4 checking for routepolicy@1.1.2 took 1
+         START 4 checking for rspack@1.0.0-beta340.12
+         DONE 4 checking for rspack@1.0.0-beta340.12 took 0
+         START 4 checking for service-configuration@1.3.5
+         DONE 4 checking for service-configuration@1.3.5 took 0
+         START 4 checking for session@1.2.2
+         DONE 4 checking for session@1.2.2 took 0
+         START 4 checking for sha@1.0.10
+         DONE 4 checking for sha@1.0.10 took 0
+         START 4 checking for shell-server@0.7.0-beta340.12
+         DONE 4 checking for shell-server@0.7.0-beta340.12 took 0
+         START 4 checking for socket-stream-client@0.6.1
+         DONE 4 checking for socket-stream-client@0.6.1 took 1
+         START 4 checking for standard-minifier-css@1.9.3
+         DONE 4 checking for standard-minifier-css@1.9.3 took 0
+         START 4 checking for standard-minifier-js@3.1.1
+         DONE 4 checking for standard-minifier-js@3.1.1 took 0
+         START 4 checking for static-html@1.4.0
+         DONE 4 checking for static-html@1.4.0 took 0
+         START 4 checking for static-html-tools@1.0.0
+         DONE 4 checking for static-html-tools@1.0.0 took 0
+         START 4 checking for tools-core@1.0.0-beta340.12
+         DONE 4 checking for tools-core@1.0.0-beta340.12 took 1
+         START 4 checking for tracker@1.3.4
+         DONE 4 checking for tracker@1.3.4 took 0
+         START 4 checking for typescript@5.7.0-beta340.12
+         DONE 4 checking for typescript@5.7.0-beta340.12 took 0
+         START 4 checking for underscore@1.6.4
+         DONE 4 checking for underscore@1.6.4 took 0
+         START 4 checking for url@1.3.5
+         DONE 4 checking for url@1.3.5 took 0
+         START 4 checking for webapp@2.0.7
+         DONE 4 checking for webapp@2.0.7 took 0
+         START 4 checking for webapp-hashing@1.1.2
+         DONE 4 checking for webapp-hashing@1.1.2 took 1
+         START 4 checking for zodern:types@1.0.13
+         DONE 4 checking for zodern:types@1.0.13 took 0
+       DONE 3 downloading missing packages took 19
+     END CAPTURE 2 undefined took 19
+     START 2 building local packages
+       START 3 loading package accounts-base@3.2.0-beta340.12
+       DONE 3 loading package accounts-base@3.2.0-beta340.12 took 6
+       START 3 loading package meteor@2.1.1
+       DONE 3 loading package meteor@2.1.1 took 5
+       START 3 loading package core-runtime@1.0.0
+       DONE 3 loading package core-runtime@1.0.0 took 2
+       START 3 loading package ecmascript@0.17.0-beta340.12
+       DONE 3 loading package ecmascript@0.17.0-beta340.12 took 30
+       START 3 loading package react-fast-refresh@0.2.9
+       DONE 3 loading package react-fast-refresh@0.2.9 took 3
+       START 3 loading package modules@0.20.3
+       DONE 3 loading package modules@0.20.3 took 5
+       START 3 loading package modules-runtime@0.13.2
+       DONE 3 loading package modules-runtime@0.13.2 took 2
+       START 3 loading package ecmascript-runtime@0.8.3
+       DONE 3 loading package ecmascript-runtime@0.8.3 took 2
+       START 3 loading package ecmascript-runtime-client@0.12.3
+       DONE 3 loading package ecmascript-runtime-client@0.12.3 took 1
+       START 3 loading package promise@1.0.0
+       DONE 3 loading package promise@1.0.0 took 2
+       START 3 loading package modern-browsers@0.2.3
+       DONE 3 loading package modern-browsers@0.2.3 took 2
+       START 3 loading package ecmascript-runtime-server@0.11.1
+       DONE 3 loading package ecmascript-runtime-server@0.11.1 took 1
+       START 3 loading package babel-runtime@1.5.2
+       DONE 3 loading package babel-runtime@1.5.2 took 1
+       START 3 loading package dynamic-import@0.7.4
+       DONE 3 loading package dynamic-import@0.7.4 took 3
+       START 3 loading package fetch@0.1.6
+       DONE 3 loading package fetch@0.1.6 took 4
+       START 3 loading package inter-process-messaging@0.1.2
+       DONE 3 loading package inter-process-messaging@0.1.2 took 3
+       START 3 loading package ddp-rate-limiter@1.2.2
+       DONE 3 loading package ddp-rate-limiter@1.2.2 took 2
+       START 3 loading package rate-limit@1.1.2
+       DONE 3 loading package rate-limit@1.1.2 took 2
+       START 3 loading package random@1.2.2
+       DONE 3 loading package random@1.2.2 took 3
+       START 3 loading package check@1.4.4
+       DONE 3 loading package check@1.4.4 took 2
+       START 3 loading package ejson@1.1.5
+       DONE 3 loading package ejson@1.1.5 took 3
+       START 3 loading package base64@1.0.13
+       DONE 3 loading package base64@1.0.13 took 1
+       START 3 loading package callback-hook@1.6.1
+       DONE 3 loading package callback-hook@1.6.1 took 2
+       START 3 loading package url@1.3.5
+       DONE 3 loading package url@1.3.5 took 3
+       START 3 loading package ddp@1.4.2
+       DONE 3 loading package ddp@1.4.2 took 2
+       START 3 loading package ddp-client@3.1.1
+       DONE 3 loading package ddp-client@3.1.1 took 11
+       START 3 loading package tracker@1.3.4
+       DONE 3 loading package tracker@1.3.4 took 1
+       START 3 loading package retry@1.1.1
+       DONE 3 loading package retry@1.1.1 took 1
+       START 3 loading package id-map@1.2.0
+       DONE 3 loading package id-map@1.2.0 took 1
+       START 3 loading package ddp-common@1.4.4
+       DONE 3 loading package ddp-common@1.4.4 took 3
+       START 3 loading package reload@1.3.2
+       DONE 3 loading package reload@1.3.2 took 2
+       START 3 loading package socket-stream-client@0.6.1
+       DONE 3 loading package socket-stream-client@0.6.1 took 16
+       START 3 loading package diff-sequence@1.1.3
+       DONE 3 loading package diff-sequence@1.1.3 took 2
+       START 3 loading package mongo-id@1.0.9
+       DONE 3 loading package mongo-id@1.0.9 took 1
+       START 3 loading package ddp-server@3.1.2
+       DONE 3 loading package ddp-server@3.1.2 took 4
+       START 3 loading package typescript@5.7.0-beta340.12
+       DONE 3 loading package typescript@5.7.0-beta340.12 took 35
+       START 3 loading package babel-compiler@7.13.0-beta340.12
+       DONE 3 loading package babel-compiler@7.13.0-beta340.12 took 38
+       START 3 loading package webapp@2.0.7
+       DONE 3 loading package webapp@2.0.7 took 20
+       START 3 loading package logging@1.3.6
+       DONE 3 loading package logging@1.3.6 took 5
+       START 3 loading package routepolicy@1.1.2
+       DONE 3 loading package routepolicy@1.1.2 took 2
+       START 3 loading package boilerplate-generator@2.1.0-beta340.12
+       DONE 3 loading package boilerplate-generator@2.1.0-beta340.12 took 3
+       START 3 loading package webapp-hashing@1.1.2
+       DONE 3 loading package webapp-hashing@1.1.2 took 0
+       START 3 loading package mongo@2.2.0-beta340.12
+       DONE 3 loading package mongo@2.2.0-beta340.12 took 17
+       START 3 loading package npm-mongo@6.16.1
+       DONE 3 loading package npm-mongo@6.16.1 took 4
+       START 3 loading package allow-deny@2.1.0
+       DONE 3 loading package allow-deny@2.1.0 took 2
+       START 3 loading package minimongo@2.0.5-beta340.12
+       DONE 3 loading package minimongo@2.0.5-beta340.12 took 6
+       START 3 loading package geojson-utils@1.0.12
+       DONE 3 loading package geojson-utils@1.0.12 took 3
+       START 3 loading package ordered-dict@1.2.0
+       DONE 3 loading package ordered-dict@1.2.0 took 1
+       START 3 loading package mongo-decimal@0.2.0
+       DONE 3 loading package mongo-decimal@0.2.0 took 1
+       START 3 loading package mongo-dev-server@1.1.1
+       DONE 3 loading package mongo-dev-server@1.1.1 took 1
+       START 3 loading package binary-heap@1.0.12
+       DONE 3 loading package binary-heap@1.0.12 took 3
+       START 3 loading package localstorage@1.2.1
+       DONE 3 loading package localstorage@1.2.1 took 1
+       START 3 loading package reactive-var@1.0.13
+       DONE 3 loading package reactive-var@1.0.13 took 1
+       START 3 loading package accounts-password@3.2.2-beta340.12
+       DONE 3 loading package accounts-password@3.2.2-beta340.12 took 18
+       START 3 loading package sha@1.0.10
+       DONE 3 loading package sha@1.0.10 took 0
+       START 3 loading package email@3.1.2
+       DONE 3 loading package email@3.1.2 took 4
+       START 3 loading package autoupdate@2.0.1
+       DONE 3 loading package autoupdate@2.0.1 took 3
+       START 3 loading package caching-compiler@2.0.1
+       DONE 3 loading package caching-compiler@2.0.1 took 3
+       START 3 loading package clinical:extended-api@3.0.0
+       DONE 3 loading package clinical:extended-api@3.0.0 took 3
+       START 3 loading package session@1.2.2
+       DONE 3 loading package session@1.2.2 took 1
+       START 3 loading package reactive-dict@1.3.2
+       DONE 3 loading package reactive-dict@1.3.2 took 2
+       START 3 loading package underscore@1.6.4
+       DONE 3 loading package underscore@1.6.4 took 12
+       START 3 preparing to build package clinical:family-health-history
+         START 4 loading package react-meteor-data@3.0.1
+         DONE 4 loading package react-meteor-data@3.0.1 took 7
+         START 4 loading package clinical:hl7-resource-datatypes@4.0.8
+         DONE 4 loading package clinical:hl7-resource-datatypes@4.0.8 took 13
+         START 4 building package clinical:family-health-history
+         DONE 4 building package clinical:family-health-history took 4
+       DONE 3 preparing to build package clinical:family-health-history took 24
+       START 3 loading package clinical:fonts@1.2.0
+       DONE 3 loading package clinical:fonts@1.2.0 took 3
+       START 3 preparing to build package clinical:order-catalog
+         START 4 building package clinical:order-catalog
+         DONE 4 building package clinical:order-catalog took 4
+       DONE 3 preparing to build package clinical:order-catalog took 4
+       START 3 preparing to build package clinical:pacio-core
+         START 4 building package clinical:pacio-core
+         DONE 4 building package clinical:pacio-core took 21
+       DONE 3 preparing to build package clinical:pacio-core took 21
+       START 3 preparing to build package clinical:reference-app
+         START 4 building package clinical:reference-app
+         DONE 4 building package clinical:reference-app took 6
+       DONE 3 preparing to build package clinical:reference-app took 6
+       START 3 loading package es5-shim@4.8.1
+       DONE 3 loading package es5-shim@4.8.1 took 4
+       START 3 loading package facts-base@1.0.2
+       DONE 3 loading package facts-base@1.0.2 took 0
+       START 3 loading package hot-code-push@1.0.5
+       DONE 3 loading package hot-code-push@1.0.5 took 1
+       START 3 loading package hot-module-replacement@0.5.4
+       DONE 3 loading package hot-module-replacement@0.5.4 took 2
+       START 3 loading package modules-runtime-hot@0.14.3
+       DONE 3 loading package modules-runtime-hot@0.14.3 took 1
+       START 3 loading package launch-screen@2.0.1
+       DONE 3 loading package launch-screen@2.0.1 took 0
+       START 3 loading package matb33:collection-hooks@2.0.0
+       DONE 3 loading package matb33:collection-hooks@2.0.0 took 11
+       START 3 loading package zodern:types@1.0.13
+       DONE 3 loading package zodern:types@1.0.13 took 4
+       START 3 loading package mdg:validated-method@1.3.0
+       DONE 3 loading package mdg:validated-method@1.3.0 took 2
+       START 3 loading package meteor-base@1.5.2
+       DONE 3 loading package meteor-base@1.5.2 took 1
+       START 3 loading package minifier-css@2.0.1
+       DONE 3 loading package minifier-css@2.0.1 took 12
+       START 3 loading package minifier-js@3.1.0-beta340.12
+       DONE 3 loading package minifier-js@3.1.0-beta340.12 took 3
+       START 3 loading package mobile-experience@1.1.2
+       DONE 3 loading package mobile-experience@1.1.2 took 0
+       START 3 loading package mobile-status-bar@1.1.1
+       DONE 3 loading package mobile-status-bar@1.1.1 took 1
+       START 3 loading package rspack@1.0.0-beta340.12
+       DONE 3 loading package rspack@1.0.0-beta340.12 took 22
+       START 3 loading package tools-core@1.0.0-beta340.12
+       DONE 3 loading package tools-core@1.0.0-beta340.12 took 3
+       START 3 loading package service-configuration@1.3.5
+       DONE 3 loading package service-configuration@1.3.5 took 2
+       START 3 loading package shell-server@0.7.0-beta340.12
+       DONE 3 loading package shell-server@0.7.0-beta340.12 took 1
+       START 3 loading package standard-minifier-css@1.9.3
+       DONE 3 loading package standard-minifier-css@1.9.3 took 41
+       START 3 loading package standard-minifier-js@3.1.1
+       DONE 3 loading package standard-minifier-js@3.1.1 took 42
+       START 3 loading package static-html@1.4.0
+       DONE 3 loading package static-html@1.4.0 took 12
+       START 3 loading package static-html-tools@1.0.0
+       DONE 3 loading package static-html-tools@1.0.0 took 3
+     DONE 2 building local packages took 554
+   DONE 1 preparing project took 994
+ END CAPTURE 0 undefined took 994
+ START CAPTURE 0 building the application took NaN
+   START 1 determining active plugins
+     START 2 loading plugin `minifyStdCSS` from package `standard-minifier-css`
+     DONE 2 loading plugin `minifyStdCSS` from package `standard-minifier-css` took 74
+     START 2 running registerMinifier callback in package standard-minifier-css
+     DONE 2 running registerMinifier callback in package standard-minifier-css took 0
+     START 2 loading plugin `minifyStdJS` from package `standard-minifier-js`
+     DONE 2 loading plugin `minifyStdJS` from package `standard-minifier-js` took 94
+     START 2 running registerMinifier callback in package standard-minifier-js
+     DONE 2 running registerMinifier callback in package standard-minifier-js took 0
+     START 2 loading plugin `compile-ecmascript` from package `ecmascript`
+     DONE 2 loading plugin `compile-ecmascript` from package `ecmascript` took 52
+     START 2 running registerCompiler callback in package ecmascript
+     DONE 2 running registerCompiler callback in package ecmascript took 0
+     START 2 loading plugin `compile-typescript` from package `typescript`
+     DONE 2 loading plugin `compile-typescript` from package `typescript` took 50
+     START 2 running registerCompiler callback in package typescript
+     DONE 2 running registerCompiler callback in package typescript took 0
+     START 2 loading plugin `compileStaticHtmlBatch` from package `static-html`
+     DONE 2 loading plugin `compileStaticHtmlBatch` from package `static-html` took 32
+     START 2 running registerCompiler callback in package static-html
+     DONE 2 running registerCompiler callback in package static-html took 0
+     START 2 loading plugin `rspack` from package `rspack`
+[31m[Rspack Build Error Client] npm warn config init.author.name Use `--init-author-name` instead.
+[0m
+[31m[Rspack Build Error Client] npm warn config init.author.email Use `--init-author-email` instead.
+npm warn config init.author.url Use `--init-author-url` instead.
+[0m
+[31m[Rspack Build Error Server] npm warn config init.author.name Use `--init-author-name` instead.
+npm warn config init.author.email Use `--init-author-email` instead.
+npm warn config init.author.url Use `--init-author-url` instead.
+[0m
+[31m[Rspack Build Error Client] [rspack.config.js] Ignored custom "output.publicPath" — reserved for Meteor-Rspack integration.
+[0m
+[35m[Rspack Build Server] [server-rspack]:
+  [1m[33mWARNING[39m[22m in [1m./node_modules/express/lib/view.js[39m[22m [1m[32m81:13-25[39m[22m
+    [33m⚠[0m Critical dependency: the request of a dependency is an expression
+      ╭─[81:21]
+   [2m79[0m │ 
+   [2m80[0m │     // default engine export
+   [2m81[0m │     var fn = require(mod).__express
+      · [35;1m                     ───[0m
+   [2m82[0m │ 
+   [2m83[0m │     if (typeof fn !== 'function') {
+      ╰────
+  [0m
+
+  [1m[33mWARNING[39m[22m in [1m./node_modules/mongodb/lib/deps.js[39m[22m [1m[32m31:27-37[39m[22m
+    [33m⚠[0m Module not found: Can't resolve 'kerberos' in '/Users/abigailwatson/Code/honeycomb-ehr/node_modules/mongodb/lib'
+      ╭─[31:19]
+   [2m29[0m │         // Ensure you always wrap an optional require in the try block NODE-3199
+   [2m30[0m │         // eslint-disable-next-line @typescript-eslint/no-require-imports
+   [2m31[0m │         kerberos = require('kerberos');
+      · [35;1m                   ───────────────────[0m
+   [2m32[0m │     }
+   [2m33[0m │     catch (error) {
+      ╰────
+  [0m
+
+  [1m[33mWARNING[39m[22m in [1m./node_modules/mongodb/lib/deps.js[39m[22m [1m[32m42:28-46[39m[22m
+    [33m⚠[0m Module not found: Can't resolve '@mongodb-js/zstd' in '/Users/abigailwatson/Code/honeycomb-ehr/node_modules/mongodb/lib'
+      ╭─[42:20]
+   [2m40[0m │     try {
+   [2m41[0m │         // eslint-disable-next-line @typescript-eslint/no-require-imports
+   [2m42[0m │         ZStandard = require('@mongodb-js/zstd');
+      · [35;1m                    ───────────────────────────[0m
+   [2m43[0m │     }
+   [2m44[0m │     catch (error) {
+      ╰────
+  [0m
+
+  [1m[33mWARNING[39m[22m in [1m./node_modules/mongodb/lib/deps.js[39m[22m [1m[32m53:43-74[39m[22m
+    [33m⚠[0m Module not found: Can't resolve '@aws-sdk/credential-providers' in '/Users/abigailwatson/Code/honeycomb-ehr/node_modules/mongodb/lib'
+      ╭─[53:35]
+   [2m51[0m │         // Ensure you always wrap an optional require in the try block NODE-3199
+   [2m52[0m │         // eslint-disable-next-line @typescript-eslint/no-require-imports
+   [2m53[0m │         const credentialProvider = require('@aws-sdk/credential-providers');
+      · [35;1m                                   ────────────────────────────────────────[0m
+   [2m54[0m │         return credentialProvider;
+   [2m55[0m │     }
+      ╰────
+  [0m
+
+  [1m[33mWARNING[39m[22m in [1m./node_modules/mongodb/lib/deps.js[39m[22m [1m[32m65:43-57[39m[22m
+    [33m⚠[0m Module not found: Can't resolve 'gcp-metadata' in '/Users/abigailwatson/Code/honeycomb-ehr/node_modules/mongodb/lib'
+      ╭─[65:35]
+   [2m63[0m │         // Ensure you always wrap an optional require in the try block NODE-3199
+   [2m64[0m │         // eslint-disable-next-line @typescript-eslint/no-require-imports
+   [2m65[0m │         const credentialProvider = require('gcp-metadata');
+      · [35;1m                                   ───────────────────────[0m
+   [2m66[0m │         return credentialProvider;
+   [2m67[0m │     }
+      ╰────
+  [0m
+
+  [1m[33mWARNING[39m[22m in [1m./node_modules/mongodb/lib/deps.js[39m[22m [1m[32m77:30-38[39m[22m
+    [33m⚠[0m Module not found: Can't resolve 'snappy' in '/Users/abigailwatson/Code/honeycomb-ehr/node_modules/mongodb/lib'
+      ╭─[77:22]
+   [2m75[0m │         // Ensure you always wrap an optional require in the try block NODE-3199
+   [2m76[0m │         // eslint-disable-next-line @typescript-eslint/no-require-imports
+   [2m77[0m │         const value = require('snappy');
+      · [35;1m                      ─────────────────[0m
+   [2m78[0m │         return value;
+   [2m79[0m │     }
+      ╰────
+  [0m
+
+  [1m[33mWARNING[39m[22m in [1m./node_modules/mongodb/lib/deps.js[39m[22m [1m[32m89:30-37[39m[22m
+    [33m⚠[0m Module not found: Can't resolve 'socks' in '/Users/abigailwatson/Code/honeycomb-ehr/node_modules/mongodb/lib'
+      ╭─[89:22]
+   [2m87[0m │         // Ensure you always wrap an optional require in the try block NODE-3199
+   [2m88[0m │         // eslint-disable-next-line @typescript-eslint/no-require-imports
+   [2m89[0m │         const value = require('socks');
+      · [35;1m                      ────────────────[0m
+   [2m90[0m │         return value;
+   [2m91[0m │     }
+      ╰────
+  [0m
+
+  [1m[33mWARNING[39m[22m in [1m./node_modules/mongodb/lib/deps.js[39m[22m [1m[32m102:23-29[39m[22m
+    [33m⚠[0m Module not found: Can't resolve 'aws4' in '/Users/abigailwatson/Code/honeycomb-ehr/node_modules/mongodb/lib'
+       ╭─[102:15]
+   [2m100[0m │     try {
+   [2m101[0m │         // eslint-disable-next-line @typescript-eslint/no-require-imports
+   [2m102[0m │         aws4 = require('aws4');
+       · [35;1m               ───────────────[0m
+   [2m103[0m │     }
+   [2m104[0m │     catch (error) {
+       ╰────
+  [0m
+
+  [1m[33mWARNING[39m[22m in [1m./node_modules/mongodb/lib/deps.js[39m[22m [1m[32m117:42-69[39m[22m
+    [33m⚠[0m Module not found: Can't resolve 'mongodb-client-encryption' in '/Users/abigailwatson/Code/honeycomb-ehr/node_modules/mongodb/lib'
+       ╭─[117:34]
+   [2m115[0m │         // in a way that makes this line throw at bundle time, not runtime, catching here will make bundling succeed
+   [2m116[0m │         // eslint-disable-next-line @typescript-eslint/no-require-imports
+   [2m117[0m │         mongodbClientEncryption = require('mongodb-client-encryption');
+       · [35;1m                                  ────────────────────────────────────[0m
+   [2m118[0m │     }
+   [2m119[0m │     catch (error) {
+       ╰────
+  [0m
+
+  [1m[33mWARNING[39m[22m in [1m./server/FhirEndpoints.js[39m[22m [1m[32m515:19-36[39m[22m
+    [33m⚠[0m ESModulesLinkingWarning: export 'default' (imported as 'OAuthServerConfig') was not found in './OAuthServer.js' (possible exports: OAuthServerConfig)
+       ╭─[515:19]
+   [2m513[0m │         }
+   [2m514[0m │         // SMART on FHIR (OAUTH) 
+   [2m515[0m │         if (typeof OAuthServerConfig !== "object") {
+       · [35;1m                   ─────────────────[0m
+   [2m516[0m │             console.log('OAuthServerConfig does not exist.');
+   [2m517[0m │         }
+       ╰────
+  [0m
+
+  [1m[33mWARNING[39m[22m in [1m./server/Methods.js[39m[22m [1m[32m44:12-28[39m[22m
+    [33m⚠[0m ESModulesLinkingWarning: export 'fetchCertificate' (imported as 'fetchCertificate') was not found in './OAuthEndpoints.js' (possible exports: OAuthServerConfig, accessTokenCollection, certificateIsExpired, certificateIsRevoked, fetchRevokationList, formatPEM, fuzzyMatch, parseCertAttributes, removeTrailingSlash, saveToInboundTrafficLog, setRedirectHeader)
+      ╭─[44:12]
+   [2m42[0m │     fetchCertificate: function(url) {
+   [2m43[0m │         return _async_to_generator(function*() {
+   [2m44[0m │             fetchCertificate(url);
+      · [35;1m            ────────────────[0m
+   [2m45[0m │         })();
+   [2m46[0m │     },
+      ╰────
+  [0m
+
+  [1m[33mWARNING[39m[22m in [1m./server/OAuthEndpoints.js[39m[22m [1m[32m1349:44-58[39m[22m
+    [33m⚠[0m ESModulesLinkingWarning: export 'default' (imported as 'asn1js') was not found in 'asn1js' (possible exports: Any, BaseBlock, BaseStringBlock, BitString, BmpString, Boolean, CharacterString, Choice, Constructed, DATE, DateTime, Duration, EndOfContent, Enumerated, GeneralString, GeneralizedTime, GraphicString, HexBlock, IA5String, Integer, Null, NumericString, ObjectIdentifier, OctetString, Primitive, PrintableString, RawData, RelativeObjectIdentifier, Repeated, Sequence, Set, TIME, TeletexString, TimeOfDay, UTCTime, UniversalString, Utf8String, ValueBlock, VideotexString, ViewWriter, VisibleString, compareSchema, fromBER, verifySchema)
+        ╭─[1349:44]
+   [2m1347[0m │                     try {
+   [2m1348[0m │                         // Parse the ASN.1 data to obtain the Certificate Revocation List (CRL)
+   [2m1349[0m │                         revokationAsn1crl = asn1js.fromBER(revokationBuffer);
+        · [35;1m                                            ──────────────[0m
+   [2m1350[0m │                     // console.log('revokationAsn1crl', revokationAsn1);
+   [2m1351[0m │                     } catch (error) {
+        ╰────
+  [0m
+
+  [1m[33mWARNING[39m[22m in [1m./server/OAuthEndpoints.js[39m[22m [1m[32m1356:44-75[39m[22m
+    [33m⚠[0m ESModulesLinkingWarning: export 'default' (imported as 'pkijs') was not found in 'pkijs' (possible exports: AbstractCryptoEngine, AccessDescription, Accuracy, AlgorithmIdentifier, AltName, ArgumentError, AsnError, AttCertValidityPeriod, Attribute, AttributeCertificateInfoV1, AttributeCertificateInfoV2, AttributeCertificateV1, AttributeCertificateV2, AttributeTypeAndValue, AuthenticatedSafe, AuthorityKeyIdentifier, BasicConstraints, BasicOCSPResponse, CAVersion, CRLBag, CRLDistributionPoints, CertBag, CertID, Certificate, CertificateChainValidationEngine, CertificatePolicies, CertificateRevocationList, CertificateSet, CertificateTemplate, CertificationRequest, ChainValidationCode, ChainValidationError, ContentInfo, CryptoEngine, DigestInfo, DistributionPoint, ECCCMSSharedInfo, ECNamedCurves, ECPrivateKey, ECPublicKey, EncapsulatedContentInfo, EncryptedContentInfo, EncryptedData, EnvelopedData, ExtKeyUsage, Extension, ExtensionValueFactory, Extensions, GeneralName, GeneralNames, GeneralSubtree, HASHED_MESSAGE, HASH_ALGORITHM, Holder, InfoAccess, IssuerAndSerialNumber, IssuerSerial, IssuingDistributionPoint, KEKIdentifier, KEKRecipientInfo, KeyAgreeRecipientIdentifier, KeyAgreeRecipientInfo, KeyBag, KeyTransRecipientInfo, MICROS, MILLIS, MacData, MessageImprint, NameConstraints, OCSPRequest, OCSPResponse, ObjectDigestInfo, OriginatorIdentifierOrKey, OriginatorInfo, OriginatorPublicKey, OtherCertificateFormat, OtherKeyAttribute, OtherPrimeInfo, OtherRecipientInfo, OtherRevocationInfoFormat, PBES2Params, PBKDF2Params, PFX, PKCS8ShroudedKeyBag, PKIStatus, PKIStatusInfo, POLICY_IDENTIFIER, POLICY_QUALIFIERS, ParameterError, PasswordRecipientinfo, PkiObject, PolicyConstraints, PolicyInformation, PolicyMapping, PolicyMappings, PolicyQualifierInfo, PrivateKeyInfo, PrivateKeyUsagePeriod, PublicKeyInfo, QCStatement, QCStatements, RDN, RSAESOAEPParams, RSAPrivateKey, RSAPublicKey, RSASSAPSSParams, RecipientEncryptedKey, RecipientEncryptedKeys, RecipientIdentifier, RecipientInfo, RecipientKeyIdentifier, RelativeDistinguishedNames, Request, ResponseBytes, ResponseData, RevocationInfoChoices, RevokedCertificate, SECONDS, SafeBag, SafeBagValueFactory, SafeContents, SecretBag, Signature, SignedAndUnsignedAttributes, SignedCertificateTimestamp, SignedCertificateTimestampList, SignedData, SignedDataVerifyError, SignerInfo, SingleResponse, SubjectDirectoryAttributes, TBSRequest, TSTInfo, TYPE, TYPE_AND_VALUES, Time, TimeStampReq, TimeStampResp, TimeType, V2Form, VALUE, VALUE_BEFORE_DECODE, checkCA, createCMSECDSASignature, createECDSASignatureFromCMS, engine, getAlgorithmByOID, getAlgorithmParameters, getCrypto, getEngine, getHashAlgorithm, getOIDByAlgorithm, getRandomValues, id_AnyPolicy, id_AuthorityInfoAccess, id_AuthorityKeyIdentifier, id_BaseCRLNumber, id_BasicConstraints, id_CRLBag_X509CRL, id_CRLDistributionPoints, id_CRLNumber, id_CRLReason, id_CertBag_AttributeCertificate, id_CertBag_SDSICertificate, id_CertBag_X509Certificate, id_CertificateIssuer, id_CertificatePolicies, id_ContentType_Data, id_ContentType_EncryptedData, id_ContentType_EnvelopedData, id_ContentType_SignedData, id_ExtKeyUsage, id_FreshestCRL, id_InhibitAnyPolicy, id_InvalidityDate, id_IssuerAltName, id_IssuingDistributionPoint, id_KeyUsage, id_MicrosoftAppPolicies, id_MicrosoftCaVersion, id_MicrosoftCertTemplateV1, id_MicrosoftCertTemplateV2, id_MicrosoftPrevCaCertHash, id_NameConstraints, id_PKIX_OCSP_Basic, id_PolicyConstraints, id_PolicyMappings, id_PrivateKeyUsagePeriod, id_QCStatements, id_SignedCertificateTimestampList, id_SubjectAltName, id_SubjectDirectoryAttributes, id_SubjectInfoAccess, id_SubjectKeyIdentifier, id_ad, id_ad_caIssuers, id_ad_ocsp, id_eContentType_TSTInfo, id_pkix, id_sha1, id_sha256, id_sha384, id_sha512, kdf, setEngine, stringPrep, verifySCTsForCertificate)
+        ╭─[1356:44]
+   [2m1354[0m │                     try {
+   [2m1355[0m │                         // Convert the parsed ASN.1 structure into a PKIjs CertificateRevocationList object
+   [2m1356[0m │                         revokationCrl = new pkijs.CertificateRevocationList({
+        · [35;1m                                            ───────────────────────────────[0m
+   [2m1357[0m │                             schema: revokationAsn1crl.result
+   [2m1358[0m │                         });
+        ╰────
+  [0m
+
+  [1m[33mWARNING[39m[22m in [1m./server/OAuthEndpoints.js[39m[22m [1m[32m1363:66-90[39m[22m
+    [33m⚠[0m ESModulesLinkingWarning: export 'default' (imported as 'pvutils') was not found in 'pvutils' (possible exports: arrayBufferToString, bufferToHexCodes, checkBufferParams, clearProps, fromBase64, getParametersValue, getUTCDate, isEqualBuffer, nearestPowerOf2, padNumber, stringToArrayBuffer, toBase64, utilConcatBuf, utilConcatView, utilDecodeTC, utilEncodeTC, utilFromBase, utilToBase)
+        ╭─[1363:66]
+   [2m1361[0m │                             for (const { userCertificate } of revokationCrl.revokedCertificates){
+   [2m1362[0m │                                 // Collect revoked serial numbers in a lowercase hex format
+   [2m1363[0m │                                 revokedSerialNumbers.push(toLower(pvutils.bufferToHexCodes(userCertificate.valueBlock.valueHex)));
+        · [35;1m                                                                  ────────────────────────[0m
+   [2m1364[0m │                                 console.log('revokedSerialNumbers', revokedSerialNumbers);
+   [2m1365[0m │                             }
+        ╰────
+  [0m
+
+  [1m[server-rspack][39m[22m compiled with [1m[33m14 warnings[39m[22m in 2.28 s
+[0m
+[35m[Rspack Build Client] [client-rspack]:
+  [1m[33mWARNING[39m[22m in [33m⚠[0m asset size limit: The following asset(s) exceed the recommended size limit (244.141 KiB). This can impact web performance.
+    [33m│[0m Assets:
+    [33m│[0m   build-chunks/714.ec08d723a19c9f5f.js (1.116 MiB)
+    [33m│[0m   build-chunks/121.027b0543d7fc193c.js (1.248 MiB)
+    [33m│[0m   build-assets/5130ccb17e3f3f5b.wasm (5.377 MiB)
+    [33m│[0m   build-chunks/499.91e0e2cf34610cf5.js (1.169 MiB)
+    [33m│[0m   ../_build/main-prod/client-rspack.js (6.149 MiB)
+  [0m
+
+  [1m[33mWARNING[39m[22m in [33m⚠[0m entrypoint size limit: The following entrypoint(s) combined asset size exceeds the recommended limit (244.141 KiB). This can impact web performance.
+    [33m│[0m Entrypoints:
+    [33m│[0m   main (6.149 MiB)
+    [33m│[0m       ../_build/main-prod/client-rspack.js
+  [0m
+
+  [1m[client-rspack][39m[22m compiled with [1m[33m2 warnings[39m[22m in 3.28 s
+[0m
+     DONE 2 loading plugin `rspack` from package `rspack` took 4963
+     START 2 loading plugin `basicFileTypes` from package `meteor`
+     DONE 2 loading plugin `basicFileTypes` from package `meteor` took 1
+     START 2 running registerCompiler callback in package meteor
+     DONE 2 running registerCompiler callback in package meteor took 0
+   DONE 1 determining active plugins took 5266
+   START 1 determining active plugins
+   DONE 1 determining active plugins took 0
+   START 1 determining active plugins
+   DONE 1 determining active plugins took 0
+   START 1 building for web.browser
+     START 2 linking the program
+     DONE 2 linking the program took 3
+     START 2 processing files with ecmascript (for target web.browser)
+     DONE 2 processing files with ecmascript (for target web.browser) took 1
+     START 2 processing files with typescript (for target web.browser)
+     DONE 2 processing files with typescript (for target web.browser) took 0
+     START 2 processing files with meteor (for target web.browser)
+     DONE 2 processing files with meteor (for target web.browser) took 0
+     START 2 processing files with static-html (for target web.browser)
+     DONE 2 processing files with static-html (for target web.browser) took 1
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 2
+     DONE 2 linking took 3
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 2
+     DONE 2 linking took 3
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 1
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 0
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 1
+     DONE 2 linking took 1
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 15
+     DONE 2 linking took 294
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 1
+     DONE 2 linking took 2
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 0
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 0
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 0
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 0
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 0
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 0
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 1
+     DONE 2 linking took 1
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 0
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 3
+     DONE 2 linking took 10
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 1
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 1
+     DONE 2 linking took 2
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 2
+     DONE 2 linking took 3
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 1
+     DONE 2 linking took 1
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 1
+     DONE 2 linking took 1
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 1
+     DONE 2 linking took 1
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 0
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 0
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 2
+     DONE 2 linking took 3
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 9
+     DONE 2 linking took 18
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 1
+     DONE 2 linking took 2
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 0
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 0
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 2
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 1
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 6
+     DONE 2 linking took 16
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 4
+     DONE 2 linking took 12
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 1
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 0
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 1
+     DONE 2 linking took 2
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 0
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 0
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 1
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 2
+     DONE 2 linking took 6
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 0
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 1
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 0
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 0
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 1
+     DONE 2 linking took 1
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 0
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 1
+     DONE 2 linking took 3
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 0
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 1
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 1
+     DONE 2 linking took 1
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 1
+     DONE 2 linking took 3
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 1
+     DONE 2 linking took 5
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 22
+     DONE 2 linking took 32
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 1
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 1
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 0
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 2
+     DONE 2 linking took 2
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 2
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 0
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 0
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 0
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 0
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 0
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 1
+     DONE 2 linking took 2
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 1
+     DONE 2 linking took 3
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 13
+     DONE 2 linking took 33
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 3
+     DONE 2 linking took 6
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 0
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 0
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 0
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 0
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 1
+     START 2 linking
+     DONE 2 linking took 995
+     START 2 minifying app code
+     DONE 2 minifying app code took 2622
+     START 2 minifying app stylesheet
+Browserslist: caniuse-lite is outdated. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+     DONE 2 minifying app stylesheet took 311
+   DONE 1 building for web.browser took 9498
+   START 1 building for web.browser.legacy
+     START 2 linking the program
+     DONE 2 linking the program took 2
+     START 2 processing files with ecmascript (for target web.browser.legacy)
+     DONE 2 processing files with ecmascript (for target web.browser.legacy) took 1
+     START 2 processing files with typescript (for target web.browser.legacy)
+     DONE 2 processing files with typescript (for target web.browser.legacy) took 0
+     START 2 processing files with meteor (for target web.browser.legacy)
+     DONE 2 processing files with meteor (for target web.browser.legacy) took 0
+     START 2 processing files with static-html (for target web.browser.legacy)
+     DONE 2 processing files with static-html (for target web.browser.legacy) took 1
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 0
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 1
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 0
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 0
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 0
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 10
+     DONE 2 linking took 334
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 0
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 0
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 0
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 0
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 0
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 1
+     DONE 2 linking took 2
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 1
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 0
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 3
+     DONE 2 linking took 8
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 11
+     DONE 2 linking took 17
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 3
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 1
+     DONE 2 linking took 2
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 1
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 0
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 1
+     DONE 2 linking took 1
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 1
+     DONE 2 linking took 4
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 0
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 1
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 1
+     DONE 2 linking took 1
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 7
+     DONE 2 linking took 18
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 1
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 1
+     DONE 2 linking took 1
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 1
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 1
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 2
+     DONE 2 linking took 3
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 8
+     DONE 2 linking took 16
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 3
+     DONE 2 linking took 9
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 0
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 0
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 1
+     DONE 2 linking took 5
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 0
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 0
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 1
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 4
+     DONE 2 linking took 6
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 0
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 0
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 0
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 0
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 0
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 0
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 2
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 0
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 0
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 5
+     DONE 2 linking took 8
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 6
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 3
+     DONE 2 linking took 5
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 3
+     DONE 2 linking took 12
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 0
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 1
+     DONE 2 linking took 1
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 1
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 1
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 0
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 0
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 0
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 0
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 0
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 1
+     DONE 2 linking took 1
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 1
+     DONE 2 linking took 2
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 1
+     DONE 2 linking took 2
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 13
+     DONE 2 linking took 34
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 2
+     DONE 2 linking took 8
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 0
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 0
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 0
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 0
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 1
+     DONE 2 linking took 1
+     START 2 linking
+     DONE 2 linking took 1053
+     START 2 minifying app code
+     DONE 2 minifying app code took 2929
+     START 2 minifying app stylesheet
+     DONE 2 minifying app stylesheet took 0
+   DONE 1 building for web.browser.legacy took 9927
+   START 1 building for os.osx.arm64
+     START 2 linking the program
+     DONE 2 linking the program took 2
+     START 2 loading plugin `types` from package `zodern:types`
+     DONE 2 loading plugin `types` from package `zodern:types` took 6
+     START 2 running registerCompiler callback in package zodern:types
+     DONE 2 running registerCompiler callback in package zodern:types took 0
+     START 2 running registerLinter callback in package zodern:types
+     DONE 2 running registerLinter callback in package zodern:types took 1
+     START 2 processing files with ecmascript (for target os.osx.arm64)
+     DONE 2 processing files with ecmascript (for target os.osx.arm64) took 1
+     START 2 processing files with typescript (for target os.osx.arm64)
+     DONE 2 processing files with typescript (for target os.osx.arm64) took 0
+     START 2 processing files with zodern:types (for target os.osx.arm64)
+     DONE 2 processing files with zodern:types (for target os.osx.arm64) took 0
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 4
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 1
+     DONE 2 linking took 2
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 0
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 0
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 1
+     DONE 2 linking took 1
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 0
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 2
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 0
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 1
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 0
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 0
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 1
+     DONE 2 linking took 1
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 0
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 0
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 1
+     DONE 2 linking took 1
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 1
+     DONE 2 linking took 1
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 0
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 0
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 0
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 1
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 2
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 0
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 0
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 1
+     DONE 2 linking took 1
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 1
+     DONE 2 linking took 4
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 0
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 0
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 1
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 1
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 14
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 1
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 0
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 0
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 0
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 0
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 4
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 1
+     DONE 2 linking took 4
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 4
+     DONE 2 linking took 5
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 0
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 1
+     DONE 2 linking took 1
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 0
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 0
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 0
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 1
+     DONE 2 linking took 2
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 1
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 2
+     DONE 2 linking took 7
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 2
+     DONE 2 linking took 11
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 0
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 4
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 1
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 1
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 5
+     DONE 2 linking took 19
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 0
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 1
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 1
+     DONE 2 linking took 1
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 0
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 1
+     DONE 2 linking took 5
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 0
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 0
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 0
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 0
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 2
+     DONE 2 linking took 8
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 2
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 1
+     DONE 2 linking took 6
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 0
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 0
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 0
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 0
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 0
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 0
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 0
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 1
+     DONE 2 linking took 1
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 1
+     DONE 2 linking took 7
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 1
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 1
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 1
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 3
+     DONE 2 linking took 13
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 1
+     DONE 2 linking took 2
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 2
+     DONE 2 linking took 8
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 1
+     DONE 2 linking took 1
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 0
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 0
+     START 2 linking
+       START 3 computing assigned variables
+       DONE 3 computing assigned variables took 0
+     DONE 2 linking took 1
+     START 2 linking
+     DONE 2 linking took 978
+   DONE 1 building for os.osx.arm64 took 1577
+ END CAPTURE 0 building the application took 73712

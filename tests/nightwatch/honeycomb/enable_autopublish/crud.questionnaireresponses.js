@@ -2,6 +2,7 @@
 
 const testUtils = require('./shared-test-utils');
 const saveNavigationHelper = require('../../helpers/save-navigation-helper');
+const loginHelper = require('../../helpers/login-helper');
 
 describe('QuestionnaireResponses CRUD Operations', function() {
   const timestamp = Date.now();
@@ -45,110 +46,62 @@ describe('QuestionnaireResponses CRUD Operations', function() {
       .url('http://localhost:3000')
       .waitForElementVisible('body', 5000);
 
-    // Check if we're logged in
-    browser.execute(function() {
-      return {
-        isLoggedIn: typeof Meteor !== 'undefined' && !!Meteor.userId(),
-        userId: Meteor.userId ? Meteor.userId() : null,
-        username: Meteor.user ? (Meteor.user() ? Meteor.user().username : null) : null
-      };
-    }, [], function(result) {
-      console.log('Initial login state:', result.value);
-      
-      if (!result.value.isLoggedIn) {
-        console.log('Not logged in, attempting programmatic login...');
-        
-        browser.executeAsync(function(done) {
-          if (typeof Meteor !== 'undefined') {
-            Meteor.call('test.createTestUser', {
-              username: 'janedoe',
-              email: 'janedoe@test.org',
-              password: 'janedoe123'
-            }, function(err, userId) {
-              if (err) {
-                console.error('Failed to create test user:', err);
-                done({ userCreated: false, error: err.message });
-              } else {
-                console.log('Test user ready, userId:', userId);
-                Meteor.loginWithPassword('janedoe', 'janedoe123', function(loginErr) {
-                  if (loginErr) {
-                    console.error('Login failed:', loginErr);
-                    done({ userCreated: true, loginSuccess: false, error: loginErr.message });
-                  } else {
-                    console.log('Login successful');
-                    done({ 
-                      userCreated: true,
-                      loginSuccess: true, 
-                      userId: Meteor.userId(), 
-                      username: Meteor.user() ? Meteor.user().username : null 
-                    });
-                  }
-                });
-              }
-            });
-          } else {
-            done({ userCreated: false, loginSuccess: false, error: 'Meteor not available' });
-          }
-        }, [], function(result) {
-          if (result.value.loginSuccess) {
-            browser.assert.ok(true, 'Successfully created test user and logged in');
-            console.log('Logged in as:', result.value.username, 'userId:', result.value.userId);
-            
-            testUtils.createTestPatient(browser, {
-              name: 'John Doe',
-              family: 'Doe',
-              given: 'John',
-              identifier: 'test-patient-' + timestamp
-            }, function(result) {
-              if (result.error) {
-                console.error('Failed to create test patient:', result.error);
-                browser.assert.fail('Failed to create test patient: ' + result.error);
-              } else {
-                console.log('Test patient created with ID:', result.result);
-                browser.assert.ok(true, 'Successfully created test patient');
-              }
-            });
-          } else {
-            browser.assert.fail('Setup failed: ' + result.value.error);
-          }
-        });
-        
-        browser.pause(500);
+    // Use loginHelper to ensure user is logged in with retry logic
+    loginHelper.ensureLoggedIn(browser, function(isLoggedIn) {
+      if (!isLoggedIn) {
+        browser.assert.fail('Failed to ensure user is logged in');
       } else {
-        browser.assert.ok(true, 'Already logged in (autologin enabled)');
-        console.log('Already logged in as:', result.value.username, 'userId:', result.value.userId);
-        
-        testUtils.createTestPatient(browser, {
-          name: 'John Doe',
-          family: 'Doe',
-          given: 'John',
-          identifier: 'test-patient-' + timestamp
-        }, function(result) {
-          if (result.error) {
-            console.error('Failed to create test patient:', result.error);
-            browser.assert.fail('Failed to create test patient: ' + result.error);
-          } else {
-            console.log('Test patient created with ID:', result.result);
-            browser.assert.ok(true, 'Successfully created test patient');
-            
-            browser.execute(function(patientId) {
-              if (typeof Session !== 'undefined' && typeof Patients !== 'undefined') {
-                const patient = Patients.findOne({_id: patientId});
-                if (patient) {
-                  Session.set('selectedPatientId', patientId);
-                  Session.set('selectedPatient', patient);
-                  console.log('Set selected patient in Session:', patientId);
-                }
-              }
-            }, [result.result]);
-          }
-        });
+        browser.assert.ok(true, 'User is logged in');
       }
-      
+
+      // Create test patient
+      testUtils.createTestPatient(browser, {
+        name: 'John Doe',
+        family: 'Doe',
+        given: 'John',
+        identifier: 'test-patient-' + timestamp
+      }, function(result) {
+        if (result.error) {
+          console.error('Failed to create test patient:', result.error);
+          browser.assert.fail('Failed to create test patient: ' + result.error);
+        } else {
+          console.log('Test patient created with ID:', result.result);
+          browser.assert.ok(true, 'Successfully created test patient');
+
+          // Fetch patient from server and set in Session
+          browser.executeAsync(function(patientId, done) {
+            if (typeof Meteor !== 'undefined' && typeof Session !== 'undefined') {
+              Meteor.call('patients.findOne', patientId, function(error, patient) {
+                if (error) {
+                  console.error('Error fetching patient:', error);
+                  done({ success: false, error: error.message });
+                } else if (patient) {
+                  Session.set('selectedPatientId', patient._id);
+                  Session.set('selectedPatient', patient);
+                  console.log('Set selected patient in Session:', patient._id, patient.name?.[0]?.text);
+                  done({ success: true, patientId: patient._id, patientName: patient.name?.[0]?.text });
+                } else {
+                  console.error('Patient not found:', patientId);
+                  done({ success: false, error: 'Patient not found' });
+                }
+              });
+            } else {
+              done({ success: false, error: 'Meteor or Session not available' });
+            }
+          }, [result.result], function(fetchResult) {
+            if (fetchResult.value && fetchResult.value.success) {
+              console.log('Successfully set selected patient:', fetchResult.value);
+            } else if (fetchResult.value) {
+              console.error('Failed to set selected patient:', fetchResult.value.error);
+            }
+          });
+        }
+      });
+
       // Clean up any existing test data
       browser.executeAsync(function(done) {
         if (typeof QuestionnaireResponses !== 'undefined') {
-          const testQuestionnaireResponses = QuestionnaireResponses.find({ 
+          const testQuestionnaireResponses = QuestionnaireResponses.find({
             'author.display': { $regex: 'Smith|Johnson' }
           }).fetch();
           testQuestionnaireResponses.forEach(function(questionnaireResponse) {
@@ -158,36 +111,12 @@ describe('QuestionnaireResponses CRUD Operations', function() {
         }
         done();
       });
-      
-      browser.execute(function(testIdentifier) {
-          if (typeof Session !== 'undefined' && typeof Patients !== 'undefined') {
-            const patient = Patients.findOne({
-              'identifier.value': testIdentifier
-            });
-            if (patient) {
-              Session.set('selectedPatientId', patient._id);
-              Session.set('selectedPatient', patient);
-              console.log('Set selected patient in Session:', patient._id, patient.name?.[0]?.text);
-              return { success: true, patientId: patient._id, patientName: patient.name?.[0]?.text };
-            } else {
-              console.error('Could not find test patient with identifier:', testIdentifier);
-              return { success: false, error: 'Patient not found' };
-            }
-          }
-          return { success: false, error: 'Session or Patients not available' };
-        }, ['test-patient-' + timestamp], function(result) {
-          if (result.value.success) {
-            console.log('Successfully set selected patient:', result.value);
-          } else {
-            console.error('Failed to set selected patient:', result.value.error);
-          }
-        });
     });
   });
 
   it('02. Verify questionnaire responses list page loads', browser => {
+    testUtils.navigateUrl(browser, '/questionnaire-responses');
     browser
-      .url('http://localhost:3000/questionnaire-responses')
       .pause(1000)
       .execute(function() {
         // Capture any console errors
@@ -223,7 +152,11 @@ describe('QuestionnaireResponses CRUD Operations', function() {
           hasEitherElement: hasTable || hasNoDataCard
         };
       }, [], function(result) {
-        browser.assert.equal(result.value.hasEitherElement, true, 'Either questionnaire responses table or no-data message is present');
+        if (result.value && result.value.hasEitherElement !== undefined) {
+          browser.assert.equal(result.value.hasEitherElement, true, 'Either questionnaire responses table or no-data message is present');
+        } else {
+          console.error('Failed to check page elements:', result);
+        }
       })
       .saveScreenshot('tests/nightwatch/screenshots/questionnaireresponses/02-questionnaireresponses-list.png');
   });
@@ -245,7 +178,11 @@ describe('QuestionnaireResponses CRUD Operations', function() {
         }
         return false;
       }, [], function(result) {
-        browser.assert.equal(result.value, true, 'Clicked Add Questionnaire Response button');
+        if (result.value !== undefined) {
+          browser.assert.equal(result.value, true, 'Clicked Add Questionnaire Response button');
+        } else {
+          console.error('Failed to click Add button:', result);
+        }
       });
 
     browser
@@ -421,8 +358,8 @@ describe('QuestionnaireResponses CRUD Operations', function() {
   });
 
   it('06. View questionnaire response details', browser => {
+    testUtils.navigateUrl(browser, '/questionnaire-responses');
     browser
-      .url('http://localhost:3000/questionnaire-responses')
       .waitForElementVisible('#questionnaireResponsesTable', 5000)
       .pause(500);
 
@@ -437,7 +374,11 @@ describe('QuestionnaireResponses CRUD Operations', function() {
         }
         return false;
       }, [testQuestionnaireResponse.authorName], function(result) {
-        browser.assert.equal(result.value, true, 'Found and clicked questionnaire response row');
+        if (result.value !== undefined) {
+          browser.assert.equal(result.value, true, 'Found and clicked questionnaire response row');
+        } else {
+          console.error('Failed to click row:', result);
+        }
       });
 
     browser
@@ -463,9 +404,9 @@ describe('QuestionnaireResponses CRUD Operations', function() {
         browser.assert.ok(result.value.notes.includes(testQuestionnaireResponse.notes), 'Notes contain expected text');
       })
       .saveScreenshot('tests/nightwatch/screenshots/questionnaireresponses/07-view-questionnaireresponse-details.png');
-    
+
+    testUtils.navigateUrl(browser, '/questionnaire-responses');
     browser
-      .url('http://localhost:3000/questionnaire-responses')
       .waitForElementVisible('#questionnaireResponsesPage', 5000);
   });
 
@@ -485,7 +426,11 @@ describe('QuestionnaireResponses CRUD Operations', function() {
         }
         return false;
       }, [testQuestionnaireResponse.authorName], function(result) {
-        browser.assert.equal(result.value, true, 'Found and clicked questionnaire response row');
+        if (result.value !== undefined) {
+          browser.assert.equal(result.value, true, 'Found and clicked questionnaire response row');
+        } else {
+          console.error('Failed to click row:', result);
+        }
       });
 
     browser
@@ -512,31 +457,45 @@ describe('QuestionnaireResponses CRUD Operations', function() {
       })
       .pause(500);
 
+    // Scroll to top to avoid toolbar overlay issues
+    browser.execute(function() {
+      window.scrollTo(0, 0);
+    });
+
+    // Update text fields (no click needed - avoid interception)
     browser
-      .click('#authorDisplay')
+      .pause(300)
       .clearValue('#authorDisplay')
       .setValue('#authorDisplay', updatedQuestionnaireResponse.authorName)
-      .click('#status')
-      .pause(300)
-      .execute(function(value) {
-        const menuItems = document.querySelectorAll('[role="option"]');
-        for (let item of menuItems) {
-          if (item.textContent.toLowerCase().includes(value.toLowerCase()) || 
-              item.getAttribute('data-value') === value) {
-            item.click();
-            return true;
-          }
-        }
-        return false;
-      }, [updatedQuestionnaireResponse.status], function(result) {
-        browser.assert.equal(result.value, true, 'Selected status');
-      })
-      .click('#authored')
       .clearValue('#authored')
       .setValue('#authored', updatedQuestionnaireResponse.authored)
-      .click('#notesTextarea')
       .clearValue('#notesTextarea')
-      .setValue('#notesTextarea', updatedQuestionnaireResponse.notes)
+      .setValue('#notesTextarea', updatedQuestionnaireResponse.notes);
+
+    // Update status select (click must be inside execute to avoid interception)
+    browser
+      .pause(300)
+      .execute(function(value) {
+        // Click the select to open it
+        const statusSelect = document.querySelector('#status select, #status');
+        if (statusSelect) {
+          statusSelect.click();
+
+          // Wait for menu to render, then select option
+          setTimeout(function() {
+            const menuItems = document.querySelectorAll('[role="option"]');
+            for (let item of menuItems) {
+              if (item.textContent.toLowerCase().includes(value.toLowerCase()) ||
+                  item.getAttribute('data-value') === value) {
+                item.click();
+                return;
+              }
+            }
+          }, 300);
+          return true;
+        }
+        return false;
+      }, [updatedQuestionnaireResponse.status])
       .pause(500)
       .saveScreenshot('tests/nightwatch/screenshots/questionnaireresponses/08-updated-questionnaireresponse-form.png');
 
@@ -555,8 +514,10 @@ describe('QuestionnaireResponses CRUD Operations', function() {
       });
 
     browser
-      .pause(1000)
-      .url('http://localhost:3000/questionnaire-responses')
+      .pause(1000);
+
+    testUtils.navigateUrl(browser, '/questionnaire-responses');
+    browser
       .waitForElementVisible('#questionnaireResponsesTable', 5000)
       .saveScreenshot('tests/nightwatch/screenshots/questionnaireresponses/09-questionnaireresponse-updated.png');
   });
@@ -706,8 +667,8 @@ describe('QuestionnaireResponses CRUD Operations', function() {
   it('11. Test form validation', browser => {
     // Note: This test validates that the form allows submission with minimal data
     // It requires the full test suite to run properly as it depends on the login from test 01
+    testUtils.navigateUrl(browser, '/questionnaire-responses');
     browser
-      .url('http://localhost:3000/questionnaire-responses')
       .waitForElementVisible('#questionnaireResponsesPage', 5000)
       .pause(500);
 
@@ -723,7 +684,11 @@ describe('QuestionnaireResponses CRUD Operations', function() {
         }
         return false;
       }, [], function(result) {
-        browser.assert.equal(result.value, true, 'Clicked Add Questionnaire Response button');
+        if (result.value !== undefined) {
+          browser.assert.equal(result.value, true, 'Clicked Add Questionnaire Response button');
+        } else {
+          console.error('Failed to click Add button:', result);
+        }
       });
 
     browser

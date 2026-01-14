@@ -62,8 +62,8 @@ import AddIcon from '@mui/icons-material/Add';
 import VerifiedIcon from '@mui/icons-material/Verified';
 import WarningIcon from '@mui/icons-material/Warning';
 
-// Collections will be accessed through Meteor.Collections
-import { FhirUtilities } from '/imports/lib/FhirUtilities';
+// Collections and utilities will be accessed through Meteor global
+// Packages cannot directly import from /imports/ with Meteor 3 + RSPack
 
 // Removed unused page imports - now using only DocumentReferences
 
@@ -78,6 +78,18 @@ const directiveTypes = [
 ];
 
 function AdvancedDirectivesPage(props) {
+  // Access FhirUtilities from Meteor global object
+  const FhirUtilities = Meteor.FhirUtilities || {};
+
+  // Get Honeycomb theme for dark mode support
+  const useAppTheme = Meteor.useTheme;
+  const appTheme = useAppTheme ? useAppTheme() : { theme: 'light' };
+  const isDark = appTheme.theme === 'dark';
+
+  // Theme-aware colors for cards and papers
+  const cardBgColor = isDark ? '#1e1e1e' : '#ffffff';
+  const cardTextColor = isDark ? 'rgba(255, 255, 255, 0.87)' : 'rgba(0, 0, 0, 0.87)';
+
   const [openDialog, setOpenDialog] = useState(false);
   const [selectedDocument, setSelectedDocument] = useState(null);
   const [openPdfViewer, setOpenPdfViewer] = useState(false);
@@ -307,8 +319,15 @@ function AdvancedDirectivesPage(props) {
   };
 
   const EmergencyContacts = () => (
-    <Card variant="outlined">
-      <CardHeader 
+    <Card variant="outlined" sx={{
+      bgcolor: cardBgColor,
+      color: cardTextColor,
+      '& .MuiTypography-root': { color: cardTextColor },
+      '& .MuiListItemText-secondary': {
+        color: isDark ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)'
+      }
+    }}>
+      <CardHeader
         avatar={<PhoneIcon color="primary" />}
         title="Emergency Contacts"
         titleTypographyProps={{ variant: 'h6' }}
@@ -421,32 +440,37 @@ function AdvancedDirectivesPage(props) {
   );
 
   return (
-    <Box sx={{ 
-      bgcolor: theme => theme.palette.mode === 'light' 
-        ? theme.palette.grey[50] 
-        : theme.palette.background.default,
-      minHeight: '100vh'
-    }}>
+    <Box sx={{ minHeight: '100vh' }}>
       <Container maxWidth="xl" sx={{ pt: 3, pb: 3 }}>
         <Box sx={{ mb: 3 }}>
-        <Breadcrumbs aria-label="breadcrumb">
-          <Link 
-            color="inherit" 
-            href="/" 
+        <Breadcrumbs aria-label="breadcrumb" sx={{
+          '& .MuiTypography-root': { color: cardTextColor },
+          '& .MuiLink-root': { color: cardTextColor }
+        }}>
+          <Link
+            color="inherit"
+            href="/"
             sx={{ display: 'flex', alignItems: 'center' }}
           >
-            <HomeIcon sx={{ mr: 0.5 }} fontSize="inherit" />
+            <HomeIcon sx={{ mr: 0.5, color: cardTextColor }} fontSize="inherit" />
             Home
           </Link>
-          <Typography color="text.primary" sx={{ display: 'flex', alignItems: 'center' }}>
-            <DescriptionIcon sx={{ mr: 0.5 }} fontSize="inherit" />
+          <Typography sx={{ display: 'flex', alignItems: 'center', color: cardTextColor }}>
+            <DescriptionIcon sx={{ mr: 0.5, color: cardTextColor }} fontSize="inherit" />
             Advance Healthcare Directives
           </Typography>
         </Breadcrumbs>
       </Box>
 
       <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
-        <Tabs value={tabValue} onChange={handleTabChange} aria-label="document tabs">
+        <Tabs value={tabValue} onChange={handleTabChange} aria-label="document tabs" sx={{
+          '& .MuiTab-root': {
+            color: isDark ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)'
+          },
+          '& .Mui-selected': {
+            color: isDark ? 'rgba(255, 255, 255, 0.87)' : 'rgba(0, 0, 0, 0.87)'
+          }
+        }}>
           <Tab label="Advance Directives" />
           <Tab label="All Documents" />
         </Tabs>
@@ -456,7 +480,14 @@ function AdvancedDirectivesPage(props) {
       {tabValue === 0 && (
         <Grid container spacing={3}>
           <Grid item xs={12} md={8}>
-            <Card>
+            <Card sx={{
+              bgcolor: cardBgColor,
+              color: cardTextColor,
+              '& .MuiTypography-root': { color: cardTextColor },
+              '& .MuiCardHeader-subheader': {
+                color: isDark ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)'
+              }
+            }}>
               <CardHeader
                 title={data.patient ? `Advance Directives - ${FhirUtilities.pluckName(data.patient)}` : "Advance Directives"}
                 subheader="Legal documents that specify your healthcare wishes"
@@ -480,7 +511,12 @@ function AdvancedDirectivesPage(props) {
               {data.loading ? (
                 <Typography>Loading documents...</Typography>
               ) : data.documentReferences.length === 0 ? (
-                <Alert severity="info">
+                <Alert severity="info" sx={{
+                  bgcolor: isDark ? 'rgba(33, 150, 243, 0.15)' : 'rgba(33, 150, 243, 0.1)',
+                  color: cardTextColor,
+                  '& .MuiAlert-icon': { color: isDark ? '#90caf9' : '#1976d2' },
+                  '& .MuiAlertTitle-root': { color: cardTextColor }
+                }}>
                   <AlertTitle>No Advance Directives Found</AlertTitle>
                   {data.allDocumentReferences.length > 0 ? (
                     <>
@@ -531,11 +567,15 @@ function AdvancedDirectivesPage(props) {
               )}
 
               <Box sx={{ mt: 4 }}>
-                <Typography variant="h6" gutterBottom>
+                <Typography variant="h6" gutterBottom sx={{ color: cardTextColor }}>
                   Care Preferences Summary
                 </Typography>
                 {!openPreferencesForm ? (
-                  <Paper variant="outlined" sx={{ p: 2 }}>
+                  <Paper variant="outlined" sx={{
+                    p: 2,
+                    bgcolor: isDark ? '#2a2a2a' : '#f5f5f5',
+                    '& .MuiTypography-root': { color: cardTextColor }
+                  }}>
                     <Typography variant="body2" paragraph>
                       Document your specific care preferences including code status, 
                       comfort care, and treatment options.
@@ -560,8 +600,15 @@ function AdvancedDirectivesPage(props) {
           <Stack spacing={3}>
             <EmergencyContacts />
             
-            <Card variant="outlined">
-              <CardHeader 
+            <Card variant="outlined" sx={{
+              bgcolor: cardBgColor,
+              color: cardTextColor,
+              '& .MuiTypography-root': { color: cardTextColor },
+              '& .MuiListItemText-secondary': {
+                color: isDark ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)'
+              }
+            }}>
+              <CardHeader
                 title="Quick Reference"
                 titleTypographyProps={{ variant: 'h6' }}
               />
@@ -602,8 +649,15 @@ function AdvancedDirectivesPage(props) {
               </CardContent>
             </Card>
 
-            <Card variant="outlined">
-              <CardHeader 
+            <Card variant="outlined" sx={{
+              bgcolor: cardBgColor,
+              color: cardTextColor,
+              '& .MuiTypography-root': { color: cardTextColor },
+              '& .MuiLink-root': {
+                color: isDark ? 'rgba(100, 181, 246, 1)' : 'rgb(25, 118, 210)'
+              }
+            }}>
+              <CardHeader
                 title="Resources"
                 titleTypographyProps={{ variant: 'h6' }}
               />
@@ -632,7 +686,18 @@ function AdvancedDirectivesPage(props) {
       {/* Tab Panel 1: All Documents */}
       {tabValue === 1 && (
         <Box sx={{ mt: 2 }}>
-          <Card>
+          <Card sx={{
+            bgcolor: cardBgColor,
+            color: cardTextColor,
+            '& .MuiTypography-root': { color: cardTextColor },
+            '& .MuiCardHeader-title': { color: cardTextColor },
+            '& .MuiCardHeader-subheader': {
+              color: isDark ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)'
+            },
+            '& .MuiListItemText-secondary': {
+              color: isDark ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)'
+            }
+          }}>
             <CardHeader
               title="All Clinical Documents"
               subheader="All medical documents including clinical notes, discharge summaries, and advance directives"
@@ -641,7 +706,12 @@ function AdvancedDirectivesPage(props) {
               {data.loading ? (
                 <Typography>Loading documents...</Typography>
               ) : data.allDocumentReferences.length === 0 ? (
-                <Alert severity="info">
+                <Alert severity="info" sx={{
+                  bgcolor: isDark ? 'rgba(33, 150, 243, 0.15)' : 'rgba(33, 150, 243, 0.1)',
+                  color: cardTextColor,
+                  '& .MuiAlert-icon': { color: isDark ? '#90caf9' : '#1976d2' },
+                  '& .MuiAlertTitle-root': { color: cardTextColor }
+                }}>
                   <AlertTitle>No Documents Found</AlertTitle>
                   No clinical documents are available for this patient.
                 </Alert>
@@ -716,7 +786,11 @@ function AdvancedDirectivesPage(props) {
               
               if (!attachmentData) {
                 return (
-                  <Alert severity="error">
+                  <Alert severity="error" sx={{
+                    bgcolor: isDark ? 'rgba(211, 47, 47, 0.15)' : 'rgba(211, 47, 47, 0.1)',
+                    color: cardTextColor,
+                    '& .MuiAlert-icon': { color: isDark ? '#f44336' : '#d32f2f' }
+                  }}>
                     No document data available to display
                   </Alert>
                 );
@@ -761,7 +835,12 @@ function AdvancedDirectivesPage(props) {
               
               // Unsupported file type
               return (
-                <Alert severity="warning">
+                <Alert severity="warning" sx={{
+                  bgcolor: isDark ? 'rgba(237, 108, 2, 0.15)' : 'rgba(237, 108, 2, 0.1)',
+                  color: cardTextColor,
+                  '& .MuiAlert-icon': { color: isDark ? '#ff9800' : '#ed6c02' },
+                  '& .MuiAlertTitle-root': { color: cardTextColor }
+                }}>
                   <AlertTitle>Unsupported File Type</AlertTitle>
                   This document type ({contentType}) cannot be displayed in the viewer.
                   <br />

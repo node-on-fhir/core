@@ -1,0 +1,61 @@
+# ╭───────────────────────────ImplementationGuide-ibm.fhir.fda.icsr.json───────────────────────────╮
+# │  The properties below are used to create the ImplementationGuide resource. For a list of       │
+# │  supported properties, see:                                                                    │
+# │  http://build.fhir.org/ig/HL7/fhir-shorthand/branches/beta/sushi.html#ig-development           │
+# ╰────────────────────────────────────────────────────────────────────────────────────────────────╯
+id: hl7.fhir.us.icsr-ae-reporting
+canonical: http://hl7.org/fhir/us/icsr-ae-reporting
+version: 1.0.1
+name: TransfusionVaccinationAdverseEventDetectionReporting
+title: "HL7 FHIR Implementation Guide: Profiles for Transfusion and Vaccination Adverse Event Detection and
+  Reporting"
+status: draft
+publisher: 
+    name: Biomedical Research & Regulation WG
+    url: http://hl7.org/Special/committees/rcrim
+contact:
+  - name: Jean Duteau
+    telecom:
+      - system: email
+        value: mailto:jean.duteau@ibm.com
+description: A set of profiles that define the data elements needed to detect conditions
+  and observations arising from transfusions or vaccinations that are candidates for Adverse Events as well as profiles
+  that allow the reporting of Adverse Events
+license: CC0-1.0
+fhirVersion: 4.0.1
+dependencies:
+  hl7.fhir.us.core: 4.0.0
+  hl7.fhir.us.medmorph: 0.1.0
+  us.nlm.vsac:
+    uri: http://fhir.org/packages/us.nlm.vsac/ImplementationGuide/us.nlm.vsac
+    version: 0.9.0
+parameters:
+  show-inherited-invariants: false
+copyrightYear: 2020+
+releaseLabel: STU 1 Technical Correction
+jurisdiction: urn:iso:std:iso:3166#US "United States of America"
+
+menu:
+  Table of Contents: toc.html
+  Overview: index.html
+  AE Algorithms: algorithms.html
+  Pull Use Case: pull_use_case.html
+  Profile Descriptions: profile_listing.html
+  Relationship to US-Core: relationship_to_us-core.html
+  ICSR Mappings: icsr_mappings.html
+  Artifacts: artifacts.html
+
+pages:
+  index.md:
+    title: Overview
+  algorithms.md:
+    title: Adverse Event Algorithms
+  profile_listing.md:
+    title: Profile Descriptions
+  relationship_to_us-core.md:
+    title: Relationship to US-Core
+  icsr_mappings.md:
+    title: ICSR Mappings
+  pull_use_case.md:
+    title: Pull Use Case
+

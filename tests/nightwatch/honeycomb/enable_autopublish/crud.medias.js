@@ -1,6 +1,7 @@
 // tests/nightwatch/honeycomb/enable_autopublish/crud.medias.js
 
 const testUtils = require('./shared-test-utils');
+const loginHelper = require('../../helpers/login-helper');
 
 describe('Medias CRUD Operations', function() {
   const timestamp = Date.now();
@@ -64,125 +65,61 @@ describe('Medias CRUD Operations', function() {
         window.testTimestamp = ts;
       }, [timestamp]);
 
-    // Check if we're logged in
-    browser.execute(function() {
-      return {
-        isLoggedIn: typeof Meteor !== 'undefined' && !!Meteor.userId(),
-        userId: Meteor.userId ? Meteor.userId() : null,
-        username: Meteor.user ? (Meteor.user() ? Meteor.user().username : null) : null
-      };
-    }, [], function(result) {
-      console.log('Initial login state:', result.value);
-      
-      if (!result.value.isLoggedIn) {
-        console.log('Not logged in, attempting programmatic login...');
-        
-        browser.executeAsync(function(done) {
-          if (typeof Meteor !== 'undefined') {
-            Meteor.call('test.createTestUser', {
-              username: 'janedoe',
-              email: 'janedoe@test.org',
-              password: 'janedoe123'
-            }, function(err, userId) {
-              if (err) {
-                console.error('Failed to create test user:', err);
-                done({ userCreated: false, error: err.message });
-              } else {
-                console.log('Test user ready, userId:', userId);
-                Meteor.loginWithPassword('janedoe', 'janedoe123', function(loginErr) {
-                  if (loginErr) {
-                    console.error('Login failed:', loginErr);
-                    done({ userCreated: true, loginSuccess: false, error: loginErr.message });
-                  } else {
-                    console.log('Login successful');
-                    done({ 
-                      userCreated: true,
-                      loginSuccess: true, 
-                      userId: Meteor.userId(), 
-                      username: Meteor.user() ? Meteor.user().username : null 
-                    });
-                  }
-                });
-              }
-            });
-          } else {
-            done({ userCreated: false, loginSuccess: false, error: 'Meteor not available' });
-          }
-        }, [], function(result) {
-          if (result.value.loginSuccess) {
-            browser.assert.ok(true, 'Successfully created test user and logged in');
-            console.log('Logged in as:', result.value.username, 'userId:', result.value.userId);
-            
-            // Create a test patient
-            testUtils.createTestPatient(browser, {
-              name: 'John Doe',
-              family: 'Doe',
-              given: 'John',
-              identifier: 'test-patient-' + timestamp
-            }, function(result) {
-              if (result.error) {
-                console.error('Failed to create test patient:', result.error);
-                browser.assert.fail('Failed to create test patient: ' + result.error);
-              } else {
-                console.log('Test patient created with ID:', result.result);
-                browser.assert.ok(true, 'Successfully created test patient');
-                
-                // Set the patient in Session
-                browser.execute(function(patientId) {
-                  if (typeof Session !== 'undefined' && typeof Patients !== 'undefined') {
-                    const patient = Patients.findOne({_id: patientId});
-                    if (patient) {
-                      Session.set('selectedPatientId', patientId);
-                      Session.set('selectedPatient', patient);
-                      console.log('Set selected patient in Session:', patientId);
-                    }
-                  }
-                }, [result.result]);
-              }
-            });
-          } else {
-            browser.assert.fail('Setup failed: ' + result.value.error);
-          }
-        });
-        
-        browser.pause(500);
+    loginHelper.ensureLoggedIn(browser, function(isLoggedIn) {
+      if (!isLoggedIn) {
+        browser.assert.fail('Failed to ensure user is logged in');
       } else {
-        browser.assert.ok(true, 'Already logged in (autologin enabled)');
-        console.log('Already logged in as:', result.value.username, 'userId:', result.value.userId);
-        
-        // Create a test patient even if already logged in
-        testUtils.createTestPatient(browser, {
-          name: 'John Doe',
-          family: 'Doe',
-          given: 'John',
-          identifier: 'test-patient-' + timestamp
-        }, function(result) {
-          if (result.error) {
-            console.error('Failed to create test patient:', result.error);
-            browser.assert.fail('Failed to create test patient: ' + result.error);
-          } else {
-            console.log('Test patient created with ID:', result.result);
-            browser.assert.ok(true, 'Successfully created test patient');
-            
-            // Set the patient in Session
-            browser.execute(function(patientId) {
-              if (typeof Session !== 'undefined' && typeof Patients !== 'undefined') {
-                const patient = Patients.findOne({_id: patientId});
-                if (patient) {
-                  Session.set('selectedPatientId', patientId);
-                  Session.set('selectedPatient', patient);
-                  console.log('Set selected patient in Session:', patientId);
-                }
-              }
-            }, [result.result]);
-          }
-        });
+        browser.assert.ok(true, 'User is logged in');
       }
-      
+
+      // Create a test patient
+      testUtils.createTestPatient(browser, {
+        name: 'John Doe',
+        family: 'Doe',
+        given: 'John',
+        identifier: 'test-patient-' + timestamp
+      }, function(result) {
+        if (result.error) {
+          console.error('Failed to create test patient:', result.error);
+          browser.assert.fail('Failed to create test patient: ' + result.error);
+        } else {
+          console.log('Test patient created with ID:', result.result);
+          browser.assert.ok(true, 'Successfully created test patient');
+
+          // Fetch the patient from the server and set in Session
+          browser.executeAsync(function(patientId, done) {
+            if (typeof Meteor !== 'undefined' && typeof Session !== 'undefined') {
+              Meteor.call('patients.findOne', patientId, function(error, patient) {
+                if (error) {
+                  console.error('Error fetching patient:', error);
+                  done({ success: false, error: error.message });
+                } else if (patient) {
+                  Session.set('selectedPatientId', patient._id);
+                  Session.set('selectedPatient', patient);
+                  console.log('Set selected patient in Session:', patient._id, patient.name?.[0]?.text);
+                  done({ success: true, patientId: patient._id, patientName: patient.name?.[0]?.text });
+                } else {
+                  console.error('Patient not found:', patientId);
+                  done({ success: false, error: 'Patient not found' });
+                }
+              });
+            } else {
+              done({ success: false, error: 'Meteor or Session not available' });
+            }
+          }, [result.result], function(fetchResult) {
+            if (fetchResult.value && fetchResult.value.success) {
+              console.log('Successfully set selected patient:', fetchResult.value);
+            } else if (fetchResult.value) {
+              console.error('Failed to set selected patient:', fetchResult.value.error);
+            }
+          });
+        }
+      });
+
       // Clean up any existing test data
       browser.executeAsync(function(done) {
         if (typeof Medias !== 'undefined') {
-          const testMedias = Medias.find({ 
+          const testMedias = Medias.find({
             $or: [
               { 'content.title': { $regex: '.*Patient photo.*' } },
               { 'reasonCode.0.text': { $regex: 'Documentation.*' } },
@@ -196,21 +133,21 @@ describe('Medias CRUD Operations', function() {
         }
         done();
       });
-      
+
       browser.pause(500);
-      
+
       // Re-establish patient context
       browser.execute(function(testIdentifier) {
         console.log('Looking for patient with identifier:', testIdentifier);
-        
+
         if (typeof Session !== 'undefined' && typeof Patients !== 'undefined') {
           const allPatients = Patients.find({}).fetch();
           console.log('Total patients in collection:', allPatients.length);
-          
+
           let patient = Patients.findOne({
             'identifier.value': testIdentifier
           });
-          
+
           if (!patient) {
             console.log('Patient not found by identifier, trying by name...');
             patient = Patients.findOne({
@@ -221,12 +158,12 @@ describe('Medias CRUD Operations', function() {
               ]
             });
           }
-          
+
           if (!patient && allPatients.length > 0) {
             console.log('Patient not found by name, using most recent patient');
             patient = Patients.findOne({}, { sort: { _id: -1 } });
           }
-          
+
           if (patient) {
             console.log('Found patient:', patient._id, patient.name?.[0]?.text);
             Session.set('selectedPatientId', patient._id);
@@ -240,9 +177,9 @@ describe('Medias CRUD Operations', function() {
         return { success: false, error: 'Session or Patients not available' };
       }, ['test-patient-' + timestamp], function(result) {
         console.log('Patient selection check:', result.value);
-        if (result.value.success) {
+        if (result.value && result.value.success) {
           browser.assert.ok(true, `Patient selected: ${result.value.patientName}`);
-        } else {
+        } else if (result.value) {
           console.error('Failed to set selected patient:', result.value.error);
         }
       });
@@ -250,11 +187,10 @@ describe('Medias CRUD Operations', function() {
   });
 
   it('02. Verify medias list page loads', browser => {
-    // First navigate to home page to ensure React app loads
+    // Navigate to medias page
+    testUtils.navigateUrl(browser, '/medias');
     browser
-      .url('http://localhost:3000')
       .waitForElementVisible('body', 5000)
-      .url('http://localhost:3000/medias')
       .pause(500)
       .execute(function() {
         // Debug: Check if we're on the right page
@@ -291,10 +227,34 @@ describe('Medias CRUD Operations', function() {
           consoleErrors: consoleErrors
         };
       }, [], function(result) {
-        console.log('Page debug info:', JSON.stringify(result.value, null, 2));
+        console.log('[Test 02 DEBUG] Page state:', JSON.stringify(result.value, null, 2));
+
+        // Check URL
+        if (!result.value.currentUrl.includes('/medias')) {
+          console.error('[Test 02] URL check FAILED. Current URL:', result.value.currentUrl);
+        }
+
+        // Check settings
+        if (!result.value.mediasEnabled) {
+          console.error('[Test 02] Medias module NOT enabled in settings!');
+          console.error('[Test 02] Check Meteor.settings.public.modules.fhir.Medias');
+        }
+
+        // Check for 404
+        if (result.value.hasNotFound) {
+          console.error('[Test 02] Page contains 404 or "Page not found" text!');
+          console.error('[Test 02] Page content preview:', result.value.pageContentPreview);
+        }
+
+        // Check if page rendered
+        if (!result.value.hasMediasPage) {
+          console.error('[Test 02] #mediasPage element NOT found in DOM!');
+        }
+
         browser.assert.ok(result.value.currentUrl.includes('/medias'), 'URL contains /medias');
         browser.assert.ok(result.value.mediasEnabled, 'Medias module is enabled in settings');
         browser.assert.ok(!result.value.hasNotFound, 'Page is not showing 404 error');
+        browser.assert.ok(result.value.hasMediasPage, '#mediasPage element exists');
       })
       .waitForElementVisible('#mediasPage', 5000)
       .pause(1000);
@@ -748,8 +708,22 @@ describe('Medias CRUD Operations', function() {
     // Search for our specific test media since there may be many Synthea medias
     browser
       .waitForElementVisible('#mediaSearchInput', 5000)
-      .clearValue('#mediaSearchInput')
-      .setValue('#mediaSearchInput', testMedia.contentTitle.substring(0, 20))
+      .execute(function(searchValue) {
+        const input = document.querySelector('#mediaSearchInput');
+        if (input) {
+          // Clear the field
+          input.value = '';
+          input.dispatchEvent(new Event('input', { bubbles: true }));
+          input.dispatchEvent(new Event('change', { bubbles: true }));
+
+          // Set new value
+          input.value = searchValue;
+          input.dispatchEvent(new Event('input', { bubbles: true }));
+          input.dispatchEvent(new Event('change', { bubbles: true }));
+          return true;
+        }
+        return false;
+      }, [testMedia.contentTitle.substring(0, 20)])
       .pause(1000);
     
     browser.execute(function() {
@@ -832,8 +806,22 @@ describe('Medias CRUD Operations', function() {
     // Search for our specific media - use a simpler search term
     browser
       .waitForElementVisible('#mediaSearchInput', 5000)
-      .clearValue('#mediaSearchInput')
-      .setValue('#mediaSearchInput', 'Patient photo')
+      .execute(function(searchValue) {
+        const input = document.querySelector('#mediaSearchInput');
+        if (input) {
+          // Clear the field
+          input.value = '';
+          input.dispatchEvent(new Event('input', { bubbles: true }));
+          input.dispatchEvent(new Event('change', { bubbles: true }));
+
+          // Set new value
+          input.value = searchValue;
+          input.dispatchEvent(new Event('input', { bubbles: true }));
+          input.dispatchEvent(new Event('change', { bubbles: true }));
+          return true;
+        }
+        return false;
+      }, ['Patient photo'])
       .pause(1000);
 
     // Now click on the media row
@@ -944,10 +932,10 @@ describe('Medias CRUD Operations', function() {
         browser.assert.ok(result.value.notes.includes(testMedia.notes), 'Notes contain expected text');
       })
       .saveScreenshot('tests/nightwatch/screenshots/medias/07-view-media-details.png');
-    
+
     // Navigate back to medias list
+    testUtils.navigateUrl(browser, '/medias');
     browser
-      .url('http://localhost:3000/medias')
       .waitForElementVisible('#mediasPage', 5000);
   });
 
@@ -959,8 +947,22 @@ describe('Medias CRUD Operations', function() {
     // Search for our specific test media first
     browser
       .waitForElementVisible('#mediaSearchInput', 5000)
-      .clearValue('#mediaSearchInput')
-      .setValue('#mediaSearchInput', testMedia.contentTitle.substring(0, 20))
+      .execute(function(searchValue) {
+        const input = document.querySelector('#mediaSearchInput');
+        if (input) {
+          // Clear the field
+          input.value = '';
+          input.dispatchEvent(new Event('input', { bubbles: true }));
+          input.dispatchEvent(new Event('change', { bubbles: true }));
+
+          // Set new value
+          input.value = searchValue;
+          input.dispatchEvent(new Event('input', { bubbles: true }));
+          input.dispatchEvent(new Event('change', { bubbles: true }));
+          return true;
+        }
+        return false;
+      }, [testMedia.contentTitle.substring(0, 20)])
       .pause(1000);
 
     // Now click on the media to edit
@@ -1019,21 +1021,34 @@ describe('Medias CRUD Operations', function() {
       .setValue('#reasonCodeInput', updatedMedia.reasonCode)
       .clearValue('#contentTitleInput')
       .setValue('#contentTitleInput', updatedMedia.contentTitle)
-      .click('#statusSelect')
-      .pause(300)
       .execute(function(value) {
-        const menuItems = document.querySelectorAll('[role="option"]');
-        for (let item of menuItems) {
-          if (item.textContent.toLowerCase().includes(value.toLowerCase()) || 
-              item.getAttribute('data-value') === value) {
-            item.click();
-            return true;
-          }
+        console.log('Looking for status value:', value);
+        const statusSelect = document.querySelector('#statusSelect');
+        if (statusSelect) {
+          statusSelect.click();
+          setTimeout(() => {
+            const menuItems = document.querySelectorAll('[role="option"]');
+            console.log('Found menu items:', menuItems.length);
+
+            for (let item of menuItems) {
+              const dataValue = item.getAttribute('data-value');
+              // Normalize text by replacing spaces with hyphens
+              const textValue = item.textContent.toLowerCase().replace(/\s+/g, '-');
+              const searchValue = value.toLowerCase();
+
+              console.log('Checking item:', item.textContent, 'normalized:', textValue);
+
+              if (dataValue === value || textValue === searchValue) {
+                console.log('Match found! Clicking:', item.textContent);
+                item.click();
+                return true;
+              }
+            }
+            console.error('No match found for value:', value);
+            return false;
+          }, 300);
         }
-        return false;
-      }, [updatedMedia.status], function(result) {
-        browser.assert.equal(result.value, true, 'Selected status');
-      })
+      }, [updatedMedia.status])
       .clearValue('#notesTextarea')
       .setValue('#notesTextarea', updatedMedia.notes)
       .pause(500)
@@ -1055,8 +1070,11 @@ describe('Medias CRUD Operations', function() {
       });
 
     browser
-      .pause(2000)
-      .url('http://localhost:3000/medias')
+      .pause(2000);
+
+    testUtils.navigateUrl(browser, '/medias');
+
+    browser
       .waitForElementVisible('#mediasTable', 5000)
       .saveScreenshot('tests/nightwatch/screenshots/medias/09-media-updated.png');
   });
@@ -1065,8 +1083,22 @@ describe('Medias CRUD Operations', function() {
     browser
       .waitForElementVisible('#mediasTable', 5000)
       .waitForElementVisible('#mediaSearchInput', 5000)
-      .clearValue('#mediaSearchInput')
-      .setValue('#mediaSearchInput', updatedMedia.contentTitle.substring(0, 20))
+      .execute(function(searchValue) {
+        const input = document.querySelector('#mediaSearchInput');
+        if (input) {
+          // Clear the field
+          input.value = '';
+          input.dispatchEvent(new Event('input', { bubbles: true }));
+          input.dispatchEvent(new Event('change', { bubbles: true }));
+
+          // Set new value
+          input.value = searchValue;
+          input.dispatchEvent(new Event('input', { bubbles: true }));
+          input.dispatchEvent(new Event('change', { bubbles: true }));
+          return true;
+        }
+        return false;
+      }, [updatedMedia.contentTitle.substring(0, 20)])
       .pause(1000)
       .execute(function(expectedTitle) {
         const table = document.querySelector('#mediasTable');

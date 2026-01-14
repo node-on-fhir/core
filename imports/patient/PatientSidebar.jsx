@@ -87,10 +87,10 @@ import {heartO} from 'react-icons-kit/fa/heartO';
 // import {ic_tune} from 'react-icons-kit/md/ic_tune'
 // import {flask} from 'react-icons-kit/fa/flask' // Substance 
 // import {cameraRetro} from 'react-icons-kit/fa/cameraRetro' // ImagingStudy
-// import {film} from 'react-icons-kit/fa/film' // Media 
-// import {image} from 'react-icons-kit/fa/image' // Media 
+import {film} from 'react-icons-kit/fa/film' // Media
+import {image} from 'react-icons-kit/fa/image' // Media / DICOM
 // import {eye} from 'react-icons-kit/fa/eye' // BodySite
-// import {barcode} from 'react-icons-kit/fa/barcode' // Barcode  
+// import {barcode} from 'react-icons-kit/fa/barcode' // Barcode
 import {ambulance} from 'react-icons-kit/fa/ambulance' // Ambulance   
 // import {medkit} from 'react-icons-kit/fa/medkit'  // SmartKit  
 // import {desktop} from 'react-icons-kit/fa/desktop' //Desktop  
@@ -1093,8 +1093,28 @@ export function PatientSidebar(props){
         <Icon icon={users} />
       </ListItemIcon>
       <ListItemText primary="Patient Directory" />
-    </ListItem>);    
+    </ListItem>);
     patientDirectoryElements.push(<Divider key="patient-directory-hr" />);
+  };
+
+  //----------------------------------------------------------------------
+  // DICOM Viewer
+
+  let dicomViewerElements = [];
+  if(get(Meteor, 'settings.public.modules.DicomViewer')){
+    dicomViewerElements.push(<ListItem id='dicomStudiesItem' key='dicomStudiesItem' button onClick={function(){ openPage('/dicom/studies'); }} >
+      <ListItemIcon >
+        <Icon icon={image} />
+      </ListItemIcon>
+      <ListItemText primary="DICOM Studies" />
+    </ListItem>);
+    dicomViewerElements.push(<ListItem id='dicomUploadItem' key='dicomUploadItem' button onClick={function(){ openPage('/dicom/upload'); }} >
+      <ListItemIcon >
+        <Icon icon={film} />
+      </ListItemIcon>
+      <ListItemText primary="Upload DICOM" />
+    </ListItem>);
+    dicomViewerElements.push(<Divider key="dicom-viewer-hr" />);
   };
 
   //----------------------------------------------------------------------
@@ -1314,6 +1334,7 @@ export function PatientSidebar(props){
       { profileElements }
       { dataManagementElements }
       { patientDirectoryElements }
+      { dicomViewerElements }
       { customWorkflowElements }
 
       <div id='patientWorkflowElements' key='patientWorkflowElements'>

@@ -25,14 +25,13 @@ import { FhirResource, fhirVersions } from 'fhir-react';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 
 import ErrorBoundary from './ErrorBoundary.jsx';
+import { DynamicSpacer } from './DynamicSpacer';
 
 //----------------------------------------------------------------------
 // Helper Components
 
-let DynamicSpacer;
 let useTheme;
 Meteor.startup(function(){
-  DynamicSpacer = Meteor.DynamicSpacer;
   useTheme = Meteor.useTheme;
 })
 

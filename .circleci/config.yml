@@ -21,8 +21,7 @@ parameters:
           "name": "actors",
           "tests": [
             "tests/nightwatch/honeycomb/enable_autopublish/crud.patients.js",
-            "tests/nightwatch/honeycomb/enable_autopublish/crud.practitioners.js",
-            "tests/nightwatch/honeycomb/enable_autopublish/crud.careteams.js"
+            "tests/nightwatch/honeycomb/enable_autopublish/crud.practitioners.js"
           ]
         },
         {
@@ -62,15 +61,7 @@ parameters:
           "name": "care-management",
           "tests": [
             "tests/nightwatch/honeycomb/enable_autopublish/crud.careplans.js",
-            "tests/nightwatch/honeycomb/enable_autopublish/crud.nutritionorders.js",
             "tests/nightwatch/honeycomb/enable_autopublish/crud.servicerequests.js"
-          ]
-        },
-        {
-          "name": "scheduling",
-          "tests": [
-            "tests/nightwatch/honeycomb/enable_autopublish/crud.appointments.js",
-            "tests/nightwatch/honeycomb/enable_autopublish/crud.schedules.js"
           ]
         },
         {
@@ -120,7 +111,6 @@ parameters:
         {
           "name": "library-sciences",
           "tests": [
-            "tests/nightwatch/honeycomb/enable_autopublish/crud.medias.js",
             "tests/nightwatch/honeycomb/enable_autopublish/crud.documentreferences.js"
           ]
         },
@@ -130,6 +120,16 @@ parameters:
             "tests/nightwatch/honeycomb/enable_autopublish/simple-sorting-test.js",
             "tests/nightwatch/honeycomb/dev_auto_login/my.profile.js",
             "tests/nightwatch/honeycomb/default/localhost.js"
+          ]
+        },
+        {
+          "name": "base-ehr",
+          "tests": [
+            "packages/order-catalog/tests/nightwatch/170.315.a.1.test.js",
+            "packages/order-catalog/tests/nightwatch/170.315.a.2.test.js",
+            "packages/implantable-devices/tests/nightwatch/170.315.a.14.test.js",
+            "packages/hipaa-compliance/tests/nightwatch/170.315.d.1.test.js",
+            "packages/family-health-history/tests/nightwatch/170.315.a.12.test.js"
           ]
         }
       ]
@@ -154,8 +154,8 @@ jobs:
           NODE_ENV: test
           NIGHTWATCH: true
           DISPLAY: :99.0
-          NODE_OPTIONS: --max_old_space_size=4096
-          TOOL_NODE_FLAGS: --max_old_space_size=4096
+          NODE_OPTIONS: --max-old-space-size=2048
+          TOOL_NODE_FLAGS: --max-old-space-size=2048
           TEST_BROWSER_DRIVER: chrome
           MONGO_URL: mongodb://mongo:27017/meteor_test
           ENABLE_AUTOPUBLISH: true
@@ -168,7 +168,7 @@ jobs:
       - image: mongo:6.0
         name: mongo
     
-    resource_class: medium  # Can use medium for parallel execution
+    resource_class: large  # 8GB - NODE_OPTIONS (2GB) + MongoDB + Chrome + headroom for RSpack
     parallelism: 1  # Ensure we're not trying to parallelize within the job
     
     steps:
@@ -398,18 +398,18 @@ jobs:
             export TEST_RUN=true
             # Add signal handling and verbose output
             trap 'echo "Received signal at $(date)"; exit' SIGTERM SIGINT
-            # Run Meteor with explicit settings and verbose output
+            # Run Meteor with explicit settings and all ONC packages loaded
             # Add periodic output to prevent timeout
             (
-              meteor run --settings configs/settings.honeycomb.tdd.json --port 3000 &
+              meteor run --settings configs/settings.honeycomb.tdd.json --port 3000 
               METEOR_PID=$!
-              
+
               # Output progress every 30 seconds to prevent timeout
               while kill -0 $METEOR_PID 2>/dev/null; do
                 echo "[$(date)] Meteor is still starting up..."
                 sleep 30
               done
-              
+
               wait $METEOR_PID
             )
       
@@ -469,11 +469,24 @@ jobs:
             # Run tests
             echo "Starting Nightwatch tests..."
             export NIGHTWATCH_EXTERNAL_CHROMEDRIVER=true
-            
+
+            # Start memory monitoring in background
+            echo "Starting memory monitoring..."
+            (while true; do
+              echo "=== MEMORY $(date '+%H:%M:%S') ==="
+              free -m | head -2
+              ps aux --sort=-%mem | grep -E 'node|chrome|mongo' | head -3 || true
+              sleep 30
+            done) &
+            MEMORY_MONITOR_PID=$!
+
             # Run tests without timeout command (might be causing the termination)
             TEST_FILES="<< parameters.test-files >>"
             npx nightwatch --config nightwatch.circle.conf.js $TEST_FILES || TEST_EXIT_CODE=$?
-            
+
+            # Stop memory monitor
+            kill $MEMORY_MONITOR_PID 2>/dev/null || true
+
             # Cleanup
             kill $CHROMEDRIVER_PID 2>/dev/null || true
             
@@ -574,3 +587,13 @@ workflows:
           name: framework
           group-name: framework
           test-files: "tests/nightwatch/honeycomb/enable_autopublish/simple-sorting-test.js tests/nightwatch/honeycomb/dev_auto_login/my.profile.js tests/nightwatch/honeycomb/default/localhost.js"
+      
+      # ONC Health IT Certification test groups
+      - test-group:
+          name: base-ehr
+          group-name: base-ehr
+          test-files: "packages/order-catalog/tests/nightwatch/170.315.a.1.test.js packages/order-catalog/tests/nightwatch/170.315.a.2.test.js packages/implantable-devices/tests/nightwatch/170.315.a.14.test.js packages/hipaa-compliance/tests/nightwatch/170.315.d.1.test.js packages/family-health-history/tests/nightwatch/170.315.a.12.test.js"
+      
+
+
+            

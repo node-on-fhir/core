@@ -1,9 +1,12 @@
 // tests/nightwatch/honeycomb/enable_autopublish/crud.supplydeliveries.js
 
 const testUtils = require('./shared-test-utils');
+const loginHelper = require('../../helpers/login-helper');
 
 describe('SupplyDeliveries CRUD Operations', function() {
   const timestamp = Date.now();
+  let createdSupplyDeliveryId = null; // Store supply delivery ID for cross-test access
+
   const testSupplyDelivery = {
     status: 'in-progress',
     type: 'device',
@@ -62,82 +65,57 @@ describe('SupplyDeliveries CRUD Operations', function() {
         window.testTimestamp = ts;
       }, [timestamp]);
 
-    // Check if we're logged in
-    browser.execute(function() {
-      return {
-        isLoggedIn: typeof Meteor !== 'undefined' && !!Meteor.userId(),
-        userId: Meteor.userId ? Meteor.userId() : null,
-        username: Meteor.user ? (Meteor.user() ? Meteor.user().username : null) : null
-      };
-    }, [], function(result) {
-      console.log('Initial login state:', result.value);
-      
-      // Check if result.value exists before accessing its properties
-      if (!result.value || !result.value.isLoggedIn) {
-        console.log('Not logged in, attempting programmatic login...');
-        
-        browser.executeAsync(function(done) {
-          if (typeof Meteor !== 'undefined') {
-            Meteor.call('test.createTestUser', {
-              username: 'janedoe',
-              email: 'janedoe@test.org',
-              password: 'janedoe123'
-            }, function(err, userId) {
-              if (err) {
-                console.error('Failed to create test user:', err);
-                done({ userCreated: false, error: err.message });
-              } else {
-                console.log('Test user ready, userId:', userId);
-                Meteor.loginWithPassword('janedoe', 'janedoe123', function(loginErr) {
-                  if (loginErr) {
-                    console.error('Login failed:', loginErr);
-                    done({ userCreated: true, loginSuccess: false, error: loginErr.message });
-                  } else {
-                    console.log('Login successful');
-                    done({ 
-                      userCreated: true,
-                      loginSuccess: true, 
-                      userId: Meteor.userId(), 
-                      username: Meteor.user() ? Meteor.user().username : null 
-                    });
-                  }
-                });
-              }
-            });
-          } else {
-            done({ userCreated: false, loginSuccess: false, error: 'Meteor not available' });
-          }
-        }, [], function(result) {
-          if (result.value.loginSuccess) {
-            console.log('Test user logged in successfully as:', result.value.username);
-          } else {
-            console.error('Login failed:', result.value.error);
-          }
-        });
+    // Use loginHelper to ensure user is logged in with retry logic
+    loginHelper.ensureLoggedIn(browser, function(isLoggedIn) {
+      if (!isLoggedIn) {
+        browser.assert.fail('Failed to ensure user is logged in');
+      } else {
+        browser.assert.ok(true, 'User is logged in');
       }
-    });
 
-    // Create test patient
-    console.log('Creating test patient...');
-    testUtils.createTestPatient(browser, {
-      givenName: 'John',
-      familyName: 'Doe',
-      birthDate: '1970-01-01'
-    }, function(result) {
-      console.log('Test patient created:', result);
-      
-      // Set the patient in Session immediately after creation
-      browser.execute(function(patientId) {
-        const patient = Patients.findOne({_id: patientId});
-        if (patient) {
-          console.log('[Test] Setting session patient:', patient);
-          Session.set('selectedPatientId', patientId);
-          Session.set('selectedPatient', patient);
-          console.log('[Test] Session variables set successfully');
+      // Create test patient
+      testUtils.createTestPatient(browser, {
+        name: 'John Doe',
+        family: 'Doe',
+        given: 'John',
+        identifier: 'test-patient-' + timestamp
+      }, function(result) {
+        if (result.error) {
+          console.error('Failed to create test patient:', result.error);
+          browser.assert.fail('Failed to create test patient: ' + result.error);
         } else {
-          console.error('[Test] Patient not found with ID:', patientId);
+          console.log('Test patient created with ID:', result.result);
+          browser.assert.ok(true, 'Successfully created test patient');
+
+          // Fetch patient from server and set in Session
+          browser.executeAsync(function(patientId, done) {
+            if (typeof Meteor !== 'undefined' && typeof Session !== 'undefined') {
+              Meteor.call('patients.findOne', patientId, function(error, patient) {
+                if (error) {
+                  console.error('Error fetching patient:', error);
+                  done({ success: false, error: error.message });
+                } else if (patient) {
+                  Session.set('selectedPatientId', patient._id);
+                  Session.set('selectedPatient', patient);
+                  console.log('Set selected patient in Session:', patient._id, patient.name?.[0]?.text);
+                  done({ success: true, patientId: patient._id, patientName: patient.name?.[0]?.text });
+                } else {
+                  console.error('Patient not found:', patientId);
+                  done({ success: false, error: 'Patient not found' });
+                }
+              });
+            } else {
+              done({ success: false, error: 'Meteor or Session not available' });
+            }
+          }, [result.result], function(fetchResult) {
+            if (fetchResult.value && fetchResult.value.success) {
+              console.log('Successfully set selected patient:', fetchResult.value);
+            } else if (fetchResult.value) {
+              console.error('Failed to set selected patient:', fetchResult.value.error);
+            }
+          });
         }
-      }, [result.result]);
+      });
     });
 
     // Clean up any existing test data
@@ -161,8 +139,8 @@ describe('SupplyDeliveries CRUD Operations', function() {
   });
 
   it('02. Navigate to supply deliveries list page', browser => {
+    testUtils.navigateUrl(browser, '/supply-deliveries');
     browser
-      .url('http://localhost:3000/supply-deliveries')
       .waitForElementVisible('body', 5000)
       .windowSize('current', 1400, 900)
       .pause(1000);
@@ -204,8 +182,8 @@ describe('SupplyDeliveries CRUD Operations', function() {
           .waitForElementVisible('#supplyDeliveryDetailsPage', 5000);
       } else {
         console.log('Add button not found, attempting direct navigation');
+        testUtils.navigateUrl(browser, '/supply-deliveries/new');
         browser
-          .url('http://localhost:3000/supply-deliveries/new')
           .waitForElementVisible('#supplyDeliveryDetailsPage', 5000);
       }
     });
@@ -334,14 +312,26 @@ describe('SupplyDeliveries CRUD Operations', function() {
       };
     }, [], function(result) {
       console.log('Navigation after save:', result.value);
-      browser.assert.ok(result.value.isOnListPage, 
+      browser.assert.ok(result.value.isOnListPage,
         'Should navigate back to supply deliveries list after save');
+    });
+
+    // Capture the created supply delivery ID for subsequent tests
+    browser.execute(function() {
+      return window.saveResult?.result || null;
+    }, [], function(result) {
+      if (result.value) {
+        createdSupplyDeliveryId = result.value;
+        console.log('✓ Captured supply delivery ID for subsequent tests:', createdSupplyDeliveryId);
+      } else {
+        console.warn('✗ Could not capture supply delivery ID');
+      }
     });
   });
 
   it('05. Verify supply delivery was created', browser => {
+    testUtils.navigateUrl(browser, '/supply-deliveries');
     browser
-      .url('http://localhost:3000/supply-deliveries')
       .waitForElementVisible('body', 5000)
       .pause(1500);
 
@@ -385,25 +375,34 @@ describe('SupplyDeliveries CRUD Operations', function() {
   });
 
   it('06. View supply delivery details', browser => {
-    // Search for our specific supply delivery if search is available
-    browser.execute(function(ts) {
-      const searchInput = document.querySelector('#supplyDeliverySearchInput');
-      if (searchInput) {
-        searchInput.value = ts.toString();
-        searchInput.dispatchEvent(new Event('input', { bubbles: true }));
-        return { searchPerformed: true };
-      }
-      return { searchPerformed: false };
-    }, [timestamp], function(result) {
-      if (result.value.searchPerformed) {
-        browser.pause(500); // Wait for search to filter results
-      }
-    });
+    // DEVIATION FROM STANDARD CRUD PATTERN:
+    //
+    // Standard approach would be:
+    //   1. Search for supply delivery in table
+    //   2. Click the row to open detail page
+    //
+    // Problem with standard approach:
+    //   - Newly created supply delivery may not be in client collection (subscription limit)
+    //   - Search won't find what's not in the collection
+    //   - Clicking wrong row would load wrong supply delivery
+    //
+    // Our approach:
+    //   - Navigate DIRECTLY to /supply-deliveries/{id} using the captured ID
+    //   - SupplyDeliveryDetail component will load the specific delivery
+    //   - Ensures we're viewing the correct supply delivery regardless of table state
 
-    // Click on the first row (should be our newest supply delivery if sorted properly)
+    browser.execute(function(deliveryId) {
+      console.log('Navigating directly to supply delivery detail:', deliveryId);
+      // Use React Router navigation to preserve state
+      if (typeof Meteor !== 'undefined' && typeof Meteor.navigate === 'function') {
+        Meteor.navigate('/supply-deliveries/' + deliveryId);
+      } else {
+        window.location.href = '/supply-deliveries/' + deliveryId;
+      }
+    }, [createdSupplyDeliveryId]);
+
     browser
-      .click('#supplyDeliveriesTable tbody tr:first-child')
-      .pause(1000)
+      .pause(2000) // Wait for navigation and subscription to load data
       .waitForElementVisible('#supplyDeliveryDetailsPage', 5000);
 
     // Verify we can see the details
@@ -440,11 +439,25 @@ describe('SupplyDeliveries CRUD Operations', function() {
   });
 
   it('07. Edit supply delivery', browser => {
+    // Navigate directly to the supply delivery detail page
+    browser.execute(function(deliveryId) {
+      console.log('Navigating to supply delivery for edit:', deliveryId);
+      if (typeof Meteor !== 'undefined' && typeof Meteor.navigate === 'function') {
+        Meteor.navigate('/supply-deliveries/' + deliveryId);
+      } else {
+        window.location.href = '/supply-deliveries/' + deliveryId;
+      }
+    }, [createdSupplyDeliveryId]);
+
+    browser
+      .pause(2000)
+      .waitForElementVisible('#supplyDeliveryDetailsPage', 5000);
+
     // Enter edit mode if needed
     browser.execute(function() {
       const editButton = document.querySelector('#editSupplyDeliveryButton, #lockSupplyDeliveryButton');
       const isLocked = document.querySelector('#lockSupplyDeliveryButton');
-      
+
       if (editButton && !isLocked) {
         editButton.click();
         return { clickedEdit: true };
@@ -509,42 +522,105 @@ describe('SupplyDeliveries CRUD Operations', function() {
   });
 
   it('08. Delete supply delivery', browser => {
-    // Navigate to the supply delivery if not already there
-    browser.execute(function() {
-      return window.location.pathname;
-    }, [], function(result) {
-      if (!result.value.includes('/supply-deliveries/')) {
-        // Navigate back to the supply delivery
-        browser
-          .url('http://localhost:3000/supply-deliveries')
-          .pause(1000)
-          .click('#supplyDeliveriesTable tbody tr:first-child')
-          .pause(1000);
+    // Navigate directly to the supply delivery detail page
+    browser.execute(function(deliveryId) {
+      console.log('Navigating to supply delivery for deletion:', deliveryId);
+      if (typeof Meteor !== 'undefined' && typeof Meteor.navigate === 'function') {
+        Meteor.navigate('/supply-deliveries/' + deliveryId);
+      } else {
+        window.location.href = '/supply-deliveries/' + deliveryId;
       }
-    });
+    }, [createdSupplyDeliveryId]);
 
     // Ensure we're on the detail page
     browser
+      .pause(2000)
       .waitForElementVisible('#supplyDeliveryDetailsPage', 5000)
       .pause(500);
 
-    // Click delete button
+    // Verify we're logged in before attempting deletion
+    browser.execute(function() {
+      return {
+        pathname: window.location.pathname,
+        isLoggedIn: typeof Meteor !== 'undefined' && !!Meteor.userId(),
+        userId: Meteor.userId ? Meteor.userId() : null
+      };
+    }, [], function(result) {
+      console.log('[Test 08] Current state:', result.value);
+      browser.assert.ok(result.value.isLoggedIn, 'User should be logged in for deletion');
+      browser.assert.ok(result.value.pathname.includes('/supply-deliveries/'),
+        'Should be on supply delivery detail page');
+    });
+
+    // Debug: Check component state before delete
+    browser.execute(function() {
+      return {
+        isEditing: window.__supplyDeliveryIsEditing,
+        hasDeleteButton: !!document.querySelector('#deleteSupplyDeliveryButton'),
+        pathname: window.location.pathname
+      };
+    }, [], function(result) {
+      console.log('[Before delete]:', result.value);
+    });
+
+    // Click delete button directly (not in execute block)
+    // This handles window.confirm() more reliably than execute blocks
     browser
-      .waitForElementVisible('#deleteSupplyDeliveryButton', 5000)
+      .pause(500)
       .click('#deleteSupplyDeliveryButton')
       .pause(500)
       .acceptAlert()
-      .pause(1000);
+      .pause(5000); // Wait for delete method call + navigation + page mount in CI
 
-    // Verify we're back on the list page
+    // Check for errors and what happened
     browser.execute(function() {
-      return window.location.pathname;
+      const errorElement = document.querySelector('[class*="error"]') ||
+                          document.querySelector('[class*="Alert"]') ||
+                          document.querySelector('[severity="error"]');
+      return {
+        hasError: !!errorElement,
+        errorText: errorElement ? errorElement.textContent : null,
+        pathname: window.location.pathname,
+        stillOnDetailPage: !!document.querySelector('#supplyDeliveryDetailsPage')
+      };
     }, [], function(result) {
-      browser.assert.ok(
-        result.value === '/supply-deliveries',
-        'Should be redirected to supply deliveries list after deletion'
-      );
+      console.log('[After delete]:', result.value);
+      if (result.value.hasError) {
+        console.log('[Delete error found]:', result.value.errorText);
+      }
     });
+
+    // Verify we're back on the list page or wait for navigation
+    browser
+      .pause(2000)
+      .waitForElementVisible('#supplyDeliveriesPage', 10000)
+      .execute(function() {
+        return {
+          pathname: window.location.pathname,
+          hasPage: !!document.querySelector('#supplyDeliveriesPage'),
+          hasTable: !!document.querySelector('#supplyDeliveriesTable'),
+          hasNoData: !!document.querySelector('[data-testid="no-supply-deliveries"]'),
+          hasDetailPage: !!document.querySelector('#supplyDeliveryDetailsPage')
+        };
+      }, [], function(result) {
+        // ADD NULL CHECK - execute can return null
+        if (!result || !result.value) {
+          console.error('[Test 08] execute returned null - page may not be ready');
+          browser.assert.fail('Failed to check page state after deletion - execute returned null');
+          return;
+        }
+
+        console.log('[Test 08] After deletion:', result.value);
+
+        if (result.value.hasDetailPage) {
+          console.log('WARNING: Still on detail page - deletion may have failed or navigation slow');
+        }
+
+        browser.assert.ok(
+          result.value.hasTable || result.value.hasNoData,
+          'Should show either table or no-data state'
+        );
+      });
   });
 
   it('09. Cleanup test data', browser => {

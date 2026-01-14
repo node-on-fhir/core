@@ -168,15 +168,16 @@ Meteor.methods({
       updateData.$set.category = careTeamData.category;
     }
     
-    // Update period
+    // Update period - build complete object first to avoid MongoDB path conflict
     if (careTeamData.period) {
-      updateData.$set.period = {};
+      const periodUpdate = {};
       if (careTeamData.period.start) {
-        updateData.$set['period.start'] = moment(careTeamData.period.start).format('YYYY-MM-DD');
+        periodUpdate.start = moment(careTeamData.period.start).format('YYYY-MM-DD');
       }
       if (careTeamData.period.end) {
-        updateData.$set['period.end'] = moment(careTeamData.period.end).format('YYYY-MM-DD');
+        periodUpdate.end = moment(careTeamData.period.end).format('YYYY-MM-DD');
       }
+      updateData.$set.period = periodUpdate;
     }
     
     // Update participants

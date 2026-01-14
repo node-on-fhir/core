@@ -30,7 +30,15 @@ import { FhirDehydrator } from '../../lib/FhirDehydrator';
 //===========================================================================
 // THEMING
 
-
+const logger = {
+  debug: console.debug.bind(console),
+  trace: console.trace.bind(console),
+  data: console.log.bind(console),
+  verbose: console.debug.bind(console),
+  info: console.info.bind(console),
+  warn: console.warn.bind(console),
+  error: console.error.bind(console)
+};
 
 
 //===========================================================================
@@ -96,6 +104,8 @@ function LocationsTable(props){
 
     // ------------------------------------------------------------------------
   // Form Factors
+
+  let multiline = false;
 
   if(formFactorLayout){
     logger.verbose('formFactorLayout', formFactorLayout + ' ' + window.innerWidth);

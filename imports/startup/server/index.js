@@ -47,16 +47,28 @@ Meteor.startup(() => {
   
   // Email module
   if (modules.email?.enabled) {
-    import('./email-startup').catch(console.error);
+    import(/* webpackIgnore: true */ './email-startup').catch(error => {
+      console.warn('Email startup module not found:', error.message);
+    });
+  } else {
+    console.log('Email module disabled in settings');
   }
 
   // Scheduler module
   if (modules.scheduler?.enabled) {
-    import('./scheduler-startup').catch(console.error);
+    import(/* webpackIgnore: true */ './scheduler-startup').catch(error => {
+      console.warn('Scheduler startup module not found:', error.message);
+    });
+  } else {
+    console.log('Scheduler module disabled in settings');
   }
 
   // Monitoring module
   if (modules.monitoring?.enabled) {
-    import('./monitoring-startup').catch(console.error);
+    import(/* webpackIgnore: true */ './monitoring-startup').catch(error => {
+      console.warn('Monitoring startup module not found:', error.message);
+    });
+  } else {
+    console.log('Monitoring module disabled in settings');
   }
 });

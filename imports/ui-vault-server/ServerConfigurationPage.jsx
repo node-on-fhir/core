@@ -93,15 +93,14 @@ import { Endpoints } from '../lib/schemas/SimpleSchemas/Endpoints';
 import { SubscriptionsTable } from './SubscriptionsTable';
 
 import { useNavigate } from "react-router-dom";
+import { DynamicSpacer } from '../ui/DynamicSpacer';
 
 
 //----------------------------------------------------------------------
 // Helper Components
 
-let DynamicSpacer;
 let useTheme;
 Meteor.startup(function(){
-  DynamicSpacer = Meteor.DynamicSpacer;
   useTheme = Meteor.useTheme;
 })
 

@@ -1,0 +1,292 @@
+library "mrna_peri_enhanced" version '1.0.0'
+using FHIR version '4.0.0'
+include "FHIRHelpers" version '4.0.0' called FHIRHelpers
+include "mrna_peri_value_sets" version '1.0.0' called value_sets
+codesystem "SNOMEDCT": 'http://snomed.info/sct'
+
+// parameter to inject an index date found via the spreadsheets from health systems.
+parameter "hs_index_date" Date
+
+// Functions for filtering a set of clinical resources
+define fluent function during( Observations List<Observation>, Period Interval<DateTime>):
+   Observations O where O.effective.value during Period
+
+define fluent function during( Conditions List<Condition>,Period Interval<DateTime>):
+   Conditions C where (C.onset as FHIR.dateTime).value during Period
+
+define fluent function during( Procedures List<Procedure>, Period Interval<DateTime>):
+   Procedures P where P.performed during Period
+
+define fluent function during(Immunizations List<Immunization>, Period Interval<DateTime>):
+   Immunizations I where I.occurrence during Period
+
+define fluent function during(DiagnosticReports List<DiagnosticReport>, Period Interval<DateTime>):
+   DiagnosticReports D where D.effective.value during Period
+   
+// Define value sets
+define vaccine_mrna: value_sets.vaccine_mrna
+
+define pericarditis_dxnonspecific:
+  Concept {codes: (value_sets.pericarditis_dxnonspecific.codes union value_sets.myopericarditis_dxnonspecific.codes)}
+
+define pericarditis_dxspecific:
+  Concept {codes: (value_sets.pericarditis_dxspecific.codes union value_sets.myopericarditis_dxspecific.codes)}
+
+define pericarditis_dxchronic:
+  Concept {codes: (value_sets.pericarditis_dxchronic.codes union value_sets.myopericarditis_dxchronic.codes)}
+
+define pericarditis_all:
+  Concept {codes: ((pericarditis_dxnonspecific.codes union pericarditis_dxspecific.codes) union pericarditis_dxchronic.codes)}
+
+ define pericarditis_dxspecific_dxchronic:
+    Concept {codes: (pericarditis_dxchronic.codes union pericarditis_dxspecific.codes)}
+
+define present_value: Concept {
+  Code '52101004' from "SNOMEDCT" display 'Present (qualifier value)'
+}
+
+// symptom codes
+define chest_pain: Concept {
+  Code '102587001' from "SNOMEDCT" display 'Acute chest pain (finding)'
+}
+define palpitations: Concept {
+  Code '80313002' from "SNOMEDCT" display 'Palpitations (finding)'
+}
+define dyspnea: Concept {
+  Code '267036007' from "SNOMEDCT" display 'Dyspnea (finding)'
+}
+define diaphoresis: Concept {
+  Code '52613005' from "SNOMEDCT" display 'Excessive sweating (finding)'
+}
+define sudden_death: Concept {
+  Code '418362005' from "SNOMEDCT" display 'Dead - sudden death (finding)'
+}
+// physical finding codes
+define friction_rub: Concept {
+  Code '7036007' from "SNOMEDCT" display 'Pericardial friction rub'
+}
+define paradoxus: Concept {
+  Code '52099006' from "SNOMEDCT" display 'Pulsus paradoxus'
+}
+
+// ecg abnormality codes
+define diffuse_st_elevation: Concept {
+  Code '76388001:116676008=353734004' from "SNOMEDCT" display 'ST segment elevation with Associated morphology = Upward (concave-upward)'
+}
+define st_depression: Concept {
+  Code '26141007:418775008=29303009,363698007=257477004' from "SNOMEDCT" display 'ST segment depression with Finding method = Electrocardiographic procedure, Finding site = Electrocardiograph lead site'
+}
+define pr_depression: Concept {
+  Code '251245007:116676008=416181002,246090004=55930002,363714003=410516002' from "SNOMEDCT" display 'PR-segment depression with Diffuse morphology, Associated finding = ST-segment changes (absent)'
+}
+// imaging abnormality codes
+define abnormal_imaging_findings: Concept {
+  Code '404684003:246090004={373945007,3238004}' from "SNOMEDCT" display 'Clinical finding with Associated finding = Pericardial effusion or Pericarditis'
+}
+// biopsy inflammation codes
+define inflammatory_pericardial_biopsy: Concept {
+  Code '409774005:363698007=386110002,703065002=430244006' from "SNOMEDCT" display 'Inflammatory morphology:Finding site=Pericardium tissue,Specimen source=Specimen from pericardium'
+}
+
+// Start AE Logic
+context Patient
+
+// Use health system determined index date.
+define index_date:
+    date from hs_index_date
+    
+// Get mRNA immunization and procedure resources
+define mrna_imm_list: 
+    [Immunization: vaccine_mrna] I
+    where I.status = 'completed'
+
+define mrna_proc_list: 
+    [Procedure: vaccine_mrna] P
+    where P.status = 'completed'
+
+define mrna_imm_dt_list: mrna_imm_list I
+    return date from Coalesce((I.occurrence as FHIR.dateTime).value, ToDateTime((I.occurrence as FHIR.string).value)) sort asc
+
+define mrna_proc_dt_list: mrna_proc_list P
+    return date from Coalesce((P.performed as FHIR.dateTime).value, (P.performed as FHIR.Period)."start".value, ToDateTime((P.performed as FHIR.string).value))
+
+//By default a query returns a list of distinct results
+define mrna_dt_list: mrna_imm_dt_list union mrna_proc_dt_list
+
+// Query for immunizations that occurred on the index date or the day after
+define mrna_imm_on_index_date:
+  mrna_imm_list I
+    where (date from Coalesce((I.occurrence as FHIR.dateTime).value, ToDateTime((I.occurrence as FHIR.string).value)) 
+           in Interval[index_date, index_date + 1 day])
+    
+// Query for procedures that occurred on the index date or the day after
+define mrna_proc_on_index_date:
+  mrna_proc_list P
+    where (date from Coalesce((P.performed as FHIR.dateTime).value, (P.performed as FHIR.Period)."start".value, ToDateTime((P.performed as FHIR.string).value)) in Interval[index_date, index_date + 1 day])
+
+define exposure:
+  mrna_imm_on_index_date.vaccineCode.coding.code union mrna_proc_on_index_date.code.coding.code
+    
+define mRNAImmunization_Evidence:
+    Tuple {
+        definition: 'Patient\'s mRNA immunization exposures',
+        featureType: 'biologic_exposure',
+        evidence: mrna_imm_on_index_date union mrna_proc_on_index_date
+    }
+
+// Clean window for observability
+define clean_window_start:
+  index_date - 365 days
+
+// diagnosis window for evidence
+define diagnosis_window_end:
+  index_date + 42 days
+
+define outcome_evidence_interval:
+    Interval[index_date, diagnosis_window_end]
+
+define function HasDataObservability(Conditions List<Condition>, StartDate DateTime, EndDate DateTime):
+  exists (Conditions C1 where C1.recordedDate < StartDate)
+    and exists (Conditions C2 where C2.recordedDate > EndDate)
+
+define data_observability:
+  HasDataObservability([Condition], clean_window_start, diagnosis_window_end)
+
+// Check for excluded diagnoses
+define no_prior_pericarditis:
+  not exists([Condition: pericarditis_all] C
+    where C.recordedDate is not null
+    and (C.recordedDate as FHIR.dateTime) during Interval[clean_window_start, index_date]
+  )
+
+define no_excluded_pericarditis_in_evidence_window:
+  not exists([Condition: pericarditis_dxspecific_dxchronic] C
+    where C.recordedDate is not null
+    and (C.recordedDate as FHIR.dateTime) during outcome_evidence_interval
+  )
+
+// generic list of confirmatory statuses
+define positive_status: {'final', 'amended', 'corrected', 'registered', 'preliminary', 'completed'}
+
+// Find valid observations in evidence window.
+define valid_observations:
+    [Observation] O
+    where exists (O.value.coding Co where Co.code in present_value.codes.code) and
+    (O.effective.value during outcome_evidence_interval or O.effective.start.value during outcome_evidence_interval) and
+    O.status in positive_status
+
+// symptom evidence
+define symptom_chest_pain: 
+    exists (valid_observations O
+     where exists (O.code.coding C where C.code in chest_pain.codes.code)
+            )
+            
+define symptom_palpitations: 
+    exists (valid_observations O
+     where exists (O.code.coding C where C.code in palpitations.codes.code)
+            )
+            
+define symptom_dyspnea: 
+    exists (valid_observations O
+     where exists (O.code.coding C where C.code in dyspnea.codes.code)
+            )
+            
+define symptom_diaphoresis: 
+    exists (valid_observations O
+     where exists (O.code.coding C where C.code in diaphoresis.codes.code)
+            )
+            
+define symptom_sudden_death: 
+    exists (valid_observations O
+     where exists (O.code.coding C where C.code in sudden_death.codes.code)
+            )
+            
+define has_cardiac_symptom:
+    symptom_chest_pain or symptom_palpitations or symptom_dyspnea or symptom_diaphoresis or symptom_sudden_death
+
+// physical finding evidence 
+define physical_friction_rub: 
+    exists (valid_observations O
+     where exists (O.code.coding C where C.code in friction_rub.codes.code)
+            )
+            
+define physical_paradoxus: 
+    exists (valid_observations O
+     where exists (O.code.coding C where C.code in paradoxus.codes.code)
+            )
+            
+define has_physical_exam_findings:
+      physical_friction_rub or physical_paradoxus
+      
+// biopsy evidence
+define biopsy_inflammation:
+    exists (valid_observations O
+     where exists (O.code.coding C where C.code in inflammatory_pericardial_biopsy.codes.code)
+     )
+     
+// imaging evidence
+define imaging_fluid_inflammation:
+    exists (valid_observations O
+     where exists (O.code.coding C where C.code in abnormal_imaging_findings.codes.code)
+     )
+
+// ecg evidence
+
+define ecg_diffuse_st_elevation:
+    exists (valid_observations O
+     where exists (O.code.coding C where C.code in diffuse_st_elevation.codes.code)
+     )
+define ecg_st_depression:
+    exists (valid_observations O
+     where exists (O.code.coding C where C.code in st_depression.codes.code)
+     )
+define ecg_pr_depression:
+    exists (valid_observations O
+     where exists (O.code.coding C where C.code in pr_depression.codes.code)
+     )
+define abnormal_EKG:
+    ecg_diffuse_st_elevation or ecg_st_depression or ecg_pr_depression
+
+
+// Make final determinations
+
+define level1_count:
+    (if has_physical_exam_findings then 1 else 0) + (if abnormal_EKG then 1 else 0) + (if imaging_fluid_inflammation then 1 else 0)
+
+define exposure_determination:
+  Length(exposure) > 0
+
+define outcome_level1_determination:
+    if (
+      (biopsy_inflammation)
+      or (
+        (level1_count >= 2)
+      )
+    ) then true
+    else false
+
+define outcome_level2_determination:
+    if (
+    (has_cardiac_symptom) and
+    (
+    (has_physical_exam_findings) or
+    (abnormal_EKG) or
+    (imaging_fluid_inflammation)
+    )
+    ) then true
+    else false
+
+define "outcome_determination":
+  if "outcome_level1_determination" then 'Definitive'
+  else if "outcome_level2_determination" then 'Probable'
+  else 'Possible (Insuff.evidence)'
+  
+define "InPopulation":
+    if (
+        data_observability
+        and exposure_determination
+        and no_prior_pericarditis
+        and no_excluded_pericarditis_in_evidence_window
+        and (outcome_level1_determination or outcome_level2_determination)
+        ) then true
+        else false

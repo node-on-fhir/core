@@ -1,0 +1,526 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MCCI_IN200100UV01 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="urn:hl7-org:v3 ../multicacheschemas/MCCI_IN200100UV01.xsd" xmlns="urn:hl7-org:v3" xmlns:mif="urn:hl7-org:v3/mif" ITSVersion="XML_1.0">
+    <!-- BATCH IDENTIFIER -->
+    <!-- BATCH TRANSMISSION DATE - CCYYMMDDHHMMSS.mmm -->
+    <id extension="BATCH20210105142444-0500533f2636-a404-13c5-10e3-7d293893227a" root="2.16.840.1.113883.3.989.2.1.3.22"/>
+    <creationTime value="20210105142444-0500"/>
+    <responseModeCode code="D"/>
+    <interactionId extension="MCCI_IN200100UV01" root="2.16.840.1.113883.1.6"/>
+    <name code="1" displayName="ichicsr" codeSystem="2.16.840.1.113883.3.989.2.1.1.1"/>
+    <PORR_IN049016UV>
+        <!-- MESSAGE IDENTIFIER -->
+        <!-- MESSAGE CREATION DATE - CCYYMMDDhhmmss-0000 -->
+        <id extension="US-IBM-e380bc14-2a03-7b64-c3f5-22daea2aa495" root="2.16.840.1.113883.3.989.2.1.3.1"/>
+        <creationTime value="20210105142444-0000"/>
+        <interactionId extension="MCCI_IN200100UV01" root="2.16.840.1.113883.1.6"/>
+        <processingCode code="P"/>
+        <processingModeCode code="T"/>
+        <acceptAckCode code="AL"/>
+        <receiver typeCode="RCV">
+            <device classCode="DEV" determinerCode="INSTANCE">
+                <!-- MESSAGE RECEIVER IDENTIFIER -->
+                <id extension="CBERVAERS" root="2.16.840.1.113883.3.989.2.1.3.12"/>
+            </device>
+        </receiver>
+        <sender typeCode="SND">
+            <device classCode="DEV" determinerCode="INSTANCE">
+                <!-- MESSAGE SENDER IDENTIFIER -->
+                <id extension="SENDER-IDENTIFIER" root="2.16.840.1.113883.3.989.2.1.3.11"/>
+            </device>
+        </sender>
+        <controlActProcess moodCode="EVN" classCode="CACT">
+            <code code="PORR_TE049016UV" codeSystem="2.16.840.1.113883.1.18"/>
+            <!-- REPORT CREATE DATE - CCYYMMDDHHMMSS-0000 -->
+            <effectiveTime value="20210105142444-0000"/>
+            <subject typeCode="SUBJ">
+                <investigationEvent classCode="INVSTG" moodCode="EVN">
+                    <!-- SENDER CASE REPORT UNIQUE IDENTIFIER -->
+                    <!-- REGULATORY AUTHORITY or OTHER SENDER CASE REPORT NUMBER -->
+                    <!-- CASE NARRATIVE SUMMARY -->
+                    <!-- DATE REPORT WAS FIRST RECEIVED FROM SOURCE -->
+                    <!-- DATE OF MOST RECENT INFORMATION FOR THIS REPORT -->
+                    <!-- ARE ADDITIONAL DOCUMENTS AVAILABLE -->
+                    <!-- DOES CASE FULFILL LOCAL CRITERIA FOR EXPEDITED REPORT -->
+                    <!-- IS THIS A COMBINATION PRODUCT REPORT -->
+                    <!-- LOCAL CRITERIA REPORT TYPE -->
+                    <!-- FIRST SENDER OF THIS CASE -->
+                    <!-- REPORTER INFORMATION -->
+                    <!-- SENDER INFORMATION -->
+                    <!-- REPORT TYPE -->
+                    <id extension="US-IBM-e380bc14-2a03-7b64-c3f5-22daea2aa495" root="2.16.840.1.113883.3.989.2.1.3.1"/>
+                    <id extension="US-IBM-e380bc14-2a03-7b64-c3f5-22daea2aa495" root="2.16.840.1.113883.3.989.2.1.3.2"/>
+                    <code code="PAT_ADV_EVNT" codeSystem="2.16.840.1.113883.5.4"/>
+                    <text>Header: FDA CBER BEST Automated AE Reporting Prototype Case
+BEST Detection Phenotype Algorithm: sharepoint link
+BEST Certainty: Definite
+BEST Severity: Non-Severe
+BEST Causality: Probable
+Onset location for reaction:
+Preliminary investigation results: Developed acute facial nerve paralysis after ED administration of influenza vaccine;
+Reaction Type: vax_bells_palsy;
+Illness at Time of Vaccination: 
+	1. illness, Problem, Chronic systolic (congestive) heart failure, Date 20170430;
+Notes: 
+	1. notes, Progress Note - Nurse, Patient Care Documentation, Progress Note : Patient suffered  face weakness  from unknown cause. Patient had idiopathic facial nerve palsy and showed rapid progression. Palsy improved  lot facial paralysis identified., Date 20170423;</text>
+                    <statusCode code="active"/>
+                    <effectiveTime>
+                        <low value="20210105"/>
+                    </effectiveTime>
+                    <availabilityTime value="20210105"/>
+                    <component typeCode="COMP">
+                        <adverseEventAssessment classCode="INVSTG" moodCode="EVN">
+                            <subject1 typeCode="SBJ">
+                                <primaryRole classCode="INVSBJ">
+                                    <player1 classCode="PSN" determinerCode="INSTANCE">
+                                        <name>
+                                            <!-- PATIENT FIRST NAME -->
+                                            <!-- PATIENT LAST NAME -->
+                                            <given>FNAME</given>
+                                            <family>LNAME</family>
+                                        </name>
+                                        <!-- PATIENT TELEPHONE -->
+                                        <!-- PATIENT EMAIL -->
+                                        <!-- PATIENT DATE OF BIRTH -->
+                                        <telecom nullFlavor="NASK" value="tel"/>
+                                        <telecom nullFlavor="NASK" value="mailto"/>
+                                        <administrativeGenderCode code="1" displayName="Male" codeSystem="1.0.5218"/>
+                                        <birthTime value="19550722"/>
+                                        <addr>
+                                            <!-- PATIENT STREET ADDRESS -->
+                                            <!-- PATIENT CITY -->
+                                            <!-- PATIENT STATE -->
+                                            <!-- PATIENT COUNTY -->
+                                            <!-- PATIENT POSTAL CODE -->
+                                            <!-- PATIENT COUNTRY -->
+                                            <streetAddressLine nullFlavor="NASK"/>
+                                            <city nullFlavor="NASK"/>
+                                            <state nullFlavor="NASK"/>
+                                            <county nullFlavor="NASK"/>
+                                            <postalCode nullFlavor="NASK"/>
+                                            <country nullFlavor="NASK"/>
+                                        </addr>
+                                    </player1>
+                                    <subjectOf2 typeCode="SBJ">
+                                        <observation classCode="OBS" moodCode="EVN">
+                                            <code code="C17049" displayName="Race" codeSystem="2.16.840.1.113883.3.26.1.1"/>
+                                            <!-- PATIENT RACE -->
+                                            <value nullFlavor="UNK" xsi:type="CE"/>
+                                        </observation>
+                                    </subjectOf2>
+                                    <subjectOf2 typeCode="SBJ">
+                                        <observation classCode="OBS" moodCode="EVN">
+                                            <code code="C16564" displayName="Ethnic Group" codeSystem="2.16.840.1.113883.3.26.1.1"/>
+                                            <!-- PATIENT ETHNICITY -->
+                                            <value nullFlavor="UNK" xsi:type="CE"/>
+                                        </observation>
+                                    </subjectOf2>
+                                    <subjectOf2 typeCode="SBJ">
+                                        <organizer classCode="CATEGORY" moodCode="EVN">
+                                            <code code="1" codeSystem="2.16.840.1.113883.3.989.2.1.1.20" displayName="relevantMedicalHistoryAndConcurrentConditions"/>
+                                            <component typeCode="COMP">
+                                                <observation classCode="OBS" moodCode="EVN">
+                                                    <code code="18" displayName="historyAndConcurrentConditionText" codeSystem="2.16.840.1.113883.3.989.2.1.1.19"/>
+                                                    <!-- RELEVANT MEDICAL HISTORY -->
+                                                    <value xsi:type="ED">Long term (current) use of anticoagulants</value>
+                                                </observation>
+                                            </component>
+                                        </organizer>
+                                    </subjectOf2>
+                                    <subjectOf2 typeCode="SBJ">
+                                        <observation moodCode="EVN" classCode="OBS">
+                                            <!-- Used to reference this reaction in other places in the submission -->
+                                            <!-- REACTION START DATE -->
+                                            <!-- MedDRA REACTION/EVENT and VERSION -->
+                                            <!-- VARIOUS SERIOUSNESS CRITERIA -->
+                                            <!-- OUTCOME OF REACTION/EVENT AT TIME OF LAST OBSERVATION -->
+                                            <id root="16a4ea30-f675-1ce2-a30a-362a4ccde219"/>
+                                            <code code="29" codeSystem="2.16.840.1.113883.3.989.2.1.1.19" displayName="reaction"/>
+                                            <effectiveTime xsi:type="IVL_TS">
+                                                <low value="20170423"/>
+                                                <!-- B.2.i.3 Date of Start of Reaction / Event -->
+                                            </effectiveTime>
+                                            <value xsi:type="CE" code="10004223" codeSystem="2.16.840.1.113883.6.163" codeSystemVersion="23.0"/>
+                                            <outboundRelationship2 typeCode="PERT">
+                                                <observation classCode="OBS" moodCode="EVN">
+                                                    <code code="34" codeSystem="2.16.840.1.113883.3.989.2.1.1.19" displayName="resultsInDeath"/>
+                                                    <value nullFlavor="NI" xsi:type="BL"/>
+                                                    <!-- Results in Death-->
+                                                </observation>
+                                            </outboundRelationship2>
+                                            <outboundRelationship2 typeCode="PERT">
+                                                <observation classCode="OBS" moodCode="EVN">
+                                                    <code code="21" codeSystem="2.16.840.1.113883.3.989.2.1.1.19" displayName="isLifeThreatening"/>
+                                                    <value nullFlavor="NI" xsi:type="BL"/>
+                                                    <!-- Life Threatening -->
+                                                </observation>
+                                            </outboundRelationship2>
+                                            <outboundRelationship2 typeCode="PERT">
+                                                <observation classCode="OBS" moodCode="EVN">
+                                                    <code code="33" codeSystem="2.16.840.1.113883.3.989.2.1.1.19" displayName="requiresInpatientHospitalization"/>
+                                                    <value nullFlavor="NI" xsi:type="BL"/>
+                                                    <!-- Caused / Prolonged Hospitalisation -->
+                                                </observation>
+                                            </outboundRelationship2>
+                                            <outboundRelationship2 typeCode="PERT">
+                                                <observation classCode="OBS" moodCode="EVN">
+                                                    <code code="35" codeSystem="2.16.840.1.113883.3.989.2.1.1.19" displayName="resultsInPersistentOrSignificantDisability"/>
+                                                    <value nullFlavor="NI" xsi:type="BL"/>
+                                                    <!--  Disabling / Incapacitating-->
+                                                </observation>
+                                            </outboundRelationship2>
+                                            <outboundRelationship2 typeCode="PERT">
+                                                <observation classCode="OBS" moodCode="EVN">
+                                                    <code code="12" codeSystem="2.16.840.1.113883.3.989.2.1.1.19" displayName="congenitalAnomalyBirthDefect"/>
+                                                    <value nullFlavor="NI" xsi:type="BL"/>
+                                                    <!-- Congenital Anomaly / Birth Defect -->
+                                                </observation>
+                                            </outboundRelationship2>
+                                            <outboundRelationship2 typeCode="PERT">
+                                                <observation classCode="OBS" moodCode="EVN">
+                                                    <code code="26" codeSystem="2.16.840.1.113883.3.989.2.1.1.19" displayName="otherMedicallyImportantCondition"/>
+                                                    <value xsi:type="BL" value="true"/>
+                                                    <!-- Other Medically Important Condition -->
+                                                </observation>
+                                            </outboundRelationship2>
+                                            <outboundRelationship2 typeCode="PERT">
+                                                <observation classCode="OBS" moodCode="EVN">
+                                                    <code code="C53513" codeSystem="2.16.840.1.113883.3.26.1.1" displayName="Emergency Room"/>
+                                                    <value nullFlavor="NI" xsi:type="BL"/>
+                                                    <!-- Required visit to the emergency room  -->
+                                                </observation>
+                                            </outboundRelationship2>
+                                            <outboundRelationship2 typeCode="PERT">
+                                                <observation classCode="OBS" moodCode="EVN">
+                                                    <code code="C16988" codeSystem="2.16.840.1.113883.3.26.1.1" displayName="Physician Office"/>
+                                                    <value nullFlavor="NI" xsi:type="BL"/>
+                                                    <!-- Required visit to the Physician Office  -->
+                                                </observation>
+                                            </outboundRelationship2>
+                                            <outboundRelationship2 typeCode="PERT">
+                                                <observation classCode="OBS" moodCode="EVN">
+                                                    <code code="C17649" codeSystem="2.16.840.1.113883.3.26.1.1" displayName="Other"/>
+                                                    <value nullFlavor="NI" xsi:type="BL"/>
+                                                    <!-- VAERSNone of the above -->
+                                                </observation>
+                                            </outboundRelationship2>
+                                            <outboundRelationship2 typeCode="PERT">
+                                                <observation classCode="OBS" moodCode="EVN">
+                                                    <code code="27" codeSystem="2.16.840.1.113883.3.989.2.1.1.19" displayName="outcome"/>
+                                                    <value xsi:type="CE" code="2" displayName="Recovering/Resolving" codeSystem="2.16.840.1.113883.3.989.2.1.1.11"/>
+                                                    <!-- B.2.i.6: Outcome of Reaction / Event at the Time of Last Observation [1]recovered/resolved [2]recovering/resolving [3]not recovered/not resolved/ongoing 
+                          [4]recovered/resolved with sequelae [5]fatal [6]unknown -->
+                                                </observation>
+                                            </outboundRelationship2>
+                                        </observation>
+                                    </subjectOf2>
+                                    <subjectOf2 typeCode="SBJ">
+                                        <organizer>
+                                            <code code="4" codeSystem="2.16.840.1.113883.3.989.2.1.1.20" displayName="drugInformation"/>
+                                            <component typeCode="COMP">
+                                                <substanceAdministration moodCode="EVN" classCode="SBADM">
+                                                    <!-- Used to reference this drug administration in other places in the submission -->
+                                                    <!-- VACCINATION MILITARY FLAG -->
+                                                    <id root="8d36c8a1-1ad3-a6b4-6ef9-d52bd3c33749"/>
+                                                    <consumable>
+                                                        <instanceOfKind classCode="INST">
+                                                            <kindOfProduct classCode="MMAT" determinerCode="KIND">
+                                                                <!-- MEDICINAL PRODUCT NUMBER AND VERSION-->
+                                                                <!-- MEDICINAL PRODUCT NAME -->
+                                                                <code code="197782" codeSystem="2.16.840.1.113883.6.88"/>
+                                                                <name>hydrocortisone</name>
+                                                            </kindOfProduct>
+                                                        </instanceOfKind>
+                                                    </consumable>
+                                                    <outboundRelationship2 typeCode="COMP">
+                                                        <substanceAdministration classCode="SBADM" moodCode="EVN">
+                                                            <performer typeCode="PRF">
+                                                                <assignedEntity classCode="ASSIGNED">
+                                                                    <!-- VACCINATION FACILITY TYPE -->
+                                                                    <code code="C16696" displayName="C16696" codeSystem="2.16.840.1.113883.3.26.1.1"/>
+                                                                    <representedOrganization classCode="ORG" determinerCode="INSTANCE">
+                                                                        <!-- VACCINATION FACILITY NAME -->
+                                                                        <!-- VACCINATION TELEPHONE / FAX / EMAIL -->
+                                                                        <!-- VACCINATION FACILITY ADDRESS -->
+                                                                        <name nullFlavor="NI"/>
+                                                                        <telecom nullFlavor="NI" value="tel"/>
+                                                                        <telecom nullFlavor="NI" value="fax"/>
+                                                                        <telecom nullFlavor="NI" value="mailto"/>
+                                                                        <addr>
+                                                                            <streetAddressLine nullFlavor="NI"/>
+                                                                            <city nullFlavor="NI"/>
+                                                                            <state nullFlavor="NI"/>
+                                                                            <postalCode nullFlavor="NI"/>
+                                                                            <country nullFlavor="NI"/>
+                                                                        </addr>
+                                                                    </representedOrganization>
+                                                                </assignedEntity>
+                                                            </performer>
+                                                        </substanceAdministration>
+                                                    </outboundRelationship2>
+                                                    <inboundRelationship typeCode="REFR">
+                                                        <observation classCode="OBS" moodCode="EVN">
+                                                            <code code="C114865" displayName="Vaccination at Military Site" codeSystem="2.16.840.1.113883.3.26.1.1"/>
+                                                            <value nullFlavor="NI" xsi:type="BL"/>
+                                                        </observation>
+                                                    </inboundRelationship>
+                                                </substanceAdministration>
+                                            </component>
+                                        </organizer>
+                                    </subjectOf2>
+                                    <subjectOf2 typeCode="SBJ">
+                                        <organizer>
+                                            <code code="4" codeSystem="2.16.840.1.113883.3.989.2.1.1.20" displayName="drugInformation"/>
+                                            <component typeCode="COMP">
+                                                <substanceAdministration moodCode="EVN" classCode="SBADM">
+                                                    <!-- Used to reference this drug administration in other places in the submission -->
+                                                    <!-- VACCINATION MILITARY FLAG -->
+                                                    <id root="e69f88fa-1ae1-78fe-49f3-59ea57a85175"/>
+                                                    <consumable>
+                                                        <instanceOfKind classCode="INST">
+                                                            <kindOfProduct classCode="MMAT" determinerCode="KIND">
+                                                                <!-- MEDICINAL PRODUCT NUMBER AND VERSION-->
+                                                                <!-- MEDICINAL PRODUCT NAME -->
+                                                                <code code="70461-019-03" codeSystem="2.16.840.1.113883.6.69" codeSystemVersion="20210105142444"/>
+                                                                <name>influenza virus vaccine, inactivated</name>
+                                                            </kindOfProduct>
+                                                        </instanceOfKind>
+                                                    </consumable>
+                                                    <outboundRelationship2 typeCode="COMP">
+                                                        <substanceAdministration classCode="SBADM" moodCode="EVN">
+                                                            <performer typeCode="PRF">
+                                                                <assignedEntity classCode="ASSIGNED">
+                                                                    <!-- VACCINATION FACILITY TYPE -->
+                                                                    <code code="C16696" displayName="C16696" codeSystem="2.16.840.1.113883.3.26.1.1"/>
+                                                                    <representedOrganization classCode="ORG" determinerCode="INSTANCE">
+                                                                        <!-- VACCINATION FACILITY NAME -->
+                                                                        <!-- VACCINATION TELEPHONE / FAX / EMAIL -->
+                                                                        <!-- VACCINATION FACILITY ADDRESS -->
+                                                                        <name nullFlavor="NI"/>
+                                                                        <telecom nullFlavor="NI" value="tel"/>
+                                                                        <telecom nullFlavor="NI" value="fax"/>
+                                                                        <telecom nullFlavor="NI" value="mailto"/>
+                                                                        <addr>
+                                                                            <streetAddressLine nullFlavor="NI"/>
+                                                                            <city nullFlavor="NI"/>
+                                                                            <state nullFlavor="NI"/>
+                                                                            <postalCode nullFlavor="NI"/>
+                                                                            <country nullFlavor="NI"/>
+                                                                        </addr>
+                                                                    </representedOrganization>
+                                                                </assignedEntity>
+                                                            </performer>
+                                                        </substanceAdministration>
+                                                    </outboundRelationship2>
+                                                    <inboundRelationship typeCode="REFR">
+                                                        <observation classCode="OBS" moodCode="EVN">
+                                                            <code code="C114865" displayName="Vaccination at Military Site" codeSystem="2.16.840.1.113883.3.26.1.1"/>
+                                                            <value nullFlavor="NI" xsi:type="BL"/>
+                                                        </observation>
+                                                    </inboundRelationship>
+                                                </substanceAdministration>
+                                            </component>
+                                        </organizer>
+                                    </subjectOf2>
+                                </primaryRole>
+                            </subject1>
+                            <component typeCode="COMP">
+                                <causalityAssessment classCode="OBS" moodCode="EVN">
+                                    <code code="20" codeSystem="2.16.840.1.113883.3.989.2.1.1.19"/>
+                                    <!-- CHARACTERIZATION OF DRUG ROLE - Uses the internal id of the drug administration -->
+                                    <!-- B.4.k.1: Characterisation of Drug Role [1]Suspect [2]Concomitant [3]Interacting [4]Drug Not Administered -->
+                                    <value xsi:type="CE" code="2" codeSystem="2.16.840.1.113883.3.989.2.1.1.13"/>
+                                    <subject2 typeCode="SUBJ">
+                                        <productUseReference classCode="ACT" moodCode="EVN">
+                                            <!-- LINKS TO THE DRUG ADMINISTRATION REFERENCE ABOVE -->
+                                            <id root="8d36c8a1-1ad3-a6b4-6ef9-d52bd3c33749"/>
+                                        </productUseReference>
+                                    </subject2>
+                                </causalityAssessment>
+                            </component>
+                            <component typeCode="COMP">
+                                <causalityAssessment classCode="OBS" moodCode="EVN">
+                                    <code code="20" codeSystem="2.16.840.1.113883.3.989.2.1.1.19"/>
+                                    <!-- CHARACTERIZATION OF DRUG ROLE - Uses the internal id of the drug administration -->
+                                    <!-- B.4.k.1: Characterisation of Drug Role [1]Suspect [2]Concomitant [3]Interacting [4]Drug Not Administered -->
+                                    <value xsi:type="CE" code="1" codeSystem="2.16.840.1.113883.3.989.2.1.1.13"/>
+                                    <subject2 typeCode="SUBJ">
+                                        <productUseReference classCode="ACT" moodCode="EVN">
+                                            <!-- LINKS TO THE DRUG ADMINISTRATION REFERENCE ABOVE -->
+                                            <id root="e69f88fa-1ae1-78fe-49f3-59ea57a85175"/>
+                                        </productUseReference>
+                                    </subject2>
+                                </causalityAssessment>
+                            </component>
+                        </adverseEventAssessment>
+                    </component>
+                    <component typeCode="COMP">
+                        <observationEvent classCode="OBS" moodCode="EVN">
+                            <code code="1" codeSystem="2.16.840.1.113883.3.989.2.1.1.19" displayName="additionalDocumentsAvailable"/>
+                            <value xsi:type="BL" value="false"/>
+                        </observationEvent>
+                    </component>
+                    <component typeCode="COMP">
+                        <observationEvent classCode="OBS" moodCode="EVN">
+                            <code code="23" codeSystem="2.16.840.1.113883.3.989.2.1.1.19" displayName="localCriteriaForExpedited"/>
+                            <value xsi:type="BL" value="false"/>
+                        </observationEvent>
+                    </component>
+                    <component typeCode="COMP">
+                        <observationEvent classCode="OBS" moodCode="EVN">
+                            <code code="C156384" codeSystem="2.16.840.1.113883.3.26.1.1" displayName="Combination Product Report Indicator"/>
+                            <value xsi:type="BL" value="false"/>
+                        </observationEvent>
+                    </component>
+                    <component typeCode="COMP">
+                        <observationEvent classCode="OBS" moodCode="EVN">
+                            <code code="C54588" codeSystem="2.16.840.1.113883.3.26.1.1"/>
+                            <value xsi:type="CE" code="2" codeSystem="2.16.840.1.113883.3.989.2.1.1.1003" displayName="Non-Expedited AE"/>
+                        </observationEvent>
+                    </component>
+                    <outboundRelationship typeCode="SPRT">
+                        <relatedInvestigation classCode="INVSTG" moodCode="EVN">
+                            <code code="1" codeSystem="2.16.840.1.113883.3.989.2.1.1.22" displayName="initialReport"/>
+                            <subjectOf2 typeCode="SUBJ">
+                                <controlActEvent classCode="CACT" moodCode="EVN">
+                                    <author typeCode="AUT">
+                                        <assignedEntity classCode="ASSIGNED">
+                                            <code code="1" displayName="regulator" codeSystem="2.16.840.1.113883.3.989.2.1.1.3"/>
+                                            <!-- A.1.10.2: First Sender of this Case [1]:Regulator [2]:Other -->
+                                        </assignedEntity>
+                                    </author>
+                                </controlActEvent>
+                            </subjectOf2>
+                        </relatedInvestigation>
+                    </outboundRelationship>
+                    <outboundRelationship typeCode="SPRT">
+                        <priorityNumber value="1"/>
+                        <!-- Indicates that this is the primary source -->
+                        <relatedInvestigation classCode="INVSTG" moodCode="EVN">
+                            <code code="2" codeSystem="2.16.840.1.113883.3.989.2.1.1.22" displayName="sourceReport"/>
+                            <subjectOf2 typeCode="SUBJ">
+                                <controlActEvent classCode="CACT" moodCode="EVN">
+                                    <author typeCode="AUT">
+                                        <assignedEntity classCode="ASSIGNED">
+                                            <addr>
+                                                <streetAddressLine>666 jkl</streetAddressLine>
+                                                <!-- A.2.r.1.2c: Reporter's Address and Telephone (Reporter street) -->
+                                                <!-- A.2.r.1.2d: Reporter's Address and Telpehone (Reporter city) -->
+                                                <!-- A.2.r.1.2e:  Reporter's Address and Telephone (Reporter state or province) -->
+                                                <!-- A.2.r.1.2f:  Reporter's Address and Telephone (Reporter postcode) -->
+                                                <city>Arlington</city>
+                                                <state>TN</state>
+                                                <county nullFlavor="NASK"/>
+                                                <postalCode>222222</postalCode>
+                                            </addr>
+                                            <telecom value="tel:3333333333"/>
+                                            <telecom value="mailto:admin@admin.com"/>
+                                            <!-- A.2.r.1.2g Reporter's Address and Telephone (Telephone) -->
+                                            <!-- A.2.r.1.2h Reporter's Address and Telephone (Email) -->
+                                            <assignedPerson classCode="PSN" determinerCode="INSTANCE">
+                                                <name>
+                                                    <given>asdhj</given>
+                                                    <!-- A.2.r.1.1b: Reporter Identifier (Reporter given name) -->
+                                                    <!-- A.2.r.1.1d: Reporter Identifier (Reporter family name) -->
+                                                    <family>Admin</family>
+                                                </name>
+                                                <asQualifiedEntity classCode="QUAL">
+                                                    <code codeSystem="2.16.840.1.113883.3.989.2.1.1.6" code="1"/>
+                                                    <!-- A.2.r.1.4: Qualification [1] Physician [2]Pharmacist -->
+                                                </asQualifiedEntity>
+                                                <asLocatedEntity classCode="LOCE">
+                                                    <location determinerCode="INSTANCE" classCode="COUNTRY">
+                                                        <code code="US" codeSystem="1.0.3166.1.2.2" displayName="United States"/>
+                                                        <!-- A.2.r.1.3: Country (Reporter country code) -->
+                                                    </location>
+                                                </asLocatedEntity>
+                                            </assignedPerson>
+                                        </assignedEntity>
+                                    </author>
+                                </controlActEvent>
+                            </subjectOf2>
+                        </relatedInvestigation>
+                    </outboundRelationship>
+                    <subjectOf1 typeCode="SUBJ">
+                        <controlActEvent classCode="CACT" moodCode="EVN">
+                            <author typeCode="AUT">
+                                <assignedEntity classCode="ASSIGNED">
+                                    <code code="1" codeSystem="2.16.840.1.113883.3.989.2.1.1.7"/>
+                                    <!-- A.3.1: Sender Type [1] Pharmaceutical Company [2]Regulatory Authority [3]Health Professional [4] Regional Pharmacovigilance Center
+                 [5] WHO collaborating center for international drug monitoring [6] Other [7] Patient / Consumer -->
+                                    <!-- A.3.4f: Sender's Telephone -->
+                                    <!-- A.3.4i: Sender's Fax -->
+                                    <!-- A.3.4l : Sender's E-mail Address -->
+                                    <!-- A.3.4.f,i,l Sender's address, fax, telephone and E-mail address -->
+                                    <addr>
+                                        <streetAddressLine>street</streetAddressLine>
+                                        <!-- A.3.4a: Sender's Street Address -->
+                                        <!-- A.3.4b: Sender's City -->
+                                        <!-- A.3.4c: Sender's State or Province -->
+                                        <!-- A.3.4d: Sender's Postcode -->
+                                        <city>city</city>
+                                        <state>CA</state>
+                                        <postalCode>postcode</postalCode>
+                                    </addr>
+                                    <telecom value="tel:+01 123 456 78"/>
+                                    <telecom value="fax:+01 123 456 89"/>
+                                    <telecom value="mailto:email@city.us"/>
+                                    <assignedPerson classCode="PSN" determinerCode="INSTANCE">
+                                        <name>
+                                            <prefix>sender title</prefix>
+                                            <!-- A.3.3b: Sender's Title -->
+                                            <!-- A.3.3c: Sender's Given Name -->
+                                            <!-- A.3.3e: Sender's Family Name -->
+                                            <given>sender gname</given>
+                                            <family>sender fname</family>
+                                        </name>
+                                        <asLocatedEntity classCode="LOCE">
+                                            <location classCode="COUNTRY" determinerCode="INSTANCE">
+                                                <code code="US" codeSystem="1.0.3166.1.2.2"/>
+                                                <!-- A.3.4e: Sender's Country Code -->
+                                            </location>
+                                        </asLocatedEntity>
+                                    </assignedPerson>
+                                    <representedOrganization classCode="ORG" determinerCode="INSTANCE">
+                                        <name>sender department</name>
+                                        <!-- A.3.3a: Sender's Department -->
+                                        <assignedEntity classCode="ASSIGNED">
+                                            <representedOrganization classCode="ORG" determinerCode="INSTANCE">
+                                                <name>sender organisation</name>
+                                                <!-- A.3.2: Sender's Organization -->
+                                            </representedOrganization>
+                                        </assignedEntity>
+                                    </representedOrganization>
+                                </assignedEntity>
+                            </author>
+                        </controlActEvent>
+                    </subjectOf1>
+                    <subjectOf2 typeCode="SUBJ">
+                        <investigationCharacteristic classCode="OBS" moodCode="EVN">
+                            <code code="1" codeSystem="2.16.840.1.113883.3.989.2.1.1.23" displayName="ICH ReportType"/>
+                            <!-- [1] Spontaneous report [2] Report from study [3] Other [4] Not available to sender (unknown) -->
+                            <value xsi:type="CE" code="1" displayName="Spontaneous report" codeSystem="2.16.840.1.113883.3.989.2.1.1.2"/>
+                        </investigationCharacteristic>
+                    </subjectOf2>
+                    <subjectOf2 typeCode="SUBJ">
+                        <investigationCharacteristic classCode="OBS" moodCode="EVN">
+                            <code code="2" codeSystem="2.16.840.1.113883.3.989.2.1.1.23" displayName="otherCaseIds"/>
+                            <value xsi:type="BL" nullFlavor="NI"/>
+                        </investigationCharacteristic>
+                    </subjectOf2>
+                </investigationEvent>
+            </subject>
+        </controlActProcess>
+    </PORR_IN049016UV>
+    <receiver typeCode="RCV">
+        <device classCode="DEV" determinerCode="INSTANCE">
+            <!-- BATCH RECEIVER IDENTIFIER -->
+            <id extension="CBERVAERS" root="2.16.840.1.113883.3.989.2.1.3.14"/>
+        </device>
+    </receiver>
+    <sender typeCode="SND">
+        <device classCode="DEV" determinerCode="INSTANCE">
+            <!-- BATCH SENDER IDENTIFIER -->
+            <id extension="SENDER-IDENTIFIER" root="2.16.840.1.113883.3.989.2.1.3.13"/>
+        </device>
+    </sender>
+</MCCI_IN200100UV01>

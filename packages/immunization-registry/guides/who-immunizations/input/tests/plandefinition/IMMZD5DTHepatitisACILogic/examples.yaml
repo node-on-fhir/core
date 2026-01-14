@@ -1,0 +1,75 @@
+---
+#0. The client is currently pregnant
+#   "Potential contraindications" = "Currently pregnant"
+### Live attentuated Hepatitis A-containing vaccine is contraindicated
+### "Immunization recommendation status" = "Contraindicated" (where "Type of hepatitis A dose" = "Live attenuated hepatitis A vaccine")
+id: "39.0"
+birth: -25y
+patient:
+  fhir:
+    gender: female
+contraindication:
+    currentlypregnant:
+      code: DE162
+      display: "Currently pregnant"
+      effectiveDateTime: -1d
+medicationrequest:
+  hepatitisa:
+    medication:
+      code: XM03Y7
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Combinations hepatitis vaccines"
+    fhir:
+      authoredOn: 0d
+      status: draft
+      intent: proposal
+---
+#0. The client is severely immunocompromised
+#   "Potential contraindications" = "Severely immunocompromised"
+### Live attentuated Hepatitis A-containing vaccine is contraindicated
+### "Immunization recommendation status" = "Contraindicated" (where "Type of hepatitis A dose" = "Live attenuated hepatitis A vaccine")
+id: "40.0"
+birth: -2y
+patient:
+  fhir:
+    gender: female
+contraindication:
+    severelyimmunocompromised:
+      code: DE200
+      display: "Severely immunocompromised"
+      effectiveDateTime: -1d
+medicationrequest:
+  hepatitisa:
+    medication:
+      code: XM03Y7
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Combinations hepatitis vaccines"
+    fhir:
+      authoredOn: 0d
+      status: draft
+      intent: proposal
+---
+#0. The client has a history of severe allergic reactions
+#   '"Potential contraindications" = "Severe allergic reactions"
+### Hepatitis A vaccination could be contraindicated. Clinical judgement is required. Create a clinical note
+### "Immunization recommendation status" = "Further evaluation needed"
+id: "41.0"
+birth: -2y
+patient:
+  fhir:
+    gender: female
+contraindication:
+    severeallergicreactions:
+      code: DE167
+      display: "Severe allergic reactions"
+      effectiveDateTime: -1d
+medicationrequest:
+  hepatitisa:
+    medication:
+      code: XM03Y7
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Combinations hepatitis vaccines"
+    fhir:
+      authoredOn: 0d
+      status: draft
+      intent: proposal

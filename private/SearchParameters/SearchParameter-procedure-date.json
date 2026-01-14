@@ -1,0 +1,18 @@
+{
+  "resourceType": "SearchParameter",
+  "id": "procedure-date",
+  "url": "http://hl7.org/fhir/SearchParameter/Procedure-date",
+  "version": "4.0.1",
+  "name": "HoneycombProcedureDate",
+  "status": "active",
+  "date": "2024-12-17",
+  "description": "When the procedure was performed",
+  "code": "date",
+  "base": ["Procedure"],
+  "type": "date",
+  "expression": "Procedure.performedDateTime",
+  "xpath": "performedDateTime",
+  "multipleOr": true,
+  "multipleAnd": true,
+  "comparator": ["eq", "ne", "gt", "lt", "ge", "le", "sa", "eb", "ap"]
+}

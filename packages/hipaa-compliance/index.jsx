@@ -7,26 +7,29 @@ import { get } from 'lodash';
 import { Meteor } from 'meteor/meteor';
 
 // Import components
-import AuditLogPage from './client/AuditLogPage';
-import PolicyMenuPage from './client/PolicyMenuPage';
-import PolicyPage from './client/PolicyPage';
+import AuditLogPage from './client/AuditLogPage.jsx';
+import PolicyMenuPage from './client/PolicyMenuPage.jsx';
+import PolicyPage from './client/PolicyPage.jsx';
 
 // Dynamic route injection for Honeycomb
 let DynamicRoutes = [{
   name: 'HipaaAuditLog',
   path: '/hipaa/audit-log',
   element: <AuditLogPage />,
-  requireAuth: true
+  requireAuth: true,
+  description: 'HIPAA Audit Log - ONC §170.315(d)(2), §170.315(d)(3), §170.315(d)(10)'
 }, {
   name: 'HipaaPolicyMenu',
   path: '/hipaa/policies',
   element: <PolicyMenuPage />,
-  requireAuth: false
+  requireAuth: false,
+  description: 'HIPAA Compliance Policies and Documentation'
 }, {
   name: 'HipaaPolicy',
   path: '/hipaa/policies/:policyId',
   element: <PolicyPage />,
-  requireAuth: false
+  requireAuth: false,
+  description: 'Individual HIPAA Policy Details'
 }];
 
 // Admin routes

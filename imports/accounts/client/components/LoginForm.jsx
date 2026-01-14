@@ -17,7 +17,12 @@ import {
 import { logger } from '../../lib/AccountsLogger';
 import { useDevAutoLogin } from '../hooks/useDevAutoLogin';
 
-export function LoginForm({ onSuccess, onSignupClick, onForgotPasswordClick }) {
+export function LoginForm({ onSuccess, onSignupClick, onForgotPasswordClick, isDark = false }) {
+  // Theme-aware colors
+  const cardBgColor = isDark ? '#2a2a2a' : '#ffffff';
+  const cardTextColor = isDark ? 'rgba(255, 255, 255, 0.87)' : 'rgba(0, 0, 0, 0.87)';
+  const inputBorderColor = isDark ? 'rgba(255, 255, 255, 0.23)' : 'rgba(0, 0, 0, 0.23)';
+
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -254,25 +259,35 @@ export function LoginForm({ onSuccess, onSignupClick, onForgotPasswordClick }) {
   };
 
   return (
-    <Paper 
-      elevation={0} 
-      sx={{ 
-        p: 5, 
-        maxWidth: 440, 
+    <Paper
+      elevation={0}
+      sx={{
+        p: 5,
+        maxWidth: 440,
         mx: 'auto',
-        backgroundColor: 'background.paper',
+        backgroundColor: cardBgColor,
         border: '1px solid',
-        borderColor: 'divider',
-        borderRadius: 2
+        borderColor: inputBorderColor,
+        borderRadius: 2,
+        '& .MuiTypography-root': { color: cardTextColor },
+        '& .MuiInputBase-root': { color: cardTextColor },
+        '& .MuiInputLabel-root': { color: cardTextColor },
+        '& .MuiOutlinedInput-notchedOutline': {
+          borderColor: inputBorderColor
+        },
+        '& .MuiFormHelperText-root': {
+          color: isDark ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)'
+        }
       }}
     >
-      <Typography 
-        variant="h4" 
-        gutterBottom 
-        sx={{ 
+      <Typography
+        variant="h4"
+        gutterBottom
+        sx={{
           fontWeight: 500,
           mb: 4,
-          textAlign: 'center'
+          textAlign: 'center',
+          color: cardTextColor
         }}
       >
         {registrationMode ? 'Create Account' : 'Sign In'}

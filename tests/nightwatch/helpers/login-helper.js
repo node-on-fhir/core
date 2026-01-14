@@ -63,7 +63,14 @@ module.exports = {
           }
         });
       } else {
-        callback(result.value);
+        // ADD NULL CHECK - executeAsync can return null if it times out
+        if (callback) {
+          callback(result && result.value ? result.value : {
+            meteorAvailable: false,
+            isLoggedIn: false,
+            error: 'executeAsync returned null - Meteor may not be ready'
+          });
+        }
       }
     });
   },
@@ -106,8 +113,13 @@ module.exports = {
         done({ userCreated: false, loginSuccess: false, error: 'Meteor not available' });
       }
     }, [], function(result) {
+      // ADD NULL CHECK - executeAsync can return null if it times out
       if (callback) {
-        callback(result.value);
+        callback(result && result.value ? result.value : {
+          userCreated: false,
+          loginSuccess: false,
+          error: 'executeAsync returned null or timed out - Meteor may not be available'
+        });
       }
     });
   },

@@ -1,0 +1,18 @@
+{
+  "resourceType": "SearchParameter",
+  "id": "encounter-date",
+  "url": "http://hl7.org/fhir/SearchParameter/Encounter-date",
+  "version": "4.0.1",
+  "name": "HoneycombEncounterDate",
+  "status": "active",
+  "date": "2024-12-09",
+  "description": "A date within the period the Encounter lasted",
+  "code": "date",
+  "base": ["Encounter"],
+  "type": "date",
+  "expression": "Encounter.period.start",
+  "xpath": "period.start",
+  "multipleOr": true,
+  "multipleAnd": true,
+  "comparator": ["eq", "ne", "gt", "lt", "ge", "le", "sa", "eb", "ap"]
+}

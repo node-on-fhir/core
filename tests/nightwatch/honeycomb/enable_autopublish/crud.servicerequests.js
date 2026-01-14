@@ -2,6 +2,7 @@
 
 const testUtils = require('./shared-test-utils');
 const saveNavigationHelper = require('../../helpers/save-navigation-helper');
+const loginHelper = require('../../helpers/login-helper');
 
 describe('ServiceRequests CRUD Operations', function() {
   const timestamp = Date.now();
@@ -48,112 +49,63 @@ describe('ServiceRequests CRUD Operations', function() {
   it('01. Setup test environment', browser => {
     browser
       .url('http://localhost:3000')
-      .waitForElementVisible('body', 5000);
+      .waitForElementVisible('body', 5000)
+      .execute(function(ts) {
+        window.testTimestamp = ts;
+      }, [timestamp]);
 
-    // Check if we're logged in
-    browser.execute(function() {
-      return {
-        isLoggedIn: typeof Meteor !== 'undefined' && !!Meteor.userId(),
-        userId: Meteor.userId ? Meteor.userId() : null,
-        username: Meteor.user ? (Meteor.user() ? Meteor.user().username : null) : null
-      };
-    }, [], function(result) {
-      console.log('Initial login state:', result.value);
-      
-      if (!result.value.isLoggedIn) {
-        console.log('Not logged in, attempting programmatic login...');
-        
-        browser.executeAsync(function(done) {
-          if (typeof Meteor !== 'undefined') {
-            Meteor.call('test.createTestUser', {
-              username: 'janedoe',
-              email: 'janedoe@test.org',
-              password: 'janedoe123'
-            }, function(err, userId) {
-              if (err) {
-                console.error('Failed to create test user:', err);
-                done({ userCreated: false, error: err.message });
-              } else {
-                console.log('Test user ready, userId:', userId);
-                Meteor.loginWithPassword('janedoe', 'janedoe123', function(loginErr) {
-                  if (loginErr) {
-                    console.error('Login failed:', loginErr);
-                    done({ userCreated: true, loginSuccess: false, error: loginErr.message });
-                  } else {
-                    console.log('Login successful');
-                    done({ 
-                      userCreated: true,
-                      loginSuccess: true, 
-                      userId: Meteor.userId(), 
-                      username: Meteor.user() ? Meteor.user().username : null 
-                    });
-                  }
-                });
-              }
-            });
-          } else {
-            done({ userCreated: false, loginSuccess: false, error: 'Meteor not available' });
-          }
-        }, [], function(result) {
-          if (result.value.loginSuccess) {
-            browser.assert.ok(true, 'Successfully created test user and logged in');
-            console.log('Logged in as:', result.value.username, 'userId:', result.value.userId);
-            
-            testUtils.createTestPatient(browser, {
-              name: 'John Doe',
-              family: 'Doe',
-              given: 'John',
-              identifier: 'test-patient-' + timestamp
-            }, function(result) {
-              if (result.error) {
-                console.error('Failed to create test patient:', result.error);
-                browser.assert.fail('Failed to create test patient: ' + result.error);
-              } else {
-                console.log('Test patient created with ID:', result.result);
-                browser.assert.ok(true, 'Successfully created test patient');
-              }
-            });
-          } else {
-            browser.assert.fail('Setup failed: ' + result.value.error);
-          }
-        });
-        
-        browser.pause(500);
-      } else {
-        browser.assert.ok(true, 'Already logged in (autologin enabled)');
-        console.log('Already logged in as:', result.value.username, 'userId:', result.value.userId);
-        
-        testUtils.createTestPatient(browser, {
-          name: 'John Doe',
-          family: 'Doe',
-          given: 'John',
-          identifier: 'test-patient-' + timestamp
-        }, function(result) {
-          if (result.error) {
-            console.error('Failed to create test patient:', result.error);
-            browser.assert.fail('Failed to create test patient: ' + result.error);
-          } else {
-            console.log('Test patient created with ID:', result.result);
-            browser.assert.ok(true, 'Successfully created test patient');
-            
-            browser.execute(function(patientId) {
-              if (typeof Session !== 'undefined' && typeof Patients !== 'undefined') {
-                const patient = Patients.findOne({_id: patientId});
-                if (patient) {
-                  Session.set('selectedPatientId', patientId);
+    // Use loginHelper to ensure we're logged in
+    loginHelper.ensureLoggedIn(browser, function() {
+      console.log('Login verified, creating test patient...');
+
+      // Create a test patient
+      testUtils.createTestPatient(browser, {
+        name: 'John Doe',
+        family: 'Doe',
+        given: 'John',
+        identifier: 'test-patient-' + timestamp
+      }, function(result) {
+        if (result.error) {
+          console.error('Failed to create test patient:', result.error);
+          browser.assert.fail('Failed to create test patient: ' + result.error);
+        } else {
+          console.log('Test patient created with ID:', result.result);
+          browser.assert.ok(true, 'Successfully created test patient');
+
+          // Fetch patient from server and set in Session
+          browser.executeAsync(function(patientId, done) {
+            if (typeof Meteor !== 'undefined' && typeof Session !== 'undefined') {
+              Meteor.call('patients.findOne', patientId, function(error, patient) {
+                if (error) {
+                  console.error('Error fetching patient:', error);
+                  done({ success: false, error: error.message });
+                } else if (patient) {
+                  Session.set('selectedPatientId', patient._id);
                   Session.set('selectedPatient', patient);
-                  console.log('Set selected patient in Session:', patientId);
+                  console.log('Set selected patient in Session:', patient._id, patient.name?.[0]?.text);
+                  done({ success: true, patientId: patient._id, patientName: patient.name?.[0]?.text });
+                } else {
+                  console.error('Patient not found:', patientId);
+                  done({ success: false, error: 'Patient not found' });
                 }
-              }
-            }, [result.result]);
-          }
-        });
-      }
-      
+              });
+            } else {
+              done({ success: false, error: 'Meteor or Session not available' });
+            }
+          }, [result.result], function(fetchResult) {
+            if (fetchResult.value.success) {
+              console.log('Successfully set selected patient:', fetchResult.value);
+            } else {
+              console.error('Failed to set selected patient:', fetchResult.value.error);
+            }
+          });
+        }
+      });
+
       // Clean up any existing test data
       browser.executeAsync(function(done) {
         if (typeof ServiceRequests !== 'undefined') {
-          const testServiceRequests = ServiceRequests.find({ 
+          const testServiceRequests = ServiceRequests.find({
             'requester.display': { $regex: 'Smith|Johnson' }
           }).fetch();
           testServiceRequests.forEach(function(serviceRequest) {
@@ -163,36 +115,14 @@ describe('ServiceRequests CRUD Operations', function() {
         }
         done();
       });
-      
-      browser.execute(function(testIdentifier) {
-          if (typeof Session !== 'undefined' && typeof Patients !== 'undefined') {
-            const patient = Patients.findOne({
-              'identifier.value': testIdentifier
-            });
-            if (patient) {
-              Session.set('selectedPatientId', patient._id);
-              Session.set('selectedPatient', patient);
-              console.log('Set selected patient in Session:', patient._id, patient.name?.[0]?.text);
-              return { success: true, patientId: patient._id, patientName: patient.name?.[0]?.text };
-            } else {
-              console.error('Could not find test patient with identifier:', testIdentifier);
-              return { success: false, error: 'Patient not found' };
-            }
-          }
-          return { success: false, error: 'Session or Patients not available' };
-        }, ['test-patient-' + timestamp], function(result) {
-          if (result.value.success) {
-            console.log('Successfully set selected patient:', result.value);
-          } else {
-            console.error('Failed to set selected patient:', result.value.error);
-          }
-        });
+
+      browser.pause(500);
     });
   });
 
   it('02. Verify service requests list page loads', browser => {
+    testUtils.navigateUrl(browser, '/service-requests');
     browser
-      .url('http://localhost:3000/service-requests')
       .waitForElementVisible('body', 5000)
       .execute(function() {
         // Check for JavaScript errors
@@ -251,8 +181,8 @@ describe('ServiceRequests CRUD Operations', function() {
         console.log('Auth status:', result.value);
       });
     
+    testUtils.navigateUrl(browser, '/service-requests');  // Navigate to the page first
     browser
-      .url('http://localhost:3000/service-requests')  // Navigate to the page first
       .waitForElementVisible('body', 10000)
       .pause(1000);  // Allow React to render
 
@@ -394,55 +324,14 @@ describe('ServiceRequests CRUD Operations', function() {
     });
 
     // Skip setting requester field - it should be auto-populated with logged-in user
+    // Fill form fields using standard Nightwatch commands (triggers React onChange properly)
     browser
       .pause(500)
-      .click('#performerDisplay')
-      .execute(function() {
-        const performerField = document.querySelector('#performerDisplay');
-        if (performerField) {
-          performerField.select();
-          performerField.value = '';
-          const inputEvent = new Event('input', { bubbles: true });
-          const changeEvent = new Event('change', { bubbles: true });
-          performerField.dispatchEvent(inputEvent);
-          performerField.dispatchEvent(changeEvent);
-          const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
-          nativeInputValueSetter.call(performerField, '');
-          performerField.dispatchEvent(inputEvent);
-        }
-      })
+      .clearValue('#performerDisplay')
       .setValue('#performerDisplay', testServiceRequest.performerName)
-      .click('#codeCode')
-      .execute(function() {
-        const codeField = document.querySelector('#codeCode');
-        if (codeField) {
-          codeField.select();
-          codeField.value = '';
-          const inputEvent = new Event('input', { bubbles: true });
-          const changeEvent = new Event('change', { bubbles: true });
-          codeField.dispatchEvent(inputEvent);
-          codeField.dispatchEvent(changeEvent);
-          const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
-          nativeInputValueSetter.call(codeField, '');
-          codeField.dispatchEvent(inputEvent);
-        }
-      })
+      .clearValue('#codeCode')
       .setValue('#codeCode', testServiceRequest.code)
-      .click('#codeDisplay')
-      .execute(function() {
-        const codeDisplayField = document.querySelector('#codeDisplay');
-        if (codeDisplayField) {
-          codeDisplayField.select();
-          codeDisplayField.value = '';
-          const inputEvent = new Event('input', { bubbles: true });
-          const changeEvent = new Event('change', { bubbles: true });
-          codeDisplayField.dispatchEvent(inputEvent);
-          codeDisplayField.dispatchEvent(changeEvent);
-          const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
-          nativeInputValueSetter.call(codeDisplayField, '');
-          codeDisplayField.dispatchEvent(inputEvent);
-        }
-      })
+      .clearValue('#codeDisplay')
       .setValue('#codeDisplay', testServiceRequest.codeDisplay);
 
     // Handle Material-UI Select components
@@ -813,11 +702,15 @@ describe('ServiceRequests CRUD Operations', function() {
         };
       }, [], function(result) {
         console.log('Service request detail state:', result.value);
-        if (result.value.fieldValue === '' && !result.value.isLoading) {
+
+        // Check if result.value exists before accessing properties
+        if (result.value && result.value.fieldValue === '' && !result.value.isLoading) {
           console.log('Warning: Requester field is empty and not loading');
           if (result.value.serviceRequestData) {
             console.log('Service request requester data:', result.value.serviceRequestData.requester);
           }
+        } else if (!result.value) {
+          console.warn('Execute block returned null - ServiceRequests collection may not be available');
         }
       });
       
@@ -869,17 +762,17 @@ describe('ServiceRequests CRUD Operations', function() {
         browser.assert.ok(result.value.notes.includes(testServiceRequest.notes), 'Notes contain expected text');
       })
       .saveScreenshot('tests/nightwatch/screenshots/servicerequests/07-view-servicerequest-details.png');
-    
+
+      testUtils.navigateUrl(browser, '/service-requests');
       browser
-        .url('http://localhost:3000/service-requests')
         .waitForElementVisible('#serviceRequestsPage', 5000);
     });
   });
 
   it('07. Update existing service request', browser => {
     // Navigate to service requests list page first
+    testUtils.navigateUrl(browser, '/service-requests');
     browser
-      .url('http://localhost:3000/service-requests')
       .waitForElementVisible('#serviceRequestsPage', 5000)
       .pause(1000);
     
@@ -1037,8 +930,11 @@ describe('ServiceRequests CRUD Operations', function() {
       });
 
       browser
-        .pause(1000)
-        .url('http://localhost:3000/service-requests')
+        .pause(1000);
+
+      testUtils.navigateUrl(browser, '/service-requests');
+
+      browser
         .waitForElementVisible('#serviceRequestsTable', 5000)
         .saveScreenshot('tests/nightwatch/screenshots/servicerequests/09-servicerequest-updated.png');
     });

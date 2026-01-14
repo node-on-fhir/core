@@ -1,6 +1,7 @@
 // tests/nightwatch/honeycomb/crud.medicationrequests.js
 
 const testUtils = require('./shared-test-utils');
+const loginHelper = require('../../helpers/login-helper');
 
 describe('MedicationRequests CRUD Operations', function() {
   const timestamp = Date.now();
@@ -49,110 +50,61 @@ describe('MedicationRequests CRUD Operations', function() {
       .url('http://localhost:3000')
       .waitForElementVisible('body', 5000);
 
-    // Check if we're logged in
-    browser.execute(function() {
-      return {
-        isLoggedIn: typeof Meteor !== 'undefined' && !!Meteor.userId(),
-        userId: Meteor.userId ? Meteor.userId() : null,
-        username: Meteor.user ? (Meteor.user() ? Meteor.user().username : null) : null
-      };
-    }, [], function(result) {
-      console.log('Initial login state:', result.value);
-      
-      if (!result.value.isLoggedIn) {
-        console.log('Not logged in, attempting programmatic login...');
-        
-        browser.executeAsync(function(done) {
-          if (typeof Meteor !== 'undefined') {
-            Meteor.call('test.createTestUser', {
-              username: 'janedoe',
-              email: 'janedoe@test.org',
-              password: 'janedoe123'
-            }, function(err, userId) {
-              if (err) {
-                console.error('Failed to create test user:', err);
-                done({ userCreated: false, error: err.message });
-              } else {
-                console.log('Test user ready, userId:', userId);
-                Meteor.loginWithPassword('janedoe', 'janedoe123', function(loginErr) {
-                  if (loginErr) {
-                    console.error('Login failed:', loginErr);
-                    done({ userCreated: true, loginSuccess: false, error: loginErr.message });
-                  } else {
-                    console.log('Login successful');
-                    done({ 
-                      userCreated: true,
-                      loginSuccess: true, 
-                      userId: Meteor.userId(), 
-                      username: Meteor.user() ? Meteor.user().username : null 
-                    });
-                  }
-                });
-              }
-            });
-          } else {
-            done({ userCreated: false, loginSuccess: false, error: 'Meteor not available' });
-          }
-        }, [], function(result) {
-          if (result.value.loginSuccess) {
-            browser.assert.ok(true, 'Successfully created test user and logged in');
-            console.log('Logged in as:', result.value.username, 'userId:', result.value.userId);
-            
-            testUtils.createTestPatient(browser, {
-              name: 'John Doe',
-              family: 'Doe',
-              given: 'John',
-              identifier: 'test-patient-' + timestamp
-            }, function(result) {
-              if (result.error) {
-                console.error('Failed to create test patient:', result.error);
-                browser.assert.fail('Failed to create test patient: ' + result.error);
-              } else {
-                console.log('Test patient created with ID:', result.result);
-                browser.assert.ok(true, 'Successfully created test patient');
-              }
-            });
-          } else {
-            browser.assert.fail('Setup failed: ' + result.value.error);
-          }
-        });
-        
-        browser.pause(1000);
+    loginHelper.ensureLoggedIn(browser, function(isLoggedIn) {
+      if (!isLoggedIn) {
+        browser.assert.fail('Failed to ensure user is logged in');
       } else {
-        browser.assert.ok(true, 'Already logged in (autologin enabled)');
-        console.log('Already logged in as:', result.value.username, 'userId:', result.value.userId);
-        
-        testUtils.createTestPatient(browser, {
-          name: 'John Doe',
-          family: 'Doe',
-          given: 'John',
-          identifier: 'test-patient-' + timestamp
-        }, function(result) {
-          if (result.error) {
-            console.error('Failed to create test patient:', result.error);
-            browser.assert.fail('Failed to create test patient: ' + result.error);
-          } else {
-            console.log('Test patient created with ID:', result.result);
-            browser.assert.ok(true, 'Successfully created test patient');
-            
-            browser.execute(function(patientId) {
-              if (typeof Session !== 'undefined' && typeof Patients !== 'undefined') {
-                const patient = Patients.findOne({_id: patientId});
-                if (patient) {
-                  Session.set('selectedPatientId', patientId);
-                  Session.set('selectedPatient', patient);
-                  console.log('Set selected patient in Session:', patientId);
-                }
-              }
-            }, [result.result]);
-          }
-        });
+        browser.assert.ok(true, 'User is logged in');
       }
-      
+
+      // Create a test patient
+      testUtils.createTestPatient(browser, {
+        name: 'John Doe',
+        family: 'Doe',
+        given: 'John',
+        identifier: 'test-patient-' + timestamp
+      }, function(result) {
+        if (result.error) {
+          console.error('Failed to create test patient:', result.error);
+          browser.assert.fail('Failed to create test patient: ' + result.error);
+        } else {
+          console.log('Test patient created with ID:', result.result);
+          browser.assert.ok(true, 'Successfully created test patient');
+
+          // Fetch the patient from the server and set in Session
+          browser.executeAsync(function(patientId, done) {
+            if (typeof Meteor !== 'undefined' && typeof Session !== 'undefined') {
+              Meteor.call('patients.findOne', patientId, function(error, patient) {
+                if (error) {
+                  console.error('Error fetching patient:', error);
+                  done({ success: false, error: error.message });
+                } else if (patient) {
+                  Session.set('selectedPatientId', patient._id);
+                  Session.set('selectedPatient', patient);
+                  console.log('Set selected patient in Session:', patient._id, patient.name?.[0]?.text);
+                  done({ success: true, patientId: patient._id, patientName: patient.name?.[0]?.text });
+                } else {
+                  console.error('Patient not found:', patientId);
+                  done({ success: false, error: 'Patient not found' });
+                }
+              });
+            } else {
+              done({ success: false, error: 'Meteor or Session not available' });
+            }
+          }, [result.result], function(fetchResult) {
+            if (fetchResult.value && fetchResult.value.success) {
+              console.log('Successfully set selected patient:', fetchResult.value);
+            } else if (fetchResult.value) {
+              console.error('Failed to set selected patient:', fetchResult.value.error);
+            }
+          });
+        }
+      });
+
       // Clean up any existing test data
       browser.executeAsync(function(done) {
         if (typeof MedicationRequests !== 'undefined') {
-          const testMedicationRequests = MedicationRequests.find({ 
+          const testMedicationRequests = MedicationRequests.find({
             'requester.display': { $regex: 'Smith|Johnson' }
           }).fetch();
           testMedicationRequests.forEach(function(medicationRequest) {
@@ -162,7 +114,7 @@ describe('MedicationRequests CRUD Operations', function() {
         }
         done();
       });
-      
+
       browser.pause(1000)
         .execute(function(testIdentifier) {
           if (typeof Session !== 'undefined' && typeof Patients !== 'undefined') {
@@ -181,9 +133,9 @@ describe('MedicationRequests CRUD Operations', function() {
           }
           return { success: false, error: 'Session or Patients not available' };
         }, ['test-patient-' + timestamp], function(result) {
-          if (result.value.success) {
+          if (result.value && result.value.success) {
             console.log('Successfully set selected patient:', result.value);
-          } else {
+          } else if (result.value) {
             console.error('Failed to set selected patient:', result.value.error);
           }
         });
@@ -191,8 +143,8 @@ describe('MedicationRequests CRUD Operations', function() {
   });
 
   it('02. Verify medication requests list page loads', browser => {
+    testUtils.navigateUrl(browser, '/medication-requests');
     browser
-      .url('http://localhost:3000/medication-requests')
       .waitForElementVisible('#medicationRequestsPage', 5000)
             .execute(function() {
         const hasTable = document.querySelector('#medicationRequestsTable') !== null;
@@ -242,7 +194,7 @@ describe('MedicationRequests CRUD Operations', function() {
       }, [], function(result) {
         if (!result.value) {
           // If button not found, try direct navigation
-          browser.url('http://localhost:3000/medication-requests/new');
+          testUtils.navigateUrl(browser, '/medication-requests/new');
         } else {
           browser.assert.equal(result.value, true, 'Clicked Add Medication Request button');
         }
@@ -435,6 +387,10 @@ describe('MedicationRequests CRUD Operations', function() {
       .click('#numberOfRepeats')
       .clearValue('#numberOfRepeats')
       .setValue('#numberOfRepeats', testMedicationRequest.numberOfRepeats)
+      .execute(function() {
+        document.querySelector('#authoredOn')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      })
+      .pause(300)
       .click('#authoredOn')
       .clearValue('#authoredOn')
       .setValue('#authoredOn', testMedicationRequest.authoredOn)
@@ -645,9 +601,9 @@ describe('MedicationRequests CRUD Operations', function() {
         browser.assert.ok(result.value.priority || result.value.priorityDisplay, 'Priority field has value');
       })
       .saveScreenshot('tests/nightwatch/screenshots/medicationrequests/07-view-medicationrequest-details.png');
-    
+
+    testUtils.navigateUrl(browser, '/medication-requests');
     browser
-      .url('http://localhost:3000/medication-requests')
       .waitForElementVisible('#medicationRequestsPage', 5000);
   });
 
@@ -737,7 +693,22 @@ describe('MedicationRequests CRUD Operations', function() {
       .pause(500)
       .saveScreenshot('tests/nightwatch/screenshots/medicationrequests/08-updated-medicationrequest-form.png');
 
+    // Scroll to bottom to ensure Save button is visible (critical for CI environments)
+    browser.execute(function() {
+      const cardActions = document.querySelector('div[class*="MuiCardActions"]');
+      if (cardActions) {
+        cardActions.scrollIntoView({ behavior: 'smooth', block: 'end' });
+        return { scrolled: true, found: 'CardActions' };
+      }
+      // Fallback: scroll to bottom of page
+      window.scrollTo(0, document.body.scrollHeight);
+      return { scrolled: true, found: 'fallback' };
+    }, [], function(result) {
+      console.log('Scrolled to Save button area:', result.value);
+    });
+
     browser
+      .pause(500) // Wait for scroll animation to complete
       .execute(function() {
         const buttons = document.querySelectorAll('button');
         for (let button of buttons) {
@@ -766,7 +737,7 @@ describe('MedicationRequests CRUD Operations', function() {
         console.log('Navigation state after save:', result.value);
         if (result.value.onDetailPage && !result.value.onListPage) {
           // Still on detail page, navigate to list
-          browser.url('http://localhost:3000/medication-requests');
+          testUtils.navigateUrl(browser, '/medication-requests');
         }
       });
     
@@ -789,8 +760,8 @@ describe('MedicationRequests CRUD Operations', function() {
       console.log('After update - Collection state:', result.value);
     });
 
+    testUtils.navigateUrl(browser, '/medication-requests');
     browser
-      .url('http://localhost:3000/medication-requests')
       .waitForElementVisible('#medicationRequestsTable', 5000)
       .saveScreenshot('tests/nightwatch/screenshots/medicationrequests/09-medicationrequest-updated.png');
   });
@@ -950,7 +921,7 @@ describe('MedicationRequests CRUD Operations', function() {
       }, [], function(result) {
         if (!result.value) {
           // If button not found, navigate directly
-          browser.url('http://localhost:3000/medication-requests/new');
+          testUtils.navigateUrl(browser, '/medication-requests/new');
         } else {
           browser.assert.equal(result.value, true, 'Clicked Add button');
         }

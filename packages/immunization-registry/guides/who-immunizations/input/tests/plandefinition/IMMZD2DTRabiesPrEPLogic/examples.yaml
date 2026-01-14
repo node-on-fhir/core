@@ -1,0 +1,72 @@
+---
+#1. No rabies primary series doses were administered
+#   Count of vaccines administered (where "Vaccine type" = "Rabies vaccines" and "Type of dose" = "Primary series") = 0
+### Client is due for rabies vaccination
+### "Immunization recommendation status" = "Due"
+id: "08.1"
+birth: -25y
+patient:
+  fhir:
+    gender: female
+---
+#1. One rabies primary series doses were administered
+#   Count of vaccines administered (where "Vaccine type" = "Rabies vaccines" and "Type of dose" = "Primary series") = 1
+#2. The latest rabies dose was administered less than 7 days ago
+#   ''Today's date - Latest "Date of vaccination" (where "Vaccine type" = "Rabies vaccines") < 7 days
+### Client is not due for rabies vaccination
+### "Immunization recommendation status" = "Not due"
+id: "09.12"
+birth: -25y
+patient:
+  fhir:
+    gender: female
+immunization:
+  rabies:
+    vaccine:
+      code: XM6T09
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Rabies vaccine"
+    doses:
+      p2:
+        - -3d
+---
+#1. One rabies primary series doses were administered
+#2. The latest rabies dose was administered more than 7 days ago
+#   ''Today's date - Latest "Date of vaccination" (where "Vaccine type" = "Rabies vaccines") ≥ 7 days
+### Client is due for rabies vaccination
+### "Immunization recommendation status" = "Due"
+id: "10.12"
+birth: -25y
+patient:
+  fhir:
+    gender: female
+immunization:
+  rabies:
+    vaccine:
+      code: XM6T09
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Rabies vaccine"
+    doses:
+      p2:
+        - -7d
+---
+#1. Two rabies primary series doses were administered
+#   Count of vaccines administered (where "Vaccine type" = "Rabies vaccines" and "Type of dose" = "Primary series") = 2
+### Rabies immunization schedule is complete
+### "Immunization recommendation status" = "Complete"
+### "Completed the primary vaccination series" = TRUE (where "Vaccine type" = "Rabies vaccines")
+id: "11.1"
+birth: -26y
+patient:
+  fhir:
+    gender: female
+immunization:
+  rabies:
+    vaccine:
+      code: XM6T09
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Rabies vaccine"
+    doses:
+      p2:
+        - -10d
+        - -3d

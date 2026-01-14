@@ -1,0 +1,29 @@
+{
+  "resourceType": "SearchParameter",
+  "id": "medicationdispense-patient",
+  "url": "http://github.com/node-on-fhir/honeycomb/private/SearchParameters/SearchParameter-medicationdispense-patient",
+  "version": "1.0.0",
+  "name": "HoneycombMedicationDispensePatient",
+  "status": "active",
+  "date": "2024-12-14",
+  "publisher": "github.com/node-on-fhir",
+  "contact": [
+    {
+      "telecom": [
+        {
+          "system": "url",
+          "value": "http://github.com/node-on-fhir/honeycomb"
+        }
+      ]
+    }
+  ],
+  "description": "Search for medication dispenses by patient",
+  "code": "patient",
+  "base": ["MedicationDispense"],
+  "type": "reference",
+  "expression": "MedicationDispense.subject.where(resolve() is Patient)",
+  "xpath": "subject.reference",
+  "target": ["Patient"],
+  "multipleOr": true,
+  "multipleAnd": false
+}

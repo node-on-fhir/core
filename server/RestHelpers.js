@@ -1,10 +1,462 @@
+// server/RestHelpers.js
 import moment from 'moment';
 
 import { get, has, set, unset, cloneDeep, pullAt, findIndex } from 'lodash';
 
 import * as mongoQuery from 'mongo-query';
 
+import FhirUtilities from '../imports/lib/FhirUtilities.js';
+import { Practitioners } from '../imports/lib/schemas/SimpleSchemas/Practitioners';
+import { Organizations } from '../imports/lib/schemas/SimpleSchemas/Organizations';
 
+// =============================================================================
+// Profile Decorator Discovery
+// Discover ProfileDecorators from packages (similar to ProfileSet pattern)
+// These are used to apply IG-specific requirements to resources at egress time
+
+let discoveredDecorators = {};
+
+// Discovery runs at module load time after Meteor packages are initialized
+Meteor.startup(function() {
+  Object.keys(Package).forEach(function(packageName) {
+    if (Package[packageName].ProfileDecorators) {
+      console.log('ProfileDecorators discovered from package:', packageName);
+      let decorators = Package[packageName].ProfileDecorators;
+      Object.keys(decorators).forEach(function(resourceType) {
+        if (!discoveredDecorators[resourceType]) {
+          discoveredDecorators[resourceType] = [];
+        }
+        discoveredDecorators[resourceType].push(decorators[resourceType]);
+      });
+    }
+  });
+
+  if (Object.keys(discoveredDecorators).length > 0) {
+    console.log('RestHelpers: Discovered decorators for:', Object.keys(discoveredDecorators).join(', '));
+  } else {
+    console.log('RestHelpers: No ProfileDecorators discovered from packages');
+  }
+});
+
+/**
+ * Apply discovered profile decorators to a resource
+ * @param {Object} resource - The FHIR resource
+ * @param {string} requestedProfile - Optional specific profile URL
+ * @returns {Object} - Decorated resource
+ */
+function applyProfileDecorators(resource, requestedProfile) {
+  let resourceType = get(resource, 'resourceType');
+  if (!resourceType) {
+    return resource;
+  }
+
+  let decorators = discoveredDecorators[resourceType];
+  if (!decorators || decorators.length === 0) {
+    return resource;
+  }
+
+  let result = resource;
+  for (let decorator of decorators) {
+    // If specific profile requested, only apply matching decorator
+    if (requestedProfile && decorator.profileUrl !== requestedProfile) {
+      continue;
+    }
+
+    try {
+      if (typeof decorator.decorate === 'function') {
+        result = decorator.decorate(result);
+        process.env.DEBUG && console.log('RestHelpers: Applied decorator', decorator.profileUrl);
+      }
+    } catch (err) {
+      console.error('RestHelpers: Error applying decorator', err);
+    }
+  }
+
+  return result;
+}
+
+// =============================================================================
+// Token Search Helpers for CodeableConcept Fields
+// These helpers enable proper FHIR token-type searches on CodeableConcept fields
+// by querying the nested coding.code path instead of direct string matching
+
+/**
+ * Convert FHIR xpath to MongoDB field path
+ * @param {string} xpath - e.g., "f:CarePlan/f:category" or "category"
+ * @returns {string} - e.g., "category"
+ */
+function xpathToMongoPath(xpath) {
+  if (!xpath) {
+    console.warn('xpathToMongoPath: Empty xpath provided');
+    return null;
+  }
+
+  // Handle FHIR union expressions like "Patient.name.given | Patient.name.family"
+  // Take the first path from the union (they usually point to related fields)
+  if (xpath.includes(' | ')) {
+    let firstPath = xpath.split(' | ')[0].trim();
+    return xpathToMongoPath(firstPath);  // Recursively process
+  }
+
+  // Handle FHIRPath expressions like "Patient.identifier" → "identifier"
+  // or "Patient.name.given" → "name.given"
+  if (xpath.includes('.') && !xpath.includes('f:')) {
+    let parts = xpath.split('.');
+    // Skip the first part (resource type like "Patient", "CarePlan") and return rest
+    if (parts.length > 1) {
+      return parts.slice(1).join('.');
+    }
+  }
+
+  // Handle f:xpath format like "f:CarePlan/f:category" → "category"
+  if (xpath.includes('f:') || xpath.includes('/')) {
+    let parts = xpath.split('/');
+    let lastPart = parts[parts.length - 1];
+    if (lastPart.startsWith('f:')) {
+      return lastPart.substring(2);
+    }
+    return lastPart;
+  }
+
+  return xpath;
+}
+
+/**
+ * Check if a field is a CodeableConcept type based on FHIR patterns
+ * @param {string} fieldName - The field name from xpath (e.g., "category")
+ * @param {string} searchParamCode - The search parameter code (e.g., "category")
+ * @returns {boolean}
+ */
+function isCodeableConceptField(fieldName, searchParamCode) {
+  // Known CodeableConcept fields in FHIR R4
+  const codeableConceptFields = [
+    'category', 'code', 'type', 'specialty', 'role', 'class',
+    'clinicalStatus', 'verificationStatus', 'clinical-status', 'verification-status',
+    'dischargeDisposition', 'serviceType', 'reasonCode', 'vaccineCode',
+    'route', 'site', 'method', 'bodySite', 'reaction', 'substance',
+    'interpretation', 'dataAbsentReason', 'severity', 'criticality'
+  ];
+
+  // Simple code fields that should NOT use CodeableConcept logic
+  const simpleCodeFields = [
+    'status', 'intent', 'gender', 'priority', 'use', 'mode',
+    'lifecycleStatus', 'active', 'experimental'
+  ];
+
+  if (!fieldName) {
+    console.warn('isCodeableConceptField: Empty fieldName provided');
+    return false;
+  }
+
+  let normalizedField = fieldName.toLowerCase().replace(/-/g, '');
+  let normalizedCode = (searchParamCode || '').toLowerCase().replace(/-/g, '');
+
+  // First check if it's explicitly a simple code field
+  if (simpleCodeFields.some(function(f) {
+    return normalizedField === f.toLowerCase() || normalizedCode === f.toLowerCase();
+  })) {
+    return false;
+  }
+
+  // Then check if it matches known CodeableConcept fields
+  return codeableConceptFields.some(function(f) {
+    return normalizedField === f.toLowerCase() ||
+           normalizedCode === f.toLowerCase() ||
+           normalizedField.includes(f.toLowerCase());
+  });
+}
+
+/**
+ * Check if a CodeableConcept field is typically an array in FHIR resources
+ * Array fields need $elemMatch for proper MongoDB querying
+ * @param {string} fieldName - The field name (e.g., "category", "code")
+ * @returns {boolean}
+ */
+function isArrayCodeableConceptField(fieldName) {
+  // Fields that are arrays of CodeableConcept in FHIR R4
+  // Note: 'type' is NOT included - DocumentReference.type is a single CodeableConcept
+  const arrayFields = [
+    'category',      // Observation, Condition, DiagnosticReport, DocumentReference, etc.
+    'serviceType',   // HealthcareService, Appointment
+    'specialty',     // PractitionerRole, HealthcareService
+    'classification' // Device
+  ];
+
+  if (!fieldName) {
+    return false;
+  }
+
+  let normalizedField = fieldName.toLowerCase();
+  return arrayFields.some(function(f) {
+    return normalizedField === f.toLowerCase();
+  });
+}
+
+/**
+ * Build MongoDB query for token search on CodeableConcept field
+ * Supports: bare code, system|code, and comma-separated values
+ * @param {string} mongoPath - e.g., "category"
+ * @param {string} searchValue - e.g., "assess-plan" or "http://system|code"
+ * @returns {Object} - MongoDB query object
+ */
+function buildCodeableConceptTokenQuery(mongoPath, searchValue) {
+  if (!mongoPath || !searchValue) {
+    console.warn('buildCodeableConceptTokenQuery: Missing mongoPath or searchValue');
+    return {};
+  }
+
+  // Check if this field is typically an array of CodeableConcepts
+  let isArrayField = isArrayCodeableConceptField(mongoPath);
+
+  let searchValues = searchValue.split(',').map(function(v) { return v.trim(); });
+  let orConditions = [];
+
+  searchValues.forEach(function(val) {
+    if (val.includes('|')) {
+      // System|code format
+      let pipeIndex = val.indexOf('|');
+      let system = val.substring(0, pipeIndex);
+      let code = val.substring(pipeIndex + 1);
+
+      if (system && code) {
+        // Both system and code specified - match both
+        let condition = {};
+        if (isArrayField) {
+          // For array fields, use $elemMatch on the array itself
+          condition[mongoPath] = {
+            $elemMatch: {
+              'coding.system': system,
+              'coding.code': code
+            }
+          };
+        } else {
+          // For single CodeableConcept fields, use $elemMatch on the coding array
+          condition[mongoPath + '.coding'] = {
+            $elemMatch: {
+              'system': system,
+              'code': code
+            }
+          };
+        }
+        orConditions.push(condition);
+      } else if (system && !code) {
+        // System only (ends with |) - match any code in that system
+        let condition = {};
+        condition[mongoPath + '.coding.system'] = system;
+        orConditions.push(condition);
+      } else if (!system && code) {
+        // Code only (starts with |) - same as bare code
+        orConditions.push(buildCodeOnlyCondition(mongoPath, code, isArrayField));
+      }
+    } else {
+      // Bare code - match coding.code or text
+      orConditions.push(buildCodeOnlyCondition(mongoPath, val, isArrayField));
+    }
+  });
+
+  if (orConditions.length === 0) {
+    console.warn('buildCodeableConceptTokenQuery: No conditions generated for', mongoPath, searchValue);
+    return {};
+  } else if (orConditions.length === 1) {
+    return orConditions[0];
+  } else {
+    return { $or: orConditions };
+  }
+}
+
+/**
+ * Build condition for code-only search (no system specified)
+ * Matches either coding.code or text field
+ * @param {string} mongoPath - e.g., "category"
+ * @param {string} code - e.g., "assess-plan"
+ * @param {boolean} isArrayField - true if the field is an array of CodeableConcepts
+ * @returns {Object} - MongoDB query condition
+ */
+function buildCodeOnlyCondition(mongoPath, code, isArrayField) {
+  let codingCondition = {};
+  let textCondition = {};
+
+  if (isArrayField) {
+    // For array fields (like category[]), use $elemMatch on the array
+    // to properly match within each CodeableConcept element
+    codingCondition[mongoPath] = {
+      $elemMatch: {
+        'coding.code': code
+      }
+    };
+    // Text match also needs $elemMatch for array fields
+    textCondition[mongoPath] = {
+      $elemMatch: {
+        'text': code
+      }
+    };
+  } else {
+    // For single CodeableConcept fields (like code), use dot notation
+    codingCondition[mongoPath + '.coding.code'] = code;
+    textCondition[mongoPath + '.text'] = code;
+  }
+
+  return { $or: [codingCondition, textCondition] };
+}
+
+/**
+ * Check if a field is an Identifier type
+ * @param {string} fieldName - The field name from xpath (e.g., "identifier")
+ * @param {string} searchParamCode - The search parameter code
+ * @returns {boolean}
+ */
+function isIdentifierField(fieldName, searchParamCode) {
+  const identifierFields = ['identifier'];
+
+  if (!fieldName) {
+    return false;
+  }
+
+  let normalizedField = fieldName.toLowerCase();
+  let normalizedCode = (searchParamCode || '').toLowerCase();
+
+  return identifierFields.includes(normalizedField) || identifierFields.includes(normalizedCode);
+}
+
+/**
+ * Build MongoDB query for token search on Identifier field
+ * Identifier has structure: {system: "...", value: "..."}
+ * Supports: bare value, system|value, and comma-separated values
+ * @param {string} mongoPath - e.g., "identifier"
+ * @param {string} searchValue - e.g., "12345" or "http://system|12345"
+ * @returns {Object} - MongoDB query object
+ */
+function buildIdentifierTokenQuery(mongoPath, searchValue) {
+  if (!mongoPath || !searchValue) {
+    console.warn('buildIdentifierTokenQuery: Missing mongoPath or searchValue');
+    return {};
+  }
+
+  let searchValues = searchValue.split(',').map(function(v) { return v.trim(); });
+  let orConditions = [];
+
+  searchValues.forEach(function(val) {
+    if (val.includes('|')) {
+      // System|value format
+      let pipeIndex = val.indexOf('|');
+      let system = val.substring(0, pipeIndex);
+      let value = val.substring(pipeIndex + 1);
+
+      if (system && value) {
+        // Both system and value specified - match both using $elemMatch
+        let condition = {};
+        condition[mongoPath] = {
+          $elemMatch: {
+            'system': system,
+            'value': value
+          }
+        };
+        orConditions.push(condition);
+      } else if (system && !value) {
+        // System only (ends with |) - match any identifier in that system
+        let condition = {};
+        condition[mongoPath + '.system'] = system;
+        orConditions.push(condition);
+      } else if (!system && value) {
+        // Value only (starts with |) - match just the value
+        let condition = {};
+        condition[mongoPath + '.value'] = value;
+        orConditions.push(condition);
+      }
+    } else {
+      // Bare value - match just the value field
+      let condition = {};
+      condition[mongoPath + '.value'] = val;
+      orConditions.push(condition);
+    }
+  });
+
+  if (orConditions.length === 0) {
+    console.warn('buildIdentifierTokenQuery: No conditions generated for', mongoPath, searchValue);
+    return {};
+  } else if (orConditions.length === 1) {
+    return orConditions[0];
+  } else {
+    return { $or: orConditions };
+  }
+}
+
+/**
+ * Check if a field is a HumanName type
+ * @param {string} fieldName - The field name (e.g., "name")
+ * @param {string} searchParamCode - The search parameter code
+ * @returns {boolean}
+ */
+function isHumanNameField(fieldName, searchParamCode) {
+  const humanNameFields = ['name'];
+
+  if (!fieldName) {
+    return false;
+  }
+
+  let normalizedField = fieldName.toLowerCase();
+  let normalizedCode = (searchParamCode || '').toLowerCase();
+
+  return humanNameFields.includes(normalizedField) || humanNameFields.includes(normalizedCode);
+}
+
+/**
+ * Build MongoDB query for string search on HumanName field
+ * Searches family, given, and text fields with case-insensitive regex
+ * @param {string} mongoPath - e.g., "name"
+ * @param {string} searchValue - e.g., "Koelpin146"
+ * @returns {Object} - MongoDB query object
+ */
+function buildHumanNameStringQuery(mongoPath, searchValue) {
+  if (!mongoPath || !searchValue) {
+    console.warn('buildHumanNameStringQuery: Missing mongoPath or searchValue');
+    return {};
+  }
+
+  // Search family, given, and text fields with case-insensitive regex
+  let regex = { $regex: searchValue, $options: 'i' };
+
+  return {
+    $or: [
+      { [mongoPath + '.family']: regex },
+      { [mongoPath + '.given']: regex },
+      { [mongoPath + '.text']: regex }
+    ]
+  };
+}
+
+/**
+ * Build MongoDB query for string search on Address field
+ * Searches text, line, city, district, state, postalCode, and country fields
+ * FHIR address search should match any part of the address
+ * @param {string} mongoPath - e.g., "address"
+ * @param {string} searchValue - e.g., "Chicago"
+ * @returns {Object} - MongoDB query object
+ */
+function buildAddressStringQuery(mongoPath, searchValue) {
+  if (!mongoPath || !searchValue) {
+    console.warn('buildAddressStringQuery: Missing mongoPath or searchValue');
+    return {};
+  }
+
+  // Search text, line, city, district, state, postalCode, and country fields
+  // with case-insensitive regex (FHIR default for string search)
+  let regex = { $regex: searchValue, $options: 'i' };
+
+  return {
+    $or: [
+      { [mongoPath + '.text']: regex },
+      { [mongoPath + '.line']: regex },
+      { [mongoPath + '.city']: regex },
+      { [mongoPath + '.district']: regex },
+      { [mongoPath + '.state']: regex },
+      { [mongoPath + '.postalCode']: regex },
+      { [mongoPath + '.country']: regex }
+    ]
+  };
+}
+
+// =============================================================================
 
 export const RestHelpers = {
     fhirVersion: 'fhir-3.0.0',
@@ -12,6 +464,19 @@ export const RestHelpers = {
     isDebug: process.env.DEBUG || true,
     isTrace: process.env.TRACE,
     noAuth: false, // Use SafeNoAuth.isEnabled() instead
+
+    // Token search helpers for CodeableConcept and Identifier fields (exported for testing)
+    xpathToMongoPath: xpathToMongoPath,
+    isCodeableConceptField: isCodeableConceptField,
+    buildCodeableConceptTokenQuery: buildCodeableConceptTokenQuery,
+    isIdentifierField: isIdentifierField,
+    buildIdentifierTokenQuery: buildIdentifierTokenQuery,
+    // HumanName search helpers
+    isHumanNameField: isHumanNameField,
+    buildHumanNameStringQuery: buildHumanNameStringQuery,
+    // Address search helpers
+    buildAddressStringQuery: buildAddressStringQuery,
+
     logging: function(req, route){
         if(this.isDebug){
             console.log(route + get(req, 'params.id'));
@@ -336,8 +801,148 @@ export const RestHelpers = {
       }
 
       process.env.TRACE && console.log("response", response);
-        
+
+      // Normalize urn:uuid: references to standard FHIR format
+      // ONC (g)(10) tests expect references in ResourceType/ID format, not urn:uuid:ID
+      if (has(response, 'subject.reference')) {
+        let subjectRef = get(response, 'subject.reference');
+        if (subjectRef && subjectRef.startsWith('urn:uuid:')) {
+          let patientId = subjectRef.replace('urn:uuid:', '');
+          response.subject.reference = 'Patient/' + patientId;
+          process.env.DEBUG && console.log('[prepForFhirTransfer] Normalized subject.reference:', subjectRef, '->', response.subject.reference);
+        }
+      }
+      if (has(response, 'patient.reference')) {
+        let patientRef = get(response, 'patient.reference');
+        if (patientRef && patientRef.startsWith('urn:uuid:')) {
+          let patientId = patientRef.replace('urn:uuid:', '');
+          response.patient.reference = 'Patient/' + patientId;
+          process.env.DEBUG && console.log('[prepForFhirTransfer] Normalized patient.reference:', patientRef, '->', response.patient.reference);
+        }
+      }
+
+      // Normalize encounter.reference (for Condition resources)
+      // ONC (g)(10) test 12.6.07 requires Condition.encounter to resolve to valid Encounter
+      if (has(response, 'encounter.reference')) {
+        let encounterRef = get(response, 'encounter.reference');
+        if (encounterRef && encounterRef.startsWith('urn:uuid:')) {
+          let encounterId = encounterRef.replace('urn:uuid:', '');
+          response.encounter.reference = 'Encounter/' + encounterId;
+          process.env.DEBUG && console.log('[prepForFhirTransfer] Normalized encounter.reference:', encounterRef, '->', response.encounter.reference);
+        }
+      }
+
+      // CareTeam: Normalize participant.member references for Patient participants
+      // SNOMED code 116154003 = "Patient" role
+      if (Array.isArray(response.participant)) {
+        response.participant.forEach(function(participant) {
+          if (has(participant, 'member.reference')) {
+            let memberRef = get(participant, 'member.reference');
+            if (memberRef && memberRef.startsWith('urn:uuid:')) {
+              // Check if this participant has a "Patient" role (SNOMED 116154003)
+              let isPatientRole = false;
+              if (Array.isArray(participant.role)) {
+                participant.role.forEach(function(role) {
+                  if (Array.isArray(get(role, 'coding'))) {
+                    role.coding.forEach(function(coding) {
+                      if (get(coding, 'code') === '116154003' ||
+                          get(coding, 'display', '').toLowerCase() === 'patient') {
+                        isPatientRole = true;
+                      }
+                    });
+                  }
+                });
+              }
+              if (isPatientRole) {
+                let patientId = memberRef.replace('urn:uuid:', '');
+                participant.member.reference = 'Patient/' + patientId;
+                process.env.DEBUG && console.log('[prepForFhirTransfer] Normalized participant.member.reference:', memberRef, '->', participant.member.reference);
+              }
+            }
+          }
+        });
+      }
+
+      // Apply profile decorators (adds IG-specific extensions)
+      // This uses the Package Discovery Pattern to find decorators from installed IG packages
+      response = applyProfileDecorators(response);
+
       return response;
+    },
+    // Helper to resolve conditional references like "Practitioner?identifier=system|value"
+    // This is a separate async function to avoid making prepForFhirTransfer async
+    // Used for CareTeam participant.member references which Synthea generates as conditional refs
+    resolveConditionalReferences: async function(record) {
+      console.log('[resolveConditionalReferences] Called with record:', get(record, 'resourceType'), get(record, 'id'));
+
+      if (!record || !Array.isArray(record.participant)) {
+        console.log('[resolveConditionalReferences] No participants array, returning');
+        return record;
+      }
+
+      console.log('[resolveConditionalReferences] Processing', record.participant.length, 'participants');
+
+      for (let participant of record.participant) {
+        if (has(participant, 'member.reference')) {
+          let memberRef = get(participant, 'member.reference');
+
+          // Check if this is a conditional reference: ResourceType?identifier=system|value
+          if (memberRef && memberRef.includes('?identifier=')) {
+            console.log('[resolveConditionalReferences] Found conditional reference:', memberRef);
+            const conditionalMatch = memberRef.match(/^(\w+)\?identifier=(.+)$/);
+            if (conditionalMatch) {
+              const [, resourceType, identifierParam] = conditionalMatch;
+              console.log('[resolveConditionalReferences] Parsed - resourceType:', resourceType, 'identifierParam:', identifierParam);
+
+              // Parse system|value format
+              const pipeIndex = identifierParam.lastIndexOf('|');
+              let system = null;
+              let value = identifierParam;
+              if (pipeIndex > 0) {
+                system = identifierParam.substring(0, pipeIndex);
+                value = identifierParam.substring(pipeIndex + 1);
+              }
+              console.log('[resolveConditionalReferences] Parsed identifier - system:', system, 'value:', value);
+
+              // Get the appropriate collection
+              let collection = null;
+              if (resourceType === 'Practitioner') {
+                collection = Practitioners;
+              } else if (resourceType === 'Organization') {
+                collection = Organizations;
+              }
+
+              if (collection) {
+                // Build query for identifier lookup
+                let query;
+                if (system) {
+                  query = { 'identifier': { $elemMatch: { 'system': system, 'value': value } } };
+                } else {
+                  query = { 'identifier.value': value };
+                }
+                console.log('[resolveConditionalReferences] Query:', JSON.stringify(query));
+
+                try {
+                  const resource = await collection.findOneAsync(query);
+                  console.log('[resolveConditionalReferences] Lookup result:', resource ? 'Found: ' + resource.id : 'Not found');
+                  if (resource && resource.id) {
+                    participant.member.reference = resourceType + '/' + resource.id;
+                    console.log('[resolveConditionalReferences] Resolved:', memberRef, '->', participant.member.reference);
+                  } else {
+                    console.warn('[resolveConditionalReferences] No matching resource found for:', memberRef);
+                  }
+                } catch (err) {
+                  console.warn('[resolveConditionalReferences] Lookup failed:', err.message);
+                }
+              } else {
+                console.warn('[resolveConditionalReferences] Unknown resource type in conditional reference:', resourceType);
+              }
+            }
+          }
+        }
+      }
+
+      return record;
     },
     generateDatabaseQuery: function(query, resourceType){
       return RestHelpers.generateMongoSearchQuery(query, resourceType)
@@ -485,6 +1090,18 @@ export const RestHelpers = {
         };
       }
 
+      // Handle 'patient' search parameter for resources that use patient.reference
+      // (AllergyIntolerance, CarePlan, CareTeam, Encounter, Immunization, MedicationRequest, etc.)
+      // Uses FhirUtilities.addPatientFilterToQuery() which handles:
+      // - patient.reference, subject.reference, for.reference
+      // - urn:uuid: format
+      // - Regex patterns for absolute URL matches
+      if (get(query, 'patient')) {
+        let patientValue = get(query, 'patient');
+        let patientId = patientValue.replace(/^Patient\//, '');
+        Object.assign(databaseQuery, FhirUtilities.addPatientFilterToQuery(patientId, {}));
+      }
+
       
 
       if (get(query, 'address')) {
@@ -629,23 +1246,96 @@ export const RestHelpers = {
         }
         
         if(isFuzzy){
-          queryComponent[trimmedExpression] = {$regex: get(req.query, get(searchParameter, 'code')), $options: 'i'};                
+          queryComponent[trimmedExpression] = {$regex: get(req.query, get(searchParameter, 'code')), $options: 'i'};
         } else {
-          // queryComponent[trimmedExpression] = get(req.query, get(searchParameter, 'code'));
-          
-          let codeComponents = (get(req.query, get(searchParameter, 'code'))).split(",");
-          if(Array.isArray(codeComponents) && (codeComponents.length > 1)){
-            queryComponent[trimmedExpression] = {$in: []};
-            codeComponents.forEach(function(part){
-              queryComponent[trimmedExpression].$in.push(part);
+          // Handle reference type search parameters
+          // Use $in to match multiple possible reference formats (mirrors $everything pattern)
+          // FHIR references can be stored as: Patient/123, https://server/Patient/123, or just 123
+          let isReferenceType = get(searchParameter, 'type') === 'reference';
+
+          if(isReferenceType){
+            let searchValue = get(req.query, get(searchParameter, 'code'));
+            let codeComponents = searchValue.split(",");
+            let targetResourceType = get(searchParameter, 'target.0', 'Patient');
+            let fhirBaseUrl = get(Meteor, 'settings.public.fhirUrl', 'http://localhost:3000');
+            let fhirPath = get(Meteor, 'settings.private.fhir.rest.endpoint', 'baseR4');
+
+            // Build $in array with all possible reference formats for each value
+            let allPatterns = [];
+            codeComponents.forEach(function(val){
+              val = val.trim();
+              // Extract the ID portion (strip any prefix)
+              let idPart = val;
+              if(val.includes('/')){
+                idPart = val.split('/').pop();
+              }
+
+              // Add all possible formats
+              allPatterns.push(idPart);                                                        // Just ID
+              allPatterns.push(targetResourceType + '/' + idPart);                             // Relative: Patient/123
+              allPatterns.push(fhirBaseUrl + '/' + fhirPath + '/' + targetResourceType + '/' + idPart);  // Absolute URL
             });
+
+            queryComponent[trimmedExpression] = { $in: allPatterns };
+            process.env.DEBUG && console.log('RestHelpers.parseQueryComponent: Reference search with patterns:', allPatterns);
           } else {
-            queryComponent[trimmedExpression] = get(req.query, get(searchParameter, 'code'));
+            // Non-reference types - check for token type on CodeableConcept
+            let isTokenType = get(searchParameter, 'type') === 'token';
+            let searchValue = get(req.query, get(searchParameter, 'code'));
+            let searchParamCode = get(searchParameter, 'code');
+
+            if (isTokenType) {
+              // The xpath field already contains the MongoDB path - use it directly
+              // (xpath is repurposed to store MongoDB-compatible dotted paths, not FHIRPath)
+              let mongoPath = trimmedExpression;
+
+              // Extract base field for Identifier/CodeableConcept detection
+              // e.g., "identifier.value" → "identifier", "category" → "category"
+              let baseField = mongoPath.includes('.') ? mongoPath.split('.')[0] : mongoPath;
+
+              if (baseField && isIdentifierField(baseField, searchParamCode)) {
+                // Build Identifier-aware query using base field for $elemMatch
+                let identifierQuery = buildIdentifierTokenQuery(baseField, searchValue);
+                Object.assign(queryComponent, identifierQuery);
+                process.env.DEBUG && console.log('RestHelpers.parseQueryComponent: Token search on Identifier:', baseField, searchValue, identifierQuery);
+              } else if (baseField && isCodeableConceptField(baseField, searchParamCode)) {
+                // Build CodeableConcept-aware query (searches coding.code and text)
+                let codeableConceptQuery = buildCodeableConceptTokenQuery(baseField, searchValue);
+                Object.assign(queryComponent, codeableConceptQuery);
+                process.env.DEBUG && console.log('RestHelpers.parseQueryComponent: Token search on CodeableConcept:', baseField, searchValue, codeableConceptQuery);
+              } else {
+                // Token search on simple code field - use mongoPath directly
+                let codeComponents = searchValue.split(",");
+                if (Array.isArray(codeComponents) && (codeComponents.length > 1)) {
+                  queryComponent[mongoPath] = { $in: codeComponents.map(function(c) { return c.trim(); }) };
+                } else {
+                  queryComponent[mongoPath] = searchValue;
+                }
+                process.env.DEBUG && console.log('RestHelpers.parseQueryComponent: Token search on simple field:', mongoPath, searchValue);
+              }
+            } else {
+              // Non-token, non-reference types (string, date, etc.)
+              let baseField = trimmedExpression.includes('.') ? trimmedExpression.split('.')[0] : trimmedExpression;
+
+              if (isHumanNameField(baseField, searchParamCode)) {
+                // HumanName: search family, given, and text fields
+                let humanNameQuery = buildHumanNameStringQuery(baseField, searchValue);
+                Object.assign(queryComponent, humanNameQuery);
+                process.env.DEBUG && console.log('RestHelpers.parseQueryComponent: String search on HumanName:', baseField, searchValue, humanNameQuery);
+              } else {
+                // Original logic for simple fields
+                let codeComponents = searchValue.split(",");
+                if (Array.isArray(codeComponents) && (codeComponents.length > 1)) {
+                  queryComponent[trimmedExpression] = { $in: codeComponents.map(function(c) { return c.trim(); }) };
+                } else {
+                  queryComponent[trimmedExpression] = searchValue;
+                }
+              }
+            }
           }
-    
         }
       }
-    
+
       return queryComponent;
     },
     fhirPathToMongo: function(searchParameter, queryKey, req){

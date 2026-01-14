@@ -5,13 +5,13 @@ import { useNavigate } from 'react-router-dom';
 import { get } from 'lodash';
 import { Meteor } from 'meteor/meteor';
 
-import { 
-  Box, 
-  Container, 
-  Typography, 
+import {
+  Box,
+  Container,
+  Typography,
   Button,
   Link,
-  useTheme,
+  useTheme as useMuiTheme,
   useMediaQuery,
   alpha
 } from '@mui/material';
@@ -21,10 +21,21 @@ import LockIcon from '@mui/icons-material/Lock';
 
 export default function NotAuthorized(props) {
   const navigate = useNavigate();
-  const theme = useTheme();
-  
+  const muiTheme = useMuiTheme();
+
+  // Get Honeycomb theme for dark mode support
+  const useAppTheme = Meteor.useTheme;
+  const appTheme = useAppTheme ? useAppTheme() : { theme: 'light' };
+  const isDark = appTheme.theme === 'dark';
+
+  // Theme-aware colors
+  const cardBgColor = isDark ? '#2a2a2a' : '#ffffff';
+  const cardTextColor = isDark ? 'rgba(255, 255, 255, 0.87)' : 'rgba(0, 0, 0, 0.87)';
+  const bgColor = isDark ? '#1e1e1e' : '#f5f5f5';
+  const borderColor = isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.12)';
+
   // Define responsive breakpoints
-  const upMd = useMediaQuery(theme.breakpoints.up('md')); // >= 960px
+  const upMd = useMediaQuery(muiTheme.breakpoints.up('md')); // >= 960px
   const upLg = useMediaQuery('(min-width:1920px)'); // >= 1920px
 
   const handleSignIn = function() {
@@ -132,14 +143,14 @@ export default function NotAuthorized(props) {
 
             <Box
               sx={{
-                backgroundColor: 'background.paper',
+                backgroundColor: cardBgColor,
                 borderRadius: 2,
                 padding: 3,
                 marginBottom: 3,
                 boxShadow: '0 2px 10px rgba(0,0,0,0.05)',
                 cursor: 'pointer',
                 border: '1px solid',
-                borderColor: 'divider',
+                borderColor: borderColor,
                 transition: 'all 0.2s ease',
                 '&:hover': {
                   border: theme => `1px solid ${theme.palette.primary.main}`,
@@ -166,10 +177,12 @@ export default function NotAuthorized(props) {
                   {appTitle.slice(0, 2).toUpperCase()}
                 </Box>
                 <Box sx={{ flex: 1 }}>
-                  <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                  <Typography variant="body1" sx={{ fontWeight: 500, color: cardTextColor }}>
                     {appTitle}
                   </Typography>
-                  <Typography variant="body2" color="text.secondary">
+                  <Typography variant="body2" sx={{
+                    color: isDark ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)'
+                  }}>
                     {appDomain}
                   </Typography>
                 </Box>
@@ -333,13 +346,13 @@ export default function NotAuthorized(props) {
 
             <Box
               sx={{
-                backgroundColor: 'background.paper',
+                backgroundColor: cardBgColor,
                 borderRadius: 2,
                 padding: 3,
                 marginBottom: 4,
                 cursor: 'pointer',
                 border: '1px solid',
-                borderColor: 'divider',
+                borderColor: borderColor,
                 transition: 'all 0.2s ease',
                 '&:hover': {
                   border: theme => `1px solid ${theme.palette.primary.main}`,
@@ -366,10 +379,12 @@ export default function NotAuthorized(props) {
                   {appTitle.slice(0, 2).toUpperCase()}
                 </Box>
                 <Box sx={{ flex: 1 }}>
-                  <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                  <Typography variant="body1" sx={{ fontWeight: 500, color: cardTextColor }}>
                     {appTitle}
                   </Typography>
-                  <Typography variant="body2" color="text.secondary">
+                  <Typography variant="body2" sx={{
+                    color: isDark ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)'
+                  }}>
                     {appDomain}
                   </Typography>
                 </Box>
@@ -397,15 +412,22 @@ export default function NotAuthorized(props) {
             </Box>
 
             <Box sx={{ textAlign: 'center', marginTop: 8 }}>
-              <Typography variant="caption" color="text.secondary">
+              <Typography variant="caption" sx={{
+                color: isDark ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)'
+              }}>
                 Version {versionString} — © 2025 {appTitle}.
               </Typography>
               <br />
-              <Typography variant="caption" color="text.secondary">
+              <Typography variant="caption" sx={{
+                color: isDark ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)'
+              }}>
                 All rights reserved.
               </Typography>
               <br />
-              <Typography variant="caption" color="text.secondary" sx={{ mt: 1 }}>
+              <Typography variant="caption" sx={{
+                mt: 1,
+                color: isDark ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)'
+              }}>
                 Protected by NodeOnFHIR Security
               </Typography>
             </Box>
@@ -421,7 +443,7 @@ export default function NotAuthorized(props) {
       sx={{
         display: 'flex',
         minHeight: '100vh',
-        backgroundColor: 'background.default',
+        backgroundColor: bgColor,
         position: 'relative',
       }}
     >
@@ -429,7 +451,7 @@ export default function NotAuthorized(props) {
       <Box
         sx={{
           flex: '0 0 20%',
-          backgroundColor: 'action.hover',
+          backgroundColor: bgColor,
         }}
       />
 
@@ -441,10 +463,10 @@ export default function NotAuthorized(props) {
           top: 0,
           width: 40,
           height: '100%',
-          backgroundColor: 'background.paper',
+          backgroundColor: cardBgColor,
           borderLeft: '1.5px solid',
           borderRight: '1.5px solid',
-          borderColor: 'divider',
+          borderColor: borderColor,
           zIndex: 1,
         }}
       />
@@ -455,10 +477,10 @@ export default function NotAuthorized(props) {
           top: 0,
           width: 40,
           height: '100%',
-          backgroundColor: 'background.paper',
+          backgroundColor: cardBgColor,
           borderLeft: '1.5px solid',
           borderRight: '1.5px solid',
-          borderColor: 'divider',
+          borderColor: borderColor,
           zIndex: 1,
         }}
       />
@@ -479,7 +501,7 @@ export default function NotAuthorized(props) {
             height: 200,
             marginTop: '-80px',
             borderRadius: '50%',
-            background: theme.palette.mode === 'dark'
+            background: isDark
               ? `linear-gradient(135deg, ${theme.palette.primary.light} 0%, ${theme.palette.primary.main} 100%)`
               : `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
             display: 'flex',
@@ -492,16 +514,16 @@ export default function NotAuthorized(props) {
               width: 170,
               height: 170,
               borderRadius: '50%',
-              backgroundColor: theme.palette.background.paper,
+              backgroundColor: cardBgColor,
             }
           })}
         >
-          <FingerprintIcon 
-            sx={{ 
-              fontSize: 90, 
+          <FingerprintIcon
+            sx={{
+              fontSize: 90,
               color: 'primary.main',
               zIndex: 1,
-            }} 
+            }}
           />
         </Box>
       </Box>
@@ -514,22 +536,23 @@ export default function NotAuthorized(props) {
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          backgroundColor: 'action.hover',
+          backgroundColor: bgColor,
           padding: 4,
           borderLeft: '8px solid',
           borderRight: '1px solid',
-          borderColor: 'divider',
+          borderColor: borderColor,
         }}
       >
         <Box sx={{ maxWidth: 320, width: '100%' }}>
-          <Typography 
-            variant="h4" 
-            component="h1" 
+          <Typography
+            variant="h4"
+            component="h1"
             gutterBottom
-            sx={{ 
+            sx={{
               fontWeight: 600,
               textAlign: 'center',
               marginBottom: 4,
+              color: cardTextColor
             }}
           >
             Choose an account
@@ -537,13 +560,13 @@ export default function NotAuthorized(props) {
 
           <Box
             sx={{
-              backgroundColor: 'background.paper',
+              backgroundColor: cardBgColor,
               borderRadius: 2,
               padding: 3,
               marginBottom: 4,
               cursor: 'pointer',
               border: '1px solid',
-              borderColor: 'divider',
+              borderColor: borderColor,
               transition: 'all 0.2s ease',
               '&:hover': {
                 border: theme => `1px solid ${theme.palette.primary.main}`,
@@ -570,10 +593,12 @@ export default function NotAuthorized(props) {
                 {appTitle.slice(0, 2).toUpperCase()}
               </Box>
               <Box sx={{ flex: 1 }}>
-                <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                <Typography variant="body1" sx={{ fontWeight: 500, color: cardTextColor }}>
                   {appTitle}
                 </Typography>
-                <Typography variant="body2" color="text.secondary">
+                <Typography variant="body2" sx={{
+                  color: isDark ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)'
+                }}>
                   {appDomain}
                 </Typography>
               </Box>
@@ -601,15 +626,22 @@ export default function NotAuthorized(props) {
           </Box>
 
           <Box sx={{ textAlign: 'center', marginTop: 8 }}>
-            <Typography variant="caption" color="text.secondary">
+            <Typography variant="caption" sx={{
+              color: isDark ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)'
+            }}>
               Version {versionString} — © 2025 {appTitle}.
             </Typography>
             <br />
-            <Typography variant="caption" color="text.secondary">
+            <Typography variant="caption" sx={{
+              color: isDark ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)'
+            }}>
               All rights reserved.
             </Typography>
             <br />
-            <Typography variant="caption" color="text.secondary" sx={{ mt: 1 }}>
+            <Typography variant="caption" sx={{
+              mt: 1,
+              color: isDark ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)'
+            }}>
               Protected by NodeOnFHIR Security
             </Typography>
           </Box>

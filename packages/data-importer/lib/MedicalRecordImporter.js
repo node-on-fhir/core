@@ -468,10 +468,106 @@ MedicalRecordImporter = {
 
       // HipaaLogger.logEvent({eventType: "update", userId: Meteor.userId(), userName: get(Meteor.user(), 'profile.fullName', get(Meteor.user(), 'username', '')), collectionName: "Procedures", recordId: self.state.procedureId });
   },
+  isAppleHealthXml: function(content) {
+    // Check if content is a string and contains Apple Health XML markers
+    if(typeof content !== 'string') {
+      return false;
+    }
+    return content.includes('<!DOCTYPE HealthData') ||
+           content.includes('HealthKit Export Version');
+  },
+  analyzeAppleHealthXML: function(xmlContent) {
+    console.log('=====================================================');
+    console.log('MedicalRecordImporter.analyzeAppleHealthXML()');
+    console.log('XML size:', (xmlContent.length / 1024 / 1024).toFixed(2), 'MB');
+
+    try {
+      const healthRecords = {};
+      const workouts = {};
+      let totalRecords = 0;
+      let earliestDate = null;
+      let latestDate = null;
+
+      // Use regex to extract Record elements and their attributes
+      const recordRegex = /<Record\s+([^>]+)>/g;
+      let match;
+
+      while ((match = recordRegex.exec(xmlContent)) !== null) {
+        const attributes = match[1];
+
+        // Extract type attribute
+        const typeMatch = /type="([^"]+)"/.exec(attributes);
+        const startDateMatch = /startDate="([^"]+)"/.exec(attributes);
+
+        if (typeMatch) {
+          const type = typeMatch[1];
+          const startDate = startDateMatch ? startDateMatch[1] : null;
+
+          // Track record counts by type
+          if (!healthRecords[type]) {
+            healthRecords[type] = {
+              count: 0,
+              displayName: type.replace(/HK(Quantity|Category)TypeIdentifier/, '')
+            };
+          }
+          healthRecords[type].count++;
+          totalRecords++;
+
+          // Track date range
+          if (startDate) {
+            const date = new Date(startDate);
+            if (!earliestDate || date < earliestDate) {
+              earliestDate = date;
+            }
+            if (!latestDate || date > latestDate) {
+              latestDate = date;
+            }
+          }
+        }
+      }
+
+      // Extract Workout elements
+      const workoutRegex = /<Workout\s+([^>]+)>/g;
+      while ((match = workoutRegex.exec(xmlContent)) !== null) {
+        const attributes = match[1];
+        const typeMatch = /workoutActivityType="([^"]+)"/.exec(attributes);
+
+        if (typeMatch) {
+          const type = typeMatch[1];
+          if (!workouts[type]) {
+            workouts[type] = {
+              count: 0,
+              displayName: type.replace(/HKWorkoutActivityType/, '')
+            };
+          }
+          workouts[type].count++;
+        }
+      }
+
+      console.log('Analysis complete');
+      console.log('Total records:', totalRecords);
+      console.log('Unique types:', Object.keys(healthRecords).length);
+      console.log('Workouts:', Object.keys(workouts).length);
+
+      return {
+        healthRecords,
+        workouts,
+        totalRecords,
+        dateRange: {
+          earliest: earliestDate,
+          latest: latestDate
+        },
+        clinicalRecords: [] // XML files don't have clinical-records folder
+      };
+    } catch (error) {
+      console.error('Error analyzing Apple Health XML:', error);
+      return { error: error.message };
+    }
+  },
   analyzeAppleHealthExport: async function(zipContent, options = {}){
     console.log('=====================================================');
     console.log('MedicalRecordImporter.analyzeAppleHealthExport()');
-    
+
     try {
       // Load the zip file
       const zip = new JSZip();
@@ -1212,7 +1308,9 @@ MedicalRecordImporter = {
       'HKQuantityTypeIdentifierOxygenSaturation': { code: '59408-5', display: 'Oxygen saturation', unit: '%' },
       'HKQuantityTypeIdentifierBloodGlucose': { code: '15074-8', display: 'Glucose', unit: 'mg/dL' },
       'HKQuantityTypeIdentifierBodyTemperature': { code: '8310-5', display: 'Body temperature', unit: 'Cel' },
-      'HKQuantityTypeIdentifierRespiratoryRate': { code: '9279-1', display: 'Respiratory rate', unit: 'breaths/min' }
+      'HKQuantityTypeIdentifierRespiratoryRate': { code: '9279-1', display: 'Respiratory rate', unit: 'breaths/min' },
+      'HKQuantityTypeIdentifierRestingHeartRate': { code: '40443-4', display: 'Resting heart rate', unit: 'beats/min' },
+      'HKCategoryTypeIdentifierSleepAnalysis': { code: '93832-1', display: 'Sleep duration', unit: 'min' }
     };
     
     const loincInfo = typeToLoinc[type];

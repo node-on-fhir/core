@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import { useTracker } from 'meteor/react-meteor-data';
 import { useNavigate } from 'react-router-dom';
 
-import { 
-  Grid, 
+import {
+  Grid,
   Container,
   Divider,
   Card,
@@ -11,9 +11,14 @@ import {
   CardContent,
   Button,
   Box,
-  Typography
+  Typography,
+  TextField,
+  ToggleButton,
+  ToggleButtonGroup
 } from '@mui/material';
-import AddIcon from '@mui/icons-material/Add'; 
+import AddIcon from '@mui/icons-material/Add';
+import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
+import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward'; 
 
 import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
@@ -48,13 +53,54 @@ Session.setDefault('MedicationsTable.medicationsIndex', 0)
 
 export function MedicationsPage(props){
   const navigate = useNavigate();
+  const [searchFilter, setSearchFilter] = useState('');
+  const [sortOrder, setSortOrder] = useState('descending');
 
   // Subscribe to medications data
   const isLoading = useTracker(() => {
-    // Check if we should use autopublish (development mode)
-    const handle = Meteor.subscribe('autopublish.Medications', {}, {});
+    // Request configured subscription limit to ensure newly created records appear
+    // This is especially important when there are 100+ existing records (e.g., Synthea data)
+    const subscriptionLimit = get(Meteor, 'settings.public.defaults.subscriptionLimit', 1000);
+
+    // Build query based on search filter
+    let query = {};
+
+    // Add search filter if present
+    if(searchFilter && searchFilter.length > 0) {
+      // Check if searchFilter looks like a medication ID (24-char hex string)
+      const looksLikeId = /^[a-f0-9]{24}$/i.test(searchFilter);
+
+      if (looksLikeId) {
+        // Exact ID match - much faster, no regex needed
+        query = {
+          $or: [
+            {'_id': searchFilter},
+            {'id': searchFilter}
+          ]
+        };
+        console.log('Medications subscription - ID query (optimized):', query);
+      } else {
+        // General search with regex
+        query = {
+          $or: [
+            {'_id': searchFilter},
+            {'id': searchFilter},
+            {'code.text': {$regex: searchFilter, $options: 'i'}},
+            {'code.coding.0.display': {$regex: searchFilter, $options: 'i'}},
+            {'manufacturer.display': {$regex: searchFilter, $options: 'i'}},
+            {'status': {$regex: searchFilter, $options: 'i'}}
+          ]
+        };
+        console.log('Medications subscription - general query:', query);
+      }
+    }
+
+    const handle = Meteor.subscribe('autopublish.Medications', query, {
+      limit: subscriptionLimit,
+      sort: { '_id': -1 } // Most recent first
+    });
     return !handle.ready();
-  }, []);
+  }, [searchFilter]);
 
   let data = {
     currentMedicationId: '',
@@ -79,13 +125,57 @@ export function MedicationsPage(props){
     return Medications.findOne({_id: Session.get('selectedMedicationId')});
   }, [])
   data.medications = useTracker(function(){
+    // Build same query as subscription for client-side filtering
+    let query = {};
+
+    // Add search filter if present
+    if(searchFilter && searchFilter.length > 0) {
+      // Check if searchFilter looks like a medication ID (24-char hex string)
+      const looksLikeId = /^[a-f0-9]{24}$/i.test(searchFilter);
+
+      if (looksLikeId) {
+        // Exact ID match - much faster
+        query = {
+          $or: [
+            {'_id': searchFilter},
+            {'id': searchFilter}
+          ]
+        };
+      } else {
+        // General search with regex
+        query = {
+          $or: [
+            {'_id': searchFilter},
+            {'id': searchFilter},
+            {'code.text': {$regex: searchFilter, $options: 'i'}},
+            {'code.coding.0.display': {$regex: searchFilter, $options: 'i'}},
+            {'manufacturer.display': {$regex: searchFilter, $options: 'i'}},
+            {'status': {$regex: searchFilter, $options: 'i'}}
+          ]
+        };
+      }
+    }
+
     // Sort by most recent first (using _id in reverse order)
-    return Medications.find({}, {
-      sort: { 
+    const medications = Medications.find(query, {
+      sort: {
         '_id': -1  // Most recent first (naive but works with MongoDB ObjectIDs)
       }
     }).fetch();
-  }, [])
+
+    // Diagnostic logging
+    console.log('[MedicationsPage] Fetched', medications.length, 'medications from client collection');
+    if (medications.length > 0) {
+      console.log('[MedicationsPage] First 3 medications:', medications.slice(0, 3).map(med => ({
+        _id: med._id,
+        codeText: get(med, 'code.text'),
+        codeDisplay: get(med, 'code.coding[0].display'),
+        manufacturer: get(med, 'manufacturer.display')
+      })));
+    }
+
+    return medications;
+  }, [searchFilter])
   data.medicationsIndex = useTracker(function(){
     return Session.get('MedicationsTable.medicationsIndex')
   }, [])
@@ -109,6 +199,12 @@ export function MedicationsPage(props){
     navigate('/medications/new');
   }
 
+  function handleSortOrderChange(event, newOrder){
+    if(newOrder !== null){
+      setSortOrder(newOrder);
+    }
+  }
+
   function renderHeader() {
     return (
       <Box mb={2}>
@@ -121,15 +217,45 @@ export function MedicationsPage(props){
               {data.medications.length} medications found
             </Typography>
           </Grid>
-          <Grid item>
-            <Button
-              variant="contained"
-              color="primary"
-              startIcon={<AddIcon />}
-              onClick={handleAddMedication}
-            >
-              Add Medication
-            </Button>
+          <Grid item xs={12} sm={6}>
+            <Box display="flex" gap={2} alignItems="center" justifyContent="flex-end">
+              <ToggleButtonGroup
+                value={sortOrder}
+                exclusive
+                onChange={handleSortOrderChange}
+                aria-label="sort order"
+                size="small"
+              >
+                <ToggleButton value="ascending" aria-label="ascending order">
+                  <ArrowUpwardIcon />
+                </ToggleButton>
+                <ToggleButton value="descending" aria-label="descending order">
+                  <ArrowDownwardIcon />
+                </ToggleButton>
+              </ToggleButtonGroup>
+
+              <Button
+                variant="contained"
+                color="primary"
+                startIcon={<AddIcon />}
+                onClick={handleAddMedication}
+              >
+                Add Medication
+              </Button>
+            </Box>
+          </Grid>
+        </Grid>
+        <Grid container spacing={2} sx={{ mt: 1 }}>
+          <Grid item xs={12}>
+            <TextField
+              id="medicationSearchInput"
+              fullWidth
+              placeholder="Search medications by ID, code, manufacturer, status..."
+              value={searchFilter}
+              onChange={(e) => setSearchFilter(e.target.value)}
+              variant="outlined"
+              size="small"
+            />
           </Grid>
         </Grid>
       </Box>

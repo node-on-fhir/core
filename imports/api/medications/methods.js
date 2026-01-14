@@ -22,11 +22,11 @@ function getMedications() {
 Meteor.methods({
   async 'medications.create'(medicationData) {
     check(medicationData, Object);
-    
+
     if (!this.userId) {
       throw new Meteor.Error('not-authorized', 'User must be logged in to create medications');
     }
-    
+
     // Add metadata
     const medication = {
       ...medicationData,
@@ -36,7 +36,18 @@ Meteor.methods({
         versionId: '1'
       }
     };
-    
+
+    // Set _id based on environment variable for consistent sorting with Synthea data
+    // This ensures new medications sort properly with existing ObjectID-based records
+    if (process.env.USE_MONGO_OBJECTID) {
+      const { Mongo } = Package.mongo;
+      const objectId = new Mongo.ObjectID();
+      // Convert to hex string for Meteor compatibility
+      medication._id = objectId.toHexString();
+      console.log('[medications.create] Using MongoDB ObjectID (as hex string):', medication._id);
+    }
+    // Otherwise Meteor will auto-generate a random string ID
+
     // Insert and return the new medication
     const Medications = getMedications();
     const medicationId = await Medications.insertAsync(medication);

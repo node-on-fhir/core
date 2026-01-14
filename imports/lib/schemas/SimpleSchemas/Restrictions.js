@@ -11,7 +11,7 @@ import SimpleSchema from 'simpl-schema';
 import { BaseSchema, DomainResourceSchema, IdentifierSchema, ContactPointSchema, AddressSchema, ReferenceSchema, SignatureSchema } from 'meteor/clinical:hl7-resource-datatypes';
 
 
-import ConsentSchema from './Consents';
+import { ConsentSchema } from './Consents';
 
 // if(Package['clinical:autopublish']){
 //   console.log("*****************************************************************************")

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 
-import { 
+import {
   Button,
   Table,
   TableBody,
@@ -9,12 +9,14 @@ import {
   TableHead,
   TableRow,
   TablePagination,
-  IconButton,
-  FirstPageIcon,
+  IconButton
+} from '@mui/material';
+import {
+  FirstPage as FirstPageIcon,
   KeyboardArrowLeft,
   KeyboardArrowRight,
-  LastPageIcon
-} from '@mui/material';
+  LastPage as LastPageIcon
+} from '@mui/icons-material';
 
 
 // import Icon from 'react-icons-kit'
@@ -33,7 +35,8 @@ let set = _.set;
 import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
 
-import { flattenPerson } from '../lib/FhirDehydrator';
+import { flattenPatient } from '../lib/FhirDehydrator';
+import { DynamicSpacer } from '../ui/DynamicSpacer';
 
 // //===========================================================================
 // // THEMING
@@ -82,10 +85,8 @@ let styles = {
 //----------------------------------------------------------------------
 // Helper Components
 
-let DynamicSpacer;
 let useTheme;
 Meteor.startup(function(){
-  DynamicSpacer = Meteor.DynamicSpacer;
   useTheme = Meteor.useTheme;
 })
 
@@ -828,7 +829,7 @@ export function PersonsTable(props){
       let count = 0;  
       persons.forEach(function(person){
         if((count >= (page * rowsPerPageToRender)) && (count < (page + 1) * rowsPerPageToRender)){
-          personsToRender.push(flattenPerson(person, dateFormat));
+          personsToRender.push(flattenPatient(person, dateFormat));
         }
         count++;
       });  

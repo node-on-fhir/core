@@ -6,6 +6,48 @@ import { check, Match } from 'meteor/check';
 import { get } from 'lodash';
 import { Patients } from '/imports/lib/schemas/SimpleSchemas/Patients';
 
+/**
+ * PRACTITIONER ACCESS CONTROL
+ * ===========================
+ * Controls how healthcare practitioners and providers access patient records.
+ *
+ * OPTION 1: Full Access (default)
+ * Setting: Meteor.settings.private.accessControl.practitionerFullAccess = true
+ * Behavior: Practitioners can view ALL patients in the system.
+ * Use case: Small clinics, development, situations where all practitioners
+ *           need visibility across the entire patient population.
+ *
+ * OPTION 2: Assigned Patients Only
+ * Setting: Meteor.settings.private.accessControl.practitionerFullAccess = false
+ * Behavior: Practitioners can ONLY view patients where:
+ *   - Patient.generalPractitioner.reference matches "Practitioner/{practitionerId}"
+ *   - OR patient record has meta.security.display = "unrestricted"
+ * Use case: Large healthcare systems, multi-tenant deployments, HIPAA-compliant
+ *           environments where practitioners should only see their own patients.
+ *
+ * NOTE: This setting only affects DDP pub/sub access (UI). REST API access
+ * is controlled by FhirEndpoints.js which has similar logic.
+ */
+
+/**
+ * Determines the user's authorized role based on priority.
+ * Role priority: healthcare practitioner > healthcare provider > patient
+ * This mirrors the logic in FhirEndpoints.js getAuthorizedRole()
+ * @param {Array} userRoles - The user's roles array from Meteor.users
+ * @returns {string} - The highest priority role found, or 'patient' as default
+ */
+function getAuthorizedRole(userRoles) {
+  const authorizedRoles = ['healthcare practitioner', 'healthcare provider', 'patient'];
+  if (Array.isArray(userRoles)) {
+    for (const role of authorizedRoles) {
+      if (userRoles.includes(role)) {
+        return role;
+      }
+    }
+  }
+  return 'patient'; // default if no authorized role found
+}
+
 // Main patients publication with search and filtering
 Meteor.publish('patients.search', async function(query = {}, options = {}) {
   // Check if user is authenticated
@@ -33,15 +75,17 @@ Meteor.publish('patients.search', async function(query = {}, options = {}) {
   check(query, Match.Maybe(Object));
   check(options, Match.Maybe(Object));
   
-  // Default options
+  // Default options - use configured subscriptionLimit
+  const defaultLimit = get(Meteor, 'settings.public.defaults.subscriptionLimit', 1000);
   options = Object.assign({
-    limit: 100,
-    sort: { 'meta.lastUpdated': -1 }
+    limit: defaultLimit,
+    // Sort by meta.lastUpdated with _id fallback for records without meta.lastUpdated (e.g., Synthea imports)
+    sort: { 'meta.lastUpdated': -1, '_id': -1 }
   }, options);
   
-  // Apply reasonable limits
-  if (options.limit > 1000) {
-    options.limit = 1000;
+  // Apply reasonable limits - cap at configured subscriptionLimit
+  if (options.limit > defaultLimit) {
+    options.limit = defaultLimit;
   }
   
   // Transform query to handle ObjectID and improve search
@@ -83,33 +127,95 @@ Meteor.publish('patients.search', async function(query = {}, options = {}) {
   }
   
   // Log the publication request
-  console.log('Publishing patients.search with transformed query:', JSON.stringify(query), 'options:', options);
+  console.log('========== patients.search publication ==========');
+  console.log('Received query:', JSON.stringify(query, null, 2));
+  console.log('Options:', JSON.stringify(options));
+  console.log('userId:', this.userId);
   
-  // TODO: Add patient access control based on user roles and permissions
-  // For now, authenticated users can see all patients
-  // In production, implement proper PHI access controls:
-  // - Practitioners see their assigned patients
-  // - Patients see only their own record
-  // - Admins see all patients
-  // - Care team members see patients they're assigned to
-  
+  // Role-based access control (mirrors FhirEndpoints.js pattern)
   if (this.userId) {
     const user = await Meteor.users.findOneAsync(this.userId);
-    
-    // If user has a patientId, they can only see their own record
-    if (user && user.patientId) {
-      query._id = user.patientId;
-      console.log('User is a patient, restricting to their own record:', user.patientId);
+
+    if (user) {
+      const authorizedRole = getAuthorizedRole(get(user, 'roles', []));
+      console.log('User authorized role:', authorizedRole, 'userId:', this.userId);
+
+      // Healthcare practitioners/providers access
+      if (authorizedRole === 'healthcare practitioner' || authorizedRole === 'healthcare provider') {
+        const practitionerFullAccess = get(Meteor, 'settings.private.accessControl.practitionerFullAccess', true);
+
+        if (practitionerFullAccess) {
+          // Full access - no restrictions, query passes through as-is
+          console.log('Practitioner access (full) - no patient restrictions applied');
+        } else {
+          // Assigned patients only - filter by generalPractitioner.reference
+          const practitionerId = user.practitionerId;
+
+          if (practitionerId) {
+            const practitionerQuery = {
+              $or: [
+                // Unrestricted records are visible to all authorized users
+                { 'meta.security.display': 'unrestricted' },
+                // Patients explicitly assigned to this practitioner
+                { 'generalPractitioner.reference': `Practitioner/${practitionerId}` },
+                { 'generalPractitioner.reference': { $regex: practitionerId } }
+              ]
+            };
+
+            if (Object.keys(query).length > 0) {
+              query = { $and: [practitionerQuery, query] };
+              console.log('Practitioner access (assigned-only) - filtering by assignment');
+            } else {
+              query = practitionerQuery;
+            }
+          } else {
+            // Practitioner role but no practitionerId - show unrestricted only
+            query = { 'meta.security.display': 'unrestricted' };
+            console.log('Practitioner role but no practitionerId - showing unrestricted only');
+          }
+        }
+      } else if (authorizedRole === 'patient') {
+        // Patients can ONLY see their own record
+        const patientId = user.patientId;
+
+        if (patientId) {
+          const patientQuery = {
+            $or: [
+              { _id: patientId },
+              { id: patientId }
+            ]
+          };
+
+          // Handle ObjectID format
+          if (/^[a-f\d]{24}$/i.test(patientId)) {
+            patientQuery.$or.push({ _id: new Mongo.ObjectID(patientId) });
+          }
+
+          if (Object.keys(query).length > 0) {
+            query = { $and: [patientQuery, query] };
+            console.log('Patient role - combining search with patient restriction');
+          } else {
+            query = patientQuery;
+            console.log('Patient role - restricting to own record:', patientId);
+          }
+        } else {
+          console.log('Patient role but no patientId - returning empty');
+          return this.ready();
+        }
+      } else {
+        // Unknown role - deny access
+        console.log('Unknown role - returning empty:', authorizedRole);
+        return this.ready();
+      }
+    } else {
+      console.log('User not found - returning empty');
+      return this.ready();
     }
-    
-    // TODO: Add more sophisticated access control
-    // Example: Check if user is practitioner and filter by assigned patients
-    // if (user && user.practitionerId) {
-    //   // Get patients assigned to this practitioner
-    //   query['generalPractitioner.reference'] = `Practitioner/${user.practitionerId}`;
-    // }
   }
-  
+
+  console.log('Final query being executed:', JSON.stringify(query, null, 2));
+  console.log('=================================================');
+
   return Patients.find(query, options);
 });
 
@@ -141,7 +247,7 @@ Meteor.publish('patients.all', function() {
   }
   
   console.log('Publishing all patients for development');
-  return Patients.find({}, { limit: 1000 });
+  return Patients.find({}, { limit: 1000, sort: { '_id': -1 } });
 });
 
 // Publication for a single patient by ID

@@ -2,9 +2,11 @@
 
 const testUtils = require('./shared-test-utils');
 const saveNavigationHelper = require('../../helpers/save-navigation-helper');
+const loginHelper = require('../../helpers/login-helper');
 
 describe('MedicationAdministrations CRUD Operations', function() {
   const timestamp = Date.now();
+  let testPatientId = null; // Store patient ID for cross-test access
   const testMedicationAdministration = {
     patientName: 'John Doe',
     performerName: `Nurse Smith ${timestamp}`,
@@ -49,128 +51,66 @@ describe('MedicationAdministrations CRUD Operations', function() {
       .url('http://localhost:3000')
       .waitForElementVisible('body', 5000);
 
-    // Check if we're logged in
-    browser.execute(function() {
-      return {
-        isLoggedIn: typeof Meteor !== 'undefined' && !!Meteor.userId(),
-        userId: Meteor.userId ? Meteor.userId() : null,
-        username: Meteor.user ? (Meteor.user() ? Meteor.user().username : null) : null
-      };
-    }, [], function(result) {
-      console.log('Initial login state:', result.value);
-      
-      if (!result.value.isLoggedIn) {
-        console.log('Not logged in, attempting programmatic login...');
-        
-        browser.executeAsync(function(done) {
-          if (typeof Meteor !== 'undefined') {
-            Meteor.call('test.createTestUser', {
-              username: 'janedoe',
-              email: 'janedoe@test.org',
-              password: 'janedoe123'
-            }, function(err, userId) {
-              if (err) {
-                console.error('Failed to create test user:', err);
-                done({ userCreated: false, error: err.message });
-              } else {
-                console.log('Test user ready, userId:', userId);
-                Meteor.loginWithPassword('janedoe', 'janedoe123', function(loginErr) {
-                  if (loginErr) {
-                    console.error('Login failed:', loginErr);
-                    done({ userCreated: true, loginSuccess: false, error: loginErr.message });
-                  } else {
-                    console.log('Login successful');
-                    done({ 
-                      userCreated: true,
-                      loginSuccess: true, 
-                      userId: Meteor.userId(), 
-                      username: Meteor.user() ? Meteor.user().username : null 
-                    });
-                  }
-                });
-              }
-            });
-          } else {
-            done({ userCreated: false, loginSuccess: false, error: 'Meteor not available' });
-          }
-        }, [], function(result) {
-          if (result.value.loginSuccess) {
-            browser.assert.ok(true, 'Successfully created test user and logged in');
-            console.log('Logged in as:', result.value.username, 'userId:', result.value.userId);
-            
-            testUtils.createTestPatient(browser, {
-              name: 'John Doe',
-              family: 'Doe',
-              given: 'John',
-              identifier: 'test-patient-' + timestamp
-            }, function(result) {
-              if (result.error) {
-                console.error('Failed to create test patient:', result.error);
-                browser.assert.fail('Failed to create test patient: ' + result.error);
-              } else {
-                console.log('Test patient created with ID:', result.result);
-                browser.assert.ok(true, 'Successfully created test patient');
-                
-                // Set the patient as selected
-                browser.execute(function(patientId) {
-                  if(typeof Session !== 'undefined' && typeof Patients !== 'undefined'){
-                    const patient = Patients.findOne({_id: patientId});
-                    if(patient){
-                      Session.set('selectedPatientId', patientId);
-                      Session.set('selectedPatient', patient);
-                      console.log('Selected patient set:', patient);
-                    } else {
-                      console.log('Patient not found with ID:', patientId);
-                    }
-                  }
-                }, [result.result]);
-              }
-            });
-          } else {
-            browser.assert.fail('Setup failed: ' + result.value.error);
-          }
-        });
-        
-        browser.pause(1000);
+    loginHelper.ensureLoggedIn(browser, function(isLoggedIn) {
+      if (!isLoggedIn) {
+        browser.assert.fail('Failed to ensure user is logged in');
       } else {
-        browser.assert.ok(true, 'Already logged in (autologin enabled)');
-        console.log('Already logged in as:', result.value.username, 'userId:', result.value.userId);
-        
-        testUtils.createTestPatient(browser, {
-          name: 'John Doe',
-          family: 'Doe',
-          given: 'John',
-          identifier: 'test-patient-' + timestamp
-        }, function(result) {
-          if (result.error) {
-            console.error('Failed to create test patient:', result.error);
-            browser.assert.fail('Failed to create test patient: ' + result.error);
-          } else {
-            console.log('Test patient created with ID:', result.result);
-            browser.assert.ok(true, 'Successfully created test patient');
-            
-            browser.execute(function(patientId) {
-              if (typeof Session !== 'undefined' && typeof Patients !== 'undefined') {
-                const patient = Patients.findOne({_id: patientId});
-                if (patient) {
-                  Session.set('selectedPatientId', patientId);
-                  Session.set('selectedPatient', patient);
-                  console.log('Set selected patient in Session:', patientId);
-                }
-              }
-            }, [result.result]);
-          }
-        });
+        browser.assert.ok(true, 'User is logged in');
       }
-      
+
+      // Create a test patient
+      testUtils.createTestPatient(browser, {
+        name: 'John Doe',
+        family: 'Doe',
+        given: 'John',
+        identifier: 'test-patient-' + timestamp
+      }, function(result) {
+        if (result.error) {
+          console.error('Failed to create test patient:', result.error);
+          browser.assert.fail('Failed to create test patient: ' + result.error);
+        } else {
+          testPatientId = result.result; // Store for later tests
+          console.log('Test patient created with ID:', result.result);
+          browser.assert.ok(true, 'Successfully created test patient');
+
+          // Fetch the patient from the server and set in Session
+          browser.executeAsync(function(patientId, done) {
+            if (typeof Meteor !== 'undefined' && typeof Session !== 'undefined') {
+              Meteor.call('patients.findOne', patientId, function(error, patient) {
+                if (error) {
+                  console.error('Error fetching patient:', error);
+                  done({ success: false, error: error.message });
+                } else if (patient) {
+                  Session.set('selectedPatientId', patient._id);
+                  Session.set('selectedPatient', patient);
+                  console.log('Set selected patient in Session:', patient._id, patient.name?.[0]?.text);
+                  done({ success: true, patientId: patient._id, patientName: patient.name?.[0]?.text });
+                } else {
+                  console.error('Patient not found:', patientId);
+                  done({ success: false, error: 'Patient not found' });
+                }
+              });
+            } else {
+              done({ success: false, error: 'Meteor or Session not available' });
+            }
+          }, [result.result], function(fetchResult) {
+            if (fetchResult.value && fetchResult.value.success) {
+              console.log('Successfully set selected patient:', fetchResult.value);
+            } else if (fetchResult.value) {
+              console.error('Failed to set selected patient:', fetchResult.value.error);
+            }
+          });
+        }
+      });
+
       // Clean up any existing test data
       browser.executeAsync(function(done) {
         if (typeof MedicationAdministrations !== 'undefined') {
-          const testMedicationAdministrations = MedicationAdministrations.find({ 
-            'performer': { 
-              $elemMatch: { 
-                'actor.display': { $regex: 'Nurse Smith|Nurse Johnson' } 
-              } 
+          const testMedicationAdministrations = MedicationAdministrations.find({
+            'performer': {
+              $elemMatch: {
+                'actor.display': { $regex: 'Nurse Smith|Nurse Johnson' }
+              }
             }
           }).fetch();
           testMedicationAdministrations.forEach(function(medicationAdministration) {
@@ -180,37 +120,15 @@ describe('MedicationAdministrations CRUD Operations', function() {
         }
         done();
       });
-      
-      browser.pause(1000)
-        .execute(function(testIdentifier) {
-          if (typeof Session !== 'undefined' && typeof Patients !== 'undefined') {
-            const patient = Patients.findOne({
-              'identifier.value': testIdentifier
-            });
-            if (patient) {
-              Session.set('selectedPatientId', patient._id);
-              Session.set('selectedPatient', patient);
-              console.log('Set selected patient in Session:', patient._id, patient.name?.[0]?.text);
-              return { success: true, patientId: patient._id, patientName: patient.name?.[0]?.text };
-            } else {
-              console.error('Could not find test patient with identifier:', testIdentifier);
-              return { success: false, error: 'Patient not found' };
-            }
-          }
-          return { success: false, error: 'Session or Patients not available' };
-        }, ['test-patient-' + timestamp], function(result) {
-          if (result.value.success) {
-            console.log('Successfully set selected patient:', result.value);
-          } else {
-            console.error('Failed to set selected patient:', result.value.error);
-          }
-        });
+
+      browser.pause(1000); // Let session and subscription settle
     });
   });
 
   it('02. Verify medication administrations list page loads', browser => {
+    // Use client-side navigation to preserve Meteor/Session state
+    testUtils.navigateUrl(browser, '/medication-administrations');
     browser
-      .url('http://localhost:3000/medication-administrations')
       .waitForElementVisible('#medicationAdministrationsPage', 5000)
             .execute(function() {
         const hasTable = document.querySelector('#medicationAdministrationsTable') !== null;
@@ -234,6 +152,39 @@ describe('MedicationAdministrations CRUD Operations', function() {
     browser
       .waitForElementVisible('#medicationAdministrationsPage', 5000)
       .pause(500);
+
+    // Re-establish patient context using server-side method (bypasses subscription limits)
+    browser.executeAsync(function(patientId, done) {
+      console.log('[Test 03] Re-establishing patient context with ID:', patientId);
+
+      if (typeof Meteor !== 'undefined' && typeof Session !== 'undefined') {
+        // Server method queries DB directly, bypasses subscription limits
+        Meteor.call('patients.findOne', patientId, function(error, patient) {
+          if (error) {
+            console.error('[Test 03] Error fetching patient:', error);
+            done({ success: false, error: error.message });
+          } else if (patient) {
+            Session.set('selectedPatientId', patient._id);
+            Session.set('selectedPatient', patient);
+            console.log('[Test 03] Re-established patient context:', patient._id, patient.name?.[0]?.text);
+            done({ success: true, patientId: patient._id, patientName: patient.name?.[0]?.text });
+          } else {
+            console.error('[Test 03] Patient not found:', patientId);
+            done({ success: false, error: 'Patient not found' });
+          }
+        });
+      } else {
+        done({ success: false, error: 'Meteor or Session not available' });
+      }
+    }, [testPatientId], function(result) {
+      if (result.value && result.value.success) {
+        console.log('[Test 03] Successfully re-established patient context:', result.value.patientName);
+      } else {
+        console.error('[Test 03] Failed to re-establish patient context:', result.value?.error);
+      }
+    });
+
+    browser.pause(500); // Let subscription react to new Session value
 
     browser
       .execute(function() {
@@ -265,8 +216,8 @@ describe('MedicationAdministrations CRUD Operations', function() {
         return false;
       }, [], function(result) {
         if (!result.value) {
-          // If button not found, try direct navigation
-          browser.url('http://localhost:3000/medication-administrations/new');
+          // If button not found, use navigateUrl to preserve Session
+          testUtils.navigateUrl(browser, '/medication-administrations/new');
         } else {
           browser.assert.equal(result.value, true, 'Clicked Add Medication Administration button');
         }
@@ -275,14 +226,14 @@ describe('MedicationAdministrations CRUD Operations', function() {
     browser
       .pause(500); // Give navigation time
       
-    // Check if we navigated, if not, use direct navigation
+    // Check if we navigated, if not, use navigateUrl to preserve Session
     browser.execute(function() {
       return window.location.pathname;
     }, [], function(result) {
       console.log('Current path after button click:', result.value);
       if (!result.value.includes('/medication-administrations/new')) {
-        console.log('Button click did not navigate, using direct navigation');
-        browser.url('http://localhost:3000/medication-administrations/new');
+        console.log('Button click did not navigate, using navigateUrl');
+        testUtils.navigateUrl(browser, '/medication-administrations/new');
       }
     });
     
@@ -521,80 +472,110 @@ describe('MedicationAdministrations CRUD Operations', function() {
     }, [], function(result) {
       console.log('Server-side count after save:', result.value);
     });
+
+    // Verify the medication administration was created with correct patient reference
+    browser.executeAsync(function(patientId, done) {
+      if (typeof MedicationAdministrations !== 'undefined') {
+        const allMeds = MedicationAdministrations.find({}).fetch();
+        const testMed = allMeds.find(m => m.performer?.[0]?.actor?.display?.includes('Smith'));
+
+        done({
+          totalMeds: allMeds.length,
+          foundTestMed: !!testMed,
+          testMedId: testMed?._id,
+          testMedPatientRef: testMed?.subject?.reference,
+          testMedPatientDisplay: testMed?.subject?.display,
+          testMedPerformer: testMed?.performer?.[0]?.actor?.display,
+          expectedPatientId: patientId,
+          allMedsPatientRefs: allMeds.slice(0, 5).map(m => ({
+            performer: m.performer?.[0]?.actor?.display,
+            patientRef: m.subject?.reference
+          }))
+        });
+      } else {
+        done({ error: 'MedicationAdministrations collection not available' });
+      }
+    }, [testPatientId], function(result) {
+      console.log('[Test 04 POST-SAVE] Medication administration check:', JSON.stringify(result.value, null, 2));
+
+      if (!result.value.foundTestMed) {
+        console.error('[Test 04] WARNING: Test medication administration not found after save!');
+        console.error('[Test 04] Total medication administrations:', result.value.totalMeds);
+        console.error('[Test 04] Sample medication administrations:', result.value.allMedsPatientRefs);
+      } else if (!result.value.testMedPatientRef || !result.value.testMedPatientRef.includes(result.value.expectedPatientId)) {
+        console.error('[Test 04] WARNING: Medication administration has wrong patient reference!');
+        console.error('[Test 04] Expected patient ID:', result.value.expectedPatientId);
+        console.error('[Test 04] Actual patient reference:', result.value.testMedPatientRef);
+        console.error('[Test 04] Actual patient display:', result.value.testMedPatientDisplay);
+      } else {
+        console.log('[Test 04] ✓ Medication administration created successfully');
+        console.log('[Test 04] ✓ Patient reference correct:', result.value.testMedPatientRef);
+        console.log('[Test 04] ✓ Performer:', result.value.testMedPerformer);
+        console.log('[Test 04] ✓ Med Admin ID:', result.value.testMedId);
+      }
+    });
   });
 
   it('05. Verify new medication administration appears in list', browser => {
     browser
       .waitForElementVisible('#medicationAdministrationsPage', 5000)
-      .pause(3000) // Give MORE time for subscription to load
-      
-      // Refresh the page to force subscription reload
-      .refresh()
-      .waitForElementVisible('#medicationAdministrationsPage', 5000)
-            
-      // Check if we have a table or a single card view
-      .execute(function() {
-        const hasTable = !!document.querySelector('#medicationAdministrationsTable');
-        const hasCards = !!document.querySelector('.medication-administration-card');
-        const pageContent = document.querySelector('#medicationAdministrationsPage')?.textContent || '';
-        
-        // Also check subscription status
-        const subHandles = Meteor.connection._subscriptions;
-        const subInfo = {};
-        Object.keys(subHandles).forEach(key => {
-          const sub = subHandles[key];
-          if (sub.name && sub.name.includes('MedicationAdministrations')) {
-            subInfo[sub.name] = { ready: sub.ready, params: sub.params };
+      .pause(500);
+
+    // Re-establish patient context (test 05 starts fresh, may not have Session)
+    browser.executeAsync(function(patientId, done) {
+      console.log('[Test 05] Re-establishing patient context with ID:', patientId);
+
+      if (typeof Meteor !== 'undefined' && typeof Session !== 'undefined') {
+        Meteor.call('patients.findOne', patientId, function(error, patient) {
+          if (error) {
+            console.error('[Test 05] Error fetching patient:', error);
+            done({ success: false, error: error.message });
+          } else if (patient) {
+            Session.set('selectedPatientId', patient._id);
+            Session.set('selectedPatient', patient);
+            console.log('[Test 05] Re-established patient context:', patient._id, patient.name?.[0]?.text);
+            done({ success: true, patientId: patient._id, patientName: patient.name?.[0]?.text });
+          } else {
+            console.error('[Test 05] Patient not found:', patientId);
+            done({ success: false, error: 'Patient not found' });
           }
         });
-        
-        return {
-          hasTable,
-          hasCards,
-          pageContent: pageContent.substring(0, 500), // First 500 chars
-          subscriptions: subInfo
-        };
-      }, [], function(result) {
-        console.log('Page state after save:', result.value);
-        
-        // If we have a table, check for content
-        if (result.value.hasTable) {
-          browser
-            .waitForElementVisible('#medicationAdministrationsTable', 5000)
-            .assert.containsText('#medicationAdministrationsTable', testMedicationAdministration.performerName)
-            .assert.containsText('#medicationAdministrationsTable', testMedicationAdministration.medicationDisplay);
-        } else {
-          // Check if we have the "no data" state after save
-          console.log('No table found, checking for data...');
-          browser.execute(function() {
-            // Check if data exists in the collection
-            if (typeof MedicationAdministrations !== 'undefined') {
-              const count = MedicationAdministrations.find().count();
-              const data = MedicationAdministrations.find().fetch();
-              return {
-                collectionExists: true,
-                count: count,
-                data: data
-              };
-            }
-            return { collectionExists: false };
-          }, [], function(dataResult) {
-            console.log('Collection check:', dataResult.value);
-            
-            // If we have data but it's not showing, that's a subscription issue
-            if (dataResult.value && dataResult.value.count > 0) {
-              browser.assert.ok(true, 'Medication administration saved (found in collection)');
-            } else {
-              // Otherwise just verify we're on the right page
-              browser.assert.ok(
-                result.value.pageContent.includes('Administration') || 
-                result.value.pageContent.includes('No Data Available'),
-                'On medication administrations page'
-              );
-            }
-          });
-        }
-      })
+      } else {
+        done({ success: false, error: 'Meteor or Session not available' });
+      }
+    }, [testPatientId], function(result) {
+      if (result.value && result.value.success) {
+        console.log('[Test 05] Successfully re-established patient context:', result.value.patientName);
+      } else {
+        console.error('[Test 05] Failed to re-establish patient context:', result.value?.error);
+      }
+    });
+
+    browser.pause(1000); // Let subscription react to new Session value
+
+    // Scroll to top to make search input visible
+    browser.execute(function() {
+      window.scrollTo(0, 0);
+    });
+    browser.pause(500);
+
+    // Search for the specific test record using a short, unique search term
+    // Use "Smith" from "Nurse Smith 1763121998791" - short and unique
+    const searchTerm = testMedicationAdministration.performerName.split(' ')[1]; // e.g., "Smith"
+    console.log('Searching for test record with term:', searchTerm);
+
+    browser
+      .waitForElementVisible('#medicationAdministrationSearchInput', 5000)
+      .clearValue('#medicationAdministrationSearchInput')
+      .pause(1000) // Wait for table to reset
+      .setValue('#medicationAdministrationSearchInput', searchTerm)
+      .pause(3000); // Wait for character-by-character typing and subscription to update
+
+    // Verify table contains the search term (acts as implicit wait for search to complete)
+    browser
+      .waitForElementVisible('#medicationAdministrationsTable', 5000)
+      .assert.containsText('#medicationAdministrationsTable', searchTerm, 'Table filtered to show test record')
+      .assert.containsText('#medicationAdministrationsTable', testMedicationAdministration.medicationDisplay)
       .saveScreenshot('tests/nightwatch/screenshots/medicationadministrations/06-medicationadministration-in-list.png');
   });
 
@@ -628,28 +609,230 @@ describe('MedicationAdministrations CRUD Operations', function() {
       .assert.elementPresent('#status')
       .assert.elementPresent('#category')
       .saveScreenshot('tests/nightwatch/screenshots/medicationadministrations/07-view-medicationadministration-details.png');
-    
-    browser
-      .url('http://localhost:3000/medication-administrations')
-      .waitForElementVisible('#medicationAdministrationsPage', 5000);
+
+    // DEBUG: Check data state at END of test 06
+    browser.execute(function() {
+      if (typeof MedicationAdministrations !== 'undefined') {
+        const allMeds = MedicationAdministrations.find({}).fetch();
+        const smithMeds = allMeds.filter(m => m.performer?.[0]?.actor?.display?.includes('Smith'));
+
+        console.log('[Test 06 END] Total medication administrations:', allMeds.length);
+        console.log('[Test 06 END] Smith medication administrations:', smithMeds.length);
+
+        if (smithMeds.length > 0) {
+          console.log('[Test 06 END] ✓ Test medication administration still exists');
+          console.log('[Test 06 END] Performer:', smithMeds[0].performer?.[0]?.actor?.display);
+          console.log('[Test 06 END] ID:', smithMeds[0]._id);
+        } else {
+          console.error('[Test 06 END] ✗ Test medication administration DISAPPEARED!');
+        }
+      }
+    });
+
+    // DON'T navigate back - let test 07 handle its own navigation
+    // This avoids race conditions and double-navigation issues
   });
 
   it('07. Update existing medication administration', browser => {
-    browser
-      .waitForElementVisible('#medicationAdministrationsTable', 5000)
-      .pause(500);
+    // DEBUG: Check data state at START of test 07 (BEFORE navigation)
+    browser.execute(function() {
+      if (typeof MedicationAdministrations !== 'undefined') {
+        const allMeds = MedicationAdministrations.find({}).fetch();
+        const smithMeds = allMeds.filter(m => m.performer?.[0]?.actor?.display?.includes('Smith'));
+
+        console.log('[Test 07 START PRE-NAV] Total medication administrations:', allMeds.length);
+        console.log('[Test 07 START PRE-NAV] Smith medication administrations:', smithMeds.length);
+
+        if (smithMeds.length > 0) {
+          console.log('[Test 07 START PRE-NAV] ✓ Test medication administration exists before navigation');
+        } else {
+          console.error('[Test 07 START PRE-NAV] ✗ Test medication administration MISSING before navigation!');
+        }
+      }
+    });
+
+    browser.pause(500); // Let debug output print
+
+    // CRITICAL: Navigate to page at test start - don't assume we're there from test 06
+    // Each test should be self-contained and establish its own initial state
+    testUtils.navigateUrl(browser, '/medication-administrations');
 
     browser
-      .execute(function() {
-        // Click the first row in the table
-        const firstRow = document.querySelector('#medicationAdministrationsTable tbody tr');
-        if (firstRow) {
-          firstRow.click();
-          return { clicked: true };
+      .waitForElementVisible('#medicationAdministrationsPage', 10000)
+      .pause(500); // Let page stabilize
+
+    // DEBUG: Check data state AFTER navigation but BEFORE patient context re-establishment
+    browser.execute(function() {
+      if (typeof MedicationAdministrations !== 'undefined') {
+        const allMeds = MedicationAdministrations.find({}).fetch();
+        const smithMeds = allMeds.filter(m => m.performer?.[0]?.actor?.display?.includes('Smith'));
+
+        console.log('[Test 07 POST-NAV] Total medication administrations:', allMeds.length);
+        console.log('[Test 07 POST-NAV] Smith medication administrations:', smithMeds.length);
+
+        if (smithMeds.length > 0) {
+          console.log('[Test 07 POST-NAV] ✓ Test medication administration exists after navigation');
+        } else {
+          console.error('[Test 07 POST-NAV] ✗ Test medication administration MISSING after navigation!');
         }
-        return { clicked: false };
-      }, [], function(result) {
-        browser.assert.equal(result.value.clicked, true, 'Clicked first medication administration row');
+      }
+    });
+
+    browser.pause(500); // Let debug output print
+
+    // Re-establish patient context using server-side fetch
+    browser.executeAsync(function(patientId, done) {
+      console.log('[Test 07] Re-establishing patient context with ID:', patientId);
+
+      if (typeof Meteor !== 'undefined' && typeof Session !== 'undefined') {
+        Meteor.call('patients.findOne', patientId, function(error, patient) {
+          if (error) {
+            console.error('[Test 07] Error fetching patient:', error);
+            done({ success: false, error: error.message });
+          } else if (patient) {
+            Session.set('selectedPatientId', patient._id);
+            Session.set('selectedPatient', patient);
+            console.log('[Test 07] Re-established patient context:', patient._id);
+            done({ success: true });
+          } else {
+            console.error('[Test 07] Patient not found:', patientId);
+            done({ success: false, error: 'Patient not found' });
+          }
+        });
+      } else {
+        done({ success: false, error: 'Meteor or Session not available' });
+      }
+    }, [testPatientId]);
+
+    browser
+      .pause(5000) // Extended pause for subscription to update after patient context set (CI needs more time)
+      .waitForElementVisible('#medicationAdministrationsPage', 10000);
+
+    // Add comprehensive debugging to understand why table doesn't exist
+    browser.execute(function() {
+      const results = {
+        hasPage: document.querySelector('#medicationAdministrationsPage') !== null,
+        hasTable: document.querySelector('#medicationAdministrationsTable') !== null,
+        hasSearchInput: document.querySelector('#medicationAdministrationSearchInput') !== null,
+        sessionPatientId: Session.get('selectedPatientId'),
+        sessionPatient: Session.get('selectedPatient'),
+        allMedicationAdministrations: MedicationAdministrations.find({}).count(),
+        medicationAdministrationsInView: [],
+        pageContent: ''
+      };
+
+      // Get patient info if available
+      if (results.sessionPatient) {
+        results.patientFhirId = results.sessionPatient.id;
+        results.patientName = results.sessionPatient.name?.[0]?.text;
+      }
+
+      // Get all medication administrations with their patient references
+      const allMeds = MedicationAdministrations.find({}).fetch();
+      results.medicationAdministrationsInView = allMeds.map(med => ({
+        _id: med._id,
+        subjectDisplay: med.subject?.display,
+        subjectReference: med.subject?.reference,
+        performerDisplay: med.performer?.[0]?.actor?.display,
+        status: med.status
+      }));
+
+      // Get page text content
+      const pageElement = document.querySelector('#medicationAdministrationsPage');
+      if (pageElement) {
+        results.pageContent = pageElement.textContent.substring(0, 200);
+      }
+
+      return results;
+    }, [], function(result) {
+      console.log('[Test 07 DEBUG] Page state:', JSON.stringify(result.value, null, 2));
+
+      if (!result.value.hasTable) {
+        console.error('[Test 07] TABLE MISSING!');
+        console.error('[Test 07] Patient context:', result.value.sessionPatientId, result.value.patientName);
+        console.error('[Test 07] Total medication administrations:', result.value.allMedicationAdministrations);
+        console.error('[Test 07] Medication administrations in view:', result.value.medicationAdministrationsInView.length);
+
+        if (result.value.medicationAdministrationsInView.length > 0) {
+          console.error('[Test 07] Sample medication administration:', result.value.medicationAdministrationsInView[0]);
+          console.error('[Test 07] PROBLEM: Medication administrations exist but table not rendering!');
+        } else {
+          console.error('[Test 07] PROBLEM: No medication administrations found - patient filter likely excluding data');
+        }
+      }
+    });
+
+    browser.pause(1000); // Give time to read debug output
+
+    // Scroll to top to ensure search input is visible
+    browser.execute(function() {
+      window.scrollTo(0, 0);
+    });
+
+    browser.pause(500);
+
+    // CRITICAL: Use search to find test medication administration in large dataset
+    // With 100+ records (Synthea data), the test record may not be in the visible/subscribed 100
+    // Search filters down to just our test data
+    // Pattern follows immunizations.js with fallback if search fails
+    browser
+      .waitForElementVisible('#medicationAdministrationSearchInput', 5000)
+      .clearValue('#medicationAdministrationSearchInput')
+      .setValue('#medicationAdministrationSearchInput', 'Smith')
+      .pause(1500); // Give time for search results to update
+
+    // Check if we have the table after searching (with fallback to show all if search fails)
+    browser.execute(function() {
+      const hasTable = document.querySelector('#medicationAdministrationsTable') !== null;
+      const rows = hasTable ? document.querySelectorAll('#medicationAdministrationsTable tbody tr') : [];
+      const pageContent = document.querySelector('#medicationAdministrationsPage')?.textContent || '';
+
+      return {
+        hasTable: hasTable,
+        rowCount: rows.length,
+        firstRowText: rows.length > 0 ? rows[0].textContent : '',
+        hasNoData: pageContent.includes('No Data')
+      };
+    }, [], function(result) {
+      console.log('[Test 07] Table state after search:', result.value);
+
+      if (!result.value.hasTable && result.value.hasNoData) {
+        // If search resulted in no data, clear the search to show all medication administrations
+        console.log('[Test 07] Search returned no data, clearing search filter');
+        browser
+          .clearValue('#medicationAdministrationSearchInput')
+          .pause(1000);
+      }
+    });
+
+    // Now click on the medication administration row
+    browser
+      .waitForElementVisible('#medicationAdministrationsTable', 5000)
+      .execute(function(timestamp) {
+        const rows = document.querySelectorAll('#medicationAdministrationsTable tbody tr');
+        console.log('[Test 07] Found', rows.length, 'rows in medication administrations table');
+
+        // Look for our test medication administration
+        for (let i = 0; i < rows.length; i++) {
+          const row = rows[i];
+          if (row.textContent.includes(timestamp)) {
+            console.log('[Test 07] Clicking row', i, 'with text:', row.textContent.substring(0, 100));
+            row.click();
+            return { clicked: true, rowText: row.textContent, rowIndex: i };
+          }
+        }
+
+        // If not found by timestamp, click the first row (sorted newest-first)
+        if (rows.length > 0) {
+          console.log('[Test 07] Timestamp not found, clicking first row');
+          rows[0].click();
+          return { clicked: true, rowText: rows[0].textContent, rowIndex: 0 };
+        }
+
+        return { clicked: false, error: 'No rows found' };
+      }, [timestamp.toString()], function(result) {
+        console.log('[Test 07] Click result:', result.value);
+        browser.assert.equal(result.value.clicked, true, 'Found and clicked medication administration row');
       });
 
     browser
@@ -718,17 +901,46 @@ describe('MedicationAdministrations CRUD Operations', function() {
         browser.assert.equal(result.value, true, 'Clicked Save button');
       });
 
+    browser.pause(1000);
+
+    // Use navigateUrl to preserve Session
+    testUtils.navigateUrl(browser, '/medication-administrations');
+
     browser
-      .url('http://localhost:3000/medication-administrations')
       .waitForElementVisible('#medicationAdministrationsPage', 10000)
       .pause(2000) // Give time for data to load after navigation
-      .waitForElementVisible('#medicationAdministrationsTable', 5000)
+      .waitForElementVisible('#medicationAdministrationsTable', 10000)
       .saveScreenshot('tests/nightwatch/screenshots/medicationadministrations/09-medicationadministration-updated.png');
   });
 
   it('08. Verify updated medication administration in list', browser => {
+    // Re-establish patient context using server-side fetch
+    browser.executeAsync(function(patientId, done) {
+      console.log('[Test 08] Re-establishing patient context with ID:', patientId);
+
+      if (typeof Meteor !== 'undefined' && typeof Session !== 'undefined') {
+        Meteor.call('patients.findOne', patientId, function(error, patient) {
+          if (error) {
+            console.error('[Test 08] Error fetching patient:', error);
+            done({ success: false, error: error.message });
+          } else if (patient) {
+            Session.set('selectedPatientId', patient._id);
+            Session.set('selectedPatient', patient);
+            console.log('[Test 08] Re-established patient context:', patient._id);
+            done({ success: true });
+          } else {
+            console.error('[Test 08] Patient not found:', patientId);
+            done({ success: false, error: 'Patient not found' });
+          }
+        });
+      } else {
+        done({ success: false, error: 'Meteor or Session not available' });
+      }
+    }, [testPatientId]);
+
     // First, ensure we're on the page and check without search
     browser
+      .pause(1000)
       .waitForElementVisible('#medicationAdministrationsPage', 10000)
       .pause(1000) // Additional pause to ensure page is fully loaded
       .execute(function() {

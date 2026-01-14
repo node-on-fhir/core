@@ -1,0 +1,155 @@
+{
+  "public": {
+    "title": "Honeycomb with Reference App",
+    "version": "0.1.0",
+    "fhirVersion": "4.0.1",
+    "defaults": {
+      "route": "/reference-app",
+      "landingPage": "/reference-app",
+      "dateFormat": "YYYY-MM-DD", 
+      "dateTimeFormat": "YYYY-MM-DD HH:mm:ss",
+      "disableHeader": false,
+      "disableFooter": false,
+      "prominentHeader": true,
+      "paginationLimit": 100,
+      "subscriptionLimit": 1000,
+      "sidebar": {
+        "menuItems": {
+          "HomePage": true,
+          "FhirModules": true,
+          "SidebarWorkflows": true,
+          "ClinicianWorkflows": true,
+          "PatientChart": true,
+          "PatientDirectory": true,
+          "UserProfile": true,
+          "ProblemList": true,
+          "MedicationAllergyList": true,
+          "MedicationList": true
+        }
+      }
+    },
+    "interfaces": {
+      "fhir": {
+        "channel": {
+          "name": "Clinical Channel",
+          "endpoint": "https://localhost:3000/baseR4",
+          "version": "4.0.1"
+        }
+      }
+    },
+    "modules": {
+      "PatientDirectory": true,
+      "referenceApp": {
+        "enabled": true,
+        "showInSidebar": true,
+        "showInWorkflows": true,
+        "requireAuthentication": true,
+        "allowedRoles": ["practitioner", "admin", "user"],
+        "features": {
+          "workflow": true,
+          "dataCollection": true,
+          "reporting": true,
+          "export": true
+        },
+        "ui": {
+          "showHeader": true,
+          "showTabs": true,
+          "showFooterButtons": true,
+          "theme": "default"
+        }
+      },
+      "orderCatalog": {
+        "enabled": true,
+        "showInSidebar": true,
+        "showInWorkflows": true,
+        "requireAuthentication": true,
+        "allowedRoles": ["practitioner", "admin", "nurse"],
+        "features": {
+          "cpoeEnabled": true,
+          "drugInteractionChecks": true,
+          "labOrders": true,
+          "medicationOrders": true,
+          "orderSets": true
+        },
+        "defaultSettings": {
+          "orderPriority": "routine",
+          "requireOrderPriority": true,
+          "enableAuditLogging": true
+        }
+      },
+      "drugInteractions": {
+        "enabled": true,
+        "showInWorkflows": true,
+        "requireAuthentication": true,
+        "allowedRoles": ["practitioner", "admin", "nurse", "pharmacist"],
+        "features": {
+          "drugDrugChecking": true,
+          "drugAllergyChecking": true,
+          "realTimeChecking": true,
+          "checkOnOrderEntry": true,
+          "checkOnOrderSign": true
+        },
+        "defaultSettings": {
+          "severityThreshold": "moderate",
+          "enableAuditLogging": true,
+          "showEvidence": true,
+          "allowOverride": true
+        }
+      },
+      "fhir": {
+        "enabled": true,
+        "Patients": true,
+        "CarePlans": true
+      },
+      "clinicalLists": {
+        "enabled": true,
+        "showInSidebar": true,
+        "showInWorkflows": true,
+        "requireAuthentication": true,
+        "allowedRoles": ["practitioner", "admin", "nurse", "user"],
+        "features": {
+          "problemList": true,
+          "medicationAllergyList": true,
+          "medicationList": true
+        }
+      },
+      "sidebar": {
+        "enabled": true,
+        "showWorkflows": true,
+        "showElements": true
+      }
+    }
+  },
+  "private": {
+    "referenceApp": {
+      "apiKey": "REPLACE_WITH_YOUR_API_KEY",
+      "apiSecret": "REPLACE_WITH_YOUR_API_SECRET",
+      "endpoint": "https://api.example.com/v1",
+      "timeout": 30000,
+      "retryAttempts": 3,
+      "enableCronJobs": false,
+      "cronSchedule": "every 24 hours",
+      "initializeSampleData": false,
+      "debugMode": false,
+      "logging": {
+        "enabled": true,
+        "level": "info",
+        "includeMetadata": true
+      },
+      "validation": {
+        "strict": true,
+        "allowPartialResources": false,
+        "validateOnSave": true
+      },
+      "integration": {
+        "externalSystemUrl": "",
+        "authType": "oauth2",
+        "clientId": "",
+        "clientSecret": "",
+        "scope": "patient/*.read"
+      }
+    },
+    "enableTaskManager": false,
+    "enableCronAutomation": false
+  }
+}

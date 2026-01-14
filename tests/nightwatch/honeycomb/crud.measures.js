@@ -653,61 +653,119 @@ describe('Measures CRUD Operations', function() {
       console.log('Edit mode check:', result.value);
     });
 
-    browser.pause(1000); // Give time for form to become editable
+    // Wait for edit mode to fully activate - verify Save button appears
+    browser
+      .waitForElementVisible('#saveMeasureButton', 10000)
+      .pause(500); // Additional stability pause for CI environment
+
+    // Verify edit mode is active by checking button state
+    browser.execute(function() {
+      const saveButton = document.querySelector('#saveMeasureButton');
+      const cancelButton = Array.from(document.querySelectorAll('button'))
+        .find(btn => btn.textContent.includes('Cancel'));
+      const titleInput = document.querySelector('#titleInput');
+
+      return {
+        hasSaveButton: !!saveButton,
+        saveButtonEnabled: saveButton && !saveButton.disabled,
+        hasCancelButton: !!cancelButton,
+        inputsEnabled: titleInput && !titleInput.disabled
+      };
+    }, [], function(result) {
+      console.log('Edit mode verification:', result.value);
+      browser.assert.equal(result.value.hasSaveButton, true, 'Save button exists');
+      browser.assert.equal(result.value.saveButtonEnabled, true, 'Save button is enabled');
+    });
 
     // Update measure details
     browser
       .clearValue('#titleInput')
       .setValue('#titleInput', updatedMeasure.title)
       .clearValue('#versionInput')
-      .setValue('#versionInput', updatedMeasure.version)
-      .click('#statusSelect')
-      .pause(300)
-      .execute(function(value) {
-        const menuItems = document.querySelectorAll('[role="option"]');
-        for (let item of menuItems) {
-          if (item.textContent.toLowerCase().includes(value.toLowerCase()) || 
-              item.getAttribute('data-value') === value) {
-            item.click();
-            return true;
+      .setValue('#versionInput', updatedMeasure.version);
+
+    // Update status select - click inside execute block to avoid interception
+    browser.execute(function(value) {
+      const statusSelect = document.querySelector('#statusSelect');
+      if (statusSelect) {
+        statusSelect.click();
+        setTimeout(function() {
+          const menuItems = document.querySelectorAll('[role="option"]');
+          for (let item of menuItems) {
+            if (item.textContent.toLowerCase().includes(value.toLowerCase()) ||
+                item.getAttribute('data-value') === value) {
+              item.click();
+              return;
+            }
           }
-        }
-        return false;
-      }, [updatedMeasure.status], function(result) {
-        browser.assert.equal(result.value, true, 'Selected status');
-      })
+        }, 300);
+        return true;
+      }
+      return false;
+    }, [updatedMeasure.status], function(result) {
+      browser.assert.equal(result.value, true, 'Selected status');
+    });
+
+    // Longer pause after select to ensure Material-UI state updates complete
+    browser
+      .pause(1000)
       .clearValue('#descriptionTextarea')
-      .setValue('#descriptionTextarea', updatedMeasure.description)
+      .setValue('#descriptionTextarea', updatedMeasure.description);
+
+    // Scroll purposeTextarea into view before interacting (critical for CI environments)
+    browser.execute(function() {
+      const element = document.querySelector('#purposeTextarea');
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return { scrolled: true };
+      }
+      return { scrolled: false };
+    }, [], function(result) {
+      console.log('Scrolled purposeTextarea into view:', result.value);
+    });
+
+    browser
+      .pause(500) // Wait for scroll animation to complete
       .clearValue('#purposeTextarea')
       .setValue('#purposeTextarea', updatedMeasure.purpose)
       .pause(500)
       .saveScreenshot('tests/nightwatch/screenshots/measures/08-updated-measure-form.png');
 
-    // Save the updated measure
+    // Save the updated measure - use standard Nightwatch click since button has reliable ID
     browser
-      .execute(function() {
-        const buttons = document.querySelectorAll('button');
-        for (let button of buttons) {
-          if (button.textContent.includes('Save')) {
-            button.click();
-            return true;
-          }
-        }
-        return false;
-      }, [], function(result) {
-        browser.assert.equal(result.value, true, 'Clicked Save button');
-      });
+      .pause(500) // Ensure form updates are complete
+      .click('#saveMeasureButton')
+      .pause(500); // Give time for save operation to start
+
+    // Verify save succeeded by checking for navigation or button state change
+    browser.execute(function() {
+      // After save on existing record, should exit edit mode
+      const editButton = Array.from(document.querySelectorAll('button'))
+        .find(btn => btn.textContent.includes('Edit'));
+      const saveButton = document.querySelector('#saveMeasureButton');
+
+      return {
+        hasEditButton: !!editButton,
+        hasSaveButton: !!saveButton,
+        currentPath: window.location.pathname
+      };
+    }, [], function(result) {
+      console.log('Post-save state:', result.value);
+    });
 
     browser
-      .pause(1000)
-      .url('http://localhost:3000/measures')
-      .waitForElementVisible('#measuresTable', 5000)
+      .pause(1000);
+
+    // CRITICAL: Use testUtils.navigateUrl to preserve Session state
+    testUtils.navigateUrl(browser, '/measures');
+    browser
+      .waitForElementVisible('#measuresTable', 10000)
       .saveScreenshot('tests/nightwatch/screenshots/measures/09-measure-updated.png');
   });
 
   it('08. Verify updated measure in list', browser => {
     browser
-      .waitForElementVisible('#measuresTable', 5000)
+      .waitForElementVisible('#measuresTable', 10000)
       .pause(500);
 
     // Check if search input exists and use it if available
@@ -715,7 +773,8 @@ describe('Measures CRUD Operations', function() {
       const searchInput = document.querySelector('#measureSearchInput');
       return { hasSearchInput: searchInput !== null };
     }, [], function(result) {
-      if (result.value.hasSearchInput) {
+      // ADD NULL CHECK - execute can return null
+      if (result && result.value && result.value.hasSearchInput) {
         browser
           .waitForElementVisible('#measureSearchInput', 5000)
           .clearValue('#measureSearchInput')

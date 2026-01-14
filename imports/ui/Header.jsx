@@ -27,7 +27,8 @@ import moment from 'moment';
 import { useTracker } from 'meteor/react-meteor-data';
 import { FhirUtilities } from '../FhirUtilities';
 
-import { logger } from '../Logger';
+import { logger } from '/client/ClientLogger';
+import { DynamicSpacer } from './DynamicSpacer';
 
 import { useNavigate } from "react-router-dom";
 import { useTheme as useMuiTheme } from '@mui/material/styles';
@@ -39,10 +40,8 @@ import { useTheme as useMuiTheme } from '@mui/material/styles';
 //----------------------------------------------------------------------
 // Helper Components
 
-let DynamicSpacer;
 let useTheme;
 Meteor.startup(function(){
-  DynamicSpacer = Meteor.DynamicSpacer;
   useTheme = Meteor.useTheme;
 })
 

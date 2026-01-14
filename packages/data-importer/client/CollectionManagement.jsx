@@ -161,7 +161,7 @@ Meteor.call('getServerStats', function(error, result){
 
 export function CollectionManagement(props){
 
-  let { 
+  let {
     displayIcons = false,
     displayImportCheckmarks = false,
     displayExportCheckmarks = true,
@@ -183,9 +183,10 @@ export function CollectionManagement(props){
     noDataMessage = "No data found.",
     preview = {},
     tableSize = "small",
+    textColor = "rgba(255, 255, 255, 0.87)",
     onSelectionChange,
     onSelectedExportChange,
-    ...otherProps 
+    ...otherProps
   } = props;
 
 
@@ -714,7 +715,7 @@ export function CollectionManagement(props){
 
       let cellStyle = {
         cursor: 'pointer',
-        color: 'black'
+        color: textColor
       }
       if(get(data, 'collections.pubsub') && get(data, "collections.pubsub." + resourceShorthand)){
         if(data.collections.pubsub[resourceType] === true){
@@ -724,7 +725,7 @@ export function CollectionManagement(props){
 
       return(
         <TableCell className="dropButton" style={cellStyle} onClick={dropCollection.bind(this, resourceType)} >Drop</TableCell>
-      )  
+      )
     }
   }
   function renderPreview(collectionName){
@@ -735,7 +736,7 @@ export function CollectionManagement(props){
       }
 
       return(
-        <TableCell className="dropButton" style={{cursor: 'pointer'}}>{displayText}</TableCell>
+        <TableCell className="dropButton" style={{cursor: 'pointer', color: textColor}}>{displayText}</TableCell>
       )  
     }
   }
@@ -747,8 +748,8 @@ export function CollectionManagement(props){
       }
 
       return(
-        <TableCell className="clientCount" style={{cursor: 'pointer'}}>{displayText}</TableCell>
-      )  
+        <TableCell className="clientCount" style={{cursor: 'pointer', color: textColor}}>{displayText}</TableCell>
+      )
     }
   }
   function renderLocalClientCount(collectionName){
@@ -759,8 +760,8 @@ export function CollectionManagement(props){
       }
 
       return(
-        <TableCell className="localClientCount" style={{cursor: 'pointer'}}>{displayText}</TableCell>
-      )  
+        <TableCell className="localClientCount" style={{cursor: 'pointer', color: textColor}}>{displayText}</TableCell>
+      )
     }
   }
   function renderPubSub(resourceType){
@@ -805,7 +806,7 @@ export function CollectionManagement(props){
     if(props.displayPreview){
       return(
         <TableCell className="preview">Preview</TableCell>
-      )  
+      )
     }
   }
   function renderClientCountHeader(){
@@ -1757,9 +1758,9 @@ export function CollectionManagement(props){
       { renderIcon("Patient") }
       { renderImportCheckmark(methods.togglePatients.bind(this), 'Patient') }
       <TableCell className="collection">Patients</TableCell>
-      { renderPreview('Patient')} 
-      { renderClientCount('Patient')} 
-      { renderLocalClientCount('Patient')} 
+      { renderPreview('Patient')}
+      { renderClientCount('Patient')}
+      { renderLocalClientCount('Patient')}
       { renderPubSub('Patient')} 
       { renderImportButton('Patients')} 
       { renderDropButton('Patient')} 
@@ -2174,15 +2175,15 @@ export function CollectionManagement(props){
       <TableHead>
         <TableRow>
           { renderIconHeader() }
-          { renderImportCheckmarkHeader()}             
-          { renderImportButtonHeader()} 
+          { renderImportCheckmarkHeader()}
+          { renderImportButtonHeader()}
           <TableCell className="collection">Collection</TableCell>
-          { renderPreviewHeader()} 
-          { renderClientCountHeader()} 
-          { renderLocalClientCountHeader()} 
-          { renderPubSubHeader()}           
-          { renderDropButtonHeader()} 
-          { renderExportButtonHeader()} 
+          { renderPreviewHeader()}
+          { renderClientCountHeader()}
+          { renderLocalClientCountHeader()}
+          { renderPubSubHeader()}
+          { renderDropButtonHeader()}
+          { renderExportButtonHeader()}
           { renderExportCheckmarkHeader()}
         </TableRow>
       </TableHead>

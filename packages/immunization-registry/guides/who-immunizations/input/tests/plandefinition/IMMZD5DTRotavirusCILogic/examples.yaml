@@ -1,0 +1,250 @@
+---
+#0. The client has prior history of intussusception
+#   "Potential contraindications" = "Prior history of intussusception"
+### Rotavirus vaccination is contraindicated
+### "Immunization recommendation status" = "Contraindicated"
+id: "25.0"
+birth: -8w 
+patient:
+  fhir:
+    gender: female
+contraindication:
+  priorhistoryofintussusception:
+    code: DE196
+    display: "Prior history of intussusception"
+    effectiveDateTime: -1d
+medicationrequest:
+  rotavirus:
+    medication:
+      code: XM4GV0
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Rota virus, live attenuated"
+    fhir:
+      authoredOn: 0d
+      status: draft
+      intent: proposal
+---
+#0. The client has severe immunodeficiency
+#   '"Potential contraindications" = "Immunodeficiency syndromes"
+### Rotavirus vaccination is contraindicated
+### "Immunization recommendation status" = "Contraindicated"
+id: "26.0"
+birth: -8w 
+patient:
+  fhir:
+    gender: female
+contraindication:
+  immunodeficiencysyndromes:
+    code: DE187
+    display: "Immunodeficiency syndromes"
+    effectiveDateTime: -1d
+medicationrequest:
+  rotavirus:
+    medication:
+      code: XM4GV0
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Rota virus, live attenuated"
+    fhir:
+      authoredOn: 0d
+      status: draft
+      intent: proposal
+---
+#0. The client has a history of severe allergic reactions
+#   "Potential contraindications" = "Severe allergic reactions"
+### Rotavirus vaccination could be contraindicated. Clinical judgement is required. Create a clinical note
+### "Immunization recommendation status" = "Further evaluation needed"
+id: "27.0"
+birth: -8w 
+patient:
+  fhir:
+    gender: female
+contraindication:
+  severeallergicreactions:
+    code: DE167
+    display: "Severe allergic reactions"
+    effectiveDateTime: -1d
+medicationrequest:
+  rotavirus:
+    medication:
+      code: XM4GV0
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Rota virus, live attenuated"
+    fhir:
+      authoredOn: 0d
+      status: draft
+      intent: proposal
+---
+#0. The client has history of anaphylactic reactions
+#   "Potential contraindications" = "History of anaphylactic reactions"
+### Rotavirus vaccination could be contraindicated. Clinical judgement is required. Create a clinical note
+### "Immunization recommendation status" = "Further evaluation needed"
+id: "28.0"
+birth: -8w 
+patient:
+  fhir:
+    gender: female
+contraindication:
+  historyofanaphylacticreactions:
+    code: DE166
+    display: "History of anaphylactic reactions"
+    effectiveDateTime: -1d
+medicationrequest:
+  rotavirus:
+    medication:
+      code: XM4GV0
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Rota virus, live attenuated"
+    fhir:
+      authoredOn: 0d
+      status: draft
+      intent: proposal
+---
+#0. The client has altered immunocompetence
+#   "Potential contraindications" = "Altered immunocompetence"
+### Clinical judgement is required. Create a clinical note
+### "Immunization recommendation status" = "Further evaluation needed"
+id: "29.0"
+birth: -8w 
+patient:
+  fhir:
+    gender: female
+contraindication:
+  alteredimmunocompetence:
+    code: DE197
+    display: "Altered immunocompetence"
+    effectiveDateTime: -1d
+medicationrequest:
+  rotavirus:
+    medication:
+      code: XM4GV0
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Rota virus, live attenuated"
+    fhir:
+      authoredOn: 0d
+      status: draft
+      intent: proposal
+---
+#0. The client has spina bifida
+#   "Potential contraindications" = "Spina bifida"
+### Clinical judgement is required. Create a clinical note
+### "Immunization recommendation status" = "Further evaluation needed"
+id: "30.0"
+birth: -8w 
+patient:
+  fhir:
+    gender: female
+contraindication:
+  spinabifida:
+    code: DE192
+    display: "Spina bifida"
+    effectiveDateTime: -1d
+medicationrequest:
+  rotavirus:
+    medication:
+      code: XM4GV0
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Rota virus, live attenuated"
+    fhir:
+      authoredOn: 0d
+      status: draft
+      intent: proposal
+---
+#0. The client has bladder exstrophy
+#   "Potential contraindications" = "Bladder exstrophy"
+### Clinical judgement is required. Create a clinical note
+### "Immunization recommendation status" = "Further evaluation needed"
+id: "31.0"
+birth: -8w 
+patient:
+  fhir:
+    gender: female
+contraindication:
+  bladderexstrophy:
+    code: DE193
+    display: "Bladder exstrophy"
+    effectiveDateTime: -1d
+medicationrequest:
+  rotavirus:
+    medication:
+      code: XM4GV0
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Rota virus, live attenuated"
+    fhir:
+      authoredOn: 0d
+      status: draft
+      intent: proposal
+---
+#0. The client has chronic gastrointestinal disease
+#   "Potential contraindications" = "Chronic gastrointestinal disease"
+### Clinical judgement is required. Create a clinical note
+### "Immunization recommendation status" = "Further evaluation needed"
+id: "32.0"
+birth: -8w 
+patient:
+  fhir:
+    gender: female
+contraindication:
+  chronicgastrointestinaldisease:
+    code: DEXXX
+    display: "Chronic gastrointestinal disease"
+    effectiveDateTime: -1d
+medicationrequest:
+  rotavirus:
+    medication:
+      code: XM4GV0
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Rota virus, live attenuated"
+    fhir:
+      authoredOn: 0d
+      status: draft
+      intent: proposal
+---
+#0. The client has acute gastroenteritis
+#   "Potential contraindications" = "Acute gastroenteritis"
+### Clinical judgement is required. Create a clinical note
+### "Immunization recommendation status" = "Further evaluation needed"
+id: "33.0"
+birth: -8w 
+patient:
+  fhir:
+    gender: female
+contraindication:
+  acutegastroenteritis:
+    code: DE194
+    display: "Acute gastroenteritis"
+    effectiveDateTime: -1d
+medicationrequest:
+  rotavirus:
+    medication:
+      code: XM4GV0
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Rota virus, live attenuated"
+    fhir:
+      authoredOn: 0d
+      status: draft
+      intent: proposal
+---
+#0. The client has moderate to severe fever
+#   "Potential contraindications" = "Moderate to severe fever"
+### Clinical judgement is required. Create a clinical note
+### "Immunization recommendation status" = "Further evaluation needed"
+id: "34.0"
+birth: -8w 
+patient:
+  fhir:
+    gender: female
+contraindication:
+  moderatetoseverefever:
+    code: DE195
+    display: "Moderate to severe fever"
+    effectiveDateTime: -1d
+medicationrequest:
+  rotavirus:
+    medication:
+      code: XM4GV0
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Rota virus, live attenuated"
+    fhir:
+      authoredOn: 0d
+      status: draft
+      intent: proposal

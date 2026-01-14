@@ -86,13 +86,15 @@
         "menuItems": {
           "HomePage": true,
           "PatientSummary": true,
+          "PatientChart": true,
           "PatientDirectory": true,
           "FhirResources": true,
+          "FhirResourcesDashboard": true,
           "FhirModules": true,
           "DynamicModules": true,
           "SidebarWorkflows": true,
           "ClinicianWorkflows": true,
-          "Theme": false,
+          "Theming": true,
           "About": true,
           "Privacy": true,
           "TermsAndConditions": true,
@@ -497,6 +499,39 @@
           "publication": true
         },
         "ServiceRequest": {
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "search"
+          ],
+          "search": true,
+          "publication": true
+        },
+        "Coverage": {
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "search"
+          ],
+          "search": true,
+          "publication": true
+        },
+        "MedicationDispense": {
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "search"
+          ],
+          "search": true,
+          "publication": true
+        },
+        "Specimen": {
           "interactions": [
             "read",
             "create",

@@ -1,0 +1,28 @@
+{
+  "resourceType": "SearchParameter",
+  "id": "diagnosticreport-category",
+  "url": "http://hl7.org/fhir/SearchParameter/DiagnosticReport-category",
+  "version": "4.0.1",
+  "name": "HoneycombDiagnosticReportCategory",
+  "status": "active",
+  "date": "2024-12-06",
+  "publisher": "github.com/node-on-fhir",
+  "contact": [
+    {
+      "telecom": [
+        {
+          "system": "url",
+          "value": "http://github.com/node-on-fhir/honeycomb"
+        }
+      ]
+    }
+  ],
+  "description": "Which diagnostic discipline/department created the report",
+  "code": "category",
+  "base": ["DiagnosticReport"],
+  "type": "token",
+  "expression": "DiagnosticReport.category",
+  "xpath": "category",
+  "multipleOr": true,
+  "multipleAnd": true
+}

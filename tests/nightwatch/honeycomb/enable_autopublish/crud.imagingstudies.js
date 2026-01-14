@@ -1,6 +1,7 @@
 // tests/nightwatch/honeycomb/enable_autopublish/crud.imagingstudies.js
 
 const testUtils = require('./shared-test-utils');
+const loginHelper = require('../../helpers/login-helper');
 
 describe('ImagingStudies CRUD Operations', function() {
   const timestamp = Date.now();
@@ -53,125 +54,62 @@ describe('ImagingStudies CRUD Operations', function() {
         window.testTimestamp = ts;
       }, [timestamp]);
 
-    // Check if we're logged in
-    browser.execute(function() {
-      return {
-        isLoggedIn: typeof Meteor !== 'undefined' && !!Meteor.userId(),
-        userId: Meteor.userId ? Meteor.userId() : null,
-        username: Meteor.user ? (Meteor.user() ? Meteor.user().username : null) : null
-      };
-    }, [], function(result) {
-      console.log('Initial login state:', result.value);
-      
-      if (!result.value.isLoggedIn) {
-        console.log('Not logged in, attempting programmatic login...');
-        
-        browser.executeAsync(function(done) {
-          if (typeof Meteor !== 'undefined') {
-            Meteor.call('test.createTestUser', {
-              username: 'janedoe',
-              email: 'janedoe@test.org',
-              password: 'janedoe123'
-            }, function(err, userId) {
-              if (err) {
-                console.error('Failed to create test user:', err);
-                done({ userCreated: false, error: err.message });
-              } else {
-                console.log('Test user ready, userId:', userId);
-                Meteor.loginWithPassword('janedoe', 'janedoe123', function(loginErr) {
-                  if (loginErr) {
-                    console.error('Login failed:', loginErr);
-                    done({ userCreated: true, loginSuccess: false, error: loginErr.message });
-                  } else {
-                    console.log('Login successful');
-                    done({ 
-                      userCreated: true,
-                      loginSuccess: true, 
-                      userId: Meteor.userId(), 
-                      username: Meteor.user() ? Meteor.user().username : null 
-                    });
-                  }
-                });
-              }
-            });
-          } else {
-            done({ userCreated: false, loginSuccess: false, error: 'Meteor not available' });
-          }
-        }, [], function(result) {
-          if (result.value.loginSuccess) {
-            browser.assert.ok(true, 'Successfully created test user and logged in');
-            console.log('Logged in as:', result.value.username, 'userId:', result.value.userId);
-            
-            // Create a test patient
-            testUtils.createTestPatient(browser, {
-              name: 'John Doe',
-              family: 'Doe',
-              given: 'John',
-              identifier: 'test-patient-' + timestamp
-            }, function(result) {
-              if (result.error) {
-                console.error('Failed to create test patient:', result.error);
-                browser.assert.fail('Failed to create test patient: ' + result.error);
-              } else {
-                console.log('Test patient created with ID:', result.result);
-                browser.assert.ok(true, 'Successfully created test patient');
-                
-                // Set the patient in Session
-                browser.execute(function(patientId) {
-                  if (typeof Session !== 'undefined' && typeof Patients !== 'undefined') {
-                    const patient = Patients.findOne({_id: patientId});
-                    if (patient) {
-                      Session.set('selectedPatientId', patientId);
-                      Session.set('selectedPatient', patient);
-                      console.log('Set selected patient in Session:', patientId);
-                    }
-                  }
-                }, [result.result]);
-              }
-            });
-          } else {
-            browser.assert.fail('Setup failed: ' + result.value.error);
-          }
-        });
-        
-        browser.pause(500);
+    // Use loginHelper to ensure user is logged in with retry logic
+    loginHelper.ensureLoggedIn(browser, function(isLoggedIn) {
+      if (!isLoggedIn) {
+        browser.assert.fail('Failed to ensure user is logged in');
       } else {
-        browser.assert.ok(true, 'Already logged in (autologin enabled)');
-        console.log('Already logged in as:', result.value.username, 'userId:', result.value.userId);
-        
-        // Create a test patient even if already logged in
-        testUtils.createTestPatient(browser, {
-          name: 'John Doe',
-          family: 'Doe',
-          given: 'John',
-          identifier: 'test-patient-' + timestamp
-        }, function(result) {
-          if (result.error) {
-            console.error('Failed to create test patient:', result.error);
-            browser.assert.fail('Failed to create test patient: ' + result.error);
-          } else {
-            console.log('Test patient created with ID:', result.result);
-            browser.assert.ok(true, 'Successfully created test patient');
-            
-            // Set the patient in Session
-            browser.execute(function(patientId) {
-              if (typeof Session !== 'undefined' && typeof Patients !== 'undefined') {
-                const patient = Patients.findOne({_id: patientId});
-                if (patient) {
-                  Session.set('selectedPatientId', patientId);
-                  Session.set('selectedPatient', patient);
-                  console.log('Set selected patient in Session:', patientId);
-                }
-              }
-            }, [result.result]);
-          }
-        });
+        browser.assert.ok(true, 'User is logged in');
       }
-      
+
+      // Create test patient
+      testUtils.createTestPatient(browser, {
+        name: 'John Doe',
+        family: 'Doe',
+        given: 'John',
+        identifier: 'test-patient-' + timestamp
+      }, function(result) {
+        if (result.error) {
+          console.error('Failed to create test patient:', result.error);
+          browser.assert.fail('Failed to create test patient: ' + result.error);
+        } else {
+          console.log('Test patient created with ID:', result.result);
+          browser.assert.ok(true, 'Successfully created test patient');
+
+          // Fetch patient from server and set in Session
+          browser.executeAsync(function(patientId, done) {
+            if (typeof Meteor !== 'undefined' && typeof Session !== 'undefined') {
+              Meteor.call('patients.findOne', patientId, function(error, patient) {
+                if (error) {
+                  console.error('Error fetching patient:', error);
+                  done({ success: false, error: error.message });
+                } else if (patient) {
+                  Session.set('selectedPatientId', patient._id);
+                  Session.set('selectedPatient', patient);
+                  console.log('Set selected patient in Session:', patient._id, patient.name?.[0]?.text);
+                  done({ success: true, patientId: patient._id, patientName: patient.name?.[0]?.text });
+                } else {
+                  console.error('Patient not found:', patientId);
+                  done({ success: false, error: 'Patient not found' });
+                }
+              });
+            } else {
+              done({ success: false, error: 'Meteor or Session not available' });
+            }
+          }, [result.result], function(fetchResult) {
+            if (fetchResult.value && fetchResult.value.success) {
+              console.log('Successfully set selected patient:', fetchResult.value);
+            } else if (fetchResult.value) {
+              console.error('Failed to set selected patient:', fetchResult.value.error);
+            }
+          });
+        }
+      });
+
       // Clean up any existing test data
       browser.executeAsync(function(done) {
         if (typeof ImagingStudies !== 'undefined') {
-          const testStudies = ImagingStudies.find({ 
+          const testStudies = ImagingStudies.find({
             $or: [
               { 'description': { $regex: '.*CT Scan.*' } },
               { 'reasonCode.0.text': { $regex: 'Chest pain.*' } },
@@ -185,21 +123,21 @@ describe('ImagingStudies CRUD Operations', function() {
         }
         done();
       });
-      
+
       browser.pause(500);
-      
+
       // Re-establish patient context
       browser.execute(function(testIdentifier) {
         console.log('Looking for patient with identifier:', testIdentifier);
-        
+
         if (typeof Session !== 'undefined' && typeof Patients !== 'undefined') {
           const allPatients = Patients.find({}).fetch();
           console.log('Total patients in collection:', allPatients.length);
-          
+
           let patient = Patients.findOne({
             'identifier.value': testIdentifier
           });
-          
+
           if (!patient) {
             console.log('Patient not found by identifier, trying by name...');
             patient = Patients.findOne({
@@ -210,12 +148,12 @@ describe('ImagingStudies CRUD Operations', function() {
               ]
             });
           }
-          
+
           if (!patient && allPatients.length > 0) {
             console.log('Patient not found by name, using most recent patient');
             patient = Patients.findOne({}, { sort: { _id: -1 } });
           }
-          
+
           if (patient) {
             console.log('Found patient:', patient._id, patient.name?.[0]?.text);
             Session.set('selectedPatientId', patient._id);
@@ -239,8 +177,9 @@ describe('ImagingStudies CRUD Operations', function() {
   });
 
   it('02. Verify imaging studies list page loads', browser => {
+    // Use client-side navigation to preserve Meteor/Session state
+    testUtils.navigateUrl(browser, '/imaging-studies');
     browser
-      .url('http://localhost:3000/imaging-studies')
       .waitForElementVisible('#imagingStudiesPage', 5000)
       .pause(500)
       // Re-establish patient context after navigation
@@ -395,21 +334,9 @@ describe('ImagingStudies CRUD Operations', function() {
       console.log('Edit mode check:', result.value);
     });
 
-    // Fill form fields
-    // Set the modality using the select dropdown
+    // Fill form fields using setValue for text inputs
     browser
       .pause(500)
-      .execute(function(modalityCode) {
-        const select = document.querySelector('#modalitySelect');
-        if (select) {
-          // Find the native select element within Material-UI
-          const nativeSelect = select.querySelector('select') || select;
-          nativeSelect.value = modalityCode;
-          nativeSelect.dispatchEvent(new Event('change', { bubbles: true }));
-          return true;
-        }
-        return false;
-      }, [testImagingStudy.modalityCode])
       .clearValue('#descriptionInput')
       .setValue('#descriptionInput', testImagingStudy.description)
       .clearValue('#startedInput')
@@ -433,81 +360,6 @@ describe('ImagingStudies CRUD Operations', function() {
       .clearValue('#notesTextarea')
       .setValue('#notesTextarea', testImagingStudy.notes)
       .pause(500);
-
-    // Also use execute method as fallback
-    browser.execute(function(study) {
-      function setFieldValue(selector, value) {
-        const field = document.querySelector(selector);
-        if (field) {
-          const nativeInputValueSetter = Object.getOwnPropertyDescriptor(
-            window.HTMLInputElement.prototype, 
-            'value'
-          ).set;
-          nativeInputValueSetter.call(field, value);
-          
-          const inputEvent = new Event('input', { bubbles: true });
-          field.dispatchEvent(inputEvent);
-          
-          const changeEvent = new Event('change', { bubbles: true });
-          field.dispatchEvent(changeEvent);
-          
-          console.log(`Set ${selector} to:`, value);
-          return true;
-        } else if (selector.includes('Textarea')) {
-          const textarea = document.querySelector(selector);
-          if (textarea) {
-            const nativeTextareaValueSetter = Object.getOwnPropertyDescriptor(
-              window.HTMLTextAreaElement.prototype, 
-              'value'
-            ).set;
-            nativeTextareaValueSetter.call(textarea, value);
-            
-            const inputEvent = new Event('input', { bubbles: true });
-            textarea.dispatchEvent(inputEvent);
-            
-            const changeEvent = new Event('change', { bubbles: true });
-            textarea.dispatchEvent(changeEvent);
-            
-            console.log(`Set ${selector} to:`, value);
-            return true;
-          }
-        }
-        console.warn(`Field ${selector} not found`);
-        return false;
-      }
-      
-      const results = {};
-      
-      // Ensure subject display is set
-      const subjectField = document.querySelector('#subjectDisplay');
-      if (subjectField && !subjectField.value) {
-        const selectedPatient = Session.get('selectedPatient');
-        if (selectedPatient && selectedPatient.name) {
-          let patientName = '';
-          if (typeof selectedPatient.name === 'string') {
-            patientName = selectedPatient.name;
-          } else if (Array.isArray(selectedPatient.name) && selectedPatient.name[0]) {
-            patientName = selectedPatient.name[0].text || 
-                        `${selectedPatient.name[0].given?.join(' ') || ''} ${selectedPatient.name[0].family || ''}`.trim();
-          }
-          if (patientName) {
-            results.subjectDisplay = setFieldValue('#subjectDisplay', patientName);
-          }
-        }
-      }
-      
-      results.description = setFieldValue('#descriptionInput', study.description);
-      results.numberOfSeries = setFieldValue('#numberOfSeriesInput', study.numberOfSeries.toString());
-      results.numberOfInstances = setFieldValue('#numberOfInstancesInput', study.numberOfInstances.toString());
-      results.reasonCode = setFieldValue('#reasonCodeInput', study.reasonCode);
-      results.interpreter = setFieldValue('#interpreterInput', study.interpreter);
-      results.endpoint = setFieldValue('#endpointInput', study.endpoint);
-      results.notes = setFieldValue('#notesTextarea', study.notes);
-      
-      return { filled: true, results: results };
-    }, [testImagingStudy], function(result) {
-      console.log('Form fields filled:', result.value);
-    });
 
     // Handle Material-UI Select components
     browser.execute(function(status) {
@@ -875,8 +727,8 @@ describe('ImagingStudies CRUD Operations', function() {
       .saveScreenshot('tests/nightwatch/screenshots/imaging-studies/07-view-imaging-study-details.png');
     
     // Navigate back to imaging studies list
+    testUtils.navigateUrl(browser, '/imaging-studies');
     browser
-      .url('http://localhost:3000/imaging-studies')
       .waitForElementVisible('#imagingStudiesPage', 5000);
   });
 
@@ -987,8 +839,11 @@ describe('ImagingStudies CRUD Operations', function() {
       });
 
     browser
-      .pause(500)
-      .url('http://localhost:3000/imaging-studies')
+      .pause(500);
+
+    testUtils.navigateUrl(browser, '/imaging-studies');
+
+    browser
       .waitForElementVisible('#imagingStudiesTable', 5000)
       .saveScreenshot('tests/nightwatch/screenshots/imaging-studies/09-imaging-study-updated.png');
   });

@@ -17,22 +17,25 @@ import CorrectionTaskStatus from './client/components/CorrectionTaskStatus';
 // Define routes for the application
 let DynamicRoutes = [
   {
+    name: 'CorrectionRequests',
     path: '/correction-requests',
     element: <CorrectionRequestsPage />,
-    label: 'Correction Requests',
-    icon: 'Edit'
+    requireAuth: true,
+    description: 'Patient access to request amendments - ONC §170.315(d)(4)'
   },
   {
+    name: 'NewCorrectionRequest',
     path: '/correction-requests/new',
     element: <NewCorrectionRequestPage />,
-    label: 'New Correction Request',
-    icon: 'Add'
+    requireAuth: true,
+    description: 'Create new correction request for health information'
   },
   {
+    name: 'CorrectionRequestDetail',
     path: '/correction-requests/:id',
     element: <CorrectionRequestRouter />,
-    label: 'Correction Request Detail',
-    hide: true
+    requireAuth: true,
+    description: 'View correction request status and details'
   }
 ];
 

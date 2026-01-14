@@ -25,13 +25,14 @@ import { Session } from 'meteor/session';
 
 
 import { CodeSystemSelection } from './CodeSystemSelection';
+import { DynamicSpacer } from '../../ui/DynamicSpacer';
 
 
 
 //===========================================================================
 
+let CodeSystems;
 Meteor.startup(function(){
-  DynamicSpacer = Meteor.DynamicSpacer;
   CodeSystems = Meteor.Collections.CodeSystems;
 })
 

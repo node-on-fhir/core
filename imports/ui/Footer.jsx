@@ -36,18 +36,17 @@ import { get, has, cloneDeep } from 'lodash';
 
 
 // import theme from '../Theme';
-import { logger } from '../Logger';
+import { logger } from '/client/ClientLogger';
 // import useStyles from '../Styles';
 
 import { useNavigate, useLocation } from "react-router-dom";
+import { DynamicSpacer } from './DynamicSpacer';
 
 //----------------------------------------------------------------------
 // Helper Components
 
-let DynamicSpacer;
 let useTheme;
 Meteor.startup(function(){
-  DynamicSpacer = Meteor.DynamicSpacer;
   useTheme = Meteor.useTheme;
 })
 

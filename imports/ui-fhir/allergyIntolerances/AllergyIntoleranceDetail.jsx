@@ -121,8 +121,9 @@ function AllergyIntoleranceDetail(props) {
   const [error, setError] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
 
-  // Set patient name and recorder on component mount for new allergy intolerances
+  // Set patient name and recorder on component mount for new allergy intolerances ONLY
   useEffect(function() {
+    // IMPORTANT: Only run this for NEW records, not existing ones
     if (!id || id === 'new') {
       // Enable editing for new allergy intolerances
       setIsEditing(true);
@@ -143,8 +144,6 @@ function AllergyIntoleranceDetail(props) {
           // Fallback to _id if no FHIR id
           patientReference = `Patient/${get(selectedPatient, '_id', '')}`;
         }
-        console.log('Setting patient from selectedPatient:', patientName, patientReference);
-        console.log('Patient FHIR id:', fhirId, 'MongoDB _id:', get(selectedPatient, '_id'));
       } else if (currentUser) {
         // Only use current user as fallback if they have a patient record
         const userPatientId = get(currentUser, 'profile.patientId');
@@ -155,11 +154,6 @@ function AllergyIntoleranceDetail(props) {
                          `${get(userPatient, 'name[0].given[0]', '')} ${get(userPatient, 'name[0].family', '')}`.trim();
             patientReference = `Patient/${get(userPatient, 'id', userPatientId)}`;
           }
-        }
-        
-        // If still no patient name, don't default to username
-        if (!patientName) {
-          console.log('No patient selected or associated with current user');
         }
       }
       
@@ -185,22 +179,33 @@ function AllergyIntoleranceDetail(props) {
           display: recorderName
         }
       }));
-    } else {
-      // Viewing existing allergy intolerance - start in read-only mode
-      setIsEditing(false);
     }
+    // Note: Don't set isEditing(false) here for existing records
+    // Let the second useEffect handle loading existing records
   }, [id, selectedPatient, currentUser]);
 
-  // Load allergy intolerance if editing
+  // Load allergy intolerance if viewing existing record
   useEffect(() => {
-    if (id && id !== 'new' && isSubscriptionReady) {
+    if (id && id !== 'new') {
+      // Try to load even if subscription says not ready - data might be there from page subscription
       const existingAllergy = AllergyIntolerances.findOne({_id: id});
+
       if (existingAllergy) {
         setAllergyIntolerance(existingAllergy);
         setIsEditing(false);
+      } else {
+        // Try finding by id field instead
+        const allergyById = AllergyIntolerances.findOne({id: id});
+        if (allergyById) {
+          setAllergyIntolerance(allergyById);
+          setIsEditing(false);
+        } else {
+          // Set to read-only mode anyway
+          setIsEditing(false);
+        }
       }
     }
-  }, [id, isSubscriptionReady]);
+  }, [id]);
 
   // Handle input changes
   const handleChange = (path, value) => {

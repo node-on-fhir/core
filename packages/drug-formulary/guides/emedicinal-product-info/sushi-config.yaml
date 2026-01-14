@@ -1,0 +1,101 @@
+# ╭──────────────────────────────ImplementationGuide-gh.json───────────────────────────────╮
+# │  The properties below are used to create the ImplementationGuide resource. For a list of       │
+# │  supported properties, see:                                                                    │
+# │  http://build.fhir.org/ig/HL7/fhir-shorthand/branches/beta/sushi.html#ig-development           │
+# ╰────────────────────────────────────────────────────────────────────────────────────────────────╯
+id: hl7.fhir.uv.emedicinal-product-info
+canonical: http://hl7.org/fhir/uv/emedicinal-product-info 
+name: EpiIG
+title: Global Core Electronic Medicinal Product Information (ePI)
+description: FHIR Implementation Guide representing how to create Electronic Medicinal Product Information (also known as drug poduct labels, summary of product characteristics, patient leaflet, and pack artwork).
+status: active
+version: 1.1.0
+fhirVersion: 5.0.0
+copyrightYear: 2022+
+releaseLabel: trial-use
+license: CC0-1.0 # https://www.hl7.org/fhir/valueset-spdx-license.html
+jurisdiction: http://unstats.un.org/unsd/methods/m49/m49.htm#001 "World" # https://www.hl7.org/fhir/valueset-jurisdiction.html
+publisher:
+  name: HL7 International - Biomedical Research & Regulation Work Group
+  url: http://hl7.org/Special/committees/rcrim
+
+pages:
+  index.md:
+      title: Home
+  background.md:
+      title: Background
+  usecases.md:
+      title: Use Cases
+  epi-components.md:
+      title: ePI Components
+  build-overview.md:
+      title: Overview
+  build-epi1.md:
+      title: Build ePI Type 1
+  build-epi2.md:
+      title: Build ePI Type 2
+  build-epi3.md:
+      title: Build ePI Type 3
+  build-epi4.md:
+      title: Build ePI Type 4
+  gettingstarted.md:
+      title: Getting Started
+  tech-style-guide.md:
+      title: Technical Style Guide
+  tracked-changes.md:
+      title: Tracked Changes
+  versions.md:
+      title: Version Control
+  terminology.md:
+      title: Terminology
+  downloads.md:
+      title: Downloads
+  credits.md:
+      title: Credits
+
+menu:
+  Home: index.html
+  Background: background.html
+  Getting Started: gettingstarted.html
+  ePI Components: epi-components.html
+  Use Cases: usecases.html
+  How to Build ePI Type 1 to 4: 
+    Overview: build-overview.html
+    Build ePI Type 1: build-epi1.html
+    Build ePI Type 2: build-epi2.html
+    Build ePI Type 3: build-epi3.html
+    Build ePI Type 4: build-epi4.html
+    Technical Style Guide: tech-style-guide.html
+    Tracked Changes: tracked-changes.html
+    Verson Control: versions.html
+    Terminology: terminology.html
+  Artifacts: artifacts.html
+  Downloads: downloads.html
+  Credits: credits.html
+
+parameters:
+  jira-code: uv-emedicinal-product-info
+
+#parameters:
+  #show-inherited-invariants: false
+
+  #autoload-resources: true
+  produce-jekyll-data: true
+
+#  special-url: 
+#    - https://spor.ema.europa.eu/rmswi
+#    - https://spor.ema.europa.eu/v1/lists/200000000014
+#    - https://spor.ema.europa.eu/v1/lists/100000155531
+#    - https://spor.ema.europa.eu/v1/lists/100000072050
+#    - https://spor.ema.europa.eu/v1/lists/100000072050
+#    - https://spor.ema.europa.eu/v1/lists/200000003199
+#    - https://spor.ema.europa.eu/v1/lists/220000000000
+#    - https://spor.ema.europa.eu/v1/lists/220000000031
+#    - https://spor.ema.europa.eu/v1/lists/100000073346
+#    - https://spor.ema.europa.eu/v1/lists/100000155526
+#    - https://spor.ema.europa.eu/v1/lists/100000073345
+#    - https://spor.ema.europa.eu/v1/lists/100000072055
+#    - https://spor.ema.europa.eu/v1/lists/200000029659
+
+instanceOptions:
+  manualSliceOrdering: true

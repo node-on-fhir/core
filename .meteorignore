@@ -21,6 +21,7 @@ packages/provider-directory/data/
 docs/
 *.md
 !README.md
+certification/
 
 # Package development files
 packages/*/.git/
@@ -59,3 +60,7 @@ screenshots/
 *.gif
 !public/*.png
 !public/*.jpg
+
+*/guide
+*/guide/*
+*/guides/*

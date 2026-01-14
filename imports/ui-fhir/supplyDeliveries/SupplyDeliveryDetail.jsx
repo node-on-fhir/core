@@ -237,6 +237,12 @@ function SupplyDeliveryDetail(props) {
         console.log('Creating new supply delivery:', supplyDelivery);
         const newId = await Meteor.callAsync('createSupplyDelivery', supplyDelivery);
         console.log('Supply delivery created with ID:', newId);
+
+        // Store result for tests to capture
+        if (typeof window !== 'undefined') {
+          window.saveResult = { result: newId };
+        }
+
         // Navigate back to supply deliveries list for new supply deliveries
         navigate('/supply-deliveries');
       }
@@ -249,21 +255,33 @@ function SupplyDeliveryDetail(props) {
   };
 
   const handleDelete = async () => {
-    if (!id || id === 'new') return;
-    
-    if (!window.confirm('Are you sure you want to delete this supply delivery?')) {
+    console.log('[SupplyDeliveryDetail] handleDelete called, id:', id);
+
+    if (!id || id === 'new') {
+      console.log('[SupplyDeliveryDetail] Cannot delete - invalid id');
       return;
     }
-    
+
+    const confirmResult = window.confirm('Are you sure you want to delete this supply delivery?');
+    console.log('[SupplyDeliveryDetail] Confirm result:', confirmResult);
+
+    if (!confirmResult) {
+      console.log('[SupplyDeliveryDetail] Delete cancelled by user');
+      return;
+    }
+
+    console.log('[SupplyDeliveryDetail] Starting delete operation...');
     setLoading(true);
     setError(null);
-    
+
     try {
-      await Meteor.callAsync('removeSupplyDelivery', id);
-      console.log('Supply delivery deleted successfully');
+      console.log('[SupplyDeliveryDetail] Calling removeSupplyDelivery with id:', id);
+      const result = await Meteor.callAsync('removeSupplyDelivery', id);
+      console.log('[SupplyDeliveryDetail] Delete result:', result);
+      console.log('[SupplyDeliveryDetail] Navigating to /supply-deliveries');
       navigate('/supply-deliveries');
     } catch (error) {
-      console.error('Error deleting supply delivery:', error);
+      console.error('[SupplyDeliveryDetail] Error deleting supply delivery:', error);
       setError(error.message || 'Failed to delete supply delivery');
     } finally {
       setLoading(false);
@@ -274,9 +292,12 @@ function SupplyDeliveryDetail(props) {
     setIsEditing(!isEditing);
   };
   
-  // Debug logging
+  // Debug logging and expose state for tests
   useEffect(() => {
     console.log('SupplyDeliveryDetail render - id:', id, 'isEditing:', isEditing);
+    if (typeof window !== 'undefined') {
+      window.__supplyDeliveryIsEditing = isEditing;
+    }
   }, [id, isEditing]);
 
   return (
@@ -499,7 +520,7 @@ function SupplyDeliveryDetail(props) {
                 id="notesInput"
                 name="notes"
                 label="Notes"
-                multiline
+                multiline={true}
                 rows={4}
                 value={get(supplyDelivery, 'note[0].text', '')}
                 onChange={(e) => handleInputChange('note[0].text', e.target.value)}

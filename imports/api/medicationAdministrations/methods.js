@@ -9,8 +9,13 @@ import { MedicationAdministrations } from '/imports/lib/schemas/SimpleSchemas/Me
 Meteor.methods({
   async 'medicationAdministrations.create'(medicationAdministration) {
     check(medicationAdministration, Object);
-    
+
+    console.log('=== medicationAdministrations.create called ===');
+    console.log('User ID:', this.userId);
+    console.log('MedicationAdministration data received:', JSON.stringify(medicationAdministration, null, 2));
+
     if (!this.userId) {
+      console.error('medicationAdministrations.create: Not authorized - no userId');
       throw new Meteor.Error('not-authorized', 'You must be logged in to create medication administrations');
     }
 
@@ -22,12 +27,31 @@ Meteor.methods({
     // Ensure resourceType is set
     medicationAdministration.resourceType = 'MedicationAdministration';
 
+    // Generate FHIR id if not provided
+    if (!medicationAdministration.id) {
+      const { Random } = require('meteor/random');
+      medicationAdministration.id = Random.id();
+      console.log('Generated FHIR id:', medicationAdministration.id);
+    }
+
+    console.log('MedicationAdministration to insert:', JSON.stringify(medicationAdministration, null, 2));
+    console.log('Subject reference:', get(medicationAdministration, 'subject.reference'));
+    console.log('Subject display:', get(medicationAdministration, 'subject.display'));
+    console.log('Performer:', get(medicationAdministration, 'performer[0].actor'));
+
     try {
       const result = await MedicationAdministrations.insertAsync(medicationAdministration);
-      console.log('Created medication administration:', result);
+      console.log('Successfully inserted medication administration with _id:', result);
+      console.log('MedicationAdministration created', {
+        userId: this.userId,
+        medicationAdministrationId: result,
+        fhirId: medicationAdministration.id,
+        timestamp: new Date()
+      });
       return result;
     } catch (error) {
       console.error('Error creating medication administration:', error);
+      console.error('Error stack:', error.stack);
       throw new Meteor.Error('insert-failed', error.message);
     }
   },

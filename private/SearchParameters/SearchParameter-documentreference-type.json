@@ -1,0 +1,28 @@
+{
+  "resourceType": "SearchParameter",
+  "id": "documentreference-type",
+  "url": "http://hl7.org/fhir/SearchParameter/DocumentReference-type",
+  "version": "4.0.1",
+  "name": "HoneycombDocumentReferenceType",
+  "status": "active",
+  "date": "2024-12-20",
+  "publisher": "github.com/node-on-fhir",
+  "contact": [
+    {
+      "telecom": [
+        {
+          "system": "url",
+          "value": "http://github.com/node-on-fhir/honeycomb"
+        }
+      ]
+    }
+  ],
+  "description": "Kind of document (LOINC if possible)",
+  "code": "type",
+  "base": ["DocumentReference"],
+  "type": "token",
+  "expression": "DocumentReference.type",
+  "xpath": "type",
+  "multipleOr": true,
+  "multipleAnd": true
+}

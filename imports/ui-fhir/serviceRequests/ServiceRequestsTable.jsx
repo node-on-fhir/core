@@ -20,7 +20,7 @@ let set = _.set;
 let has = _.has;
 
 import FhirUtilities from '../../lib/FhirUtilities';
-import { TableNoData } from '../../components/TableNoData';
+import TableNoData from '../../components/TableNoData';
 import { FhirDehydrator } from '../../lib/FhirDehydrator';
 
 import { useTracker } from 'meteor/react-meteor-data';

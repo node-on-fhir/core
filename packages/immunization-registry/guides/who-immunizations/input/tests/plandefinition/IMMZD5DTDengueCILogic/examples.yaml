@@ -1,0 +1,225 @@
+---
+#1. The client is immunocompromised
+#   "Potential contraindications" = "Immunocompromised"
+### Dengue vaccination is contraindicated
+### "Immunization recommendation status" = "Contraindicated"
+id: "37.1"
+birth: -9y
+patient:
+  fhir:
+    gender: female
+contraindication:
+    immunocompromised:
+      code: DE163
+      display: "Immunocompromised"
+      effectiveDateTime: -1d
+medicationrequest:
+  dengue:
+    medication:
+      code: XM38G7
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Dengue vaccine"
+    fhir:
+      authoredOn: 0d
+      status: draft
+      intent: proposal
+---
+#1. The client is severely immunocompromised
+#   "Potential contraindications" = "Severely immunocompromised"
+### Dengue vaccination is contraindicated
+### "Immunization recommendation status" = "Contraindicated"
+id: "38.1"
+birth: -9y
+patient:
+  fhir:
+    gender: female
+contraindication:
+    severelyimmunocompromised:
+      code: DE200
+      display: "Severely immunocompromised"
+      effectiveDateTime: -1d
+medicationrequest:
+  dengue:
+    medication:
+      code: XM38G7
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Dengue vaccine"
+    fhir:
+      authoredOn: 0d
+      status: draft
+      intent: proposal
+---
+#1. The client is currently pregnant
+#   "Potential contraindications" = "Currently pregnant"
+### Dengue vaccination is contraindicated
+### "Immunization recommendation status" = "Contraindicated"
+id: "39.1"
+birth: -25y
+patient:
+  fhir:
+    gender: female
+contraindication:
+    currentlypregnant:
+      code: DE162
+      display: "Currently pregnant"
+      effectiveDateTime: -1d
+medicationrequest:
+  dengue:
+    medication:
+      code: XM38G7
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Dengue vaccine"
+    fhir:
+      authoredOn: 0d
+      status: draft
+      intent: proposal
+---
+#1. The client is currently lactating
+#   '"Potential contraindications" = "Breastfeeding"
+### Dengue vaccination is contraindicated
+### "Immunization recommendation status" = "Contraindicated"
+id: "40.1"
+birth: -25y
+patient:
+  fhir:
+    gender: female
+contraindication:
+    breastfeeding:
+      code: DE191
+      display: "Breastfeeding"
+      effectiveDateTime: -1d
+medicationrequest:
+  dengue:
+    medication:
+      code: XM38G7
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Dengue vaccine"
+    fhir:
+      authoredOn: 0d
+      status: draft
+      intent: proposal
+---
+#1. The client has history of severe allergic reactions
+#   "Potential contraindications" = "Severe allergic reactions"
+### Dengue vaccination could be contraindicated. Clinical judgement is required. Create a clinical note.
+### "Immunization recommendation status" = "Further evaluation needed"
+id: "41.1"
+birth: -9y
+patient:
+  fhir:
+    gender: female
+contraindication:
+    severeallergicreactions:
+      code: DE167
+      display: "Severe allergic reactions"
+      effectiveDateTime: -1d
+medicationrequest:
+  dengue:
+    medication:
+      code: XM38G7
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Dengue vaccine"
+    fhir:
+      authoredOn: 0d
+      status: draft
+      intent: proposal
+---
+#1. The client has history of anaphylactic reactions
+#   "Potential contraindications" ="History of anaphylactic reactions"
+### Dengue vaccination could be contraindicated. Clinical judgement is required. Create a clinical note.
+### "Immunization recommendation status" = "Further evaluation needed"
+id: "42.1"
+birth: -9y
+patient:
+  fhir:
+    gender: female
+contraindication:
+    historyofanaphylacticreactions:
+      code: DE166
+      display: "History of anaphylactic reactions"
+      effectiveDateTime: -1d
+medicationrequest:
+  dengue:
+    medication:
+      code: XM38G7
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Dengue vaccine"
+    fhir:
+      authoredOn: 0d
+      status: draft
+      intent: proposal
+---
+#1. The client has immunodeficiency syndromes
+#   "Potential contraindications" = "Immunodeficiency syndromes"
+### Dengue vaccination is contraindicated
+### "Immunization recommendation status" = "Contraindicated"
+id: "43.1"
+birth: -9y
+patient:
+  fhir:
+    gender: female
+contraindication:
+    immunodeficiencysyndromes:
+      code: DE187
+      display: "Immunodeficiency syndromes"
+      effectiveDateTime: -1d
+medicationrequest:
+  dengue:
+    medication:
+      code: 
+      system: "http://id.who.int/icd/release/11/mms"
+      display: ""
+    fhir:
+      authoredOn: 0d
+      status: draft
+      intent: proposal
+---
+#1. The client is severely immunosuppressed
+#   "Potential contraindications" = "Severely immunosuppressed"
+### Dengue vaccination is contraindicated
+### "Immunization recommendation status" = "Contraindicated"
+id: "44.1"
+birth: -9y
+patient:
+  fhir:
+    gender: female
+contraindication:
+    severelyimmunosuppressed:
+      code: DE165
+      display: "Severely immunosuppressed"
+      effectiveDateTime: -1d
+medicationrequest:
+  dengue:
+    medication:
+      code: XM38G7
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Dengue vaccine"
+    fhir:
+      authoredOn: 0d
+      status: draft
+      intent: proposal
+---
+#1. The client has symptomatic HIV infection
+#   "Potential contraindications" = "Symptomatic HIV infection"
+### Dengue vaccination is contraindicated
+### "Immunization recommendation status" = "Contraindicated"
+id: "45.1"
+birth: -9y
+patient:
+  fhir:
+    gender: female
+contraindication:
+    symptomatichivinfection:
+      code: DE168
+      display: "Symptomatic HIV infection"
+      effectiveDateTime: -1d
+medicationrequest:
+  dengue:
+    medication:
+      code: XM38G7
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Dengue vaccine"
+    fhir:
+      authoredOn: 0d
+      status: draft
+      intent: proposal

@@ -1,0 +1,42 @@
+---
+#1. Client's age is less than 12 months
+#   Today's date − "Date of birth" < 12 months
+### Client is not due for Hepatitis A vaccination
+### "Immunization recommendation status" = "Not due"
+id: "20.1"
+birth: -11m
+patient:
+  fhir:
+    gender: female
+---
+#0. No hepatitis A primary series dose was administered
+#   Count of vaccines administered (where "Vaccine type" = "Hepatitis A-containing vaccines" and "Type of dose" = "Primary series") = 0
+#1. Client's age is more than or equal to 12 months
+#   Today's date − "Date of birth" ≥ 12 months
+### Client is due for Hepatitis A vaccination
+### "Immunization recommendation status" = "Due"
+id: "21.01"
+birth: -12m
+patient:
+  fhir:
+    gender: female
+---
+#0. One hepatitis A primary series dose was administered
+#   Count of vaccines administered (where "Vaccine type" = "Hepatitis A-containing vaccines" and "Type of dose" = "Primary series") = 1
+### Hepatitis A immunization schedule is complete
+### "Immunization recommendation status" = "Complete"
+### "Completed the primary vaccination series" = TRUE (where "Vaccine type" = "Hepatitis A-containing vaccines")
+id: "22.0"
+birth: -12m
+patient:
+  fhir:
+    gender: female
+immunization:
+  hepatitisa:
+    vaccine:
+      code: XM2A12
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Hepatitis A, inactivated, whole virus"
+    doses:
+      p1:
+        - b+12m

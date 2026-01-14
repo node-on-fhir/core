@@ -109,6 +109,7 @@ export function ConditionsPage(props){
               {'code.text': {$regex: searchFilter, $options: 'i'}},
               {'code.coding.0.display': {$regex: searchFilter, $options: 'i'}},
               {'patient.display': {$regex: searchFilter, $options: 'i'}},
+              {'subject.display': {$regex: searchFilter, $options: 'i'}},
               {'asserter.display': {$regex: searchFilter, $options: 'i'}},
               {'notes': {$regex: searchFilter, $options: 'i'}}
             ]

@@ -1,6 +1,6 @@
 # CRUD Test Implementation Guide
 
-This guide provides patterns and checklists for implementing CRUD tests in the Honeycomb application, based on lessons learned from implementing Conditions and CarePlans tests.
+This guide provides patterns and checklists for implementing CRUD tests in the Honeycomb application, based on lessons learned from implementing Conditions, CarePlans, and Encounters tests.
 
 **Placeholder Conventions:**
 - `{ResourceType}` - PascalCase singular (e.g., Condition, CarePlan)
@@ -13,6 +13,165 @@ This guide provides patterns and checklists for implementing CRUD tests in the H
 1. **Don't modify tests that have been refined over nearly a decade** - The tests represent business requirements. Adjust the application code to meet the tests, not the other way around.
 2. **Test Driven Development (TDD)** - The tests define the expected behavior. Implementation should satisfy these expectations.
 3. **Handle both empty and populated databases** - Tests must work whether the database is empty or contains 2.6M+ records.
+4. **Search before clicking in large datasets** - With 100+ records, always filter the table before finding and clicking rows.
+
+## Quick Scan Checklist for Existing CRUD Tests
+
+When updating an existing `crud.*.js` test file, scan for these common issues:
+
+### 1. Navigation Pattern Issues
+- [ ] Search for `browser.url('http://localhost:3000/` mid-test (after test 01)
+- [ ] Replace with `testUtils.navigateUrl(browser, '/path')` to preserve Session
+- [ ] Ensure `const testUtils = require('./shared-test-utils');` at top
+
+### 2. Detail Component Data Loading
+- [ ] Open corresponding `{ResourceType}Detail.jsx` component
+- [ ] Check if data loading useEffect waits for `isSubscriptionReady`
+- [ ] Replace with optimistic loading pattern (load immediately if data exists)
+- [ ] Add fallback to try both `_id` and `id` fields
+
+### 3. Patient Context Management
+- [ ] Add `let testPatientId = null;` at suite level (after `const timestamp`)
+- [ ] Store ID when patient created: `testPatientId = result.result;` (in both login paths)
+- [ ] Use `patients.findOne` Meteor method to fetch patient (don't use client collection)
+- [ ] In test 02, restore Session after `browser.url()` using stored `testPatientId`
+- [ ] Verify mid-test navigation uses `testUtils.navigateUrl()` (preserves Session automatically)
+
+**Why**: Subscription limits (100 records) mean newly created patients may not appear in client collection. Use server method to fetch from database.
+
+### 4. Search-Based Row Finding (Critical for Large Datasets)
+- [ ] Check if tests use search before finding/clicking rows in tables with 100+ records
+- [ ] Add search filter before row clicking in tests 05-09
+- [ ] Use short, unique search terms (e.g., "Smith" instead of full name with timestamp)
+- [ ] Always verify table contains search term before clicking: `.assert.containsText('#table', searchTerm)`
+- [ ] Allow 3+ seconds after `.setValue()` for character-by-character typing to complete
+
+**Why**: With 100 records in table, finding specific test row without filtering is unreliable and slow.
+
+### 5. React Form Input Handling
+- [ ] Search for `clearValue()` + `setValue()` patterns on search inputs
+- [ ] Replace with execute block that triggers React events (see section 6)
+- [ ] Check for `.click('#...Select')` on Material-UI Select components
+- [ ] Move click inside execute block to avoid "element click intercepted" errors
+
+**Why**: `clearValue()` doesn't trigger React onChange events, causing value concatenation. Material-UI clicks outside execute blocks get intercepted by overlapping elements.
+
+---
+
+## Quick Fix Templates
+
+### Test Structure (Suite Level)
+```javascript
+describe('Resource CRUD Operations', function() {
+  const timestamp = Date.now();
+  let testPatientId = null; // Store patient ID for cross-test access
+
+  const testResource = { /* ... */ };
+  // ...
+});
+```
+
+### Test 01: Patient Creation with Server Fetch
+```javascript
+it('01. Setup test environment', browser => {
+  // After testUtils.createTestPatient callback:
+  testPatientId = result.result; // Store ID
+
+  // Fetch patient from server and set in Session
+  browser.executeAsync(function(patientId, done) {
+    if (typeof Meteor !== 'undefined' && typeof Session !== 'undefined') {
+      Meteor.call('patients.findOne', patientId, function(error, patient) {
+        if (error) {
+          console.error('Error fetching patient:', error);
+          done({ success: false, error: error.message });
+        } else if (patient) {
+          Session.set('selectedPatientId', patient._id);
+          Session.set('selectedPatient', patient);
+          console.log('Set selected patient in Session:', patient._id, patient.name?.[0]?.text);
+          done({ success: true, patientId: patient._id, patientName: patient.name?.[0]?.text });
+        } else {
+          console.error('Patient not found:', patientId);
+          done({ success: false, error: 'Patient not found' });
+        }
+      });
+    } else {
+      done({ success: false, error: 'Meteor or Session not available' });
+    }
+  }, [result.result], function(fetchResult) {
+    if (fetchResult.value.success) {
+      console.log('Successfully set selected patient:', fetchResult.value);
+    } else {
+      console.error('Failed to set selected patient:', fetchResult.value.error);
+    }
+  });
+});
+```
+
+### Test 02: Session Restoration After browser.url()
+```javascript
+it('02. Verify list page loads', browser => {
+  browser
+    .url('http://localhost:3000/{resourceTypes}')
+    .waitForElementVisible('#{resourceTypes}Page', 5000);
+
+  // Re-establish patient context (browser.url clears Session)
+  browser.executeAsync(function(patientId, done) {
+    if (typeof Meteor !== 'undefined' && typeof Session !== 'undefined') {
+      Meteor.call('patients.findOne', patientId, function(error, patient) {
+        if (error) {
+          console.error('Error fetching patient:', error);
+          done({ success: false, error: error.message });
+        } else if (patient) {
+          Session.set('selectedPatientId', patient._id);
+          Session.set('selectedPatient', patient);
+          console.log('Re-established patient context:', patient._id, patient.name?.[0]?.text);
+          done({ success: true });
+        } else {
+          console.error('Patient not found:', patientId);
+          done({ success: false, error: 'Patient not found' });
+        }
+      });
+    } else {
+      done({ success: false, error: 'Meteor or Session not available' });
+    }
+  }, [testPatientId]);
+
+  browser.pause(500); // Let subscription update
+});
+```
+
+### Mid-Test Navigation (Tests 03+)
+```javascript
+// Instead of:
+- browser.url('http://localhost:3000/{resourceTypes}')
+
+// Use:
++ testUtils.navigateUrl(browser, '/{resourceTypes}');
+  browser.waitForElementVisible('#{resourceTypes}Page', 5000);
+```
+
+### Detail Component Data Loading
+```javascript
+// In {ResourceType}Detail.jsx - replace subscription-dependent loading
+useEffect(function() {
+  if (id && id !== 'new') {
+    // Load immediately if data exists - don't wait for subscription
+    const existing = {ResourceTypes}.findOne({_id: id});
+
+    if (existing) {
+      set{ResourceType}(existing);
+      setIsEditing(false);
+    } else {
+      // Fallback: try id field
+      const byId = {ResourceTypes}.findOne({id: id});
+      if (byId) {
+        set{ResourceType}(byId);
+        setIsEditing(false);
+      }
+    }
+  }
+}, [id]); // Only depend on id, not subscription status
+```
 
 ## Key Patterns and Issues Discovered
 
@@ -116,9 +275,57 @@ if (process.env.USE_MONGO_OBJECTID) {
 - **Issue**: Setting values programmatically in React forms requires special handling
 - **Solution**: Use different approaches for different input types
 
-#### Text Input Pattern (Use setValue directly):
+#### The clearValue() Problem
+
+**Critical Discovery**: Nightwatch's `clearValue()` does NOT reliably clear React-controlled inputs.
+
+**Why it fails**:
+- `clearValue()` clears the DOM value but doesn't trigger React's `onChange` events
+- React's state still thinks the old value is there
+- When `setValue()` types new characters, React concatenates them instead of replacing
+- This is a well-known issue with React-controlled inputs in automated testing
+
+**Symptom**: Search values concatenating like `"Patient photo 1763897715996Patient photo"`
+
+#### Search Input Pattern (Execute Block - REQUIRED)
+
+For search inputs and any fields where `clearValue()` fails, use this pattern:
+
 ```javascript
-// CORRECT - Use setValue for text inputs, textareas
+// CORRECT - Execute block that properly triggers React events
+browser
+  .waitForElementVisible('#searchInput', 5000)
+  .execute(function(searchValue) {
+    const input = document.querySelector('#searchInput');
+    if (input) {
+      // Clear the field
+      input.value = '';
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      input.dispatchEvent(new Event('change', { bubbles: true }));
+
+      // Set new value
+      input.value = searchValue;
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      input.dispatchEvent(new Event('change', { bubbles: true }));
+      return true;
+    }
+    return false;
+  }, [searchValue])
+  .pause(1000);
+```
+
+**What this does**:
+1. Explicitly clears React's state: `input.value = ''` + `dispatchEvent('input')` tells React the field is now empty
+2. Properly sets new value: `input.value = searchValue` + `dispatchEvent('input')` tells React the new value
+3. Triggers all necessary events: Both `input` and `change` events ensure React state updates
+4. No more concatenation: React sees clear → empty → new value, not old value → concatenated value
+
+#### Regular Text Input Pattern (Use setValue directly)
+
+For regular text inputs that will be fully replaced (not search fields):
+
+```javascript
+// CORRECT for non-search text inputs
 browser
   .clearValue('#codeInput')
   .setValue('#codeInput', testData.codeCode)
@@ -126,12 +333,65 @@ browser
   .setValue('#notesTextarea', testData.notes);
 ```
 
-**Important**: 
-- Use setValue directly on text inputs (like the locations test does)
-- Only use execute blocks for Material-UI Select components
-- Use the correct field values from test data (e.g., codeCode for the code field, codeDisplay for the display field)
+**Important**: Use the correct field values from test data (e.g., codeCode for the code field, codeDisplay for the display field)
 
-#### Why Native Setter Approach Fails:
+#### Material-UI Select Pattern (Execute Block - REQUIRED)
+
+For Material-UI Select components, you MUST use execute blocks with the click inside:
+
+```javascript
+// CORRECT - Click and select inside execute block
+browser
+  .execute(function(value) {
+    const statusSelect = document.querySelector('#statusSelect');
+    if (statusSelect) {
+      statusSelect.click();  // Click INSIDE execute to avoid interception
+      setTimeout(() => {
+        const menuItems = document.querySelectorAll('[role="option"]');
+        for (let item of menuItems) {
+          const dataValue = item.getAttribute('data-value');
+          const textValue = item.textContent.toLowerCase().replace(/\s+/g, '-');
+          const searchValue = value.toLowerCase();
+
+          if (dataValue === value || textValue === searchValue) {
+            item.click();
+            break;
+          }
+        }
+      }, 300);  // Wait for dropdown to render
+    }
+  }, [statusValue])
+  .pause(500);
+```
+
+**Why this is required**:
+- Material-UI Select components have overlapping elements
+- Nightwatch's `.click('#statusSelect')` outside execute blocks gets intercepted
+- Error: "element click intercepted: Element ... is not clickable at point (x, y). Other element would receive the click"
+- Clicking inside JavaScript execute block bypasses Selenium's element position checking
+
+```javascript
+// WRONG - Will fail with "element click intercepted"
+browser
+  .click('#statusSelect')  // ✗ Gets intercepted
+  .pause(1000)
+  .execute(function(value) {
+    // ... select menu item
+  }, [value]);
+```
+
+#### When to Use Each Pattern
+
+| Input Type | Pattern | Reason |
+|------------|---------|--------|
+| Search inputs | Execute block (clear + set + events) | `clearValue()` doesn't trigger React events |
+| Regular text inputs | `clearValue()` + `setValue()` | Simple replacement works |
+| Material-UI Select | Execute block (click + select) | Avoid element interception errors |
+| Date inputs | `clearValue()` + `setValue()` | Simple replacement works |
+| Textareas | `clearValue()` + `setValue()` | Simple replacement works |
+
+#### Why Native Setter Approach Fails
+
 ```javascript
 // WRONG - This causes "Illegal invocation" errors
 browser.execute(function(value) {
@@ -143,6 +403,157 @@ browser.execute(function(value) {
 ```
 
 The native setter approach causes "Illegal invocation" errors in the browser and should be avoided for standard form inputs.
+
+## Navigation Pattern: Preserving Session State
+
+### Critical Discovery: `browser.url()` vs `Meteor.navigate()`
+
+**Problem**: Using `browser.url()` mid-test causes full page reload, which **clears all Meteor Session variables**. This loses critical test context like `selectedPatient` and `selectedPatientId`.
+
+**Solution**: Use `testUtils.navigateUrl()` helper for mid-test navigation.
+
+### The `navigateUrl()` Helper
+
+Located in `shared-test-utils.js`:
+
+```javascript
+const testUtils = require('./shared-test-utils');
+
+// Instead of browser.url() (which clears Session):
+testUtils.navigateUrl(browser, '/allergy-intolerances');
+browser.waitForElementVisible('#allergyIntolerancesPage', 5000);
+```
+
+**How it works:**
+1. Uses `Meteor.navigate()` under the hood (React Router client-side navigation)
+2. Falls back to `window.location.href` if `Meteor.navigate()` not available
+3. Preserves all Session variables
+4. Logs navigation method for debugging
+
+### When to Use Each Approach
+
+#### Use `browser.url()` for:
+- **Initial navigation** at test suite start
+- **First page load** (no Session to preserve)
+- **External URLs**
+
+```javascript
+before(browser => {
+  browser
+    .windowSize('current', 1400, 900)
+    .url('http://localhost:3000')  // Initial load - OK
+    .waitForElementVisible('body', 5000);
+});
+```
+
+#### Use `testUtils.navigateUrl()` for:
+- **Mid-test navigation** between pages
+- **Returning to list** after detail view
+- **Any navigation where Session must be preserved**
+
+```javascript
+it('06. View details', browser => {
+  // View details...
+
+  // Navigate back - MUST preserve Session!
+  testUtils.navigateUrl(browser, '/allergy-intolerances');
+  browser.waitForElementVisible('#allergyIntolerancesPage', 5000);
+  // Patient context still available ✓
+});
+```
+
+### Migration Pattern
+
+**Before (Session lost ✗):**
+```javascript
+it('07. Update record', browser => {
+  browser
+    .url('http://localhost:3000/allergy-intolerances')  // ✗ Clears Session!
+    .waitForElementVisible('#allergyIntolerancesTable', 5000);
+
+  // Have to re-establish patient context...
+  browser.execute(function() {
+    const patient = Patients.findOne({...});
+    Session.set('selectedPatient', patient);
+  });
+});
+```
+
+**After (Session preserved ✓):**
+```javascript
+const testUtils = require('./shared-test-utils');
+
+it('07. Update record', browser => {
+  testUtils.navigateUrl(browser, '/allergy-intolerances');  // ✓ Preserves Session!
+  browser.waitForElementVisible('#allergyIntolerancesTable', 5000);
+  // Patient context automatically available - no re-establishment needed ✓
+});
+```
+
+### Why This Matters
+
+Without `navigateUrl()`:
+- ✗ Tests must re-establish patient context after every navigation
+- ✗ Tables appear empty because no patient is selected
+- ✗ Slower (full page reload vs client-side navigation)
+- ✗ Doesn't match real user behavior
+
+With `navigateUrl()`:
+- ✓ Session preserved automatically
+- ✓ Patient context maintained throughout test
+- ✓ Faster tests
+- ✓ Mimics actual user navigation
+
+### Implementation in NavigationProvider
+
+The `Meteor.navigate()` function is exposed via `NavigationContext.jsx`:
+
+```javascript
+// imports/ui/NavigationContext.jsx
+useLayoutEffect(function() {
+  if (typeof Meteor !== 'undefined') {
+    Meteor.navigate = function(path, options) {
+      navigate(path, options);  // React Router's navigate
+    };
+
+    return function() {
+      delete Meteor.navigate;
+    };
+  }
+}, [navigate]);
+```
+
+This makes React Router's client-side navigation available globally for tests.
+
+## Detail Component Data Loading Pattern
+
+**Problem**: Waiting for `isSubscriptionReady` can block data loading even when data exists.
+
+**Solution**: Load data immediately if it exists, regardless of subscription status.
+
+```javascript
+// In AllergyIntoleranceDetail.jsx (or similar detail components)
+useEffect(() => {
+  if (id && id !== 'new') {
+    // Load immediately if data exists - don't wait for subscription
+    const existingAllergy = AllergyIntolerances.findOne({_id: id});
+
+    if (existingAllergy) {
+      setAllergyIntolerance(existingAllergy);
+      setIsEditing(false);
+    } else {
+      // Fallback: try finding by id field
+      const allergyById = AllergyIntolerances.findOne({id: id});
+      if (allergyById) {
+        setAllergyIntolerance(allergyById);
+        setIsEditing(false);
+      }
+    }
+  }
+}, [id]); // Only depend on id, not subscription status
+```
+
+**Why**: Subscription status may never report "ready" even when data is available in the collection. Load optimistically.
 
 ## Patient Context and Data Scoping in Tests
 
@@ -165,7 +576,6 @@ The native setter approach causes "Illegal invocation" errors in the browser and
 ### Common Patient Context Issues
 - **Empty List**: If no patient is selected, the list will be empty even if records exist
 - **Wrong Patient**: If Session isn't set correctly, you may see another patient's data
-- **Lost Context**: Navigation between pages can sometimes lose patient context
 - **ID Mismatch**: Using MongoDB _id instead of FHIR id in references
 - **Subscription Filtering**: The autopublish subscription filters on the server - if the query doesn't match how data is stored, nothing returns
 - **Reference Format**: FHIR resources store patient references as `Patient/[id]`, not just the ID
@@ -259,6 +669,125 @@ const isLoading = useTracker(() => {
 
 This comprehensive query handles various ways FHIR resources might reference a patient, ensuring we catch all records for the selected patient.
 
+### Patient Context Management in Multi-Test Suites (CRITICAL FOR CI)
+
+**The Problem:**
+
+In test suites where test 01 creates a patient and tests 07-09 need to use it, the patient may not be findable in later tests when running in CI with subscription limits:
+
+1. **Subscription Limits**: Autopublish limits to 100-1000 records for performance
+2. **Database Has Existing Data**: Synthea generates 100+ patients already in DB
+3. **New Patient Outside Window**: Test patient exists in DB but isn't in the subscribed 100 records
+4. **Client Query Fails**: `Patients.findOne()` only searches subscribed records, returns `null`
+5. **Session Not Set**: Without patient in Session, filtered queries return empty
+6. **Heisenbug**: Works locally (small DB) but fails intermittently in CI (large DB)
+
+**The Solution Pattern:**
+
+**1. Store Patient ID at Suite Level:**
+```javascript
+describe('Communications CRUD Operations', function() {
+  const timestamp = Date.now();
+  let testPatientId = null; // Accessible across all tests in suite
+
+  const testCommunication = { /* ... */ };
+```
+
+**2. Capture ID in Test 01:**
+```javascript
+it('01. Setup test environment', browser => {
+  testUtils.createTestPatient(browser, {
+    name: 'John Doe',
+    family: 'Doe',
+    given: 'John',
+    identifier: 'test-patient-' + timestamp
+  }, function(result) {
+    testPatientId = result.result; // ← Store for later tests
+    console.log('Created patient with ID:', testPatientId);
+
+    // Then fetch from server and set in Session
+    browser.executeAsync(function(patientId, done) {
+      Meteor.call('patients.findOne', patientId, function(error, patient) {
+        if (patient) {
+          Session.set('selectedPatientId', patient._id);
+          Session.set('selectedPatient', patient);
+          done({ success: true });
+        }
+      });
+    }, [testPatientId]);
+  });
+});
+```
+
+**3. Re-establish Context in Later Tests Using Server Method:**
+```javascript
+it('07. Update existing communication', browser => {
+  // DON'T use client collection lookup - subscription limits!
+  // ✗ BAD: const patient = Patients.findOne({'identifier.value': ...});
+
+  // ✓ GOOD: Use server-side Meteor method
+  browser.executeAsync(function(patientId, done) {
+    console.log('[Test 07] Re-establishing patient context with ID:', patientId);
+
+    if (typeof Meteor !== 'undefined' && typeof Session !== 'undefined') {
+      // Server method queries DB directly, bypasses subscription limits
+      Meteor.call('patients.findOne', patientId, function(error, patient) {
+        if (error) {
+          console.error('[Test 07] Error fetching patient:', error);
+          done({ success: false, error: error.message });
+        } else if (patient) {
+          Session.set('selectedPatientId', patient._id);
+          Session.set('selectedPatient', patient);
+          console.log('[Test 07] Re-established patient context:', patient._id);
+          done({ success: true, patientId: patient._id });
+        } else {
+          console.error('[Test 07] Patient not found:', patientId);
+          done({ success: false, error: 'Patient not found' });
+        }
+      });
+    } else {
+      done({ success: false, error: 'Meteor or Session not available' });
+    }
+  }, [testPatientId], function(result) {
+    if (result.value && result.value.success) {
+      console.log('[Test 07] Successfully re-established patient context');
+    } else {
+      console.error('[Test 07] Failed to re-establish patient context:', result.value?.error);
+    }
+  });
+
+  browser.pause(1000); // Let subscription react to new Session value
+});
+```
+
+**Why This Works:**
+
+- **Server Method**: `Meteor.call('patients.findOne', id)` queries MongoDB directly
+- **Not Limited by Subscriptions**: Can find any patient in DB regardless of client collection state
+- **Guaranteed Success**: Using exact `_id` we captured, not searching by identifier
+- **Works in Both Environments**: Local (small DB) and CI (large DB with limits)
+
+**When to Apply This Pattern:**
+
+✅ **Required When:**
+- Test suite has multiple tests (01 creates, 07+ uses)
+- Database has 100+ existing records
+- Running in CI with unpredictable environment
+- Seeing intermittent "empty table" or "patient not found" failures
+
+❌ **Not Needed When:**
+- Single test creates and uses data (no cross-test dependencies)
+- Small datasets (< 50 records total)
+- Test creates patient and uses it in same test (data guaranteed in subscription)
+
+**Examples of This Pattern:**
+- ✅ `crud.immunizations.js` (lines 8, 69, 674-701)
+- ✅ `crud.observations.js` (lines 9, 68, 624-651)
+- ✅ `crud.allergyintolerances.js` (lines 8, 67, 624-651)
+- ✅ `crud.careplans.js` (lines 8, 67, 624-651)
+
+**Related Best Practice:** Always use `testUtils.navigateUrl()` instead of `browser.url()` for mid-test navigation to preserve Session state.
+
 ## Implementation Checklist for New CRUD Tests
 
 ### 1. Test Structure Setup
@@ -344,62 +873,9 @@ This comprehensive query handles various ways FHIR resources might reference a p
 - [ ] Auto-populated fields are documented
 - [ ] Form inputs work with both user interaction and programmatic setting
 
-## Session Context and Navigation
-
-### Critical Pattern: Page Navigation vs React Router Navigation
-
-**Key Insight**: There are two types of navigation in the application that handle Session state differently:
-
-1. **Full Page Navigation (`browser.url()`)**: 
-   - Causes a complete page reload
-   - **CLEARS all Session variables**
-   - Used for initial navigation to a route
-   - Example: `browser.url('http://localhost:3000/allergy-intolerances')`
-
-2. **React Router Navigation (`navigate()`)**: 
-   - Client-side routing without page reload
-   - **PRESERVES Session variables**
-   - Used when clicking buttons/links within the app
-   - Example: Clicking "Add Allergy" button uses `navigate('/allergy-intolerances/new')`
-
-### Correct Pattern for Tests:
-```javascript
-// Step 1: Navigate to the page (causes reload, clears Session)
-browser
-  .url('http://localhost:3000/allergy-intolerances')
-  .waitForElementVisible('#allergyIntolerancesPage', 5000);
-
-// Step 2: Set patient context AFTER navigation
-browser.execute(function() {
-  const patient = Patients.findOne({...});
-  if (patient) {
-    Session.set('selectedPatientId', patient._id);
-    Session.set('selectedPatient', patient);
-  }
-});
-
-// Step 3: Further navigation within the app preserves Session
-// Clicking "Add" button uses React Router, Session variables remain
-```
-
-### Common Mistake:
-```javascript
-// WRONG: Setting Session before navigation
-browser.execute(function() {
-  Session.set('selectedPatient', patient); // This will be lost!
-});
-browser.url('http://localhost:3000/allergy-intolerances'); // Clears Session!
-```
-
-### Why This Matters:
-- Patient context is stored in Session
-- Many components filter data based on `Session.get('selectedPatient')`
-- If Session is cleared, lists appear empty even though data exists
-- This is why setting patient context must happen AFTER initial page navigation
-
 ## Common Pitfalls to Avoid
 
-1. **Don't set Session variables before `browser.url()`** - they will be cleared
+1. **Don't use `browser.url()` for mid-test navigation** - use `testUtils.navigateUrl()` to preserve Session
 2. **Don't search by identifier when you can use _id directly**
 3. **Don't assume _id === id** (especially with Synthea data)
 4. **Don't modify well-established test patterns**
@@ -410,6 +886,8 @@ browser.url('http://localhost:3000/allergy-intolerances'); // Clears Session!
 9. **Don't filter data client-side when you can pass queries to subscriptions**
 10. **Don't assume new records will appear at top/bottom without proper sorting**
 11. **Don't test Material-UI Select components with simple selectors - use execute blocks**
+12. **Don't try to find rows in large tables without search filtering first** - causes flaky tests
+13. **Don't use `_id || id` fallback in onClick handlers** - use only `_id` like working components
 
 ## Debugging Tips
 
@@ -788,3 +1266,82 @@ When dealing with delete operations in Nightwatch tests:
 4. Check component's actual button visibility rules
 5. Look at working tests for proven patterns
 6. Remember: `null` return usually means execution issue, not logic issue
+
+## Search-Based Test Pattern for Large Datasets (Critical)
+
+When working with tables that contain 100+ records (common with Synthea data), finding specific test records requires search filtering.
+
+### The Problem
+
+Without search:
+- Table shows 100 records (subscription limit)
+- Test tries to find specific row by scanning all 100
+- Slow, unreliable, causes race conditions
+- Often fails because test record isn't visible without filtering
+
+### The Solution
+
+Always use search before clicking rows in large datasets:
+
+```javascript
+it('06. View resource details', browser => {
+  // Search for the specific test record first
+  browser
+    .clearValue('#resourceSearchInput')
+    .pause(1000) // Wait for table to reset
+    .setValue('#resourceSearchInput', 'Smith') // Short, unique search term
+    .pause(3000) // Wait for character-by-character typing to complete
+    .assert.containsText('#resourceTable', 'Smith'); // Verify filtered results
+
+  // NOW click the row - should be only 1-2 rows visible
+  browser.execute(function() {
+    const rows = document.querySelectorAll('#resourceTable tbody tr');
+    if (rows.length > 0) {
+      rows[0].click(); // Click first row in filtered results
+      return true;
+    }
+    return false;
+  });
+});
+```
+
+### Key Principles
+
+1. **Search with short, unique terms**: "Smith" instead of "Dr. Smith 1763112187769"
+   - Shorter = types faster
+   - Less prone to timing issues
+
+2. **Always verify before clicking**: Use `.assert.containsText()` to ensure table is filtered
+   - Acts as implicit wait for search to complete
+   - Fails fast if search doesn't work
+
+3. **Allow sufficient time**: 3+ seconds after `.setValue()` for typing to complete
+   - `.setValue()` types character-by-character
+   - Each character triggers onChange in React
+   - Multiple subscription queries fire sequentially
+
+4. **Reuse search state when possible**: If previous test already has correct filter active
+   ```javascript
+   // Test 05 searches for "Smith"
+   // Test 06 can reuse that filter (don't clear and re-type)
+   ```
+
+### When to Use Search in Tests
+
+- **Always** for viewing/editing/deleting specific records (tests 05-09)
+- **Not needed** for initial setup (tests 01-04) or listing all records
+- **Critical** when table shows 100 records but you need to find 1 specific test record
+
+### Table Component onClick Pattern
+
+Tables must use only `_id` for row clicks (not `_id || id` fallback):
+
+```javascript
+// CORRECT - matches AllergyIntolerances, CarePlans pattern
+<TableRow onClick={ handleRowClick.bind(this, resources[i]._id)} />
+
+// WRONG - causes issues when both _id and id exist
+<TableRow onClick={ handleRowClick.bind(this, resources[i]._id || resources[i].id)} />
+```
+
+**Why**: The `_id` is the primary key. Using `_id || id` can pass wrong value when both exist.

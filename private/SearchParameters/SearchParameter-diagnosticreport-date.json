@@ -1,0 +1,18 @@
+{
+  "resourceType": "SearchParameter",
+  "id": "diagnosticreport-date",
+  "url": "http://hl7.org/fhir/SearchParameter/DiagnosticReport-date",
+  "version": "4.0.1",
+  "name": "HoneycombDiagnosticReportDate",
+  "status": "active",
+  "date": "2024-12-08",
+  "description": "The clinically relevant time of the report",
+  "code": "date",
+  "base": ["DiagnosticReport"],
+  "type": "date",
+  "expression": "DiagnosticReport.effectiveDateTime",
+  "xpath": "effectiveDateTime",
+  "multipleOr": true,
+  "multipleAnd": true,
+  "comparator": ["eq", "ne", "gt", "lt", "ge", "le", "sa", "eb", "ap"]
+}

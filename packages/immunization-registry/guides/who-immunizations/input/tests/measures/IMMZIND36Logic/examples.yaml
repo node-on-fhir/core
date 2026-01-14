@@ -1,0 +1,101 @@
+---
+id: 01.BCGdropout
+birth: "2025-01-02"
+patient:
+  fhir:
+    gender: female
+immunization:
+  bcg:
+    vaccine:
+      code: XM8142
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Tuberculosis, live attenuated vaccines"
+    fhir:
+      expirationDate: 1y
+      occurrenceDateTime: b+1d
+      protocolApplied:
+        - doseNumberString: "1"
+          seriesDosesString: "1"
+          series: "Primary series"
+  measles1:
+    vaccine:
+      code: XM8TF3  
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Measles, combinations with mumps and rubella, live attenuated"
+    fhir:
+      expirationDate: 1y
+      occurrenceDateTime: b+9m
+      protocolApplied:
+        - doseNumberString: "1"
+          seriesDosesString: "2"
+          series: "Primary series"
+---
+id: 02.BCGdropout
+birth: -1m
+patient:
+  fhir:
+    gender: female
+immunization:
+  bcg:
+    vaccine:
+      code: XM8142
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Tuberculosis, live attenuated vaccines"
+    fhir:
+      expirationDate: 1y
+      occurrenceDateTime: b+1d
+      protocolApplied:
+        - doseNumberString: "1"
+          seriesDosesString: "1"
+          series: "Primary series"
+---
+id: 03.BCGdropout
+birth: "2024-08-02"
+patient:
+  fhir:
+    gender: female
+immunization:
+  bcg:
+    vaccine:
+      code: XM8142
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Tuberculosis, live attenuated vaccines"
+    fhir:
+      expirationDate: 1y
+      occurrenceDateTime: b+1d
+      protocolApplied:
+        - doseNumberString: "1"
+          seriesDosesString: "1"
+          series: "Primary series"
+  measles1:
+    vaccine:
+      code: XM8TF3  
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Measles, combinations with mumps and rubella, live attenuated"
+    fhir:
+      expirationDate: 1y
+      occurrenceDateTime: b+9m
+      protocolApplied:
+        - doseNumberString: "1"
+          seriesDosesString: "2"
+          series: "Primary series"
+---
+id: 04.BCGdropout
+birth: "2025-01-02"
+patient:
+  fhir:
+    gender: female
+immunization:
+  bcg:
+    vaccine:
+      code: XM8142
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Tuberculosis, live attenuated vaccines"
+    fhir:
+      expirationDate: 1y
+      occurrenceDateTime: b+1d
+      protocolApplied:
+        - doseNumberString: "1"
+          seriesDosesString: "1"
+          series: "Primary series"
+

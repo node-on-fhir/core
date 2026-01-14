@@ -1,6 +1,7 @@
 // tests/nightwatch/honeycomb/enable_autopublish/crud.locations.js
 
 const testUtils = require('./shared-test-utils');
+const loginHelper = require('../../helpers/login-helper');
 
 describe('Locations CRUD Operations', function() {
   const timestamp = Date.now();
@@ -46,73 +47,23 @@ describe('Locations CRUD Operations', function() {
     browser
       .url('http://localhost:3000')
       .waitForElementVisible('body', 5000)
+      .pause(1000)
       .execute(function(ts) {
         window.testTimestamp = ts;
       }, [timestamp]);
 
-    // Check if we're logged in
-    browser.execute(function() {
-      return {
-        isLoggedIn: typeof Meteor !== 'undefined' && !!Meteor.userId(),
-        userId: Meteor.userId ? Meteor.userId() : null,
-        username: Meteor.user ? (Meteor.user() ? Meteor.user().username : null) : null
-      };
-    }, [], function(result) {
-      console.log('Initial login state:', result.value);
-      
-      if (!result.value.isLoggedIn) {
-        console.log('Not logged in, attempting programmatic login...');
-        
-        browser.executeAsync(function(done) {
-          if (typeof Meteor !== 'undefined') {
-            Meteor.call('test.createTestUser', {
-              username: 'janedoe',
-              email: 'janedoe@test.org',
-              password: 'janedoe123'
-            }, function(err, userId) {
-              if (err) {
-                console.error('Failed to create test user:', err);
-                done({ userCreated: false, error: err.message });
-              } else {
-                console.log('Test user ready, userId:', userId);
-                Meteor.loginWithPassword('janedoe', 'janedoe123', function(loginErr) {
-                  if (loginErr) {
-                    console.error('Login failed:', loginErr);
-                    done({ userCreated: true, loginSuccess: false, error: loginErr.message });
-                  } else {
-                    console.log('Login successful');
-                    done({ 
-                      userCreated: true,
-                      loginSuccess: true, 
-                      userId: Meteor.userId(), 
-                      username: Meteor.user() ? Meteor.user().username : null 
-                    });
-                  }
-                });
-              }
-            });
-          } else {
-            done({ userCreated: false, loginSuccess: false, error: 'Meteor not available' });
-          }
-        }, [], function(result) {
-          if (result.value.loginSuccess) {
-            browser.assert.ok(true, 'Successfully created test user and logged in');
-            console.log('Logged in as:', result.value.username, 'userId:', result.value.userId);
-          } else {
-            browser.assert.fail('Setup failed: ' + result.value.error);
-          }
-        });
-        
-        browser.pause(1000);
+    // Use login helper with built-in retry logic and null checks
+    loginHelper.ensureLoggedIn(browser, function(isLoggedIn) {
+      if (!isLoggedIn) {
+        browser.assert.fail('Failed to ensure user is logged in');
       } else {
-        browser.assert.ok(true, 'Already logged in (autologin enabled)');
-        console.log('Already logged in as:', result.value.username, 'userId:', result.value.userId);
+        browser.assert.ok(true, 'User is logged in');
       }
-      
+
       // Clean up any existing test data
       browser.executeAsync(function(done) {
         if (typeof Locations !== 'undefined') {
-          const testLocations = Locations.find({ 
+          const testLocations = Locations.find({
             $or: [
               { 'name': { $regex: '.*Hospital.*' } },
               { 'identifier.0.value': { $regex: 'LOC.*' } }
@@ -125,14 +76,12 @@ describe('Locations CRUD Operations', function() {
         }
         done();
       });
-      
-      browser.pause(1000);
     });
   });
 
   it('02. Verify locations list page loads', browser => {
+    testUtils.navigateUrl(browser, '/locations');
     browser
-      .url('http://localhost:3000/locations')
       .waitForElementVisible('#locationsPage', 5000)
       .execute(function() {
         const hasTable = document.querySelector('#locationsTable') !== null;
@@ -396,10 +345,10 @@ describe('Locations CRUD Operations', function() {
       .assert.valueContains('#identifierInput', testLocation.identifier)
       .assert.valueContains('#phoneInput', testLocation.phone)
       .saveScreenshot('tests/nightwatch/screenshots/locations/07-view-location-details.png');
-    
+
     // Navigate back to locations list
+    testUtils.navigateUrl(browser, '/locations');
     browser
-      .url('http://localhost:3000/locations')
       .waitForElementVisible('#locationsPage', 5000);
   });
 
@@ -506,8 +455,8 @@ describe('Locations CRUD Operations', function() {
         browser.assert.equal(result.value, true, 'Clicked Save button');
       });
 
+    testUtils.navigateUrl(browser, '/locations');
     browser
-      .url('http://localhost:3000/locations')
       .waitForElementVisible('#locationsPage', 10000)
       .pause(2000) // Give time for data to load
       .execute(function() {

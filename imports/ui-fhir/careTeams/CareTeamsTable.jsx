@@ -597,7 +597,7 @@ function CareTeamsTable(props){
         rowStyle.height = '32px';
       }
       tableRows.push(
-        <TableRow className="careTeamRow" key={i} onClick={ handleRowClick.bind(this, careTeamsToRender[i].id)} hover={true} style={rowStyle} selected={selected} >            
+        <TableRow className="careTeamRow" key={i} onClick={ handleRowClick.bind(this, careTeamsToRender[i]._id)} hover={true} style={rowStyle} selected={selected} >
           { renderToggle() }
           { renderActionIcons(careTeamsToRender[i]) }
           { renderCategory( careTeamsToRender[i].category ) } 

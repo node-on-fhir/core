@@ -1,8 +1,8 @@
 // /imports/components/PatientSearchDialog.jsx
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
-import { 
+import {
   TextField,
   InputAdornment,
   IconButton,
@@ -31,45 +31,79 @@ Meteor.startup(function(){
 });
 
 function PatientSearchDialog(props){
-  let { 
-    defaultSearchTerm, 
+  let {
+    defaultSearchTerm,
     onSelect,
     hideFhirBarcode,
-    ...otherProps 
+    ...otherProps
   } = props;
 
   const [searchTerm, setSearchTerm] = useState(defaultSearchTerm);
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState(defaultSearchTerm);
 
-  // Subscribe to patients data
+  // Debounce the search term to prevent rapid re-subscriptions
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  // Subscribe to patients data with search query
   const isReady = useTracker(function(){
-    const handle = Meteor.subscribe('patients.all');
-    return handle.ready();
-  }, []);
-
-  let patients = useTracker(function(){
-    if (!Patients || !isReady) return [];
-    
-    // Create a regex search that's case-insensitive
-    let searchQuery = {};
-    if (searchTerm && searchTerm.length > 0) {
-      searchQuery = {
+    // Build search query for server-side filtering
+    let query = {};
+    if (debouncedSearchTerm && debouncedSearchTerm.trim() !== '') {
+      const searchPattern = debouncedSearchTerm.trim();
+      query = {
         $or: [
-          {'name.text': {$regex: searchTerm, $options: 'i'}},
-          {'name.family': {$regex: searchTerm, $options: 'i'}},
-          {'name.given': {$regex: searchTerm, $options: 'i'}}
+          {'name.text': {$regex: searchPattern, $options: 'i'}},
+          {'name.family': {$regex: searchPattern, $options: 'i'}},
+          {'name.given': {$regex: searchPattern, $options: 'i'}},
+          {'name.0.text': {$regex: searchPattern, $options: 'i'}},
+          {'name.0.family': {$regex: searchPattern, $options: 'i'}},
+          {'name.0.given': {$regex: searchPattern, $options: 'i'}},
+          {'name.0.given.0': {$regex: searchPattern, $options: 'i'}}
         ]
       };
     }
-    
+
+    console.log('PatientSearchDialog subscribing with query:', JSON.stringify(query));
+    const handle = Meteor.subscribe('patients.search', query, { limit: 1000 });
+    return handle.ready();
+  }, [debouncedSearchTerm]);
+
+  let patients = useTracker(function(){
+    if (!Patients || !isReady) return [];
+
+    // Client-side filtering as additional safety
+    // The server already filtered, but this ensures UI matches search term
+    let searchQuery = {};
+    if (debouncedSearchTerm && debouncedSearchTerm.trim() !== '') {
+      const searchRegex = new RegExp(debouncedSearchTerm.trim(), 'i');
+      searchQuery = {
+        $or: [
+          {'name.text': {$regex: searchRegex}},
+          {'name.family': {$regex: searchRegex}},
+          {'name.given': {$regex: searchRegex}},
+          {'name.0.text': {$regex: searchRegex}},
+          {'name.0.family': {$regex: searchRegex}},
+          {'name.0.given': {$regex: searchRegex}},
+          {'name.0.given.0': {$regex: searchRegex}}
+        ]
+      };
+    }
+
     return Patients.find(searchQuery).fetch();
-  }, [searchTerm, isReady]);
+  }, [debouncedSearchTerm, isReady]);
 
   console.log("PatientSearchDialog.searchTerm", searchTerm);
+  console.log("PatientSearchDialog.debouncedSearchTerm", debouncedSearchTerm);
   console.log("PatientSearchDialog.patients", patients);
 
   function changeInput(event){
     setSearchTerm(event.target.value);
-  }  
+  }
 
   function handleFilterPatients(event){
     console.log('handleFilterPatients', searchTerm);
@@ -100,7 +134,7 @@ function PatientSearchDialog(props){
           }}
         />
       </Box>
-      
+
       {!isReady ? (
         <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '400px' }}>
           <CircularProgress />
@@ -112,7 +146,7 @@ function PatientSearchDialog(props){
           </Typography>
         </Box>
       ) : (
-        <PatientsTable 
+        <PatientsTable
         hideActionIcons={true}
         hideActive={true}
         hideAddress={true}
@@ -126,12 +160,12 @@ function PatientSearchDialog(props){
         hideSystemBarcode={true}
         hideFhirBarcode={hideFhirBarcode}
         patients={patients}
-        paginationCount={patients.length}        
+        paginationCount={patients.length}
         rowsPerPage={25}
         onRowClick={function(selectedPatientId, selectedPatient){
           console.log('PatientSearchDialog.PatientsTable.onRowClick', selectedPatientId);
           console.log('PatientSearchDialog.PatientsTable.onRowClick - patient object:', selectedPatient);
-          
+
           if(typeof onSelect === "function"){
             // PatientsTable now passes both ID and patient object
             if (selectedPatient) {
@@ -156,7 +190,7 @@ function PatientSearchDialog(props){
   );
 }
 
-PatientSearchDialog.propTypes = { 
+PatientSearchDialog.propTypes = {
   hideFhirBarcode: PropTypes.bool,
   defaultSearchTerm: PropTypes.string,
   onSelect: PropTypes.func

@@ -14,7 +14,7 @@ import App from './App.jsx';
 
 
 // import { theme, defaultAppPalette} from '../Theme';
-// import { logger } from '../Logger';
+// import { logger } from '/client/ClientLogger';
 // import useStyles from '../Styles';
 
 

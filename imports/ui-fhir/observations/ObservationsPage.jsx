@@ -19,13 +19,14 @@ import AddIcon from '@mui/icons-material/Add';
 
 import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
-import HipaaLogger from '../../lib/HipaaLogger';
+import { HipaaLogger } from '../../lib/HipaaLogger';
 
 // import ObservationDetail from './ObservationDetail';
 import ObservationsTable from './ObservationsTable';
 import LayoutHelpers from '../../lib/LayoutHelpers';
+import { FhirUtilities } from '../../lib/FhirUtilities';
 
-import { get, has } from 'lodash'; 
+import { get, has } from 'lodash';
 import { Observations, ObservationSchema } from '/imports/lib/schemas/SimpleSchemas/Observations';
 
 //=============================================================================================================================================
@@ -71,18 +72,32 @@ export function ObservationsPage(props){
   data.selectedObservation = useTracker(function(){
     return Observations.findOne({_id: Session.get('selectedObservationId')});
   }, [])
-  // Subscribe to observations data
+  // Subscribe to observations data with patient filtering
   const isLoading = useTracker(() => {
+    const selectedPatientId = Session.get('selectedPatientId');
+    const selectedPatient = Session.get('selectedPatient');
     let autoPublishEnabled = get(Meteor, 'settings.public.defaults.autopublish', false);
-    
+
+    // Build patient filter query
+    let query = {};
+    if(selectedPatient || selectedPatientId) {
+      const fhirId = get(selectedPatient, 'id');
+
+      if(fhirId) {
+        query = FhirUtilities.addPatientFilterToQuery(fhirId);
+      } else if(selectedPatientId) {
+        query = FhirUtilities.addPatientFilterToQuery(selectedPatientId);
+      }
+    }
+
     if(autoPublishEnabled){
-      const handle = Meteor.subscribe('autopublish.Observations', {}, { limit: 1000 });
+      const handle = Meteor.subscribe('autopublish.Observations', query, { limit: 1000 });
       return !handle.ready();
     } else {
       const handle = Meteor.subscribe('observations.all');
       return !handle.ready();
     }
-  }, []);
+  }, [Session.get('selectedPatientId')]);
   
   data.observations = useTracker(function(){
     return Observations.find().fetch();

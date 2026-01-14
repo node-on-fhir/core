@@ -15,6 +15,7 @@ import asn1js from 'asn1js';
 import pkijs from 'pkijs';
 import pvutils from 'pvutils';
 import fs from 'fs';
+import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
 import forge from 'node-forge';
 import express from 'express';
@@ -591,12 +592,40 @@ WebApp.handlers.post("/oauth/registration", async (req, res) => {
     }
   } else {
     if (req.body) {
-      const oauthClientRecord = { ...req.body, verified: false, created_at: new Date() };
+      // Generate client_secret for confidential clients
+      let client_secret = null;
+      const authMethod = get(req.body, 'token_endpoint_auth_method', 'client_secret_basic');
+
+      if(['client_secret_basic', 'client_secret_post'].includes(authMethod)){
+        // Generate a strong random secret (two Random IDs concatenated)
+        client_secret = Random.id() + Random.id();
+      }
+
+      const oauthClientRecord = {
+        ...req.body,
+        client_secret: client_secret,
+        verified: false,
+        created_at: new Date()
+      };
+
       const clientId = await OAuthClients.insertAsync(oauthClientRecord);
 
-      console.log('clientId', clientId)
+      console.log('clientId', clientId);
+      console.log('Generated client_secret for confidential client:', !!client_secret);
+
+      // Return response with client_secret if generated
+      const response = {
+        client_id: clientId,
+        client_name: get(req.body, 'client_name'),
+        scope: get(req.body, 'scope')
+      };
+
+      if(client_secret){
+        response.client_secret = client_secret;
+      }
+
       if (!res.headersSent){
-        res.status(201).json({ client_id: clientId, client_name: get(req.body, 'client_name'), scope: get(req.body, 'scope') }).end();
+        res.status(201).json(response).end();
       }
     } else {
       if (!res.headersSent){
@@ -607,9 +636,10 @@ WebApp.handlers.post("/oauth/registration", async (req, res) => {
 });
 
 
-WebApp.handlers.get("/oauth/authorize", async (req, res) => {
-
-  console.log("GET /oauth/authorize");
+// Shared authorize handler for both GET and POST
+// SMART on FHIR 2.x requires support for both methods
+async function handleAuthorize(req, res, method) {
+  console.log(method + " /oauth/authorize");
 
   if (process.env.DEBUG_OAUTH) {
     console.log("===================== OAUTH DEBUG START =====================");
@@ -633,6 +663,51 @@ WebApp.handlers.get("/oauth/authorize", async (req, res) => {
   let appState = get(req, 'query.state') || get(req, 'body.state');
   let responseType = get(req, 'query.response_type') || get(req, 'body.response_type');
 
+  // SMART 2.x parameters
+  let requestedScope = get(req, 'query.scope') || get(req, 'body.scope');
+  let launchContext = get(req, 'query.launch') || get(req, 'body.launch');
+  let patientId = get(req, 'query.patient') || get(req, 'body.patient');
+  let codeChallenge = get(req, 'query.code_challenge') || get(req, 'body.code_challenge');
+  let codeChallengeMethod = get(req, 'query.code_challenge_method') || get(req, 'body.code_challenge_method');
+  let aud = get(req, 'query.aud') || get(req, 'body.aud');
+
+  // SMART on FHIR 2.x: Validate aud parameter if provided (ONC 9.4.04)
+  // The aud must match the FHIR server base URL
+  if (aud) {
+    const fhirPath = get(Meteor, 'settings.private.fhir.fhirPath', 'baseR4');
+    const expectedAud = Meteor.absoluteUrl() + fhirPath;
+
+    // Normalize both URLs (remove trailing slashes for comparison)
+    const normalizedAud = aud.replace(/\/$/, '');
+    const normalizedExpected = expectedAud.replace(/\/$/, '');
+
+    if (normalizedAud !== normalizedExpected) {
+      console.error('OAuth authorize - Invalid aud parameter. Got:', aud, 'Expected:', expectedAud);
+
+      // Return error per OAuth 2.0 spec
+      if (redirectUri) {
+        const errorUrl = new URL(redirectUri);
+        errorUrl.searchParams.set('error', 'invalid_request');
+        errorUrl.searchParams.set('error_description', 'Invalid aud parameter - must match FHIR server base URL');
+        if (appState) {
+          errorUrl.searchParams.set('state', appState);
+        }
+        return res.redirect(errorUrl.toString());
+      } else {
+        return res.status(400).json({
+          error: 'invalid_request',
+          error_description: 'Invalid aud parameter - must match FHIR server base URL'
+        }).end();
+      }
+    }
+    console.log('OAuth authorize - aud parameter validated:', aud);
+  }
+
+  if (process.env.DEBUG_OAUTH) {
+    console.log("SMART 2.x params - scope:", requestedScope, "launch:", launchContext, "patient:", patientId);
+    console.log("PKCE - code_challenge:", codeChallenge, "method:", codeChallengeMethod);
+  }
+
   if (redirectUri && appState.length === 0) {
     res.setHeader("Location", `${redirectUri}?state=unspecified&error=invalid_request`);
 
@@ -643,8 +718,69 @@ WebApp.handlers.get("/oauth/authorize", async (req, res) => {
     if (clientId) {
       const client = await OAuthClients.findOneAsync({ $or: [{ _id: clientId }, { client_id: clientId }] });
       if (client) {
+        // Check if this is a standalone launch that requires patient selection
+        // If launch/patient scope is requested but no patient ID is provided and no launch context,
+        // redirect to the patient picker page
+        const needsPatientPicker = requestedScope &&
+                                   requestedScope.includes('launch/patient') &&
+                                   !patientId &&
+                                   !launchContext;
+
+        if (needsPatientPicker) {
+          console.log('Standalone launch with launch/patient scope - redirecting to patient picker');
+
+          // Validate redirect_uri before proceeding
+          if (redirectUri && Array.isArray(client.redirect_uris) && !client.redirect_uris.includes(redirectUri)) {
+            if (!res.headersSent) {
+              res.status(412).json({ "error_message": 'Provided redirect did not match registered redirects...' }).end();
+            }
+            return;
+          }
+
+          // Build URL to patient picker page with OAuth params
+          const patientPickerUrl = new URL(Meteor.absoluteUrl() + 'oauth-patient-picker');
+          patientPickerUrl.searchParams.set('client_id', clientId);
+          patientPickerUrl.searchParams.set('state', appState || '');
+          patientPickerUrl.searchParams.set('redirect_uri', redirectUri || get(client, 'redirect_uris.0', ''));
+          patientPickerUrl.searchParams.set('scope', requestedScope);
+          patientPickerUrl.searchParams.set('response_type', responseType || 'code');
+          if (codeChallenge) {
+            patientPickerUrl.searchParams.set('code_challenge', codeChallenge);
+            patientPickerUrl.searchParams.set('code_challenge_method', codeChallengeMethod || 'S256');
+          }
+          if (aud) {
+            patientPickerUrl.searchParams.set('aud', aud);
+          }
+
+          console.log('Redirecting to patient picker:', patientPickerUrl.toString());
+
+          res.setHeader('Location', patientPickerUrl.toString());
+          if (!res.headersSent) {
+            res.status(302).end();
+          }
+          return;
+        }
+
         const newAuthorizationCode = Random.id();
         client.authorization_code = newAuthorizationCode;
+
+        // Store SMART 2.x context for token exchange
+        if (requestedScope) {
+          client.requested_scope = requestedScope;
+        }
+        if (launchContext) {
+          client.launch_context = launchContext;
+          client.launch_type = 'ehr';
+        } else {
+          client.launch_type = 'standalone';
+        }
+        if (patientId) {
+          client.patient_id = patientId;
+        }
+        if (codeChallenge) {
+          client.code_challenge = codeChallenge;
+          client.code_challenge_method = codeChallengeMethod || 'S256';
+        }
 
         delete client._document;
         delete client._super_;
@@ -679,6 +815,16 @@ WebApp.handlers.get("/oauth/authorize", async (req, res) => {
       }
     }
   }
+}
+
+// GET /oauth/authorize - Standard authorize endpoint
+WebApp.handlers.get("/oauth/authorize", async (req, res) => {
+  await handleAuthorize(req, res, "GET");
+});
+
+// POST /oauth/authorize - Required by SMART on FHIR 2.x spec
+WebApp.handlers.post("/oauth/authorize", async (req, res) => {
+  await handleAuthorize(req, res, "POST");
 });
 
 
@@ -768,7 +914,12 @@ WebApp.handlers.post("/oauth/token", async (req, res) => {
         }
         
         // Check if client is registered in our system
-        let registeredClient = await OAuthClients.findOneAsync({ client_id: clientId });
+        // Security: Try _id first (original owner wins), then fall back to client_id field
+        // This prevents impersonation if attacker registers client_id matching existing _id
+        let registeredClient = await OAuthClients.findOneAsync({ _id: clientId });
+        if (!registeredClient) {
+          registeredClient = await OAuthClients.findOneAsync({ client_id: clientId });
+        }
         
         if (!registeredClient) {
           res.status(400).json({
@@ -792,11 +943,12 @@ WebApp.handlers.post("/oauth/token", async (req, res) => {
         // Update client record with new access token
         await OAuthClients.updateAsync(
           { _id: registeredClient._id },
-          { 
+          {
             $set: {
               access_token: access_token,
               access_token_created_at: new Date(),
-              scope: scopes
+              scope: scopes,
+              requested_scope: scopes  // Also update requested_scope for consistency with BulkData.js
             }
           }
         );
@@ -827,87 +979,519 @@ WebApp.handlers.post("/oauth/token", async (req, res) => {
     }
   }
 
+  // Handle refresh_token grant type
+  if (get(req.body, 'grant_type') === 'refresh_token') {
+    console.log('Processing refresh_token grant type');
+
+    let incomingRefreshToken = get(req.body, 'refresh_token');
+    if (!incomingRefreshToken) {
+      res.status(400).json({
+        "error": "invalid_request",
+        "error_description": "refresh_token is required"
+      });
+      return;
+    }
+
+    // Find client by refresh token
+    let clientWithRefreshToken = await OAuthClients.findOneAsync({ refresh_token: incomingRefreshToken });
+
+    if (!clientWithRefreshToken) {
+      console.log('No client found with refresh_token:', incomingRefreshToken);
+      res.status(400).json({
+        "error": "invalid_grant",
+        "error_description": "Invalid refresh token"
+      });
+      return;
+    }
+
+    console.log('Found client for refresh token:', clientWithRefreshToken.client_id);
+
+    // Generate new access token and refresh token
+    let newAccessToken = Random.id();
+    let newRefreshToken = Random.id();
+
+    // CRITICAL: Use the ORIGINAL scope from when the refresh token was issued
+    // Per OAuth 2.0 spec, refresh token response scope MUST be subset of original
+    let originalScope = clientWithRefreshToken.requested_scope || clientWithRefreshToken.scope || '';
+
+    // If client requests a subset of scopes, use that instead
+    let requestedScope = get(req.body, 'scope', '');
+    let effectiveScope = originalScope;
+
+    if (requestedScope) {
+      // Only allow scopes that are in the original grant
+      let originalScopes = originalScope.split(' ').filter(s => s);
+      let requestedScopes = requestedScope.split(' ').filter(s => s);
+      let allowedScopes = requestedScopes.filter(s => originalScopes.includes(s));
+
+      if (allowedScopes.length > 0) {
+        effectiveScope = allowedScopes.join(' ');
+      } else {
+        // If none of the requested scopes are valid, use original
+        effectiveScope = originalScope;
+      }
+    }
+
+    console.log('Refresh token - original scope:', originalScope);
+    console.log('Refresh token - effective scope:', effectiveScope);
+
+    // Update client with new tokens
+    await OAuthClients.updateAsync(
+      { _id: clientWithRefreshToken._id },
+      {
+        $set: {
+          access_token: newAccessToken,
+          access_token_created_at: new Date(),
+          refresh_token: newRefreshToken
+        }
+      }
+    );
+
+    // Build token response
+    let tokenResponse = {
+      "access_token": newAccessToken,
+      "token_type": "Bearer",
+      "scope": effectiveScope,
+      "expires_in": get(Meteor, 'settings.private.fhir.tokenTimeout', 86400),
+      "refresh_token": newRefreshToken
+    };
+
+    // Add id_token if openid scope is present
+    if (effectiveScope.includes('openid')) {
+      let privateKey = get(Meteor, 'settings.private.x509.privateKey', '');
+      if (privateKey) {
+        privateKey = privateKey.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+
+        let nowInSeconds = Math.floor(Date.now() / 1000);
+        let fhirBasePath = get(Meteor, 'settings.private.fhir.fhirPath', 'baseR4');
+        let idTokenPayload = {
+          iss: Meteor.absoluteUrl() + fhirBasePath,
+          sub: clientWithRefreshToken.user_id || clientWithRefreshToken._id,
+          aud: clientWithRefreshToken.client_id || clientWithRefreshToken._id,
+          exp: nowInSeconds + 3600,
+          iat: nowInSeconds
+        };
+
+        if (clientWithRefreshToken.patient_id && effectiveScope.includes('fhirUser')) {
+          idTokenPayload.fhirUser = Meteor.absoluteUrl() + fhirBasePath + '/Patient/' + clientWithRefreshToken.patient_id;
+        }
+
+        try {
+          tokenResponse.id_token = jwt.sign(idTokenPayload, privateKey, { algorithm: 'RS256' });
+        } catch (idTokenError) {
+          console.error('Error signing id_token for refresh:', idTokenError.message);
+        }
+      }
+    }
+
+    console.log('Refresh token response:', JSON.stringify(tokenResponse, null, 2));
+
+    res.setHeader('Content-Type', 'application/json');
+    res.setHeader('Cache-Control', 'no-store');
+    res.setHeader('Pragma', 'no-cache');
+    res.status(200).json(tokenResponse);
+    return;
+  }
+
   // Handle standard authorization_code grant type (user-interactive flow)
-  let authorizedClient = await OAuthClients.findOneAsync({ authorization_code: get(req.query, 'code') });
+  let authCode = get(req.query, 'code') || get(req.body, 'code');
+  let authorizedClient = await OAuthClients.findOneAsync({ authorization_code: authCode });
   console.log('authorizedClient', authorizedClient);
 
   if (authorizedClient) {
+    // Client ID Validation (ONC g(10) 9.17.04 / AUT-PAT-18)
+    // Validate that the client_id in the request matches the client that owns the authorization code
+    let requestClientId = null;
+
+    // Extract client_id from Basic auth header (for confidential clients)
+    const authHeader = get(req, 'headers.authorization', '');
+    if (authHeader.startsWith('Basic ')) {
+      try {
+        const base64Credentials = authHeader.substring(6);
+        const credentials = Buffer.from(base64Credentials, 'base64').toString('utf8');
+        const [clientId, clientSecret] = credentials.split(':');
+        requestClientId = clientId;
+        console.log('Client ID from Basic auth header:', requestClientId);
+      } catch (e) {
+        console.error('Failed to decode Basic auth header:', e.message);
+      }
+    }
+
+    // If not in header, check request body (for public clients or client_secret_post)
+    if (!requestClientId) {
+      requestClientId = get(req.body, 'client_id');
+      if (requestClientId) {
+        console.log('Client ID from request body:', requestClientId);
+      }
+    }
+
+    // Validate client_id matches the authorization code owner
+    if (requestClientId) {
+      // Check if request client_id matches either _id or client_id field of authorized client
+      const clientIdMatches = (requestClientId === authorizedClient._id) ||
+                              (requestClientId === authorizedClient.client_id);
+
+      if (!clientIdMatches) {
+        console.error('Client ID validation failed - request client_id:', requestClientId,
+                      'does not match authorized client _id:', authorizedClient._id,
+                      'or client_id:', authorizedClient.client_id);
+        if (!res.headersSent) {
+          res.setHeader('Content-Type', 'application/json');
+          res.status(401).json({
+            error: 'invalid_client',
+            error_description: 'Client ID does not match the authorization code'
+          }).end();
+        }
+        return;
+      }
+      console.log('Client ID validation successful');
+    } else {
+      console.log('Client ID validation skipped - no client_id provided in request');
+    }
+
+    // PKCE Validation (RFC 7636 / SMART App Launch 2.x / ONC g(10) 9.18.03)
+    // If code_challenge was provided during authorization, code_verifier MUST be validated
+    if (authorizedClient.code_challenge) {
+      let codeVerifier = get(req.body, 'code_verifier');
+      let codeChallengeMethod = authorizedClient.code_challenge_method || 'S256';
+
+      console.log('PKCE validation - code_challenge present, method:', codeChallengeMethod);
+      console.log('PKCE validation - code_verifier provided:', !!codeVerifier);
+
+      if (!codeVerifier) {
+        // code_verifier is required when code_challenge was used
+        console.error('PKCE validation failed - code_verifier missing');
+        if (!res.headersSent) {
+          res.setHeader('Content-Type', 'application/json');
+          res.status(400).json({
+            error: 'invalid_request',
+            error_description: 'code_verifier is required when code_challenge was used during authorization'
+          }).end();
+        }
+        return;
+      }
+
+      // Validate code_verifier against stored code_challenge
+      let computedChallenge;
+      if (codeChallengeMethod === 'S256') {
+        // S256: BASE64URL(SHA256(code_verifier))
+        const hash = crypto.createHash('sha256').update(codeVerifier).digest();
+        // BASE64URL encoding: replace + with -, / with _, remove =
+        computedChallenge = hash.toString('base64')
+          .replace(/\+/g, '-')
+          .replace(/\//g, '_')
+          .replace(/=+$/, '');
+      } else if (codeChallengeMethod === 'plain') {
+        // Plain method (not recommended, but must be supported)
+        computedChallenge = codeVerifier;
+      } else {
+        console.error('PKCE validation failed - unsupported code_challenge_method:', codeChallengeMethod);
+        if (!res.headersSent) {
+          res.setHeader('Content-Type', 'application/json');
+          res.status(400).json({
+            error: 'invalid_request',
+            error_description: 'Unsupported code_challenge_method'
+          }).end();
+        }
+        return;
+      }
+
+      console.log('PKCE validation - computed challenge:', computedChallenge);
+      console.log('PKCE validation - stored challenge:', authorizedClient.code_challenge);
+
+      if (computedChallenge !== authorizedClient.code_challenge) {
+        console.error('PKCE validation failed - code_verifier does not match code_challenge');
+        if (!res.headersSent) {
+          res.setHeader('Content-Type', 'application/json');
+          res.status(400).json({
+            error: 'invalid_grant',
+            error_description: 'code_verifier does not match code_challenge'
+          }).end();
+        }
+        return;
+      }
+
+      console.log('PKCE validation successful');
+    } else {
+      console.log('PKCE validation skipped - no code_challenge was used during authorization');
+    }
+
     let updatedAuthorizedClient = cloneDeep(authorizedClient);
     delete updatedAuthorizedClient._document;
     delete updatedAuthorizedClient._super_;
     updatedAuthorizedClient.access_token = Random.id();
     updatedAuthorizedClient.access_token_created_at = new Date();
 
-    // todo: check scopes to set this
-    let offlineOrOnlineScope = process.env.REFRESH_TOKEN || false;
-    if(offlineOrOnlineScope){
-      updatedAuthorizedClient.standalone_refresh_token = Random.id();
+    // Use requested_scope from authorization if available, otherwise fall back to registered scope
+    let effectiveScope = authorizedClient.requested_scope || authorizedClient.scope || '';
+
+    // Check for offline_access scope to determine if refresh token should be issued
+    let hasOfflineAccess = effectiveScope.includes('offline_access') || process.env.REFRESH_TOKEN;
+    if (hasOfflineAccess) {
+      updatedAuthorizedClient.refresh_token = Random.id();
     }
 
     await OAuthClients.updateAsync({ _id: updatedAuthorizedClient._id }, { $set: updatedAuthorizedClient });
 
+    // Build token response per SMART App Launch 2.x / 170.315(g)(10) AUT-PAT-35
     let returnPayload = {
       code: 200,
       data: {
         "access_token": updatedAuthorizedClient.access_token,
         "token_type": "Bearer",
-        "scope": authorizedClient.scope,
+        "scope": effectiveScope,
         "expires_in": get(Meteor, 'settings.private.fhir.tokenTimeout', 86400)
       }
     };
-    if(offlineOrOnlineScope){
-      returnPayload.data.standalone_refresh_token = updatedAuthorizedClient.standalone_refresh_token
+
+    // refresh_token - required when offline_access scope is granted (must be valid 3+ months)
+    if (hasOfflineAccess) {
+      returnPayload.data.refresh_token = updatedAuthorizedClient.refresh_token;
+    }
+
+    // patient context - required for context-ehr-patient and context-standalone-patient
+    if (authorizedClient.patient_id) {
+      returnPayload.data.patient = authorizedClient.patient_id;
+    }
+
+    // encounter context - required for US Core 6.1.0+ (context-ehr-encounter)
+    if (authorizedClient.encounter_id) {
+      returnPayload.data.encounter = authorizedClient.encounter_id;
+    }
+
+    // EHR launch context fields
+    if (authorizedClient.launch_type === 'ehr') {
+      returnPayload.data.need_patient_banner = true;
+      returnPayload.data.smart_style_url = Meteor.absoluteUrl() + 'smart-style.json';
+    }
+
+    // id_token - required when openid scope is requested (sso-openid-connect capability)
+    if (effectiveScope.includes('openid')) {
+      let privateKey = get(Meteor, 'settings.private.x509.privateKey', '');
+      if (privateKey) {
+        // Normalize line endings - handle both actual CRLF bytes and escaped strings
+        // After JSON parsing, \r\n becomes actual CRLF (0x0D 0x0A)
+        privateKey = privateKey.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+
+        let nowInSeconds = Math.floor(Date.now() / 1000);
+        let fhirBasePath = get(Meteor, 'settings.private.fhir.fhirPath', 'baseR4');
+        let idTokenPayload = {
+          iss: Meteor.absoluteUrl() + fhirBasePath,
+          sub: authorizedClient.user_id || authorizedClient._id,
+          aud: authorizedClient.client_id || authorizedClient._id,
+          exp: nowInSeconds + 3600,
+          iat: nowInSeconds
+        };
+
+        // Add fhirUser claim if patient context is available
+        if (authorizedClient.patient_id && effectiveScope.includes('fhirUser')) {
+          idTokenPayload.fhirUser = Meteor.absoluteUrl() + fhirBasePath + '/Patient/' + authorizedClient.patient_id;
+        }
+
+        try {
+          console.log('Signing id_token with RS256 algorithm...');
+          console.log('id_token payload:', JSON.stringify(idTokenPayload, null, 2));
+          returnPayload.data.id_token = jwt.sign(idTokenPayload, privateKey, { algorithm: 'RS256' });
+          console.log('id_token signed successfully, length:', returnPayload.data.id_token.length);
+        } catch (idTokenError) {
+          console.error('Error signing id_token:', idTokenError.message);
+          console.error('Error stack:', idTokenError.stack);
+          // Log the key format for debugging (first 50 chars only for security)
+          console.error('Private key starts with:', privateKey.substring(0, 50));
+        }
+      } else {
+        console.warn('openid scope requested but no private key configured for id_token signing');
+      }
     }
 
 
-    // is this a UDAP server?
-    if(get(Meteor, 'settings.private.x509')){
+    // Check if this is a JWT-based request (UDAP or SMART asymmetric) vs standard OAuth (Basic auth)
+    let client_assertion = get(req.body, 'client_assertion');
 
-      let client_assertion = get(req.body, 'client_assertion');
+    // Handle JWT-based client authentication (UDAP with x5c or SMART asymmetric with kid)
+    if(client_assertion){
+
       let decoded = jwt.decode(client_assertion, { complete: true });
 
-      console.log('decoded', decoded);
+      console.log('JWT client assertion - decoded:', decoded);
       if(!decoded){
         if (!res.headersSent){
           res.setHeader('Content-Type', 'application/json');
           console.log('Response Headers:', res.getHeaders());
           res.status(400).send(Buffer.from(JSON.stringify({"error": "invalid_request", "description": "client assertion could not be decoded"}))).end();
         }
-      } else if (!get(decoded, 'header.alg')) {
+        return;
+      }
+
+      if (!get(decoded, 'header.alg')) {
         Object.assign(returnPayload, { code: 400, data: { "error": "invalid_request", "description": "decoded header did not contain an alg", "udap_testscript_step": "IIB4a1" } });
         if (!res.headersSent){
           res.setHeader('content-type', 'application/json');
           console.log('Response Headers:', res.getHeaders());
           res.status(400).send(Buffer.from(JSON.stringify(returnPayload.data))).end();
         }
-      } else if (!get(decoded, 'header.x5c')) {
-        Object.assign(returnPayload, { code: 400, data: { "error": "invalid_request", "description": "decoded header did not contain an x5c field", "udap_testscript_step": "IIB4a2" } });
-        if (!res.headersSent){
-          res.setHeader('Content-Type', 'application/json').status(400).send(Buffer.from(JSON.stringify(returnPayload.data))).end();
+        return;
+      }
+
+      // Check if this is SMART asymmetric (has kid, no x5c) or UDAP (has x5c)
+      const hasKid = get(decoded, 'header.kid');
+      const hasX5c = get(decoded, 'header.x5c');
+
+      if (hasKid && !hasX5c) {
+        // SMART asymmetric client authentication (ONC g(10) 9.21.4)
+        // Verify JWT using client's registered JWKS
+        console.log('SMART asymmetric flow - kid:', hasKid);
+
+        const clientId = get(decoded, 'payload.iss') || get(decoded, 'payload.sub');
+        if (!clientId) {
+          if (!res.headersSent) {
+            res.setHeader('Content-Type', 'application/json');
+            res.status(400).json({
+              error: 'invalid_client',
+              error_description: 'client_assertion must contain iss or sub claim'
+            }).end();
+          }
+          return;
         }
-      } else if (!get(decoded, 'payload.jti')) {
-        Object.assign(returnPayload, { code: 400, data: { "error": "invalid_request", "description": "decoded payload did not contain an jti", "udap_testscript_step": "IIB4c6" } });
-        if (!res.headersSent){
-          res.setHeader('Content-Type', 'application/json').status(400).send(Buffer.from(JSON.stringify(returnPayload.data))).end();
+
+        // Look up the client to get their JWKS
+        let asymmetricClient = await OAuthClients.findOneAsync({ _id: clientId });
+        if (!asymmetricClient) {
+          asymmetricClient = await OAuthClients.findOneAsync({ client_id: clientId });
         }
-      } else if (!get(decoded, 'payload.iss')) {
-        Object.assign(returnPayload, { code: 400, data: { "error": "invalid_request", "description": "decoded payload did not contain an iss", "udap_testscript_step": "IIB4c1" } });
-        delete returnPayload.data.access_token;
-        if (!res.headersSent){
-          res.setHeader('Content-Type', 'application/json').status(400).send(Buffer.from(JSON.stringify(returnPayload.data))).end();
+
+        if (!asymmetricClient) {
+          console.error('SMART asymmetric - client not found:', clientId);
+          if (!res.headersSent) {
+            res.setHeader('Content-Type', 'application/json');
+            res.status(401).json({
+              error: 'invalid_client',
+              error_description: 'Client not registered'
+            }).end();
+          }
+          return;
         }
-      } else if (!get(decoded, 'payload.sub')) {
-        Object.assign(returnPayload, { code: 400, data: { "error": "invalid_request", "description": "decoded payload did not contain an sub", "udap_testscript_step": "IIB4c2" } });
-        delete returnPayload.data.access_token;
-        if (!res.headersSent){
-          res.setHeader('Content-Type', 'application/json').status(400).send(Buffer.from(JSON.stringify(returnPayload.data))).end();
+
+        // Get JWKS from client record or fetch from jwks_uri
+        let jwks = null;
+        if (asymmetricClient.jwks) {
+          jwks = asymmetricClient.jwks;
+          console.log('SMART asymmetric - using inline JWKS');
+        } else if (asymmetricClient.jwks_uri) {
+          console.log('SMART asymmetric - fetching JWKS from:', asymmetricClient.jwks_uri);
+          try {
+            const jwksResponse = await fetch(asymmetricClient.jwks_uri);
+            if (jwksResponse.ok) {
+              jwks = await jwksResponse.json();
+            } else {
+              console.error('SMART asymmetric - failed to fetch JWKS:', jwksResponse.status);
+            }
+          } catch (fetchError) {
+            console.error('SMART asymmetric - error fetching JWKS:', fetchError.message);
+          }
         }
-      } else if (get(decoded, 'payload.iss') !== get(decoded, 'payload.sub')) {
-        Object.assign(returnPayload, { code: 400, data: { "error": "invalid_request", "description": "decoded payload iss did not equal sub", "udap_testscript_step": "IIB4c" } });
-        if (!res.headersSent){
-          res.setHeader('Content-Type', 'application/json').status(400).send(Buffer.from(JSON.stringify(returnPayload.data))).end();
+
+        if (!jwks || !jwks.keys) {
+          console.error('SMART asymmetric - no JWKS available for client:', clientId);
+          if (!res.headersSent) {
+            res.setHeader('Content-Type', 'application/json');
+            res.status(401).json({
+              error: 'invalid_client',
+              error_description: 'Client has no JWKS configured'
+            }).end();
+          }
+          return;
         }
-      } else {
+
+        // Find the key by kid
+        const key = jwks.keys.find(k => k.kid === hasKid);
+        if (!key) {
+          console.error('SMART asymmetric - key not found with kid:', hasKid);
+          if (!res.headersSent) {
+            res.setHeader('Content-Type', 'application/json');
+            res.status(401).json({
+              error: 'invalid_client',
+              error_description: 'Key not found in client JWKS'
+            }).end();
+          }
+          return;
+        }
+
+        // Convert JWK to PEM for verification
+        try {
+          const { createPublicKey } = await import('crypto');
+          const publicKey = createPublicKey({ key: key, format: 'jwk' });
+          const pem = publicKey.export({ type: 'spki', format: 'pem' });
+
+          // Verify the JWT
+          jwt.verify(client_assertion, pem, { algorithms: [decoded.header.alg] }, (error, verifiedJwt) => {
+            if (error) {
+              console.error('SMART asymmetric - JWT verification failed:', error.message);
+              if (!res.headersSent) {
+                res.setHeader('Content-Type', 'application/json');
+                res.status(401).json({
+                  error: 'invalid_client',
+                  error_description: 'Client assertion signature verification failed'
+                }).end();
+              }
+            } else {
+              console.log('SMART asymmetric - JWT verified successfully');
+              // Success - return token response
+              if (!res.headersSent) {
+                res.setHeader('Content-Type', 'application/json');
+                res.setHeader('Cache-Control', 'no-store');
+                res.setHeader('Pragma', 'no-cache');
+                res.status(200).send(Buffer.from(JSON.stringify(returnPayload.data))).end();
+              }
+            }
+          });
+        } catch (cryptoError) {
+          console.error('SMART asymmetric - crypto error:', cryptoError.message);
+          if (!res.headersSent) {
+            res.setHeader('Content-Type', 'application/json');
+            res.status(401).json({
+              error: 'invalid_client',
+              error_description: 'Failed to process client key'
+            }).end();
+          }
+        }
+        return;
+
+      } else if (hasX5c) {
+        // UDAP flow - x5c certificate chain present
+        console.log('UDAP flow - x5c present');
+
+        if (!get(decoded, 'payload.jti')) {
+          Object.assign(returnPayload, { code: 400, data: { "error": "invalid_request", "description": "decoded payload did not contain an jti", "udap_testscript_step": "IIB4c6" } });
+          if (!res.headersSent){
+            res.setHeader('Content-Type', 'application/json').status(400).send(Buffer.from(JSON.stringify(returnPayload.data))).end();
+          }
+          return;
+        }
+        if (!get(decoded, 'payload.iss')) {
+          Object.assign(returnPayload, { code: 400, data: { "error": "invalid_request", "description": "decoded payload did not contain an iss", "udap_testscript_step": "IIB4c1" } });
+          delete returnPayload.data.access_token;
+          if (!res.headersSent){
+            res.setHeader('Content-Type', 'application/json').status(400).send(Buffer.from(JSON.stringify(returnPayload.data))).end();
+          }
+          return;
+        }
+        if (!get(decoded, 'payload.sub')) {
+          Object.assign(returnPayload, { code: 400, data: { "error": "invalid_request", "description": "decoded payload did not contain an sub", "udap_testscript_step": "IIB4c2" } });
+          delete returnPayload.data.access_token;
+          if (!res.headersSent){
+            res.setHeader('Content-Type', 'application/json').status(400).send(Buffer.from(JSON.stringify(returnPayload.data))).end();
+          }
+          return;
+        }
+        if (get(decoded, 'payload.iss') !== get(decoded, 'payload.sub')) {
+          Object.assign(returnPayload, { code: 400, data: { "error": "invalid_request", "description": "decoded payload iss did not equal sub", "udap_testscript_step": "IIB4c" } });
+          if (!res.headersSent){
+            res.setHeader('Content-Type', 'application/json').status(400).send(Buffer.from(JSON.stringify(returnPayload.data))).end();
+          }
+          return;
+        }
+
         let softwareStatementPem = "-----BEGIN CERTIFICATE-----\r\n";
         softwareStatementPem += formatPEM(get(decoded, 'header.x5c[0]', ''));
         softwareStatementPem += "\r\n-----END CERTIFICATE-----\r\n";
@@ -920,30 +1504,37 @@ WebApp.handlers.post("/oauth/token", async (req, res) => {
               res.setHeader('Content-Type', 'application/json').status(400).send(Buffer.from(JSON.stringify(returnPayload.data))).end();
             }
           } else {
+            // UDAP server success - add required headers per 170.315(g)(10) AUT-PAT-35
             if (!res.headersSent){
               console.log('Response Headers:', res.getHeaders());
-              res.setHeader('Content-Type', 'application/json').status(200).send(Buffer.from(JSON.stringify(returnPayload.data))).end();
+              res.setHeader('Content-Type', 'application/json');
+              res.setHeader('Cache-Control', 'no-store');
+              res.setHeader('Pragma', 'no-cache');
+              res.status(200).send(Buffer.from(JSON.stringify(returnPayload.data))).end();
             }
           }
         });
+        return;
+
+      } else {
+        // JWT has neither kid nor x5c - invalid
+        Object.assign(returnPayload, { code: 400, data: { "error": "invalid_request", "description": "client_assertion must contain either x5c or kid header" } });
+        if (!res.headersSent){
+          res.setHeader('Content-Type', 'application/json').status(400).send(Buffer.from(JSON.stringify(returnPayload.data))).end();
+        }
+        return;
       }
     } else {
-      // this is not a UDAP server, so we need to return the access token
-      // without verifying the client_assertion and checking security certificates
-
-      // will need to set the following for OpenID:
-      // - standalone_id_token
-      // - standalone_patient_id
-      // - standalone_encounter_id
-
-      // let standalone_id_token = jwt.sign({
-      // });
-      // returnPayload.data.standalone_id_token = "foo";
-
+      // Standard OAuth/SMART flow (Basic auth or no client_assertion)
+      // This handles both non-UDAP servers and UDAP-capable servers with Basic auth clients
+      // Required headers per 170.315(g)(10) AUT-PAT-35
       if (!res.headersSent){
+        console.log('Standard OAuth flow - returning token response');
         console.log('Response Headers:', res.getHeaders());
-        console.log('OAuthServerConfig.clientCollection', OAuthServerConfig.clientsCollection);
-        res.setHeader('Content-Type', 'application/json').status(200).send(Buffer.from(JSON.stringify(returnPayload.data))).end();
+        res.setHeader('Content-Type', 'application/json');
+        res.setHeader('Cache-Control', 'no-store');
+        res.setHeader('Pragma', 'no-cache');
+        res.status(200).send(Buffer.from(JSON.stringify(returnPayload.data))).end();
       }
     }
 
@@ -972,18 +1563,127 @@ WebApp.handlers.get("/authorizations/manage", async (req, res) => {
 });
 
 
-WebApp.handlers.get("/authorizations/introspect", async (req, res) => {
+// Token Introspection Endpoint (RFC 7662 / ONC g(10) 9.20.2)
+// POST /authorizations/introspect - Introspect an access token or refresh token
+WebApp.handlers.post("/authorizations/introspect", async (req, res) => {
 
-  console.log("GET /authorizations/introspect");
+  console.log("POST /authorizations/introspect");
 
   saveToInboundTrafficLog(req);
 
-  res.setHeader('Content-type', 'application/json');
+  res.setHeader('Content-Type', 'application/json');
   res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Cache-Control", "no-store");
+  res.setHeader("Pragma", "no-cache");
 
-  res.json({
-    "message": 'introspect'
-  });
+  // Get the token from request body
+  const token = get(req.body, 'token');
+  const tokenTypeHint = get(req.body, 'token_type_hint'); // optional: 'access_token' or 'refresh_token'
+
+  console.log('Token introspection - token:', token ? token.substring(0, 8) + '...' : 'none');
+  console.log('Token introspection - token_type_hint:', tokenTypeHint);
+
+  if (!token) {
+    // RFC 7662: If token is missing, return inactive
+    console.log('Token introspection - no token provided, returning inactive');
+    res.status(200).json({ active: false }).end();
+    return;
+  }
+
+  // Look up the token in OAuthClients collection
+  // Check both access_token and refresh_token fields
+  let client = null;
+  let tokenType = null;
+
+  // Try access_token first (or if hinted)
+  if (!tokenTypeHint || tokenTypeHint === 'access_token') {
+    client = await OAuthClients.findOneAsync({ access_token: token });
+    if (client) {
+      tokenType = 'access_token';
+    }
+  }
+
+  // If not found as access_token, try refresh_token
+  if (!client && (!tokenTypeHint || tokenTypeHint === 'refresh_token')) {
+    client = await OAuthClients.findOneAsync({ refresh_token: token });
+    if (client) {
+      tokenType = 'refresh_token';
+    }
+  }
+
+  if (!client) {
+    // Token not found - return inactive
+    console.log('Token introspection - token not found, returning inactive');
+    res.status(200).json({ active: false }).end();
+    return;
+  }
+
+  // Check if token has been revoked
+  if (client.revoked_at) {
+    console.log('Token introspection - token has been revoked, returning inactive');
+    res.status(200).json({ active: false }).end();
+    return;
+  }
+
+  // Check if access token has expired (for access_token type)
+  if (tokenType === 'access_token' && client.access_token_created_at) {
+    const tokenTimeout = get(Meteor, 'settings.private.fhir.tokenTimeout', 86400); // default 24 hours
+    const expiresAt = moment(client.access_token_created_at).add(tokenTimeout, 'seconds');
+    if (moment().isAfter(expiresAt)) {
+      console.log('Token introspection - access token has expired, returning inactive');
+      res.status(200).json({ active: false }).end();
+      return;
+    }
+  }
+
+  // Token is active - build introspection response per RFC 7662
+  console.log('Token introspection - token is active');
+
+  const tokenTimeout = get(Meteor, 'settings.private.fhir.tokenTimeout', 86400);
+  const issuedAt = client.access_token_created_at ? Math.floor(new Date(client.access_token_created_at).getTime() / 1000) : null;
+  const expiresAt = issuedAt ? issuedAt + tokenTimeout : null;
+
+  const introspectionResponse = {
+    active: true,
+    scope: client.requested_scope || client.scope || '',
+    client_id: client.client_id || client._id,
+    token_type: 'Bearer'
+  };
+
+  // Add optional claims if available
+  if (expiresAt) {
+    introspectionResponse.exp = expiresAt;
+  }
+  if (issuedAt) {
+    introspectionResponse.iat = issuedAt;
+  }
+  // sub should match the ID token's sub claim (which is user_id)
+  if (client.user_id) {
+    introspectionResponse.sub = client.user_id;
+    introspectionResponse.username = client.user_id;
+  }
+
+  // Add launch context parameters (SMART on FHIR)
+  // When launch/patient scope is present, include patient claim
+  const grantedScope = introspectionResponse.scope || '';
+  if (grantedScope.includes('launch/patient') && client.patient_id) {
+    introspectionResponse.patient = client.patient_id;
+    console.log('Token introspection - adding patient launch context:', client.patient_id);
+  }
+  // Include encounter claim if encounter_id is present
+  // (matches token response behavior - encounter is included if present, regardless of scope)
+  if (client.encounter_id) {
+    introspectionResponse.encounter = client.encounter_id;
+    console.log('Token introspection - adding encounter launch context:', client.encounter_id);
+  }
+
+  // Add issuer
+  const fhirBasePath = get(Meteor, 'settings.private.fhir.fhirPath', 'baseR4');
+  introspectionResponse.iss = Meteor.absoluteUrl() + fhirBasePath;
+
+  console.log('Token introspection response:', JSON.stringify(introspectionResponse, null, 2));
+
+  res.status(200).json(introspectionResponse).end();
 });
 
 
@@ -1045,6 +1745,271 @@ WebApp.handlers.get("/oauth/getIdentity", async (req, res) => {
 
 });
 
+
+//===========================================================================
+// Meteor Methods for OAuth
+
+Meteor.methods({
+  /**
+   * OAuth.completeWithPatient
+   * Complete OAuth authorization with patient selection (for standalone launch with launch/patient scope)
+   * Called from OAuthPatientPickerPage after user selects a patient
+   */
+  'OAuth.completeWithPatient': async function(params) {
+    console.log('OAuth.completeWithPatient called with params:', JSON.stringify(params, null, 2));
+
+    const { clientId, patientId, patientFhirId, state, redirectUri, scope, codeChallenge, codeChallengeMethod, sessionDurationMinutes } = params;
+
+    if (!clientId) {
+      throw new Meteor.Error('invalid_request', 'Missing client_id');
+    }
+    if (!patientId && !patientFhirId) {
+      throw new Meteor.Error('invalid_request', 'Missing patient ID');
+    }
+    if (!redirectUri) {
+      throw new Meteor.Error('invalid_request', 'Missing redirect_uri');
+    }
+
+    // Find the OAuth client record
+    const client = await OAuthClients.findOneAsync({
+      $or: [{ _id: clientId }, { client_id: clientId }]
+    });
+
+    if (!client) {
+      console.error('OAuth.completeWithPatient - No client found with client_id:', clientId);
+      throw new Meteor.Error('invalid_client', 'No client found with that client_id');
+    }
+
+    // Validate redirect_uri matches registered redirects
+    if (Array.isArray(client.redirect_uris) && !client.redirect_uris.includes(redirectUri)) {
+      console.error('OAuth.completeWithPatient - Redirect URI mismatch. Got:', redirectUri, 'Expected one of:', client.redirect_uris);
+      throw new Meteor.Error('invalid_request', 'Redirect URI does not match registered redirects');
+    }
+
+    // Generate new authorization code
+    const authorizationCode = Random.id();
+
+    // Update client with patient context and authorization code
+    const updateFields = {
+      authorization_code: authorizationCode,
+      patient_id: patientFhirId || patientId,  // Use FHIR ID if available
+      launch_type: 'standalone',
+      requested_scope: scope || client.scope
+    };
+
+    // Store PKCE params if provided
+    if (codeChallenge) {
+      updateFields.code_challenge = codeChallenge;
+      updateFields.code_challenge_method = codeChallengeMethod || 'S256';
+    }
+
+    // Store user_id for ownership tracking (token revocation)
+    if (this.userId) {
+      updateFields.user_id = this.userId;
+    }
+
+    // Calculate authorization expiration based on session duration (ONC g(10) 9.3.01)
+    if (sessionDurationMinutes && sessionDurationMinutes > 0) {
+      updateFields.session_duration_minutes = sessionDurationMinutes;
+      updateFields.authorization_expires_at = new Date(Date.now() + (sessionDurationMinutes * 60 * 1000));
+      console.log('OAuth.completeWithPatient - Authorization expires at:', updateFields.authorization_expires_at);
+    }
+
+    console.log('OAuth.completeWithPatient - Updating client with:', updateFields);
+
+    await OAuthClients.updateAsync(
+      { _id: client._id },
+      { $set: updateFields }
+    );
+
+    // Build redirect URL with authorization code
+    const redirectUrl = new URL(redirectUri);
+    redirectUrl.searchParams.set('code', authorizationCode);
+    if (state) {
+      redirectUrl.searchParams.set('state', state);
+    }
+
+    console.log('OAuth.completeWithPatient - Redirect URL:', redirectUrl.toString());
+
+    return {
+      code: authorizationCode,
+      state: state,
+      redirectUrl: redirectUrl.toString()
+    };
+  },
+
+  /**
+   * OAuth.createEhrLaunchContext
+   * Create a launch context for EHR launch (when launching app from within EHR)
+   * Returns a launch token that can be passed to the app's launch URL
+   */
+  'OAuth.createEhrLaunchContext': async function(params) {
+    console.log('OAuth.createEhrLaunchContext called with params:', JSON.stringify(params, null, 2));
+
+    const { clientId, patientId, patientFhirId, encounterId } = params;
+
+    if (!clientId) {
+      throw new Meteor.Error('invalid_request', 'Missing client_id');
+    }
+    if (!patientId && !patientFhirId) {
+      throw new Meteor.Error('invalid_request', 'Missing patient ID');
+    }
+
+    // Find the OAuth client record
+    const client = await OAuthClients.findOneAsync({
+      $or: [{ _id: clientId }, { client_id: clientId }]
+    });
+
+    if (!client) {
+      console.error('OAuth.createEhrLaunchContext - No client found with client_id:', clientId);
+      throw new Meteor.Error('invalid_client', 'No client found with that client_id');
+    }
+
+    // Generate launch context token
+    const launchToken = Random.id();
+
+    // Update client with launch context
+    const updateFields = {
+      launch_context: launchToken,
+      launch_type: 'ehr',
+      patient_id: patientFhirId || patientId
+    };
+
+    // Add encounter context for US Core 6.1.0+ compliance (context-ehr-encounter)
+    // Uses provided encounterId, or falls back to settings default from defaultEncounter blob
+    let effectiveEncounterId = encounterId || get(Meteor, 'settings.private.fhir.defaultEncounter.id');
+    if (effectiveEncounterId) {
+      updateFields.encounter_id = effectiveEncounterId;
+    } else {
+      console.warn('OAuth.createEhrLaunchContext - No encounter_id provided and no defaultEncounter.id configured in settings');
+    }
+
+    console.log('OAuth.createEhrLaunchContext - Updating client with:', updateFields);
+
+    await OAuthClients.updateAsync(
+      { _id: client._id },
+      { $set: updateFields }
+    );
+
+    // Build launch URL
+    const fhirBaseUrl = Meteor.absoluteUrl() + get(Meteor, 'settings.private.fhir.fhirPath', 'baseR4');
+    const launchUri = client.launch_uri || client.redirect_uris?.[0];
+
+    if (!launchUri) {
+      throw new Meteor.Error('invalid_client', 'Client has no launch_uri configured');
+    }
+
+    const launchUrl = new URL(launchUri);
+    launchUrl.searchParams.set('iss', fhirBaseUrl);
+    launchUrl.searchParams.set('launch', launchToken);
+
+    console.log('OAuth.createEhrLaunchContext - Launch URL:', launchUrl.toString());
+
+    return {
+      launchToken: launchToken,
+      launchUrl: launchUrl.toString(),
+      iss: fhirBaseUrl
+    };
+  },
+
+  /**
+   * OAuth.getPatientAuthorizations
+   * Get all active OAuth authorizations for the current user's linked patient
+   * Returns sanitized data (no tokens/secrets) for display in My Profile
+   * ONC g(10) 9.3.01 - Patient access to authorized applications
+   */
+  'OAuth.getPatientAuthorizations': async function() {
+    if (!this.userId) {
+      throw new Meteor.Error('not-authorized', 'You must be logged in');
+    }
+
+    // Get user's linked patient ID
+    const user = await Meteor.users.findOneAsync({ _id: this.userId });
+    const patientId = get(user, 'patientId');
+
+    if (!patientId) {
+      console.log('OAuth.getPatientAuthorizations - No linked patient for user:', this.userId);
+      return [];
+    }
+
+    // Find all active authorizations for this patient
+    const authorizations = await OAuthClients.find({
+      patient_id: patientId,
+      access_token: { $exists: true, $ne: null },
+      revoked_at: { $exists: false }
+    }).fetchAsync();
+
+    console.log('OAuth.getPatientAuthorizations - Found', authorizations.length, 'authorizations for patient:', patientId);
+
+    // Return sanitized data (no tokens/secrets)
+    return authorizations.map(function(auth) {
+      return {
+        _id: auth._id,
+        client_name: auth.client_name || auth.client_id,
+        client_id: auth.client_id,
+        authorized_at: auth.access_token_created_at || auth.created_at,
+        expires_at: auth.authorization_expires_at,
+        scope: auth.requested_scope || auth.scope,
+        launch_type: auth.launch_type
+      };
+    });
+  },
+
+  /**
+   * OAuth.revokePatientAuthorization
+   * Revoke an OAuth authorization for the current user's linked patient
+   * Verifies ownership before revocation
+   * ONC g(10) 9.3.01 - Patient-initiated token revocation within 1 hour
+   */
+  'OAuth.revokePatientAuthorization': async function(authorizationId) {
+    check(authorizationId, String);
+
+    if (!this.userId) {
+      throw new Meteor.Error('not-authorized', 'You must be logged in');
+    }
+
+    // Get user's linked patient ID
+    const user = await Meteor.users.findOneAsync({ _id: this.userId });
+    const patientId = get(user, 'patientId');
+
+    if (!patientId) {
+      throw new Meteor.Error('no-patient-link', 'No patient record linked to your account');
+    }
+
+    // Find the authorization - use _id only (per CLAUDE.md anti-pattern guidance)
+    const authorization = await OAuthClients.findOneAsync({ _id: authorizationId });
+
+    if (!authorization) {
+      throw new Meteor.Error('not-found', 'Authorization not found');
+    }
+
+    // Verify ownership - patient_id must match
+    if (authorization.patient_id !== patientId) {
+      console.error('OAuth.revokePatientAuthorization - Ownership mismatch. User patient:', patientId, 'Auth patient:', authorization.patient_id);
+      throw new Meteor.Error('forbidden', 'You can only revoke your own authorizations');
+    }
+
+    // Revoke by clearing tokens and marking revocation time
+    const result = await OAuthClients.updateAsync(
+      { _id: authorizationId },
+      {
+        $set: {
+          revoked_at: new Date(),
+          revoked_by: this.userId
+        },
+        $unset: {
+          access_token: '',
+          refresh_token: '',
+          authorization_code: ''
+        }
+      }
+    );
+
+    console.log('OAuth.revokePatientAuthorization - Revoked auth:', authorizationId, 'for patient:', patientId);
+
+    return { success: true, revoked_at: new Date() };
+  }
+});
 
 
 

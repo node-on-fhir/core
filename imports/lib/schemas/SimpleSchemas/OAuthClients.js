@@ -137,6 +137,99 @@ OAuthClientSchema =  new SimpleSchema({
     type: Date,
     optional: true
   },
+  "response_types": {
+    type: Array,
+    optional: true
+  },
+  "response_types.$": {
+    type: String,
+    optional: true
+  },
+  "jwks_uri": {
+    type: String,
+    optional: true
+  },
+  "jwks": {
+    type: Object,
+    optional: true,
+    blackbox: true  // Allow any structure for JWKS object
+  },
+  "launch_uri": {
+    type: String,
+    optional: true
+  },
+  "pkce_enabled": {
+    type: Boolean,
+    optional: true,
+    defaultValue: false
+  },
+  "pkce_method": {
+    type: String,
+    optional: true,
+    allowedValues: ['S256', 'plain']
+  },
+  "auth_request_method": {
+    type: String,
+    optional: true,
+    allowedValues: ['GET', 'POST'],
+    defaultValue: 'GET'
+  },
+  // SMART 2.x fields for g(10) certification
+  "patient_id": {
+    type: String,
+    optional: true
+  },
+  "encounter_id": {
+    type: String,
+    optional: true
+  },
+  "launch_type": {
+    type: String,
+    optional: true,
+    allowedValues: ['ehr', 'standalone']
+  },
+  "launch_context": {
+    type: String,
+    optional: true
+  },
+  "code_challenge": {
+    type: String,
+    optional: true
+  },
+  "code_challenge_method": {
+    type: String,
+    optional: true,
+    allowedValues: ['S256', 'plain']
+  },
+  "refresh_token": {
+    type: String,
+    optional: true
+  },
+  "requested_scope": {
+    type: String,
+    optional: true
+  },
+  "user_id": {
+    type: String,
+    optional: true
+  },
+  // Token revocation fields for ONC g(10) 9.3.01 compliance
+  "authorization_expires_at": {
+    type: Date,
+    optional: true
+  },
+  "revoked_at": {
+    type: Date,
+    optional: true
+  },
+  "revoked_by": {
+    type: String,
+    optional: true
+  },
+  "session_duration_minutes": {
+    type: Number,
+    optional: true
+  }
 });
 
 OAuthClients.attachSchema(OAuthClientSchema);

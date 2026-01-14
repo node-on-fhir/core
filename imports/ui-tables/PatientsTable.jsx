@@ -2,7 +2,7 @@ import React, { useState, useEffect, Fragment } from 'react';
 import PropTypes from 'prop-types';
 import { useNavigate } from 'react-router-dom';
 
-import { 
+import {
   Button,
   Table,
   TableBody,
@@ -11,17 +11,17 @@ import {
   TableRow,
   TablePagination,
   IconButton,
-  FirstPageIcon,
-  KeyboardArrowLeft,
-  KeyboardArrowRight,
-  LastPageIcon,
   Collapse,
   Box,
   Typography,
   Chip,
   Stack
 } from '@mui/material';
-import { 
+import {
+  FirstPage as FirstPageIcon,
+  KeyboardArrowLeft,
+  KeyboardArrowRight,
+  LastPage as LastPageIcon,
   KeyboardArrowDown,
   KeyboardArrowUp,
   Edit as EditIcon,
@@ -30,7 +30,8 @@ import {
   Print as PrintIcon,
   LocalHospital as HospitalIcon,
   Assessment as AuditIcon,
-  Person as PersonIcon
+  Person as PersonIcon,
+  Launch as LaunchIcon
 } from '@mui/icons-material';
 
 
@@ -51,6 +52,7 @@ import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
 
 import { flattenPatient } from '../lib/FhirDehydrator';
+import { DynamicSpacer } from '../ui/DynamicSpacer';
 
 // //===========================================================================
 // // THEMING
@@ -99,10 +101,8 @@ let styles = {
 //----------------------------------------------------------------------
 // Helper Components
 
-let DynamicSpacer;
 let useTheme;
 Meteor.startup(function(){
-  DynamicSpacer = Meteor.DynamicSpacer;
   useTheme = Meteor.useTheme;
 })
 
@@ -186,19 +186,23 @@ export function PatientsTable(props = {}){
   useEffect(() => {
     const collectButtons = async () => {
       let buttons = [];
-      
+
       // Parse packages looking for PatientsDirectoryButtons
       const packageNames = Object.keys(Package);
-      
+      console.log('PatientsTable: Scanning packages for PatientsDirectoryButtons...');
+
       for (const packageName of packageNames) {
         if (Package[packageName].PatientsDirectoryButtons) {
+          console.log('PatientsTable: Found PatientsDirectoryButtons in package:', packageName);
+          console.log('PatientsTable: Buttons:', Package[packageName].PatientsDirectoryButtons);
           buttons = buttons.concat(Package[packageName].PatientsDirectoryButtons);
         }
       }
-      
+
+      console.log('PatientsTable: Total dynamic buttons collected:', buttons.length);
       setDynamicButtons(buttons);
     };
-    
+
     collectButtons();
   }, []);
 
@@ -235,9 +239,10 @@ export function PatientsTable(props = {}){
     rowsPerPage = 5,
     onCellClick,
     onRowClick,
-    onMetaClick, 
+    onMetaClick,
     onActionButtonClick,
     onFhirOperations,
+    onLaunchClick,
     onSetPage,
     onChangeRowsPerPage,
     actionButtonLabel,
@@ -261,14 +266,30 @@ export function PatientsTable(props = {}){
     rowClickMode = 'index',
     page: initialPage = 0,  // Rename to avoid conflict with state
     size,
+    order = 'descending',
 
-    ...otherProps 
+    ...otherProps
   } = props;
 
 
   if(logger){
     logger.trace('PatientsTable.patients', patients)
   }
+
+  // Store original prop values to preserve user preferences
+  // These will be restored after form factor logic
+  const hideIdentifierFromProp = hideIdentifier;
+  const hideGenderFromProp = hideGender;
+  const hideBirthSexFromProp = hideBirthSex;
+  const hideActiveFromProp = hideActive;
+  const hideCityFromProp = hideCity;
+  const hideStateFromProp = hideState;
+  const hidePostalCodeFromProp = hidePostalCode;
+  const hideCountryFromProp = hideCountry;
+  const hideSystemBarcodeFromProp = hideSystemBarcode;
+  const hideFhirBarcodeFromProp = hideFhirBarcode;
+  const hideMaritalStatusFromProp = hideMaritalStatus;
+  const hideLanguageFromProp = hideLanguage;
 
   // ------------------------------------------------------------------------
   // Form Factors
@@ -365,9 +386,24 @@ export function PatientsTable(props = {}){
         hideCounts = true;
         hideSystemBarcode = true;
         hideFhirBarcode = false;
-        break;            
+        break;
     }
   }
+
+  // Restore user preferences for controlled columns
+  // This ensures toggle buttons in PatientsDirectory work correctly
+  hideIdentifier = hideIdentifierFromProp;
+  hideGender = hideGenderFromProp;
+  hideBirthSex = hideBirthSexFromProp;
+  hideActive = hideActiveFromProp;
+  hideCity = hideCityFromProp;
+  hideState = hideStateFromProp;
+  hidePostalCode = hidePostalCodeFromProp;
+  hideCountry = hideCountryFromProp;
+  hideSystemBarcode = hideSystemBarcodeFromProp;
+  hideFhirBarcode = hideFhirBarcodeFromProp;
+  hideMaritalStatus = hideMaritalStatusFromProp;
+  hideLanguage = hideLanguageFromProp;
 
 
     //---------------------------------------------------------------------
@@ -768,8 +804,11 @@ export function PatientsTable(props = {}){
         barcodeClasses = "barcode helvetica";
       }
 
+      // Convert ObjectID to string if needed
+      const idString = typeof id === 'object' && id._str ? id._str : String(id || '');
+
       return (
-        <TableCell><span className={barcodeClasses}>{id}</span></TableCell>
+        <TableCell><span className={barcodeClasses}>{idString}</span></TableCell>
       );
     }
   }
@@ -913,7 +952,22 @@ export function PatientsTable(props = {}){
           patientsToRender.push(flattenPatient(patient, dateFormat));
         }
         count++;
-      });  
+      });
+
+      // Apply sorting based on order prop
+      if (order === 'ascending') {
+        patientsToRender.sort(function(a, b) {
+          const aId = a._id || '';
+          const bId = b._id || '';
+          return String(aId).localeCompare(String(bId));
+        });
+      } else {
+        patientsToRender.sort(function(a, b) {
+          const aId = a._id || '';
+          const bId = b._id || '';
+          return String(bId).localeCompare(String(aId));
+        });
+      }
     }
   }
 
@@ -942,7 +996,11 @@ export function PatientsTable(props = {}){
         rowStyle.height = '32px';
       }
 
-      const patientId = get(patientsToRender[i], 'id') || get(patientsToRender[i], '_id');
+      // Use _id as primary key (NOT id) to avoid collisions
+      // After flattenPatient(), records have both _id and id fields
+      // Using || can cause one patient's id to match another's _id
+      const patientId = get(patientsToRender[i], '_id');
+      const currentPatient = patientsToRender[i];  // Capture for closure in onClick handlers
       const isExpanded = expandedRows[patientId] || false;
       
       // Main row
@@ -1000,7 +1058,8 @@ export function PatientsTable(props = {}){
                     onClick={(e) => {
                       e.stopPropagation();
                       console.log('Selecting patient:', patientId);
-                      const selectedPatient = patientsToRender.find(p => (p.id === patientId || p._id === patientId));
+                      // Use _id only for lookup to avoid collisions
+                      const selectedPatient = patientsToRender.find(p => p._id === patientId);
                       console.log('Found patient:', selectedPatient);
                       
                       // Normalize the patient ID (handle ObjectID)
@@ -1048,59 +1107,64 @@ export function PatientsTable(props = {}){
                     startIcon={<ViewIcon />}
                     onClick={(e) => {
                       e.stopPropagation();
-                      
-                      // Set the selected patient in session
-                      const selectedPatient = patientsToRender.find(p => (p.id === patientId || p._id === patientId));
-                      // Normalize the patient ID (handle ObjectID)
-                      const normalizedId = typeof patientId === 'object' && patientId._str ? patientId._str : patientId;
-                      Session.set('selectedPatientId', normalizedId);
-                      Session.set('selectedPatient', selectedPatient);
-                      
-                      // Log AuditEvent for viewing patient chart
-                      Meteor.call('auditEvents.log', 'rest', Meteor.userId(), `Patient/${patientId}`, 
-                        `User viewed patient chart for ${selectedPatient?.name || patientId}`, {
-                          action: 'READ',
-                          entity: [{
-                            what: {
-                              reference: `Patient/${patientId}`,
-                              display: selectedPatient?.name || 'Unknown Patient'
-                            },
-                            type: {
-                              system: 'http://hl7.org/fhir/resource-types',
-                              code: 'Patient',
-                              display: 'Patient'
+
+                      // Get the patient's FHIR id (not MongoDB _id)
+                      // Use _id only for lookup to avoid collisions
+                      const selectedPatient = patientsToRender.find(p => p._id === patientId);
+                      const fhirId = selectedPatient?.id;
+
+                      if (fhirId) {
+                        // Set only the FHIR id - let AutoDashboard query for the full patient
+                        // This prevents structure mismatch between flattened and full FHIR objects
+                        Session.set('selectedPatientId', fhirId);
+
+                        // Log AuditEvent for viewing patient chart
+                        Meteor.call('auditEvents.log', 'rest', Meteor.userId(), `Patient/${fhirId}`,
+                          `User viewed patient chart for ${selectedPatient?.name || fhirId}`, {
+                            action: 'READ',
+                            entity: [{
+                              what: {
+                                reference: `Patient/${fhirId}`,
+                                display: selectedPatient?.name || 'Unknown Patient'
+                              },
+                              type: {
+                                system: 'http://hl7.org/fhir/resource-types',
+                                code: 'Patient',
+                                display: 'Patient'
+                              }
+                            }]
+                          }, (error) => {
+                            if (error) {
+                              console.error('Error logging audit event:', error);
+                            } else {
+                              console.log('Audit event logged for patient chart view');
                             }
-                          }]
-                        }, (error) => {
-                          if (error) {
-                            console.error('Error logging audit event:', error);
-                          } else {
-                            console.log('Audit event logged for patient chart view');
                           }
-                        }
-                      );
-                      
-                      // Navigate to patient chart
-                      navigate('/patient-chart');
+                        );
+
+                        // Navigate to patient chart
+                        navigate('/patient-chart');
+                      }
                     }}
                   >
                     View Chart
                   </Button>
                   
                   <Button
-                    id="viewPatientButton"
+                    className="viewPatientDemographicsButton"
                     variant="outlined"
                     size="small"
                     startIcon={<PersonIcon />}
                     onClick={(e) => {
                       e.stopPropagation();
-                      
+
                       // Get the patient's FHIR id (not MongoDB _id)
-                      const selectedPatient = patientsToRender.find(p => (p.id === patientId || p._id === patientId));
+                      // Use _id only for lookup to avoid collisions
+                      const selectedPatient = patientsToRender.find(p => p._id === patientId);
                       const fhirId = selectedPatient?.id;
-                      
-                      console.log('View patient details:', patientId, 'FHIR ID:', fhirId);
-                      
+
+                      console.log('View patient demographics:', patientId, 'FHIR ID:', fhirId);
+
                       // Navigate to patient detail page using FHIR id
                       if (fhirId) {
                         navigate(`/patients/${fhirId}`);
@@ -1109,7 +1173,7 @@ export function PatientsTable(props = {}){
                       }
                     }}
                   >
-                    View Patient
+                    Demographics
                   </Button>
                   
                   <Button
@@ -1124,7 +1188,29 @@ export function PatientsTable(props = {}){
                   >
                     Audit
                   </Button>
-                  
+
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    startIcon={<LaunchIcon />}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      console.log('Launch clicked for patient:', patientId);
+
+                      // Get the full patient object (unflatted version from original patients array)
+                      const selectedPatient = patientsToRender.find(p => p._id === patientId);
+                      console.log('Selected patient for launch:', selectedPatient);
+
+                      if (typeof onLaunchClick === 'function') {
+                        onLaunchClick(selectedPatient);
+                      } else {
+                        console.warn('onLaunchClick handler not provided');
+                      }
+                    }}
+                  >
+                    Launch
+                  </Button>
+
                   {/* Dynamic Buttons from Packages */}
                   {dynamicButtons.map((buttonConfig) => {
                     const ButtonComponent = (
@@ -1136,15 +1222,16 @@ export function PatientsTable(props = {}){
                         startIcon={buttonConfig.icon}
                         onClick={(e) => {
                           e.stopPropagation();
-                          
+
                           if (buttonConfig.requiresModal) {
-                            setSelectedPatientForModal(patientsToRender[i]);
+                            setSelectedPatientForModal(currentPatient);
                             setModalState({
                               ...modalState,
                               [buttonConfig.id]: true
                             });
                           } else if (buttonConfig.onClick) {
-                            buttonConfig.onClick(patientId, patientsToRender[i]);
+                            // Pass navigate function to allow React Router navigation
+                            buttonConfig.onClick(patientId, currentPatient, navigate);
                           }
                         }}
                       >
@@ -1276,8 +1363,9 @@ PatientsTable.propTypes = {
   rowsPerPage: PropTypes.number,
   onCellClick: PropTypes.func,
   onRowClick: PropTypes.func,
-  onMetaClick: PropTypes.func, 
+  onMetaClick: PropTypes.func,
   onActionButtonClick: PropTypes.func,
+  onLaunchClick: PropTypes.func,
   actionButtonLabel: PropTypes.string,
   defaultAvatar: PropTypes.string,
   disablePagination: PropTypes.bool,
@@ -1294,7 +1382,8 @@ PatientsTable.propTypes = {
   formFactorLayout: PropTypes.string,
 
   logger: PropTypes.object,
-  rowClickMode: PropTypes.string
+  rowClickMode: PropTypes.string,
+  order: PropTypes.oneOf(['ascending', 'descending'])
 };
 
 export default PatientsTable;

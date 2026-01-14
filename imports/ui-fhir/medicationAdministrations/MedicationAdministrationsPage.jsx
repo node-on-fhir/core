@@ -389,8 +389,8 @@ export function MedicationAdministrationsPage(props){
   }
   
   return (
-    <Box 
-      id="medicationAdministrationsPage" 
+    <Box
+      id="medicationAdministrationsPage"
       sx={{
         minHeight: '100vh',
         backgroundColor: 'background.default',
@@ -398,7 +398,7 @@ export function MedicationAdministrationsPage(props){
         py: { xs: 3, sm: 4, md: 5 }
       }}
     >
-      { data.medicationAdministrations.length > 0 && renderHeader() }
+      { renderHeader() }
       { layoutContent }
     </Box>
   );

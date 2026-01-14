@@ -1,0 +1,81 @@
+---
+#2. Client's age is less than 2 years
+#   Today's date − "Date of birth" < 2 years
+### Client is not due for Typhoid vaccination
+### "Immunization recommendation status" = "Not due"
+id: "19.2"
+birth: -1y
+patient:
+  fhir:
+    gender: female
+---
+#1. No typhoid primary series doses were administered
+#   Count of vaccines administered (where "Vaccine type" = "Typhoid vaccines" and "Type of dose" = "Primary series") = 0
+#2. Client's age is more than or equal to 2 years
+#   Today's date − "Date of birth" ≥ 2 years
+### Client is due for Typhoid vaccination
+### "Immunization recommendation status" = "Due"
+id: "20.12"
+birth: -2y
+patient:
+  fhir:
+    gender: female
+---
+#1. One typhoid primary series dose was administered
+#   Count of vaccines administered (where "Vaccine type" = "Typhoid vaccines" and "Type of dose" = "Primary series") = 1
+#3. The latest typhoid dose was administered less than 3 years ago
+#   Today's date − latest "Date and time of vaccination" (where "Vaccine type" = "Typhoid vaccines") < 3 years
+### Primary series is complete. Client is not due for typhoid booster dose
+### "Immunization recommendation status" = "Not due"
+### "Completed the primary vaccination series" (where "Vaccine type" = "Typhoid vaccines") = TRUE
+id: "21.13"
+birth: -4y
+patient:
+  fhir:
+    gender: female
+immunization:
+  typhoid:
+    vaccine:
+      code: XM8BU8
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Typhoid vaccines"
+    doses:
+      p1:
+        - -2y
+    fhir:
+      extension:
+        - url: "http://smart.who.int/immunizations/StructureDefinition/IMMZTypeOfDose"
+          valueCodeableConcept:
+            coding:
+            - code: DE227
+              system: "http://smart.who.int/immunizations/CodeSystem/IMMZ.D"
+              display: "ViPS"
+---
+#1. One typhoid primary series dose was administered
+#3. The latest typhoid dose was administered more than 3 years ago
+#   Today's date − latest "Date and time of vaccination" (where "Vaccine type" = "Typhoid vaccines") ≥ 3 years
+### Primary series is complete. Client is due for typhoid booster dose
+### "Immunization recommendation status" = "Due"
+### "Completed the primary vaccination series" (where "Vaccine type" = "Typhoid vaccines") = TRUE
+id: "22.13"
+birth: -5y
+patient:
+  fhir:
+    gender: female
+immunization:
+  typhoid:
+    vaccine:
+      code: XM8BU8
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Typhoid vaccines"
+    doses:
+      p1:
+        - -3y
+    fhir:
+      extension:
+        - url: "http://smart.who.int/immunizations/StructureDefinition/IMMZTypeOfDose"
+          valueCodeableConcept:
+            coding:
+            - code: DE227
+              system: "http://smart.who.int/immunizations/CodeSystem/IMMZ.D"
+              display: "ViPS"

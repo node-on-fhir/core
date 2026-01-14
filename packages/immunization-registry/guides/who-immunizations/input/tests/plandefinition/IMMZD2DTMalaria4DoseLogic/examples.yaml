@@ -1,0 +1,174 @@
+---
+#1. Client's age is less than 5 months
+#   Today's date − "Date of birth" < 5 months
+### Client is not due for malaria vaccination
+### "Immunization recommendation status" = "Not due"
+id: "08.1"
+birth: -4m
+patient:
+  fhir:
+    gender: female
+---
+#0. No malaria primary series doses were administered
+#   Count of vaccines administered (where "Vaccine type" = "Malaria vaccines" and "Type of dose" = "Primary series") = 0
+#1. Client's age is more than or equal to 5 months
+#   Today's date − "Date of birth" ≥ 5 months
+### Client is due for malaria vaccination
+### "Immunization recommendation status" = "Due"
+id: "09.01"
+birth: -5m
+patient:
+  fhir:
+    gender: female
+---
+#0. One malaria primary series dose was administered
+#   Count of vaccines administered (where "Vaccine type" = "Malaria vaccines" and "Type of dose" = "Primary series") = 1
+#2. The latest malaria dose was administered less than 4 weeks ago
+#   Today's date − "Date and time of vaccination" (where "Vaccine type" = "Malaria vaccines") < 4 weeks
+### Client is not due for malaria vaccination
+### "Immunization recommendation status" = "Not due"
+id: "10.02"
+birth: -5m
+patient:
+  fhir:
+    gender: female
+immunization:
+  malaria:
+    vaccine:
+      code: J07XA01
+      system: "http://www.whocc.no/atc"
+      display: "Malaria vaccines"
+    doses:
+      p4:
+        - -0d
+---
+#0. One malaria primary series dose was administered
+#2. The latest malaria dose was administered more than 4 weeks ago
+#   Today's date − latest "Date and time of vaccination" (where "Vaccine type" = "Malaria vaccines") ≥ 4 weeks
+### Client is due for malaria vaccination
+### "Immunization recommendation status" = "Due"
+id: "11.02"
+birth: -6m
+patient:
+  fhir:
+    gender: female
+immunization:
+  malaria:
+    vaccine:
+      code: J07XA01
+      system: "http://www.whocc.no/atc"
+      display: "Malaria vaccines"
+    doses:
+      p4:
+        - -4w
+---
+#0. Two malaria primary series doses were administered
+#   Count of vaccines administered (where "Vaccine type" = "Malaria vaccines" and "Type of dose" = "Primary series") = 2
+#2. The latest malaria dose was administered less than 4 weeks ago
+#   Today's date − "Date and time of vaccination" (where "Vaccine type" = "Malaria vaccines") < 4 weeks
+### Client is not due for malaria vaccination
+### "Immunization recommendation status" = "Not due"
+id: "12.02"
+birth: -6m
+patient:
+  fhir:
+    gender: female
+immunization:
+  malaria:
+    vaccine:
+      code: J07XA01
+      system: "http://www.whocc.no/atc"
+      display: "Malaria vaccines"
+    doses:
+      p4:
+        - b+5m
+        - b+6m
+---
+#0. Two malaria primary series doses were administered
+#2. The latest malaria dose was administered more than 4 weeks ago
+#   Today's date − latest "Date and time of vaccination" (where "Vaccine type" = "Malaria vaccines") ≥ 4 weeks
+### Client is due for malaria vaccination
+### "Immunization recommendation status" = "Due"
+id: "13.02"
+birth: -7m
+patient:
+  fhir:
+    gender: female
+immunization:
+  malaria:
+    vaccine:
+      code: J07XA01
+      system: "http://www.whocc.no/atc"
+      display: "Malaria vaccines"
+    doses:
+      p4:
+        - b+5m
+        - b+6m
+---
+#0. Three malaria primary series doses were administered
+#   Count of vaccines administered (where "Vaccine type" = "Malaria vaccines" and "Type of dose" = "Primary series") = 3
+#2. The latest malaria dose was administered less than 4 weeks ago
+#   Today's date − "Date and time of vaccination" (where "Vaccine type" = "Malaria vaccines") < 4 weeks
+### Client is not due for malaria vaccination
+### "Immunization recommendation status" = "Not due"
+id: "14.02"
+birth: -7m
+patient:
+  fhir:
+    gender: female
+immunization:
+  malaria:
+    vaccine:
+      code: J07XA01
+      system: "http://www.whocc.no/atc"
+      display: "Malaria vaccines"
+    doses:
+      p4:
+        - b+5m
+        - b+6m
+        - b+7m
+---
+#0. Three malaria primary series doses were administered
+#2. The latest malaria dose was administered more than 4 weeks ago
+#   Today's date − latest "Date and time of vaccination" (where "Vaccine type" = "Malaria vaccines") ≥ 4 weeks
+### Client is due for malaria vaccination
+### "Immunization recommendation status" = "Due"
+id: "15.02"
+birth: -8m
+patient:
+  fhir:
+    gender: female
+immunization:
+  malaria:
+    vaccine:
+      code: J07XA01
+      system: "http://www.whocc.no/atc"
+      display: "Malaria vaccines"
+    doses:
+      p4:
+        - b+5m
+        - b+6m
+        - b+7m
+---
+#0. Four malaria primary series doses were administered
+#   Count of vaccines administered (where "Vaccine type" = "Malaria vaccines" and "Type of dose" = "Primary series") = 4
+### Malaria immunization schedule is complete
+### "Immunization recommendation status" = "Complete"
+### "Completed the primary vaccination series" = TRUE (where "Vaccine type" = "Malaria vaccines")"
+id: "16.0"
+birth: -8m
+patient:
+  fhir:
+    gender: female
+immunization:
+  malaria:
+    vaccine:
+      code: J07XA01
+      system: "http://www.whocc.no/atc"
+      display: "Malaria vaccines"
+    doses:
+      p4:
+        - b+5m
+        - b+6m
+        - b+7m
+        - b+8m

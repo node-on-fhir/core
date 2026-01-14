@@ -1,0 +1,28 @@
+{
+  "resourceType": "SearchParameter",
+  "id": "patient-gender",
+  "url": "http://hl7.org/fhir/SearchParameter/Patient-gender",
+  "version": "4.0.1",
+  "name": "HoneycombPatientGender",
+  "status": "active",
+  "date": "2024-12-06",
+  "publisher": "github.com/node-on-fhir",
+  "contact": [
+    {
+      "telecom": [
+        {
+          "system": "url",
+          "value": "http://github.com/node-on-fhir/honeycomb"
+        }
+      ]
+    }
+  ],
+  "description": "Gender of the patient",
+  "code": "gender",
+  "base": ["Patient"],
+  "type": "token",
+  "expression": "Patient.gender",
+  "xpath": "gender",
+  "multipleOr": true,
+  "multipleAnd": false
+}

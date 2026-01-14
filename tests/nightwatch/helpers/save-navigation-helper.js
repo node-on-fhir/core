@@ -3,6 +3,9 @@
 module.exports = {
   /**
    * Handles save button click and navigation with fallback
+   *
+   * @deprecated Use saveWithDiagnostics() instead for better error handling and diagnostics
+   *
    * @param {Object} browser - Nightwatch browser object
    * @param {String} resourceType - The resource type (e.g., 'observations', 'conditions')
    * @param {String} pageSelectorId - The ID of the list page element (e.g., '#observationsPage')
@@ -108,12 +111,19 @@ module.exports = {
         }, [`/${resourcePath}`], function(result) {
           console.log('Client-side navigation result:', result.value);
           
-          // If client-side navigation failed, fall back to full page navigation
+          // If client-side navigation failed, fall back to Meteor.navigate() to preserve Session
           if (!result.value.success) {
-            console.log('Client-side navigation not available, using full page navigation');
-            browser
-              .url(`http://localhost:3000/${resourcePath}`)
-              .pause(1000);
+            console.log('Client-side navigation not available, using Meteor.navigate fallback');
+            browser.execute(function(path) {
+              if (typeof Meteor !== 'undefined' && typeof Meteor.navigate === 'function') {
+                console.log('[saveAndNavigate] Using Meteor.navigate() to preserve Session');
+                Meteor.navigate(path);
+              } else {
+                console.warn('[saveAndNavigate] Meteor.navigate not available, using window.location');
+                window.location.href = path;
+              }
+            }, [`/${resourcePath}`]);
+            browser.pause(1000);
           } else {
             // Give client-side navigation time to complete
             browser.pause(1000);
@@ -262,7 +272,16 @@ module.exports = {
       // If we expect redirect but it didn't happen
       if (expectedRedirect && !state.navigationOccurred) {
         console.log(`No navigation after ${state.saveTime}ms - forcing navigation to ${listPagePath}`);
-        browser.url(`http://localhost:3000${listPagePath}`);
+        browser.execute(function(path) {
+          if (typeof Meteor !== 'undefined' && typeof Meteor.navigate === 'function') {
+            console.log('[saveWithDiagnostics] Using Meteor.navigate() to preserve Session');
+            Meteor.navigate(path);
+          } else {
+            console.warn('[saveWithDiagnostics] Meteor.navigate not available, using window.location');
+            window.location.href = path;
+          }
+        }, [listPagePath]);
+        browser.pause(1000);
       }
     });
 

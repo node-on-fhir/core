@@ -1,0 +1,17 @@
+map "http://smart.who.int/immunizations/StructureMap/IMMZ.D5.QRToLM" = "IMMZ.D5.QRToLM"
+// Immunization Administer Vaccine - Transform QuestionnaireResponse to Logical Model
+
+uses "http://hl7.org/fhir/StructureDefinition/QuestionnaireResponse" alias QResp as source
+uses "http://smart.who.int/immunizations/StructureDefinition/IMMZD5" alias IMMZD5 as target
+
+imports "http://smart.who.int/immunizations/StructureMap/IMMZ.Helpers"
+
+
+group QRespToIMMZD5 ( source qr : QResp, target immz : IMMZD5) {
+
+  qr.subject as subject -> immz.patient = subject "setPatient";
+
+  qr.item as item where linkId = 'potentialContraindications' -> immz.potentialContraindications as field 
+    then ItemToCoding(item, field) "potentialContraindications";
+
+}

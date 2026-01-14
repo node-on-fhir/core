@@ -72,6 +72,8 @@ export function ConsentsTable(props){
     hidePeriodStart,
     hidePeriodEnd,
     hideCategory,
+    hidePolicyRule,
+    hideNotes,
     hideVerify,
     hideRevoke,
     hideBarcode,
@@ -389,6 +391,34 @@ export function ConsentsTable(props){
       );
     }
   }
+  function renderPolicyRule(policyRuleText){
+    if (!hidePolicyRule) {
+      return (
+        <TableCell className='policyRule' style={data.style.cell}>{ policyRuleText }</TableCell>
+      );
+    }
+  }
+  function renderPolicyRuleHeader(){
+    if (!hidePolicyRule) {
+      return (
+        <TableCell className='policyRule'>Policy Rule</TableCell>
+      );
+    }
+  }
+  function renderNotes(notesText){
+    if (!hideNotes) {
+      return (
+        <TableCell className='notes' style={data.style.cell}>{ notesText }</TableCell>
+      );
+    }
+  }
+  function renderNotesHeader(){
+    if (!hideNotes) {
+      return (
+        <TableCell className='notes'>Notes</TableCell>
+      );
+    }
+  }
   function renderDate(id, dateTime){
     if (!hideDateTime) {
       return (
@@ -701,10 +731,12 @@ export function ConsentsTable(props){
   } else {
     for (let i = 0; i < consentsToRender.length; i++) {
       const currentConsent = consentsToRender[i];
-      const consentId = currentConsent.id;  // Use FHIR id instead of MongoDB _id
-      
+      // CRITICAL: Use MongoDB _id for row click, not FHIR id
+      // ConsentDetail expects _id in the URL param
+      const consentMongoId = currentConsent._id;
+
       let selected = false;
-      if(currentConsent.id === selectedConsentId){
+      if(currentConsent._id === selectedConsentId){
         selected = true;
       }
       if(get(currentConsent, 'modifierExtension[0]')){
@@ -714,7 +746,7 @@ export function ConsentsTable(props){
         rowStyle.height = '32px';
       }
       logger.trace('consentsToRender[i]', currentConsent)
-      
+
       // Debug: Check all fields for objects
       const fieldsToCheck = ['category', 'scope', 'actorRole', 'provisionType', 'provisionClass'];
       fieldsToCheck.forEach(field => {
@@ -723,19 +755,19 @@ export function ConsentsTable(props){
           console.warn(`ConsentsTable: ${field} is an object:`, value);
         }
       });
-      
+
       tableRows.push(
-        <TableRow className="consentRow" 
-          key={i} 
-          style={rowStyle} 
+        <TableRow className="consentRow"
+          key={i}
+          style={rowStyle}
           onClick={() => {
-            console.log('ConsentsTable row clicked, _id:', consentId);
+            console.log('ConsentsTable row clicked, _id:', consentMongoId);
             if(typeof onRowClick === 'function'){
-              onRowClick(consentId);
+              onRowClick(consentMongoId);
             }
-          }} 
-          hover={true} 
-          >            
+          }}
+          hover={true}
+          >
           {renderSelected(get(currentConsent, '_id'))}
           {renderIdentifier(get(currentConsent, 'identifier', ''))}
           {renderDate(get(currentConsent, '_id'), get(currentConsent, 'dateTime'))}
@@ -743,6 +775,8 @@ export function ConsentsTable(props){
           {renderPeriodEnd(get(currentConsent, '_id'), get(currentConsent, 'end'))}
           {renderStatus(get(currentConsent, 'status'))}
           {renderCategory( get(currentConsent, 'category')) }
+          {renderPolicyRule( get(currentConsent, 'policyRule')) }
+          {renderNotes( get(currentConsent, 'notes')) }
           {renderScope( get(currentConsent, 'scope')) }
           {renderPatientName(get(currentConsent, 'patientName')) }
           {renderOrganization(get(currentConsent, 'organization')) }
@@ -759,7 +793,7 @@ export function ConsentsTable(props){
 
           {renderBarcode(get(currentConsent, 'id', ''))}
         </TableRow>
-      );    
+      );
     }
   }
 
@@ -775,6 +809,8 @@ export function ConsentsTable(props){
             {renderPeriodEndHeader() }
             {renderStatusHeader() }
             {renderCategoryHeader() }
+            {renderPolicyRuleHeader() }
+            {renderNotesHeader() }
             {renderScopeHeader() }
             {renderPatientNameHeader() }
             {renderOrganizationHeader() }

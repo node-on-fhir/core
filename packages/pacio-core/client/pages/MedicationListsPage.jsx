@@ -1,3 +1,5 @@
+// /packages/pacio-core/client/pages/MedicationListsPage.jsx
+
 import React, { useState, useEffect } from 'react';
 import { useTracker } from 'meteor/react-meteor-data';
 import { Meteor } from 'meteor/meteor';
@@ -32,13 +34,21 @@ import MedicationIcon from '@mui/icons-material/Medication';
 import PrintIcon from '@mui/icons-material/Print';
 import CompareArrowsIcon from '@mui/icons-material/CompareArrows';
 
-import { MedicationRequests } from '/imports/lib/schemas/SimpleSchemas/MedicationRequests';
-import { MedicationAdministrations } from '/imports/lib/schemas/SimpleSchemas/MedicationAdministrations';
-import { AllergyIntolerances } from '/imports/lib/schemas/SimpleSchemas/AllergyIntolerances';
+// Access collections via Meteor global object (packages can't import from /imports/)
+let MedicationRequests;
+let MedicationAdministrations;
+let AllergyIntolerances;
 
-import MedicationRequestsTable from '/imports/ui-fhir/medicationRequests/MedicationRequestsTable';
-import MedicationAdministrationsTable from '/imports/ui-fhir/medicationAdministrations/MedicationAdministrationsTable';
-import AllergyIntolerancesTable from '/imports/ui-fhir/allergyIntolerances/AllergyIntolerancesTable';
+if (Meteor.isClient) {
+  MedicationRequests = window.MedicationRequests || get(Meteor, 'Collections.MedicationRequests');
+  MedicationAdministrations = window.MedicationAdministrations || get(Meteor, 'Collections.MedicationAdministrations');
+  AllergyIntolerances = window.AllergyIntolerances || get(Meteor, 'Collections.AllergyIntolerances');
+}
+
+// Access tables via Meteor.Tables
+const MedicationRequestsTable = Meteor.Tables?.MedicationRequestsTable;
+const MedicationAdministrationsTable = Meteor.Tables?.MedicationAdministrationsTable;
+const AllergyIntolerancesTable = Meteor.Tables?.AllergyIntolerancesTable;
 
 
 function TabPanel(props) {
@@ -61,6 +71,15 @@ function TabPanel(props) {
 }
 
 function MedicationListsPage(props) {
+  // Get Honeycomb theme for dark mode support
+  const useAppTheme = Meteor.useTheme;
+  const appTheme = useAppTheme ? useAppTheme() : { theme: 'light' };
+  const isDark = appTheme.theme === 'dark';
+
+  // Theme-aware colors for cards
+  const cardBgColor = isDark ? '#1e1e1e' : '#ffffff';
+  const cardTextColor = isDark ? 'rgba(255, 255, 255, 0.87)' : 'rgba(0, 0, 0, 0.87)';
+
   const [tabIndex, setTabIndex] = useState(0);
   const [reconciliationMode, setReconciliationMode] = useState(false);
   const [selectedPatientId, setSelectedPatientId] = useState(Session.get('selectedPatientId'));
@@ -140,25 +159,23 @@ function MedicationListsPage(props) {
   };
 
   return (
-    <Box sx={{ 
-      bgcolor: theme => theme.palette.mode === 'light' 
-        ? theme.palette.grey[50] 
-        : theme.palette.background.default,
-      minHeight: '100vh'
-    }}>
+    <Box sx={{ minHeight: '100vh' }}>
       <Container maxWidth="xl" sx={{ pt: 3, pb: 3 }}>
         <Box sx={{ mb: 3 }}>
-        <Breadcrumbs aria-label="breadcrumb">
-          <Link 
-            color="inherit" 
-            href="/" 
+        <Breadcrumbs aria-label="breadcrumb" sx={{
+          '& .MuiTypography-root': { color: cardTextColor },
+          '& .MuiLink-root': { color: cardTextColor }
+        }}>
+          <Link
+            color="inherit"
+            href="/"
             sx={{ display: 'flex', alignItems: 'center' }}
           >
-            <HomeIcon sx={{ mr: 0.5 }} fontSize="inherit" />
+            <HomeIcon sx={{ mr: 0.5, color: cardTextColor }} fontSize="inherit" />
             Home
           </Link>
-          <Typography color="text.primary" sx={{ display: 'flex', alignItems: 'center' }}>
-            <MedicationIcon sx={{ mr: 0.5 }} fontSize="inherit" />
+          <Typography sx={{ display: 'flex', alignItems: 'center', color: cardTextColor }}>
+            <MedicationIcon sx={{ mr: 0.5, color: cardTextColor }} fontSize="inherit" />
             Medication Lists
           </Typography>
         </Breadcrumbs>
@@ -166,7 +183,24 @@ function MedicationListsPage(props) {
 
       <Grid container spacing={3}>
         <Grid item xs={12}>
-          <Card>
+          <Card sx={{
+            bgcolor: cardBgColor,
+            color: cardTextColor,
+            '& .MuiTypography-root': { color: cardTextColor },
+            '& .MuiCardHeader-title': { color: cardTextColor },
+            '& .MuiCardHeader-subheader': {
+              color: isDark ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)'
+            },
+            '& .MuiTab-root': {
+              color: isDark ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)'
+            },
+            '& .Mui-selected': {
+              color: isDark ? 'rgba(255, 255, 255, 0.87)' : 'rgba(0, 0, 0, 0.87)'
+            },
+            '& .MuiTabs-indicator': {
+              backgroundColor: isDark ? 'rgba(255, 255, 255, 0.87)' : 'rgba(0, 0, 0, 0.87)'
+            }
+          }}>
             <CardHeader
               title="Medication Management"
               action={
@@ -186,7 +220,13 @@ function MedicationListsPage(props) {
             />
             <CardContent>
               {data.allergies.length > 0 && (
-                <Alert severity="warning" sx={{ mb: 2 }}>
+                <Alert severity="warning" sx={{
+                  mb: 2,
+                  bgcolor: isDark ? 'rgba(237, 108, 2, 0.15)' : 'rgba(237, 108, 2, 0.1)',
+                  color: cardTextColor,
+                  '& .MuiAlert-icon': { color: isDark ? '#ff9800' : '#ed6c02' },
+                  '& .MuiAlertTitle-root': { color: cardTextColor }
+                }}>
                   <AlertTitle>Allergy Alert</AlertTitle>
                   Patient has {data.allergies.length} documented {data.allergies.length === 1 ? 'allergy' : 'allergies'}
                 </Alert>

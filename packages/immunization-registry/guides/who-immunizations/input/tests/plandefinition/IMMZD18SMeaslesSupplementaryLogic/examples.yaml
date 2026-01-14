@@ -1,0 +1,82 @@
+---
+id: 47.PS2
+birth: -2y
+patient:
+  fhir:
+    gender: female
+immunization:
+  flu:
+    vaccine:
+      code: XM5V64
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Influenza vaccines, live attenuated"
+    fhir:
+      expirationDate: 1y
+      occurrenceDateTime: -2w
+  measles1:
+    vaccine:
+      code: XM8TF3  
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Measles, combinations with mumps and rubella, live attenuated"
+    fhir:
+      expirationDate: 1y
+      occurrenceDateTime: b+9m
+      protocolApplied:
+        - doseNumberString: "1"
+          seriesDosesString: "2"
+          series: "Primary series"
+  measles2:
+    vaccine:
+      code: XM8TF3  
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Measles, combinations with mumps and rubella, live attenuated"
+    fhir:
+      expirationDate: 1y
+      occurrenceDateTime: b+15m
+      protocolApplied:
+        - doseNumberString: "2"
+          seriesDosesString: "2"
+          series: "Primary series"
+---
+id: 47.D1
+birth: -2y
+patient:
+  fhir:
+    gender: female
+immunization:
+  measles1:
+    vaccine:
+      code: XM8TF3  
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Measles, combinations with mumps and rubella, live attenuated"
+    fhir:
+      expirationDate: 1y
+      occurrenceDateTime: b+9m
+      protocolApplied:
+        - doseNumberString: "1"
+          seriesDosesString: "2"
+          series: "Primary series"
+  measles2:
+    vaccine:
+      code: XM8TF3  
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Measles, combinations with mumps and rubella, live attenuated"
+    fhir:
+      expirationDate: 1y
+      occurrenceDateTime: b+15m
+      protocolApplied:
+        - doseNumberString: "2"
+          seriesDosesString: "2"
+          series: "Primary series"
+  supplementary:
+    vaccine:
+      code: XM8TF3  
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Measles, combinations with mumps and rubella, live attenuated"
+    fhir:
+      expirationDate: 1y
+      occurrenceDateTime: b+23m
+      protocolApplied:
+        - doseNumberString: "1"
+          seriesDosesString: "1"
+          series: "Supplementary dose"

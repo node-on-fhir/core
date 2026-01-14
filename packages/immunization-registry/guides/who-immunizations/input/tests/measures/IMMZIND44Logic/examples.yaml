@@ -1,0 +1,160 @@
+---
+id: 01.aefi
+birth: -6w
+patient:
+  fhir:
+    gender: female
+immunization:
+  pentavalent:
+    location: "site"
+    vaccine:
+      code: XM7JP3
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Diphtheria, hemophilus influenzae B, pertussis, tetanus, hepatitis B vaccines"
+    doses:
+      p3:
+        - 0d
+location:
+  site:
+    name: "Vaccination Site"
+    state: "Region"
+adverseevent:
+  ae1:
+    location: "site"
+    immunization: "pentavalentp1"
+    fhir: 
+      event: 
+        coding:
+          - code: DE103
+            system: "http://smart.who.int/immunizations/CodeSystem/IMMZ.D"
+            display: "Anaphylaxis"
+      date: 0d
+      seriousness:
+        coding:
+          - code: DE109
+            system: "http://smart.who.int/immunizations/CodeSystem/IMMZ.D"
+            display: "Life threatening"
+      outcome:
+        coding:
+          - system: "http://terminology.hl7.org/CodeSystem/adverse-event-outcome"
+            code: "ongoing"
+---
+id: 02.aefi
+birth: -3m
+patient:
+  fhir:
+    gender: female
+immunization:
+  pentavalent:
+    location: "site"
+    vaccine:
+      code: XM7JP3
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Diphtheria, hemophilus influenzae B, pertussis, tetanus, hepatitis B vaccines"
+    doses:
+      p3:
+        - b+6w
+location:
+  site:
+    name: "Vaccination Site"
+    state: "Region"
+adverseevent:
+  ae1:
+    location: "site"
+    immunization: "pentavalentp1"
+    fhir: 
+      event: 
+        coding:
+          - code: DE98
+            system: "http://smart.who.int/immunizations/CodeSystem/IMMZ.D"
+            display: "Seizures"
+      date: 0d
+      seriousness:
+        coding:
+          - code: DE109
+            system: "http://smart.who.int/immunizations/CodeSystem/IMMZ.D"
+            display: "Life threatening"
+      outcome:
+        coding:
+          - system: "http://terminology.hl7.org/CodeSystem/adverse-event-outcome"
+            code: "resolved"
+---
+id: 03.aefi
+birth: -3m
+patient:
+  fhir:
+    gender: female
+immunization:
+  pentavalent:
+    location: "site"
+    vaccine:
+      code: XM7JP3
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Diphtheria, hemophilus influenzae B, pertussis, tetanus, hepatitis B vaccines"
+    doses:
+      p3:
+        - 0d
+location:
+  site:
+    name: "Vaccination Site"
+    state: "Region"
+---
+id: 04.aefi
+birth: -6m
+patient:
+  fhir:
+    gender: female
+immunization:
+  pentavalent:
+    location: "site"
+    vaccine:
+      code: XM7JP3
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Diphtheria, hemophilus influenzae B, pertussis, tetanus, hepatitis B vaccines"
+    doses:
+      p3:
+        - 0d
+location:
+  site:
+    name: "Vaccination Site"
+    state: "Region"
+adverseevent:
+  ae1:
+    location: "site"
+    immunization: "pentavalentp1"
+    fhir: 
+      event: 
+        coding:
+          - code: DE100
+            system: "http://smart.who.int/immunizations/CodeSystem/IMMZ.D"
+            display: "Sepsis"
+      date: 0d
+      seriousness:
+        coding:
+          - code: DE108
+            system: "http://smart.who.int/immunizations/CodeSystem/IMMZ.D"
+            display: "Death"
+      outcome:
+        coding:
+          - system: "http://terminology.hl7.org/CodeSystem/adverse-event-outcome"
+            code: "fatal"
+---
+id: 05.aefi
+birth: -6m
+patient:
+  fhir:
+    gender: female
+immunization:
+  pentavalent:
+    location: "site"
+    vaccine:
+      code: XM7JP3
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Diphtheria, hemophilus influenzae B, pertussis, tetanus, hepatitis B vaccines"
+    doses:
+      p3:
+        - 0d
+location:
+  site:
+    name: "Vaccination Site"
+    state: "Region"

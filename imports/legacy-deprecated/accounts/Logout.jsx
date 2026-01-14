@@ -33,7 +33,7 @@ import { Session } from 'meteor/session';
 import { Meteor } from 'meteor/meteor';
 
 import jwt from 'jsonwebtoken';
-import { log, message } from '../Logger';
+import { log, message } from '/client/ClientLogger';
 
 
 // import { AccountsClient } from '@accounts/client';

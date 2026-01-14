@@ -1,0 +1,101 @@
+---
+#1. The client is currently pregnant
+#   "Potential contraindications" = "Currently pregnant"
+### Mumps vaccination is contraindicated
+### "Immunization recommendation status" = "Contraindicated"
+id: "20.1"
+birth: -25y
+patient:
+  fhir:
+    gender: female
+contraindication:
+    currentlypregnant:
+      code: DE162
+      display: "Currently pregnant"
+      effectiveDateTime: -1d
+medicationrequest:
+  mumps:
+    medication:
+      code: XM1131
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Mumps, live attenuated"
+    fhir:
+      authoredOn: 0d
+      status: draft
+      intent: proposal
+---
+#1. The client has allergy to vaccine components
+#   '"Potential contraindications" = "Severe allergic reactions"
+### Mumps vaccination could be contraindicated. Clinical judgement is required.
+### Create a clinical note.
+### Immunization recommendation status = "Further evaluation needed"
+id: "21.1"
+birth: -2y
+patient:
+  fhir:
+    gender: female
+contraindication:
+    severeallergicreactions:
+      code: DE167
+      display: "Severe allergic reactions"
+      effectiveDateTime: -1d
+medicationrequest:
+  mumps:
+    medication:
+      code: XM1131
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Mumps, live attenuated"
+    fhir:
+      authoredOn: 0d
+      status: draft
+      intent: proposal
+---
+#1. The client has immune deficiency
+#   "Potential contraindications" = "Immunodeficiency syndromes"
+### Mumps vaccination is contraindicated
+### "Immunization recommendation status" = "Contraindicated"
+id: "22.1"
+birth: -2y
+patient:
+  fhir:
+    gender: female
+contraindication:
+    immunodeficiencysyndromes:
+      code: DE187
+      display: "Immunodeficiency syndromes"
+      effectiveDateTime: -1d
+medicationrequest:
+  mumps:
+    medication:
+      code: XM1131
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Mumps, live attenuated"
+    fhir:
+      authoredOn: 0d
+      status: draft
+      intent: proposal
+---
+#1. The client is severely immunosuppressed
+#   "Potential contraindications" = "Severely immunosuppressed"
+### Mumps vaccination is contraindicated
+### "Immunization recommendation status" = "Contraindicated"
+id: "23.1"
+birth: -2y
+patient:
+  fhir:
+    gender: female
+contraindication:
+    severelyimmunosuppressed:
+      code: DE165
+      display: "Severely immunosuppressed"
+      effectiveDateTime: -1d
+medicationrequest:
+  mumps:
+    medication:
+      code: XM1131
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Mumps, live attenuated"
+    fhir:
+      authoredOn: 0d
+      status: draft
+      intent: proposal

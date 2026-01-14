@@ -131,27 +131,27 @@ Meteor.methods({
   
   async 'procedures.get'(procedureId) {
     check(procedureId, String);
-    
+
     if (!this.userId) {
       throw new Meteor.Error('not-authorized', 'User must be logged in to view procedures');
     }
-    
+
     const Procedures = getProcedures();
     console.log('procedures.get called with ID:', procedureId);
     console.log('Using Procedures collection:', !!Procedures);
-    
+
     // Try both ways to find the procedure
     let procedure = await Procedures.findOneAsync({ _id: procedureId });
-    
+
     if (!procedure) {
       // Also try without the query object
       procedure = await Procedures.findOneAsync(procedureId);
     }
-    
+
     if (!procedure) {
       throw new Meteor.Error('not-found', 'Procedure not found');
     }
-    
+
     return procedure;
   }
 });

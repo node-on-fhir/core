@@ -1,9 +1,12 @@
 // tests/nightwatch/honeycomb/enable_autopublish/crud.consents.js
 
 const testUtils = require('./shared-test-utils');
+const loginHelper = require('../../helpers/login-helper');
 
 describe('Consents CRUD Operations', function() {
   const timestamp = Date.now();
+  let testPatientId = null; // Store patient ID for cross-test access
+
   const testConsent = {
     status: 'active',
     category: 'IDSCL',  // Use the code value for native select
@@ -43,125 +46,62 @@ describe('Consents CRUD Operations', function() {
         window.testTimestamp = ts;
       }, [timestamp]);
 
-    // Check if we're logged in
-    browser.execute(function() {
-      return {
-        isLoggedIn: typeof Meteor !== 'undefined' && !!Meteor.userId(),
-        userId: Meteor.userId ? Meteor.userId() : null,
-        username: Meteor.user ? (Meteor.user() ? Meteor.user().username : null) : null
-      };
-    }, [], function(result) {
-      console.log('Initial login state:', result.value);
-      
-      if (!result.value.isLoggedIn) {
-        console.log('Not logged in, attempting programmatic login...');
-        
-        browser.executeAsync(function(done) {
-          if (typeof Meteor !== 'undefined') {
-            Meteor.call('test.createTestUser', {
-              username: 'janedoe',
-              email: 'janedoe@test.org',
-              password: 'janedoe123'
-            }, function(err, userId) {
-              if (err) {
-                console.error('Failed to create test user:', err);
-                done({ userCreated: false, error: err.message });
-              } else {
-                console.log('Test user ready, userId:', userId);
-                Meteor.loginWithPassword('janedoe', 'janedoe123', function(loginErr) {
-                  if (loginErr) {
-                    console.error('Login failed:', loginErr);
-                    done({ userCreated: true, loginSuccess: false, error: loginErr.message });
-                  } else {
-                    console.log('Login successful');
-                    done({ 
-                      userCreated: true,
-                      loginSuccess: true, 
-                      userId: Meteor.userId(), 
-                      username: Meteor.user() ? Meteor.user().username : null 
-                    });
-                  }
-                });
-              }
-            });
-          } else {
-            done({ userCreated: false, loginSuccess: false, error: 'Meteor not available' });
-          }
-        }, [], function(result) {
-          if (result.value.loginSuccess) {
-            browser.assert.ok(true, 'Successfully created test user and logged in');
-            console.log('Logged in as:', result.value.username, 'userId:', result.value.userId);
-            
-            // Create a test patient
-            testUtils.createTestPatient(browser, {
-              name: 'John Doe',
-              family: 'Doe',
-              given: 'John',
-              identifier: 'test-patient-' + timestamp
-            }, function(result) {
-              if (result.error) {
-                console.error('Failed to create test patient:', result.error);
-                browser.assert.fail('Failed to create test patient: ' + result.error);
-              } else {
-                console.log('Test patient created with ID:', result.result);
-                browser.assert.ok(true, 'Successfully created test patient');
-                
-                // Set the patient in Session
-                browser.execute(function(patientId) {
-                  if (typeof Session !== 'undefined' && typeof Patients !== 'undefined') {
-                    const patient = Patients.findOne({_id: patientId});
-                    if (patient) {
-                      Session.set('selectedPatientId', patientId);
-                      Session.set('selectedPatient', patient);
-                      console.log('Set selected patient in Session:', patientId);
-                    }
-                  }
-                }, [result.result]);
-              }
-            });
-          } else {
-            browser.assert.fail('Setup failed: ' + result.value.error);
-          }
-        });
-        
-        browser.pause(500);
+    loginHelper.ensureLoggedIn(browser, function(isLoggedIn) {
+      if (!isLoggedIn) {
+        browser.assert.fail('Failed to ensure user is logged in');
       } else {
-        browser.assert.ok(true, 'Already logged in (autologin enabled)');
-        console.log('Already logged in as:', result.value.username, 'userId:', result.value.userId);
-        
-        // Create a test patient even if already logged in
-        testUtils.createTestPatient(browser, {
-          name: 'John Doe',
-          family: 'Doe',
-          given: 'John',
-          identifier: 'test-patient-' + timestamp
-        }, function(result) {
-          if (result.error) {
-            console.error('Failed to create test patient:', result.error);
-            browser.assert.fail('Failed to create test patient: ' + result.error);
-          } else {
-            console.log('Test patient created with ID:', result.result);
-            browser.assert.ok(true, 'Successfully created test patient');
-            
-            // Set the patient in Session
-            browser.execute(function(patientId) {
-              if (typeof Session !== 'undefined' && typeof Patients !== 'undefined') {
-                const patient = Patients.findOne({_id: patientId});
-                if (patient) {
-                  Session.set('selectedPatientId', patientId);
-                  Session.set('selectedPatient', patient);
-                  console.log('Set selected patient in Session:', patientId);
-                }
-              }
-            }, [result.result]);
-          }
-        });
+        browser.assert.ok(true, 'User is logged in');
       }
-      
+
+      // Create a test patient
+      testUtils.createTestPatient(browser, {
+        name: 'John Doe',
+        family: 'Doe',
+        given: 'John',
+        identifier: 'test-patient-' + timestamp
+      }, function(result) {
+        if (result.error) {
+          console.error('Failed to create test patient:', result.error);
+          browser.assert.fail('Failed to create test patient: ' + result.error);
+        } else {
+          testPatientId = result.result; // Store ID for use in other tests
+          console.log('Test patient created with ID:', result.result);
+          browser.assert.ok(true, 'Successfully created test patient');
+
+          // Fetch the patient from the server and set in Session
+          browser.executeAsync(function(patientId, done) {
+            if (typeof Meteor !== 'undefined' && typeof Session !== 'undefined') {
+              Meteor.call('patients.findOne', patientId, function(error, patient) {
+                if (error) {
+                  console.error('Error fetching patient:', error);
+                  done({ success: false, error: error.message });
+                } else if (patient) {
+                  Session.set('selectedPatientId', patient._id);
+                  Session.set('selectedPatient', patient);
+                  console.log('Set selected patient in Session:', patient._id, patient.name?.[0]?.text);
+                  done({ success: true, patientId: patient._id, patientName: patient.name?.[0]?.text });
+                } else {
+                  console.error('Patient not found:', patientId);
+                  done({ success: false, error: 'Patient not found' });
+                }
+              });
+            } else {
+              done({ success: false, error: 'Meteor or Session not available' });
+            }
+          }, [result.result], function(fetchResult) {
+            if (fetchResult.value && fetchResult.value.success) {
+              console.log('Successfully set selected patient:', fetchResult.value);
+            } else if (fetchResult.value) {
+              console.error('Failed to set selected patient:', fetchResult.value.error);
+            }
+          });
+        }
+      });
+
       // Clean up any existing test data
       browser.executeAsync(function(done) {
         if (typeof Consents !== 'undefined') {
-          const testConsents = Consents.find({ 
+          const testConsents = Consents.find({
             $or: [
               { 'category.0.text': { $regex: '.*Consent.*' } },
               { 'policyRule.0.text': { $regex: 'Policy.*' } },
@@ -175,21 +115,21 @@ describe('Consents CRUD Operations', function() {
         }
         done();
       });
-      
+
       browser.pause(500);
-      
+
       // Re-establish patient context
       browser.execute(function(testIdentifier) {
         console.log('Looking for patient with identifier:', testIdentifier);
-        
+
         if (typeof Session !== 'undefined' && typeof Patients !== 'undefined') {
           const allPatients = Patients.find({}).fetch();
           console.log('Total patients in collection:', allPatients.length);
-          
+
           let patient = Patients.findOne({
             'identifier.value': testIdentifier
           });
-          
+
           if (!patient) {
             console.log('Patient not found by identifier, trying by name...');
             patient = Patients.findOne({
@@ -200,12 +140,12 @@ describe('Consents CRUD Operations', function() {
               ]
             });
           }
-          
+
           if (!patient && allPatients.length > 0) {
             console.log('Patient not found by name, using most recent patient');
             patient = Patients.findOne({}, { sort: { _id: -1 } });
           }
-          
+
           if (patient) {
             console.log('Found patient:', patient._id, patient.name?.[0]?.text);
             Session.set('selectedPatientId', patient._id);
@@ -219,9 +159,9 @@ describe('Consents CRUD Operations', function() {
         return { success: false, error: 'Session or Patients not available' };
       }, ['test-patient-' + timestamp], function(result) {
         console.log('Patient selection check:', result.value);
-        if (result.value.success) {
+        if (result.value && result.value.success) {
           browser.assert.ok(true, `Patient selected: ${result.value.patientName}`);
-        } else {
+        } else if (result.value) {
           console.error('Failed to set selected patient:', result.value.error);
         }
       });
@@ -229,10 +169,35 @@ describe('Consents CRUD Operations', function() {
   });
 
   it('02. Verify consents list page loads', browser => {
+    // Use client-side navigation to preserve Meteor/Session state
+    testUtils.navigateUrl(browser, '/consents');
     browser
-      .url('http://localhost:3000/consents')
-      .waitForElementVisible('#consentsPage', 5000)
-      .pause(2000)
+      .waitForElementVisible('#consentsPage', 5000);
+
+    // Re-establish patient context after navigation (browser.url clears Session)
+    browser.executeAsync(function(patientId, done) {
+      if (typeof Meteor !== 'undefined' && typeof Session !== 'undefined') {
+        Meteor.call('patients.findOne', patientId, function(error, patient) {
+          if (error) {
+            console.error('Error fetching patient:', error);
+            done({ success: false, error: error.message });
+          } else if (patient) {
+            Session.set('selectedPatientId', patient._id);
+            Session.set('selectedPatient', patient);
+            console.log('Re-established patient context:', patient._id, patient.name?.[0]?.text);
+            done({ success: true });
+          } else {
+            console.error('Patient not found:', patientId);
+            done({ success: false, error: 'Patient not found' });
+          }
+        });
+      } else {
+        done({ success: false, error: 'Meteor or Session not available' });
+      }
+    }, [testPatientId]);
+
+    browser
+      .pause(500) // Let subscription update
       .execute(function() {
         const hasTable = document.querySelector('#consentsTable') !== null;
         const hasNoDataCard = document.querySelector('.no-data-card') !== null ||
@@ -584,8 +549,9 @@ describe('Consents CRUD Operations', function() {
       });
 
     browser
-      .pause(2000);
-    
+      .pause(3000) // Give time for save and navigation
+      .waitForElementVisible('#consentsPage', 5000);
+
     // Check if we're back on the consents list page and verify consent was saved
     browser.execute(function(timestamp) {
       const currentUrl = window.location.pathname;
@@ -701,11 +667,11 @@ describe('Consents CRUD Operations', function() {
     // Wait for page to re-render with patient context
     browser.pause(1000);
 
-    // Search for our specific test consent by patient name
+    // Search for our specific test consent by unique notes field
     browser
       .waitForElementVisible('#consentSearchInput', 5000)
       .clearValue('#consentSearchInput')
-      .setValue('#consentSearchInput', testConsent.patientName)
+      .setValue('#consentSearchInput', testConsent.notes)
       .pause(1000);
     
     browser.execute(function(timestamp) {
@@ -823,64 +789,68 @@ describe('Consents CRUD Operations', function() {
       .waitForElementVisible('#consentsPage', 5000)
       .pause(1000);
 
-    // Search for our specific consent by patient name
+    // Search for our specific consent by timestamp (unique identifier in policyRule/notes)
     browser
       .waitForElementVisible('#consentSearchInput', 5000)
       .clearValue('#consentSearchInput')
-      .setValue('#consentSearchInput', testConsent.patientName)
-      .pause(1000);
+      .setValue('#consentSearchInput', timestamp.toString())
+      .pause(2000); // Wait for subscription to update with filtered results
 
-    // Now click on the consent row
+    // Debug: Check what consents are in the table
+    browser.execute(function(timestamp) {
+      const rows = document.querySelectorAll('#consentsTable tbody tr');
+
+      const debugInfo = {
+        timestamp: timestamp,
+        rowCount: rows.length,
+        consents: []
+      };
+
+      // Check what consents are in the client collection
+      if (typeof Consents !== 'undefined') {
+        const allConsents = Consents.find({}).fetch();
+        debugInfo.totalConsents = allConsents.length;
+
+        allConsents.forEach(c => {
+          debugInfo.consents.push({
+            mongoId: c._id,
+            fhirId: c.id,
+            policyRule: c.policyRule?.text,
+            note: c.note?.[0]?.text,
+            patient: c.patient?.reference,
+            status: c.status
+          });
+        });
+      }
+
+      return debugInfo;
+    }, [timestamp.toString()], function(result) {
+      console.log('=== CONSENT TABLE DEBUG ===');
+      console.log(JSON.stringify(result.value, null, 2));
+    });
+
+    // Click on the consent row (subscription has filtered to show only our consent)
     browser
       .waitForElementVisible('#consentsTable', 5000)
       .execute(function(timestamp) {
         const rows = document.querySelectorAll('#consentsTable tbody tr');
-        console.log('Found', rows.length, 'rows in consents table');
-        
-        // Get consent ID from the table before clicking
-        let consentId = null;
-        
-        if (typeof Consents !== 'undefined') {
-          // Find the test consent by timestamp in notes (could be created or updated)
-          const searchStrings = [
-            `Test consent created at ${timestamp}`,
-            `Test consent updated at ${timestamp}`
-          ];
-          
-          let consentDoc = null;
-          for (let searchString of searchStrings) {
-            consentDoc = Consents.findOne({
-              'note.0.text': { $regex: searchString }
-            });
-            if (consentDoc) {
-              consentId = consentDoc._id;
-              console.log('Found test consent with _id:', consentId, 'using search:', searchString);
-              break;
-            }
-          }
-        }
-        
-        // Since there's only one row after search, just click it
+        console.log('After timestamp search, found', rows.length, 'row(s)');
+
         if (rows.length > 0) {
-          console.log('Clicking first row (after search filter)');
+          console.log('Clicking first row (should be our test consent)');
+          console.log('First row text:', rows[0].textContent.substring(0, 100));
           rows[0].click();
-          return { 
-            clicked: true, 
-            rowText: rows[0].textContent, 
-            rowIndex: 0,
-            consentId: consentId
+          return {
+            clicked: true,
+            rowText: rows[0].textContent,
+            rowCount: rows.length
           };
         }
-        
-        return { clicked: false, error: 'No rows found' };
+
+        return { clicked: false, error: 'No rows found after timestamp search' };
       }, [timestamp.toString()], function(result) {
         console.log('Click result:', result.value);
         browser.assert.equal(result.value.clicked, true, 'Found and clicked consent row');
-        
-        // Navigate directly using the found consent ID
-        if (result.value && result.value.consentId) {
-          browser.url(`http://localhost:3000/consents/${result.value.consentId}`);
-        }
       });
 
     browser
@@ -1003,8 +973,8 @@ describe('Consents CRUD Operations', function() {
 
   it('07. Update existing consent', browser => {
     // Navigate back to consents list page first
+    testUtils.navigateUrl(browser, '/consents');
     browser
-      .url('http://localhost:3000/consents')
       .waitForElementVisible('#consentsPage', 5000)
       .pause(1000);
 
@@ -1043,59 +1013,44 @@ describe('Consents CRUD Operations', function() {
     // Wait for page to re-render with patient context
     browser.pause(1000);
 
-    // Search for our specific test consent by patient name (exactly like test 05)
+    // Search for our specific test consent by timestamp (unique identifier)
     browser
       .waitForElementVisible('#consentSearchInput', 5000)
       .clearValue('#consentSearchInput')
-      .setValue('#consentSearchInput', testConsent.patientName)
+      .setValue('#consentSearchInput', timestamp.toString())
       .pause(1000);
 
-    // Click on the consent row (using the same approach as test 06)
-    browser
-      .execute(function(timestamp) {
-        const rows = document.querySelectorAll('#consentsTable tbody tr');
-        console.log('Found', rows.length, 'rows in consents table after search');
-        
-        let consentId = null;
-        
-        // Find the test consent to get its ID
-        if (typeof Consents !== 'undefined') {
-          const searchString = `Test consent created at ${timestamp}`;
-          const consentDoc = Consents.findOne({
-            'note.0.text': { $regex: searchString }
-          });
-          if (consentDoc) {
-            consentId = consentDoc._id;
-            console.log('Found test consent with _id:', consentId);
-          }
-        }
-        
-        // Since we searched by patient name, click the first row
-        if (rows.length > 0) {
-          console.log('Clicking first row after search filter');
-          rows[0].click();
-          return { 
-            clicked: true, 
-            rowCount: rows.length,
-            consentId: consentId
-          };
-        }
-        
-        return { clicked: false, error: 'No rows found after search' };
-      }, [timestamp.toString()], function(result) {
-        console.log('Click result:', result.value);
-        
-        if (!result.value.clicked) {
-          browser.assert.fail('Test consent not found in table - cannot update');
-        } else {
-          browser.assert.equal(result.value.clicked, true, 'Found and clicked consent row');
-          
-          // Navigate directly if click didn't work
-          if (result.value.consentId) {
-            browser.url(`http://localhost:3000/consents/${result.value.consentId}`);
-          }
-        }
-      });
+    // Click on the test consent row (after search, should be the only row)
+    browser.execute(function(timestamp) {
+      const rows = document.querySelectorAll('#consentsTable tbody tr');
+      console.log('Found', rows.length, 'consent row(s) after searching by timestamp:', timestamp);
+
+      // Debug: Log all row IDs to see which consents are visible
+      if (typeof Consents !== 'undefined') {
+        const allVisible = Consents.find({}).fetch();
+        console.log('Consents visible in client collection:', allVisible.length);
+        allVisible.forEach(c => {
+          console.log('  - ID:', c._id, 'policyRule:', c.policyRule?.text, 'notes:', c.note?.[0]?.text);
+        });
+      }
+
+      // After filtering by timestamp, there should be exactly 1 row (our test consent)
+      if (rows.length > 0) {
+        console.log('Clicking first row to edit consent');
+        console.log('First row text:', rows[0].textContent.substring(0, 100));
+        rows[0].click();
+        return { clicked: true, rowCount: rows.length };
+      }
+
+      return { clicked: false, error: 'No rows found after search' };
+    }, [timestamp.toString()], function(result) {
+      console.log('Click result:', result.value);
+      if (!result.value.clicked) {
+        browser.assert.fail('Test consent not found in table - cannot update');
+      } else {
+        browser.assert.equal(result.value.clicked, true, 'Found and clicked consent row');
+      }
+    });
 
     browser
       .pause(1000)
@@ -1158,6 +1113,26 @@ describe('Consents CRUD Operations', function() {
       .pause(500)
       .saveScreenshot('tests/nightwatch/screenshots/consents/08-updated-consent-form.png');
 
+    // Debug: Check form values before save
+    browser.execute(function() {
+      const category = document.querySelector('#categoryInput')?.value;
+      const status = document.querySelector('#statusSelect')?.value;
+      const notes = document.querySelector('#notesTextarea')?.value;
+      const policyRule = document.querySelector('#policyRuleInput')?.value;
+
+      console.log('=== Form values BEFORE save ===');
+      console.log('  Category input value:', category);
+      console.log('  Status input value:', status);
+      console.log('  Notes input value:', notes);
+      console.log('  Policy rule:', policyRule);
+
+      return { category, status, notes, policyRule };
+    }, [], function(result) {
+      console.log('Form state before save:', result.value);
+    });
+
+    browser.pause(500);
+
     // Save the updated consent
     browser
       .execute(function() {
@@ -1174,9 +1149,21 @@ describe('Consents CRUD Operations', function() {
         browser.assert.equal(result.value, true, 'Clicked Update button');
       });
 
+    // Wait for update to complete and verify we're still on detail page
     browser
-      .pause(2000)
-      .url('http://localhost:3000/consents')
+      .pause(3000)
+      .execute(function() {
+        return {
+          url: window.location.pathname,
+          hasDetailPage: !!document.querySelector('#consentDetailPage'),
+          isEditMode: !!document.querySelector('button svg[data-testid="LockOpenIcon"]')
+        };
+      }, [], function(result) {
+        console.log('After update state:', result.value);
+      });
+
+    testUtils.navigateUrl(browser, '/consents');
+    browser
       .waitForElementVisible('#consentsTable', 5000)
       .saveScreenshot('tests/nightwatch/screenshots/consents/09-consent-updated.png');
   });

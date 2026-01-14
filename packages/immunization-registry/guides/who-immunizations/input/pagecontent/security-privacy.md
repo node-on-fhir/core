@@ -1,0 +1,3 @@
+This page will contain security and privacy considerations related to SMART Guidelines for Immunizations. 
+
+For an illustrative, starting set of non-functional requirements, which includes security and privacy-related requirements from the [WHO Digital Adaptation Kit for Immunizations](https://iris.who.int/handle/10665/380303), see the [Non-functional Requirements](non-functional-requirements.html). 

@@ -1,0 +1,29 @@
+{
+  "resourceType": "SearchParameter",
+  "id": "coverage-patient",
+  "url": "http://github.com/node-on-fhir/honeycomb/private/SearchParameters/SearchParameter-coverage-patient",
+  "version": "1.0.0",
+  "name": "HoneycombCoveragePatient",
+  "status": "active",
+  "date": "2024-12-07",
+  "publisher": "github.com/node-on-fhir",
+  "contact": [
+    {
+      "telecom": [
+        {
+          "system": "url",
+          "value": "http://github.com/node-on-fhir/honeycomb"
+        }
+      ]
+    }
+  ],
+  "description": "Search for coverage by patient (beneficiary)",
+  "code": "patient",
+  "base": ["Coverage"],
+  "type": "reference",
+  "expression": "Coverage.beneficiary",
+  "xpath": "beneficiary.reference",
+  "target": ["Patient"],
+  "multipleOr": true,
+  "multipleAnd": false
+}

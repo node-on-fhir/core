@@ -35,14 +35,13 @@ import { Meteor } from 'meteor/meteor';
 import { Random } from 'meteor/random';
 import { HTTP } from 'meteor/http';
 
-import { browserHistory } from 'react-router';
 import { get, set, has, uniq, cloneDeep } from 'lodash';
 import moment from 'moment';
 
 import { parseString } from 'xml2js';
 import xml2js from 'xml2js';
-import XLSX from 'xlsx';
-import JSZip from 'jszip';
+// import XLSX from 'xlsx';  // Unused - removed to avoid web worker conflicts with Rspack
+// import JSZip from 'jszip';  // Unused - removed to avoid web worker conflicts with Rspack
 
 import MedicalRecordImporter from '../lib/MedicalRecordImporter';
 
@@ -52,7 +51,13 @@ import { CollectionManagement } from './CollectionManagement';
 import PreviewDataCard from './PreviewDataCard';
 import DataEditor from './DataEditor';
 
-import { useNavigate } from "react-router-dom";
+// Use Meteor.startup pattern for Router utilities
+let useNavigate;
+Meteor.startup(function(){
+  if (window.ReactRouter) {
+    useNavigate = window.ReactRouter.useNavigate;
+  }
+});
 
 
 // import "ace-builds";
@@ -289,7 +294,18 @@ export function ImportEditorBindings(props){
   const { theme: themeMode } = useTheme();
   const muiTheme = useMuiTheme();
 
-  const navigate = useNavigate();
+  const navigate = useNavigate ? useNavigate() : null;
+
+  // Get Honeycomb theme colors from settings (not Material-UI theme)
+  const isDark = themeMode === 'dark';
+
+  // Strip !important flags if present in settings
+  const stripImportant = (str) => typeof str === 'string' ? str.replace(/\s*!important\s*$/, '') : str;
+
+  // Theme-aware colors: use mode-specific defaults since settings file has dark mode values
+  const cardBgColor = isDark ? '#1e1e1e' : '#ffffff';
+  const cardTextColor = isDark ? 'rgba(255, 255, 255, 0.87)' : 'rgba(0, 0, 0, 0.87)';
+  const subheaderColor = isDark ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)';
 
   if(typeof logger === "undefined"){
     if(typeof props.logger === "object"){
@@ -473,7 +489,12 @@ export function ImportEditorBindings(props){
           const currentFile = fileList[fileIndex];
           const fileType = currentFile.type || currentFile.name.split(".").pop();
           const isZipFile = ['application/zip', 'application/x-zip-compressed', 'zip'].includes(fileType) || currentFile.name.endsWith('.zip');
-          
+
+          // Detect Apple Health export.xml - large XML files or specifically named export.xml
+          const isAppleHealthXml = (currentFile.name === 'export.xml' ||
+                                   currentFile.name.toLowerCase().includes('apple') && currentFile.name.endsWith('.xml')) &&
+                                   currentFile.size > 1000000; // > 1MB suggests Apple Health data
+
           var reader = new FileReader();
           reader.onload = function(event){
 
@@ -484,10 +505,10 @@ export function ImportEditorBindings(props){
               type: fileType,
               status: 'loaded'
             }
-            
+
             console.log('FileReader.currentFile', currentFile);
             console.log('FileReader.newQueueItem', newQueueItem);
-            
+
             if(isZipFile){
               // Handle Apple Health export zip files
               console.log('Processing Apple Health export zip file as ArrayBuffer');
@@ -495,7 +516,7 @@ export function ImportEditorBindings(props){
               newQueueItem.content = arrayBuffer;
               newQueueItem.isAppleHealthExport = true;
               setShowAppleHealthOptions(true);
-              
+
               // Pre-analyze the Apple Health export
               MedicalRecordImporter.analyzeAppleHealthExport(arrayBuffer).then(analysis => {
                 if (!analysis.error) {
@@ -505,8 +526,32 @@ export function ImportEditorBindings(props){
               }).catch(err => {
                 console.error('Error analyzing Apple Health export:', err);
               });
-              
+
               resolve(newQueueItem);
+            } else if(isAppleHealthXml) {
+              // Handle standalone Apple Health export.xml files
+              console.log('Processing Apple Health export.xml file');
+              var content = event.target.result;
+
+              // Verify it's actually an Apple Health XML by checking for DOCTYPE
+              if(content.includes('<!DOCTYPE HealthData') || content.includes('HealthKit Export Version')) {
+                console.log('Confirmed Apple Health XML structure');
+                newQueueItem.content = content;
+                newQueueItem.type = 'xml';
+                newQueueItem.isAppleHealthExport = true;
+                newQueueItem.isAppleHealthXml = true;
+                setShowAppleHealthOptions(true);
+
+                logger.trace('FileReader.newQueueItem', newQueueItem);
+                resolve(newQueueItem);
+              } else {
+                console.log('Large XML file but not Apple Health format, treating as standard XML');
+                // Fall through to standard XML handling below
+                parsedContent = content;
+                newQueueItem.content = parsedContent;
+                logger.trace('FileReader.newQueueItem', newQueueItem);
+                resolve(newQueueItem);
+              }
             } else {
               var content = event.target.result;   
               console.log('content', content);
@@ -514,7 +559,8 @@ export function ImportEditorBindings(props){
               var parsedContent;
 
               if(newQueueItem.type === "text/csv"){
-                parsedContent = PapaParse.parse(content); 
+                // Disable workers to avoid Rspack bundling issues
+                parsedContent = PapaParse.parse(content, { worker: false });
                 newQueueItem.content = parsedContent.data;
               } else if(['application/json', 'application/json+fhir'].includes(newQueueItem.type)){
                 parsedContent = JSON.parse(content); 
@@ -1163,20 +1209,29 @@ export function ImportEditorBindings(props){
     console.log('digestData.fileExtension', fileExtension)
     console.log('')
 
-    // For Apple Health Export (algorithm 1), we need the ArrayBuffer
+    // For Apple Health Export (algorithm 1), we need the raw data (ArrayBuffer or XML string)
     if(selectedAlgorithm === 1){
-      // Check if we have the ArrayBuffer in the import buffer
+      // Check if we have the ArrayBuffer in the import buffer (ZIP file)
       if(importBuffer instanceof ArrayBuffer){
-        console.log('Using ArrayBuffer from importBuffer for Apple Health Export');
+        console.log('Using ArrayBuffer from importBuffer for Apple Health Export (ZIP)');
         editorContent = importBuffer;
-      } else {
-        // Try to get from session
+      }
+      // Check if we have Apple Health XML string (standalone export.xml)
+      else if(typeof importBuffer === 'string' && MedicalRecordImporter.isAppleHealthXml(importBuffer)){
+        console.log('Using XML string from importBuffer for Apple Health Export (XML)');
+        editorContent = importBuffer;
+      }
+      // Fallback to session
+      else {
         const sessionBuffer = Session.get('importBuffer');
         if(sessionBuffer instanceof ArrayBuffer){
-          console.log('Using ArrayBuffer from Session for Apple Health Export');
+          console.log('Using ArrayBuffer from Session for Apple Health Export (ZIP)');
+          editorContent = sessionBuffer;
+        } else if(typeof sessionBuffer === 'string' && MedicalRecordImporter.isAppleHealthXml(sessionBuffer)){
+          console.log('Using XML string from Session for Apple Health Export (XML)');
           editorContent = sessionBuffer;
         } else {
-          console.error('Apple Health Export requires ArrayBuffer but none found');
+          console.error('Apple Health Export requires ArrayBuffer (ZIP) or XML string but none found');
           console.log('importBuffer type:', typeof importBuffer);
           console.log('sessionBuffer type:', typeof sessionBuffer);
         }
@@ -1365,12 +1420,65 @@ export function ImportEditorBindings(props){
     console.log('Parsing Data')
     console.log('previewBuffer type:', typeof previewBuffer);
     console.log('Is ArrayBuffer?', previewBuffer instanceof ArrayBuffer);
+    console.log('mappingAlgorithm:', mappingAlgorithm);
 
-    // Skip scanning for binary data like ArrayBuffer
+    // PRIORITY 1: Check for Apple Health Export FIRST (before any JSON parsing attempts)
+    // This handles both ZIP files (ArrayBuffer) and standalone export.xml (XML string)
+    if(mappingAlgorithm === 1 ||
+       previewBuffer instanceof ArrayBuffer ||
+       (typeof previewBuffer === 'string' && MedicalRecordImporter.isAppleHealthXml(previewBuffer))) {
+
+      console.log('Apple Health Export detected - processing...');
+
+      if(previewBuffer instanceof ArrayBuffer) {
+        // Handle ZIP file
+        console.log('Processing Apple Health ZIP file (ArrayBuffer)');
+        const importOptions = appleHealthOptions || {
+          timeRange: 'all',
+          includeWorkouts: true,
+          includeClinicalRecords: true,
+          includeHealthRecords: true
+        };
+
+        try {
+          const result = await MedicalRecordImporter.importAppleHealthExport(previewBuffer, importOptions);
+          if(result.success) {
+            console.log('Apple Health ZIP import successful');
+            Session.set('lastUpdated', new Date());
+          } else {
+            console.error('Apple Health ZIP import failed:', result.error);
+          }
+        } catch(error) {
+          console.error('Error importing Apple Health ZIP:', error);
+        }
+        return; // Exit early - we're done
+      }
+      else if(typeof previewBuffer === 'string' && MedicalRecordImporter.isAppleHealthXml(previewBuffer)) {
+        // Handle standalone XML file
+        console.log('Processing Apple Health XML file (string)');
+        const importOptions = appleHealthOptions || {
+          timeRange: 'all',
+          includeWorkouts: true,
+          includeClinicalRecords: false, // XML doesn't have clinical-records folder
+          includeHealthRecords: true
+        };
+
+        try {
+          await MedicalRecordImporter.processAppleHealthXML(previewBuffer, importOptions);
+          console.log('Apple Health XML import successful');
+          Session.set('lastUpdated', new Date());
+        } catch(error) {
+          console.error('Error importing Apple Health XML:', error);
+        }
+        return; // Exit early - we're done
+      }
+    }
+
+    // PRIORITY 2: Skip scanning for binary data (but not for Apple Health which we already handled)
     if(!(previewBuffer instanceof ArrayBuffer)){
       scanData(previewBuffer, true);
     }
-  
+
 
     logger.debug('File mime type: ' + fileExtension);
     console.log('File mime type: ' + fileExtension);
@@ -1480,59 +1588,29 @@ export function ImportEditorBindings(props){
       // logger.debug('File contents: ', previewBuffer);
       // logger.debug('ImportEditorBindings.MappingAlgorithm: ' + mappingAlgorithm);
 
-      MedicalRecordImporter.importNdjson(previewBuffer);      
+      MedicalRecordImporter.importNdjson(previewBuffer);
     } else if(['application/zip', 'application/x-zip-compressed', 'zip'].includes(fileExtension) || previewBuffer instanceof ArrayBuffer){
-      console.log("Detected zip file or ArrayBuffer (likely Apple Health Export)");
-      if(mappingAlgorithm === 1 && previewBuffer instanceof ArrayBuffer) {
-        console.log('Processing Apple Health Export with ArrayBuffer');
-        const importOptions = appleHealthOptions || {
-          timeRange: appleHealthTimeRange,
-          includeWorkouts: true,
-          includeClinicalRecords: true,
-          includeHealthRecords: true
-        };
-        MedicalRecordImporter.importAppleHealthExport(previewBuffer, importOptions).then(result => {
-          console.log('Apple Health import result:', result);
-          Session.set('lastUpdated', new Date());
-        }).catch(error => {
-          console.error('Apple Health import error:', error);
-        });
-      } else {
-        console.error('Zip file detected but not processing as Apple Health Export');
-      }
+      // Note: Apple Health Export (ZIP/ArrayBuffer) is now handled at the TOP of parseFileContents
+      // This block should only be reached if it's NOT Apple Health (algorithm !== 1)
+      console.log("Detected zip file or ArrayBuffer (non-Apple Health)");
+      console.warn('Zip file detected but not Apple Health Export - no handler implemented');
     } else {
       logger.debug("Otherwise, we're going to assume that this is a JSON or FHIR file.  Parsing...")
       logger.debug('File contents: ', previewBuffer);
 
-      
+
       switch (mappingAlgorithm) {
         case 0:  // FHIR Bundle
           MedicalRecordImporter.importBundle(previewBuffer);
           break;
         case 1:  // Apple Health Export
-          console.log('Processing Apple Health Export with mapping algorithm 1');
-          if(previewBuffer instanceof ArrayBuffer) {
-            const importOptions = appleHealthOptions || {
-              timeRange: appleHealthTimeRange,
-              includeWorkouts: true,
-              includeClinicalRecords: true,
-              includeHealthRecords: true
-            };
-            MedicalRecordImporter.importAppleHealthExport(previewBuffer, importOptions).then(result => {
-              if(result.success) {
-                console.log('Apple Health import successful');
-                Session.set('lastUpdated', new Date());
-              } else {
-                console.error('Apple Health import failed:', result.error);
-              }
-            });
-          } else {
-            console.error('Apple Health Export requires ArrayBuffer format');
-          }
-          break;      
+          // Note: Apple Health Export is now handled at the TOP of parseFileContents
+          // This case should never be reached because we return early above
+          console.warn('Apple Health Export case 1 reached - should have been handled at top of parseFileContents');
+          break;
         case 2:  // FaceBook
           parseFacebookProfile(previewBuffer);
-          break;      
+          break;
         case 3:  // Chicago Grocers File
           this.parseChicagoGrocersFile(previewBuffer);
           break;
@@ -1614,27 +1692,45 @@ export function ImportEditorBindings(props){
       fileExtension = get(queueItem, 'type');
     }
     
-    // Check if this is an Apple Health export
+    // Check if this is an Apple Health export (zip or XML)
     if(get(queueItem, 'isAppleHealthExport')){
       console.log('Processing Apple Health Export file');
       // Set the mapping algorithm to Apple Health Export
       setMappingAlgorithm(1);
-      
-      // Import the Apple Health data directly
-      MedicalRecordImporter.importAppleHealthExport(previewBuffer, {
-        timeRange: appleHealthTimeRange,
-        includeWorkouts: true,
-        includeClinicalRecords: true,
-        includeHealthRecords: true
-      }).then(result => {
-        if(result.success) {
-          console.log('Apple Health import successful');
+
+      // Check if this is XML or ZIP
+      if(get(queueItem, 'isAppleHealthXml')) {
+        // Handle standalone XML file
+        console.log('Processing Apple Health XML file');
+        const importOptions = {
+          timeRange: appleHealthTimeRange,
+          includeWorkouts: true,
+          includeClinicalRecords: false, // XML doesn't have clinical-records folder
+          includeHealthRecords: true
+        };
+        MedicalRecordImporter.processAppleHealthXML(previewBuffer, importOptions).then(() => {
+          console.log('Apple Health XML import successful');
           Session.set('lastUpdated', new Date());
-        } else {
-          console.error('Apple Health import failed:', result.error);
-        }
-      });
-      
+        }).catch(error => {
+          console.error('Apple Health XML import failed:', error);
+        });
+      } else {
+        // Handle ZIP file (ArrayBuffer)
+        MedicalRecordImporter.importAppleHealthExport(previewBuffer, {
+          timeRange: appleHealthTimeRange,
+          includeWorkouts: true,
+          includeClinicalRecords: true,
+          includeHealthRecords: true
+        }).then(result => {
+          if(result.success) {
+            console.log('Apple Health import successful');
+            Session.set('lastUpdated', new Date());
+          } else {
+            console.error('Apple Health import failed:', result.error);
+          }
+        });
+      }
+
       // Mark as completed
       if(typeof resolve === "function"){
         queueItem.status = "completed";
@@ -1690,26 +1786,27 @@ export function ImportEditorBindings(props){
           if(selectedCollectionsToExport[resourceName] === true){
             let collectionName = pluralizeResourceName(resourceName);
             console.log('collectionName', collectionName);
-            
+
             if(window[collectionName]){
-              if(window[collectionName].find().count()){
-                window[collectionName].find().forEach(function(record){
+              const records = window[collectionName].find().fetch();
+              if(records.length > 0){
+                records.forEach(function(record){
                   console.log('----------------------------------')
                   console.log('record', record);
                   let channelUrl = get(Meteor, 'settings.public.interfaces.fhirRelay.channel.endpoint');
-                  
+
                     console.log('channelUrl.length', channelUrl.length);
-                  
+
                     if(channelUrl[channelUrl.length] === "/"){
                       channelUrl = channelUrl.substring(0, channelUrl.length - 1);
-    
+
                     }
                     console.log('channelUrl', channelUrl);
-    
+
                     if(get(record, 'id')){
                       let putUrl = channelUrl + '/' + resourceName + "/" + get(record, 'id');
                       console.log('PUT ' + putUrl)
-                      
+
                       HTTP.put(putUrl, {data: record}, function(error, result){
                         if(error) {console.log('HTTP.put.error', error)}
                         if(result) {console.log('HTTP.put.result', result)}
@@ -1721,7 +1818,7 @@ export function ImportEditorBindings(props){
                         if(error) {console.log('HTTP.put.error', error)}
                         if(result) {console.log('HTTP.put.result', result)}
                       })
-                    }  
+                    }
                 })
               }
             }
@@ -1768,9 +1865,19 @@ export function ImportEditorBindings(props){
     // Set the import buffer with the file content
     if(get(item, 'content')){
       setImportBuffer(get(item, 'content'));
-      Session.set('importBuffer', get(item, 'content'));
+
+      // Only store in Session if it's NOT a large file (avoid EJSON size limits)
+      // For Apple Health XML (100MB+) or large ZIP files, keep in component state only
+      const contentSize = get(item, 'content.byteLength') || get(item, 'content.length') || 0;
+      if(contentSize < 10 * 1024 * 1024) { // Less than 10MB
+        Session.set('importBuffer', get(item, 'content'));
+      } else {
+        console.log('Skipping Session.set for large file (', (contentSize / 1024 / 1024).toFixed(2), 'MB), keeping in component state only');
+        // Remove any existing importBuffer from Session to avoid confusion
+        Session.set('importBuffer', null);
+      }
     }
-    
+
     // For Apple Health exports, set the mapping algorithm
     if(get(item, 'isAppleHealthExport')){
       setMappingAlgorithm(1);
@@ -1778,7 +1885,9 @@ export function ImportEditorBindings(props){
   }  
   function openPageUrl(url){
     console.log('openPageUrl', url)
-    navigate(url, { replace: true });
+    if (navigate) {
+      navigate(url, { replace: true });
+    }
   }
   
   
@@ -1803,7 +1912,7 @@ export function ImportEditorBindings(props){
     console.log('toggleAutoSelectPatient', event.currentTarget.value, newValue)
     setAutoSelectFirstPatient(newValue)
   }
-  function sendBundleToDataWarehouse() {
+  async function sendBundleToDataWarehouse() {
     console.log('Sending to data warehouse....');
 
     // replace with fetch to /metadata route
@@ -1811,22 +1920,40 @@ export function ImportEditorBindings(props){
 
     let resourceList = get(Meteor, 'settings.public.capabilityStatement.resourceTypes');
     if(Array.isArray(resourceList)){
-      resourceList.forEach(function(resourceType){
-        
+      for(const resourceType of resourceList){
+
         let pluralizedCollectionName = MedicalRecordImporter.pluralizeResourceName(resourceType);
           console.log('ImportEditorBindings.pluralizedCollectionName', pluralizedCollectionName)
-          
+
           if(window[pluralizedCollectionName] && window[pluralizedCollectionName]._collection){
-            window[pluralizedCollectionName]._collection.find().forEach(function(record){                        
-              Meteor.call('proxyInsertResource', record, async function(err, res){
-                if(err) console.log('proxyInsert.err', err)
+            // Use synchronous fetch() on client-side cursors
+            const records = window[pluralizedCollectionName]._collection.find().fetch();
+            console.log(`Found ${records.length} records in ${pluralizedCollectionName}`);
+
+            for(const record of records){
+              try {
+                const res = await new Promise((resolve, reject) => {
+                  Meteor.call('proxyInsertResource', record, function(err, result){
+                    if(err) {
+                      console.log('proxyInsert.err', err);
+                      reject(err);
+                    } else {
+                      resolve(result);
+                    }
+                  });
+                });
+
                 if(res){
                   await window[pluralizedCollectionName].removeAsync({_id: record._id})
                 }
-              })
-            });        
+              } catch(error) {
+                console.error('Error processing record:', error);
+              }
+            }
+          } else {
+            console.log('Collection not found or missing _collection:', pluralizedCollectionName);
           }
-      })
+      }
     }
 
   }
@@ -1857,7 +1984,7 @@ export function ImportEditorBindings(props){
     if(Array.isArray(importQueueRowsToRender)){
       // console.log('ImportQueue is an array.', importQueueRowsToRender)
       importQueueRowsToRender.forEach(function(item, index){
-        importQueueRows.push(<TableRow key={"importQueueRow-" + index} hover={true} onClick={selectImportQueueRow.bind(this, item)} style={{cursor: 'pointer'}} >
+        importQueueRows.push(<TableRow key={"importQueueRow-" + index} hover={true} onClick={selectImportQueueRow.bind(this, item)} style={{cursor: 'pointer', color: cardTextColor}} >
           {/* <TableCell>{index}</TableCell> */}
           <TableCell>
             {get(item, 'name')}<br />
@@ -1866,7 +1993,7 @@ export function ImportEditorBindings(props){
           <TableCell>{get(item, 'size')}</TableCell>
           {/* <TableCell style={{minWidth: '160px'}}>{moment(get(item, 'lastModifiedDate')).format('YYYY-MM-DD hh:mm')}</TableCell> */}
         </TableRow>)
-      })  
+      })
     }  
   }
 
@@ -1898,8 +2025,12 @@ export function ImportEditorBindings(props){
   if(showPreviewData){
     columnWidth = 3;
     previewDataContent = <Grid item md={12} lg={columnWidth} style={{width: '100%'}}>
-      <CardHeader title="Step 2.1 - Preview Data" style={{cursor: 'pointer'}} onClick={ setShowPreviewData.bind(this, false)} />
-      <Card style={{height: window.innerHeight - 300, backgroundColor: muiTheme.palette.mode === 'dark' ? muiTheme.palette.background.paper : '#ffffff'}} width={cardWidth + 'px'}>
+      <CardHeader
+        title="Step 2.1 - Preview Data"
+        style={{cursor: 'pointer', color: cardTextColor}}
+        onClick={ setShowPreviewData.bind(this, false)}
+      />
+      <Card style={{height: window.innerHeight - 300, backgroundColor: cardBgColor, color: cardTextColor}} width={cardWidth + 'px'}>
         <PreviewDataCard
           readyToImport={readyToImport}
           progressMax={importQueueLength}
@@ -1962,8 +2093,23 @@ export function ImportEditorBindings(props){
         <Grid container spacing={4} justify='center' style={{marginBottom: '100px'}}>
           <Grid item md={12} lg={columnWidth} style={{width: '100%'}}>
             <CardHeader title="Step 1 - File Scanner" />
-          
-            <Card width={cardWidth + 'px'} style={{backgroundColor: muiTheme.palette.mode === 'dark' ? muiTheme.palette.background.paper : '#ffffff'}}>              
+
+            <Card
+              width={cardWidth + 'px'}
+              sx={{
+                bgcolor: cardBgColor,
+                color: cardTextColor,
+                '& .MuiTableCell-root': {
+                  color: cardTextColor,
+                  borderColor: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.12)'
+                },
+                '& .MuiCheckbox-root': { color: cardTextColor },
+                '& .MuiTablePagination-root': { color: cardTextColor },
+                '& .MuiTablePagination-selectLabel': { color: cardTextColor },
+                '& .MuiTablePagination-displayedRows': { color: cardTextColor },
+                '& .MuiSelect-icon': { color: cardTextColor }
+              }}
+            >
               <CardContent>        
                 <Button 
                   id='selectFileButton'
@@ -1990,7 +2136,7 @@ export function ImportEditorBindings(props){
                 </Table>
                 { paginationFooter }
 
-                <div style={{marginTop: '6px'}} >
+                <div style={{marginTop: '6px', color: cardTextColor}} >
                   <Checkbox checked={autoSelectFirstPatient} onChange={toggleAutoSelectPatient.bind(this)} />Autoselect patient
                   <br />
                   <Checkbox checked={sendToDataWarehouse} onChange={toggleSendToDataWarehouse.bind(this)} />Send to data warehouse servers
@@ -2017,8 +2163,19 @@ export function ImportEditorBindings(props){
 
           </Grid>
           <Grid item md={12} lg={columnWidth} style={{width: '100%'}}>
-            <CardHeader title="Step 2 - Raw Data" style={{cursor: 'pointer'}} onClick={ setShowPreviewData.bind(this, true)} />
-            <Card style={{height: window.innerHeight - 300, backgroundColor: muiTheme.palette.mode === 'dark' ? muiTheme.palette.background.paper : '#ffffff'}} width={cardWidth + 'px'}>
+            <CardHeader
+              title="Step 2 - Raw Data"
+              style={{cursor: 'pointer', color: cardTextColor}}
+              onClick={ setShowPreviewData.bind(this, true)}
+            />
+            <Card
+              style={{height: window.innerHeight - 300}}
+              width={cardWidth + 'px'}
+              sx={{
+                bgcolor: cardBgColor,
+                color: cardTextColor
+              }}
+            >
               <DataEditor
                 previewMode={showPreviewData}
                 readyToImport={readyToImport}
@@ -2034,13 +2191,29 @@ export function ImportEditorBindings(props){
                 onMapData={mapData}
                 editWrapEnabled={editWrapEnabled}
                 onAppleHealthTimeRangeChange={(value) => setAppleHealthTimeRange(value)}
+                cardBgColor={cardBgColor}
+                cardTextColor={cardTextColor}
+                isDark={isDark}
               />
             </Card>
           </Grid>
           { previewDataContent }
           <Grid item md={12} lg={columnWidth} style={{width: '100%'}} key="last-grid-item">
             <CardHeader title="Step 3 - Collection Preview" />
-            <Card style={{height: window.innerHeight - 300, marginBottom: '20px', backgroundColor: muiTheme.palette.mode === 'dark' ? muiTheme.palette.background.paper : '#ffffff', display: 'flex', flexDirection: 'column'}} width={cardWidth + 'px'}>
+            <Card
+              style={{height: window.innerHeight - 300, marginBottom: '20px', display: 'flex', flexDirection: 'column'}}
+              width={cardWidth + 'px'}
+              sx={{
+                bgcolor: cardBgColor,
+                color: cardTextColor,
+                '& .MuiInputLabel-root': { color: cardTextColor },
+                '& .MuiSelect-root': { color: cardTextColor },
+                '& .MuiSelect-icon': { color: cardTextColor },
+                '& .MuiTableCell-root': { color: cardTextColor },
+                '& .MuiCheckbox-root': { color: cardTextColor },
+                '& .MuiButton-root': { color: cardTextColor }
+              }}
+            >
                 <CardContent style={{paddingBottom: 0}}>
                   <InputLabel id="import-algorithm-label">Import Algorithm</InputLabel>
                   <Select
@@ -2048,6 +2221,10 @@ export function ImportEditorBindings(props){
                     value={importAlgorithm}
                     onChange={handleChangeImportAlgorithm}
                     fullWidth
+                    style={{color: cardTextColor}}
+                    sx={{
+                      '& .MuiSelect-icon': { color: cardTextColor }
+                    }}
                   >
                     <MenuItem value="all" id="import-all" key="import-all">all</MenuItem>
                     <MenuItem value="import" id="import-import" key="import-import" >import</MenuItem>
@@ -2057,7 +2234,7 @@ export function ImportEditorBindings(props){
                   </Select>
                 </CardContent>
                 { dynamicAlgorithmItems }
-                <div style={{flex: 1, overflow: 'auto', padding: '0 16px 16px 16px'}}>
+                <div style={{flex: 1, overflow: 'auto', padding: '0 16px 16px 16px', color: cardTextColor}}>
                   <CollectionManagement
                     mode={importAlgorithm}
                     resourceTypes={scannedResourceTypes}
@@ -2071,6 +2248,7 @@ export function ImportEditorBindings(props){
                     displayPubSubEnabled={false}
                     noDataMessage="Please select a file to import."
                     preview={resourcePreview}
+                    textColor={cardTextColor}
                     onSelectionChange={function(selectionState){
                       console.log('onSelectionChange', selectionState)
                       setCollectionsToExport(selectionState);

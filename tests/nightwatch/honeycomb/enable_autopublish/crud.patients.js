@@ -1,6 +1,7 @@
 // tests/nightwatch/honeycomb/enable_autopublish/crud.patients.js
 
 const testUtils = require('./shared-test-utils');
+const loginHelper = require('../../helpers/login-helper');
 
 describe('Patients CRUD Operations', function() {
   const timestamp = Date.now();
@@ -49,69 +50,18 @@ describe('Patients CRUD Operations', function() {
         window.testTimestamp = ts;
       }, [timestamp]);
 
-    // Check if we're logged in
-    browser.execute(function() {
-      return {
-        isLoggedIn: typeof Meteor !== 'undefined' && !!Meteor.userId(),
-        userId: Meteor.userId ? Meteor.userId() : null,
-        username: Meteor.user ? (Meteor.user() ? Meteor.user().username : null) : null
-      };
-    }, [], function(result) {
-      console.log('Initial login state:', result.value);
-      
-      if (!result.value.isLoggedIn) {
-        console.log('Not logged in, attempting programmatic login...');
-        
-        browser.executeAsync(function(done) {
-          if (typeof Meteor !== 'undefined') {
-            Meteor.call('test.createTestUser', {
-              username: 'janedoe',
-              email: 'janedoe@test.org',
-              password: 'janedoe123'
-            }, function(err, userId) {
-              if (err) {
-                console.error('Failed to create test user:', err);
-                done({ userCreated: false, error: err.message });
-              } else {
-                console.log('Test user ready, userId:', userId);
-                Meteor.loginWithPassword('janedoe', 'janedoe123', function(loginErr) {
-                  if (loginErr) {
-                    console.error('Login failed:', loginErr);
-                    done({ userCreated: true, loginSuccess: false, error: loginErr.message });
-                  } else {
-                    console.log('Login successful');
-                    done({ 
-                      userCreated: true,
-                      loginSuccess: true, 
-                      userId: Meteor.userId(), 
-                      username: Meteor.user() ? Meteor.user().username : null 
-                    });
-                  }
-                });
-              }
-            });
-          } else {
-            done({ userCreated: false, loginSuccess: false, error: 'Meteor not available' });
-          }
-        }, [], function(result) {
-          if (result.value.loginSuccess) {
-            browser.assert.ok(true, 'Successfully created test user and logged in');
-            console.log('Logged in as:', result.value.username, 'userId:', result.value.userId);
-          } else {
-            browser.assert.fail('Setup failed: ' + result.value.error);
-          }
-        });
-        
-        browser.pause(500);
+    // Use login helper with built-in retry logic and null checks
+    loginHelper.ensureLoggedIn(browser, function(isLoggedIn) {
+      if (!isLoggedIn) {
+        browser.assert.fail('Failed to ensure user is logged in');
       } else {
-        browser.assert.ok(true, 'Already logged in (autologin enabled)');
-        console.log('Already logged in as:', result.value.username, 'userId:', result.value.userId);
+        browser.assert.ok(true, 'User is logged in');
       }
-      
+
       // Clean up any existing test data
       browser.executeAsync(function(done) {
         if (typeof Patients !== 'undefined') {
-          const testPatients = Patients.find({ 
+          const testPatients = Patients.find({
             $or: [
               { 'name.0.family': { $regex: 'Patient.*' } },
               { 'identifier.0.value': { $regex: 'test-patient-.*' } }
@@ -124,14 +74,15 @@ describe('Patients CRUD Operations', function() {
         }
         done();
       });
-      
+
       browser.pause(500);
     });
   });
 
   it('02. Verify patients list page loads', browser => {
+    // Use client-side navigation to preserve Meteor/Session state
+    testUtils.navigateUrl(browser, '/patients');
     browser
-      .url('http://localhost:3000/patients')
       .waitForElementVisible('#patientsPage', 5000)
       .pause(3000)  // Give more time for subscriptions and React to render in CI
       .execute(function() {
@@ -384,21 +335,28 @@ describe('Patients CRUD Operations', function() {
       const currentUrl = window.location.pathname;
       const hasPatientsPage = document.querySelector('#patientsPage') !== null;
       const hasDetailPage = document.querySelector('#patientDetailPage') !== null;
-      
-      // Check for any error messages
-      const errorElements = document.querySelectorAll('[color="error"], .error, [class*="error"], [class*="Error"]');
+
+      // Check for actual error messages (alerts, snackbars) not just error-colored buttons
+      const errorElements = document.querySelectorAll('.MuiAlert-root, .MuiSnackbar-root, [role="alert"]');
       let errorText = '';
       errorElements.forEach(el => {
-        if (el.textContent) errorText += el.textContent + ' ';
+        // Only include elements with error/warning severity
+        if (el.classList.contains('MuiAlert-standardError') ||
+            el.classList.contains('MuiAlert-filledError') ||
+            el.classList.contains('MuiAlert-outlinedError') ||
+            el.textContent.toLowerCase().includes('error') ||
+            el.textContent.toLowerCase().includes('failed')) {
+          if (el.textContent) errorText += el.textContent + ' ';
+        }
       });
-      
+
       // Check for success message
-      const successElements = document.querySelectorAll('[color="success.main"], .success, [class*="success"]');
+      const successElements = document.querySelectorAll('.MuiAlert-standardSuccess, .MuiAlert-filledSuccess, .MuiAlert-outlinedSuccess');
       let successText = '';
       successElements.forEach(el => {
         if (el.textContent) successText += el.textContent + ' ';
       });
-      
+
       return {
         url: currentUrl,
         hasPatientsPage: hasPatientsPage,
@@ -540,41 +498,132 @@ describe('Patients CRUD Operations', function() {
       .waitForElementVisible('#patientsPage', 5000)
       .pause(1000);
 
-    // Search for our test patient
+    // Search for our test patient using family name (displayed in table, contains unique timestamp)
     browser
       .waitForElementVisible('#patientSearchInput', 5000)
       .clearValue('#patientSearchInput')
-      .setValue('#patientSearchInput', testPatient.givenName)
-      .pause(1000); // Wait for search results to update
+      .pause(500) // Wait for clear to take effect
+      .setValue('#patientSearchInput', testPatient.familyName)
+      .pause(2500); // Wait for debounced search (500ms debounce + subscription update + render)
 
-    // Now click on the expand button for the filtered result
+    // Verify search filtered the results before clicking
+    browser.execute(function(expectedName) {
+      const allRows = document.querySelectorAll('#patientsTable tbody tr');
+      console.log('After search - found', allRows.length, 'total rows in patients table');
+
+      // Check if table contains our patient name
+      const tableText = document.querySelector('#patientsTable')?.textContent || '';
+      const foundOurPatient = tableText.includes(expectedName);
+      console.log('Table contains our patient name:', foundOurPatient);
+
+      return {
+        rowCount: allRows.length,
+        foundOurPatient: foundOurPatient,
+        tablePreview: tableText.substring(0, 200)
+      };
+    }, [testPatient.familyName], function(result) {
+      console.log('Search verification:', result.value);
+      if (!result.value.foundOurPatient) {
+        console.warn('WARNING: Search did not find our patient! This might cause the wrong patient to be clicked.');
+      }
+    });
+
+    // First collapse all expanded rows to ensure clean state
+    browser.execute(function() {
+      const expandedButtons = document.querySelectorAll('#patientsTable button[aria-label="expand row"][aria-expanded="true"]');
+      console.log('Collapsing', expandedButtons.length, 'already-expanded rows');
+      expandedButtons.forEach(btn => btn.click());
+    });
+
+    browser.pause(300); // Wait for collapse animations
+
+    // Now click on the expand button for our specific patient
     browser
-      .execute(function() {
-        // After searching, there should be only one or very few results
-        const allRows = document.querySelectorAll('#patientsTable tbody tr');
-        console.log('After search - found', allRows.length, 'total rows in patients table');
-        
-        // Find and click the first expand button (should be our patient)
-        const expandButtons = document.querySelectorAll('#patientsTable button[aria-label*="expand"]');
-        console.log('Found', expandButtons.length, 'expand buttons');
-        
-        if (expandButtons[0]) {
-          console.log('Clicking first expand button after search');
-          expandButtons[0].click();
-          return { clicked: true };
+      .execute(function(expectedName) {
+        // Find the row that contains our patient name
+        const allRows = document.querySelectorAll('#patientsTable tbody tr.patientRow');
+        console.log('Total patient rows:', allRows.length);
+
+        let targetRow = null;
+        for (let row of allRows) {
+          const rowText = row.textContent || '';
+          console.log('Checking row:', rowText.substring(0, 150));
+          if (rowText.includes(expectedName)) {
+            console.log('✓ Found our patient row with name:', expectedName);
+            targetRow = row;
+            break;
+          }
         }
-        
-        return { clicked: false, error: 'No expand button found after search' };
-      }, [], function(result) {
+
+        if (targetRow) {
+          // Find the expand button in this specific row
+          const expandButton = targetRow.querySelector('button[aria-label="expand row"]');
+          if (expandButton) {
+            console.log('Clicking expand button in row with our patient name');
+            expandButton.click();
+            return {
+              clicked: true,
+              rowText: targetRow.textContent.substring(0, 200),
+              method: 'name-match'
+            };
+          } else {
+            return { clicked: false, error: 'No expand button in target row' };
+          }
+        }
+
+        // Fallback: click first expand button
+        console.warn('FALLBACK: Could not find row with name, using first expand button');
+        const expandButtons = document.querySelectorAll('#patientsTable button[aria-label="expand row"]');
+        console.log('Found', expandButtons.length, 'expand buttons (fallback)');
+        if (expandButtons[0]) {
+          expandButtons[0].click();
+          return { clicked: true, warning: 'Used fallback - row not found by name', method: 'fallback' };
+        }
+
+        return { clicked: false, error: 'No expand button found' };
+      }, [testPatient.familyName], function(result) {
         console.log('Expand result:', result.value);
+        if (result.value.method === 'fallback') {
+          console.warn('WARNING: Used fallback method - may click wrong patient!');
+        }
         browser.assert.equal(result.value.clicked, true, 'Clicked expand button');
       });
 
-    // Wait for expansion and click View Patient button
+    // Wait for expansion and click Demographics button
+    // Note: Must find button within the expanded row's context since multiple rows may have same class
     browser
-      .pause(500) // Wait for expansion animation
-      .waitForElementVisible('#viewPatientButton', 5000)
-      .click('#viewPatientButton')
+      .pause(500); // Wait for expansion animation
+
+    browser.execute(function(expectedName) {
+      // Find the expanded row containing our test patient's name
+      const allRows = document.querySelectorAll('#patientsTable tbody tr.patientRow');
+      let expandedRowGroup = null;
+
+      for (let row of allRows) {
+        if (row.textContent.includes(expectedName)) {
+          // Found the main row, now find the next sibling (the expanded detail row)
+          let nextRow = row.nextElementSibling;
+          if (nextRow && nextRow.querySelector('.viewPatientDemographicsButton')) {
+            expandedRowGroup = nextRow;
+            break;
+          }
+        }
+      }
+
+      if (expandedRowGroup) {
+        const demographicsButton = expandedRowGroup.querySelector('.viewPatientDemographicsButton');
+        if (demographicsButton) {
+          demographicsButton.click();
+          return { clicked: true, method: 'found-in-expanded-row' };
+        }
+      }
+
+      return { clicked: false, error: 'Demographics button not found in expanded row' };
+    }, [testPatient.familyName], function(result) {
+      browser.assert.equal(result.value.clicked, true, 'Clicked Demographics button in correct row');
+    });
+
+    browser
       .pause(1000)
       .waitForElementVisible('#patientDetailPage', 5000)
       .assert.valueContains('#givenNameInput', testPatient.givenName)
@@ -582,9 +631,9 @@ describe('Patients CRUD Operations', function() {
       .assert.valueContains('#identifierInput', testPatient.identifier)
       .saveScreenshot('tests/nightwatch/screenshots/patients/07-view-patient-details.png');
     
-    // Navigate back to patients list
+    // Navigate back to patients list using client-side navigation
+    testUtils.navigateUrl(browser, '/patients');
     browser
-      .url('http://localhost:3000/patients')
       .waitForElementVisible('#patientsPage', 5000);
   });
 
@@ -593,31 +642,88 @@ describe('Patients CRUD Operations', function() {
       .waitForElementVisible('#patientsPage', 5000)
       .pause(1000);
 
-    // Search for our test patient
+    // Search for our test patient using family name (displayed in table, contains unique timestamp)
     browser
       .waitForElementVisible('#patientSearchInput', 5000)
       .clearValue('#patientSearchInput')
-      .setValue('#patientSearchInput', testPatient.givenName)
-      .pause(1000); // Wait for search results to update
+      .pause(500)
+      .setValue('#patientSearchInput', testPatient.familyName)
+      .pause(2500); // Wait for debounced search + subscription
 
-    // Click on the expand button to open the accordion
+    // Collapse all expanded rows first
+    browser.execute(function() {
+      const expandedButtons = document.querySelectorAll('#patientsTable button[aria-label="expand row"][aria-expanded="true"]');
+      expandedButtons.forEach(btn => btn.click());
+    });
+
+    browser.pause(300);
+
+    // Click on the expand button for our specific patient
     browser
-      .execute(function() {
-        const expandButtons = document.querySelectorAll('#patientsTable button[aria-label*="expand"]');
+      .execute(function(expectedName) {
+        const allRows = document.querySelectorAll('#patientsTable tbody tr.patientRow');
+        let targetRow = null;
+        for (let row of allRows) {
+          if (row.textContent.includes(expectedName)) {
+            targetRow = row;
+            break;
+          }
+        }
+
+        if (targetRow) {
+          const expandButton = targetRow.querySelector('button[aria-label="expand row"]');
+          if (expandButton) {
+            expandButton.click();
+            return true;
+          }
+        }
+
+        // Fallback
+        const expandButtons = document.querySelectorAll('#patientsTable button[aria-label="expand row"]');
         if (expandButtons[0]) {
           expandButtons[0].click();
           return true;
         }
         return false;
-      }, [], function(result) {
+      }, [testPatient.familyName], function(result) {
         browser.assert.equal(result.value, true, 'Clicked expand button');
       });
 
-    // Click View Patient button
+    // Wait for expansion and click Demographics button
+    // Note: Must find button within the expanded row's context since multiple rows may have same class
     browser
-      .pause(500)
-      .waitForElementVisible('#viewPatientButton', 5000)
-      .click('#viewPatientButton')
+      .pause(500); // Wait for expansion animation
+
+    browser.execute(function(expectedName) {
+      // Find the expanded row containing our test patient's name
+      const allRows = document.querySelectorAll('#patientsTable tbody tr.patientRow');
+      let expandedRowGroup = null;
+
+      for (let row of allRows) {
+        if (row.textContent.includes(expectedName)) {
+          // Found the main row, now find the next sibling (the expanded detail row)
+          let nextRow = row.nextElementSibling;
+          if (nextRow && nextRow.querySelector('.viewPatientDemographicsButton')) {
+            expandedRowGroup = nextRow;
+            break;
+          }
+        }
+      }
+
+      if (expandedRowGroup) {
+        const demographicsButton = expandedRowGroup.querySelector('.viewPatientDemographicsButton');
+        if (demographicsButton) {
+          demographicsButton.click();
+          return { clicked: true, method: 'found-in-expanded-row' };
+        }
+      }
+
+      return { clicked: false, error: 'Demographics button not found in expanded row' };
+    }, [testPatient.familyName], function(result) {
+      browser.assert.equal(result.value.clicked, true, 'Clicked Demographics button in correct row');
+    });
+
+    browser
       .pause(1000)
       .waitForElementVisible('#patientDetailPage', 5000)
       .pause(500);
@@ -691,8 +797,10 @@ describe('Patients CRUD Operations', function() {
       });
 
     browser
-      .pause(2000)
-      .url('http://localhost:3000/patients')
+      .pause(2000);
+    // Use client-side navigation to preserve Meteor/Session state
+    testUtils.navigateUrl(browser, '/patients');
+    browser
       .waitForElementVisible('#patientsTable', 5000)
       .saveScreenshot('tests/nightwatch/screenshots/patients/09-patient-updated.png');
   });
@@ -718,24 +826,24 @@ describe('Patients CRUD Operations', function() {
       .waitForElementVisible('#patientsPage', 5000)
       .pause(1000);
 
-    // Search for our updated test patient
+    // Search for our test patient using family name (displayed in table, contains unique timestamp)
     browser
       .waitForElementVisible('#patientSearchInput', 5000)
       .clearValue('#patientSearchInput')
-      .setValue('#patientSearchInput', updatedPatient.givenName)
-      .pause(1000); // Wait for search results to update
+      .pause(500)
+      .setValue('#patientSearchInput', testPatient.familyName)
+      .pause(2500); // Wait for debounced search + subscription
 
     // Since Delete button is not available in the UI, use programmatic deletion
     // This tests the delete method while acknowledging that delete functionality
     // is typically accessed from MyProfile page in production
-    browser.executeAsync(function(givenName, familyName, done) {
+    browser.executeAsync(function(identifier, done) {
       console.log('TEST_RUN: Performing programmatic patient deletion');
-      
+
       if (typeof Patients !== 'undefined') {
-        // Find the patient to delete
+        // Find the patient to delete by identifier
         const patientToDelete = Patients.findOne({
-          'name.0.given.0': givenName,
-          'name.0.family': familyName
+          'identifier.0.value': identifier
         });
         
         if (patientToDelete) {
@@ -772,19 +880,19 @@ describe('Patients CRUD Operations', function() {
           }
         } else {
           console.log('Patient not found for deletion');
-          done({ 
-            deleted: false, 
+          done({
+            deleted: false,
             error: 'Patient not found',
-            searchCriteria: { givenName, familyName }
+            searchCriteria: { identifier: identifier }
           });
         }
       } else {
-        done({ 
-          deleted: false, 
-          error: 'Patients collection not available' 
+        done({
+          deleted: false,
+          error: 'Patients collection not available'
         });
       }
-    }, [updatedPatient.givenName, updatedPatient.familyName], function(result) {
+    }, [testPatient.identifier], function(result) {
       console.log('Deletion result:', result.value);
       
       if (result.value.deleted) {

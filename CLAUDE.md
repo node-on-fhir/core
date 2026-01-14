@@ -1,229 +1,184 @@
-
 # CLAUDE.md
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## Overview
 
-Honeycomb3 is a full-stack FHIR (Fast Healthcare Interoperability Resources) framework built on Meteor.js for creating healthcare applications. It provides a TEFCA-compliant FHIR server, consent management, and support for SMART on FHIR applications.
+Honeycomb3 is a full-stack FHIR (Fast Healthcare Interoperability Resources) framework built on Meteor.js. It provides a TEFCA-compliant FHIR server, consent management, and SMART on FHIR support.
 
-## Key Commands
+**Tech Stack**: Meteor v3 + React 18 + Material-UI v5 + MongoDB + FHIR R4
 
-### Development
+## Quick Start
+
 ```bash
-# Run the application locally
+# Run locally
 meteor run --settings configs/settings.honeycomb.localhost.json
 
-# Run with specific settings (choose appropriate config file)
-meteor run --settings configs/settings.consent.localhost.json
-meteor run --settings configs/settings.fhir.localhost.json
+# Run tests
+npm test
 ```
 
-### Testing
-```bash
-# Run unit tests
-meteor test --once --driver-package meteortesting:mocha
+## Claude Code Workflow
 
-# Run full app tests
-meteor test --full-app --driver-package meteortesting:mocha
+Comprehensive guidance is organized in `.claude/`:
 
-# Run Nightwatch E2E tests
-npm test  # or meteor npm test
-```
+### Commands (Slash Commands)
+- `/create-crud-microservice {Resource}` - Generate complete FHIR resource implementation
+- `/create-crud-tests {Resource}` - Generate 9-test CRUD pattern
+- `/add-patient-context-to-tests {file}` - Fix test context management
+- `/audit-id-lookups` - Scan for ID collision bugs
+- `/audit-theme` - Scan for dark mode issues
+- `/healthit-checklist {topic}` - Generate paranoia checklist
 
-### Build & Deploy
-```bash
-# Production build with bundle visualization
-meteor --production --extra-packages bundle-visualizer
+### Agents (Specialized Subagents)
+- `fhir-schema-expert` - FHIR R4, SMART 2.x, ONC (g)(10), schema migration
+- `test-stabilizer` - Nightwatch stability, Material-UI testing
+- `patient-context-debugger` - Session state, subscription patterns
+- `theme-auditor` - Light/dark mode compliance
+- `healthit-auditor` - ONC (g)(10) certification
 
-# Build desktop app (Electron)
-meteor-desktop
-```
+### Hooks (Automatic Verification)
+- `post-tool-use-id-lookup.md` - Detects `_id||id` anti-pattern (runs after edits)
+- `post-tool-use-theme.md` - Detects hardcoded colors (runs after edits)
+- `post-tool-use-async.md` - Checks Meteor v3 async patterns (runs after edits)
+- `verify-tests.md` - Smart test triggers (asks before running tests)
 
-## Architecture Overview
+### Rules (Detailed Patterns)
+- `.claude/rules/anti-patterns/` - Critical bugs to avoid
+- `.claude/rules/fhir/` - FHIR resource implementation
+- `.claude/rules/testing/` - E2E test patterns
+- `.claude/rules/ui/` - Material-UI v5, theming, responsive
+- `.claude/rules/meteor/` - Meteor v3 async, collections
 
-### Technology Stack
-- **Framework**: Meteor.js (real-time web framework)
-- **Frontend**: React 18, Material-UI v5, React Router v6
-- **Backend**: Node.js, MongoDB, Express.js for REST endpoints
-- **Data Standard**: FHIR R4
-- **Testing**: Mocha (unit), Nightwatch (E2E)
+## Critical Anti-Pattern: ID Lookup with OR Logic
 
-### Core Components
-
-1. **FHIR Server** (`/server/fhir/`)
-   - REST API endpoints for 40+ FHIR resources
-   - OAuth 2.0 authentication server
-   - CDS Hooks implementation
-   - UDAP certificate handling
-
-2. **Client UI** (`/imports/ui/`)
-   - Patient chart components
-   - FHIR resource management interfaces
-   - Consent management system
-   - SMART app launcher and debugger
-
-3. **Data Layer** (`/imports/lib/`)
-   - SimpleSchema definitions for FHIR resources
-   - Validated Meteor methods for data operations
-   - FHIR utility functions and transformers
-
-4. **Plugin System** (`/packages/`)
-   - Modular architecture for extending functionality
-   - Starter packages for common use cases
-
-### Key Patterns
-
-- **Methods**: Use Meteor's validated methods pattern for data operations (see `/imports/methods/`)
-- **Schemas**: All FHIR resources have SimpleSchema definitions in `/imports/lib/schemas/`
-- **Routing**: React Router v6 configuration in `/imports/ui/App.jsx`
-- **Testing**: Page Object Model for E2E tests in `/tests/nightwatch/pages/`
-
-## Important Notes
-
-- Replace all "QWERTY" placeholders before deployment
-- Settings files in `/configs/` control different deployment modes (FHIR server, consent engine, etc.)
-- The application supports HIPAA compliance and has undergone security audits
-- When adding new FHIR resources, follow the existing pattern in schemas and UI components
-- Use the FHIR dehydrator functions when transforming between FHIR and internal formats
-
-## SyncedCron Control
-
-The application uses `meteor/quave:synced-cron` for scheduled tasks. By default, SyncedCron is **disabled** to prevent interference with tests and development.
-
-### Enabling SyncedCron
-
-You can enable SyncedCron in three ways:
-
-1. **Environment Variable** (highest priority):
-   ```bash
-   ENABLE_SYNCED_CRON=true meteor run --settings configs/settings.honeycomb.localhost.json
-   ```
-
-2. **Settings Configuration**:
-   ```json
-   {
-     "private": {
-       "enableCronAutomation": true
-     }
-   }
-   ```
-
-3. **Legacy Setting** (for backward compatibility):
-   ```json
-   {
-     "private": {
-       "enableTaskManager": true
-     }
-   }
-   ```
-
-### Test Environment
-
-SyncedCron is automatically disabled when `TEST_RUN=true` is set, regardless of settings configuration. This prevents cron jobs from interfering with test execution.
-
-## Package Dependencies
-
-### Deprecated Packages
-- **clinical:hl7-fhir-data-infrastructure** - This package is deprecated. Do not use it in new packages or add it as a dependency.
-
-### Preferred Dependencies for Clinical Packages
-
-
-When creating clinical packages, use these dependencies:
-- `meteor` 
-- `webapp` 
-- `ecmascript` 
-- `react-meteor-data` 
-- `session` 
-- `mongo` 
-- `check` 
-- `clinical:extended-api`
-- `clinical:hl7-resource-datatypes`
-
-- Style guide:  we are writing a Meteor v3 app, using React and MaterialUI app.  
-
-- *** IMPORTANT:  On the server, be sure to use Meteor v3 API, including getTextAsync, findAsync, insertAsync, updateAsync, removeAsync, countAsync, etc. *** 
-
-- Add the path and name of the file as the first line of each file (commented out)
-
-- We are using the Meteor v3 toolchain, with ES6 style async/await patterns. We prefer function() syntax instead of ES6 style => arrow syntax. 
-
-- We use the lodash library for circuit breaker pattern when accessing JSON objects, so feel free to generously use get() and set() functions and specify default values.  Do *not* import the _ function; do explicitly import each function.
-
-- For date time operations, use the moment library.  
-
-- We are writing a 12 Factor app, so will wish to specify key configuration params via environment variables, which then get attached to the Meteor.settings on server startup, and later accessed elsewhere in the app.  
-
-- When possible, files should be written in such a way that they can be refactored into an Atmosphere.js package later.
-
-- Development environment is MacOS ARM64.  When multiple clients are run, they will likely be run on the same machine, using ports 3000 and 4000 respectively.  
-
-- When returning code, check with the user, whether a script, bash commands, or javascript file is desired.  
-
-- Use the meteor/fetch package for HTTP calls.
-
-- Don't ever suggest webpack, vite, or other bundlers.  
-
-- Avoid directory index.js files.
-
-- When routing between pages, always use the useNavigate hook; Don't use window.location.href
-
-- Strive to always balance conditional if/then statements, and give a console message during the negative case.  Don't silently swallow the conditional.  
-
-- Do use the full gamut of console messages:  console.warn, console.error, console.group, etc.
-
-- Always use IDE diagnostics to validate code after implementation
-
-## RSPack Migration Guide
-
-### Handling Nested Imports
-
-Nested imports are a Meteor-specific feature not supported by standard bundlers like RSPack. They must be migrated to standard JavaScript patterns.
-
-#### Dynamic Import Pattern (Recommended)
-
-When you need to conditionally import packages (e.g., optional Atmosphere.js packages), use dynamic imports:
+**NEVER use OR logic when looking up records by ID.** This is the #1 bug in Honeycomb and causes ID collisions.
 
 ```javascript
-// Instead of nested import:
-// if (Package['browser-policy-common']) {
-//   import { BrowserPolicy } from 'meteor/browser-policy-common';
-// }
+// ❌ WRONG - Can match multiple records causing ID collisions!
+const patientId = get(patient, 'id') || get(patient, '_id');
+const record = collection.find(p => p.id === value || p._id === value);
 
-// Use dynamic import:
-if (Package['browser-policy-common']) {
-  console.log('Configuring content-security-policy.');
-  import('meteor/browser-policy-common').then(({ BrowserPolicy }) => {
-    // Use BrowserPolicy here
-  });
+// ✅ CORRECT - Use MongoDB _id (primary key) only
+const patientId = get(patient, '_id');
+const record = collection.find(p => p._id === value);
+```
+
+**Why**: After data transformation (e.g., `flattenPatient()`), records have **BOTH** `_id` (MongoDB primary key) and `id` (FHIR identifier). Using OR logic can match multiple records:
+
+```javascript
+{
+  _id: '5832e8a0ea861706b1857c49',  // MongoDB primary key
+  id: '23c65305-e7da-3fa8-e7c9-92d6199dd40e'  // FHIR identifier
 }
 ```
 
-This pattern is standards-compliant and works with modern bundlers while maintaining the conditional loading behavior.
+Using OR logic (`||`) can cause catastrophic ID collisions:
+- Patient A: `{ _id: 'abc123', id: 'xyz789' }`
+- Patient B: `{ _id: 'xyz789', id: 'def456' }`
+- Looking up `'xyz789'` with OR logic matches **BOTH** patients!
+- `.find()` returns whichever comes first (wrong patient)
+
+**Real-World Impact:** This bug caused test patients to open the wrong patient details page, showing "Kylee Leannon" instead of the test patient. With 293+ patients in the database, ID collisions are inevitable.
+
+**When You Need FHIR ID:**
+
+Get it from the found record after lookup, don't use it for the lookup itself:
+
+```javascript
+// Find by MongoDB _id
+const patient = Patients.findOne({ _id: mongoId });
+
+// Then extract FHIR id for navigation or display
+const fhirId = patient.id;
+navigate(`/patients/${fhirId}`);
+```
+
+**MongoDB _id is the source of truth** for all record lookups. FHIR `id` is just a field and should only be used for:
+- Display purposes
+- FHIR API compliance
+- Navigation URLs (after lookup)
+
+**More details**: See `.claude/rules/anti-patterns/id-lookup.md`
+
+## Development Guidelines
+
+### Meteor v3 Async (Server-Side)
+```javascript
+// ❌ WRONG: Synchronous (Meteor v2)
+const record = Observations.findOne({ _id: id });
+
+// ✅ CORRECT: Async (Meteor v3)
+const record = await Observations.findOneAsync({ _id: id });
+```
+
+**More details**: See `.claude/rules/meteor/v3-async.md`
+
+### Material-UI Theming
+```javascript
+// ❌ WRONG: Hardcoded colors (breaks dark mode)
+<Box sx={{ backgroundColor: '#ffffff', color: '#000000' }} />
+
+// ✅ CORRECT: Theme tokens
+<Box sx={{ backgroundColor: 'background.paper', color: 'text.primary' }} />
+```
+
+**More details**: See `.claude/rules/ui/theming.md`
+
+### React Navigation
+```javascript
+// ❌ WRONG: Full page reload
+window.location.href = '/patients';
+
+// ✅ CORRECT: React Router
+const navigate = useNavigate();
+navigate('/patients');
+```
+
+**More details**: See `.claude/rules/anti-patterns/navigation.md`
+
+## Additional Patterns
+
+For comprehensive guidance on:
+- **FHIR Resources**: See `.claude/rules/fhir/resource-implementation.md`
+- **Patient Filtering**: See `.claude/rules/fhir/patient-filtering.md`
+- **Test Patterns**: See `.claude/rules/testing/crud-patterns.md`
+- **Theme Compliance**: See `.claude/rules/ui/theming.md`
+- **All Anti-Patterns**: See `.claude/rules/anti-patterns/`
+
+Use `/audit-id-lookups` and `/audit-theme` commands to scan the codebase for common issues 
+
+## Coding Style
+
+- **Meteor v3**: Use async/await on server (`findOneAsync`, `insertAsync`, `updateAsync`, `removeAsync`)
+- **Function syntax**: Prefer `function() {}` over arrow functions for Meteor methods (preserves `this` context)
+- **Lodash**: Use `get()` and `set()` for circuit breaker pattern; import functions explicitly, not `_`
+- **Date/time**: Use `moment` library
+- **HTTP calls**: Use `meteor/fetch` package
+- **Routing**: Use `useNavigate()` hook, never `window.location.href`
+- **Console**: Use full gamut (`console.warn`, `console.error`, `console.group`, etc.)
+- **Conditionals**: Always balance if/then with console messages, don't silently swallow
+- **File headers**: Add path/name as first line (commented out)
+- **No bundlers**: Don't suggest webpack, vite, etc. (Meteor has built-in bundler)
+- **No index.js**: Avoid directory index files
 
 ## Healthy Paranoia Checklist Format
 
-When the user asks for a "Healthy Paranoia Checklist" or when discussing risky technical implementations, use this format:
+When discussing risky technical implementations, use `/healthit-checklist {topic}` or this format:
 
+```markdown
 ### Healthy Paranoia Checklist: [Topic]
 
 **What could still go wrong:**
-- 🎯 [Specific technical risk with details]
-- 💥 [Infrastructure/deployment concern]  
-- 🐛 [Likely bug or edge case scenario]
+- 🎯 [Specific technical risk]
+- 💥 [Infrastructure/deployment concern]
+- 🐛 [Likely bug or edge case]
 - 📱 [Platform/device-specific issue]
 - 🔒 [Security/compliance/regulatory worry]
-- 😭 [The nightmare scenario that keeps you up at night]
+- 😭 [Nightmare scenario]
 
 **But remember:** [What's actually working and why that's significant]
+```
 
-This format:
-- Validates legitimate concerns without dismissing them
-- Lists specific, realistic technical risks (not vague worries)
-- Uses emojis to add levity while discussing potential failures
-- Maintains perspective by acknowledging what IS working
-- Balances optimism with engineering realism
-
-Perfect for situations where "it should just work" has burned us before.
+This validates concerns while maintaining perspective.
 

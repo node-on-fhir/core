@@ -83,6 +83,7 @@ export function EncountersPage(props){
           {'_id': searchFilter},
           {'id': searchFilter},
           {'participant.0.individual.display': {$regex: searchFilter, $options: 'i'}},
+          {'participant.individual.display': {$regex: searchFilter, $options: 'i'}},
           {'type.0.text': {$regex: searchFilter, $options: 'i'}},
           {'reasonCode.0.text': {$regex: searchFilter, $options: 'i'}},
           {'subject.display': {$regex: searchFilter, $options: 'i'}}
@@ -155,6 +156,7 @@ export function EncountersPage(props){
           {'_id': searchFilter},
           {'id': searchFilter},
           {'participant.0.individual.display': {$regex: searchFilter, $options: 'i'}},
+          {'participant.individual.display': {$regex: searchFilter, $options: 'i'}},
           {'type.0.text': {$regex: searchFilter, $options: 'i'}},
           {'reasonCode.0.text': {$regex: searchFilter, $options: 'i'}},
           {'subject.display': {$regex: searchFilter, $options: 'i'}}

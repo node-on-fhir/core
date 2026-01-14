@@ -1,0 +1,61 @@
+---
+#2. Client's age is less than 6 months
+#   Today's date − "Date of birth" < 6 months
+### Client is not due for Typhoid vaccination
+### "Immunization recommendation status" = "Not due"
+id: "08.2"
+birth: -5m
+patient:
+  fhir:
+    gender: female
+---
+#1. No typhoid primary series doses were administered
+#   Count of vaccines administered (where "Vaccine type" = "Typhoid vaccines" and "Type of dose" = "Primary series") = 0
+#2. Client's age is between 6 months and 45 years
+#   6 months ≤ Today's date − "Date of birth" < 45 years
+### Client is due for Typhoid vaccination
+### "Immunization recommendation status" = "Due"
+id: "09.12"
+birth: -6m
+patient:
+  fhir:
+    gender: female
+---
+#1. No typhoid primary series doses were administered
+#2. Client's age is more than or equal to 45 years
+#   Today's date − "Date of birth" ≥ 45 years
+### Clinical judgement is required. Create a clinical note
+### "Immunization recommendation status" = "Further evaluation needed"
+id: "10.12"
+birth: -45y
+patient:
+  fhir:
+    gender: female
+---
+#1. One typhoid primary series dose was administered
+#   Count of vaccines administered (where "Vaccine type" = "Typhoid vaccines" and "Type of dose" = "Primary series") = 1
+### Typhoid immunization schedule is complete
+### "Immunization recommendation status" = "Complete"
+### "Completed the primary vaccination series" = TRUE (where "Vaccine type" = "Typhoid vaccines")
+id: "11.1"
+birth: -6m
+patient:
+  fhir:
+    gender: female
+immunization:
+  typhoid:
+    vaccine:
+      code: XM8BU8
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Typhoid vaccines"
+    doses:
+      p1:
+        - 0d
+    fhir:
+      extension:
+        - url: "http://smart.who.int/immunizations/StructureDefinition/IMMZTypeOfDose"
+          valueCodeableConcept:
+            coding:
+            - code: DE226
+              system: "http://smart.who.int/immunizations/CodeSystem/IMMZ.D"
+              display: "Typbar-TCV"

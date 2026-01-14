@@ -1,0 +1,125 @@
+---
+#1. The client is currently pregnant
+#   "Potential contraindications" = "Currently pregnant"
+### Varicella vaccination is contraindicated
+### "Immunization recommendation status" = "Contraindicated"
+id: "34.1"
+birth: -25y
+patient:
+  fhir:
+    gender: female
+contraindication:
+    currentlypregnant:
+      code: DE162
+      display: "Currently pregnant"
+      effectiveDateTime: -1d
+medicationrequest:
+  varicella:
+    medication:
+      code: XM8DG3
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Varicella zoster vaccines"
+    fhir:
+      authoredOn: 0d
+      status: draft
+      intent: proposal
+---
+#1. The client is planning to get pregnant in the next month
+#   "Potential contraindications" = "Planning to get pregnant in the next month"
+### Clinical judgement is required. Create clinical note
+### "Immunization recommendation status" = "Further evaluation needed"
+id: "35.1"
+birth: -25y
+patient:
+  fhir:
+    gender: female
+contraindication:
+    planningtogetpregnantinthenextmonth:
+      code: DE169
+      display: "Planning to get pregnant in the next month"
+      effectiveDateTime: -1d
+medicationrequest:
+  varicella:
+    medication:
+      code: XM8DG3
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Varicella zoster vaccines"
+    fhir:
+      authoredOn: 0d
+      status: draft
+      intent: proposal
+---
+#1. The client has immune deficiency
+#   "Potential contraindications" = "Immunodeficiency syndromes"
+### Varicella vaccination could be contraindicated. Clinical judgement is required. Create clinical note
+### "Immunization recommendation status" = "Further evaluation needed"
+id: "36.1"
+birth: -2y
+patient:
+  fhir:
+    gender: female
+contraindication:
+    immunodeficiencysyndromes:
+      code: DE187
+      display: "Immunodeficiency syndromes"
+      effectiveDateTime: -1d
+medicationrequest:
+  varicella:
+    medication:
+      code: XM8DG3
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Varicella zoster vaccines"
+    fhir:
+      authoredOn: 0d
+      status: draft
+      intent: proposal
+---
+#1. The client is immunocompromised
+#   "Potential contraindications" = "Immunocompromised"
+### Clinical judgement is required. Create clinical note
+### '"Immunization recommendation status" = "Further evaluation needed"
+id: "37.1"
+birth: -2y
+patient:
+  fhir:
+    gender: female
+contraindication:
+    immunocompromised:
+      code: DE163
+      display: "Immunocompromised"
+      effectiveDateTime: -1d
+medicationrequest:
+  varicella:
+    medication:
+      code: XM8DG3
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Varicella zoster vaccines"
+    fhir:
+      authoredOn: 0d
+      status: draft
+      intent: proposal
+---
+#1. The client is receiving or has received medications that may be immunosuppressive
+#   "Potential contraindications" = "Exposed to immunosuppressive treatment"
+### Clinical judgement is required. Create clinical note
+### "Immunization recommendation status" = "Further evaluation needed"
+id: "38.1"
+birth: -2y
+patient:
+  fhir:
+    gender: female
+contraindication:
+    exposedtoimmunosuppressivetreatment:
+      code: DE164
+      display: "Exposed to immunosuppressive treatment"
+      effectiveDateTime: -1d
+medicationrequest:
+  varicella:
+    medication:
+      code: XM8DG3
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Varicella zoster vaccines"
+    fhir:
+      authoredOn: 0d
+      status: draft
+      intent: proposal

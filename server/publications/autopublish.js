@@ -1,5 +1,9 @@
 // server/publications/autopublish.js
 
+console.log('========================================');
+console.log('[Autopublish] FILE IS BEING LOADED');
+console.log('========================================');
+
 import { Meteor } from 'meteor/meteor';
 import { Mongo } from 'meteor/mongo';
 import { get } from 'lodash';
@@ -161,6 +165,13 @@ const collectionsMap = {
 const isProduction = get(Meteor, 'settings.public.environment') === 'production';
 const isDevelopment = !isProduction && (get(Meteor, 'settings.public.environment') === 'development' || process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test' || !get(Meteor, 'settings.public.environment'));
 
+console.log('[Autopublish] Environment check:');
+console.log('[Autopublish]   settings.public.environment:', get(Meteor, 'settings.public.environment'));
+console.log('[Autopublish]   process.env.NODE_ENV:', process.env.NODE_ENV);
+console.log('[Autopublish]   isProduction:', isProduction);
+console.log('[Autopublish]   isDevelopment:', isDevelopment);
+console.log('[Autopublish]   settings.private.fhir.autopublishSubscriptions:', get(Meteor, 'settings.private.fhir.autopublishSubscriptions', false));
+
 // Initialize autopublish if enabled AND not in production
 const autopublishEnabled = get(Meteor, 'settings.private.fhir.autopublishSubscriptions', false) && isDevelopment;
 
@@ -168,27 +179,38 @@ const autopublishEnabled = get(Meteor, 'settings.private.fhir.autopublishSubscri
 const forceAutopublish = process.env.ENABLE_AUTOPUBLISH === 'true';
 const finalAutopublishEnabled = autopublishEnabled || forceAutopublish;
 
+console.log('[Autopublish]   autopublishEnabled:', autopublishEnabled);
+console.log('[Autopublish]   forceAutopublish:', forceAutopublish);
+console.log('[Autopublish]   finalAutopublishEnabled:', finalAutopublishEnabled);
+
 if (finalAutopublishEnabled) {
   console.log('Autopublish is ENABLED for development/testing. Setting up automatic publications...');
   console.log('Environment:', process.env.NODE_ENV, 'Force autopublish:', forceAutopublish);
 } else if (get(Meteor, 'settings.private.fhir.autopublishSubscriptions', false) && isProduction) {
   console.error('ERROR: Autopublish is not allowed in production. Ignoring autopublishSubscriptions setting.');
+} else {
+  console.log('Autopublish is DISABLED. Publications must be set up manually.');
+  console.log('  Reason: autopublishEnabled=' + autopublishEnabled + ' (needs autopublishSubscriptions=true AND isDevelopment=true)');
 }
 
 if (finalAutopublishEnabled) {
 
+  console.log('[Autopublish] Starting autopublish setup, checking Devices...');
+  // console.log('[Autopublish] Devices in collectionsMap:', collectionsMap['Devices']);
+  console.log('[Autopublish] Devices type:', typeof collectionsMap['Devices']);
+
   // Create publications for each collection
   Object.keys(collectionsMap).forEach(function(collectionName) {
     const collection = collectionsMap[collectionName];
-    
+
     if (collection && collection._collection) {
       // Check if this collection should be published based on settings
       const resourceConfig = get(Meteor, `settings.private.fhir.rest.${collectionName.slice(0, -1)}`, {});
       const shouldPublish = get(resourceConfig, 'publication', true);
-      
+
       if (shouldPublish) {
         const publicationName = `autopublish.${collectionName}`;
-        
+
         Meteor.publish(publicationName, function(query, options) {
           // Default empty query and options
           query = query || {};
@@ -277,12 +299,28 @@ if (finalAutopublishEnabled) {
             }
           }
           
-          // In development, we can be more permissive
-          // Cap at 100 records per cursor for performance
-          options.limit = options.limit || 100;
-          // Ensure user can't request more than 100 records
-          if (options.limit > 100) {
-            options.limit = 100;
+          // Optimize for ID queries - they're much faster and should bypass limits
+          const isIdQuery = query.$or && query.$or.length >= 2 &&
+                            query.$or.every(condition => condition._id || condition.id);
+
+          // Get configured limit for use in both branches
+          const configuredLimit = get(Meteor, 'settings.public.defaults.subscriptionLimit', 1000);
+
+          if (isIdQuery) {
+            // ID queries are fast lookups on indexed fields - no need for limits
+            console.log(`Publishing ${collectionName} - ID query (unlimited):`, JSON.stringify(query));
+            // Remove any limit for ID queries
+            delete options.limit;
+          } else {
+            // Regular queries need limits for performance
+            // In development, we can be more permissive
+            // Cap at configured limit (default 1000) for performance
+            options.limit = options.limit || configuredLimit;
+            // Ensure user can't request more than configured maximum
+            if (options.limit > configuredLimit) {
+              options.limit = configuredLimit;
+            }
+            console.log(`Publishing ${collectionName} with query:`, JSON.stringify(query), 'options:', options, `(max ${options.limit} records)`);
           }
           
           // Default sort by most recent for better development experience
@@ -294,7 +332,7 @@ if (finalAutopublishEnabled) {
           
           // In development with autopublish, allow unauthenticated access for testing
           if (!this.userId && isDevelopment && finalAutopublishEnabled) {
-            console.log(`Allowing unauthenticated access to ${collectionName} in development mode (max 100 records)`);
+            console.log(`Allowing unauthenticated access to ${collectionName} in development mode (max ${configuredLimit} records)`);
             // Continue with the query
           } else if (!this.userId) {
             // In production or without autopublish, require authentication
@@ -336,7 +374,7 @@ if (finalAutopublishEnabled) {
               */
             }
           } else {
-            console.log(`Publishing ${collectionName} with query:`, JSON.stringify(query), 'options:', options, '(max 100 records)');
+            console.log(`Publishing ${collectionName} with query:`, JSON.stringify(query), 'options:', options, `(max ${configuredLimit} records)`);
           }
           
           // Don't use count() in publications as it's not needed and causes issues in Meteor v3
@@ -357,22 +395,24 @@ if (finalAutopublishEnabled) {
       const publicationName = `${collectionName.toLowerCase()}.all`;
       
       Meteor.publish(publicationName, function() {
+        const allPublicationLimit = get(Meteor, 'settings.public.defaults.subscriptionLimit', 1000);
+
         if (!this.userId && isDevelopment && finalAutopublishEnabled) {
-          console.log(`Publishing all ${collectionName} for development (unauthenticated) - limited to 100 records`);
-          return collection.find({}, { 
-            limit: 100,
-            sort: { 
+          console.log(`Publishing all ${collectionName} for development (unauthenticated) - limited to ${allPublicationLimit} records`);
+          return collection.find({}, {
+            limit: allPublicationLimit,
+            sort: {
               '_id': -1  // Most recent first (naive but works with MongoDB ObjectIDs)
             }
           });
         } else if (!this.userId) {
           return this.ready();
         }
-        
-        console.log(`Publishing all ${collectionName} for development - limited to 100 records`);
-        return collection.find({}, { 
-          limit: 100,
-          sort: { 
+
+        console.log(`Publishing all ${collectionName} for development - limited to ${allPublicationLimit} records`);
+        return collection.find({}, {
+          limit: allPublicationLimit,
+          sort: {
             '_id': -1  // Most recent first (naive but works with MongoDB ObjectIDs)
           }
         });

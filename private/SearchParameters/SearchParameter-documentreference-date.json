@@ -1,0 +1,18 @@
+{
+  "resourceType": "SearchParameter",
+  "id": "documentreference-date",
+  "url": "http://hl7.org/fhir/SearchParameter/DocumentReference-date",
+  "version": "4.0.1",
+  "name": "HoneycombDocumentReferenceDate",
+  "status": "active",
+  "date": "2024-12-09",
+  "description": "When this document reference was created",
+  "code": "date",
+  "base": ["DocumentReference"],
+  "type": "date",
+  "expression": "DocumentReference.date",
+  "xpath": "date",
+  "multipleOr": true,
+  "multipleAnd": true,
+  "comparator": ["eq", "ne", "gt", "lt", "ge", "le", "sa", "eb", "ap"]
+}

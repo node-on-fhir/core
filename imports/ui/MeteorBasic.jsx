@@ -8,7 +8,7 @@ import {
 
 import { get } from 'lodash';
 import { Hello } from './Hello.jsx';
-import { Info } from './Index.jsx';
+import { Index } from './Index.jsx';
 
 
 
@@ -68,8 +68,8 @@ function MeteorBasic(props){
   return (
     <div id='MeteorBasic'>
         <Hello />
-        <Info />
-    </div>      
+        <Index />
+    </div>
   );
 }
 

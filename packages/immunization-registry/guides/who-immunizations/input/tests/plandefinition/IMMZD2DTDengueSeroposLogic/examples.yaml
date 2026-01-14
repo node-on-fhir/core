@@ -1,0 +1,255 @@
+---
+#2. Client's age is less than 9 years
+#   Today's date − "Date of birth" <  9 years
+### Client is not due for dengue vaccination
+### "Immunization recommendation status" = "Not due"
+id: "08.2"
+birth: -8y
+patient:
+  fhir:
+    gender: female
+---
+#2. Client's age is more than 45 years
+#   Today's date − "Date of birth" > 45 years
+### Client is not due for dengue vaccination
+### "Immunization recommendation status" = "Not due"
+id: "09.2"
+birth: -46y
+patient:
+  fhir:
+    gender: female
+---
+#3. Client's dengue serostatus is negative
+#   "Dengue serostatus" = "Negative"
+### Client is not due for dengue vaccination
+### "Immunization recommendation status" = "Not due"
+id: "10.3"
+birth: -15y
+patient:
+  fhir:
+    gender: female
+observation:
+  hiv:
+    code:
+      code: DE241
+      system: "http://smart.who.int/immunizations/CodeSystem/IMMZ.D"
+      display: "Dengue serostatus"
+    fhir:
+      effectiveDateTime: -6m
+      valueCodeableConcept:
+        coding:
+          - code: DE265
+            system: "http://smart.who.int/immunizations/CodeSystem/IMMZ.D"
+            display: "Negative"
+---
+#1. No dengue primary series doses were administered
+#   Count of vaccines administered (where "Vaccine type" = "Dengue vaccines" and "Type of dose" = "Primary series") = 0
+#2. Client's age is between 9 years and 45 years
+#   9 years ≤ Today's date − "Date of birth" ≤  45 years
+#3. Client's dengue serostatus is positive
+#   "Dengue serostatus" = "Positive"
+### Client is due for dengue vaccination
+### "Immunization recommendation status" = "Due"
+id: "11.123"
+birth: -15y
+patient:
+  fhir:
+    gender: female
+observation:
+  hiv:
+    code:
+      code: DE241
+      system: "http://smart.who.int/immunizations/CodeSystem/IMMZ.D"
+      display: "Dengue serostatus"
+    fhir:
+      effectiveDateTime: -6m
+      valueCodeableConcept:
+        coding:
+          - code: DE264
+            system: "http://smart.who.int/immunizations/CodeSystem/IMMZ.D"
+            display: "Positive"
+---
+#1. One dengue primary series dose was administered
+#   Count of vaccines administered (where "Vaccine type" = "Dengue vaccines" and "Type of dose" = "Primary series") = 1
+#2. Client's age is between 9 years and 45 years
+#   9 years ≤ Today's date − "Date of birth" ≤  45 years
+#3. Client's dengue serostatus is positive
+#   "Dengue serostatus" = "Positive"
+#4. The latest dengue dose was administered less than 6 months ago
+#   Today's date - Latest "Date and time of vaccination" (where "Vaccine type" = "Dengue vaccines") < 6 months
+### Client is not due for dengue vaccination
+### "Immunization recommendation status" = "Not due"
+id: "12.1234"
+birth: -15y
+patient:
+  fhir:
+    gender: female
+immunization:
+  dengue:
+    vaccine:
+      code: XM38G7
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Dengue vaccine"
+    doses:
+      p3:
+        - -4w
+observation:
+  hiv:
+    code:
+      code: DE241
+      system: "http://smart.who.int/immunizations/CodeSystem/IMMZ.D"
+      display: "Dengue serostatus"
+    fhir:
+      effectiveDateTime: -6m
+      valueCodeableConcept:
+        coding:
+          - code: DE264
+            system: "http://smart.who.int/immunizations/CodeSystem/IMMZ.D"
+            display: "Positive"
+---
+#1. One dengue primary series dose was administered
+#2. Client's age is between 9 years and 45 years
+#3. Client's dengue serostatus is positive
+#4. The latest dengue dose was administered more than 6 months ago
+#   Today's date - Latest "Date and time of vaccination" (where "Vaccine type" = "Dengue vaccines") ≥ 6 months
+### Client is due for dengue vaccination
+### "Immunization recommendation status" = "Due"
+id: "13.1234"
+birth: -15y
+patient:
+  fhir:
+    gender: female
+immunization:
+  dengue:
+    vaccine:
+      code: XM38G7
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Dengue vaccine"
+    doses:
+      p3:
+        - -6m
+observation:
+  hiv:
+    code:
+      code: DE241
+      system: "http://smart.who.int/immunizations/CodeSystem/IMMZ.D"
+      display: "Dengue serostatus"
+    fhir:
+      effectiveDateTime: -6m
+      valueCodeableConcept:
+        coding:
+          - code: DE264
+            system: "http://smart.who.int/immunizations/CodeSystem/IMMZ.D"
+            display: "Positive"
+---
+#1. Two dengue primary series doses were administered
+#   Count of vaccines administered (where "Vaccine type" = "Dengue vaccines" and "Type of dose" = "Primary series") = 2
+#2. Client's age is between 9 years and 45 years
+#   9 years ≤ Today's date − "Date of birth" ≤  45 years
+#3. Client's dengue serostatus is positive
+#   "Dengue serostatus" = "Positive"
+#4. The latest dengue dose was administered less than 6 months ago
+#   Today's date - Latest "Date and time of vaccination" (where "Vaccine type" = "Dengue vaccines") < 6 months
+### Client is not due for dengue vaccination
+### "Immunization recommendation status" = "Not due"
+id: "14.1234"
+birth: -15y
+patient:
+  fhir:
+    gender: female
+immunization:
+  dengue:
+    vaccine:
+      code: XM38G7
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Dengue vaccine"
+    doses:
+      p3:
+        - -7m
+        - -1m
+observation:
+  hiv:
+    code:
+      code: DE241
+      system: "http://smart.who.int/immunizations/CodeSystem/IMMZ.D"
+      display: "Dengue serostatus"
+    fhir:
+      effectiveDateTime: -2y
+      valueCodeableConcept:
+        coding:
+          - code: DE264
+            system: "http://smart.who.int/immunizations/CodeSystem/IMMZ.D"
+            display: "Positive"
+---
+#1. Two dengue primary series doses were administered
+#2. Client's age is between 9 years and 45 years
+#3. Client's dengue serostatus is positive
+#4. The latest dengue dose was administered more than 6 months ago
+#   Today's date - Latest "Date and time of vaccination" (where "Vaccine type" = "Dengue vaccines") ≥ 6 months
+### Client is due for dengue vaccination
+### "Immunization recommendation status" = "Due"
+id: "15.1234"
+birth: -15y
+patient:
+  fhir:
+    gender: female
+immunization:
+  dengue:
+    vaccine:
+      code: XM38G7
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Dengue vaccine"
+    doses:
+      p3:
+        - -12m
+        - -6m
+observation:
+  hiv:
+    code:
+      code: DE241
+      system: "http://smart.who.int/immunizations/CodeSystem/IMMZ.D"
+      display: "Dengue serostatus"
+    fhir:
+      effectiveDateTime: -2y
+      valueCodeableConcept:
+        coding:
+          - code: DE264
+            system: "http://smart.who.int/immunizations/CodeSystem/IMMZ.D"
+            display: "Positive"
+---
+#1. Three dengue primary series doses were administered
+#   Count of vaccines administered (where "Vaccine type" = "Dengue vaccines" and "Type of dose" = "Primary series") = 3
+#2. Client's age is between 9 years and 45 years
+#   9 years ≤ Today's date − "Date of birth" ≤  45 years
+### Dengue immunization schedule is complete
+### "Immunization recommendation status" = "Complete"
+### "Completed the primary vaccination series" = TRUE (where "Vaccine type" = "Dengue vaccines")"
+id: "16.12"
+birth: -15y
+patient:
+  fhir:
+    gender: female
+immunization:
+  dengue:
+    vaccine:
+      code: XM38G7
+      system: "http://id.who.int/icd/release/11/mms"
+      display: "Dengue vaccine"
+    doses:
+      p3:
+        - -18m
+        - -12m
+        - -6m
+observation:
+  hiv:
+    code:
+      code: DE241
+      system: "http://smart.who.int/immunizations/CodeSystem/IMMZ.D"
+      display: "Dengue serostatus"
+    fhir:
+      effectiveDateTime: -2y
+      valueCodeableConcept:
+        coding:
+          - code: DE264
+            system: "http://smart.who.int/immunizations/CodeSystem/IMMZ.D"
+            display: "Positive"

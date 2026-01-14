@@ -147,7 +147,7 @@ export const AccountsServer = {
       return;
     }
     
-    logger.debug('Accounts object:', Object.keys(Accounts || {}));
+    // logger.debug('Accounts object:', Object.keys(Accounts || {}));
     
     // Validate new users
     // TODO: In Meteor 3, validateNewUser might not be available immediately
@@ -231,9 +231,10 @@ export const AccountsServer = {
       user.createdAt = new Date();
       user.lastActivityAt = new Date();
       
-      // Set default role
+      // Set default roles
+      // All users get 'user' (authenticated) and 'patient' (can access own record) roles
       const defaultRole = get(Meteor, 'settings.private.accounts.defaultRole', 'user');
-      user.roles = [defaultRole];
+      user.roles = [defaultRole, 'patient'];
       
       // Handle OAuth data
       if (user.services?.google) {

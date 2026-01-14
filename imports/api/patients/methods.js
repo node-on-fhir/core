@@ -19,9 +19,16 @@ Meteor.methods({
     // Clean up the patient data to avoid parallel array indexing issues
     const cleanPatient = {
       resourceType: 'Patient',
-      id: patientData.id || Random.id(),
       active: patientData.active !== undefined ? patientData.active : true
     };
+
+    // Generate unique FHIR id - never accept from client to avoid collisions
+    // Only accept ID if it's a non-empty string, otherwise generate
+    if (!patientData.id || typeof patientData.id !== 'string' || patientData.id.trim() === '') {
+      cleanPatient.id = Random.id();
+    } else {
+      cleanPatient.id = patientData.id;
+    }
     
     // Set _id based on environment variable
     if (process.env.USE_MONGO_OBJECTID) {
@@ -110,7 +117,17 @@ Meteor.methods({
     try {
       console.log('[patients.insert] Inserting patient:', JSON.stringify(cleanPatient, null, 2));
       const result = await Patients.insertAsync(cleanPatient);
-      console.log('[patients.insert] Created patient with ID:', result);
+      console.log('[patients.insert] insertAsync returned ID:', result);
+
+      // DIAGNOSTIC: Verify the patient was actually inserted
+      const verifyPatient = await Patients.findOneAsync({ _id: result });
+      if (verifyPatient) {
+        console.log('[patients.insert] ✓ Verified patient exists in database with ID:', result);
+      } else {
+        console.error('[patients.insert] ✗ WARNING: insertAsync returned ID but patient NOT in database!');
+        console.error('[patients.insert] This indicates a serious database issue');
+      }
+
       return result;
     } catch (error) {
       console.error('[patients.insert] Error details:', {
@@ -231,13 +248,10 @@ Meteor.methods({
     }
     
     try {
-      const result = await Patients.removeAsync({
-        $or: [
-          { id: patientId },
-          { _id: patientId }
-        ]
-      });
-      console.log('[patients.remove] Removed patient:', result);
+      // IMPORTANT: Use _id only for lookups per CLAUDE.md anti-pattern guidelines
+      // Never use $or logic which can cause ID collisions
+      const result = await Patients.removeAsync({ _id: patientId });
+      console.log('[patients.remove] Removed patient with _id:', patientId, 'result:', result);
       return result;
     } catch (error) {
       console.error('[patients.remove] Error:', error);
@@ -254,12 +268,10 @@ Meteor.methods({
     }
     
     try {
-      const patient = await Patients.findOneAsync({
-        $or: [
-          { id: patientId },
-          { _id: patientId }
-        ]
-      });
+      // IMPORTANT: Use _id only for lookups per CLAUDE.md anti-pattern guidelines
+      // Never use $or logic which can cause ID collisions
+      const patient = await Patients.findOneAsync({ _id: patientId });
+      console.log('[patients.findOne] Found patient with _id:', patientId, patient ? 'exists' : 'not found');
       return patient;
     } catch (error) {
       console.error('[patients.findOne] Error:', error);

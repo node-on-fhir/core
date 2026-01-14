@@ -190,10 +190,10 @@ describe('Accounts - Login (Progressive Flow)', function() {
       
       // Step 2: Enter non-existent username/email
       .setValue('input[name="username"]', newEmail)
-      .pause(3000) // Wait for user check
-      
+      .pause(4000) // Longer wait for user check (CI is slower)
+
       // Step 3: Verify infobox and CREATE NEW ACCOUNT button appear, sign-in button not present
-      .waitForElementPresent('.MuiAlert-root', 5000)
+      .waitForElementPresent('.MuiAlert-root', 10000)
       .verify.textContains('.MuiAlert-root', 'No account found')
       .execute(function() {
         const buttons = Array.from(document.querySelectorAll('button'));
@@ -245,23 +245,23 @@ describe('Accounts - Login (Progressive Flow)', function() {
       .pause(500)
       
       // Step 7: Verify confirm password is now enabled
-      .waitForElementPresent('input[name="confirmPassword"]:not([disabled])', 5000)
+      .waitForElementPresent('input[name="confirmPassword"]:not([disabled])', 10000)
       .saveScreenshot('tests/nightwatch/screenshots/login/inline-04-confirm-enabled.png')
-      
+
       // Step 8: Enter matching confirm password
       .setValue('input[name="confirmPassword"]', password)
-      .pause(500)
-      
+      .pause(1000)
+
       // Step 9: Verify username input appears after passwords match
-      .waitForElementPresent('input[name="newUsername"]', 5000)
+      .waitForElementPresent('input[name="newUsername"]', 10000)
       .saveScreenshot('tests/nightwatch/screenshots/login/inline-05-username-appears.png')
-      
+
       // Step 10: Fill username
       .setValue('input[name="newUsername"]', newUsername)
-      .pause(2000) // Wait for availability check
+      .pause(4000) // Longer wait for availability check (CI is slower)
       
       // Step 11: Verify REGISTER USER button appears
-      .waitForElementPresent('button[type="submit"]', 5000)
+      .waitForElementPresent('button[type="submit"]', 10000)
       .execute(function() {
         const buttons = Array.from(document.querySelectorAll('button[type="submit"]'));
         const registerButton = buttons.find(b => b.textContent.includes('REGISTER USER'));
@@ -276,10 +276,21 @@ describe('Accounts - Login (Progressive Flow)', function() {
         client.assert.ok(!result.value.disabled, 'REGISTER USER button should be enabled');
       })
       .saveScreenshot('tests/nightwatch/screenshots/login/inline-06-register-button.png')
-      
-      // Step 12: Click REGISTER USER button
-      .click('button[type="submit"]')
-      .pause(3000) // Wait for registration to complete
+
+      // Step 12: Click REGISTER USER button - use execute for reliability
+      .execute(function() {
+        const buttons = document.querySelectorAll('button[type="submit"]');
+        for (let button of buttons) {
+          if (button.textContent.includes('REGISTER USER') && !button.disabled) {
+            button.click();
+            return { clicked: true };
+          }
+        }
+        return { clicked: false };
+      }, function(result) {
+        console.log('Register button click:', result.value);
+      })
+      .pause(5000) // Longer wait for registration to complete in CI
       
       // Step 13: Verify successful registration and redirect
       .execute(function() {
@@ -444,21 +455,46 @@ describe('Accounts - Login (Progressive Flow)', function() {
       // Fill in username first
       .clearValue('input[name="username"]')
       .setValue('input[name="username"]', newUsername)
-      .pause(2000) // Wait for user check
-      
+      .pause(4000) // Longer wait for user check (CI is slower)
+
       // Wait for password field to be enabled if user exists
-      .waitForElementPresent('input[name="password"]:not([disabled])', 10000)
-      
+      .waitForElementPresent('input[name="password"]:not([disabled])', 15000)
+
       // Now fill password
       .clearValue('input[name="password"]')
       .setValue('input[name="password"]', password)
+      .pause(1000) // Let React validation update
       .saveScreenshot('tests/nightwatch/screenshots/login/04-filled-form.png')
-      
-      // Submit form
-      .waitForElementNotPresent('button[type="submit"][disabled]', 5000)
-      .click('button[type="submit"]')
-      .pause(3000)
-      
+
+      // Debug: Check submit button state before trying to click
+      .execute(function() {
+        const submitBtn = document.querySelector('button[type="submit"]');
+        return {
+          exists: !!submitBtn,
+          disabled: submitBtn ? submitBtn.disabled : null,
+          text: submitBtn ? submitBtn.textContent : null
+        };
+      }, function(result) {
+        console.log('Submit button state:', result.value);
+      })
+
+      // Wait for submit button to be enabled (longer timeout for CI)
+      .waitForElementNotPresent('button[type="submit"][disabled]', 10000)
+      .pause(500)
+
+      // Click submit - use execute block for more reliable clicking
+      .execute(function() {
+        const submitBtn = document.querySelector('button[type="submit"]');
+        if (submitBtn && !submitBtn.disabled) {
+          submitBtn.click();
+          return { clicked: true };
+        }
+        return { clicked: false, disabled: submitBtn ? submitBtn.disabled : true };
+      }, function(result) {
+        console.log('Submit click result:', result.value);
+      })
+      .pause(5000) // Longer wait for login to complete in CI
+
       // Check if we've successfully logged in
       .execute(function() {
         return {

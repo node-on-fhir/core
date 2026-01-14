@@ -5,9 +5,9 @@
 
 import { Meteor } from 'meteor/meteor';
 import React from 'react';
+import { Box } from '@mui/material';
 
 import { get } from 'lodash';
-import { useTheme } from '@mui/material/styles';
 
 import { ImportEditorBindings } from './ImportEditorBindings';
 
@@ -17,22 +17,23 @@ Meteor.startup(function(){
 })
 
 //============================================================================
-// Main Component  
+// Main Component
 
 export function ImportPage(props){
-  const theme = useTheme();
   const appTheme = useAppTheme ? useAppTheme() : { theme: 'light' };
 
   return(
-    <div id="ImportPage" style={{
-      padding: '20px', 
-      height: window.innerHeight, 
-      overflow: 'scroll', 
-      marginBottom: '80px',
-      backgroundColor: theme.palette.mode === 'dark' ? theme.palette.background.default : '#f6f6f6'
-    }}>
-        <ImportEditorBindings history={props.history} />
-    </div>
+    <Box
+      id="ImportPage"
+      sx={{
+        minHeight: '100vh',
+        py: 2.5,
+        px: 2.5,
+        mb: 10
+      }}
+    >
+      <ImportEditorBindings history={props.history} />
+    </Box>
   );
 }
 

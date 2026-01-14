@@ -44,19 +44,59 @@ Meteor.startup(() => {
 
   // Load additional modules based on configuration
   const modules = get(Meteor, 'settings.public.modules', {});
-  
+
   // Analytics module
   if (modules.analytics?.enabled) {
-    import('./analytics-startup').catch(console.error);
+    import(/* webpackIgnore: true */ './analytics-startup').catch(error => {
+      console.warn('Analytics startup module not found:', error.message);
+    });
+  } else {
+    console.log('Analytics module disabled in settings');
   }
 
   // Chat module
   if (modules.chat?.enabled) {
-    import('./chat-startup').catch(console.error);
+    import(/* webpackIgnore: true */ './chat-startup').catch(error => {
+      console.warn('Chat startup module not found:', error.message);
+    });
+  } else {
+    console.log('Chat module disabled in settings');
   }
 
   // Notifications module
   if (modules.notifications?.enabled) {
-    import('./notifications-startup').catch(console.error);
+    import(/* webpackIgnore: true */ './notifications-startup').catch(error => {
+      console.warn('Notifications startup module not found:', error.message);
+    });
+  } else {
+    console.log('Notifications module disabled in settings');
+  }
+
+  // DICOM Viewer with Cornerstone3D
+  console.log('[DICOM] Checking DICOM settings...');
+  console.log('[DICOM] Meteor.settings:', Meteor.settings);
+  console.log('[DICOM] Meteor.settings.public:', Meteor.settings.public);
+  console.log('[DICOM] Meteor.settings.public.dicom:', Meteor.settings.public?.dicom);
+
+  const dicomEnabled = get(Meteor, 'settings.public.dicom.enabled', false);
+  console.log('[DICOM] dicomEnabled:', dicomEnabled);
+
+  if (dicomEnabled) {
+    console.log('🎯 Loading DICOM viewer (Cornerstone3D)...');
+    import('./cornerstone-setup').then(({ initializeCornerstone3D }) => {
+      console.log('[DICOM] Calling initializeCornerstone3D()...');
+      return initializeCornerstone3D();
+    }).then(result => {
+      if (result) {
+        console.log('✅ Cornerstone3D initialized and ready');
+        console.log('[DICOM] Result:', result);
+      } else {
+        console.log('📦 Cornerstone3D initialization skipped (disabled in settings)');
+      }
+    }).catch(error => {
+      console.error('❌ Failed to initialize Cornerstone3D:', error);
+    });
+  } else {
+    console.log('📦 DICOM viewer disabled in settings');
   }
 });
