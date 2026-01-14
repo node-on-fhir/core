@@ -401,8 +401,7 @@ jobs:
             # Run Meteor with explicit settings and all ONC packages loaded
             # Add periodic output to prevent timeout
             (
-              meteor run --settings configs/settings.honeycomb.tdd.json --port 3000 \
-                --extra-packages "clinical:reference-app, clinical:us-core" &
+              meteor run --settings configs/settings.honeycomb.tdd.json --port 3000 
               METEOR_PID=$!
 
               # Output progress every 30 seconds to prevent timeout
@@ -470,11 +469,24 @@ jobs:
             # Run tests
             echo "Starting Nightwatch tests..."
             export NIGHTWATCH_EXTERNAL_CHROMEDRIVER=true
-            
+
+            # Start memory monitoring in background
+            echo "Starting memory monitoring..."
+            (while true; do
+              echo "=== MEMORY $(date '+%H:%M:%S') ==="
+              free -m | head -2
+              ps aux --sort=-%mem | grep -E 'node|chrome|mongo' | head -3 || true
+              sleep 30
+            done) &
+            MEMORY_MONITOR_PID=$!
+
             # Run tests without timeout command (might be causing the termination)
             TEST_FILES="<< parameters.test-files >>"
             npx nightwatch --config nightwatch.circle.conf.js $TEST_FILES || TEST_EXIT_CODE=$?
-            
+
+            # Stop memory monitor
+            kill $MEMORY_MONITOR_PID 2>/dev/null || true
+
             # Cleanup
             kill $CHROMEDRIVER_PID 2>/dev/null || true
             
