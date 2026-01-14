@@ -38,44 +38,11 @@ Meteor.startup(async function() {
     console.error('Failed to initialize Patients collection after', maxRetries, 'attempts');
   }
   
-  // Subscribe to patients if we have a selected patient
-  Tracker.autorun(function() {
-    const selectedPatientId = Session.get('selectedPatientId');
-    if (selectedPatientId) {
-      console.log('Subscribing to patient data:', selectedPatientId);
-      const handle = Meteor.subscribe('pacio.patients', selectedPatientId);
-      
-      // Log subscription status
-      Tracker.autorun(function() {
-        if (handle.ready()) {
-          console.log('Patient subscription ready for:', selectedPatientId);
-          if (window.Patients) {
-            const count = window.Patients.find().count();
-            console.log('Patients in local collection:', count);
-          }
-        }
-      });
-    }
-  });
-  
-  // Also subscribe to all patients for the patient directory/search
-  // This can be controlled by a setting if needed
-  const enablePatientDirectory = Meteor.settings?.public?.pacio?.enablePatientDirectory ?? true;
-  if (enablePatientDirectory) {
-    console.log('Subscribing to patient directory...');
-    const directoryHandle = Meteor.subscribe('pacio.patients');
-    
-    // Log directory subscription status
-    Tracker.autorun(function() {
-      if (directoryHandle.ready()) {
-        console.log('Patient directory subscription ready');
-        if (window.Patients) {
-          const count = window.Patients.find().count();
-          console.log('Total patients in directory:', count);
-        }
-      }
-    });
-  }
+  // NOTE: Patient subscriptions are now handled by PacioSubscriptions.js
+  // which properly manages subscription handles and cleanup.
+  // Removed duplicate subscriptions from here to prevent subscription multiplication.
+
+  console.log('PACIO Core client initialization complete');
 });
 
 // Export a helper to subscribe to patient data
