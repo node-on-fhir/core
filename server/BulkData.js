@@ -323,7 +323,7 @@ function preparePatientForUSCore(patient) {
     prepared.meta.profile = [];
   }
   const usCorePatientProfile = 'http://hl7.org/fhir/us/core/StructureDefinition/us-core-patient';
-  if (!prepared.meta.profile.includes(usCorePatientProfile)) {
+  if (!prepared.meta.profile.some(function(profile) { return profile === usCorePatientProfile; })) {
     prepared.meta.profile.push(usCorePatientProfile);
   }
 
