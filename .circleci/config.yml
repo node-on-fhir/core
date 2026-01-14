@@ -154,8 +154,8 @@ jobs:
           NODE_ENV: test
           NIGHTWATCH: true
           DISPLAY: :99.0
-          NODE_OPTIONS: --max_old_space_size=4096
-          TOOL_NODE_FLAGS: --max_old_space_size=4096
+          NODE_OPTIONS: --max_old_space_size=2560
+          TOOL_NODE_FLAGS: --max_old_space_size=2560
           TEST_BROWSER_DRIVER: chrome
           MONGO_URL: mongodb://mongo:27017/meteor_test
           ENABLE_AUTOPUBLISH: true
@@ -168,7 +168,7 @@ jobs:
       - image: mongo:6.0
         name: mongo
     
-    resource_class: large  # 8GB RAM needed for RSpack + MongoDB + Chrome
+    resource_class: medium  # 4GB - reduced NODE_OPTIONS (2.5GB) leaves room for MongoDB + Chrome
     parallelism: 1  # Ensure we're not trying to parallelize within the job
     
     steps:
