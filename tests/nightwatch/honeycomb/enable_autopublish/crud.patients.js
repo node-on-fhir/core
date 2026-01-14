@@ -498,30 +498,30 @@ describe('Patients CRUD Operations', function() {
       .waitForElementVisible('#patientsPage', 5000)
       .pause(1000);
 
-    // Search for our test patient using identifier (more unique than name)
+    // Search for our test patient using family name (displayed in table, contains unique timestamp)
     browser
       .waitForElementVisible('#patientSearchInput', 5000)
       .clearValue('#patientSearchInput')
       .pause(500) // Wait for clear to take effect
-      .setValue('#patientSearchInput', testPatient.identifier)
+      .setValue('#patientSearchInput', testPatient.familyName)
       .pause(2500); // Wait for debounced search (500ms debounce + subscription update + render)
 
     // Verify search filtered the results before clicking
-    browser.execute(function(expectedIdentifier) {
+    browser.execute(function(expectedName) {
       const allRows = document.querySelectorAll('#patientsTable tbody tr');
       console.log('After search - found', allRows.length, 'total rows in patients table');
 
-      // Check if table contains our identifier
+      // Check if table contains our patient name
       const tableText = document.querySelector('#patientsTable')?.textContent || '';
-      const foundOurPatient = tableText.includes(expectedIdentifier);
-      console.log('Table contains our identifier:', foundOurPatient);
+      const foundOurPatient = tableText.includes(expectedName);
+      console.log('Table contains our patient name:', foundOurPatient);
 
       return {
         rowCount: allRows.length,
         foundOurPatient: foundOurPatient,
         tablePreview: tableText.substring(0, 200)
       };
-    }, [testPatient.identifier], function(result) {
+    }, [testPatient.familyName], function(result) {
       console.log('Search verification:', result.value);
       if (!result.value.foundOurPatient) {
         console.warn('WARNING: Search did not find our patient! This might cause the wrong patient to be clicked.');
@@ -539,8 +539,8 @@ describe('Patients CRUD Operations', function() {
 
     // Now click on the expand button for our specific patient
     browser
-      .execute(function(expectedIdentifier) {
-        // Find the row that contains our identifier
+      .execute(function(expectedName) {
+        // Find the row that contains our patient name
         const allRows = document.querySelectorAll('#patientsTable tbody tr.patientRow');
         console.log('Total patient rows:', allRows.length);
 
@@ -548,8 +548,8 @@ describe('Patients CRUD Operations', function() {
         for (let row of allRows) {
           const rowText = row.textContent || '';
           console.log('Checking row:', rowText.substring(0, 150));
-          if (rowText.includes(expectedIdentifier)) {
-            console.log('✓ Found our patient row with identifier:', expectedIdentifier);
+          if (rowText.includes(expectedName)) {
+            console.log('✓ Found our patient row with name:', expectedName);
             targetRow = row;
             break;
           }
@@ -559,12 +559,12 @@ describe('Patients CRUD Operations', function() {
           // Find the expand button in this specific row
           const expandButton = targetRow.querySelector('button[aria-label="expand row"]');
           if (expandButton) {
-            console.log('Clicking expand button in row with our identifier');
+            console.log('Clicking expand button in row with our patient name');
             expandButton.click();
             return {
               clicked: true,
               rowText: targetRow.textContent.substring(0, 200),
-              method: 'identifier-match'
+              method: 'name-match'
             };
           } else {
             return { clicked: false, error: 'No expand button in target row' };
@@ -572,16 +572,16 @@ describe('Patients CRUD Operations', function() {
         }
 
         // Fallback: click first expand button
-        console.warn('FALLBACK: Could not find row with identifier, using first expand button');
+        console.warn('FALLBACK: Could not find row with name, using first expand button');
         const expandButtons = document.querySelectorAll('#patientsTable button[aria-label="expand row"]');
         console.log('Found', expandButtons.length, 'expand buttons (fallback)');
         if (expandButtons[0]) {
           expandButtons[0].click();
-          return { clicked: true, warning: 'Used fallback - row not found by identifier', method: 'fallback' };
+          return { clicked: true, warning: 'Used fallback - row not found by name', method: 'fallback' };
         }
 
         return { clicked: false, error: 'No expand button found' };
-      }, [testPatient.identifier], function(result) {
+      }, [testPatient.familyName], function(result) {
         console.log('Expand result:', result.value);
         if (result.value.method === 'fallback') {
           console.warn('WARNING: Used fallback method - may click wrong patient!');
@@ -594,13 +594,13 @@ describe('Patients CRUD Operations', function() {
     browser
       .pause(500); // Wait for expansion animation
 
-    browser.execute(function(expectedIdentifier) {
-      // Find the expanded row containing our test patient's identifier
+    browser.execute(function(expectedName) {
+      // Find the expanded row containing our test patient's name
       const allRows = document.querySelectorAll('#patientsTable tbody tr.patientRow');
       let expandedRowGroup = null;
 
       for (let row of allRows) {
-        if (row.textContent.includes(expectedIdentifier)) {
+        if (row.textContent.includes(expectedName)) {
           // Found the main row, now find the next sibling (the expanded detail row)
           let nextRow = row.nextElementSibling;
           if (nextRow && nextRow.querySelector('.viewPatientDemographicsButton')) {
@@ -619,7 +619,7 @@ describe('Patients CRUD Operations', function() {
       }
 
       return { clicked: false, error: 'Demographics button not found in expanded row' };
-    }, [testPatient.identifier], function(result) {
+    }, [testPatient.familyName], function(result) {
       browser.assert.equal(result.value.clicked, true, 'Clicked Demographics button in correct row');
     });
 
@@ -642,12 +642,12 @@ describe('Patients CRUD Operations', function() {
       .waitForElementVisible('#patientsPage', 5000)
       .pause(1000);
 
-    // Search for our test patient using identifier (more unique)
+    // Search for our test patient using family name (displayed in table, contains unique timestamp)
     browser
       .waitForElementVisible('#patientSearchInput', 5000)
       .clearValue('#patientSearchInput')
       .pause(500)
-      .setValue('#patientSearchInput', testPatient.identifier)
+      .setValue('#patientSearchInput', testPatient.familyName)
       .pause(2500); // Wait for debounced search + subscription
 
     // Collapse all expanded rows first
@@ -660,11 +660,11 @@ describe('Patients CRUD Operations', function() {
 
     // Click on the expand button for our specific patient
     browser
-      .execute(function(expectedIdentifier) {
+      .execute(function(expectedName) {
         const allRows = document.querySelectorAll('#patientsTable tbody tr.patientRow');
         let targetRow = null;
         for (let row of allRows) {
-          if (row.textContent.includes(expectedIdentifier)) {
+          if (row.textContent.includes(expectedName)) {
             targetRow = row;
             break;
           }
@@ -685,7 +685,7 @@ describe('Patients CRUD Operations', function() {
           return true;
         }
         return false;
-      }, [testPatient.identifier], function(result) {
+      }, [testPatient.familyName], function(result) {
         browser.assert.equal(result.value, true, 'Clicked expand button');
       });
 
@@ -694,13 +694,13 @@ describe('Patients CRUD Operations', function() {
     browser
       .pause(500); // Wait for expansion animation
 
-    browser.execute(function(expectedIdentifier) {
-      // Find the expanded row containing our test patient's identifier
+    browser.execute(function(expectedName) {
+      // Find the expanded row containing our test patient's name
       const allRows = document.querySelectorAll('#patientsTable tbody tr.patientRow');
       let expandedRowGroup = null;
 
       for (let row of allRows) {
-        if (row.textContent.includes(expectedIdentifier)) {
+        if (row.textContent.includes(expectedName)) {
           // Found the main row, now find the next sibling (the expanded detail row)
           let nextRow = row.nextElementSibling;
           if (nextRow && nextRow.querySelector('.viewPatientDemographicsButton')) {
@@ -719,7 +719,7 @@ describe('Patients CRUD Operations', function() {
       }
 
       return { clicked: false, error: 'Demographics button not found in expanded row' };
-    }, [testPatient.identifier], function(result) {
+    }, [testPatient.familyName], function(result) {
       browser.assert.equal(result.value.clicked, true, 'Clicked Demographics button in correct row');
     });
 
@@ -826,12 +826,12 @@ describe('Patients CRUD Operations', function() {
       .waitForElementVisible('#patientsPage', 5000)
       .pause(1000);
 
-    // Search for our test patient using identifier
+    // Search for our test patient using family name (displayed in table, contains unique timestamp)
     browser
       .waitForElementVisible('#patientSearchInput', 5000)
       .clearValue('#patientSearchInput')
       .pause(500)
-      .setValue('#patientSearchInput', testPatient.identifier)
+      .setValue('#patientSearchInput', testPatient.familyName)
       .pause(2500); // Wait for debounced search + subscription
 
     // Since Delete button is not available in the UI, use programmatic deletion
