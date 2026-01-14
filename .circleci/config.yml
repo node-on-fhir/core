@@ -154,8 +154,8 @@ jobs:
           NODE_ENV: test
           NIGHTWATCH: true
           DISPLAY: :99.0
-          NODE_OPTIONS: --max_old_space_size=2048
-          TOOL_NODE_FLAGS: --max_old_space_size=2048
+          NODE_OPTIONS: --max-old-space-size=2048
+          TOOL_NODE_FLAGS: --max-old-space-size=2048
           TEST_BROWSER_DRIVER: chrome
           MONGO_URL: mongodb://mongo:27017/meteor_test
           ENABLE_AUTOPUBLISH: true
