@@ -168,7 +168,7 @@ jobs:
       - image: mongo:6.0
         name: mongo
     
-    resource_class: medium  # Can use medium for parallel execution
+    resource_class: large  # 8GB RAM needed for RSpack + MongoDB + Chrome
     parallelism: 1  # Ensure we're not trying to parallelize within the job
     
     steps:
