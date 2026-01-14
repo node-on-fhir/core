@@ -317,6 +317,12 @@ Meteor.methods({
   },
 
   async 'users.linkPatient'(patientId) {
+    // Validate patientId before check() to provide clearer error message
+    if (!patientId || typeof patientId !== 'string') {
+      console.warn('[users.linkPatient] Invalid patientId:', patientId);
+      throw new Meteor.Error(400, 'Patient ID is required and must be a string');
+    }
+
     check(patientId, String);
 
     // Ensure user is logged in
