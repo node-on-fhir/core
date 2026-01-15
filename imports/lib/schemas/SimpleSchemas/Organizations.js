@@ -8,7 +8,7 @@ import SimpleSchema from 'simpl-schema';
 // REFACTOR:  we want to deprecate meteor/clinical:hl7-resource-datatypes
 // so please remove references from the following line
 // and replace with import from ../../datatypes/*
-import { BaseSchema, HumanNameSchema, DomainResourceSchema, IdentifierSchema, ContactPointSchema, AddressSchema } from 'meteor/clinical:hl7-resource-datatypes';
+import { BaseSchema, HumanNameSchema, DomainResourceSchema, IdentifierSchema, ContactPointSchema, AddressSchema, CodeableConceptSchema, ReferenceSchema } from 'meteor/clinical:hl7-resource-datatypes';
 // import HumanNameSchema from '../../../datatypes/HumanName';
 
 // import { MetaSchema } from '../../datatypes/Meta';

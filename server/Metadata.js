@@ -278,18 +278,18 @@ const MetadataServerMethods = {
         if (Array.isArray(Meteor.settings.private.fhir.rest[key].interactions)) {
           newResourceStatement.interaction = [];
           Meteor.settings.private.fhir.rest[key].interactions.forEach(function(item){
+            // Normalize interaction codes to FHIR R4 TypeRestfulInteraction
+            // Settings can use either DSTU2 ("search") or R4 ("search-type")
+            // CapabilityStatement always outputs R4-compliant codes
+            // Valid R4 codes: read, vread, update, patch, delete, create, search-type, history-instance, history-type
+            let interactionCode = item;
+            if (item === 'search') {
+              interactionCode = 'search-type';
+            } else if (item === 'history') {
+              interactionCode = 'history-instance';
+            }
             newResourceStatement.interaction.push({
-              "code": item
-            })
-            newResourceStatement.versioning = get(Meteor, 'settings.private.fhir.rest[' + key + '].versioning', "no-version")
-          })
-        }
-
-        if (Array.isArray(Meteor.settings.private.fhir.rest[key].interactions)) {
-          newResourceStatement.interaction = [];
-          Meteor.settings.private.fhir.rest[key].interactions.forEach(function(item){
-            newResourceStatement.interaction.push({
-              "code": item
+              "code": interactionCode
             })
             newResourceStatement.versioning = get(Meteor, 'settings.private.fhir.rest[' + key + '].versioning', "no-version")
           })
@@ -579,16 +579,6 @@ const MetadataServerMethods = {
       "registration_endpoint": Meteor.absoluteUrl() + get(Meteor, 'settings.private.fhir.security.registrationEndpoint', "oauth/registration"),
       "registration_endpoint_jwt_signing_alg_values_supported": ["RS256", "ES384"],
       "signed_metadata": null,
-      "raw_metadata": {
-        "iss": Meteor.absoluteUrl(),
-        "sub": Meteor.absoluteUrl(),
-        "exp": moment().unix(),
-        "iat": moment().unix(),
-        "jti": "random-value-" + Random.id(),
-        "authorization_endpoint": Meteor.absoluteUrl() + get(Meteor, 'settings.private.fhir.security.authorization_endpoint', "oauth/authorize"),
-        "token_endpoint": Meteor.absoluteUrl() + get(Meteor, 'settings.private.fhir.security.tokenEndpoint', "oauth/token"),
-        "registration_endpoint": Meteor.absoluteUrl() + get(Meteor, 'settings.private.fhir.security.registrationEndpoint', "oauth/registration")
-      },
       "udap_profiles_supported": ["udap_authz", "udap_dcr"],
       "udap_authorization_extensions_supported": [],
       "udap_authorization_extensions_required": [],
@@ -598,14 +588,85 @@ const MetadataServerMethods = {
     let fhirRestEndpoints = get(Meteor, 'settings.private.fhir.rest');
     if(fhirRestEndpoints){
       Object.keys(fhirRestEndpoints).forEach(function(key){
-        response.scopes_supported.push("system/" + key + ".read")
+        let resourceConfig = fhirRestEndpoints[key];
+
+        // Get scope types (default to ["system"] for backward compatibility)
+        let scopeTypes = get(resourceConfig, 'scopes', ['system']);
+        let enableWrite = get(resourceConfig, 'write', false);
+
+        // Generate scopes for each type
+        scopeTypes.forEach(function(scopeType){
+          response.scopes_supported.push(scopeType + "/" + key + ".read");
+          if(enableWrite){
+            response.scopes_supported.push(scopeType + "/" + key + ".write");
+          }
+        });
       })
     }
 
-    let x509publicCert = get(Meteor, 'settings.private.x509.publicCertPem');
-    console.log('x509publicCert', x509publicCert)
-    response.x5c.push(x509publicCert)
+    // Get x509 credentials from settings
+    let privateKey = get(Meteor, 'settings.private.x509.privateKey', '');
+    let x509publicCert = get(Meteor, 'settings.private.x509.publicCertPem', '');
+    console.log('x509publicCert', x509publicCert ? 'present' : 'missing');
+    console.log('privateKey', privateKey ? 'present' : 'missing');
 
+    // Add certificate to x5c array (must be pure base64, no PEM headers/newlines per UDAP spec)
+    if (x509publicCert) {
+      let x5cCleaned = x509publicCert
+        .replace(/\\r\\n/g, '\n')
+        .replace(/\r\n/g, '\n')
+        .replace(/-----BEGIN CERTIFICATE-----/g, '')
+        .replace(/-----END CERTIFICATE-----/g, '')
+        .replace(/[\r\n]/g, '')
+        .trim();
+      response.x5c.push(x5cCleaned);
+    }
+
+    // Sign the metadata JWT if private key is available
+    if (privateKey) {
+      // Normalize line endings
+      privateKey = privateKey.replace(/\\r\\n/g, '\n').replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+
+      // Build the metadata to sign (per UDAP spec)
+      let metadataToSign = {
+        "iss": Meteor.absoluteUrl() + fhirPath,
+        "sub": Meteor.absoluteUrl() + fhirPath,
+        "exp": moment().add(1, 'year').unix(),
+        "iat": moment().unix(),
+        "jti": Random.id(),
+        "authorization_endpoint": Meteor.absoluteUrl() + get(Meteor, 'settings.private.fhir.security.authorization_endpoint', "oauth/authorize"),
+        "token_endpoint": Meteor.absoluteUrl() + get(Meteor, 'settings.private.fhir.security.tokenEndpoint', "oauth/token"),
+        "registration_endpoint": Meteor.absoluteUrl() + get(Meteor, 'settings.private.fhir.security.registrationEndpoint', "oauth/registration")
+      };
+
+      // Get x5c value (base64 DER certificate without PEM headers)
+      let x5cValue = '';
+      if (x509publicCert) {
+        x5cValue = x509publicCert
+          .replace(/\\r\\n/g, '\n')
+          .replace(/\r\n/g, '\n')
+          .replace('-----BEGIN CERTIFICATE-----', '')
+          .replace('-----END CERTIFICATE-----', '')
+          .replace(/\n/g, '')
+          .trim();
+      }
+
+      try {
+        response.signed_metadata = jwt.sign(metadataToSign, privateKey, {
+          algorithm: 'RS256',
+          header: {
+            alg: 'RS256',
+            x5c: x5cValue ? [x5cValue] : undefined
+          }
+        });
+        console.log('UDAP signed_metadata generated successfully');
+      } catch (error) {
+        console.error('Error signing UDAP metadata:', error.message);
+        response.signed_metadata = null;
+      }
+    } else {
+      console.warn('UDAP: No private key configured, signed_metadata will be null');
+    }
 
     return response;
   }

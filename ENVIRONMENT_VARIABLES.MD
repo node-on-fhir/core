@@ -12,7 +12,11 @@ This document lists all environment variables used in the Honeycomb3 FHIR framew
 | `DEV_AUTO_LOGIN` | Enable automatic login in development | `false` | No | `/server/FhirEndpoints.js`, `/imports/accounts/server/dev-autologin.js` |
 | `DEV_AUTO_USERNAME` | Username for development auto-login | - | No | `/server/FhirEndpoints.js`, `/imports/accounts/server/dev-autologin.js` |
 | `DEV_AUTO_PASSWORD` | Password for development auto-login | - | No | `/server/FhirEndpoints.js`, `/imports/accounts/server/dev-autologin.js` |
-| `NOAUTH` | Disable authentication (development only) | `false` | No | `/server/RestHelpers.js`, `/server/FhirEndpoints.js` |
+| `NOAUTH` | Disable authentication (requires `SANDBOX_MODE=true`) | `false` | No | `/server/SafeNoAuth.js`, `/server/FhirEndpoints.js` |
+| `SANDBOX_MODE` | Secondary confirmation for NOAUTH (double-latch guard) | `false` | No | `/server/SafeNoAuth.js` |
+| `NOAUTH_ALLOWED_DOMAINS` | Comma-separated domains where NOAUTH is allowed | `localhost` | No | `/server/SafeNoAuth.js` |
+| `NOAUTH_EXPIRES_HOURS` | Hours until NOAUTH auto-expires | `24` | No | `/server/SafeNoAuth.js` |
+| `PRODUCTION_MODE` | If `true`, prevents NOAUTH from activating | - | No | `/server/SafeNoAuth.js` |
 | `REFRESH_TOKEN` | OAuth refresh token configuration | - | No | `/server/OAuthEndpoints.js` |
 
 ## Database
@@ -115,6 +119,24 @@ export USE_MONGO_OBJECTID=true
 # This ensures new patients use MongoDB ObjectIDs like Synthea data
 USE_MONGO_OBJECTID=true meteor run --settings configs/settings.synthea.json
 ```
+
+### Sandbox Configuration (Open FHIR Server)
+```bash
+# Double-latch guard - both required
+export NOAUTH=true
+export SANDBOX_MODE=true
+
+# Allow your domain (default is localhost only)
+export NOAUTH_ALLOWED_DOMAINS=sandbox.example.com,localhost
+
+# Optional: extend expiration (default 24 hours)
+export NOAUTH_EXPIRES_HOURS=72
+
+# Must NOT be true
+export PRODUCTION_MODE=false
+```
+
+See [COOKBOOK.md](./COOKBOOK.md) for complete PM2 configuration examples.
 
 ### Production Configuration
 ```bash
