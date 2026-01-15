@@ -48,4 +48,16 @@ Meteor.startup(async function() {
   global.Collections.Beds = Beds;
 });
 
+// ProfileSet for CapabilityStatement discovery
+// Metadata.js will automatically discover this and add profiles to CapabilityStatement
+// This enables PACIO Inferno test kit validation by declaring supported profiles
+export const ProfileSet = {
+  name: 'PACIO Core Profiles',
+  profiles: {
+    'Composition': [
+      'http://hl7.org/fhir/us/pacio-toc/StructureDefinition/TOC-Composition'
+    ]
+  }
+};
+
 console.log('PACIO Core package server initialized');

@@ -2422,7 +2422,7 @@ if(typeof serverRouteManifest === "object"){
               }
   
               if (get(req, 'body')) {
-                newRecord = req.body;
+                let newRecord = req.body;
                 if(get(Meteor, 'settings.private.trace') === true) { console.log('req.body', req.body); }
                 
   
@@ -2447,10 +2447,9 @@ if(typeof serverRouteManifest === "object"){
                   } else {
                     newRecord.resourceType = routeResourceType;
                     newRecord._id = newlyAssignedId;
-  
-                    if(!get(newRecord, 'id')){
-                      newRecord.id = newlyAssignedId;
-                    }
+
+                    // Server MUST assign id on create (ignore client-provided id per FHIR spec)
+                    newRecord.id = newlyAssignedId;
                     
       
                     newRecord = RestHelpers.toMongo(newRecord);
@@ -2461,62 +2460,75 @@ if(typeof serverRouteManifest === "object"){
                     
                     if(! await Collections[collectionName].findOneAsync({id: newlyAssignedId})){
                       if(get(Meteor, 'settings.private.debug') === true) { console.log('No ' + routeResourceType + ' found.  Creating one.'); }
-      
-                      await Collections[collectionName].insertAsync(newRecord, schemaValidationConfig, async function(error, result){
-                        if (error) {
-                          if(get(Meteor, 'settings.private.trace') === true) { console.log('PUT /fhir/MeasureReport/' + req.params.id + "[error]", error); }
-      
-                          // Bad Request
-                          res.status(400).json({message: error.message});
-                        }
-                        if (result) {
-                          if(get(Meteor, 'settings.private.trace') === true) { console.log('result', result); }
-                          res.setHeader("Last-Modified", new Date());
-                          res.setHeader("ETag", fhirVersion);
-  
-                          // Now that the record is written; if it was a Provenance, lets check the payload
-                          if(collectionName === "Provenances"){
-  
-                            let xProvenanceData = get(newRecord, 'signature[0].data');
-  
-                            let decodedProvenanceData = jwt.decode(xProvenanceData, {complete: true})
-                            console.log('decodedProvenanceData', decodedProvenanceData);
-                
-                            let provenancePayloadResourceType = get(decodedProvenanceData, 'payload.resourceType');
-                            console.log('provenancePayload.resourceType', provenancePayloadResourceType);
-                
-                            let provenancePayload = get(decodedProvenanceData, 'payload');
-                            console.log('provenancePayload.payload', provenancePayload);
-                
-                            if(provenancePayloadResourceType){
-                              let collectionName = FhirUtilities.pluralizeResourceName(provenancePayloadResourceType)
-                              if(Collections[collectionName]){
-                                console.log('Adding a new ' + provenancePayloadResourceType + ' which was found in the x-provenance header payload.')
-                                if(! await Collections[collectionName].findOneAsync({id: provenancePayload.id})){
-                                  await Collections[collectionName].insertAsync(provenancePayload)
-                                }
+
+                      try {
+                        const result = await Collections[collectionName].insertAsync(newRecord);
+
+                        if(get(Meteor, 'settings.private.trace') === true) { console.log('result', result); }
+                        res.setHeader("Last-Modified", new Date());
+                        res.setHeader("ETag", fhirVersion);
+
+                        // Now that the record is written; if it was a Provenance, lets check the payload
+                        if(collectionName === "Provenances"){
+
+                          let xProvenanceData = get(newRecord, 'signature[0].data');
+
+                          let decodedProvenanceData = jwt.decode(xProvenanceData, {complete: true})
+                          console.log('decodedProvenanceData', decodedProvenanceData);
+
+                          let provenancePayloadResourceType = get(decodedProvenanceData, 'payload.resourceType');
+                          console.log('provenancePayload.resourceType', provenancePayloadResourceType);
+
+                          let provenancePayload = get(decodedProvenanceData, 'payload');
+                          console.log('provenancePayload.payload', provenancePayload);
+
+                          if(provenancePayloadResourceType){
+                            let provenanceCollectionName = FhirUtilities.pluralizeResourceName(provenancePayloadResourceType)
+                            if(Collections[provenanceCollectionName]){
+                              console.log('Adding a new ' + provenancePayloadResourceType + ' which was found in the x-provenance header payload.')
+                              if(! await Collections[provenanceCollectionName].findOneAsync({id: provenancePayload.id})){
+                                await Collections[provenanceCollectionName].insertAsync(provenancePayload)
                               }
                             }
                           }
-  
-                          // Re-enable the following for Abacus & SANER
-                          // But document accordingly, and need to include Provenance stamping
-                          // res.setHeader("MeasureReport", fhirPath + "/MeasureReport/" + result);
-                          // res.setHeader("Location", "/MeasureReport/" + result);
-      
-                          let resourceRecords = await Collections[collectionName].find({id: newlyAssignedId});
-                          let payload = [];
-      
-                          resourceRecords.forEach(function(record){
-                            payload.push(RestHelpers.prepForFhirTransfer(record));
-                          });
-                          
-                          if(get(Meteor, 'settings.private.trace') === true) { console.log("payload", payload); }
-      
-                          // created!
-                          res.status(201).json(Bundle.generate(payload));
                         }
-                      }); 
+
+                        // Re-enable the following for Abacus & SANER
+                        // But document accordingly, and need to include Provenance stamping
+                        // res.setHeader("MeasureReport", fhirPath + "/MeasureReport/" + result);
+                        // res.setHeader("Location", "/MeasureReport/" + result);
+
+                        // Fetch the created resource (use _id which is always set to newlyAssignedId)
+                        const createdRecord = await Collections[collectionName].findOneAsync({_id: newlyAssignedId});
+
+                        if (createdRecord) {
+                          // Set Location header per FHIR spec (use record's FHIR id, not MongoDB _id)
+                          res.setHeader("Location", `/${fhirPath}/${routeResourceType}/${get(createdRecord, 'id', newlyAssignedId)}`);
+
+                          if(get(Meteor, 'settings.private.trace') === true) {
+                            console.log("Created resource:", createdRecord);
+                          }
+
+                          // Return the created resource directly (FHIR compliant - all versions)
+                          res.status(201).json(RestHelpers.prepForFhirTransfer(createdRecord));
+                        } else {
+                          // Resource was inserted but couldn't be retrieved - server error
+                          console.error(`POST /${fhirPath}/${routeResourceType} - Resource created but not found: ${newlyAssignedId}`);
+                          res.status(500).json({
+                            resourceType: "OperationOutcome",
+                            issue: [{
+                              severity: "error",
+                              code: "exception",
+                              details: { text: "Resource created but could not be retrieved" }
+                            }]
+                          });
+                        }
+                      } catch (error) {
+                        if(get(Meteor, 'settings.private.trace') === true) { console.log('POST /fhir/' + routeResourceType + ' [error]', error); }
+                        console.error('POST /fhir/' + routeResourceType + ' error:', error.message);
+                        // Bad Request
+                        res.status(400).json({message: error.message});
+                      }
                     } else {
                       // Already Exists
                       res.status(412).json();
@@ -2593,92 +2605,99 @@ if(typeof serverRouteManifest === "object"){
                       if(get(Meteor, 'settings.private.debug') === true) { console.log('Versioned Collection: Trying to add another versioned record to the main Task collection.') }
     
                       if(get(Meteor, 'settings.private.debug') === true) { console.log("Lets set a new version ID"); }
-                      if(!get(newRecord, 'meta.versionId')){
-                        set(newRecord, 'meta.versionId', (numRecordsToUpdate + 1).toString());  
-                      }
+                      // Server MUST ignore client meta.versionId and assign its own (FHIR spec)
+                      set(newRecord, 'meta.versionId', (numRecordsToUpdate + 1).toString());
+                      set(newRecord, 'meta.lastUpdated', new Date());
         
                       if(get(Meteor, 'settings.private.debug') === true) { console.log("And add it to the history"); }
-                      newlyAssignedId = await Collections[collectionName].insertAsync(newRecord, schemaValidationConfig, async function(error, resultId){
-                        if (error) {
-                          if(get(Meteor, 'settings.private.trace') === true) { console.log('PUT /fhir/' + routeResourceType + '/' + req.params.id + "[error]", error); }
-            
-                          // Bad Request
-                          res.status(400).json({message: error.message});
-                        }
-                        if (resultId) {
-                          if(get(Meteor, 'settings.private.trace') === true) { console.log('resultId', resultId); }
 
-                          // this MeasureReport header was used in the SANER specification, I think
-                          // don't remove, but it needs a conditional statement so it's not included on everything else
-                          // res.setHeader("MeasureReport", fhirPath + "/" + routeResourceType + "/" + resultId);
-                          res.setHeader("Last-Modified", new Date());
-                          
-            
-                          let updatedRecord = await Collections[collectionName].findOneAsync({_id: resultId});
-            
-                          if(get(Meteor, 'settings.private.trace') === true) { console.log("updatedRecord", updatedRecord); }
-            
-                          let operationOutcome = {
-                            "resourceType": "OperationOutcome",
-                            "issue" : [{ // R!  A single issue associated with the action
-                              "severity" : "information", // R!  fatal | error | warning | information
-                              "code" : "informational", // R!  Error or warning code
-                              "details" : { 
-                                "text": resultId,
-                                "coding": [{
-                                  "system": "http://terminology.hl7.org/CodeSystem/operation-outcome",
-                                  "code": "MSG_UPDATED",
-                                  "display": "existing resource updated",
-                                  "userSelected": false
-                                }]
-                              }
-                            }]
-                          }
+                      try {
+                        const resultId = await Collections[collectionName].insertAsync(newRecord);
 
-                          if(updatedRecord){
-                            // success!
-                            res.status(200).json(RestHelpers.prepForFhirTransfer(updatedRecord));
-                          } else {
-                            // success!
-                            res.status(400).json();
-                          }
+                        if(get(Meteor, 'settings.private.trace') === true) { console.log('resultId', resultId); }
+
+                        // this MeasureReport header was used in the SANER specification, I think
+                        // don't remove, but it needs a conditional statement so it's not included on everything else
+                        // res.setHeader("MeasureReport", fhirPath + "/" + routeResourceType + "/" + resultId);
+                        res.setHeader("Last-Modified", new Date());
+
+
+                        let updatedRecord = await Collections[collectionName].findOneAsync({_id: resultId});
+
+                        if(get(Meteor, 'settings.private.trace') === true) { console.log("updatedRecord", updatedRecord); }
+
+                        let operationOutcome = {
+                          "resourceType": "OperationOutcome",
+                          "issue" : [{ // R!  A single issue associated with the action
+                            "severity" : "information", // R!  fatal | error | warning | information
+                            "code" : "informational", // R!  Error or warning code
+                            "details" : {
+                              "text": resultId,
+                              "coding": [{
+                                "system": "http://terminology.hl7.org/CodeSystem/operation-outcome",
+                                "code": "MSG_UPDATED",
+                                "display": "existing resource updated",
+                                "userSelected": false
+                              }]
+                            }
+                          }]
                         }
-                      });    
+
+                        if(updatedRecord){
+                          // success!
+                          res.status(200).json(RestHelpers.prepForFhirTransfer(updatedRecord));
+                        } else {
+                          // success!
+                          res.status(400).json();
+                        }
+                      } catch (error) {
+                        if(get(Meteor, 'settings.private.trace') === true) { console.log('PUT /fhir/' + routeResourceType + '/' + req.params.id + "[error]", error); }
+                        console.error('PUT /fhir/' + routeResourceType + '/' + req.params.id + ' error:', error.message);
+                        // Bad Request
+                        res.status(400).json({message: error.message});
+                      }
                     } else {
                       console.log("There's existing records, but we're not a versioned collection");
                       console.log("So we just need to update the record");
 
                       if(get(Meteor, 'settings.private.debug') === true) { console.log('Nonversioned Collection: Trying to update the existing record.') }
-                        newlyAssignedId = await Collections[collectionName].updateAsync({id: req.params.id}, {$set: newRecord },  schemaValidationConfig, async function(error, result){
-                        if (error) {
-                          if(get(Meteor, 'settings.private.trace') === true) { console.log('PUT /fhir/' + routeResourceType + '/' + req.params.id + "[error]", error); }
-            
-                          // Bad Request
-                          res.status(400).json({message: error.message});
+
+                      // Get existing record's versionId to increment it
+                      const existingRecord = await Collections[collectionName].findOneAsync({id: req.params.id});
+                      const currentVersion = parseInt(get(existingRecord, 'meta.versionId', '0'));
+
+                      // Server MUST ignore client meta.versionId and assign its own (FHIR spec)
+                      set(newRecord, 'meta.versionId', (currentVersion + 1).toString());
+                      set(newRecord, 'meta.lastUpdated', new Date());
+
+                      try {
+                        const result = await Collections[collectionName].updateAsync({id: req.params.id}, {$set: newRecord });
+
+                        if(get(Meteor, 'settings.private.trace') === true) { console.log('result', result); }
+                        // keep the following; needed for SANER
+                        // needs a conditional clause
+                        // res.setHeader("MeasureReport", fhirPath + "/" + routeResourceType + "/" + result);
+                        res.setHeader("Last-Modified", new Date());
+                        res.setHeader("ETag", fhirVersion);
+
+                        // this isn't a versioned collection, so we expect only a single record
+                        let updatedRecord = await Collections[collectionName].findOneAsync({id: req.params.id});
+
+                        if(updatedRecord){
+                          if(get(Meteor, 'settings.private.trace') === true) { console.log("updatedRecord", updatedRecord); }
+
+                          // success!
+                          res.status(200).json(RestHelpers.prepForFhirTransfer(updatedRecord));
+                        } else {
+                          // record not found after update
+                          res.status(500).json({message: 'Record not found after update'});
                         }
-                        if (result) {
-                          if(get(Meteor, 'settings.private.trace') === true) { console.log('result', result); }
-                          // keep the following; needed for SANER
-                          // needs a conditional clause
-                          // res.setHeader("MeasureReport", fhirPath + "/" + routeResourceType + "/" + result);
-                          res.setHeader("Last-Modified", new Date());
-                          res.setHeader("ETag", fhirVersion);
-            
-                          // this isn't a versioned collection, so we expect only a single record
-                          let updatedRecord = await Collections[collectionName].findOneAsync({id: req.params.id});
-            
-                          if(updatedRecord){
-                            if(get(Meteor, 'settings.private.trace') === true) { console.log("updatedRecord", updatedRecord); }
-            
-                            // success!
-                            res.status(200).json(RestHelpers.prepForFhirTransfer(updatedRecord));
-                          } else {
-                            // success!
-                            res.status(500).json({message: error.message});
-                          }
-                          
-                        }
-                      });
+                      } catch (error) {
+                        if(get(Meteor, 'settings.private.trace') === true) { console.log('PUT /fhir/' + routeResourceType + '/' + req.params.id + "[error]", error); }
+                        console.error('PUT /fhir/' + routeResourceType + '/' + req.params.id + ' error:', error.message);
+                        // Bad Request
+                        res.status(400).json({message: error.message});
+                      }
                     }
                     
                   // no existing records found, this is a create interaction
@@ -2690,27 +2709,26 @@ if(typeof serverRouteManifest === "object"){
                     }
 
                     if(get(Meteor, 'settings.private.debug') === true) { console.log(newRecord); }
-    
-                    newlyAssignedId = await Collections[collectionName].insertAsync(newRecord, schemaValidationConfig, async function(error, resultId){
-                      if (error) {
-                        if(get(Meteor, 'settings.private.trace') === true) { console.log('PUT /fhir/' + routeResourceType + '/' + req.params.id + "[error]", error); }
-          
-                        // Bad Request
-                        res.status(400).json({message: error.message});
-                      }
-                      if (resultId) {
-                        if(get(Meteor, 'settings.private.trace') === true) { console.log('resultId', resultId); }
-                        res.setHeader("MeasureReport", fhirPath + "/" + routeResourceType + "/" + resultId);
-                        res.setHeader("Last-Modified", new Date());
-                        res.setHeader("ETag", fhirVersion);
-          
-                        let updatedRecord = await Collections[collectionName].findOneAsync({_id: resultId});
-          
-                        // Created!                        
-                        res.status(201).json(RestHelpers.prepForFhirTransfer(updatedRecord));
-                      }
-                    }); 
-                   
+
+                    try {
+                      const resultId = await Collections[collectionName].insertAsync(newRecord);
+
+                      if(get(Meteor, 'settings.private.trace') === true) { console.log('resultId', resultId); }
+                      res.setHeader("MeasureReport", fhirPath + "/" + routeResourceType + "/" + resultId);
+                      res.setHeader("Last-Modified", new Date());
+                      res.setHeader("ETag", fhirVersion);
+
+                      let updatedRecord = await Collections[collectionName].findOneAsync({_id: resultId});
+
+                      // Created!
+                      res.status(201).json(RestHelpers.prepForFhirTransfer(updatedRecord));
+                    } catch (error) {
+                      if(get(Meteor, 'settings.private.trace') === true) { console.log('PUT /fhir/' + routeResourceType + '/' + req.params.id + "[error]", error); }
+                      console.error('PUT /fhir/' + routeResourceType + '/' + req.params.id + ' error:', error.message);
+                      // Bad Request
+                      res.status(400).json({message: error.message});
+                    }
+
                   }  
                 } else {
                   console.log(collectionName + ' collection not found.')

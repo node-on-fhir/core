@@ -278,18 +278,18 @@ const MetadataServerMethods = {
         if (Array.isArray(Meteor.settings.private.fhir.rest[key].interactions)) {
           newResourceStatement.interaction = [];
           Meteor.settings.private.fhir.rest[key].interactions.forEach(function(item){
+            // Normalize interaction codes to FHIR R4 TypeRestfulInteraction
+            // Settings can use either DSTU2 ("search") or R4 ("search-type")
+            // CapabilityStatement always outputs R4-compliant codes
+            // Valid R4 codes: read, vread, update, patch, delete, create, search-type, history-instance, history-type
+            let interactionCode = item;
+            if (item === 'search') {
+              interactionCode = 'search-type';
+            } else if (item === 'history') {
+              interactionCode = 'history-instance';
+            }
             newResourceStatement.interaction.push({
-              "code": item
-            })
-            newResourceStatement.versioning = get(Meteor, 'settings.private.fhir.rest[' + key + '].versioning', "no-version")
-          })
-        }
-
-        if (Array.isArray(Meteor.settings.private.fhir.rest[key].interactions)) {
-          newResourceStatement.interaction = [];
-          Meteor.settings.private.fhir.rest[key].interactions.forEach(function(item){
-            newResourceStatement.interaction.push({
-              "code": item
+              "code": interactionCode
             })
             newResourceStatement.versioning = get(Meteor, 'settings.private.fhir.rest[' + key + '].versioning', "no-version")
           })
@@ -588,7 +588,19 @@ const MetadataServerMethods = {
     let fhirRestEndpoints = get(Meteor, 'settings.private.fhir.rest');
     if(fhirRestEndpoints){
       Object.keys(fhirRestEndpoints).forEach(function(key){
-        response.scopes_supported.push("system/" + key + ".read")
+        let resourceConfig = fhirRestEndpoints[key];
+
+        // Get scope types (default to ["system"] for backward compatibility)
+        let scopeTypes = get(resourceConfig, 'scopes', ['system']);
+        let enableWrite = get(resourceConfig, 'write', false);
+
+        // Generate scopes for each type
+        scopeTypes.forEach(function(scopeType){
+          response.scopes_supported.push(scopeType + "/" + key + ".read");
+          if(enableWrite){
+            response.scopes_supported.push(scopeType + "/" + key + ".write");
+          }
+        });
       })
     }
 
@@ -598,9 +610,16 @@ const MetadataServerMethods = {
     console.log('x509publicCert', x509publicCert ? 'present' : 'missing');
     console.log('privateKey', privateKey ? 'present' : 'missing');
 
-    // Add certificate to x5c array
+    // Add certificate to x5c array (must be pure base64, no PEM headers/newlines per UDAP spec)
     if (x509publicCert) {
-      response.x5c.push(x509publicCert);
+      let x5cCleaned = x509publicCert
+        .replace(/\\r\\n/g, '\n')
+        .replace(/\r\n/g, '\n')
+        .replace(/-----BEGIN CERTIFICATE-----/g, '')
+        .replace(/-----END CERTIFICATE-----/g, '')
+        .replace(/[\r\n]/g, '')
+        .trim();
+      response.x5c.push(x5cCleaned);
     }
 
     // Sign the metadata JWT if private key is available
@@ -610,8 +629,8 @@ const MetadataServerMethods = {
 
       // Build the metadata to sign (per UDAP spec)
       let metadataToSign = {
-        "iss": Meteor.absoluteUrl(),
-        "sub": Meteor.absoluteUrl(),
+        "iss": Meteor.absoluteUrl() + fhirPath,
+        "sub": Meteor.absoluteUrl() + fhirPath,
         "exp": moment().add(1, 'year').unix(),
         "iat": moment().unix(),
         "jti": Random.id(),
