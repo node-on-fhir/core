@@ -14,21 +14,33 @@ function getClinicianId(currentUser){
 }
 
 if(Meteor.isClient){
+  // Store active subscription handles for cleanup
+  let activeHandles = [];
+
   // Single tracker for all PHI resource subscriptions
   Tracker.autorun((computation) => {
     const clinicianId = getClinicianId(Session.get('currentUser'));
     const clientSecretOrBearerToken = Session.get('clientSecretOrBearerToken');
     const selectedPatientId = Session.get('selectedPatientId');
-    
+
+    // Stop all previous subscriptions before creating new ones
+    // This prevents subscription multiplication on Session changes
+    activeHandles.forEach(handle => {
+      if (handle && handle.stop) {
+        handle.stop();
+      }
+    });
+    activeHandles = [];
+
     console.log('PACIO PHI Subscriptions - selectedPatientId:', selectedPatientId);
-    
+
     // Only subscribe if we have a patient selected
     if(selectedPatientId) {
       // PHI Resources
       const subscriptions = [
         'AllergyIntolerances',
         'AuditEvents',
-        'CarePlans', 
+        'CarePlans',
         'Compositions',
         'Conditions',
         'Consents',
@@ -45,14 +57,17 @@ if(Meteor.isClient){
         'QuestionnaireResponses',
         'ServiceRequests'
       ];
-      
+
       subscriptions.forEach(resourceType => {
         const handle = Meteor.subscribe(`pacio.${resourceType}`, selectedPatientId, clinicianId, clientSecretOrBearerToken);
-        console.log(`Subscribing to pacio.${resourceType} for patient ${selectedPatientId}`);
+        activeHandles.push(handle);
       });
-      
+
       // Patient resource subscription
-      Meteor.subscribe('pacio.Patients', selectedPatientId, clinicianId, clientSecretOrBearerToken);
+      const patientHandle = Meteor.subscribe('pacio.Patients', selectedPatientId, clinicianId, clientSecretOrBearerToken);
+      activeHandles.push(patientHandle);
+
+      console.log(`PACIO: Subscribed to ${activeHandles.length} resources for patient ${selectedPatientId}`);
     } else {
       console.log('No patient selected, skipping PHI subscriptions');
     }
