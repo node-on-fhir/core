@@ -1455,6 +1455,29 @@ Meteor.methods({
     }
   },
 
+  /**
+   * Returns the Daisey test patient bundle JSON for download.
+   * @returns {String} The raw JSON content of the Daisey bundle
+   */
+  'referenceApp.getDaiseyBundleJson': async function() {
+    console.log('referenceApp.getDaiseyBundleJson');
+
+    // Check authorization
+    if (!this.userId) {
+      throw new Meteor.Error('unauthorized', 'User must be logged in');
+    }
+
+    try {
+      const assetPath = 'data/Daisy/Daisey627_Jackelyn13_Koelpin146_958c63b0-4a7f-2ee7-ef6a-e04df5931b4c.json';
+      const bundleJson = await Assets.getTextAsync(assetPath);
+      console.log('Returning Daisey bundle JSON for download');
+      return bundleJson;
+    } catch (error) {
+      console.error('Error in referenceApp.getDaiseyBundleJson:', error);
+      throw new Meteor.Error('download-failed', error.message || 'Failed to get Daisey bundle');
+    }
+  },
+
   // ---------------------------------------------------------------------------
   // SEED MISSING REFERENCES FROM PARSED URLs
   // ---------------------------------------------------------------------------
@@ -1976,5 +1999,105 @@ Meteor.methods({
 
     console.log('Seed missing references complete:', results);
     return results;
+  },
+
+  // ---------------------------------------------------------------------------
+  // CREATE BULK EXPORT GROUP
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Creates or updates a Group resource for bulk data export testing.
+   * Adds all patients in the database as members of the group.
+   * Required for ONC (g)(10) certification test 8.2.06.
+   *
+   * @param {String} groupId - The FHIR ID for the Group (default: 'inferno-test-group')
+   * @returns {Object} Result with groupId and patientCount
+   */
+  'referenceApp.createBulkExportGroup': async function(groupId = 'inferno-test-group') {
+    console.log('referenceApp.createBulkExportGroup', groupId);
+
+    try {
+      // Get collections
+      const Patients = await global.Collections.Patients;
+      const Groups = await global.Collections.Groups;
+
+      if (!Patients) {
+        throw new Meteor.Error('collection-not-found', 'Patients collection not available');
+      }
+      if (!Groups) {
+        throw new Meteor.Error('collection-not-found', 'Groups collection not available');
+      }
+
+      // Get all patients
+      const patients = await Patients.find({}).fetchAsync();
+      console.log(`[createBulkExportGroup] Found ${patients.length} patients`);
+
+      if (patients.length === 0) {
+        throw new Meteor.Error('no-patients', 'No patients found in database. Load test data first.');
+      }
+
+      // Build Group.member array with Patient references
+      const members = patients.map(function(patient) {
+        const patientId = patient.id || patient._id;
+        const familyName = get(patient, 'name[0].family', 'Unknown');
+        return {
+          entity: {
+            reference: `Patient/${patientId}`,
+            display: familyName
+          }
+        };
+      });
+
+      // Check if group already exists
+      let existingGroup = await Groups.findOneAsync({ id: groupId });
+      if (!existingGroup) {
+        existingGroup = await Groups.findOneAsync({ _id: groupId });
+      }
+
+      const groupResource = {
+        resourceType: 'Group',
+        id: groupId,
+        meta: {
+          lastUpdated: new Date().toISOString(),
+          profile: ['http://hl7.org/fhir/StructureDefinition/Group']
+        },
+        type: 'person',
+        actual: true,
+        name: 'Inferno Bulk Export Test Group',
+        quantity: members.length,
+        member: members
+      };
+
+      if (existingGroup) {
+        // Update existing group
+        await Groups.updateAsync(
+          { _id: existingGroup._id },
+          { $set: groupResource }
+        );
+        console.log(`[createBulkExportGroup] Updated Group ${groupId} with ${members.length} patients`);
+      } else {
+        // Create new group
+        groupResource._id = groupId;
+        await Groups.insertAsync(groupResource);
+        console.log(`[createBulkExportGroup] Created Group ${groupId} with ${members.length} patients`);
+      }
+
+      // Build the patient IDs list for Inferno config
+      const patientIds = patients.map(function(patient) {
+        return patient.id || patient._id;
+      });
+
+      return {
+        success: true,
+        groupId: groupId,
+        patientCount: members.length,
+        patientIds: patientIds,
+        action: existingGroup ? 'updated' : 'created'
+      };
+
+    } catch (error) {
+      console.error('Error in referenceApp.createBulkExportGroup:', error);
+      throw new Meteor.Error('create-group-failed', error.message || 'Failed to create bulk export group');
+    }
   }
 });

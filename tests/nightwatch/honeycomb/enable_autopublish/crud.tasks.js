@@ -122,8 +122,8 @@ describe('Tasks CRUD Operations', function() {
   });
 
   it('02. Verify tasks list page loads', browser => {
+    testUtils.navigateUrl(browser, '/tasks');
     browser
-      .url('http://localhost:3000/tasks')
       .waitForElementVisible('body', 5000);
     
     // Re-establish patient context after navigation
@@ -205,8 +205,8 @@ describe('Tasks CRUD Operations', function() {
         console.log('Auth status:', result.value);
       });
     
+    testUtils.navigateUrl(browser, '/tasks');  // Navigate to the page first
     browser
-      .url('http://localhost:3000/tasks')  // Navigate to the page first
       .waitForElementVisible('body', 10000)
       .pause(1000);  // Allow React to render
 
@@ -550,8 +550,8 @@ describe('Tasks CRUD Operations', function() {
 
   it('06. View task details', browser => {
     // Navigate back to tasks page
+    testUtils.navigateUrl(browser, '/tasks');
     browser
-      .url('http://localhost:3000/tasks')
       .waitForElementVisible('#tasksPage', 5000);
     
     // Re-establish patient context after navigation
@@ -723,8 +723,8 @@ describe('Tasks CRUD Operations', function() {
       })
       .saveScreenshot('tests/nightwatch/screenshots/tasks/07-view-task-details.png');
     
+      testUtils.navigateUrl(browser, '/tasks');
       browser
-        .url('http://localhost:3000/tasks')
         .waitForElementVisible('#tasksPage', 5000);
     });
   });

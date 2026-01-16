@@ -149,6 +149,11 @@ OAuthClientSchema =  new SimpleSchema({
     type: String,
     optional: true
   },
+  "jwks": {
+    type: Object,
+    optional: true,
+    blackbox: true  // Allow any structure for JWKS object
+  },
   "launch_uri": {
     type: String,
     optional: true
@@ -206,6 +211,23 @@ OAuthClientSchema =  new SimpleSchema({
   },
   "user_id": {
     type: String,
+    optional: true
+  },
+  // Token revocation fields for ONC g(10) 9.3.01 compliance
+  "authorization_expires_at": {
+    type: Date,
+    optional: true
+  },
+  "revoked_at": {
+    type: Date,
+    optional: true
+  },
+  "revoked_by": {
+    type: String,
+    optional: true
+  },
+  "session_duration_minutes": {
+    type: Number,
     optional: true
   }
 });

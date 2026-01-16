@@ -126,8 +126,9 @@ describe('MedicationAdministrations CRUD Operations', function() {
   });
 
   it('02. Verify medication administrations list page loads', browser => {
+    // Use client-side navigation to preserve Meteor/Session state
+    testUtils.navigateUrl(browser, '/medication-administrations');
     browser
-      .url('http://localhost:3000/medication-administrations')
       .waitForElementVisible('#medicationAdministrationsPage', 5000)
             .execute(function() {
         const hasTable = document.querySelector('#medicationAdministrationsTable') !== null;

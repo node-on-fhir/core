@@ -168,8 +168,9 @@ describe('DiagnosticReports CRUD Operations', function() {
   });
 
   it('02. Verify diagnostic reports list page loads', browser => {
+    // Use client-side navigation to preserve Meteor/Session state
+    testUtils.navigateUrl(browser, '/diagnostic-reports');
     browser
-      .url('http://localhost:3000/diagnostic-reports')
       .waitForElementVisible('#diagnosticReportsPage', 5000)
       .pause(2000);
       

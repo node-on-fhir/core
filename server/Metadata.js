@@ -174,6 +174,9 @@ const MetadataServerMethods = {
       "kind": "capability",
       "date": new Date(),
       "contact": get(Meteor, 'settings.public.contact'),
+      "instantiates": [
+        "http://hl7.org/fhir/uv/bulkdata/CapabilityStatement/bulk-data"
+      ],
       "software": {
         "version" : "6.1.0",
         "name" : "Vault Server",
@@ -275,18 +278,18 @@ const MetadataServerMethods = {
         if (Array.isArray(Meteor.settings.private.fhir.rest[key].interactions)) {
           newResourceStatement.interaction = [];
           Meteor.settings.private.fhir.rest[key].interactions.forEach(function(item){
+            // Normalize interaction codes to FHIR R4 TypeRestfulInteraction
+            // Settings can use either DSTU2 ("search") or R4 ("search-type")
+            // CapabilityStatement always outputs R4-compliant codes
+            // Valid R4 codes: read, vread, update, patch, delete, create, search-type, history-instance, history-type
+            let interactionCode = item;
+            if (item === 'search') {
+              interactionCode = 'search-type';
+            } else if (item === 'history') {
+              interactionCode = 'history-instance';
+            }
             newResourceStatement.interaction.push({
-              "code": item
-            })
-            newResourceStatement.versioning = get(Meteor, 'settings.private.fhir.rest[' + key + '].versioning', "no-version")
-          })
-        }
-
-        if (Array.isArray(Meteor.settings.private.fhir.rest[key].interactions)) {
-          newResourceStatement.interaction = [];
-          Meteor.settings.private.fhir.rest[key].interactions.forEach(function(item){
-            newResourceStatement.interaction.push({
-              "code": item
+              "code": interactionCode
             })
             newResourceStatement.versioning = get(Meteor, 'settings.private.fhir.rest[' + key + '].versioning', "no-version")
           })
@@ -298,6 +301,66 @@ const MetadataServerMethods = {
           newResourceStatement.supportedProfile = resourceProfiles;
         }
 
+        // Add searchParam declarations for resources that support search
+        // This is required for ONC (g)(10) certification test 12.50.01 (Screening and Assessments)
+        if (key === 'Observation') {
+          newResourceStatement.searchParam = [
+            {
+              "name": "patient",
+              "type": "reference",
+              "documentation": "The subject that the observation is about (if patient)"
+            },
+            {
+              "name": "category",
+              "type": "token",
+              "documentation": "The classification of the type of observation"
+            },
+            {
+              "name": "code",
+              "type": "token",
+              "documentation": "The code of the observation type"
+            },
+            {
+              "name": "date",
+              "type": "date",
+              "documentation": "Obtained date/time. If the obtained element is a period, a date that falls in the period"
+            },
+            {
+              "name": "status",
+              "type": "token",
+              "documentation": "The status of the observation"
+            }
+          ];
+        } else if (key === 'Condition') {
+          newResourceStatement.searchParam = [
+            {
+              "name": "patient",
+              "type": "reference",
+              "documentation": "Who has the condition?"
+            },
+            {
+              "name": "category",
+              "type": "token",
+              "documentation": "The category of the condition"
+            },
+            {
+              "name": "clinical-status",
+              "type": "token",
+              "documentation": "The clinical status of the condition"
+            },
+            {
+              "name": "code",
+              "type": "token",
+              "documentation": "Code for the condition"
+            },
+            {
+              "name": "onset-date",
+              "type": "date",
+              "documentation": "Date related onsets (dateTime and Period)"
+            }
+          ];
+        }
+
         CapabilityStatement.rest[0].resource.push(newResourceStatement);
       })
     }
@@ -307,6 +370,78 @@ const MetadataServerMethods = {
         CapabilityStatement.rest[0].operation = [];
         Meteor.settings.private.fhir.systemOperations.forEach(function(op){
           CapabilityStatement.rest[0].operation.push(op);
+        });
+      }
+    }
+
+    // =============================================================================
+    // BULK DATA EXPORT SUPPORT
+    // =============================================================================
+    // This section adds Group resource with $export operation to comply with:
+    // - FHIR Bulk Data Access IG (http://hl7.org/fhir/uv/bulkdata/)
+    // - ONC 21st Century Cures Act certification requirements (170.315(g)(10))
+    //
+    // OPEN QUESTIONS / TODO:
+    // 1. Settings Configuration: Should bulk data be toggle-able via settings file?
+    //    e.g., Meteor.settings.private.fhir.enableBulkData: true
+    //
+    // 2. Getting Started: Should this be documented in a Getting Started guide?
+    //    Users need to understand Group/$export workflow.
+    //
+    // 3. Group Auto-Selection: Should we auto-select Group resource in UI?
+    //    Or require explicit patient group membership management?
+    //
+    // 4. Additional Endpoints Required:
+    //    - POST/GET Group/[id]/$export (kick off export)
+    //    - GET [polling location] (check export status)
+    //    - GET [file location] (download NDJSON files)
+    //    - DELETE [polling location] (cancel export)
+    //
+    // 5. Dynamic Groups: Can we dynamically generate Groups like Provenance?
+    //    e.g., virtual groups based on Condition, Location, Practitioner, etc.
+    //    Similar pattern to how Provenance is auto-generated for audit trail.
+    //
+    // 6. Patient Export: Also support Patient/$export for all patients?
+    //
+    // Reference: http://hl7.org/fhir/uv/bulkdata/OperationDefinition/group-export
+    // =============================================================================
+
+    // Add Group resource with $export operation for Bulk Data IG compliance
+    // Check if Group is already declared, if not add it
+    let groupResourceExists = CapabilityStatement.rest[0].resource.some(function(r){
+      return r.type === 'Group';
+    });
+
+    if (!groupResourceExists) {
+      CapabilityStatement.rest[0].resource.push({
+        "type": "Group",
+        "interaction": [
+          { "code": "read" },
+          { "code": "search-type" }
+        ],
+        "versioning": "no-version",
+        "operation": [
+          {
+            "name": "export",
+            "definition": "http://hl7.org/fhir/uv/bulkdata/OperationDefinition/group-export"
+          }
+        ]
+      });
+    } else {
+      // Group exists but may not have the $export operation - add it if missing
+      let groupResource = CapabilityStatement.rest[0].resource.find(function(r){
+        return r.type === 'Group';
+      });
+      if (!groupResource.operation) {
+        groupResource.operation = [];
+      }
+      let hasExportOp = groupResource.operation.some(function(op){
+        return op.name === 'export';
+      });
+      if (!hasExportOp) {
+        groupResource.operation.push({
+          "name": "export",
+          "definition": "http://hl7.org/fhir/uv/bulkdata/OperationDefinition/group-export"
         });
       }
     }
@@ -444,16 +579,6 @@ const MetadataServerMethods = {
       "registration_endpoint": Meteor.absoluteUrl() + get(Meteor, 'settings.private.fhir.security.registrationEndpoint', "oauth/registration"),
       "registration_endpoint_jwt_signing_alg_values_supported": ["RS256", "ES384"],
       "signed_metadata": null,
-      "raw_metadata": {
-        "iss": Meteor.absoluteUrl(),
-        "sub": Meteor.absoluteUrl(),
-        "exp": moment().unix(),
-        "iat": moment().unix(),
-        "jti": "random-value-" + Random.id(),
-        "authorization_endpoint": Meteor.absoluteUrl() + get(Meteor, 'settings.private.fhir.security.authorization_endpoint', "oauth/authorize"),
-        "token_endpoint": Meteor.absoluteUrl() + get(Meteor, 'settings.private.fhir.security.tokenEndpoint', "oauth/token"),
-        "registration_endpoint": Meteor.absoluteUrl() + get(Meteor, 'settings.private.fhir.security.registrationEndpoint', "oauth/registration")
-      },
       "udap_profiles_supported": ["udap_authz", "udap_dcr"],
       "udap_authorization_extensions_supported": [],
       "udap_authorization_extensions_required": [],
@@ -463,14 +588,85 @@ const MetadataServerMethods = {
     let fhirRestEndpoints = get(Meteor, 'settings.private.fhir.rest');
     if(fhirRestEndpoints){
       Object.keys(fhirRestEndpoints).forEach(function(key){
-        response.scopes_supported.push("system/" + key + ".read")
+        let resourceConfig = fhirRestEndpoints[key];
+
+        // Get scope types (default to ["system"] for backward compatibility)
+        let scopeTypes = get(resourceConfig, 'scopes', ['system']);
+        let enableWrite = get(resourceConfig, 'write', false);
+
+        // Generate scopes for each type
+        scopeTypes.forEach(function(scopeType){
+          response.scopes_supported.push(scopeType + "/" + key + ".read");
+          if(enableWrite){
+            response.scopes_supported.push(scopeType + "/" + key + ".write");
+          }
+        });
       })
     }
 
-    let x509publicCert = get(Meteor, 'settings.private.x509.publicCertPem');
-    console.log('x509publicCert', x509publicCert)
-    response.x5c.push(x509publicCert)
+    // Get x509 credentials from settings
+    let privateKey = get(Meteor, 'settings.private.x509.privateKey', '');
+    let x509publicCert = get(Meteor, 'settings.private.x509.publicCertPem', '');
+    console.log('x509publicCert', x509publicCert ? 'present' : 'missing');
+    console.log('privateKey', privateKey ? 'present' : 'missing');
 
+    // Add certificate to x5c array (must be pure base64, no PEM headers/newlines per UDAP spec)
+    if (x509publicCert) {
+      let x5cCleaned = x509publicCert
+        .replace(/\\r\\n/g, '\n')
+        .replace(/\r\n/g, '\n')
+        .replace(/-----BEGIN CERTIFICATE-----/g, '')
+        .replace(/-----END CERTIFICATE-----/g, '')
+        .replace(/[\r\n]/g, '')
+        .trim();
+      response.x5c.push(x5cCleaned);
+    }
+
+    // Sign the metadata JWT if private key is available
+    if (privateKey) {
+      // Normalize line endings
+      privateKey = privateKey.replace(/\\r\\n/g, '\n').replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+
+      // Build the metadata to sign (per UDAP spec)
+      let metadataToSign = {
+        "iss": Meteor.absoluteUrl() + fhirPath,
+        "sub": Meteor.absoluteUrl() + fhirPath,
+        "exp": moment().add(1, 'year').unix(),
+        "iat": moment().unix(),
+        "jti": Random.id(),
+        "authorization_endpoint": Meteor.absoluteUrl() + get(Meteor, 'settings.private.fhir.security.authorization_endpoint', "oauth/authorize"),
+        "token_endpoint": Meteor.absoluteUrl() + get(Meteor, 'settings.private.fhir.security.tokenEndpoint', "oauth/token"),
+        "registration_endpoint": Meteor.absoluteUrl() + get(Meteor, 'settings.private.fhir.security.registrationEndpoint', "oauth/registration")
+      };
+
+      // Get x5c value (base64 DER certificate without PEM headers)
+      let x5cValue = '';
+      if (x509publicCert) {
+        x5cValue = x509publicCert
+          .replace(/\\r\\n/g, '\n')
+          .replace(/\r\n/g, '\n')
+          .replace('-----BEGIN CERTIFICATE-----', '')
+          .replace('-----END CERTIFICATE-----', '')
+          .replace(/\n/g, '')
+          .trim();
+      }
+
+      try {
+        response.signed_metadata = jwt.sign(metadataToSign, privateKey, {
+          algorithm: 'RS256',
+          header: {
+            alg: 'RS256',
+            x5c: x5cValue ? [x5cValue] : undefined
+          }
+        });
+        console.log('UDAP signed_metadata generated successfully');
+      } catch (error) {
+        console.error('Error signing UDAP metadata:', error.message);
+        response.signed_metadata = null;
+      }
+    } else {
+      console.warn('UDAP: No private key configured, signed_metadata will be null');
+    }
 
     return response;
   }

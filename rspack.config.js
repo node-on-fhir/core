@@ -1,5 +1,8 @@
 const { defineConfig } = require('@meteorjs/rspack');
 
+// Detect CI environment
+const isCI = process.env.CI === 'true' || process.env.CIRCLECI === 'true';
+
 /**
  * Rspack configuration for Meteor projects.
  *
@@ -12,7 +15,7 @@ const { defineConfig } = require('@meteorjs/rspack');
  */
 module.exports = defineConfig(Meteor => {
   const config = {
-    plugins: []
+    plugins: [],
   };
 
   // Client-specific configuration
@@ -65,6 +68,17 @@ module.exports = defineConfig(Meteor => {
       ...config.experiments,
       topLevelAwait: true,
     };
+
+    // Disable HMR in CI - WebSocket connections can fail in headless Chrome
+    // causing the client bundle to not load properly after navigation
+    if (isCI) {
+      console.log('[rspack] CI detected - disabling HMR for stability');
+      config.devServer = {
+        ...config.devServer,
+        hot: false,
+        liveReload: false,
+      };
+    }
   }
 
   // Server-specific configuration

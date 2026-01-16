@@ -77,8 +77,9 @@ describe('Questionnaires CRUD Operations', function() {
   });
 
   it('02. Verify questionnaires list page loads', browser => {
+    // Use client-side navigation to preserve Meteor/Session state
+    testUtils.navigateUrl(browser, '/questionnaires');
     browser
-      .url('http://localhost:3000/questionnaires')
       .waitForElementVisible('#questionnairesPage', 5000)
       .execute(function() {
         const hasTable = document.querySelector('#questionnairesTable') !== null;

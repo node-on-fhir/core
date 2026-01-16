@@ -1,7 +1,6 @@
 // packages/hipaa-compliance/client/PolicyMenuPage.jsx
 
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
 import {
   Container,
   Grid,
@@ -83,14 +82,16 @@ const policyCategories = [
   }
 ];
 
-// Dynamic spacer
+// Dynamic spacer and navigation
 let DynamicSpacer;
+let useNavigate;
 Meteor.startup(function(){
   DynamicSpacer = Meteor.DynamicSpacer;
+  useNavigate = Meteor.useNavigate;
 });
 
 export default function PolicyMenuPage(props) {
-  const navigate = useNavigate();
+  const navigate = useNavigate ? useNavigate() : () => {};
 
   const handlePolicyClick = (policyId) => {
     navigate(`/hipaa/policies/${policyId}`);

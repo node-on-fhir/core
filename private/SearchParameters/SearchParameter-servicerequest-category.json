@@ -1,0 +1,17 @@
+{
+  "resourceType": "SearchParameter",
+  "id": "servicerequest-category",
+  "url": "http://hl7.org/fhir/SearchParameter/ServiceRequest-category",
+  "version": "4.0.1",
+  "name": "HoneycombServiceRequestCategory",
+  "status": "active",
+  "date": "2024-12-17",
+  "description": "Classification of service",
+  "code": "category",
+  "base": ["ServiceRequest"],
+  "type": "token",
+  "expression": "ServiceRequest.category",
+  "xpath": "category",
+  "multipleOr": true,
+  "multipleAnd": true
+}

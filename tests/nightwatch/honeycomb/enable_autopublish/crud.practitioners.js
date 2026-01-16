@@ -425,9 +425,9 @@ describe('Practitioners CRUD Operations', function() {
       .assert.valueContains('#npiInput', testPractitioner.npiIdentifier)
       .saveScreenshot('tests/nightwatch/screenshots/practitioners/07-view-practitioner-details.png');
     
-    // Navigate back to practitioners list
+    // Navigate back to practitioners list using client-side navigation
+    testUtils.navigateUrl(browser, '/practitioners');
     browser
-      .url('http://localhost:3000/practitioners')
       .waitForElementVisible('#practitionersPage', 5000);
   });
 
@@ -517,8 +517,10 @@ describe('Practitioners CRUD Operations', function() {
       });
 
     browser
-      .pause(1000)
-      .url('http://localhost:3000/practitioners')
+      .pause(1000);
+    // Use client-side navigation to preserve Meteor/Session state
+    testUtils.navigateUrl(browser, '/practitioners');
+    browser
       .waitForElementVisible('#practitionersTable', 5000)
       .saveScreenshot('tests/nightwatch/screenshots/practitioners/09-practitioner-updated.png');
   });

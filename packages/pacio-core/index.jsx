@@ -587,5 +587,9 @@ export const PatientsDirectoryButtons = [
   }
 ];
 
+// Note: ProfileSet is exported from server/index.js (not here) because
+// Metadata.js runs on the server and only sees server-side exports.
+// See server/index.js for the ProfileSet that adds PACIO TOC profiles to CapabilityStatement.
+
 // Note: All exports are defined above using export const
 // No additional export block needed

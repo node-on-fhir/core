@@ -150,6 +150,60 @@ function selectMaterialUIOption(browser, selectSelector, optionValue) {
 }
 
 /**
+ * Wait for Meteor client to be fully initialized with retry logic
+ * This is critical for CI environments where the client bundle may load slowly
+ * @param {Object} browser - Nightwatch browser object
+ * @param {Function} callback - Callback function(ready: boolean)
+ * @param {number} maxRetries - Maximum retry attempts (default: 30 = 30 seconds)
+ */
+function waitForMeteor(browser, callback, maxRetries = 30) {
+  let retries = 0;
+
+  function checkMeteor() {
+    browser.execute(function() {
+      try {
+        return {
+          meteorDefined: typeof Meteor !== 'undefined',
+          sessionDefined: typeof Session !== 'undefined',
+          collectionsReady: typeof Meteor !== 'undefined' && typeof Meteor.Collections !== 'undefined',
+          reactTarget: document.getElementById('react-target') !== null,
+          hasChildren: document.getElementById('react-target')?.children?.length > 0
+        };
+      } catch (e) {
+        return { error: e.message };
+      }
+    }, [], function(result) {
+      const state = result.value || {};
+
+      // Check if all critical components are ready
+      const isReady = state.meteorDefined &&
+                      state.sessionDefined &&
+                      state.collectionsReady &&
+                      state.reactTarget &&
+                      state.hasChildren;
+
+      if (isReady) {
+        console.log('[waitForMeteor] Meteor client ready:', state);
+        if (callback) callback(true);
+      } else if (retries < maxRetries) {
+        retries++;
+        if (retries % 5 === 0) {
+          console.log('[waitForMeteor] Waiting for Meteor... attempt ' + retries + '/' + maxRetries, state);
+        }
+        browser.pause(1000);
+        checkMeteor();
+      } else {
+        console.error('[waitForMeteor] TIMEOUT: Meteor not available after ' + maxRetries + ' seconds');
+        console.error('[waitForMeteor] Final state:', state);
+        if (callback) callback(false);
+      }
+    });
+  }
+
+  checkMeteor();
+}
+
+/**
  * Save form with stability checks
  * @param {Object} browser - Nightwatch browser object
  */
@@ -193,6 +247,7 @@ module.exports = {
   stableSetValue,
   stableClick,
   waitForPageReady,
+  waitForMeteor,
   setFormValue,
   selectMaterialUIOption,
   saveFormWithVerification

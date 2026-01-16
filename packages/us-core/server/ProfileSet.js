@@ -6,7 +6,7 @@
 // These profiles are used to populate the CapabilityStatement.rest.resource.supportedProfile
 // for ONC HealthIT (g)(10) certification compliance.
 //
-// Note: Some profiles require |7.0.0 version suffix for MustSupport reference validation
+// Note: Profile URLs are versionless per Inferno test expectations
 
 ProfileSet = {
   name: "US Core",
@@ -123,7 +123,7 @@ ProfileSet = {
 
     // Organization
     "Organization": [
-      "http://hl7.org/fhir/us/core/StructureDefinition/us-core-organization|7.0.0"
+      "http://hl7.org/fhir/us/core/StructureDefinition/us-core-organization"
     ],
 
     // Practitioner
@@ -163,7 +163,7 @@ ProfileSet = {
 
     // Specimen
     "Specimen": [
-      "http://hl7.org/fhir/us/core/StructureDefinition/us-core-specimen|7.0.0"
+      "http://hl7.org/fhir/us/core/StructureDefinition/us-core-specimen"
     ],
 
     // Device (implantable)

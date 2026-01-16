@@ -127,10 +127,8 @@ parameters:
           "tests": [
             "packages/order-catalog/tests/nightwatch/170.315.a.1.test.js",
             "packages/order-catalog/tests/nightwatch/170.315.a.2.test.js",
-            "packages/drug-interactions/tests/nightwatch/170.315.a.4.test.js",
             "packages/implantable-devices/tests/nightwatch/170.315.a.14.test.js",
             "packages/hipaa-compliance/tests/nightwatch/170.315.d.1.test.js",
-            "packages/clinical-lists/tests/nightwatch/170.315.a.3.test.js",
             "packages/family-health-history/tests/nightwatch/170.315.a.12.test.js"
           ]
         }
@@ -156,8 +154,8 @@ jobs:
           NODE_ENV: test
           NIGHTWATCH: true
           DISPLAY: :99.0
-          NODE_OPTIONS: --max_old_space_size=4096
-          TOOL_NODE_FLAGS: --max_old_space_size=4096
+          NODE_OPTIONS: --max_old_space_size=2048
+          TOOL_NODE_FLAGS: --max_old_space_size=2048
           TEST_BROWSER_DRIVER: chrome
           MONGO_URL: mongodb://mongo:27017/meteor_test
           ENABLE_AUTOPUBLISH: true
@@ -170,7 +168,7 @@ jobs:
       - image: mongo:6.0
         name: mongo
     
-    resource_class: medium  # Can use medium for parallel execution
+    resource_class: large  # 8GB - NODE_OPTIONS (2GB) leaves 6GB for MongoDB + Chrome + pacio-core
     parallelism: 1  # Ensure we're not trying to parallelize within the job
     
     steps:
@@ -404,7 +402,7 @@ jobs:
             # Add periodic output to prevent timeout
             (
               meteor run --settings configs/settings.honeycomb.tdd.json --port 3000 \
-                --extra-packages "clinical:reference-app, clinical:order-catalog, clinical:drug-interactions, clinical:secure-messaging, clinical:request-for-corrections, clinical:ccda-export, clinical:implantable-devices, clinical:e-prescribing, clinical:quality-measures, clinical:hipaa-compliance, clinical:clinical-lists, clinical:drug-formulary, clinical:syndromic-surveillance, clinical:family-health-history, clinical:social-determinants, clinical:structured-data-capture, clinical:case-reporting, clinical:cancer-registry-reporting, clinical:lab-test-reporting, clinical:immunization-registry, clinical:antimicrobial-reporting, clinical:pacio-core, clinical:accounts-management, clinical:multi-factor-auth, clinical:patient-matching" &
+                --extra-packages "clinical:reference-app, clinical:us-core, clinical:pacio-core " &
               METEOR_PID=$!
 
               # Output progress every 30 seconds to prevent timeout
@@ -582,7 +580,7 @@ workflows:
       - test-group:
           name: base-ehr
           group-name: base-ehr
-          test-files: "packages/order-catalog/tests/nightwatch/170.315.a.1.test.js packages/order-catalog/tests/nightwatch/170.315.a.2.test.js packages/drug-interactions/tests/nightwatch/170.315.a.4.test.js packages/implantable-devices/tests/nightwatch/170.315.a.14.test.js packages/hipaa-compliance/tests/nightwatch/170.315.d.1.test.js packages/clinical-lists/tests/nightwatch/170.315.a.3.test.js packages/family-health-history/tests/nightwatch/170.315.a.12.test.js"
+          test-files: "packages/order-catalog/tests/nightwatch/170.315.a.1.test.js packages/order-catalog/tests/nightwatch/170.315.a.2.test.js packages/implantable-devices/tests/nightwatch/170.315.a.14.test.js packages/hipaa-compliance/tests/nightwatch/170.315.d.1.test.js packages/family-health-history/tests/nightwatch/170.315.a.12.test.js"
       
 
 

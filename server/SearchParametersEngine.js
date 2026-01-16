@@ -187,9 +187,17 @@ const SearchParametersEngine = {
 
     // String type can be: HumanName, Address, string
     if (searchParamType === 'string') {
+      // HumanName is only used for Person-like resources (Patient, Practitioner, RelatedPerson)
+      // Location.name and Organization.name are simple strings
       if (baseField === 'name') {
-        return 'HumanName';
+        // Check expression to determine resource type
+        const humanNameResources = ['Patient', 'Practitioner', 'RelatedPerson', 'Person'];
+        const isHumanName = humanNameResources.some(function(res) {
+          return expression && expression.startsWith(res + '.');
+        });
+        return isHumanName ? 'HumanName' : 'string';
       }
+      // Address is used for Person-like resources and Location
       if (baseField === 'address') {
         return 'Address';
       }
@@ -282,6 +290,7 @@ const SearchParametersEngine = {
       'SearchParameter-observation-date.json',
       'SearchParameter-observation-code.json',
       'SearchParameter-procedure-patient.json',
+      'SearchParameter-procedure-date.json',
       'SearchParameter-encounter-patient.json',
       'SearchParameter-medicationrequest-patient.json',
       'SearchParameter-medicationrequest-intent.json',
@@ -293,6 +302,8 @@ const SearchParametersEngine = {
       'SearchParameter-device-patient.json',
       'SearchParameter-diagnosticreport-patient.json',
       'SearchParameter-documentreference-patient.json',
+      'SearchParameter-documentreference-type.json',
+      'SearchParameter-documentreference-category.json',
       'SearchParameter-imagingstudy-patient.json',
       'SearchParameter-immunization-patient.json',
       'SearchParameter-media-patient.json',
@@ -302,6 +313,9 @@ const SearchParametersEngine = {
       'SearchParameter-questionnaireresponse-patient.json',
       'SearchParameter-researchsubject-patient.json',
       'SearchParameter-servicerequest-patient.json',
+      'SearchParameter-servicerequest-code.json',
+      'SearchParameter-servicerequest-category.json',
+      'SearchParameter-servicerequest-authored.json',
       'SearchParameter-supplydelivery-patient.json',
       'SearchParameter-careplan-category.json',
       'SearchParameter-careteam-patient.json',
@@ -311,7 +325,9 @@ const SearchParametersEngine = {
       'SearchParameter-diagnosticreport-code.json',
       'SearchParameter-diagnosticreport-date.json',
       'SearchParameter-documentreference-date.json',
-      'SearchParameter-encounter-date.json'
+      'SearchParameter-encounter-date.json',
+      'SearchParameter-location-address.json',
+      'SearchParameter-location-name.json'
     ];
 
     for (const fileName of searchParameterFiles) {
@@ -497,8 +513,13 @@ const SearchParametersEngine = {
    *
    * This function handles BOTH by using $or to match either format.
    *
+   * FHIR date search semantics:
+   * - Search precision determines matching granularity
+   * - date=2024-06-16 matches anything on that day
+   * - date=2024-06-16T10:30:00-06:00 matches only that specific second
+   *
    * @param {string} baseField - e.g., "birthDate", "effectiveDateTime"
-   * @param {string} searchValue - e.g., "2020-01-01", "ge2020-01-01"
+   * @param {string} searchValue - e.g., "2020-01-01", "ge2020-01-01", "2020-01-01T10:30:00Z"
    * @returns {Object} - MongoDB query
    */
   buildDateQuery: function(baseField, searchValue) {
@@ -516,6 +537,9 @@ const SearchParametersEngine = {
       prefix = prefixMatch[1];
       dateStr = prefixMatch[2];
     }
+
+    // Check if the search value has a time component (T followed by time)
+    const hasTimeComponent = dateStr.includes('T');
 
     // Validate date format (YYYY-MM-DD or YYYY-MM-DDTHH:MM:SS...)
     const dateMatch = dateStr.match(/^(\d{4})-(\d{2})-(\d{2})/);
@@ -535,69 +559,139 @@ const SearchParametersEngine = {
 
     const query = {};
 
+    // Helper to build time-aware queries for comparison operators
+    const buildTimeAwareComparisonQuery = function(operator) {
+      if (hasTimeComponent) {
+        // For dateTime searches with time component, compare against the full timestamp
+        // We need to match both string ISO format and Date objects
+        const conditions = [];
+
+        if (operator === '$gt') {
+          conditions.push({ [baseField]: { $gt: dateStr } }); // String comparison
+          conditions.push({ $and: [{ [baseField]: { $type: 'date' } }, { [baseField]: { $gt: date } }] }); // Date comparison
+        } else if (operator === '$gte') {
+          conditions.push({ [baseField]: { $gte: dateStr } }); // String comparison
+          conditions.push({ $and: [{ [baseField]: { $type: 'date' } }, { [baseField]: { $gte: date } }] }); // Date comparison
+        } else if (operator === '$lt') {
+          conditions.push({ [baseField]: { $lt: dateStr } }); // String comparison
+          conditions.push({ $and: [{ [baseField]: { $type: 'date' } }, { [baseField]: { $lt: date } }] }); // Date comparison
+        } else if (operator === '$lte') {
+          conditions.push({ [baseField]: { $lte: dateStr } }); // String comparison
+          conditions.push({ $and: [{ [baseField]: { $type: 'date' } }, { [baseField]: { $lte: date } }] }); // Date comparison
+        }
+
+        return { $or: conditions };
+      } else {
+        // For date-only searches, use day-level comparison
+        if (operator === '$gt' || operator === '$gte') {
+          const compareOp = operator === '$gt' ? '$gt' : '$gte';
+          return {
+            $or: [
+              { $and: [{ [baseField]: { $type: 'string' } }, { [baseField]: { [compareOp]: dateStrNormalized } }] },
+              { $and: [{ [baseField]: { $type: 'date' } }, { [baseField]: { [compareOp]: date } }] }
+            ]
+          };
+        } else if (operator === '$lt' || operator === '$lte') {
+          const compareOp = operator === '$lt' ? '$lt' : '$lte';
+          return {
+            $or: [
+              { $and: [{ [baseField]: { $type: 'string' } }, { [baseField]: { [compareOp]: dateStrNormalized } }] },
+              { $and: [{ [baseField]: { $type: 'date' } }, { [baseField]: { [compareOp]: date } }] }
+            ]
+          };
+        }
+      }
+      return {};
+    };
+
     switch (prefix) {
       case 'gt':
-        // Match: string > "YYYY-MM-DD" OR Date > date
-        // Use $or to match either string or Date storage format
-        query.$or = [
-          { $and: [{ [baseField]: { $type: 'string' } }, { [baseField]: { $gt: dateStrNormalized } }] },
-          { $and: [{ [baseField]: { $type: 'date' } }, { [baseField]: { $gt: date } }] }
-        ];
+        Object.assign(query, buildTimeAwareComparisonQuery('$gt'));
         break;
       case 'ge':
-        query.$or = [
-          { $and: [{ [baseField]: { $type: 'string' } }, { [baseField]: { $gte: dateStrNormalized } }] },
-          { $and: [{ [baseField]: { $type: 'date' } }, { [baseField]: { $gte: date } }] }
-        ];
+        Object.assign(query, buildTimeAwareComparisonQuery('$gte'));
         break;
       case 'lt':
-        query.$or = [
-          { $and: [{ [baseField]: { $type: 'string' } }, { [baseField]: { $lt: dateStrNormalized } }] },
-          { $and: [{ [baseField]: { $type: 'date' } }, { [baseField]: { $lt: date } }] }
-        ];
+        Object.assign(query, buildTimeAwareComparisonQuery('$lt'));
         break;
       case 'le':
-        query.$or = [
-          { $and: [{ [baseField]: { $type: 'string' } }, { [baseField]: { $lte: dateStrNormalized } }] },
-          { $and: [{ [baseField]: { $type: 'date' } }, { [baseField]: { $lte: date } }] }
-        ];
+        Object.assign(query, buildTimeAwareComparisonQuery('$lte'));
         break;
       case 'ne':
-        // For ne, we need: NOT (string equal OR date equal)
-        query.$and = [
-          { [baseField]: { $ne: dateStrNormalized } },
-          { [baseField]: { $ne: date } }
-        ];
+        if (hasTimeComponent) {
+          // For dateTime with time, exclude exact timestamp match
+          query.$and = [
+            { [baseField]: { $ne: dateStr } },
+            { [baseField]: { $ne: date } }
+          ];
+        } else {
+          // For date-only, exclude entire day
+          query.$and = [
+            { [baseField]: { $not: { $regex: '^' + dateStrNormalized } } },
+            { $or: [
+              { [baseField]: { $lt: date } },
+              { [baseField]: { $gte: new Date(date.getTime() + 24 * 60 * 60 * 1000) } }
+            ]}
+          ];
+        }
         break;
       case 'sa': // starts after
-        query.$or = [
-          { $and: [{ [baseField]: { $type: 'string' } }, { [baseField]: { $gt: dateStrNormalized } }] },
-          { $and: [{ [baseField]: { $type: 'date' } }, { [baseField]: { $gt: date } }] }
-        ];
+        Object.assign(query, buildTimeAwareComparisonQuery('$gt'));
         break;
       case 'eb': // ends before
-        query.$or = [
-          { $and: [{ [baseField]: { $type: 'string' } }, { [baseField]: { $lt: dateStrNormalized } }] },
-          { $and: [{ [baseField]: { $type: 'date' } }, { [baseField]: { $lt: date } }] }
-        ];
+        Object.assign(query, buildTimeAwareComparisonQuery('$lt'));
         break;
       case 'eq':
       default:
-        // For exact date match:
-        // - String: exactly "YYYY-MM-DD"
-        // - Date: >= midnight AND < next midnight
-        const nextDay = new Date(date);
-        nextDay.setDate(nextDay.getDate() + 1);
+        if (hasTimeComponent) {
+          // For dateTime with time component, match at second precision
+          // Use regex to match the timestamp prefix (handles timezone variations)
+          // E.g., "2024-06-16T10:30:00" matches "2024-06-16T10:30:00-06:00"
+          const timeMatch = dateStr.match(/^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2})/);
+          if (timeMatch) {
+            const timestampPrefix = timeMatch[1]; // "YYYY-MM-DDTHH:MM:SS"
+            // For exact timestamp match, match the same second
+            // The end of the second is start + 1 second
+            const nextSecond = new Date(date.getTime() + 1000);
 
-        query.$or = [
-          // String prefix match (matches "2018-06-10" and "2018-06-10T10:20:48-06:00")
-          { [baseField]: { $regex: '^' + dateStrNormalized } },
-          // Date range match (whole day)
-          { $and: [
-            { [baseField]: { $gte: date } },
-            { [baseField]: { $lt: nextDay } }
-          ]}
-        ];
+            query.$or = [
+              // String prefix match for ISO format with seconds
+              { [baseField]: { $regex: '^' + timestampPrefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') } },
+              // Date object range match (within same second)
+              { $and: [
+                { [baseField]: { $type: 'date' } },
+                { [baseField]: { $gte: date } },
+                { [baseField]: { $lt: nextSecond } }
+              ]}
+            ];
+          } else {
+            // Fallback for unusual time formats - use day-level matching
+            console.warn('[SearchParametersEngine] Could not parse time from:', dateStr);
+            const nextDay = new Date(date);
+            nextDay.setDate(nextDay.getDate() + 1);
+            query.$or = [
+              { [baseField]: { $regex: '^' + dateStrNormalized } },
+              { $and: [
+                { [baseField]: { $gte: date } },
+                { [baseField]: { $lt: nextDay } }
+              ]}
+            ];
+          }
+        } else {
+          // For date-only search, match entire day
+          const nextDay = new Date(date);
+          nextDay.setDate(nextDay.getDate() + 1);
+
+          query.$or = [
+            // String prefix match (matches "2018-06-10" and "2018-06-10T10:20:48-06:00")
+            { [baseField]: { $regex: '^' + dateStrNormalized } },
+            // Date range match (whole day)
+            { $and: [
+              { [baseField]: { $gte: date } },
+              { [baseField]: { $lt: nextDay } }
+            ]}
+          ];
+        }
         break;
     }
 
@@ -692,8 +786,7 @@ const SearchParametersEngine = {
           case 'HumanName':
             return RestHelpers.buildHumanNameStringQuery(baseField, searchValue);
           case 'Address':
-            // TODO: Implement Address-specific search
-            return this.buildStringQuery(baseField, searchValue);
+            return RestHelpers.buildAddressStringQuery(baseField, searchValue);
           default:
             return this.buildStringQuery(baseField, searchValue);
         }

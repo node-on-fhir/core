@@ -33,21 +33,26 @@ accounts-base
 mdg:validated-method
 fetch
 
-clinical:data-importer
-clinical:data-exporter
-clinical:international-patient-summary
-
+## Base EHR
+# clinical:reference-app
+# clinical:us-core
+# clinical:family-health-history
+# clinical:order-catalog
 # clinical:pacio-core
+# clinical:hipaa-compliance
+# clinical:implantable-devices
+# clinical:drug-interactions
+
+
+## Miscellaneous
+# clinical:pacio-core
+# clinical:data-importer
+# clinical:data-exporter
+# clinical:international-patient-summary
 # clinical:request-for-corrections
 # clinical:synthea
 # clinical:patient-matching
 # clinical:structured-data-capture
-
-symptomatic:timelines
-symptomatic:symptom-tracking
-symptomatic:mcp
-
-
 # clinical:secure-messaging
 # clinical:request-for-corrections
 # clinical:ccda-export
@@ -67,17 +72,8 @@ symptomatic:mcp
 # clinical:multi-factor-auth
 # clinical:patient-matching
 
-clinical:reference-app
-clinical:pacio-core
-clinical:family-health-history
-clinical:order-catalog
-
-# clinical:hipaa-compliance
-# clinical:implantable-devices
-# clinical:drug-interactions
 
 # US Core 7.0.0 profiles for CapabilityStatement (ONC g(10) certification)
-clinical:us-core
 
 rspack@1.0.0-beta340.12
 
