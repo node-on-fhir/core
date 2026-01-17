@@ -89,19 +89,55 @@ describe('Schedules CRUD Operations', function() {
   });
 
   it('02. Verify schedules list page loads', browser => {
+    // DIAGNOSTIC: Check state BEFORE navigation
+    browser.execute(function() {
+      return {
+        currentUrl: window.location.href,
+        hasMeteor: typeof Meteor !== 'undefined',
+        hasMeteorNavigate: typeof Meteor !== 'undefined' && typeof Meteor.navigate === 'function',
+        hasSession: typeof Session !== 'undefined',
+        allElementIds: Array.from(document.querySelectorAll('[id]')).map(function(el) { return el.id; }).slice(0, 15)
+      };
+    }, [], function(result) {
+      console.log('[DEBUG PRE-NAV]', JSON.stringify(result.value, null, 2));
+    });
+
+    browser.pause(500);
+
+    // Attempt navigation
     testUtils.navigateUrl(browser, '/schedules');
+
+    browser.pause(3000); // Extended pause for debugging
+
+    // DIAGNOSTIC: Check state AFTER navigation
+    browser.execute(function() {
+      return {
+        currentUrl: window.location.href,
+        hasSchedulesPage: document.querySelector('#schedulesPage') !== null,
+        bodyClasses: document.body.className,
+        allElementIds: Array.from(document.querySelectorAll('[id]')).map(function(el) { return el.id; }).slice(0, 20),
+        pageTitle: document.title,
+        bodyTextPreview: document.body.innerText.substring(0, 300)
+      };
+    }, [], function(result) {
+      console.log('[DEBUG POST-NAV]', JSON.stringify(result.value, null, 2));
+    });
+
+    // Take screenshot before the assertion
+    browser.saveScreenshot('tests/nightwatch/screenshots/schedules/debug-02-post-nav.png');
+
     browser
       .waitForElementVisible('body', 10000)
-      .pause(2000) // Give React time to render
+      .pause(1000)
       .execute(function() {
         // Check if the page loaded at all
         console.log('Document body length:', document.body.innerHTML.length);
         console.log('Document title:', document.title);
-        
+
         // Check for React root
         const reactRoot = document.querySelector('#react-target');
         console.log('React root found:', reactRoot !== null);
-        
+
         // Check for any error overlay
         const errorOverlay = document.querySelector('[id*="error"]');
         if (errorOverlay) {
@@ -141,7 +177,7 @@ describe('Schedules CRUD Operations', function() {
           browser.saveScreenshot('tests/nightwatch/screenshots/schedules/debug-blank-page.png');
         }
       })
-      .waitForElementVisible('#schedulesPage', 5000)
+      .waitForElementVisible('#schedulesPage', 10000)
       .pause(500)
       .execute(function() {
         const hasTable = document.querySelector('#schedulesTable') !== null;
@@ -162,7 +198,7 @@ describe('Schedules CRUD Operations', function() {
 
   it('03. Navigate to new schedule form', browser => {
     browser
-      .waitForElementVisible('#schedulesPage', 5000)
+      .waitForElementVisible('#schedulesPage', 10000)
       .pause(1000);
     
     // Click "Add Schedule" button

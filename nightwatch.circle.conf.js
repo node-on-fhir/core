@@ -41,7 +41,7 @@ module.exports = {
       },
       
       // Moderate logging - show important info only
-      silent: false,
+      silent: true,
       output: true,
       detailed_output: false,
       disable_error_log: false,
@@ -92,12 +92,9 @@ module.exports = {
         log_path: false,  // Disable webdriver HTTP request logging
         port: 9515,
         cli_args: [
-          '--log-level=WARNING',  // Only show warnings and errors
+          '--log-level=WARNING',
           '--port=9515',
-          '--allowed-ips=',
-          '--disable-dev-shm-usage',
-          '--whitelisted-ips=',
-          '--silent'  // Add silent flag to reduce ChromeDriver output
+          '--allowed-ips='
         ],
         // Increase timeout for webdriver
         timeout_options: {
