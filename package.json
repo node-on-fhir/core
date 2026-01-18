@@ -11,6 +11,7 @@
     "medical-home": "TEST_RUN=1 ENABLE_AUTOPUBLISH=true meteor run --settings configs/settings.honeycomb.tdd.json --extra-packages 'clinical:pacio-core, clinical:us-core'",
     "medical-home-autologin": "TEST_RUN=1 ENABLE_AUTOPUBLISH=true DEV_AUTO_LOGIN=true DEV_AUTO_USERNAME=demouser DEV_AUTO_PASSWORD=password2025 meteor run --settings configs/settings.honeycomb.tdd.json --extra-packages 'clinical:pacio-core, clinical:us-core'",
     "base-ehr": "TEST_RUN=1 meteor run --settings configs/settings.honeycomb.tdd.json --extra-packages 'clinical:pacio-core, clinical:us-core'",
+    "ris": "meteor run --settings configs/settings.honeycomb.dicom.localhost.json --extra-packages 'clinical:pacio-core, clinical:us-core'",
     "nightwatch": "./scripts/run-nightwatch-local-circleci.sh"
   },
   "dependencies": {

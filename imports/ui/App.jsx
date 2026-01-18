@@ -138,6 +138,10 @@ import {
 // ConsentsPage is now in ui-pages export
 import DiagnosticReportsPage from '../ui-fhir/diagnosticReports/DiagnosticReportsPage';
 import DiagnosticReportDetail from '../ui-fhir/diagnosticReports/DiagnosticReportDetail';
+import BodyStructuresPage from '../ui-fhir/bodyStructures/BodyStructuresPage';
+import BodyStructureDetail from '../ui-fhir/bodyStructures/BodyStructureDetail';
+import ClinicalImpressionsPage from '../ui-fhir/clinicalImpressions/ClinicalImpressionsPage';
+import ClinicalImpressionDetail from '../ui-fhir/clinicalImpressions/ClinicalImpressionDetail';
 import ImagingStudiesPage from '../ui-fhir/imagingStudies/ImagingStudiesPage';
 import ImagingStudyDetail from '../ui-fhir/imagingStudies/ImagingStudyDetail';
 import AppointmentsPage from '../ui-fhir/appointments/AppointmentsPage';
@@ -240,6 +244,7 @@ import { ArtifactAssessments } from '../lib/schemas/SimpleSchemas/ArtifactAssess
 import { AuditEvents } from '../lib/schemas/SimpleSchemas/AuditEvents';
 import { BodyStructures } from '../lib/schemas/SimpleSchemas/BodyStructures';
 import { Bundles } from '../lib/schemas/SimpleSchemas/Bundles';
+import { ClinicalImpressions } from '../lib/schemas/SimpleSchemas/ClinicalImpressions';
 import { CarePlans } from '../lib/schemas/SimpleSchemas/CarePlans';
 import { CareTeams } from '../lib/schemas/SimpleSchemas/CareTeams';
 import { Conditions } from '../lib/schemas/SimpleSchemas/Conditions';
@@ -309,6 +314,7 @@ Meteor.Collections = {
   CarePlans,
   CareTeams,
   Claims,
+  ClinicalImpressions,
   CodeSystems,
   ConceptMaps,
   Conditions,
@@ -679,6 +685,34 @@ if(get(Meteor, 'settings.public.modules.fhir.ArtifactAssessments')){
   dynamicRoutes.push({
     path: "/artifact-assessments",
     element: <ArtifactAssessmentsPage />
+  })
+}
+if(get(Meteor, 'settings.public.modules.fhir.BodyStructures')){
+  dynamicRoutes.push({
+    path: "/body-structures",
+    element: <BodyStructuresPage />
+  })
+  dynamicRoutes.push({
+    path: "/body-structures/new",
+    element: <BodyStructureDetail />
+  })
+  dynamicRoutes.push({
+    path: "/body-structures/:id",
+    element: <BodyStructureDetail />
+  })
+}
+if(get(Meteor, 'settings.public.modules.fhir.ClinicalImpressions')){
+  dynamicRoutes.push({
+    path: "/clinical-impressions",
+    element: <ClinicalImpressionsPage />
+  })
+  dynamicRoutes.push({
+    path: "/clinical-impressions/new",
+    element: <ClinicalImpressionDetail />
+  })
+  dynamicRoutes.push({
+    path: "/clinical-impressions/:id",
+    element: <ClinicalImpressionDetail />
   })
 }
 if(get(Meteor, 'settings.public.modules.fhir.ActivityDefinitions')){

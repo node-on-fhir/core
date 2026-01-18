@@ -838,6 +838,92 @@ export function flattenBundle(bundle){
   return result;
 }
 
+export function flattenClinicalImpression(clinicalImpression, internalDateFormat) {
+  let result = {
+    _id: '',
+    id: '',
+    resourceType: 'ClinicalImpression',
+    status: '',
+    description: '',
+    summary: '',
+    date: '',
+    effectiveDateTime: '',
+    assessorDisplay: '',
+    assessorReference: '',
+    subjectDisplay: '',
+    subjectReference: ''
+  };
+
+  if (!internalDateFormat) {
+    internalDateFormat = get(Meteor, "settings.public.defaults.internalDateFormat", "YYYY-MM-DD");
+  }
+
+  result._id = extractIdString(get(clinicalImpression, '_id', ''));
+  result.id = get(clinicalImpression, 'id', '');
+  result.status = get(clinicalImpression, 'status', '');
+  result.description = get(clinicalImpression, 'description', '');
+  result.summary = get(clinicalImpression, 'summary', '');
+
+  // Dates
+  if (get(clinicalImpression, 'date')) {
+    result.date = moment(get(clinicalImpression, 'date')).format(internalDateFormat);
+  }
+  if (get(clinicalImpression, 'effectiveDateTime')) {
+    result.effectiveDateTime = moment(get(clinicalImpression, 'effectiveDateTime')).format(internalDateFormat);
+  }
+
+  // Assessor reference (Practitioner)
+  result.assessorDisplay = get(clinicalImpression, 'assessor.display', '');
+  result.assessorReference = get(clinicalImpression, 'assessor.reference', '');
+
+  // Subject reference (Patient)
+  result.subjectDisplay = get(clinicalImpression, 'subject.display', '');
+  result.subjectReference = get(clinicalImpression, 'subject.reference', '');
+
+  return result;
+}
+
+export function flattenBodyStructure(bodyStructure, internalDateFormat) {
+  let result = {
+    _id: '',
+    id: '',
+    resourceType: 'BodyStructure',
+    active: true,
+    description: '',
+    morphology: '',
+    morphologyCode: '',
+    structure: '',
+    structureCode: '',
+    patientDisplay: '',
+    patientReference: ''
+  };
+
+  if (!internalDateFormat) {
+    internalDateFormat = get(Meteor, "settings.public.defaults.internalDateFormat", "YYYY-MM-DD");
+  }
+
+  result._id = extractIdString(get(bodyStructure, '_id', ''));
+  result.id = get(bodyStructure, 'id', '');
+  result.active = get(bodyStructure, 'active', true);
+  result.description = get(bodyStructure, 'description', '');
+
+  // Morphology (CodeableConcept)
+  result.morphology = get(bodyStructure, 'morphology.text',
+    get(bodyStructure, 'morphology.coding.0.display', ''));
+  result.morphologyCode = get(bodyStructure, 'morphology.coding.0.code', '');
+
+  // Structure (from includedStructure array)
+  result.structure = get(bodyStructure, 'includedStructure.0.structure.text',
+    get(bodyStructure, 'includedStructure.0.structure.coding.0.display', ''));
+  result.structureCode = get(bodyStructure, 'includedStructure.0.structure.coding.0.code', '');
+
+  // Patient reference
+  result.patientDisplay = get(bodyStructure, 'patient.display', '');
+  result.patientReference = get(bodyStructure, 'patient.reference', '');
+
+  return result;
+}
+
 export function flattenCarePlan(plan){
 
   let result = {
@@ -6900,8 +6986,10 @@ export const FhirDehydrator = {
   dehydrateAppointment: flattenAppointment,
   dehydrateArtifactAssessment: flattenArtifactAssessment,
   dehydrateAuditEvent: flattenAuditEvent,
+  dehydrateBodyStructure: flattenBodyStructure,
   dehydrateBundle: flattenBundle,
   dehydrateCarePlan: flattenCarePlan,
+  dehydrateClinicalImpression: flattenClinicalImpression,
   dehydrateCareTeam: flattenCareTeam,
   dehydrateClaim: flattenClaim,
   dehydrateCodeSystem: flattenCodeSystem,
@@ -6995,9 +7083,11 @@ export default {
   flattenAppointment,
   flattenArtifactAssessment,
   flattenAuditEvent,
+  flattenBodyStructure,
   flattenBundle,
   flattenCarePlan,
   flattenCareTeam,
+  flattenClinicalImpression,
   flattenClaim,
   flattenCodeSystem,
   flattenComposition,

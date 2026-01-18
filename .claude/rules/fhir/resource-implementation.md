@@ -2,7 +2,7 @@
 
 ## Overview
 
-When implementing a new FHIR resource in Honeycomb, follow these patterns to ensure consistency with existing resources and compliance with FHIR R4 specification.
+When implementing a new FHIR resource in Honeycomb, follow these patterns to ensure consistency with existing resources and compliance with FHIR R4B specification.
 
 ## Implementation Checklist
 
@@ -340,7 +340,7 @@ function ServiceRequestsPage() {
 }
 ```
 
-## FHIR R4 Compliance
+## FHIR R4B Compliance
 
 ### Required Fields
 
@@ -412,7 +412,7 @@ After implementation:
 
 - Command: `/create-crud-microservice` - Automated generation
 - Command: `/create-crud-tests` - Generate tests
-- Agent: `fhir-schema-expert` - FHIR R4 spec questions, schema migration
+- Agent: `fhir-schema-expert` - FHIR R4B spec questions, schema migration
 - Rule: `rules/fhir/dehydrator.md` - FhirDehydrator patterns
 - Rule: `rules/fhir/patient-filtering.md` - Patient filtering
 - See `imports/ui-fhir/CLAUDE.md` for detailed UI patterns

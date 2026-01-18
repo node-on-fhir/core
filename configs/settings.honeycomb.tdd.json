@@ -149,8 +149,10 @@
         "AllergyIntolerances": true,
         "AuditEvents": true,
         "Appointments": true,
+        "BodyStructures": true,
         "CarePlans": true,
         "CareTeams": true,
+        "ClinicalImpressions": true,
         "Compositions": true,
         "Communications": true,
         "Conditions": true,
@@ -220,6 +222,17 @@
             "delete"
           ],
           "search": false,
+          "publication": true
+        },
+        "BodyStructure": {
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "search"
+          ],
+          "search": true,
           "publication": true
         },
         "CareTeam": {

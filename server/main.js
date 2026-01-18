@@ -83,6 +83,8 @@ import '../imports/api/research-studies/methods.js';
 import '../imports/api/schedules/methods.js';
 import '../imports/api/serviceRequests/methods.js';
 import '../imports/api/diagnosticReports/methods.js';
+import '../imports/api/bodyStructures/methods.js';
+import '../imports/api/clinicalImpressions/methods.js';
 import '../imports/methods/supplyDeliveries.js';
 import '../imports/methods/tasks.js';
 
@@ -134,7 +136,9 @@ import { Appointments } from '../imports/lib/schemas/SimpleSchemas/Appointments'
 import { ArtifactAssessments } from '../imports/lib/schemas/SimpleSchemas/ArtifactAssessments';
 import { AuditEvents } from '../imports/lib/schemas/SimpleSchemas/AuditEvents';
 import { Bundles } from '../imports/lib/schemas/SimpleSchemas/Bundles';
+import { BodyStructures } from '../imports/lib/schemas/SimpleSchemas/BodyStructures';
 import { CarePlans } from '../imports/lib/schemas/SimpleSchemas/CarePlans';
+import { ClinicalImpressions } from '../imports/lib/schemas/SimpleSchemas/ClinicalImpressions';
 import { CareTeams } from '../imports/lib/schemas/SimpleSchemas/CareTeams';
 import { Claims } from '../imports/lib/schemas/SimpleSchemas/Claims';
 import { CodeSystems } from '../imports/lib/schemas/SimpleSchemas/CodeSystems';
@@ -201,10 +205,12 @@ Meteor.Collections = {
   Appointments,
   ArtifactAssessments,
   AuditEvents,
+  BodyStructures,
   Bundles,
   CarePlans,
   CareTeams,
   Claims,
+  ClinicalImpressions,
   CodeSystems,
   Conditions,
   Consents,
@@ -268,10 +274,12 @@ Object.assign(global.Collections, {
   Appointments,
   ArtifactAssessments,
   AuditEvents,
+  BodyStructures,
   Bundles,
   CarePlans,
   CareTeams,
   Claims,
+  ClinicalImpressions,
   CodeSystems,
   Conditions,
   Consents,

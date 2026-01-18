@@ -51,7 +51,9 @@ import { AllergyIntolerances } from '/imports/lib/schemas/SimpleSchemas/AllergyI
 import { Appointments } from '/imports/lib/schemas/SimpleSchemas/Appointments';
 import { ArtifactAssessments } from '/imports/lib/schemas/SimpleSchemas/ArtifactAssessments';
 import { AuditEvents } from '/imports/lib/schemas/SimpleSchemas/AuditEvents';
+import { BodyStructures } from '/imports/lib/schemas/SimpleSchemas/BodyStructures';
 import { Bundles } from '/imports/lib/schemas/SimpleSchemas/Bundles';
+import { ClinicalImpressions } from '/imports/lib/schemas/SimpleSchemas/ClinicalImpressions';
 import { CarePlans } from '/imports/lib/schemas/SimpleSchemas/CarePlans';
 import { CareTeams } from '/imports/lib/schemas/SimpleSchemas/CareTeams';
 import { Claims } from '/imports/lib/schemas/SimpleSchemas/Claims';
@@ -109,10 +111,12 @@ const collectionsMap = {
   'Appointments': Appointments,
   'ArtifactAssessments': ArtifactAssessments,
   'AuditEvents': AuditEvents,
+  'BodyStructures': BodyStructures,
   'Bundles': Bundles,
   'CarePlans': CarePlans,
   'CareTeams': CareTeams,
   'Claims': Claims,
+  'ClinicalImpressions': ClinicalImpressions,
   'CodeSystems': CodeSystems,
   'Communications': Communications,
   'CommunicationRequests': CommunicationRequests,

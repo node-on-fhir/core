@@ -41,7 +41,7 @@ module.exports = {
       },
       
       // Moderate logging - show important info only
-      silent: true,
+      silent: true, // toggles HTTP logging
       output: true,
       detailed_output: false,
       disable_error_log: false,

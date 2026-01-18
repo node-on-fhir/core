@@ -8,7 +8,9 @@ import { AllergyIntolerances } from '/imports/lib/schemas/SimpleSchemas/AllergyI
 import { Appointments } from '/imports/lib/schemas/SimpleSchemas/Appointments';
 import { ArtifactAssessments } from '/imports/lib/schemas/SimpleSchemas/ArtifactAssessments';
 import { AuditEvents } from '/imports/lib/schemas/SimpleSchemas/AuditEvents';
+import { BodyStructures } from '/imports/lib/schemas/SimpleSchemas/BodyStructures';
 import { Bundles } from '/imports/lib/schemas/SimpleSchemas/Bundles';
+import { ClinicalImpressions } from '/imports/lib/schemas/SimpleSchemas/ClinicalImpressions';
 import { CarePlans } from '/imports/lib/schemas/SimpleSchemas/CarePlans';
 import { CareTeams } from '/imports/lib/schemas/SimpleSchemas/CareTeams';
 import { Claims } from '/imports/lib/schemas/SimpleSchemas/Claims';
@@ -67,10 +69,12 @@ if (Meteor.isClient) {
     Appointments,
     ArtifactAssessments,
     AuditEvents,
+    BodyStructures,
     Bundles,
     CarePlans,
     CareTeams,
     Claims,
+    ClinicalImpressions,
     CodeSystems,
     Conditions,
     Consents,
@@ -125,10 +129,12 @@ if (Meteor.isClient) {
   window.Appointments = Appointments;
   window.ArtifactAssessments = ArtifactAssessments;
   window.AuditEvents = AuditEvents;
+  window.BodyStructures = BodyStructures;
   window.Bundles = Bundles;
   window.CarePlans = CarePlans;
   window.CareTeams = CareTeams;
   window.Claims = Claims;
+  window.ClinicalImpressions = ClinicalImpressions;
   window.CodeSystems = CodeSystems;
   window.Conditions = Conditions;
   window.Consents = Consents;

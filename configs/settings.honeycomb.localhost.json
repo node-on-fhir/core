@@ -149,8 +149,10 @@
       "fhir": {
         "AllergyIntolerances": true,
         "AuditEvents": true,
+        "BodyStructures": true,
         "CarePlans": true,
         "CareTeams": true,
+        "ClinicalImpressions": true,
         "Compositions": true,
         "Communications": true,
         "Conditions": true,
