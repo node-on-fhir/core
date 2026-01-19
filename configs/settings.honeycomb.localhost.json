@@ -170,6 +170,7 @@
         "MedicationRequests": true,
         "MedicationAdministrations": true,
         "MedicationStatements": true,
+        "NutritionIntakes": true,
         "NutritionOrders": true,
         "Organizations": true,
         "Observations": true,

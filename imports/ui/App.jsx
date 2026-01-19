@@ -213,6 +213,9 @@ import {
 // import MediaDetail from '../ui-fhir/medias/MediaDetail';
 import SupplyDeliveryDetail from '../ui-fhir/supplyDeliveries/SupplyDeliveryDetail';
 
+import NutritionIntakesPage from '../ui-fhir/nutritionIntakes/NutritionIntakesPage';
+import NutritionIntakeDetail from '../ui-fhir/nutritionIntakes/NutritionIntakeDetail';
+
 
 //===============================================================================================================
 // PACIO Pages
@@ -1328,6 +1331,20 @@ if(get(Meteor, 'settings.public.modules.fhir.NutritionOrders')){
   dynamicRoutes.push({
     path: "/nutrition-orders/:id",
     element: <NutritionOrderDetail />
+  })
+}
+if(get(Meteor, 'settings.public.modules.fhir.NutritionIntakes')){
+  dynamicRoutes.push({
+    path: "/nutrition-intakes",
+    element: <NutritionIntakesPage />
+  })
+  dynamicRoutes.push({
+    path: "/nutrition-intakes/new",
+    element: <NutritionIntakeDetail />
+  })
+  dynamicRoutes.push({
+    path: "/nutrition-intakes/:id",
+    element: <NutritionIntakeDetail />
   })
 }
 if(get(Meteor, 'settings.public.modules.fhir.PlanDefinitions')){

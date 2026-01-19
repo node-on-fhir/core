@@ -4874,6 +4874,163 @@ export function flattenNutritionOrder(nutritionOrder, internalDateFormat){
   return result;
 }
 
+export function flattenNutritionIntake(nutritionIntake, internalDateFormat){
+  let result = {
+    _id: '',
+    id: '',
+    resourceType: 'NutritionIntake',
+    identifier: '',
+    status: '',
+    subjectDisplay: '',
+    subjectReference: '',
+    occurrenceDateTime: '',
+    recordedDateTime: '',
+    consumedItem: '',
+    nutritionProduct: '',
+    code: '',
+    codeDisplay: '',
+    amount: '',
+    notConsumed: false,
+    notConsumedReason: '',
+    ingredientLabel: '',
+    performerDisplay: '',
+    performerReference: '',
+    locationDisplay: '',
+    locationReference: '',
+    note: ''
+  };
+
+  result.resourceType = get(nutritionIntake, 'resourceType', 'NutritionIntake');
+
+  if(!internalDateFormat){
+    internalDateFormat = get(Meteor, 'settings.public.defaults.internalDateFormat', 'YYYY-MM-DD');
+  }
+
+  // Core identifiers
+  result._id = extractIdString(get(nutritionIntake, '_id', ''));
+  result.id = get(nutritionIntake, 'id', '');
+  result.identifier = get(nutritionIntake, 'identifier[0].value', '');
+
+  // Status
+  result.status = get(nutritionIntake, 'status', '');
+
+  // Subject (patient) information
+  result.subjectDisplay = get(nutritionIntake, 'subject.display', '');
+  result.subjectReference = get(nutritionIntake, 'subject.reference', '');
+
+  // Date/Time fields
+  const occurrenceDateTime = get(nutritionIntake, 'occurrenceDateTime');
+  if(occurrenceDateTime){
+    result.occurrenceDateTime = moment(occurrenceDateTime).format(internalDateFormat);
+  }
+
+  const recordedDateTime = get(nutritionIntake, 'recorded');
+  if(recordedDateTime){
+    result.recordedDateTime = moment(recordedDateTime).format(internalDateFormat);
+  }
+
+  // Code (if present at top level)
+  if(get(nutritionIntake, 'code')){
+    result.code = get(nutritionIntake, 'code.coding[0].code', '');
+    result.codeDisplay = get(nutritionIntake, 'code.text', get(nutritionIntake, 'code.coding[0].display', ''));
+  }
+
+  // Consumed items - FHIR R5 structure
+  if(get(nutritionIntake, 'consumedItem')){
+    const consumedItems = [];
+    get(nutritionIntake, 'consumedItem', []).forEach(function(item){
+      // Type
+      const type = get(item, 'type.text', get(item, 'type.coding[0].display', get(item, 'type.coding[0].code', '')));
+
+      // Nutrition product
+      let product = '';
+      if(get(item, 'nutritionProduct.concept')){
+        product = get(item, 'nutritionProduct.concept.text', get(item, 'nutritionProduct.concept.coding[0].display', ''));
+      } else if(get(item, 'nutritionProduct.reference')){
+        product = get(item, 'nutritionProduct.reference.display', get(item, 'nutritionProduct.reference.reference', ''));
+      }
+
+      // Amount
+      let amount = '';
+      if(get(item, 'amount')){
+        amount = get(item, 'amount.value', '') + ' ' + get(item, 'amount.unit', '');
+      }
+
+      if(product){
+        consumedItems.push(product + (amount ? ' (' + amount.trim() + ')' : ''));
+      } else if(type){
+        consumedItems.push(type + (amount ? ' (' + amount.trim() + ')' : ''));
+      }
+    });
+    result.consumedItem = consumedItems.join(', ');
+
+    // Also extract first item's nutrition product for display
+    const firstItem = get(nutritionIntake, 'consumedItem[0]');
+    if(firstItem){
+      if(get(firstItem, 'nutritionProduct.concept')){
+        result.nutritionProduct = get(firstItem, 'nutritionProduct.concept.text', get(firstItem, 'nutritionProduct.concept.coding[0].display', ''));
+      } else if(get(firstItem, 'nutritionProduct.reference')){
+        result.nutritionProduct = get(firstItem, 'nutritionProduct.reference.display', '');
+      }
+
+      // Amount from first item
+      if(get(firstItem, 'amount')){
+        result.amount = get(firstItem, 'amount.value', '') + ' ' + get(firstItem, 'amount.unit', '');
+      }
+
+      // Not consumed flag
+      result.notConsumed = get(firstItem, 'notConsumed', false);
+      if(get(firstItem, 'notConsumedReason')){
+        result.notConsumedReason = get(firstItem, 'notConsumedReason.text', get(firstItem, 'notConsumedReason.coding[0].display', ''));
+      }
+    }
+  }
+
+  // Ingredient label
+  if(get(nutritionIntake, 'ingredientLabel')){
+    const labels = [];
+    get(nutritionIntake, 'ingredientLabel', []).forEach(function(label){
+      const nutrient = get(label, 'nutrient.text', get(label, 'nutrient.coding[0].display', ''));
+      const amount = get(label, 'amount.value', '') + ' ' + get(label, 'amount.unit', '');
+      if(nutrient){
+        labels.push(nutrient + (amount.trim() ? ': ' + amount.trim() : ''));
+      }
+    });
+    result.ingredientLabel = labels.join(', ');
+  }
+
+  // Performer information
+  if(get(nutritionIntake, 'performer')){
+    const performers = [];
+    get(nutritionIntake, 'performer', []).forEach(function(perf){
+      if(get(perf, 'actor.display')){
+        performers.push(get(perf, 'actor.display'));
+      } else if(get(perf, 'actor.reference')){
+        performers.push(get(perf, 'actor.reference'));
+      }
+    });
+    result.performerDisplay = performers.join(', ');
+    result.performerReference = get(nutritionIntake, 'performer[0].actor.reference', '');
+  }
+
+  // Location
+  result.locationDisplay = get(nutritionIntake, 'location.display', '');
+  result.locationReference = get(nutritionIntake, 'location.reference', '');
+
+  // Note
+  if(get(nutritionIntake, 'note')){
+    const notes = [];
+    get(nutritionIntake, 'note', []).forEach(function(n){
+      if(get(n, 'text')){
+        notes.push(get(n, 'text'));
+      }
+    });
+    result.note = notes.join('; ');
+  }
+
+  return result;
+}
+
 export function flattenNetwork(organization, internalDateFormat){
     let result = {
       resourceType: 'Network',
@@ -7034,6 +7191,7 @@ export const FhirDehydrator = {
   dehydrateMedicationRequest: flattenMedicationRequest,
   dehydrateMedicationAdministration: flattenMedicationAdministration,
   dehydrateNetwork: flattenNetwork,
+  dehydrateNutritionIntake: flattenNutritionIntake,
   dehydrateNutritionOrder: flattenNutritionOrder,
   dehydrateObservation: flattenObservation,
   dehydrateOrganization: flattenOrganization,
@@ -7130,6 +7288,7 @@ export default {
   flattenMedicationRequest,
   flattenMedicationAdministration,
   flattenMessageHeader,
+  flattenNutritionIntake,
   flattenNutritionOrder,
   flattenObservation,
   flattenOperationOutcome,

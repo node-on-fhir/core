@@ -74,6 +74,7 @@ import '../imports/api/medias/methods.js';
 import '../imports/api/measures/methods.js';
 import '../imports/api/measureReports/methods.js';
 import '../imports/api/messageHeaders/methods.js';
+import '../imports/api/nutritionIntakes/methods.js';
 import '../imports/api/nutritionOrders/methods.js';
 import '../imports/api/patients/methods.js';
 import '../imports/api/planDefinitions/methods.js';
@@ -176,6 +177,7 @@ import { Measures } from '../imports/lib/schemas/SimpleSchemas/Measures';
 import { MeasureReports } from '../imports/lib/schemas/SimpleSchemas/MeasureReports';
 import { Medias } from '../imports/lib/schemas/SimpleSchemas/Medias';
 import { MessageHeaders } from '../imports/lib/schemas/SimpleSchemas/MessageHeaders';
+import { NutritionIntakes } from '../imports/lib/schemas/SimpleSchemas/NutritionIntakes';
 import { NutritionOrders } from '../imports/lib/schemas/SimpleSchemas/NutritionOrders';
 import { OperationOutcomes } from '../imports/lib/schemas/SimpleSchemas/OperationOutcomes';
 import { Organizations } from '../imports/lib/schemas/SimpleSchemas/Organizations';
@@ -246,6 +248,7 @@ Meteor.Collections = {
   Measures,
   MeasureReports,
   Medias,
+  NutritionIntakes,
   NutritionOrders,
   OperationOutcomes,
   Organizations,
@@ -317,6 +320,7 @@ Object.assign(global.Collections, {
   Measures,
   MeasureReports,
   Medias,
+  NutritionIntakes,
   NutritionOrders,
   OperationOutcomes,
   Organizations,

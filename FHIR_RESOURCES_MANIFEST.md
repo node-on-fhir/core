@@ -125,6 +125,7 @@ This manifest tracks the implementation status of all FHIR R4 resource types in 
 | MolecularSequence | ⏳ pending | PO | ❌ | ❌ | |
 | NamingSystem | ⏳ pending | PA | ❌ | ❌ | |
 | NutritionOrder | ✅ done | CM | ✅ | ✅ | |
+| NutritionIntake | ✅ done | PO | ✅ | ✅ | FHIR R5 resource |
 | Observation | ✅ done | PO | ✅ | ✅ | |
 | ObservationDefinition | ⏳ pending | PA | ❌ | ❌ | |
 | OperationDefinition | ⏳ pending | PA | ❌ | ❌ | |
@@ -222,8 +223,8 @@ Resources needed for research/trials use cases:
 
 ## Statistics
 
-- **Total Resources:** 146
-- **Done (with tests):** 33
+- **Total Resources:** 147
+- **Done (with tests):** 34
 - **Partial (UI only):** 24
 - **Pending:** 87
 - **Skipped:** 2
@@ -238,4 +239,5 @@ Resources needed for research/trials use cases:
 | 2026-01-18 | ClinicalImpression | ✅ done | Clinical assessments (CM) |
 | 2026-01-18 | BodyStructure | ✅ done | First Ralph loop implementation |
 | 2026-01-19 | PlanDefinition | ✅ done | Clinical protocols, order sets (PA) |
+| 2026-01-19 | NutritionIntake | ✅ done | FHIR R5 resource, dietary intake tracking (PO) |
 

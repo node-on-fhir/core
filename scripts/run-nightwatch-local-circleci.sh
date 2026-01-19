@@ -44,7 +44,7 @@ get_test_files() {
             echo "tests/nightwatch/honeycomb/enable_autopublish/crud.diagnosticreports.js tests/nightwatch/honeycomb/enable_autopublish/crud.imagingstudies.js"
             ;;
         "care-management")
-            echo "tests/nightwatch/honeycomb/enable_autopublish/crud.careplans.js tests/nightwatch/honeycomb/enable_autopublish/crud.nutritionorders.js tests/nightwatch/honeycomb/enable_autopublish/crud.servicerequests.js"
+            echo "tests/nightwatch/honeycomb/enable_autopublish/crud.careplans.js tests/nightwatch/honeycomb/enable_autopublish/crud.nutritionintakes.js tests/nightwatch/honeycomb/enable_autopublish/crud.nutritionorders.js tests/nightwatch/honeycomb/enable_autopublish/crud.servicerequests.js"
             ;;
         "scheduling")
             echo "tests/nightwatch/honeycomb/enable_autopublish/crud.appointments.js tests/nightwatch/honeycomb/enable_autopublish/crud.schedules.js"

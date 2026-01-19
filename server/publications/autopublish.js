@@ -85,6 +85,7 @@ import { Measures } from '/imports/lib/schemas/SimpleSchemas/Measures';
 import { MeasureReports } from '/imports/lib/schemas/SimpleSchemas/MeasureReports';
 import { Medias } from '/imports/lib/schemas/SimpleSchemas/Medias';
 import { MessageHeaders } from '/imports/lib/schemas/SimpleSchemas/MessageHeaders';
+import { NutritionIntakes } from '/imports/lib/schemas/SimpleSchemas/NutritionIntakes';
 import { NutritionOrders } from '/imports/lib/schemas/SimpleSchemas/NutritionOrders';
 import { OperationOutcomes } from '/imports/lib/schemas/SimpleSchemas/OperationOutcomes';
 import { Organizations } from '/imports/lib/schemas/SimpleSchemas/Organizations';
@@ -146,6 +147,7 @@ const collectionsMap = {
   'MeasureReports': MeasureReports,
   'Medias': Medias,
   'MessageHeaders': MessageHeaders,
+  'NutritionIntakes': NutritionIntakes,
   'NutritionOrders': NutritionOrders,
   'OperationOutcomes': OperationOutcomes,
   'Organizations': Organizations,
