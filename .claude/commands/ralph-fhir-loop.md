@@ -1,3 +1,44 @@
+---
+allowedPrompts:
+  # Test execution
+  - tool: Bash
+    prompt: "run nightwatch tests"
+  - tool: Bash
+    prompt: "run npm tests"
+
+  # Server management
+  - tool: Bash
+    prompt: "start meteor server"
+  - tool: Bash
+    prompt: "kill meteor processes"
+  - tool: Bash
+    prompt: "check port status"
+
+  # Log and file inspection
+  - tool: Bash
+    prompt: "check server logs"
+  - tool: Bash
+    prompt: "list files and directories"
+  - tool: Bash
+    prompt: "read file contents"
+  - tool: Bash
+    prompt: "search file contents"
+
+  # Directory operations
+  - tool: Bash
+    prompt: "create directories"
+
+  # Output and validation
+  - tool: Bash
+    prompt: "redirect output to file"
+  - tool: Bash
+    prompt: "validate syntax"
+
+  # Browser
+  - tool: Bash
+    prompt: "open browser to localhost"
+---
+
 # Ralph Wiggum FHIR Microservice Loop
 
 > "Me fail English? That's unpossible!" - Ralph Wiggum
@@ -669,6 +710,57 @@ Edit `FHIR_RESOURCES_MANIFEST.md`:
 
 ---
 
+## PHASE 7.5: UPDATE CIRCLECI CONFIGURATION
+
+### Step 7.5.1: Identify Test Group
+
+Resource types map to CircleCI test groups:
+
+| Resource Type | Test Group |
+|---------------|------------|
+| Patient, Practitioner, CareTeam | actors |
+| Observation, Condition, Encounter, Procedure, BodyStructure, ClinicalImpression | clinical-history |
+| AllergyIntolerance, Immunization | autoimmune |
+| Medication, MedicationRequest, MedicationAdministration | pharmacy |
+| DiagnosticReport, ImagingStudy | radiology |
+| CarePlan, ServiceRequest, NutritionOrder, ActivityDefinition | care-management |
+| Questionnaire, QuestionnaireResponse | structured-data-capture |
+| ResearchStudy, ResearchSubject | clinical-trials |
+| Consent, Task, PlanDefinition | administrative |
+| Location, Device, SupplyDelivery | supply-chain |
+| Communication, MessageHeader | communications |
+| Measure, MeasureReport | public-health |
+| DocumentReference, Media | library-sciences |
+
+### Step 7.5.2: Update CircleCI Config
+
+Edit `.circleci/config.yml` in **TWO places**:
+
+**1. Parameters section** (JSON test-groups array ~line 10-136):
+```json
+{
+  "name": "{test-group}",
+  "tests": [
+    "existing/test/file.js",
+    "tests/nightwatch/honeycomb/enable_autopublish/crud.{resources}.js"
+  ]
+}
+```
+
+**2. Workflows section** (~line 494-586):
+```yaml
+- test-group:
+    name: {test-group}
+    group-name: {test-group}
+    test-files: "existing/test.js tests/nightwatch/honeycomb/enable_autopublish/crud.{resources}.js"
+```
+
+### Step 7.5.3: Verify Config
+
+Read back the modified sections to confirm correct placement and YAML syntax.
+
+---
+
 ## Completion Criteria
 
 A resource is complete when:
@@ -678,6 +770,7 @@ A resource is complete when:
 - [ ] `/audit-theme` clean
 - [ ] `/audit-id-lookups` clean
 - [ ] Manifest updated
+- [ ] Test added to `.circleci/config.yml` in appropriate test group
 
 ---
 
