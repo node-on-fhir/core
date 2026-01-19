@@ -110,25 +110,52 @@ export function ActivityDefinitionsPage(props) {
   let formFactor = LayoutHelpers.determineFormFactor();
   let paddingWidth = LayoutHelpers.calcCanvasPaddingWidth();
 
+  // Header with search - always rendered
+  let headerContent = (
+    <Box sx={{ mb: 2 }}>
+      <Grid container spacing={2} alignItems="center" justifyContent="space-between">
+        <Grid item xs={12} sm={6}>
+          <Typography variant="h4">
+            Activity Definitions
+          </Typography>
+          <Typography variant="subtitle2" color="textSecondary">
+            {activityDefinitions.length} activity definitions found
+          </Typography>
+        </Grid>
+        <Grid item xs={12} sm={6}>
+          <Box display="flex" justifyContent="flex-end">
+            <Button
+              id="newActivityDefinitionButton"
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={handleAddNew}
+            >
+              New Activity Definition
+            </Button>
+          </Box>
+        </Grid>
+      </Grid>
+      <Grid container spacing={2} sx={{ mt: 1 }}>
+        <Grid item xs={12}>
+          <TextField
+            id="activityDefinitionSearchInput"
+            fullWidth
+            placeholder="Search by name, title, description..."
+            value={searchFilter}
+            onChange={(e) => setSearchFilter(e.target.value)}
+            size="small"
+          />
+        </Grid>
+      </Grid>
+    </Box>
+  );
+
+  // Content - conditional based on data
   let layoutContainer;
   if (activityDefinitions.length > 0) {
     layoutContainer = (
       <Card sx={{ boxShadow: 3 }}>
-        <CardHeader
-          title={activityDefinitions.length + " Activity Definitions"}
-          sx={{ bgcolor: 'primary.main', color: 'primary.contrastText' }}
-        />
         <CardContent>
-          <Box sx={{ mb: 2 }}>
-            <TextField
-              id="activityDefinitionSearchInput"
-              fullWidth
-              placeholder="Search by name, title, description..."
-              value={searchFilter}
-              onChange={(e) => setSearchFilter(e.target.value)}
-              size="small"
-            />
-          </Box>
           <ActivityDefinitionsTable
             id="activityDefinitionsTable"
             activityDefinitions={activityDefinitions}
@@ -139,43 +166,38 @@ export function ActivityDefinitionsPage(props) {
             hideActionButton={true}
           />
         </CardContent>
-        <CardActions sx={{ justifyContent: 'flex-end', p: 2 }}>
-          <Button
-            id="newActivityDefinitionButton"
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={handleAddNew}
-          >
-            New Activity Definition
-          </Button>
-        </CardActions>
       </Card>
     );
   } else {
     layoutContainer = (
-      <Container maxWidth="sm" sx={{ display: 'flex', flexDirection: 'column', height: '100%', justifyContent: 'center' }}>
-        <Card sx={{ boxShadow: 3 }}>
-          <CardHeader
-            title="No Activity Definitions"
-            subheader="No activity definitions found. Create one to get started."
-          />
-          <CardActions sx={{ justifyContent: 'center', p: 2 }}>
-            <Button
-              id="newActivityDefinitionButton"
-              variant="contained"
-              startIcon={<AddIcon />}
-              onClick={handleAddNew}
-            >
-              New Activity Definition
-            </Button>
-          </CardActions>
+      <Box
+        id="noActivityDefinitionsMessage"
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          minHeight: '30vh',
+          textAlign: 'center'
+        }}
+      >
+        <Card sx={{ maxWidth: '600px', width: '100%', boxShadow: 3 }}>
+          <CardContent sx={{ p: 4 }}>
+            <Typography variant="h5" sx={{ mb: 2 }}>
+              No Activity Definitions
+            </Typography>
+            <Typography variant="body1" color="textSecondary">
+              No activity definitions found. Create one to get started.
+            </Typography>
+          </CardContent>
         </Card>
-      </Container>
+      </Box>
     );
   }
 
   return (
     <div id="activityDefinitionsPage" style={{ padding: "20px" }}>
+      {headerContent}
       {layoutContainer}
     </div>
   );

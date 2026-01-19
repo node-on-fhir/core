@@ -287,6 +287,7 @@ export function EndpointsPage(props){
     </Card>
   } else {
     layoutContent = <Box
+      id="noEndpointsMessage"
       sx={{
         display: 'flex',
         flexDirection: 'column',

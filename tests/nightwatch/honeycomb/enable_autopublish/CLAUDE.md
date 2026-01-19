@@ -109,7 +109,7 @@ it('01. Setup test environment', browser => {
 
 ### Test 02: Session Restoration After browser.url()
 ```javascript
-it('02. Verify list page loads', browser => {
+it('02. Verify {resourceType} list page loads', browser => {
   browser
     .url('http://localhost:3000/{resourceTypes}')
     .waitForElementVisible('#{resourceTypes}Page', 5000);
@@ -946,7 +946,7 @@ describe('Resource CRUD Operations', function() {
     // Clean up old test data
   });
 
-  it('02. Verify list page loads', browser => {
+  it('02. {resourceType} Verify list page loads', browser => {
     // Navigate to list
     // Check for table or no-data state
   });

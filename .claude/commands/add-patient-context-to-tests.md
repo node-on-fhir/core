@@ -131,7 +131,7 @@ testUtils.createTestPatient(browser, {
 
 **Add after browser.url() and waitForElementVisible:**
 ```javascript
-it('02. Verify list page loads', browser => {
+it('02. Verify {resourceType} list page loads', browser => {
   browser
     .url('http://localhost:3000/observations')
     .waitForElementVisible('#observationsPage', 5000);

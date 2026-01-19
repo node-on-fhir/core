@@ -86,7 +86,7 @@ describe('ActivityDefinitions CRUD Operations', function() {
   // ============================================================================
   // TEST 02: VERIFY LIST PAGE LOADS (Target: 4-6 assertions)
   // ============================================================================
-  it('02. Verify list page loads', function(browser) {
+  it('02. Verify activity definition list page loads', function(browser) {
     browser.url('http://localhost:3000/activity-definitions');
     browser.pause(2000);
 

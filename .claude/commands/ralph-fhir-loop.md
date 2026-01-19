@@ -65,8 +65,16 @@ npx nightwatch --config nightwatch.circle.conf.js tests/nightwatch/honeycomb/ena
 # Run tests with verbose output
 npx nightwatch tests/nightwatch/honeycomb/enable_autopublish/crud.{resources}.js --config nightwatch.conf.js --verbose
 
-# Check server logs
+# Start server with auto-login (background)
+meteor npm run medical-home-autologin > /tmp/meteor-server.log 2>&1 &
+
+# Wait for server ready
+for i in {1..60}; do curl -s http://localhost:3000 > /dev/null 2>&1 && echo "Server ready" && break; sleep 2; done
+
+# Check server logs (multiple variations)
 tail -100 /tmp/meteor-server.log
+tail -f /tmp/meteor-server.log
+cat /tmp/meteor-server.log | tail -100
 
 # View recent test screenshots
 ls -la tests/nightwatch/screenshots/{resources}/
@@ -74,9 +82,13 @@ ls -la tests/nightwatch/screenshots/{resources}/
 # Check if server is running
 curl -s http://localhost:3000 > /dev/null && echo "Server running" || echo "Server not running"
 
-# Kill stuck processes
+# Kill stuck processes (ports 3000 and 8080)
 pkill -f "meteor run" || true
 lsof -i :3000 | grep LISTEN | awk '{print $2}' | xargs kill -9 2>/dev/null || true
+lsof -i :8080 | grep LISTEN | awk '{print $2}' | xargs kill -9 2>/dev/null || true
+
+# Create schema directories
+mkdir -p imports/lib/schemas/R4B/JsonSchema
 ```
 
 ## Overview

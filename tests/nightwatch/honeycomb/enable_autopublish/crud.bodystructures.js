@@ -101,7 +101,7 @@ describe('BodyStructures CRUD Operations', function() {
     console.log('[01] Test environment setup complete');
   });
 
-  it('02. Verify list page loads', function(browser) {
+  it('02. Verify bodystructure list page loads', function(browser) {
     console.log('[02] Verifying body structures list page...');
 
     browser.url('http://localhost:3000/body-structures');

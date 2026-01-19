@@ -195,7 +195,7 @@ describe('Medications CRUD Operations [Patient-Agnostic]', function() {
     console.log('[Test 01] Logged in. No patient context needed.');
   });
 
-  it('02. Verify list page loads', browser => {
+  it('02. Verify {resourceType} list page loads', browser => {
     browser
       .url('http://localhost:3000/medications')
       .waitForElementVisible('#medicationsPage', 5000);
@@ -489,7 +489,7 @@ describe('ServiceRequests CRUD Operations [Clinician-Mediated]', function() {
     });
   });
 
-  it('02. Verify list page loads', browser => {
+  it('02. Verify {resourceType} list page loads', browser => {
     browser
       .url('http://localhost:3000/service-requests')
       .waitForElementVisible('#serviceRequestsPage', 5000);

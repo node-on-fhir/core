@@ -49,7 +49,7 @@ describe('Endpoints CRUD Operations', function() {
 
   // Test 02: Verify list page loads
   // Target: 6 assertions
-  it('02. Verify list page loads', async (browser) => {
+  it('02. Verify endpoints list page loads', async (browser) => {
     console.log('[02] Navigating to endpoints page...');
 
     testUtils.navigateUrl(browser, '/endpoints');
