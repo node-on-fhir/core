@@ -142,6 +142,8 @@ import BodyStructuresPage from '../ui-fhir/bodyStructures/BodyStructuresPage';
 import BodyStructureDetail from '../ui-fhir/bodyStructures/BodyStructureDetail';
 import ClinicalImpressionsPage from '../ui-fhir/clinicalImpressions/ClinicalImpressionsPage';
 import ClinicalImpressionDetail from '../ui-fhir/clinicalImpressions/ClinicalImpressionDetail';
+import RiskAssessmentsPage from '../ui-fhir/riskAssessments/RiskAssessmentsPage';
+import RiskAssessmentDetail from '../ui-fhir/riskAssessments/RiskAssessmentDetail';
 import ImagingStudiesPage from '../ui-fhir/imagingStudies/ImagingStudiesPage';
 import ImagingStudyDetail from '../ui-fhir/imagingStudies/ImagingStudyDetail';
 import AppointmentsPage from '../ui-fhir/appointments/AppointmentsPage';
@@ -159,6 +161,7 @@ import MeasureReportDetail from '../ui-fhir/measureReports/MeasureReportDetail';
 import MessageHeadersPage from '../ui-fhir/messageHeaders/MessageHeadersPage';
 import MessageHeaderDetail from '../ui-fhir/messageHeaders/MessageHeaderDetail';
 import SupplyDeliveriesPage from '../ui-fhir/supplyDeliveries/SupplyDeliveriesPage';
+import SupplyRequestsPage from '../ui-fhir/supplyRequests/SupplyRequestsPage';
 import EndpointsPage from '../ui-fhir/endpoints/EndpointsPage';
 import EndpointDetail from '../ui-fhir/endpoints/EndpointDetail';
 import OrganizationsPage from '../ui-fhir/organizations/OrganizationsPage';
@@ -212,6 +215,7 @@ import {
 // TODO: Create these detail components
 // import MediaDetail from '../ui-fhir/medias/MediaDetail';
 import SupplyDeliveryDetail from '../ui-fhir/supplyDeliveries/SupplyDeliveryDetail';
+import SupplyRequestDetail from '../ui-fhir/supplyRequests/SupplyRequestDetail';
 
 import NutritionIntakesPage from '../ui-fhir/nutritionIntakes/NutritionIntakesPage';
 import NutritionIntakeDetail from '../ui-fhir/nutritionIntakes/NutritionIntakeDetail';
@@ -730,6 +734,20 @@ if(get(Meteor, 'settings.public.modules.fhir.ClinicalImpressions')){
     element: <ClinicalImpressionDetail />
   })
 }
+if(get(Meteor, 'settings.public.modules.fhir.RiskAssessments')){
+  dynamicRoutes.push({
+    path: "/risk-assessments",
+    element: <RiskAssessmentsPage />
+  })
+  dynamicRoutes.push({
+    path: "/risk-assessments/new",
+    element: <RiskAssessmentDetail />
+  })
+  dynamicRoutes.push({
+    path: "/risk-assessments/:id",
+    element: <RiskAssessmentDetail />
+  })
+}
 if(get(Meteor, 'settings.public.modules.fhir.ActivityDefinitions')){
   dynamicRoutes.push({
     path: "/activity-definitions",
@@ -742,6 +760,20 @@ if(get(Meteor, 'settings.public.modules.fhir.ActivityDefinitions')){
   dynamicRoutes.push({
     path: "/activity-definitions/:id",
     element: <ActivityDefinitionDetail />
+  })
+}
+if(get(Meteor, 'settings.public.modules.fhir.AuditEvents')){
+  dynamicRoutes.push({
+    path: "/audit-events",
+    element: <AuditEventsPage />
+  })
+  dynamicRoutes.push({
+    path: "/audit-events/new",
+    element: <AuditEventDetail />
+  })
+  dynamicRoutes.push({
+    path: "/audit-events/:id",
+    element: <AuditEventDetail />
   })
 }
 if(get(Meteor, 'settings.public.modules.fhir.Bundles')){
@@ -1213,6 +1245,20 @@ if(get(Meteor, 'settings.public.modules.fhir.SupplyDeliveries')){
   dynamicRoutes.push({
     path: "/supply-deliveries/:id",
     element: <SupplyDeliveryDetail />
+  })
+}
+if(get(Meteor, 'settings.public.modules.fhir.SupplyRequests')){
+  dynamicRoutes.push({
+    path: "/supply-requests",
+    element: <SupplyRequestsPage />
+  })
+  dynamicRoutes.push({
+    path: "/supply-requests/new",
+    element: <SupplyRequestDetail />
+  })
+  dynamicRoutes.push({
+    path: "/supply-requests/:id",
+    element: <SupplyRequestDetail />
   })
 }
 if(get(Meteor, 'settings.public.modules.fhir.ValueSets')){

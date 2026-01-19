@@ -1,0 +1,146 @@
+{
+  "$schema": "http://json-schema.org/draft-06/schema#",
+  "id": "http://hl7.org/fhir/json-schema/SupplyRequest",
+  "$ref": "#/definitions/SupplyRequest",
+  "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
+  "definitions": {
+    "SupplyRequest": {
+      "description": "A record of a request for a medication, substance or device used in the healthcare setting.",
+      "properties": {
+        "resourceType": {
+          "description": "This is a SupplyRequest resource",
+          "const": "SupplyRequest"
+        },
+        "id": {
+          "description": "The logical id of the resource, as used in the URL for the resource. Once assigned, this value never changes.",
+          "$ref": "string.schema.json#/definitions/string"
+        },
+        "meta": {
+          "description": "The metadata about the resource.",
+          "$ref": "Meta.schema.json#/definitions/Meta"
+        },
+        "identifier": {
+          "description": "Business identifiers assigned to this SupplyRequest by the author and/or other systems.",
+          "items": {
+            "$ref": "Identifier.schema.json#/definitions/Identifier"
+          },
+          "type": "array"
+        },
+        "status": {
+          "description": "Status of the supply request.",
+          "$ref": "#/definitions/code"
+        },
+        "category": {
+          "description": "Category of supply, e.g. central, non-stock, etc.",
+          "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+        },
+        "priority": {
+          "description": "Indicates how quickly this SupplyRequest should be addressed.",
+          "$ref": "#/definitions/code"
+        },
+        "itemCodeableConcept": {
+          "description": "The item that is requested to be supplied (code).",
+          "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+        },
+        "itemReference": {
+          "description": "The item that is requested to be supplied (reference).",
+          "$ref": "Reference.schema.json#/definitions/Reference"
+        },
+        "quantity": {
+          "description": "The amount that is being ordered of the indicated item.",
+          "$ref": "Quantity.schema.json#/definitions/Quantity"
+        },
+        "parameter": {
+          "description": "Specific parameters for the ordered item.",
+          "items": {
+            "$ref": "#/definitions/SupplyRequest_Parameter"
+          },
+          "type": "array"
+        },
+        "occurrenceDateTime": {
+          "description": "When the request should be fulfilled.",
+          "pattern": "^([0-9]([0-9]([0-9][1-9]|[1-9]0)|[1-9]00)|[1-9]000)(-(0[1-9]|1[0-2])(-(0[1-9]|[1-2][0-9]|3[0-1])(T([01][0-9]|2[0-3]):[0-5][0-9]:([0-5][0-9]|60)(\\.[0-9]+)?(Z|(\\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00)))?)?)?$",
+          "type": "string"
+        },
+        "occurrencePeriod": {
+          "description": "When the request should be fulfilled (period).",
+          "$ref": "Period.schema.json#/definitions/Period"
+        },
+        "occurrenceTiming": {
+          "description": "When the request should be fulfilled (timing).",
+          "$ref": "Timing.schema.json#/definitions/Timing"
+        },
+        "authoredOn": {
+          "description": "When the request was made.",
+          "$ref": "#/definitions/dateTime"
+        },
+        "requester": {
+          "description": "The device, practitioner, etc. who initiated the request.",
+          "$ref": "Reference.schema.json#/definitions/Reference"
+        },
+        "supplier": {
+          "description": "Who is intended to fulfill the request.",
+          "items": {
+            "$ref": "Reference.schema.json#/definitions/Reference"
+          },
+          "type": "array"
+        },
+        "reasonCode": {
+          "description": "The reason why the supply item was requested.",
+          "items": {
+            "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+          },
+          "type": "array"
+        },
+        "reasonReference": {
+          "description": "The reason why the supply item was requested (reference).",
+          "items": {
+            "$ref": "Reference.schema.json#/definitions/Reference"
+          },
+          "type": "array"
+        },
+        "deliverFrom": {
+          "description": "Where the supply is expected to come from.",
+          "$ref": "Reference.schema.json#/definitions/Reference"
+        },
+        "deliverTo": {
+          "description": "Where the supply is destined to go.",
+          "$ref": "Reference.schema.json#/definitions/Reference"
+        }
+      },
+      "additionalProperties": false,
+      "required": ["quantity", "resourceType"]
+    },
+    "SupplyRequest_Parameter": {
+      "description": "Specific parameters for the ordered item.",
+      "properties": {
+        "id": {
+          "description": "Unique id for the element within a resource.",
+          "$ref": "string.schema.json#/definitions/string"
+        },
+        "code": {
+          "description": "A code or string that identifies the device detail being asserted.",
+          "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+        },
+        "valueCodeableConcept": {
+          "description": "The value of the device detail (CodeableConcept).",
+          "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+        },
+        "valueQuantity": {
+          "description": "The value of the device detail (Quantity).",
+          "$ref": "Quantity.schema.json#/definitions/Quantity"
+        },
+        "valueRange": {
+          "description": "The value of the device detail (Range).",
+          "$ref": "Range.schema.json#/definitions/Range"
+        },
+        "valueBoolean": {
+          "description": "The value of the device detail (Boolean).",
+          "pattern": "^true|false$",
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

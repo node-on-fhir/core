@@ -1,0 +1,154 @@
+{
+  "$schema": "http://json-schema.org/draft-06/schema#",
+  "id": "http://hl7.org/fhir/json-schema/RiskAssessment",
+  "$ref": "#/definitions/RiskAssessment",
+  "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
+  "definitions": {
+    "RiskAssessment": {
+      "description": "An assessment of the likely outcome(s) for a patient or other subject as well as the likelihood of each outcome.",
+      "properties": {
+        "resourceType": {
+          "description": "This is a RiskAssessment resource",
+          "const": "RiskAssessment"
+        },
+        "id": {
+          "description": "The logical id of the resource, as used in the URL for the resource. Once assigned, this value never changes.",
+          "type": "string"
+        },
+        "meta": {
+          "description": "The metadata about the resource."
+        },
+        "status": {
+          "description": "The status of the RiskAssessment, using the same statuses as an Observation.",
+          "type": "string"
+        },
+        "method": {
+          "description": "The algorithm, process or mechanism used to evaluate the risk.",
+          "type": "object"
+        },
+        "code": {
+          "description": "The type of the risk assessment performed.",
+          "type": "object"
+        },
+        "subject": {
+          "description": "The patient or group the risk assessment applies to.",
+          "type": "object"
+        },
+        "encounter": {
+          "description": "The encounter where the assessment was performed.",
+          "type": "object"
+        },
+        "occurrenceDateTime": {
+          "description": "The date (and possibly time) the risk assessment was performed.",
+          "type": "string"
+        },
+        "condition": {
+          "description": "For assessments or prognosis specific to a particular condition, indicates the condition being assessed.",
+          "type": "object"
+        },
+        "performer": {
+          "description": "The provider or software application that performed the assessment.",
+          "type": "object"
+        },
+        "reasonCode": {
+          "description": "The reason the risk assessment was performed.",
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        },
+        "reasonReference": {
+          "description": "Resources supporting the reason the risk assessment was performed.",
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        },
+        "basis": {
+          "description": "Indicates the source data considered as part of the assessment.",
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        },
+        "prediction": {
+          "description": "Describes the expected outcome for the subject.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/RiskAssessment_Prediction"
+          }
+        },
+        "mitigation": {
+          "description": "A description of the steps that might be taken to reduce the identified risk(s).",
+          "type": "string"
+        },
+        "note": {
+          "description": "Additional comments about the risk assessment.",
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        },
+        "identifier": {
+          "description": "Business identifier assigned to the risk assessment.",
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        },
+        "basedOn": {
+          "description": "A reference to the request that is fulfilled by this risk assessment.",
+          "type": "object"
+        },
+        "parent": {
+          "description": "A reference to a resource that this risk assessment is part of, such as a Procedure.",
+          "type": "object"
+        }
+      },
+      "additionalProperties": false,
+      "required": ["subject", "resourceType"]
+    },
+    "RiskAssessment_Prediction": {
+      "description": "An assessment of the likely outcome(s) for a patient or other subject as well as the likelihood of each outcome.",
+      "properties": {
+        "id": {
+          "description": "Unique id for the element within a resource.",
+          "type": "string"
+        },
+        "outcome": {
+          "description": "One of the potential outcomes for the patient (e.g. remission, death, a particular condition).",
+          "type": "object"
+        },
+        "probabilityDecimal": {
+          "description": "Indicates how likely the outcome is (in the specified timeframe).",
+          "type": "number"
+        },
+        "probabilityRange": {
+          "description": "Indicates how likely the outcome is (in the specified timeframe).",
+          "type": "object"
+        },
+        "qualitativeRisk": {
+          "description": "Indicates how likely the outcome is, expressed as a qualitative value (e.g. low, medium, or high).",
+          "type": "object"
+        },
+        "relativeRisk": {
+          "description": "Indicates the risk for this particular subject divided by the risk of the population in general.",
+          "type": "number"
+        },
+        "whenPeriod": {
+          "description": "Indicates the period of time or age range of the subject to which the specified probability applies.",
+          "type": "object"
+        },
+        "whenRange": {
+          "description": "Indicates the period of time or age range of the subject to which the specified probability applies.",
+          "type": "object"
+        },
+        "rationale": {
+          "description": "Additional information explaining the basis for the prediction.",
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

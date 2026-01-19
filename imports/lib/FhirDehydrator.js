@@ -883,6 +883,67 @@ export function flattenClinicalImpression(clinicalImpression, internalDateFormat
   return result;
 }
 
+export function flattenRiskAssessment(riskAssessment, internalDateFormat) {
+  let result = {
+    _id: '',
+    id: '',
+    resourceType: 'RiskAssessment',
+    status: '',
+    codeDisplay: '',
+    codeCode: '',
+    methodDisplay: '',
+    methodCode: '',
+    predictionOutcome: '',
+    mitigation: '',
+    date: '',
+    occurrenceDateTime: '',
+    performerDisplay: '',
+    performerReference: '',
+    subjectDisplay: '',
+    subjectReference: ''
+  };
+
+  if (!internalDateFormat) {
+    internalDateFormat = get(Meteor, "settings.public.defaults.internalDateFormat", "YYYY-MM-DD");
+  }
+
+  result._id = extractIdString(get(riskAssessment, '_id', ''));
+  result.id = get(riskAssessment, 'id', '');
+  result.status = get(riskAssessment, 'status', '');
+
+  // Code (type of assessment)
+  result.codeDisplay = get(riskAssessment, 'code.text', get(riskAssessment, 'code.coding.0.display', ''));
+  result.codeCode = get(riskAssessment, 'code.coding.0.code', '');
+
+  // Method (assessment methodology)
+  result.methodDisplay = get(riskAssessment, 'method.text', get(riskAssessment, 'method.coding.0.display', ''));
+  result.methodCode = get(riskAssessment, 'method.coding.0.code', '');
+
+  // Prediction (first prediction outcome)
+  result.predictionOutcome = get(riskAssessment, 'prediction.0.outcome.text', '');
+
+  // Mitigation
+  result.mitigation = get(riskAssessment, 'mitigation', '');
+
+  // Dates
+  if (get(riskAssessment, 'date')) {
+    result.date = moment(get(riskAssessment, 'date')).format(internalDateFormat);
+  }
+  if (get(riskAssessment, 'occurrenceDateTime')) {
+    result.occurrenceDateTime = moment(get(riskAssessment, 'occurrenceDateTime')).format(internalDateFormat);
+  }
+
+  // Performer reference (Practitioner)
+  result.performerDisplay = get(riskAssessment, 'performer.display', '');
+  result.performerReference = get(riskAssessment, 'performer.reference', '');
+
+  // Subject reference (Patient)
+  result.subjectDisplay = get(riskAssessment, 'subject.display', '');
+  result.subjectReference = get(riskAssessment, 'subject.reference', '');
+
+  return result;
+}
+
 export function flattenBodyStructure(bodyStructure, internalDateFormat) {
   let result = {
     _id: '',
@@ -6652,6 +6713,78 @@ export function flattenSupplyDelivery(supplyDelivery, internalDateFormat){
   return result;
 }
 
+export function flattenSupplyRequest(supplyRequest, internalDateFormat){
+  let result = {
+    _id: get(supplyRequest, '_id', ''),
+    id: get(supplyRequest, 'id', ''),
+    resourceType: 'SupplyRequest',
+    identifier: get(supplyRequest, 'identifier[0].value', ''),
+    status: get(supplyRequest, 'status', ''),
+    category: '',
+    categoryCode: get(supplyRequest, 'category.coding[0].code', ''),
+    priority: get(supplyRequest, 'priority', ''),
+    itemCodeableConcept: '',
+    itemCodeableConceptCode: get(supplyRequest, 'itemCodeableConcept.coding[0].code', ''),
+    itemReference: get(supplyRequest, 'itemReference.reference', ''),
+    itemDisplay: get(supplyRequest, 'itemReference.display', ''),
+    quantity: get(supplyRequest, 'quantity.value', ''),
+    quantityUnit: get(supplyRequest, 'quantity.unit', ''),
+    occurrenceDateTime: '',
+    authoredOn: '',
+    requester: get(supplyRequest, 'requester.display', ''),
+    requesterReference: get(supplyRequest, 'requester.reference', ''),
+    supplier: get(supplyRequest, 'supplier[0].display', ''),
+    supplierReference: get(supplyRequest, 'supplier[0].reference', ''),
+    reasonCode: '',
+    reasonCodeCode: get(supplyRequest, 'reasonCode[0].coding[0].code', ''),
+    deliverFrom: get(supplyRequest, 'deliverFrom.display', ''),
+    deliverFromReference: get(supplyRequest, 'deliverFrom.reference', ''),
+    deliverTo: get(supplyRequest, 'deliverTo.display', ''),
+    deliverToReference: get(supplyRequest, 'deliverTo.reference', '')
+  };
+
+  // Category
+  if(has(supplyRequest, 'category.text')){
+    result.category = get(supplyRequest, 'category.text');
+  } else {
+    result.category = get(supplyRequest, 'category.coding[0].display', '');
+  }
+
+  // Item CodeableConcept
+  if(has(supplyRequest, 'itemCodeableConcept.text')){
+    result.itemCodeableConcept = get(supplyRequest, 'itemCodeableConcept.text');
+  } else {
+    result.itemCodeableConcept = get(supplyRequest, 'itemCodeableConcept.coding[0].display', '');
+  }
+
+  // Reason Code
+  if(has(supplyRequest, 'reasonCode[0].text')){
+    result.reasonCode = get(supplyRequest, 'reasonCode[0].text');
+  } else {
+    result.reasonCode = get(supplyRequest, 'reasonCode[0].coding[0].display', '');
+  }
+
+  // Occurrence DateTime
+  if(get(supplyRequest, 'occurrenceDateTime')){
+    if(internalDateFormat){
+      result.occurrenceDateTime = moment(get(supplyRequest, 'occurrenceDateTime', null)).format(internalDateFormat);
+    } else {
+      result.occurrenceDateTime = moment(get(supplyRequest, 'occurrenceDateTime', null)).format("YYYY-MM-DD");
+    }
+  }
+
+  // Authored On
+  if(get(supplyRequest, 'authoredOn')){
+    if(internalDateFormat){
+      result.authoredOn = moment(get(supplyRequest, 'authoredOn', null)).format(internalDateFormat);
+    } else {
+      result.authoredOn = moment(get(supplyRequest, 'authoredOn', null)).format("YYYY-MM-DD");
+    }
+  }
+
+  return result;
+}
+
 export function flattenRestriction(restriction, internalDateFormat){
     let result = {
         resourceType: 'Restriction',
@@ -6673,25 +6806,6 @@ export function flattenRestriction(restriction, internalDateFormat){
     }
     
     return result;
-}
-
-export function flattenRiskAssessment(document){
-  let result = {
-    _id: get(document, '_id', ''),
-    id: get(document, 'id', ''),
-    occurrenceDateTime: moment(get(document, 'occurrenceDateTime', null)).format("YYYY-MM-DD hh:mm"),
-    identifier: get(document, 'identifier[0].value', ''),
-    performer: get(document, 'performer.display', ''),
-    performerReference: get(document, 'performer.reference', ''),
-    status: get(document, 'status', ''),
-    subjectReference: get(document, 'subject.reference', ''),
-    subjectName: get(document, 'subject.display', ''),
-    outcomeText: get(document, 'prediction[0].outcome.text', ''),
-    probabilityDecimal: get(document, 'prediction[0].probabilityDecimal', ''),
-    text: get(document, 'text.div', ''),
-  };
-
-  return result;
 }
 
 export function flattenServiceRequest(document){

@@ -100,10 +100,12 @@ import { Questionnaires } from '/imports/lib/schemas/SimpleSchemas/Questionnaire
 import { QuestionnaireResponses } from '/imports/lib/schemas/SimpleSchemas/QuestionnaireResponses';
 import { ResearchStudies } from '/imports/lib/schemas/SimpleSchemas/ResearchStudies';
 import { ResearchSubjects } from '/imports/lib/schemas/SimpleSchemas/ResearchSubjects';
+import { RiskAssessments } from '/imports/lib/schemas/SimpleSchemas/RiskAssessments';
 import { Schedules } from '/imports/lib/schemas/SimpleSchemas/Schedules';
 import { SearchParameters } from '/imports/lib/schemas/SimpleSchemas/SearchParameters';
 import { ServiceRequests } from '/imports/lib/schemas/SimpleSchemas/ServiceRequests';
 import { SupplyDeliveries } from '/imports/lib/schemas/SimpleSchemas/SupplyDeliveries';
+import { SupplyRequests } from '/imports/lib/schemas/SimpleSchemas/SupplyRequests';
 import { Tasks } from '/imports/lib/schemas/SimpleSchemas/Tasks';
 import { ValueSets } from '/imports/lib/schemas/SimpleSchemas/ValueSets';
 
@@ -163,10 +165,12 @@ const collectionsMap = {
   'QuestionnaireResponses': QuestionnaireResponses,
   'ResearchStudies': ResearchStudies,
   'ResearchSubjects': ResearchSubjects,
+  'RiskAssessments': RiskAssessments,
   'Schedules': Schedules,
   'SearchParameters': SearchParameters,
   'ServiceRequests': ServiceRequests,
   'SupplyDeliveries': SupplyDeliveries,
+  'SupplyRequests': SupplyRequests,
   'Tasks': Tasks,
   'ValueSets': ValueSets
 };

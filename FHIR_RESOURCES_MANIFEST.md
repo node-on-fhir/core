@@ -169,7 +169,7 @@ This manifest tracks the implementation status of all FHIR R4 resource types in 
 | SubstanceSourceMaterial | ⏳ pending | PA | ❌ | ❌ | |
 | SubstanceSpecification | ⏳ pending | PA | ❌ | ❌ | |
 | SupplyDelivery | 🔶 partial | CM | ❌ | ✅ | |
-| SupplyRequest | ⏳ pending | CM | ❌ | ❌ | |
+| SupplyRequest | ✅ done | PA | ✅ | ✅ | Supply chain workflow |
 | Task | ✅ done | CM | ✅ | ✅ | |
 | TerminologyCapabilities | ⏳ pending | PA | ❌ | ❌ | |
 | TestReport | ⏳ pending | PA | ❌ | ❌ | |
@@ -224,9 +224,9 @@ Resources needed for research/trials use cases:
 ## Statistics
 
 - **Total Resources:** 147
-- **Done (with tests):** 34
+- **Done (with tests):** 35
 - **Partial (UI only):** 24
-- **Pending:** 87
+- **Pending:** 86
 - **Skipped:** 2
 
 ---
@@ -240,4 +240,5 @@ Resources needed for research/trials use cases:
 | 2026-01-18 | BodyStructure | ✅ done | First Ralph loop implementation |
 | 2026-01-19 | PlanDefinition | ✅ done | Clinical protocols, order sets (PA) |
 | 2026-01-19 | NutritionIntake | ✅ done | FHIR R5 resource, dietary intake tracking (PO) |
+| 2026-01-19 | SupplyRequest | ✅ done | Supply chain workflow, inventory requests (PA) |
 

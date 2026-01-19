@@ -91,6 +91,8 @@ import '../imports/api/serviceRequests/methods.js';
 import '../imports/api/diagnosticReports/methods.js';
 import '../imports/api/bodyStructures/methods.js';
 import '../imports/api/clinicalImpressions/methods.js';
+import '../imports/api/riskAssessments/methods.js';
+import '../imports/api/supplyRequests/methods.js';
 import '../imports/methods/supplyDeliveries.js';
 import '../imports/methods/tasks.js';
 
@@ -194,10 +196,12 @@ import { Questionnaires } from '../imports/lib/schemas/SimpleSchemas/Questionnai
 import { QuestionnaireResponses } from '../imports/lib/schemas/SimpleSchemas/QuestionnaireResponses';
 import { ResearchStudies } from '../imports/lib/schemas/SimpleSchemas/ResearchStudies';
 import { ResearchSubjects } from '../imports/lib/schemas/SimpleSchemas/ResearchSubjects';
+import { RiskAssessments } from '../imports/lib/schemas/SimpleSchemas/RiskAssessments';
 import { Schedules } from '../imports/lib/schemas/SimpleSchemas/Schedules';
 import { SearchParameters } from '../imports/lib/schemas/SimpleSchemas/SearchParameters';
 import { ServiceRequests } from '../imports/lib/schemas/SimpleSchemas/ServiceRequests';
 import { Specimens } from '../imports/lib/schemas/SimpleSchemas/Specimens';
+import { SupplyRequests } from '../imports/lib/schemas/SimpleSchemas/SupplyRequests';
 import { Tasks } from '../imports/lib/schemas/SimpleSchemas/Tasks';
 import { ValueSets } from '../imports/lib/schemas/SimpleSchemas/ValueSets';
 
@@ -266,10 +270,12 @@ Meteor.Collections = {
   RelatedPersons,
   ResearchStudies,
   ResearchSubjects,
+  RiskAssessments,
   Schedules,
   SearchParameters,
   ServiceRequests,
   Specimens,
+  SupplyRequests,
   Tasks,
   ValueSets
 }
@@ -339,10 +345,12 @@ Object.assign(global.Collections, {
   RelatedPersons,
   ResearchStudies,
   ResearchSubjects,
+  RiskAssessments,
   Schedules,
   SearchParameters,
   ServiceRequests,
   Specimens,
+  SupplyRequests,
   Tasks,
   ValueSets
 });

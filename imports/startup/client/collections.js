@@ -58,9 +58,11 @@ import { QuestionnaireResponses } from '/imports/lib/schemas/SimpleSchemas/Quest
 import { RelatedPersons } from '/imports/lib/schemas/SimpleSchemas/RelatedPersons';
 import { ResearchStudies } from '/imports/lib/schemas/SimpleSchemas/ResearchStudies';
 import { ResearchSubjects } from '/imports/lib/schemas/SimpleSchemas/ResearchSubjects';
+import { RiskAssessments } from '/imports/lib/schemas/SimpleSchemas/RiskAssessments';
 import { Schedules } from '/imports/lib/schemas/SimpleSchemas/Schedules';
 import { ServiceRequests } from '/imports/lib/schemas/SimpleSchemas/ServiceRequests';
 import { SupplyDeliveries } from '/imports/lib/schemas/SimpleSchemas/SupplyDeliveries';
+import { SupplyRequests } from '/imports/lib/schemas/SimpleSchemas/SupplyRequests';
 import { Tasks } from '/imports/lib/schemas/SimpleSchemas/Tasks';
 import { ValueSets } from '/imports/lib/schemas/SimpleSchemas/ValueSets';
 
@@ -122,9 +124,11 @@ if (Meteor.isClient) {
     RelatedPersons,
     ResearchStudies,
     ResearchSubjects,
+    RiskAssessments,
     Schedules,
     ServiceRequests,
     SupplyDeliveries,
+    SupplyRequests,
     Tasks,
     ValueSets
   };
@@ -185,9 +189,11 @@ if (Meteor.isClient) {
   window.RelatedPersons = RelatedPersons;
   window.ResearchStudies = ResearchStudies;
   window.ResearchSubjects = ResearchSubjects;
+  window.RiskAssessments = RiskAssessments;
   window.Schedules = Schedules;
   window.ServiceRequests = ServiceRequests;
   window.SupplyDeliveries = SupplyDeliveries;
+  window.SupplyRequests = SupplyRequests;
   window.Tasks = Tasks;
   window.ValueSets = ValueSets;
 

@@ -109,8 +109,7 @@
           "/bundles",
           "/contracts",
           "/devices",
-          "/message-headers",
-          "/risk-assessments"
+          "/message-headers"
         ]
       },
       "autopublish": true
@@ -183,6 +182,7 @@
         "QuestionnaireResponses": true,
         "ResearchStudies": true,
         "ResearchSubjects": true,
+        "RiskAssessments": true,
         "ServiceRequests": true
       }
     }
@@ -548,6 +548,17 @@
           "publication": true
         },
         "Specimen": {
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "search"
+          ],
+          "search": true,
+          "publication": true
+        },
+        "RiskAssessment": {
           "interactions": [
             "read",
             "create",

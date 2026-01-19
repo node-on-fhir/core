@@ -111,8 +111,7 @@
           "/bundles",
           "/contracts",
           "/devices",
-          "/imaging-studies",
-          "/risk-assessments"
+          "/imaging-studies"
         ]
       },
       "autopublish": true
@@ -191,9 +190,11 @@
         "Schedules": true,
         "ServiceRequests": true,
         "SupplyDeliveries": true,
+        "SupplyRequests": true,
         "Tasks": true,
         "Measures": true,
-        "MeasureReports": true
+        "MeasureReports": true,
+        "RiskAssessments": true
       }
     }
   },
@@ -663,6 +664,17 @@
           "search": true,
           "publication": true
         },
+        "SupplyRequest": {
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "search"
+          ],
+          "search": true,
+          "publication": true
+        },
         "Task": {
           "interactions": [
             "read",
@@ -686,6 +698,17 @@
           "publication": true
         },
         "MeasureReport": {
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "search"
+          ],
+          "search": true,
+          "publication": true
+        },
+        "RiskAssessment": {
           "interactions": [
             "read",
             "create",
