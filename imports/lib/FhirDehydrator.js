@@ -5165,6 +5165,8 @@ export function flattenOrganization(organization, internalDateFormat){
     meta: '',
     name: '',
     identifier: '',
+    type: '',
+    active: false,
     phone: '',
     email: '',
     addressLine: '',
@@ -5172,6 +5174,7 @@ export function flattenOrganization(organization, internalDateFormat){
     city: '',
     state: '',
     postalCode: '',
+    country: '',
     fullAddress: '',
     operationOutcome: '',
     numEndpoints: 0
@@ -5183,16 +5186,22 @@ export function flattenOrganization(organization, internalDateFormat){
   result.id = get(organization, 'id', '');
   result.identifier = get(organization, 'identifier[0].value', '');
 
-  result.name = get(organization, 'name', '')
+  result.name = get(organization, 'name', '');
+
+  // Type - get display text from CodeableConcept
+  result.type = get(organization, 'type[0].coding[0].display', get(organization, 'type[0].text', ''));
+
+  // Active status
+  result.active = get(organization, 'active', false);
 
   result.phone = FhirUtilities.pluckPhone(get(organization, 'telecom'));
   result.email = FhirUtilities.pluckEmail(get(organization, 'telecom'));
 
-  result.addressLine = get(organization, 'address[0].line[0]');
-  result.city = get(organization, 'address[0].city');
-  result.state = get(organization, 'address[0].state');
-  result.postalCode = get(organization, 'address[0].postalCode');
-  result.country = get(organization, 'address[0].country');
+  result.addressLine = get(organization, 'address[0].line[0]', '');
+  result.city = get(organization, 'address[0].city', '');
+  result.state = get(organization, 'address[0].state', '');
+  result.postalCode = get(organization, 'address[0].postalCode', '');
+  result.country = get(organization, 'address[0].country', '');
 
   result.fullAddress = FhirUtilities.stringifyAddress(get(organization, 'address[0]'));
 

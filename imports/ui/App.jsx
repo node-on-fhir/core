@@ -161,6 +161,8 @@ import MessageHeaderDetail from '../ui-fhir/messageHeaders/MessageHeaderDetail';
 import SupplyDeliveriesPage from '../ui-fhir/supplyDeliveries/SupplyDeliveriesPage';
 import EndpointsPage from '../ui-fhir/endpoints/EndpointsPage';
 import EndpointDetail from '../ui-fhir/endpoints/EndpointDetail';
+import OrganizationsPage from '../ui-fhir/organizations/OrganizationsPage';
+import OrganizationDetail from '../ui-fhir/organizations/OrganizationDetail';
 
 import {
   ActivityDefinitionDetail,
@@ -956,6 +958,20 @@ if(get(Meteor, 'settings.public.modules.fhir.Locations')){
   dynamicRoutes.push({
     path: "/locations/:id",
     element: <LocationDetail />
+  })
+}
+if(get(Meteor, 'settings.public.modules.fhir.Organizations')){
+  dynamicRoutes.push({
+    path: "/organizations",
+    element: <OrganizationsPage />
+  })
+  dynamicRoutes.push({
+    path: "/organizations/new",
+    element: <OrganizationDetail />
+  })
+  dynamicRoutes.push({
+    path: "/organizations/:id",
+    element: <OrganizationDetail />
   })
 }
 if(get(Meteor, 'settings.public.modules.fhir.Observations')){

@@ -65,6 +65,7 @@ import '../imports/api/endpoints/methods.js';
 import '../imports/api/imagingStudies/methods.js';
 import '../imports/api/locations/methods.js';
 import '../imports/api/observations/methods.js';
+import '../imports/api/organizations/methods.js';
 import '../imports/methods/immunizations.js';
 import '../imports/api/medicationAdministrations/methods.js';
 import '../imports/api/medicationRequests/methods.js';

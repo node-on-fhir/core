@@ -22,7 +22,8 @@ parameters:
           "tests": [
             "tests/nightwatch/honeycomb/enable_autopublish/crud.patients.js",
             "tests/nightwatch/honeycomb/enable_autopublish/crud.practitioners.js",
-            "tests/nightwatch/honeycomb/enable_autopublish/crud.practitionerRoles.js"
+            "tests/nightwatch/honeycomb/enable_autopublish/crud.practitionerRoles.js",
+            "tests/nightwatch/honeycomb/enable_autopublish/crud.organizations.js"
           ]
         },
         {
@@ -508,7 +509,7 @@ workflows:
       - test-group:
           name: actors
           group-name: actors
-          test-files: "tests/nightwatch/honeycomb/enable_autopublish/crud.patients.js tests/nightwatch/honeycomb/enable_autopublish/crud.practitioners.js tests/nightwatch/honeycomb/enable_autopublish/crud.practitionerRoles.js tests/nightwatch/honeycomb/enable_autopublish/crud.careteams.js"
+          test-files: "tests/nightwatch/honeycomb/enable_autopublish/crud.patients.js tests/nightwatch/honeycomb/enable_autopublish/crud.practitioners.js tests/nightwatch/honeycomb/enable_autopublish/crud.practitionerRoles.js tests/nightwatch/honeycomb/enable_autopublish/crud.careteams.js tests/nightwatch/honeycomb/enable_autopublish/crud.organizations.js"
       
       - test-group:
           name: clinical-history
