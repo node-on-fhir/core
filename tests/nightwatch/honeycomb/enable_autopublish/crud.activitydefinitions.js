@@ -116,13 +116,14 @@ describe('ActivityDefinitions CRUD Operations', function() {
 
     // Verify page title or header
     browser.execute(function() {
-      const cardHeader = document.querySelector('.MuiCardHeader-title');
+      // Page uses Typography h4 for header, not CardHeader
+      const header = document.querySelector('.MuiTypography-h4');
       return {
-        hasHeader: cardHeader !== null,
-        headerText: cardHeader ? cardHeader.textContent : ''
+        hasHeader: header !== null,
+        headerText: header ? header.textContent : ''
       };
     }, [], function(result) {
-      browser.assert.ok(result.value.hasHeader, 'Card header exists');
+      browser.assert.ok(result.value.hasHeader, 'Page header exists');
       console.log('[02] Header text:', result.value.headerText);
     });
 
