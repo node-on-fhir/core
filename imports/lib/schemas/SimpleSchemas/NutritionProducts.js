@@ -1,34 +1,11 @@
+// imports/lib/schemas/SimpleSchemas/NutritionProducts.js
 import { get } from 'lodash';
-import validator from 'validator';
 
 import BaseModel from '../../BaseModel';
 import { Mongo } from 'meteor/mongo';
 import SimpleSchema from 'simpl-schema';
 
-// REFACTOR:  we want to deprecate meteor/clinical:hl7-resource-datatypes
-// so please remove references from the following line
-// and replace with import from ../../datatypes/*
-import {  AddressSchema, BaseSchema, ContactPointSchema, CodeableConceptSchema, DomainResourceSchema, IdentifierSchema,  MoneySchema, PeriodSchema, QuantitySchema, ReferenceSchema, SignatureSchema } from 'meteor/clinical:hl7-resource-datatypes';
-
-
-// if(Package['clinical:autopublish']){
-//   console.log("*****************************************************************************")
-//   console.log("HIPAA WARNING:  Your app has the 'clinical-autopublish' package installed.");
-//   console.log("Any protected health information (PHI) stored in this app should be audited."); 
-//   console.log("Please consider writing secure publish/subscribe functions and uninstalling.");  
-//   console.log("");  
-//   console.log("meteor remove clinical:autopublish");  
-//   console.log("");  
-// }
-// if(Package['autopublish']){
-//   console.log("*****************************************************************************")
-//   console.log("HIPAA WARNING:  DO NOT STORE PROTECTED HEALTH INFORMATION IN THIS APP. ");  
-//   console.log("Your application has the 'autopublish' package installed.  Please uninstall.");
-//   console.log("");  
-//   console.log("meteor remove autopublish");  
-//   console.log("meteor add clinical:autopublish");  
-//   console.log("");  
-// }
+import { BaseSchema, DomainResourceSchema, CodeableConceptSchema, ReferenceSchema, QuantitySchema, IdentifierSchema, AnnotationSchema } from 'meteor/clinical:hl7-resource-datatypes';
 
 
 // create the object using our BaseModel
@@ -40,19 +17,149 @@ export let NutritionProducts = new Mongo.Collection('NutritionProducts');
 NutritionProduct.prototype._collection = NutritionProducts;
 
 
-
 //Add the transform to the collection since Meteor.users is pre-defined by the accounts package
 NutritionProducts._transform = function (document) {
   return new NutritionProduct(document);
 };
 
-let NutritionProductSchema = DomainResourceSchema.extend({
-  "resourceType" : {
+// FHIR R4B NutritionProduct Schema
+let NutritionProductR4 = new SimpleSchema({
+  "resourceType": {
     type: String,
-    defaultValue: "Resource"
+    defaultValue: "NutritionProduct"
+  },
+  "_id": {
+    type: String,
+    optional: true
+  },
+  "id": {
+    type: String,
+    optional: true
+  },
+  "meta": {
+    type: Object,
+    optional: true,
+    blackbox: true
+  },
+  "text": {
+    type: Object,
+    optional: true,
+    blackbox: true
+  },
+  "identifier": {
+    type: Array,
+    optional: true
+  },
+  "identifier.$": {
+    type: IdentifierSchema,
+    optional: true
+  },
+  "extension": {
+    type: Array,
+    optional: true
+  },
+  "extension.$": {
+    type: Object,
+    optional: true,
+    blackbox: true
+  },
+  "modifierExtension": {
+    type: Array,
+    optional: true
+  },
+  "modifierExtension.$": {
+    type: Object,
+    optional: true,
+    blackbox: true
+  },
+  // Status: active | inactive | entered-in-error
+  "status": {
+    type: String,
+    optional: true,
+    allowedValues: ['active', 'inactive', 'entered-in-error']
+  },
+  // Category: Broad nutritional product category
+  "category": {
+    type: Array,
+    optional: true
+  },
+  "category.$": {
+    type: CodeableConceptSchema,
+    optional: true
+  },
+  // Code: SNOMED CT or other identifier for the product
+  "code": {
+    type: CodeableConceptSchema,
+    optional: true
+  },
+  // Manufacturer: Organization references
+  "manufacturer": {
+    type: Array,
+    optional: true
+  },
+  "manufacturer.$": {
+    type: ReferenceSchema,
+    optional: true
+  },
+  // Nutrient: Nutritional information
+  "nutrient": {
+    type: Array,
+    optional: true
+  },
+  "nutrient.$": {
+    type: Object,
+    optional: true,
+    blackbox: true
+  },
+  // Ingredient: Product ingredients
+  "ingredient": {
+    type: Array,
+    optional: true
+  },
+  "ingredient.$": {
+    type: Object,
+    optional: true,
+    blackbox: true
+  },
+  // Known Allergen: Allergen references
+  "knownAllergen": {
+    type: Array,
+    optional: true
+  },
+  "knownAllergen.$": {
+    type: Object,
+    optional: true,
+    blackbox: true
+  },
+  // Product Characteristic: Descriptive properties
+  "productCharacteristic": {
+    type: Array,
+    optional: true
+  },
+  "productCharacteristic.$": {
+    type: Object,
+    optional: true,
+    blackbox: true
+  },
+  // Instance: Physical countable instances
+  "instance": {
+    type: Object,
+    optional: true,
+    blackbox: true
+  },
+  // Note: Comments
+  "note": {
+    type: Array,
+    optional: true
+  },
+  "note.$": {
+    type: AnnotationSchema,
+    optional: true
   }
 });
 
+let NutritionProductSchema = NutritionProductR4;
+
 // NutritionProducts.attachSchema(NutritionProductSchema);
 
-export default { NutritionProduct, NutritionProducts, NutritionProductSchema };
+export default { NutritionProduct, NutritionProducts, NutritionProductSchema, NutritionProductR4 };

@@ -44,6 +44,7 @@ import { Medias } from '/imports/lib/schemas/SimpleSchemas/Medias';
 import { MessageHeaders } from '/imports/lib/schemas/SimpleSchemas/MessageHeaders';
 import { NutritionIntakes } from '/imports/lib/schemas/SimpleSchemas/NutritionIntakes';
 import { NutritionOrders } from '/imports/lib/schemas/SimpleSchemas/NutritionOrders';
+import { NutritionProducts } from '/imports/lib/schemas/SimpleSchemas/NutritionProducts';
 import { OperationOutcomes } from '/imports/lib/schemas/SimpleSchemas/OperationOutcomes';
 import { Organizations } from '/imports/lib/schemas/SimpleSchemas/Organizations';
 import { Observations } from '/imports/lib/schemas/SimpleSchemas/Observations';
@@ -107,6 +108,7 @@ if (Meteor.isClient) {
     Medias,
     NutritionIntakes,
     NutritionOrders,
+    NutritionProducts,
     OperationOutcomes,
     Organizations,
     Observations,
@@ -169,6 +171,7 @@ if (Meteor.isClient) {
   window.Medias = Medias;
   window.NutritionIntakes = NutritionIntakes;
   window.NutritionOrders = NutritionOrders;
+  window.NutritionProducts = NutritionProducts;
   window.OperationOutcomes = OperationOutcomes;
   window.Organizations = Organizations;
   window.Observations = Observations;

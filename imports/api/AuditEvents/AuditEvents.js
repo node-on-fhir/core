@@ -2,7 +2,9 @@
 
 import { Meteor } from 'meteor/meteor';
 import { Mongo } from 'meteor/mongo';
+import { check } from 'meteor/check';
 import { get } from 'lodash';
+import { Random } from 'meteor/random';
 
 // Import the existing collection from the schema file
 import { AuditEvents } from '../../lib/schemas/SimpleSchemas/AuditEvents';
@@ -10,8 +12,101 @@ import { AuditEvents } from '../../lib/schemas/SimpleSchemas/AuditEvents';
 // Re-export for other modules
 export { AuditEvents };
 
-// Define Meteor methods for audit logging
+// Define Meteor methods for audit logging and CRUD operations
 Meteor.methods({
+  'auditEvents.insert': async function(auditEventData) {
+    check(auditEventData, Object);
+
+    if (!this.userId) {
+      throw new Meteor.Error('not-authorized', 'You must be logged in to create audit events');
+    }
+
+    const cleanAuditEvent = {
+      resourceType: 'AuditEvent',
+      id: Random.id(),
+      type: get(auditEventData, 'type', {
+        system: 'http://hl7.org/fhir/audit-event-type',
+        code: 'rest',
+        display: 'RESTful Operation'
+      }),
+      subtype: get(auditEventData, 'subtype', []),
+      action: get(auditEventData, 'action', 'R'),
+      recorded: get(auditEventData, 'recorded', new Date().toISOString()),
+      outcome: get(auditEventData, 'outcome', '0'),
+      outcomeDesc: get(auditEventData, 'outcomeDesc', ''),
+      agent: get(auditEventData, 'agent', [{
+        who: {
+          reference: `User/${this.userId}`,
+          display: this.userId
+        },
+        requestor: true
+      }]),
+      source: get(auditEventData, 'source', {
+        observer: {
+          display: 'Honeycomb FHIR Server'
+        }
+      }),
+      entity: get(auditEventData, 'entity', [])
+    };
+
+    cleanAuditEvent._id = cleanAuditEvent.id;
+
+    console.log('[auditEvents.insert] Inserting:', cleanAuditEvent._id);
+    const result = await AuditEvents.insertAsync(cleanAuditEvent);
+    return result;
+  },
+
+  'auditEvents.update': async function(auditEventId, auditEventData) {
+    check(auditEventId, String);
+    check(auditEventData, Object);
+
+    if (!this.userId) {
+      throw new Meteor.Error('not-authorized', 'You must be logged in to update audit events');
+    }
+
+    const existing = await AuditEvents.findOneAsync({ _id: auditEventId });
+    if (!existing) {
+      throw new Meteor.Error('not-found', 'AuditEvent not found');
+    }
+
+    const updates = {
+      type: get(auditEventData, 'type', existing.type),
+      subtype: get(auditEventData, 'subtype', existing.subtype),
+      action: get(auditEventData, 'action', existing.action),
+      recorded: get(auditEventData, 'recorded', existing.recorded),
+      outcome: get(auditEventData, 'outcome', existing.outcome),
+      outcomeDesc: get(auditEventData, 'outcomeDesc', existing.outcomeDesc),
+      agent: get(auditEventData, 'agent', existing.agent),
+      source: get(auditEventData, 'source', existing.source),
+      entity: get(auditEventData, 'entity', existing.entity)
+    };
+
+    console.log('[auditEvents.update] Updating:', auditEventId);
+    const result = await AuditEvents.updateAsync(
+      { _id: auditEventId },
+      { $set: updates }
+    );
+    return result;
+  },
+
+  'auditEvents.remove': async function(auditEventId) {
+    check(auditEventId, String);
+
+    if (!this.userId) {
+      throw new Meteor.Error('not-authorized', 'You must be logged in to remove audit events');
+    }
+
+    console.log('[auditEvents.remove] Removing:', auditEventId);
+    const result = await AuditEvents.removeAsync({ _id: auditEventId });
+    return result;
+  },
+
+  'auditEvents.findOne': async function(auditEventId) {
+    check(auditEventId, String);
+
+    const auditEvent = await AuditEvents.findOneAsync({ _id: auditEventId });
+    return auditEvent;
+  },
   'auditEvents.log': async function(eventType, userId, recordId, message, additionalData = {}) {
     // Basic validation
     if (!eventType) {

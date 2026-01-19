@@ -172,6 +172,7 @@
         "MedicationStatements": true,
         "NutritionIntakes": true,
         "NutritionOrders": true,
+        "NutritionProducts": true,
         "Organizations": true,
         "Observations": true,
         "Patients": true,
@@ -399,6 +400,17 @@
           "publication": true
         },
         "NutritionOrder": {
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "search"
+          ],
+          "search": true,
+          "publication": true
+        },
+        "NutritionProduct": {
           "interactions": [
             "read",
             "create",

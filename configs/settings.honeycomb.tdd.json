@@ -176,6 +176,7 @@
         "MessageHeaders": true,
         "NutritionIntakes": true,
         "NutritionOrders": true,
+        "NutritionProducts": true,
         "Organizations": true,
         "Observations": true,
         "Patients": true,

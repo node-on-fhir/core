@@ -5031,6 +5031,81 @@ export function flattenNutritionIntake(nutritionIntake, internalDateFormat){
   return result;
 }
 
+export function flattenNutritionProduct(nutritionProduct, internalDateFormat){
+  let result = {
+    _id: '',
+    id: '',
+    resourceType: 'NutritionProduct',
+    identifier: '',
+    status: '',
+    category: '',
+    categoryCode: '',
+    code: '',
+    codeDisplay: '',
+    name: '',
+    manufacturer: '',
+    description: '',
+    note: ''
+  };
+
+  result.resourceType = get(nutritionProduct, 'resourceType', 'NutritionProduct');
+
+  if(!internalDateFormat){
+    internalDateFormat = get(Meteor, 'settings.public.defaults.internalDateFormat', 'YYYY-MM-DD');
+  }
+
+  // Core identifiers
+  result._id = extractIdString(get(nutritionProduct, '_id', ''));
+  result.id = get(nutritionProduct, 'id', '');
+  result.identifier = get(nutritionProduct, 'identifier[0].value', '');
+
+  // Status
+  result.status = get(nutritionProduct, 'status', '');
+
+  // Category
+  if(get(nutritionProduct, 'category')){
+    result.category = get(nutritionProduct, 'category[0].text', get(nutritionProduct, 'category[0].coding[0].display', ''));
+    result.categoryCode = get(nutritionProduct, 'category[0].coding[0].code', '');
+  }
+
+  // Code - product identification
+  if(get(nutritionProduct, 'code')){
+    result.code = get(nutritionProduct, 'code.coding[0].code', '');
+    result.codeDisplay = get(nutritionProduct, 'code.text', get(nutritionProduct, 'code.coding[0].display', ''));
+    // Use code text or display as the product name
+    result.name = get(nutritionProduct, 'code.text', get(nutritionProduct, 'code.coding[0].display', ''));
+  }
+
+  // Manufacturer
+  if(get(nutritionProduct, 'manufacturer')){
+    result.manufacturer = get(nutritionProduct, 'manufacturer[0].display', '');
+  }
+
+  // Description from productCharacteristic
+  if(get(nutritionProduct, 'productCharacteristic')){
+    const characteristics = get(nutritionProduct, 'productCharacteristic', []);
+    characteristics.forEach(function(characteristic){
+      const typeCode = get(characteristic, 'type.coding[0].code', '');
+      if(typeCode === 'description' || typeCode === 'Description'){
+        result.description = get(characteristic, 'valueString', '');
+      }
+    });
+  }
+
+  // Note
+  if(get(nutritionProduct, 'note')){
+    const notes = [];
+    get(nutritionProduct, 'note', []).forEach(function(n){
+      if(get(n, 'text')){
+        notes.push(get(n, 'text'));
+      }
+    });
+    result.note = notes.join('; ');
+  }
+
+  return result;
+}
+
 export function flattenNetwork(organization, internalDateFormat){
     let result = {
       resourceType: 'Network',
@@ -7193,6 +7268,7 @@ export const FhirDehydrator = {
   dehydrateNetwork: flattenNetwork,
   dehydrateNutritionIntake: flattenNutritionIntake,
   dehydrateNutritionOrder: flattenNutritionOrder,
+  dehydrateNutritionProduct: flattenNutritionProduct,
   dehydrateObservation: flattenObservation,
   dehydrateOrganization: flattenOrganization,
   dehydrateOperationOutcome: flattenOperationOutcome,
@@ -7290,6 +7366,7 @@ export default {
   flattenMessageHeader,
   flattenNutritionIntake,
   flattenNutritionOrder,
+  flattenNutritionProduct,
   flattenObservation,
   flattenOperationOutcome,
   flattenOrganization,

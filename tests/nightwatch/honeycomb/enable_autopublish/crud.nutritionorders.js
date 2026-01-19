@@ -5,6 +5,8 @@ const loginHelper = require('../../helpers/login-helper');
 
 describe('NutritionOrders CRUD Operations', function() {
   const timestamp = Date.now();
+  let testPatientId = null; // Store patient ID for cross-test access
+
   const testNutritionOrder = {
     status: 'active',
     intent: 'order',
@@ -117,19 +119,36 @@ describe('NutritionOrders CRUD Operations', function() {
         birthDate: '1970-01-01'
       }, function(result) {
         console.log('Test patient created:', result);
+        testPatientId = result.result; // Store for cross-test access
+        console.log('Stored testPatientId:', testPatientId);
 
-        // Set the patient in Session immediately after creation
-        browser.execute(function(patientId) {
-          const patient = Patients.findOne({_id: patientId});
-          if (patient) {
-            console.log('[Test] Setting session patient:', patient);
-            Session.set('selectedPatientId', patientId);
-            Session.set('selectedPatient', patient);
-            console.log('[Test] Session variables set successfully');
+        // Fetch patient from server using Meteor method (bypasses subscription limits)
+        browser.executeAsync(function(patientId, done) {
+          if (typeof Meteor !== 'undefined' && typeof Session !== 'undefined') {
+            Meteor.call('patients.findOne', patientId, function(error, patient) {
+              if (error) {
+                console.error('[Test] Error fetching patient:', error);
+                done({ success: false, error: error.message });
+              } else if (patient) {
+                Session.set('selectedPatientId', patient._id);
+                Session.set('selectedPatient', patient);
+                console.log('[Test] Set selected patient in Session:', patient._id, patient.name?.[0]?.text);
+                done({ success: true, patientId: patient._id, patientName: patient.name?.[0]?.text });
+              } else {
+                console.error('[Test] Patient not found:', patientId);
+                done({ success: false, error: 'Patient not found' });
+              }
+            });
           } else {
-            console.error('[Test] Patient not found with ID:', patientId);
+            done({ success: false, error: 'Meteor or Session not available' });
           }
-        }, [result.result]);
+        }, [result.result], function(fetchResult) {
+          if (fetchResult.value && fetchResult.value.success) {
+            console.log('Successfully set selected patient:', fetchResult.value);
+          } else {
+            console.error('Failed to set selected patient:', fetchResult.value?.error);
+          }
+        });
       });
 
       // Clean up any existing test data
@@ -169,80 +188,51 @@ describe('NutritionOrders CRUD Operations', function() {
     
     browser.saveScreenshot('tests/nightwatch/screenshots/nutritionorders/02-nutritionorders-list.png');
 
-    // Re-establish patient context on the nutrition-orders page
-    browser.execute(function(ts) {
-      if (typeof Session !== 'undefined' && typeof Patients !== 'undefined') {
-        // First, let's see what patients are available
-        const totalPatients = Patients.find().count();
-        console.log('[Test] Total patients in collection:', totalPatients);
-        
-        // Try multiple ways to find the test patient
-        let testPatient = Patients.findOne({
-          $or: [
-            { 'name.0.given.0': 'John' },
-            { 'name.0.family': 'Doe' }
-          ]
-        });
-        
-        if (!testPatient) {
-          // Try alternative query structure
-          testPatient = Patients.findOne({
-            $or: [
-              { 'name': { $elemMatch: { given: ['John'], family: 'Doe' } } },
-              { 'name': { $elemMatch: { text: /John.*Doe/i } } }
-            ]
-          });
-        }
-        
-        if (!testPatient && totalPatients > 0) {
-          // As a last resort, get the most recent patient
-          console.log('[Test] Could not find John Doe, checking recent patients...');
-          const recentPatients = Patients.find({}, { sort: { _id: -1 }, limit: 5 }).fetch();
-          recentPatients.forEach(p => {
-            console.log('[Test] Recent patient:', p._id, p.name?.[0]?.text || 'No name');
-          });
-        }
-        
-        // Check if we already have a patient in session
+    // Re-establish patient context using stored testPatientId and server method
+    // (bypasses subscription limits that caused test failures)
+    browser.executeAsync(function(patientId, done) {
+      console.log('[Test 02] Re-establishing patient context with ID:', patientId);
+
+      if (typeof Meteor !== 'undefined' && typeof Session !== 'undefined') {
+        // First check if we already have this patient in Session
         const existingPatientId = Session.get('selectedPatientId');
         const existingPatient = Session.get('selectedPatient');
-        
-        if (!testPatient && existingPatient) {
-          console.log('[Test] Using existing patient from session:', existingPatientId);
-          return { success: true, patientId: existingPatientId, source: 'existing session' };
+
+        if (existingPatient && existingPatientId === patientId) {
+          console.log('[Test 02] Patient context already set:', existingPatientId);
+          done({ success: true, patientId: existingPatientId, source: 'existing session' });
+          return;
         }
-        
-        if (testPatient) {
-          console.log('[Test] Found test patient, re-establishing context');
-          Session.set('selectedPatientId', testPatient._id);
-          Session.set('selectedPatient', testPatient);
-          console.log('[Test] Patient set:', testPatient._id, testPatient.name?.[0]?.text);
-          return { success: true, patientId: testPatient._id, source: 'found patient' };
-        } else {
-          console.error('[Test] Could not find test patient on nutrition-orders page');
-          return { 
-            success: false, 
-            error: 'Test patient not found', 
-            totalPatients: totalPatients,
-            existingPatientId: existingPatientId 
-          };
-        }
-      }
-      return { success: false, error: 'Session or Patients not available' };
-    }, [timestamp], function(result) {
-      console.log('Patient context re-establishment:', result.value);
-      
-      if (!result.value.success && result.value.totalPatients === 0) {
-        console.log('No patients found - patient subscription might not be active on this page');
-      }
-      
-      // Don't fail the test if patient is already in session
-      if (result.value.source === 'existing session' || result.value.existingPatientId) {
-        browser.assert.ok(true, 'Patient context maintained from previous test');
+
+        // Use server method to fetch patient (bypasses subscription limits)
+        Meteor.call('patients.findOne', patientId, function(error, patient) {
+          if (error) {
+            console.error('[Test 02] Error fetching patient:', error);
+            done({ success: false, error: error.message });
+          } else if (patient) {
+            Session.set('selectedPatientId', patient._id);
+            Session.set('selectedPatient', patient);
+            console.log('[Test 02] Re-established patient context:', patient._id, patient.name?.[0]?.text);
+            done({ success: true, patientId: patient._id, source: 'server method' });
+          } else {
+            console.error('[Test 02] Patient not found:', patientId);
+            done({ success: false, error: 'Patient not found' });
+          }
+        });
       } else {
-        browser.assert.ok(result.value.success, 'Patient context should be re-established on nutrition-orders page');
+        done({ success: false, error: 'Meteor or Session not available' });
+      }
+    }, [testPatientId], function(result) {
+      console.log('Patient context re-establishment:', result.value);
+
+      if (result.value && result.value.success) {
+        browser.assert.ok(true, 'Patient context re-established on nutrition-orders page');
+      } else {
+        browser.assert.ok(false, 'Patient context should be re-established: ' + (result.value?.error || 'unknown error'));
       }
     });
+
+    browser.pause(1000); // Let subscription react to new Session value
 
     // Check for either the table or the no-data state
     browser.execute(function() {
@@ -1058,18 +1048,43 @@ describe('NutritionOrders CRUD Operations', function() {
         'Notes should be updated before save');
     });
 
-    // Scroll to and save changes
+    // Scroll to top to ensure we can find the save button
+    browser.pause(1000); // Wait for any pending dropdown operations to complete
+
     browser
       .execute(function() {
-        // Scroll to save button
-        const saveButton = document.querySelector('#saveNutritionOrderButton');
-        if (saveButton) {
-          saveButton.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        // First scroll to top to reset view
+        window.scrollTo(0, 0);
+        return { scrolled: true };
+      })
+      .pause(500)
+      .execute(function() {
+        // Scroll to CardActions area
+        const cardActions = document.querySelector('.MuiCardActions-root');
+        if (cardActions) {
+          cardActions.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
-        return { buttonFound: !!saveButton, buttonText: saveButton?.textContent };
+
+        // Find save button
+        const saveButton = document.querySelector('#saveNutritionOrderButton');
+        const editButton = document.querySelector('#editNutritionOrderButton');
+        const cancelButton = document.querySelector('button');
+
+        // Debug: log what buttons we can find
+        const allButtons = document.querySelectorAll('button');
+        const buttonTexts = Array.from(allButtons).map(b => b.textContent?.trim());
+
+        return {
+          buttonFound: !!saveButton,
+          buttonText: saveButton?.textContent,
+          editButtonFound: !!editButton,
+          allButtonTexts: buttonTexts,
+          cardActionsFound: !!cardActions
+        };
       }, [], function(result) {
+        console.log('Button state:', result.value);
         browser.assert.ok(result.value.buttonFound, 'Save button should be found');
-        browser.assert.ok(result.value.buttonText && result.value.buttonText.includes('Save'), 
+        browser.assert.ok(result.value.buttonText && result.value.buttonText.includes('Save'),
           'Save button should have correct text');
       })
       .pause(500)
