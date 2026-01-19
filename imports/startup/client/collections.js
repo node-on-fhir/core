@@ -49,6 +49,7 @@ import { Observations } from '/imports/lib/schemas/SimpleSchemas/Observations';
 import { Patients } from '/imports/lib/schemas/SimpleSchemas/Patients';
 import { PlanDefinitions } from '/imports/lib/schemas/SimpleSchemas/PlanDefinitions';
 import { Practitioners } from '/imports/lib/schemas/SimpleSchemas/Practitioners';
+import { PractitionerRoles } from '/imports/lib/schemas/SimpleSchemas/PractitionerRoles';
 import { Procedures } from '/imports/lib/schemas/SimpleSchemas/Procedures';
 import { Questionnaires } from '/imports/lib/schemas/SimpleSchemas/Questionnaires';
 import { QuestionnaireResponses } from '/imports/lib/schemas/SimpleSchemas/QuestionnaireResponses';
@@ -110,6 +111,7 @@ if (Meteor.isClient) {
     Patients,
     PlanDefinitions,
     Practitioners,
+    PractitionerRoles,
     Procedures,
     Questionnaires,
     QuestionnaireResponses,
@@ -170,6 +172,7 @@ if (Meteor.isClient) {
   window.Patients = Patients;
   window.PlanDefinitions = PlanDefinitions;
   window.Practitioners = Practitioners;
+  window.PractitionerRoles = PractitionerRoles;
   window.Procedures = Procedures;
   window.Questionnaires = Questionnaires;
   window.QuestionnaireResponses = QuestionnaireResponses;

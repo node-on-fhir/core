@@ -180,6 +180,7 @@
         "Patients": true,
         "PlanDefinitions": true,
         "Practitioners": true,
+        "PractitionerRoles": true,
         "Procedures": true,
         "Questionnaires": true,
         "QuestionnaireResponses": true,

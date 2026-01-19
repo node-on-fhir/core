@@ -77,6 +77,7 @@ import '../imports/api/nutritionOrders/methods.js';
 import '../imports/api/patients/methods.js';
 import '../imports/api/planDefinitions/methods.js';
 import '../imports/api/practitioners/methods.js';
+import '../imports/api/practitionerRoles/methods.js';
 import '../imports/api/procedures/methods.js';
 import '../imports/api/questionnaires/methods.js';
 import '../imports/api/questionnaireResponses/methods.js';
@@ -182,6 +183,7 @@ import { Patients } from '../imports/lib/schemas/SimpleSchemas/Patients';
 import { PlanDefinitions } from '../imports/lib/schemas/SimpleSchemas/PlanDefinitions';
 import { RelatedPersons } from '../imports/lib/schemas/SimpleSchemas/RelatedPersons';
 import { Practitioners } from '../imports/lib/schemas/SimpleSchemas/Practitioners';
+import { PractitionerRoles } from '../imports/lib/schemas/SimpleSchemas/PractitionerRoles';
 import { Procedures } from '../imports/lib/schemas/SimpleSchemas/Procedures';
 import { Questionnaires } from '../imports/lib/schemas/SimpleSchemas/Questionnaires';
 import { QuestionnaireResponses } from '../imports/lib/schemas/SimpleSchemas/QuestionnaireResponses';
@@ -250,6 +252,7 @@ Meteor.Collections = {
   Patients,
   PlanDefinitions,
   Practitioners,
+  PractitionerRoles,
   Procedures,
   Questionnaires,
   QuestionnaireResponses,
@@ -320,6 +323,7 @@ Object.assign(global.Collections, {
   Patients,
   PlanDefinitions,
   Practitioners,
+  PractitionerRoles,
   Procedures,
   Questionnaires,
   QuestionnaireResponses,
@@ -346,6 +350,7 @@ global.ExplanationOfBenefits = ExplanationOfBenefits;
 global.Immunizations = Immunizations;
 global.Observations = Observations;
 global.Practitioners = Practitioners;
+global.PractitionerRoles = PractitionerRoles;
 global.Procedures = Procedures;
 global.MedicationRequests = MedicationRequests;
 global.Medications = Medications;

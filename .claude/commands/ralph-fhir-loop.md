@@ -517,6 +517,54 @@ Use existing patterns from:
 - Patient-owned: `imports/ui-fhir/observations/`
 - Clinician-mediated: `imports/ui-fhir/medicationRequests/`
 
+#### Empty Database Guards (CRITICAL FOR CI)
+
+**Problem**: In CI, the database starts empty. Components that only render certain elements (search inputs, tables) when there's data will cause tests to fail.
+
+**Pattern**: Always render header/search elements regardless of data state:
+
+```javascript
+// WRONG - Search only shows when data exists
+if (data.length > 0) {
+  return (
+    <Card>
+      <TextField id="searchInput" />  {/* Missing when empty! */}
+      <Table data={data} />
+    </Card>
+  );
+} else {
+  return <NoDataMessage />;  {/* No search input here! */}
+}
+
+// CORRECT - Search always renders, content is conditional
+return (
+  <div id="resourcePage">
+    {/* Header with search - ALWAYS rendered */}
+    <Box>
+      <Typography>Resources</Typography>
+      <TextField id="searchInput" />
+      <Button id="newButton">Add New</Button>
+    </Box>
+
+    {/* Content - conditional */}
+    {data.length > 0 ? (
+      <Table id="resourceTable" data={data} />
+    ) : (
+      <Box id="noResourceMessage">
+        <Typography>No resources found</Typography>
+      </Box>
+    )}
+  </div>
+);
+```
+
+**Required IDs for empty state**:
+- `id="{resourceTypes}Page"` - Page container (always present)
+- `id="{resourceType}SearchInput"` - Search input (always present)
+- `id="new{ResourceType}Button"` - Add button (always present)
+- `id="{resourceTypes}Table"` - Table (only when data exists)
+- `id="no{ResourceTypes}Message"` - No-data message (only when empty)
+
 ### Step 4.5: Routes
 
 Add to `imports/ui/App.jsx`:
@@ -691,6 +739,9 @@ Common issues:
 | `Cannot read property 'X' of undefined` | Check browser console - likely missing import or schema mismatch |
 | `Match error: Expected string` | SimpleSchema validation failure - check field types |
 | Page blank but no test error | Check browser console for silent JS errors blocking render |
+| Search input not found (CI only) | Component only renders search when data exists - restructure to always render header/search (see Step 4.4 Empty Database Guards) |
+| Table or no-data not found (CI only) | Missing `id="no{ResourceTypes}Message"` on empty state container |
+| Test passes locally, fails in CI | Database is empty in CI - ensure components handle empty state with proper IDs |
 
 ### Step 6.4: Repeat
 
@@ -779,6 +830,7 @@ A resource is complete when:
 - [ ] JSONSchema downloaded to `imports/lib/schemas/R4B/JsonSchema/{Resource}.json`
 - [ ] All 9 CRUD tests pass
 - [ ] UI pages functional (`/{resources}`, `/{resources}/new`, `/{resources}/:id`)
+- [ ] Empty database guards in place (search input always renders, no-data state has ID)
 - [ ] `/audit-theme` clean
 - [ ] `/audit-id-lookups` clean
 - [ ] Manifest updated

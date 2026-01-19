@@ -148,6 +148,8 @@ import AppointmentsPage from '../ui-fhir/appointments/AppointmentsPage';
 import AppointmentDetail from '../ui-fhir/appointments/AppointmentDetail';
 import SchedulesPage from '../ui-fhir/schedules/SchedulesPage';
 import ScheduleDetail from '../ui-fhir/schedules/ScheduleDetail';
+import PractitionerRolesPage from '../ui-fhir/practitionerRoles/PractitionerRolesPage';
+import PractitionerRoleDetail from '../ui-fhir/practitionerRoles/PractitionerRoleDetail';
 import MediasPage from '../ui-fhir/medias/MediasPage';
 import MediaDetail from '../ui-fhir/medias/MediaDetail';
 import MeasuresPage from '../ui-fhir/measures/MeasuresPage';
@@ -1338,6 +1340,18 @@ dynamicRoutes.push({
 dynamicRoutes.push({
   path: "/practitioners/:id",
   element: <PractitionerDetail />
+})
+dynamicRoutes.push({
+  path: "/practitioner-roles",
+  element: <PractitionerRolesPage />
+})
+dynamicRoutes.push({
+  path: "/practitioner-roles/new",
+  element: <PractitionerRoleDetail />
+})
+dynamicRoutes.push({
+  path: "/practitioner-roles/:id",
+  element: <PractitionerRoleDetail />
 })
 dynamicRoutes.push({
   path: "/lists",

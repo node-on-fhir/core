@@ -175,6 +175,7 @@
         "Observations": true,
         "Patients": true,
         "Practitioners": true,
+        "PractitionerRoles": true,
         "Procedures": true,
         "Questionnaires": true,
         "QuestionnaireResponses": true,
