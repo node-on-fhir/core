@@ -162,6 +162,7 @@
         "DiagnosticReports": true,
         "DocumentReferences": true,
         "Encounters": true,
+        "Endpoints": true,
         "Goals": true,
         "Immunizations": true,
         "ImagingStudies": true,
@@ -605,6 +606,17 @@
           "publication": true
         },
         "Encounter": {
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "search"
+          ],
+          "search": true,
+          "publication": true
+        },
+        "Endpoint": {
           "interactions": [
             "read",
             "create",

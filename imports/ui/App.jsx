@@ -157,6 +157,8 @@ import MeasureReportDetail from '../ui-fhir/measureReports/MeasureReportDetail';
 import MessageHeadersPage from '../ui-fhir/messageHeaders/MessageHeadersPage';
 import MessageHeaderDetail from '../ui-fhir/messageHeaders/MessageHeaderDetail';
 import SupplyDeliveriesPage from '../ui-fhir/supplyDeliveries/SupplyDeliveriesPage';
+import EndpointsPage from '../ui-fhir/endpoints/EndpointsPage';
+import EndpointDetail from '../ui-fhir/endpoints/EndpointDetail';
 
 import {
   ActivityDefinitionDetail,
@@ -864,6 +866,20 @@ if(get(Meteor, 'settings.public.modules.fhir.Encounters')){
   dynamicRoutes.push({
     path: "/encounters/:id",
     element: <EncounterDetail />
+  })
+}
+if(get(Meteor, 'settings.public.modules.fhir.Endpoints')){
+  dynamicRoutes.push({
+    path: "/endpoints",
+    element: <EndpointsPage />
+  })
+  dynamicRoutes.push({
+    path: "/endpoints/new",
+    element: <EndpointDetail />
+  })
+  dynamicRoutes.push({
+    path: "/endpoints/:id",
+    element: <EndpointDetail />
   })
 }
 // TEMP: Adding ResearchStudies routes directly for testing

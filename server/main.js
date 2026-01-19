@@ -61,6 +61,7 @@ import '../imports/api/dicom/server/methods.js';
 import '../imports/api/documentReferences/methods.js';
 import '../imports/api/devices/methods.js'; // Import the methods
 import '../imports/api/encounters/methods.js';
+import '../imports/api/endpoints/methods.js';
 import '../imports/api/imagingStudies/methods.js';
 import '../imports/api/locations/methods.js';
 import '../imports/api/observations/methods.js';

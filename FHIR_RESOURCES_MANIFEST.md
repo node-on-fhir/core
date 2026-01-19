@@ -74,7 +74,7 @@ This manifest tracks the implementation status of all FHIR R4 resource types in 
 | DocumentReference | ✅ done | PO | ✅ | ✅ | |
 | EffectEvidenceSynthesis | ⏳ pending | PA | ❌ | ❌ | |
 | Encounter | ✅ done | PO | ✅ | ✅ | |
-| Endpoint | 🔶 partial | PA | ❌ | ✅ | |
+| Endpoint | ✅ done | PA | ✅ | ✅ | FHIR service endpoint connection details |
 | EnrollmentRequest | ⏳ pending | WF | ❌ | ❌ | |
 | EnrollmentResponse | ⏳ pending | WF | ❌ | ❌ | |
 | EpisodeOfCare | ⏳ pending | PO | ❌ | ❌ | |
@@ -234,6 +234,7 @@ Resources needed for research/trials use cases:
 
 | Date | Resource | Action | Notes |
 |------|----------|--------|-------|
+| 2026-01-18 | Endpoint | ✅ done | FHIR service connection details (PA) |
 | 2026-01-18 | ClinicalImpression | ✅ done | Clinical assessments (CM) |
 | 2026-01-18 | BodyStructure | ✅ done | First Ralph loop implementation |
 

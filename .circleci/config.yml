@@ -121,7 +121,8 @@ parameters:
           "tests": [
             "tests/nightwatch/honeycomb/enable_autopublish/simple-sorting-test.js",
             "tests/nightwatch/honeycomb/dev_auto_login/my.profile.js",
-            "tests/nightwatch/honeycomb/default/localhost.js"
+            "tests/nightwatch/honeycomb/default/localhost.js",
+            "tests/nightwatch/honeycomb/enable_autopublish/crud.endpoints.js"
           ]
         },
         {
@@ -576,7 +577,7 @@ workflows:
       - test-group:
           name: framework
           group-name: framework
-          test-files: "tests/nightwatch/honeycomb/enable_autopublish/simple-sorting-test.js tests/nightwatch/honeycomb/dev_auto_login/my.profile.js tests/nightwatch/honeycomb/default/localhost.js"
+          test-files: "tests/nightwatch/honeycomb/enable_autopublish/simple-sorting-test.js tests/nightwatch/honeycomb/dev_auto_login/my.profile.js tests/nightwatch/honeycomb/default/localhost.js tests/nightwatch/honeycomb/enable_autopublish/crud.endpoints.js"
       
       # ONC Health IT Certification test groups
       - test-group:
