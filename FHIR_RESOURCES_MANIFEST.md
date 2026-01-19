@@ -2,7 +2,7 @@
 
 This manifest tracks the implementation status of all FHIR R4 resource types in Honeycomb.
 
-**Last Updated:** 2026-01-18
+**Last Updated:** 2026-01-19
 
 ---
 
@@ -136,7 +136,7 @@ This manifest tracks the implementation status of all FHIR R4 resource types in 
 | PaymentNotice | ⏳ pending | WF | ❌ | ❌ | |
 | PaymentReconciliation | ⏳ pending | WF | ❌ | ❌ | |
 | Person | ⏳ pending | PA | ❌ | ❌ | |
-| PlanDefinition | 🔶 partial | PA | ❌ | ✅ | |
+| PlanDefinition | ✅ done | PA | ✅ | ✅ | Clinical protocols, order sets |
 | Practitioner | 🔶 partial | PA | ❌ | ✅ | |
 | PractitionerRole | 🔶 partial | PA | ❌ | ✅ | |
 | Procedure | ✅ done | PO | ✅ | ✅ | |
@@ -188,7 +188,7 @@ Resources needed for imaging/radiology use cases (in implementation order):
 1. Patient ✅
 2. Practitioner 🔶
 3. Organization ✅
-4. PlanDefinition 🔶
+4. PlanDefinition ✅
 5. Encounter ✅
 6. Procedure ✅
 7. **BodyStructure ✅** (was BodySite in R3)
@@ -223,8 +223,8 @@ Resources needed for research/trials use cases:
 ## Statistics
 
 - **Total Resources:** 146
-- **Done (with tests):** 32
-- **Partial (UI only):** 25
+- **Done (with tests):** 33
+- **Partial (UI only):** 24
 - **Pending:** 87
 - **Skipped:** 2
 
@@ -237,4 +237,5 @@ Resources needed for research/trials use cases:
 | 2026-01-18 | Endpoint | ✅ done | FHIR service connection details (PA) |
 | 2026-01-18 | ClinicalImpression | ✅ done | Clinical assessments (CM) |
 | 2026-01-18 | BodyStructure | ✅ done | First Ralph loop implementation |
+| 2026-01-19 | PlanDefinition | ✅ done | Clinical protocols, order sets (PA) |
 

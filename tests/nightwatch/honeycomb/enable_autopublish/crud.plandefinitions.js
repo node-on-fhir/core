@@ -1,10 +1,10 @@
-// tests/nightwatch/honeycomb/crud.plandefinitions.js
+// tests/nightwatch/honeycomb/enable_autopublish/crud.plandefinitions.js
 
 // PlanDefinitions is an infrastructure resource - no patient tracking needed
 
-const loginHelper = require('../helpers/login-helper');
-const saveNavigationHelper = require('../helpers/save-navigation-helper');
-const testUtils = require('./enable_autopublish/shared-test-utils');
+const loginHelper = require('../../helpers/login-helper');
+const saveNavigationHelper = require('../../helpers/save-navigation-helper');
+const testUtils = require('./shared-test-utils');
 
 describe('PlanDefinitions CRUD Operations', function() {
   const timestamp = Date.now();
