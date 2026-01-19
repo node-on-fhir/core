@@ -46,6 +46,7 @@ import './AccountsMethods.js';
 import '../imports/startup/server/index.js';
 
 // Import API methods
+import '../imports/api/activityDefinitions/methods.js';
 import '../imports/api/allergyIntolerances/methods.js';
 import '../imports/api/appointments/methods.js';
 import '../imports/api/AuditEvents/AuditEvents'; // Import the methods

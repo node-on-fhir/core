@@ -31,7 +31,7 @@ This manifest tracks the implementation status of all FHIR R4 resource types in 
 | Resource | Status | Ownership | Tests | UI | Notes |
 |----------|--------|-----------|-------|-----|-------|
 | Account | ⏳ pending | WF | ❌ | ❌ | Financial |
-| ActivityDefinition | 🔶 partial | PA | ❌ | ✅ | |
+| ActivityDefinition | ✅ done | PA | ✅ | ✅ | DICOM hackathon |
 | AdverseEvent | ⏳ pending | PO | ❌ | ❌ | Clinical trials |
 | AllergyIntolerance | ✅ done | PO | ✅ | ✅ | |
 | Appointment | ✅ done | CM | ✅ | ✅ | |

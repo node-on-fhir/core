@@ -146,6 +146,7 @@
         "enabled": true
       },
       "fhir": {
+        "ActivityDefinitions": true,
         "AllergyIntolerances": true,
         "AuditEvents": true,
         "Appointments": true,
@@ -203,6 +204,17 @@
       "autopublishSubscriptions": true,
       "autoGenerateSubscriptions": true,
       "rest": {
+        "ActivityDefinition": {
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "search"
+          ],
+          "search": true,
+          "publication": true
+        },
         "AllergyIntolerance": {
           "interactions": [
             "read",

@@ -720,6 +720,14 @@ if(get(Meteor, 'settings.public.modules.fhir.ActivityDefinitions')){
     path: "/activity-definitions",
     element: <ActivityDefinitionsPage />
   })
+  dynamicRoutes.push({
+    path: "/activity-definitions/new",
+    element: <ActivityDefinitionDetail />
+  })
+  dynamicRoutes.push({
+    path: "/activity-definitions/:id",
+    element: <ActivityDefinitionDetail />
+  })
 }
 if(get(Meteor, 'settings.public.modules.fhir.Bundles')){
   dynamicRoutes.push({
