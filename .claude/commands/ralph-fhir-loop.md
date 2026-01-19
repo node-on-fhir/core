@@ -13,6 +13,8 @@ allowedPrompts:
     prompt: "kill meteor processes"
   - tool: Bash
     prompt: "check port status"
+  - tool: Bash
+    prompt: "check server health"
 
   # Log and file inspection
   - tool: Bash
@@ -37,6 +39,30 @@ allowedPrompts:
   # Browser
   - tool: Bash
     prompt: "open browser to localhost"
+
+  # Git operations (read-only for status/log, write for staging)
+  - tool: Bash
+    prompt: "check git status"
+  - tool: Bash
+    prompt: "view git diff"
+  - tool: Bash
+    prompt: "view git log"
+  - tool: Bash
+    prompt: "stage files for commit"
+
+  # HTTP/Download operations (for fetching HL7 schemas)
+  - tool: Bash
+    prompt: "fetch FHIR schema from HL7"
+  - tool: Bash
+    prompt: "download JSON schema"
+  - tool: Bash
+    prompt: "curl HTTP request"
+
+  # npm operations
+  - tool: Bash
+    prompt: "check npm packages"
+  - tool: Bash
+    prompt: "run npm scripts"
 ---
 
 # Ralph Wiggum FHIR Microservice Loop
