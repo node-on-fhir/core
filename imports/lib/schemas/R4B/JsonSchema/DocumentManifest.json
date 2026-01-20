@@ -1,0 +1,31 @@
+{
+  "$schema": "http://json-schema.org/draft-06/schema#",
+  "id": "http://hl7.org/fhir/json-schema/DocumentManifest",
+  "description": "A collection of documents compiled for a purpose together with metadata that applies to the collection.",
+  "type": "object",
+  "required": ["resourceType", "content"],
+  "properties": {
+    "resourceType": { "const": "DocumentManifest" },
+    "id": { "type": "string", "description": "Logical id of this artifact" },
+    "_id": { "type": "string", "description": "MongoDB primary key" },
+    "meta": { "type": "object", "properties": { "versionId": { "type": "string" }, "lastUpdated": { "type": "string" }, "source": { "type": "string" }, "profile": { "type": "array", "items": { "type": "string" } }, "security": { "type": "array", "items": { "type": "object", "properties": { "system": { "type": "string" }, "code": { "type": "string" }, "display": { "type": "string" } } } }, "tag": { "type": "array", "items": { "type": "object", "properties": { "system": { "type": "string" }, "code": { "type": "string" }, "display": { "type": "string" } } } } } },
+    "implicitRules": { "type": "string" },
+    "language": { "type": "string" },
+    "text": { "type": "object", "properties": { "status": { "type": "string" }, "div": { "type": "string" } } },
+    "contained": { "type": "array", "items": { "type": "object" } },
+    "extension": { "type": "array", "items": { "type": "object" } },
+    "modifierExtension": { "type": "array", "items": { "type": "object" } },
+    "masterIdentifier": { "type": "object", "properties": { "use": { "type": "string" }, "system": { "type": "string" }, "value": { "type": "string" } } },
+    "identifier": { "type": "array", "items": { "type": "object", "properties": { "use": { "type": "string" }, "system": { "type": "string" }, "value": { "type": "string" } } } },
+    "status": { "type": "string", "enum": ["current", "superseded", "entered-in-error"] },
+    "type": { "type": "object", "properties": { "coding": { "type": "array", "items": { "type": "object", "properties": { "system": { "type": "string" }, "code": { "type": "string" }, "display": { "type": "string" } } } }, "text": { "type": "string" } } },
+    "subject": { "type": "object", "properties": { "reference": { "type": "string" }, "display": { "type": "string" } } },
+    "created": { "type": "string" },
+    "author": { "type": "array", "items": { "type": "object", "properties": { "reference": { "type": "string" }, "display": { "type": "string" } } } },
+    "recipient": { "type": "array", "items": { "type": "object", "properties": { "reference": { "type": "string" }, "display": { "type": "string" } } } },
+    "source": { "type": "string" },
+    "description": { "type": "string" },
+    "content": { "type": "array", "items": { "type": "object", "properties": { "reference": { "type": "string" }, "display": { "type": "string" } } } },
+    "related": { "type": "array", "items": { "type": "object", "properties": { "identifier": { "type": "object", "properties": { "use": { "type": "string" }, "system": { "type": "string" }, "value": { "type": "string" } } }, "ref": { "type": "object", "properties": { "reference": { "type": "string" }, "display": { "type": "string" } } } } } }
+  }
+}

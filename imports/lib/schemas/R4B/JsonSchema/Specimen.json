@@ -1,0 +1,32 @@
+{
+  "$schema": "http://json-schema.org/draft-06/schema#",
+  "id": "http://hl7.org/fhir/json-schema/Specimen",
+  "description": "A sample to be used for analysis.",
+  "type": "object",
+  "required": ["resourceType"],
+  "properties": {
+    "resourceType": { "const": "Specimen" },
+    "id": { "type": "string", "description": "Logical id of this artifact" },
+    "_id": { "type": "string", "description": "MongoDB primary key" },
+    "meta": { "type": "object", "properties": { "versionId": { "type": "string" }, "lastUpdated": { "type": "string" }, "source": { "type": "string" }, "profile": { "type": "array", "items": { "type": "string" } }, "security": { "type": "array", "items": { "type": "object", "properties": { "system": { "type": "string" }, "code": { "type": "string" }, "display": { "type": "string" } } } }, "tag": { "type": "array", "items": { "type": "object", "properties": { "system": { "type": "string" }, "code": { "type": "string" }, "display": { "type": "string" } } } } } },
+    "implicitRules": { "type": "string" },
+    "language": { "type": "string" },
+    "text": { "type": "object", "properties": { "status": { "type": "string" }, "div": { "type": "string" } } },
+    "contained": { "type": "array", "items": { "type": "object" } },
+    "extension": { "type": "array", "items": { "type": "object" } },
+    "modifierExtension": { "type": "array", "items": { "type": "object" } },
+    "identifier": { "type": "array", "items": { "type": "object", "properties": { "use": { "type": "string" }, "system": { "type": "string" }, "value": { "type": "string" } } } },
+    "accessionIdentifier": { "type": "object", "properties": { "use": { "type": "string" }, "system": { "type": "string" }, "value": { "type": "string" } } },
+    "status": { "type": "string", "enum": ["available", "unavailable", "unsatisfactory", "entered-in-error"] },
+    "type": { "type": "object", "properties": { "coding": { "type": "array", "items": { "type": "object", "properties": { "system": { "type": "string" }, "code": { "type": "string" }, "display": { "type": "string" } } } }, "text": { "type": "string" } } },
+    "subject": { "type": "object", "properties": { "reference": { "type": "string" }, "display": { "type": "string" } } },
+    "receivedTime": { "type": "string" },
+    "parent": { "type": "array", "items": { "type": "object", "properties": { "reference": { "type": "string" }, "display": { "type": "string" } } } },
+    "request": { "type": "array", "items": { "type": "object", "properties": { "reference": { "type": "string" }, "display": { "type": "string" } } } },
+    "collection": { "type": "object", "properties": { "collector": { "type": "object", "properties": { "reference": { "type": "string" }, "display": { "type": "string" } } }, "collectedDateTime": { "type": "string" }, "collectedPeriod": { "type": "object", "properties": { "start": { "type": "string" }, "end": { "type": "string" } } }, "duration": { "type": "object", "properties": { "value": { "type": "number" }, "unit": { "type": "string" }, "system": { "type": "string" }, "code": { "type": "string" } } }, "quantity": { "type": "object", "properties": { "value": { "type": "number" }, "unit": { "type": "string" }, "system": { "type": "string" }, "code": { "type": "string" } } }, "method": { "type": "object", "properties": { "coding": { "type": "array", "items": { "type": "object", "properties": { "system": { "type": "string" }, "code": { "type": "string" }, "display": { "type": "string" } } } }, "text": { "type": "string" } } }, "bodySite": { "type": "object", "properties": { "coding": { "type": "array", "items": { "type": "object", "properties": { "system": { "type": "string" }, "code": { "type": "string" }, "display": { "type": "string" } } } }, "text": { "type": "string" } } }, "fastingStatusCodeableConcept": { "type": "object" }, "fastingStatusDuration": { "type": "object" } } },
+    "processing": { "type": "array", "items": { "type": "object", "properties": { "description": { "type": "string" }, "procedure": { "type": "object", "properties": { "coding": { "type": "array", "items": { "type": "object", "properties": { "system": { "type": "string" }, "code": { "type": "string" }, "display": { "type": "string" } } } }, "text": { "type": "string" } } }, "additive": { "type": "array", "items": { "type": "object", "properties": { "reference": { "type": "string" }, "display": { "type": "string" } } } }, "timeDateTime": { "type": "string" }, "timePeriod": { "type": "object", "properties": { "start": { "type": "string" }, "end": { "type": "string" } } } } } },
+    "container": { "type": "array", "items": { "type": "object", "properties": { "identifier": { "type": "array", "items": { "type": "object", "properties": { "use": { "type": "string" }, "system": { "type": "string" }, "value": { "type": "string" } } } }, "description": { "type": "string" }, "type": { "type": "object", "properties": { "coding": { "type": "array", "items": { "type": "object", "properties": { "system": { "type": "string" }, "code": { "type": "string" }, "display": { "type": "string" } } } }, "text": { "type": "string" } } }, "capacity": { "type": "object", "properties": { "value": { "type": "number" }, "unit": { "type": "string" }, "system": { "type": "string" }, "code": { "type": "string" } } }, "specimenQuantity": { "type": "object", "properties": { "value": { "type": "number" }, "unit": { "type": "string" }, "system": { "type": "string" }, "code": { "type": "string" } } }, "additiveCodeableConcept": { "type": "object" }, "additiveReference": { "type": "object" } } } },
+    "condition": { "type": "array", "items": { "type": "object", "properties": { "coding": { "type": "array", "items": { "type": "object", "properties": { "system": { "type": "string" }, "code": { "type": "string" }, "display": { "type": "string" } } } }, "text": { "type": "string" } } } },
+    "note": { "type": "array", "items": { "type": "object", "properties": { "authorReference": { "type": "object" }, "authorString": { "type": "string" }, "time": { "type": "string" }, "text": { "type": "string" } } } }
+  }
+}

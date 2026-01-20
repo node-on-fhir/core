@@ -1,0 +1,32 @@
+{
+  "$schema": "http://json-schema.org/draft-06/schema#",
+  "id": "http://hl7.org/fhir/json-schema/CareTeam",
+  "description": "The Care Team includes all the people and organizations who plan to participate in the coordination and delivery of care for a patient.",
+  "type": "object",
+  "required": ["resourceType"],
+  "properties": {
+    "resourceType": { "const": "CareTeam" },
+    "id": { "type": "string", "description": "Logical id of this artifact" },
+    "_id": { "type": "string", "description": "MongoDB primary key" },
+    "meta": { "type": "object", "properties": { "versionId": { "type": "string" }, "lastUpdated": { "type": "string" }, "source": { "type": "string" }, "profile": { "type": "array", "items": { "type": "string" } }, "security": { "type": "array", "items": { "type": "object", "properties": { "system": { "type": "string" }, "code": { "type": "string" }, "display": { "type": "string" } } } }, "tag": { "type": "array", "items": { "type": "object", "properties": { "system": { "type": "string" }, "code": { "type": "string" }, "display": { "type": "string" } } } } } },
+    "implicitRules": { "type": "string" },
+    "language": { "type": "string" },
+    "text": { "type": "object", "properties": { "status": { "type": "string" }, "div": { "type": "string" } } },
+    "contained": { "type": "array", "items": { "type": "object" } },
+    "extension": { "type": "array", "items": { "type": "object" } },
+    "modifierExtension": { "type": "array", "items": { "type": "object" } },
+    "identifier": { "type": "array", "items": { "type": "object", "properties": { "use": { "type": "string" }, "system": { "type": "string" }, "value": { "type": "string" } } } },
+    "status": { "type": "string", "enum": ["proposed", "active", "suspended", "inactive", "entered-in-error"] },
+    "category": { "type": "array", "items": { "type": "object", "properties": { "coding": { "type": "array", "items": { "type": "object", "properties": { "system": { "type": "string" }, "code": { "type": "string" }, "display": { "type": "string" } } } }, "text": { "type": "string" } } } },
+    "name": { "type": "string" },
+    "subject": { "type": "object", "properties": { "reference": { "type": "string" }, "display": { "type": "string" } } },
+    "encounter": { "type": "object", "properties": { "reference": { "type": "string" }, "display": { "type": "string" } } },
+    "period": { "type": "object", "properties": { "start": { "type": "string" }, "end": { "type": "string" } } },
+    "participant": { "type": "array", "items": { "type": "object", "properties": { "role": { "type": "array", "items": { "type": "object", "properties": { "coding": { "type": "array", "items": { "type": "object", "properties": { "system": { "type": "string" }, "code": { "type": "string" }, "display": { "type": "string" } } } }, "text": { "type": "string" } } } }, "member": { "type": "object", "properties": { "reference": { "type": "string" }, "display": { "type": "string" } } }, "onBehalfOf": { "type": "object", "properties": { "reference": { "type": "string" }, "display": { "type": "string" } } }, "period": { "type": "object", "properties": { "start": { "type": "string" }, "end": { "type": "string" } } } } } },
+    "reasonCode": { "type": "array", "items": { "type": "object", "properties": { "coding": { "type": "array", "items": { "type": "object", "properties": { "system": { "type": "string" }, "code": { "type": "string" }, "display": { "type": "string" } } } }, "text": { "type": "string" } } } },
+    "reasonReference": { "type": "array", "items": { "type": "object", "properties": { "reference": { "type": "string" }, "display": { "type": "string" } } } },
+    "managingOrganization": { "type": "array", "items": { "type": "object", "properties": { "reference": { "type": "string" }, "display": { "type": "string" } } } },
+    "telecom": { "type": "array", "items": { "type": "object", "properties": { "system": { "type": "string" }, "value": { "type": "string" }, "use": { "type": "string" }, "rank": { "type": "integer" }, "period": { "type": "object", "properties": { "start": { "type": "string" }, "end": { "type": "string" } } } } } },
+    "note": { "type": "array", "items": { "type": "object", "properties": { "text": { "type": "string" }, "time": { "type": "string" }, "authorReference": { "type": "object", "properties": { "reference": { "type": "string" }, "display": { "type": "string" } } }, "authorString": { "type": "string" } } } }
+  }
+}

@@ -145,7 +145,7 @@ describe('SupplyRequests CRUD Operations', function() {
       const detailsPage = document.getElementById('supplyRequestDetailPage');
       const statusField = document.querySelector('#statusInput');
       const priorityField = document.querySelector('#priorityInput');
-      const quantityField = document.querySelector('#quantityInput');
+      const quantityField = document.querySelector('#quantityValueInput');
 
       return {
         detailsPageVisible: !!detailsPage,
@@ -208,7 +208,7 @@ describe('SupplyRequests CRUD Operations', function() {
 
     // Fill in quantity
     browser
-      .setValue('#quantityInput', testSupplyRequest.quantity)
+      .setValue('#quantityValueInput', testSupplyRequest.quantity)
       .pause(300);
 
     // Fill in authored on date
@@ -230,12 +230,12 @@ describe('SupplyRequests CRUD Operations', function() {
       .setValue('#supplierInput', testSupplyRequest.supplier)
       .pause(300);
 
-    // Fill in notes
+    // Fill in reason (notes)
     browser.execute(function(notes) {
-      const notesField = document.querySelector('#notesInput');
-      if (notesField) {
-        notesField.value = notes;
-        notesField.dispatchEvent(new Event('input', { bubbles: true }));
+      const reasonField = document.querySelector('#reasonInput');
+      if (reasonField) {
+        reasonField.value = notes;
+        reasonField.dispatchEvent(new Event('input', { bubbles: true }));
       }
     }, [testSupplyRequest.notes]);
 
@@ -247,10 +247,10 @@ describe('SupplyRequests CRUD Operations', function() {
         status: document.querySelector('#statusInput')?.value,
         priority: document.querySelector('#priorityInput')?.value,
         itemCodeableConcept: document.querySelector('#itemCodeableConceptInput')?.value,
-        quantity: document.querySelector('#quantityInput')?.value,
+        quantity: document.querySelector('#quantityValueInput')?.value,
         requester: document.querySelector('#requesterInput')?.value,
         supplier: document.querySelector('#supplierInput')?.value,
-        notes: document.querySelector('#notesInput')?.value
+        reason: document.querySelector('#reasonInput')?.value
       };
       console.log('[Test] Form data before save:', formData);
     });
@@ -350,16 +350,16 @@ describe('SupplyRequests CRUD Operations', function() {
     browser.execute(function(expectedRequest) {
       const statusField = document.querySelector('#statusInput');
       const priorityField = document.querySelector('#priorityInput');
-      const quantityField = document.querySelector('#quantityInput');
+      const quantityField = document.querySelector('#quantityValueInput');
       const itemCodeableConceptField = document.querySelector('#itemCodeableConceptInput');
-      const notesField = document.querySelector('#notesInput');
+      const reasonField = document.querySelector('#reasonInput');
 
       return {
         status: statusField ? (statusField.value || statusField.textContent) : null,
         priority: priorityField ? (priorityField.value || priorityField.textContent) : null,
         quantity: quantityField ? quantityField.value : null,
         itemCodeableConcept: itemCodeableConceptField ? itemCodeableConceptField.value : null,
-        notes: notesField ? notesField.value : null
+        reason: reasonField ? reasonField.value : null
       };
     }, [testSupplyRequest], function(result) {
       console.log('Detail page values:', result.value);
@@ -446,12 +446,12 @@ describe('SupplyRequests CRUD Operations', function() {
 
     // Update quantity and item description
     browser
-      .clearValue('#quantityInput')
-      .setValue('#quantityInput', updatedSupplyRequest.quantity)
+      .clearValue('#quantityValueInput')
+      .setValue('#quantityValueInput', updatedSupplyRequest.quantity)
       .clearValue('#itemCodeableConceptInput')
       .setValue('#itemCodeableConceptInput', updatedSupplyRequest.itemCodeableConcept)
-      .clearValue('#notesInput')
-      .setValue('#notesInput', updatedSupplyRequest.notes)
+      .clearValue('#reasonInput')
+      .setValue('#reasonInput', updatedSupplyRequest.notes)
       .pause(500);
 
     // Save changes
@@ -461,12 +461,12 @@ describe('SupplyRequests CRUD Operations', function() {
 
     // Verify updates were saved
     browser.execute(function() {
-      const quantityField = document.querySelector('#quantityInput');
-      const notesField = document.querySelector('#notesInput');
+      const quantityField = document.querySelector('#quantityValueInput');
+      const reasonField = document.querySelector('#reasonInput');
 
       return {
         quantity: quantityField ? quantityField.value : null,
-        notes: notesField ? notesField.value : null
+        reason: reasonField ? reasonField.value : null
       };
     }, [], function(result) {
       console.log('Updated values:', result.value);

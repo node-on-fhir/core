@@ -1,0 +1,29 @@
+{
+  "$schema": "http://json-schema.org/draft-06/schema#",
+  "id": "http://hl7.org/fhir/json-schema/NutritionProduct",
+  "description": "A food or fluid product that is consumed by patients.",
+  "type": "object",
+  "required": ["resourceType", "status"],
+  "properties": {
+    "resourceType": { "const": "NutritionProduct" },
+    "id": { "type": "string", "description": "Logical id of this artifact" },
+    "_id": { "type": "string", "description": "MongoDB primary key" },
+    "meta": { "type": "object", "properties": { "versionId": { "type": "string" }, "lastUpdated": { "type": "string" }, "source": { "type": "string" }, "profile": { "type": "array", "items": { "type": "string" } }, "security": { "type": "array", "items": { "type": "object", "properties": { "system": { "type": "string" }, "code": { "type": "string" }, "display": { "type": "string" } } } }, "tag": { "type": "array", "items": { "type": "object", "properties": { "system": { "type": "string" }, "code": { "type": "string" }, "display": { "type": "string" } } } } } },
+    "implicitRules": { "type": "string" },
+    "language": { "type": "string" },
+    "text": { "type": "object", "properties": { "status": { "type": "string" }, "div": { "type": "string" } } },
+    "contained": { "type": "array", "items": { "type": "object" } },
+    "extension": { "type": "array", "items": { "type": "object" } },
+    "modifierExtension": { "type": "array", "items": { "type": "object" } },
+    "status": { "type": "string", "enum": ["active", "inactive", "entered-in-error"] },
+    "category": { "type": "array", "items": { "type": "object", "properties": { "coding": { "type": "array", "items": { "type": "object", "properties": { "system": { "type": "string" }, "code": { "type": "string" }, "display": { "type": "string" } } } }, "text": { "type": "string" } } } },
+    "code": { "type": "object", "properties": { "coding": { "type": "array", "items": { "type": "object", "properties": { "system": { "type": "string" }, "code": { "type": "string" }, "display": { "type": "string" } } } }, "text": { "type": "string" } } },
+    "manufacturer": { "type": "array", "items": { "type": "object", "properties": { "reference": { "type": "string" }, "display": { "type": "string" } } } },
+    "nutrient": { "type": "array", "items": { "type": "object", "properties": { "item": { "type": "object" }, "amount": { "type": "array", "items": { "type": "object", "properties": { "numerator": { "type": "object" }, "denominator": { "type": "object" } } } } } } },
+    "ingredient": { "type": "array", "items": { "type": "object", "properties": { "item": { "type": "object" }, "amount": { "type": "array", "items": { "type": "object", "properties": { "numerator": { "type": "object" }, "denominator": { "type": "object" } } } } } } },
+    "knownAllergen": { "type": "array", "items": { "type": "object" } },
+    "productCharacteristic": { "type": "array", "items": { "type": "object", "properties": { "type": { "type": "object", "properties": { "coding": { "type": "array", "items": { "type": "object", "properties": { "system": { "type": "string" }, "code": { "type": "string" }, "display": { "type": "string" } } } }, "text": { "type": "string" } } }, "valueCodeableConcept": { "type": "object" }, "valueString": { "type": "string" }, "valueQuantity": { "type": "object" }, "valueBase64Binary": { "type": "string" }, "valueAttachment": { "type": "object" }, "valueBoolean": { "type": "boolean" } } } },
+    "instance": { "type": "object", "properties": { "quantity": { "type": "object" }, "identifier": { "type": "array", "items": { "type": "object" } }, "lotNumber": { "type": "string" }, "expiry": { "type": "string" }, "useBy": { "type": "string" } } },
+    "note": { "type": "array", "items": { "type": "object", "properties": { "authorReference": { "type": "object" }, "authorString": { "type": "string" }, "time": { "type": "string" }, "text": { "type": "string" } } } }
+  }
+}

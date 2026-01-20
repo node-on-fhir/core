@@ -1,0 +1,33 @@
+{
+  "$schema": "http://json-schema.org/draft-06/schema#",
+  "id": "http://hl7.org/fhir/json-schema/CompartmentDefinition",
+  "description": "A compartment definition that defines how resources are accessed on a server.",
+  "type": "object",
+  "required": ["resourceType", "status", "url", "name", "code", "search"],
+  "properties": {
+    "resourceType": { "const": "CompartmentDefinition" },
+    "id": { "type": "string", "description": "Logical id of this artifact" },
+    "_id": { "type": "string", "description": "MongoDB primary key" },
+    "meta": { "type": "object", "properties": { "versionId": { "type": "string" }, "lastUpdated": { "type": "string" }, "source": { "type": "string" }, "profile": { "type": "array", "items": { "type": "string" } }, "security": { "type": "array", "items": { "type": "object", "properties": { "system": { "type": "string" }, "code": { "type": "string" }, "display": { "type": "string" } } } }, "tag": { "type": "array", "items": { "type": "object", "properties": { "system": { "type": "string" }, "code": { "type": "string" }, "display": { "type": "string" } } } } } },
+    "implicitRules": { "type": "string" },
+    "language": { "type": "string" },
+    "text": { "type": "object", "properties": { "status": { "type": "string" }, "div": { "type": "string" } } },
+    "contained": { "type": "array", "items": { "type": "object" } },
+    "extension": { "type": "array", "items": { "type": "object" } },
+    "modifierExtension": { "type": "array", "items": { "type": "object" } },
+    "url": { "type": "string" },
+    "version": { "type": "string" },
+    "name": { "type": "string" },
+    "status": { "type": "string", "enum": ["draft", "active", "retired", "unknown"] },
+    "experimental": { "type": "boolean" },
+    "date": { "type": "string" },
+    "publisher": { "type": "string" },
+    "contact": { "type": "array", "items": { "type": "object", "properties": { "name": { "type": "string" }, "telecom": { "type": "array", "items": { "type": "object" } } } } },
+    "description": { "type": "string" },
+    "useContext": { "type": "array", "items": { "type": "object" } },
+    "purpose": { "type": "string" },
+    "code": { "type": "string", "enum": ["Patient", "Encounter", "RelatedPerson", "Practitioner", "Device"] },
+    "search": { "type": "boolean" },
+    "resource": { "type": "array", "items": { "type": "object", "properties": { "code": { "type": "string" }, "param": { "type": "array", "items": { "type": "string" } }, "documentation": { "type": "string" } } } }
+  }
+}

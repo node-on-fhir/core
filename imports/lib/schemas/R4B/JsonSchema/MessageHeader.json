@@ -1,0 +1,31 @@
+{
+  "$schema": "http://json-schema.org/draft-06/schema#",
+  "id": "http://hl7.org/fhir/json-schema/MessageHeader",
+  "description": "The header for a message exchange that is either requesting or responding to an action. The reference(s) that are the subject of the action as well as other information related to the action are typically transmitted in a bundle in which the MessageHeader resource instance is the first resource in the bundle.",
+  "type": "object",
+  "required": ["resourceType", "source"],
+  "properties": {
+    "resourceType": { "const": "MessageHeader" },
+    "id": { "type": "string", "description": "Logical id of this artifact" },
+    "_id": { "type": "string", "description": "MongoDB primary key" },
+    "meta": { "type": "object", "properties": { "versionId": { "type": "string" }, "lastUpdated": { "type": "string" }, "source": { "type": "string" }, "profile": { "type": "array", "items": { "type": "string" } }, "security": { "type": "array", "items": { "type": "object", "properties": { "system": { "type": "string" }, "code": { "type": "string" }, "display": { "type": "string" } } } }, "tag": { "type": "array", "items": { "type": "object", "properties": { "system": { "type": "string" }, "code": { "type": "string" }, "display": { "type": "string" } } } } } },
+    "implicitRules": { "type": "string" },
+    "language": { "type": "string" },
+    "text": { "type": "object", "properties": { "status": { "type": "string" }, "div": { "type": "string" } } },
+    "contained": { "type": "array", "items": { "type": "object" } },
+    "extension": { "type": "array", "items": { "type": "object" } },
+    "modifierExtension": { "type": "array", "items": { "type": "object" } },
+    "eventCoding": { "type": "object", "properties": { "system": { "type": "string" }, "code": { "type": "string" }, "display": { "type": "string" } } },
+    "eventUri": { "type": "string" },
+    "destination": { "type": "array", "items": { "type": "object", "properties": { "name": { "type": "string" }, "target": { "type": "object", "properties": { "reference": { "type": "string" }, "display": { "type": "string" } } }, "endpoint": { "type": "string" }, "receiver": { "type": "object", "properties": { "reference": { "type": "string" }, "display": { "type": "string" } } } } } },
+    "sender": { "type": "object", "properties": { "reference": { "type": "string" }, "display": { "type": "string" } } },
+    "enterer": { "type": "object", "properties": { "reference": { "type": "string" }, "display": { "type": "string" } } },
+    "author": { "type": "object", "properties": { "reference": { "type": "string" }, "display": { "type": "string" } } },
+    "source": { "type": "object", "properties": { "name": { "type": "string" }, "software": { "type": "string" }, "version": { "type": "string" }, "contact": { "type": "object", "properties": { "system": { "type": "string" }, "value": { "type": "string" }, "use": { "type": "string" } } }, "endpoint": { "type": "string" } } },
+    "responsible": { "type": "object", "properties": { "reference": { "type": "string" }, "display": { "type": "string" } } },
+    "reason": { "type": "object", "properties": { "coding": { "type": "array", "items": { "type": "object", "properties": { "system": { "type": "string" }, "code": { "type": "string" }, "display": { "type": "string" } } } }, "text": { "type": "string" } } },
+    "response": { "type": "object", "properties": { "identifier": { "type": "string" }, "code": { "type": "string", "enum": ["ok", "transient-error", "fatal-error"] }, "details": { "type": "object", "properties": { "reference": { "type": "string" }, "display": { "type": "string" } } } } },
+    "focus": { "type": "array", "items": { "type": "object", "properties": { "reference": { "type": "string" }, "display": { "type": "string" } } } },
+    "definition": { "type": "string" }
+  }
+}

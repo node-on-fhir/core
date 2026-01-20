@@ -1,0 +1,22 @@
+{
+  "$schema": "http://json-schema.org/draft-06/schema#",
+  "id": "http://hl7.org/fhir/json-schema/Linkage",
+  "description": "Identifies two or more records (resource instances) that refer to the same real-world occurrence.",
+  "type": "object",
+  "required": ["resourceType", "item"],
+  "properties": {
+    "resourceType": { "const": "Linkage" },
+    "id": { "type": "string", "description": "Logical id of this artifact" },
+    "_id": { "type": "string", "description": "MongoDB primary key" },
+    "meta": { "type": "object", "properties": { "versionId": { "type": "string" }, "lastUpdated": { "type": "string" }, "source": { "type": "string" }, "profile": { "type": "array", "items": { "type": "string" } }, "security": { "type": "array", "items": { "type": "object", "properties": { "system": { "type": "string" }, "code": { "type": "string" }, "display": { "type": "string" } } } }, "tag": { "type": "array", "items": { "type": "object", "properties": { "system": { "type": "string" }, "code": { "type": "string" }, "display": { "type": "string" } } } } } },
+    "implicitRules": { "type": "string" },
+    "language": { "type": "string" },
+    "text": { "type": "object", "properties": { "status": { "type": "string" }, "div": { "type": "string" } } },
+    "contained": { "type": "array", "items": { "type": "object" } },
+    "extension": { "type": "array", "items": { "type": "object" } },
+    "modifierExtension": { "type": "array", "items": { "type": "object" } },
+    "active": { "type": "boolean" },
+    "author": { "type": "object", "properties": { "reference": { "type": "string" }, "display": { "type": "string" } } },
+    "item": { "type": "array", "items": { "type": "object", "properties": { "type": { "type": "string", "enum": ["source", "alternate", "historical"] }, "resource": { "type": "object", "properties": { "reference": { "type": "string" }, "display": { "type": "string" } } } } } }
+  }
+}

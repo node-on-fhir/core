@@ -1,0 +1,32 @@
+{
+  "$schema": "http://json-schema.org/draft-06/schema#",
+  "id": "http://hl7.org/fhir/json-schema/ObservationDefinition",
+  "description": "Set of definitional characteristics for a kind of observation or measurement produced or consumed by an orderable health care service.",
+  "type": "object",
+  "required": ["resourceType", "code"],
+  "properties": {
+    "resourceType": { "const": "ObservationDefinition" },
+    "id": { "type": "string", "description": "Logical id of this artifact" },
+    "_id": { "type": "string", "description": "MongoDB primary key" },
+    "meta": { "type": "object", "properties": { "versionId": { "type": "string" }, "lastUpdated": { "type": "string" }, "source": { "type": "string" }, "profile": { "type": "array", "items": { "type": "string" } }, "security": { "type": "array", "items": { "type": "object", "properties": { "system": { "type": "string" }, "code": { "type": "string" }, "display": { "type": "string" } } } }, "tag": { "type": "array", "items": { "type": "object", "properties": { "system": { "type": "string" }, "code": { "type": "string" }, "display": { "type": "string" } } } } } },
+    "implicitRules": { "type": "string" },
+    "language": { "type": "string" },
+    "text": { "type": "object", "properties": { "status": { "type": "string" }, "div": { "type": "string" } } },
+    "contained": { "type": "array", "items": { "type": "object" } },
+    "extension": { "type": "array", "items": { "type": "object" } },
+    "modifierExtension": { "type": "array", "items": { "type": "object" } },
+    "category": { "type": "array", "items": { "type": "object", "properties": { "coding": { "type": "array", "items": { "type": "object", "properties": { "system": { "type": "string" }, "code": { "type": "string" }, "display": { "type": "string" } } } }, "text": { "type": "string" } } } },
+    "code": { "type": "object", "properties": { "coding": { "type": "array", "items": { "type": "object", "properties": { "system": { "type": "string" }, "code": { "type": "string" }, "display": { "type": "string" } } } }, "text": { "type": "string" } } },
+    "identifier": { "type": "array", "items": { "type": "object", "properties": { "use": { "type": "string" }, "system": { "type": "string" }, "value": { "type": "string" } } } },
+    "permittedDataType": { "type": "array", "items": { "type": "string", "enum": ["Quantity", "CodeableConcept", "string", "boolean", "integer", "Range", "Ratio", "SampledData", "time", "dateTime", "Period"] } },
+    "multipleResultsAllowed": { "type": "boolean" },
+    "method": { "type": "object", "properties": { "coding": { "type": "array", "items": { "type": "object", "properties": { "system": { "type": "string" }, "code": { "type": "string" }, "display": { "type": "string" } } } }, "text": { "type": "string" } } },
+    "preferredReportName": { "type": "string" },
+    "quantitativeDetails": { "type": "object", "properties": { "customaryUnit": { "type": "object" }, "unit": { "type": "object" }, "conversionFactor": { "type": "number" }, "decimalPrecision": { "type": "integer" } } },
+    "qualifiedInterval": { "type": "array", "items": { "type": "object", "properties": { "category": { "type": "string", "enum": ["reference", "critical", "absolute"] }, "range": { "type": "object" }, "context": { "type": "object" }, "appliesTo": { "type": "array", "items": { "type": "object" } }, "gender": { "type": "string", "enum": ["male", "female", "other", "unknown"] }, "age": { "type": "object" }, "gestationalAge": { "type": "object" }, "condition": { "type": "string" } } } },
+    "validCodedValueSet": { "type": "object", "properties": { "reference": { "type": "string" }, "display": { "type": "string" } } },
+    "normalCodedValueSet": { "type": "object", "properties": { "reference": { "type": "string" }, "display": { "type": "string" } } },
+    "abnormalCodedValueSet": { "type": "object", "properties": { "reference": { "type": "string" }, "display": { "type": "string" } } },
+    "criticalCodedValueSet": { "type": "object", "properties": { "reference": { "type": "string" }, "display": { "type": "string" } } }
+  }
+}

@@ -1,0 +1,433 @@
+{
+  "$schema": "http://json-schema.org/draft-06/schema#",
+  "id": "http://hl7.org/fhir/json-schema/Appointment",
+  "description": "A booking of a healthcare event among patient(s), practitioner(s), related person(s) and/or device(s) for a specific date/time.",
+  "type": "object",
+  "required": ["resourceType", "participant"],
+  "properties": {
+    "resourceType": {
+      "const": "Appointment"
+    },
+    "id": {
+      "type": "string",
+      "description": "Logical id of this artifact"
+    },
+    "_id": {
+      "type": "string",
+      "description": "MongoDB primary key"
+    },
+    "meta": {
+      "type": "object",
+      "description": "Metadata about the resource",
+      "properties": {
+        "versionId": { "type": "string" },
+        "lastUpdated": { "type": "string" },
+        "source": { "type": "string" },
+        "profile": { "type": "array", "items": { "type": "string" } },
+        "security": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "system": { "type": "string" },
+              "code": { "type": "string" },
+              "display": { "type": "string" }
+            }
+          }
+        },
+        "tag": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "system": { "type": "string" },
+              "code": { "type": "string" },
+              "display": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "implicitRules": {
+      "type": "string",
+      "description": "A set of rules under which this content was created"
+    },
+    "language": {
+      "type": "string",
+      "description": "Language of the resource content"
+    },
+    "text": {
+      "type": "object",
+      "description": "Text summary of the resource",
+      "properties": {
+        "status": { "type": "string" },
+        "div": { "type": "string" }
+      }
+    },
+    "contained": {
+      "type": "array",
+      "description": "Contained, inline Resources",
+      "items": { "type": "object" }
+    },
+    "extension": {
+      "type": "array",
+      "description": "Additional content defined by implementations",
+      "items": {
+        "type": "object",
+        "properties": {
+          "url": { "type": "string" },
+          "valueString": { "type": "string" },
+          "valueBoolean": { "type": "boolean" },
+          "valueCode": { "type": "string" }
+        }
+      }
+    },
+    "modifierExtension": {
+      "type": "array",
+      "description": "Extensions that cannot be ignored",
+      "items": {
+        "type": "object",
+        "properties": {
+          "url": { "type": "string" },
+          "valueString": { "type": "string" },
+          "valueBoolean": { "type": "boolean" },
+          "valueCode": { "type": "string" }
+        }
+      }
+    },
+    "identifier": {
+      "type": "array",
+      "description": "External ids for this item",
+      "items": {
+        "type": "object",
+        "properties": {
+          "use": { "type": "string" },
+          "type": {
+            "type": "object",
+            "properties": {
+              "coding": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "system": { "type": "string" },
+                    "code": { "type": "string" },
+                    "display": { "type": "string" }
+                  }
+                }
+              },
+              "text": { "type": "string" }
+            }
+          },
+          "system": { "type": "string" },
+          "value": { "type": "string" },
+          "period": {
+            "type": "object",
+            "properties": {
+              "start": { "type": "string" },
+              "end": { "type": "string" }
+            }
+          },
+          "assigner": {
+            "type": "object",
+            "properties": {
+              "reference": { "type": "string" },
+              "display": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "status": {
+      "type": "string",
+      "description": "proposed | pending | booked | arrived | fulfilled | cancelled | noshow | entered-in-error | checked-in | waitlist",
+      "enum": ["proposed", "pending", "booked", "arrived", "fulfilled", "cancelled", "noshow", "entered-in-error", "checked-in", "waitlist"]
+    },
+    "cancelationReason": {
+      "type": "object",
+      "description": "The coded reason for the appointment being cancelled",
+      "properties": {
+        "coding": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "system": { "type": "string" },
+              "code": { "type": "string" },
+              "display": { "type": "string" }
+            }
+          }
+        },
+        "text": { "type": "string" }
+      }
+    },
+    "serviceCategory": {
+      "type": "array",
+      "description": "A broad categorization of the service that is to be performed",
+      "items": {
+        "type": "object",
+        "properties": {
+          "coding": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "system": { "type": "string" },
+                "code": { "type": "string" },
+                "display": { "type": "string" }
+              }
+            }
+          },
+          "text": { "type": "string" }
+        }
+      }
+    },
+    "serviceType": {
+      "type": "array",
+      "description": "The specific service that is to be performed",
+      "items": {
+        "type": "object",
+        "properties": {
+          "coding": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "system": { "type": "string" },
+                "code": { "type": "string" },
+                "display": { "type": "string" }
+              }
+            }
+          },
+          "text": { "type": "string" }
+        }
+      }
+    },
+    "specialty": {
+      "type": "array",
+      "description": "The specialty of a practitioner required to perform the service",
+      "items": {
+        "type": "object",
+        "properties": {
+          "coding": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "system": { "type": "string" },
+                "code": { "type": "string" },
+                "display": { "type": "string" }
+              }
+            }
+          },
+          "text": { "type": "string" }
+        }
+      }
+    },
+    "appointmentType": {
+      "type": "object",
+      "description": "The style of appointment or patient booked",
+      "properties": {
+        "coding": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "system": { "type": "string" },
+              "code": { "type": "string" },
+              "display": { "type": "string" }
+            }
+          }
+        },
+        "text": { "type": "string" }
+      }
+    },
+    "reasonCode": {
+      "type": "array",
+      "description": "Coded reason this appointment is scheduled",
+      "items": {
+        "type": "object",
+        "properties": {
+          "coding": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "system": { "type": "string" },
+                "code": { "type": "string" },
+                "display": { "type": "string" }
+              }
+            }
+          },
+          "text": { "type": "string" }
+        }
+      }
+    },
+    "reasonReference": {
+      "type": "array",
+      "description": "Reason the appointment is scheduled (reference)",
+      "items": {
+        "type": "object",
+        "properties": {
+          "reference": { "type": "string" },
+          "display": { "type": "string" }
+        }
+      }
+    },
+    "priority": {
+      "type": "integer",
+      "description": "Used to make informed decisions if needing to re-prioritize",
+      "minimum": 0
+    },
+    "description": {
+      "type": "string",
+      "description": "Shown on a subject line in a meeting request"
+    },
+    "supportingInformation": {
+      "type": "array",
+      "description": "Additional information to support the appointment",
+      "items": {
+        "type": "object",
+        "properties": {
+          "reference": { "type": "string" },
+          "display": { "type": "string" }
+        }
+      }
+    },
+    "start": {
+      "type": "string",
+      "description": "When appointment is to take place"
+    },
+    "end": {
+      "type": "string",
+      "description": "When appointment is to conclude"
+    },
+    "minutesDuration": {
+      "type": "integer",
+      "description": "Duration in minutes",
+      "minimum": 1
+    },
+    "slot": {
+      "type": "array",
+      "description": "The slots that this appointment is filling",
+      "items": {
+        "type": "object",
+        "properties": {
+          "reference": { "type": "string" },
+          "display": { "type": "string" }
+        }
+      }
+    },
+    "created": {
+      "type": "string",
+      "description": "The date that this appointment was initially created"
+    },
+    "comment": {
+      "type": "string",
+      "description": "Additional comments"
+    },
+    "patientInstruction": {
+      "type": "string",
+      "description": "Detailed information for the patient"
+    },
+    "basedOn": {
+      "type": "array",
+      "description": "The service request this appointment is allocated to assess",
+      "items": {
+        "type": "object",
+        "properties": {
+          "reference": { "type": "string" },
+          "display": { "type": "string" }
+        }
+      }
+    },
+    "participant": {
+      "type": "array",
+      "description": "Participants involved in appointment",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique id for inter-element referencing"
+          },
+          "extension": {
+            "type": "array",
+            "items": { "type": "object" }
+          },
+          "modifierExtension": {
+            "type": "array",
+            "items": { "type": "object" }
+          },
+          "type": {
+            "type": "array",
+            "description": "Role of participant",
+            "items": {
+              "type": "object",
+              "properties": {
+                "coding": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "system": { "type": "string" },
+                      "code": { "type": "string" },
+                      "display": { "type": "string" }
+                    }
+                  }
+                },
+                "text": { "type": "string" }
+              }
+            }
+          },
+          "actor": {
+            "type": "object",
+            "description": "Person, Location/HealthcareService or Device",
+            "properties": {
+              "reference": { "type": "string" },
+              "type": { "type": "string" },
+              "identifier": {
+                "type": "object",
+                "properties": {
+                  "system": { "type": "string" },
+                  "value": { "type": "string" }
+                }
+              },
+              "display": { "type": "string" }
+            }
+          },
+          "required": {
+            "type": "string",
+            "description": "required | optional | information-only",
+            "enum": ["required", "optional", "information-only"]
+          },
+          "status": {
+            "type": "string",
+            "description": "accepted | declined | tentative | needs-action",
+            "enum": ["accepted", "declined", "tentative", "needs-action"]
+          },
+          "period": {
+            "type": "object",
+            "description": "Participation period of the actor",
+            "properties": {
+              "start": { "type": "string" },
+              "end": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "requestedPeriod": {
+      "type": "array",
+      "description": "Potential date/time interval(s) requested",
+      "items": {
+        "type": "object",
+        "properties": {
+          "start": { "type": "string" },
+          "end": { "type": "string" }
+        }
+      }
+    }
+  }
+}

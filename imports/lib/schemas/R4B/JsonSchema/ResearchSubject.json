@@ -1,0 +1,27 @@
+{
+  "$schema": "http://json-schema.org/draft-06/schema#",
+  "id": "http://hl7.org/fhir/json-schema/ResearchSubject",
+  "description": "A physical entity which is the primary unit of operational and/or administrative interest in a study.",
+  "type": "object",
+  "required": ["resourceType", "status", "study", "individual"],
+  "properties": {
+    "resourceType": { "const": "ResearchSubject" },
+    "id": { "type": "string", "description": "Logical id of this artifact" },
+    "_id": { "type": "string", "description": "MongoDB primary key" },
+    "meta": { "type": "object", "properties": { "versionId": { "type": "string" }, "lastUpdated": { "type": "string" }, "source": { "type": "string" }, "profile": { "type": "array", "items": { "type": "string" } }, "security": { "type": "array", "items": { "type": "object", "properties": { "system": { "type": "string" }, "code": { "type": "string" }, "display": { "type": "string" } } } }, "tag": { "type": "array", "items": { "type": "object", "properties": { "system": { "type": "string" }, "code": { "type": "string" }, "display": { "type": "string" } } } } } },
+    "implicitRules": { "type": "string" },
+    "language": { "type": "string" },
+    "text": { "type": "object", "properties": { "status": { "type": "string" }, "div": { "type": "string" } } },
+    "contained": { "type": "array", "items": { "type": "object" } },
+    "extension": { "type": "array", "items": { "type": "object" } },
+    "modifierExtension": { "type": "array", "items": { "type": "object" } },
+    "identifier": { "type": "array", "items": { "type": "object", "properties": { "use": { "type": "string" }, "system": { "type": "string" }, "value": { "type": "string" } } } },
+    "status": { "type": "string", "enum": ["candidate", "eligible", "follow-up", "ineligible", "not-registered", "off-study", "on-study", "on-study-intervention", "on-study-observation", "pending-on-study", "potential-candidate", "screening", "withdrawn"] },
+    "period": { "type": "object", "properties": { "start": { "type": "string" }, "end": { "type": "string" } } },
+    "study": { "type": "object", "properties": { "reference": { "type": "string" }, "display": { "type": "string" } } },
+    "individual": { "type": "object", "properties": { "reference": { "type": "string" }, "display": { "type": "string" } } },
+    "assignedArm": { "type": "string" },
+    "actualArm": { "type": "string" },
+    "consent": { "type": "object", "properties": { "reference": { "type": "string" }, "display": { "type": "string" } } }
+  }
+}

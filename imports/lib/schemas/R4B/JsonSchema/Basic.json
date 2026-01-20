@@ -1,0 +1,81 @@
+{
+  "$schema": "http://json-schema.org/draft-06/schema#",
+  "id": "http://hl7.org/fhir/json-schema/Basic",
+  "description": "Basic is used for handling concepts not yet defined in FHIR, narrative-only resources that don't map to an existing resource, and custom resources.",
+  "type": "object",
+  "required": ["resourceType", "code"],
+  "properties": {
+    "resourceType": {
+      "const": "Basic"
+    },
+    "id": {
+      "type": "string",
+      "description": "Logical id of this artifact"
+    },
+    "_id": {
+      "type": "string",
+      "description": "MongoDB primary key"
+    },
+    "meta": {
+      "type": "object",
+      "description": "Metadata about the resource",
+      "properties": {
+        "versionId": { "type": "string" },
+        "lastUpdated": { "type": "string" },
+        "source": { "type": "string" },
+        "profile": { "type": "array", "items": { "type": "string" } },
+        "security": { "type": "array", "items": { "type": "object", "properties": { "system": { "type": "string" }, "code": { "type": "string" }, "display": { "type": "string" } } } },
+        "tag": { "type": "array", "items": { "type": "object", "properties": { "system": { "type": "string" }, "code": { "type": "string" }, "display": { "type": "string" } } } }
+      }
+    },
+    "implicitRules": { "type": "string", "description": "A set of rules under which this content was created" },
+    "language": { "type": "string", "description": "Language of the resource content" },
+    "text": { "type": "object", "description": "Text summary of the resource", "properties": { "status": { "type": "string" }, "div": { "type": "string" } } },
+    "contained": { "type": "array", "description": "Contained, inline Resources", "items": { "type": "object" } },
+    "extension": { "type": "array", "description": "Additional content defined by implementations", "items": { "type": "object", "properties": { "url": { "type": "string" }, "valueString": { "type": "string" }, "valueBoolean": { "type": "boolean" }, "valueCode": { "type": "string" } } } },
+    "modifierExtension": { "type": "array", "description": "Extensions that cannot be ignored", "items": { "type": "object", "properties": { "url": { "type": "string" }, "valueString": { "type": "string" }, "valueBoolean": { "type": "boolean" }, "valueCode": { "type": "string" } } } },
+    "identifier": {
+      "type": "array",
+      "description": "Business identifier",
+      "items": {
+        "type": "object",
+        "properties": {
+          "use": { "type": "string" },
+          "type": { "type": "object", "properties": { "coding": { "type": "array", "items": { "type": "object", "properties": { "system": { "type": "string" }, "code": { "type": "string" }, "display": { "type": "string" } } } }, "text": { "type": "string" } } },
+          "system": { "type": "string" },
+          "value": { "type": "string" },
+          "period": { "type": "object", "properties": { "start": { "type": "string" }, "end": { "type": "string" } } },
+          "assigner": { "type": "object", "properties": { "reference": { "type": "string" }, "display": { "type": "string" } } }
+        }
+      }
+    },
+    "code": {
+      "type": "object",
+      "description": "Kind of Resource",
+      "properties": {
+        "coding": { "type": "array", "items": { "type": "object", "properties": { "system": { "type": "string" }, "code": { "type": "string" }, "display": { "type": "string" } } } },
+        "text": { "type": "string" }
+      }
+    },
+    "subject": {
+      "type": "object",
+      "description": "Identifies the focus of this resource",
+      "properties": {
+        "reference": { "type": "string" },
+        "display": { "type": "string" }
+      }
+    },
+    "created": {
+      "type": "string",
+      "description": "When created"
+    },
+    "author": {
+      "type": "object",
+      "description": "Who created",
+      "properties": {
+        "reference": { "type": "string" },
+        "display": { "type": "string" }
+      }
+    }
+  }
+}

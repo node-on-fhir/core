@@ -1,0 +1,18 @@
+{
+  "$schema": "http://json-schema.org/draft-06/schema#",
+  "id": "http://hl7.org/fhir/json-schema/Binary",
+  "description": "A resource that represents the data of a single raw artifact as digital content accessible in its native format.",
+  "type": "object",
+  "required": ["resourceType", "contentType"],
+  "properties": {
+    "resourceType": { "const": "Binary" },
+    "id": { "type": "string", "description": "Logical id of this artifact" },
+    "_id": { "type": "string", "description": "MongoDB primary key" },
+    "meta": { "type": "object", "properties": { "versionId": { "type": "string" }, "lastUpdated": { "type": "string" }, "source": { "type": "string" }, "profile": { "type": "array", "items": { "type": "string" } }, "security": { "type": "array", "items": { "type": "object", "properties": { "system": { "type": "string" }, "code": { "type": "string" }, "display": { "type": "string" } } } }, "tag": { "type": "array", "items": { "type": "object", "properties": { "system": { "type": "string" }, "code": { "type": "string" }, "display": { "type": "string" } } } } } },
+    "implicitRules": { "type": "string" },
+    "language": { "type": "string" },
+    "contentType": { "type": "string" },
+    "securityContext": { "type": "object", "properties": { "reference": { "type": "string" }, "display": { "type": "string" } } },
+    "data": { "type": "string" }
+  }
+}

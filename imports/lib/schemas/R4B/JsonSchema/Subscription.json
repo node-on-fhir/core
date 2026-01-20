@@ -1,0 +1,26 @@
+{
+  "$schema": "http://json-schema.org/draft-06/schema#",
+  "id": "http://hl7.org/fhir/json-schema/Subscription",
+  "description": "The subscription resource is used to define a push-based subscription from a server to another system.",
+  "type": "object",
+  "required": ["resourceType", "status", "reason", "criteria", "channel"],
+  "properties": {
+    "resourceType": { "const": "Subscription" },
+    "id": { "type": "string", "description": "Logical id of this artifact" },
+    "_id": { "type": "string", "description": "MongoDB primary key" },
+    "meta": { "type": "object", "properties": { "versionId": { "type": "string" }, "lastUpdated": { "type": "string" }, "source": { "type": "string" }, "profile": { "type": "array", "items": { "type": "string" } }, "security": { "type": "array", "items": { "type": "object", "properties": { "system": { "type": "string" }, "code": { "type": "string" }, "display": { "type": "string" } } } }, "tag": { "type": "array", "items": { "type": "object", "properties": { "system": { "type": "string" }, "code": { "type": "string" }, "display": { "type": "string" } } } } } },
+    "implicitRules": { "type": "string" },
+    "language": { "type": "string" },
+    "text": { "type": "object", "properties": { "status": { "type": "string" }, "div": { "type": "string" } } },
+    "contained": { "type": "array", "items": { "type": "object" } },
+    "extension": { "type": "array", "items": { "type": "object" } },
+    "modifierExtension": { "type": "array", "items": { "type": "object" } },
+    "status": { "type": "string", "enum": ["requested", "active", "error", "off"] },
+    "contact": { "type": "array", "items": { "type": "object", "properties": { "system": { "type": "string" }, "value": { "type": "string" }, "use": { "type": "string" } } } },
+    "end": { "type": "string" },
+    "reason": { "type": "string" },
+    "criteria": { "type": "string" },
+    "error": { "type": "string" },
+    "channel": { "type": "object", "properties": { "type": { "type": "string", "enum": ["rest-hook", "websocket", "email", "sms", "message"] }, "endpoint": { "type": "string" }, "payload": { "type": "string" }, "header": { "type": "array", "items": { "type": "string" } } } }
+  }
+}

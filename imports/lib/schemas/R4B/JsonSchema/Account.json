@@ -1,0 +1,30 @@
+{
+  "$schema": "http://json-schema.org/draft-06/schema#",
+  "id": "http://hl7.org/fhir/json-schema/Account",
+  "description": "A financial tool for tracking value accrued for a particular purpose. In the healthcare field, used to track charges for a patient, cost centers, etc.",
+  "type": "object",
+  "required": ["resourceType", "status"],
+  "properties": {
+    "resourceType": { "const": "Account" },
+    "id": { "type": "string", "description": "Logical id of this artifact" },
+    "_id": { "type": "string", "description": "MongoDB primary key" },
+    "meta": { "type": "object", "properties": { "versionId": { "type": "string" }, "lastUpdated": { "type": "string" }, "source": { "type": "string" }, "profile": { "type": "array", "items": { "type": "string" } }, "security": { "type": "array", "items": { "type": "object", "properties": { "system": { "type": "string" }, "code": { "type": "string" }, "display": { "type": "string" } } } }, "tag": { "type": "array", "items": { "type": "object", "properties": { "system": { "type": "string" }, "code": { "type": "string" }, "display": { "type": "string" } } } } } },
+    "implicitRules": { "type": "string" },
+    "language": { "type": "string" },
+    "text": { "type": "object", "properties": { "status": { "type": "string" }, "div": { "type": "string" } } },
+    "contained": { "type": "array", "items": { "type": "object" } },
+    "extension": { "type": "array", "items": { "type": "object" } },
+    "modifierExtension": { "type": "array", "items": { "type": "object" } },
+    "identifier": { "type": "array", "items": { "type": "object", "properties": { "use": { "type": "string" }, "system": { "type": "string" }, "value": { "type": "string" } } } },
+    "status": { "type": "string", "enum": ["active", "inactive", "entered-in-error", "on-hold", "unknown"] },
+    "type": { "type": "object", "properties": { "coding": { "type": "array", "items": { "type": "object", "properties": { "system": { "type": "string" }, "code": { "type": "string" }, "display": { "type": "string" } } } }, "text": { "type": "string" } } },
+    "name": { "type": "string" },
+    "subject": { "type": "array", "items": { "type": "object", "properties": { "reference": { "type": "string" }, "display": { "type": "string" } } } },
+    "servicePeriod": { "type": "object", "properties": { "start": { "type": "string" }, "end": { "type": "string" } } },
+    "coverage": { "type": "array", "items": { "type": "object", "properties": { "coverage": { "type": "object", "properties": { "reference": { "type": "string" }, "display": { "type": "string" } } }, "priority": { "type": "integer" } } } },
+    "owner": { "type": "object", "properties": { "reference": { "type": "string" }, "display": { "type": "string" } } },
+    "description": { "type": "string" },
+    "guarantor": { "type": "array", "items": { "type": "object", "properties": { "party": { "type": "object", "properties": { "reference": { "type": "string" }, "display": { "type": "string" } } }, "onHold": { "type": "boolean" }, "period": { "type": "object", "properties": { "start": { "type": "string" }, "end": { "type": "string" } } } } } },
+    "partOf": { "type": "object", "properties": { "reference": { "type": "string" }, "display": { "type": "string" } } }
+  }
+}

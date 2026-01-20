@@ -1,0 +1,27 @@
+{
+  "$schema": "http://json-schema.org/draft-06/schema#",
+  "id": "http://hl7.org/fhir/json-schema/VisionPrescription",
+  "description": "An authorization for the provision of glasses and/or contact lenses to a patient.",
+  "type": "object",
+  "required": ["resourceType", "status", "created", "patient", "dateWritten", "prescriber", "lensSpecification"],
+  "properties": {
+    "resourceType": { "const": "VisionPrescription" },
+    "id": { "type": "string", "description": "Logical id of this artifact" },
+    "_id": { "type": "string", "description": "MongoDB primary key" },
+    "meta": { "type": "object", "properties": { "versionId": { "type": "string" }, "lastUpdated": { "type": "string" }, "source": { "type": "string" }, "profile": { "type": "array", "items": { "type": "string" } }, "security": { "type": "array", "items": { "type": "object", "properties": { "system": { "type": "string" }, "code": { "type": "string" }, "display": { "type": "string" } } } }, "tag": { "type": "array", "items": { "type": "object", "properties": { "system": { "type": "string" }, "code": { "type": "string" }, "display": { "type": "string" } } } } } },
+    "implicitRules": { "type": "string" },
+    "language": { "type": "string" },
+    "text": { "type": "object", "properties": { "status": { "type": "string" }, "div": { "type": "string" } } },
+    "contained": { "type": "array", "items": { "type": "object" } },
+    "extension": { "type": "array", "items": { "type": "object" } },
+    "modifierExtension": { "type": "array", "items": { "type": "object" } },
+    "identifier": { "type": "array", "items": { "type": "object", "properties": { "use": { "type": "string" }, "system": { "type": "string" }, "value": { "type": "string" } } } },
+    "status": { "type": "string", "enum": ["active", "cancelled", "draft", "entered-in-error"] },
+    "created": { "type": "string" },
+    "patient": { "type": "object", "properties": { "reference": { "type": "string" }, "display": { "type": "string" } } },
+    "encounter": { "type": "object", "properties": { "reference": { "type": "string" }, "display": { "type": "string" } } },
+    "dateWritten": { "type": "string" },
+    "prescriber": { "type": "object", "properties": { "reference": { "type": "string" }, "display": { "type": "string" } } },
+    "lensSpecification": { "type": "array", "items": { "type": "object", "properties": { "product": { "type": "object", "properties": { "coding": { "type": "array", "items": { "type": "object", "properties": { "system": { "type": "string" }, "code": { "type": "string" }, "display": { "type": "string" } } } }, "text": { "type": "string" } } }, "eye": { "type": "string", "enum": ["right", "left"] }, "sphere": { "type": "number" }, "cylinder": { "type": "number" }, "axis": { "type": "integer" }, "prism": { "type": "array", "items": { "type": "object", "properties": { "amount": { "type": "number" }, "base": { "type": "string", "enum": ["up", "down", "in", "out"] } } } }, "add": { "type": "number" }, "power": { "type": "number" }, "backCurve": { "type": "number" }, "diameter": { "type": "number" }, "duration": { "type": "object", "properties": { "value": { "type": "number" }, "unit": { "type": "string" }, "system": { "type": "string" }, "code": { "type": "string" } } }, "color": { "type": "string" }, "brand": { "type": "string" }, "note": { "type": "array", "items": { "type": "object", "properties": { "authorReference": { "type": "object", "properties": { "reference": { "type": "string" }, "display": { "type": "string" } } }, "authorString": { "type": "string" }, "time": { "type": "string" }, "text": { "type": "string" } } } } } } }
+  }
+}

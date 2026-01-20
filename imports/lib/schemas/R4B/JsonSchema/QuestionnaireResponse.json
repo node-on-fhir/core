@@ -1,0 +1,30 @@
+{
+  "$schema": "http://json-schema.org/draft-06/schema#",
+  "id": "http://hl7.org/fhir/json-schema/QuestionnaireResponse",
+  "description": "A structured set of questions and their answers. The questions are ordered and grouped into coherent subsets, corresponding to the structure of the grouping of the questionnaire being responded to.",
+  "type": "object",
+  "required": ["resourceType", "status"],
+  "properties": {
+    "resourceType": { "const": "QuestionnaireResponse" },
+    "id": { "type": "string", "description": "Logical id of this artifact" },
+    "_id": { "type": "string", "description": "MongoDB primary key" },
+    "meta": { "type": "object", "properties": { "versionId": { "type": "string" }, "lastUpdated": { "type": "string" }, "source": { "type": "string" }, "profile": { "type": "array", "items": { "type": "string" } }, "security": { "type": "array", "items": { "type": "object", "properties": { "system": { "type": "string" }, "code": { "type": "string" }, "display": { "type": "string" } } } }, "tag": { "type": "array", "items": { "type": "object", "properties": { "system": { "type": "string" }, "code": { "type": "string" }, "display": { "type": "string" } } } } } },
+    "implicitRules": { "type": "string" },
+    "language": { "type": "string" },
+    "text": { "type": "object", "properties": { "status": { "type": "string" }, "div": { "type": "string" } } },
+    "contained": { "type": "array", "items": { "type": "object" } },
+    "extension": { "type": "array", "items": { "type": "object" } },
+    "modifierExtension": { "type": "array", "items": { "type": "object" } },
+    "identifier": { "type": "object", "properties": { "use": { "type": "string" }, "system": { "type": "string" }, "value": { "type": "string" } } },
+    "basedOn": { "type": "array", "items": { "type": "object", "properties": { "reference": { "type": "string" }, "display": { "type": "string" } } } },
+    "partOf": { "type": "array", "items": { "type": "object", "properties": { "reference": { "type": "string" }, "display": { "type": "string" } } } },
+    "questionnaire": { "type": "string" },
+    "status": { "type": "string", "enum": ["in-progress", "completed", "amended", "entered-in-error", "stopped"] },
+    "subject": { "type": "object", "properties": { "reference": { "type": "string" }, "display": { "type": "string" } } },
+    "encounter": { "type": "object", "properties": { "reference": { "type": "string" }, "display": { "type": "string" } } },
+    "authored": { "type": "string" },
+    "author": { "type": "object", "properties": { "reference": { "type": "string" }, "display": { "type": "string" } } },
+    "source": { "type": "object", "properties": { "reference": { "type": "string" }, "display": { "type": "string" } } },
+    "item": { "type": "array", "items": { "type": "object", "properties": { "linkId": { "type": "string" }, "definition": { "type": "string" }, "text": { "type": "string" }, "answer": { "type": "array", "items": { "type": "object", "properties": { "valueBoolean": { "type": "boolean" }, "valueDecimal": { "type": "number" }, "valueInteger": { "type": "integer" }, "valueDate": { "type": "string" }, "valueDateTime": { "type": "string" }, "valueTime": { "type": "string" }, "valueString": { "type": "string" }, "valueUri": { "type": "string" }, "valueAttachment": { "type": "object", "properties": { "contentType": { "type": "string" }, "language": { "type": "string" }, "data": { "type": "string" }, "url": { "type": "string" }, "size": { "type": "integer" }, "hash": { "type": "string" }, "title": { "type": "string" }, "creation": { "type": "string" } } }, "valueCoding": { "type": "object", "properties": { "system": { "type": "string" }, "code": { "type": "string" }, "display": { "type": "string" } } }, "valueQuantity": { "type": "object", "properties": { "value": { "type": "number" }, "unit": { "type": "string" }, "system": { "type": "string" }, "code": { "type": "string" } } }, "valueReference": { "type": "object", "properties": { "reference": { "type": "string" }, "display": { "type": "string" } } }, "item": { "type": "array", "items": { "type": "object" } } } } }, "item": { "type": "array", "items": { "type": "object" } } } } }
+  }
+}

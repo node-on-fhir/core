@@ -1,0 +1,30 @@
+{
+  "$schema": "http://json-schema.org/draft-06/schema#",
+  "id": "http://hl7.org/fhir/json-schema/ClinicalUseDefinition",
+  "description": "A single issue - either an indication, contraindication, interaction or an undesirable effect for a medicinal product, medication, device or procedure.",
+  "type": "object",
+  "required": ["resourceType", "type"],
+  "properties": {
+    "resourceType": { "const": "ClinicalUseDefinition" },
+    "id": { "type": "string", "description": "Logical id of this artifact" },
+    "_id": { "type": "string", "description": "MongoDB primary key" },
+    "meta": { "type": "object", "properties": { "versionId": { "type": "string" }, "lastUpdated": { "type": "string" }, "source": { "type": "string" }, "profile": { "type": "array", "items": { "type": "string" } }, "security": { "type": "array", "items": { "type": "object", "properties": { "system": { "type": "string" }, "code": { "type": "string" }, "display": { "type": "string" } } } }, "tag": { "type": "array", "items": { "type": "object", "properties": { "system": { "type": "string" }, "code": { "type": "string" }, "display": { "type": "string" } } } } } },
+    "implicitRules": { "type": "string" },
+    "language": { "type": "string" },
+    "text": { "type": "object", "properties": { "status": { "type": "string" }, "div": { "type": "string" } } },
+    "contained": { "type": "array", "items": { "type": "object" } },
+    "extension": { "type": "array", "items": { "type": "object" } },
+    "modifierExtension": { "type": "array", "items": { "type": "object" } },
+    "identifier": { "type": "array", "items": { "type": "object", "properties": { "use": { "type": "string" }, "system": { "type": "string" }, "value": { "type": "string" } } } },
+    "type": { "type": "string", "enum": ["indication", "contraindication", "interaction", "undesirable-effect", "warning"] },
+    "category": { "type": "array", "items": { "type": "object", "properties": { "coding": { "type": "array", "items": { "type": "object", "properties": { "system": { "type": "string" }, "code": { "type": "string" }, "display": { "type": "string" } } } }, "text": { "type": "string" } } } },
+    "subject": { "type": "array", "items": { "type": "object", "properties": { "reference": { "type": "string" }, "display": { "type": "string" } } } },
+    "status": { "type": "object", "properties": { "coding": { "type": "array", "items": { "type": "object", "properties": { "system": { "type": "string" }, "code": { "type": "string" }, "display": { "type": "string" } } } }, "text": { "type": "string" } } },
+    "contraindication": { "type": "object", "properties": { "diseaseSymptomProcedure": { "type": "object" }, "diseaseStatus": { "type": "object" }, "comorbidity": { "type": "array", "items": { "type": "object" } }, "indication": { "type": "array", "items": { "type": "object" } }, "otherTherapy": { "type": "array", "items": { "type": "object", "properties": { "relationshipType": { "type": "object" }, "therapy": { "type": "object" } } } } } },
+    "indication": { "type": "object", "properties": { "diseaseSymptomProcedure": { "type": "object" }, "diseaseStatus": { "type": "object" }, "comorbidity": { "type": "array", "items": { "type": "object" } }, "intendedEffect": { "type": "object" }, "durationRange": { "type": "object" }, "durationString": { "type": "string" }, "undesirableEffect": { "type": "array", "items": { "type": "object" } }, "otherTherapy": { "type": "array", "items": { "type": "object" } } } },
+    "interaction": { "type": "object", "properties": { "interactant": { "type": "array", "items": { "type": "object", "properties": { "itemReference": { "type": "object" }, "itemCodeableConcept": { "type": "object" } } } }, "type": { "type": "object" }, "effect": { "type": "object" }, "incidence": { "type": "object" }, "management": { "type": "array", "items": { "type": "object" } } } },
+    "population": { "type": "array", "items": { "type": "object", "properties": { "reference": { "type": "string" }, "display": { "type": "string" } } } },
+    "undesirableEffect": { "type": "object", "properties": { "symptomConditionEffect": { "type": "object" }, "classification": { "type": "object" }, "frequencyOfOccurrence": { "type": "object" } } },
+    "warning": { "type": "object", "properties": { "description": { "type": "string" }, "code": { "type": "object" } } }
+  }
+}
