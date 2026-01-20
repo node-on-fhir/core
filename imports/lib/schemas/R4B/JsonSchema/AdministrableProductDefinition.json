@@ -1,0 +1,29 @@
+{
+  "$schema": "http://json-schema.org/draft-06/schema#",
+  "id": "http://hl7.org/fhir/json-schema/AdministrableProductDefinition",
+  "description": "A pharmaceutical product described in terms of its composition and dose form, and how it is to be administered to a patient.",
+  "type": "object",
+  "required": ["resourceType", "administrableDoseForm"],
+  "properties": {
+    "resourceType": { "const": "AdministrableProductDefinition" },
+    "id": { "type": "string", "description": "Logical id of this artifact" },
+    "_id": { "type": "string", "description": "MongoDB primary key" },
+    "meta": { "type": "object", "properties": { "versionId": { "type": "string" }, "lastUpdated": { "type": "string" }, "source": { "type": "string" }, "profile": { "type": "array", "items": { "type": "string" } }, "security": { "type": "array", "items": { "type": "object", "properties": { "system": { "type": "string" }, "code": { "type": "string" }, "display": { "type": "string" } } } }, "tag": { "type": "array", "items": { "type": "object", "properties": { "system": { "type": "string" }, "code": { "type": "string" }, "display": { "type": "string" } } } } } },
+    "implicitRules": { "type": "string" },
+    "language": { "type": "string" },
+    "text": { "type": "object", "properties": { "status": { "type": "string" }, "div": { "type": "string" } } },
+    "contained": { "type": "array", "items": { "type": "object" } },
+    "extension": { "type": "array", "items": { "type": "object" } },
+    "modifierExtension": { "type": "array", "items": { "type": "object" } },
+    "identifier": { "type": "array", "items": { "type": "object", "properties": { "use": { "type": "string" }, "system": { "type": "string" }, "value": { "type": "string" } } } },
+    "status": { "type": "string", "enum": ["draft", "active", "retired", "unknown"] },
+    "formOf": { "type": "array", "items": { "type": "object", "properties": { "reference": { "type": "string" }, "display": { "type": "string" } } } },
+    "administrableDoseForm": { "type": "object", "properties": { "coding": { "type": "array", "items": { "type": "object", "properties": { "system": { "type": "string" }, "code": { "type": "string" }, "display": { "type": "string" } } } }, "text": { "type": "string" } } },
+    "unitOfPresentation": { "type": "object", "properties": { "coding": { "type": "array", "items": { "type": "object", "properties": { "system": { "type": "string" }, "code": { "type": "string" }, "display": { "type": "string" } } } }, "text": { "type": "string" } } },
+    "producedFrom": { "type": "array", "items": { "type": "object", "properties": { "reference": { "type": "string" }, "display": { "type": "string" } } } },
+    "ingredient": { "type": "array", "items": { "type": "object", "properties": { "coding": { "type": "array", "items": { "type": "object", "properties": { "system": { "type": "string" }, "code": { "type": "string" }, "display": { "type": "string" } } } }, "text": { "type": "string" } } } },
+    "device": { "type": "object", "properties": { "reference": { "type": "string" }, "display": { "type": "string" } } },
+    "property": { "type": "array", "items": { "type": "object", "properties": { "type": { "type": "object" }, "valueCodeableConcept": { "type": "object" }, "valueQuantity": { "type": "object" }, "valueDate": { "type": "string" }, "valueBoolean": { "type": "boolean" }, "valueAttachment": { "type": "object" } } } },
+    "routeOfAdministration": { "type": "array", "items": { "type": "object", "properties": { "code": { "type": "object", "properties": { "coding": { "type": "array", "items": { "type": "object", "properties": { "system": { "type": "string" }, "code": { "type": "string" }, "display": { "type": "string" } } } }, "text": { "type": "string" } } }, "firstDose": { "type": "object" }, "maxSingleDose": { "type": "object" }, "maxDosePerDay": { "type": "object" }, "maxDosePerTreatmentPeriod": { "type": "object" }, "maxTreatmentPeriod": { "type": "object" }, "targetSpecies": { "type": "array", "items": { "type": "object" } } } } }
+  }
+}

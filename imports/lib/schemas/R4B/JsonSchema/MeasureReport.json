@@ -1,0 +1,30 @@
+{
+  "$schema": "http://json-schema.org/draft-06/schema#",
+  "id": "http://hl7.org/fhir/json-schema/MeasureReport",
+  "description": "The MeasureReport resource contains the results of the calculation of a measure; and optionally a reference to the resources involved in that calculation.",
+  "type": "object",
+  "required": ["resourceType", "status", "type", "measure", "period"],
+  "properties": {
+    "resourceType": { "const": "MeasureReport" },
+    "id": { "type": "string", "description": "Logical id of this artifact" },
+    "_id": { "type": "string", "description": "MongoDB primary key" },
+    "meta": { "type": "object", "properties": { "versionId": { "type": "string" }, "lastUpdated": { "type": "string" }, "source": { "type": "string" }, "profile": { "type": "array", "items": { "type": "string" } }, "security": { "type": "array", "items": { "type": "object", "properties": { "system": { "type": "string" }, "code": { "type": "string" }, "display": { "type": "string" } } } }, "tag": { "type": "array", "items": { "type": "object", "properties": { "system": { "type": "string" }, "code": { "type": "string" }, "display": { "type": "string" } } } } } },
+    "implicitRules": { "type": "string" },
+    "language": { "type": "string" },
+    "text": { "type": "object", "properties": { "status": { "type": "string" }, "div": { "type": "string" } } },
+    "contained": { "type": "array", "items": { "type": "object" } },
+    "extension": { "type": "array", "items": { "type": "object" } },
+    "modifierExtension": { "type": "array", "items": { "type": "object" } },
+    "identifier": { "type": "array", "items": { "type": "object", "properties": { "use": { "type": "string" }, "system": { "type": "string" }, "value": { "type": "string" } } } },
+    "status": { "type": "string", "enum": ["complete", "pending", "error"] },
+    "type": { "type": "string", "enum": ["individual", "subject-list", "summary", "data-collection"] },
+    "measure": { "type": "string" },
+    "subject": { "type": "object", "properties": { "reference": { "type": "string" }, "display": { "type": "string" } } },
+    "date": { "type": "string" },
+    "reporter": { "type": "object", "properties": { "reference": { "type": "string" }, "display": { "type": "string" } } },
+    "period": { "type": "object", "properties": { "start": { "type": "string" }, "end": { "type": "string" } } },
+    "improvementNotation": { "type": "object", "properties": { "coding": { "type": "array", "items": { "type": "object", "properties": { "system": { "type": "string" }, "code": { "type": "string" }, "display": { "type": "string" } } } }, "text": { "type": "string" } } },
+    "group": { "type": "array", "items": { "type": "object", "properties": { "code": { "type": "object", "properties": { "coding": { "type": "array", "items": { "type": "object", "properties": { "system": { "type": "string" }, "code": { "type": "string" }, "display": { "type": "string" } } } }, "text": { "type": "string" } } }, "population": { "type": "array", "items": { "type": "object", "properties": { "code": { "type": "object", "properties": { "coding": { "type": "array", "items": { "type": "object", "properties": { "system": { "type": "string" }, "code": { "type": "string" }, "display": { "type": "string" } } } }, "text": { "type": "string" } } }, "count": { "type": "integer" }, "subjectResults": { "type": "object", "properties": { "reference": { "type": "string" }, "display": { "type": "string" } } } } } }, "measureScore": { "type": "object", "properties": { "value": { "type": "number" }, "unit": { "type": "string" }, "system": { "type": "string" }, "code": { "type": "string" } } }, "stratifier": { "type": "array", "items": { "type": "object", "properties": { "code": { "type": "array", "items": { "type": "object" } }, "stratum": { "type": "array", "items": { "type": "object", "properties": { "value": { "type": "object" }, "component": { "type": "array", "items": { "type": "object" } }, "population": { "type": "array", "items": { "type": "object" } }, "measureScore": { "type": "object" } } } } } } } } } },
+    "evaluatedResource": { "type": "array", "items": { "type": "object", "properties": { "reference": { "type": "string" }, "display": { "type": "string" } } } }
+  }
+}

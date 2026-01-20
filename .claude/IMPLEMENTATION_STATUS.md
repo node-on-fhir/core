@@ -41,7 +41,7 @@ High-value audit and fix commands:
 
 **Specialized autonomous agents:**
 
-- ⏳ `agents/fhir-schema-expert.md` - FHIR R4, SMART 2.x, ONC (g)(10)
+- ⏳ `agents/fhir-schema-expert.md` - FHIR R4B, SMART 2.x, ONC (g)(10)
 - ⏳ `agents/test-stabilizer.md` - Nightwatch, Material-UI testing
 - ⏳ `agents/patient-context-debugger.md` - Session, subscriptions
 - ⏳ `agents/theme-auditor.md` - Dark/light mode compliance

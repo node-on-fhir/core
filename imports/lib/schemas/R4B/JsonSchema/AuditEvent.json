@@ -1,0 +1,285 @@
+{
+  "$schema": "http://json-schema.org/draft-06/schema#",
+  "id": "http://hl7.org/fhir/json-schema/AuditEvent",
+  "description": "A record of an event made for purposes of maintaining a security log.",
+  "type": "object",
+  "required": ["resourceType", "type", "recorded", "agent", "source"],
+  "properties": {
+    "resourceType": {
+      "const": "AuditEvent"
+    },
+    "id": {
+      "type": "string",
+      "description": "Logical id of this artifact"
+    },
+    "_id": {
+      "type": "string",
+      "description": "MongoDB primary key"
+    },
+    "type": {
+      "type": "object",
+      "description": "Type/identifier of event",
+      "properties": {
+        "system": { "type": "string" },
+        "code": { "type": "string" },
+        "display": { "type": "string" }
+      }
+    },
+    "subtype": {
+      "type": "array",
+      "description": "More specific type/id for the event",
+      "items": {
+        "type": "object",
+        "properties": {
+          "system": { "type": "string" },
+          "code": { "type": "string" },
+          "display": { "type": "string" }
+        }
+      }
+    },
+    "action": {
+      "type": "string",
+      "description": "Type of action performed during the event",
+      "enum": ["C", "R", "U", "D", "E"]
+    },
+    "period": {
+      "type": "object",
+      "description": "When the activity occurred",
+      "properties": {
+        "start": { "type": "string" },
+        "end": { "type": "string" }
+      }
+    },
+    "recorded": {
+      "type": "string",
+      "description": "Time when the event was recorded"
+    },
+    "outcome": {
+      "type": "string",
+      "description": "Whether the event succeeded or failed",
+      "enum": ["0", "4", "8", "12"]
+    },
+    "outcomeDesc": {
+      "type": "string",
+      "description": "Description of the event outcome"
+    },
+    "purposeOfEvent": {
+      "type": "array",
+      "description": "The purposeOfUse of the event",
+      "items": {
+        "type": "object",
+        "properties": {
+          "coding": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "system": { "type": "string" },
+                "code": { "type": "string" },
+                "display": { "type": "string" }
+              }
+            }
+          },
+          "text": { "type": "string" }
+        }
+      }
+    },
+    "agent": {
+      "type": "array",
+      "description": "Actor involved in the event",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["requestor"],
+        "properties": {
+          "type": {
+            "type": "object",
+            "properties": {
+              "coding": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "system": { "type": "string" },
+                    "code": { "type": "string" },
+                    "display": { "type": "string" }
+                  }
+                }
+              },
+              "text": { "type": "string" }
+            }
+          },
+          "role": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "coding": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "system": { "type": "string" },
+                      "code": { "type": "string" },
+                      "display": { "type": "string" }
+                    }
+                  }
+                },
+                "text": { "type": "string" }
+              }
+            }
+          },
+          "who": {
+            "type": "object",
+            "description": "Reference to the agent",
+            "properties": {
+              "reference": { "type": "string" },
+              "display": { "type": "string" }
+            }
+          },
+          "altId": { "type": "string" },
+          "name": { "type": "string" },
+          "requestor": { "type": "boolean" },
+          "location": {
+            "type": "object",
+            "properties": {
+              "reference": { "type": "string" },
+              "display": { "type": "string" }
+            }
+          },
+          "policy": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "media": {
+            "type": "object",
+            "properties": {
+              "system": { "type": "string" },
+              "code": { "type": "string" },
+              "display": { "type": "string" }
+            }
+          },
+          "network": {
+            "type": "object",
+            "properties": {
+              "address": { "type": "string" },
+              "type": { "type": "string" }
+            }
+          },
+          "purposeOfUse": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "coding": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "system": { "type": "string" },
+                      "code": { "type": "string" },
+                      "display": { "type": "string" }
+                    }
+                  }
+                },
+                "text": { "type": "string" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "source": {
+      "type": "object",
+      "description": "Audit Event Reporter",
+      "required": ["observer"],
+      "properties": {
+        "site": { "type": "string" },
+        "observer": {
+          "type": "object",
+          "description": "Reference to the source observer",
+          "properties": {
+            "reference": { "type": "string" },
+            "display": { "type": "string" }
+          }
+        },
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "system": { "type": "string" },
+              "code": { "type": "string" },
+              "display": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "entity": {
+      "type": "array",
+      "description": "Data or objects used",
+      "items": {
+        "type": "object",
+        "properties": {
+          "what": {
+            "type": "object",
+            "properties": {
+              "reference": { "type": "string" },
+              "display": { "type": "string" }
+            }
+          },
+          "type": {
+            "type": "object",
+            "properties": {
+              "system": { "type": "string" },
+              "code": { "type": "string" },
+              "display": { "type": "string" }
+            }
+          },
+          "role": {
+            "type": "object",
+            "properties": {
+              "system": { "type": "string" },
+              "code": { "type": "string" },
+              "display": { "type": "string" }
+            }
+          },
+          "lifecycle": {
+            "type": "object",
+            "properties": {
+              "system": { "type": "string" },
+              "code": { "type": "string" },
+              "display": { "type": "string" }
+            }
+          },
+          "securityLabel": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "system": { "type": "string" },
+                "code": { "type": "string" },
+                "display": { "type": "string" }
+              }
+            }
+          },
+          "name": { "type": "string" },
+          "description": { "type": "string" },
+          "query": { "type": "string" },
+          "detail": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "type": { "type": "string" },
+                "valueString": { "type": "string" },
+                "valueBase64Binary": { "type": "string" }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

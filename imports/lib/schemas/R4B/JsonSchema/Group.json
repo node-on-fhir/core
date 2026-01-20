@@ -1,0 +1,29 @@
+{
+  "$schema": "http://json-schema.org/draft-06/schema#",
+  "id": "http://hl7.org/fhir/json-schema/Group",
+  "description": "Represents a defined collection of entities that may be discussed or acted upon collectively but which are not expected to act collectively, and are not formally or legally recognized; i.e. a collection of entities that isn't an Organization.",
+  "type": "object",
+  "required": ["resourceType", "type", "actual"],
+  "properties": {
+    "resourceType": { "const": "Group" },
+    "id": { "type": "string", "description": "Logical id of this artifact" },
+    "_id": { "type": "string", "description": "MongoDB primary key" },
+    "meta": { "type": "object", "properties": { "versionId": { "type": "string" }, "lastUpdated": { "type": "string" }, "source": { "type": "string" }, "profile": { "type": "array", "items": { "type": "string" } }, "security": { "type": "array", "items": { "type": "object", "properties": { "system": { "type": "string" }, "code": { "type": "string" }, "display": { "type": "string" } } } }, "tag": { "type": "array", "items": { "type": "object", "properties": { "system": { "type": "string" }, "code": { "type": "string" }, "display": { "type": "string" } } } } } },
+    "implicitRules": { "type": "string" },
+    "language": { "type": "string" },
+    "text": { "type": "object", "properties": { "status": { "type": "string" }, "div": { "type": "string" } } },
+    "contained": { "type": "array", "items": { "type": "object" } },
+    "extension": { "type": "array", "items": { "type": "object" } },
+    "modifierExtension": { "type": "array", "items": { "type": "object" } },
+    "identifier": { "type": "array", "items": { "type": "object", "properties": { "use": { "type": "string" }, "system": { "type": "string" }, "value": { "type": "string" } } } },
+    "active": { "type": "boolean" },
+    "type": { "type": "string", "enum": ["person", "animal", "practitioner", "device", "medication", "substance"] },
+    "actual": { "type": "boolean" },
+    "code": { "type": "object", "properties": { "coding": { "type": "array", "items": { "type": "object", "properties": { "system": { "type": "string" }, "code": { "type": "string" }, "display": { "type": "string" } } } }, "text": { "type": "string" } } },
+    "name": { "type": "string" },
+    "quantity": { "type": "integer" },
+    "managingEntity": { "type": "object", "properties": { "reference": { "type": "string" }, "display": { "type": "string" } } },
+    "characteristic": { "type": "array", "items": { "type": "object", "properties": { "code": { "type": "object", "properties": { "coding": { "type": "array", "items": { "type": "object", "properties": { "system": { "type": "string" }, "code": { "type": "string" }, "display": { "type": "string" } } } }, "text": { "type": "string" } } }, "valueCodeableConcept": { "type": "object", "properties": { "coding": { "type": "array", "items": { "type": "object", "properties": { "system": { "type": "string" }, "code": { "type": "string" }, "display": { "type": "string" } } } }, "text": { "type": "string" } } }, "valueBoolean": { "type": "boolean" }, "valueQuantity": { "type": "object", "properties": { "value": { "type": "number" }, "unit": { "type": "string" }, "system": { "type": "string" }, "code": { "type": "string" } } }, "valueRange": { "type": "object", "properties": { "low": { "type": "object", "properties": { "value": { "type": "number" }, "unit": { "type": "string" } } }, "high": { "type": "object", "properties": { "value": { "type": "number" }, "unit": { "type": "string" } } } } }, "valueReference": { "type": "object", "properties": { "reference": { "type": "string" }, "display": { "type": "string" } } }, "exclude": { "type": "boolean" }, "period": { "type": "object", "properties": { "start": { "type": "string" }, "end": { "type": "string" } } } } } },
+    "member": { "type": "array", "items": { "type": "object", "properties": { "entity": { "type": "object", "properties": { "reference": { "type": "string" }, "display": { "type": "string" } } }, "period": { "type": "object", "properties": { "start": { "type": "string" }, "end": { "type": "string" } } }, "inactive": { "type": "boolean" } } } }
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "$schema": "http://json-schema.org/draft-06/schema#",
+  "id": "http://hl7.org/fhir/json-schema/PractitionerRole",
+  "description": "A specific set of Roles/Locations/specialties/services that a practitioner may perform at an organization for a period of time.",
+  "type": "object",
+  "required": ["resourceType"],
+  "properties": {
+    "resourceType": { "const": "PractitionerRole" },
+    "id": { "type": "string", "description": "Logical id of this artifact" },
+    "_id": { "type": "string", "description": "MongoDB primary key" },
+    "meta": { "type": "object", "properties": { "versionId": { "type": "string" }, "lastUpdated": { "type": "string" }, "source": { "type": "string" }, "profile": { "type": "array", "items": { "type": "string" } }, "security": { "type": "array", "items": { "type": "object", "properties": { "system": { "type": "string" }, "code": { "type": "string" }, "display": { "type": "string" } } } }, "tag": { "type": "array", "items": { "type": "object", "properties": { "system": { "type": "string" }, "code": { "type": "string" }, "display": { "type": "string" } } } } } },
+    "implicitRules": { "type": "string" },
+    "language": { "type": "string" },
+    "text": { "type": "object", "properties": { "status": { "type": "string" }, "div": { "type": "string" } } },
+    "contained": { "type": "array", "items": { "type": "object" } },
+    "extension": { "type": "array", "items": { "type": "object" } },
+    "modifierExtension": { "type": "array", "items": { "type": "object" } },
+    "identifier": { "type": "array", "items": { "type": "object", "properties": { "use": { "type": "string" }, "system": { "type": "string" }, "value": { "type": "string" } } } },
+    "active": { "type": "boolean" },
+    "period": { "type": "object", "properties": { "start": { "type": "string" }, "end": { "type": "string" } } },
+    "practitioner": { "type": "object", "properties": { "reference": { "type": "string" }, "display": { "type": "string" } } },
+    "organization": { "type": "object", "properties": { "reference": { "type": "string" }, "display": { "type": "string" } } },
+    "code": { "type": "array", "items": { "type": "object", "properties": { "coding": { "type": "array", "items": { "type": "object", "properties": { "system": { "type": "string" }, "code": { "type": "string" }, "display": { "type": "string" } } } }, "text": { "type": "string" } } } },
+    "specialty": { "type": "array", "items": { "type": "object", "properties": { "coding": { "type": "array", "items": { "type": "object", "properties": { "system": { "type": "string" }, "code": { "type": "string" }, "display": { "type": "string" } } } }, "text": { "type": "string" } } } },
+    "location": { "type": "array", "items": { "type": "object", "properties": { "reference": { "type": "string" }, "display": { "type": "string" } } } },
+    "healthcareService": { "type": "array", "items": { "type": "object", "properties": { "reference": { "type": "string" }, "display": { "type": "string" } } } },
+    "telecom": { "type": "array", "items": { "type": "object", "properties": { "system": { "type": "string" }, "value": { "type": "string" }, "use": { "type": "string" }, "rank": { "type": "integer" }, "period": { "type": "object", "properties": { "start": { "type": "string" }, "end": { "type": "string" } } } } } },
+    "availableTime": { "type": "array", "items": { "type": "object", "properties": { "daysOfWeek": { "type": "array", "items": { "type": "string" } }, "allDay": { "type": "boolean" }, "availableStartTime": { "type": "string" }, "availableEndTime": { "type": "string" } } } },
+    "notAvailable": { "type": "array", "items": { "type": "object", "properties": { "description": { "type": "string" }, "during": { "type": "object", "properties": { "start": { "type": "string" }, "end": { "type": "string" } } } } } },
+    "availabilityExceptions": { "type": "string" },
+    "endpoint": { "type": "array", "items": { "type": "object", "properties": { "reference": { "type": "string" }, "display": { "type": "string" } } } }
+  }
+}

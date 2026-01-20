@@ -346,7 +346,7 @@ This agent has deep familiarity with:
 - SMART on FHIR v2 (Granular Scopes): http://hl7.org/fhir/smart-app-launch/scopes-and-launch-context.html
 - Bulk FHIR: https://hl7.org/fhir/uv/bulkdata/
 - UDAP: https://www.udap.org/
-- FHIR R4 AuditEvent: https://hl7.org/fhir/R4/auditevent.html
+- FHIR R4B AuditEvent: https://hl7.org/fhir/R4B/auditevent.html
 
 ## When to Invoke
 
@@ -621,7 +621,7 @@ A: Not required but recommended for TEFCA compliance and enhanced security.
 ## Related
 
 - See `/healthit-checklist` command for generating paranoia lists
-- See `fhir-schema-expert` for FHIR R4 spec questions
+- See `fhir-schema-expert` for FHIR R4B spec questions
 - See `server/CLAUDE.md` for granular scopes implementation
 - See ONC regulations: https://www.healthit.gov/topic/certification-ehrs/certification-criteria
 

@@ -1,0 +1,32 @@
+{
+  "$schema": "http://json-schema.org/draft-06/schema#",
+  "id": "http://hl7.org/fhir/json-schema/SupplyDelivery",
+  "description": "Record of delivery of what is supplied.",
+  "type": "object",
+  "required": ["resourceType"],
+  "properties": {
+    "resourceType": { "const": "SupplyDelivery" },
+    "id": { "type": "string", "description": "Logical id of this artifact" },
+    "_id": { "type": "string", "description": "MongoDB primary key" },
+    "meta": { "type": "object", "properties": { "versionId": { "type": "string" }, "lastUpdated": { "type": "string" }, "source": { "type": "string" }, "profile": { "type": "array", "items": { "type": "string" } }, "security": { "type": "array", "items": { "type": "object", "properties": { "system": { "type": "string" }, "code": { "type": "string" }, "display": { "type": "string" } } } }, "tag": { "type": "array", "items": { "type": "object", "properties": { "system": { "type": "string" }, "code": { "type": "string" }, "display": { "type": "string" } } } } } },
+    "implicitRules": { "type": "string" },
+    "language": { "type": "string" },
+    "text": { "type": "object", "properties": { "status": { "type": "string" }, "div": { "type": "string" } } },
+    "contained": { "type": "array", "items": { "type": "object" } },
+    "extension": { "type": "array", "items": { "type": "object" } },
+    "modifierExtension": { "type": "array", "items": { "type": "object" } },
+    "identifier": { "type": "array", "items": { "type": "object", "properties": { "use": { "type": "string" }, "system": { "type": "string" }, "value": { "type": "string" } } } },
+    "basedOn": { "type": "array", "items": { "type": "object", "properties": { "reference": { "type": "string" }, "display": { "type": "string" } } } },
+    "partOf": { "type": "array", "items": { "type": "object", "properties": { "reference": { "type": "string" }, "display": { "type": "string" } } } },
+    "status": { "type": "string", "enum": ["in-progress", "completed", "abandoned", "entered-in-error"] },
+    "patient": { "type": "object", "properties": { "reference": { "type": "string" }, "display": { "type": "string" } } },
+    "type": { "type": "object", "properties": { "coding": { "type": "array", "items": { "type": "object", "properties": { "system": { "type": "string" }, "code": { "type": "string" }, "display": { "type": "string" } } } }, "text": { "type": "string" } } },
+    "suppliedItem": { "type": "object", "properties": { "quantity": { "type": "object", "properties": { "value": { "type": "number" }, "unit": { "type": "string" }, "system": { "type": "string" }, "code": { "type": "string" } } }, "itemCodeableConcept": { "type": "object", "properties": { "coding": { "type": "array", "items": { "type": "object", "properties": { "system": { "type": "string" }, "code": { "type": "string" }, "display": { "type": "string" } } } }, "text": { "type": "string" } } }, "itemReference": { "type": "object", "properties": { "reference": { "type": "string" }, "display": { "type": "string" } } } } },
+    "occurrenceDateTime": { "type": "string" },
+    "occurrencePeriod": { "type": "object", "properties": { "start": { "type": "string" }, "end": { "type": "string" } } },
+    "occurrenceTiming": { "type": "object", "properties": { "event": { "type": "array", "items": { "type": "string" } }, "repeat": { "type": "object" }, "code": { "type": "object" } } },
+    "supplier": { "type": "object", "properties": { "reference": { "type": "string" }, "display": { "type": "string" } } },
+    "destination": { "type": "object", "properties": { "reference": { "type": "string" }, "display": { "type": "string" } } },
+    "receiver": { "type": "array", "items": { "type": "object", "properties": { "reference": { "type": "string" }, "display": { "type": "string" } } } }
+  }
+}

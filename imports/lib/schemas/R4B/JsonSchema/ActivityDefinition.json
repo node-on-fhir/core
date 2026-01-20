@@ -1,0 +1,877 @@
+{
+  "$schema": "http://json-schema.org/draft-06/schema#",
+  "id": "http://hl7.org/fhir/json-schema/ActivityDefinition",
+  "description": "This resource allows for the definition of some activity to be performed, independent of a particular patient, practitioner, or other performance context.",
+  "type": "object",
+  "required": ["resourceType"],
+  "properties": {
+    "resourceType": {
+      "const": "ActivityDefinition"
+    },
+    "id": {
+      "type": "string",
+      "description": "Logical id of this artifact"
+    },
+    "_id": {
+      "type": "string",
+      "description": "MongoDB primary key"
+    },
+    "meta": {
+      "type": "object",
+      "description": "Metadata about the resource",
+      "properties": {
+        "versionId": { "type": "string" },
+        "lastUpdated": { "type": "string" },
+        "source": { "type": "string" },
+        "profile": { "type": "array", "items": { "type": "string" } },
+        "security": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "system": { "type": "string" },
+              "code": { "type": "string" },
+              "display": { "type": "string" }
+            }
+          }
+        },
+        "tag": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "system": { "type": "string" },
+              "code": { "type": "string" },
+              "display": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "implicitRules": {
+      "type": "string",
+      "description": "A set of rules under which this content was created"
+    },
+    "language": {
+      "type": "string",
+      "description": "Language of the resource content"
+    },
+    "text": {
+      "type": "object",
+      "description": "Text summary of the resource",
+      "properties": {
+        "status": { "type": "string" },
+        "div": { "type": "string" }
+      }
+    },
+    "contained": {
+      "type": "array",
+      "description": "Contained, inline Resources",
+      "items": { "type": "object" }
+    },
+    "extension": {
+      "type": "array",
+      "description": "Additional content defined by implementations",
+      "items": {
+        "type": "object",
+        "properties": {
+          "url": { "type": "string" },
+          "valueString": { "type": "string" },
+          "valueBoolean": { "type": "boolean" },
+          "valueInteger": { "type": "integer" },
+          "valueCode": { "type": "string" }
+        }
+      }
+    },
+    "modifierExtension": {
+      "type": "array",
+      "description": "Extensions that cannot be ignored",
+      "items": {
+        "type": "object",
+        "properties": {
+          "url": { "type": "string" },
+          "valueString": { "type": "string" },
+          "valueBoolean": { "type": "boolean" },
+          "valueInteger": { "type": "integer" },
+          "valueCode": { "type": "string" }
+        }
+      }
+    },
+    "url": {
+      "type": "string",
+      "description": "Canonical identifier for this activity definition"
+    },
+    "identifier": {
+      "type": "array",
+      "description": "Additional identifier for the activity definition",
+      "items": {
+        "type": "object",
+        "properties": {
+          "use": { "type": "string" },
+          "type": {
+            "type": "object",
+            "properties": {
+              "coding": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "system": { "type": "string" },
+                    "code": { "type": "string" },
+                    "display": { "type": "string" }
+                  }
+                }
+              },
+              "text": { "type": "string" }
+            }
+          },
+          "system": { "type": "string" },
+          "value": { "type": "string" },
+          "period": {
+            "type": "object",
+            "properties": {
+              "start": { "type": "string" },
+              "end": { "type": "string" }
+            }
+          },
+          "assigner": {
+            "type": "object",
+            "properties": {
+              "reference": { "type": "string" },
+              "display": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "version": {
+      "type": "string",
+      "description": "Business version of the activity definition"
+    },
+    "name": {
+      "type": "string",
+      "description": "Name for this activity definition (computer friendly)"
+    },
+    "title": {
+      "type": "string",
+      "description": "Name for this activity definition (human friendly)"
+    },
+    "subtitle": {
+      "type": "string",
+      "description": "Subordinate title of the activity definition"
+    },
+    "status": {
+      "type": "string",
+      "description": "draft | active | retired | unknown",
+      "enum": ["draft", "active", "retired", "unknown"]
+    },
+    "experimental": {
+      "type": "boolean",
+      "description": "For testing purposes, not real usage"
+    },
+    "subjectCodeableConcept": {
+      "type": "object",
+      "description": "Type of individual the activity definition is intended for",
+      "properties": {
+        "coding": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "system": { "type": "string" },
+              "code": { "type": "string" },
+              "display": { "type": "string" }
+            }
+          }
+        },
+        "text": { "type": "string" }
+      }
+    },
+    "subjectReference": {
+      "type": "object",
+      "description": "Type of individual the activity definition is intended for",
+      "properties": {
+        "reference": { "type": "string" },
+        "display": { "type": "string" }
+      }
+    },
+    "subjectCanonical": {
+      "type": "string",
+      "description": "Type of individual the activity definition is intended for"
+    },
+    "date": {
+      "type": "string",
+      "description": "Date last changed"
+    },
+    "publisher": {
+      "type": "string",
+      "description": "Name of the publisher"
+    },
+    "contact": {
+      "type": "array",
+      "description": "Contact details for the publisher",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "telecom": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "system": { "type": "string" },
+                "value": { "type": "string" },
+                "use": { "type": "string" },
+                "rank": { "type": "integer" },
+                "period": {
+                  "type": "object",
+                  "properties": {
+                    "start": { "type": "string" },
+                    "end": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "description": {
+      "type": "string",
+      "description": "Natural language description of the activity definition"
+    },
+    "useContext": {
+      "type": "array",
+      "description": "The context that the content is intended to support",
+      "items": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "object",
+            "properties": {
+              "system": { "type": "string" },
+              "code": { "type": "string" },
+              "display": { "type": "string" }
+            }
+          },
+          "valueCodeableConcept": {
+            "type": "object",
+            "properties": {
+              "coding": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "system": { "type": "string" },
+                    "code": { "type": "string" },
+                    "display": { "type": "string" }
+                  }
+                }
+              },
+              "text": { "type": "string" }
+            }
+          },
+          "valueQuantity": {
+            "type": "object",
+            "properties": {
+              "value": { "type": "number" },
+              "unit": { "type": "string" },
+              "system": { "type": "string" },
+              "code": { "type": "string" }
+            }
+          },
+          "valueRange": {
+            "type": "object",
+            "properties": {
+              "low": {
+                "type": "object",
+                "properties": {
+                  "value": { "type": "number" },
+                  "unit": { "type": "string" }
+                }
+              },
+              "high": {
+                "type": "object",
+                "properties": {
+                  "value": { "type": "number" },
+                  "unit": { "type": "string" }
+                }
+              }
+            }
+          },
+          "valueReference": {
+            "type": "object",
+            "properties": {
+              "reference": { "type": "string" },
+              "display": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "jurisdiction": {
+      "type": "array",
+      "description": "Intended jurisdiction for activity definition",
+      "items": {
+        "type": "object",
+        "properties": {
+          "coding": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "system": { "type": "string" },
+                "code": { "type": "string" },
+                "display": { "type": "string" }
+              }
+            }
+          },
+          "text": { "type": "string" }
+        }
+      }
+    },
+    "purpose": {
+      "type": "string",
+      "description": "Why this activity definition is defined"
+    },
+    "usage": {
+      "type": "string",
+      "description": "Describes the clinical usage of the activity definition"
+    },
+    "copyright": {
+      "type": "string",
+      "description": "Use and/or publishing restrictions"
+    },
+    "approvalDate": {
+      "type": "string",
+      "description": "When the activity definition was approved by publisher"
+    },
+    "lastReviewDate": {
+      "type": "string",
+      "description": "When the activity definition was last reviewed"
+    },
+    "effectivePeriod": {
+      "type": "object",
+      "description": "When the activity definition is expected to be used",
+      "properties": {
+        "start": { "type": "string" },
+        "end": { "type": "string" }
+      }
+    },
+    "topic": {
+      "type": "array",
+      "description": "E.g. Education, Treatment, Assessment",
+      "items": {
+        "type": "object",
+        "properties": {
+          "coding": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "system": { "type": "string" },
+                "code": { "type": "string" },
+                "display": { "type": "string" }
+              }
+            }
+          },
+          "text": { "type": "string" }
+        }
+      }
+    },
+    "author": {
+      "type": "array",
+      "description": "Who authored the content",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "telecom": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "system": { "type": "string" },
+                "value": { "type": "string" },
+                "use": { "type": "string" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "editor": {
+      "type": "array",
+      "description": "Who edited the content",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "telecom": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "system": { "type": "string" },
+                "value": { "type": "string" },
+                "use": { "type": "string" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "reviewer": {
+      "type": "array",
+      "description": "Who reviewed the content",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "telecom": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "system": { "type": "string" },
+                "value": { "type": "string" },
+                "use": { "type": "string" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "endorser": {
+      "type": "array",
+      "description": "Who endorsed the content",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "telecom": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "system": { "type": "string" },
+                "value": { "type": "string" },
+                "use": { "type": "string" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "relatedArtifact": {
+      "type": "array",
+      "description": "Additional documentation, citations",
+      "items": {
+        "type": "object",
+        "properties": {
+          "type": { "type": "string" },
+          "label": { "type": "string" },
+          "display": { "type": "string" },
+          "citation": { "type": "string" },
+          "url": { "type": "string" },
+          "document": {
+            "type": "object",
+            "properties": {
+              "contentType": { "type": "string" },
+              "language": { "type": "string" },
+              "data": { "type": "string" },
+              "url": { "type": "string" },
+              "size": { "type": "integer" },
+              "hash": { "type": "string" },
+              "title": { "type": "string" },
+              "creation": { "type": "string" }
+            }
+          },
+          "resource": { "type": "string" }
+        }
+      }
+    },
+    "library": {
+      "type": "array",
+      "description": "Logic used by the activity definition",
+      "items": { "type": "string" }
+    },
+    "kind": {
+      "type": "string",
+      "description": "Kind of resource"
+    },
+    "profile": {
+      "type": "string",
+      "description": "What profile the resource needs to conform to"
+    },
+    "code": {
+      "type": "object",
+      "description": "Detail type of activity",
+      "properties": {
+        "coding": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "system": { "type": "string" },
+              "code": { "type": "string" },
+              "display": { "type": "string" }
+            }
+          }
+        },
+        "text": { "type": "string" }
+      }
+    },
+    "intent": {
+      "type": "string",
+      "description": "proposal | plan | directive | order | original-order | reflex-order | filler-order | instance-order | option"
+    },
+    "priority": {
+      "type": "string",
+      "description": "routine | urgent | asap | stat"
+    },
+    "doNotPerform": {
+      "type": "boolean",
+      "description": "True if the activity should not be performed"
+    },
+    "timingTiming": {
+      "type": "object",
+      "description": "When activity is to occur",
+      "properties": {
+        "event": { "type": "array", "items": { "type": "string" } },
+        "repeat": {
+          "type": "object",
+          "properties": {
+            "boundsDuration": {
+              "type": "object",
+              "properties": {
+                "value": { "type": "number" },
+                "unit": { "type": "string" },
+                "system": { "type": "string" },
+                "code": { "type": "string" }
+              }
+            },
+            "boundsRange": {
+              "type": "object",
+              "properties": {
+                "low": { "type": "object" },
+                "high": { "type": "object" }
+              }
+            },
+            "boundsPeriod": {
+              "type": "object",
+              "properties": {
+                "start": { "type": "string" },
+                "end": { "type": "string" }
+              }
+            },
+            "count": { "type": "integer" },
+            "countMax": { "type": "integer" },
+            "duration": { "type": "number" },
+            "durationMax": { "type": "number" },
+            "durationUnit": { "type": "string" },
+            "frequency": { "type": "integer" },
+            "frequencyMax": { "type": "integer" },
+            "period": { "type": "number" },
+            "periodMax": { "type": "number" },
+            "periodUnit": { "type": "string" },
+            "dayOfWeek": { "type": "array", "items": { "type": "string" } },
+            "timeOfDay": { "type": "array", "items": { "type": "string" } },
+            "when": { "type": "array", "items": { "type": "string" } },
+            "offset": { "type": "integer" }
+          }
+        },
+        "code": {
+          "type": "object",
+          "properties": {
+            "coding": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "system": { "type": "string" },
+                  "code": { "type": "string" },
+                  "display": { "type": "string" }
+                }
+              }
+            },
+            "text": { "type": "string" }
+          }
+        }
+      }
+    },
+    "timingDateTime": {
+      "type": "string",
+      "description": "When activity is to occur"
+    },
+    "timingAge": {
+      "type": "object",
+      "description": "When activity is to occur",
+      "properties": {
+        "value": { "type": "number" },
+        "comparator": { "type": "string" },
+        "unit": { "type": "string" },
+        "system": { "type": "string" },
+        "code": { "type": "string" }
+      }
+    },
+    "timingPeriod": {
+      "type": "object",
+      "description": "When activity is to occur",
+      "properties": {
+        "start": { "type": "string" },
+        "end": { "type": "string" }
+      }
+    },
+    "timingRange": {
+      "type": "object",
+      "description": "When activity is to occur",
+      "properties": {
+        "low": {
+          "type": "object",
+          "properties": {
+            "value": { "type": "number" },
+            "unit": { "type": "string" }
+          }
+        },
+        "high": {
+          "type": "object",
+          "properties": {
+            "value": { "type": "number" },
+            "unit": { "type": "string" }
+          }
+        }
+      }
+    },
+    "timingDuration": {
+      "type": "object",
+      "description": "When activity is to occur",
+      "properties": {
+        "value": { "type": "number" },
+        "comparator": { "type": "string" },
+        "unit": { "type": "string" },
+        "system": { "type": "string" },
+        "code": { "type": "string" }
+      }
+    },
+    "location": {
+      "type": "object",
+      "description": "Where it should happen",
+      "properties": {
+        "reference": { "type": "string" },
+        "display": { "type": "string" }
+      }
+    },
+    "participant": {
+      "type": "array",
+      "description": "Who should participate in the action",
+      "items": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "patient | practitioner | related-person | device"
+          },
+          "role": {
+            "type": "object",
+            "properties": {
+              "coding": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "system": { "type": "string" },
+                    "code": { "type": "string" },
+                    "display": { "type": "string" }
+                  }
+                }
+              },
+              "text": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "productReference": {
+      "type": "object",
+      "description": "What's administered/supplied",
+      "properties": {
+        "reference": { "type": "string" },
+        "display": { "type": "string" }
+      }
+    },
+    "productCodeableConcept": {
+      "type": "object",
+      "description": "What's administered/supplied",
+      "properties": {
+        "coding": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "system": { "type": "string" },
+              "code": { "type": "string" },
+              "display": { "type": "string" }
+            }
+          }
+        },
+        "text": { "type": "string" }
+      }
+    },
+    "quantity": {
+      "type": "object",
+      "description": "How much is administered/consumed/supplied",
+      "properties": {
+        "value": { "type": "number" },
+        "comparator": { "type": "string" },
+        "unit": { "type": "string" },
+        "system": { "type": "string" },
+        "code": { "type": "string" }
+      }
+    },
+    "dosage": {
+      "type": "array",
+      "description": "Detailed dosage instructions",
+      "items": {
+        "type": "object",
+        "properties": {
+          "sequence": { "type": "integer" },
+          "text": { "type": "string" },
+          "additionalInstruction": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "coding": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "system": { "type": "string" },
+                      "code": { "type": "string" },
+                      "display": { "type": "string" }
+                    }
+                  }
+                },
+                "text": { "type": "string" }
+              }
+            }
+          },
+          "patientInstruction": { "type": "string" },
+          "timing": {
+            "type": "object",
+            "properties": {
+              "event": { "type": "array", "items": { "type": "string" } },
+              "repeat": { "type": "object" },
+              "code": { "type": "object" }
+            }
+          },
+          "asNeededBoolean": { "type": "boolean" },
+          "asNeededCodeableConcept": { "type": "object" },
+          "site": { "type": "object" },
+          "route": { "type": "object" },
+          "method": { "type": "object" },
+          "doseAndRate": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "type": { "type": "object" },
+                "doseRange": { "type": "object" },
+                "doseQuantity": { "type": "object" },
+                "rateRatio": { "type": "object" },
+                "rateRange": { "type": "object" },
+                "rateQuantity": { "type": "object" }
+              }
+            }
+          },
+          "maxDosePerPeriod": { "type": "object" },
+          "maxDosePerAdministration": { "type": "object" },
+          "maxDosePerLifetime": { "type": "object" }
+        }
+      }
+    },
+    "bodySite": {
+      "type": "array",
+      "description": "What part of body to perform on",
+      "items": {
+        "type": "object",
+        "properties": {
+          "coding": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "system": { "type": "string" },
+                "code": { "type": "string" },
+                "display": { "type": "string" }
+              }
+            }
+          },
+          "text": { "type": "string" }
+        }
+      }
+    },
+    "specimenRequirement": {
+      "type": "array",
+      "description": "What specimens are required to perform this action",
+      "items": {
+        "type": "object",
+        "properties": {
+          "reference": { "type": "string" },
+          "display": { "type": "string" }
+        }
+      }
+    },
+    "observationRequirement": {
+      "type": "array",
+      "description": "What observations are required to perform this action",
+      "items": {
+        "type": "object",
+        "properties": {
+          "reference": { "type": "string" },
+          "display": { "type": "string" }
+        }
+      }
+    },
+    "observationResultRequirement": {
+      "type": "array",
+      "description": "What observations must be produced by this action",
+      "items": {
+        "type": "object",
+        "properties": {
+          "reference": { "type": "string" },
+          "display": { "type": "string" }
+        }
+      }
+    },
+    "transform": {
+      "type": "string",
+      "description": "Transform to apply the template"
+    },
+    "dynamicValue": {
+      "type": "array",
+      "description": "Dynamic aspects of the definition",
+      "items": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "The path to the element to be set dynamically"
+          },
+          "expression": {
+            "type": "object",
+            "description": "An expression that provides the dynamic value for the customization",
+            "properties": {
+              "description": { "type": "string" },
+              "name": { "type": "string" },
+              "language": { "type": "string" },
+              "expression": { "type": "string" },
+              "reference": { "type": "string" }
+            }
+          }
+        }
+      }
+    }
+  }
+}

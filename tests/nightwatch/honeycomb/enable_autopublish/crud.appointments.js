@@ -170,9 +170,47 @@ describe('Appointments CRUD Operations', function() {
   });
 
   it('02. Verify appointments list page loads', browser => {
+    // DIAGNOSTIC: Check state BEFORE navigation
+    browser.execute(function() {
+      return {
+        currentUrl: window.location.href,
+        hasMeteor: typeof Meteor !== 'undefined',
+        hasMeteorNavigate: typeof Meteor !== 'undefined' && typeof Meteor.navigate === 'function',
+        hasSession: typeof Session !== 'undefined',
+        selectedPatientId: typeof Session !== 'undefined' ? Session.get('selectedPatientId') : null,
+        allElementIds: Array.from(document.querySelectorAll('[id]')).map(function(el) { return el.id; }).slice(0, 15)
+      };
+    }, [], function(result) {
+      console.log('[DEBUG PRE-NAV]', JSON.stringify(result.value, null, 2));
+    });
+
+    browser.pause(500);
+
+    // Attempt navigation
     testUtils.navigateUrl(browser, '/appointments');
+
+    browser.pause(3000); // Extended pause for debugging
+
+    // DIAGNOSTIC: Check state AFTER navigation
+    browser.execute(function() {
+      return {
+        currentUrl: window.location.href,
+        hasAppointmentsPage: document.querySelector('#appointmentsPage') !== null,
+        bodyClasses: document.body.className,
+        allElementIds: Array.from(document.querySelectorAll('[id]')).map(function(el) { return el.id; }).slice(0, 20),
+        pageTitle: document.title,
+        bodyTextPreview: document.body.innerText.substring(0, 300)
+      };
+    }, [], function(result) {
+      console.log('[DEBUG POST-NAV]', JSON.stringify(result.value, null, 2));
+    });
+
+    // Take screenshot before the assertion
+    browser.saveScreenshot('tests/nightwatch/screenshots/appointments/debug-02-post-nav.png');
+
+    // Original assertion
     browser
-      .waitForElementVisible('#appointmentsPage', 5000)
+      .waitForElementVisible('#appointmentsPage', 10000)
       .pause(1000);
 
     // Re-establish patient context as safety net

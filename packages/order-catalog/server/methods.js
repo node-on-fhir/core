@@ -29,7 +29,7 @@ Meteor.methods({
       orders: [Object],
       orderType: Match.Where(function(type) {
         check(type, String);
-        return ['laboratory', 'medication'].includes(type);
+        return ['laboratory', 'medication', 'radiology'].includes(type);
       }),
       authorId: String
     });
@@ -42,13 +42,48 @@ Meteor.methods({
       const Patients = await global.Collections.Patients;
       
       // Verify patient exists
+      // Use MongoDB _id for lookup (Session stores _id, not FHIR id)
       let patient = null;
+      let patientFhirId = orderData.patientId;
+      let patientDisplay = 'Unknown Patient';
+
       if (Patients) {
-        patient = await Patients.findOneAsync({ id: orderData.patientId });
+        patient = await Patients.findOneAsync({ _id: orderData.patientId });
         if (!patient) {
-          throw new Meteor.Error('patient-not-found', 'Patient not found');
+          throw new Meteor.Error('patient-not-found', `Patient not found with _id: ${orderData.patientId}`);
+        }
+        // Get FHIR id for reference
+        patientFhirId = get(patient, 'id', orderData.patientId);
+
+        // Assemble patient display name using FhirUtilities
+        if (patient.name && patient.name.length > 0) {
+          patientDisplay = Meteor.FhirUtilities.assembleName(patient.name[0]);
+        }
+
+        console.log('✓ Patient found:', {
+          _id: patient._id,
+          fhirId: patientFhirId,
+          display: patientDisplay
+        });
+      }
+
+      // Get current user for practitioner display
+      const currentUser = await Meteor.users.findOneAsync({ _id: this.userId });
+      let practitionerDisplay = 'Unknown Provider';
+
+      // Try to get name from user profile
+      if (currentUser) {
+        if (get(currentUser, 'profile.name')) {
+          practitionerDisplay = get(currentUser, 'profile.name');
+        } else if (get(currentUser, 'username')) {
+          practitionerDisplay = get(currentUser, 'username');
         }
       }
+
+      console.log('✓ Practitioner found:', {
+        userId: this.userId,
+        display: practitionerDisplay
+      });
       
       const results = [];
       const timestamp = new Date().toISOString();
@@ -75,8 +110,8 @@ Meteor.methods({
               text: order.display
             },
             subject: {
-              reference: `Patient/${orderData.patientId}`,
-              display: get(patient, 'name[0].text', 'Unknown Patient')
+              reference: `Patient/${patientFhirId}`,
+              display: patientDisplay
             },
             encounter: {
               reference: `Encounter/${Session.get('currentEncounterId') || 'unknown'}`
@@ -85,7 +120,7 @@ Meteor.methods({
             authoredOn: timestamp,
             requester: {
               reference: `Practitioner/${this.userId}`,
-              display: get(Meteor.user(), 'profile.name', 'Unknown Provider')
+              display: practitionerDisplay
             },
             category: [{
               coding: [{
@@ -122,8 +157,8 @@ Meteor.methods({
               text: order.display
             },
             subject: {
-              reference: `Patient/${orderData.patientId}`,
-              display: get(patient, 'name[0].text', 'Unknown Patient')
+              reference: `Patient/${patientFhirId}`,
+              display: patientDisplay
             },
             encounter: {
               reference: `Encounter/${Session.get('currentEncounterId') || 'unknown'}`
@@ -131,7 +166,7 @@ Meteor.methods({
             authoredOn: timestamp,
             requester: {
               reference: `Practitioner/${this.userId}`,
-              display: get(Meteor.user(), 'profile.name', 'Unknown Provider')
+              display: practitionerDisplay
             },
             dosageInstruction: [{
               text: `${order.quantity || 1} ${order.form || 'unit'} ${order.frequency || 'daily'} for ${order.duration || 'as directed'}`,
@@ -179,10 +214,133 @@ Meteor.methods({
               time: timestamp
             }] : undefined
           };
-          
+
           collection = MedicationRequests;
+
+        } else if (orderData.orderType === 'radiology') {
+          // Create FHIR ServiceRequest for radiology/imaging orders
+          // ONC §170.315(a)(3) - CPOE Diagnostic Imaging
+          resource = {
+            resourceType: 'ServiceRequest',
+            id: Random.id(),
+            status: 'active',
+            intent: 'order',
+            priority: order.priority || 'routine',
+
+            // Main code: LOINC procedure code from RSNA Radiology Playbook
+            code: {
+              coding: [{
+                system: 'http://loinc.org',
+                code: order.code,
+                display: order.display
+              }],
+              text: order.display
+            },
+
+            // Category: Imaging (SNOMED CT)
+            category: [{
+              coding: [{
+                system: 'http://snomed.info/sct',
+                code: '363679005',
+                display: 'Imaging'
+              }],
+              text: 'Imaging'
+            }],
+
+            // Order detail: Modality (DICOM code)
+            orderDetail: [{
+              coding: [{
+                system: 'http://dicom.nema.org/resources/ontology/DCM',
+                code: order.modality,
+                display: order.modalityDisplay
+              }],
+              text: order.modalityDisplay
+            }],
+
+            // Body site
+            bodySite: order.bodyPart ? [{
+              text: order.bodyPart,
+              ...(order.bodyPartCode && {
+                coding: [{
+                  system: 'http://snomed.info/sct',
+                  code: order.bodyPartCode,
+                  display: order.bodyPart
+                }]
+              })
+            }] : undefined,
+
+            // Reason for order (ONC optional field for §170.315(a)(3))
+            reasonCode: order.reasonForOrder ? [{
+              text: order.reasonForOrder
+            }] : undefined,
+
+            // Patient reference (use FHIR id for reference)
+            subject: {
+              reference: `Patient/${patientFhirId}`,
+              display: patientDisplay
+            },
+
+            // Encounter reference
+            encounter: {
+              reference: `Encounter/${get(Meteor, 'Session.get("currentEncounterId")', 'unknown')}`
+            },
+
+            // Timing
+            occurrenceDateTime: timestamp,
+            authoredOn: timestamp,
+
+            // Requester (ordering provider)
+            requester: {
+              reference: `Practitioner/${this.userId}`,
+              display: practitionerDisplay
+            },
+
+            // Supporting info: contrast, laterality, views as extensions
+            extension: [],
+
+            // Notes
+            note: order.notes ? [{
+              text: order.notes,
+              time: timestamp,
+              authorReference: {
+                reference: `Practitioner/${this.userId}`
+              }
+            }] : undefined
+          };
+
+          // Add laterality extension if applicable
+          if (order.selectedLaterality && order.selectedLaterality !== 'bilateral') {
+            resource.extension.push({
+              url: 'http://hl7.org/fhir/StructureDefinition/bodySite-laterality',
+              valueCodeableConcept: {
+                coding: [{
+                  system: 'http://snomed.info/sct',
+                  code: order.selectedLaterality === 'left' ? '7771000' : '24028007',
+                  display: order.selectedLaterality === 'left' ? 'Left' : 'Right'
+                }]
+              }
+            });
+          }
+
+          // Add contrast as extension
+          if (order.contrast) {
+            resource.extension.push({
+              url: 'http://honeycomb3.io/fhir/StructureDefinition/contrast',
+              valueString: order.contrast
+            });
+          }
+
+          // Add views as extension
+          if (order.views) {
+            resource.extension.push({
+              url: 'http://honeycomb3.io/fhir/StructureDefinition/views',
+              valueString: order.views
+            });
+          }
+
+          collection = ServiceRequests;
         }
-        
+
         // Insert the resource
         if (collection && resource) {
           const insertId = await collection.insertAsync(resource);

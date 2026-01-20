@@ -1,0 +1,288 @@
+{
+  "$schema": "http://json-schema.org/draft-06/schema#",
+  "id": "http://hl7.org/fhir/json-schema/ClinicalImpression",
+  "$ref": "#/definitions/ClinicalImpression",
+  "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
+  "definitions": {
+    "ClinicalImpression": {
+      "description": "A record of a clinical assessment performed to determine what problem(s) may affect the patient and before planning the treatments or management strategies that are best to manage a patient's condition.",
+      "properties": {
+        "resourceType": {
+          "description": "This is a ClinicalImpression resource",
+          "const": "ClinicalImpression"
+        },
+        "id": {
+          "description": "The logical id of the resource, as used in the URL for the resource. Once assigned, this value never changes.",
+          "$ref": "id.schema.json#/definitions/id"
+        },
+        "meta": {
+          "description": "The metadata about the resource. This is content that is maintained by the infrastructure.",
+          "$ref": "Meta.schema.json#/definitions/Meta"
+        },
+        "implicitRules": {
+          "description": "A reference to a set of rules that were followed when the resource was constructed, and which must be understood when processing the content.",
+          "$ref": "#/definitions/uri"
+        },
+        "_implicitRules": {
+          "description": "Extensions for implicitRules",
+          "$ref": "Element.schema.json#/definitions/Element"
+        },
+        "language": {
+          "description": "The base language in which the resource is written.",
+          "$ref": "#/definitions/code"
+        },
+        "_language": {
+          "description": "Extensions for language",
+          "$ref": "Element.schema.json#/definitions/Element"
+        },
+        "text": {
+          "description": "A human-readable narrative that contains a summary of the resource and can be used to represent the content of the resource to a human.",
+          "$ref": "Narrative.schema.json#/definitions/Narrative"
+        },
+        "contained": {
+          "description": "These resources do not have an independent existence apart from the resource that contains them.",
+          "items": {
+            "$ref": "ResourceList.schema.json#/definitions/ResourceList"
+          },
+          "type": "array"
+        },
+        "extension": {
+          "description": "May be used to represent additional information that is not part of the basic definition of the resource.",
+          "items": {
+            "$ref": "Extension.schema.json#/definitions/Extension"
+          },
+          "type": "array"
+        },
+        "modifierExtension": {
+          "description": "May be used to represent additional information that is not part of the basic definition of the resource and that modifies the understanding of the element that contains it.",
+          "items": {
+            "$ref": "Extension.schema.json#/definitions/Extension"
+          },
+          "type": "array"
+        },
+        "identifier": {
+          "description": "Business identifiers assigned to this clinical impression by the performer or other systems which remain constant as the resource is updated.",
+          "items": {
+            "$ref": "Identifier.schema.json#/definitions/Identifier"
+          },
+          "type": "array"
+        },
+        "status": {
+          "description": "Identifies the workflow status of the assessment.",
+          "$ref": "#/definitions/code"
+        },
+        "_status": {
+          "description": "Extensions for status",
+          "$ref": "Element.schema.json#/definitions/Element"
+        },
+        "statusReason": {
+          "description": "Captures the reason for the current state of the ClinicalImpression.",
+          "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+        },
+        "code": {
+          "description": "Categorizes the type of clinical assessment performed.",
+          "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+        },
+        "description": {
+          "description": "A summary of the context and/or cause of the assessment - why / where it was performed, and what patient events/status prompted it.",
+          "$ref": "#/definitions/string"
+        },
+        "_description": {
+          "description": "Extensions for description",
+          "$ref": "Element.schema.json#/definitions/Element"
+        },
+        "subject": {
+          "description": "The patient or group of individuals assessed as part of this record.",
+          "$ref": "Reference.schema.json#/definitions/Reference"
+        },
+        "encounter": {
+          "description": "The Encounter during which this ClinicalImpression was created or to which the creation of this record is tightly associated.",
+          "$ref": "Reference.schema.json#/definitions/Reference"
+        },
+        "effectiveDateTime": {
+          "description": "The point in time or period over which the subject was assessed.",
+          "pattern": "^(\\d{4})(-(0[1-9]|1[0-2])(-(0[1-9]|[1-2]\\d|3[0-1])(T([01]\\d|2[0-3]):[0-5]\\d:([0-5]\\d|60)(\\.\\d+)?(Z|([+-])(([0-1]\\d|2[0-3]):[0-5]\\d|14:00)))?)?)?$",
+          "type": "string"
+        },
+        "_effectiveDateTime": {
+          "description": "Extensions for effectiveDateTime",
+          "$ref": "Element.schema.json#/definitions/Element"
+        },
+        "effectivePeriod": {
+          "description": "The point in time or period over which the subject was assessed.",
+          "$ref": "Period.schema.json#/definitions/Period"
+        },
+        "date": {
+          "description": "Indicates when the documentation of the assessment was complete.",
+          "$ref": "#/definitions/dateTime"
+        },
+        "_date": {
+          "description": "Extensions for date",
+          "$ref": "Element.schema.json#/definitions/Element"
+        },
+        "assessor": {
+          "description": "The clinician performing the assessment.",
+          "$ref": "Reference.schema.json#/definitions/Reference"
+        },
+        "previous": {
+          "description": "A reference to the last assessment that was conducted on this patient.",
+          "$ref": "Reference.schema.json#/definitions/Reference"
+        },
+        "problem": {
+          "description": "A list of the relevant problems/conditions for a patient.",
+          "items": {
+            "$ref": "Reference.schema.json#/definitions/Reference"
+          },
+          "type": "array"
+        },
+        "investigation": {
+          "description": "One or more sets of investigations (signs, symptoms, etc.). The actual grouping of investigations varies greatly depending on the type and context of the assessment.",
+          "items": {
+            "$ref": "#/definitions/ClinicalImpression_Investigation"
+          },
+          "type": "array"
+        },
+        "protocol": {
+          "description": "Reference to a specific published clinical protocol that was followed during this assessment, and/or that provides evidence in support of the diagnosis.",
+          "items": {
+            "$ref": "#/definitions/uri"
+          },
+          "type": "array"
+        },
+        "_protocol": {
+          "description": "Extensions for protocol",
+          "items": {
+            "$ref": "Element.schema.json#/definitions/Element"
+          },
+          "type": "array"
+        },
+        "summary": {
+          "description": "A text summary of the investigations and the diagnosis.",
+          "$ref": "#/definitions/string"
+        },
+        "_summary": {
+          "description": "Extensions for summary",
+          "$ref": "Element.schema.json#/definitions/Element"
+        },
+        "finding": {
+          "description": "Specific findings or diagnoses that were considered likely or relevant to ongoing treatment.",
+          "items": {
+            "$ref": "#/definitions/ClinicalImpression_Finding"
+          },
+          "type": "array"
+        },
+        "prognosisCodeableConcept": {
+          "description": "Estimate of likely outcome.",
+          "items": {
+            "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+          },
+          "type": "array"
+        },
+        "prognosisReference": {
+          "description": "RiskAssessment expressing likely outcome.",
+          "items": {
+            "$ref": "Reference.schema.json#/definitions/Reference"
+          },
+          "type": "array"
+        },
+        "supportingInfo": {
+          "description": "Information supporting the clinical impression.",
+          "items": {
+            "$ref": "Reference.schema.json#/definitions/Reference"
+          },
+          "type": "array"
+        },
+        "note": {
+          "description": "Commentary about the impression, typically recorded after the impression itself was made, though supplemental notes by the original author could also appear.",
+          "items": {
+            "$ref": "Annotation.schema.json#/definitions/Annotation"
+          },
+          "type": "array"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "subject",
+        "resourceType"
+      ]
+    },
+    "ClinicalImpression_Investigation": {
+      "description": "A record of a clinical assessment performed to determine what problem(s) may affect the patient and before planning the treatments or management strategies that are best to manage a patient's condition.",
+      "properties": {
+        "id": {
+          "description": "Unique id for the element within a resource (for internal references). This may be any string value that does not contain spaces.",
+          "$ref": "string.schema.json#/definitions/string"
+        },
+        "extension": {
+          "description": "May be used to represent additional information that is not part of the basic definition of the element.",
+          "items": {
+            "$ref": "Extension.schema.json#/definitions/Extension"
+          },
+          "type": "array"
+        },
+        "modifierExtension": {
+          "description": "May be used to represent additional information that is not part of the basic definition of the element and that modifies the understanding of the element in which it is contained.",
+          "items": {
+            "$ref": "Extension.schema.json#/definitions/Extension"
+          },
+          "type": "array"
+        },
+        "code": {
+          "description": "A name/code for the group (\"set\") of investigations. Typically, this will be something like \"signs\", \"symptoms\", \"clinical\", \"diagnostic\", but the list is not constrained.",
+          "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+        },
+        "item": {
+          "description": "A record of a specific investigation that was undertaken.",
+          "items": {
+            "$ref": "Reference.schema.json#/definitions/Reference"
+          },
+          "type": "array"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "code"
+      ]
+    },
+    "ClinicalImpression_Finding": {
+      "description": "A record of a clinical assessment performed to determine what problem(s) may affect the patient and before planning the treatments or management strategies that are best to manage a patient's condition.",
+      "properties": {
+        "id": {
+          "description": "Unique id for the element within a resource (for internal references). This may be any string value that does not contain spaces.",
+          "$ref": "string.schema.json#/definitions/string"
+        },
+        "extension": {
+          "description": "May be used to represent additional information that is not part of the basic definition of the element.",
+          "items": {
+            "$ref": "Extension.schema.json#/definitions/Extension"
+          },
+          "type": "array"
+        },
+        "modifierExtension": {
+          "description": "May be used to represent additional information that is not part of the basic definition of the element and that modifies the understanding of the element in which it is contained.",
+          "items": {
+            "$ref": "Extension.schema.json#/definitions/Extension"
+          },
+          "type": "array"
+        },
+        "itemCodeableConcept": {
+          "description": "Specific text or code for finding or diagnosis, which may include ruled-out or resolved conditions.",
+          "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+        },
+        "itemReference": {
+          "description": "Specific reference for finding or diagnosis, which may include ruled-out or resolved conditions.",
+          "$ref": "Reference.schema.json#/definitions/Reference"
+        },
+        "basis": {
+          "description": "Which investigations support finding or diagnosis.",
+          "$ref": "#/definitions/string"
+        },
+        "_basis": {
+          "description": "Extensions for basis",
+          "$ref": "Element.schema.json#/definitions/Element"
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

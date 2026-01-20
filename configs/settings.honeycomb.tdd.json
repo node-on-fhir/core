@@ -111,8 +111,7 @@
           "/bundles",
           "/contracts",
           "/devices",
-          "/imaging-studies",
-          "/risk-assessments"
+          "/imaging-studies"
         ]
       },
       "autopublish": true
@@ -146,11 +145,14 @@
         "enabled": true
       },
       "fhir": {
+        "ActivityDefinitions": true,
         "AllergyIntolerances": true,
         "AuditEvents": true,
         "Appointments": true,
+        "BodyStructures": true,
         "CarePlans": true,
         "CareTeams": true,
+        "ClinicalImpressions": true,
         "Compositions": true,
         "Communications": true,
         "Conditions": true,
@@ -159,6 +161,7 @@
         "DiagnosticReports": true,
         "DocumentReferences": true,
         "Encounters": true,
+        "Endpoints": true,
         "Goals": true,
         "Immunizations": true,
         "ImagingStudies": true,
@@ -170,12 +173,15 @@
         "MedicationAdministrations": true,
         "MedicationStatements": true,
         "MessageHeaders": true,
+        "NutritionIntakes": true,
         "NutritionOrders": true,
+        "NutritionProducts": true,
         "Organizations": true,
         "Observations": true,
         "Patients": true,
         "PlanDefinitions": true,
         "Practitioners": true,
+        "PractitionerRoles": true,
         "Procedures": true,
         "Questionnaires": true,
         "QuestionnaireResponses": true,
@@ -184,9 +190,11 @@
         "Schedules": true,
         "ServiceRequests": true,
         "SupplyDeliveries": true,
+        "SupplyRequests": true,
         "Tasks": true,
         "Measures": true,
-        "MeasureReports": true
+        "MeasureReports": true,
+        "RiskAssessments": true
       }
     }
   },
@@ -201,6 +209,17 @@
       "autopublishSubscriptions": true,
       "autoGenerateSubscriptions": true,
       "rest": {
+        "ActivityDefinition": {
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "search"
+          ],
+          "search": true,
+          "publication": true
+        },
         "AllergyIntolerance": {
           "interactions": [
             "read",
@@ -220,6 +239,17 @@
             "delete"
           ],
           "search": false,
+          "publication": true
+        },
+        "BodyStructure": {
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "search"
+          ],
+          "search": true,
           "publication": true
         },
         "CareTeam": {
@@ -590,6 +620,17 @@
           "search": true,
           "publication": true
         },
+        "Endpoint": {
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "search"
+          ],
+          "search": true,
+          "publication": true
+        },
         "Appointment": {
           "interactions": [
             "read",
@@ -623,6 +664,17 @@
           "search": true,
           "publication": true
         },
+        "SupplyRequest": {
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "search"
+          ],
+          "search": true,
+          "publication": true
+        },
         "Task": {
           "interactions": [
             "read",
@@ -646,6 +698,17 @@
           "publication": true
         },
         "MeasureReport": {
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "search"
+          ],
+          "search": true,
+          "publication": true
+        },
+        "RiskAssessment": {
           "interactions": [
             "read",
             "create",

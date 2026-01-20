@@ -53,11 +53,6 @@ fetch
 # clinical:synthea
 # clinical:patient-matching
 # clinical:structured-data-capture
-
-# symptomatic:timelines
-# symptomatic:symptom-tracking
-# symptomatic:mcp
-
 # clinical:secure-messaging
 # clinical:request-for-corrections
 # clinical:ccda-export
@@ -81,7 +76,7 @@ fetch
 # US Core 7.0.0 profiles for CapabilityStatement (ONC g(10) certification)
 
 rspack@1.0.0-beta340.12
-
+# typed:modal
 
 
 

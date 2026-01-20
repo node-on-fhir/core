@@ -27,7 +27,7 @@ Package.onUse(function(api) {
   // Server files
   api.addFiles('server/index.js', 'server');
   api.addFiles('server/methods.js', 'server');
-  
+
   // Client entry point
   api.mainModule('index.jsx', 'client');
 });

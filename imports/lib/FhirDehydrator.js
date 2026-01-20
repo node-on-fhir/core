@@ -838,6 +838,153 @@ export function flattenBundle(bundle){
   return result;
 }
 
+export function flattenClinicalImpression(clinicalImpression, internalDateFormat) {
+  let result = {
+    _id: '',
+    id: '',
+    resourceType: 'ClinicalImpression',
+    status: '',
+    description: '',
+    summary: '',
+    date: '',
+    effectiveDateTime: '',
+    assessorDisplay: '',
+    assessorReference: '',
+    subjectDisplay: '',
+    subjectReference: ''
+  };
+
+  if (!internalDateFormat) {
+    internalDateFormat = get(Meteor, "settings.public.defaults.internalDateFormat", "YYYY-MM-DD");
+  }
+
+  result._id = extractIdString(get(clinicalImpression, '_id', ''));
+  result.id = get(clinicalImpression, 'id', '');
+  result.status = get(clinicalImpression, 'status', '');
+  result.description = get(clinicalImpression, 'description', '');
+  result.summary = get(clinicalImpression, 'summary', '');
+
+  // Dates
+  if (get(clinicalImpression, 'date')) {
+    result.date = moment(get(clinicalImpression, 'date')).format(internalDateFormat);
+  }
+  if (get(clinicalImpression, 'effectiveDateTime')) {
+    result.effectiveDateTime = moment(get(clinicalImpression, 'effectiveDateTime')).format(internalDateFormat);
+  }
+
+  // Assessor reference (Practitioner)
+  result.assessorDisplay = get(clinicalImpression, 'assessor.display', '');
+  result.assessorReference = get(clinicalImpression, 'assessor.reference', '');
+
+  // Subject reference (Patient)
+  result.subjectDisplay = get(clinicalImpression, 'subject.display', '');
+  result.subjectReference = get(clinicalImpression, 'subject.reference', '');
+
+  return result;
+}
+
+export function flattenRiskAssessment(riskAssessment, internalDateFormat) {
+  let result = {
+    _id: '',
+    id: '',
+    resourceType: 'RiskAssessment',
+    status: '',
+    codeDisplay: '',
+    codeCode: '',
+    methodDisplay: '',
+    methodCode: '',
+    predictionOutcome: '',
+    mitigation: '',
+    date: '',
+    occurrenceDateTime: '',
+    performerDisplay: '',
+    performerReference: '',
+    subjectDisplay: '',
+    subjectReference: ''
+  };
+
+  if (!internalDateFormat) {
+    internalDateFormat = get(Meteor, "settings.public.defaults.internalDateFormat", "YYYY-MM-DD");
+  }
+
+  result._id = extractIdString(get(riskAssessment, '_id', ''));
+  result.id = get(riskAssessment, 'id', '');
+  result.status = get(riskAssessment, 'status', '');
+
+  // Code (type of assessment)
+  result.codeDisplay = get(riskAssessment, 'code.text', get(riskAssessment, 'code.coding.0.display', ''));
+  result.codeCode = get(riskAssessment, 'code.coding.0.code', '');
+
+  // Method (assessment methodology)
+  result.methodDisplay = get(riskAssessment, 'method.text', get(riskAssessment, 'method.coding.0.display', ''));
+  result.methodCode = get(riskAssessment, 'method.coding.0.code', '');
+
+  // Prediction (first prediction outcome)
+  result.predictionOutcome = get(riskAssessment, 'prediction.0.outcome.text', '');
+
+  // Mitigation
+  result.mitigation = get(riskAssessment, 'mitigation', '');
+
+  // Dates
+  if (get(riskAssessment, 'date')) {
+    result.date = moment(get(riskAssessment, 'date')).format(internalDateFormat);
+  }
+  if (get(riskAssessment, 'occurrenceDateTime')) {
+    result.occurrenceDateTime = moment(get(riskAssessment, 'occurrenceDateTime')).format(internalDateFormat);
+  }
+
+  // Performer reference (Practitioner)
+  result.performerDisplay = get(riskAssessment, 'performer.display', '');
+  result.performerReference = get(riskAssessment, 'performer.reference', '');
+
+  // Subject reference (Patient)
+  result.subjectDisplay = get(riskAssessment, 'subject.display', '');
+  result.subjectReference = get(riskAssessment, 'subject.reference', '');
+
+  return result;
+}
+
+export function flattenBodyStructure(bodyStructure, internalDateFormat) {
+  let result = {
+    _id: '',
+    id: '',
+    resourceType: 'BodyStructure',
+    active: true,
+    description: '',
+    morphology: '',
+    morphologyCode: '',
+    structure: '',
+    structureCode: '',
+    patientDisplay: '',
+    patientReference: ''
+  };
+
+  if (!internalDateFormat) {
+    internalDateFormat = get(Meteor, "settings.public.defaults.internalDateFormat", "YYYY-MM-DD");
+  }
+
+  result._id = extractIdString(get(bodyStructure, '_id', ''));
+  result.id = get(bodyStructure, 'id', '');
+  result.active = get(bodyStructure, 'active', true);
+  result.description = get(bodyStructure, 'description', '');
+
+  // Morphology (CodeableConcept)
+  result.morphology = get(bodyStructure, 'morphology.text',
+    get(bodyStructure, 'morphology.coding.0.display', ''));
+  result.morphologyCode = get(bodyStructure, 'morphology.coding.0.code', '');
+
+  // Structure (from includedStructure array)
+  result.structure = get(bodyStructure, 'includedStructure.0.structure.text',
+    get(bodyStructure, 'includedStructure.0.structure.coding.0.display', ''));
+  result.structureCode = get(bodyStructure, 'includedStructure.0.structure.coding.0.code', '');
+
+  // Patient reference
+  result.patientDisplay = get(bodyStructure, 'patient.display', '');
+  result.patientReference = get(bodyStructure, 'patient.reference', '');
+
+  return result;
+}
+
 export function flattenCarePlan(plan){
 
   let result = {
@@ -4788,6 +4935,238 @@ export function flattenNutritionOrder(nutritionOrder, internalDateFormat){
   return result;
 }
 
+export function flattenNutritionIntake(nutritionIntake, internalDateFormat){
+  let result = {
+    _id: '',
+    id: '',
+    resourceType: 'NutritionIntake',
+    identifier: '',
+    status: '',
+    subjectDisplay: '',
+    subjectReference: '',
+    occurrenceDateTime: '',
+    recordedDateTime: '',
+    consumedItem: '',
+    nutritionProduct: '',
+    code: '',
+    codeDisplay: '',
+    amount: '',
+    notConsumed: false,
+    notConsumedReason: '',
+    ingredientLabel: '',
+    performerDisplay: '',
+    performerReference: '',
+    locationDisplay: '',
+    locationReference: '',
+    note: ''
+  };
+
+  result.resourceType = get(nutritionIntake, 'resourceType', 'NutritionIntake');
+
+  if(!internalDateFormat){
+    internalDateFormat = get(Meteor, 'settings.public.defaults.internalDateFormat', 'YYYY-MM-DD');
+  }
+
+  // Core identifiers
+  result._id = extractIdString(get(nutritionIntake, '_id', ''));
+  result.id = get(nutritionIntake, 'id', '');
+  result.identifier = get(nutritionIntake, 'identifier[0].value', '');
+
+  // Status
+  result.status = get(nutritionIntake, 'status', '');
+
+  // Subject (patient) information
+  result.subjectDisplay = get(nutritionIntake, 'subject.display', '');
+  result.subjectReference = get(nutritionIntake, 'subject.reference', '');
+
+  // Date/Time fields
+  const occurrenceDateTime = get(nutritionIntake, 'occurrenceDateTime');
+  if(occurrenceDateTime){
+    result.occurrenceDateTime = moment(occurrenceDateTime).format(internalDateFormat);
+  }
+
+  const recordedDateTime = get(nutritionIntake, 'recorded');
+  if(recordedDateTime){
+    result.recordedDateTime = moment(recordedDateTime).format(internalDateFormat);
+  }
+
+  // Code (if present at top level)
+  if(get(nutritionIntake, 'code')){
+    result.code = get(nutritionIntake, 'code.coding[0].code', '');
+    result.codeDisplay = get(nutritionIntake, 'code.text', get(nutritionIntake, 'code.coding[0].display', ''));
+  }
+
+  // Consumed items - FHIR R5 structure
+  if(get(nutritionIntake, 'consumedItem')){
+    const consumedItems = [];
+    get(nutritionIntake, 'consumedItem', []).forEach(function(item){
+      // Type
+      const type = get(item, 'type.text', get(item, 'type.coding[0].display', get(item, 'type.coding[0].code', '')));
+
+      // Nutrition product
+      let product = '';
+      if(get(item, 'nutritionProduct.concept')){
+        product = get(item, 'nutritionProduct.concept.text', get(item, 'nutritionProduct.concept.coding[0].display', ''));
+      } else if(get(item, 'nutritionProduct.reference')){
+        product = get(item, 'nutritionProduct.reference.display', get(item, 'nutritionProduct.reference.reference', ''));
+      }
+
+      // Amount
+      let amount = '';
+      if(get(item, 'amount')){
+        amount = get(item, 'amount.value', '') + ' ' + get(item, 'amount.unit', '');
+      }
+
+      if(product){
+        consumedItems.push(product + (amount ? ' (' + amount.trim() + ')' : ''));
+      } else if(type){
+        consumedItems.push(type + (amount ? ' (' + amount.trim() + ')' : ''));
+      }
+    });
+    result.consumedItem = consumedItems.join(', ');
+
+    // Also extract first item's nutrition product for display
+    const firstItem = get(nutritionIntake, 'consumedItem[0]');
+    if(firstItem){
+      if(get(firstItem, 'nutritionProduct.concept')){
+        result.nutritionProduct = get(firstItem, 'nutritionProduct.concept.text', get(firstItem, 'nutritionProduct.concept.coding[0].display', ''));
+      } else if(get(firstItem, 'nutritionProduct.reference')){
+        result.nutritionProduct = get(firstItem, 'nutritionProduct.reference.display', '');
+      }
+
+      // Amount from first item
+      if(get(firstItem, 'amount')){
+        result.amount = get(firstItem, 'amount.value', '') + ' ' + get(firstItem, 'amount.unit', '');
+      }
+
+      // Not consumed flag
+      result.notConsumed = get(firstItem, 'notConsumed', false);
+      if(get(firstItem, 'notConsumedReason')){
+        result.notConsumedReason = get(firstItem, 'notConsumedReason.text', get(firstItem, 'notConsumedReason.coding[0].display', ''));
+      }
+    }
+  }
+
+  // Ingredient label
+  if(get(nutritionIntake, 'ingredientLabel')){
+    const labels = [];
+    get(nutritionIntake, 'ingredientLabel', []).forEach(function(label){
+      const nutrient = get(label, 'nutrient.text', get(label, 'nutrient.coding[0].display', ''));
+      const amount = get(label, 'amount.value', '') + ' ' + get(label, 'amount.unit', '');
+      if(nutrient){
+        labels.push(nutrient + (amount.trim() ? ': ' + amount.trim() : ''));
+      }
+    });
+    result.ingredientLabel = labels.join(', ');
+  }
+
+  // Performer information
+  if(get(nutritionIntake, 'performer')){
+    const performers = [];
+    get(nutritionIntake, 'performer', []).forEach(function(perf){
+      if(get(perf, 'actor.display')){
+        performers.push(get(perf, 'actor.display'));
+      } else if(get(perf, 'actor.reference')){
+        performers.push(get(perf, 'actor.reference'));
+      }
+    });
+    result.performerDisplay = performers.join(', ');
+    result.performerReference = get(nutritionIntake, 'performer[0].actor.reference', '');
+  }
+
+  // Location
+  result.locationDisplay = get(nutritionIntake, 'location.display', '');
+  result.locationReference = get(nutritionIntake, 'location.reference', '');
+
+  // Note
+  if(get(nutritionIntake, 'note')){
+    const notes = [];
+    get(nutritionIntake, 'note', []).forEach(function(n){
+      if(get(n, 'text')){
+        notes.push(get(n, 'text'));
+      }
+    });
+    result.note = notes.join('; ');
+  }
+
+  return result;
+}
+
+export function flattenNutritionProduct(nutritionProduct, internalDateFormat){
+  let result = {
+    _id: '',
+    id: '',
+    resourceType: 'NutritionProduct',
+    identifier: '',
+    status: '',
+    category: '',
+    categoryCode: '',
+    code: '',
+    codeDisplay: '',
+    name: '',
+    manufacturer: '',
+    description: '',
+    note: ''
+  };
+
+  result.resourceType = get(nutritionProduct, 'resourceType', 'NutritionProduct');
+
+  if(!internalDateFormat){
+    internalDateFormat = get(Meteor, 'settings.public.defaults.internalDateFormat', 'YYYY-MM-DD');
+  }
+
+  // Core identifiers
+  result._id = extractIdString(get(nutritionProduct, '_id', ''));
+  result.id = get(nutritionProduct, 'id', '');
+  result.identifier = get(nutritionProduct, 'identifier[0].value', '');
+
+  // Status
+  result.status = get(nutritionProduct, 'status', '');
+
+  // Category
+  if(get(nutritionProduct, 'category')){
+    result.category = get(nutritionProduct, 'category[0].text', get(nutritionProduct, 'category[0].coding[0].display', ''));
+    result.categoryCode = get(nutritionProduct, 'category[0].coding[0].code', '');
+  }
+
+  // Code - product identification
+  if(get(nutritionProduct, 'code')){
+    result.code = get(nutritionProduct, 'code.coding[0].code', '');
+    result.codeDisplay = get(nutritionProduct, 'code.text', get(nutritionProduct, 'code.coding[0].display', ''));
+    // Use code text or display as the product name
+    result.name = get(nutritionProduct, 'code.text', get(nutritionProduct, 'code.coding[0].display', ''));
+  }
+
+  // Manufacturer
+  if(get(nutritionProduct, 'manufacturer')){
+    result.manufacturer = get(nutritionProduct, 'manufacturer[0].display', '');
+  }
+
+  // Description from productCharacteristic
+  if(get(nutritionProduct, 'productCharacteristic')){
+    const characteristics = get(nutritionProduct, 'productCharacteristic', []);
+    characteristics.forEach(function(characteristic){
+      const typeCode = get(characteristic, 'type.coding[0].code', '');
+      if(typeCode === 'description' || typeCode === 'Description'){
+        result.description = get(characteristic, 'valueString', '');
+      }
+    });
+  }
+
+  // Note
+  if(get(nutritionProduct, 'note')){
+    const notes = [];
+    get(nutritionProduct, 'note', []).forEach(function(n){
+      if(get(n, 'text')){
+        notes.push(get(n, 'text'));
+      }
+    });
+    result.note = notes.join('; ');
+  }
+
+  return result;
+}
+
 export function flattenNetwork(organization, internalDateFormat){
     let result = {
       resourceType: 'Network',
@@ -5079,6 +5458,8 @@ export function flattenOrganization(organization, internalDateFormat){
     meta: '',
     name: '',
     identifier: '',
+    type: '',
+    active: false,
     phone: '',
     email: '',
     addressLine: '',
@@ -5086,6 +5467,7 @@ export function flattenOrganization(organization, internalDateFormat){
     city: '',
     state: '',
     postalCode: '',
+    country: '',
     fullAddress: '',
     operationOutcome: '',
     numEndpoints: 0
@@ -5097,16 +5479,22 @@ export function flattenOrganization(organization, internalDateFormat){
   result.id = get(organization, 'id', '');
   result.identifier = get(organization, 'identifier[0].value', '');
 
-  result.name = get(organization, 'name', '')
+  result.name = get(organization, 'name', '');
+
+  // Type - get display text from CodeableConcept
+  result.type = get(organization, 'type[0].coding[0].display', get(organization, 'type[0].text', ''));
+
+  // Active status
+  result.active = get(organization, 'active', false);
 
   result.phone = FhirUtilities.pluckPhone(get(organization, 'telecom'));
   result.email = FhirUtilities.pluckEmail(get(organization, 'telecom'));
 
-  result.addressLine = get(organization, 'address[0].line[0]');
-  result.city = get(organization, 'address[0].city');
-  result.state = get(organization, 'address[0].state');
-  result.postalCode = get(organization, 'address[0].postalCode');
-  result.country = get(organization, 'address[0].country');
+  result.addressLine = get(organization, 'address[0].line[0]', '');
+  result.city = get(organization, 'address[0].city', '');
+  result.state = get(organization, 'address[0].state', '');
+  result.postalCode = get(organization, 'address[0].postalCode', '');
+  result.country = get(organization, 'address[0].country', '');
 
   result.fullAddress = FhirUtilities.stringifyAddress(get(organization, 'address[0]'));
 
@@ -6325,6 +6713,78 @@ export function flattenSupplyDelivery(supplyDelivery, internalDateFormat){
   return result;
 }
 
+export function flattenSupplyRequest(supplyRequest, internalDateFormat){
+  let result = {
+    _id: get(supplyRequest, '_id', ''),
+    id: get(supplyRequest, 'id', ''),
+    resourceType: 'SupplyRequest',
+    identifier: get(supplyRequest, 'identifier[0].value', ''),
+    status: get(supplyRequest, 'status', ''),
+    category: '',
+    categoryCode: get(supplyRequest, 'category.coding[0].code', ''),
+    priority: get(supplyRequest, 'priority', ''),
+    itemCodeableConcept: '',
+    itemCodeableConceptCode: get(supplyRequest, 'itemCodeableConcept.coding[0].code', ''),
+    itemReference: get(supplyRequest, 'itemReference.reference', ''),
+    itemDisplay: get(supplyRequest, 'itemReference.display', ''),
+    quantity: get(supplyRequest, 'quantity.value', ''),
+    quantityUnit: get(supplyRequest, 'quantity.unit', ''),
+    occurrenceDateTime: '',
+    authoredOn: '',
+    requester: get(supplyRequest, 'requester.display', ''),
+    requesterReference: get(supplyRequest, 'requester.reference', ''),
+    supplier: get(supplyRequest, 'supplier[0].display', ''),
+    supplierReference: get(supplyRequest, 'supplier[0].reference', ''),
+    reasonCode: '',
+    reasonCodeCode: get(supplyRequest, 'reasonCode[0].coding[0].code', ''),
+    deliverFrom: get(supplyRequest, 'deliverFrom.display', ''),
+    deliverFromReference: get(supplyRequest, 'deliverFrom.reference', ''),
+    deliverTo: get(supplyRequest, 'deliverTo.display', ''),
+    deliverToReference: get(supplyRequest, 'deliverTo.reference', '')
+  };
+
+  // Category
+  if(has(supplyRequest, 'category.text')){
+    result.category = get(supplyRequest, 'category.text');
+  } else {
+    result.category = get(supplyRequest, 'category.coding[0].display', '');
+  }
+
+  // Item CodeableConcept
+  if(has(supplyRequest, 'itemCodeableConcept.text')){
+    result.itemCodeableConcept = get(supplyRequest, 'itemCodeableConcept.text');
+  } else {
+    result.itemCodeableConcept = get(supplyRequest, 'itemCodeableConcept.coding[0].display', '');
+  }
+
+  // Reason Code
+  if(has(supplyRequest, 'reasonCode[0].text')){
+    result.reasonCode = get(supplyRequest, 'reasonCode[0].text');
+  } else {
+    result.reasonCode = get(supplyRequest, 'reasonCode[0].coding[0].display', '');
+  }
+
+  // Occurrence DateTime
+  if(get(supplyRequest, 'occurrenceDateTime')){
+    if(internalDateFormat){
+      result.occurrenceDateTime = moment(get(supplyRequest, 'occurrenceDateTime', null)).format(internalDateFormat);
+    } else {
+      result.occurrenceDateTime = moment(get(supplyRequest, 'occurrenceDateTime', null)).format("YYYY-MM-DD");
+    }
+  }
+
+  // Authored On
+  if(get(supplyRequest, 'authoredOn')){
+    if(internalDateFormat){
+      result.authoredOn = moment(get(supplyRequest, 'authoredOn', null)).format(internalDateFormat);
+    } else {
+      result.authoredOn = moment(get(supplyRequest, 'authoredOn', null)).format("YYYY-MM-DD");
+    }
+  }
+
+  return result;
+}
+
 export function flattenRestriction(restriction, internalDateFormat){
     let result = {
         resourceType: 'Restriction',
@@ -6346,25 +6806,6 @@ export function flattenRestriction(restriction, internalDateFormat){
     }
     
     return result;
-}
-
-export function flattenRiskAssessment(document){
-  let result = {
-    _id: get(document, '_id', ''),
-    id: get(document, 'id', ''),
-    occurrenceDateTime: moment(get(document, 'occurrenceDateTime', null)).format("YYYY-MM-DD hh:mm"),
-    identifier: get(document, 'identifier[0].value', ''),
-    performer: get(document, 'performer.display', ''),
-    performerReference: get(document, 'performer.reference', ''),
-    status: get(document, 'status', ''),
-    subjectReference: get(document, 'subject.reference', ''),
-    subjectName: get(document, 'subject.display', ''),
-    outcomeText: get(document, 'prediction[0].outcome.text', ''),
-    probabilityDecimal: get(document, 'prediction[0].probabilityDecimal', ''),
-    text: get(document, 'text.div', ''),
-  };
-
-  return result;
 }
 
 export function flattenServiceRequest(document){
@@ -6900,8 +7341,10 @@ export const FhirDehydrator = {
   dehydrateAppointment: flattenAppointment,
   dehydrateArtifactAssessment: flattenArtifactAssessment,
   dehydrateAuditEvent: flattenAuditEvent,
+  dehydrateBodyStructure: flattenBodyStructure,
   dehydrateBundle: flattenBundle,
   dehydrateCarePlan: flattenCarePlan,
+  dehydrateClinicalImpression: flattenClinicalImpression,
   dehydrateCareTeam: flattenCareTeam,
   dehydrateClaim: flattenClaim,
   dehydrateCodeSystem: flattenCodeSystem,
@@ -6937,7 +7380,9 @@ export const FhirDehydrator = {
   dehydrateMedicationRequest: flattenMedicationRequest,
   dehydrateMedicationAdministration: flattenMedicationAdministration,
   dehydrateNetwork: flattenNetwork,
+  dehydrateNutritionIntake: flattenNutritionIntake,
   dehydrateNutritionOrder: flattenNutritionOrder,
+  dehydrateNutritionProduct: flattenNutritionProduct,
   dehydrateObservation: flattenObservation,
   dehydrateOrganization: flattenOrganization,
   dehydrateOperationOutcome: flattenOperationOutcome,
@@ -6995,9 +7440,11 @@ export default {
   flattenAppointment,
   flattenArtifactAssessment,
   flattenAuditEvent,
+  flattenBodyStructure,
   flattenBundle,
   flattenCarePlan,
   flattenCareTeam,
+  flattenClinicalImpression,
   flattenClaim,
   flattenCodeSystem,
   flattenComposition,
@@ -7031,7 +7478,9 @@ export default {
   flattenMedicationRequest,
   flattenMedicationAdministration,
   flattenMessageHeader,
+  flattenNutritionIntake,
   flattenNutritionOrder,
+  flattenNutritionProduct,
   flattenObservation,
   flattenOperationOutcome,
   flattenOrganization,

@@ -1,0 +1,440 @@
+{
+  "$schema": "http://json-schema.org/draft-06/schema#",
+  "id": "http://hl7.org/fhir/json-schema/AllergyIntolerance",
+  "description": "Risk of harmful or undesirable, physiological response which is unique to an individual and associated with exposure to a substance.",
+  "type": "object",
+  "required": ["resourceType", "patient"],
+  "properties": {
+    "resourceType": {
+      "const": "AllergyIntolerance"
+    },
+    "id": {
+      "type": "string",
+      "description": "Logical id of this artifact"
+    },
+    "_id": {
+      "type": "string",
+      "description": "MongoDB primary key"
+    },
+    "meta": {
+      "type": "object",
+      "description": "Metadata about the resource",
+      "properties": {
+        "versionId": { "type": "string" },
+        "lastUpdated": { "type": "string" },
+        "source": { "type": "string" },
+        "profile": { "type": "array", "items": { "type": "string" } },
+        "security": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "system": { "type": "string" },
+              "code": { "type": "string" },
+              "display": { "type": "string" }
+            }
+          }
+        },
+        "tag": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "system": { "type": "string" },
+              "code": { "type": "string" },
+              "display": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "implicitRules": {
+      "type": "string",
+      "description": "A set of rules under which this content was created"
+    },
+    "language": {
+      "type": "string",
+      "description": "Language of the resource content"
+    },
+    "text": {
+      "type": "object",
+      "description": "Text summary of the resource",
+      "properties": {
+        "status": { "type": "string" },
+        "div": { "type": "string" }
+      }
+    },
+    "contained": {
+      "type": "array",
+      "description": "Contained, inline Resources",
+      "items": { "type": "object" }
+    },
+    "extension": {
+      "type": "array",
+      "description": "Additional content defined by implementations",
+      "items": {
+        "type": "object",
+        "properties": {
+          "url": { "type": "string" },
+          "valueString": { "type": "string" },
+          "valueBoolean": { "type": "boolean" },
+          "valueCode": { "type": "string" }
+        }
+      }
+    },
+    "modifierExtension": {
+      "type": "array",
+      "description": "Extensions that cannot be ignored",
+      "items": {
+        "type": "object",
+        "properties": {
+          "url": { "type": "string" },
+          "valueString": { "type": "string" },
+          "valueBoolean": { "type": "boolean" },
+          "valueCode": { "type": "string" }
+        }
+      }
+    },
+    "identifier": {
+      "type": "array",
+      "description": "External ids for this item",
+      "items": {
+        "type": "object",
+        "properties": {
+          "use": { "type": "string" },
+          "type": {
+            "type": "object",
+            "properties": {
+              "coding": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "system": { "type": "string" },
+                    "code": { "type": "string" },
+                    "display": { "type": "string" }
+                  }
+                }
+              },
+              "text": { "type": "string" }
+            }
+          },
+          "system": { "type": "string" },
+          "value": { "type": "string" },
+          "period": {
+            "type": "object",
+            "properties": {
+              "start": { "type": "string" },
+              "end": { "type": "string" }
+            }
+          },
+          "assigner": {
+            "type": "object",
+            "properties": {
+              "reference": { "type": "string" },
+              "display": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "clinicalStatus": {
+      "type": "object",
+      "description": "active | inactive | resolved",
+      "properties": {
+        "coding": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "system": { "type": "string" },
+              "code": { "type": "string" },
+              "display": { "type": "string" }
+            }
+          }
+        },
+        "text": { "type": "string" }
+      }
+    },
+    "verificationStatus": {
+      "type": "object",
+      "description": "unconfirmed | confirmed | refuted | entered-in-error",
+      "properties": {
+        "coding": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "system": { "type": "string" },
+              "code": { "type": "string" },
+              "display": { "type": "string" }
+            }
+          }
+        },
+        "text": { "type": "string" }
+      }
+    },
+    "type": {
+      "type": "string",
+      "description": "allergy | intolerance",
+      "enum": ["allergy", "intolerance"]
+    },
+    "category": {
+      "type": "array",
+      "description": "food | medication | environment | biologic",
+      "items": {
+        "type": "string",
+        "enum": ["food", "medication", "environment", "biologic"]
+      }
+    },
+    "criticality": {
+      "type": "string",
+      "description": "low | high | unable-to-assess",
+      "enum": ["low", "high", "unable-to-assess"]
+    },
+    "code": {
+      "type": "object",
+      "description": "Code that identifies the allergy or intolerance",
+      "properties": {
+        "coding": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "system": { "type": "string" },
+              "code": { "type": "string" },
+              "display": { "type": "string" }
+            }
+          }
+        },
+        "text": { "type": "string" }
+      }
+    },
+    "patient": {
+      "type": "object",
+      "description": "Who the sensitivity is for",
+      "properties": {
+        "reference": { "type": "string" },
+        "type": { "type": "string" },
+        "identifier": {
+          "type": "object",
+          "properties": {
+            "system": { "type": "string" },
+            "value": { "type": "string" }
+          }
+        },
+        "display": { "type": "string" }
+      }
+    },
+    "encounter": {
+      "type": "object",
+      "description": "Encounter when the allergy or intolerance was asserted",
+      "properties": {
+        "reference": { "type": "string" },
+        "display": { "type": "string" }
+      }
+    },
+    "onsetDateTime": {
+      "type": "string",
+      "description": "When allergy or intolerance was identified"
+    },
+    "onsetAge": {
+      "type": "object",
+      "description": "When allergy or intolerance was identified",
+      "properties": {
+        "value": { "type": "number" },
+        "comparator": { "type": "string" },
+        "unit": { "type": "string" },
+        "system": { "type": "string" },
+        "code": { "type": "string" }
+      }
+    },
+    "onsetPeriod": {
+      "type": "object",
+      "description": "When allergy or intolerance was identified",
+      "properties": {
+        "start": { "type": "string" },
+        "end": { "type": "string" }
+      }
+    },
+    "onsetRange": {
+      "type": "object",
+      "description": "When allergy or intolerance was identified",
+      "properties": {
+        "low": {
+          "type": "object",
+          "properties": {
+            "value": { "type": "number" },
+            "unit": { "type": "string" }
+          }
+        },
+        "high": {
+          "type": "object",
+          "properties": {
+            "value": { "type": "number" },
+            "unit": { "type": "string" }
+          }
+        }
+      }
+    },
+    "onsetString": {
+      "type": "string",
+      "description": "When allergy or intolerance was identified"
+    },
+    "recordedDate": {
+      "type": "string",
+      "description": "Date first version of the resource instance was recorded"
+    },
+    "recorder": {
+      "type": "object",
+      "description": "Who recorded the sensitivity",
+      "properties": {
+        "reference": { "type": "string" },
+        "display": { "type": "string" }
+      }
+    },
+    "asserter": {
+      "type": "object",
+      "description": "Source of the information about the allergy",
+      "properties": {
+        "reference": { "type": "string" },
+        "display": { "type": "string" }
+      }
+    },
+    "lastOccurrence": {
+      "type": "string",
+      "description": "Date(/time) of last known occurrence of a reaction"
+    },
+    "note": {
+      "type": "array",
+      "description": "Additional text not captured in other fields",
+      "items": {
+        "type": "object",
+        "properties": {
+          "authorReference": {
+            "type": "object",
+            "properties": {
+              "reference": { "type": "string" },
+              "display": { "type": "string" }
+            }
+          },
+          "authorString": { "type": "string" },
+          "time": { "type": "string" },
+          "text": { "type": "string" }
+        }
+      }
+    },
+    "reaction": {
+      "type": "array",
+      "description": "Adverse Reaction Events linked to exposure to substance",
+      "items": {
+        "type": "object",
+        "required": ["manifestation"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique id for inter-element referencing"
+          },
+          "extension": {
+            "type": "array",
+            "items": { "type": "object" }
+          },
+          "modifierExtension": {
+            "type": "array",
+            "items": { "type": "object" }
+          },
+          "substance": {
+            "type": "object",
+            "description": "Specific substance or pharmaceutical product considered to be responsible for event",
+            "properties": {
+              "coding": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "system": { "type": "string" },
+                    "code": { "type": "string" },
+                    "display": { "type": "string" }
+                  }
+                }
+              },
+              "text": { "type": "string" }
+            }
+          },
+          "manifestation": {
+            "type": "array",
+            "description": "Clinical symptoms/signs associated with the Event",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "properties": {
+                "coding": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "system": { "type": "string" },
+                      "code": { "type": "string" },
+                      "display": { "type": "string" }
+                    }
+                  }
+                },
+                "text": { "type": "string" }
+              }
+            }
+          },
+          "description": {
+            "type": "string",
+            "description": "Description of the event as a whole"
+          },
+          "onset": {
+            "type": "string",
+            "description": "Date(/time) when manifestations showed"
+          },
+          "severity": {
+            "type": "string",
+            "description": "mild | moderate | severe",
+            "enum": ["mild", "moderate", "severe"]
+          },
+          "exposureRoute": {
+            "type": "object",
+            "description": "How the subject was exposed to the substance",
+            "properties": {
+              "coding": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "system": { "type": "string" },
+                    "code": { "type": "string" },
+                    "display": { "type": "string" }
+                  }
+                }
+              },
+              "text": { "type": "string" }
+            }
+          },
+          "note": {
+            "type": "array",
+            "description": "Text about event not captured in other fields",
+            "items": {
+              "type": "object",
+              "properties": {
+                "authorReference": {
+                  "type": "object",
+                  "properties": {
+                    "reference": { "type": "string" },
+                    "display": { "type": "string" }
+                  }
+                },
+                "authorString": { "type": "string" },
+                "time": { "type": "string" },
+                "text": { "type": "string" }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

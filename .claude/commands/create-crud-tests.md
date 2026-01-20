@@ -195,7 +195,7 @@ describe('Medications CRUD Operations [Patient-Agnostic]', function() {
     console.log('[Test 01] Logged in. No patient context needed.');
   });
 
-  it('02. Verify list page loads', browser => {
+  it('02. Verify {resourceType} list page loads', browser => {
     browser
       .url('http://localhost:3000/medications')
       .waitForElementVisible('#medicationsPage', 5000);
@@ -489,7 +489,7 @@ describe('ServiceRequests CRUD Operations [Clinician-Mediated]', function() {
     });
   });
 
-  it('02. Verify list page loads', browser => {
+  it('02. Verify {resourceType} list page loads', browser => {
     browser
       .url('http://localhost:3000/service-requests')
       .waitForElementVisible('#serviceRequestsPage', 5000);
@@ -824,7 +824,7 @@ const ARCHETYPE_MAP = {
 When generating, the command adapts to:
 
 1. **Resource archetype** (auto-detected or specified)
-2. **Required fields per resource** (consults FHIR R4 spec)
+2. **Required fields per resource** (consults FHIR R4B spec)
 3. **Login account** (standard user vs practitioner)
 4. **Search strategy** (code, text, or display)
 5. **Status transitions** (draft → active for orders)

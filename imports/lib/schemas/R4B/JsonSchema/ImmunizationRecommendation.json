@@ -1,0 +1,24 @@
+{
+  "$schema": "http://json-schema.org/draft-06/schema#",
+  "id": "http://hl7.org/fhir/json-schema/ImmunizationRecommendation",
+  "description": "A patient's point-in-time set of recommendations (i.e. forecasting) according to a published schedule with optional supporting justification.",
+  "type": "object",
+  "required": ["resourceType", "patient", "date", "recommendation"],
+  "properties": {
+    "resourceType": { "const": "ImmunizationRecommendation" },
+    "id": { "type": "string", "description": "Logical id of this artifact" },
+    "_id": { "type": "string", "description": "MongoDB primary key" },
+    "meta": { "type": "object", "properties": { "versionId": { "type": "string" }, "lastUpdated": { "type": "string" }, "source": { "type": "string" }, "profile": { "type": "array", "items": { "type": "string" } }, "security": { "type": "array", "items": { "type": "object", "properties": { "system": { "type": "string" }, "code": { "type": "string" }, "display": { "type": "string" } } } }, "tag": { "type": "array", "items": { "type": "object", "properties": { "system": { "type": "string" }, "code": { "type": "string" }, "display": { "type": "string" } } } } } },
+    "implicitRules": { "type": "string" },
+    "language": { "type": "string" },
+    "text": { "type": "object", "properties": { "status": { "type": "string" }, "div": { "type": "string" } } },
+    "contained": { "type": "array", "items": { "type": "object" } },
+    "extension": { "type": "array", "items": { "type": "object" } },
+    "modifierExtension": { "type": "array", "items": { "type": "object" } },
+    "identifier": { "type": "array", "items": { "type": "object", "properties": { "use": { "type": "string" }, "system": { "type": "string" }, "value": { "type": "string" } } } },
+    "patient": { "type": "object", "properties": { "reference": { "type": "string" }, "display": { "type": "string" } } },
+    "date": { "type": "string" },
+    "authority": { "type": "object", "properties": { "reference": { "type": "string" }, "display": { "type": "string" } } },
+    "recommendation": { "type": "array", "items": { "type": "object", "properties": { "vaccineCode": { "type": "array", "items": { "type": "object", "properties": { "coding": { "type": "array", "items": { "type": "object", "properties": { "system": { "type": "string" }, "code": { "type": "string" }, "display": { "type": "string" } } } }, "text": { "type": "string" } } } }, "targetDisease": { "type": "object", "properties": { "coding": { "type": "array", "items": { "type": "object", "properties": { "system": { "type": "string" }, "code": { "type": "string" }, "display": { "type": "string" } } } }, "text": { "type": "string" } } }, "contraindicatedVaccineCode": { "type": "array", "items": { "type": "object" } }, "forecastStatus": { "type": "object", "properties": { "coding": { "type": "array", "items": { "type": "object", "properties": { "system": { "type": "string" }, "code": { "type": "string" }, "display": { "type": "string" } } } }, "text": { "type": "string" } } }, "forecastReason": { "type": "array", "items": { "type": "object" } }, "dateCriterion": { "type": "array", "items": { "type": "object", "properties": { "code": { "type": "object" }, "value": { "type": "string" } } } }, "description": { "type": "string" }, "series": { "type": "string" }, "doseNumberPositiveInt": { "type": "integer" }, "doseNumberString": { "type": "string" }, "seriesDosesPositiveInt": { "type": "integer" }, "seriesDosesString": { "type": "string" }, "supportingImmunization": { "type": "array", "items": { "type": "object" } }, "supportingPatientInformation": { "type": "array", "items": { "type": "object" } } } } }
+  }
+}

@@ -17,7 +17,7 @@ describe('Observations CRUD', function() {
   });
 
   // Read Operations
-  it('02. Verify list page loads', browser => {
+  it('02. Verify {resourceType} list page loads', browser => {
     // Navigate to list page, check table renders
   });
 
@@ -142,7 +142,7 @@ it('01. Setup test environment', browser => {
 **Purpose**: Navigate to resource list, verify table renders
 
 ```javascript
-it('02. Verify list page loads', browser => {
+it('02. Verify {resourceType} list page loads', browser => {
   // Use testUtils.navigateUrl to preserve Session
   testUtils.navigateUrl(browser, '/observations');
 

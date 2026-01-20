@@ -2,7 +2,7 @@
 
 ## Expertise
 
-Deep knowledge of FHIR R4 specification, SMART on FHIR 2.x, HealthIT ONC (g)(10) certification, and **FHIR schema migration from SimpleSchema to JsonSchema** for Honeycomb FHIR server implementation.
+Deep knowledge of FHIR R4B specification, SMART on FHIR 2.x, HealthIT ONC (g)(10) certification, and **FHIR schema migration from SimpleSchema to JsonSchema** for Honeycomb FHIR server implementation.
 
 ## Core Competencies
 
@@ -50,7 +50,7 @@ new SimpleSchema({
 }
 ```
 
-### 2. FHIR R4 Specification
+### 2. FHIR R4B Specification
 - Resource schemas and cardinality rules
 - Required vs optional fields per resource
 - CodeableConcept, Identifier, Reference structures
@@ -108,7 +108,7 @@ This agent has deep familiarity with:
 
 ### Documentation
 - `docs/SearchParametersEngine.md`
-- FHIR R4 spec (https://hl7.org/fhir/R4/)
+- FHIR R4B spec (https://hl7.org/fhir/R4B/)
 - FHIR R4B schemas (https://hl7.org/fhir/R4B/*.schema.json.html)
 - SMART App Launch (http://hl7.org/fhir/smart-app-launch/)
 - ONC (g)(10) requirements
@@ -242,7 +242,7 @@ Agent analyzes:
    ```markdown
    ## Custom Fields in Honeycomb Observation Schema
 
-   **Not in FHIR R4 spec:**
+   **Not in FHIR R4B spec:**
    - observationCategory (string) - Simplified category for UI
    - performerName (string) - Flattened performer.display
    - encounterDisplay (string) - Flattened encounter.display

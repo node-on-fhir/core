@@ -1,0 +1,320 @@
+{
+  "$schema": "http://json-schema.org/draft-06/schema#",
+  "id": "http://hl7.org/fhir/json-schema/NutritionIntake",
+  "$ref": "#/definitions/NutritionIntake",
+  "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
+  "definitions": {
+    "NutritionIntake": {
+      "description": "Records of food or fluid consumption by a patient, capturing current or past intake from sources such as patient memory, nutrition labels, or clinician observation.",
+      "properties": {
+        "resourceType": {
+          "description": "This is a NutritionIntake resource",
+          "const": "NutritionIntake"
+        },
+        "id": {
+          "description": "The logical id of the resource, as used in the URL for the resource.",
+          "type": "string"
+        },
+        "meta": {
+          "description": "The metadata about the resource maintained by infrastructure.",
+          "type": "object"
+        },
+        "implicitRules": {
+          "description": "Rules followed during resource construction that must be understood when processing.",
+          "type": "string"
+        },
+        "language": {
+          "description": "The base language in which the resource is written.",
+          "type": "string"
+        },
+        "text": {
+          "description": "Human-readable narrative containing a summary of the resource.",
+          "type": "object"
+        },
+        "contained": {
+          "description": "Resources without independent existence apart from the containing resource.",
+          "items": {
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "extension": {
+          "description": "Additional information not part of the basic definition.",
+          "items": {
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "modifierExtension": {
+          "description": "Additional information that modifies understanding of the element.",
+          "items": {
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "identifier": {
+          "description": "Business identifiers assigned by performers or systems.",
+          "items": {
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "instantiatesCanonical": {
+          "description": "Instantiates FHIR protocol or definition.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "instantiatesUri": {
+          "description": "Instantiates external protocol or definition.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "basedOn": {
+          "description": "Plan, proposal or order fulfilled by this event.",
+          "items": {
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "partOf": {
+          "description": "Larger event of which this event is a component or step.",
+          "items": {
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "status": {
+          "description": "Code representing the state of intake assertion.",
+          "type": "string",
+          "enum": ["preparation", "in-progress", "not-done", "on-hold", "stopped", "completed", "entered-in-error", "unknown"]
+        },
+        "statusReason": {
+          "description": "Reason for the current state of the NutritionIntake.",
+          "items": {
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "code": {
+          "description": "Overall type of nutrition intake.",
+          "type": "object"
+        },
+        "subject": {
+          "description": "Person, animal or group consuming the food or fluid.",
+          "type": "object"
+        },
+        "encounter": {
+          "description": "Encounter establishing the context for this NutritionIntake.",
+          "type": "object"
+        },
+        "occurrenceDateTime": {
+          "description": "Interval during which intake is being asserted.",
+          "type": "string"
+        },
+        "occurrencePeriod": {
+          "description": "Interval during which intake is being asserted.",
+          "type": "object"
+        },
+        "recorded": {
+          "description": "Date when the NutritionIntake was asserted.",
+          "type": "string"
+        },
+        "reportedBoolean": {
+          "description": "Boolean indicating reported status of consumption.",
+          "type": "boolean"
+        },
+        "reportedReference": {
+          "description": "Person or organization providing consumption information.",
+          "type": "object"
+        },
+        "consumedItem": {
+          "description": "What food or fluid product or item was consumed.",
+          "items": {
+            "$ref": "#/definitions/NutritionIntake_ConsumedItem"
+          },
+          "type": "array"
+        },
+        "ingredientLabel": {
+          "description": "Total nutrient amounts for the whole meal or product.",
+          "items": {
+            "$ref": "#/definitions/NutritionIntake_IngredientLabel"
+          },
+          "type": "array"
+        },
+        "performer": {
+          "description": "Who performed the intake and involvement level.",
+          "items": {
+            "$ref": "#/definitions/NutritionIntake_Performer"
+          },
+          "type": "array"
+        },
+        "location": {
+          "description": "Where the intake occurred.",
+          "type": "object"
+        },
+        "derivedFrom": {
+          "description": "Links to NutritionOrder or supporting information.",
+          "items": {
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "reason": {
+          "description": "Reason or condition for consuming the food or fluid.",
+          "items": {
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "note": {
+          "description": "Extra information not conveyed by other attributes.",
+          "items": {
+            "type": "object"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "subject",
+        "consumedItem",
+        "resourceType"
+      ]
+    },
+    "NutritionIntake_ConsumedItem": {
+      "description": "Details of consumed food or fluid items.",
+      "properties": {
+        "id": {
+          "description": "Unique id for element within resource.",
+          "type": "string"
+        },
+        "extension": {
+          "description": "Additional information not part of basic definition.",
+          "items": {
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "modifierExtension": {
+          "description": "Information modifying element understanding.",
+          "items": {
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "type": {
+          "description": "Category of consumed item: food, fluid, enteral, etc.",
+          "type": "object"
+        },
+        "nutritionProduct": {
+          "description": "Food or fluid product consumed.",
+          "type": "object"
+        },
+        "schedule": {
+          "description": "Scheduled frequency of consumption.",
+          "type": "object"
+        },
+        "amount": {
+          "description": "Quantity of specified food.",
+          "type": "object"
+        },
+        "rate": {
+          "description": "Rate at which enteral feeding was administered.",
+          "type": "object"
+        },
+        "notConsumed": {
+          "description": "Indicator when food was not consumed.",
+          "type": "boolean"
+        },
+        "notConsumedReason": {
+          "description": "Reason food or fluid was not consumed.",
+          "type": "object"
+        }
+      },
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "nutritionProduct",
+        "type"
+      ]
+    },
+    "NutritionIntake_IngredientLabel": {
+      "description": "Total nutrient composition details.",
+      "properties": {
+        "id": {
+          "description": "Unique id for element within resource.",
+          "type": "string"
+        },
+        "extension": {
+          "description": "Additional information not part of basic definition.",
+          "items": {
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "modifierExtension": {
+          "description": "Information modifying element understanding.",
+          "items": {
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "nutrient": {
+          "description": "Macronutrient or vitamin/mineral consumed.",
+          "type": "object"
+        },
+        "amount": {
+          "description": "Total amount of nutrient consumed.",
+          "type": "object"
+        }
+      },
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "amount",
+        "nutrient"
+      ]
+    },
+    "NutritionIntake_Performer": {
+      "description": "Documentation of who performed intake activity.",
+      "properties": {
+        "id": {
+          "description": "Unique id for element within resource.",
+          "type": "string"
+        },
+        "extension": {
+          "description": "Additional information not part of basic definition.",
+          "items": {
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "modifierExtension": {
+          "description": "Information modifying element understanding.",
+          "items": {
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "function": {
+          "description": "Type of performer.",
+          "type": "object"
+        },
+        "actor": {
+          "description": "Individual or entity performing the intake.",
+          "type": "object"
+        }
+      },
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "actor"
+      ]
+    }
+  }
+}

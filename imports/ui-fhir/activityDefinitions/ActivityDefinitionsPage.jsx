@@ -1,137 +1,204 @@
+// /imports/ui-fhir/activityDefinitions/ActivityDefinitionsPage.jsx
+
 import React, { useState } from 'react';
 import { useTracker } from 'meteor/react-meteor-data';
+import { useNavigate } from 'react-router-dom';
 
-import { 
-  Grid, 
+import {
+  Grid,
   Container,
   Divider,
   Card,
   CardHeader,
   CardContent,
-  Button
-} from '@mui/material'; 
+  CardActions,
+  Button,
+  TextField,
+  Box,
+  Typography
+} from '@mui/material';
+import AddIcon from '@mui/icons-material/Add';
 
 import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
 
-// import ActivityDefinitionDetail from './ActivityDefinitionDetail';
 import ActivityDefinitionsTable from './ActivityDefinitionsTable';
 import LayoutHelpers from '../../lib/LayoutHelpers';
 
 import { get } from 'lodash';
 
-
-//=============================================================================================================================================
-// DATA CURSORS
-
-Meteor.startup(function(){
-  ActivityDefinitions = Meteor.Collections.ActivityDefinitions;
-})
+// Import collection directly for reliable access
+import { ActivityDefinitions } from '/imports/lib/schemas/SimpleSchemas/ActivityDefinitions';
 
 //=============================================================================================================================================
 // SESSION VARIABLES
 
 Session.setDefault('selectedActivityDefinitionId', false);
-
-
-Session.setDefault('evidencePageTabIndex', 1); 
-Session.setDefault('evidenceSearchFilter', ''); 
-Session.setDefault('selectedActivityDefinitionId', false);
-Session.setDefault('selectedActivityDefinition', false)
-Session.setDefault('ActivityDefinitionsPage.onePageLayout', true)
-Session.setDefault('ActivityDefinitionsPage.defaultQuery', {})
-Session.setDefault('ActivityDefinitionsTable.hideCheckbox', true)
-Session.setDefault('ActivityDefinitionsTable.activityDefinitionIndex', 0)
-
+Session.setDefault('selectedActivityDefinition', false);
+Session.setDefault('ActivityDefinitionsPage.onePageLayout', true);
+Session.setDefault('ActivityDefinitionsPage.defaultQuery', {});
+Session.setDefault('ActivityDefinitionsTable.hideCheckbox', true);
+Session.setDefault('ActivityDefinitionsTable.activityDefinitionIndex', 0);
 
 //=============================================================================================================================================
 // MAIN COMPONENT
 
-export function ActivityDefinitionsPage(props){
+export function ActivityDefinitionsPage(props) {
+  const navigate = useNavigate();
+  const [searchFilter, setSearchFilter] = useState('');
 
-  let data = {
-    currentActivityDefinitionId: '',
-    selectedActivityDefinition: null,
-    activityDefinition: [],
-    onePageLayout: true,
-    showSystemIds: false,
-    showFhirIds: false,
-    activityDefinitionIndex: 0
-  };
+  // Subscribe to ActivityDefinitions data
+  const isLoading = useTracker(function() {
+    const autoPublishEnabled = get(Meteor, 'settings.public.defaults.autopublish', false);
 
-  data.onePageLayout = useTracker(function(){
-    return Session.get('ActivityDefinitionsPage.onePageLayout');
-  }, [])
-  data.hideCheckbox = useTracker(function(){
-    return Session.get('ActivityDefinitionsTable.hideCheckbox');
-  }, [])
-  data.selectedActivityDefinitionId = useTracker(function(){
-    return Session.get('selectedActivityDefinitionId');
-  }, [])
-  data.selectedActivityDefinition = useTracker(function(){
-    return ActivityDefinitions.findOne({_id: Session.get('selectedActivityDefinitionId')});
-  }, [])
-  data.activityDefinition = useTracker(function(){
-    return ActivityDefinitions.find().fetch();
-  }, [])
-  data.activityDefinitionIndex = useTracker(function(){
-    return Session.get('ActivityDefinitionsTable.activityDefinitionIndex')
-  }, [])
-  data.showSystemIds = useTracker(function(){
+    let query = {};
+    if (searchFilter && searchFilter.length > 0) {
+      query = {
+        $or: [
+          { 'name': { $regex: searchFilter, $options: 'i' } },
+          { 'title': { $regex: searchFilter, $options: 'i' } },
+          { 'description': { $regex: searchFilter, $options: 'i' } },
+          { '_id': searchFilter },
+          { 'id': searchFilter }
+        ]
+      };
+    }
+
+    let handle;
+    if (autoPublishEnabled) {
+      handle = Meteor.subscribe('autopublish.ActivityDefinitions', query, { limit: 100 });
+    }
+
+    return handle ? !handle.ready() : false;
+  }, [searchFilter]);
+
+  // Get activity definitions from collection
+  const activityDefinitions = useTracker(function() {
+    let query = {};
+    if (searchFilter && searchFilter.length > 0) {
+      query = {
+        $or: [
+          { 'name': { $regex: searchFilter, $options: 'i' } },
+          { 'title': { $regex: searchFilter, $options: 'i' } },
+          { 'description': { $regex: searchFilter, $options: 'i' } },
+          { '_id': searchFilter },
+          { 'id': searchFilter }
+        ]
+      };
+    }
+    return ActivityDefinitions.find(query, { sort: { _id: -1 } }).fetch();
+  }, [searchFilter]);
+
+  const showSystemIds = useTracker(function() {
     return Session.get('showSystemIds');
-  }, [])
-  data.showFhirIds = useTracker(function(){
+  }, []);
+
+  const showFhirIds = useTracker(function() {
     return Session.get('showFhirIds');
-  }, [])
+  }, []);
+
+  function handleRowClick(activityDefinitionId) {
+    navigate('/activity-definitions/' + activityDefinitionId);
+  }
+
+  function handleAddNew() {
+    navigate('/activity-definitions/new');
+  }
 
 
   let headerHeight = LayoutHelpers.calcHeaderHeight();
   let formFactor = LayoutHelpers.determineFormFactor();
   let paddingWidth = LayoutHelpers.calcCanvasPaddingWidth();
-  
-  let noDataImage = get(Meteor, 'settings.public.defaults.noData.noDataImagePath', "packages/clinical_hl7-fhir-data-infrastructure/assets/NoData.png");  
-  let noDataCardStyle = {};
 
+  // Header with search - always rendered
+  let headerContent = (
+    <Box sx={{ mb: 2 }}>
+      <Grid container spacing={2} alignItems="center" justifyContent="space-between">
+        <Grid item xs={12} sm={6}>
+          <Typography variant="h4">
+            Activity Definitions
+          </Typography>
+          <Typography variant="subtitle2" color="textSecondary">
+            {activityDefinitions.length} activity definitions found
+          </Typography>
+        </Grid>
+        <Grid item xs={12} sm={6}>
+          <Box display="flex" justifyContent="flex-end">
+            <Button
+              id="newActivityDefinitionButton"
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={handleAddNew}
+            >
+              New Activity Definition
+            </Button>
+          </Box>
+        </Grid>
+      </Grid>
+      <Grid container spacing={2} sx={{ mt: 1 }}>
+        <Grid item xs={12}>
+          <TextField
+            id="activityDefinitionSearchInput"
+            fullWidth
+            placeholder="Search by name, title, description..."
+            value={searchFilter}
+            onChange={(e) => setSearchFilter(e.target.value)}
+            size="small"
+          />
+        </Grid>
+      </Grid>
+    </Box>
+  );
+
+  // Content - conditional based on data
   let layoutContainer;
-  if(data.activityDefinition.length > 0){
-    layoutContainer = <Card height="auto" scrollable={true} margin={20}>
-      <CardHeader title={ data.activityDefinition.length + " ActivityDefinitions"} />
-      <CardContent>
-        <ActivityDefinitionsTable 
-          id='activityDefinitionTable'
-          activityDefinition={data.activityDefinition}
-          count={data.activityDefinition.length}  
-          formFactorLayout={formFactor}
-          rowsPerPage={LayoutHelpers.calcTableRows()} 
-          actionButtonLabel="Remove"
-          hideClinicalStatus={true}
-          hideActivityDefinition={true}
-          hideActionButton={get(Meteor, 'settings.public.modules.fhir.ActivityDefinitions.hideRemoveButtonOnTable', true)}
-          onActionButtonClick={function(selectedId){
-            ActivityDefinitions._collection.remove({_id: selectedId})
-          }}
-          onSetPage={function(index){
-            setActivityDefinitionsPageIndex(index)
-          }}        
-          page={data.activityDefinitionIndex}
-        />
-      </CardContent>
-    </Card>
+  if (activityDefinitions.length > 0) {
+    layoutContainer = (
+      <Card sx={{ boxShadow: 3 }}>
+        <CardContent>
+          <ActivityDefinitionsTable
+            id="activityDefinitionsTable"
+            activityDefinitions={activityDefinitions}
+            count={activityDefinitions.length}
+            formFactorLayout={formFactor}
+            rowsPerPage={LayoutHelpers.calcTableRows()}
+            onRowClick={handleRowClick}
+            hideActionButton={true}
+          />
+        </CardContent>
+      </Card>
+    );
   } else {
-    layoutContainer = <Container maxWidth="sm" style={{display: 'flex', flexDirection: 'column', flexWrap: 'nowrap', height: '100%', justifyContent: 'center'}}>
-      {/* <img src={Meteor.absoluteUrl() + noDataImage} style={{width: '100%'}} />     */}
-      <CardContent>
-        <CardHeader 
-          title={get(Meteor, 'settings.public.defaults.noData.defaultTitle', "No Data Available")} 
-          subheader={get(Meteor, 'settings.public.defaults.noData.defaultMessage', "No records were found in the client data cursor.  To debug, check the data cursor in the client console, then check subscriptions and publications, and relevant search queries.  If the data is not loaded in, use a tool like Mongo Compass to load the records directly into the Mongo database, or use the FHIR API interfaces.")} 
-        />
-      </CardContent>
-    </Container>
+    layoutContainer = (
+      <Box
+        id="noActivityDefinitionsMessage"
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          minHeight: '30vh',
+          textAlign: 'center'
+        }}
+      >
+        <Card sx={{ maxWidth: '600px', width: '100%', boxShadow: 3 }}>
+          <CardContent sx={{ p: 4 }}>
+            <Typography variant="h5" sx={{ mb: 2 }}>
+              No Activity Definitions
+            </Typography>
+            <Typography variant="body1" color="textSecondary">
+              No activity definitions found. Create one to get started.
+            </Typography>
+          </CardContent>
+        </Card>
+      </Box>
+    );
   }
-  
+
   return (
-    <div id="activityDefinitionPage" style={{padding: "20px"}}>
-      { layoutContainer }
+    <div id="activityDefinitionsPage" style={{ padding: "20px" }}>
+      {headerContent}
+      {layoutContainer}
     </div>
   );
 }

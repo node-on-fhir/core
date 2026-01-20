@@ -8,7 +8,9 @@ import { AllergyIntolerances } from '/imports/lib/schemas/SimpleSchemas/AllergyI
 import { Appointments } from '/imports/lib/schemas/SimpleSchemas/Appointments';
 import { ArtifactAssessments } from '/imports/lib/schemas/SimpleSchemas/ArtifactAssessments';
 import { AuditEvents } from '/imports/lib/schemas/SimpleSchemas/AuditEvents';
+import { BodyStructures } from '/imports/lib/schemas/SimpleSchemas/BodyStructures';
 import { Bundles } from '/imports/lib/schemas/SimpleSchemas/Bundles';
+import { ClinicalImpressions } from '/imports/lib/schemas/SimpleSchemas/ClinicalImpressions';
 import { CarePlans } from '/imports/lib/schemas/SimpleSchemas/CarePlans';
 import { CareTeams } from '/imports/lib/schemas/SimpleSchemas/CareTeams';
 import { Claims } from '/imports/lib/schemas/SimpleSchemas/Claims';
@@ -40,22 +42,27 @@ import { Measures } from '/imports/lib/schemas/SimpleSchemas/Measures';
 import { MeasureReports } from '/imports/lib/schemas/SimpleSchemas/MeasureReports';
 import { Medias } from '/imports/lib/schemas/SimpleSchemas/Medias';
 import { MessageHeaders } from '/imports/lib/schemas/SimpleSchemas/MessageHeaders';
+import { NutritionIntakes } from '/imports/lib/schemas/SimpleSchemas/NutritionIntakes';
 import { NutritionOrders } from '/imports/lib/schemas/SimpleSchemas/NutritionOrders';
+import { NutritionProducts } from '/imports/lib/schemas/SimpleSchemas/NutritionProducts';
 import { OperationOutcomes } from '/imports/lib/schemas/SimpleSchemas/OperationOutcomes';
 import { Organizations } from '/imports/lib/schemas/SimpleSchemas/Organizations';
 import { Observations } from '/imports/lib/schemas/SimpleSchemas/Observations';
 import { Patients } from '/imports/lib/schemas/SimpleSchemas/Patients';
 import { PlanDefinitions } from '/imports/lib/schemas/SimpleSchemas/PlanDefinitions';
 import { Practitioners } from '/imports/lib/schemas/SimpleSchemas/Practitioners';
+import { PractitionerRoles } from '/imports/lib/schemas/SimpleSchemas/PractitionerRoles';
 import { Procedures } from '/imports/lib/schemas/SimpleSchemas/Procedures';
 import { Questionnaires } from '/imports/lib/schemas/SimpleSchemas/Questionnaires';
 import { QuestionnaireResponses } from '/imports/lib/schemas/SimpleSchemas/QuestionnaireResponses';
 import { RelatedPersons } from '/imports/lib/schemas/SimpleSchemas/RelatedPersons';
 import { ResearchStudies } from '/imports/lib/schemas/SimpleSchemas/ResearchStudies';
 import { ResearchSubjects } from '/imports/lib/schemas/SimpleSchemas/ResearchSubjects';
+import { RiskAssessments } from '/imports/lib/schemas/SimpleSchemas/RiskAssessments';
 import { Schedules } from '/imports/lib/schemas/SimpleSchemas/Schedules';
 import { ServiceRequests } from '/imports/lib/schemas/SimpleSchemas/ServiceRequests';
 import { SupplyDeliveries } from '/imports/lib/schemas/SimpleSchemas/SupplyDeliveries';
+import { SupplyRequests } from '/imports/lib/schemas/SimpleSchemas/SupplyRequests';
 import { Tasks } from '/imports/lib/schemas/SimpleSchemas/Tasks';
 import { ValueSets } from '/imports/lib/schemas/SimpleSchemas/ValueSets';
 
@@ -67,10 +74,12 @@ if (Meteor.isClient) {
     Appointments,
     ArtifactAssessments,
     AuditEvents,
+    BodyStructures,
     Bundles,
     CarePlans,
     CareTeams,
     Claims,
+    ClinicalImpressions,
     CodeSystems,
     Conditions,
     Consents,
@@ -99,22 +108,27 @@ if (Meteor.isClient) {
     Measures,
     MeasureReports,
     Medias,
+    NutritionIntakes,
     NutritionOrders,
+    NutritionProducts,
     OperationOutcomes,
     Organizations,
     Observations,
     Patients,
     PlanDefinitions,
     Practitioners,
+    PractitionerRoles,
     Procedures,
     Questionnaires,
     QuestionnaireResponses,
     RelatedPersons,
     ResearchStudies,
     ResearchSubjects,
+    RiskAssessments,
     Schedules,
     ServiceRequests,
     SupplyDeliveries,
+    SupplyRequests,
     Tasks,
     ValueSets
   };
@@ -125,10 +139,12 @@ if (Meteor.isClient) {
   window.Appointments = Appointments;
   window.ArtifactAssessments = ArtifactAssessments;
   window.AuditEvents = AuditEvents;
+  window.BodyStructures = BodyStructures;
   window.Bundles = Bundles;
   window.CarePlans = CarePlans;
   window.CareTeams = CareTeams;
   window.Claims = Claims;
+  window.ClinicalImpressions = ClinicalImpressions;
   window.CodeSystems = CodeSystems;
   window.Conditions = Conditions;
   window.Consents = Consents;
@@ -157,22 +173,27 @@ if (Meteor.isClient) {
   window.Measures = Measures;
   window.MeasureReports = MeasureReports;
   window.Medias = Medias;
+  window.NutritionIntakes = NutritionIntakes;
   window.NutritionOrders = NutritionOrders;
+  window.NutritionProducts = NutritionProducts;
   window.OperationOutcomes = OperationOutcomes;
   window.Organizations = Organizations;
   window.Observations = Observations;
   window.Patients = Patients;
   window.PlanDefinitions = PlanDefinitions;
   window.Practitioners = Practitioners;
+  window.PractitionerRoles = PractitionerRoles;
   window.Procedures = Procedures;
   window.Questionnaires = Questionnaires;
   window.QuestionnaireResponses = QuestionnaireResponses;
   window.RelatedPersons = RelatedPersons;
   window.ResearchStudies = ResearchStudies;
   window.ResearchSubjects = ResearchSubjects;
+  window.RiskAssessments = RiskAssessments;
   window.Schedules = Schedules;
   window.ServiceRequests = ServiceRequests;
   window.SupplyDeliveries = SupplyDeliveries;
+  window.SupplyRequests = SupplyRequests;
   window.Tasks = Tasks;
   window.ValueSets = ValueSets;
 

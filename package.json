@@ -6,7 +6,13 @@
     "test": "meteor test --once --driver-package meteortesting:mocha",
     "test-app": "TEST_WATCH=1 meteor test --full-app --driver-package meteortesting:mocha",
     "visualize": "meteor --production --extra-packages bundle-visualizer",
-    "desktop": "meteor-desktop"
+    "desktop": "meteor-desktop",
+    "validation-tests": "./scripts/run-nightwatch-local-circleci.sh",
+    "medical-home": "TEST_RUN=1 ENABLE_AUTOPUBLISH=true meteor run --settings configs/settings.honeycomb.tdd.json --extra-packages 'clinical:pacio-core, clinical:us-core'",
+    "medical-home-autologin": "TEST_RUN=1 ENABLE_AUTOPUBLISH=true DEV_AUTO_LOGIN=true DEV_AUTO_USERNAME=demouser DEV_AUTO_PASSWORD=password2025 meteor run --settings configs/settings.honeycomb.tdd.json --extra-packages 'clinical:pacio-core, clinical:us-core'",
+    "base-ehr": "TEST_RUN=1 meteor run --settings configs/settings.honeycomb.tdd.json --extra-packages 'clinical:pacio-core, clinical:us-core'",
+    "ris": "meteor run --settings configs/settings.honeycomb.dicom.localhost.json --extra-packages 'clinical:pacio-core, clinical:us-core'",
+    "nightwatch": "./scripts/run-nightwatch-local-circleci.sh"
   },
   "dependencies": {
     "@accounts/client": "0.33.1",

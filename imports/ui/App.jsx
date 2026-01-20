@@ -138,12 +138,20 @@ import {
 // ConsentsPage is now in ui-pages export
 import DiagnosticReportsPage from '../ui-fhir/diagnosticReports/DiagnosticReportsPage';
 import DiagnosticReportDetail from '../ui-fhir/diagnosticReports/DiagnosticReportDetail';
+import BodyStructuresPage from '../ui-fhir/bodyStructures/BodyStructuresPage';
+import BodyStructureDetail from '../ui-fhir/bodyStructures/BodyStructureDetail';
+import ClinicalImpressionsPage from '../ui-fhir/clinicalImpressions/ClinicalImpressionsPage';
+import ClinicalImpressionDetail from '../ui-fhir/clinicalImpressions/ClinicalImpressionDetail';
+import RiskAssessmentsPage from '../ui-fhir/riskAssessments/RiskAssessmentsPage';
+import RiskAssessmentDetail from '../ui-fhir/riskAssessments/RiskAssessmentDetail';
 import ImagingStudiesPage from '../ui-fhir/imagingStudies/ImagingStudiesPage';
 import ImagingStudyDetail from '../ui-fhir/imagingStudies/ImagingStudyDetail';
 import AppointmentsPage from '../ui-fhir/appointments/AppointmentsPage';
 import AppointmentDetail from '../ui-fhir/appointments/AppointmentDetail';
 import SchedulesPage from '../ui-fhir/schedules/SchedulesPage';
 import ScheduleDetail from '../ui-fhir/schedules/ScheduleDetail';
+import PractitionerRolesPage from '../ui-fhir/practitionerRoles/PractitionerRolesPage';
+import PractitionerRoleDetail from '../ui-fhir/practitionerRoles/PractitionerRoleDetail';
 import MediasPage from '../ui-fhir/medias/MediasPage';
 import MediaDetail from '../ui-fhir/medias/MediaDetail';
 import MeasuresPage from '../ui-fhir/measures/MeasuresPage';
@@ -153,6 +161,11 @@ import MeasureReportDetail from '../ui-fhir/measureReports/MeasureReportDetail';
 import MessageHeadersPage from '../ui-fhir/messageHeaders/MessageHeadersPage';
 import MessageHeaderDetail from '../ui-fhir/messageHeaders/MessageHeaderDetail';
 import SupplyDeliveriesPage from '../ui-fhir/supplyDeliveries/SupplyDeliveriesPage';
+import SupplyRequestsPage from '../ui-fhir/supplyRequests/SupplyRequestsPage';
+import EndpointsPage from '../ui-fhir/endpoints/EndpointsPage';
+import EndpointDetail from '../ui-fhir/endpoints/EndpointDetail';
+import OrganizationsPage from '../ui-fhir/organizations/OrganizationsPage';
+import OrganizationDetail from '../ui-fhir/organizations/OrganizationDetail';
 
 import {
   ActivityDefinitionDetail,
@@ -202,6 +215,16 @@ import {
 // TODO: Create these detail components
 // import MediaDetail from '../ui-fhir/medias/MediaDetail';
 import SupplyDeliveryDetail from '../ui-fhir/supplyDeliveries/SupplyDeliveryDetail';
+import SupplyRequestDetail from '../ui-fhir/supplyRequests/SupplyRequestDetail';
+
+import NutritionIntakesPage from '../ui-fhir/nutritionIntakes/NutritionIntakesPage';
+import NutritionIntakeDetail from '../ui-fhir/nutritionIntakes/NutritionIntakeDetail';
+
+import NutritionProductsPage from '../ui-fhir/nutritionProducts/NutritionProductsPage';
+import NutritionProductDetail from '../ui-fhir/nutritionProducts/NutritionProductDetail';
+
+import AuditEventsPage from '../ui-fhir/auditEvents/AuditEventsPage';
+import AuditEventDetail from '../ui-fhir/auditEvents/AuditEventDetail';
 
 
 //===============================================================================================================
@@ -240,6 +263,7 @@ import { ArtifactAssessments } from '../lib/schemas/SimpleSchemas/ArtifactAssess
 import { AuditEvents } from '../lib/schemas/SimpleSchemas/AuditEvents';
 import { BodyStructures } from '../lib/schemas/SimpleSchemas/BodyStructures';
 import { Bundles } from '../lib/schemas/SimpleSchemas/Bundles';
+import { ClinicalImpressions } from '../lib/schemas/SimpleSchemas/ClinicalImpressions';
 import { CarePlans } from '../lib/schemas/SimpleSchemas/CarePlans';
 import { CareTeams } from '../lib/schemas/SimpleSchemas/CareTeams';
 import { Conditions } from '../lib/schemas/SimpleSchemas/Conditions';
@@ -309,6 +333,7 @@ Meteor.Collections = {
   CarePlans,
   CareTeams,
   Claims,
+  ClinicalImpressions,
   CodeSystems,
   ConceptMaps,
   Conditions,
@@ -681,10 +706,74 @@ if(get(Meteor, 'settings.public.modules.fhir.ArtifactAssessments')){
     element: <ArtifactAssessmentsPage />
   })
 }
+if(get(Meteor, 'settings.public.modules.fhir.BodyStructures')){
+  dynamicRoutes.push({
+    path: "/body-structures",
+    element: <BodyStructuresPage />
+  })
+  dynamicRoutes.push({
+    path: "/body-structures/new",
+    element: <BodyStructureDetail />
+  })
+  dynamicRoutes.push({
+    path: "/body-structures/:id",
+    element: <BodyStructureDetail />
+  })
+}
+if(get(Meteor, 'settings.public.modules.fhir.ClinicalImpressions')){
+  dynamicRoutes.push({
+    path: "/clinical-impressions",
+    element: <ClinicalImpressionsPage />
+  })
+  dynamicRoutes.push({
+    path: "/clinical-impressions/new",
+    element: <ClinicalImpressionDetail />
+  })
+  dynamicRoutes.push({
+    path: "/clinical-impressions/:id",
+    element: <ClinicalImpressionDetail />
+  })
+}
+if(get(Meteor, 'settings.public.modules.fhir.RiskAssessments')){
+  dynamicRoutes.push({
+    path: "/risk-assessments",
+    element: <RiskAssessmentsPage />
+  })
+  dynamicRoutes.push({
+    path: "/risk-assessments/new",
+    element: <RiskAssessmentDetail />
+  })
+  dynamicRoutes.push({
+    path: "/risk-assessments/:id",
+    element: <RiskAssessmentDetail />
+  })
+}
 if(get(Meteor, 'settings.public.modules.fhir.ActivityDefinitions')){
   dynamicRoutes.push({
     path: "/activity-definitions",
     element: <ActivityDefinitionsPage />
+  })
+  dynamicRoutes.push({
+    path: "/activity-definitions/new",
+    element: <ActivityDefinitionDetail />
+  })
+  dynamicRoutes.push({
+    path: "/activity-definitions/:id",
+    element: <ActivityDefinitionDetail />
+  })
+}
+if(get(Meteor, 'settings.public.modules.fhir.AuditEvents')){
+  dynamicRoutes.push({
+    path: "/audit-events",
+    element: <AuditEventsPage />
+  })
+  dynamicRoutes.push({
+    path: "/audit-events/new",
+    element: <AuditEventDetail />
+  })
+  dynamicRoutes.push({
+    path: "/audit-events/:id",
+    element: <AuditEventDetail />
   })
 }
 if(get(Meteor, 'settings.public.modules.fhir.Bundles')){
@@ -824,6 +913,20 @@ if(get(Meteor, 'settings.public.modules.fhir.Encounters')){
     element: <EncounterDetail />
   })
 }
+if(get(Meteor, 'settings.public.modules.fhir.Endpoints')){
+  dynamicRoutes.push({
+    path: "/endpoints",
+    element: <EndpointsPage />
+  })
+  dynamicRoutes.push({
+    path: "/endpoints/new",
+    element: <EndpointDetail />
+  })
+  dynamicRoutes.push({
+    path: "/endpoints/:id",
+    element: <EndpointDetail />
+  })
+}
 // TEMP: Adding ResearchStudies routes directly for testing
 // Commented out - routes are now added conditionally above
 // dynamicRoutes.push({
@@ -896,6 +999,20 @@ if(get(Meteor, 'settings.public.modules.fhir.Locations')){
   dynamicRoutes.push({
     path: "/locations/:id",
     element: <LocationDetail />
+  })
+}
+if(get(Meteor, 'settings.public.modules.fhir.Organizations')){
+  dynamicRoutes.push({
+    path: "/organizations",
+    element: <OrganizationsPage />
+  })
+  dynamicRoutes.push({
+    path: "/organizations/new",
+    element: <OrganizationDetail />
+  })
+  dynamicRoutes.push({
+    path: "/organizations/:id",
+    element: <OrganizationDetail />
   })
 }
 if(get(Meteor, 'settings.public.modules.fhir.Observations')){
@@ -1130,6 +1247,20 @@ if(get(Meteor, 'settings.public.modules.fhir.SupplyDeliveries')){
     element: <SupplyDeliveryDetail />
   })
 }
+if(get(Meteor, 'settings.public.modules.fhir.SupplyRequests')){
+  dynamicRoutes.push({
+    path: "/supply-requests",
+    element: <SupplyRequestsPage />
+  })
+  dynamicRoutes.push({
+    path: "/supply-requests/new",
+    element: <SupplyRequestDetail />
+  })
+  dynamicRoutes.push({
+    path: "/supply-requests/:id",
+    element: <SupplyRequestDetail />
+  })
+}
 if(get(Meteor, 'settings.public.modules.fhir.ValueSets')){
   dynamicRoutes.push({
     path: "/value-sets",
@@ -1254,6 +1385,34 @@ if(get(Meteor, 'settings.public.modules.fhir.NutritionOrders')){
     element: <NutritionOrderDetail />
   })
 }
+if(get(Meteor, 'settings.public.modules.fhir.NutritionIntakes')){
+  dynamicRoutes.push({
+    path: "/nutrition-intakes",
+    element: <NutritionIntakesPage />
+  })
+  dynamicRoutes.push({
+    path: "/nutrition-intakes/new",
+    element: <NutritionIntakeDetail />
+  })
+  dynamicRoutes.push({
+    path: "/nutrition-intakes/:id",
+    element: <NutritionIntakeDetail />
+  })
+}
+if(get(Meteor, 'settings.public.modules.fhir.NutritionProducts')){
+  dynamicRoutes.push({
+    path: "/nutrition-products",
+    element: <NutritionProductsPage />
+  })
+  dynamicRoutes.push({
+    path: "/nutrition-products/new",
+    element: <NutritionProductDetail />
+  })
+  dynamicRoutes.push({
+    path: "/nutrition-products/:id",
+    element: <NutritionProductDetail />
+  })
+}
 if(get(Meteor, 'settings.public.modules.fhir.PlanDefinitions')){
   dynamicRoutes.push({
     path: "/plan-definitions",
@@ -1280,6 +1439,18 @@ dynamicRoutes.push({
 dynamicRoutes.push({
   path: "/practitioners/:id",
   element: <PractitionerDetail />
+})
+dynamicRoutes.push({
+  path: "/practitioner-roles",
+  element: <PractitionerRolesPage />
+})
+dynamicRoutes.push({
+  path: "/practitioner-roles/new",
+  element: <PractitionerRoleDetail />
+})
+dynamicRoutes.push({
+  path: "/practitioner-roles/:id",
+  element: <PractitionerRoleDetail />
 })
 dynamicRoutes.push({
   path: "/lists",

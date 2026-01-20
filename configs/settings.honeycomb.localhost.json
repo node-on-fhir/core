@@ -109,8 +109,7 @@
           "/bundles",
           "/contracts",
           "/devices",
-          "/message-headers",
-          "/risk-assessments"
+          "/message-headers"
         ]
       },
       "autopublish": true
@@ -149,8 +148,10 @@
       "fhir": {
         "AllergyIntolerances": true,
         "AuditEvents": true,
+        "BodyStructures": true,
         "CarePlans": true,
         "CareTeams": true,
+        "ClinicalImpressions": true,
         "Compositions": true,
         "Communications": true,
         "Conditions": true,
@@ -168,16 +169,20 @@
         "MedicationRequests": true,
         "MedicationAdministrations": true,
         "MedicationStatements": true,
+        "NutritionIntakes": true,
         "NutritionOrders": true,
+        "NutritionProducts": true,
         "Organizations": true,
         "Observations": true,
         "Patients": true,
         "Practitioners": true,
+        "PractitionerRoles": true,
         "Procedures": true,
         "Questionnaires": true,
         "QuestionnaireResponses": true,
         "ResearchStudies": true,
         "ResearchSubjects": true,
+        "RiskAssessments": true,
         "ServiceRequests": true
       }
     }
@@ -405,6 +410,17 @@
           "search": true,
           "publication": true
         },
+        "NutritionProduct": {
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "search"
+          ],
+          "search": true,
+          "publication": true
+        },
         "Observation": {
           "interactions": [
             "read",
@@ -532,6 +548,17 @@
           "publication": true
         },
         "Specimen": {
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "search"
+          ],
+          "search": true,
+          "publication": true
+        },
+        "RiskAssessment": {
           "interactions": [
             "read",
             "create",

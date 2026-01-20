@@ -5,7 +5,7 @@ import { useTracker } from 'meteor/react-meteor-data';
 import { Session } from 'meteor/session';
 import { Meteor } from 'meteor/meteor';
 
-import { 
+import {
   Box,
   Card,
   CardContent,
@@ -31,6 +31,7 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  TablePagination,
   IconButton,
   Tooltip,
   Alert,
@@ -50,6 +51,7 @@ import {
 import {
   Science as ScienceIcon,
   Medication as MedicationIcon,
+  MedicalServices as MedicalServicesIcon,
   Add as AddIcon,
   Remove as RemoveIcon,
   ExpandMore as ExpandMoreIcon,
@@ -62,10 +64,22 @@ import {
   Vaccines as VaccinesIcon,
   BloodType as BloodTypeIcon,
   Timer as TimerIcon,
-  PriorityHigh as PriorityHighIcon
+  PriorityHigh as PriorityHighIcon,
+  List as ListIcon
 } from '@mui/icons-material';
 
 import { get, debounce } from 'lodash';
+
+// Import radiology catalog
+import { RADIOLOGY_CATALOG, RADIOLOGY_CATEGORIES, MODALITY_CODES } from './RadiologyCatalog';
+
+// Theme detection - multiple fallback strategies
+let useAppTheme;
+if (typeof Meteor !== 'undefined') {
+  if (Meteor.useTheme) {
+    useAppTheme = Meteor.useTheme;
+  }
+}
 
 // =============================================================================
 // SAMPLE CATALOG DATA
@@ -126,14 +140,18 @@ function OrderCatalogPage(props) {
   console.log('OrderCatalogPage.render()', props);
 
   // State management
-  const [orderType, setOrderType] = useState('laboratory');
+  const [orderType, setOrderType] = useState(props.defaultType || 'laboratory');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [activeOrders, setActiveOrders] = useState([]);
   const [selectedPatient, setSelectedPatient] = useState(null);
   const [orderPriority, setOrderPriority] = useState('routine');
   const [showAlerts, setShowAlerts] = useState(true);
-  
+
+  // Pagination state - default to 20 items per page for hackathon demo
+  const [page, setPage] = useState(0);
+  const [rowsPerPage] = useState(20);
+
   // Track reactive data
   const { selectedPatientId, currentUser } = useTracker(() => {
     return {
@@ -141,26 +159,62 @@ function OrderCatalogPage(props) {
       currentUser: Meteor.user()
     };
   });
+
+  // Theme awareness for dark mode support
+  // Try multiple methods to detect dark mode
+  let isDark = false;
+  let appTheme = { theme: 'light' };
+
+  if (useAppTheme) {
+    appTheme = useAppTheme();
+    isDark = appTheme.theme === 'dark';
+  } else {
+    // Fallback: Check if DICOM settings are loaded (indicates dark mode)
+    const settingsTitle = get(Meteor, 'settings.public.title', '');
+    isDark = settingsTitle.includes('DICOM');
+  }
+
+  // Theme-aware colors
+  const cardBgColor = isDark ? '#1e1e1e' : '#ffffff';
+  const cardTextColor = isDark ? 'rgba(255, 255, 255, 0.87)' : 'rgba(0, 0, 0, 0.87)';
   
   // Filter catalog based on search and category
   const filteredCatalog = useMemo(() => {
-    const catalog = orderType === 'laboratory' ? LAB_CATALOG : MEDICATION_CATALOG;
-    
+    const catalog = orderType === 'laboratory' ? LAB_CATALOG :
+                    orderType === 'medication' ? MEDICATION_CATALOG :
+                    orderType === 'radiology' ? RADIOLOGY_CATALOG :
+                    [];
+
     return catalog.filter(item => {
-      const matchesSearch = searchTerm === '' || 
+      const matchesSearch = searchTerm === '' ||
         item.display.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.code.includes(searchTerm);
-      
-      const matchesCategory = selectedCategory === 'all' || 
+        item.code.includes(searchTerm) ||
+        (item.bodyPart && item.bodyPart.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (item.modality && item.modality.toLowerCase().includes(searchTerm.toLowerCase()));
+
+      const matchesCategory = selectedCategory === 'all' ||
         item.category === selectedCategory;
-      
+
       return matchesSearch && matchesCategory;
     });
   }, [orderType, searchTerm, selectedCategory]);
-  
+
+  // Paginate the filtered catalog for display
+  const paginatedCatalog = useMemo(() => {
+    const start = page * rowsPerPage;
+    const end = start + rowsPerPage;
+    return filteredCatalog.slice(start, end);
+  }, [filteredCatalog, page, rowsPerPage]);
+
   // Get unique categories
   const categories = useMemo(() => {
-    const catalog = orderType === 'laboratory' ? LAB_CATALOG : MEDICATION_CATALOG;
+    // For radiology, use predefined categories for better UX
+    if (orderType === 'radiology') {
+      return ['all', ...RADIOLOGY_CATEGORIES];
+    }
+
+    const catalog = orderType === 'laboratory' ? LAB_CATALOG :
+                    orderType === 'medication' ? MEDICATION_CATALOG : [];
     return ['all', ...new Set(catalog.map(item => item.category))];
   }, [orderType]);
   
@@ -173,13 +227,30 @@ function OrderCatalogPage(props) {
       ...item,
       id: `${item.id}_${Date.now()}`,
       priority: orderPriority,
-      quantity: 1,
-      frequency: orderType === 'medication' ? 'daily' : null,
-      duration: orderType === 'medication' ? '7 days' : null,
       status: 'draft',
-      orderedAt: new Date()
+      orderedAt: new Date(),
+
+      // Radiology-specific fields
+      ...(orderType === 'radiology' && {
+        modality: item.modality,
+        modalityDisplay: item.modalityDisplay,
+        bodyPart: item.bodyPart,
+        bodyPartCode: item.bodyPartCode,
+        contrast: item.contrast,
+        laterality: item.laterality || null,
+        reasonForOrder: '', // User will fill this
+        priorExamComparison: null,
+        views: item.views || null
+      }),
+
+      // Medication-specific fields
+      ...(orderType === 'medication' && {
+        quantity: 1,
+        frequency: 'daily',
+        duration: '7 days'
+      })
     };
-    
+
     setActiveOrders([...activeOrders, newOrder]);
   }
   
@@ -212,6 +283,13 @@ function OrderCatalogPage(props) {
     }
     
     // Submit orders
+    console.log('Submitting orders with:', {
+      patientId: selectedPatientId,
+      orderType: orderType,
+      orderCount: activeOrders.length,
+      authorId: currentUser?._id
+    });
+
     Meteor.call('orderCatalog.submitOrders', {
       patientId: selectedPatientId,
       orders: activeOrders,
@@ -224,7 +302,15 @@ function OrderCatalogPage(props) {
       } else {
         console.log('Orders submitted successfully:', result);
         setActiveOrders([]);
-        alert('Orders submitted successfully');
+
+        // Show success message with navigation option
+        const shouldNavigate = window.confirm(
+          `Orders submitted successfully!\n\nWould you like to view all Service Requests?`
+        );
+
+        if (shouldNavigate && typeof Meteor.navigate === 'function') {
+          Meteor.navigate('/service-requests');
+        }
       }
     });
   }
@@ -254,9 +340,6 @@ function OrderCatalogPage(props) {
       id="orderCatalogPage"
       data-testid="order-catalog-page"
       sx={{
-        bgcolor: theme => theme.palette.mode === 'light'
-          ? theme.palette.grey[50]
-          : theme.palette.background.default,
         minHeight: '100vh',
         pb: 4
       }}
@@ -264,23 +347,51 @@ function OrderCatalogPage(props) {
       <Container maxWidth="xl" sx={{ pt: 2 }}>
         
         {/* Compact Header with ONC Certification Badge */}
-        <Paper sx={{ p: 2, mb: 2 }}>
+        <Paper sx={{
+          p: 2,
+          mb: 2,
+          bgcolor: cardBgColor,
+          color: cardTextColor
+        }}>
           <Grid container alignItems="center" spacing={2}>
             <Grid item xs>
-              <Typography variant="h5" sx={{ fontWeight: 600 }}>
+              <Typography variant="h5" sx={{ fontWeight: 600, color: cardTextColor }}>
                 Computerized Provider Order Entry (CPOE)
               </Typography>
-              <Typography variant="body2" color="text.secondary">
-                ONC §170.315(a)(1) Medications | §170.315(a)(2) Laboratory
+              <Typography variant="body2" sx={{
+                color: isDark ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)'
+              }}>
+                ONC §170.315(a)(1) Medications | §170.315(a)(2) Laboratory | §170.315(a)(3) Diagnostic Imaging
               </Typography>
             </Grid>
             <Grid item>
-              <Chip
-                icon={<CheckCircleIcon />}
-                label="ONC HealthIT"
-                color="primary"
-                variant="outlined"
-              />
+              <Stack direction="row" spacing={1}>
+                <Button
+                  variant="outlined"
+                  startIcon={<ListIcon />}
+                  onClick={() => {
+                    if (typeof Meteor.navigate === 'function') {
+                      Meteor.navigate('/service-requests');
+                    }
+                  }}
+                  sx={{
+                    color: cardTextColor,
+                    borderColor: isDark ? 'rgba(255,255,255,0.23)' : 'rgba(0,0,0,0.23)',
+                    '&:hover': {
+                      borderColor: isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.5)',
+                      bgcolor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)'
+                    }
+                  }}
+                >
+                  View Service Requests
+                </Button>
+                <Chip
+                  icon={<CheckCircleIcon />}
+                  label="ONC HealthIT"
+                  color="primary"
+                  variant="outlined"
+                />
+              </Stack>
             </Grid>
           </Grid>
         </Paper>
@@ -290,10 +401,31 @@ function OrderCatalogPage(props) {
           
           {/* Left Panel: Catalog Browser */}
           <Grid item xs={12} md={7}>
-            <Card>
+            <Card sx={{
+              bgcolor: cardBgColor,
+              color: cardTextColor,
+              '& .MuiCardHeader-title': { color: cardTextColor },
+              '& .MuiCardHeader-subheader': {
+                color: isDark ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)'
+              },
+              '& .MuiTableCell-root': {
+                color: cardTextColor,
+                borderColor: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.12)'
+              },
+              '& .MuiInputLabel-root': { color: cardTextColor },
+              '& .MuiInputBase-root': { color: cardTextColor },
+              '& .MuiOutlinedInput-notchedOutline': {
+                borderColor: isDark ? 'rgba(255, 255, 255, 0.23)' : 'rgba(0, 0, 0, 0.23)'
+              },
+              '& .MuiChip-root': {
+                color: cardTextColor,
+                borderColor: isDark ? 'rgba(255,255,255,0.23)' : 'rgba(0,0,0,0.23)'
+              },
+              '& .MuiTypography-root': { color: cardTextColor }
+            }}>
               <CardHeader
                 title="Order Catalog"
-                subheader={`Browse ${orderType === 'laboratory' ? 'laboratory tests' : 'medications'}`}
+                subheader={`Browse ${orderType === 'laboratory' ? 'laboratory tests' : orderType === 'medication' ? 'medications' : 'radiology procedures'}`}
                 action={
                   <ToggleButtonGroup
                     value={orderType}
@@ -301,6 +433,21 @@ function OrderCatalogPage(props) {
                     onChange={(e, value) => value && setOrderType(value)}
                     size="small"
                     data-testid="order-type-selector"
+                    sx={{
+                      '& .MuiToggleButton-root': {
+                        color: `${cardTextColor} !important`,
+                        borderColor: `${isDark ? 'rgba(255,255,255,0.23)' : 'rgba(0,0,0,0.23)'} !important`,
+                        bgcolor: `${isDark ? '#2a2a2a' : '#ffffff'} !important`,
+                        '&.Mui-selected': {
+                          bgcolor: `${isDark ? 'rgba(163, 153, 163, 0.3)' : 'rgba(163, 153, 163, 0.1)'} !important`,
+                          color: `${cardTextColor} !important`,
+                          borderColor: `${isDark ? 'rgba(163, 153, 163, 0.5)' : 'rgba(163, 153, 163, 0.5)'} !important`
+                        },
+                        '&:hover': {
+                          bgcolor: `${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)'} !important`
+                        }
+                      }
+                    }}
                   >
                     <ToggleButton value="laboratory" data-testid="laboratory-tab">
                       <BiotechIcon sx={{ mr: 1 }} />
@@ -309,6 +456,10 @@ function OrderCatalogPage(props) {
                     <ToggleButton value="medication" data-testid="medications-tab">
                       <MedicationIcon sx={{ mr: 1 }} />
                       Medication
+                    </ToggleButton>
+                    <ToggleButton value="radiology" data-testid="radiology-tab">
+                      <MedicalServicesIcon sx={{ mr: 1 }} />
+                      Radiology
                     </ToggleButton>
                   </ToggleButtonGroup>
                 }
@@ -322,9 +473,11 @@ function OrderCatalogPage(props) {
                     placeholder={`Search ${orderType} orders...`}
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    data-testid={orderType === 'laboratory' ? 'laboratory-search-input' : 'medication-search-input'}
+                    data-testid={`${orderType}-search-input`}
                     InputProps={{
-                      startAdornment: orderType === 'laboratory' ? <ScienceIcon sx={{ mr: 1, color: 'text.secondary' }} /> : <MedicationIcon sx={{ mr: 1, color: 'text.secondary' }} />
+                      startAdornment: orderType === 'laboratory' ? <ScienceIcon sx={{ mr: 1, color: isDark ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.54)' }} /> :
+                                     orderType === 'medication' ? <MedicationIcon sx={{ mr: 1, color: isDark ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.54)' }} /> :
+                                     <MedicalServicesIcon sx={{ mr: 1, color: isDark ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.54)' }} />
                     }}
                   />
                   
@@ -337,19 +490,36 @@ function OrderCatalogPage(props) {
                         color={selectedCategory === cat ? 'primary' : 'default'}
                         variant={selectedCategory === cat ? 'filled' : 'outlined'}
                         size="small"
+                        sx={{
+                          color: `${cardTextColor} !important`,
+                          borderColor: `${isDark ? 'rgba(255,255,255,0.23)' : 'rgba(0,0,0,0.23)'} !important`,
+                          bgcolor: selectedCategory === cat && isDark ? 'rgba(163, 153, 163, 0.3) !important' : isDark ? '#2a2a2a !important' : undefined,
+                          '&:hover': {
+                            bgcolor: `${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)'} !important`
+                          },
+                          '& .MuiChip-label': {
+                            color: `${cardTextColor} !important`
+                          }
+                        }}
                       />
                     ))}
                   </Stack>
                 </Stack>
                 
                 {/* Catalog Table */}
-                <TableContainer sx={{ maxHeight: 400 }}>
+                <TableContainer>
                   <Table
                     size="small"
                     stickyHeader
                     data-testid={orderType === 'laboratory' ? 'laboratory-orders-table' : 'medication-orders-table'}
                   >
-                    <TableHead>
+                    <TableHead sx={{
+                      '& .MuiTableCell-head': {
+                        bgcolor: isDark ? '#2a2a2a !important' : '#f5f5f5 !important',
+                        color: `${cardTextColor} !important`,
+                        borderBottom: `1px solid ${isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.12)'} !important`
+                      }
+                    }}>
                       <TableRow>
                         <TableCell>Code</TableCell>
                         <TableCell>Description</TableCell>
@@ -358,17 +528,23 @@ function OrderCatalogPage(props) {
                             <TableCell>Specimen</TableCell>
                             <TableCell>TAT</TableCell>
                           </>
-                        ) : (
+                        ) : orderType === 'medication' ? (
                           <>
                             <TableCell>Route</TableCell>
                             <TableCell>Strength</TableCell>
+                          </>
+                        ) : (
+                          <>
+                            <TableCell>Modality</TableCell>
+                            <TableCell>Body Part</TableCell>
+                            <TableCell>TAT</TableCell>
                           </>
                         )}
                         <TableCell align="center">Action</TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
-                      {filteredCatalog.map((item) => (
+                      {paginatedCatalog.map((item) => (
                         <TableRow
                           key={item.id}
                           hover
@@ -391,7 +567,19 @@ function OrderCatalogPage(props) {
                           {orderType === 'laboratory' ? (
                             <>
                               <TableCell>
-                                <Chip label={item.specimen} size="small" variant="outlined" />
+                                <Chip
+                                  label={item.specimen}
+                                  size="small"
+                                  variant="outlined"
+                                  sx={{
+                                    color: `${cardTextColor} !important`,
+                                    borderColor: `${isDark ? 'rgba(255,255,255,0.23)' : 'rgba(0,0,0,0.23)'} !important`,
+                                    bgcolor: `${isDark ? '#2a2a2a' : 'transparent'} !important`,
+                                    '& .MuiChip-label': {
+                                      color: `${cardTextColor} !important`
+                                    }
+                                  }}
+                                />
                               </TableCell>
                               <TableCell>
                                 <Stack direction="row" spacing={0.5} alignItems="center">
@@ -400,13 +588,52 @@ function OrderCatalogPage(props) {
                                 </Stack>
                               </TableCell>
                             </>
-                          ) : (
+                          ) : orderType === 'medication' ? (
                             <>
                               <TableCell>
-                                <Chip label={item.route} size="small" variant="outlined" />
+                                <Chip
+                                  label={item.route}
+                                  size="small"
+                                  variant="outlined"
+                                  sx={{
+                                    color: `${cardTextColor} !important`,
+                                    borderColor: `${isDark ? 'rgba(255,255,255,0.23)' : 'rgba(0,0,0,0.23)'} !important`,
+                                    bgcolor: `${isDark ? '#2a2a2a' : 'transparent'} !important`,
+                                    '& .MuiChip-label': {
+                                      color: `${cardTextColor} !important`
+                                    }
+                                  }}
+                                />
                               </TableCell>
                               <TableCell>
                                 <Typography variant="body2">{item.strength}</Typography>
+                              </TableCell>
+                            </>
+                          ) : (
+                            <>
+                              <TableCell>
+                                <Chip
+                                  label={item.modality}
+                                  size="small"
+                                  variant="outlined"
+                                  sx={{
+                                    color: `${cardTextColor} !important`,
+                                    borderColor: `${isDark ? 'rgba(255,255,255,0.23)' : 'rgba(0,0,0,0.23)'} !important`,
+                                    bgcolor: `${isDark ? '#2a2a2a' : 'transparent'} !important`,
+                                    '& .MuiChip-label': {
+                                      color: `${cardTextColor} !important`
+                                    }
+                                  }}
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <Typography variant="body2">{item.bodyPart}</Typography>
+                              </TableCell>
+                              <TableCell>
+                                <Stack direction="row" spacing={0.5} alignItems="center">
+                                  <TimerIcon fontSize="small" color="action" />
+                                  <Typography variant="caption">{item.turnaround}</Typography>
+                                </Stack>
                               </TableCell>
                             </>
                           )}
@@ -424,6 +651,22 @@ function OrderCatalogPage(props) {
                       ))}
                     </TableBody>
                   </Table>
+                  <TablePagination
+                    component="div"
+                    count={filteredCatalog.length}
+                    page={page}
+                    onPageChange={(e, newPage) => setPage(newPage)}
+                    rowsPerPage={rowsPerPage}
+                    rowsPerPageOptions={[]} // Hide options since we're using dynamic calculation
+                    sx={{
+                      color: `${cardTextColor} !important`,
+                      '& .MuiTablePagination-selectLabel': { color: `${cardTextColor} !important` },
+                      '& .MuiTablePagination-displayedRows': { color: `${cardTextColor} !important` },
+                      '& .MuiTablePagination-actions': {
+                        '& .MuiIconButton-root': { color: `${cardTextColor} !important` }
+                      }
+                    }}
+                  />
                 </TableContainer>
               </CardContent>
             </Card>
@@ -431,7 +674,19 @@ function OrderCatalogPage(props) {
           
           {/* Right Panel: Active Orders */}
           <Grid item xs={12} md={5}>
-            <Card data-testid="active-orders-panel">
+            <Card data-testid="active-orders-panel" sx={{
+              bgcolor: cardBgColor,
+              color: cardTextColor,
+              '& .MuiCardHeader-title': { color: cardTextColor },
+              '& .MuiCardHeader-subheader': {
+                color: isDark ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)'
+              },
+              '& .MuiTypography-root': { color: cardTextColor },
+              '& .MuiRadio-root': { color: cardTextColor },
+              '& .MuiFormControlLabel-label': { color: cardTextColor },
+              '& .MuiFormLabel-root': { color: cardTextColor },
+              '& .MuiButton-root': { color: cardTextColor }
+            }}>
               <CardHeader
                 title="Active Orders"
                 subheader={`${activeOrders.length} items pending submission`}
@@ -443,7 +698,15 @@ function OrderCatalogPage(props) {
               />
               <CardContent>
                 {/* Order Priority Selector */}
-                <Paper variant="outlined" sx={{ p: 2, mb: 2 }}>
+                <Paper variant="outlined" sx={{
+                  p: 2,
+                  mb: 2,
+                  bgcolor: isDark ? '#2a2a2a' : '#f5f5f5',
+                  borderColor: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.12)',
+                  '& .MuiFormLabel-root': { color: cardTextColor },
+                  '& .MuiFormControlLabel-label': { color: cardTextColor },
+                  '& .MuiRadio-root': { color: cardTextColor }
+                }}>
                   <FormControl component="fieldset" size="small">
                     <FormLabel component="legend">Default Priority</FormLabel>
                     <RadioGroup
@@ -461,18 +724,52 @@ function OrderCatalogPage(props) {
                 {/* Active Orders List */}
                 <Stack spacing={1} sx={{ maxHeight: 350, overflowY: 'auto' }}>
                   {activeOrders.length === 0 ? (
-                    <Alert severity="info">
+                    <Alert severity="info" sx={{
+                      bgcolor: isDark ? 'rgba(33, 150, 243, 0.15)' : 'rgba(33, 150, 243, 0.1)',
+                      color: cardTextColor,
+                      '& .MuiAlert-icon': { color: isDark ? '#90caf9' : '#1976d2' }
+                    }}>
                       No orders added yet. Select items from the catalog to begin.
                     </Alert>
                   ) : (
                     activeOrders.map((order) => (
-                      <Accordion key={order.id} defaultExpanded={false}>
+                      <Accordion
+                        key={order.id}
+                        defaultExpanded={false}
+                        sx={{
+                          bgcolor: isDark ? '#2a2a2a' : '#f5f5f5',
+                          color: cardTextColor,
+                          '& .MuiAccordionSummary-root': {
+                            bgcolor: isDark ? '#2a2a2a' : '#f5f5f5',
+                            color: cardTextColor
+                          },
+                          '& .MuiAccordionDetails-root': {
+                            bgcolor: isDark ? '#2a2a2a' : '#f5f5f5',
+                            color: cardTextColor
+                          },
+                          '& .MuiTextField-root': {
+                            '& .MuiInputLabel-root': { color: cardTextColor },
+                            '& .MuiInputBase-root': { color: cardTextColor },
+                            '& .MuiOutlinedInput-notchedOutline': {
+                              borderColor: isDark ? 'rgba(255, 255, 255, 0.23)' : 'rgba(0, 0, 0, 0.23)'
+                            }
+                          }
+                        }}
+                      >
                         <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                           <Stack direction="row" spacing={1} alignItems="center" sx={{ width: '100%' }}>
-                            <Chip 
-                              label={order.priority} 
-                              size="small" 
+                            <Chip
+                              label={order.priority}
+                              size="small"
                               color={order.priority === 'stat' ? 'error' : order.priority === 'urgent' ? 'warning' : 'default'}
+                              sx={{
+                                color: `${cardTextColor} !important`,
+                                borderColor: `${isDark ? 'rgba(255,255,255,0.23)' : 'rgba(0,0,0,0.23)'} !important`,
+                                bgcolor: isDark ? '#2a2a2a !important' : undefined,
+                                '& .MuiChip-label': {
+                                  color: `${cardTextColor} !important`
+                                }
+                              }}
                             />
                             <Typography variant="body2" sx={{ flex: 1 }}>
                               {order.display}
@@ -536,6 +833,13 @@ function OrderCatalogPage(props) {
                       color="inherit"
                       onClick={() => setActiveOrders([])}
                       data-testid="clear-orders-button"
+                      sx={{
+                        bgcolor: isDark ? '#424242 !important' : undefined,
+                        color: `${cardTextColor} !important`,
+                        '&:hover': {
+                          bgcolor: isDark ? '#616161 !important' : undefined
+                        }
+                      }}
                     >
                       Clear All
                     </Button>
@@ -544,6 +848,12 @@ function OrderCatalogPage(props) {
                       onClick={handleSubmitOrders}
                       disabled={activeOrders.length === 0}
                       data-testid="submit-orders-button"
+                      sx={{
+                        '&.Mui-disabled': {
+                          bgcolor: isDark ? '#424242 !important' : undefined,
+                          color: isDark ? 'rgba(255,255,255,0.3) !important' : undefined
+                        }
+                      }}
                     >
                       Submit Orders ({activeOrders.length})
                     </Button>
@@ -553,7 +863,11 @@ function OrderCatalogPage(props) {
                 {/* ONC Compliance Alerts */}
                 {showAlerts && (
                   <Stack spacing={1} sx={{ mt: 2 }}>
-                    <Alert severity="info" onClose={() => setShowAlerts(false)}>
+                    <Alert severity="info" onClose={() => setShowAlerts(false)} sx={{
+                      bgcolor: isDark ? 'rgba(33, 150, 243, 0.15)' : 'rgba(33, 150, 243, 0.1)',
+                      color: cardTextColor,
+                      '& .MuiAlert-icon': { color: isDark ? '#90caf9' : '#1976d2' }
+                    }}>
                       <strong>ONC Requirement:</strong> All orders must include priority level and clinical indication when applicable.
                     </Alert>
                   </Stack>
@@ -563,14 +877,26 @@ function OrderCatalogPage(props) {
             
             {/* Drug-Drug Interaction Check (for ONC compliance) */}
             {orderType === 'medication' && activeOrders.length > 1 && (
-              <Card sx={{ mt: 2 }}>
-                <CardHeader 
-                  title="Drug Interaction Check" 
+              <Card sx={{
+                mt: 2,
+                bgcolor: cardBgColor,
+                color: cardTextColor,
+                '& .MuiCardHeader-title': { color: cardTextColor },
+                '& .MuiCardHeader-subheader': {
+                  color: isDark ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)'
+                }
+              }}>
+                <CardHeader
+                  title="Drug Interaction Check"
                   subheader="ONC §170.315(a)(4) Compliance"
                   avatar={<WarningIcon color="warning" />}
                 />
                 <CardContent>
-                  <Alert severity="success">
+                  <Alert severity="success" sx={{
+                    bgcolor: isDark ? 'rgba(46, 125, 50, 0.15)' : 'rgba(46, 125, 50, 0.1)',
+                    color: cardTextColor,
+                    '& .MuiAlert-icon': { color: isDark ? '#66bb6a' : '#2e7d32' }
+                  }}>
                     No significant drug-drug interactions detected.
                   </Alert>
                 </CardContent>

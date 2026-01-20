@@ -153,6 +153,7 @@ export function FhirResourcesIndex() {
     { name: 'Questionnaires', route: '/questionnaires', settingsKey: 'Questionnaires' },
     { name: 'Research Studies', route: '/research-studies', settingsKey: 'ResearchStudies' },
     { name: 'Research Subjects', route: '/research-subjects', settingsKey: 'ResearchSubjects' },
+    { name: 'Risk Assessments', route: '/risk-assessments', settingsKey: 'RiskAssessments' },
     { name: 'Service Requests', route: '/service-requests', settingsKey: 'ServiceRequests' },
     { name: 'Tasks', route: '/tasks', settingsKey: 'Tasks' },
     { name: 'Value Sets', route: '/value-sets', settingsKey: 'ValueSets' }

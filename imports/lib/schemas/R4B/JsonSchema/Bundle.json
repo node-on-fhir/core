@@ -1,0 +1,22 @@
+{
+  "$schema": "http://json-schema.org/draft-06/schema#",
+  "id": "http://hl7.org/fhir/json-schema/Bundle",
+  "description": "A container for a collection of resources.",
+  "type": "object",
+  "required": ["resourceType"],
+  "properties": {
+    "resourceType": { "const": "Bundle" },
+    "id": { "type": "string", "description": "Logical id of this artifact" },
+    "_id": { "type": "string", "description": "MongoDB primary key" },
+    "meta": { "type": "object", "properties": { "versionId": { "type": "string" }, "lastUpdated": { "type": "string" }, "source": { "type": "string" }, "profile": { "type": "array", "items": { "type": "string" } }, "security": { "type": "array", "items": { "type": "object", "properties": { "system": { "type": "string" }, "code": { "type": "string" }, "display": { "type": "string" } } } }, "tag": { "type": "array", "items": { "type": "object", "properties": { "system": { "type": "string" }, "code": { "type": "string" }, "display": { "type": "string" } } } } } },
+    "implicitRules": { "type": "string" },
+    "language": { "type": "string" },
+    "identifier": { "type": "object", "properties": { "use": { "type": "string" }, "system": { "type": "string" }, "value": { "type": "string" } } },
+    "type": { "type": "string", "description": "document | message | transaction | transaction-response | batch | batch-response | history | searchset | collection", "enum": ["document", "message", "transaction", "transaction-response", "batch", "batch-response", "history", "searchset", "collection"] },
+    "timestamp": { "type": "string", "description": "When the bundle was assembled" },
+    "total": { "type": "integer", "description": "If search, the total number of matches", "minimum": 0 },
+    "link": { "type": "array", "description": "Links related to this Bundle", "items": { "type": "object", "properties": { "relation": { "type": "string" }, "url": { "type": "string" } } } },
+    "entry": { "type": "array", "description": "Entry in the bundle", "items": { "type": "object", "properties": { "link": { "type": "array", "items": { "type": "object", "properties": { "relation": { "type": "string" }, "url": { "type": "string" } } } }, "fullUrl": { "type": "string" }, "resource": { "type": "object" }, "search": { "type": "object", "properties": { "mode": { "type": "string", "enum": ["match", "include", "outcome"] }, "score": { "type": "number" } } }, "request": { "type": "object", "properties": { "method": { "type": "string", "enum": ["GET", "HEAD", "POST", "PUT", "DELETE", "PATCH"] }, "url": { "type": "string" }, "ifNoneMatch": { "type": "string" }, "ifModifiedSince": { "type": "string" }, "ifMatch": { "type": "string" }, "ifNoneExist": { "type": "string" } } }, "response": { "type": "object", "properties": { "status": { "type": "string" }, "location": { "type": "string" }, "etag": { "type": "string" }, "lastModified": { "type": "string" }, "outcome": { "type": "object" } } } } } },
+    "signature": { "type": "object", "description": "Digital Signature", "properties": { "type": { "type": "array", "items": { "type": "object", "properties": { "system": { "type": "string" }, "code": { "type": "string" }, "display": { "type": "string" } } } }, "when": { "type": "string" }, "who": { "type": "object", "properties": { "reference": { "type": "string" }, "display": { "type": "string" } } }, "onBehalfOf": { "type": "object", "properties": { "reference": { "type": "string" }, "display": { "type": "string" } } }, "targetFormat": { "type": "string" }, "sigFormat": { "type": "string" }, "data": { "type": "string" } } }
+  }
+}

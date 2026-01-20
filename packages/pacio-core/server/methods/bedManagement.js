@@ -35,6 +35,11 @@ Meteor.methods({
   },
 
   'pacio.assignPatientToBed': async function(bedId, patientId, additionalInfo) {
+    console.log('=== pacio.assignPatientToBed called ===');
+    console.log('bedId:', bedId);
+    console.log('patientId:', patientId, 'type:', typeof patientId);
+    console.log('additionalInfo:', additionalInfo);
+
     check(bedId, String);
     // Handle both String IDs and MongoDB ObjectIDs
     check(patientId, Match.Where(function(id) {
@@ -72,6 +77,8 @@ Meteor.methods({
       }
     }
 
+    console.log('patientIdString after conversion:', patientIdString);
+
     // Check if bed exists and is available
     const bed = await Beds.findOneAsync({ _id: bedId });
     if (!bed) {
@@ -88,27 +95,32 @@ Meteor.methods({
       throw new Meteor.Error('patients-not-found', 'Patients collection not found');
     }
 
-    // Query for patient - handle both string and ObjectID lookups
+    // Query for patient - always try ObjectID first, then fall back to string
     let patient;
-    
-    if (process.env.USE_MONGO_OBJECTID) {
-      // When using MongoDB ObjectIDs, convert string to ObjectID for query
-      const { Mongo } = Package.mongo;
-      try {
-        const objectId = new Mongo.ObjectID(patientIdString);
-        patient = await Patients.findOneAsync({ _id: objectId });
-      } catch (e) {
-        // If ObjectID creation fails, try with string
-        patient = await Patients.findOneAsync({ _id: patientIdString });
-      }
-    } else {
-      // Standard string ID lookup
-      patient = await Patients.findOneAsync({ _id: patientIdString });
+    const { Mongo } = Package.mongo;
+
+    try {
+      // Try ObjectID lookup first (most common case)
+      const objectId = new Mongo.ObjectID(patientIdString);
+      patient = await Patients.findOneAsync({ _id: objectId });
+      console.log('ObjectID lookup result:', patient ? 'Found' : 'Not found');
+    } catch (e) {
+      console.log('ObjectID conversion failed:', e.message);
     }
-    
+
+    // If ObjectID lookup failed, try string lookup
     if (!patient) {
+      console.log('Trying string ID lookup...');
+      patient = await Patients.findOneAsync({ _id: patientIdString });
+      console.log('String lookup result:', patient ? 'Found' : 'Not found');
+    }
+
+    if (!patient) {
+      console.error('Patient not found with ID:', patientIdString);
       throw new Meteor.Error('patient-not-found', 'Patient not found');
     }
+
+    console.log('✓ Patient found:', patient._id);
 
     // Extract patient info
     const patientName = patient.name?.[0]?.text || 

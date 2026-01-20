@@ -1,0 +1,33 @@
+{
+  "$schema": "http://json-schema.org/draft-06/schema#",
+  "id": "http://hl7.org/fhir/json-schema/PackagedProductDefinition",
+  "description": "A medically related item or items, in a container or package.",
+  "type": "object",
+  "required": ["resourceType"],
+  "properties": {
+    "resourceType": { "const": "PackagedProductDefinition" },
+    "id": { "type": "string", "description": "Logical id of this artifact" },
+    "_id": { "type": "string", "description": "MongoDB primary key" },
+    "meta": { "type": "object", "properties": { "versionId": { "type": "string" }, "lastUpdated": { "type": "string" }, "source": { "type": "string" }, "profile": { "type": "array", "items": { "type": "string" } }, "security": { "type": "array", "items": { "type": "object", "properties": { "system": { "type": "string" }, "code": { "type": "string" }, "display": { "type": "string" } } } }, "tag": { "type": "array", "items": { "type": "object", "properties": { "system": { "type": "string" }, "code": { "type": "string" }, "display": { "type": "string" } } } } } },
+    "implicitRules": { "type": "string" },
+    "language": { "type": "string" },
+    "text": { "type": "object", "properties": { "status": { "type": "string" }, "div": { "type": "string" } } },
+    "contained": { "type": "array", "items": { "type": "object" } },
+    "extension": { "type": "array", "items": { "type": "object" } },
+    "modifierExtension": { "type": "array", "items": { "type": "object" } },
+    "identifier": { "type": "array", "items": { "type": "object", "properties": { "use": { "type": "string" }, "system": { "type": "string" }, "value": { "type": "string" } } } },
+    "name": { "type": "string" },
+    "type": { "type": "object", "properties": { "coding": { "type": "array", "items": { "type": "object", "properties": { "system": { "type": "string" }, "code": { "type": "string" }, "display": { "type": "string" } } } }, "text": { "type": "string" } } },
+    "packageFor": { "type": "array", "items": { "type": "object", "properties": { "reference": { "type": "string" }, "display": { "type": "string" } } } },
+    "status": { "type": "object", "properties": { "coding": { "type": "array", "items": { "type": "object", "properties": { "system": { "type": "string" }, "code": { "type": "string" }, "display": { "type": "string" } } } }, "text": { "type": "string" } } },
+    "statusDate": { "type": "string" },
+    "containedItemQuantity": { "type": "array", "items": { "type": "object", "properties": { "value": { "type": "number" }, "unit": { "type": "string" }, "system": { "type": "string" }, "code": { "type": "string" } } } },
+    "description": { "type": "string" },
+    "legalStatusOfSupply": { "type": "array", "items": { "type": "object", "properties": { "code": { "type": "object" }, "jurisdiction": { "type": "object" } } } },
+    "marketingStatus": { "type": "array", "items": { "type": "object", "properties": { "country": { "type": "object" }, "jurisdiction": { "type": "object" }, "status": { "type": "object" }, "dateRange": { "type": "object" }, "restoreDate": { "type": "string" } } } },
+    "characteristic": { "type": "array", "items": { "type": "object", "properties": { "coding": { "type": "array", "items": { "type": "object", "properties": { "system": { "type": "string" }, "code": { "type": "string" }, "display": { "type": "string" } } } }, "text": { "type": "string" } } } },
+    "copackagedIndicator": { "type": "boolean" },
+    "manufacturer": { "type": "array", "items": { "type": "object", "properties": { "reference": { "type": "string" }, "display": { "type": "string" } } } },
+    "package": { "type": "object", "properties": { "identifier": { "type": "array", "items": { "type": "object" } }, "type": { "type": "object" }, "quantity": { "type": "integer" }, "material": { "type": "array", "items": { "type": "object" } }, "alternateMaterial": { "type": "array", "items": { "type": "object" } }, "shelfLifeStorage": { "type": "array", "items": { "type": "object" } }, "manufacturer": { "type": "array", "items": { "type": "object" } }, "property": { "type": "array", "items": { "type": "object" } }, "containedItem": { "type": "array", "items": { "type": "object" } }, "package": { "type": "array", "items": { "type": "object" } } } }
+  }
+}

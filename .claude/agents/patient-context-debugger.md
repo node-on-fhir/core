@@ -57,7 +57,7 @@ browser.url('http://localhost:3000/observations');
 **Solutions:**
 1. **Restore Session After Navigation:**
 ```javascript
-it('02. Verify list page loads', browser => {
+it('02. Verify {resourceType} list page loads', browser => {
   browser.url('http://localhost:3000/observations');
 
   // Restore patient context

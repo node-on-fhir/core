@@ -1,0 +1,30 @@
+{
+  "$schema": "http://json-schema.org/draft-06/schema#",
+  "id": "http://hl7.org/fhir/json-schema/Provenance",
+  "description": "Provenance of a resource is a record that describes entities and processes involved in producing and delivering or otherwise influencing that resource.",
+  "type": "object",
+  "required": ["resourceType", "target", "recorded", "agent"],
+  "properties": {
+    "resourceType": { "const": "Provenance" },
+    "id": { "type": "string", "description": "Logical id of this artifact" },
+    "_id": { "type": "string", "description": "MongoDB primary key" },
+    "meta": { "type": "object", "properties": { "versionId": { "type": "string" }, "lastUpdated": { "type": "string" }, "source": { "type": "string" }, "profile": { "type": "array", "items": { "type": "string" } }, "security": { "type": "array", "items": { "type": "object", "properties": { "system": { "type": "string" }, "code": { "type": "string" }, "display": { "type": "string" } } } }, "tag": { "type": "array", "items": { "type": "object", "properties": { "system": { "type": "string" }, "code": { "type": "string" }, "display": { "type": "string" } } } } } },
+    "implicitRules": { "type": "string" },
+    "language": { "type": "string" },
+    "text": { "type": "object", "properties": { "status": { "type": "string" }, "div": { "type": "string" } } },
+    "contained": { "type": "array", "items": { "type": "object" } },
+    "extension": { "type": "array", "items": { "type": "object" } },
+    "modifierExtension": { "type": "array", "items": { "type": "object" } },
+    "target": { "type": "array", "items": { "type": "object", "properties": { "reference": { "type": "string" }, "display": { "type": "string" } } } },
+    "occurredPeriod": { "type": "object", "properties": { "start": { "type": "string" }, "end": { "type": "string" } } },
+    "occurredDateTime": { "type": "string" },
+    "recorded": { "type": "string" },
+    "policy": { "type": "array", "items": { "type": "string" } },
+    "location": { "type": "object", "properties": { "reference": { "type": "string" }, "display": { "type": "string" } } },
+    "reason": { "type": "array", "items": { "type": "object", "properties": { "coding": { "type": "array", "items": { "type": "object", "properties": { "system": { "type": "string" }, "code": { "type": "string" }, "display": { "type": "string" } } } }, "text": { "type": "string" } } } },
+    "activity": { "type": "object", "properties": { "coding": { "type": "array", "items": { "type": "object", "properties": { "system": { "type": "string" }, "code": { "type": "string" }, "display": { "type": "string" } } } }, "text": { "type": "string" } } },
+    "agent": { "type": "array", "items": { "type": "object", "properties": { "type": { "type": "object", "properties": { "coding": { "type": "array", "items": { "type": "object", "properties": { "system": { "type": "string" }, "code": { "type": "string" }, "display": { "type": "string" } } } }, "text": { "type": "string" } } }, "role": { "type": "array", "items": { "type": "object", "properties": { "coding": { "type": "array", "items": { "type": "object", "properties": { "system": { "type": "string" }, "code": { "type": "string" }, "display": { "type": "string" } } } }, "text": { "type": "string" } } } }, "who": { "type": "object", "properties": { "reference": { "type": "string" }, "display": { "type": "string" } } }, "onBehalfOf": { "type": "object", "properties": { "reference": { "type": "string" }, "display": { "type": "string" } } } } } },
+    "entity": { "type": "array", "items": { "type": "object", "properties": { "role": { "type": "string", "enum": ["derivation", "revision", "quotation", "source", "removal"] }, "what": { "type": "object", "properties": { "reference": { "type": "string" }, "display": { "type": "string" } } }, "agent": { "type": "array", "items": { "type": "object" } } } } },
+    "signature": { "type": "array", "items": { "type": "object", "properties": { "type": { "type": "array", "items": { "type": "object", "properties": { "system": { "type": "string" }, "code": { "type": "string" }, "display": { "type": "string" } } } }, "when": { "type": "string" }, "who": { "type": "object", "properties": { "reference": { "type": "string" }, "display": { "type": "string" } } }, "onBehalfOf": { "type": "object", "properties": { "reference": { "type": "string" }, "display": { "type": "string" } } }, "targetFormat": { "type": "string" }, "sigFormat": { "type": "string" }, "data": { "type": "string" } } } }
+  }
+}

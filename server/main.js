@@ -25,6 +25,7 @@ import './Cron.js';
 import './ConsentEngineMethods.js';
 import './SearchParameterMethods.js';
 import './SyntheaMethods.js';
+import './RadiologyCatalogInitializer.js';
 import './ConsentEngineHttp.js';
 import './CdsHooksEndpoints.js';
 import './Methods.js';
@@ -45,6 +46,7 @@ import './AccountsMethods.js';
 import '../imports/startup/server/index.js';
 
 // Import API methods
+import '../imports/api/activityDefinitions/methods.js';
 import '../imports/api/allergyIntolerances/methods.js';
 import '../imports/api/appointments/methods.js';
 import '../imports/api/AuditEvents/AuditEvents'; // Import the methods
@@ -59,9 +61,11 @@ import '../imports/api/dicom/server/methods.js';
 import '../imports/api/documentReferences/methods.js';
 import '../imports/api/devices/methods.js'; // Import the methods
 import '../imports/api/encounters/methods.js';
+import '../imports/api/endpoints/methods.js';
 import '../imports/api/imagingStudies/methods.js';
 import '../imports/api/locations/methods.js';
 import '../imports/api/observations/methods.js';
+import '../imports/api/organizations/methods.js';
 import '../imports/methods/immunizations.js';
 import '../imports/api/medicationAdministrations/methods.js';
 import '../imports/api/medicationRequests/methods.js';
@@ -70,10 +74,13 @@ import '../imports/api/medias/methods.js';
 import '../imports/api/measures/methods.js';
 import '../imports/api/measureReports/methods.js';
 import '../imports/api/messageHeaders/methods.js';
+import '../imports/api/nutritionIntakes/methods.js';
 import '../imports/api/nutritionOrders/methods.js';
+import '../imports/api/nutritionProducts/methods.js';
 import '../imports/api/patients/methods.js';
 import '../imports/api/planDefinitions/methods.js';
 import '../imports/api/practitioners/methods.js';
+import '../imports/api/practitionerRoles/methods.js';
 import '../imports/api/procedures/methods.js';
 import '../imports/api/questionnaires/methods.js';
 import '../imports/api/questionnaireResponses/methods.js';
@@ -82,6 +89,10 @@ import '../imports/api/research-studies/methods.js';
 import '../imports/api/schedules/methods.js';
 import '../imports/api/serviceRequests/methods.js';
 import '../imports/api/diagnosticReports/methods.js';
+import '../imports/api/bodyStructures/methods.js';
+import '../imports/api/clinicalImpressions/methods.js';
+import '../imports/api/riskAssessments/methods.js';
+import '../imports/api/supplyRequests/methods.js';
 import '../imports/methods/supplyDeliveries.js';
 import '../imports/methods/tasks.js';
 
@@ -133,7 +144,9 @@ import { Appointments } from '../imports/lib/schemas/SimpleSchemas/Appointments'
 import { ArtifactAssessments } from '../imports/lib/schemas/SimpleSchemas/ArtifactAssessments';
 import { AuditEvents } from '../imports/lib/schemas/SimpleSchemas/AuditEvents';
 import { Bundles } from '../imports/lib/schemas/SimpleSchemas/Bundles';
+import { BodyStructures } from '../imports/lib/schemas/SimpleSchemas/BodyStructures';
 import { CarePlans } from '../imports/lib/schemas/SimpleSchemas/CarePlans';
+import { ClinicalImpressions } from '../imports/lib/schemas/SimpleSchemas/ClinicalImpressions';
 import { CareTeams } from '../imports/lib/schemas/SimpleSchemas/CareTeams';
 import { Claims } from '../imports/lib/schemas/SimpleSchemas/Claims';
 import { CodeSystems } from '../imports/lib/schemas/SimpleSchemas/CodeSystems';
@@ -167,7 +180,9 @@ import { Measures } from '../imports/lib/schemas/SimpleSchemas/Measures';
 import { MeasureReports } from '../imports/lib/schemas/SimpleSchemas/MeasureReports';
 import { Medias } from '../imports/lib/schemas/SimpleSchemas/Medias';
 import { MessageHeaders } from '../imports/lib/schemas/SimpleSchemas/MessageHeaders';
+import { NutritionIntakes } from '../imports/lib/schemas/SimpleSchemas/NutritionIntakes';
 import { NutritionOrders } from '../imports/lib/schemas/SimpleSchemas/NutritionOrders';
+import { NutritionProducts } from '../imports/lib/schemas/SimpleSchemas/NutritionProducts';
 import { OperationOutcomes } from '../imports/lib/schemas/SimpleSchemas/OperationOutcomes';
 import { Organizations } from '../imports/lib/schemas/SimpleSchemas/Organizations';
 import { Observations } from '../imports/lib/schemas/SimpleSchemas/Observations';
@@ -175,15 +190,18 @@ import { Patients } from '../imports/lib/schemas/SimpleSchemas/Patients';
 import { PlanDefinitions } from '../imports/lib/schemas/SimpleSchemas/PlanDefinitions';
 import { RelatedPersons } from '../imports/lib/schemas/SimpleSchemas/RelatedPersons';
 import { Practitioners } from '../imports/lib/schemas/SimpleSchemas/Practitioners';
+import { PractitionerRoles } from '../imports/lib/schemas/SimpleSchemas/PractitionerRoles';
 import { Procedures } from '../imports/lib/schemas/SimpleSchemas/Procedures';
 import { Questionnaires } from '../imports/lib/schemas/SimpleSchemas/Questionnaires';
 import { QuestionnaireResponses } from '../imports/lib/schemas/SimpleSchemas/QuestionnaireResponses';
 import { ResearchStudies } from '../imports/lib/schemas/SimpleSchemas/ResearchStudies';
 import { ResearchSubjects } from '../imports/lib/schemas/SimpleSchemas/ResearchSubjects';
+import { RiskAssessments } from '../imports/lib/schemas/SimpleSchemas/RiskAssessments';
 import { Schedules } from '../imports/lib/schemas/SimpleSchemas/Schedules';
 import { SearchParameters } from '../imports/lib/schemas/SimpleSchemas/SearchParameters';
 import { ServiceRequests } from '../imports/lib/schemas/SimpleSchemas/ServiceRequests';
 import { Specimens } from '../imports/lib/schemas/SimpleSchemas/Specimens';
+import { SupplyRequests } from '../imports/lib/schemas/SimpleSchemas/SupplyRequests';
 import { Tasks } from '../imports/lib/schemas/SimpleSchemas/Tasks';
 import { ValueSets } from '../imports/lib/schemas/SimpleSchemas/ValueSets';
 
@@ -200,10 +218,12 @@ Meteor.Collections = {
   Appointments,
   ArtifactAssessments,
   AuditEvents,
+  BodyStructures,
   Bundles,
   CarePlans,
   CareTeams,
   Claims,
+  ClinicalImpressions,
   CodeSystems,
   Conditions,
   Consents,
@@ -234,23 +254,28 @@ Meteor.Collections = {
   Measures,
   MeasureReports,
   Medias,
+  NutritionIntakes,
   NutritionOrders,
+  NutritionProducts,
   OperationOutcomes,
   Organizations,
   Observations,
   Patients,
   PlanDefinitions,
   Practitioners,
+  PractitionerRoles,
   Procedures,
   Questionnaires,
   QuestionnaireResponses,
   RelatedPersons,
   ResearchStudies,
   ResearchSubjects,
+  RiskAssessments,
   Schedules,
   SearchParameters,
   ServiceRequests,
   Specimens,
+  SupplyRequests,
   Tasks,
   ValueSets
 }
@@ -267,10 +292,12 @@ Object.assign(global.Collections, {
   Appointments,
   ArtifactAssessments,
   AuditEvents,
+  BodyStructures,
   Bundles,
   CarePlans,
   CareTeams,
   Claims,
+  ClinicalImpressions,
   CodeSystems,
   Conditions,
   Consents,
@@ -302,23 +329,28 @@ Object.assign(global.Collections, {
   Measures,
   MeasureReports,
   Medias,
+  NutritionIntakes,
   NutritionOrders,
+  NutritionProducts,
   OperationOutcomes,
   Organizations,
   Observations,
   Patients,
   PlanDefinitions,
   Practitioners,
+  PractitionerRoles,
   Procedures,
   Questionnaires,
   QuestionnaireResponses,
   RelatedPersons,
   ResearchStudies,
   ResearchSubjects,
+  RiskAssessments,
   Schedules,
   SearchParameters,
   ServiceRequests,
   Specimens,
+  SupplyRequests,
   Tasks,
   ValueSets
 });
@@ -335,6 +367,7 @@ global.ExplanationOfBenefits = ExplanationOfBenefits;
 global.Immunizations = Immunizations;
 global.Observations = Observations;
 global.Practitioners = Practitioners;
+global.PractitionerRoles = PractitionerRoles;
 global.Procedures = Procedures;
 global.MedicationRequests = MedicationRequests;
 global.Medications = Medications;
@@ -442,6 +475,19 @@ Meteor.startup(async function(){
     } else {
       console.log('[Encounters] Default Encounter already exists:', defaultEncounter.id);
     }
+  }
+
+  // Initialize Radiology Catalog (populate PlanDefinitions for CPOE Diagnostic Imaging)
+  // ONC §170.315(a)(3) - CPOE Diagnostic Imaging
+  if (process.env.INITIALIZE_RADIOLOGY_CATALOG ||
+      get(Meteor, 'settings.private.fhir.autoPopulate.radiologyCatalog')) {
+    console.log('==========================================================================================');
+    console.log('[RadiologyCatalog] Initialization ENABLED');
+    console.log('[RadiologyCatalog] Source: LOINC/RSNA Radiology Playbook (free, no CPT license)');
+    console.log('==========================================================================================');
+
+    const { RadiologyCatalogInitializer } = await import('./RadiologyCatalogInitializer.js');
+    await RadiologyCatalogInitializer.initializeRadiologyCatalog();
   }
 
   // Establish a database connection
