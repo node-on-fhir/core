@@ -88,6 +88,7 @@ import '../imports/api/researchSubjects/methods.js';
 import '../imports/api/research-studies/methods.js';
 import '../imports/api/schedules/methods.js';
 import '../imports/api/serviceRequests/methods.js';
+import '../imports/api/substances/methods.js';
 import '../imports/api/diagnosticReports/methods.js';
 import '../imports/api/bodyStructures/methods.js';
 import '../imports/api/clinicalImpressions/methods.js';
@@ -201,6 +202,7 @@ import { Schedules } from '../imports/lib/schemas/SimpleSchemas/Schedules';
 import { SearchParameters } from '../imports/lib/schemas/SimpleSchemas/SearchParameters';
 import { ServiceRequests } from '../imports/lib/schemas/SimpleSchemas/ServiceRequests';
 import { Specimens } from '../imports/lib/schemas/SimpleSchemas/Specimens';
+import { Substances } from '../imports/lib/schemas/SimpleSchemas/Substances';
 import { SupplyRequests } from '../imports/lib/schemas/SimpleSchemas/SupplyRequests';
 import { Tasks } from '../imports/lib/schemas/SimpleSchemas/Tasks';
 import { ValueSets } from '../imports/lib/schemas/SimpleSchemas/ValueSets';
@@ -275,6 +277,7 @@ Meteor.Collections = {
   SearchParameters,
   ServiceRequests,
   Specimens,
+  Substances,
   SupplyRequests,
   Tasks,
   ValueSets
@@ -350,6 +353,7 @@ Object.assign(global.Collections, {
   SearchParameters,
   ServiceRequests,
   Specimens,
+  Substances,
   SupplyRequests,
   Tasks,
   ValueSets

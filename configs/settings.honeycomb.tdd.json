@@ -189,6 +189,7 @@
         "ResearchSubjects": true,
         "Schedules": true,
         "ServiceRequests": true,
+        "Substances": true,
         "SupplyDeliveries": true,
         "SupplyRequests": true,
         "Tasks": true,

@@ -183,8 +183,20 @@
         "ResearchStudies": true,
         "ResearchSubjects": true,
         "RiskAssessments": true,
-        "ServiceRequests": true
+        "ServiceRequests": true,
+        "Substances": true
+      },
+      "pantryManagement": {
+        "enabled": true,
+        "showInSidebar": true
       }
+    },
+    "pantry": {
+      "defaultDailyCalories": 2500,
+      "expiryWarningDays": 30,
+      "expiryCriticalDays": 7,
+      "defaultCrewSize": 4,
+      "useBedsForCrewCount": true
     }
   },
   "private": {

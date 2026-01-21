@@ -7,13 +7,16 @@ import SimpleSchema from 'simpl-schema';
 // and replace with import from ../../datatypes/*
 import { BaseSchema, DomainResourceSchema, IdentifierSchema, ContactPointSchema, AddressSchema, ReferenceSchema, RatioSchema, SignatureSchema } from 'meteor/clinical:hl7-resource-datatypes';
 
+// Import Substances from its own module to avoid duplicate collection definition
+import { Substances } from './Substances';
 
 // create the object using our BaseModel
 let Medication = BaseModel.extend();
 let Substance = BaseModel.extend();
 
 export let Medications = new Mongo.Collection('Medications');
-export let Substances = new Mongo.Collection('Substances');
+// Re-export Substances from its own module (no longer creating duplicate here)
+export { Substances };
 
 //Assign a collection so the object knows how to perform CRUD operations
 Medication.prototype._collection = Medications;

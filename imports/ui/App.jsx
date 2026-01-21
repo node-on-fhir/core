@@ -226,6 +226,9 @@ import NutritionProductDetail from '../ui-fhir/nutritionProducts/NutritionProduc
 import AuditEventsPage from '../ui-fhir/auditEvents/AuditEventsPage';
 import AuditEventDetail from '../ui-fhir/auditEvents/AuditEventDetail';
 
+import SubstancesPage from '../ui-fhir/substances/SubstancesPage';
+import SubstanceDetail from '../ui-fhir/substances/SubstanceDetail';
+
 
 //===============================================================================================================
 // PACIO Pages
@@ -1411,6 +1414,20 @@ if(get(Meteor, 'settings.public.modules.fhir.NutritionProducts')){
   dynamicRoutes.push({
     path: "/nutrition-products/:id",
     element: <NutritionProductDetail />
+  })
+}
+if(get(Meteor, 'settings.public.modules.fhir.Substances')){
+  dynamicRoutes.push({
+    path: "/substances",
+    element: <SubstancesPage />
+  })
+  dynamicRoutes.push({
+    path: "/substances/new",
+    element: <SubstanceDetail />
+  })
+  dynamicRoutes.push({
+    path: "/substances/:id",
+    element: <SubstanceDetail />
   })
 }
 if(get(Meteor, 'settings.public.modules.fhir.PlanDefinitions')){
