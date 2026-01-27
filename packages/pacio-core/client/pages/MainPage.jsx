@@ -267,20 +267,26 @@ export function MainPage() {
   const facilityData = useTracker(() => {
     // Simply get beds from the collection - all data is already there
     const beds = Beds.find({}).fetch();
-    
+
     // Ensure beds is always an array
     const validBeds = Array.isArray(beds) ? beds : [];
-    
+
+    // Get maxBeds from settings (for limiting display, e.g., Orion Capsule has 4 crew)
+    const maxBeds = get(Meteor, 'settings.public.pacio.maxBeds', 16);
+
+    // Limit beds to maxBeds setting
+    const limitedBeds = validBeds.slice(0, maxBeds);
+
     // Debug log to check beds data
-    if (validBeds.length > 0) {
-      console.log('Sample bed data:', validBeds[0]);
+    if (limitedBeds.length > 0) {
+      console.log('Sample bed data:', limitedBeds[0]);
     } else {
       console.log('No beds found in collection');
     }
-    
-    // Calculate occupied beds
-    const occupiedBeds = validBeds.filter(bed => bed && bed.status === 'occupied').length;
-    const totalBeds = validBeds.length || 16;
+
+    // Calculate occupied beds (from limited set)
+    const occupiedBeds = limitedBeds.filter(bed => bed && bed.status === 'occupied').length;
+    const totalBeds = limitedBeds.length || maxBeds;
     
     return {
       facility: {
@@ -299,7 +305,7 @@ export function MainPage() {
           other: 2
         }
       },
-      beds: validBeds,
+      beds: limitedBeds,
       recentAlerts: (() => {
         console.log('PractitionerId:', practitionerId);
         console.log('User isPractitioner:', user?.profile?.isPractitioner);

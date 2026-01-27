@@ -184,7 +184,13 @@
         "ResearchSubjects": true,
         "RiskAssessments": true,
         "ServiceRequests": true,
-        "Substances": true
+        "Substances": true,
+        "SupplyDeliveries": true,
+        "SupplyRequests": true
+      },
+      "lifeSupportSystems": {
+        "enabled": true,
+        "showInSidebar": true
       },
       "pantryManagement": {
         "enabled": true,
@@ -197,6 +203,16 @@
       "expiryCriticalDays": 7,
       "defaultCrewSize": 4,
       "useBedsForCrewCount": true
+    },
+    "lifesupport": {
+      "crewCount": 4,
+      "missionDays": 10,
+      "missionName": "Artemis II",
+      "alertThresholds": {
+        "critical": 2,
+        "warning": 5,
+        "caution": 10
+      }
     }
   },
   "private": {

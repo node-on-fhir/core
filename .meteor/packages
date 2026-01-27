@@ -26,6 +26,7 @@ clinical:hl7-resource-datatypes
 clinical:extended-api
 clinical:fonts
 clinical:pantry-management
+clinical:life-support-systems
 
 service-configuration
 accounts-password

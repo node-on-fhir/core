@@ -95,6 +95,7 @@ import '../imports/api/clinicalImpressions/methods.js';
 import '../imports/api/riskAssessments/methods.js';
 import '../imports/api/supplyRequests/methods.js';
 import '../imports/methods/supplyDeliveries.js';
+import '../imports/api/lists/methods.js';
 import '../imports/methods/tasks.js';
 
 // Import test methods (for non-production environments)
@@ -204,6 +205,7 @@ import { ServiceRequests } from '../imports/lib/schemas/SimpleSchemas/ServiceReq
 import { Specimens } from '../imports/lib/schemas/SimpleSchemas/Specimens';
 import { Substances } from '../imports/lib/schemas/SimpleSchemas/Substances';
 import { SupplyRequests } from '../imports/lib/schemas/SimpleSchemas/SupplyRequests';
+import { SupplyDeliveries } from '../imports/lib/schemas/SimpleSchemas/SupplyDeliveries';
 import { Tasks } from '../imports/lib/schemas/SimpleSchemas/Tasks';
 import { ValueSets } from '../imports/lib/schemas/SimpleSchemas/ValueSets';
 
@@ -278,6 +280,7 @@ Meteor.Collections = {
   ServiceRequests,
   Specimens,
   Substances,
+  SupplyDeliveries,
   SupplyRequests,
   Tasks,
   ValueSets
@@ -354,6 +357,7 @@ Object.assign(global.Collections, {
   ServiceRequests,
   Specimens,
   Substances,
+  SupplyDeliveries,
   SupplyRequests,
   Tasks,
   ValueSets
@@ -674,13 +678,13 @@ Meteor.startup(async () => {
 
   // Patient-specific OAuth authorizations publication
   // ONC g(10) 9.3.01 - Patient access to view authorized applications
-  Meteor.publish('OAuthClients.forPatient', function() {
+  Meteor.publish('OAuthClients.forPatient', async function() {
     if (!this.userId) {
       return this.ready();
     }
 
-    // Get user synchronously for publication
-    const user = Meteor.users.findOne({ _id: this.userId });
+    // Get user asynchronously for publication (Meteor v3)
+    const user = await Meteor.users.findOneAsync({ _id: this.userId });
     const patientId = get(user, 'patientId');
 
     if (!patientId) {
