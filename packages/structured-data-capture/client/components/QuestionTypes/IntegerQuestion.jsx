@@ -19,8 +19,16 @@ export function IntegerQuestion(props) {
     onChange,
     readOnly = false,
     error = false,
-    helperText
+    helperText,
+    // Dark mode theming props
+    isDark = false,
+    cardTextColor = 'rgba(0, 0, 0, 0.87)',
+    borderColor = 'rgba(0, 0, 0, 0.23)'
   } = props;
+
+  // Theme-aware colors
+  const disabledColor = isDark ? 'rgba(255, 255, 255, 0.38)' : 'rgba(0, 0, 0, 0.38)';
+  const secondaryTextColor = isDark ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)';
 
   // Get constraints
   const minValue = get(item, 'extension', []).find(e => 
@@ -100,6 +108,7 @@ export function IntegerQuestion(props) {
               size="small"
               onClick={handleDecrement}
               disabled={minValue !== undefined && value <= minValue}
+              sx={{ color: secondaryTextColor, '&.Mui-disabled': { color: disabledColor } }}
             >
               <RemoveIcon fontSize="small" />
             </IconButton>
@@ -107,6 +116,7 @@ export function IntegerQuestion(props) {
               size="small"
               onClick={handleIncrement}
               disabled={maxValue !== undefined && value >= maxValue}
+              sx={{ color: secondaryTextColor, '&.Mui-disabled': { color: disabledColor } }}
             >
               <AddIcon fontSize="small" />
             </IconButton>
@@ -115,6 +125,16 @@ export function IntegerQuestion(props) {
       }}
       size="small"
       variant="outlined"
+      sx={{
+        '& .MuiInputBase-input': { color: cardTextColor },
+        '& .MuiInputBase-input.Mui-disabled': {
+          color: disabledColor,
+          WebkitTextFillColor: disabledColor
+        },
+        '& .MuiInputLabel-root': { color: secondaryTextColor },
+        '& .MuiOutlinedInput-notchedOutline': { borderColor: borderColor },
+        '& .MuiFormHelperText-root': { color: secondaryTextColor }
+      }}
     />
   );
 }

@@ -1,6 +1,7 @@
 // /Volumes/SonicMagic/Code/honeycomb-public-release/packages/structured-data-capture/client/pages/QuestionnaireBuilderPage.jsx
 
 import React, { useState } from 'react';
+import { Meteor } from 'meteor/meteor';
 import {
   Container,
   Paper,
@@ -38,6 +39,12 @@ import {
 import { Random } from 'meteor/random';
 import { QuestionnaireForm } from '../components/QuestionnaireForm';
 
+// Use Meteor.useTheme pattern per project requirements
+let useAppTheme;
+Meteor.startup(function() {
+  useAppTheme = Meteor.useTheme;
+});
+
 const questionTypes = [
   { value: 'string', label: 'Short Text' },
   { value: 'text', label: 'Long Text' },
@@ -55,6 +62,16 @@ const questionTypes = [
 ];
 
 export function QuestionnaireBuilderPage() {
+  // Dark mode theming using Honeycomb's theme system
+  const appTheme = useAppTheme ? useAppTheme() : { theme: 'light' };
+  const isDark = appTheme.theme === 'dark';
+  const pageBgColor = isDark ? '#121212' : '#f5f5f5';
+  const cardBgColor = isDark ? '#1e1e1e' : '#ffffff';
+  const cardTextColor = isDark ? 'rgba(255, 255, 255, 0.87)' : 'rgba(0, 0, 0, 0.87)';
+  const paperBgColor = isDark ? '#2a2a2a' : '#ffffff';
+  const selectedBgColor = isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.04)';
+  const borderColor = isDark ? 'rgba(255, 255, 255, 0.23)' : 'rgba(0, 0, 0, 0.23)';
+
   const [questionnaire, setQuestionnaire] = useState({
     resourceType: 'Questionnaire',
     id: Random.id(),
@@ -173,10 +190,8 @@ export function QuestionnaireBuilderPage() {
 
   if (previewMode) {
     return (
-      <Box sx={{ 
-        bgcolor: theme => theme.palette.mode === 'light' 
-          ? theme.palette.grey[50] 
-          : theme.palette.background.default,
+      <Box sx={{
+        bgcolor: pageBgColor,
         minHeight: '100vh'
       }}>
         <Container maxWidth="lg" sx={{ pt: 4 }}>
@@ -203,21 +218,26 @@ export function QuestionnaireBuilderPage() {
   }
 
   return (
-    <Box sx={{ 
-      bgcolor: theme => theme.palette.mode === 'light' 
-        ? theme.palette.grey[50] 
-        : theme.palette.background.default,
+    <Box sx={{
+      bgcolor: pageBgColor,
       minHeight: '100vh'
     }}>
       <Container maxWidth="xl" sx={{ pt: 4, pb: 4 }}>
-        <Typography variant="h4" gutterBottom>
+        <Typography variant="h4" gutterBottom sx={{ color: cardTextColor }}>
           Questionnaire Builder
         </Typography>
 
       <Grid container spacing={3}>
         {/* Left Panel - Questionnaire Properties */}
         <Grid item xs={12} md={4}>
-          <Paper sx={{ p: 3, mb: 3 }}>
+          <Paper sx={{
+              p: 3, mb: 3, bgcolor: paperBgColor, color: cardTextColor,
+              '& .MuiInputLabel-root': { color: cardTextColor },
+              '& .MuiInputBase-root': { color: cardTextColor },
+              '& .MuiOutlinedInput-notchedOutline': { borderColor: borderColor },
+              '& .MuiSelect-icon': { color: cardTextColor },
+              '& .MuiFormControlLabel-label': { color: cardTextColor }
+            }}>
             <Typography variant="h6" gutterBottom>
               Questionnaire Properties
             </Typography>
@@ -274,7 +294,15 @@ export function QuestionnaireBuilderPage() {
 
           {/* Selected Item Properties */}
           {selectedItemIndex !== null && (
-            <Paper sx={{ p: 3 }}>
+            <Paper sx={{
+              p: 3, bgcolor: paperBgColor, color: cardTextColor,
+              '& .MuiInputLabel-root': { color: cardTextColor },
+              '& .MuiInputBase-root': { color: cardTextColor },
+              '& .MuiOutlinedInput-notchedOutline': { borderColor: borderColor },
+              '& .MuiSelect-icon': { color: cardTextColor },
+              '& .MuiFormControlLabel-label': { color: cardTextColor },
+              '& .MuiSwitch-track': { backgroundColor: isDark ? 'rgba(255,255,255,0.3)' : undefined }
+            }}>
               <Typography variant="h6" gutterBottom>
                 Question Properties
               </Typography>
@@ -352,7 +380,10 @@ export function QuestionnaireBuilderPage() {
 
         {/* Right Panel - Question List */}
         <Grid item xs={12} md={8}>
-          <Paper sx={{ p: 3 }}>
+          <Paper sx={{
+              p: 3, bgcolor: paperBgColor, color: cardTextColor,
+              '& .MuiChip-root': { color: cardTextColor }
+            }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
               <Typography variant="h6">
                 Questions ({questionnaire.item.length})
@@ -368,12 +399,16 @@ export function QuestionnaireBuilderPage() {
 
             <List>
               {questionnaire.item.map((item, index) => (
-                <Card key={item.linkId} sx={{ mb: 2 }}>
-                  <CardContent 
-                    sx={theme => ({ 
+                <Card key={item.linkId} sx={{
+                  mb: 2, bgcolor: cardBgColor, color: cardTextColor,
+                  '& .MuiChip-root': { color: cardTextColor },
+                  '& .MuiIconButton-root': { color: cardTextColor }
+                }}>
+                  <CardContent
+                    sx={{
                       cursor: 'pointer',
-                      backgroundColor: selectedItemIndex === index ? theme.palette.action.selected : 'transparent'
-                    })}
+                      backgroundColor: selectedItemIndex === index ? selectedBgColor : 'transparent'
+                    }}
                     onClick={() => setSelectedItemIndex(index)}
                   >
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>

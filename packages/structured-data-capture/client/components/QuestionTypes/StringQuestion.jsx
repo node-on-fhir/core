@@ -19,8 +19,16 @@ export function StringQuestion(props) {
     onChange,
     readOnly = false,
     error = false,
-    helperText
+    helperText,
+    // Dark mode theming props
+    isDark = false,
+    cardTextColor = 'rgba(0, 0, 0, 0.87)',
+    borderColor = 'rgba(0, 0, 0, 0.23)'
   } = props;
+
+  // Theme-aware colors
+  const disabledColor = isDark ? 'rgba(255, 255, 255, 0.38)' : 'rgba(0, 0, 0, 0.38)';
+  const secondaryTextColor = isDark ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)';
 
   const type = get(item, 'type');
   const maxLength = get(item, 'maxLength');
@@ -67,13 +75,24 @@ export function StringQuestion(props) {
       }}
       InputProps={{
         startAdornment: inputIcon && (
-          <InputAdornment position="start">
+          <InputAdornment position="start" sx={{ color: secondaryTextColor }}>
             {inputIcon}
           </InputAdornment>
         )
       }}
       size="small"
       variant="outlined"
+      sx={{
+        '& .MuiInputBase-input': { color: cardTextColor },
+        '& .MuiInputBase-input.Mui-disabled': {
+          color: disabledColor,
+          WebkitTextFillColor: disabledColor
+        },
+        '& .MuiInputLabel-root': { color: secondaryTextColor },
+        '& .MuiOutlinedInput-notchedOutline': { borderColor: borderColor },
+        '& .MuiFormHelperText-root': { color: secondaryTextColor },
+        '& .MuiInputBase-input::placeholder': { color: secondaryTextColor, opacity: 1 }
+      }}
     />
   );
 }

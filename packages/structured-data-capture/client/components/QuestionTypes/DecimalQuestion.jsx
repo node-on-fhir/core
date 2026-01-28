@@ -17,8 +17,16 @@ export function DecimalQuestion(props) {
     onChange,
     readOnly = false,
     error = false,
-    helperText
+    helperText,
+    // Dark mode theming props
+    isDark = false,
+    cardTextColor = 'rgba(0, 0, 0, 0.87)',
+    borderColor = 'rgba(0, 0, 0, 0.23)'
   } = props;
+
+  // Theme-aware colors
+  const disabledColor = isDark ? 'rgba(255, 255, 255, 0.38)' : 'rgba(0, 0, 0, 0.38)';
+  const secondaryTextColor = isDark ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)';
 
   const type = get(item, 'type');
   
@@ -105,7 +113,7 @@ export function DecimalQuestion(props) {
   if (isSlider && minValue !== undefined && maxValue !== undefined) {
     return (
       <Box sx={{ px: 2 }}>
-        <Typography variant="body2" color="textSecondary">
+        <Typography variant="body2" sx={{ color: secondaryTextColor }}>
           {displayValue || minValue} {unit}
         </Typography>
         <Slider
@@ -120,9 +128,14 @@ export function DecimalQuestion(props) {
             { value: minValue, label: minValue },
             { value: maxValue, label: maxValue }
           ]}
+          sx={{
+            '& .MuiSlider-markLabel': { color: secondaryTextColor },
+            '& .MuiSlider-thumb.Mui-disabled': { color: disabledColor },
+            '& .MuiSlider-track.Mui-disabled': { color: disabledColor }
+          }}
         />
         {error && helperText && (
-          <Typography variant="caption" color="error">
+          <Typography variant="caption" sx={{ color: isDark ? '#f44336' : '#d32f2f' }}>
             {helperText}
           </Typography>
         )}
@@ -146,11 +159,21 @@ export function DecimalQuestion(props) {
       }}
       InputProps={{
         endAdornment: unit && (
-          <InputAdornment position="end">{unit}</InputAdornment>
+          <InputAdornment position="end" sx={{ color: secondaryTextColor }}>{unit}</InputAdornment>
         )
       }}
       size="small"
       variant="outlined"
+      sx={{
+        '& .MuiInputBase-input': { color: cardTextColor },
+        '& .MuiInputBase-input.Mui-disabled': {
+          color: disabledColor,
+          WebkitTextFillColor: disabledColor
+        },
+        '& .MuiInputLabel-root': { color: secondaryTextColor },
+        '& .MuiOutlinedInput-notchedOutline': { borderColor: borderColor },
+        '& .MuiFormHelperText-root': { color: secondaryTextColor }
+      }}
     />
   );
 }

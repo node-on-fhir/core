@@ -64,7 +64,7 @@ export const DynamicRoutes = [
 // ];
 export const SidebarWorkflows = [];
 
-// Clinical workflows
+// Clinical workflows - navigate to forms page with form param
 export const ClinicianWorkflows = [
   {
     primaryText: 'Patient Assessments',
@@ -73,17 +73,17 @@ export const ClinicianWorkflows = [
   },
   {
     primaryText: 'PHQ-9 Screening',
-    to: '/structured-data-capture?form=phq9',
+    to: '/structured-data-capture-forms?form=phq9',
     iconName: 'ic_hearing'
   },
   {
     primaryText: 'Intake Forms',
-    to: '/structured-data-capture?form=intake',
+    to: '/structured-data-capture-forms?form=intake',
     iconName: 'document'
   },
   {
     primaryText: 'Consent Forms',
-    to: '/structured-data-capture?form=consent',
+    to: '/structured-data-capture-forms?form=consent',
     iconName: 'notepad'
   }
 ];

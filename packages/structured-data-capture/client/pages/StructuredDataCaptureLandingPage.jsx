@@ -118,27 +118,27 @@ export default function StructuredDataCaptureLandingPage() {
     }
   ];
 
-  // Clinical assessment forms
+  // Clinical assessment forms - navigate to forms page with form param
   const clinicalForms = [
     {
       title: 'PHQ-9 Screening',
       description: 'Depression screening questionnaire',
       emoji: '🧠',
-      path: '/structured-data-capture?form=phq9',
+      path: '/structured-data-capture-forms?form=phq9',
       color: theme.palette.info.main
     },
     {
       title: 'Intake Forms',
       description: 'New patient intake questionnaires',
       emoji: '📋',
-      path: '/structured-data-capture?form=intake',
+      path: '/structured-data-capture-forms?form=intake',
       color: theme.palette.warning.main
     },
     {
       title: 'Consent Forms',
       description: 'Patient consent and authorization forms',
       emoji: '✍️',
-      path: '/structured-data-capture?form=consent',
+      path: '/structured-data-capture-forms?form=consent',
       color: theme.palette.error.main
     }
   ];

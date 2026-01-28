@@ -40,7 +40,13 @@ export function QuestionnaireForm(props) {
     paperProps = {},
     readOnly = false,
     autoSave = true,
-    autoSaveDelay = 1000
+    autoSaveDelay = 1000,
+    // Dark mode theming props
+    isDark = false,
+    cardBgColor = '#ffffff',
+    cardTextColor = 'rgba(0, 0, 0, 0.87)',
+    paperBgColor = '#ffffff',
+    borderColor = 'rgba(0, 0, 0, 0.23)'
   } = props;
 
   // State
@@ -170,19 +176,29 @@ export function QuestionnaireForm(props) {
           showLinkId={showLinkIds}
           renderItems={renderItems}
           validationError={validationErrors.find(e => e.linkId === linkId)}
+          isDark={isDark}
+          cardBgColor={cardBgColor}
+          cardTextColor={cardTextColor}
+          paperBgColor={paperBgColor}
+          borderColor={borderColor}
         />
       );
     });
   }, [
-    isItemEnabled, 
-    getAnswerValue, 
-    handleAnswerChange, 
-    handleItemFocus, 
-    clearAnswer, 
-    readOnly, 
-    showLinkIds, 
+    isItemEnabled,
+    getAnswerValue,
+    handleAnswerChange,
+    handleItemFocus,
+    clearAnswer,
+    readOnly,
+    showLinkIds,
     customRenderers,
-    validationErrors
+    validationErrors,
+    isDark,
+    cardBgColor,
+    cardTextColor,
+    paperBgColor,
+    borderColor
   ]);
 
   // Show thank you page if submitted
@@ -193,6 +209,10 @@ export function QuestionnaireForm(props) {
         redirectUrl={thankYouPage.redirectUrl}
         redirectDelay={thankYouPage.redirectDelay}
         onClose={() => setShowThankYou(false)}
+        isDark={isDark}
+        cardBgColor={cardBgColor}
+        cardTextColor={cardTextColor}
+        paperBgColor={paperBgColor}
       />
     );
   }
@@ -216,25 +236,30 @@ export function QuestionnaireForm(props) {
                   element.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 }
               }}
+              isDark={isDark}
+              cardBgColor={cardBgColor}
+              cardTextColor={cardTextColor}
+              paperBgColor={paperBgColor}
+              borderColor={borderColor}
             />
           </Grid>
         )}
         
         <Grid item xs={12} md={showSidebar ? 9 : 12}>
-          <Paper elevation={3} {...paperProps}>
+          <Paper elevation={3} {...paperProps} sx={{ bgcolor: paperBgColor, color: cardTextColor, ...paperProps.sx }}>
             <Box p={3}>
               {/* Header */}
-              <Typography variant="h4" gutterBottom>
+              <Typography variant="h4" gutterBottom sx={{ color: cardTextColor }}>
                 {get(questionnaire, 'title', 'Questionnaire')}
               </Typography>
-              
+
               {get(questionnaire, 'description') && (
-                <Typography variant="body1" color="textSecondary" paragraph>
+                <Typography variant="body1" sx={{ color: isDark ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)' }} paragraph>
                   {get(questionnaire, 'description')}
                 </Typography>
               )}
-              
-              <Divider sx={{ my: 2 }} />
+
+              <Divider sx={{ my: 2, borderColor: borderColor }} />
               
               {/* Progress */}
               {showProgress && (
@@ -243,8 +268,11 @@ export function QuestionnaireForm(props) {
                     total={completionStatus.total}
                     answered={completionStatus.answered}
                     percentage={completionStatus.percentage}
+                    isDark={isDark}
+                    cardTextColor={cardTextColor}
+                    paperBgColor={paperBgColor}
                   />
-                  <Divider sx={{ my: 2 }} />
+                  <Divider sx={{ my: 2, borderColor: borderColor }} />
                 </>
               )}
               
@@ -275,7 +303,7 @@ export function QuestionnaireForm(props) {
               {/* Action buttons */}
               {!readOnly && (
                 <>
-                  <Divider sx={{ my: 2 }} />
+                  <Divider sx={{ my: 2, borderColor: borderColor }} />
                   <ActionButtons
                     onSubmit={onSubmit ? handleSubmit : null}
                     onSave={onSave ? save : null}
@@ -285,6 +313,9 @@ export function QuestionnaireForm(props) {
                     isSaving={isSaving}
                     lastSaved={lastSaved}
                     canSubmit={completionStatus.percentage === 100 || !showValidation}
+                    isDark={isDark}
+                    cardTextColor={cardTextColor}
+                    borderColor={borderColor}
                   />
                 </>
               )}

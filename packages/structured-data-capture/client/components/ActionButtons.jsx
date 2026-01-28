@@ -35,8 +35,16 @@ export function ActionButtons(props) {
     showLastSaved = true,
     variant = 'contained',
     size = 'medium',
-    fullWidth = false
+    fullWidth = false,
+    // Dark mode theming props
+    isDark = false,
+    cardTextColor = 'rgba(0, 0, 0, 0.87)',
+    borderColor = 'rgba(0, 0, 0, 0.23)'
   } = props;
+
+  // Theme-aware colors
+  const secondaryTextColor = isDark ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)';
+  const disabledColor = isDark ? 'rgba(255, 255, 255, 0.38)' : 'rgba(0, 0, 0, 0.38)';
 
   const getLastSavedText = function() {
     if (!lastSaved) return null;
@@ -102,14 +110,14 @@ export function ActionButtons(props) {
         {showLastSaved && lastSavedText && (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
             <CheckIcon fontSize="small" color="success" />
-            <Typography variant="caption" color="textSecondary">
+            <Typography variant="caption" sx={{ color: secondaryTextColor }}>
               {lastSavedText}
             </Typography>
           </Box>
         )}
-        
+
         {(onCancel || onClearAll) && (
-          <ButtonGroup variant="outlined" size={size}>
+          <ButtonGroup variant="outlined" size={size} sx={{ '& .MuiButton-outlined': { borderColor: borderColor } }}>
             {onClearAll && (
               <Tooltip title="Clear all answers">
                 <Button
@@ -122,13 +130,17 @@ export function ActionButtons(props) {
                 </Button>
               </Tooltip>
             )}
-            
+
             {onCancel && (
               <Button
-                color="inherit"
                 startIcon={<CancelIcon />}
                 onClick={onCancel}
                 disabled={isSubmitting || isSaving}
+                sx={{
+                  color: cardTextColor,
+                  borderColor: borderColor,
+                  '&.Mui-disabled': { color: disabledColor }
+                }}
               >
                 {cancelLabel}
               </Button>

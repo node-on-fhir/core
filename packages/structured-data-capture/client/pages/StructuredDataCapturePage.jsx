@@ -1,11 +1,12 @@
 // /Volumes/SonicMagic/Code/honeycomb-public-release/packages/structured-data-capture/client/pages/StructuredDataCapturePage.jsx
 
-import React, { useState } from 'react';
-import { 
-  Container, 
-  Paper, 
-  Typography, 
-  Box, 
+import React, { useState, useEffect } from 'react';
+import { Meteor } from 'meteor/meteor';
+import {
+  Container,
+  Paper,
+  Typography,
+  Box,
   Button,
   Grid,
   Card,
@@ -13,13 +14,24 @@ import {
   CardActions,
   Chip
 } from '@mui/material';
-import { 
+import {
   Assignment as QuestionnaireIcon,
   CheckCircle as CompleteIcon,
   PlayArrow as StartIcon
 } from '@mui/icons-material';
-import { useNavigate } from 'react-router-dom';
 import { QuestionnaireForm } from '../components/QuestionnaireForm';
+
+// Use Meteor.useNavigate and Meteor.useTheme patterns per project requirements
+let useNavigate;
+let useSearchParams;
+let useAppTheme;
+Meteor.startup(function() {
+  useNavigate = Meteor.useNavigate;
+  useAppTheme = Meteor.useTheme;
+  // Get useSearchParams from ReactRouterDOM
+  const ReactRouterDOM = window.ReactRouterDOM || {};
+  useSearchParams = ReactRouterDOM.useSearchParams;
+});
 
 // Example questionnaires
 const exampleQuestionnaires = [
@@ -199,8 +211,43 @@ const exampleQuestionnaires = [
 ];
 
 export default function StructuredDataCapturePage() {
-  const navigate = useNavigate();
+  const navigate = useNavigate ? useNavigate() : function() {};
+
+  // Dark mode theming using Honeycomb's theme system
+  const appTheme = useAppTheme ? useAppTheme() : { theme: 'light' };
+  const isDark = appTheme.theme === 'dark';
+  const pageBgColor = isDark ? '#121212' : '#f5f5f5';
+  const cardBgColor = isDark ? '#1e1e1e' : '#ffffff';
+  const cardTextColor = isDark ? 'rgba(255, 255, 255, 0.87)' : 'rgba(0, 0, 0, 0.87)';
+  const paperBgColor = isDark ? '#2a2a2a' : '#ffffff';
+  const borderColor = isDark ? 'rgba(255, 255, 255, 0.23)' : 'rgba(0, 0, 0, 0.23)';
+
+  // Get search params with fallback
+  let searchParams = null;
+  try {
+    if (useSearchParams) {
+      [searchParams] = useSearchParams();
+    }
+  } catch (e) {
+    // Fallback: use URLSearchParams directly
+  }
+  if (!searchParams) {
+    searchParams = new URLSearchParams(window.location.search);
+  }
+
   const [selectedQuestionnaire, setSelectedQuestionnaire] = useState(null);
+
+  // Auto-select questionnaire based on URL query param
+  useEffect(function() {
+    const formId = searchParams.get('form');
+    if (formId && !selectedQuestionnaire) {
+      const matchingForm = exampleQuestionnaires.find(q => q.id === formId);
+      if (matchingForm) {
+        console.log('Auto-selecting form from URL param:', formId);
+        setSelectedQuestionnaire(matchingForm);
+      }
+    }
+  }, [searchParams, selectedQuestionnaire]);
 
   const handleQuestionnaireSelect = function(questionnaire) {
     setSelectedQuestionnaire(questionnaire);
@@ -221,10 +268,8 @@ export default function StructuredDataCapturePage() {
 
   if (selectedQuestionnaire) {
     return (
-      <Box sx={{ 
-        bgcolor: theme => theme.palette.mode === 'light' 
-          ? theme.palette.grey[50] 
-          : theme.palette.background.default,
+      <Box sx={{
+        bgcolor: pageBgColor,
         minHeight: '100vh'
       }}>
         <Container maxWidth="lg" sx={{ pt: 4, pb: 4 }}>
@@ -235,6 +280,11 @@ export default function StructuredDataCapturePage() {
             showProgress={true}
             showSidebar={true}
             enableTracking={true}
+            isDark={isDark}
+            cardBgColor={cardBgColor}
+            cardTextColor={cardTextColor}
+            paperBgColor={paperBgColor}
+            borderColor={borderColor}
             thankYouPage={{
               show: true,
               message: `Thank you for completing the ${selectedQuestionnaire.title}`,
@@ -247,24 +297,22 @@ export default function StructuredDataCapturePage() {
   }
 
   return (
-    <Box sx={{ 
-      bgcolor: theme => theme.palette.mode === 'light' 
-        ? theme.palette.grey[50] 
-        : theme.palette.background.default,
+    <Box sx={{
+      bgcolor: pageBgColor,
       minHeight: '100vh'
     }}>
       <Container maxWidth="lg" sx={{ pt: 4, pb: 4 }}>
-        <Typography variant="h4" gutterBottom>
+        <Typography variant="h4" gutterBottom sx={{ color: cardTextColor }}>
           Structured Data Capture
         </Typography>
-        
-        <Paper sx={{ p: 3, mb: 3 }}>
+
+        <Paper sx={{ p: 3, mb: 3, bgcolor: paperBgColor, color: cardTextColor }}>
           <Typography variant="h6" gutterBottom>
             FHIR Questionnaire Demo
           </Typography>
-          <Typography variant="body1" color="textSecondary">
-            This page demonstrates the clinical:structured-data-capture package capabilities. 
-            Select a questionnaire below to see different question types, conditional logic, 
+          <Typography variant="body1" sx={{ color: isDark ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)' }}>
+            This page demonstrates the clinical:structured-data-capture package capabilities.
+            Select a questionnaire below to see different question types, conditional logic,
             validation, and progress tracking in action.
           </Typography>
         </Paper>
@@ -273,7 +321,11 @@ export default function StructuredDataCapturePage() {
           {exampleQuestionnaires.map(function(example) {
             return (
               <Grid item xs={12} md={4} key={example.id}>
-                <Card>
+                <Card sx={{
+                  bgcolor: cardBgColor,
+                  color: cardTextColor,
+                  '& .MuiChip-outlined': { color: cardTextColor, borderColor: borderColor }
+                }}>
                   <CardContent>
                     <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                       <QuestionnaireIcon sx={{ mr: 1, color: 'primary.main' }} />
@@ -281,25 +333,25 @@ export default function StructuredDataCapturePage() {
                         {example.title}
                       </Typography>
                     </Box>
-                    
-                    <Typography variant="body2" color="textSecondary" paragraph>
+
+                    <Typography variant="body2" sx={{ color: isDark ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)' }} paragraph>
                       {example.description}
                     </Typography>
-                    
+
                     <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                      <Chip 
-                        label={`${example.questions} questions`} 
-                        size="small" 
-                        variant="outlined" 
+                      <Chip
+                        label={`${example.questions} questions`}
+                        size="small"
+                        variant="outlined"
                       />
-                      <Chip 
-                        label={example.estimatedTime} 
-                        size="small" 
-                        variant="outlined" 
+                      <Chip
+                        label={example.estimatedTime}
+                        size="small"
+                        variant="outlined"
                       />
                     </Box>
                   </CardContent>
-                  
+
                   <CardActions>
                     <Button
                       size="small"
@@ -315,7 +367,7 @@ export default function StructuredDataCapturePage() {
           })}
         </Grid>
 
-        <Paper sx={{ p: 3, mt: 3 }}>
+        <Paper sx={{ p: 3, mt: 3, bgcolor: paperBgColor, color: cardTextColor }}>
           <Typography variant="h6" gutterBottom>
             Features Demonstrated
           </Typography>
@@ -324,7 +376,7 @@ export default function StructuredDataCapturePage() {
               <Typography variant="subtitle2" gutterBottom>
                 Question Types
               </Typography>
-              <Typography variant="body2" color="textSecondary">
+              <Typography variant="body2" sx={{ color: isDark ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)' }}>
                 • Text input (string, text)<br />
                 • Numeric input (integer, decimal)<br />
                 • Date/time pickers<br />
@@ -339,7 +391,7 @@ export default function StructuredDataCapturePage() {
               <Typography variant="subtitle2" gutterBottom>
                 Advanced Features
               </Typography>
-              <Typography variant="body2" color="textSecondary">
+              <Typography variant="body2" sx={{ color: isDark ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)' }}>
                 • Conditional logic (enableWhen)<br />
                 • Required field validation<br />
                 • Pattern validation (regex)<br />
