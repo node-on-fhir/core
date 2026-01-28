@@ -181,9 +181,8 @@ function Footer({
   if(get(Meteor, 'settings.public.defaults.disableFooter')){
     footerContainerOverride.display = 'none'
   }
-  if(!displayNavbars){
-    footerContainerOverride.bottom = '-64px'
-    footerContainerOverride.height = '64px'
+  if(displayNavbars === false){
+    footerContainerOverride.transform = 'translateY(100%)'
   }
   if(Meteor.isCordova){
     footerContainerOverride.bottom = '-114px';  //64px footer + -50px safearea 
@@ -191,8 +190,8 @@ function Footer({
   }
 
   let appStyle = {
-    width: '100%', 
-    bottom: '0px', 
+    width: '100%',
+    bottom: '0px',
     height: '64p',
     position: 'sticky'
   };
@@ -206,7 +205,7 @@ function Footer({
 
 
   return (
-    <AppBar id="footer" position="fixed" style={appStyle} >
+    <AppBar id="footer" position="fixed" style={{...appStyle, ...footerContainerOverride, transition: 'transform 0.3s ease-in-out'}} >
       <Toolbar>
         { westNavbar }
       </Toolbar>

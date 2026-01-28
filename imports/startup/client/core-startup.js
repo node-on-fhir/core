@@ -46,6 +46,7 @@ Session.setDefault('mainAppDialogOpen', false);
 Session.setDefault('theme', get(Meteor, 'settings.public.theme.default', 'light'));
 Session.setDefault('sidebarOpen', true);
 Session.setDefault('accountsDialogTab', 0);
+Session.setDefault('displayNavbars', true);
 
 // Set up connection monitoring
 Meteor.startup(() => {
@@ -167,7 +168,14 @@ function initializeKeyboardShortcuts() {
       Session.set('sidebarOpen', !currentState);
       localStorage.setItem('sidebarOpen', !currentState);
     }
-    
+
+    // Command/Ctrl + Shift + N - Toggle header/footer visibility (Navigation)
+    if ((event.metaKey || event.ctrlKey) && event.shiftKey && event.key === 'N') {
+      event.preventDefault();
+      const currentState = Session.get('displayNavbars');
+      Session.set('displayNavbars', !currentState);
+    }
+
     // Escape - Close dialogs
     if (event.key === 'Escape') {
       Session.set('mainAppDialogOpen', false);
