@@ -18,6 +18,7 @@ clinical:hl7-resource-datatypes@4.0.8
 clinical:life-support-systems@0.1.0
 clinical:pacio-core@0.1.0
 clinical:pantry-management@0.1.0
+clinical:structured-data-capture@0.1.0
 clinical:us-core@7.0.1
 core-runtime@1.0.0
 ddp@1.4.2
