@@ -21,6 +21,7 @@ Package.onUse(function(api) {
 
   api.addFiles('server/methods.xlsx.js', ['server']);
   api.addFiles('server/methods.proxy.js', ['server']);
+  api.addFiles('server/methods.warehouse.js', ['server']);
 
   api.mainModule('index.jsx', 'client');
 });
