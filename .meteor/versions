@@ -16,7 +16,6 @@ clinical:data-importer@0.17.0
 clinical:extended-api@3.0.0
 clinical:fonts@1.2.0
 clinical:hl7-resource-datatypes@4.0.8
-clinical:life-support-systems@0.1.0
 clinical:pacio-core@0.1.0
 clinical:pantry-management@0.1.0
 clinical:structured-data-capture@0.1.0
@@ -65,6 +64,7 @@ mongo-decimal@0.2.0
 mongo-dev-server@1.1.1
 mongo-id@1.0.9
 npm-mongo@6.16.1
+orbital:life-support-systems@0.1.0
 orbital:lunar-maps@0.1.0
 ordered-dict@1.2.0
 promise@1.0.0

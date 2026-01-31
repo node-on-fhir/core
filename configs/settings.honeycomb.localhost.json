@@ -195,6 +195,10 @@
       "pantryManagement": {
         "enabled": true,
         "showInSidebar": true
+      },
+      "supplyChain": {
+        "enabled": true,
+        "showInSidebar": true
       }
     },
     "pantry": {
