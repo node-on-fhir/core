@@ -41,6 +41,10 @@ import './VaultServer.js';
 import '../imports/lib/UdapMethods.js';
 import './Swagger.js';
 import './AccountsMethods.js';
+import './DicomEndpoints.js';
+
+// GridFS Manager for DICOM file storage
+import GridFSManager from './lib/GridFSManager.js';
 
 // Import accounts startup if enabled
 import '../imports/startup/server/index.js';
@@ -425,6 +429,15 @@ Meteor.startup(() => {
 
 let accountsServer;
 Meteor.startup(async function(){
+  // Initialize GridFS for DICOM file storage
+  const gridfsInitialized = GridFSManager.initialize();
+  if (gridfsInitialized) {
+    global.GridFSManager = GridFSManager;
+    console.log('[server/main.js] GridFSManager initialized and exposed on global.GridFSManager');
+  } else {
+    console.warn('[server/main.js] GridFSManager failed to initialize - DICOM uploads will not work');
+  }
+
   // Need to add a default language for accessibility purposes
   WebApp.addHtmlAttributeHook(function() {
     return {

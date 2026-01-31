@@ -92,6 +92,46 @@ export function extractDicomMetadata(dataSet) {
 }
 
 /**
+ * Parse DICOM file from an ArrayBuffer and create Cornerstone image ID
+ * Used when loading DICOM from a URL (GridFS, blob URL, etc.)
+ * @param {ArrayBuffer} arrayBuffer - Raw DICOM file bytes
+ * @returns {Object} - Parsed DICOM info with imageId for Cornerstone
+ */
+export function parseDicomFromArrayBuffer(arrayBuffer) {
+  try {
+    const bytes = new Uint8Array(arrayBuffer);
+
+    // Parse the DICOM file
+    const dataSet = dicomParser.parseDicom(bytes);
+
+    // Get transfer syntax
+    const transferSyntax = dataSet.string('x00020010');
+    console.log('Transfer Syntax UID:', transferSyntax);
+
+    // Create a blob URL from the DICOM data
+    const blob = new Blob([arrayBuffer], { type: 'application/dicom' });
+    const blobUrl = URL.createObjectURL(blob);
+
+    // Create Cornerstone image ID using wadouri scheme
+    const imageId = 'wadouri:' + blobUrl;
+
+    console.log('Created Cornerstone image ID:', imageId);
+
+    return {
+      dataSet: dataSet,
+      arrayBuffer: arrayBuffer,
+      byteArray: bytes,
+      transferSyntax: transferSyntax,
+      imageId: imageId,
+      blobUrl: blobUrl
+    };
+  } catch (error) {
+    console.error('Error parsing DICOM from ArrayBuffer:', error);
+    throw new Error('Failed to parse DICOM file: ' + error.message);
+  }
+}
+
+/**
  * Cleanup blob URL to free memory
  * @param {string} blobUrl - Blob URL to revoke
  */

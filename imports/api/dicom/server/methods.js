@@ -1,17 +1,21 @@
-// packages/dicom-viewer/server/methods.js
+// imports/api/dicom/server/methods.js
 
 import { Meteor } from 'meteor/meteor';
-import { check } from 'meteor/check';
+import { check, Match } from 'meteor/check';
 import { get } from 'lodash';
 
 // =============================================================================
 // DICOM UPLOAD METHODS
 // =============================================================================
 
+// Max file size for DDP-based upload (base64 inline storage)
+// Files larger than this must use the HTTP upload endpoint (/api/dicom/upload)
+const MAX_DDP_FILE_SIZE = 12 * 1024 * 1024; // 12 MB
+
 Meteor.methods({
   /**
-   * Process uploaded DICOM file
-   * Stores the DICOM data as a FHIR DocumentReference
+   * Process uploaded DICOM file (legacy DDP path - small files only)
+   * For large files, use POST /api/dicom/upload + dicom.createFhirResources
    */
   async 'dicom.processUploadedFile'(fileInfo) {
     check(fileInfo, {
@@ -24,15 +28,22 @@ Meteor.methods({
       throw new Meteor.Error('unauthorized', 'Must be logged in');
     }
 
-    try {
-      console.log('📁 Processing uploaded DICOM file:', fileInfo.filename, `(${fileInfo.size} bytes)`);
+    // File size guard - reject large files with helpful error
+    if (fileInfo.size > MAX_DDP_FILE_SIZE) {
+      throw new Meteor.Error('file-too-large',
+        `File is ${(fileInfo.size / (1024 * 1024)).toFixed(1)} MB. ` +
+        `Files over ${MAX_DDP_FILE_SIZE / (1024 * 1024)} MB must use the HTTP upload endpoint. ` +
+        `The UI will handle this automatically.`
+      );
+    }
 
-      // Get DocumentReferences collection from global
+    try {
+      console.log('Processing uploaded DICOM file:', fileInfo.filename, `(${fileInfo.size} bytes)`);
+
       const DocumentReferences = global.Collections?.DocumentReferences;
 
       if (!DocumentReferences) {
-        console.warn('⚠️  DocumentReferences collection not available, returning success anyway');
-        // For testing, just return success without storing
+        console.warn('DocumentReferences collection not available, returning success anyway');
         return {
           success: true,
           message: 'DICOM file processed (DocumentReferences not available)',
@@ -41,11 +52,9 @@ Meteor.methods({
         };
       }
 
-      // Get current user for provenance
       const currentUser = await Meteor.users.findOneAsync({ _id: this.userId });
       const username = currentUser?.username || currentUser?.emails?.[0]?.address || 'unknown';
 
-      // Create FHIR DocumentReference for the DICOM file
       const documentReference = {
         resourceType: 'DocumentReference',
         status: 'current',
@@ -77,7 +86,7 @@ Meteor.methods({
         content: [{
           attachment: {
             contentType: 'application/dicom',
-            data: fileInfo.data,  // Store base64 encoded DICOM data
+            data: fileInfo.data,
             title: fileInfo.filename,
             creation: new Date().toISOString(),
             size: fileInfo.size
@@ -90,10 +99,8 @@ Meteor.methods({
         }
       };
 
-      // Insert the DocumentReference using Meteor v3 async API
       const docRefId = await DocumentReferences.insertAsync(documentReference);
-
-      console.log('✅ Created DocumentReference:', docRefId, 'for', fileInfo.filename);
+      console.log('Created DocumentReference:', docRefId, 'for', fileInfo.filename);
 
       return {
         success: true,
@@ -105,18 +112,19 @@ Meteor.methods({
       };
 
     } catch (error) {
-      console.error('❌ Error processing uploaded file:', error);
+      console.error('Error processing uploaded file:', error);
       throw new Meteor.Error('upload-processing-failed', error.message);
     }
   },
 
   /**
    * Convert DICOM file to FHIR DocumentReference and ImagingStudy resources
+   * (legacy DDP path - small files only)
    */
   async 'dicom.convertToFHIR'(fileInfo) {
     check(fileInfo, {
       filename: String,
-      data: String,  // base64 encoded DICOM file
+      data: String,
       size: Number,
     });
 
@@ -124,10 +132,17 @@ Meteor.methods({
       throw new Meteor.Error('unauthorized', 'Must be logged in');
     }
 
-    try {
-      console.log('🔄 Converting DICOM to FHIR resources:', fileInfo.filename);
+    // File size guard
+    if (fileInfo.size > MAX_DDP_FILE_SIZE) {
+      throw new Meteor.Error('file-too-large',
+        `File is ${(fileInfo.size / (1024 * 1024)).toFixed(1)} MB. ` +
+        `Files over ${MAX_DDP_FILE_SIZE / (1024 * 1024)} MB must use the HTTP upload endpoint.`
+      );
+    }
 
-      // Get collections from global
+    try {
+      console.log('Converting DICOM to FHIR resources:', fileInfo.filename);
+
       const DocumentReferences = global.Collections?.DocumentReferences;
       const ImagingStudies = global.Collections?.ImagingStudies;
 
@@ -139,16 +154,12 @@ Meteor.methods({
         throw new Meteor.Error('collection-unavailable', 'ImagingStudies collection not available');
       }
 
-      // Get current user for provenance
       const currentUser = await Meteor.users.findOneAsync({ _id: this.userId });
       const username = currentUser?.username || currentUser?.emails?.[0]?.address || 'unknown';
 
-      // Parse DICOM metadata from base64 data
-      // For now, we'll extract basic info - in production, you'd use dicom-parser
       const timestamp = new Date().toISOString();
       const patientId = get(Meteor, 'settings.public.defaults.patientId', 'unknown-patient');
 
-      // Create FHIR DocumentReference
       const documentReference = {
         resourceType: 'DocumentReference',
         status: 'current',
@@ -188,11 +199,9 @@ Meteor.methods({
         }]
       };
 
-      // Insert DocumentReference
       const docRefId = await DocumentReferences.insertAsync(documentReference);
-      console.log('✅ Created DocumentReference:', docRefId);
+      console.log('Created DocumentReference:', docRefId);
 
-      // Create FHIR ImagingStudy
       const imagingStudy = {
         resourceType: 'ImagingStudy',
         status: 'available',
@@ -225,15 +234,12 @@ Meteor.methods({
         }]
       };
 
-      // Insert ImagingStudy
       const imagingStudyId = await ImagingStudies.insertAsync(imagingStudy);
-      console.log('✅ Created ImagingStudy:', imagingStudyId);
+      console.log('Created ImagingStudy:', imagingStudyId);
 
-      // Verify it was inserted
       const verifyStudy = await ImagingStudies.findOneAsync({ _id: imagingStudyId });
-      console.log('✅ Verified ImagingStudy in database:', verifyStudy ? 'Found' : 'NOT FOUND');
+      console.log('Verified ImagingStudy in database:', verifyStudy ? 'Found' : 'NOT FOUND');
 
-      // Link DocumentReference to ImagingStudy
       await DocumentReferences.updateAsync(docRefId, {
         $set: {
           'context.related': [{
@@ -242,7 +248,7 @@ Meteor.methods({
         }
       });
 
-      console.log('✅ DICOM to FHIR conversion completed successfully');
+      console.log('DICOM to FHIR conversion completed successfully');
 
       return {
         success: true,
@@ -258,10 +264,189 @@ Meteor.methods({
       };
 
     } catch (error) {
-      console.error('❌ Error converting DICOM to FHIR:', error);
+      console.error('Error converting DICOM to FHIR:', error);
       throw new Meteor.Error('fhir-conversion-failed', error.message);
+    }
+  },
+
+  /**
+   * Create FHIR resources for a DICOM file that was uploaded to GridFS via HTTP
+   * Called after POST /api/dicom/upload returns a fileId
+   * Stores only a URL reference in the DocumentReference (no inline base64 data)
+   */
+  async 'dicom.createFhirResources'(fileInfo) {
+    check(fileInfo, {
+      fileId: String,
+      filename: String,
+      size: Number,
+      url: String
+    });
+
+    if (!this.userId) {
+      throw new Meteor.Error('unauthorized', 'Must be logged in');
+    }
+
+    try {
+      console.log('Creating FHIR resources for GridFS file:', fileInfo.filename, 'fileId:', fileInfo.fileId);
+
+      const DocumentReferences = global.Collections?.DocumentReferences;
+      const ImagingStudies = global.Collections?.ImagingStudies;
+
+      if (!DocumentReferences) {
+        throw new Meteor.Error('collection-unavailable', 'DocumentReferences collection not available');
+      }
+
+      const currentUser = await Meteor.users.findOneAsync({ _id: this.userId });
+      const username = currentUser?.username || currentUser?.emails?.[0]?.address || 'unknown';
+
+      const timestamp = new Date().toISOString();
+      const patientId = get(Meteor, 'settings.public.defaults.patientId', 'unknown-patient');
+
+      // Create FHIR DocumentReference with URL reference (not inline data)
+      const documentReference = {
+        resourceType: 'DocumentReference',
+        status: 'current',
+        docStatus: 'final',
+        type: {
+          coding: [{
+            system: 'http://loinc.org',
+            code: '18748-4',
+            display: 'Diagnostic imaging study'
+          }],
+          text: 'DICOM Image'
+        },
+        category: [{
+          coding: [{
+            system: 'http://loinc.org',
+            code: 'LP29684-5',
+            display: 'Radiology'
+          }]
+        }],
+        subject: {
+          reference: `Patient/${patientId}`
+        },
+        date: timestamp,
+        author: [{
+          reference: `Practitioner/${this.userId}`,
+          display: username
+        }],
+        description: `DICOM file: ${fileInfo.filename}`,
+        content: [{
+          attachment: {
+            contentType: 'application/dicom',
+            url: fileInfo.url,  // GridFS URL reference instead of inline data
+            title: fileInfo.filename,
+            creation: timestamp,
+            size: fileInfo.size
+          }
+        }]
+      };
+
+      const docRefId = await DocumentReferences.insertAsync(documentReference);
+      console.log('Created DocumentReference:', docRefId, '(GridFS URL:', fileInfo.url, ')');
+
+      // Create ImagingStudy if collection is available
+      let imagingStudyId = null;
+      if (ImagingStudies) {
+        const imagingStudy = {
+          resourceType: 'ImagingStudy',
+          status: 'available',
+          subject: {
+            reference: `Patient/${patientId}`
+          },
+          started: timestamp,
+          numberOfSeries: 1,
+          numberOfInstances: 1,
+          description: `Imaging study from ${fileInfo.filename}`,
+          series: [{
+            uid: `${Date.now()}.1`,
+            number: 1,
+            modality: {
+              system: 'http://dicom.nema.org/resources/ontology/DCM',
+              code: 'CT',
+              display: 'Computed Tomography'
+            },
+            description: 'DICOM series',
+            numberOfInstances: 1,
+            started: timestamp,
+            instance: [{
+              uid: `${Date.now()}.1.1`,
+              sopClass: {
+                system: 'urn:ietf:rfc:3986',
+                code: 'urn:oid:1.2.840.10008.5.1.4.1.1.2'
+              },
+              number: 1
+            }]
+          }]
+        };
+
+        imagingStudyId = await ImagingStudies.insertAsync(imagingStudy);
+        console.log('Created ImagingStudy:', imagingStudyId);
+
+        // Link DocumentReference to ImagingStudy
+        await DocumentReferences.updateAsync(docRefId, {
+          $set: {
+            'context.related': [{
+              reference: `ImagingStudy/${imagingStudyId}`
+            }]
+          }
+        });
+      }
+
+      console.log('FHIR resources created for GridFS file:', fileInfo.fileId);
+
+      return {
+        success: true,
+        documentReference: {
+          id: docRefId,
+          resourceType: 'DocumentReference'
+        },
+        imagingStudy: imagingStudyId ? {
+          id: imagingStudyId,
+          resourceType: 'ImagingStudy'
+        } : null,
+        filename: fileInfo.filename
+      };
+
+    } catch (error) {
+      console.error('Error creating FHIR resources for GridFS file:', error);
+      throw new Meteor.Error('fhir-resource-creation-failed', error.message);
+    }
+  },
+
+  /**
+   * Get GridFS storage status for the Getting Started wizard
+   * Returns initialization status, file count, total storage size
+   */
+  async 'dicom.getGridFSStatus'() {
+    if (!this.userId) {
+      throw new Meteor.Error('unauthorized', 'Must be logged in');
+    }
+
+    try {
+      const GridFSManager = global.GridFSManager;
+
+      if (!GridFSManager) {
+        return {
+          initialized: false,
+          bucketName: 'dicom',
+          chunkSize: 255 * 1024,
+          fileCount: 0,
+          totalSize: 0,
+          message: 'GridFSManager not available on global scope'
+        };
+      }
+
+      const stats = await GridFSManager.getStats();
+      return stats;
+    } catch (error) {
+      console.error('Error getting GridFS status:', error);
+      return {
+        initialized: false,
+        error: error.message
+      };
     }
   }
 });
 
-console.log('✅ DICOM server methods registered');
+console.log('DICOM server methods registered');

@@ -162,6 +162,7 @@
         "Encounters": true,
         "Goals": true,
         "Immunizations": true,
+        "DicomViewer": true,
         "ImagingStudies": true,
         "Lists": true,
         "Locations": true,
@@ -233,6 +234,12 @@
       "chiefMedicalOfficer": {
         "reference": "Practitioner/chief-medical-officer",
         "display": "Dr. Sarah Johnson, Chief Medical Officer"
+      }
+    },
+    "dicom": {
+      "gridfs": {
+        "bucketName": "dicom",
+        "chunkSizeBytes": 261120
       }
     },
     "fhir": {
