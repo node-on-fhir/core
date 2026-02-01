@@ -220,7 +220,7 @@ export function SimpleDicomViewport({ dicomData, dicomUrl }) {
 
     loadAndRenderDicom();
 
-    // Cleanup function
+    // Cleanup function - destroy engine fully so tools re-initialize on next load
     return function() {
       if (blobUrl) {
         cleanupBlobUrl(blobUrl);
@@ -229,10 +229,11 @@ export function SimpleDicomViewport({ dicomData, dicomUrl }) {
       const renderingEngine = renderingEngineRef.current;
       if (renderingEngine) {
         try {
-          renderingEngine.disableElement('SIMPLE_DICOM_VIEWPORT');
+          renderingEngine.destroy();
         } catch (e) {
-          console.warn('Error disabling viewport:', e);
+          console.warn('Error destroying rendering engine:', e);
         }
+        renderingEngineRef.current = null;
       }
     };
   }, [dicomData, dicomUrl]);

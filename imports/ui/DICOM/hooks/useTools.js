@@ -31,12 +31,16 @@ export function useTools(viewportId, renderingEngine) {
     } = cornerstone3DTools;
 
     try {
-      // Add tools to Cornerstone3D
-      cornerstone3DTools.addTool(WindowLevelTool);
-      cornerstone3DTools.addTool(PanTool);
-      cornerstone3DTools.addTool(ZoomTool);
-      cornerstone3DTools.addTool(StackScrollMouseWheelTool);
-      cornerstone3DTools.addTool(LengthTool);
+      // Add tools to Cornerstone3D (global registration - safe to call multiple times)
+      function safeAddTool(tool) {
+        try { cornerstone3DTools.addTool(tool); }
+        catch (e) { /* tool already registered globally */ }
+      }
+      safeAddTool(WindowLevelTool);
+      safeAddTool(PanTool);
+      safeAddTool(ZoomTool);
+      safeAddTool(StackScrollMouseWheelTool);
+      safeAddTool(LengthTool);
 
       // Create or get tool group
       let toolGroup = ToolGroupManager.getToolGroup(toolGroupId);
@@ -45,12 +49,16 @@ export function useTools(viewportId, renderingEngine) {
         toolGroup = ToolGroupManager.createToolGroup(toolGroupId);
       }
 
-      // Add tools to tool group
-      toolGroup.addTool(WindowLevelTool.toolName);
-      toolGroup.addTool(PanTool.toolName);
-      toolGroup.addTool(ZoomTool.toolName);
-      toolGroup.addTool(StackScrollMouseWheelTool.toolName);
-      toolGroup.addTool(LengthTool.toolName);
+      // Add tools to tool group (safe to call if already added)
+      function safeGroupAddTool(group, toolName) {
+        try { group.addTool(toolName); }
+        catch (e) { /* tool already in group */ }
+      }
+      safeGroupAddTool(toolGroup, WindowLevelTool.toolName);
+      safeGroupAddTool(toolGroup, PanTool.toolName);
+      safeGroupAddTool(toolGroup, ZoomTool.toolName);
+      safeGroupAddTool(toolGroup, StackScrollMouseWheelTool.toolName);
+      safeGroupAddTool(toolGroup, LengthTool.toolName);
 
       // Set initial active tool (Window/Level)
       toolGroup.setToolActive(WindowLevelTool.toolName, {
@@ -73,13 +81,11 @@ export function useTools(viewportId, renderingEngine) {
       console.error('❌ Error initializing tools:', error);
     }
 
-    // Cleanup
+    // Cleanup - destroy tool group entirely so it starts fresh on next init
     return function() {
       try {
-        const toolGroup = ToolGroupManager.getToolGroup(toolGroupId);
-        if (toolGroup) {
-          toolGroup.removeViewports(renderingEngine.id, viewportId);
-        }
+        const { ToolGroupManager: TGM } = window.cornerstone3DTools;
+        TGM.destroyToolGroup(toolGroupId);
       } catch (e) {
         console.warn('Error cleaning up tools:', e);
       }
