@@ -64,6 +64,20 @@ function isMixedContent(url){
   return window.location.protocol === 'https:' && url.startsWith('http://');
 }
 
+// Restrict which external URLs may be loaded into the iframe.
+// Currently allows only HTTPS URLs. Extend with hostname checks if needed.
+function isAllowedExternalUrl(url){
+  try {
+    const parsed = new URL(url);
+    if(parsed.protocol !== 'https:'){
+      return false;
+    }
+    return true;
+  } catch(e){
+    return false;
+  }
+}
+
 
 //==========================================================================================
 // Main Component
@@ -176,6 +190,10 @@ export function ExternalContentPanel(props){
     if(!isValidUrl(normalized)){
       console.warn('[ExternalContentPanel] Invalid URL:', normalized);
       return;
+    if(!isAllowedExternalUrl(normalized)){
+      console.warn('[ExternalContentPanel] Disallowed URL:', normalized);
+      return;
+    }
     }
     setAddressBarValue(normalized);
     setCurrentUrl(normalized);
