@@ -225,7 +225,7 @@ function ResearchSubjectsTable(props){
       rows.push(
         <TableRow 
           key={row._id} 
-          onClick={onRowClick ? onRowClick.bind(this, row._id || row.id) : undefined}
+          onClick={onRowClick ? onRowClick.bind(this, row._id) : undefined}
           hover={onRowClick ? true : false}
           style={{cursor: onRowClick ? 'pointer' : 'default'}}
         >
