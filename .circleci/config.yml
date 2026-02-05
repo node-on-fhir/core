@@ -248,10 +248,10 @@ jobs:
                 head -n 1)
               
               if [ -z "$CHROMEDRIVER_URL" ]; then
-                # Fallback to latest stable
-                echo "Exact version not found, using latest stable ChromeDriver"
-                CHROMEDRIVER_URL=$(curl -s "https://googlechromelabs.github.io/chrome-for-testing/last-known-good-versions-with-downloads.json" | \
-                  jq -r '.channels.Stable.downloads.chromedriver[] | select(.platform=="linux64") | .url')
+                # Fallback to latest ChromeDriver for the same major version
+                echo "Exact version not found, falling back to latest ChromeDriver for Chrome $CHROME_MAJOR"
+                CHROMEDRIVER_URL=$(curl -s "https://googlechromelabs.github.io/chrome-for-testing/latest-versions-per-milestone-with-downloads.json" | \
+                  jq -r ".milestones.\"$CHROME_MAJOR\".downloads.chromedriver[] | select(.platform==\"linux64\") | .url")
               fi
               
               echo "Downloading ChromeDriver from: $CHROMEDRIVER_URL"
@@ -286,6 +286,15 @@ jobs:
             chromedriver --version || echo "ChromeDriver not found"
             echo "ChromeDriver location:"
             which chromedriver || echo "ChromeDriver not in PATH"
+
+            # Verify major versions match
+            CHROME_MAJOR=$(google-chrome --version | awk '{print $3}' | cut -d'.' -f1)
+            CHROMEDRIVER_MAJOR=$(chromedriver --version | awk '{print $2}' | cut -d'.' -f1)
+            if [ "$CHROME_MAJOR" != "$CHROMEDRIVER_MAJOR" ]; then
+              echo "ERROR: Chrome major version ($CHROME_MAJOR) != ChromeDriver major version ($CHROMEDRIVER_MAJOR)"
+              exit 1
+            fi
+            echo "Version match confirmed: Chrome $CHROME_MAJOR, ChromeDriver $CHROMEDRIVER_MAJOR"
       
       - run:
           name: Create directories
