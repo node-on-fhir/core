@@ -190,10 +190,10 @@ export function ExternalContentPanel(props){
     if(!isValidUrl(normalized)){
       console.warn('[ExternalContentPanel] Invalid URL:', normalized);
       return;
+    }
     if(!isAllowedExternalUrl(normalized)){
       console.warn('[ExternalContentPanel] Disallowed URL:', normalized);
       return;
-    }
     }
     setAddressBarValue(normalized);
     setCurrentUrl(normalized);
@@ -251,6 +251,9 @@ export function ExternalContentPanel(props){
   // Render
 
   let hasUrl = !!currentUrl;
+
+  // Defense-in-depth: validate URL scheme at render time
+  let safeSrc = (currentUrl && isAllowedExternalUrl(currentUrl)) ? currentUrl : '';
 
   return (
     <Box
@@ -443,7 +446,7 @@ export function ExternalContentPanel(props){
           <iframe
             ref={iframeRef}
             id="externalContentFrame"
-            src={currentUrl}
+            src={safeSrc}
             sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
             onLoad={handleIframeLoad}
             onError={handleIframeError}

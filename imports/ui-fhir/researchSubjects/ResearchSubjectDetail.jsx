@@ -273,22 +273,16 @@ function ResearchSubjectDetail(props) {
   };
 
   // Handle delete
-  const handleDelete = async () => {
+  const handleDelete = () => {
     if (id && id !== 'new') {
       if (window.confirm('Are you sure you want to delete this research subject?')) {
-        setLoading(true);
         setIsDeleting(true);
 
-        try {
-          await Meteor.callAsync('researchSubjects.remove', {
-            _id: id
-          });
-          console.log('Deleted research subject');
-        } catch (error) {
-          console.error('Delete error:', error);
-        }
+        // Fire server call without awaiting - navigate immediately
+        Meteor.callAsync('researchSubjects.remove', { _id: id })
+          .then(() => console.log('Deleted research subject'))
+          .catch((error) => console.error('Delete error:', error));
 
-        setLoading(false);
         navigate('/research-subjects');
       }
     }
