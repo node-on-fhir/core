@@ -184,7 +184,17 @@ jobs:
     
     steps:
       - checkout
-      
+
+      - restore_cache:
+          keys:
+            - meteor-install-v3.3-{{ arch }}
+            - meteor-install-v3.3-
+
+      - restore_cache:
+          keys:
+            - npm-deps-v1-{{ checksum "package-lock.json" }}
+            - npm-deps-v1-
+
       - run:
           name: Install Chrome with retry
           command: |
@@ -297,22 +307,23 @@ jobs:
       - run:
           name: Install Meteor
           command: |
-            # Clear any existing Meteor installation
-            rm -rf ~/.meteor
-            # Install fresh Meteor
-            curl https://install.meteor.com/?release=3.3 | sh
+            if command -v meteor &> /dev/null && meteor --version 2>/dev/null; then
+              echo "Meteor already installed (from cache)"
+              meteor --version
+            else
+              echo "Installing Meteor fresh..."
+              rm -rf ~/.meteor
+              curl https://install.meteor.com/?release=3.3 | sh
+            fi
             echo 'export PATH="$HOME/.meteor:$PATH"' >> $BASH_ENV
             source $BASH_ENV
             sudo ln -sf $HOME/.meteor/meteor /usr/local/bin/meteor
       
       - run:
-          name: Clear Meteor build cache
+          name: Prepare build environment
           command: |
-            # Clear local Meteor build cache
-            rm -rf .meteor/local
-            echo "Cleared .meteor/local directory"
-            # Also clear npm cache to ensure fresh packages
-            npm cache clean --force
+            echo "Meteor local cache: $(du -sh .meteor/local 2>/dev/null || echo 'none')"
+            echo "Node modules: $(du -sh node_modules 2>/dev/null || echo 'none')"
       
       - run:
           name: Verify code changes
@@ -336,7 +347,18 @@ jobs:
             # Update browserslist database to avoid warnings
             echo "Updating browserslist database..."
             npx update-browserslist-db@latest || true
-      
+
+      - save_cache:
+          key: meteor-install-v3.3-{{ arch }}
+          paths:
+            - ~/.meteor
+
+      - save_cache:
+          key: npm-deps-v1-{{ checksum "package-lock.json" }}
+          paths:
+            - node_modules
+            - .meteor/local
+
       - run:
           name: Pre-build Meteor packages
           no_output_timeout: 20m
@@ -350,7 +372,8 @@ jobs:
             
             # Run build with progress monitoring
             (
-              meteor build --directory /tmp/build-test --debug &
+              meteor build --directory /tmp/build-test --debug \
+                --extra-packages "clinical:reference-app, clinical:us-core, clinical:pacio-core" &
               BUILD_PID=$!
               
               # Monitor progress
@@ -427,15 +450,20 @@ jobs:
       
       - run:
           name: Wait for Meteor
+          no_output_timeout: 25m
           command: |
-            for i in {1..120}; do
+            for i in {1..240}; do
               if curl -f http://localhost:3000 > /dev/null 2>&1; then
-                echo "Meteor is ready!"
-                break
+                echo "Meteor is ready after $((i * 5)) seconds!"
+                exit 0
               fi
-              echo "Waiting for Meteor... ($i/120)"
+              echo "Waiting for Meteor... ($i/240, $((i * 5))s elapsed)"
               sleep 5
             done
+            echo "ERROR: Meteor failed to start within 20 minutes"
+            echo "Checking Meteor process:"
+            ps aux | grep meteor || true
+            exit 1
       
       - run:
           name: Run Nightwatch tests - << parameters.group-name >>
