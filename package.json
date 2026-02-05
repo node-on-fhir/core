@@ -34,7 +34,7 @@
     "@langchain/openai": "0.3.16",
     "@meteorjs/ddp-graceful-shutdown": "^0.9.2",
     "@mlc-ai/web-llm": "^0.2.79",
-    "@modelcontextprotocol/sdk": "1.25.2",
+    "@modelcontextprotocol/sdk": "1.26.0",
     "@mui/icons-material": "^5.16.7",
     "@mui/lab": "^5.0.0-alpha.175",
     "@mui/material": "^5.16.7",
