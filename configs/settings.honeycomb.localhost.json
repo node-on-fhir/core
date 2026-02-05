@@ -37,6 +37,14 @@
         "nivoTheme": "red_grey"
       }
     },
+    "iframe": {
+      "enabled": true,
+      "url": "https://www.ncbi.nlm.nih.gov",
+      "defaultUrl": "https://www.ncbi.nlm.nih.gov",
+      "showAddressBar": true,
+      "defaultWidth": "50%",
+      "mode": "1up"
+    },
     "loggingThreshold": "debug",
     "fhirAutoSubscribe": true,
     "capabilityStatement": {
@@ -110,6 +118,20 @@
           "/contracts",
           "/devices",
           "/message-headers"
+        ],
+        "customIframeLinks": [
+          {
+            "label": "PubMed",
+            "url": "https://pubmed.ncbi.nlm.nih.gov/",
+            "icon": "globe",
+            "openSecondPanel": false
+          },
+          {
+            "label": "FHIR Spec",
+            "url": "https://hl7.org/fhir/R4/",
+            "icon": "fire",
+            "openSecondPanel": true
+          }
         ]
       },
       "autopublish": true

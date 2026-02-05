@@ -117,6 +117,7 @@ import {pipette} from 'react-icons-kit/typicons/pipette' // Immunization ?
 // import {ic_wifi_tethering} from 'react-icons-kit/md/ic_wifi_tethering';
 // import {ic_devices} from 'react-icons-kit/md/ic_devices';
 
+import {globe} from 'react-icons-kit/fa/globe';
 import {signIn} from 'react-icons-kit/fa/signIn';
 
 
@@ -508,9 +509,58 @@ export function PatientSidebar(props){
   }
 
   //----------------------------------------------------------------------
+  // Custom Iframe Links
+
+  let customIframeLinkElements = [];
+  if(get(Meteor, 'settings.public.defaults.sidebar.customIframeLinks')){
+    let customIframeLinkArray = get(Meteor, 'settings.public.defaults.sidebar.customIframeLinks');
+
+    customIframeLinkArray.forEach(function(iframeLink, index){
+      let clonedIcon = parseIcon(get(iframeLink, 'icon', 'globe'));
+      if(clonedIcon){
+        clonedIcon = React.cloneElement(clonedIcon, {});
+      } else {
+        clonedIcon = <Icon icon={globe} />
+      }
+
+      customIframeLinkElements.push(
+        <ListItem
+          id={'customIframeLinkItem-' + index}
+          key={'customIframeLinkItem-' + index}
+          button
+          onClick={function(){
+            let url = get(iframeLink, 'url', '');
+            let openSecondPanel = get(iframeLink, 'openSecondPanel', false);
+
+            Session.set('externalContentUrl', url);
+
+            if(openSecondPanel){
+              // 2up mode: open side panel
+              Session.set('secondPanelOpen', true);
+            } else {
+              // 1up mode: navigate to full-page route
+              Session.set('secondPanelOpen', false);
+              openPage('/external-content');
+            }
+          }}
+        >
+          <ListItemIcon>
+            { clonedIcon }
+          </ListItemIcon>
+          <ListItemText primary={get(iframeLink, 'label', 'External Link')} />
+        </ListItem>
+      );
+    });
+
+    if(customIframeLinkElements.length > 0){
+      customIframeLinkElements.push(<Divider key='custom-iframe-links-hr' />);
+    }
+  }
+
+  //----------------------------------------------------------------------
   // Trackers
 
-  let currentUser = useTracker(function(){  
+  let currentUser = useTracker(function(){
     // Try Meteor.user() first, fallback to Session
     const meteorUser = Meteor.user();
     if (meteorUser) {
@@ -726,10 +776,11 @@ export function PatientSidebar(props){
           break;   
         case "heartO":
           result = <Icon icon={heartO} />
-          break;   
-          
-          
-          
+          break;
+        case "globe":
+          result = <Icon icon={globe} />
+          break;
+
         default:
           result = <Icon icon={fire} />
           break;
@@ -920,6 +971,32 @@ export function PatientSidebar(props){
         }
       }
     });
+
+    // Settings-driven workflow links
+    let settingsWorkflowLinks = get(Meteor, 'settings.public.defaults.sidebar.workflowLinks', []);
+    settingsWorkflowLinks.forEach(function(workflowLink, wlIndex){
+      let clonedIcon = parseIcon(get(workflowLink, 'icon', 'fire'));
+      if(clonedIcon){
+        clonedIcon = React.cloneElement(clonedIcon, {});
+      } else {
+        clonedIcon = <Icon icon={fire} />
+      }
+
+      workflowElements.push(
+        <ListItem
+          id={'workflowLink-' + wlIndex}
+          key={'workflowLink-' + wlIndex}
+          button
+          onClick={function(){ openPage(get(workflowLink, 'to', '/')); }}
+        >
+          <ListItemIcon>
+            { clonedIcon }
+          </ListItemIcon>
+          <ListItemText primary={get(workflowLink, 'label', 'Workflow')} />
+        </ListItem>
+      );
+    });
+
     workflowElements.push(<Divider key="workflow-modules-hr" />);
     logger.trace('client.app.patient.PatientSidebar.workflowElements: ' + workflowElements.length);
   }
@@ -1336,6 +1413,7 @@ export function PatientSidebar(props){
       { patientDirectoryElements }
       { dicomViewerElements }
       { customWorkflowElements }
+      { customIframeLinkElements }
 
       <div id='patientWorkflowElements' key='patientWorkflowElements'>
         { workflowElements }   

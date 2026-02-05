@@ -85,6 +85,10 @@ import StudyListPage from './DICOM/StudyListPage.jsx';
 import UploadPage from './DICOM/UploadPage.jsx';
 import DicomViewerPage from './DICOM/DicomViewerPage.jsx';
 
+// External Content / iFrame
+import ExternalContentPage from './ExternalContentPage.jsx';
+import ExternalContentPanel from './ExternalContentPanel.jsx';
+
 // Optional package imports would go here when packages are added
 
 //===============================================================================================================
@@ -560,6 +564,14 @@ let dynamicRoutes = [
     element: <SwaggerPage />
   }  
 ]
+
+// External Content / iFrame route
+if(get(Meteor, 'settings.public.iframe.enabled', false)){
+  dynamicRoutes.push({
+    path: "/external-content",
+    element: <ExternalContentPage />
+  });
+}
 
 // Business/Legal page routes
 if(get(Meteor, 'settings.public.businessPages.privacy.enabled')){
@@ -1709,7 +1721,9 @@ function usePageViews() {
 
 
 if(Meteor.isClient){
-  Session.setDefault('slideOutCardsVisible', true)
+  Session.setDefault('slideOutCardsVisible', true);
+  Session.setDefault('externalContentUrl', get(Meteor, 'settings.public.iframe.url', ''));
+  Session.setDefault('secondPanelOpen', false);
 }
 export function SlideOutCards(props){
 
@@ -2166,7 +2180,10 @@ export function App(props){
               location={props.location}
               history={window.history}
               { ...otherProps } />
-            <StyledMainRouter style={{flex: 1}} />
+            <Box sx={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+              <StyledMainRouter style={{flex: 1}} />
+              <SecondaryIframePanel />
+            </Box>
             <Footer
               drawerIsOpen={drawerIsOpen}
               location={props.location}
@@ -2242,4 +2259,51 @@ function StyledMainRouter(props){
       <Route path="*" />
     </Routes>
   </main>)
+}
+
+
+//===============================================================================================================
+// Secondary Iframe Panel (2up mode)
+
+function SecondaryIframePanel(){
+  const secondPanelOpen = useTracker(function(){
+    return Session.get('secondPanelOpen');
+  }, []);
+  const secondPanelUrl = useTracker(function(){
+    return Session.get('externalContentUrl');
+  }, []);
+
+  const iframeEnabled = get(Meteor, 'settings.public.iframe.enabled', false);
+  const defaultWidth = get(Meteor, 'settings.public.iframe.defaultWidth', '50%');
+  const showAddressBar = get(Meteor, 'settings.public.iframe.showAddressBar', true);
+
+  if(!iframeEnabled || !secondPanelOpen || !secondPanelUrl){
+    return null;
+  }
+
+  return (
+    <Box sx={{
+      width: { xs: '100%', md: defaultWidth },
+      position: { xs: 'absolute', md: 'relative' },
+      right: 0,
+      top: 0,
+      bottom: 0,
+      zIndex: { xs: 1200, md: 'auto' },
+      borderLeft: { xs: 0, md: 1 },
+      borderColor: 'divider',
+      display: 'flex',
+      flexDirection: 'column',
+      overflow: 'hidden',
+      backgroundColor: 'background.paper'
+    }}>
+      <ExternalContentPanel
+        url={secondPanelUrl}
+        showAddressBar={showAddressBar}
+        onClose={function(){
+          Session.set('secondPanelOpen', false);
+        }}
+        height="100%"
+      />
+    </Box>
+  );
 }

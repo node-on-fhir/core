@@ -102,7 +102,44 @@
           "FhirResourcesDashboard": true,
           "BiomarkerCharting": true,
           "PatientChart": true
-        }
+        },
+        "workflowLinks": [
+          {
+            "label": "Facility Dashboard",
+            "icon": "dashboard",
+            "to": "/pacio-dashboard"
+          },
+          {
+            "label": "Patient Fetch",
+            "icon": "document",
+            "to": "/patient-fetch"
+          },
+          {
+            "label": "Advance Directives",
+            "icon": "notepad",
+            "to": "/advance-directives"
+          },
+          {
+            "label": "Continuity of Care",
+            "icon": "ic_transfer_within_a_station",
+            "to": "/transition-of-care"
+          },
+          {
+            "label": "Medication Management",
+            "icon": "ic_local_pharmacy",
+            "to": "/medication-management"
+          },
+          {
+            "label": "Take Vital Signs",
+            "icon": "heartbeat",
+            "to": "/take-vital-signs"
+          },
+          {
+            "label": "Structured Data Capture",
+            "icon": "notepad",
+            "to": "/structured-data-capture"
+          }
+        ]
       }
     },
     "interfaces": {
