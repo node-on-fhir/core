@@ -56,8 +56,19 @@ export const QuestionItem = memo(function QuestionItem(props) {
     readOnly = false,
     showLinkId = false,
     renderItems,
-    validationError
+    validationError,
+    // Dark mode theming props
+    isDark = false,
+    cardBgColor = '#ffffff',
+    cardTextColor = 'rgba(0, 0, 0, 0.87)',
+    paperBgColor = '#ffffff',
+    borderColor = 'rgba(0, 0, 0, 0.23)'
   } = props;
+
+  // Theme-aware colors
+  const secondaryTextColor = isDark ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)';
+  const errorBgColor = isDark ? 'rgba(211, 47, 47, 0.15)' : 'rgba(211, 47, 47, 0.1)';
+  const hoverBgColor = isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.04)';
 
   const type = get(item, 'type');
   const linkId = get(item, 'linkId');
@@ -72,18 +83,19 @@ export const QuestionItem = memo(function QuestionItem(props) {
   // Handle group items
   if (type === 'group') {
     return (
-      <Card 
+      <Card
         id={`question-${linkId}`}
         variant={depth === 0 ? 'outlined' : 'elevation'}
         elevation={depth === 0 ? 0 : 1}
-        sx={{ 
-          mb: 2, 
+        sx={{
+          mb: 2,
           ml: depth * 2,
-          backgroundColor: depth === 0 ? 'transparent' : 'background.paper'
+          backgroundColor: depth === 0 ? 'transparent' : paperBgColor,
+          borderColor: borderColor
         }}
       >
         <CardContent>
-          <Typography variant={depth === 0 ? 'h6' : 'subtitle1'} gutterBottom>
+          <Typography variant={depth === 0 ? 'h6' : 'subtitle1'} gutterBottom sx={{ color: cardTextColor }}>
             {text}
           </Typography>
           {renderItems && renderItems(get(item, 'item', []), depth + 1)}
@@ -95,11 +107,11 @@ export const QuestionItem = memo(function QuestionItem(props) {
   // Handle display items
   if (type === 'display') {
     return (
-      <Box 
+      <Box
         id={`question-${linkId}`}
         sx={{ mb: 2, ml: depth * 2 }}
       >
-        <Typography variant="body1" color="textSecondary">
+        <Typography variant="body1" sx={{ color: secondaryTextColor }}>
           {text}
         </Typography>
       </Box>
@@ -114,16 +126,16 @@ export const QuestionItem = memo(function QuestionItem(props) {
   }
 
   return (
-    <Box 
+    <Box
       id={`question-${linkId}`}
-      sx={{ 
-        mb: 3, 
+      sx={{
+        mb: 3,
         ml: depth * 2,
         p: 2,
         borderRadius: 1,
-        backgroundColor: validationError ? 'error.light' : 'transparent',
+        backgroundColor: validationError ? errorBgColor : 'transparent',
         '&:hover': {
-          backgroundColor: readOnlyItem ? 'transparent' : 'action.hover'
+          backgroundColor: readOnlyItem ? 'transparent' : hoverBgColor
         }
       }}
       onFocus={onFocus}
@@ -131,24 +143,25 @@ export const QuestionItem = memo(function QuestionItem(props) {
       {/* Question header */}
       <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 1 }}>
         <Box sx={{ flexGrow: 1 }}>
-          <Typography variant="body1" component="div">
+          <Typography variant="body1" component="div" sx={{ color: cardTextColor }}>
             {text}
             {required && (
-              <Typography component="span" color="error" sx={{ ml: 0.5 }}>
+              <Typography component="span" sx={{ ml: 0.5, color: isDark ? '#f44336' : '#d32f2f' }}>
                 *
               </Typography>
             )}
             {repeats && (
-              <Chip 
-                label="Multiple" 
-                size="small" 
-                sx={{ ml: 1 }} 
+              <Chip
+                label="Multiple"
+                size="small"
+                sx={{ ml: 1, color: cardTextColor, borderColor: borderColor }}
+                variant="outlined"
               />
             )}
           </Typography>
-          
+
           {helpText && (
-            <FormHelperText>{helpText}</FormHelperText>
+            <FormHelperText sx={{ color: secondaryTextColor }}>{helpText}</FormHelperText>
           )}
         </Box>
         
@@ -156,26 +169,26 @@ export const QuestionItem = memo(function QuestionItem(props) {
         <Box sx={{ display: 'flex', gap: 0.5 }}>
           {showLinkId && (
             <Tooltip title={`LinkId: ${linkId}`}>
-              <IconButton size="small">
+              <IconButton size="small" sx={{ color: secondaryTextColor }}>
                 <QrCodeIcon fontSize="small" />
               </IconButton>
             </Tooltip>
           )}
-          
+
           {get(item, 'definition') && (
             <Tooltip title={get(item, 'definition')}>
-              <IconButton size="small">
+              <IconButton size="small" sx={{ color: secondaryTextColor }}>
                 <InfoIcon fontSize="small" />
               </IconButton>
             </Tooltip>
           )}
-          
+
           {!readOnlyItem && value && onClear && (
             <Tooltip title="Clear answer">
-              <IconButton 
-                size="small" 
+              <IconButton
+                size="small"
                 onClick={onClear}
-                color="error"
+                sx={{ color: isDark ? '#f44336' : '#d32f2f' }}
               >
                 <ClearIcon fontSize="small" />
               </IconButton>
@@ -192,6 +205,9 @@ export const QuestionItem = memo(function QuestionItem(props) {
         readOnly={readOnlyItem}
         error={!!validationError}
         helperText={validationError?.message}
+        isDark={isDark}
+        cardTextColor={cardTextColor}
+        borderColor={borderColor}
       />
       
       {/* Nested items */}

@@ -296,44 +296,8 @@ export const DynamicRoutes = [
   }
 ];
 
-// SidebarWorkflows - PACIO workflow items
-export const SidebarWorkflows = [
-  {
-    primaryText: 'Facility Dashboard',
-    to: '/pacio-dashboard',
-    iconName: 'dashboard'
-  },
-  {
-    primaryText: 'Patient Fetch',
-    to: '/patient-fetch',
-    iconName: 'documentIcon'
-  },
-  {
-    primaryText: 'Advance Directives',
-    to: '/advance-directives',
-    iconName: 'notepad'
-  },
-  {
-    primaryText: 'Continuity of Care',
-    to: '/transition-of-care',
-    iconName: 'ic_transfer_within_a_station'
-  },
-  {
-    primaryText: 'Medication Management',
-    to: '/medication-management',
-    iconName: 'ic_local_pharmacy'
-  },
-  {
-    primaryText: 'Take Vital Signs',
-    to: '/take-vital-signs',
-    iconName: 'heartbeat'
-  },
-  {
-    primaryText: 'Structured Data Capture',
-    to: '/structured-data-capture',
-    iconName: 'notepad'
-  }
-];
+// SidebarWorkflows - Migrated to configs/settings.pacio-core.json
+export const SidebarWorkflows = [];
 
 // Additional FHIR Resources for sidebar (alphabetically ordered)
 export const SidebarElements = [];

@@ -4,7 +4,7 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { Box, CircularProgress, Typography } from '@mui/material';
-import { parseDicomFromBase64, extractDicomMetadata, cleanupBlobUrl } from '../utils/SimpleDicomLoader';
+import { parseDicomFromBase64, parseDicomFromArrayBuffer, extractDicomMetadata, cleanupBlobUrl } from '../utils/SimpleDicomLoader';
 import { Toolbar } from './Toolbar';
 import { useTools } from '../hooks/useTools';
 
@@ -12,7 +12,7 @@ import { useTools } from '../hooks/useTools';
  * Simple DICOM Viewport Component
  * Uses Cornerstone3D RenderingEngine to display DICOM images
  */
-export function SimpleDicomViewport({ dicomData }) {
+export function SimpleDicomViewport({ dicomData, dicomUrl }) {
   const viewportRef = useRef(null);
   const renderingEngineRef = useRef(null);
   const [loading, setLoading] = useState(false);
@@ -44,7 +44,7 @@ export function SimpleDicomViewport({ dicomData }) {
   };
 
   useEffect(function() {
-    if (!dicomData) {
+    if (!dicomData && !dicomUrl) {
       return;
     }
 
@@ -53,8 +53,23 @@ export function SimpleDicomViewport({ dicomData }) {
       setError(null);
 
       try {
-        console.log('Parsing DICOM from base64 data...');
-        const parsed = parseDicomFromBase64(dicomData);
+        let parsed;
+
+        if (dicomData) {
+          // Legacy path: parse from base64 string
+          console.log('Parsing DICOM from base64 data...');
+          parsed = parseDicomFromBase64(dicomData);
+        } else if (dicomUrl) {
+          // New path: fetch URL and parse from ArrayBuffer
+          console.log('Fetching DICOM from URL:', dicomUrl);
+          const response = await fetch(dicomUrl);
+          if (!response.ok) {
+            throw new Error('Failed to fetch DICOM file: ' + response.status + ' ' + response.statusText);
+          }
+          const arrayBuffer = await response.arrayBuffer();
+          console.log('Fetched DICOM file:', arrayBuffer.byteLength, 'bytes');
+          parsed = parseDicomFromArrayBuffer(arrayBuffer);
+        }
 
         console.log('DICOM parsed successfully');
         const meta = extractDicomMetadata(parsed.dataSet);
@@ -205,7 +220,7 @@ export function SimpleDicomViewport({ dicomData }) {
 
     loadAndRenderDicom();
 
-    // Cleanup function
+    // Cleanup function - destroy engine fully so tools re-initialize on next load
     return function() {
       if (blobUrl) {
         cleanupBlobUrl(blobUrl);
@@ -214,13 +229,14 @@ export function SimpleDicomViewport({ dicomData }) {
       const renderingEngine = renderingEngineRef.current;
       if (renderingEngine) {
         try {
-          renderingEngine.disableElement('SIMPLE_DICOM_VIEWPORT');
+          renderingEngine.destroy();
         } catch (e) {
-          console.warn('Error disabling viewport:', e);
+          console.warn('Error destroying rendering engine:', e);
         }
+        renderingEngineRef.current = null;
       }
     };
-  }, [dicomData]);
+  }, [dicomData, dicomUrl]);
 
   /**
    * Handle viewport resize
@@ -357,7 +373,7 @@ export function SimpleDicomViewport({ dicomData }) {
       )}
 
       {/* Empty state */}
-      {!dicomData && !loading && !error && (
+      {!dicomData && !dicomUrl && !loading && !error && (
         <Box
           sx={{
             position: 'absolute',

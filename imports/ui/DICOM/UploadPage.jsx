@@ -1,4 +1,4 @@
-// packages/dicom-viewer/client/UploadPage.jsx
+// imports/ui/DICOM/UploadPage.jsx
 
 import React, { useState, useCallback } from 'react';
 import { Meteor } from 'meteor/meteor';
@@ -60,7 +60,7 @@ function UploadPage() {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadResults, setUploadResults] = useState([]);
   const [error, setError] = useState(null);
-  const [uploadedImageData, setUploadedImageData] = useState(null);
+  const [uploadedImageUrl, setUploadedImageUrl] = useState(null);
   const [converting, setConverting] = useState(false);
 
   // Handle file selection
@@ -96,7 +96,61 @@ function UploadPage() {
     });
   };
 
-  // Handle upload
+  // Helper: Upload a single file to GridFS via HTTP
+  // Uses XHR for real upload progress tracking
+  const uploadFileToGridFS = function(file, onProgress) {
+    return new Promise(function(resolve, reject) {
+      const formData = new FormData();
+      formData.append('dicomFile', file);
+
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', '/api/dicom/upload');
+
+      // Send Meteor login token for authentication
+      const loginToken = localStorage.getItem('Meteor.loginToken');
+      if (loginToken) {
+        xhr.setRequestHeader('Authorization', 'Bearer ' + loginToken);
+      }
+
+      // Real byte-level progress tracking
+      xhr.upload.onprogress = function(event) {
+        if (event.lengthComputable && onProgress) {
+          onProgress((event.loaded / event.total) * 100);
+        }
+      };
+
+      xhr.onload = function() {
+        if (xhr.status === 200) {
+          try {
+            resolve(JSON.parse(xhr.responseText));
+          } catch (e) {
+            reject(new Error('Invalid response from server'));
+          }
+        } else if (xhr.status === 401) {
+          reject(new Error('Unauthorized. Please log in and try again.'));
+        } else if (xhr.status === 429) {
+          reject(new Error('Rate limit exceeded. Please wait and try again.'));
+        } else if (xhr.status === 503) {
+          reject(new Error('DICOM storage not available. GridFS may not be initialized.'));
+        } else {
+          try {
+            const errBody = JSON.parse(xhr.responseText);
+            reject(new Error(errBody.error || 'Upload failed'));
+          } catch (e) {
+            reject(new Error('Upload failed with status ' + xhr.status));
+          }
+        }
+      };
+
+      xhr.onerror = function() {
+        reject(new Error('Network error during upload'));
+      };
+
+      xhr.send(formData);
+    });
+  };
+
+  // Handle upload (stores file in GridFS, creates FHIR resources)
   const handleUpload = async function() {
     if (files.length === 0) {
       setError('Please select files to upload');
@@ -107,23 +161,30 @@ function UploadPage() {
     setUploadProgress(0);
     setError(null);
     const results = [];
+    let firstPreviewFile = null;
 
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
 
       try {
-        // Read file as ArrayBuffer
-        const arrayBuffer = await readFileAsArrayBuffer(file);
+        // Upload file to GridFS via HTTP
+        console.log('Uploading', file.name, '(' + file.size + ' bytes) to GridFS...');
 
-        // Convert to base64 for transmission
-        const base64Data = arrayBufferToBase64(arrayBuffer);
+        const uploadResult = await uploadFileToGridFS(file, function(fileProgress) {
+          // Combine per-file progress with overall progress
+          const overallProgress = ((i + fileProgress / 100) / files.length) * 100;
+          setUploadProgress(overallProgress);
+        });
 
-        // Call Meteor method to process DICOM file
-        const result = await new Promise(function(resolve, reject) {
-          Meteor.call('dicom.processUploadedFile', {
-            filename: file.name,
-            data: base64Data,
-            size: file.size
+        console.log('GridFS upload complete:', uploadResult.fileId, uploadResult.url);
+
+        // Create FHIR resources (DocumentReference + ImagingStudy) via DDP method
+        const fhirResult = await new Promise(function(resolve, reject) {
+          Meteor.call('dicom.createFhirResources', {
+            fileId: uploadResult.fileId,
+            filename: uploadResult.filename,
+            size: uploadResult.size,
+            url: uploadResult.url
           }, function(error, result) {
             if (error) {
               reject(error);
@@ -133,15 +194,18 @@ function UploadPage() {
           });
         });
 
+        console.log('FHIR resources created:', fhirResult);
+
         results.push({
           filename: file.name,
           success: true,
-          result: result
+          result: fhirResult,
+          message: 'Uploaded to GridFS and created FHIR resources'
         });
 
-        // Save the first successfully uploaded image data for preview
-        if (!uploadedImageData) {
-          setUploadedImageData(base64Data);
+        // Save the first file for preview (create local blob URL - no base64 needed)
+        if (!firstPreviewFile) {
+          firstPreviewFile = file;
         }
       } catch (err) {
         console.error('Upload error for', file.name, ':', err);
@@ -151,47 +215,25 @@ function UploadPage() {
           error: err.message || 'Upload failed'
         });
       }
-
-      // Update progress
-      setUploadProgress(((i + 1) / files.length) * 100);
     }
 
     setUploadResults(results);
     setUploading(false);
+    setUploadProgress(100);
 
-    // Check if any uploads succeeded
+    // Show preview for first successfully uploaded file
     const successCount = results.filter(function(r) { return r.success; }).length;
-    if (successCount > 0) {
+    if (successCount > 0 && firstPreviewFile) {
+      // Create a local blob URL from the File object for preview
+      // This avoids base64 encoding - the blob URL points directly to the File in memory
+      const previewUrl = URL.createObjectURL(firstPreviewFile);
+      setUploadedImageUrl(previewUrl);
+
       // Clear files after successful upload
       setTimeout(function() {
         setFiles([]);
       }, 2000);
     }
-  };
-
-  // Helper: Read file as ArrayBuffer
-  const readFileAsArrayBuffer = function(file) {
-    return new Promise(function(resolve, reject) {
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        resolve(e.target.result);
-      };
-      reader.onerror = function(e) {
-        reject(new Error('Failed to read file'));
-      };
-      reader.readAsArrayBuffer(file);
-    });
-  };
-
-  // Helper: Convert ArrayBuffer to Base64
-  const arrayBufferToBase64 = function(buffer) {
-    let binary = '';
-    const bytes = new Uint8Array(buffer);
-    const len = bytes.byteLength;
-    for (let i = 0; i < len; i++) {
-      binary += String.fromCharCode(bytes[i]);
-    }
-    return btoa(binary);
   };
 
   // Format file size
@@ -201,7 +243,7 @@ function UploadPage() {
     return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
   };
 
-  // Handle convert to FHIR
+  // Handle convert to FHIR (uploads to GridFS + creates FHIR resources, then navigates to studies)
   const handleConvertToFHIR = async function() {
     if (files.length === 0) {
       setError('Please select files to convert');
@@ -217,18 +259,17 @@ function UploadPage() {
         const file = files[i];
 
         try {
-          // Read file as ArrayBuffer
-          const arrayBuffer = await readFileAsArrayBuffer(file);
+          // Upload file to GridFS via HTTP
+          console.log('Uploading', file.name, 'to GridFS for FHIR conversion...');
+          const uploadResult = await uploadFileToGridFS(file);
 
-          // Convert to base64 for transmission
-          const base64Data = arrayBufferToBase64(arrayBuffer);
-
-          // Call Meteor method to convert DICOM to FHIR
-          const result = await new Promise(function(resolve, reject) {
-            Meteor.call('dicom.convertToFHIR', {
-              filename: file.name,
-              data: base64Data,
-              size: file.size
+          // Create FHIR resources via DDP method
+          const fhirResult = await new Promise(function(resolve, reject) {
+            Meteor.call('dicom.createFhirResources', {
+              fileId: uploadResult.fileId,
+              filename: uploadResult.filename,
+              size: uploadResult.size,
+              url: uploadResult.url
             }, function(error, result) {
               if (error) {
                 reject(error);
@@ -238,33 +279,35 @@ function UploadPage() {
             });
           });
 
+          const imagingStudyMsg = fhirResult.imagingStudy
+            ? ', ImagingStudy: ' + fhirResult.imagingStudy.id
+            : '';
+
           results.push({
             filename: file.name,
             success: true,
-            result: result,
-            message: `Created DocumentReference: ${result.documentReference.id}, ImagingStudy: ${result.imagingStudy.id}`
+            result: fhirResult,
+            message: 'Created DocumentReference: ' + fhirResult.documentReference.id + imagingStudyMsg
           });
 
-          console.log('✅ FHIR conversion successful:', result);
+          console.log('FHIR conversion successful:', fhirResult);
 
           // Insert into client-side Minimongo for immediate display
-          // (until we set up proper pub/sub)
           const timestamp = new Date().toISOString();
 
           // Insert ImagingStudy
           const ImagingStudies = Meteor.Collections?.ImagingStudies;
-          if (ImagingStudies && result.imagingStudy) {
-            // Create a minimal ImagingStudy document for client display
+          if (ImagingStudies && fhirResult.imagingStudy) {
             const clientStudy = {
-              _id: result.imagingStudy.id,
+              _id: fhirResult.imagingStudy.id,
               resourceType: 'ImagingStudy',
               status: 'available',
               started: timestamp,
               numberOfSeries: 1,
               numberOfInstances: 1,
-              description: `Imaging study from ${file.name}`,
+              description: 'Imaging study from ' + file.name,
               series: [{
-                uid: `${Date.now()}.1`,
+                uid: Date.now() + '.1',
                 number: 1,
                 modality: {
                   system: 'http://dicom.nema.org/resources/ontology/DCM',
@@ -275,25 +318,24 @@ function UploadPage() {
               }]
             };
 
-            // Insert directly into underlying Minimongo collection (bypasses allow/deny rules)
             try {
               ImagingStudies._collection.insert(clientStudy);
-              console.log('✅ Inserted ImagingStudy into client Minimongo:', result.imagingStudy.id);
+              console.log('Inserted ImagingStudy into client Minimongo:', fhirResult.imagingStudy.id);
             } catch (insertError) {
-              console.warn('⚠️  Could not insert ImagingStudy into client collection:', insertError);
+              console.warn('Could not insert ImagingStudy into client collection:', insertError);
             }
           }
 
-          // Insert DocumentReference
+          // Insert DocumentReference (with URL reference, not inline base64)
           const DocumentReferences = Meteor.Collections?.DocumentReferences;
-          if (DocumentReferences && result.documentReference) {
+          if (DocumentReferences && fhirResult.documentReference) {
             const clientDocRef = {
-              _id: result.documentReference.id,
+              _id: fhirResult.documentReference.id,
               resourceType: 'DocumentReference',
               status: 'current',
               docStatus: 'final',
               date: timestamp,
-              description: `DICOM file: ${file.name}`,
+              description: 'DICOM file: ' + file.name,
               type: {
                 coding: [{
                   system: 'http://loinc.org',
@@ -312,25 +354,24 @@ function UploadPage() {
               content: [{
                 attachment: {
                   contentType: 'application/dicom',
-                  data: base64Data,  // Include the base64 DICOM data
+                  url: uploadResult.url,  // GridFS URL reference (not inline base64)
                   size: file.size,
                   title: file.name,
                   creation: timestamp
                 }
               }],
-              context: {
+              context: fhirResult.imagingStudy ? {
                 related: [{
-                  reference: `ImagingStudy/${result.imagingStudy.id}`
+                  reference: 'ImagingStudy/' + fhirResult.imagingStudy.id
                 }]
-              }
+              } : undefined
             };
 
-            // Insert directly into underlying Minimongo collection (bypasses allow/deny rules)
             try {
               DocumentReferences._collection.insert(clientDocRef);
-              console.log('✅ Inserted DocumentReference into client Minimongo:', result.documentReference.id);
+              console.log('Inserted DocumentReference into client Minimongo:', fhirResult.documentReference.id);
             } catch (insertError) {
-              console.warn('⚠️  Could not insert DocumentReference into client collection:', insertError);
+              console.warn('Could not insert DocumentReference into client collection:', insertError);
             }
           }
         } catch (err) {
@@ -370,7 +411,7 @@ function UploadPage() {
       }}
     >
       {/* Upload Area - hide when image is loaded */}
-      {!uploadedImageData && (
+      {!uploadedImageUrl && (
         <Card sx={{
           mx: 3,
           mb: 3,
@@ -514,7 +555,7 @@ function UploadPage() {
       )}
 
       {/* Upload Results - hide when image is loaded */}
-      {uploadResults.length > 0 && !uploadedImageData && (
+      {uploadResults.length > 0 && !uploadedImageUrl && (
         <Card sx={{
           mx: 3,
           mb: 3,
@@ -564,7 +605,7 @@ function UploadPage() {
       )}
 
       {/* DICOM Image Viewer */}
-      {uploadedImageData && (
+      {uploadedImageUrl && (
         <Card sx={{
           mx: 3,
           mb: 3,
@@ -592,7 +633,7 @@ function UploadPage() {
           <CardContent>
             <Box sx={{ mt: 2 }}>
               <SimpleDicomViewport
-                dicomData={uploadedImageData}
+                dicomUrl={uploadedImageUrl}
               />
             </Box>
           </CardContent>

@@ -172,7 +172,9 @@ function GettingStartedPage(props){
   const [deployExpanded, setDeployExpanded] = React.useState(false);
   const [customWorkflowsExpanded, setCustomWorkflowsExpanded] = React.useState(false);
   const [databaseExpanded, setDatabaseExpanded] = React.useState(false);
-  
+  const [gridfsExpanded, setGridfsExpanded] = React.useState(false);
+  const [gridfsStatus, setGridfsStatus] = React.useState(null);
+
   // State for color picker
   const [colorPickerOpen, setColorPickerOpen] = React.useState(false);
   const [colorPickerField, setColorPickerField] = React.useState('');
@@ -3579,7 +3581,128 @@ function GettingStartedPage(props){
         </Collapse>
       </React.Fragment>
     );
-    
+
+    // 9b. DICOM File Storage (GridFS)
+    const dicomViewerEnabled = get(settings, 'public.modules.fhir.DicomViewer', false);
+    const gridfsInitialized = get(gridfsStatus, 'initialized', false);
+    const gridfsFileCount = get(gridfsStatus, 'fileCount', 0);
+    const gridfsTotalSizeMB = get(gridfsStatus, 'totalSizeMB', '0.00');
+    const gridfsBucketName = get(gridfsStatus, 'bucketName', 'dicom');
+    const gridfsChunkSize = get(gridfsStatus, 'chunkSize', 255 * 1024);
+
+    const gridfsSeverity = !dicomViewerEnabled ? 'info' : (gridfsInitialized ? 'success' : 'warning');
+    const gridfsIcon = !dicomViewerEnabled ? <Storage /> : (gridfsInitialized ? <CheckCircle /> : <Warning />);
+
+    // Fetch GridFS status when section is expanded
+    function handleGridfsExpand() {
+      const newState = !gridfsExpanded;
+      setGridfsExpanded(newState);
+      if (newState && !gridfsStatus) {
+        Meteor.call('dicom.getGridFSStatus', function(error, result) {
+          if (error) {
+            console.warn('Could not fetch GridFS status:', error);
+            setGridfsStatus({ initialized: false, error: error.message });
+          } else {
+            setGridfsStatus(result);
+          }
+        });
+      }
+    }
+
+    checklistItemsArray.push(
+      <React.Fragment key="gridfs-section">
+        <Alert
+          severity={gridfsSeverity}
+          icon={gridfsIcon}
+          sx={{
+            backgroundColor: gridfsSeverity === 'info' ? 'action.hover' : undefined,
+            color: gridfsSeverity === 'info' ? 'text.primary' : undefined,
+            cursor: 'pointer',
+            '& .MuiAlert-icon': {
+              color: gridfsSeverity === 'info' ? 'text.secondary' : undefined
+            },
+            '&:hover': {
+              backgroundColor: gridfsSeverity === 'info' ? 'action.selected' : undefined
+            }
+          }}
+          onClick={handleGridfsExpand}
+          action={
+            <IconButton
+              size="small"
+              onClick={function(e) {
+                e.stopPropagation();
+                handleGridfsExpand();
+              }}
+            >
+              {gridfsExpanded ? <ExpandLess /> : <ExpandMore />}
+            </IconButton>
+          }
+        >
+          <Stack direction="row" alignItems="center" spacing={1}>
+            <span>DICOM File Storage (GridFS)</span>
+          </Stack>
+        </Alert>
+        <Collapse in={gridfsExpanded} timeout="auto" unmountOnExit>
+          <Box sx={{ pl: 2, pr: 2, pb: 2, pt: 1 }}>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+              DICOM files are stored in MongoDB GridFS, which chunks large files (up to 500 MB) across multiple documents.
+              This avoids the 16 MB BSON document size limit. Files are uploaded via HTTP and streamed directly to GridFS.
+            </Typography>
+
+            <Table size="small" sx={{ mb: 2 }}>
+              <TableBody>
+                <TableRow>
+                  <TableCell sx={{ fontWeight: 'bold', width: '40%' }}>Status</TableCell>
+                  <TableCell>
+                    {gridfsInitialized
+                      ? <Typography variant="body2" color="success.main">Initialized</Typography>
+                      : <Typography variant="body2" color="warning.main">Not initialized</Typography>
+                    }
+                  </TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell sx={{ fontWeight: 'bold' }}>Bucket Name</TableCell>
+                  <TableCell>{gridfsBucketName}</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell sx={{ fontWeight: 'bold' }}>Chunk Size</TableCell>
+                  <TableCell>{(gridfsChunkSize / 1024).toFixed(0)} KB</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell sx={{ fontWeight: 'bold' }}>Files Stored</TableCell>
+                  <TableCell>{gridfsFileCount}</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell sx={{ fontWeight: 'bold' }}>Total Storage</TableCell>
+                  <TableCell>{gridfsTotalSizeMB} MB</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell sx={{ fontWeight: 'bold' }}>Upload Endpoint</TableCell>
+                  <TableCell><code>POST /api/dicom/upload</code></TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell sx={{ fontWeight: 'bold' }}>Download Endpoint</TableCell>
+                  <TableCell><code>GET /api/dicom/files/:fileId</code></TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+
+            {get(gridfsStatus, 'error') && (
+              <Alert severity="error" sx={{ mb: 1 }}>
+                {get(gridfsStatus, 'error')}
+              </Alert>
+            )}
+
+            {!dicomViewerEnabled && (
+              <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                The DicomViewer module is not enabled. Set public.modules.fhir.DicomViewer to true in your settings file.
+              </Typography>
+            )}
+          </Box>
+        </Collapse>
+      </React.Fragment>
+    );
+
     // 10. Server FHIR APIs (with collapse)
     // Check if any FHIR resources are enabled
     const fhirResources = [

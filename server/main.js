@@ -41,6 +41,10 @@ import './VaultServer.js';
 import '../imports/lib/UdapMethods.js';
 import './Swagger.js';
 import './AccountsMethods.js';
+import './DicomEndpoints.js';
+
+// GridFS Manager for DICOM file storage
+import GridFSManager from './lib/GridFSManager.js';
 
 // Import accounts startup if enabled
 import '../imports/startup/server/index.js';
@@ -88,12 +92,14 @@ import '../imports/api/researchSubjects/methods.js';
 import '../imports/api/research-studies/methods.js';
 import '../imports/api/schedules/methods.js';
 import '../imports/api/serviceRequests/methods.js';
+import '../imports/api/substances/methods.js';
 import '../imports/api/diagnosticReports/methods.js';
 import '../imports/api/bodyStructures/methods.js';
 import '../imports/api/clinicalImpressions/methods.js';
 import '../imports/api/riskAssessments/methods.js';
 import '../imports/api/supplyRequests/methods.js';
 import '../imports/methods/supplyDeliveries.js';
+import '../imports/api/lists/methods.js';
 import '../imports/methods/tasks.js';
 
 // Import test methods (for non-production environments)
@@ -201,7 +207,9 @@ import { Schedules } from '../imports/lib/schemas/SimpleSchemas/Schedules';
 import { SearchParameters } from '../imports/lib/schemas/SimpleSchemas/SearchParameters';
 import { ServiceRequests } from '../imports/lib/schemas/SimpleSchemas/ServiceRequests';
 import { Specimens } from '../imports/lib/schemas/SimpleSchemas/Specimens';
+import { Substances } from '../imports/lib/schemas/SimpleSchemas/Substances';
 import { SupplyRequests } from '../imports/lib/schemas/SimpleSchemas/SupplyRequests';
+import { SupplyDeliveries } from '../imports/lib/schemas/SimpleSchemas/SupplyDeliveries';
 import { Tasks } from '../imports/lib/schemas/SimpleSchemas/Tasks';
 import { ValueSets } from '../imports/lib/schemas/SimpleSchemas/ValueSets';
 
@@ -275,6 +283,8 @@ Meteor.Collections = {
   SearchParameters,
   ServiceRequests,
   Specimens,
+  Substances,
+  SupplyDeliveries,
   SupplyRequests,
   Tasks,
   ValueSets
@@ -350,6 +360,8 @@ Object.assign(global.Collections, {
   SearchParameters,
   ServiceRequests,
   Specimens,
+  Substances,
+  SupplyDeliveries,
   SupplyRequests,
   Tasks,
   ValueSets
@@ -417,6 +429,15 @@ Meteor.startup(() => {
 
 let accountsServer;
 Meteor.startup(async function(){
+  // Initialize GridFS for DICOM file storage
+  const gridfsInitialized = GridFSManager.initialize();
+  if (gridfsInitialized) {
+    global.GridFSManager = GridFSManager;
+    console.log('[server/main.js] GridFSManager initialized and exposed on global.GridFSManager');
+  } else {
+    console.warn('[server/main.js] GridFSManager failed to initialize - DICOM uploads will not work');
+  }
+
   // Need to add a default language for accessibility purposes
   WebApp.addHtmlAttributeHook(function() {
     return {
@@ -670,13 +691,13 @@ Meteor.startup(async () => {
 
   // Patient-specific OAuth authorizations publication
   // ONC g(10) 9.3.01 - Patient access to view authorized applications
-  Meteor.publish('OAuthClients.forPatient', function() {
+  Meteor.publish('OAuthClients.forPatient', async function() {
     if (!this.userId) {
       return this.ready();
     }
 
-    // Get user synchronously for publication
-    const user = Meteor.users.findOne({ _id: this.userId });
+    // Get user asynchronously for publication (Meteor v3)
+    const user = await Meteor.users.findOneAsync({ _id: this.userId });
     const patientId = get(user, 'patientId');
 
     if (!patientId) {

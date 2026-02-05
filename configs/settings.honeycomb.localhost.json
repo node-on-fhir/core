@@ -37,6 +37,14 @@
         "nivoTheme": "red_grey"
       }
     },
+    "iframe": {
+      "enabled": true,
+      "url": "https://www.ncbi.nlm.nih.gov",
+      "defaultUrl": "https://www.ncbi.nlm.nih.gov",
+      "showAddressBar": true,
+      "defaultWidth": "50%",
+      "mode": "1up"
+    },
     "loggingThreshold": "debug",
     "fhirAutoSubscribe": true,
     "capabilityStatement": {
@@ -110,6 +118,20 @@
           "/contracts",
           "/devices",
           "/message-headers"
+        ],
+        "customIframeLinks": [
+          {
+            "label": "PubMed",
+            "url": "https://pubmed.ncbi.nlm.nih.gov/",
+            "icon": "globe",
+            "openSecondPanel": false
+          },
+          {
+            "label": "FHIR Spec",
+            "url": "https://hl7.org/fhir/R4/",
+            "icon": "fire",
+            "openSecondPanel": true
+          }
         ]
       },
       "autopublish": true
@@ -162,6 +184,7 @@
         "Encounters": true,
         "Goals": true,
         "Immunizations": true,
+        "DicomViewer": true,
         "ImagingStudies": true,
         "Lists": true,
         "Locations": true,
@@ -183,7 +206,39 @@
         "ResearchStudies": true,
         "ResearchSubjects": true,
         "RiskAssessments": true,
-        "ServiceRequests": true
+        "ServiceRequests": true,
+        "Substances": true,
+        "SupplyDeliveries": true,
+        "SupplyRequests": true
+      },
+      "lifeSupportSystems": {
+        "enabled": true,
+        "showInSidebar": true
+      },
+      "pantryManagement": {
+        "enabled": true,
+        "showInSidebar": true
+      },
+      "supplyChain": {
+        "enabled": true,
+        "showInSidebar": true
+      }
+    },
+    "pantry": {
+      "defaultDailyCalories": 2500,
+      "expiryWarningDays": 30,
+      "expiryCriticalDays": 7,
+      "defaultCrewSize": 4,
+      "useBedsForCrewCount": true
+    },
+    "lifesupport": {
+      "crewCount": 4,
+      "missionDays": 10,
+      "missionName": "Artemis II",
+      "alertThresholds": {
+        "critical": 2,
+        "warning": 5,
+        "caution": 10
       }
     }
   },
@@ -201,6 +256,12 @@
       "chiefMedicalOfficer": {
         "reference": "Practitioner/chief-medical-officer",
         "display": "Dr. Sarah Johnson, Chief Medical Officer"
+      }
+    },
+    "dicom": {
+      "gridfs": {
+        "bucketName": "dicom",
+        "chunkSizeBytes": 261120
       }
     },
     "fhir": {

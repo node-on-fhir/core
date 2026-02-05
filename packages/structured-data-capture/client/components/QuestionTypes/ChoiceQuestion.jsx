@@ -27,8 +27,17 @@ export function ChoiceQuestion(props) {
     onChange,
     readOnly = false,
     error = false,
-    helperText
+    helperText,
+    // Dark mode theming props
+    isDark = false,
+    cardTextColor = 'rgba(0, 0, 0, 0.87)',
+    borderColor = 'rgba(0, 0, 0, 0.23)'
   } = props;
+
+  // Theme-aware colors
+  const disabledColor = isDark ? 'rgba(255, 255, 255, 0.38)' : 'rgba(0, 0, 0, 0.38)';
+  const secondaryTextColor = isDark ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)';
+  const checkboxColor = isDark ? '#90caf9' : '#1976d2';
 
   const type = get(item, 'type');
   const repeats = get(item, 'repeats', false);
@@ -111,8 +120,8 @@ export function ChoiceQuestion(props) {
         multiple={repeats}
         options={options}
         getOptionLabel={(option) => option.display}
-        value={repeats ? 
-          (isArray(value) ? value : value ? [value] : []) : 
+        value={repeats ?
+          (isArray(value) ? value : value ? [value] : []) :
           value
         }
         onChange={handleAutocompleteChange}
@@ -123,11 +132,21 @@ export function ChoiceQuestion(props) {
             error={error}
             helperText={helperText}
             placeholder="Select option(s)"
+            sx={{
+              '& .MuiInputBase-input': { color: cardTextColor },
+              '& .MuiInputBase-input.Mui-disabled': { color: disabledColor, WebkitTextFillColor: disabledColor },
+              '& .MuiInputLabel-root': { color: secondaryTextColor },
+              '& .MuiOutlinedInput-notchedOutline': { borderColor: borderColor },
+              '& .MuiFormHelperText-root': { color: secondaryTextColor }
+            }}
           />
         )}
-        isOptionEqualToValue={(option, value) => 
+        isOptionEqualToValue={(option, value) =>
           option.code === (typeof value === 'string' ? value : get(value, 'code'))
         }
+        sx={{
+          '& .MuiChip-root': { color: cardTextColor, borderColor: borderColor }
+        }}
       />
     );
   }
@@ -135,7 +154,7 @@ export function ChoiceQuestion(props) {
   // Render checkboxes for multiple choice
   if (repeats) {
     const currentCodes = getCurrentCodes();
-    
+
     return (
       <FormControl error={error} disabled={readOnly}>
         <FormGroup>
@@ -147,14 +166,19 @@ export function ChoiceQuestion(props) {
                   <Checkbox
                     checked={currentCodes.includes(option.code)}
                     onChange={(e) => handleMultipleChange(e, option.code)}
+                    sx={{ color: secondaryTextColor, '&.Mui-checked': { color: checkboxColor } }}
                   />
                 }
                 label={option.display}
+                sx={{
+                  '& .MuiFormControlLabel-label': { color: cardTextColor },
+                  '& .MuiFormControlLabel-label.Mui-disabled': { color: disabledColor }
+                }}
               />
             );
           })}
         </FormGroup>
-        {helperText && <FormHelperText>{helperText}</FormHelperText>}
+        {helperText && <FormHelperText sx={{ color: secondaryTextColor }}>{helperText}</FormHelperText>}
       </FormControl>
     );
   }
@@ -162,28 +186,41 @@ export function ChoiceQuestion(props) {
   // Render dropdown for medium option sets
   if (options.length > 5 || controlType === 'drop-down') {
     const currentCode = getCurrentCodes();
-    
+
     return (
-      <FormControl fullWidth error={error} disabled={readOnly} size="small">
+      <FormControl
+        fullWidth
+        error={error}
+        disabled={readOnly}
+        size="small"
+        sx={{
+          '& .MuiInputLabel-root': { color: secondaryTextColor },
+          '& .MuiOutlinedInput-notchedOutline': { borderColor: borderColor }
+        }}
+      >
         <InputLabel>{get(item, 'text')}</InputLabel>
         <Select
           value={currentCode}
           onChange={handleSingleChange}
           input={<OutlinedInput label={get(item, 'text')} />}
+          sx={{
+            color: cardTextColor,
+            '& .MuiSelect-icon': { color: secondaryTextColor }
+          }}
         >
-          <MenuItem value="">
+          <MenuItem value="" sx={{ color: cardTextColor }}>
             <em>None</em>
           </MenuItem>
           {options.map(function(option) {
             return (
-              <MenuItem key={option.code} value={option.code}>
+              <MenuItem key={option.code} value={option.code} sx={{ color: cardTextColor }}>
                 {option.display}
               </MenuItem>
             );
           })}
           {isOpenChoice && (
             <>
-              <MenuItem value="__custom__">
+              <MenuItem value="__custom__" sx={{ color: cardTextColor }}>
                 <em>Other...</em>
               </MenuItem>
               {currentCode === '__custom__' && (
@@ -194,20 +231,24 @@ export function ChoiceQuestion(props) {
                     onChange={(e) => setCustomValue(e.target.value)}
                     placeholder="Enter custom value"
                     size="small"
+                    sx={{
+                      '& .MuiInputBase-input': { color: cardTextColor },
+                      '& .MuiOutlinedInput-notchedOutline': { borderColor: borderColor }
+                    }}
                   />
                 </Box>
               )}
             </>
           )}
         </Select>
-        {helperText && <FormHelperText>{helperText}</FormHelperText>}
+        {helperText && <FormHelperText sx={{ color: secondaryTextColor }}>{helperText}</FormHelperText>}
       </FormControl>
     );
   }
 
   // Default to radio buttons
   const currentCode = getCurrentCodes();
-  
+
   return (
     <FormControl error={error} disabled={readOnly}>
       <RadioGroup
@@ -219,8 +260,12 @@ export function ChoiceQuestion(props) {
             <FormControlLabel
               key={option.code}
               value={option.code}
-              control={<Radio />}
+              control={<Radio sx={{ color: secondaryTextColor, '&.Mui-checked': { color: checkboxColor } }} />}
               label={option.display}
+              sx={{
+                '& .MuiFormControlLabel-label': { color: cardTextColor },
+                '& .MuiFormControlLabel-label.Mui-disabled': { color: disabledColor }
+              }}
             />
           );
         })}
@@ -228,8 +273,12 @@ export function ChoiceQuestion(props) {
           <>
             <FormControlLabel
               value="__custom__"
-              control={<Radio />}
+              control={<Radio sx={{ color: secondaryTextColor, '&.Mui-checked': { color: checkboxColor } }} />}
               label="Other"
+              sx={{
+                '& .MuiFormControlLabel-label': { color: cardTextColor },
+                '& .MuiFormControlLabel-label.Mui-disabled': { color: disabledColor }
+              }}
             />
             {currentCode === '__custom__' && (
               <Box sx={{ ml: 4, mt: 1 }}>
@@ -242,13 +291,17 @@ export function ChoiceQuestion(props) {
                   }}
                   placeholder="Please specify"
                   size="small"
+                  sx={{
+                    '& .MuiInputBase-input': { color: cardTextColor },
+                    '& .MuiOutlinedInput-notchedOutline': { borderColor: borderColor }
+                  }}
                 />
               </Box>
             )}
           </>
         )}
       </RadioGroup>
-      {helperText && <FormHelperText>{helperText}</FormHelperText>}
+      {helperText && <FormHelperText sx={{ color: secondaryTextColor }}>{helperText}</FormHelperText>}
     </FormControl>
   );
 }

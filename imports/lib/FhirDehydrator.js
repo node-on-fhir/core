@@ -6785,6 +6785,84 @@ export function flattenSupplyRequest(supplyRequest, internalDateFormat){
   return result;
 }
 
+export function flattenSubstance(substance, internalDateFormat){
+  let result = {
+    resourceType: 'Substance',
+    _id: '',
+    id: '',
+    identifier: '',
+    status: '',
+    category: '',
+    categoryCode: '',
+    code: '',
+    codeDisplay: '',
+    codeSystem: '',
+    description: '',
+    instanceIdentifier: '',
+    instanceExpiry: '',
+    instanceQuantity: '',
+    instanceQuantityUnit: '',
+    ingredientCount: ''
+  };
+
+  result.resourceType = get(substance, 'resourceType', "Substance");
+  result._id = get(substance, '_id');
+  result.id = get(substance, 'id', '');
+
+  if(!internalDateFormat){
+    internalDateFormat = get(Meteor, "settings.public.defaults.dateFormat", "YYYY-MM-DD");
+  }
+
+  // Identifier
+  if (get(substance, 'identifier[0].value')) {
+    result.identifier = get(substance, 'identifier[0].value');
+  }
+
+  // Status
+  result.status = get(substance, 'status', '');
+
+  // Category
+  if (get(substance, 'category[0].coding[0].display')) {
+    result.category = get(substance, 'category[0].coding[0].display');
+    result.categoryCode = get(substance, 'category[0].coding[0].code', '');
+  } else if (get(substance, 'category[0].text')) {
+    result.category = get(substance, 'category[0].text');
+  }
+
+  // Code (required field in FHIR Substance)
+  if (get(substance, 'code.text')) {
+    result.codeDisplay = get(substance, 'code.text');
+    result.code = get(substance, 'code.coding[0].code', '');
+    result.codeSystem = get(substance, 'code.coding[0].system', '');
+  } else if (get(substance, 'code.coding[0].display')) {
+    result.codeDisplay = get(substance, 'code.coding[0].display');
+    result.code = get(substance, 'code.coding[0].code', '');
+    result.codeSystem = get(substance, 'code.coding[0].system', '');
+  }
+
+  // Description
+  result.description = get(substance, 'description', '');
+
+  // Instance (first instance if array)
+  if (get(substance, 'instance[0].identifier.value')) {
+    result.instanceIdentifier = get(substance, 'instance[0].identifier.value');
+  }
+  if (get(substance, 'instance[0].expiry')) {
+    result.instanceExpiry = moment(get(substance, 'instance[0].expiry')).format(internalDateFormat);
+  }
+  if (get(substance, 'instance[0].quantity.value')) {
+    result.instanceQuantity = get(substance, 'instance[0].quantity.value');
+    result.instanceQuantityUnit = get(substance, 'instance[0].quantity.unit', '');
+  }
+
+  // Ingredient count
+  if (get(substance, 'ingredient')) {
+    result.ingredientCount = get(substance, 'ingredient', []).length;
+  }
+
+  return result;
+}
+
 export function flattenRestriction(restriction, internalDateFormat){
     let result = {
         resourceType: 'Restriction',
@@ -7290,6 +7368,8 @@ export function flatten(collectionName, resource){
       return flattenStructureDefinition(resource);  
     case "Subscriptions":
       return flattenSubscription(resource);        
+    case "Substances":
+      return flattenSubstance(resource);
     case "SupplyDeliveries":
       return flattenSupplyDelivery(resource);
     case "Tasks":
@@ -7423,6 +7503,7 @@ export const FhirDehydrator = {
   dehydrateSearchParameter: flattenSearchParameter,
   dehydrateServiceRequest: flattenServiceRequest,
   dehydrateStructureDefinition: flattenStructureDefinition,
+  dehydrateSubstance: flattenSubstance,
   dehydrateSubscription: flattenSubscription,
   dehydrateSupplyDelivery: flattenSupplyDelivery,
   dehydrateTask: flattenTask,
@@ -7501,6 +7582,7 @@ export default {
   flattenSearchParameter,
   flattenServiceRequest,
   flattenStructureDefinition,
+  flattenSubstance,
   flattenSubscription,
   flattenSupplyDelivery,
   flattenTask,

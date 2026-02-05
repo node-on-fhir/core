@@ -28,7 +28,13 @@ export function NavigationSidebar(props) {
     response,
     onNavigate,
     sticky = true,
-    maxHeight = '80vh'
+    maxHeight = '80vh',
+    // Dark mode theming props
+    isDark = false,
+    cardBgColor = '#ffffff',
+    cardTextColor = 'rgba(0, 0, 0, 0.87)',
+    paperBgColor = '#ffffff',
+    borderColor = 'rgba(0, 0, 0, 0.23)'
   } = props;
 
   // Build navigation structure
@@ -101,10 +107,12 @@ export function NavigationSidebar(props) {
 
   const renderNavItem = function(item, indent = 0) {
     const disabled = !item.isEnabled;
-    
+    const disabledColor = isDark ? 'rgba(255, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.38)';
+    const hoverBgColor = isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.04)';
+
     return (
-      <ListItem 
-        key={item.linkId} 
+      <ListItem
+        key={item.linkId}
         disablePadding
         sx={{ pl: indent }}
       >
@@ -112,8 +120,9 @@ export function NavigationSidebar(props) {
           onClick={() => onNavigate(item.linkId)}
           disabled={disabled}
           dense
+          sx={{ '&:hover': { bgcolor: hoverBgColor } }}
         >
-          <ListItemIcon sx={{ minWidth: 36 }}>
+          <ListItemIcon sx={{ minWidth: 36, color: cardTextColor }}>
             {getIcon(item)}
           </ListItemIcon>
           <ListItemText
@@ -121,19 +130,19 @@ export function NavigationSidebar(props) {
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                 <Typography
                   variant="body2"
-                  sx={{ 
+                  sx={{
                     textDecoration: disabled ? 'line-through' : 'none',
-                    color: disabled ? 'text.disabled' : 'text.primary'
+                    color: disabled ? disabledColor : cardTextColor
                   }}
                   noWrap
                 >
                   {item.text}
                 </Typography>
                 {item.required && !item.hasAnswer && (
-                  <Chip 
-                    label="Required" 
-                    size="small" 
-                    color="error" 
+                  <Chip
+                    label="Required"
+                    size="small"
+                    color="error"
                     sx={{ height: 16, fontSize: '0.625rem' }}
                   />
                 )}
@@ -152,26 +161,28 @@ export function NavigationSidebar(props) {
         position: sticky ? 'sticky' : 'relative',
         top: sticky ? 20 : 0,
         maxHeight,
-        overflow: 'auto'
+        overflow: 'auto',
+        bgcolor: paperBgColor,
+        color: cardTextColor
       }}
     >
       <Box sx={{ p: 2 }}>
-        <Typography variant="h6" gutterBottom>
+        <Typography variant="h6" gutterBottom sx={{ color: cardTextColor }}>
           Navigation
         </Typography>
-        <Typography variant="caption" color="textSecondary">
+        <Typography variant="caption" sx={{ color: isDark ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)' }}>
           Click to jump to section
         </Typography>
       </Box>
-      
-      <Divider />
-      
+
+      <Divider sx={{ borderColor: borderColor }} />
+
       <List dense>
         {sections.map(function(section, sectionIndex) {
           if (section.isGroup) {
             return (
               <React.Fragment key={section.linkId}>
-                {sectionIndex > 0 && <Divider sx={{ my: 1 }} />}
+                {sectionIndex > 0 && <Divider sx={{ my: 1, borderColor: borderColor }} />}
                 {renderNavItem(section)}
                 {section.children.map(child => renderNavItem(child, 2))}
               </React.Fragment>

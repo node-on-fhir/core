@@ -24,8 +24,18 @@ export function ThankYouPage(props) {
     onClose,
     showRedirectProgress = true,
     customContent,
-    successIcon = true
+    successIcon = true,
+    // Dark mode theming props
+    isDark = false,
+    cardBgColor = '#ffffff',
+    cardTextColor = 'rgba(0, 0, 0, 0.87)',
+    paperBgColor = '#ffffff'
   } = props;
+
+  // Theme-aware colors
+  const secondaryTextColor = isDark ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)';
+  const successIconColor = isDark ? '#66bb6a' : '#2e7d32';
+  const progressBgColor = isDark ? '#424242' : '#e0e0e0';
 
   const navigate = useNavigate();
   const [redirectCountdown, setRedirectCountdown] = useState(Math.floor(redirectDelay / 1000));
@@ -71,53 +81,55 @@ export function ThankYouPage(props) {
 
   return (
     <Container maxWidth="sm">
-      <Paper 
-        elevation={3} 
-        sx={{ 
-          p: 4, 
+      <Paper
+        elevation={3}
+        sx={{
+          p: 4,
           mt: 4,
-          textAlign: 'center'
+          textAlign: 'center',
+          bgcolor: paperBgColor,
+          color: cardTextColor
         }}
       >
         {successIcon && (
           <Box sx={{ mb: 3 }}>
-            <SuccessIcon 
-              sx={{ 
-                fontSize: 80, 
-                color: 'success.main',
+            <SuccessIcon
+              sx={{
+                fontSize: 80,
+                color: successIconColor,
                 animation: 'pulse 2s infinite'
-              }} 
+              }}
             />
           </Box>
         )}
-        
-        <Typography variant="h4" gutterBottom>
+
+        <Typography variant="h4" gutterBottom sx={{ color: cardTextColor }}>
           {message}
         </Typography>
-        
+
         {subMessage && (
-          <Typography variant="body1" color="textSecondary" paragraph>
+          <Typography variant="body1" sx={{ color: secondaryTextColor }} paragraph>
             {subMessage}
           </Typography>
         )}
-        
+
         {customContent && (
           <Box sx={{ my: 3 }}>
             {customContent}
           </Box>
         )}
-        
+
         {redirectUrl && (
           <>
             {showRedirectProgress && (
               <Box sx={{ mt: 4, mb: 2 }}>
-                <Typography variant="body2" color="textSecondary" gutterBottom>
+                <Typography variant="body2" sx={{ color: secondaryTextColor }} gutterBottom>
                   Redirecting in {redirectCountdown} seconds...
                 </Typography>
-                <LinearProgress 
-                  variant="determinate" 
+                <LinearProgress
+                  variant="determinate"
                   value={redirectProgress}
-                  sx={{ height: 8, borderRadius: 1 }}
+                  sx={{ height: 8, borderRadius: 1, bgcolor: progressBgColor }}
                 />
               </Box>
             )}

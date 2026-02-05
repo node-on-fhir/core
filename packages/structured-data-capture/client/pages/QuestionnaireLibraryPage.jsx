@@ -1,6 +1,7 @@
 // /Volumes/SonicMagic/Code/honeycomb-public-release/packages/structured-data-capture/client/pages/QuestionnaireLibraryPage.jsx
 
 import React, { useState } from 'react';
+import { Meteor } from 'meteor/meteor';
 import {
   Container,
   Typography,
@@ -25,7 +26,14 @@ import {
   FileCopy as CopyIcon,
   PlayArrow as UseIcon
 } from '@mui/icons-material';
-import { useNavigate } from 'react-router-dom';
+
+// Use Meteor.useNavigate and Meteor.useTheme patterns per project requirements
+let useNavigate;
+let useAppTheme;
+Meteor.startup(function() {
+  useNavigate = Meteor.useNavigate;
+  useAppTheme = Meteor.useTheme;
+});
 
 // Example library of questionnaires
 const questionnaireLibrary = [
@@ -144,10 +152,19 @@ const questionnaireLibrary = [
 const categories = ['All', 'Mental Health', 'Substance Use', 'Pain Management', 'Safety', 'Nutrition', 'Medication', 'Infectious Disease', 'Diabetes', 'Consent'];
 
 export function QuestionnaireLibraryPage() {
-  const navigate = useNavigate();
+  const navigate = useNavigate ? useNavigate() : function() {};
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [viewMode, setViewMode] = useState('grid');
+
+  // Dark mode theming using Honeycomb's theme system
+  const appTheme = useAppTheme ? useAppTheme() : { theme: 'light' };
+  const isDark = appTheme.theme === 'dark';
+  const pageBgColor = isDark ? '#121212' : '#f5f5f5';
+  const cardBgColor = isDark ? '#1e1e1e' : '#ffffff';
+  const cardTextColor = isDark ? 'rgba(255, 255, 255, 0.87)' : 'rgba(0, 0, 0, 0.87)';
+  const paperBgColor = isDark ? '#2a2a2a' : '#ffffff';
+  const borderColor = isDark ? 'rgba(255, 255, 255, 0.23)' : 'rgba(0, 0, 0, 0.23)';
 
   const filteredQuestionnaires = questionnaireLibrary.filter(q => {
     const matchesSearch = q.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -171,18 +188,24 @@ export function QuestionnaireLibraryPage() {
   };
 
   return (
-    <Box sx={{ 
-      bgcolor: theme => theme.palette.mode === 'light' 
-        ? theme.palette.grey[50] 
-        : theme.palette.background.default,
+    <Box sx={{
+      bgcolor: pageBgColor,
       minHeight: '100vh'
     }}>
       <Container maxWidth="lg" sx={{ pt: 4, pb: 4 }}>
-        <Typography variant="h4" gutterBottom>
+        <Typography variant="h4" gutterBottom sx={{ color: cardTextColor }}>
           Questionnaire Library
         </Typography>
         
-        <Paper sx={{ p: 3, mb: 3 }}>
+        <Paper sx={{
+          p: 3, mb: 3, bgcolor: paperBgColor, color: cardTextColor,
+          '& .MuiInputLabel-root': { color: cardTextColor },
+          '& .MuiInputBase-root': { color: cardTextColor },
+          '& .MuiOutlinedInput-notchedOutline': { borderColor: borderColor },
+          '& .MuiChip-root.MuiChip-colorDefault': { color: cardTextColor, borderColor: borderColor },
+          '& .MuiToggleButton-root': { color: cardTextColor, borderColor: borderColor },
+          '& .MuiInputAdornment-root': { color: cardTextColor },
+        }}>
           <Grid container spacing={2} alignItems="center">
           <Grid item xs={12} md={6}>
             <TextField
@@ -239,7 +262,11 @@ export function QuestionnaireLibraryPage() {
       <Grid container spacing={3}>
         {filteredQuestionnaires.map(questionnaire => (
           <Grid item xs={12} md={viewMode === 'grid' ? 4 : 12} key={questionnaire.id}>
-            <Card>
+            <Card sx={{
+              bgcolor: cardBgColor,
+              color: cardTextColor,
+              '& .MuiChip-outlined': { color: cardTextColor, borderColor: borderColor }
+            }}>
               <CardContent>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
                   <Typography variant="h6" component="div">
@@ -252,7 +279,7 @@ export function QuestionnaireLibraryPage() {
                   />
                 </Box>
                 
-                <Typography variant="body2" color="textSecondary" paragraph>
+                <Typography variant="body2" sx={{ color: isDark ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)' }} paragraph>
                   {questionnaire.description}
                 </Typography>
                 

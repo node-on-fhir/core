@@ -18,8 +18,17 @@ export function BooleanQuestion(props) {
     onChange,
     readOnly = false,
     error = false,
-    helperText
+    helperText,
+    // Dark mode theming props
+    isDark = false,
+    cardTextColor = 'rgba(0, 0, 0, 0.87)',
+    borderColor = 'rgba(0, 0, 0, 0.23)'
   } = props;
+
+  // Theme-aware colors
+  const disabledColor = isDark ? 'rgba(255, 255, 255, 0.38)' : 'rgba(0, 0, 0, 0.38)';
+  const secondaryTextColor = isDark ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)';
+  const radioColor = isDark ? '#90caf9' : '#1976d2';
 
   // Check for specific control type
   const controlExtension = get(item, 'extension', []).find(e => 
@@ -46,8 +55,12 @@ export function BooleanQuestion(props) {
             />
           }
           label={value ? 'Yes' : 'No'}
+          sx={{
+            '& .MuiFormControlLabel-label': { color: cardTextColor },
+            '& .MuiFormControlLabel-label.Mui-disabled': { color: disabledColor }
+          }}
         />
-        {helperText && <FormHelperText>{helperText}</FormHelperText>}
+        {helperText && <FormHelperText sx={{ color: secondaryTextColor }}>{helperText}</FormHelperText>}
       </FormControl>
     );
   }
@@ -60,18 +73,26 @@ export function BooleanQuestion(props) {
         onChange={handleChange}
         row
       >
-        <FormControlLabel 
-          value="true" 
-          control={<Radio />} 
-          label="Yes" 
+        <FormControlLabel
+          value="true"
+          control={<Radio sx={{ color: secondaryTextColor, '&.Mui-checked': { color: radioColor } }} />}
+          label="Yes"
+          sx={{
+            '& .MuiFormControlLabel-label': { color: cardTextColor },
+            '& .MuiFormControlLabel-label.Mui-disabled': { color: disabledColor }
+          }}
         />
-        <FormControlLabel 
-          value="false" 
-          control={<Radio />} 
-          label="No" 
+        <FormControlLabel
+          value="false"
+          control={<Radio sx={{ color: secondaryTextColor, '&.Mui-checked': { color: radioColor } }} />}
+          label="No"
+          sx={{
+            '& .MuiFormControlLabel-label': { color: cardTextColor },
+            '& .MuiFormControlLabel-label.Mui-disabled': { color: disabledColor }
+          }}
         />
       </RadioGroup>
-      {helperText && <FormHelperText>{helperText}</FormHelperText>}
+      {helperText && <FormHelperText sx={{ color: secondaryTextColor }}>{helperText}</FormHelperText>}
     </FormControl>
   );
 }

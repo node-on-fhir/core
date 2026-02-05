@@ -1,26 +1,100 @@
 {
   "$schema": "http://json-schema.org/draft-06/schema#",
   "id": "http://hl7.org/fhir/json-schema/Substance",
-  "description": "A homogeneous material with a definite composition.",
-  "type": "object",
-  "required": ["resourceType", "code"],
-  "properties": {
-    "resourceType": { "const": "Substance" },
-    "id": { "type": "string", "description": "Logical id of this artifact" },
-    "_id": { "type": "string", "description": "MongoDB primary key" },
-    "meta": { "type": "object", "properties": { "versionId": { "type": "string" }, "lastUpdated": { "type": "string" }, "source": { "type": "string" }, "profile": { "type": "array", "items": { "type": "string" } }, "security": { "type": "array", "items": { "type": "object", "properties": { "system": { "type": "string" }, "code": { "type": "string" }, "display": { "type": "string" } } } }, "tag": { "type": "array", "items": { "type": "object", "properties": { "system": { "type": "string" }, "code": { "type": "string" }, "display": { "type": "string" } } } } } },
-    "implicitRules": { "type": "string" },
-    "language": { "type": "string" },
-    "text": { "type": "object", "properties": { "status": { "type": "string" }, "div": { "type": "string" } } },
-    "contained": { "type": "array", "items": { "type": "object" } },
-    "extension": { "type": "array", "items": { "type": "object" } },
-    "modifierExtension": { "type": "array", "items": { "type": "object" } },
-    "identifier": { "type": "array", "items": { "type": "object", "properties": { "use": { "type": "string" }, "system": { "type": "string" }, "value": { "type": "string" } } } },
-    "status": { "type": "string", "enum": ["active", "inactive", "entered-in-error"] },
-    "category": { "type": "array", "items": { "type": "object", "properties": { "coding": { "type": "array", "items": { "type": "object", "properties": { "system": { "type": "string" }, "code": { "type": "string" }, "display": { "type": "string" } } } }, "text": { "type": "string" } } } },
-    "code": { "type": "object", "properties": { "coding": { "type": "array", "items": { "type": "object", "properties": { "system": { "type": "string" }, "code": { "type": "string" }, "display": { "type": "string" } } } }, "text": { "type": "string" } } },
-    "description": { "type": "string" },
-    "instance": { "type": "array", "items": { "type": "object", "properties": { "identifier": { "type": "object", "properties": { "use": { "type": "string" }, "system": { "type": "string" }, "value": { "type": "string" } } }, "expiry": { "type": "string" }, "quantity": { "type": "object", "properties": { "value": { "type": "number" }, "unit": { "type": "string" }, "system": { "type": "string" }, "code": { "type": "string" } } } } } },
-    "ingredient": { "type": "array", "items": { "type": "object", "properties": { "quantity": { "type": "object", "properties": { "numerator": { "type": "object" }, "denominator": { "type": "object" } } }, "substanceCodeableConcept": { "type": "object", "properties": { "coding": { "type": "array", "items": { "type": "object", "properties": { "system": { "type": "string" }, "code": { "type": "string" }, "display": { "type": "string" } } } }, "text": { "type": "string" } } }, "substanceReference": { "type": "object", "properties": { "reference": { "type": "string" }, "display": { "type": "string" } } } } } }
+  "$ref": "#/definitions/Substance",
+  "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
+  "definitions": {
+    "Substance": {
+      "description": "A homogeneous material with a definite composition.",
+      "properties": {
+        "resourceType": {
+          "description": "This is a Substance resource",
+          "const": "Substance"
+        },
+        "id": {
+          "description": "The logical id of the resource, as used in the URL for the resource.",
+          "type": "string"
+        },
+        "identifier": {
+          "description": "Unique identifier for the substance.",
+          "type": "array",
+          "items": {
+            "$ref": "Identifier.schema.json#/definitions/Identifier"
+          }
+        },
+        "status": {
+          "description": "A code to indicate if the substance is actively used.",
+          "enum": ["active", "inactive", "entered-in-error"],
+          "type": "string"
+        },
+        "category": {
+          "description": "A code that classifies the general type of substance.",
+          "type": "array",
+          "items": {
+            "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+          }
+        },
+        "code": {
+          "description": "A code (or set of codes) that identify this substance.",
+          "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+        },
+        "description": {
+          "description": "A description of the substance - its appearance, handling requirements, and other usage notes.",
+          "type": "string"
+        },
+        "instance": {
+          "description": "Substance may be used to describe a kind of substance, or a specific package/container of the substance: an instance.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Substance_Instance"
+          }
+        },
+        "ingredient": {
+          "description": "A substance can be composed of other substances.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Substance_Ingredient"
+          }
+        }
+      },
+      "additionalProperties": false,
+      "required": ["code", "resourceType"]
+    },
+    "Substance_Instance": {
+      "description": "Substance may be used to describe a kind of substance, or a specific package/container of the substance: an instance.",
+      "properties": {
+        "identifier": {
+          "description": "Identifier associated with the package/container.",
+          "$ref": "Identifier.schema.json#/definitions/Identifier"
+        },
+        "expiry": {
+          "description": "When the substance is no longer valid to use.",
+          "type": "string"
+        },
+        "quantity": {
+          "description": "The amount of the substance.",
+          "$ref": "Quantity.schema.json#/definitions/Quantity"
+        }
+      },
+      "additionalProperties": false
+    },
+    "Substance_Ingredient": {
+      "description": "A substance can be composed of other substances.",
+      "properties": {
+        "quantity": {
+          "description": "The amount of the ingredient in the substance.",
+          "$ref": "Ratio.schema.json#/definitions/Ratio"
+        },
+        "substanceCodeableConcept": {
+          "description": "Another substance that is a component of this substance.",
+          "$ref": "CodeableConcept.schema.json#/definitions/CodeableConcept"
+        },
+        "substanceReference": {
+          "description": "Another substance that is a component of this substance.",
+          "$ref": "Reference.schema.json#/definitions/Reference"
+        }
+      },
+      "additionalProperties": false
+    }
   }
 }

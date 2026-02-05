@@ -1,6 +1,6 @@
 // imports/ui/DICOM/DicomViewerPage.jsx
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Meteor } from 'meteor/meteor';
 import { useTracker } from 'meteor/react-meteor-data';
 import { useParams } from 'react-router-dom';
@@ -77,10 +77,67 @@ function DicomViewerPage() {
     };
   }, [studyId]);
 
-  // Get the first DocumentReference's DICOM data
-  const dicomData = documentReferences.length > 0
-    ? get(documentReferences[0], 'content.0.attachment.data')
+  // Get the first DocumentReference's attachment info
+  const attachment = documentReferences.length > 0
+    ? get(documentReferences[0], 'content.0.attachment')
     : null;
+  const dicomData = get(attachment, 'data');  // Legacy inline base64
+  const dicomFileUrl = get(attachment, 'url');  // GridFS URL reference
+
+  // For GridFS URLs, fetch with auth headers and convert to a local blob URL
+  const [localDicomUrl, setLocalDicomUrl] = useState(null);
+  const [fetchError, setFetchError] = useState(null);
+
+  useEffect(function() {
+    if (!dicomFileUrl) {
+      setLocalDicomUrl(null);
+      return;
+    }
+
+    let revoked = false;
+    let blobUrl = null;
+
+    async function fetchDicomFile() {
+      try {
+        console.log('Fetching DICOM file from GridFS:', dicomFileUrl);
+        const loginToken = localStorage.getItem('Meteor.loginToken');
+        const headers = {};
+        if (loginToken) {
+          headers['Authorization'] = 'Bearer ' + loginToken;
+        }
+
+        const response = await fetch(dicomFileUrl, { headers: headers });
+        if (!response.ok) {
+          throw new Error('Failed to fetch DICOM file: ' + response.status + ' ' + response.statusText);
+        }
+
+        const blob = await response.blob();
+        console.log('Fetched DICOM file:', blob.size, 'bytes');
+
+        if (!revoked) {
+          blobUrl = URL.createObjectURL(blob);
+          setLocalDicomUrl(blobUrl);
+        }
+      } catch (err) {
+        console.error('Error fetching DICOM file:', err);
+        if (!revoked) {
+          setFetchError(err.message);
+        }
+      }
+    }
+
+    fetchDicomFile();
+
+    return function() {
+      revoked = true;
+      if (blobUrl) {
+        URL.revokeObjectURL(blobUrl);
+      }
+    };
+  }, [dicomFileUrl]);
+
+  // Determine which prop to pass to the viewport
+  const hasViewableData = dicomData || localDicomUrl;
 
   // Handle back navigation
   function handleBack() {
@@ -146,15 +203,33 @@ function DicomViewerPage() {
             </Alert>
           )}
 
-          {!loading && study && documentReferences.length > 0 && !dicomData && (
+          {!loading && study && documentReferences.length > 0 && !hasViewableData && !fetchError && dicomFileUrl && (
+            <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+              <CircularProgress />
+              <Typography variant="body2" sx={{ ml: 2, alignSelf: 'center' }}>
+                Loading DICOM file from storage...
+              </Typography>
+            </Box>
+          )}
+
+          {!loading && study && documentReferences.length > 0 && !hasViewableData && !dicomFileUrl && (
             <Alert severity="warning">
               DICOM image data is not available in the DocumentReference.
             </Alert>
           )}
 
-          {!loading && study && documentReferences.length > 0 && dicomData && (
+          {fetchError && (
+            <Alert severity="error">
+              Failed to load DICOM file: {fetchError}
+            </Alert>
+          )}
+
+          {!loading && study && documentReferences.length > 0 && hasViewableData && (
             <Box sx={{ mt: 2 }}>
-              <SimpleDicomViewport dicomData={dicomData} />
+              <SimpleDicomViewport
+                dicomData={dicomData}
+                dicomUrl={localDicomUrl}
+              />
             </Box>
           )}
         </CardContent>

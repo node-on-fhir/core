@@ -61,6 +61,7 @@ import { ResearchSubjects } from '/imports/lib/schemas/SimpleSchemas/ResearchSub
 import { RiskAssessments } from '/imports/lib/schemas/SimpleSchemas/RiskAssessments';
 import { Schedules } from '/imports/lib/schemas/SimpleSchemas/Schedules';
 import { ServiceRequests } from '/imports/lib/schemas/SimpleSchemas/ServiceRequests';
+import { Substances } from '/imports/lib/schemas/SimpleSchemas/Substances';
 import { SupplyDeliveries } from '/imports/lib/schemas/SimpleSchemas/SupplyDeliveries';
 import { SupplyRequests } from '/imports/lib/schemas/SimpleSchemas/SupplyRequests';
 import { Tasks } from '/imports/lib/schemas/SimpleSchemas/Tasks';
@@ -127,6 +128,7 @@ if (Meteor.isClient) {
     RiskAssessments,
     Schedules,
     ServiceRequests,
+    Substances,
     SupplyDeliveries,
     SupplyRequests,
     Tasks,
@@ -192,6 +194,7 @@ if (Meteor.isClient) {
   window.RiskAssessments = RiskAssessments;
   window.Schedules = Schedules;
   window.ServiceRequests = ServiceRequests;
+  window.Substances = Substances;
   window.SupplyDeliveries = SupplyDeliveries;
   window.SupplyRequests = SupplyRequests;
   window.Tasks = Tasks;

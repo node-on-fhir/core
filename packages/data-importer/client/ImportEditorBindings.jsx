@@ -340,6 +340,7 @@ export function ImportEditorBindings(props){
   let [selectedCollectionsToExport, setCollectionsToExport] = useState({});
 
   let [sendToDataWarehouse, setSendToDataWarehouse] = useState(false);
+  let [importResults, setImportResults] = useState(null);
   // let [autoSelectFirstPatient, setAutoSelectFirstPatient] = useState(false);
   
   let [importedPatientCount, setImportedPatientCount] = useState(0);
@@ -1758,7 +1759,16 @@ export function ImportEditorBindings(props){
     // console.log('previewObject', previewObject);
 
     if(sendToDataWarehouse){
-      Meteor.call('insertBundleIntoWarehouse', previewBuffer)
+      console.log('[ImportEditorBindings] Sending to data warehouse...');
+      Meteor.call('insertBundleIntoWarehouse', previewBuffer, {}, function(error, results) {
+        if(error) {
+          console.error('[ImportEditorBindings] Warehouse import error:', error);
+          setImportResults({ error: error.reason || error.message });
+        } else {
+          console.log('[ImportEditorBindings] Warehouse import results:', results);
+          setImportResults(results);
+        }
+      });
     } else {
       parseFileContents(previewBuffer, fileExtension, mappingAlgorithm)
     }
@@ -2141,6 +2151,32 @@ export function ImportEditorBindings(props){
                   <br />
                   <Checkbox checked={sendToDataWarehouse} onChange={toggleSendToDataWarehouse.bind(this)} />Send to data warehouse servers
                 </div>
+
+                {importResults && (
+                  <Alert
+                    severity={importResults.error ? 'error' : 'success'}
+                    sx={{ mt: 2 }}
+                    onClose={() => setImportResults(null)}
+                  >
+                    {importResults.error ? (
+                      <span>Import failed: {importResults.error}</span>
+                    ) : (
+                      <div>
+                        <strong>Import complete ({importResults.mode} mode):</strong> {importResults.inserted} inserted, {importResults.updated} updated
+                        {importResults.errors?.length > 0 && (
+                          <div style={{color: '#ff9800', marginTop: '4px'}}>
+                            {importResults.errors.length} errors
+                          </div>
+                        )}
+                        <div style={{fontSize: '0.85em', marginTop: '4px'}}>
+                          {Object.entries(importResults.resourceTypes || {}).map(([type, count]) => (
+                            <span key={type} style={{marginRight: '12px'}}>{type}: {count}</span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </Alert>
+                )}
               </CardContent>
 
               <CardActions style={{display: 'inline-flex', width: '100%'}} >

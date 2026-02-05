@@ -76,9 +76,9 @@ Meteor.startup(() => {
   console.log('[DICOM] Checking DICOM settings...');
   console.log('[DICOM] Meteor.settings:', Meteor.settings);
   console.log('[DICOM] Meteor.settings.public:', Meteor.settings.public);
-  console.log('[DICOM] Meteor.settings.public.dicom:', Meteor.settings.public?.dicom);
+  console.log('[DICOM] Meteor.settings.public.modules.DicomViewer:', Meteor.settings.public?.modules?.DicomViewer);
 
-  const dicomEnabled = get(Meteor, 'settings.public.dicom.enabled', false);
+  const dicomEnabled = get(Meteor, 'settings.public.modules.DicomViewer.enabled', false);
   console.log('[DICOM] dicomEnabled:', dicomEnabled);
 
   if (dicomEnabled) {

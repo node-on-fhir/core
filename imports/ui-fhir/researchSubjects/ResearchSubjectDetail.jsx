@@ -109,13 +109,15 @@ function ResearchSubjectDetail(props) {
   const [error, setError] = useState(null);
   const [isEditing, setIsEditing] = useState(!id || id === 'new');
   const [patientSearchOpen, setPatientSearchOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   
   // Load existing research subject if editing
   useEffect(() => {
+    if (isDeleting) return; // Don't re-fetch during deletion
     if (id && id !== 'new' && ResearchSubjects) {
       setLoading(true);
       const existingSubject = ResearchSubjects.findOne(id);
-      
+
       if (existingSubject) {
         console.log('Loading existing research subject:', existingSubject);
         setResearchSubject(existingSubject);
@@ -138,7 +140,7 @@ function ResearchSubjectDetail(props) {
       }
       setIsEditing(true);
     }
-  }, [id, selectedPatient, selectedPatientId, subscriptionReady]);
+  }, [id, selectedPatient, selectedPatientId, subscriptionReady, isDeleting]);
 
   // Handle form field changes
   const handleChange = (field, value) => {
@@ -271,27 +273,17 @@ function ResearchSubjectDetail(props) {
   };
 
   // Handle delete
-  const handleDelete = async () => {
+  const handleDelete = () => {
     if (id && id !== 'new') {
       if (window.confirm('Are you sure you want to delete this research subject?')) {
-        setLoading(true);
-        
-        try {
-          await Meteor.callAsync('researchSubjects.remove', {
-            _id: id
-          });
-          console.log('Deleted research subject');
-          setLoading(false);
-          
-          // Add a small delay before navigation
-          setTimeout(() => {
-            navigate('/research-subjects');
-          }, 500);
-        } catch (error) {
-          console.error('Delete error:', error);
-          setLoading(false);
-          setError(error.reason || 'Failed to delete research subject');
-        }
+        setIsDeleting(true);
+
+        // Fire server call without awaiting - navigate immediately
+        Meteor.callAsync('researchSubjects.remove', { _id: id })
+          .then(() => console.log('Deleted research subject'))
+          .catch((error) => console.error('Delete error:', error));
+
+        navigate('/research-subjects');
       }
     }
   };

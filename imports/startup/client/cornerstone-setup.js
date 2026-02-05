@@ -38,7 +38,7 @@ export async function initializeCornerstone3D() {
   }
 
   // Check if DICOM is enabled in settings
-  const dicomEnabled = get(Meteor, 'settings.public.dicom.enabled', false);
+  const dicomEnabled = get(Meteor, 'settings.public.modules.DicomViewer.enabled', false);
 
   if (!dicomEnabled) {
     console.log('📦 DICOM viewer disabled via settings - Cornerstone3D will not be loaded');
@@ -71,8 +71,8 @@ export async function initializeCornerstone3D() {
       });
 
       // Get settings
-      const gpuEnabled = get(Meteor, 'settings.public.dicom.enableGPU', true);
-      const workerCount = get(Meteor, 'settings.public.dicom.workerCount', 4);
+      const gpuEnabled = get(Meteor, 'settings.public.modules.DicomViewer.enableGPU', true);
+      const workerCount = get(Meteor, 'settings.public.modules.DicomViewer.workerCount', 4);
 
       // Initialize Cornerstone3D Core
       await cornerstone3D.init({
@@ -173,15 +173,15 @@ export function getCornerstone3DInfo() {
   if (!isInitialized) {
     return {
       initialized: false,
-      enabled: get(Meteor, 'settings.public.dicom.enabled', false)
+      enabled: get(Meteor, 'settings.public.modules.DicomViewer.enabled', false)
     };
   }
 
   return {
     initialized: true,
     enabled: true,
-    gpuEnabled: get(Meteor, 'settings.public.dicom.enableGPU', true),
-    workerCount: get(Meteor, 'settings.public.dicom.workerCount', 4),
+    gpuEnabled: get(Meteor, 'settings.public.modules.DicomViewer.enableGPU', true),
+    workerCount: get(Meteor, 'settings.public.modules.DicomViewer.workerCount', 4),
     version: window.cornerstone3D?.VERSION || 'unknown',
   };
 }

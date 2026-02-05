@@ -1,6 +1,7 @@
 // /Volumes/SonicMagic/Code/honeycomb-public-release/packages/structured-data-capture/client/pages/ResponseAnalyticsPage.jsx
 
 import React, { useState } from 'react';
+import { Meteor } from 'meteor/meteor';
 import {
   Container,
   Typography,
@@ -22,8 +23,7 @@ import {
   Select,
   MenuItem,
   FormControl,
-  InputLabel,
-  useTheme
+  InputLabel
 } from '@mui/material';
 import {
   TrendingUp as TrendingUpIcon,
@@ -34,6 +34,12 @@ import {
   Visibility as ViewIcon,
   BarChart as ChartIcon
 } from '@mui/icons-material';
+
+// Use Meteor.useTheme pattern per project requirements
+let useAppTheme;
+Meteor.startup(function() {
+  useAppTheme = Meteor.useTheme;
+});
 
 // Sample analytics data
 const analyticsData = {
@@ -101,20 +107,20 @@ const analyticsData = {
   }
 };
 
-function StatCard({ title, value, subtitle, icon, trend }) {
+function StatCard({ title, value, subtitle, icon, trend, cardBgColor, cardTextColor }) {
   return (
-    <Card>
+    <Card sx={{ bgcolor: cardBgColor, color: cardTextColor }}>
       <CardContent>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <Box>
-            <Typography color="textSecondary" gutterBottom variant="body2">
+            <Typography sx={{ color: cardTextColor, opacity: 0.7 }} gutterBottom variant="body2">
               {title}
             </Typography>
             <Typography variant="h4" component="div">
               {value}
             </Typography>
             {subtitle && (
-              <Typography variant="body2" color="textSecondary">
+              <Typography variant="body2" sx={{ color: cardTextColor, opacity: 0.7 }}>
                 {subtitle}
               </Typography>
             )}
@@ -137,9 +143,17 @@ function StatCard({ title, value, subtitle, icon, trend }) {
 }
 
 export function ResponseAnalyticsPage() {
-  const theme = useTheme();
   const [timeRange, setTimeRange] = useState('week');
   const [selectedQuestionnaire, setSelectedQuestionnaire] = useState('all');
+
+  // Dark mode theming using Honeycomb's theme system
+  const appTheme = useAppTheme ? useAppTheme() : { theme: 'light' };
+  const isDark = appTheme.theme === 'dark';
+  const pageBgColor = isDark ? '#121212' : '#f5f5f5';
+  const cardBgColor = isDark ? '#1e1e1e' : '#ffffff';
+  const cardTextColor = isDark ? 'rgba(255, 255, 255, 0.87)' : 'rgba(0, 0, 0, 0.87)';
+  const paperBgColor = isDark ? '#2a2a2a' : '#ffffff';
+  const borderColor = isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.12)';
 
   const handleExport = function() {
     console.log('Exporting analytics data...');
@@ -152,14 +166,14 @@ export function ResponseAnalyticsPage() {
   };
 
   return (
-    <Box sx={{ 
-      minHeight: '100vh', 
-      backgroundColor: theme.palette.mode === 'dark' ? theme.palette.background.default : theme.palette.grey[50],
+    <Box sx={{
+      minHeight: '100vh',
+      backgroundColor: pageBgColor,
       pt: 2
     }}>
     <Container maxWidth="lg" sx={{ pb: 4 }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h4">
+        <Typography variant="h4" sx={{ color: cardTextColor }}>
           Response Analytics
         </Typography>
         
@@ -197,39 +211,52 @@ export function ResponseAnalyticsPage() {
             subtitle={`${analyticsData.summary.todayResponses} today`}
             icon={<ChartIcon />}
             trend={`+${analyticsData.summary.weekGrowth}% this week`}
+            cardBgColor={cardBgColor}
+            cardTextColor={cardTextColor}
           />
         </Grid>
-        
+
         <Grid item xs={12} sm={6} md={3}>
           <StatCard
             title="Completed"
             value={analyticsData.summary.completedResponses}
             subtitle={`${analyticsData.summary.completionRate}% completion rate`}
             icon={<CompleteIcon />}
+            cardBgColor={cardBgColor}
+            cardTextColor={cardTextColor}
           />
         </Grid>
-        
+
         <Grid item xs={12} sm={6} md={3}>
           <StatCard
             title="Average Time"
             value={analyticsData.summary.averageCompletionTime}
             subtitle="Per response"
             icon={<TimeIcon />}
+            cardBgColor={cardBgColor}
+            cardTextColor={cardTextColor}
           />
         </Grid>
-        
+
         <Grid item xs={12} sm={6} md={3}>
           <StatCard
             title="Active Forms"
             value={analyticsData.questionnaireStats.length}
             subtitle="In use"
             icon={<ChartIcon />}
+            cardBgColor={cardBgColor}
+            cardTextColor={cardTextColor}
           />
         </Grid>
       </Grid>
 
       {/* Questionnaire Performance Table */}
-      <Paper sx={{ p: 3, mb: 3, backgroundColor: theme.palette.mode === 'dark' ? 'background.paper' : 'background.default' }}>
+      <Paper sx={{
+          p: 3, mb: 3, bgcolor: paperBgColor, color: cardTextColor,
+          '& .MuiTableCell-root': { color: cardTextColor, borderColor: borderColor },
+          '& .MuiChip-root': { color: cardTextColor },
+          '& .MuiIconButton-root': { color: cardTextColor }
+        }}>
         <Typography variant="h6" gutterBottom>
           Questionnaire Performance
         </Typography>
@@ -288,15 +315,18 @@ export function ResponseAnalyticsPage() {
 
       {/* Question-Level Metrics */}
       {selectedQuestionnaire !== 'all' && (
-        <Paper sx={{ p: 3, backgroundColor: theme.palette.mode === 'dark' ? 'background.paper' : 'background.default' }}>
+        <Paper sx={{
+            p: 3, bgcolor: paperBgColor, color: cardTextColor,
+            '& .MuiTableCell-root': { color: cardTextColor, borderColor: borderColor }
+          }}>
           <Typography variant="h6" gutterBottom>
             Question-Level Metrics
           </Typography>
-          
+
           <Grid container spacing={3}>
             {Object.entries(analyticsData.questionMetrics.phq9).map(([questionId, metrics]) => (
               <Grid item xs={12} md={4} key={questionId}>
-                <Card variant="outlined">
+                <Card variant="outlined" sx={{ bgcolor: cardBgColor, color: cardTextColor }}>
                   <CardContent>
                     <Typography variant="subtitle2" gutterBottom>
                       Question: {questionId}

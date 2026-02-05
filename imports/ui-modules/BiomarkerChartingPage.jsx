@@ -180,11 +180,17 @@ export function BiomarkerChartingPage(props){
   const selectedPatient = useTracker(() => Session.get('selectedPatient'), []);
   
   // Subscribe to Observations for the selected patient
-  // Try multiple subscription names that might exist
   const isLoadingSubscription = useSubscribe(() => {
     if (selectedPatientId) {
-      // Try the pacio.Observations subscription first
-      return Meteor.subscribe('pacio.Observations', selectedPatientId);
+      // Use autopublish.Observations with patient filter query
+      const query = {
+        $or: [
+          { 'subject.reference': 'Patient/' + selectedPatientId },
+          { 'subject.reference': selectedPatientId },
+          { 'subject.id': selectedPatientId }
+        ]
+      };
+      return Meteor.subscribe('autopublish.Observations', query, {});
     }
     return null;
   });

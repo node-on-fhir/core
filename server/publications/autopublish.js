@@ -104,6 +104,7 @@ import { RiskAssessments } from '/imports/lib/schemas/SimpleSchemas/RiskAssessme
 import { Schedules } from '/imports/lib/schemas/SimpleSchemas/Schedules';
 import { SearchParameters } from '/imports/lib/schemas/SimpleSchemas/SearchParameters';
 import { ServiceRequests } from '/imports/lib/schemas/SimpleSchemas/ServiceRequests';
+import { Substances } from '/imports/lib/schemas/SimpleSchemas/Substances';
 import { SupplyDeliveries } from '/imports/lib/schemas/SimpleSchemas/SupplyDeliveries';
 import { SupplyRequests } from '/imports/lib/schemas/SimpleSchemas/SupplyRequests';
 import { Tasks } from '/imports/lib/schemas/SimpleSchemas/Tasks';
@@ -169,6 +170,7 @@ const collectionsMap = {
   'Schedules': Schedules,
   'SearchParameters': SearchParameters,
   'ServiceRequests': ServiceRequests,
+  'Substances': Substances,
   'SupplyDeliveries': SupplyDeliveries,
   'SupplyRequests': SupplyRequests,
   'Tasks': Tasks,
@@ -216,6 +218,17 @@ if (finalAutopublishEnabled) {
   // Create publications for each collection
   Object.keys(collectionsMap).forEach(function(collectionName) {
     const collection = collectionsMap[collectionName];
+
+    // Debug: Log all collections being processed
+    if (collectionName === 'Substances') {
+      console.log('[Autopublish] Processing Substances:');
+      console.log('[Autopublish]   collection exists:', !!collection);
+      console.log('[Autopublish]   collection._collection exists:', !!(collection && collection._collection));
+      if (collection) {
+        console.log('[Autopublish]   collection type:', typeof collection);
+        console.log('[Autopublish]   collection keys:', Object.keys(collection).slice(0, 10));
+      }
+    }
 
     if (collection && collection._collection) {
       // Check if this collection should be published based on settings
