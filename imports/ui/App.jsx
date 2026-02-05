@@ -671,6 +671,12 @@ if(get(Meteor, 'settings.public.modules.DicomViewer')){
     path: "/dicom/upload",
     element: <AuthenticatedRoute><UploadPage /></AuthenticatedRoute>
   })
+  // Single file viewing mode (no studyId, uses ?file= query param)
+  dynamicRoutes.push({
+    path: "/dicom/viewer",
+    element: <AuthenticatedRoute><DicomViewerPage /></AuthenticatedRoute>
+  })
+  // Study viewing mode (with studyId path param)
   dynamicRoutes.push({
     path: "/dicom/viewer/:studyId",
     element: <AuthenticatedRoute><DicomViewerPage /></AuthenticatedRoute>

@@ -5,6 +5,7 @@ import { Meteor } from 'meteor/meteor';
 import { useTracker } from 'meteor/react-meteor-data';
 import { useParams } from 'react-router-dom';
 import { get } from 'lodash';
+
 import {
   Box,
   Card,
@@ -20,13 +21,15 @@ import {
 } from '@mui/icons-material';
 import SimpleDicomViewport from './components/SimpleDicomViewport';
 
-// Theme hook
+// Hooks that need to be loaded at startup (React Router, theme)
 let useAppTheme;
 let useNavigate;
-Meteor.startup(function(){
+let useSearchParams;
+Meteor.startup(function() {
   useAppTheme = Meteor.useTheme;
   if (window.ReactRouter) {
     useNavigate = window.ReactRouter.useNavigate;
+    useSearchParams = window.ReactRouter.useSearchParams;
   }
 });
 
@@ -36,6 +39,14 @@ function DicomViewerPage() {
   const appTheme = useAppTheme ? useAppTheme() : { theme: 'light' };
   const isDark = appTheme.theme === 'dark';
 
+  // Get file query parameter for single-file viewing mode
+  let fileIdFromQuery = null;
+  if (useSearchParams) {
+    const searchParamsResult = useSearchParams();
+    const searchParams = searchParamsResult[0];
+    fileIdFromQuery = searchParams.get('file');
+  }
+
   // Get theme colors from settings
   const cardBgColor = isDark
     ? get(Meteor, 'settings.public.theme.palette.cardColor', '#1e1e1e')
@@ -44,100 +55,139 @@ function DicomViewerPage() {
     ? get(Meteor, 'settings.public.theme.palette.cardTextColor', 'rgba(255, 255, 255, 0.87)')
     : 'rgba(0, 0, 0, 0.87)';
 
-  // Fetch the ImagingStudy and its DocumentReferences
-  const { study, documentReferences, loading } = useTracker(function() {
-    console.log('🔍 DicomViewerPage: Fetching study:', studyId);
+  // Fetch the ImagingStudy (only if studyId provided, not in single-file mode)
+  const { study, loading } = useTracker(function() {
+    console.log('[DicomViewerPage] useTracker running, studyId:', studyId, 'fileIdFromQuery:', fileIdFromQuery);
+
+    // CRITICAL: Subscribe to ImagingStudies to receive data from server
+    const studiesHandle = Meteor.subscribe('autopublish.ImagingStudies', {}, {});
 
     const ImagingStudies = Meteor.Collections?.ImagingStudies;
-    const DocumentReferences = Meteor.Collections?.DocumentReferences;
 
-    if (!ImagingStudies || !DocumentReferences) {
-      console.warn('⚠️  Collections not available');
-      return { study: null, documentReferences: [], loading: false };
+    if (!ImagingStudies) {
+      console.warn('[DicomViewerPage] ImagingStudies collection not available');
+      return { study: null, loading: true };
     }
 
-    // Fetch the study
-    const studyData = ImagingStudies.findOne({ _id: studyId });
-    console.log('📊 Found study:', studyData);
-
-    // Fetch DocumentReferences linked to this study
-    const docRefs = DocumentReferences.find({
-      'context.related': {
-        $elemMatch: {
-          reference: `ImagingStudy/${studyId}`
-        }
-      }
-    }).fetch();
-    console.log('📄 Found DocumentReferences:', docRefs.length, docRefs);
+    // Only fetch study if studyId provided (not single-file mode)
+    let studyData = null;
+    if (studyId) {
+      studyData = ImagingStudies.findOne({ _id: studyId });
+      console.log('[DicomViewerPage] Found study:', studyData ? 'yes' : 'no', studyData?._id);
+    }
 
     return {
       study: studyData,
-      documentReferences: docRefs,
-      loading: false
+      loading: !studiesHandle.ready()
     };
-  }, [studyId]);
+  }, [studyId, fileIdFromQuery]);
 
-  // Get the first DocumentReference's attachment info
-  const attachment = documentReferences.length > 0
-    ? get(documentReferences[0], 'content.0.attachment')
-    : null;
-  const dicomData = get(attachment, 'data');  // Legacy inline base64
-  const dicomFileUrl = get(attachment, 'url');  // GridFS URL reference
+  // Extract gridfsFileIds from ImagingStudy instances
+  function getGridfsFileIdsFromStudy(studyData) {
+    const fileIds = [];
+    if (studyData && studyData.series) {
+      for (let i = 0; i < studyData.series.length; i++) {
+        const series = studyData.series[i];
+        if (series.instance) {
+          for (let j = 0; j < series.instance.length; j++) {
+            const instance = series.instance[j];
+            const extensions = instance.extension || [];
+            for (let k = 0; k < extensions.length; k++) {
+              if (extensions[k].url === 'gridfsFileId' && extensions[k].valueString) {
+                fileIds.push(extensions[k].valueString);
+              }
+            }
+          }
+        }
+      }
+    }
+    console.log('[DicomViewerPage] Extracted gridfsFileIds from study:', fileIds.length);
+    return fileIds;
+  }
 
-  // For GridFS URLs, fetch with auth headers and convert to a local blob URL
-  const [localDicomUrl, setLocalDicomUrl] = useState(null);
+  // Determine which file(s) to load
+  const filesToLoad = fileIdFromQuery
+    ? [fileIdFromQuery]  // Single file mode
+    : getGridfsFileIdsFromStudy(study);  // Study mode
+
+  // For GridFS URLs, fetch with auth headers and convert to local blob URLs
+  // Supports both single file and multi-file (stack) modes
+  const [localDicomUrls, setLocalDicomUrls] = useState([]);
   const [fetchError, setFetchError] = useState(null);
+  const [fetchingProgress, setFetchingProgress] = useState({ current: 0, total: 0 });
 
   useEffect(function() {
-    if (!dicomFileUrl) {
-      setLocalDicomUrl(null);
+    if (!filesToLoad || filesToLoad.length === 0) {
+      setLocalDicomUrls([]);
       return;
     }
 
     let revoked = false;
-    let blobUrl = null;
+    let blobUrls = [];
 
-    async function fetchDicomFile() {
+    async function fetchAllDicomFiles() {
       try {
-        console.log('Fetching DICOM file from GridFS:', dicomFileUrl);
+        console.log('Fetching', filesToLoad.length, 'DICOM file(s) from GridFS');
+        setFetchingProgress({ current: 0, total: filesToLoad.length });
+
         const loginToken = localStorage.getItem('Meteor.loginToken');
         const headers = {};
         if (loginToken) {
           headers['Authorization'] = 'Bearer ' + loginToken;
         }
 
-        const response = await fetch(dicomFileUrl, { headers: headers });
-        if (!response.ok) {
-          throw new Error('Failed to fetch DICOM file: ' + response.status + ' ' + response.statusText);
-        }
+        const urls = [];
 
-        const blob = await response.blob();
-        console.log('Fetched DICOM file:', blob.size, 'bytes');
+        for (let i = 0; i < filesToLoad.length; i++) {
+          if (revoked) break;
+
+          const fileId = filesToLoad[i];
+          const fileUrl = '/api/dicom/files/' + fileId;
+
+          console.log('Fetching file', i + 1, 'of', filesToLoad.length, ':', fileId);
+          setFetchingProgress({ current: i + 1, total: filesToLoad.length });
+
+          const response = await fetch(fileUrl, { headers: headers });
+          if (!response.ok) {
+            throw new Error('Failed to fetch DICOM file ' + (i + 1) + ': ' + response.status + ' ' + response.statusText);
+          }
+
+          const blob = await response.blob();
+          console.log('Fetched file', i + 1, ':', blob.size, 'bytes');
+
+          const blobUrl = URL.createObjectURL(blob);
+          urls.push(blobUrl);
+          blobUrls.push(blobUrl);
+        }
 
         if (!revoked) {
-          blobUrl = URL.createObjectURL(blob);
-          setLocalDicomUrl(blobUrl);
+          console.log('All', urls.length, 'DICOM files fetched successfully');
+          setLocalDicomUrls(urls);
         }
       } catch (err) {
-        console.error('Error fetching DICOM file:', err);
+        console.error('Error fetching DICOM files:', err);
         if (!revoked) {
           setFetchError(err.message);
         }
       }
     }
 
-    fetchDicomFile();
+    fetchAllDicomFiles();
 
     return function() {
       revoked = true;
-      if (blobUrl) {
-        URL.revokeObjectURL(blobUrl);
-      }
+      // Clean up all blob URLs
+      blobUrls.forEach(function(url) {
+        URL.revokeObjectURL(url);
+      });
     };
-  }, [dicomFileUrl]);
+  }, [JSON.stringify(filesToLoad)]);
 
-  // Determine which prop to pass to the viewport
-  const hasViewableData = dicomData || localDicomUrl;
+  // Determine if we have viewable data
+  const hasViewableData = localDicomUrls.length > 0;
+
+  // Mode detection for UI
+  const isSingleFileMode = !!fileIdFromQuery;
 
   // Handle back navigation
   function handleBack() {
@@ -161,8 +211,12 @@ function DicomViewerPage() {
         color: cardTextColor
       }}>
         <CardHeader
-          title={study ? study.description || 'DICOM Viewer' : 'DICOM Viewer'}
-          subheader={study ? `Study ID: ${studyId}` : 'Loading study...'}
+          title={isSingleFileMode
+            ? 'DICOM File Viewer'
+            : (study ? study.description || 'DICOM Viewer' : 'DICOM Viewer')}
+          subheader={isSingleFileMode
+            ? 'File ID: ' + fileIdFromQuery
+            : (study ? 'Study ID: ' + studyId + ' (' + filesToLoad.length + ' images)' : 'Loading study...')}
           action={
             navigate && (
               <Button
@@ -185,50 +239,55 @@ function DicomViewerPage() {
           }}
         />
         <CardContent>
-          {loading && (
+          {/* Loading state - subscription not ready OR single file mode fetching */}
+          {(loading || (isSingleFileMode && localDicomUrls.length === 0 && !fetchError)) && (
             <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
               <CircularProgress />
+              <Typography variant="body2" sx={{ ml: 2, alignSelf: 'center' }}>
+                {isSingleFileMode ? 'Loading DICOM file...' : 'Loading study...'}
+              </Typography>
             </Box>
           )}
 
-          {!loading && !study && (
+          {/* Study not found (only in study mode) */}
+          {!loading && !isSingleFileMode && !study && studyId && (
             <Alert severity="error">
               Study not found: {studyId}
             </Alert>
           )}
 
-          {!loading && study && documentReferences.length === 0 && (
+          {/* No images found in study */}
+          {!loading && !isSingleFileMode && study && filesToLoad.length === 0 && (
             <Alert severity="warning">
-              No DICOM images found for this study.
+              No DICOM images found for this study. The study has no linked GridFS files.
             </Alert>
           )}
 
-          {!loading && study && documentReferences.length > 0 && !hasViewableData && !fetchError && dicomFileUrl && (
-            <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+          {/* Loading DICOM files from GridFS */}
+          {filesToLoad.length > 0 && !hasViewableData && !fetchError && (
+            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', py: 4 }}>
               <CircularProgress />
-              <Typography variant="body2" sx={{ ml: 2, alignSelf: 'center' }}>
-                Loading DICOM file from storage...
+              <Typography variant="body2" sx={{ mt: 2 }}>
+                {fetchingProgress.total > 1
+                  ? 'Loading DICOM files from storage... (' + fetchingProgress.current + '/' + fetchingProgress.total + ')'
+                  : 'Loading DICOM file from storage...'}
               </Typography>
             </Box>
           )}
 
-          {!loading && study && documentReferences.length > 0 && !hasViewableData && !dicomFileUrl && (
-            <Alert severity="warning">
-              DICOM image data is not available in the DocumentReference.
-            </Alert>
-          )}
-
+          {/* Fetch error */}
           {fetchError && (
             <Alert severity="error">
               Failed to load DICOM file: {fetchError}
             </Alert>
           )}
 
-          {!loading && study && documentReferences.length > 0 && hasViewableData && (
+          {/* Show the viewport when we have data */}
+          {hasViewableData && (
             <Box sx={{ mt: 2 }}>
               <SimpleDicomViewport
-                dicomData={dicomData}
-                dicomUrl={localDicomUrl}
+                dicomUrl={isSingleFileMode ? localDicomUrls[0] : null}
+                dicomUrls={!isSingleFileMode ? localDicomUrls : null}
               />
             </Box>
           )}
