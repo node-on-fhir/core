@@ -1,0 +1,147 @@
+{
+  "public": {
+    "title": "NodeOnFHIR Server",
+    "appVersion": "0.1.0",
+    "fhirVersion": "4.0.1",
+    "smartOnFhir": [{
+      "vendor": "SmartHealth IT",
+      "client_id": "my-client-id",
+      "scope": "launch launch/patient patient/read encounter/read procedure/read condition/read observation/read offline_access",
+      "fhirServiceUrl": "https://launch.smarthealthit.org/v/r3/sim/",
+      "redirect_uri": "./patient-quickchart",
+      "iss": "https://launch.smarthealthit.org/v/r3/sim/eyJoIjoiMSIsImIiOiJmMDQ2MjkzNi1lYjRiLTRkYTEtYjQ1YS1mYmQ5NmViZjhjY2IiLCJlIjoic21hcnQtUHJhY3RpdGlvbmVyLTcxNjE0NTAyIn0/fhir"
+    }],
+    "theme": {
+      "showVideoBackground": false,
+      "defaultVideo": "/VideoBackgrounds/GrayWaves.mp4",
+      "backgroundImagePath": "/backgrounds/medical/Gradient.jpg",
+      "palette": {
+        "primaryColor": "rgb(108, 183, 110)",
+        "primaryText": "rgba(255, 255, 255, 1) !important",
+      
+        "secondaryColor": "#fdb813",
+        "secondaryText": "rgba(255, 255, 255, 1) !important",
+      
+        "cardColor": "#ffffff !important",
+        "cardTextColor": "rgba(0, 0, 0, 1) !important",
+      
+        "errorColor": "rgb(128,20,60) !important",
+        "errorText": "#ffffff !important",
+      
+        "appBarColor": "#005b94",
+        "appBarTextColor": "#ffffff !important",
+      
+        "paperColor": "#ffffff !important",
+        "paperTextColor": "rgba(0, 0, 0, 1) !important",
+      
+        "backgroundCanvas": "#e6e6e6",
+        "background": "linear-gradient(45deg, rgb(108, 183, 110) 30%, rgb(150, 202, 144) 90%)",
+
+        "nivoTheme": "red_grey"
+      }
+    },
+    "loggingThreshold": "debug",
+    "fhirAutoSubscribe": true,
+    "defaults": {
+      "route": "/",
+      "landingPage": "/",
+      "homePage": "/",
+      "prominantHeader": false,
+      "useDateRangeInQueries": false,
+      "showPatientNameInHeader": false,
+      "displayUserNameInHeader": true,
+      "displayNavbars": true,
+      "disableHeader": false,
+      "disableFooter": false,
+      "initialScale": 1.0,
+      "paginationLimit": 100,
+      "subscriptionLimit": 1000,
+      "registration": {
+        "displayPatientId": false,
+        "displayFullLegalName": true,
+        "displayNickname": true,
+        "displayGivenAndFamily": false,
+        "displayFirstAndLast": false,
+        "displayEmail": true,
+        "displayPassword": true,
+        "displayUsername": false,
+        "displayInventationCode": true
+      },
+      "sidebar": {
+        "menuItems": {
+          "HomePage": false,
+          "FhirResources": false,
+          "DynamicModules": true,
+          "SidebarWorkflows": true,
+          "Theme": false,
+          "About": true,
+          "ConstructionZone": false,
+          "Navbars": false,
+          "DataImport": true,
+          "DataExport": true,
+          "SmartLauncher": false,
+          "HealthRecords": false,
+          "Profile": false,
+          "Login": false,
+          "Logout": true,
+          "Registration": true,
+          "Documentation": false,
+          "Marketing": false,
+          "TermsAndConditions": true,
+          "Privacy": true,
+          "QrScanner": false
+        }
+      }
+    },
+    "interfaces": {
+      "upstreamDirectory": {
+        "name": "Validated Directory",
+        "status": "active",
+        "channel": {
+          "endpoint": "https://vhdir.meteorapp.com/baseR4"
+        }
+      },
+      "fhirRelay": {
+        "name": "FHIR Relay",
+        "status": "inactive",
+        "channel": {
+          "endpoint": "http://localhost:3000/baseR4"
+        }
+      },
+      "symptomaticFhirServer": {
+        "name": "FHIR Server",
+        "status": "active",
+        "channel": {
+          "endpoint": "http://localhost:3000/baseR4"
+        }
+      },
+      "oauthServer": {
+        "name": "OAuth Server",
+        "status": "active",
+        "channel": {
+          "endpoint": "http://localhost:3000/"
+        }
+      },
+      "accountsServer": {      
+        "name": "Accounts Server",
+        "database": "meteor",
+        "host": "http://localhost",
+        "port": 3000
+      }
+    }
+  },
+  "private": {
+    "debug": true,
+    "trace": true,
+    "enableCronAutomation": true,
+    "enableServerStats": false,
+    "recordVersioningEnabled": true,
+    "accessControl": {
+      "enableHttpAccessRestrictions": true,
+      "enableRpcAccessRestrictions": true,
+      "enableEhrLaunchContext": true,
+      "enableBasicAuth": true,
+      "enableHipaaLogging": true
+    }
+  }
+}

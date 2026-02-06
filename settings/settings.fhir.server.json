@@ -1,0 +1,283 @@
+{
+  "public": {
+    "title": "NodeOnFHIR Server",
+    "appVersion": "0.1.0",
+    "fhirVersion": "4.0.1",
+    "smartOnFhir": [],
+    "theme": {
+      "showVideoBackground": false,
+      "defaultVideo": "/VideoBackgrounds/GrayWaves.mp4",
+      "backgroundImagePath": "/backgrounds/medical/Gradient.jpg",
+      "palette": {
+        "primaryColor": "rgb(108, 183, 110)",
+        "primaryText": "rgba(255, 255, 255, 1) !important",
+      
+        "secondaryColor": "#fdb813",
+        "secondaryText": "rgba(255, 255, 255, 1) !important",
+      
+        "cardColor": "#ffffff !important",
+        "cardTextColor": "rgba(0, 0, 0, 1) !important",
+      
+        "errorColor": "rgb(128,20,60) !important",
+        "errorText": "#ffffff !important",
+      
+        "appBarColor": "#005b94",
+        "appBarTextColor": "#ffffff !important",
+      
+        "paperColor": "#ffffff !important",
+        "paperTextColor": "rgba(0, 0, 0, 1) !important",
+      
+        "backgroundCanvas": "#e6e6e6",
+        "background": "linear-gradient(45deg, rgb(108, 183, 110) 30%, rgb(150, 202, 144) 90%)",
+
+        "nivoTheme": "red_grey"
+      }
+    },
+    "loggingThreshold": "debug",
+    "fhirAutoSubscribe": true,
+    "defaults": {
+      "route": "/",
+      "landingPage": "/",
+      "homePage": "/",
+      "prominantHeader": false,
+      "useDateRangeInQueries": false,
+      "showPatientNameInHeader": false,
+      "displayUserNameInHeader": true,
+      "displayNavbars": true,
+      "disableHeader": false,
+      "disableFooter": false,
+      "initialScale": 1.0,
+      "paginationLimit": 100,
+      "subscriptionLimit": 1000,
+      "registration": {
+        "displayPatientId": false,
+        "displayFullLegalName": true,
+        "displayNickname": true,
+        "displayGivenAndFamily": false,
+        "displayFirstAndLast": false,
+        "displayEmail": true,
+        "displayPassword": true,
+        "displayUsername": false,
+        "displayInventationCode": true
+      },
+      "sidebar": {
+        "menuItems": {
+          "HomePage": false,
+          "FhirResources": false,
+          "DynamicModules": true,
+          "SidebarWorkflows": true,
+          "Theme": false,
+          "About": true,
+          "ConstructionZone": false,
+          "Navbars": false,
+          "DataImport": true,
+          "DataExport": true,
+          "SmartLauncher": false,
+          "HealthRecords": false,
+          "Profile": false,
+          "Login": false,
+          "Logout": true,
+          "Registration": true,
+          "Documentation": false,
+          "Marketing": false,
+          "TermsAndConditions": true,
+          "Privacy": true,
+          "QrScanner": false
+        }
+      }
+    },
+    "interfaces": {
+      "fhirRelay": {
+        "name": "FHIR Relay",
+        "status": "inactive",
+        "channel": {
+          "endpoint": "http://localhost:3000/baseR4"
+        }
+      },
+      "oauthServer": {
+        "name": "OAuth Server",
+        "status": "active",
+        "channel": {
+          "endpoint": "http://localhost:3000/"
+        }
+      },
+      "accountsServer": {      
+        "name": "Accounts Server",
+        "database": "meteor",
+        "host": "http://localhost",
+        "port": 3000
+      }
+    }
+  },
+  "private": {
+    "debug": true,
+    "trace": true,
+    "enableCronAutomation": true,
+    "enableServerStats": false,
+    "recordVersioningEnabled": true,
+    "accessControl": {
+      "enableHttpAccessRestrictions": true,
+      "enableRpcAccessRestrictions": true,
+      "enableEhrLaunchContext": true,
+      "enableBasicAuth": true,
+      "enableHipaaLogging": true
+    },
+    "fhir": {
+      "disableOauth": true,
+      "inboundQueue": true,
+      "schemaValidation": {
+        "filter": false,
+        "validate": false
+      },
+      "fhirPath": "baseR4",
+      "autopublishSubscriptions": true,
+      "autoGenerateSubscriptions": true,
+      "publicationLimit": 1000,
+      "rest": {
+        "Bundle": {
+          "disableOauth": true,
+          "interactions": ["read", "create", "update", "delete"],
+          "search": true,
+          "publication": true
+        },
+        "CareTeam": {
+          "disableOauth": true,
+          "interactions": ["read", "create", "update", "delete"],
+          "search": true,
+          "publication": true,
+          "versioning": "versioned"
+        },
+        "CodeSystem": {
+          "disableOauth": true,
+          "interactions": ["read", "create", "update", "delete"],
+          "search": true,
+          "publication": true
+        },
+        "Communication": {
+          "disableOauth": true,
+          "interactions": ["read", "create", "update", "delete"],
+          "search": true,
+          "publication": true
+        },
+        "CommunicationRequest": {
+          "disableOauth": true,
+          "interactions": ["read", "create", "update", "delete"],
+          "search": true,
+          "publication": true
+        },
+        "Endpoint": {
+          "disableOauth": true,
+          "interactions": ["read", "create", "update", "patch", "delete"],
+          "search": true,
+          "publication": true,
+          "versioning": "versioned"
+        },
+        "HealthcareService": {
+          "disableOauth": true,
+          "interactions": ["read", "create", "update", "delete"],
+          "search": true,
+          "publication": true,
+          "versioning": "versioned"
+        },
+        "InsurancePlan": {
+          "disableOauth": true,
+          "interactions": ["read", "create", "update", "delete"],
+          "search": true,
+          "publication": true,
+          "versioning": "versioned"
+        },
+        "Location": {
+          "disableOauth": true,
+          "interactions": ["read", "create", "update", "patch", "delete"],
+          "search": true,
+          "publication": true,
+          "versioning": "versioned"
+        },
+        "Organization": {
+          "disableOauth": true,
+          "interactions": ["read", "vread", "create", "update", "patch", "delete", "history-type", "history-instance"],
+          "search": true,
+          "publication": true,
+          "versioning": "versioned"
+        },
+        "OrganizationAffiliation": {
+          "disableOauth": true,
+          "interactions": ["read", "vread", "create", "update", "delete"],
+          "search": true,
+          "publication": true,
+          "versioning": "versioned"
+        },
+        "Practitioner": {
+          "disableOauth": true,
+          "interactions": ["read", "create", "update", "patch", "delete", "history-type", "history-instance"],
+          "search": true,
+          "publication": true,
+          "versioning": "versioned"
+        },
+        "PractitionerRole": {
+          "disableOauth": true,
+          "interactions": ["read", "create", "update", "delete"],
+          "search": true,
+          "publication": true,
+          "versioning": "versioned"
+        },
+        "Provenance": {
+          "disableOauth": true,
+          "interactions": ["read", "create", "update", "delete"],
+          "search": true,
+          "publication": true
+        },
+        "SearchParameter": {
+          "disableOauth": true,
+          "interactions": ["read", "create", "update", "delete"],
+          "search": true,
+          "publication": true
+        },
+        "Subscription": {
+          "disableOauth": true,
+          "interactions": ["read", "create", "update", "delete"],
+          "search": true,
+          "publication": true
+        },
+        "Task": {
+          "disableOauth": true,
+          "interactions": ["read", "create", "update", "delete"],
+          "search": true,
+          "publication": true,
+          "versioning": "versioned"
+        },
+        "StructureDefinition": {
+          "disableOauth": true,
+          "interactions": ["read", "create", "update", "delete"],
+          "search": true,
+          "publication": true
+        },
+        "ValueSet": {
+          "disableOauth": true,
+          "interactions": ["read", "create", "update", "delete"],
+          "search": true,
+          "publication": true
+        },
+        "VerificationResult": {
+          "disableOauth": true,
+          "interactions": ["read", "create", "update", "delete"],
+          "search": true,
+          "publication": true,
+          "versioning": "versioned"
+        }
+      },
+      "experimentalRest": {
+        "Network": {
+          "interactions": ["read", "create", "update", "delete"],
+          "search": true,
+          "publication": true
+        },
+        "Restriction": {
+          "interactions": ["read", "create", "update", "delete"],
+          "search": true,
+          "publication": true
+        }
+      }
+    }
+  }
+}

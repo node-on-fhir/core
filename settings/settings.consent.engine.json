@@ -1,0 +1,302 @@
+{
+  "public": {
+    "title": "Consent Engine Demo",
+    "dataWarehouseEnabled": true,
+    "logging": "trace",
+    "capabilityStatement": {
+      "resourceTypes": ["AuditEvent", "Bundle", "CareTeam", "Consent", "Contract", "DocumentReference", "Endpoint", "Goal", "List", "Organization", "Patient", "Practitioner", "RelatedPerson", "Provenance", "QuestionnaireResponse"]
+    },  
+    "theme": {
+      "showVideoBackground": false,
+      "backgroundImagePath": "/backgrounds/medical/Gradient.jpg",
+      "palette": {
+        "primaryColor": "rgb(108, 183, 110)",
+        "primaryText": "rgba(255, 255, 255, 1) !important",
+      
+        "secondaryColor": "#06a9ac",
+        "secondaryText": "rgba(255, 255, 255, 1) !important",
+      
+        "cardColor": "#ffffff !important",
+        "cardTextColor": "rgba(0, 0, 0, 1) !important",
+      
+        "errorColor": "rgb(128,20,60) !important",
+        "errorText": "#ffffff !important",
+      
+        "appBarColor": "repeating-linear-gradient( 135deg, rgba(90,90,98, 0.8), rgba(90,90,98, 0.8) 20px, rgba(90,90,98, 0.85) 20px, rgba(90,90,98, 0.85) 40px ), url(http://s3-us-west-2.amazonaws.com/s.cdpn.io/3/old_map_@2X.png)",
+        "appBarTextColor": "#ffffff !important",
+      
+        "paperColor": "#ffffff !important",
+        "paperTextColor": "rgba(0, 0, 0, 1) !important",
+      
+        "backgroundCanvas": "#eeeeee",
+        "nivoTheme": "purple_orange"
+      },
+      "grayscaleFilter": "0%"
+    },
+    "defaults": {
+      "route": "/",
+      "landingPage": "/",
+      "homePage": "/",
+      "avatars": true,
+      "barcodes": true,
+      "hexgridMenu": false,
+      "nfcOrbital": false,
+      "notificationMenu": false,
+      "searchbarVisible": true,
+      "viewportSafeArea": true,
+      "displayNavbars": true,
+      "disableHeader": false,
+      "disableFooter": false,
+      "disableCanvasSlide": true,
+      "prominantHeader": true,
+      "showPatientNameInHeader": true,
+      "displayUserNameInHeader": true,
+      "drawerWidth": 320,
+      "initialScale": 0.6,
+      "defaultPagePadding": 20,
+      "paginationLimit": 100,
+      "subscriptionLimit": 1000,
+      "internalDateFormat": "YYYY-MM-DD",
+      "unitsOfMeasure": ["F", "lbs", "mg/dL"],
+      "modals": {
+        "maxWidth": "md"
+      },
+      "cards": {
+        "height": "auto",
+        "opacity": 0.95
+      },
+      "noData": {
+        "defaultTitle": "No Data Available",
+        "defaultMessage": "Make sure that you've shared your personal health record from your smartphone.  If you've not downloaded your health data yet, you may need to contact your healthcare provider.",
+        "marginTop": "-200px"
+      },
+      "registration": {
+        "signInWith": false,
+        "displayFullLegalName": true,
+        "displayNickname": true,
+        "displayGivenAndFamily": false,
+        "displayFirstAndLast": false,
+        "displayUsername": false,
+        "displayEmail": true,
+        "displayPassword": true,
+        "displayInventationCode": true,
+        "displayPatientId": true
+      },
+      "consents": {
+        "textMessage": "<p>I authorize and request the disclosure of all protected information for the purpose of review and evaluation in connection with a legal claim. I expressly request that the designated record custodian of all covered entities under HIPAA identified above disclose full and complete protected medical information including the following: </p><p>All medical records, meaning every page in my record, including but not limited to: office notes, face sheets, history and physical, consultation notes, inpatient, outpatient and emergency room treatment, all clinical charts, reports, order sheets, progress notes, nurse's notes, social worker records, clinic records, treatment plans, admission records, discharge summaries, requests for and reports of consultations, documents, correspondence, test results, statements, questionnaires/histories, correspondence, photographs, videotapes, telephone messages, and records received by other medical providers. </p><p>All physical, occupational and rehab requests, consultations and progress notes. </p><p>All disability, Medicaid or Medicare records including claim forms and record of denial of benefits. </p><p>All employment, personnel or wage records. All autopsy, laboratory, histology, cytology, pathology, immunohistochemistry records and specimens; radiology records and films including CT scan, MRI, MRA, EMG, bone scan, myleogram; nerve conduction study, echocardiogram and cardiac catheterization results, videos/CDs/films/reels and reports. </p><p>All pharmacy/prescription records including NDC numbers and drug information handouts/monographs. </p><p>All billing records including all statements, insurance claim forms, itemized bills, and records of billing to third party payers and payment or denial of benefits for the period.</p>",
+        "readMoreUrl": "https://docs.google.com/document/d/10Y-rEtVQiTWTy7tU-Slw5urAv5RVN38DwSGMVz84Phg/edit?usp=sharing"
+      },
+      "routes": {
+        "homePage": "/consent-engine",
+        "landingPage": "/consent-engine",
+        "adminWelcomePage": "/",
+        "adminHomePage": "/",
+        "adminDashboard": "/"
+      },
+      "header":{
+        "menuIcon": "",
+        "patientId": false
+      },
+      "sidebar": {
+        "minibarVisible": false,
+        "menuItems": {
+          "HomePage": false,
+          "FhirResources": false,
+          "DynamicModules": true,
+          "SidebarWorkflows": true,
+          "Theme": false,
+          "About": true,
+          "ConstructionZone": true,
+          "Navbars": false,
+          "DataImport": true,
+          "DataExport": true,
+          "SmartLauncher": true,
+          "HealthRecords": false,
+          "Profile": true,
+          "Login": {
+            "availability": "web"
+          },
+          "Logout": true,
+          "Registration": true,
+          "Documentation": true,
+          "Marketing": false,
+          "TermsAndConditions": true,
+          "Privacy": true,
+          "QrScanner": true
+        }
+      }
+    },
+    "interfaces": {
+      "fhirRelay": {
+        "name": "FHIR Relay",
+        "status": "inactive",
+        "channel": {
+          "endpoint": "http://localhost:3000/baseR4"
+        }
+      },
+      "bundleRelayTest": {
+        "name": "FHIR Server /Bundle",
+        "status": "active",
+        "channel": {
+          "endpoint": "http://localhost:3000/baseR4"
+        }
+      },
+      "observationRelayTest": {
+        "name": "FHIR Server /Observation",
+        "status": "active",
+        "channel": {
+          "endpoint": "http://localhost:3000/baseR4"
+        }
+      },
+      "symptomaticFhirServer": {
+        "name": "FHIR Server",
+        "status": "active",
+        "channel": {
+          "endpoint": "http://localhost:3000/baseR4"
+        }
+      },
+      "accountsServer": {      
+        "name": "Accounts Server",
+        "database": "meteor",
+        "host": "http://localhost",
+        "port": 3000
+      }
+    },
+    "modules": {
+      "data": true,
+      "forum": false,
+      "genome": false,
+      "healthlog": false,
+      "dermatograms": false,
+      "telemedicine": false,
+      "inbound": true,
+      "outbound": true,
+      "epic": false,
+      "statisticsLogging": false,
+      "dataRelay": true,
+      "apps": {
+        "ChecklistManifesto": false,
+        "ContinuityOfCare": false,
+        "Videoconferencing": false,
+        "ZygoteAvatar": false        
+      },
+      "fhir": {
+        "AllergyIntolerances": true,
+        "AuditEvents": {
+          "enabled": true
+        },
+        "BodySites": true,
+        "CarePlans": {
+          "displayActivitiesCard": false
+        },
+        "Conditions": {
+          "hideRemoveButtonOnTable": false
+        },
+        "Devices": true,
+        "DiagnosticReports": true,
+        "Goals": true,
+        "ImagingStudies": true,
+        "Immunizations": true,
+        "Locations": true,
+        "Lists": true,
+        "Medications": true,
+        "MedicationOrders": true,
+        "MedicationStatements": true,
+        "Organizations": true,
+        "Observations": true,
+        "Patients": {
+          "openUrlOnRowClick": "/patient-chart"
+        },
+        "Practitioners": true,
+        "Procedures": true,
+        "Questionnaires": true,
+        "RiskAssessments": true
+      },
+      "healthkit": {
+        "importDestination": "client"
+      }
+    }
+  },
+  "private": {
+    "invitationCode": false,
+    "practitionerAccessCode": "   QWERTY practitionerAccessCode   ",
+    "sysadminAccessCode": "   QWERTY sysadminAccessCode   ",
+    "enableBasicAuth": true,
+    "allowUnsafeProxy": true,
+    "disableOauth": true,
+    "initializePersonsInsteadOfPatients": true,
+    "dataWarehouseEnabled": true,
+    "enableCronAutomation": false,
+    "enableTaskManager": false,
+    "proxyServerEnabled": true,
+    "addCompositionToRelay": false,
+    "fhir": {
+      "disableOauth": true,
+      "schemaValidation": {
+        "filter": false,
+        "validate": false
+      },
+      "fhirPath": "baseR4",
+      "rest": {
+        "AuditEvent": {
+          "interactions": ["read", "create", "update", "delete"],
+          "search": true
+        },
+        "Bundle": {
+          "interactions": ["read", "create", "update", "delete"],
+          "search": true
+        },
+        "CareTeam": {
+          "interactions": ["read", "create", "update", "delete"],
+          "search": true
+        },
+        "Consent": {
+          "interactions": ["read", "create", "update", "delete"],
+          "search": true
+        },
+        "Contract": {
+          "interactions": ["read", "create", "update", "delete"],
+          "search": true
+        },
+        "DocumentReference": {
+          "interactions": ["read", "create", "update", "delete"],
+          "search": true
+        },
+        "Endpoint": {
+          "interactions": ["read", "create", "update", "delete"],
+          "search": true
+        },
+        "Organization": {
+          "interactions": ["read", "create", "update"],
+          "search": true
+        },
+        "Patient": {
+          "interactions": ["read", "create", "update"],
+          "search": true
+        },
+        "Practitioner": {
+          "interactions": ["read", "create", "update"],
+          "search": true
+        },
+        "QuestionnaireResponse": {
+          "interactions": ["read", "create", "update"],
+          "search": true
+        },
+        "RelatedPerson": {
+          "interactions": ["read", "create", "update"],
+          "search": true
+        }
+      }
+    }  
+  },
+  "galaxy.meteor.com": {
+    "env": {
+      "MONGO_URL": "mongodb://   QWERTY user:password@host:port goes here   /meteor-on-fhir",
+      "NODE_ENV": "production",
+      "ROOT_URL": "https://mehi-consent-engine.meteorapp.com",
+      "MAIL_URL": "smtps://apikey:   QWERTY API key goes here   @smtp.sendgrid.net:465",
+      "DEBUG": 1,
+      "TRACE": 0
+    }
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "public": {
+    "title": "Honeycomb - System Auth Configuration Example",
+    "fhirVersion": "R4"
+  },
+  "private": {
+    "accessControl": {
+      "enableBasicAuth": true,
+      "systemSecret": "your-super-secure-system-secret-here",
+      "enableJwtBackendServices": false
+    },
+    "fhir": {
+      "fhirPath": "baseR4",
+      "disableOauth": false,
+      "schemaValidation": {
+        "filter": false,
+        "validate": false  
+      }
+    }
+  }
+}

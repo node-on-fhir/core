@@ -1,0 +1,285 @@
+{
+  "public": {
+    "title": "Node on FHIR",
+    "fhirVersion": "R4",
+    "smartOnFhir": [{
+      "vendor": "SmartHealth IT",
+      "client_id": "my-client-id",
+      "scope": "launch launch/patient patient/read encounter/read procedure/read condition/read observation/read offline_access",
+      "fhirServiceUrl": "https://launch.smarthealthit.org/v/r3/sim/",
+      "redirect_uri": "./patient-quickchart",
+      "iss": "https://launch.smarthealthit.org/v/r3/sim/eyJoIjoiMSIsImIiOiJmMDQ2MjkzNi1lYjRiLTRkYTEtYjQ1YS1mYmQ5NmViZjhjY2IiLCJlIjoic21hcnQtUHJhY3RpdGlvbmVyLTcxNjE0NTAyIn0/fhir"
+    }],
+    "theme": {
+      "showVideoBackground": false,
+      "defaultVideo": "/VideoBackgrounds/GrayWaves.mp4",
+      "backgroundImagePath": "/backgrounds/medical/Gradient.jpg",
+      "palette": {
+        "primaryColor": "rgb(108, 183, 110)",
+        "primaryText": "rgba(255, 255, 255, 1) !important",
+      
+        "secondaryColor": "#fdb813",
+        "secondaryText": "rgba(255, 255, 255, 1) !important",
+      
+        "cardColor": "#ffffff !important",
+        "cardTextColor": "rgba(0, 0, 0, 1) !important",
+      
+        "errorColor": "rgb(128,20,60) !important",
+        "errorText": "#ffffff !important",
+            
+        "paperColor": "#ffffff !important",
+        "paperTextColor": "rgba(0, 0, 0, 1) !important",
+      
+        "backgroundCanvas": "#e6e6e6",
+        "background": "linear-gradient(45deg, rgb(108, 183, 110) 30%, rgb(150, 202, 144) 90%)",
+
+        "nivoTheme": "red_grey"
+      }
+    },
+    "loggingThreshold": "debug",
+    "fhirAutoSubscribe": true,
+    "capabilityStatement": {
+      "resourceTypes": ["AllergyIntolerance", "CarePlan", "CareTeam", "Condition", "Device", "DiagnosticReport", "DocumentReference", "Encounter", "Immunization", "Location", "Medication", "MedicationRequest", "MedicationAdministration", "Observation", "Organization", "Patient", "Procedure", "Practitioner", "PractitionerRole", "Provenance", "SupplyDelivery"]
+    },
+    "defaults": {
+      "route": "/",
+      "landingPage": "/",
+      "homePage": "/",
+      "prominentHeader": true,
+      "useDateRangeInQueries": false,
+      "showPatientNameInHeader": false,
+      "displayNavbars": true,
+      "disableHeader": false,
+      "disableFooter": false,
+      "initialScale": 1.0,
+      "paginationLimit": 100,
+      "subscriptionLimit": 1000,
+      "sidebar": {
+        "menuItems": {
+          "HomePage": true,
+          "PatientSummary": true,
+          "PatientDirectory": true,
+          "FhirResources": true,
+          "FhirModules": true,
+          "DynamicModules": true,
+          "SidebarWorkflows": true,
+          "Theme": true,
+          "Theming": true,
+          "About": true,
+          "Privacy": true,
+          "TermsAndConditions": true,
+          "DataImport": true,
+          "DataExport": true,
+          "ConstructionZone": false,
+          "UserProfile": true
+        }
+      },
+      "autopublish": true
+    },
+    "interfaces": {
+      "default": {
+        "status": "active",
+        "channel": {
+          "endpoint": "http://localhost:3000/baseR4"
+        },
+        "auth": {
+          "username": "username",
+          "password": "random_password"
+        }
+      }
+    },
+    "meshNetwork": {
+      "upstreamSync": "http://meteor-on-fhir.meteorapp.com/fhir-3.0.0", 
+      "autosync": false,
+      "magnets": []
+    },
+    "accountsServer": {      
+      "database": "meteor",
+      "host": "http://localhost",
+      "port": 3000
+    },
+    "modules": {
+      "PatientDirectory": true,
+      "Theming": true,
+      "apps": {},
+      "fhir": {
+        "AllergyIntolerances": true,
+        "AuditEvents": false,
+        "CarePlans": true,
+        "CareTeams": true,
+        "Compositions": false,
+        "Communications": false,
+        "Conditions": true,
+        "Consents": true,
+        "DocumentReferences": true,
+        "DiagnosticReports": true,
+        "Encounters": true,
+        "Goals": true,
+        "Immunizations": true,
+        "Lists": false,
+        "Locations": true,
+        "Medications": true,
+        "MedicationRequests": true,
+        "MedicationAdministrations": true,
+        "MedicationStatements": false,
+        "NutritionOrders": true,
+        "Organizations": true,
+        "Observations": true,
+        "Patients": true,
+        "Practitioners": true,
+        "PractitionerRoles": true,
+        "Procedures": true,
+        "Provenances": true,
+        "Questionnaires": true,
+        "QuestionnaireResponses": true,
+        "ResearchStudies": true,
+        "ResearchSubjects": true,
+        "ServiceRequests": true,
+        "SupplyDeliveries": true
+      }
+    },
+    "businessPages": {
+      "privacy": {
+        "enabled": true,
+        "title": "Privacy Policy",
+        "content": "We are committed to protecting your privacy and ensuring the security of your personal information. This privacy policy outlines how we collect, use, and protect your data in accordance with HIPAA and other applicable regulations."
+      },
+      "terms": {
+        "enabled": true,
+        "title": "Terms and Conditions", 
+        "content": "By using this application, you agree to the following terms and conditions. This software is provided as-is and we make no warranties regarding its fitness for any particular purpose."
+      },
+      "support": {
+        "enabled": true,
+        "title": "Support",
+        "content": "Need help? Our support team is here to assist you. Please reach out to us using the contact information below.",
+        "email": "support@example.com",
+        "phone": "1-800-XXX-XXXX"
+      },
+      "about": {
+        "enabled": true,
+        "title": "About Us",
+        "content": "Welcome to our healthcare application. We are dedicated to improving healthcare delivery through innovative technology solutions that prioritize patient care and data security."
+      }
+    }
+  },
+  "private": {
+    "fhir": {
+      "disableOauth": true,
+      "schemaValidation": {
+        "filter": false,
+        "validate": false
+      },
+      "fhirPath": "baseR4",
+      "autopublishSubscriptions": true,
+      "autoGenerateSubscriptions": true,
+      "rest": {
+        "AllergyIntolerance": {
+          "interactions": ["read", "create", "update", "delete"],
+          "search": true,
+          "publication": true
+        },
+        "CarePlan": {
+          "interactions": ["read", "create", "update", "delete"],
+          "search": true,
+          "publication": true
+        },
+        "CareTeam": {
+          "interactions": ["read", "create", "update", "delete"],
+          "search": true,
+          "publication": true
+        },
+        "Condition": {
+          "interactions": ["read", "create", "update", "delete"],
+          "search": true,
+          "publication": true
+        },
+        "Device": {
+          "interactions": ["read", "create", "update", "delete"],
+          "search": true,
+          "publication": true
+        },
+        "DiagnosticReport": {
+          "interactions": ["read", "create", "update", "delete"],
+          "search": true,
+          "publication": true
+        },
+        "DocumentReference": {
+          "interactions": ["read", "create", "update", "delete"],
+          "search": true,
+          "publication": true
+        },
+        "Encounter": {
+          "interactions": ["read", "create", "update", "delete"],
+          "search": true,
+          "publication": true
+        },
+        "Immunization": {
+          "interactions": ["read", "create", "update", "delete"],
+          "search": true,
+          "publication": true
+        },
+        "Location": {
+          "interactions": ["read", "create", "update", "delete"],
+          "search": true,
+          "publication": true
+        },
+        "Medication": {
+          "interactions": ["read", "create", "update", "delete"],
+          "search": true,
+          "publication": true
+        },
+        "MedicationRequest": {
+          "interactions": ["read", "create", "update", "delete"],
+          "search": true,
+          "publication": true
+        },
+        "MedicationAdministration": {
+          "interactions": ["read", "create", "update", "delete"],
+          "search": true,
+          "publication": true
+        },
+        "Observation": {
+          "interactions": ["read", "create", "update", "delete"],
+          "search": true,
+          "publication": true
+        },
+        "Organization": {
+          "interactions": ["read", "create", "update", "delete"],
+          "search": true,
+          "publication": true
+        },
+        "Patient": {
+          "interactions": ["read", "create", "update", "delete"],
+          "search": true,
+          "publication": true
+        },
+        "Procedure": {
+          "interactions": ["read", "create", "update", "delete"],
+          "search": true,
+          "publication": true
+        },
+        "Practitioner": {
+          "interactions": ["read", "create", "update", "delete"],
+          "search": true,
+          "publication": true
+        },
+        "Provenance": {
+          "interactions": ["read", "create", "update", "delete"],
+          "search": true,
+          "publication": true
+        },
+        "PractitionerRole": {
+          "interactions": ["read", "create", "update", "delete"],
+          "search": true,
+          "publication": true
+        },
+        "SupplyDelivery": {
+          "interactions": ["read", "create", "update", "delete"],
+          "search": true,
+          "publication": true
+        }
+      }
+    }
+  }
+}
