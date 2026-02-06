@@ -15,7 +15,6 @@ clinical:data-importer@0.17.0
 clinical:extended-api@3.0.0
 clinical:fonts@1.2.0
 clinical:hl7-resource-datatypes@4.0.8
-clinical:merkalis@0.1.0
 clinical:pacio-core@0.1.0
 clinical:structured-data-capture@0.1.0
 clinical:us-core@7.0.1

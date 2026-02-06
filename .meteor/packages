@@ -78,8 +78,8 @@ fetch
 rspack@1.0.0-beta340.12
 # typed:modal
 
-## Merkalis - Merkle Tree Storage
-clinical:merkalis
+## Merkalis - Moved to NPM package @merkalis/node-on-fhir-merkle-storage
+# clinical:merkalis
 
 
 

@@ -92,6 +92,16 @@ import ExternalContentPanel from './ExternalContentPanel.jsx';
 // Optional package imports would go here when packages are added
 
 //===============================================================================================================
+// WorkflowRegistry - NPM-based workflow discovery system
+// Import and register workflows from npmPackages/* here
+
+import WorkflowRegistry from '/imports/lib/WorkflowRegistry.js';
+import merkalisWorkflow from '@merkalis/node-on-fhir-merkle-storage';
+
+// Register NPM-based workflows
+WorkflowRegistry.registerWorkflow(merkalisWorkflow);
+
+//===============================================================================================================
 // FHIR Page Components
 
 import {
@@ -1554,6 +1564,20 @@ let homeRoute = {
 
 let headerNavigation;
 let foundMainPage = false;
+
+// ==============================================================================
+// WorkflowRegistry Routes (NPM packages)
+// Add routes from WorkflowRegistry before Atmosphere Package iteration
+const npmRoutes = WorkflowRegistry.getRoutes();
+if (npmRoutes.length > 0) {
+  console.log('[APP] Adding', npmRoutes.length, 'route(s) from WorkflowRegistry');
+  npmRoutes.forEach(function(route) {
+    dynamicRoutes.push(route);
+  });
+}
+
+// ==============================================================================
+// Atmosphere Package Routes
 Object.keys(Package).forEach(function(packageName){
   if(Package[packageName].DynamicRoutes){
     // we try to build up a route from what's specified in the package

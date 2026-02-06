@@ -2,11 +2,12 @@
   "name": "meteor-app",
   "private": true,
   "workspaces": [
-    "packages/merkalis/kastoria-core/merkle-dag-storage",
-    "packages/merkalis/kastoria-core/block-store",
-    "packages/merkalis/kastoria-core/named-root",
-    "packages/merkalis/kastoria-core/ranged-index",
-    "packages/merkalis/kastoria-core/cid"
+    "npmPackages/*",
+    "npmPackages/merkalis/kastoria-core/merkle-dag-storage",
+    "npmPackages/merkalis/kastoria-core/block-store",
+    "npmPackages/merkalis/kastoria-core/named-root",
+    "npmPackages/merkalis/kastoria-core/ranged-index",
+    "npmPackages/merkalis/kastoria-core/cid"
   ],
   "scripts": {
     "start": "meteor run",
@@ -28,7 +29,6 @@
     "@accounts/rest-client": "0.33.1",
     "@accounts/server": "0.33.1",
     "@accounts/two-factor": "^0.32.4",
-    "@atcute/cbor": "^2.3.0",
     "@breejs/later": "4.1.0",
     "@cornerstonejs/core": "^1.78.0",
     "@cornerstonejs/dicom-image-loader": "^1.78.0",

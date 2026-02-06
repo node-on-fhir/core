@@ -10,6 +10,9 @@ import { withStyles } from '@mui/material/styles';
 import { get } from 'lodash';
 import { useNavigate } from "react-router-dom";
 
+// WorkflowRegistry for NPM-based workflow discovery
+import WorkflowRegistry from '/imports/lib/WorkflowRegistry.js';
+
 
 import ListItem from '@mui/material/ListItem';
 import ListItemIcon from '@mui/material/ListItemIcon';
@@ -610,14 +613,24 @@ export function PatientSidebar(props){
 
   let sidebarWorkflows = [];
   if(get(Meteor, 'settings.public.defaults.sidebar.menuItems.SidebarWorkflows')){
+    // Get sidebar items from WorkflowRegistry (NPM packages)
+    const npmSidebarItems = WorkflowRegistry.getSidebarItems();
+    if (npmSidebarItems.length > 0) {
+      logger.data('PatientSidebar.npmSidebarItems', npmSidebarItems);
+      npmSidebarItems.forEach(function(element){
+        sidebarWorkflows.push(element);
+      });
+    }
+
+    // Get sidebar items from Atmosphere packages
     Object.keys(Package).forEach(function(packageName){
       if(Package[packageName].SidebarWorkflows){
         // we try to build up a route from what's specified in the package
         Package[packageName].SidebarWorkflows.forEach(function(element){
-          sidebarWorkflows.push(element);      
-        });    
+          sidebarWorkflows.push(element);
+        });
       }
-    }); 
+    });
     logger.data('PatientSidebar.sidebarWorkflows', sidebarWorkflows);
   }
   

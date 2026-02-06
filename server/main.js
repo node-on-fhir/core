@@ -103,8 +103,8 @@ import '../imports/api/lists/methods.js';
 import '../imports/methods/tasks.js';
 
 // Merkalis - Kastoria-Core merkle tree storage integration
-// Note: Server methods moved from Atmosphere package to main app for proper npm workspace module resolution
-import './merkalis/methods.js';
+// Server methods are now part of the @merkalis/node-on-fhir-merkle-storage NPM package
+import '@merkalis/node-on-fhir-merkle-storage/server/methods';
 
 // Import test methods (for non-production environments)
 import '../imports/accounts/server/test-methods.js';

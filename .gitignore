@@ -20,6 +20,8 @@ tests_output
 
 packages
 packages/*
+npmPackages
+npmPackages/*
 
 .DS_Store
 

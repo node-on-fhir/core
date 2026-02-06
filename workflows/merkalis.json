@@ -1,0 +1,6 @@
+{
+  "activeWorkflows": [
+    "@merkalis/node-on-fhir-merkle-storage"
+  ],
+  "description": "Active workflow registrations for Honeycomb EHR"
+}
