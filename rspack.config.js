@@ -1,7 +1,17 @@
 const { defineConfig } = require('@meteorjs/rspack');
+const path = require('path');
+const WorkflowParserPlugin = require('./configs/rspack.workflowParser.js');
 
 // Detect CI environment
 const isCI = process.env.CI === 'true' || process.env.CIRCLECI === 'true';
+
+// Run workflow parser plugin to generate barrel files BEFORE rspack bundling
+// This generates imports/workflows/index.js and loader.js with static imports
+const workflowParser = new WorkflowParserPlugin({
+  manifestPath: path.resolve(__dirname, 'configs/workflows.json'),
+  outputDir: path.resolve(__dirname, 'imports/workflows')
+});
+workflowParser.generate();
 
 /**
  * Rspack configuration for Meteor projects.
@@ -21,6 +31,10 @@ module.exports = defineConfig(Meteor => {
   // Client-specific configuration
   if (Meteor.isClient) {
     config.resolve = {
+      // Alias for workflow barrel files
+      alias: {
+        '@workflows': path.resolve(__dirname, 'imports/workflows')
+      },
       // Polyfill Node.js core modules for browser
       fallback: {
         "util": require.resolve("util/"),
@@ -83,6 +97,11 @@ module.exports = defineConfig(Meteor => {
 
   // Server-specific configuration
   if (Meteor.isServer) {
+    // Add @workflows alias for server
+    config.resolve = config.resolve || {};
+    config.resolve.alias = config.resolve.alias || {};
+    config.resolve.alias['@workflows'] = path.resolve(__dirname, 'imports/workflows');
+
     // Provide global shims for browser-oriented libraries
     // Don't polyfill process - use the real Node.js process
     config.plugins.push(

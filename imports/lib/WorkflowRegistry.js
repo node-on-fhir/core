@@ -17,6 +17,7 @@ const WorkflowRegistry = {
   routes: [],
   sidebarItems: [],
   registeredWorkflows: [],
+  onChangeCallbacks: [],
 
   /**
    * Register a workflow with its routes and sidebar items
@@ -46,6 +47,21 @@ const WorkflowRegistry = {
     }
 
     this.registeredWorkflows.push(workflowName);
+
+    // Notify subscribers that routes/sidebar items changed
+    this.onChangeCallbacks.forEach(cb => cb());
+  },
+
+  /**
+   * Subscribe to workflow registration events
+   * @param {Function} callback - Function to call when workflows are registered
+   * @returns {Function} Unsubscribe function
+   */
+  subscribe(callback) {
+    this.onChangeCallbacks.push(callback);
+    return () => {
+      this.onChangeCallbacks = this.onChangeCallbacks.filter(cb => cb !== callback);
+    };
   },
 
   /**
@@ -79,6 +95,7 @@ const WorkflowRegistry = {
     this.routes = [];
     this.sidebarItems = [];
     this.registeredWorkflows = [];
+    this.onChangeCallbacks = [];
   }
 };
 
