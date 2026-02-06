@@ -102,6 +102,10 @@ import '../imports/methods/supplyDeliveries.js';
 import '../imports/api/lists/methods.js';
 import '../imports/methods/tasks.js';
 
+// Merkalis - Kastoria-Core merkle tree storage integration
+// Note: Server methods moved from Atmosphere package to main app for proper npm workspace module resolution
+import './merkalis/methods.js';
+
 // Import test methods (for non-production environments)
 import '../imports/accounts/server/test-methods.js';
 import '../imports/accounts/server/methods.js';
