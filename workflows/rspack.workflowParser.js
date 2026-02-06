@@ -1,12 +1,13 @@
-// configs/rspack.workflowParser.js
+// workflows/rspack.workflowParser.js
 // Rspack plugin that generates workflow barrel files at build time
 //
-// This plugin reads configs/workflows.json and generates:
+// This plugin reads workflows/workflows.json and generates:
 // - imports/workflows/index.js - Static barrel with workflow imports
 // - imports/workflows/loader.js - Helper to register workflows with WorkflowRegistry
+// - imports/workflows/server-loader.js - Server-side method imports
 //
 // Usage:
-//   const WorkflowParserPlugin = require('./configs/rspack.workflowParser.js');
+//   const WorkflowParserPlugin = require('./workflows/rspack.workflowParser.js');
 //   const plugin = new WorkflowParserPlugin({ manifestPath: '...', outputDir: '...' });
 //   plugin.generate();
 

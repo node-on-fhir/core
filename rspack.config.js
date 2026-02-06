@@ -1,6 +1,6 @@
 const { defineConfig } = require('@meteorjs/rspack');
 const path = require('path');
-const WorkflowParserPlugin = require('./configs/rspack.workflowParser.js');
+const WorkflowParserPlugin = require('./workflows/rspack.workflowParser.js');
 
 // Detect CI environment
 const isCI = process.env.CI === 'true' || process.env.CIRCLECI === 'true';
@@ -8,7 +8,7 @@ const isCI = process.env.CI === 'true' || process.env.CIRCLECI === 'true';
 // Run workflow parser plugin to generate barrel files BEFORE rspack bundling
 // This generates imports/workflows/index.js and loader.js with static imports
 const workflowParser = new WorkflowParserPlugin({
-  manifestPath: path.resolve(__dirname, 'configs/workflows.json'),
+  manifestPath: path.resolve(__dirname, 'workflows/workflows.json'),
   outputDir: path.resolve(__dirname, 'imports/workflows')
 });
 workflowParser.generate();
