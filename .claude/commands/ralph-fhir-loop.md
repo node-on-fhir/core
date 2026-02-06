@@ -155,7 +155,7 @@ Ask the user these questions using AskUserQuestion:
 **CRITICAL**: Use the correct server startup command:
 
 ```bash
-# Start server with auto-login enabled (uses configs/settings.honeycomb.tdd.json)
+# Start server with auto-login enabled (uses settings/settings.honeycomb.tdd.json)
 meteor npm run medical-home-autologin > /tmp/meteor-server.log 2>&1 &
 ```
 
@@ -170,7 +170,7 @@ for i in {1..60}; do
 done
 ```
 
-**Settings File Note**: The `medical-home-autologin` script uses `configs/settings.honeycomb.tdd.json`, NOT `settings.honeycomb.localhost.json`. Ensure new resources are enabled in the TDD settings file.
+**Settings File Note**: The `medical-home-autologin` script uses `settings/settings.honeycomb.tdd.json`, NOT `settings.honeycomb.localhost.json`. Ensure new resources are enabled in the TDD settings file.
 
 ---
 
@@ -649,7 +649,7 @@ const flattened = FhirDehydrator.dehydrate{ResourceType}(record);
 
 **CRITICAL**: Add to ALL THREE settings files:
 
-1. `configs/settings.honeycomb.tdd.json` (for tests - THIS IS USED BY medical-home-autologin)
+1. `settings/settings.honeycomb.tdd.json` (for tests - THIS IS USED BY medical-home-autologin)
 2. `configs/settings.honeycomb.localhost.json` (for local dev)
 3. `configs/settings.honeycomb.dicom.localhost.json` (for dark mode)
 
@@ -756,7 +756,7 @@ Common issues:
 | Page crashes (empty react-target) | Check browser console for JS errors - DON'T IGNORE THEM |
 | `testUtils.login is not a function` | Use `loginHelper.ensureLoggedIn()` |
 | Session lost after navigation | Use `testUtils.navigateUrl()` instead of `browser.url()` |
-| Module not enabled | Add to TDD settings file (`configs/settings.honeycomb.tdd.json`), restart server |
+| Module not enabled | Add to TDD settings file (`settings/settings.honeycomb.tdd.json`), restart server |
 | Port 3000/8080 in use | Run pre-flight cleanup commands |
 | Element not found | Check selectors, add pauses |
 | Subscription timeout | Increase pause after search to 3000ms+ |
