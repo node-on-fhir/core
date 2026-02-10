@@ -133,6 +133,8 @@ export function MainPage() {
   const paperBgColor = isDark ? '#2a2a2a' : '#f5f5f5';
 
   const [selectedFilter, setSelectedFilter] = useState('all');
+  const [columnCount, setColumnCount] = useState(2);
+  const [displayMode, setDisplayMode] = useState('regular');
   const [bedStatusHeight, setBedStatusHeight] = useState(600);
   const [patientModalOpen, setPatientModalOpen] = useState(false);
   const [selectedBedId, setSelectedBedId] = useState(null);
@@ -191,6 +193,40 @@ export function MainPage() {
       return () => clearInterval(interval);
     }
   }, [userId]);
+
+  // Initialize column count and display mode from URL parameters
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const columnsParam = params.get('columns');
+    if (columnsParam === '1' || columnsParam === '2') {
+      setColumnCount(parseInt(columnsParam, 10));
+    }
+    const displayParam = params.get('display');
+    if (displayParam === 'compact' || displayParam === 'regular') {
+      setDisplayMode(displayParam);
+    }
+  }, []);
+
+  // Handle column toggle and update URL
+  const handleColumnToggle = (event, newColumnCount) => {
+    if (newColumnCount !== null) {
+      setColumnCount(newColumnCount);
+      // Update URL without page reload
+      const url = new URL(window.location);
+      url.searchParams.set('columns', newColumnCount);
+      window.history.pushState({}, '', url);
+    }
+  };
+
+  // Handle display mode toggle and update URL
+  const handleDisplayToggle = (event, newDisplayMode) => {
+    if (newDisplayMode !== null) {
+      setDisplayMode(newDisplayMode);
+      const url = new URL(window.location);
+      url.searchParams.set('display', newDisplayMode);
+      window.history.pushState({}, '', url);
+    }
+  };
 
   // Calculate dynamic height for bed status area
   useEffect(() => {
@@ -583,58 +619,64 @@ export function MainPage() {
         </Box>
         {userId && (
           <Box display="flex" gap={2} alignItems="center">
-            <FormControl
-              size="small"
-              sx={{
-                minWidth: 120,
-                '& .MuiInputLabel-root': { color: cardTextColor },
-                '& .MuiSelect-root': { color: cardTextColor },
-                '& .MuiSelect-icon': { color: cardTextColor },
-                '& .MuiOutlinedInput-notchedOutline': {
-                  borderColor: isDark ? 'rgba(255, 255, 255, 0.23)' : 'rgba(0, 0, 0, 0.23)'
-                }
-              }}
-            >
-              <InputLabel>Filter</InputLabel>
-              <Select
-                value={selectedFilter}
-                onChange={(e) => setSelectedFilter(e.target.value)}
-                label="Filter"
-                MenuProps={{
-                  PaperProps: {
-                    sx: {
-                      bgcolor: isDark ? '#2a2a2a' : '#ffffff',
-                      '& .MuiMenuItem-root': {
-                        color: cardTextColor,
-                        '&:hover': {
-                          bgcolor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.04)'
-                        },
-                        '&.Mui-selected': {
-                          bgcolor: isDark ? 'rgba(33, 150, 243, 0.16)' : 'rgba(33, 150, 243, 0.08)',
-                          '&:hover': {
-                            bgcolor: isDark ? 'rgba(33, 150, 243, 0.24)' : 'rgba(33, 150, 243, 0.12)'
-                          }
-                        }
-                      }
-                    }
-                  }
-                }}
-              >
-                <MenuItem value="all">All Beds</MenuItem>
-                <MenuItem value="occupied">Occupied</MenuItem>
-                <MenuItem value="available">Available</MenuItem>
-                <MenuItem value="cleaning">Cleaning</MenuItem>
-                <MenuItem value="maintenance">Maintenance</MenuItem>
-                <MenuItem value="critical">Critical Patients</MenuItem>
-              </Select>
-            </FormControl>
             <Button
               variant="outlined"
               startIcon={<PeopleIcon />}
               size="small"
+              sx={{ height: 32 }}
             >
               New Admission
             </Button>
+            <ToggleButtonGroup
+              value={columnCount}
+              exclusive
+              onChange={handleColumnToggle}
+              size="small"
+              sx={{
+                height: 32,
+                '& .MuiToggleButton-root': {
+                  color: cardTextColor,
+                  borderColor: isDark ? 'rgba(255, 255, 255, 0.23)' : 'rgba(0, 0, 0, 0.23)',
+                  '&.Mui-selected': {
+                    bgcolor: isDark ? 'rgba(33, 150, 243, 0.16)' : 'rgba(33, 150, 243, 0.08)',
+                    color: cardTextColor,
+                    '&:hover': {
+                      bgcolor: isDark ? 'rgba(33, 150, 243, 0.24)' : 'rgba(33, 150, 243, 0.12)'
+                    }
+                  }
+                }
+              }}
+            >
+              <ToggleButton value={1}>1</ToggleButton>
+              <ToggleButton value={2}>2</ToggleButton>
+            </ToggleButtonGroup>
+            <ToggleButtonGroup
+              value={displayMode}
+              exclusive
+              onChange={handleDisplayToggle}
+              size="small"
+              sx={{
+                height: 32,
+                '& .MuiToggleButton-root': {
+                  color: cardTextColor,
+                  borderColor: isDark ? 'rgba(255, 255, 255, 0.23)' : 'rgba(0, 0, 0, 0.23)',
+                  '&.Mui-selected': {
+                    bgcolor: isDark ? 'rgba(33, 150, 243, 0.16)' : 'rgba(33, 150, 243, 0.08)',
+                    color: cardTextColor,
+                    '&:hover': {
+                      bgcolor: isDark ? 'rgba(33, 150, 243, 0.24)' : 'rgba(33, 150, 243, 0.12)'
+                    }
+                  }
+                }
+              }}
+            >
+              <ToggleButton value="regular">
+                <Tooltip title="Regular view"><GridViewIcon fontSize="small" /></Tooltip>
+              </ToggleButton>
+              <ToggleButton value="compact">
+                <Tooltip title="Compact view"><ViewListIcon fontSize="small" /></Tooltip>
+              </ToggleButton>
+            </ToggleButtonGroup>
           </Box>
         )}
       </Box>
@@ -761,7 +803,7 @@ export function MainPage() {
 
       <Grid container spacing={2}>
         {/* Bed Status Cards */}
-        <Grid item xs={12} md={8}>
+        <Grid item xs={12} md={columnCount === 1 ? 12 : 8}>
           <Paper sx={{
             p: 2,
             height: `${bedStatusHeight}px`,
@@ -777,9 +819,53 @@ export function MainPage() {
               <Typography variant="h6">
                 Bed Status {userId && filteredBeds ? `(${filteredBeds.length} beds)` : ''}
               </Typography>
-              <Typography variant="body2" color="textSecondary">
-                {/* Remove dynamic timestamp to prevent re-renders */}
-              </Typography>
+              {userId && (
+                <FormControl
+                  size="small"
+                  sx={{
+                    minWidth: 120,
+                    '& .MuiInputLabel-root': { color: cardTextColor },
+                    '& .MuiSelect-select': { color: cardTextColor },
+                    '& .MuiSelect-icon': { color: cardTextColor },
+                    '& .MuiOutlinedInput-notchedOutline': {
+                      borderColor: isDark ? 'rgba(255, 255, 255, 0.23)' : 'rgba(0, 0, 0, 0.23)'
+                    }
+                  }}
+                >
+                  <InputLabel>Filter</InputLabel>
+                  <Select
+                    value={selectedFilter}
+                    onChange={(e) => setSelectedFilter(e.target.value)}
+                    label="Filter"
+                    MenuProps={{
+                      PaperProps: {
+                        sx: {
+                          bgcolor: isDark ? '#2a2a2a' : '#ffffff',
+                          '& .MuiMenuItem-root': {
+                            color: cardTextColor,
+                            '&:hover': {
+                              bgcolor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.04)'
+                            },
+                            '&.Mui-selected': {
+                              bgcolor: isDark ? 'rgba(33, 150, 243, 0.16)' : 'rgba(33, 150, 243, 0.08)',
+                              '&:hover': {
+                                bgcolor: isDark ? 'rgba(33, 150, 243, 0.24)' : 'rgba(33, 150, 243, 0.12)'
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }}
+                  >
+                    <MenuItem value="all">All Beds</MenuItem>
+                    <MenuItem value="occupied">Occupied</MenuItem>
+                    <MenuItem value="available">Available</MenuItem>
+                    <MenuItem value="cleaning">Cleaning</MenuItem>
+                    <MenuItem value="maintenance">Maintenance</MenuItem>
+                    <MenuItem value="critical">Critical Patients</MenuItem>
+                  </Select>
+                </FormControl>
+              )}
             </Box>
             
             {!userId ? (
@@ -829,182 +915,239 @@ export function MainPage() {
                   >
                     <CardContent>
                       {bed.status === 'occupied' ? (
-                        <Box>
-                          {/* Header Row */}
-                          <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={2}>
-                            <Box>
-                              <Box display="flex" alignItems="center" gap={1}>
-                                <Typography variant="h6" component="span">
-                                  Bed {bed.bedId || bed.roomNumber}
+                        displayMode === 'compact' ? (
+                          // COMPACT VIEW - Single row with essential info and aligned columns
+                          <Box display="flex" alignItems="center" justifyContent="space-between">
+                            <Box display="flex" alignItems="center" gap={2}>
+                              <Box sx={{ width: '25%', minWidth: 180 }}>
+                                <Typography variant="body1" fontWeight="medium" noWrap>
+                                  {bed.patientName}, {bed.patientAge}y
                                 </Typography>
-                                <Chip 
-                                  label={bed.acuityLevel || 'Stable'} 
-                                  size="small" 
-                                  sx={{ 
+                              </Box>
+                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: 120 }}>
+                                <Chip
+                                  label={bed.acuityLevel || 'Stable'}
+                                  size="small"
+                                  sx={{
                                     bgcolor: getAcuityColor(bed.acuityLevel || 'Stable'),
                                     color: theme => theme.palette.getContrastText(getAcuityColor(bed.acuityLevel || 'Stable'))
                                   }}
                                 />
                                 {bed.isolation && (
-                                  <Chip 
-                                    label="Isolation" 
-                                    size="small" 
-                                    color="error"
-                                    icon={<WarningIcon />}
-                                  />
+                                  <Chip label="Isolation" size="small" color="error" />
                                 )}
                               </Box>
-                              <Typography variant="body1" fontWeight="medium">
-                                {bed.patientName}, {bed.patientAge}y
-                              </Typography>
-                              <Typography variant="caption" color="textSecondary">
-                                {bed.patientMRN} • Admitted {bed.admissionDate ? moment(bed.admissionDate).fromNow() : 'N/A'}
+                              <Typography variant="caption" color="textSecondary" sx={{ flex: 1 }}>
+                                Bed {bed.bedId || bed.roomNumber} • {bed.primaryCondition || 'General Care'}
                               </Typography>
                             </Box>
-                            <IconButton
-                              size="small"
-                              onClick={(e) => handleMenuOpen(e, bed._id)}
-                              sx={{
-                                color: cardTextColor
-                              }}
-                            >
-                              <MoreVertIcon />
-                            </IconButton>
-                          </Box>
-
-                          {/* Main Content Grid */}
-                          <Grid container spacing={2}>
-                            {/* Patient Info Column */}
-                            <Grid item xs={12} sm={4}>
-                              <Typography variant="caption" color="textSecondary" display="block" gutterBottom>
-                                PRIMARY CONDITION
-                              </Typography>
-                              <Typography variant="body2" gutterBottom>
-                                {bed.primaryCondition || 'General Care'}
-                              </Typography>
-                              <Typography variant="caption" color="textSecondary" display="block" mt={1}>
-                                ATTENDING
-                              </Typography>
-                              <Typography variant="body2">
-                                {bed.attendingPhysician || 'Unassigned'}
-                              </Typography>
-                              {bed.dietRestrictions && (
-                                <>
-                                  <Typography variant="caption" color="textSecondary" display="block" mt={1}>
-                                    DIET
-                                  </Typography>
-                                  <Typography variant="body2">
-                                    {bed.dietRestrictions}
-                                  </Typography>
-                                </>
+                            <Box display="flex" alignItems="center" gap={1}>
+                              <Chip
+                                label={`HR: ${bed.vitals?.hr || 'N/A'}`}
+                                size="small"
+                                variant="outlined"
+                                sx={{
+                                  color: cardTextColor,
+                                  borderColor: getVitalColor('hr', bed.vitals?.hr)
+                                }}
+                              />
+                              <Chip
+                                label={`O2: ${bed.vitals?.o2 || 'N/A'}%`}
+                                size="small"
+                                variant="outlined"
+                                sx={{
+                                  color: cardTextColor,
+                                  borderColor: getVitalColor('o2', bed.vitals?.o2)
+                                }}
+                              />
+                              {bed.fallRisk && (
+                                <Chip label="Fall Risk" size="small" color="warning" />
                               )}
-                            </Grid>
-
-                            {/* Vitals Column */}
-                            <Grid item xs={12} sm={4}>
-                              <Typography variant="caption" color="textSecondary" display="block" gutterBottom>
-                                VITALS {bed.vitals && bed.vitals.lastChecked ? `(${moment(bed.vitals.lastChecked).fromNow()})` : ''}
-                              </Typography>
-                              <Box display="flex" flexWrap="wrap" gap={1}>
-                                <Chip
-                                  label={`BP: ${bed.vitals?.bp || 'N/A'}`}
-                                  size="small"
-                                  variant="outlined"
-                                  sx={{
-                                    color: cardTextColor,
-                                    borderColor: isDark ? 'rgba(255,255,255,0.23)' : 'rgba(0,0,0,0.23)'
-                                  }}
-                                />
-                                <Chip
-                                  label={`HR: ${bed.vitals?.hr || 'N/A'}`}
-                                  size="small"
-                                  variant="outlined"
-                                  sx={{
-                                    color: cardTextColor,
-                                    borderColor: getVitalColor('hr', bed.vitals?.hr)
-                                  }}
-                                />
-                                <Chip
-                                  label={`Temp: ${bed.vitals?.temp || 'N/A'}°F`}
-                                  size="small"
-                                  variant="outlined"
-                                  sx={{
-                                    color: cardTextColor,
-                                    borderColor: getVitalColor('temp', bed.vitals?.temp)
-                                  }}
-                                />
-                                <Chip
-                                  label={`O2: ${bed.vitals?.o2 || 'N/A'}%`}
-                                  size="small"
-                                  variant="outlined"
-                                  sx={{
-                                    color: cardTextColor,
-                                    borderColor: getVitalColor('o2', bed.vitals?.o2)
-                                  }}
-                                />
-                                <Chip
-                                  label={`RR: ${bed.vitals?.rr || 'N/A'}`}
-                                  size="small"
-                                  variant="outlined"
-                                  sx={{
-                                    color: cardTextColor,
-                                    borderColor: isDark ? 'rgba(255,255,255,0.23)' : 'rgba(0,0,0,0.23)'
-                                  }}
-                                />
-                              </Box>
-                              <Box display="flex" gap={1} mt={1}>
-                                {bed.fallRisk && (
-                                  <Chip 
-                                    label="Fall Risk" 
-                                    size="small" 
-                                    color="warning"
-                                    icon={<WarningIcon />}
-                                  />
-                                )}
-                              </Box>
-                            </Grid>
-
-                            {/* Workflow Column */}
-                            <Grid item xs={12} sm={4}>
-                              <Typography variant="caption" color="textSecondary" display="block" gutterBottom>
-                                WORKFLOW
-                              </Typography>
-                              <Box display="flex" flexDirection="column" gap={0.5}>
+                              <IconButton
+                                size="small"
+                                onClick={(e) => handleMenuOpen(e, bed._id)}
+                                sx={{ color: cardTextColor }}
+                              >
+                                <MoreVertIcon />
+                              </IconButton>
+                            </Box>
+                          </Box>
+                        ) : (
+                          // REGULAR VIEW - Full layout
+                          <Box>
+                            {/* Header Row */}
+                            <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={2}>
+                              <Box>
                                 <Box display="flex" alignItems="center" gap={1}>
-                                  <LocalPharmacyIcon fontSize="small" sx={{ color: cardTextColor }} />
-                                  <Typography variant="body2">
-                                    Next med: {bed.medications?.nextDue ? moment(bed.medications.nextDue).format('h:mm A') : 'N/A'}
+                                  <Typography variant="h6" component="span">
+                                    {bed.patientName}, {bed.patientAge}y
                                   </Typography>
+                                  <Chip
+                                    label={bed.acuityLevel || 'Stable'}
+                                    size="small"
+                                    sx={{
+                                      bgcolor: getAcuityColor(bed.acuityLevel || 'Stable'),
+                                      color: theme => theme.palette.getContrastText(getAcuityColor(bed.acuityLevel || 'Stable'))
+                                    }}
+                                  />
+                                  {bed.isolation && (
+                                    <Chip
+                                      label="Isolation"
+                                      size="small"
+                                      color="error"
+                                      icon={<WarningIcon />}
+                                    />
+                                  )}
                                 </Box>
-                                {bed.labs?.pending > 0 && (
-                                  <Box display="flex" alignItems="center" gap={1}>
-                                    <AssessmentIcon fontSize="small" sx={{ color: cardTextColor }} />
-                                    <Typography variant="body2">
-                                      {bed.labs.pending} lab{bed.labs.pending > 1 ? 's' : ''} pending
-                                      {bed.labs?.critical > 0 && (
-                                        <Chip
-                                          label="Critical"
-                                          size="small"
-                                          color="error"
-                                          sx={{ ml: 1, height: 20 }}
-                                        />
-                                      )}
-                                    </Typography>
-                                  </Box>
-                                )}
-                                {bed.tasks?.pending > 0 && (
-                                  <Box display="flex" alignItems="center" gap={1}>
-                                    <AssignmentIcon fontSize="small" color={bed.tasks?.overdue > 0 ? 'error' : undefined} sx={{ color: bed.tasks?.overdue > 0 ? undefined : cardTextColor }} />
-                                    <Typography variant="body2" color={bed.tasks?.overdue > 0 ? 'error' : 'textPrimary'}>
-                                      {bed.tasks.pending} task{bed.tasks.pending > 1 ? 's' : ''}
-                                      {bed.tasks?.overdue > 0 && ` (${bed.tasks.overdue} overdue)`}
-                                    </Typography>
-                                  </Box>
-                                )}
+                                <Typography variant="caption" color="textSecondary">
+                                  Bed {bed.bedId || bed.roomNumber} • {bed.patientMRN} • Admitted {bed.admissionDate ? moment(bed.admissionDate).fromNow() : 'N/A'}
+                                </Typography>
                               </Box>
+                              <IconButton
+                                size="small"
+                                onClick={(e) => handleMenuOpen(e, bed._id)}
+                                sx={{
+                                  color: cardTextColor
+                                }}
+                              >
+                                <MoreVertIcon />
+                              </IconButton>
+                            </Box>
+
+                            {/* Main Content Grid */}
+                            <Grid container spacing={2}>
+                              {/* Patient Info Column */}
+                              <Grid item xs={12} sm={4}>
+                                <Typography variant="caption" color="textSecondary" display="block" gutterBottom>
+                                  PRIMARY CONDITION
+                                </Typography>
+                                <Typography variant="body2" gutterBottom>
+                                  {bed.primaryCondition || 'General Care'}
+                                </Typography>
+                                <Typography variant="caption" color="textSecondary" display="block" mt={1}>
+                                  ATTENDING
+                                </Typography>
+                                <Typography variant="body2">
+                                  {bed.attendingPhysician || 'Unassigned'}
+                                </Typography>
+                                {bed.dietRestrictions && (
+                                  <>
+                                    <Typography variant="caption" color="textSecondary" display="block" mt={1}>
+                                      DIET
+                                    </Typography>
+                                    <Typography variant="body2">
+                                      {bed.dietRestrictions}
+                                    </Typography>
+                                  </>
+                                )}
+                              </Grid>
+
+                              {/* Vitals Column */}
+                              <Grid item xs={12} sm={4}>
+                                <Typography variant="caption" color="textSecondary" display="block" gutterBottom>
+                                  VITALS {bed.vitals && bed.vitals.lastChecked ? `(${moment(bed.vitals.lastChecked).fromNow()})` : ''}
+                                </Typography>
+                                <Box display="flex" flexWrap="wrap" gap={1}>
+                                  <Chip
+                                    label={`BP: ${bed.vitals?.bp || 'N/A'}`}
+                                    size="small"
+                                    variant="outlined"
+                                    sx={{
+                                      color: cardTextColor,
+                                      borderColor: isDark ? 'rgba(255,255,255,0.23)' : 'rgba(0,0,0,0.23)'
+                                    }}
+                                  />
+                                  <Chip
+                                    label={`HR: ${bed.vitals?.hr || 'N/A'}`}
+                                    size="small"
+                                    variant="outlined"
+                                    sx={{
+                                      color: cardTextColor,
+                                      borderColor: getVitalColor('hr', bed.vitals?.hr)
+                                    }}
+                                  />
+                                  <Chip
+                                    label={`Temp: ${bed.vitals?.temp || 'N/A'}°F`}
+                                    size="small"
+                                    variant="outlined"
+                                    sx={{
+                                      color: cardTextColor,
+                                      borderColor: getVitalColor('temp', bed.vitals?.temp)
+                                    }}
+                                  />
+                                  <Chip
+                                    label={`O2: ${bed.vitals?.o2 || 'N/A'}%`}
+                                    size="small"
+                                    variant="outlined"
+                                    sx={{
+                                      color: cardTextColor,
+                                      borderColor: getVitalColor('o2', bed.vitals?.o2)
+                                    }}
+                                  />
+                                  <Chip
+                                    label={`RR: ${bed.vitals?.rr || 'N/A'}`}
+                                    size="small"
+                                    variant="outlined"
+                                    sx={{
+                                      color: cardTextColor,
+                                      borderColor: isDark ? 'rgba(255,255,255,0.23)' : 'rgba(0,0,0,0.23)'
+                                    }}
+                                  />
+                                </Box>
+                                <Box display="flex" gap={1} mt={1}>
+                                  {bed.fallRisk && (
+                                    <Chip
+                                      label="Fall Risk"
+                                      size="small"
+                                      color="warning"
+                                      icon={<WarningIcon />}
+                                    />
+                                  )}
+                                </Box>
+                              </Grid>
+
+                              {/* Workflow Column */}
+                              <Grid item xs={12} sm={4}>
+                                <Typography variant="caption" color="textSecondary" display="block" gutterBottom>
+                                  WORKFLOW
+                                </Typography>
+                                <Box display="flex" flexDirection="column" gap={0.5}>
+                                  <Box display="flex" alignItems="center" gap={1}>
+                                    <LocalPharmacyIcon fontSize="small" sx={{ color: cardTextColor }} />
+                                    <Typography variant="body2">
+                                      Next med: {bed.medications?.nextDue ? moment(bed.medications.nextDue).format('h:mm A') : 'N/A'}
+                                    </Typography>
+                                  </Box>
+                                  {bed.labs?.pending > 0 && (
+                                    <Box display="flex" alignItems="center" gap={1}>
+                                      <AssessmentIcon fontSize="small" sx={{ color: cardTextColor }} />
+                                      <Typography variant="body2">
+                                        {bed.labs.pending} lab{bed.labs.pending > 1 ? 's' : ''} pending
+                                        {bed.labs?.critical > 0 && (
+                                          <Chip
+                                            label="Critical"
+                                            size="small"
+                                            color="error"
+                                            sx={{ ml: 1, height: 20 }}
+                                          />
+                                        )}
+                                      </Typography>
+                                    </Box>
+                                  )}
+                                  {bed.tasks?.pending > 0 && (
+                                    <Box display="flex" alignItems="center" gap={1}>
+                                      <AssignmentIcon fontSize="small" color={bed.tasks?.overdue > 0 ? 'error' : undefined} sx={{ color: bed.tasks?.overdue > 0 ? undefined : cardTextColor }} />
+                                      <Typography variant="body2" color={bed.tasks?.overdue > 0 ? 'error' : 'textPrimary'}>
+                                        {bed.tasks.pending} task{bed.tasks.pending > 1 ? 's' : ''}
+                                        {bed.tasks?.overdue > 0 && ` (${bed.tasks.overdue} overdue)`}
+                                      </Typography>
+                                    </Box>
+                                  )}
+                                </Box>
+                              </Grid>
                             </Grid>
-                          </Grid>
-                        </Box>
+                          </Box>
+                        )
                       ) : (
                         <Box display="flex" alignItems="center" justifyContent="space-between">
                           <Box display="flex" alignItems="center" gap={2}>
@@ -1069,6 +1212,7 @@ export function MainPage() {
         </Grid>
 
         {/* Right Side - Map and Alerts */}
+        {columnCount === 2 && (
         <Grid item xs={12} md={4}>
           <Grid container spacing={2}>
             {/* Map View - Only show if API key is available */}
@@ -1204,9 +1348,10 @@ export function MainPage() {
             )}
           </Grid>
         </Grid>
+        )}
 
       </Grid>
-      
+
       {/* Patient Assignment Modal */}
       <SearchPatientsModalDialog
         open={patientModalOpen}

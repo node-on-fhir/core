@@ -25,6 +25,7 @@ Comprehensive guidance is organized in `.claude/`:
 ### Commands (Slash Commands)
 - `/create-crud-microservice {Resource}` - Generate complete FHIR resource implementation
 - `/create-crud-tests {Resource}` - Generate 9-test CRUD pattern
+- `/create-npm-workflow {Name}` - Scaffold new NPM workflow package
 - `/add-patient-context-to-tests {file}` - Fix test context management
 - `/audit-id-lookups` - Scan for ID collision bugs
 - `/audit-theme` - Scan for dark mode issues
@@ -49,6 +50,36 @@ Comprehensive guidance is organized in `.claude/`:
 - `.claude/rules/testing/` - E2E test patterns
 - `.claude/rules/ui/` - Material-UI v5, theming, responsive
 - `.claude/rules/meteor/` - Meteor v3 async, collections
+- `.claude/rules/npm-packages/` - NPM workflow package patterns
+
+## NPM Workflow Packages
+
+The `npmPackages/` directory contains NPM-based workflow packages that are replacing Atmosphere.js packages. This enables plugin-style architecture using standard NPM tooling.
+
+### Running with Extra Workflows
+
+```bash
+EXTRA_WORKFLOWS=@node-on-fhir/example-workflow meteor run --settings configs/settings.honeycomb.localhost.json
+```
+
+### Creating New Workflows
+
+Use the `/create-npm-workflow` command:
+```
+/create-npm-workflow MyWorkflow
+```
+
+Or copy the template package:
+```bash
+cp -r npmPackages/example-workflow npmPackages/my-workflow
+```
+
+**More details**: See `npmPackages/CLAUDE.md` for comprehensive documentation on:
+- Package structure and exports
+- workflow.json configuration
+- Server methods with Meteor v3 async
+- WorkflowRegistry integration
+- Migration from Atmosphere.js
 
 ## Critical Anti-Pattern: ID Lookup with OR Logic
 

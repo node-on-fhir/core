@@ -52,3 +52,6 @@
 [submodule "packages/quality-measures/guides/fhir-cqm"]
 	path = packages/quality-measures/guides/fhir-cqm
 	url = https://github.com/HL7/fhir-cqm
+[submodule "npmPackages/merkalis/gitgraph.js"]
+	path = npmPackages/merkalis/gitgraph.js
+	url = https://github.com/nicoespeon/gitgraph.js
