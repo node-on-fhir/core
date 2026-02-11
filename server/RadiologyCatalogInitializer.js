@@ -26,10 +26,10 @@ export const RadiologyCatalogInitializer = {
 
     try {
       // Check if already populated
-      const existingCount = await PlanDefinitions.countAsync({
+      const existingCount = await PlanDefinitions.find({
         'type.coding.code': 'order-set',
         'useContext.code.code': 'imaging'
-      });
+      }).countAsync();
 
       if (existingCount > 0) {
         console.log(`[RadiologyCatalog] Already initialized (${existingCount} imaging order sets found)`);
@@ -241,10 +241,10 @@ export const RadiologyCatalogInitializer = {
     }
 
     try {
-      const total = await PlanDefinitions.countAsync({
+      const total = await PlanDefinitions.find({
         'type.coding.code': 'order-set',
         'useContext.code.code': 'imaging'
-      });
+      }).countAsync();
 
       const byCategory = {};
       const procedures = await PlanDefinitions.find({
