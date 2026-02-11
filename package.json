@@ -28,7 +28,7 @@
     "@cornerstonejs/tools": "^1.78.0",
     "@emotion/react": "^11.13.0",
     "@emotion/styled": "^11.13.0",
-    "@langchain/community": "0.3.3",
+    "@langchain/community": "1.1.14",
     "@langchain/core": "0.3.80",
     "@langchain/mongodb": "0.1.0",
     "@langchain/openai": "0.3.16",
