@@ -17,7 +17,18 @@ import EditIcon from '@mui/icons-material/Edit';
 import FlagIcon from '@mui/icons-material/Flag';
 import ScheduleIcon from '@mui/icons-material/Schedule';
 
+// Get useTheme from Meteor for dark mode support
+let useAppTheme;
+Meteor.startup(function(){
+  useAppTheme = Meteor.useTheme;
+});
+
 export function TaskList({ tasks, listId, onTaskUpdate }) {
+  // Theme support
+  const appTheme = useAppTheme ? useAppTheme() : { theme: 'light' };
+  const isDark = appTheme.theme === 'dark';
+  const textColor = isDark ? 'rgba(255, 255, 255, 0.87)' : 'rgba(0, 0, 0, 0.87)';
+
   const handleToggleComplete = async (taskId) => {
     try {
       await Meteor.callAsync('checklist.tasks.toggleComplete', taskId);
@@ -71,7 +82,7 @@ export function TaskList({ tasks, listId, onTaskUpdate }) {
   if (!tasks || tasks.length === 0) {
     return (
       <Box textAlign="center" py={4}>
-        <Typography variant="body1" color="text.secondary">
+        <Typography variant="body1" sx={{ color: isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.6)' }}>
           No tasks yet. Add your first task to get started.
         </Typography>
       </Box>
@@ -106,8 +117,9 @@ export function TaskList({ tasks, listId, onTaskUpdate }) {
               primary={
                 <Typography
                   variant="body1"
-                  sx={{ 
-                    textDecoration: isCompleted ? 'line-through' : 'none'
+                  sx={{
+                    textDecoration: isCompleted ? 'line-through' : 'none',
+                    color: textColor
                   }}
                 >
                   {get(task, 'description', 'Untitled task')}

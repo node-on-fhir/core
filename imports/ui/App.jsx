@@ -2129,6 +2129,33 @@ export function App(props){
 
 
   // ------------------------------------------------------------------
+  // Dynamic Layout CSS Variables
+  // Sets CSS variables for header/footer heights based on visibility state
+
+  const displayNavbars = useTracker(function(){
+    return Session.get("displayNavbars");
+  }, []);
+
+  const showProminentHeader = useTracker(function(){
+    const prominentHeaderSetting = get(Meteor, 'settings.public.defaults.prominentHeader', false);
+    const selectedPatient = Session.get("selectedPatient");
+    const selectedPatientId = Session.get("selectedPatientId");
+    const hasPatient = !!(selectedPatient || selectedPatientId);
+    return prominentHeaderSetting && hasPatient;
+  }, []);
+
+  // Set CSS variables on document root for dynamic layout calculations
+  useLayoutEffect(function(){
+    const headerHeight = (displayNavbars !== false) ? (showProminentHeader ? 128 : 64) : 0;
+    const footerHeight = (displayNavbars !== false) ? 64 : 0;
+
+    document.documentElement.style.setProperty('--header-height', `${headerHeight}px`);
+    document.documentElement.style.setProperty('--footer-height', `${footerHeight}px`);
+    document.documentElement.style.setProperty('--total-nav-height', `${headerHeight + footerHeight}px`);
+  }, [displayNavbars, showProminentHeader]);
+
+
+  // ------------------------------------------------------------------
   // User Interface Methods
 
   function handleDrawerOpen(){
@@ -2277,6 +2304,11 @@ function StyledMainRouter(props){
     return prominentHeaderSetting && hasPatient;
   }, []);
 
+  // Track navbar visibility for padding adjustments
+  const displayNavbars = useTracker(function(){
+    return Session.get("displayNavbars");
+  }, []);
+
   // Use theme-aware default backgrounds instead of white
   const backgroundCanvas = get(Meteor, 'settings.public.theme.palette.backgroundCanvas', "#f6f6f6");
   const backgroundCanvasDark = get(Meteor, 'settings.public.theme.palette.backgroundCanvasDark', "#121212");
@@ -2294,9 +2326,9 @@ function StyledMainRouter(props){
     ...style // Merge the passed style prop
   }
 
-  // Add padding when prominent header is shown
+  // Add padding when prominent header is shown AND navbars are visible
   // The prominent header Toolbar is 64px, so we add that to the top padding
-  if(showProminentHeader){
+  if(showProminentHeader && displayNavbars !== false){
     mainAppStyle.paddingTop = '64px';
   }
 

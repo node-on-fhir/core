@@ -26,13 +26,13 @@
         "secondaryColor": "#42a5f5",
         "secondaryText": "rgba(255, 255, 255, 0.95) !important",
 
-        "cardColor": "#1e1e1e !important",
+        "cardColorDark": "#1e1e1e !important",
         "cardTextColor": "rgba(255, 255, 255, 0.87) !important",
 
         "errorColor": "rgb(244, 67, 54) !important",
         "errorText": "rgba(255, 255, 255, 0.95) !important",
 
-        "paperColor": "#1e1e1e !important",
+        "paperColorDark": "#1e1e1e !important",
         "paperTextColor": "rgba(255, 255, 255, 0.87) !important",
 
         "backgroundCanvas": "#f6f6f6",
@@ -61,30 +61,38 @@
     "capabilityStatement": {
       "resourceTypes": [
         "AllergyIntolerance",
+        "BodyStructure",
         "CareTeam",
         "CarePlan",
         "Condition",
         "Composition",
         "Consent",
         "Communication",
+        "DiagnosticReport",
         "DocumentReference",
         "Encounter",
         "Goal",
+        "ImagingStudy",
         "Immunization",
         "List",
         "Location",
+        "Measure",
+        "MeasureReport",
         "Medication",
         "MedicationRequest",
         "MedicationStatement",
         "NutritionOrder",
         "Observation",
+        "Organization",
         "Patient",
+        "PlanDefinition",
         "Practitioner",
         "Procedure",
         "Questionnaire",
         "QuestionnaireResponse",
         "ResearchStudy",
         "ResearchSubject",
+        "RiskAssessment",
         "ServiceRequest"
       ]
     },
@@ -125,7 +133,6 @@
         },
         "hidden": [
           "/audit-events",
-          "/body-sites",
           "/bundles",
           "/contracts",
           "/devices",
@@ -152,7 +159,8 @@
       "chiefMedicalOfficer": {
         "reference": "Practitioner/chief-medical-officer",
         "display": "Dr. Sarah Johnson, Chief Medical Officer"
-      }
+      },
+      "dashboardPhoto": "/backgrounds/medical/Gradient.jpg"
     },
     "interfaces": {
       "default": {
@@ -176,7 +184,11 @@
       "host": "http://localhost",
       "port": 3000
     },
+    "stripe": {
+      "publishableKey": "pk_test_REPLACE_WITH_YOUR_KEY"
+    },
     "modules": {
+      "monetization": { "enabled": true },
       "PatientDirectory": true,
       "DicomViewer": {
         "enabled": true,
@@ -208,6 +220,8 @@
         "Immunizations": true,
         "ImagingStudies": true,
         "Lists": true,
+        "Measures": true,
+        "MeasureReports": true,
         "Locations": true,
         "Medications": true,
         "MedicationRequests": true,
@@ -219,6 +233,7 @@
         "Organizations": true,
         "Observations": true,
         "Patients": true,
+        "PlanDefinitions": true,
         "Practitioners": true,
         "PractitionerRoles": true,
         "Procedures": true,
@@ -249,6 +264,13 @@
     }
   },
   "private": {
+    "stripe": {
+      "secretKey": "sk_test_REPLACE_WITH_YOUR_KEY",
+      "webhookSecret": "whsec_REPLACE_WITH_YOUR_KEY"
+    },
+    "orbital": {
+      "enableCron": true
+    },
     "mcp": {
       "enabled": true,
       "transport": ["http"],
@@ -277,6 +299,17 @@
         "radiologyCatalog": true
       },
       "rest": {
+        "BodyStructure": {
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "search"
+          ],
+          "search": true,
+          "publication": true
+        },
         "Binary": {
           "interactions": [
             "read",
@@ -419,6 +452,28 @@
           "search": true,
           "publication": true
         },
+        "Measure": {
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "search"
+          ],
+          "search": true,
+          "publication": true
+        },
+        "MeasureReport": {
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "search"
+          ],
+          "search": true,
+          "publication": true
+        },
         "Location": {
           "interactions": [
             "read",
@@ -485,6 +540,17 @@
           "search": true,
           "publication": true
         },
+        "Organization": {
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
+            "search"
+          ],
+          "search": true,
+          "publication": true
+        },
         "Observation": {
           "interactions": [
             "read",
@@ -499,6 +565,17 @@
         "Patient": {
           "interactions": [
             "read",
+            "search"
+          ],
+          "search": true,
+          "publication": true
+        },
+        "PlanDefinition": {
+          "interactions": [
+            "read",
+            "create",
+            "update",
+            "delete",
             "search"
           ],
           "search": true,
@@ -557,17 +634,6 @@
           "publication": true
         },
         "ResearchSubject": {
-          "interactions": [
-            "read",
-            "create",
-            "update",
-            "delete",
-            "search"
-          ],
-          "search": true,
-          "publication": true
-        },
-        "Procedure": {
           "interactions": [
             "read",
             "create",

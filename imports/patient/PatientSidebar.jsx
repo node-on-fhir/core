@@ -612,7 +612,12 @@ export function PatientSidebar(props){
   }
 
   let sidebarWorkflows = [];
-  if(get(Meteor, 'settings.public.defaults.sidebar.menuItems.SidebarWorkflows')){
+  // Only load package workflows if SidebarWorkflows is enabled AND WorkflowsFromSettings is NOT enabled
+  // This allows WorkflowsFromSettings to suppress package-based workflows
+  const loadPackageWorkflows = get(Meteor, 'settings.public.defaults.sidebar.menuItems.SidebarWorkflows')
+    && !get(Meteor, 'settings.public.defaults.sidebar.menuItems.WorkflowsFromSettings');
+
+  if(loadPackageWorkflows){
     // Get sidebar items from WorkflowRegistry (NPM packages)
     const npmSidebarItems = WorkflowRegistry.getSidebarItems();
     if (npmSidebarItems.length > 0) {
@@ -946,46 +951,54 @@ export function PatientSidebar(props){
   }
 
   //----------------------------------------------------------------------
-  // Workflow Modules  
+  // Workflow Modules
+  // WorkflowsFromSettings allows loading ONLY settings-based workflows (no package workflows)
+  // It works independently of SidebarWorkflows
 
   let workflowElements = [];
-  if(get(Meteor, 'settings.public.defaults.sidebar.menuItems.SidebarWorkflows')){
-    sidebarWorkflows.map(function(element, index){ 
+  const showWorkflows = get(Meteor, 'settings.public.defaults.sidebar.menuItems.SidebarWorkflows')
+    || get(Meteor, 'settings.public.defaults.sidebar.menuItems.WorkflowsFromSettings');
 
-      if(element.icon){
-        console.warn('Plugin Warning: You have tried to pass in an icon.  This has been deprecated.  Please use an iconName instead.')
-      }
+  if(showWorkflows){
+    // Only render package workflows if WorkflowsFromSettings is NOT enabled
+    if(!get(Meteor, 'settings.public.defaults.sidebar.menuItems.WorkflowsFromSettings')){
+      sidebarWorkflows.map(function(element, index){
 
-      let clonedIcon = parseIcon(element.iconName); 
-
-      // // we want to pass in the props
-      if(clonedIcon){
-        clonedIcon = React.cloneElement(clonedIcon, {
-          // className: styles.drawerIcons 
-        });
-      } else {
-        clonedIcon = <Icon icon={fire} />
-      }
-
-      // the excludes array will hide routes
-      if(!get(Meteor, 'settings.public.defaults.sidebar.hiddenWorkflow', []).includes(element.to)){
-
-        // don't show the element unless it's public, or the user is signed in
-        if(!element.requireAuth || (element.requireAuth && currentUser)){
-
-          workflowElements.push(
-            <ListItem key={index} button onClick={function(){ openPage(element.to, element.workflowTabs); }} >
-              <ListItemIcon >
-                { clonedIcon }
-              </ListItemIcon>
-              <ListItemText primary={element.primaryText}  />
-            </ListItem>
-          );
+        if(element.icon){
+          console.warn('Plugin Warning: You have tried to pass in an icon.  This has been deprecated.  Please use an iconName instead.')
         }
-      }
-    });
 
-    // Settings-driven workflow links
+        let clonedIcon = parseIcon(element.iconName);
+
+        // // we want to pass in the props
+        if(clonedIcon){
+          clonedIcon = React.cloneElement(clonedIcon, {
+            // className: styles.drawerIcons
+          });
+        } else {
+          clonedIcon = <Icon icon={fire} />
+        }
+
+        // the excludes array will hide routes
+        if(!get(Meteor, 'settings.public.defaults.sidebar.hiddenWorkflow', []).includes(element.to)){
+
+          // don't show the element unless it's public, or the user is signed in
+          if(!element.requireAuth || (element.requireAuth && currentUser)){
+
+            workflowElements.push(
+              <ListItem key={index} button onClick={function(){ openPage(element.to, element.workflowTabs); }} >
+                <ListItemIcon >
+                  { clonedIcon }
+                </ListItemIcon>
+                <ListItemText primary={element.primaryText}  />
+              </ListItem>
+            );
+          }
+        }
+      });
+    }
+
+    // Settings-driven workflow links (always render when showWorkflows is true)
     let settingsWorkflowLinks = get(Meteor, 'settings.public.defaults.sidebar.workflowLinks', []);
     settingsWorkflowLinks.forEach(function(workflowLink, wlIndex){
       let clonedIcon = parseIcon(get(workflowLink, 'icon', 'fire'));

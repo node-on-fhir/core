@@ -1,7 +1,6 @@
 // packages/international-patient-summary/client/sections/IPSDiagnosticResultsSection.jsx
 
-import React, { useState, useEffect } from 'react';
-import { Meteor } from 'meteor/meteor';
+import React, { useState } from 'react';
 import { Session } from 'meteor/session';
 import { useTracker } from 'meteor/react-meteor-data';
 
@@ -24,36 +23,24 @@ import { get } from 'lodash';
 import moment from 'moment';
 
 function IPSDiagnosticResultsSection(props) {
-  const [observations, setObservations] = useState([]);
-  const [diagnosticReports, setDiagnosticReports] = useState([]);
   const [tabIndex, setTabIndex] = useState(0);
 
   const selectedPatientId = useTracker(function(){
     return Session.get('selectedPatientId');
   }, []);
 
-  useEffect(function(){
-    async function loadDiagnosticData() {
-      if(selectedPatientId) {
-        // Load Observations
-        if(window.Collections?.Observations) {
-          const patientObs = await window.Collections.Observations.find({
-            'subject.reference': `Patient/${selectedPatientId}`,
-            'category.coding.code': { $in: ['laboratory', 'vital-signs'] }
-          }).fetch();
-          setObservations(patientObs);
-        }
-        
-        // Load DiagnosticReports
-        if(window.Collections?.DiagnosticReports) {
-          const patientReports = await window.Collections.DiagnosticReports.find({
-            'subject.reference': `Patient/${selectedPatientId}`
-          }).fetch();
-          setDiagnosticReports(patientReports);
-        }
-      }
-    }
-    loadDiagnosticData();
+  const observations = useTracker(function(){
+    if(!selectedPatientId) return [];
+    if(!window.Collections?.Observations) return [];
+    return window.Collections.Observations.find({
+      'category.coding.code': { $in: ['laboratory', 'vital-signs'] }
+    }).fetch();
+  }, [selectedPatientId]);
+
+  const diagnosticReports = useTracker(function(){
+    if(!selectedPatientId) return [];
+    if(!window.Collections?.DiagnosticReports) return [];
+    return window.Collections.DiagnosticReports.find({}).fetch();
   }, [selectedPatientId]);
 
   if(observations.length === 0 && diagnosticReports.length === 0) {
@@ -74,7 +61,7 @@ function IPSDiagnosticResultsSection(props) {
       <Typography variant="h6" gutterBottom>
         Diagnostic Results (Recommended)
       </Typography>
-      <Typography variant="body2" color="text.secondary" paragraph>
+      <Typography variant="body2" sx={{ opacity: 0.7 }} paragraph>
         Laboratory, pathology, and radiology results
       </Typography>
       

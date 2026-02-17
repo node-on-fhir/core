@@ -1,7 +1,6 @@
 // packages/international-patient-summary/client/sections/IPSImmunizationsSection.jsx
 
-import React, { useState, useEffect } from 'react';
-import { Meteor } from 'meteor/meteor';
+import React from 'react';
 import { Session } from 'meteor/session';
 import { useTracker } from 'meteor/react-meteor-data';
 
@@ -23,22 +22,14 @@ import { get } from 'lodash';
 import moment from 'moment';
 
 function IPSImmunizationsSection(props) {
-  const [immunizations, setImmunizations] = useState([]);
-
   const selectedPatientId = useTracker(function(){
     return Session.get('selectedPatientId');
   }, []);
 
-  useEffect(function(){
-    async function loadImmunizations() {
-      if(selectedPatientId && window.Collections?.Immunizations) {
-        const patientImmunizations = await window.Collections.Immunizations.find({
-          'patient.reference': `Patient/${selectedPatientId}`
-        }).fetch();
-        setImmunizations(patientImmunizations);
-      }
-    }
-    loadImmunizations();
+  const immunizations = useTracker(function(){
+    if(!selectedPatientId) return [];
+    if(!window.Collections?.Immunizations) return [];
+    return window.Collections.Immunizations.find({}).fetch();
   }, [selectedPatientId]);
 
   if(immunizations.length === 0) {
@@ -59,7 +50,7 @@ function IPSImmunizationsSection(props) {
       <Typography variant="h6" gutterBottom>
         Immunizations (Recommended)
       </Typography>
-      <Typography variant="body2" color="text.secondary" paragraph>
+      <Typography variant="body2" sx={{ opacity: 0.7 }} paragraph>
         Patient's immunization status and history
       </Typography>
       

@@ -569,7 +569,8 @@ Meteor.methods({
   async 'dicom.createOrUpdateImagingStudy'(gridfsFileIds, options = {}) {
     check(gridfsFileIds, [String]);
     check(options, {
-      patientId: Match.Maybe(String)
+      patientId: Match.Maybe(String),
+      serviceRequestId: Match.Maybe(String)
     });
 
     if (!this.userId) {
@@ -625,6 +626,43 @@ Meteor.methods({
 
       const results = [];
       const patientId = options.patientId || get(Meteor, 'settings.public.defaults.patientId', 'unknown-patient');
+
+      // Look up Patient for display name (try _id first, then FHIR id fallback)
+      const Patients = global.Collections?.Patients;
+      let patientDisplay = '';
+      if (Patients && patientId && patientId !== 'unknown-patient') {
+        let patientRecord = await Patients.findOneAsync({ _id: patientId });
+        if (!patientRecord) {
+          patientRecord = await Patients.findOneAsync({ id: patientId });
+        }
+        if (patientRecord) {
+          patientDisplay = get(patientRecord, 'name.0.text',
+            [get(patientRecord, 'name.0.given.0', ''), get(patientRecord, 'name.0.family', '')].filter(Boolean).join(' ')
+          );
+          console.log('[dicom.createOrUpdateImagingStudy] Patient display:', patientDisplay);
+        }
+      }
+
+      // Look up ServiceRequest for basedOn reference
+      const ServiceRequests = global.Collections?.ServiceRequests;
+      let serviceRequestRef = null;
+      if (ServiceRequests && options.serviceRequestId) {
+        let srRecord = await ServiceRequests.findOneAsync({ _id: options.serviceRequestId });
+        if (!srRecord) {
+          srRecord = await ServiceRequests.findOneAsync({ id: options.serviceRequestId });
+        }
+        if (srRecord) {
+          const srId = srRecord.id || srRecord._id;
+          const srDisplay = get(srRecord, 'code.text',
+            get(srRecord, 'code.coding.0.display', 'Service Request')
+          );
+          serviceRequestRef = {
+            reference: 'ServiceRequest/' + srId,
+            display: srDisplay
+          };
+          console.log('[dicom.createOrUpdateImagingStudy] ServiceRequest ref:', serviceRequestRef);
+        }
+      }
 
       // Process each unique study
       for (const studyUid of studyUids) {
@@ -748,16 +786,37 @@ Meteor.methods({
             return sum + (s.numberOfInstances || 0);
           }, 0);
 
-          await ImagingStudies.updateAsync(
-            { _id: existingStudy._id },
-            {
-              $set: {
-                series: mergedSeries,
-                numberOfSeries: mergedSeries.length,
-                numberOfInstances: mergedTotalInstances
-              }
+          const updateFields = {
+            series: mergedSeries,
+            numberOfSeries: mergedSeries.length,
+            numberOfInstances: mergedTotalInstances
+          };
+
+          // Always update subject when a valid patient is provided
+          if (patientId !== 'unknown-patient') {
+            updateFields.subject = { reference: 'Patient/' + patientId };
+            if (patientDisplay) {
+              updateFields.subject.display = patientDisplay;
             }
+          }
+
+          // Merge basedOn — add ServiceRequest if not already present
+          if (serviceRequestRef) {
+            const existingBasedOn = get(existingStudy, 'basedOn', []);
+            const alreadyLinked = existingBasedOn.some(function(ref) {
+              return get(ref, 'reference') === serviceRequestRef.reference;
+            });
+            if (!alreadyLinked) {
+              updateFields.basedOn = existingBasedOn.concat([serviceRequestRef]);
+            }
+          }
+
+          const updateResult = await ImagingStudies.updateAsync(
+            { _id: existingStudy._id },
+            { $set: updateFields }
           );
+
+          console.log('[dicom.createOrUpdateImagingStudy] Update result:', updateResult, 'fields:', Object.keys(updateFields));
 
           results.push({
             action: 'updated',
@@ -769,6 +828,11 @@ Meteor.methods({
 
         } else {
           // CREATE new ImagingStudy
+          const subjectRef = { reference: 'Patient/' + patientId };
+          if (patientDisplay) {
+            subjectRef.display = patientDisplay;
+          }
+
           const imagingStudy = {
             resourceType: 'ImagingStudy',
             status: 'available',
@@ -777,9 +841,7 @@ Meteor.methods({
               system: 'urn:dicom:uid',
               value: studyUid
             }],
-            subject: {
-              reference: 'Patient/' + patientId
-            },
+            subject: subjectRef,
             started: get(firstFile, 'metadata.studyDate')
               ? formatDicomDateForFhir(get(firstFile, 'metadata.studyDate'))
               : new Date().toISOString(),
@@ -788,6 +850,11 @@ Meteor.methods({
             numberOfInstances: totalInstances,
             series: seriesArray
           };
+
+          // Add basedOn if ServiceRequest was found
+          if (serviceRequestRef) {
+            imagingStudy.basedOn = [serviceRequestRef];
+          }
 
           const imagingStudyId = await ImagingStudies.insertAsync(imagingStudy);
           console.log('[dicom.createOrUpdateImagingStudy] Created ImagingStudy:', imagingStudyId);

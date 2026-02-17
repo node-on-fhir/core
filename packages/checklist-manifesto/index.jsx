@@ -18,14 +18,14 @@ export const SidebarWorkflows = [{
   name: 'Checklist Manifesto',
   primaryText: 'Checklists',
   iconName: 'checklist',
-  to: '/checklists',
+  to: '/checklist-manifesto',
   requireAuth: true
 }];
 
 // Export dynamic routes for automatic registration
 export const DynamicRoutes = [{
   name: 'ChecklistManifesto',
-  path: '/checklists',
+  path: '/checklist-manifesto',
   element: <ChecklistManifestoPage />,
   requireAuth: true
 }];

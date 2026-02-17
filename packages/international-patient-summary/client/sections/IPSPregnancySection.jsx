@@ -9,7 +9,7 @@ function IPSPregnancySection(props) {
       <Typography variant="h6" gutterBottom>
         History of Pregnancy (Optional)
       </Typography>
-      <Typography variant="body2" color="text.secondary" paragraph>
+      <Typography variant="body2" sx={{ opacity: 0.7 }} paragraph>
         Pregnancy status and history summary
       </Typography>
       <Alert severity="info">

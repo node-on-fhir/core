@@ -37,10 +37,12 @@ import { extractAllDicomMetadata } from './utils/DicomFhirMapping';
 // Theme hook
 let useAppTheme;
 let useNavigate;
+let useSearchParams;
 Meteor.startup(function(){
   useAppTheme = Meteor.useTheme;
   if (window.ReactRouter) {
     useNavigate = window.ReactRouter.useNavigate;
+    useSearchParams = window.ReactRouter.useSearchParams;
   }
 });
 
@@ -48,6 +50,29 @@ function UploadPage() {
   const navigate = useNavigate ? useNavigate() : null;
   const appTheme = useAppTheme ? useAppTheme() : { theme: 'light' };
   const isDark = appTheme.theme === 'dark';
+
+  // Parse URL parameters for navigation
+  let backUrl = null;
+  let nextUrl = null;
+  var patientParam = null;
+  var serviceRequestParam = null;
+  if (useSearchParams) {
+    const searchParamsResult = useSearchParams();
+    const searchParams = searchParamsResult[0];
+    backUrl = searchParams.get('back');
+    nextUrl = searchParams.get('next');
+    patientParam = searchParams.get('patient');
+    serviceRequestParam = searchParams.get('servicerequest');
+  }
+
+  // Build forwarding query string for patient and servicerequest params
+  var forwardParams = '';
+  if (patientParam) {
+    forwardParams += (forwardParams ? '&' : '?') + 'patient=' + encodeURIComponent(patientParam);
+  }
+  if (serviceRequestParam) {
+    forwardParams += (forwardParams ? '&' : '?') + 'servicerequest=' + encodeURIComponent(serviceRequestParam);
+  }
 
   // Get theme colors from settings
   const cardBgColor = isDark
@@ -223,8 +248,16 @@ function UploadPage() {
       console.log('[UploadPage] Creating aggregated ImagingStudy for', successfulFileIds.length, 'files');
 
       try {
+        var uploadMethodOptions = {};
+        if (patientParam) {
+          uploadMethodOptions.patientId = patientParam;
+        }
+        if (serviceRequestParam) {
+          uploadMethodOptions.serviceRequestId = serviceRequestParam;
+        }
+
         const aggregationResult = await new Promise(function(resolve, reject) {
-          Meteor.call('dicom.createOrUpdateImagingStudy', successfulFileIds, {}, function(error, result) {
+          Meteor.call('dicom.createOrUpdateImagingStudy', successfulFileIds, uploadMethodOptions, function(error, result) {
             if (error) {
               reject(error);
             } else {
@@ -371,8 +404,16 @@ function UploadPage() {
       if (uploadedFileIds.length > 0) {
         console.log('[UploadPage] Creating aggregated ImagingStudy for', uploadedFileIds.length, 'files');
 
+        var convertMethodOptions = {};
+        if (patientParam) {
+          convertMethodOptions.patientId = patientParam;
+        }
+        if (serviceRequestParam) {
+          convertMethodOptions.serviceRequestId = serviceRequestParam;
+        }
+
         const aggregationResult = await new Promise(function(resolve, reject) {
-          Meteor.call('dicom.createOrUpdateImagingStudy', uploadedFileIds, {}, function(error, result) {
+          Meteor.call('dicom.createOrUpdateImagingStudy', uploadedFileIds, convertMethodOptions, function(error, result) {
             if (error) {
               reject(error);
             } else {
@@ -404,7 +445,7 @@ function UploadPage() {
       if (successCount > 0) {
         // Navigate to studies page to see the new FHIR resources
         if (navigate) {
-          navigate('/dicom/studies');
+          navigate('/dicom/studies' + forwardParams);
         }
       }
     } catch (err) {
@@ -434,6 +475,18 @@ function UploadPage() {
           <CardHeader
             title="Upload DICOM Files"
             subheader={files.length > 0 ? `${files.length} file${files.length !== 1 ? 's' : ''} selected` : "Drag and drop or select DICOM files to upload"}
+            action={
+              backUrl && navigate && (
+                <Button
+                  variant="outlined"
+                  startIcon={<BackIcon />}
+                  onClick={() => navigate(backUrl)}
+                  sx={{ color: cardTextColor }}
+                >
+                  Back
+                </Button>
+              )
+            }
             sx={{
               '& .MuiCardHeader-title': { color: cardTextColor },
               '& .MuiCardHeader-subheader': { color: subheaderColor }
@@ -533,23 +586,35 @@ function UploadPage() {
                 )}
 
                 {!uploading && !converting && (
-                  <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
-                    <Button
-                      variant="outlined"
-                      onClick={handleConvertToFHIR}
-                      disabled={files.length === 0}
-                      startIcon={<ConvertIcon />}
-                    >
-                      Convert to FHIR
-                    </Button>
-                    <Button
-                      variant="contained"
-                      onClick={handleUpload}
-                      disabled={files.length === 0}
-                      startIcon={<UploadIcon />}
-                    >
-                      Upload {files.length} File{files.length !== 1 ? 's' : ''}
-                    </Button>
+                  <Box sx={{ mt: 2, display: 'flex', justifyContent: 'space-between', gap: 2 }}>
+                    <Box>
+                      {nextUrl && navigate && (
+                        <Button
+                          variant="outlined"
+                          onClick={() => navigate(nextUrl)}
+                        >
+                          Next
+                        </Button>
+                      )}
+                    </Box>
+                    <Box sx={{ display: 'flex', gap: 2 }}>
+                      <Button
+                        variant="outlined"
+                        onClick={handleConvertToFHIR}
+                        disabled={files.length === 0}
+                        startIcon={<ConvertIcon />}
+                      >
+                        Convert to FHIR
+                      </Button>
+                      <Button
+                        variant="contained"
+                        onClick={handleUpload}
+                        disabled={files.length === 0}
+                        startIcon={<UploadIcon />}
+                      >
+                        Upload {files.length} File{files.length !== 1 ? 's' : ''}
+                      </Button>
+                    </Box>
                   </Box>
                 )}
 
@@ -632,7 +697,7 @@ function UploadPage() {
                 <Button
                   variant="outlined"
                   startIcon={<BackIcon />}
-                  onClick={() => navigate('/dicom/studies')}
+                  onClick={() => navigate('/dicom/studies' + forwardParams)}
                   sx={{ color: cardTextColor }}
                 >
                   Back to Studies

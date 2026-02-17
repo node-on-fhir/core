@@ -1,7 +1,6 @@
 // packages/international-patient-summary/client/sections/IPSMedicationsSection.jsx
 
-import React, { useState, useEffect } from 'react';
-import { Meteor } from 'meteor/meteor';
+import React from 'react';
 import { Session } from 'meteor/session';
 import { useTracker } from 'meteor/react-meteor-data';
 
@@ -25,37 +24,27 @@ import { get } from 'lodash';
 import moment from 'moment';
 
 function IPSMedicationsSection(props) {
-  const [medications, setMedications] = useState([]);
-
   const selectedPatientId = useTracker(function(){
     return Session.get('selectedPatientId');
   }, []);
 
-  useEffect(function(){
-    async function loadMedications() {
-      if(selectedPatientId) {
-        const meds = [];
-        
-        // Try MedicationStatements first
-        if(window.Collections?.MedicationStatements) {
-          const statements = await window.Collections.MedicationStatements.find({
-            'subject.reference': `Patient/${selectedPatientId}`
-          }).fetch();
-          meds.push(...statements.map(s => ({ ...s, _source: 'statement' })));
-        }
-        
-        // Also check MedicationRequests
-        if(window.Collections?.MedicationRequests) {
-          const requests = await window.Collections.MedicationRequests.find({
-            'subject.reference': `Patient/${selectedPatientId}`
-          }).fetch();
-          meds.push(...requests.map(r => ({ ...r, _source: 'request' })));
-        }
-        
-        setMedications(meds);
-      }
+  const medications = useTracker(function(){
+    if(!selectedPatientId) return [];
+    const meds = [];
+
+    // Try MedicationStatements first
+    if(window.Collections?.MedicationStatements) {
+      const statements = window.Collections.MedicationStatements.find({}).fetch();
+      meds.push(...statements.map(s => ({ ...s, _source: 'statement' })));
     }
-    loadMedications();
+
+    // Also check MedicationRequests
+    if(window.Collections?.MedicationRequests) {
+      const requests = window.Collections.MedicationRequests.find({}).fetch();
+      meds.push(...requests.map(r => ({ ...r, _source: 'request' })));
+    }
+
+    return meds;
   }, [selectedPatientId]);
 
   function getStatus(medication) {
@@ -129,7 +118,7 @@ function IPSMedicationsSection(props) {
       <Typography variant="h6" gutterBottom>
         Medication Summary (Required)
       </Typography>
-      <Typography variant="body2" color="text.secondary" paragraph>
+      <Typography variant="body2" sx={{ opacity: 0.7 }} paragraph>
         Patient's current and relevant medications
       </Typography>
       
@@ -154,7 +143,7 @@ function IPSMedicationsSection(props) {
                     <Typography variant="body2">
                       {getMedicationName(medication)}
                     </Typography>
-                    <Typography variant="caption" color="text.secondary">
+                    <Typography variant="caption" sx={{ opacity: 0.6 }}>
                       {get(medication, 'medicationCodeableConcept.coding[0].code', '')}
                     </Typography>
                   </TableCell>

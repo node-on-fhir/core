@@ -9,7 +9,7 @@ function IPSFunctionalStatusSection(props) {
       <Typography variant="h6" gutterBottom>
         Functional Status (Optional)
       </Typography>
-      <Typography variant="body2" color="text.secondary" paragraph>
+      <Typography variant="body2" sx={{ opacity: 0.7 }} paragraph>
         Patient's capability to perform activities of daily living
       </Typography>
       <Alert severity="info">

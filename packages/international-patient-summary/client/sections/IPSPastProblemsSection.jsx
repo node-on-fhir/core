@@ -9,7 +9,7 @@ function IPSPastProblemsSection(props) {
       <Typography variant="h6" gutterBottom>
         History of Past Problems (Optional)
       </Typography>
-      <Typography variant="body2" color="text.secondary" paragraph>
+      <Typography variant="body2" sx={{ opacity: 0.7 }} paragraph>
         Conditions the patient suffered in the past that are no longer active
       </Typography>
       <Alert severity="info">

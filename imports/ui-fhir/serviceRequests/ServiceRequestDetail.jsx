@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTracker } from 'meteor/react-meteor-data';
 
-import { 
+import {
   Button,
   Card,
   CardActions,
@@ -18,8 +18,7 @@ import {
   InputLabel,
   Typography,
   Box,
-  Stack,
-  Chip,
+  Grid,
   FormControlLabel,
   Switch
 } from '@mui/material';
@@ -298,7 +297,7 @@ function ServiceRequestDetail(props) {
   ];
 
   return (
-    <Container id="serviceRequestDetailPage" maxWidth="md" sx={{ py: 4 }}>
+    <Container id="serviceRequestDetailPage" maxWidth="lg" sx={{ py: 4 }}>
       <Card sx={{ boxShadow: 3 }}>
         <CardHeader 
           title={id && id !== 'new' ? 'Edit Service Request' : 'New Service Request'}
@@ -318,237 +317,279 @@ function ServiceRequestDetail(props) {
             </Box>
           )}
           
-          <Stack spacing={3}>
-            <TextField
-              id="subjectDisplay"
-              fullWidth
-              label="Patient Name"
-              value={get(serviceRequest, 'subject.display', '')}
-              helperText={get(serviceRequest, 'subject.reference', '') || 'Patient reference will be assigned'}
-              disabled // Always disabled to prevent editing
-            />
-            
-            <TextField
-              id="requesterDisplay"
-              fullWidth
-              label="Requester Name"
-              value={get(serviceRequest, 'requester.display', '')}
-              onChange={(e) => handleChange('requester.display', e.target.value)}
-              helperText={get(serviceRequest, 'requester.reference', '') || 'Requester reference will be assigned'}
-              disabled={!isEditing}
-            />
-            
-            <FormControl fullWidth disabled={!isEditing}>
-              <InputLabel>Status</InputLabel>
-              <Select
-                id="status"
-                value={get(serviceRequest, 'status', 'active')}
-                onChange={(e) => handleChange('status', e.target.value)}
-                label="Status"
-              >
-                {statusOptions.map(option => (
-                  <MenuItem key={option.code} value={option.code}>
-                    {option.display}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-            
-            <FormControl fullWidth disabled={!isEditing}>
-              <InputLabel>Intent</InputLabel>
-              <Select
-                id="intent"
-                value={get(serviceRequest, 'intent', 'order')}
-                onChange={(e) => handleChange('intent', e.target.value)}
-                label="Intent"
-              >
-                {intentOptions.map(option => (
-                  <MenuItem key={option.code} value={option.code}>
-                    {option.display}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-            
-            <FormControl fullWidth disabled={!isEditing}>
-              <InputLabel>Priority</InputLabel>
-              <Select
-                id="priority"
-                value={get(serviceRequest, 'priority', 'routine')}
-                onChange={(e) => handleChange('priority', e.target.value)}
-                label="Priority"
-              >
-                {priorityOptions.map(option => (
-                  <MenuItem key={option.code} value={option.code}>
-                    {option.display}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-            
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={get(serviceRequest, 'doNotPerform', false)}
-                  onChange={(e) => handleChange('doNotPerform', e.target.checked)}
-                  disabled={!isEditing}
-                />
-              }
-              label="Do Not Perform"
-            />
-            
-            <TextField
-              id="codeCode"
-              fullWidth
-              label="Service Code"
-              value={get(serviceRequest, 'code.coding[0].code', '')}
-              onChange={(e) => handleChange('code.coding[0].code', e.target.value)}
-              helperText="SNOMED CT code for the service"
-              disabled={!isEditing}
-            />
-            
-            <TextField
-              id="codeDisplay"
-              fullWidth
-              label="Service Description"
-              value={get(serviceRequest, 'code.coding[0].display', '')}
-              onChange={(e) => {
-                handleChange('code.coding[0].display', e.target.value);
-                handleChange('code.text', e.target.value);
-              }}
-              helperText="Human-readable description of the service"
-              disabled={!isEditing}
-            />
-            
-            <TextField
-              id="categoryCode"
-              fullWidth
-              label="Category Code"
-              value={get(serviceRequest, 'category[0].coding[0].code', '')}
-              onChange={(e) => handleChange('category[0].coding[0].code', e.target.value)}
-              helperText="SNOMED CT code for service category"
-              disabled={!isEditing}
-            />
-            
-            <TextField
-              id="categoryDisplay"
-              fullWidth
-              label="Category Description"
-              value={get(serviceRequest, 'category[0].coding[0].display', '')}
-              onChange={(e) => {
-                handleChange('category[0].coding[0].display', e.target.value);
-                handleChange('category[0].text', e.target.value);
-              }}
-              helperText="Description of the service category"
-              disabled={!isEditing}
-            />
-            
-            <TextField
-              fullWidth
-              type="datetime-local"
-              label="Requested Date/Time"
-              value={moment(get(serviceRequest, 'occurrenceDateTime', '')).format('YYYY-MM-DDTHH:mm')}
-              onChange={(e) => handleChange('occurrenceDateTime', e.target.value)}
-              InputLabelProps={{ shrink: true }}
-              disabled={!isEditing}
-            />
-            
-            <TextField
-              id="authoredOn"
-              fullWidth
-              type="datetime-local"
-              label="Authored On"
-              value={moment(get(serviceRequest, 'authoredOn', '')).format('YYYY-MM-DDTHH:mm')}
-              onChange={(e) => handleChange('authoredOn', e.target.value)}
-              InputLabelProps={{ shrink: true }}
-              disabled={!isEditing}
-            />
-            
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={get(serviceRequest, 'asNeededBoolean', false)}
-                  onChange={(e) => handleChange('asNeededBoolean', e.target.checked)}
-                  disabled={!isEditing}
-                />
-              }
-              label="As Needed"
-            />
-            
-            <TextField
-              id="performerDisplay"
-              fullWidth
-              label="Performer Name"
-              value={get(serviceRequest, 'performer[0].display', '')}
-              onChange={(e) => handleChange('performer[0].display', e.target.value)}
-              helperText="Who should perform this service"
-              disabled={!isEditing}
-            />
-            
-            <TextField
-              fullWidth
-              label="Location"
-              value={get(serviceRequest, 'locationReference[0].display', '')}
-              onChange={(e) => handleChange('locationReference[0].display', e.target.value)}
-              helperText="Where the service should be performed"
-              disabled={!isEditing}
-            />
-            
-            <TextField
-              id="reasonCode"
-              fullWidth
-              label="Reason Code"
-              value={get(serviceRequest, 'reasonCode[0].coding[0].code', '')}
-              onChange={(e) => handleChange('reasonCode[0].coding[0].code', e.target.value)}
-              helperText="SNOMED CT code for the reason"
-              disabled={!isEditing}
-            />
-            
-            <TextField
-              id="reasonDisplay"
-              fullWidth
-              label="Reason Description"
-              value={get(serviceRequest, 'reasonCode[0].text', '')}
-              onChange={(e) => {
-                handleChange('reasonCode[0].coding[0].display', e.target.value);
-                handleChange('reasonCode[0].text', e.target.value);
-              }}
-              helperText="Why this service is being requested"
-              disabled={!isEditing}
-            />
-            
-            <TextField
-              fullWidth
-              label="Body Site"
-              value={get(serviceRequest, 'bodySite[0].text', '')}
-              onChange={(e) => handleChange('bodySite[0].text', e.target.value)}
-              helperText="Anatomical location for the service"
-              disabled={!isEditing}
-            />
-            
-            <TextField
-              fullWidth
-              multiline
-              rows={2}
-              label="Patient Instructions"
-              value={get(serviceRequest, 'patientInstruction', '')}
-              onChange={(e) => handleChange('patientInstruction', e.target.value)}
-              helperText="Instructions for the patient"
-              disabled={!isEditing}
-            />
-            
-            <TextField
-              id="notesTextarea"
-              fullWidth
-              multiline
-              rows={3}
-              label="Notes"
-              value={get(serviceRequest, 'note[0].text', '')}
-              onChange={(e) => handleChange('note[0].text', e.target.value)}
-              helperText="Additional notes about the service request"
-              disabled={!isEditing}
-            />
-          </Stack>
+          <Grid container spacing={3}>
+            {/* Row 1: Patient Name, Requester Name */}
+            <Grid item xs={12} md={6}>
+              <TextField
+                id="subjectDisplay"
+                fullWidth
+                label="Patient Name"
+                value={get(serviceRequest, 'subject.display', '')}
+                helperText={get(serviceRequest, 'subject.reference', '') || 'Patient reference will be assigned'}
+                disabled
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                id="requesterDisplay"
+                fullWidth
+                label="Requester Name"
+                value={get(serviceRequest, 'requester.display', '')}
+                onChange={(e) => handleChange('requester.display', e.target.value)}
+                helperText={get(serviceRequest, 'requester.reference', '') || 'Requester reference will be assigned'}
+                disabled={!isEditing}
+              />
+            </Grid>
+
+            {/* Row 2: Service Code, Service Description */}
+            <Grid item xs={12} md={4}>
+              <TextField
+                id="codeCode"
+                fullWidth
+                label="Service Code"
+                value={get(serviceRequest, 'code.coding[0].code', '')}
+                onChange={(e) => handleChange('code.coding[0].code', e.target.value)}
+                helperText="SNOMED CT code for the service"
+                disabled={!isEditing}
+              />
+            </Grid>
+            <Grid item xs={12} md={8}>
+              <TextField
+                id="codeDisplay"
+                fullWidth
+                label="Service Description"
+                value={get(serviceRequest, 'code.coding[0].display', '')}
+                onChange={(e) => {
+                  handleChange('code.coding[0].display', e.target.value);
+                  handleChange('code.text', e.target.value);
+                }}
+                helperText="Human-readable description of the service"
+                disabled={!isEditing}
+              />
+            </Grid>
+
+            {/* Row 3: Category Code, Category Description */}
+            <Grid item xs={12} md={4}>
+              <TextField
+                id="categoryCode"
+                fullWidth
+                label="Category Code"
+                value={get(serviceRequest, 'category[0].coding[0].code', '')}
+                onChange={(e) => handleChange('category[0].coding[0].code', e.target.value)}
+                helperText="SNOMED CT code for service category"
+                disabled={!isEditing}
+              />
+            </Grid>
+            <Grid item xs={12} md={8}>
+              <TextField
+                id="categoryDisplay"
+                fullWidth
+                label="Category Description"
+                value={get(serviceRequest, 'category[0].coding[0].display', '')}
+                onChange={(e) => {
+                  handleChange('category[0].coding[0].display', e.target.value);
+                  handleChange('category[0].text', e.target.value);
+                }}
+                helperText="Description of the service category"
+                disabled={!isEditing}
+              />
+            </Grid>
+
+            {/* Row 4: Status, Intent, Priority */}
+            <Grid item xs={12} md={4}>
+              <FormControl fullWidth disabled={!isEditing}>
+                <InputLabel>Status</InputLabel>
+                <Select
+                  id="status"
+                  value={get(serviceRequest, 'status', 'active')}
+                  onChange={(e) => handleChange('status', e.target.value)}
+                  label="Status"
+                >
+                  {statusOptions.map(option => (
+                    <MenuItem key={option.code} value={option.code}>
+                      {option.display}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <FormControl fullWidth disabled={!isEditing}>
+                <InputLabel>Intent</InputLabel>
+                <Select
+                  id="intent"
+                  value={get(serviceRequest, 'intent', 'order')}
+                  onChange={(e) => handleChange('intent', e.target.value)}
+                  label="Intent"
+                >
+                  {intentOptions.map(option => (
+                    <MenuItem key={option.code} value={option.code}>
+                      {option.display}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <FormControl fullWidth disabled={!isEditing}>
+                <InputLabel>Priority</InputLabel>
+                <Select
+                  id="priority"
+                  value={get(serviceRequest, 'priority', 'routine')}
+                  onChange={(e) => handleChange('priority', e.target.value)}
+                  label="Priority"
+                >
+                  {priorityOptions.map(option => (
+                    <MenuItem key={option.code} value={option.code}>
+                      {option.display}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+
+            {/* Row 5: Do Not Perform, As Needed */}
+            <Grid item xs={12} md={6}>
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={get(serviceRequest, 'doNotPerform', false)}
+                    onChange={(e) => handleChange('doNotPerform', e.target.checked)}
+                    disabled={!isEditing}
+                  />
+                }
+                label="Do Not Perform"
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={get(serviceRequest, 'asNeededBoolean', false)}
+                    onChange={(e) => handleChange('asNeededBoolean', e.target.checked)}
+                    disabled={!isEditing}
+                  />
+                }
+                label="As Needed"
+              />
+            </Grid>
+
+            {/* Row 6: Requested Date/Time, Authored On */}
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                type="datetime-local"
+                label="Requested Date/Time"
+                value={moment(get(serviceRequest, 'occurrenceDateTime', '')).format('YYYY-MM-DDTHH:mm')}
+                onChange={(e) => handleChange('occurrenceDateTime', e.target.value)}
+                InputLabelProps={{ shrink: true }}
+                disabled={!isEditing}
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                id="authoredOn"
+                fullWidth
+                type="datetime-local"
+                label="Authored On"
+                value={moment(get(serviceRequest, 'authoredOn', '')).format('YYYY-MM-DDTHH:mm')}
+                onChange={(e) => handleChange('authoredOn', e.target.value)}
+                InputLabelProps={{ shrink: true }}
+                disabled={!isEditing}
+              />
+            </Grid>
+
+            {/* Row 7: Performer Name, Location */}
+            <Grid item xs={12} md={6}>
+              <TextField
+                id="performerDisplay"
+                fullWidth
+                label="Performer Name"
+                value={get(serviceRequest, 'performer[0].display', '')}
+                onChange={(e) => handleChange('performer[0].display', e.target.value)}
+                helperText="Who should perform this service"
+                disabled={!isEditing}
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                label="Location"
+                value={get(serviceRequest, 'locationReference[0].display', '')}
+                onChange={(e) => handleChange('locationReference[0].display', e.target.value)}
+                helperText="Where the service should be performed"
+                disabled={!isEditing}
+              />
+            </Grid>
+
+            {/* Row 8: Reason Code, Reason Description */}
+            <Grid item xs={12} md={4}>
+              <TextField
+                id="reasonCode"
+                fullWidth
+                label="Reason Code"
+                value={get(serviceRequest, 'reasonCode[0].coding[0].code', '')}
+                onChange={(e) => handleChange('reasonCode[0].coding[0].code', e.target.value)}
+                helperText="SNOMED CT code for the reason"
+                disabled={!isEditing}
+              />
+            </Grid>
+            <Grid item xs={12} md={8}>
+              <TextField
+                id="reasonDisplay"
+                fullWidth
+                label="Reason Description"
+                value={get(serviceRequest, 'reasonCode[0].text', '')}
+                onChange={(e) => {
+                  handleChange('reasonCode[0].coding[0].display', e.target.value);
+                  handleChange('reasonCode[0].text', e.target.value);
+                }}
+                helperText="Why this service is being requested"
+                disabled={!isEditing}
+              />
+            </Grid>
+
+            {/* Row 9: Body Site (full width) */}
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label="Body Site"
+                value={get(serviceRequest, 'bodySite[0].text', '')}
+                onChange={(e) => handleChange('bodySite[0].text', e.target.value)}
+                helperText="Anatomical location for the service"
+                disabled={!isEditing}
+              />
+            </Grid>
+
+            {/* Row 10: Patient Instructions (full width) */}
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                multiline
+                rows={2}
+                label="Patient Instructions"
+                value={get(serviceRequest, 'patientInstruction', '')}
+                onChange={(e) => handleChange('patientInstruction', e.target.value)}
+                helperText="Instructions for the patient"
+                disabled={!isEditing}
+              />
+            </Grid>
+
+            {/* Row 11: Notes (full width) */}
+            <Grid item xs={12}>
+              <TextField
+                id="notesTextarea"
+                fullWidth
+                multiline
+                rows={3}
+                label="Notes"
+                value={get(serviceRequest, 'note[0].text', '')}
+                onChange={(e) => handleChange('note[0].text', e.target.value)}
+                helperText="Additional notes about the service request"
+                disabled={!isEditing}
+              />
+            </Grid>
+          </Grid>
         </CardContent>
         
         <CardActions sx={{ justifyContent: 'flex-end', p: 2 }}>

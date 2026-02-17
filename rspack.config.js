@@ -26,6 +26,10 @@ workflowParser.generate();
 module.exports = defineConfig(Meteor => {
   const config = {
     plugins: [],
+    // Disable lazy compilation at top level (experiments.lazyCompilation is deprecated in rspack 1.5+)
+    // The EventSource endpoint conflicts with Meteor's dev server
+    // (returns text/html instead of text/event-stream), causing Cornerstone3D init to fail
+    lazyCompilation: false,
   };
 
   // Client-specific configuration

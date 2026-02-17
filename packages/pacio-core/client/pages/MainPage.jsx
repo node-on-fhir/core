@@ -68,11 +68,15 @@ import {
   ViewList as ViewListIcon,
   Circle as CircleIcon,
   Info as InfoIcon,
-  LocalPharmacy as LocalPharmacyIcon
+  LocalPharmacy as LocalPharmacyIcon,
+  Flare as FlareIcon,
+  RocketLaunch as RocketLaunchIcon,
+  PhotoCamera as PhotoCameraIcon
 } from '@mui/icons-material';
 import { Beds } from '../../lib/collections/BedsCollection';
 import { SearchPatientsModalDialog } from '../components/SearchPatientsModalDialog';
 import LocationMap from '../components/LocationMap';
+import { resolveVehicleConfig } from '../../lib/utilities/VehicleConfigResolver';
 
 // Access Communications from global namespace (initialized by main app)
 // Packages cannot directly import from /imports/ with Meteor 3 + RSPack
@@ -143,7 +147,12 @@ export function MainPage() {
   const [anchorEl, setAnchorEl] = useState(null);
   const [menuBedId, setMenuBedId] = useState(null);
   const [customMapConfig, setCustomMapConfig] = useState(null);
-  
+  const [vehicleImageError, setVehicleImageError] = useState(false);
+  const [dashboardPhotoFallback, setDashboardPhotoFallback] = useState(false);
+  const [showPhoto, setShowPhoto] = useState(true);
+  const [showMap, setShowMap] = useState(true);
+  const [showAlerts, setShowAlerts] = useState(true);
+
   // Track authentication status
   const userId = useTracker(() => Meteor.userId());
   const user = useTracker(() => Meteor.user());
@@ -228,6 +237,12 @@ export function MainPage() {
     }
   };
 
+  const handleCardVisibilityToggle = (event, newVisible) => {
+    setShowPhoto(newVisible.includes('photo'));
+    setShowMap(newVisible.includes('map'));
+    setShowAlerts(newVisible.includes('alerts'));
+  };
+
   // Calculate dynamic height for bed status area
   useEffect(() => {
     const calculateHeight = () => {
@@ -270,6 +285,9 @@ export function MainPage() {
   
   // Also subscribe to all communications for debugging
   const allCommunicationsLoading = useSubscribe('communications', 100);
+
+  // Subscribe to SWPC space weather alerts
+  const swpcAlertsLoading = useSubscribe('orbital.spaceWeatherAlerts', {}, {});
   
   // Fetch Chief Medical Officer data
   const chiefMedicalOfficer = useTracker(() => {
@@ -299,6 +317,16 @@ export function MainPage() {
     return cmo;
   }, []);
   
+  // Track selected crewed vehicle from Session (set by CrewedVehiclesPage or boot hydration)
+  const selectedCrewedVehicle = useTracker(() => Session.get('selectedCrewedVehicle'), []);
+  const vehicleConfig = resolveVehicleConfig(selectedCrewedVehicle);
+
+  // Reset vehicle image error when vehicle changes
+  useEffect(() => {
+    setVehicleImageError(false);
+    setDashboardPhotoFallback(false);
+  }, [vehicleConfig.vehicleFhirId]);
+
   // Fetch data from collections - trust the cursor
   const facilityData = useTracker(() => {
     // Simply get beds from the collection - all data is already there
@@ -307,8 +335,8 @@ export function MainPage() {
     // Ensure beds is always an array
     const validBeds = Array.isArray(beds) ? beds : [];
 
-    // Get maxBeds from settings (for limiting display, e.g., Orion Capsule has 4 crew)
-    const maxBeds = get(Meteor, 'settings.public.pacio.maxBeds', 16);
+    // Get maxBeds from vehicleConfig (resolved from vehicle or settings)
+    const maxBeds = vehicleConfig.maxBeds;
 
     // Limit beds to maxBeds setting
     const limitedBeds = validBeds.slice(0, maxBeds);
@@ -327,9 +355,9 @@ export function MainPage() {
     return {
       facility: {
         id: 'mh-001',
-        name: get(Meteor, 'settings.public.pacio.facilityName', "Rainbow's End Medical Home"),
+        name: vehicleConfig.facilityName,
         type: 'Medical Home',
-        address: get(Meteor, 'settings.public.pacio.facilityAddress', '789 Healing Way, Springfield, IL 62704'),
+        address: vehicleConfig.facilityAddress,
         lat: 39.7895,
         lng: -89.6387,
         totalBeds: totalBeds,
@@ -384,19 +412,19 @@ export function MainPage() {
         
         console.log('Found communications matching query:', communications);
         
-        // Transform communications into alert format
-        return communications.map((comm, index) => {
+        // Transform clinical communications into alert format
+        const clinicalAlerts = communications.map((comm, index) => {
           // Extract patient info from subject
           const patientName = get(comm, 'subject.display', 'Unknown Patient');
-          const bedId = get(comm, 'extension', []).find(ext => 
+          const bedId = get(comm, 'extension', []).find(ext =>
             ext.url === 'http://honeycomb.ai/fhir/StructureDefinition/bed-id'
           )?.valueString || 'N/A';
-          
+
           // Determine alert type and priority based on category
           const category = get(comm, 'category.0.coding.0.code', 'notification');
           let type = 'medical';
           let priority = 'medium';
-          
+
           if (category === 'intervention-approval') {
             type = 'medical';
             priority = 'high';
@@ -404,10 +432,10 @@ export function MainPage() {
             type = 'call';
             priority = get(comm, 'priority', 'medium') === 'urgent' ? 'high' : 'medium';
           }
-          
+
           // Get message from payload
           const message = get(comm, 'payload.0.contentString', 'New notification');
-          
+
           return {
             id: comm._id,
             bedId: bedId,
@@ -417,6 +445,32 @@ export function MainPage() {
             priority: priority
           };
         });
+
+        // Query SWPC space weather alerts
+        const swpcComms = Communications.find(
+          { 'category.0.coding.0.code': 'space-weather-alert' },
+          { sort: { sent: -1 }, limit: 5 }
+        ).fetch();
+
+        const swpcAlerts = swpcComms.map(function(comm) {
+          const contentString = get(comm, 'payload.0.contentString', '');
+          const firstLine = contentString.split('\n')[0] || 'Space Weather Alert';
+          const truncatedMessage = firstLine.length > 120 ? firstLine.substring(0, 120) + '...' : firstLine;
+
+          return {
+            id: comm._id,
+            type: 'space-weather',
+            message: truncatedMessage,
+            time: moment(comm.sent),
+            priority: 'medium'
+          };
+        });
+
+        // Merge both arrays, sort by time descending, limit to 10
+        return clinicalAlerts
+          .concat(swpcAlerts)
+          .sort(function(a, b) { return b.time.valueOf() - a.time.valueOf(); })
+          .slice(0, 10);
       })()
     };
   });
@@ -467,6 +521,7 @@ export function MainPage() {
       case 'fall': return <WarningIcon color="error" />;
       case 'call': return <NotificationsIcon color="primary" />;
       case 'medical': return <LocalHospitalIcon color="warning" />;
+      case 'space-weather': return <FlareIcon sx={{ color: '#ff9800' }} />;
       default: return <InfoIcon />;
     }
   };
@@ -675,6 +730,35 @@ export function MainPage() {
               </ToggleButton>
               <ToggleButton value="compact">
                 <Tooltip title="Compact view"><ViewListIcon fontSize="small" /></Tooltip>
+              </ToggleButton>
+            </ToggleButtonGroup>
+            <ToggleButtonGroup
+              value={[showPhoto && 'photo', showMap && 'map', showAlerts && 'alerts'].filter(Boolean)}
+              onChange={handleCardVisibilityToggle}
+              size="small"
+              sx={{
+                height: 32,
+                '& .MuiToggleButton-root': {
+                  color: cardTextColor,
+                  borderColor: isDark ? 'rgba(255, 255, 255, 0.23)' : 'rgba(0, 0, 0, 0.23)',
+                  '&.Mui-selected': {
+                    bgcolor: isDark ? 'rgba(33, 150, 243, 0.16)' : 'rgba(33, 150, 243, 0.08)',
+                    color: cardTextColor,
+                    '&:hover': {
+                      bgcolor: isDark ? 'rgba(33, 150, 243, 0.24)' : 'rgba(33, 150, 243, 0.12)'
+                    }
+                  }
+                }
+              }}
+            >
+              <ToggleButton value="photo">
+                <Tooltip title="Vehicle photo"><PhotoCameraIcon fontSize="small" /></Tooltip>
+              </ToggleButton>
+              <ToggleButton value="map">
+                <Tooltip title="Map"><MapIcon fontSize="small" /></Tooltip>
+              </ToggleButton>
+              <ToggleButton value="alerts">
+                <Tooltip title="Alerts"><NotificationsIcon fontSize="small" /></Tooltip>
               </ToggleButton>
             </ToggleButtonGroup>
           </Box>
@@ -1211,144 +1295,220 @@ export function MainPage() {
           </Paper>
         </Grid>
 
-        {/* Right Side - Map and Alerts */}
-        {columnCount === 2 && (
-        <Grid item xs={12} md={4}>
-          <Grid container spacing={2}>
-            {/* Map View - Only show if API key is available */}
-            {hasMapApiKey && (
-              <Grid item xs={12}>
+        {/* Right Side - Vehicle Image, Map and Alerts */}
+        {columnCount === 2 && (() => {
+          // Calculate how many right-side panels are visible
+          const hasVehicleImage = !!vehicleConfig.vehicleFhirId || !!vehicleConfig.dashboardPhoto;
+          const mapAvailable = hasMapApiKey;
+          const rightPanelCount =
+            (hasVehicleImage && showPhoto ? 1 : 0) +
+            (mapAvailable && showMap ? 1 : 0) +
+            (showAlerts && userId ? 1 : 0) +
+            (!userId ? 1 : 0);
+          const rightPanelHeight = rightPanelCount > 0
+            ? Math.floor((bedStatusHeight - (rightPanelCount - 1) * 10) / rightPanelCount)
+            : bedStatusHeight;
+
+          return (
+          <Grid item xs={12} md={4}>
+            <Grid container spacing={2}>
+              {/* Vehicle Image Card - Only show when a vehicle is selected and photo toggle is on */}
+              {showPhoto && hasVehicleImage && (
+                <Grid item xs={12}>
+                  <Paper sx={{
+                    height: `${rightPanelHeight}px`,
+                    bgcolor: paperBgColor,
+                    color: cardTextColor,
+                    overflow: 'hidden',
+                    position: 'relative',
+                    '& .MuiTypography-root': { color: cardTextColor }
+                  }}>
+                    {!vehicleImageError ? (() => {
+                      const vehicleImageSrc = (vehicleConfig.vehicleFhirId && !dashboardPhotoFallback)
+                        ? `/packages/orbital_core/assets/${vehicleConfig.vehicleFhirId}.${isDark ? 'dark' : 'light'}.jpg`
+                        : get(vehicleConfig, 'dashboardPhoto', '');
+                      return (
+                        <Box
+                          component="img"
+                          src={vehicleImageSrc}
+                          alt={vehicleConfig.facilityName}
+                          onError={() => {
+                            if (vehicleConfig.vehicleFhirId && vehicleConfig.dashboardPhoto && !dashboardPhotoFallback) {
+                              setDashboardPhotoFallback(true);
+                            } else {
+                              setVehicleImageError(true);
+                            }
+                          }}
+                          sx={{
+                            width: '100%',
+                            height: '100%',
+                            objectFit: 'cover',
+                            display: 'block'
+                          }}
+                        />
+                      );
+                    })() : (
+                      <Box sx={{
+                        width: '100%',
+                        height: '100%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        bgcolor: isDark ? '#2a2a2a' : '#f0f0f0'
+                      }}>
+                        <RocketLaunchIcon sx={{ fontSize: 80, color: isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.2)' }} />
+                      </Box>
+                    )}
+                    {/* Vehicle name caption overlay */}
+                    <Box sx={{
+                      position: 'absolute',
+                      bottom: 0,
+                      left: 0,
+                      right: 0,
+                      background: 'linear-gradient(transparent, rgba(0,0,0,0.7))',
+                      p: 1.5,
+                      pt: 3
+                    }}>
+                      <Typography variant="subtitle2" sx={{ color: '#ffffff !important', fontWeight: 600 }}>
+                        {vehicleConfig.facilityName}
+                      </Typography>
+                    </Box>
+                  </Paper>
+                </Grid>
+              )}
+
+              {/* Map View - Only show if API key is available and map toggle is on */}
+              {showMap && mapAvailable && (
+                <Grid item xs={12}>
+                  <Paper sx={{
+                    p: 2,
+                    height: `${rightPanelHeight}px`,
+                    bgcolor: paperBgColor,
+                    color: cardTextColor,
+                    '& .MuiTypography-root': { color: cardTextColor }
+                  }}>
+                    <Typography variant="h6" gutterBottom>
+                      {customMapConfig ? customMapConfig.defaultProps?.title || 'Lunar Surface Map' : 'Facility Location'}
+                    </Typography>
+                    {(() => {
+                      // Use CustomMap if available, otherwise default LocationMap
+                      if (customMapConfig && customMapConfig.component) {
+                        const CustomMapComponent = customMapConfig.component;
+                        return (
+                          <CustomMapComponent
+                            {...(customMapConfig.defaultProps || {})}
+                            height="calc(100% - 40px)"
+                            assets={[
+                              {
+                                id: 'facility-1',
+                                name: facilityData.facility.name,
+                                type: 'HABITAT',
+                                status: 'OPERATIONAL',
+                                coordinates: [facilityData.facility.lng, facilityData.facility.lat],
+                                o2Level: 95
+                              }
+                            ]}
+                          />
+                        );
+                      } else {
+                        return (
+                          <LocationMap
+                            latitude={facilityData.facility.lat}
+                            longitude={facilityData.facility.lng}
+                            name={facilityData.facility.name}
+                            height="calc(100% - 40px)"
+                            zoom={14}
+                          />
+                        );
+                      }
+                    })()}
+                  </Paper>
+                </Grid>
+              )}
+
+              {/* Recent Alerts - Only show if authenticated and alerts toggle is on */}
+              {showAlerts && userId && (
+                <Grid item xs={12}>
                 <Paper sx={{
                   p: 2,
-                  height: `${(bedStatusHeight - 10) / 2}px`,
+                  height: `${rightPanelHeight}px`,
+                  overflow: 'auto',
                   bgcolor: paperBgColor,
                   color: cardTextColor,
-                  '& .MuiTypography-root': { color: cardTextColor }
+                  '& .MuiTypography-root': { color: cardTextColor },
+                  '& .MuiListItemText-root': {
+                    '& .MuiTypography-root': { color: cardTextColor }
+                  }
                 }}>
                   <Typography variant="h6" gutterBottom>
-                    {customMapConfig ? customMapConfig.defaultProps?.title || 'Lunar Surface Map' : 'Facility Location'}
+                    Recent Alerts
                   </Typography>
-                  {(() => {
-                    // Use CustomMap if available, otherwise default LocationMap
-                    if (customMapConfig && customMapConfig.component) {
-                      const CustomMapComponent = customMapConfig.component;
-                      return (
-                        <CustomMapComponent
-                          {...(customMapConfig.defaultProps || {})}
-                          height="calc(100% - 40px)"
-                          // For lunar maps, we can pass different props
-                          // These could be mission coordinates, rover locations, etc.
-                          assets={[
-                            {
-                              id: 'facility-1',
-                              name: facilityData.facility.name,
-                              type: 'HABITAT',
-                              status: 'OPERATIONAL',
-                              coordinates: [facilityData.facility.lng, facilityData.facility.lat],
-                              o2Level: 95
-                            }
-                          ]}
+                  <List dense>
+                    {facilityData.recentAlerts.map((alert) => (
+                      <ListItem key={alert.id}>
+                        <ListItemIcon>
+                          {getAlertIcon(alert.type)}
+                        </ListItemIcon>
+                        <ListItemText
+                          primary={alert.message}
+                          secondary={alert.time.fromNow()}
+                          primaryTypographyProps={{
+                            variant: 'body2',
+                            color: alert.priority === 'high' ? 'error' : 'textPrimary'
+                          }}
                         />
-                      );
-                    } else {
-                      // Default to LocationMap for regular facilities
-                      return (
-                        <LocationMap
-                          latitude={facilityData.facility.lat}
-                          longitude={facilityData.facility.lng}
-                          name={facilityData.facility.name}
-                          height="calc(100% - 40px)"
-                          zoom={14}
-                        />
-                      );
-                    }
-                  })()}
+                      </ListItem>
+                    ))}
+                  </List>
                 </Paper>
               </Grid>
-            )}
+              )}
 
-            {/* Recent Alerts - Only show if authenticated */}
-            {userId && (
-              <Grid item xs={12}>
-              <Paper sx={{
-                p: 2,
-                height: hasMapApiKey ? `${(bedStatusHeight - 10) / 2}px` : `${bedStatusHeight}px`,
-                overflow: 'auto',
-                bgcolor: paperBgColor,
-                color: cardTextColor,
-                '& .MuiTypography-root': { color: cardTextColor },
-                '& .MuiListItemText-root': {
-                  '& .MuiTypography-root': { color: cardTextColor }
-                }
-              }}>
-                <Typography variant="h6" gutterBottom>
-                  Recent Alerts
-                </Typography>
-                <List dense>
-                  {facilityData.recentAlerts.map((alert) => (
-                    <ListItem key={alert.id}>
-                      <ListItemIcon>
-                        {getAlertIcon(alert.type)}
-                      </ListItemIcon>
-                      <ListItemText
-                        primary={alert.message}
-                        secondary={alert.time.fromNow()}
-                        primaryTypographyProps={{
-                          variant: 'body2',
-                          color: alert.priority === 'high' ? 'error' : 'textPrimary'
-                        }}
-                      />
-                    </ListItem>
-                  ))}
-                </List>
-              </Paper>
+              {/* Placeholder when not logged in */}
+              {!userId && (
+                <Grid item xs={12}>
+                  <Box sx={{
+                    p: 4,
+                    height: `${rightPanelHeight}px`,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}>
+                    <Typography
+                      variant="h6"
+                      sx={{
+                        fontStyle: 'italic',
+                        color: isDark ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)',
+                        textAlign: 'center',
+                        maxWidth: 500,
+                        mb: 2,
+                        fontWeight: 300,
+                        lineHeight: 1.6,
+                        transition: 'opacity 0.5s ease-in-out',
+                        opacity: 1
+                      }}
+                    >
+                      "{inspirationalQuotes[currentQuoteIndex].text}"
+                    </Typography>
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        color: isDark ? 'rgba(255, 255, 255, 0.4)' : 'rgba(0, 0, 0, 0.4)',
+                        textAlign: 'center',
+                        transition: 'opacity 0.5s ease-in-out',
+                        opacity: 1
+                      }}
+                    >
+                      — {inspirationalQuotes[currentQuoteIndex].author}
+                    </Typography>
+                  </Box>
+                </Grid>
+              )}
             </Grid>
-            )}
-            
-            {/* Placeholder when not logged in */}
-            {!userId && (
-              <Grid item xs={12}>
-                <Box sx={{ 
-                  p: 4, 
-                  height: hasMapApiKey ? `${(bedStatusHeight - 10) / 2}px` : `${bedStatusHeight}px`, 
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  justifyContent: 'center'
-                }}>
-                  <Typography
-                    variant="h6"
-                    sx={{
-                      fontStyle: 'italic',
-                      color: isDark ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)',
-                      textAlign: 'center',
-                      maxWidth: 500,
-                      mb: 2,
-                      fontWeight: 300,
-                      lineHeight: 1.6,
-                      transition: 'opacity 0.5s ease-in-out',
-                      opacity: 1
-                    }}
-                  >
-                    "{inspirationalQuotes[currentQuoteIndex].text}"
-                  </Typography>
-                  <Typography
-                    variant="body2"
-                    sx={{
-                      color: isDark ? 'rgba(255, 255, 255, 0.4)' : 'rgba(0, 0, 0, 0.4)',
-                      textAlign: 'center',
-                      transition: 'opacity 0.5s ease-in-out',
-                      opacity: 1
-                    }}
-                  >
-                    — {inspirationalQuotes[currentQuoteIndex].author}
-                  </Typography>
-                </Box>
-              </Grid>
-            )}
           </Grid>
-        </Grid>
-        )}
+          );
+        })()}
 
       </Grid>
 

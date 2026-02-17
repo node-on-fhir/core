@@ -109,10 +109,10 @@ if(Meteor.isServer){
 //         return parser.text('every 1 minute');
 //       },
 //       job: function() {
-//           console.log('TaskManager!  ' + Tasks.find().count() + ' tasks in the Task collection.')     
+//           console.log('TaskManager!  ' + Tasks.find().count() + ' tasks in the Task collection.')
 //       }
 //     });
-//   } 
+//   }
 //   if(get(Meteor, 'settings.private.enableServerStats')){
 //     SyncedCron.add({
 //       name: 'Server Stats Generator',
@@ -120,8 +120,8 @@ if(Meteor.isServer){
 //         return parser.text('every 5 minute');
 //       },
 //       job: function() {
-//           console.log('Generating server stats!')   
-          
+//           console.log('Generating server stats!')
+
 //           let restEndpoints = get(Meteor, "settings.private.fhir.rest")
 //           process.env.TRACE &&  console.log('restEndpoints', restEndpoints)
 
@@ -129,7 +129,7 @@ if(Meteor.isServer){
 //             "referenceType": "ServerStats",
 //             "timestamp": new moment()
 //           }
-          
+
 //           Object.keys(restEndpoints).forEach(function(key){
 //             // console.log('key', FhirUtilities.pluralizeResourceName(key))
 //             if(typeof Collections[FhirUtilities.pluralizeResourceName(key)] !== "undefined"){
@@ -144,8 +144,51 @@ if(Meteor.isServer){
 //           ServerStats.insert(serverStats, function(){})
 //       }
 //     });
-//   }   
+//   }
 // })
+
+// =============================================================================
+// RADIOLOGY MONTHLY MEASURE REPORT AGGREGATION
+// =============================================================================
+//
+// Generates monthly statistics snapshots as FHIR MeasureReport resources.
+// Runs on the 1st of each month at 00:05 to capture previous month's stats.
+//
+// To enable, uncomment the SyncedCron import at top of file and this block:
+// =============================================================================
+
+// Meteor.startup(function() {
+//   if (get(Meteor, 'settings.private.enableRadiologyMonthlyStats')) {
+//     console.log('[Cron] Enabling Radiology Monthly MeasureReport generation...');
+//
+//     SyncedCron.add({
+//       name: 'Generate Radiology Monthly MeasureReport',
+//       schedule: function(parser) {
+//         // Run on the 1st day of each month at 00:05
+//         return parser.text('on the 1st day of the month at 00:05');
+//       },
+//       job: async function() {
+//         // Generate report for the previous month
+//         const lastMonth = moment().subtract(1, 'month');
+//         const year = lastMonth.year();
+//         const month = lastMonth.month() + 1; // moment months are 0-indexed
+//
+//         console.log(`[Cron] Generating radiology MeasureReport for ${year}-${month}`);
+//
+//         try {
+//           const reportId = await Meteor.callAsync('radiology.generateMonthlyMeasureReport', year, month);
+//           console.log(`[Cron] Successfully created MeasureReport: ${reportId}`);
+//           return `Generated MeasureReport for ${year}-${month}: ${reportId}`;
+//         } catch (error) {
+//           console.error('[Cron] Error generating MeasureReport:', error);
+//           return `Error: ${error.message}`;
+//         }
+//       }
+//     });
+//
+//     SyncedCron.start();
+//   }
+// });
 
 
 

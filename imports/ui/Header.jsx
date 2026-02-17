@@ -437,8 +437,11 @@ function Header({ drawerIsOpen, handleDrawerOpen, lastUpdated }) {
     <Box id="header" sx={{
         flexShrink: 0,
         zIndex: 1000,
-        transition: 'transform 0.3s ease-in-out',
-        transform: (displayNavbars === false) ? 'translateY(-100%)' : 'translateY(0)'
+        transition: 'transform 0.3s ease-in-out, max-height 0.3s ease-in-out, opacity 0.3s ease-in-out',
+        transform: (displayNavbars === false) ? 'translateY(-100%)' : 'translateY(0)',
+        maxHeight: (displayNavbars === false) ? 0 : '128px',
+        overflow: (displayNavbars === false) ? 'hidden' : 'visible',
+        opacity: (displayNavbars === false) ? 0 : 1
       }}>
       <AppBar 
         id="headerContent" 

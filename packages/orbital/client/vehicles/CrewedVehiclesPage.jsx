@@ -147,6 +147,8 @@ function CrewedVehiclesPage() {
     let query = {};
     if (tagFilter === 'artemis') {
       query['meta.tag.code'] = { $regex: /^artemis/i };
+    } else if (tagFilter === 'ground-transportation') {
+      query['meta.tag.code'] = { $regex: /^ground.transportation/i };
     }
     return CrewedVehicles.find(query, { sort: { '_id': sortDirection } }).fetch();
   }, [sortAscending, tagFilter]);
@@ -239,15 +241,18 @@ function CrewedVehiclesPage() {
               <Chip
                 label="All"
                 size="small"
-                variant={tagFilter === 'all' ? 'filled' : 'outlined'}
+                variant={tagFilter === 'all' ? 'filled' : 'filled'}
                 onClick={() => setTagFilter('all')}
                 sx={{
                   ml: 1,
                   cursor: 'pointer',
                   ...(tagFilter === 'all'
-                    ? {}
+                    ? {
+                        color: isDark ? '#fff' : undefined,
+                        border: isDark ? '1px solid rgba(255,255,255,0.5)' : undefined
+                      }
                     : {
-                        borderColor: isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.23)',
+                        bgcolor: isDark ? 'rgba(255,255,255,0.16)' : 'rgba(0,0,0,0.08)',
                         color: isDark ? 'rgba(255,255,255,0.87)' : 'rgba(0,0,0,0.87)'
                       })
                 }}
@@ -255,14 +260,35 @@ function CrewedVehiclesPage() {
               <Chip
                 label="Artemis"
                 size="small"
-                variant={tagFilter === 'artemis' ? 'filled' : 'outlined'}
+                variant={tagFilter === 'artemis' ? 'filled' : 'filled'}
                 onClick={() => setTagFilter('artemis')}
                 sx={{
                   cursor: 'pointer',
                   ...(tagFilter === 'artemis'
-                    ? {}
+                    ? {
+                        color: isDark ? '#fff' : undefined,
+                        border: isDark ? '1px solid rgba(255,255,255,0.5)' : undefined
+                      }
                     : {
-                        borderColor: isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.23)',
+                        bgcolor: isDark ? 'rgba(255,255,255,0.16)' : 'rgba(0,0,0,0.08)',
+                        color: isDark ? 'rgba(255,255,255,0.87)' : 'rgba(0,0,0,0.87)'
+                      })
+                }}
+              />
+              <Chip
+                label="Ground Transportation"
+                size="small"
+                variant={tagFilter === 'ground-transportation' ? 'filled' : 'filled'}
+                onClick={() => setTagFilter('ground-transportation')}
+                sx={{
+                  cursor: 'pointer',
+                  ...(tagFilter === 'ground-transportation'
+                    ? {
+                        color: isDark ? '#fff' : undefined,
+                        border: isDark ? '1px solid rgba(255,255,255,0.5)' : undefined
+                      }
+                    : {
+                        bgcolor: isDark ? 'rgba(255,255,255,0.16)' : 'rgba(0,0,0,0.08)',
                         color: isDark ? 'rgba(255,255,255,0.87)' : 'rgba(0,0,0,0.87)'
                       })
                 }}
@@ -626,6 +652,19 @@ function CrewedVehiclesPage() {
                   )}
                 </CardContent>
                 <CardActions sx={{ justifyContent: 'flex-end', p: 2, pt: 0 }}>
+                  <Button
+                    variant="outlined"
+                    startIcon={<ExploreIcon />}
+                    sx={{ mr: 'auto' }}
+                    onClick={function() {
+                      Session.set('selectedCrewedVehicle', selectedVehicle);
+                      Session.set('selectedCrewedVehicleId', selectedVehicle._id);
+                      Session.set('selectedCrewedVehicleFhirId', selectedVehicle.id);
+                      console.log('[CrewedVehiclesPage] Set dashboard vehicle:', get(selectedVehicle, 'deviceName.0.name', selectedVehicle._id));
+                    }}
+                  >
+                    Set as Dashboard
+                  </Button>
                   <Button onClick={handleViewDetails} variant="contained" disabled>
                     View Details
                   </Button>

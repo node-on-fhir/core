@@ -161,16 +161,17 @@ let collectionNames = [
 let Patients;
 let Compositions;
 
-Meteor.startup(async function(){
-  // Conditions = window.Collections.Conditions;
-  // Procedures = window.Collections.Procedures;
-  // Patients = window.Collections.Patients;
-  // Compositions = window.Collections.Compositions;
-  // QuestionnaireResponses = window.Collections.QuestionnaireResponses;
-
-  collectionNames.forEach(function(collectionName){
-    window[collectionName] = window.Collections[collectionName];
-  })
+Meteor.startup(function(){
+  const tryInit = function() {
+    if (window.Collections) {
+      collectionNames.forEach(function(collectionName){
+        window[collectionName] = window.Collections[collectionName];
+      });
+    } else {
+      setTimeout(tryInit, 200);
+    }
+  };
+  tryInit();
 });
 
 //============================================================================

@@ -34,7 +34,7 @@ import SettingsIcon from '@mui/icons-material/Settings';
 import CloseIcon from '@mui/icons-material/Close';
 import GroupIcon from '@mui/icons-material/Group';
 
-import { useTracker, useSubscribe } from 'meteor/react-meteor-data';
+import { useTracker } from 'meteor/react-meteor-data';
 import { useNavigate } from 'react-router-dom';
 
 import { get, groupBy, orderBy, uniqBy } from 'lodash';
@@ -43,6 +43,7 @@ import moment from 'moment';
 import { Session } from 'meteor/session';
 import { Meteor } from 'meteor/meteor';
 import { Observations } from '../lib/schemas/SimpleSchemas/Observations';
+import { FhirUtilities } from '/imports/lib/FhirUtilities';
 
 import { ResponsiveLine } from '@nivo/line'
 
@@ -160,6 +161,7 @@ export function BiomarkerChartingPage(props){
   const [codeAnalysis, setCodeAnalysis] = useState(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [showLoadingWarning, setShowLoadingWarning] = useState(false);
 
   // Get current theme
   const appTheme = useAppTheme ? useAppTheme() : { theme: 'light' };
@@ -179,50 +181,53 @@ export function BiomarkerChartingPage(props){
   const selectedPatientId = useTracker(() => Session.get('selectedPatientId'), []);
   const selectedPatient = useTracker(() => Session.get('selectedPatient'), []);
   
-  // Subscribe to Observations for the selected patient
-  const isLoadingSubscription = useSubscribe(() => {
-    if (selectedPatientId) {
-      // Use autopublish.Observations with patient filter query
-      const query = {
-        $or: [
-          { 'subject.reference': 'Patient/' + selectedPatientId },
-          { 'subject.reference': selectedPatientId },
-          { 'subject.id': selectedPatientId }
-        ]
-      };
-      return Meteor.subscribe('autopublish.Observations', query, {});
+  // Subscribe to Observations for the selected patient (matches ObservationsPage pattern)
+  const isLoadingSubscription = useTracker(() => {
+    const selectedPatientTracker = Session.get('selectedPatient');
+    const selectedPatientIdTracker = Session.get('selectedPatientId');
+    let autoPublishEnabled = get(Meteor, 'settings.public.defaults.autopublish', false);
+
+    let query = {};
+    if (selectedPatientTracker || selectedPatientIdTracker) {
+      const fhirId = get(selectedPatientTracker, 'id');
+      if (fhirId) {
+        query = FhirUtilities.addPatientFilterToQuery(fhirId);
+      } else if (selectedPatientIdTracker) {
+        query = FhirUtilities.addPatientFilterToQuery(selectedPatientIdTracker);
+      }
     }
-    return null;
-  });
+
+    if (autoPublishEnabled) {
+      const handle = Meteor.subscribe('autopublish.Observations', query, { limit: 1000 });
+      return !handle.ready();
+    } else {
+      const handle = Meteor.subscribe('observations.all');
+      return !handle.ready();
+    }
+  }, [selectedPatientId]);
   
-  // Fetch observations for the selected patient
+  // Fetch observations from local collection (subscription handles server-side filtering)
   const observations = useTracker(() => {
     if (!selectedPatientId) return [];
-    
-    // First try to get observations without any filter to see if they exist
-    const allObs = Observations.find().fetch();
-    console.log('Total observations in collection:', allObs.length);
-    
-    if (allObs.length === 0) {
-      // If Observations collection is empty, return mock data for now
-      // This suggests the subscription isn't populating this collection
-      console.warn('Observations collection is empty - subscription may not be working');
-      return [];
-    }
-    
-    const query = {
-      $or: [
-        { 'subject.reference': 'Patient/' + selectedPatientId },
-        { 'subject.reference': selectedPatientId },
-        { 'subject.id': selectedPatientId }
-      ]
-    };
-    
-    const patientObs = Observations.find(query, { sort: { effectiveDateTime: -1 } }).fetch();
+    const patientObs = Observations.find({}, { sort: { effectiveDateTime: -1 } }).fetch();
     console.log('Observations for patient:', patientObs.length);
     return patientObs;
   }, [selectedPatientId]);
   
+  // Track loading duration and show warning if stuck
+  useEffect(() => {
+    const isLoading = !codeAnalysis && (isLoadingSubscription || isAnalyzing);
+    if (isLoading && selectedPatientId) {
+      setShowLoadingWarning(false);
+      const timer = setTimeout(() => {
+        setShowLoadingWarning(true);
+      }, 15000);
+      return () => clearTimeout(timer);
+    } else {
+      setShowLoadingWarning(false);
+    }
+  }, [isLoadingSubscription, isAnalyzing, codeAnalysis, selectedPatientId]);
+
   // Analyze observations to discover unique codes
   useEffect(() => {
     if (observations.length > 0 && !codeAnalysis) {
@@ -405,7 +410,7 @@ export function BiomarkerChartingPage(props){
   }
   
   // Check if we're still loading
-  const subscriptionLoading = isLoadingSubscription();
+  const subscriptionLoading = isLoadingSubscription;
   
   // Debug logging
   console.log('Subscription loading:', subscriptionLoading);
@@ -418,11 +423,20 @@ export function BiomarkerChartingPage(props){
   if (!codeAnalysis && (subscriptionLoading || isAnalyzing)) {
     return (
       <div style={{paddingTop: 40, paddingLeft: paddingWidth, paddingRight: paddingWidth}}>
-        <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
-          <CircularProgress />
-          <Typography variant="h6" style={{marginLeft: 20}}>
-            {isAnalyzing ? `Analyzing ${observations.length} observations...` : 'Loading observations...'}
-          </Typography>
+        <Box display="flex" flexDirection="column" justifyContent="center" alignItems="center" minHeight="400px">
+          <Box display="flex" alignItems="center">
+            <CircularProgress />
+            <Typography variant="h6" style={{marginLeft: 20}}>
+              {isAnalyzing ? `Analyzing ${observations.length} observations...` : 'Loading observations...'}
+            </Typography>
+          </Box>
+          {showLoadingWarning && (
+            <Alert severity="warning" sx={{ mt: 3, maxWidth: 600 }}>
+              <AlertTitle>Loading is taking longer than expected</AlertTitle>
+              This may happen if the patient has no observations, or the subscription is not responding.
+              Try selecting a different patient, or check the browser console for errors.
+            </Alert>
+          )}
         </Box>
       </div>
     );

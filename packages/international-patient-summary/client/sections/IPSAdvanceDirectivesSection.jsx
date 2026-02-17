@@ -9,7 +9,7 @@ function IPSAdvanceDirectivesSection(props) {
       <Typography variant="h6" gutterBottom>
         Advance Directives (Optional)
       </Typography>
-      <Typography variant="body2" color="text.secondary" paragraph>
+      <Typography variant="body2" sx={{ opacity: 0.7 }} paragraph>
         Patient's advance directives and supporting documents
       </Typography>
       <Alert severity="info">

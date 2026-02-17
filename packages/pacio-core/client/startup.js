@@ -3,6 +3,7 @@
 import { Meteor } from 'meteor/meteor';
 import { Tracker } from 'meteor/tracker';
 import { Session } from 'meteor/session';
+import { get } from 'lodash';
 
 // Import PACIO subscriptions
 import '../lib/PacioSubscriptions';
@@ -16,8 +17,8 @@ Meteor.startup(async function() {
   const maxRetries = 10;
   
   const initializeCollections = async function() {
-    if (global.Collections && global.Collections.Patients) {
-      window.Patients = await global.Collections.Patients;
+    if (Meteor.Collections && Meteor.Collections.Patients) {
+      window.Patients = Meteor.Collections.Patients;
       console.log('Patients collection initialized for PACIO Core');
       return true;
     }
@@ -41,6 +42,37 @@ Meteor.startup(async function() {
   // NOTE: Patient subscriptions are now handled by PacioSubscriptions.js
   // which properly manages subscription handles and cleanup.
   // Removed duplicate subscriptions from here to prevent subscription multiplication.
+
+  // Boot-time vehicle hydration: if settings specify a crewedVehicleId and
+  // no vehicle is already selected in Session, subscribe and hydrate.
+  const crewedVehicleId = get(Meteor, 'settings.public.pacio.crewedVehicleId', '');
+  if (crewedVehicleId && !Session.get('selectedCrewedVehicle')) {
+    console.log('[PACIO] Boot-time vehicle hydration for:', crewedVehicleId);
+
+    Tracker.autorun(function(computation) {
+      const handle = Meteor.subscribe('autopublish.CrewedVehicles', { id: crewedVehicleId }, { limit: 1 });
+      if (!handle.ready()) return;
+
+      const CrewedVehicles = window.CrewedVehicles || get(Meteor, 'Collections.CrewedVehicles');
+      if (!CrewedVehicles) {
+        console.warn('[PACIO] CrewedVehicles collection not available for hydration');
+        computation.stop();
+        return;
+      }
+
+      const vehicle = CrewedVehicles.findOne({ id: crewedVehicleId });
+      if (vehicle) {
+        console.log('[PACIO] Hydrated dashboard vehicle:', get(vehicle, 'deviceName.0.name', crewedVehicleId));
+        Session.set('selectedCrewedVehicle', vehicle);
+        Session.set('selectedCrewedVehicleId', vehicle._id);
+        Session.set('selectedCrewedVehicleFhirId', vehicle.id);
+      } else {
+        console.log('[PACIO] Vehicle not found for hydration:', crewedVehicleId);
+      }
+
+      computation.stop();
+    });
+  }
 
   console.log('PACIO Core client initialization complete');
 });

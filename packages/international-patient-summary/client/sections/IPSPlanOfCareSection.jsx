@@ -9,7 +9,7 @@ function IPSPlanOfCareSection(props) {
       <Typography variant="h6" gutterBottom>
         Plan of Care (Optional)
       </Typography>
-      <Typography variant="body2" color="text.secondary" paragraph>
+      <Typography variant="body2" sx={{ opacity: 0.7 }} paragraph>
         Expectations for care including proposals, goals, and orders
       </Typography>
       <Alert severity="info">

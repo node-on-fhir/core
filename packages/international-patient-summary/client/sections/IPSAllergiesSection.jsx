@@ -1,7 +1,6 @@
 // packages/international-patient-summary/client/sections/IPSAllergiesSection.jsx
 
-import React, { useState, useEffect } from 'react';
-import { Meteor } from 'meteor/meteor';
+import React from 'react';
 import { Session } from 'meteor/session';
 import { useTracker } from 'meteor/react-meteor-data';
 
@@ -25,22 +24,14 @@ import { get } from 'lodash';
 import moment from 'moment';
 
 function IPSAllergiesSection(props) {
-  const [allergies, setAllergies] = useState([]);
-
   const selectedPatientId = useTracker(function(){
     return Session.get('selectedPatientId');
   }, []);
 
-  useEffect(function(){
-    async function loadAllergies() {
-      if(selectedPatientId && window.Collections?.AllergyIntolerances) {
-        const patientAllergies = await window.Collections.AllergyIntolerances.find({
-          'patient.reference': `Patient/${selectedPatientId}`
-        }).fetch();
-        setAllergies(patientAllergies);
-      }
-    }
-    loadAllergies();
+  const allergies = useTracker(function(){
+    if(!selectedPatientId) return [];
+    if(!window.Collections?.AllergyIntolerances) return [];
+    return window.Collections.AllergyIntolerances.find({}).fetch();
   }, [selectedPatientId]);
 
   function getCriticality(allergy) {
@@ -82,7 +73,7 @@ function IPSAllergiesSection(props) {
       <Typography variant="h6" gutterBottom>
         Allergies and Intolerances (Required)
       </Typography>
-      <Typography variant="body2" color="text.secondary" paragraph>
+      <Typography variant="body2" sx={{ opacity: 0.7 }} paragraph>
         Relevant allergies or intolerances, including reaction type and criticality
       </Typography>
       
@@ -109,7 +100,7 @@ function IPSAllergiesSection(props) {
                       {get(allergy, 'code.coding[0].display', 
                         get(allergy, 'code.text', 'Unknown allergen'))}
                     </Typography>
-                    <Typography variant="caption" color="text.secondary">
+                    <Typography variant="caption" sx={{ opacity: 0.6 }}>
                       {get(allergy, 'code.coding[0].code', '')}
                     </Typography>
                   </TableCell>

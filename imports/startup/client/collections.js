@@ -135,6 +135,9 @@ if (Meteor.isClient) {
     ValueSets
   };
 
+  // Make window.Collections available for packages that use that access pattern
+  window.Collections = Meteor.Collections;
+
   // Also make them available globally for console access
   window.ActivityDefinitions = ActivityDefinitions;
   window.AllergyIntolerances = AllergyIntolerances;

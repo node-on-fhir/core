@@ -182,7 +182,10 @@ function Footer({
     footerContainerOverride.display = 'none'
   }
   if(displayNavbars === false){
-    footerContainerOverride.transform = 'translateY(100%)'
+    footerContainerOverride.transform = 'translateY(100%)';
+    footerContainerOverride.maxHeight = 0;
+    footerContainerOverride.overflow = 'hidden';
+    footerContainerOverride.opacity = 0;
   }
   if(Meteor.isCordova){
     footerContainerOverride.bottom = '-114px';  //64px footer + -50px safearea 
@@ -205,7 +208,7 @@ function Footer({
 
 
   return (
-    <AppBar id="footer" position="fixed" style={{...appStyle, ...footerContainerOverride, transition: 'transform 0.3s ease-in-out'}} >
+    <AppBar id="footer" position="fixed" style={{...appStyle, ...footerContainerOverride, transition: 'transform 0.3s ease-in-out, max-height 0.3s ease-in-out, opacity 0.3s ease-in-out'}} >
       <Toolbar>
         { westNavbar }
       </Toolbar>

@@ -9,7 +9,7 @@ function IPSSocialHistorySection(props) {
       <Typography variant="h6" gutterBottom>
         Social History (Optional)
       </Typography>
-      <Typography variant="body2" color="text.secondary" paragraph>
+      <Typography variant="body2" sx={{ opacity: 0.7 }} paragraph>
         Tobacco use, alcohol use, and other social factors
       </Typography>
       <Alert severity="info">

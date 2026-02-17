@@ -71,6 +71,9 @@ class WorkflowParserPlugin {
     // Generate server-loader.js (server-side method imports)
     this.generateServerLoader(enabledWorkflows);
 
+    // Copy assets/ directories from enabled workflows into public/workflows/
+    this.copyWorkflowAssets(enabledWorkflows);
+
     console.log('[WorkflowParser] Generated barrel files in', this.outputDir);
   }
 
@@ -198,6 +201,72 @@ class WorkflowParserPlugin {
     const outputPath = path.join(this.outputDir, 'server-loader.js');
     fs.writeFileSync(outputPath, content, 'utf8');
     console.log('[WorkflowParser] Generated', outputPath);
+  }
+
+  copyWorkflowAssets(workflows) {
+    const publicWorkflowsDir = path.resolve(__dirname, '../public/workflows');
+
+    // Clean public/workflows/ on each run to remove stale assets from disabled packages
+    if (fs.existsSync(publicWorkflowsDir)) {
+      fs.rmSync(publicWorkflowsDir, { recursive: true, force: true });
+    }
+
+    if (workflows.length === 0) {
+      return;
+    }
+
+    let totalCopied = 0;
+
+    workflows.forEach(function(workflow) {
+      try {
+        // Resolve the package's filesystem path
+        const packageMain = require.resolve(workflow.package);
+        const packageDir = path.dirname(packageMain);
+        const assetsDir = path.join(packageDir, 'assets');
+
+        if (!fs.existsSync(assetsDir) || !fs.statSync(assetsDir).isDirectory()) {
+          return;
+        }
+
+        // Derive short name from scoped package (e.g. @node-on-fhir/radiology-workflow -> radiology-workflow)
+        const shortName = workflow.package.split('/').pop();
+        const destDir = path.join(publicWorkflowsDir, shortName);
+
+        fs.mkdirSync(destDir, { recursive: true });
+
+        // Copy all non-hidden files
+        const files = fs.readdirSync(assetsDir);
+        let filesCopied = 0;
+
+        files.forEach(function(file) {
+          // Skip hidden files and macOS resource forks
+          if (file.startsWith('.') || file.startsWith('._')) {
+            return;
+          }
+
+          const srcPath = path.join(assetsDir, file);
+          const destPath = path.join(destDir, file);
+
+          // Only copy files, not subdirectories
+          if (fs.statSync(srcPath).isFile()) {
+            fs.copyFileSync(srcPath, destPath);
+            filesCopied++;
+          }
+        });
+
+        if (filesCopied > 0) {
+          console.log('[WorkflowParser] Copied ' + shortName + ' assets to public/workflows/' + shortName + '/ (' + filesCopied + ' file(s))');
+          totalCopied += filesCopied;
+        }
+      } catch (e) {
+        // Package not found or not installed - skip silently
+        console.warn('[WorkflowParser] Could not resolve assets for', workflow.package, '-', e.message);
+      }
+    });
+
+    if (totalCopied > 0) {
+      console.log('[WorkflowParser] Total workflow assets copied:', totalCopied);
+    }
   }
 }
 

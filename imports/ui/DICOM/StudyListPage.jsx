@@ -70,6 +70,18 @@ export default function StudyListPage() {
     setSearchParams = result[1];
   }
 
+  // Extract patient/servicerequest params for forwarding to upload page
+  var patientParam = searchParams ? searchParams.get('patient') : null;
+  var serviceRequestParam = searchParams ? searchParams.get('servicerequest') : null;
+
+  var forwardParams = '';
+  if (patientParam) {
+    forwardParams += '?patient=' + encodeURIComponent(patientParam);
+  }
+  if (serviceRequestParam) {
+    forwardParams += (forwardParams ? '&' : '?') + 'servicerequest=' + encodeURIComponent(serviceRequestParam);
+  }
+
   // Get initial tab from URL or default to 'studies'
   function getInitialTab() {
     if (searchParams) {
@@ -83,11 +95,14 @@ export default function StudyListPage() {
 
   const [activeTab, setActiveTab] = useState(getInitialTab);
 
-  // Sync URL when tab changes
+  // Sync URL when tab changes (merge with existing params to preserve patient/servicerequest)
   useEffect(function() {
     if (setSearchParams) {
       const tabName = TAB_NAMES[activeTab];
-      setSearchParams({ tab: tabName });
+      setSearchParams(function(prev) {
+        prev.set('tab', tabName);
+        return prev;
+      });
     }
   }, [activeTab, setSearchParams]);
 
@@ -138,7 +153,7 @@ export default function StudyListPage() {
               <Button
                 variant="contained"
                 startIcon={<UploadIcon />}
-                onClick={function() { navigate('/dicom/upload'); }}
+                onClick={function() { navigate('/dicom/upload' + forwardParams); }}
               >
                 Upload Image(s)
               </Button>
