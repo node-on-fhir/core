@@ -5,12 +5,16 @@ import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
 import { useTracker } from 'meteor/react-meteor-data';
 
-import { useLocation } from 'react-router-dom';
-
 // Use Meteor.useNavigate pattern - shares Router context with main app
 let useNavigate;
 Meteor.startup(function(){
   useNavigate = Meteor.useNavigate;
+});
+
+// Use Meteor.useLocation pattern - shares Router context with main app
+let useLocation;
+Meteor.startup(function(){
+  useLocation = Meteor.useLocation;
 });
 
 // Use Meteor.useTheme pattern for Honeycomb dark mode support
