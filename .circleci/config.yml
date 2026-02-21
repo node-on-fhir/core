@@ -349,44 +349,45 @@ jobs:
       - run:
           name: Install dependencies
           command: |
+            # Safety net: patch lockfile for cross-platform rspack bindings
+            # Handles the case where lockfile was regenerated on macOS without linux entries
+            node -e "
+            const fs = require('fs');
+            const lock = JSON.parse(fs.readFileSync('package-lock.json', 'utf8'));
+            const binding = lock.packages['node_modules/@rspack/binding'];
+            if (binding && binding.optionalDependencies) {
+              let patched = false;
+              for (const [name, version] of Object.entries(binding.optionalDependencies)) {
+                const key = 'node_modules/' + name;
+                if (!lock.packages[key]) {
+                  const os = name.includes('darwin') ? ['darwin'] : name.includes('linux') ? ['linux'] : name.includes('win32') ? ['win32'] : [];
+                  const cpu = name.includes('x64') ? ['x64'] : name.includes('arm64') ? ['arm64'] : name.includes('ia32') ? ['ia32'] : name.includes('wasm32') ? ['wasm32'] : [];
+                  lock.packages[key] = { version, cpu, dev: true, license: 'MIT', optional: true, os };
+                  patched = true;
+                  console.log('  Added: ' + key + '@' + version);
+                }
+              }
+              if (patched) {
+                fs.writeFileSync('package-lock.json', JSON.stringify(lock, null, 2));
+                console.log('Lockfile patched with missing rspack platform entries');
+              } else {
+                console.log('All rspack platform entries already present in lockfile');
+              }
+            }
+            "
+
             echo "Installing npm dependencies..."
             meteor npm install --verbose
             echo "npm install completed successfully"
 
-            # Workaround for npm optional dependency bug (https://github.com/npm/cli/issues/4828)
-            # package-lock.json was generated on macOS and lacks resolved linux binding entry
-            echo "Ensuring rspack native binding for Linux x64 is installed..."
-            RSPACK_BINDING_VERSION=$(node -p "require('./node_modules/@rspack/binding/package.json').version" 2>/dev/null || echo "")
-            if [ -n "$RSPACK_BINDING_VERSION" ]; then
-              echo "Found @rspack/binding@$RSPACK_BINDING_VERSION"
-
-              # Attempt 1: Use meteor npm install (consistent with project)
-              echo "Attempt 1: meteor npm install @rspack/binding-linux-x64-gnu@$RSPACK_BINDING_VERSION"
-              meteor npm install "@rspack/binding-linux-x64-gnu@$RSPACK_BINDING_VERSION" --no-save 2>&1 || true
-
-              # Verify the binding is loadable
-              if node -e "require('@rspack/binding-linux-x64-gnu')" 2>/dev/null; then
-                echo "✓ rspack Linux x64 GNU binding installed and verified"
-              else
-                # Attempt 2: Download and extract the package tarball directly
-                echo "Attempt 1 failed. Attempt 2: direct tarball extraction..."
-                npm pack "@rspack/binding-linux-x64-gnu@$RSPACK_BINDING_VERSION" 2>&1
-                mkdir -p node_modules/@rspack/binding-linux-x64-gnu
-                tar -xzf rspack-binding-linux-x64-gnu-*.tgz --strip-components=1 -C node_modules/@rspack/binding-linux-x64-gnu
-                rm -f rspack-binding-linux-x64-gnu-*.tgz
-
-                # Final verification
-                if node -e "require('@rspack/binding-linux-x64-gnu')" 2>/dev/null; then
-                  echo "✓ rspack Linux x64 GNU binding installed via tarball"
-                else
-                  echo "✗ FATAL: Could not install rspack Linux binding"
-                  echo "Contents of node_modules/@rspack/binding-linux-x64-gnu/:"
-                  ls -la node_modules/@rspack/binding-linux-x64-gnu/ 2>/dev/null || echo "  (directory not found)"
-                  exit 1
-                fi
-              fi
+            # Verify rspack binding is available for this platform
+            if node -e "require('@rspack/binding')" 2>/dev/null; then
+              echo "✓ rspack binding loaded successfully"
             else
-              echo "Warning: @rspack/binding not found in node_modules, skipping"
+              echo "✗ FATAL: rspack binding not loadable"
+              echo "Contents of node_modules/@rspack/:"
+              ls -la node_modules/@rspack/ 2>/dev/null || echo "  (directory not found)"
+              exit 1
             fi
 
             # Update browserslist database to avoid warnings
