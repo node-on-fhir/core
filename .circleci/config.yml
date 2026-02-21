@@ -192,8 +192,8 @@ jobs:
 
       - restore_cache:
           keys:
-            - npm-deps-v2-{{ checksum "package-lock.json" }}
-            - npm-deps-v2-
+            - npm-deps-v3-{{ checksum "package-lock.json" }}
+            - npm-deps-v3-
 
       - run:
           name: Install Chrome with retry
@@ -354,14 +354,39 @@ jobs:
             echo "npm install completed successfully"
 
             # Workaround for npm optional dependency bug (https://github.com/npm/cli/issues/4828)
-            # Ensure platform-specific rspack native binding is installed
-            echo "Ensuring rspack native binding for Linux is installed..."
-            RSPACK_BINDING_VERSION=$(node -e "try { console.log(require('@rspack/binding/package.json').version) } catch(e) { console.log('') }")
+            # package-lock.json was generated on macOS and lacks resolved linux binding entry
+            echo "Ensuring rspack native binding for Linux x64 is installed..."
+            RSPACK_BINDING_VERSION=$(node -p "require('./node_modules/@rspack/binding/package.json').version" 2>/dev/null || echo "")
             if [ -n "$RSPACK_BINDING_VERSION" ]; then
-              echo "Installing @rspack/binding-linux-x64-gnu@$RSPACK_BINDING_VERSION"
-              npm install "@rspack/binding-linux-x64-gnu@$RSPACK_BINDING_VERSION" --no-save || true
+              echo "Found @rspack/binding@$RSPACK_BINDING_VERSION"
+
+              # Attempt 1: Use meteor npm install (consistent with project)
+              echo "Attempt 1: meteor npm install @rspack/binding-linux-x64-gnu@$RSPACK_BINDING_VERSION"
+              meteor npm install "@rspack/binding-linux-x64-gnu@$RSPACK_BINDING_VERSION" --no-save 2>&1 || true
+
+              # Verify the binding is loadable
+              if node -e "require('@rspack/binding-linux-x64-gnu')" 2>/dev/null; then
+                echo "✓ rspack Linux x64 GNU binding installed and verified"
+              else
+                # Attempt 2: Download and extract the package tarball directly
+                echo "Attempt 1 failed. Attempt 2: direct tarball extraction..."
+                npm pack "@rspack/binding-linux-x64-gnu@$RSPACK_BINDING_VERSION" 2>&1
+                mkdir -p node_modules/@rspack/binding-linux-x64-gnu
+                tar -xzf rspack-binding-linux-x64-gnu-*.tgz --strip-components=1 -C node_modules/@rspack/binding-linux-x64-gnu
+                rm -f rspack-binding-linux-x64-gnu-*.tgz
+
+                # Final verification
+                if node -e "require('@rspack/binding-linux-x64-gnu')" 2>/dev/null; then
+                  echo "✓ rspack Linux x64 GNU binding installed via tarball"
+                else
+                  echo "✗ FATAL: Could not install rspack Linux binding"
+                  echo "Contents of node_modules/@rspack/binding-linux-x64-gnu/:"
+                  ls -la node_modules/@rspack/binding-linux-x64-gnu/ 2>/dev/null || echo "  (directory not found)"
+                  exit 1
+                fi
+              fi
             else
-              echo "Warning: @rspack/binding not found, skipping Linux binding install"
+              echo "Warning: @rspack/binding not found in node_modules, skipping"
             fi
 
             # Update browserslist database to avoid warnings
@@ -372,12 +397,6 @@ jobs:
           key: meteor-install-v3.3-{{ arch }}
           paths:
             - ~/.meteor
-
-      - save_cache:
-          key: npm-deps-v2-{{ checksum "package-lock.json" }}
-          paths:
-            - node_modules
-            - .meteor/local
 
       - run:
           name: Pre-build Meteor packages
@@ -423,7 +442,13 @@ jobs:
             # Clean up
             rm -rf /tmp/build-test
             echo "Pre-build completed"
-      
+
+      - save_cache:
+          key: npm-deps-v3-{{ checksum "package-lock.json" }}
+          paths:
+            - node_modules
+            - .meteor/local
+
       - run:
           name: Debug Meteor packages
           command: |

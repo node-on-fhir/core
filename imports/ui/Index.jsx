@@ -7,16 +7,140 @@ import { Random } from 'meteor/random';
 import { useNavigate } from "react-router-dom";
 import { get } from 'lodash';
 
-import { 
+import {
+  Avatar,
   CardContent,
+  Card,
+  CardHeader,
+  Chip,
   Grid,
   TextField,
   Typography,
   Box,
   InputAdornment,
+  ToggleButton,
+  ToggleButtonGroup,
   useTheme
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
+import ViewListIcon from '@mui/icons-material/ViewList';
+import ViewModuleIcon from '@mui/icons-material/ViewModule';
+
+// Core section icons
+import Home from '@mui/icons-material/Home';
+import Toc from '@mui/icons-material/Toc';
+import FolderOpen from '@mui/icons-material/FolderOpen';
+import RocketLaunch from '@mui/icons-material/RocketLaunch';
+import BugReport from '@mui/icons-material/BugReport';
+import Hub from '@mui/icons-material/Hub';
+import Extension from '@mui/icons-material/Extension';
+import Settings from '@mui/icons-material/Settings';
+import HowToReg from '@mui/icons-material/HowToReg';
+import VpnKey from '@mui/icons-material/VpnKey';
+import Person from '@mui/icons-material/Person';
+import People from '@mui/icons-material/People';
+import Palette from '@mui/icons-material/Palette';
+import Widgets from '@mui/icons-material/Widgets';
+
+// FHIR section icons
+import WarningAmber from '@mui/icons-material/WarningAmber';
+import Assessment from '@mui/icons-material/Assessment';
+import DirectionsRun from '@mui/icons-material/DirectionsRun';
+import Work from '@mui/icons-material/Work';
+import Assignment from '@mui/icons-material/Assignment';
+import Groups from '@mui/icons-material/Groups';
+import DataObject from '@mui/icons-material/DataObject';
+import Article from '@mui/icons-material/Article';
+import Email from '@mui/icons-material/Email';
+import MonitorHeart from '@mui/icons-material/MonitorHeart';
+import AccountBalanceWallet from '@mui/icons-material/AccountBalanceWallet';
+import DevicesIcon from '@mui/icons-material/Devices';
+import Summarize from '@mui/icons-material/Summarize';
+import Description from '@mui/icons-material/Description';
+import TransferWithinAStation from '@mui/icons-material/TransferWithinAStation';
+import Science from '@mui/icons-material/Science';
+import ReceiptLong from '@mui/icons-material/ReceiptLong';
+import TrackChanges from '@mui/icons-material/TrackChanges';
+import QuestionAnswer from '@mui/icons-material/QuestionAnswer';
+import Vaccines from '@mui/icons-material/Vaccines';
+import LocalLibrary from '@mui/icons-material/LocalLibrary';
+import FactCheck from '@mui/icons-material/FactCheck';
+import Medication from '@mui/icons-material/Medication';
+import Restaurant from '@mui/icons-material/Restaurant';
+import Thermostat from '@mui/icons-material/Thermostat';
+import ErrorOutline from '@mui/icons-material/ErrorOutline';
+import AccountTree from '@mui/icons-material/AccountTree';
+import Healing from '@mui/icons-material/Healing';
+import Quiz from '@mui/icons-material/Quiz';
+import Biotech from '@mui/icons-material/Biotech';
+import MedicalServices from '@mui/icons-material/MedicalServices';
+import TaskIcon from '@mui/icons-material/Task';
+import Dataset from '@mui/icons-material/Dataset';
+
+// Icon maps keyed by URL path
+const coreIconMap = {
+  '/': Home,
+  '/index': Toc,
+  '/static-files': FolderOpen,
+  '/smart-launcher': RocketLaunch,
+  '/smart-launcher-debugger': BugReport,
+  '/smart-sample-app': Hub,
+  '/smart-app-debugger': BugReport,
+  '/cds-hooks-debugger': Extension,
+  '/server-configuration': Settings,
+  '/udap-registration': HowToReg,
+  '/oauth-clients': VpnKey,
+  '/patient-chart': Person,
+  '/patient-directory': People,
+  '/theming': Palette
+};
+
+const fhirIconMap = {
+  '/allergy-intolerances': WarningAmber,
+  '/artifact-assessments': Assessment,
+  '/activity-definitions': DirectionsRun,
+  '/bundles': Work,
+  '/care-plans': Assignment,
+  '/care-teams': Groups,
+  '/code-systems': DataObject,
+  '/compositions': Article,
+  '/communications': Email,
+  '/conditions': MonitorHeart,
+  '/claims': AccountBalanceWallet,
+  '/devices': DevicesIcon,
+  '/diagnostic-reports': Summarize,
+  '/document-references': Description,
+  '/encounters': TransferWithinAStation,
+  '/evidences': Science,
+  '/explanation-of-benefits': ReceiptLong,
+  '/goals': TrackChanges,
+  '/guidance-responses': QuestionAnswer,
+  '/immunizations': Vaccines,
+  '/libraries': LocalLibrary,
+  '/measures': FactCheck,
+  '/measure-reports': Assessment,
+  '/medications': Medication,
+  '/medication-statements': Medication,
+  '/nutrition-orders': Restaurant,
+  '/observations': Thermostat,
+  '/operation-outcomes': ErrorOutline,
+  '/plan-definitions': AccountTree,
+  '/procedures': Healing,
+  '/questionnaires': Quiz,
+  '/questionnaire-responses': QuestionAnswer,
+  '/research-studies': Biotech,
+  '/research-subjects': Groups,
+  '/service-requests': MedicalServices,
+  '/tasks': TaskIcon,
+  '/value-sets': Dataset
+};
+
+// Section accent colors -- rgba for light/dark mode compatibility
+const sectionAccents = {
+  core:    { bg: 'rgba(66,133,244,0.12)',  border: 'rgba(66,133,244,0.6)',  icon: 'rgb(66,133,244)' },
+  fhir:    { bg: 'rgba(108,183,110,0.12)', border: 'rgba(108,183,110,0.6)', icon: 'rgb(108,183,110)' },
+  dynamic: { bg: 'rgba(255,167,38,0.12)',  border: 'rgba(255,167,38,0.6)',  icon: 'rgb(255,167,38)' }
+};
 
 // Create client-only Minimongo collections for filtering
 const CoreLinksCollection = new Mongo.Collection('CoreLinks', { connection: null });
@@ -26,6 +150,7 @@ const DynamicLinksCollection = new Mongo.Collection('DynamicLinks', { connection
 export const Index = () => {
   const navigate = useNavigate();
   const theme = useTheme();
+  const [viewMode, setViewMode] = useState('text');
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredCoreLinks, setFilteredCoreLinks] = useState([]);
   const [filteredFhirLinks, setFilteredFhirLinks] = useState([]);
@@ -376,8 +501,8 @@ export const Index = () => {
           description: route.description || '',
           url: route.path,
           title: route.name
-        });      
-      });    
+        });
+      });
     }
   });
 
@@ -416,7 +541,7 @@ export const Index = () => {
       setFilteredDynamicLinks(DynamicLinksCollection.find({}).fetch());
     } else {
       // Apply regex filter
-      const regexQuery = { 
+      const regexQuery = {
         $or: [
           { title: { $regex: searchQuery, $options: 'i' } },
           { url: { $regex: searchQuery, $options: 'i' } },
@@ -434,14 +559,82 @@ export const Index = () => {
     setSearchQuery(event.target.value);
   };
 
+  // Shared section header for both views
+  const renderSectionHeader = (title, accent) => {
+    return (
+      <Box sx={{ mb: 2 }}>
+        <Typography variant="h6" sx={{ fontWeight: 600, color: 'text.primary', mb: 1 }}>
+          {title}
+        </Typography>
+        <Box sx={{ width: '100%', height: '2px', bgcolor: accent.border, borderRadius: 1 }} />
+      </Box>
+    );
+  };
+
+  // Shared tile card renderer
+  const renderTileCard = (link, iconMap, accent, navPath, subtitle) => {
+    const IconComponent = iconMap[link.url] || Widgets;
+    const routePath = navPath || link.url;
+
+    return (
+      <Card
+        key={link._id}
+        onClick={() => navigate(routePath)}
+        sx={{
+          cursor: 'pointer',
+          mb: 1.5,
+          borderRadius: 2,
+          borderLeft: '4px solid',
+          borderLeftColor: accent.border,
+          transition: 'all 0.2s ease-in-out',
+          '&:hover': {
+            boxShadow: 4,
+            backgroundColor: 'action.hover',
+            transform: 'translateX(2px)'
+          }
+        }}
+      >
+        <CardHeader
+          avatar={
+            <Avatar sx={{ bgcolor: accent.bg, width: 40, height: 40 }}>
+              <IconComponent sx={{ color: accent.icon, fontSize: 22 }} />
+            </Avatar>
+          }
+          title={
+            <Typography variant="body1" sx={{ fontWeight: 500 }}>
+              {link.title || link.name}
+            </Typography>
+          }
+          subheader={subtitle || null}
+          action={
+            <Chip
+              label={routePath}
+              size="small"
+              variant="outlined"
+              sx={{ mt: 1, mr: 1, fontFamily: 'monospace', fontSize: '0.7rem' }}
+            />
+          }
+        />
+      </Card>
+    );
+  };
+
   // Render functions for different sections
   const renderCoreElements = () => {
     if (filteredCoreLinks.length === 0) return null;
-    
+
+    if (viewMode === 'tiles') {
+      return (
+        <div>
+          {renderSectionHeader('Index', sectionAccents.core)}
+          {filteredCoreLinks.map(link => renderTileCard(link, coreIconMap, sectionAccents.core))}
+        </div>
+      );
+    }
+
     return (
       <div>
-        <hr style={{marginBottom: '0px'}}/>
-        <h3 style={{marginTop: '0px', paddingTop: '0px'}}>Index</h3>
+        {renderSectionHeader('Index', sectionAccents.core)}
         <ul>
           {filteredCoreLinks.map(link => (
             <li key={link._id} onClick={() => navigate(link.url)} style={{cursor: 'pointer', color: theme.palette.mode === 'dark' ? theme.palette.primary.light : 'inherit'}}>
@@ -455,11 +648,19 @@ export const Index = () => {
 
   const renderFhirElements = () => {
     if (filteredFhirLinks.length === 0) return null;
-    
+
+    if (viewMode === 'tiles') {
+      return (
+        <div>
+          {renderSectionHeader('FHIR Modules', sectionAccents.fhir)}
+          {filteredFhirLinks.map(link => renderTileCard(link, fhirIconMap, sectionAccents.fhir))}
+        </div>
+      );
+    }
+
     return (
       <div>
-        <hr style={{marginBottom: '0px'}}/>
-        <h3 style={{marginTop: '0px', paddingTop: '0px'}}>FHIR Modules</h3>
+        {renderSectionHeader('FHIR Modules', sectionAccents.fhir)}
         <ul>
           {filteredFhirLinks.map(link => (
             <li key={link._id} onClick={() => navigate(link.url)} style={{cursor: 'pointer', color: theme.palette.mode === 'dark' ? theme.palette.primary.light : 'inherit'}}>
@@ -473,20 +674,29 @@ export const Index = () => {
 
   const renderDynamicElements = () => {
     if (filteredDynamicLinks.length === 0) return null;
-    
+
+    if (viewMode === 'tiles') {
+      return (
+        <div>
+          {renderSectionHeader('Dynamic Modules', sectionAccents.dynamic)}
+          {filteredDynamicLinks.map(link => renderTileCard(
+            link,
+            {},
+            sectionAccents.dynamic,
+            link.path,
+            link.description || null
+          ))}
+        </div>
+      );
+    }
+
     return (
       <div>
-        <hr style={{marginBottom: '0px'}}/>
-        <h3 style={{marginTop: '0px', paddingTop: '0px'}}>Dynamic Modules</h3>
+        {renderSectionHeader('Dynamic Modules', sectionAccents.dynamic)}
         <ul>
           {filteredDynamicLinks.map(link => (
             <li key={link._id} onClick={() => navigate(link.path)} style={{cursor: 'pointer', color: theme.palette.mode === 'dark' ? theme.palette.primary.light : 'inherit'}}>
               <a style={{color: 'inherit'}}>{link.name}</a>
-              {link.description && (
-                <span style={{color: theme.palette.mode === 'dark' ? '#999' : '#666', fontSize: '0.9em', marginLeft: '10px'}}>
-                  - {link.description}
-                </span>
-              )}
             </li>
           ))}
         </ul>
@@ -499,17 +709,28 @@ export const Index = () => {
 
   return (
     <div style={{
-      height: window.innerHeight, 
-      overflow: 'scroll', 
+      height: window.innerHeight,
+      overflow: 'scroll',
       paddingBottom: '100px',
       backgroundColor: theme.palette.mode === 'dark' ? theme.palette.background.default : theme.palette.grey[50]
     }}>
       <CardContent>
         {/* Search Bar Section */}
         <Box sx={{ mb: 4 }}>
-          <Typography variant="h4" component="h1" gutterBottom>
-            Site Index & Help
-          </Typography>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Typography variant="h4" component="h1" gutterBottom>
+              Site Index & Help
+            </Typography>
+            <ToggleButtonGroup
+              value={viewMode}
+              exclusive
+              onChange={(e, newMode) => { if (newMode) setViewMode(newMode); }}
+              size="small"
+            >
+              <ToggleButton value="text"><ViewListIcon /></ToggleButton>
+              <ToggleButton value="tiles"><ViewModuleIcon /></ToggleButton>
+            </ToggleButtonGroup>
+          </Box>
           <Typography variant="body2" color="text.secondary" gutterBottom>
             Search for pages, modules, and features across the application
           </Typography>
