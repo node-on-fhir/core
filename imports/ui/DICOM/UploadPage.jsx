@@ -29,10 +29,44 @@ import {
   Transform as ConvertIcon
 } from '@mui/icons-material';
 import SimpleDicomViewport from './components/SimpleDicomViewport';
+import moment from 'moment';
 
 // DICOM parsing imports
 import dicomParser from 'dicom-parser';
 import { extractAllDicomMetadata } from './utils/DicomFhirMapping';
+
+// Video file detection
+function isVideoFile(file) {
+  const name = file.name.toLowerCase();
+  return name.endsWith('.mp4') || file.type === 'video/mp4';
+}
+
+// Generate shared study/series metadata for a batch of video files
+function generateVideoStudyMetadata() {
+  return {
+    studyInstanceUid: crypto.randomUUID(),
+    seriesInstanceUid: crypto.randomUUID(),
+    modality: 'US',
+    studyDate: moment().format('YYYYMMDD'),
+    studyDescription: 'Ultrasound Video'
+  };
+}
+
+// Build per-file metadata for a video file (mirrors DICOM metadata shape)
+function buildVideoFileMetadata(file, batchMeta, instanceNumber) {
+  return {
+    studyInstanceUid: batchMeta.studyInstanceUid,
+    seriesInstanceUid: batchMeta.seriesInstanceUid,
+    sopInstanceUid: crypto.randomUUID(),
+    sopClassUid: '1.2.840.10008.5.1.4.1.1.6.1', // Ultrasound Image Storage
+    modality: 'US',
+    studyDate: batchMeta.studyDate,
+    studyDescription: batchMeta.studyDescription,
+    seriesDescription: 'Ultrasound Video Series',
+    instanceNumber: instanceNumber,
+    contentType: 'video/mp4'
+  };
+}
 
 // Theme hook
 let useAppTheme;
@@ -198,13 +232,25 @@ function UploadPage() {
     const results = [];
     let firstPreviewFile = null;
 
+    // Pre-generate shared metadata for video files in this batch
+    const hasVideoFiles = files.some(isVideoFile);
+    const videoBatchMeta = hasVideoFiles ? generateVideoStudyMetadata() : null;
+    let videoInstanceCounter = 0;
+
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
 
       try {
-        // Parse DICOM file to extract metadata BEFORE upload
-        console.log('[UploadPage] Parsing', file.name, '(' + file.size + ' bytes)...');
-        const dicomMetadata = await parseDicomFile(file);
+        // Generate metadata: video files get synthetic metadata, DICOM files get parsed
+        let dicomMetadata;
+        if (isVideoFile(file)) {
+          videoInstanceCounter++;
+          dicomMetadata = buildVideoFileMetadata(file, videoBatchMeta, videoInstanceCounter);
+          console.log('[UploadPage] Generated video metadata for', file.name, '(instance', videoInstanceCounter, ')');
+        } else {
+          console.log('[UploadPage] Parsing', file.name, '(' + file.size + ' bytes)...');
+          dicomMetadata = await parseDicomFile(file);
+        }
 
         // Upload file to GridFS via HTTP (with metadata)
         console.log('[UploadPage] Uploading', file.name, 'to GridFS...');
@@ -368,14 +414,26 @@ function UploadPage() {
     const uploadedFileIds = [];
 
     try {
+      // Pre-generate shared metadata for video files in this batch
+      const hasVideoFiles = files.some(isVideoFile);
+      const videoBatchMeta = hasVideoFiles ? generateVideoStudyMetadata() : null;
+      let videoInstanceCounter = 0;
+
       // Step 1: Upload all files to GridFS with DICOM metadata
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
 
         try {
-          // Parse DICOM file to extract metadata BEFORE upload
-          console.log('[UploadPage] Parsing', file.name, 'for FHIR conversion...');
-          const dicomMetadata = await parseDicomFile(file);
+          // Generate metadata: video files get synthetic metadata, DICOM files get parsed
+          let dicomMetadata;
+          if (isVideoFile(file)) {
+            videoInstanceCounter++;
+            dicomMetadata = buildVideoFileMetadata(file, videoBatchMeta, videoInstanceCounter);
+            console.log('[UploadPage] Generated video metadata for', file.name, '(instance', videoInstanceCounter, ')');
+          } else {
+            console.log('[UploadPage] Parsing', file.name, 'for FHIR conversion...');
+            dicomMetadata = await parseDicomFile(file);
+          }
 
           // Upload file to GridFS via HTTP (with metadata)
           console.log('[UploadPage] Uploading', file.name, 'to GridFS...');
@@ -401,6 +459,7 @@ function UploadPage() {
       }
 
       // Step 2: Create aggregated ImagingStudy from all uploaded files
+      let aggregationResult = null;
       if (uploadedFileIds.length > 0) {
         console.log('[UploadPage] Creating aggregated ImagingStudy for', uploadedFileIds.length, 'files');
 
@@ -412,7 +471,7 @@ function UploadPage() {
           convertMethodOptions.serviceRequestId = serviceRequestParam;
         }
 
-        const aggregationResult = await new Promise(function(resolve, reject) {
+        aggregationResult = await new Promise(function(resolve, reject) {
           Meteor.call('dicom.createOrUpdateImagingStudy', uploadedFileIds, convertMethodOptions, function(error, result) {
             if (error) {
               reject(error);
@@ -445,7 +504,7 @@ function UploadPage() {
       if (successCount > 0) {
         // Navigate to studies page to see the new FHIR resources
         if (navigate) {
-          navigate('/dicom/studies' + forwardParams);
+          navigate('/dicom/studies' + forwardParams, { state: { aggregationResult: aggregationResult } });
         }
       }
     } catch (err) {
@@ -473,8 +532,8 @@ function UploadPage() {
           color: cardTextColor
         }}>
           <CardHeader
-            title="Upload DICOM Files"
-            subheader={files.length > 0 ? `${files.length} file${files.length !== 1 ? 's' : ''} selected` : "Drag and drop or select DICOM files to upload"}
+            title="Upload DICOM / Video Files"
+            subheader={files.length > 0 ? `${files.length} file${files.length !== 1 ? 's' : ''} selected` : "Drag and drop DICOM (.dcm) or ultrasound video (.mp4) files"}
             action={
               backUrl && navigate && (
                 <Button
@@ -512,7 +571,7 @@ function UploadPage() {
             >
               <UploadIcon sx={{ fontSize: 48, color: subheaderColor, mb: 2 }} />
               <Typography variant="h6" gutterBottom sx={{ color: cardTextColor }}>
-                Drag and drop DICOM files here
+                Drag and drop DICOM or video files here
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 2, color: subheaderColor }}>
                 or click to browse
@@ -521,7 +580,7 @@ function UploadPage() {
                 id="file-input"
                 type="file"
                 multiple
-                accept=".dcm,.dicom"
+                accept=".dcm,.dicom,.mp4"
                 onChange={handleFileSelect}
                 style={{ display: 'none' }}
               />

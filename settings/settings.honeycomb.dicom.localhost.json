@@ -184,12 +184,12 @@
       "host": "http://localhost",
       "port": 3000
     },
-    "stripe": {
-      "publishableKey": "pk_test_REPLACE_WITH_YOUR_KEY"
-    },
     "modules": {
-      "monetization": { "enabled": true },
       "PatientDirectory": true,
+      "monetization": {
+        "enabled": true,
+        "featureGating": false
+      },
       "DicomViewer": {
         "enabled": true,
         "enableGPU": true,
@@ -261,13 +261,12 @@
       "expiryCriticalDays": 7,
       "defaultCrewSize": 4,
       "useBedsForCrewCount": true
+    },
+    "stripe": {
+      "publishableKey": "pk_test_REPLACE_WITH_YOUR_STRIPE_PUBLISHABLE_KEY"
     }
   },
   "private": {
-    "stripe": {
-      "secretKey": "sk_test_REPLACE_WITH_YOUR_KEY",
-      "webhookSecret": "whsec_REPLACE_WITH_YOUR_KEY"
-    },
     "orbital": {
       "enableCron": true
     },
@@ -279,6 +278,18 @@
     "a2a": {
       "enabled": true,
       "serverUrl": "http://localhost:8080"
+    },
+    "stripe": {
+      "secretKey": "sk_test_REPLACE_WITH_YOUR_STRIPE_SECRET_KEY",
+      "webhookSecret": "whsec_REPLACE_WITH_YOUR_WEBHOOK_SECRET",
+      "products": {
+        "freemium": { "priceId": null, "amount": 0 },
+        "vanLife": { "priceId": "price_REPLACE_VAN_LIFE", "amount": 2000 },
+        "medicare": { "priceId": "price_REPLACE_MEDICARE", "amount": 10000 },
+        "mobileclinic": { "priceId": "price_REPLACE_MOBILE_CLINIC", "amount": 50000 },
+        "regulatoryUpdates": { "priceId": "price_REPLACE_REGULATORY", "amount": 5000 },
+        "merkleStorage": { "priceId": "price_REPLACE_MERKLE", "amount": 10000 }
+      }
     },
     "pacio": {
       "chiefMedicalOfficer": {

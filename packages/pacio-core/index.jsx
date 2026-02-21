@@ -9,8 +9,7 @@ import { CircularProgress, Box, Typography } from '@mui/material';
 import './client/startup';
 
 // Import components we'll use for patient directory buttons
-import { AssignToBedModal } from './client/components/beds/AssignToBedModal';
-import { 
+import {
   Bed as BedIcon,
   LocalHospital as AdmitIcon,
   ExitToApp as DischargeIcon,
@@ -112,10 +111,16 @@ const CareTeamsPageLazy = React.lazy(() =>
 );
 const CareTeamsPage = withSuspense(CareTeamsPageLazy);
 
-const TakeVitalSignsPageLazy = React.lazy(() => 
+const TakeVitalSignsPageLazy = React.lazy(() =>
   import('./client/pages/TakeVitalSignsPage')
 );
 const TakeVitalSignsPage = withSuspense(TakeVitalSignsPageLazy);
+
+// Bed assignment modal - lazy loaded to avoid Atmosphere bundling issues
+const AssignToBedModalLazy = React.lazy(() =>
+  import('./client/components/beds/AssignToBedModal').then(module => ({ default: module.AssignToBedModal }))
+);
+const AssignToBedModal = withSuspense(AssignToBedModalLazy);
 
 const MainPageLazy = React.lazy(() => 
   import('./client/pages/MainPage').then(module => ({ default: module.MainPage }))
@@ -503,6 +508,9 @@ export const ModuleConfig = {
 // Export utilities
 export { AdvanceDirectiveUtils } from './lib/utilities/AdvanceDirectiveUtils';
 export { PdfUtils } from './lib/utilities/PdfUtils';
+
+// Export reusable components
+export { FhirFetchPanel } from './client/components/FhirFetchPanel';
 
 
 // Patient Directory Buttons - Dynamic buttons for the patients table

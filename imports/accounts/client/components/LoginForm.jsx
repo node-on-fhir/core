@@ -3,16 +3,18 @@
 import React, { useState, useEffect } from 'react';
 import { Meteor } from 'meteor/meteor';
 import { useNavigate } from 'react-router-dom';
-import { 
-  Box, 
-  Button, 
-  TextField, 
-  Typography, 
+import {
+  Box,
+  Button,
+  TextField,
+  Typography,
   Alert,
   Paper,
   Link,
   CircularProgress,
-  InputAdornment
+  InputAdornment,
+  ToggleButtonGroup,
+  ToggleButton
 } from '@mui/material';
 import { logger } from '../../lib/AccountsLogger';
 import { useDevAutoLogin } from '../hooks/useDevAutoLogin';
@@ -35,6 +37,9 @@ export function LoginForm({ onSuccess, onSignupClick, onForgotPasswordClick, isD
   const [newUsername, setNewUsername] = useState('');
   const [checkingNewUsername, setCheckingNewUsername] = useState(false);
   const [newUsernameAvailable, setNewUsernameAvailable] = useState(null);
+  const [twoFactorRequired, setTwoFactorRequired] = useState(false);
+  const [twoFactorCode, setTwoFactorCode] = useState('');
+  const [useBackupCode, setUseBackupCode] = useState(false);
   const navigate = useNavigate();
 
   // Development auto-login
@@ -63,14 +68,6 @@ export function LoginForm({ onSuccess, onSignupClick, onForgotPasswordClick, isD
 
   // Check if user exists when username changes
   useEffect(() => {
-    // Reset registration mode if username changes
-    if (registrationMode) {
-      setRegistrationMode(false);
-      setConfirmPassword('');
-      setNewUsername('');
-      setNewUsernameAvailable(null);
-    }
-    
     if (!username || username.length < 3) {
       setUserExists(null);
       return;
@@ -117,6 +114,69 @@ export function LoginForm({ onSuccess, onSignupClick, onForgotPasswordClick, isD
 
     return () => clearTimeout(timeoutId);
   }, [newUsername, registrationMode]);
+
+  // Handle 2FA code submission
+  const handleTwoFactorSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
+
+    const code = twoFactorCode.trim();
+    if (!code) {
+      setError('Please enter a code.');
+      setLoading(false);
+      return;
+    }
+
+    try {
+      if (useBackupCode) {
+        // Use backup code for login
+        await new Promise((resolve, reject) => {
+          Meteor.call('accounts.useBackupCodeForLogin', username, password, code, function(error, result) {
+            if (error) {
+              reject(error);
+            } else {
+              // Re-login with password after backup code is consumed
+              Meteor.loginWithPassword(username, password, function(loginError) {
+                if (loginError) {
+                  reject(loginError);
+                } else {
+                  resolve();
+                }
+              });
+            }
+          });
+        });
+      } else {
+        // Use TOTP code
+        await new Promise((resolve, reject) => {
+          Meteor.loginWithPasswordAnd2faCode(username, password, code, function(error) {
+            if (error) {
+              reject(error);
+            } else {
+              resolve();
+            }
+          });
+        });
+      }
+
+      logger.info('2FA login successful');
+      if (onSuccess) {
+        onSuccess();
+      } else {
+        navigate('/');
+      }
+    } catch (err) {
+      logger.error('2FA verification failed:', err);
+      if (err.error === 'invalid-2fa-code') {
+        setError('Invalid code. Please try again.');
+      } else {
+        setError(err.reason || err.message || 'Verification failed.');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -220,10 +280,19 @@ export function LoginForm({ onSuccess, onSignupClick, onForgotPasswordClick, isD
         }
       } catch (err) {
         logger.group('Login Error Analysis', true);
-        
+
+        // Check if 2FA is required
+        if (err.error === 'no-2fa-code') {
+          logger.info('2FA required for this account');
+          setTwoFactorRequired(true);
+          setLoading(false);
+          logger.groupEnd();
+          return;
+        }
+
         // Provide more specific error messages
         let errorMessage = 'Invalid username or password';
-        
+
         if (err.error === 403) {
           if (err.reason === 'User not found') {
             errorMessage = 'No account found with that username or email';
@@ -280,18 +349,56 @@ export function LoginForm({ onSuccess, onSignupClick, onForgotPasswordClick, isD
         }
       }}
     >
-      <Typography
-        variant="h4"
-        gutterBottom
-        sx={{
-          fontWeight: 500,
-          mb: 4,
-          textAlign: 'center',
-          color: cardTextColor
-        }}
-      >
-        {registrationMode ? 'Create Account' : 'Sign In'}
-      </Typography>
+      <Box sx={{ mb: 4 }}>
+        <ToggleButtonGroup
+          fullWidth
+          value={registrationMode ? 'signup' : 'signin'}
+          exclusive
+          onChange={(e, newValue) => {
+            if (newValue !== null) {
+              if (newValue === 'signup') {
+                setRegistrationMode(true);
+                setError('');
+              } else {
+                setRegistrationMode(false);
+                setConfirmPassword('');
+                setNewUsername('');
+                setNewUsernameAvailable(null);
+                setError('');
+              }
+            }
+          }}
+          sx={{
+            '& .MuiToggleButtonGroup-grouped': {
+              border: '1px solid',
+              borderColor: 'divider',
+              px: 4,
+              py: 1,
+              fontWeight: 600,
+              fontSize: '0.875rem',
+              letterSpacing: '0.5px',
+              textTransform: 'none',
+              color: cardTextColor,
+              '&.Mui-selected': {
+                backgroundColor: 'action.selected',
+                color: cardTextColor,
+                '&:hover': {
+                  backgroundColor: 'action.hover',
+                }
+              },
+              '&:first-of-type': {
+                borderRadius: '8px 0 0 8px',
+              },
+              '&:last-of-type': {
+                borderRadius: '0 8px 8px 0',
+              },
+            }
+          }}
+        >
+          <ToggleButton value="signin">Sign In</ToggleButton>
+          <ToggleButton value="signup">Sign Up</ToggleButton>
+        </ToggleButtonGroup>
+      </Box>
       
       <form onSubmit={handleSubmit}>
         <Box sx={{ mb: 4 }}>
@@ -305,11 +412,11 @@ export function LoginForm({ onSuccess, onSignupClick, onForgotPasswordClick, isD
               mb: 0.5
             }}
           >
-            Username or Email *
+            {registrationMode ? 'Email *' : 'Username or Email *'}
           </Typography>
           <TextField
             fullWidth
-            placeholder="Enter username or email"
+            placeholder={registrationMode ? 'Enter your email' : 'Enter username or email'}
             name="username"
             type="text"
             value={username}
@@ -317,12 +424,12 @@ export function LoginForm({ onSuccess, onSignupClick, onForgotPasswordClick, isD
             required
             autoComplete="username"
             autoFocus
-            error={userExists === false}
+            error={!registrationMode && userExists === false}
             variant="outlined"
             InputProps={{
               sx: { 
                 '& .MuiOutlinedInput-notchedOutline': {
-                  borderColor: userExists === false ? 'error.main' : 'divider'
+                  borderColor: !registrationMode && userExists === false ? 'error.main' : 'divider'
                 }
               },
               endAdornment: checkingUser ? (
@@ -338,7 +445,7 @@ export function LoginForm({ onSuccess, onSignupClick, onForgotPasswordClick, isD
                 mx: 0
               }
             }}
-            helperText={userExists === false ? 'No account found with this username/email' : ''}
+            helperText={!registrationMode && userExists === false ? 'No account found with this username/email' : ''}
           />
         </Box>
         
@@ -414,6 +521,19 @@ export function LoginForm({ onSuccess, onSignupClick, onForgotPasswordClick, isD
         {registrationMode ? (
           // Registration mode - show confirm password and username fields
           <>
+            {error && (
+              <Alert
+                severity="error"
+                sx={{
+                  mb: 3,
+                  '& .MuiAlert-message': {
+                    width: '100%'
+                  }
+                }}
+              >
+                {error}
+              </Alert>
+            )}
             <Box sx={{ mb: 4, mt: 4 }}>
               <Typography 
                 component="label" 
@@ -661,7 +781,106 @@ export function LoginForm({ onSuccess, onSignupClick, onForgotPasswordClick, isD
           </>
         )}
         
-        {emailConfigured && userExists !== false && !registrationMode && (
+        {/* Two-Factor Authentication step */}
+        {twoFactorRequired && !registrationMode && (
+          <Box sx={{ mb: 3, mt: 2 }}>
+            <Alert severity="info" sx={{ mb: 3 }}>
+              {useBackupCode
+                ? 'Enter one of your backup codes to sign in.'
+                : 'Enter the 6-digit code from your authenticator app.'}
+            </Alert>
+            <form onSubmit={handleTwoFactorSubmit}>
+              <Box sx={{ mb: 3 }}>
+                <Typography
+                  component="label"
+                  sx={{
+                    display: 'block',
+                    fontSize: '0.875rem',
+                    fontWeight: 500,
+                    color: 'text.secondary',
+                    mb: 0.5
+                  }}
+                >
+                  {useBackupCode ? 'Backup Code *' : 'Authentication Code *'}
+                </Typography>
+                <TextField
+                  fullWidth
+                  placeholder={useBackupCode ? 'Enter backup code' : 'Enter 6-digit code'}
+                  value={twoFactorCode}
+                  onChange={(e) => {
+                    if (useBackupCode) {
+                      setTwoFactorCode(e.target.value.slice(0, 8));
+                    } else {
+                      setTwoFactorCode(e.target.value.replace(/\D/g, '').slice(0, 6));
+                    }
+                  }}
+                  required
+                  autoFocus
+                  autoComplete="one-time-code"
+                  inputProps={{
+                    inputMode: useBackupCode ? 'text' : 'numeric',
+                    pattern: useBackupCode ? undefined : '[0-9]*',
+                    maxLength: useBackupCode ? 8 : 6,
+                    style: {
+                      textAlign: 'center',
+                      fontSize: '1.5rem',
+                      letterSpacing: '0.3em',
+                      fontFamily: 'monospace'
+                    }
+                  }}
+                  variant="outlined"
+                />
+              </Box>
+
+              {error && (
+                <Alert severity="error" sx={{ mb: 3 }}>
+                  {error}
+                </Alert>
+              )}
+
+              <Button
+                type="submit"
+                fullWidth
+                variant="contained"
+                color="primary"
+                size="large"
+                disabled={loading || (!useBackupCode && twoFactorCode.length !== 6) || (useBackupCode && twoFactorCode.length === 0)}
+                sx={{
+                  mb: 2,
+                  py: 1.5,
+                  textTransform: 'uppercase',
+                  fontWeight: 600,
+                  fontSize: '0.875rem',
+                  letterSpacing: '0.5px'
+                }}
+              >
+                {loading ? 'VERIFYING...' : 'VERIFY'}
+              </Button>
+
+              <Box sx={{ textAlign: 'center' }}>
+                <Link
+                  component="button"
+                  variant="body2"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setUseBackupCode(!useBackupCode);
+                    setTwoFactorCode('');
+                    setError('');
+                  }}
+                  sx={{
+                    color: 'secondary.main',
+                    textDecoration: 'none',
+                    '&:hover': { textDecoration: 'underline' }
+                  }}
+                >
+                  {useBackupCode ? 'Use authenticator app instead' : 'Use a backup code'}
+                </Link>
+              </Box>
+            </form>
+          </Box>
+        )}
+
+        {emailConfigured && userExists !== false && !registrationMode && !twoFactorRequired && (
           <Box sx={{ 
             textAlign: 'center',
             pt: 2,

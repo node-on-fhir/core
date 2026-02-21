@@ -439,7 +439,7 @@ function Header({ drawerIsOpen, handleDrawerOpen, lastUpdated }) {
         zIndex: 1000,
         transition: 'transform 0.3s ease-in-out, max-height 0.3s ease-in-out, opacity 0.3s ease-in-out',
         transform: (displayNavbars === false) ? 'translateY(-100%)' : 'translateY(0)',
-        maxHeight: (displayNavbars === false) ? 0 : '128px',
+        maxHeight: (displayNavbars === false) ? 0 : '64px',
         overflow: (displayNavbars === false) ? 'hidden' : 'visible',
         opacity: (displayNavbars === false) ? 0 : 1
       }}>

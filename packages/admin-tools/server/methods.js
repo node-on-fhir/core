@@ -273,5 +273,15 @@ Meteor.methods({
       }
       throw error;
     }
+  },
+
+  /**
+   * Check whether patient archival is allowed via server-side private settings
+   * @returns {Object} { allowPatientArchival: boolean }
+   */
+  'adminTools.checkArchivalSetting': async function() {
+    const allowArchival = get(Meteor, 'settings.private.allowPatientArchival', false);
+    console.log('[adminTools.checkArchivalSetting] allowPatientArchival:', allowArchival);
+    return { allowPatientArchival: allowArchival };
   }
 });

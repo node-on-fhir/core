@@ -195,7 +195,8 @@ function Footer({
   let appStyle = {
     width: '100%',
     bottom: '0px',
-    height: '64p',
+    height: '64px',
+    maxHeight: '64px',
     position: 'sticky'
   };
   // if(theme === 'light'){

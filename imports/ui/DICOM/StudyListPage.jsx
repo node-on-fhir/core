@@ -28,12 +28,14 @@ import KeyImagesTable from './components/KeyImagesTable';
 let useAppTheme;
 let useNavigate;
 let useSearchParams;
+let useLocation;
 
 Meteor.startup(function() {
   useAppTheme = Meteor.useTheme;
   if (window.ReactRouter) {
     useNavigate = window.ReactRouter.useNavigate;
     useSearchParams = window.ReactRouter.useSearchParams;
+    useLocation = window.ReactRouter.useLocation;
   }
 });
 
@@ -59,6 +61,8 @@ export default function StudyListPage() {
   const appTheme = useAppTheme ? useAppTheme() : { theme: 'light' };
   const isDark = appTheme.theme === 'dark';
   const navigate = useNavigate ? useNavigate() : null;
+  const location = useLocation ? useLocation() : {};
+  const aggregationResult = get(location, 'state.aggregationResult', null);
 
   // URL search params for tab sync
   let searchParams = null;
@@ -232,7 +236,7 @@ export default function StudyListPage() {
             aria-labelledby="tab-studies"
           >
             {activeTab === 1 && (
-              <ImagingStudiesTable {...themeProps} />
+              <ImagingStudiesTable {...themeProps} aggregationResult={aggregationResult} />
             )}
           </Box>
 

@@ -922,6 +922,19 @@ Meteor.methods({
         throw new Meteor.Error('collection-unavailable', 'DocumentReferences collection not available');
       }
 
+      // Look up actual content type from GridFS file metadata
+      const GridFSManager = global.GridFSManager;
+      let fileContentType = 'application/dicom';
+      if (GridFSManager && GridFSManager.isInitialized()) {
+        const bucket = GridFSManager.getBucket();
+        const db = bucket.s.db;
+        const filesCollection = db.collection('dicom.files');
+        const { ObjectId } = await import('mongodb');
+        const fileMeta = await filesCollection.findOne({ _id: new ObjectId(options.gridfsFileId) });
+        fileContentType = get(fileMeta, 'metadata.contentType', 'application/dicom');
+        console.log('[dicom.createKeyImage] File contentType:', fileContentType);
+      }
+
       const currentUser = await Meteor.users.findOneAsync({ _id: this.userId });
       const username = currentUser?.username || currentUser?.emails?.[0]?.address || 'unknown';
 
@@ -971,7 +984,7 @@ Meteor.methods({
         // Content: Link to GridFS file
         content: [{
           attachment: {
-            contentType: 'application/dicom',
+            contentType: fileContentType,
             url: '/api/dicom/files/' + options.gridfsFileId,
             creation: timestamp
           }
@@ -1094,6 +1107,58 @@ Meteor.methods({
     } catch (error) {
       console.error('[dicom.regenerateAllImagingStudies] Error:', error);
       throw new Meteor.Error('regeneration-failed', error.message);
+    }
+  },
+
+  /**
+   * Check for duplicate DICOM files in GridFS storage
+   * Uses MongoDB aggregation to find SOPInstanceUIDs uploaded more than once
+   *
+   * @returns {Object} - Duplicate file info
+   */
+  async 'dicom.checkDuplicateFiles'() {
+    if (!this.userId) {
+      throw new Meteor.Error('unauthorized', 'Must be logged in');
+    }
+
+    try {
+      const GridFSManager = global.GridFSManager;
+
+      if (!GridFSManager || !GridFSManager.isInitialized()) {
+        return { duplicates: [], totalDuplicateFiles: 0, uniqueDuplicatedImages: 0 };
+      }
+
+      const bucket = GridFSManager.getBucket();
+      const db = bucket.s.db;
+      const filesCollection = db.collection('dicom.files');
+
+      const pipeline = [
+        { $match: { 'metadata.sopInstanceUid': { $exists: true, $ne: null } } },
+        { $group: {
+          _id: '$metadata.sopInstanceUid',
+          count: { $sum: 1 },
+          studyUids: { $addToSet: '$metadata.studyInstanceUid' },
+          filenames: { $push: '$filename' }
+        }},
+        { $match: { count: { $gt: 1 } } },
+        { $sort: { count: -1 } },
+        { $limit: 20 }
+      ];
+
+      const duplicates = await filesCollection.aggregate(pipeline).toArray();
+      const totalDuplicateFiles = duplicates.reduce(function(sum, d) { return sum + d.count; }, 0);
+
+      console.log('[dicom.checkDuplicateFiles] Found', duplicates.length, 'duplicated images,', totalDuplicateFiles, 'total files');
+
+      return {
+        duplicates: duplicates,
+        totalDuplicateFiles: totalDuplicateFiles,
+        uniqueDuplicatedImages: duplicates.length
+      };
+
+    } catch (error) {
+      console.error('[dicom.checkDuplicateFiles] Error:', error);
+      throw new Meteor.Error('duplicate-check-failed', error.message);
     }
   }
 });

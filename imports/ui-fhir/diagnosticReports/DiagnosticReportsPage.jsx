@@ -3,10 +3,10 @@
 import React, { useState, useEffect } from 'react';
 
 import { useTracker } from 'meteor/react-meteor-data';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
-import { 
-  Grid, 
+import {
+  Grid,
   Container,
   Button,
   Box,
@@ -16,7 +16,11 @@ import {
   ToggleButtonGroup,
   Card,
   CardContent,
-  TextField
+  TextField,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem
 } from '@mui/material';
 
 import { Session } from 'meteor/session';
@@ -41,13 +45,63 @@ Session.setDefault('diagnosticReportsSearchFilter', '');
 Session.setDefault('diagnosticReportsSortOrder', 'descending');
 Session.setDefault('DiagnosticReportsTable.diagnosticReportsIndex', 0);
 
+const diagnosticServiceCategories = [
+  { code: 'AU', display: 'Audiology' },
+  { code: 'BG', display: 'Blood Gases' },
+  { code: 'BLB', display: 'Blood Bank' },
+  { code: 'CG', display: 'Cytogenetics' },
+  { code: 'CUS', display: 'Cardiac Ultrasound' },
+  { code: 'CTH', display: 'Cardiac Catheterization' },
+  { code: 'CT', display: 'CAT Scan' },
+  { code: 'CH', display: 'Chemistry' },
+  { code: 'CP', display: 'Cytopathology' },
+  { code: 'EC', display: 'Electrocardiac (EKG, EEC, Holter)' },
+  { code: 'EN', display: 'Electroneuro (EEG, EMG, EP, PSG)' },
+  { code: 'GE', display: 'Genetics' },
+  { code: 'HM', display: 'Hematology' },
+  { code: 'IMG', display: 'Diagnostic Imaging' },
+  { code: 'ICU', display: 'Bedside ICU Monitoring' },
+  { code: 'IMM', display: 'Immunology' },
+  { code: 'LAB', display: 'Laboratory' },
+  { code: 'MB', display: 'Microbiology' },
+  { code: 'MCB', display: 'Mycobacteriology' },
+  { code: 'MYC', display: 'Mycology' },
+  { code: 'NMS', display: 'Nuclear Medicine Scan' },
+  { code: 'NMR', display: 'Nuclear Magnetic Resonance' },
+  { code: 'NRS', display: 'Nursing Service Measures' },
+  { code: 'OUS', display: 'OB Ultrasound' },
+  { code: 'OT', display: 'Occupational Therapy' },
+  { code: 'OTH', display: 'Other' },
+  { code: 'OSL', display: 'Outside Lab' },
+  { code: 'PAR', display: 'Parasitology' },
+  { code: 'PHR', display: 'Pharmacy' },
+  { code: 'PAT', display: 'Pathology' },
+  { code: 'PT', display: 'Physical Therapy' },
+  { code: 'PHY', display: 'Physician (Hx, Dx, Admission Note)' },
+  { code: 'PF', display: 'Pulmonary Function' },
+  { code: 'RAD', display: 'Radiology' },
+  { code: 'RX', display: 'Radiograph' },
+  { code: 'RUS', display: 'Radiology Ultrasound' },
+  { code: 'RC', display: 'Respiratory Care (Therapy)' },
+  { code: 'RT', display: 'Radiation Therapy' },
+  { code: 'SR', display: 'Serology' },
+  { code: 'SP', display: 'Surgical Pathology' },
+  { code: 'TX', display: 'Toxicology' },
+  { code: 'VUS', display: 'Vascular Ultrasound' },
+  { code: 'VR', display: 'Virology' },
+  { code: 'URN', display: 'Urinalysis' },
+  { code: 'XRC', display: 'Cineradiograph' }
+];
+
 function DiagnosticReportsPage(props){
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [sortOrder, setSortOrder] = useState('descending');
   const [showSystemId, setShowSystemId] = useState(false);
   const [showPatientReference, setShowPatientReference] = useState(false);
   const [showPatientName, setShowPatientName] = useState(true);
   const [searchFilter, setSearchFilter] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState(searchParams.get('category') || '');
 
   let headerHeight = LayoutHelpers.calcHeaderHeight();
   let formFactor = LayoutHelpers.determineFormFactor();
@@ -78,9 +132,9 @@ function DiagnosticReportsPage(props){
     let autoPublishEnabled = get(Meteor, 'settings.public.defaults.autopublish', false);
     const selectedPatientId = Session.get('selectedPatientId');
     const selectedPatient = Session.get('selectedPatient');
-    
+
     let query = {};
-    
+
     // Add patient filter using FhirUtilities
     if(selectedPatient || selectedPatientId) {
       const fhirId = get(selectedPatient, 'id');
@@ -90,7 +144,22 @@ function DiagnosticReportsPage(props){
         query = FhirUtilities.addPatientFilterToQuery(selectedPatientId);
       }
     }
-    
+
+    // Add category filter
+    if(selectedCategory){
+      const categoryFilter = {
+        $or: [
+          {'category.coding.code': selectedCategory},
+          {'category.0.coding.0.code': selectedCategory}
+        ]
+      };
+      if(Object.keys(query).length > 0){
+        query = { $and: [query, categoryFilter] };
+      } else {
+        query = categoryFilter;
+      }
+    }
+
     // Add search filter
     if(searchFilter && searchFilter.length > 0){
       const searchQuery = {
@@ -103,17 +172,19 @@ function DiagnosticReportsPage(props){
           {'conclusion': {$regex: searchFilter, $options: 'i'}}
         ]
       };
-      
-      // Combine patient filter and search filter
+
+      // Combine with existing query
       if(Object.keys(query).length > 0) {
         query = {
-          $and: [query, searchQuery]
+          $and: Array.isArray(query.$and)
+            ? [...query.$and, searchQuery]
+            : [query, searchQuery]
         };
       } else {
         query = searchQuery;
       }
     }
-    
+
     if(autoPublishEnabled){
       const handle = Meteor.subscribe('autopublish.DiagnosticReports', query, { limit: 1000 });
       return !handle.ready();
@@ -121,14 +192,14 @@ function DiagnosticReportsPage(props){
       const handle = Meteor.subscribe('diagnosticreports.all');
       return !handle.ready();
     }
-  }, [searchFilter]);
+  }, [searchFilter, selectedCategory]);
 
   data.diagnosticReports = useTracker(function(){
     const selectedPatientId = Session.get('selectedPatientId');
     const selectedPatient = Session.get('selectedPatient');
-    
+
     let query = {};
-    
+
     // Add patient filter using FhirUtilities
     if(selectedPatient || selectedPatientId) {
       const fhirId = get(selectedPatient, 'id');
@@ -138,7 +209,22 @@ function DiagnosticReportsPage(props){
         query = FhirUtilities.addPatientFilterToQuery(selectedPatientId);
       }
     }
-    
+
+    // Add category filter
+    if(selectedCategory){
+      const categoryFilter = {
+        $or: [
+          {'category.coding.code': selectedCategory},
+          {'category.0.coding.0.code': selectedCategory}
+        ]
+      };
+      if(Object.keys(query).length > 0){
+        query = { $and: [query, categoryFilter] };
+      } else {
+        query = categoryFilter;
+      }
+    }
+
     // Add search filter
     if(searchFilter && searchFilter.length > 0){
       const searchQuery = {
@@ -151,22 +237,24 @@ function DiagnosticReportsPage(props){
           {'conclusion': {$regex: searchFilter, $options: 'i'}}
         ]
       };
-      
-      // Combine patient filter and search filter
+
+      // Combine with existing query
       if(Object.keys(query).length > 0) {
         query = {
-          $and: [query, searchQuery]
+          $and: Array.isArray(query.$and)
+            ? [...query.$and, searchQuery]
+            : [query, searchQuery]
         };
       } else {
         query = searchQuery;
       }
     }
-    
+
     // Sort by most recent first
     return DiagnosticReports.find(query, {
       sort: { _id: -1 }
     }).fetch();
-  }, [searchFilter]);
+  }, [searchFilter, selectedCategory]);
 
   function handleRowClick(diagnosticReportId){
     console.log('DiagnosticReportsPage.onRowClick', diagnosticReportId);
@@ -176,6 +264,16 @@ function DiagnosticReportsPage(props){
   function handleAddDiagnosticReport(){
     console.log('Add Diagnostic Report button clicked');
     navigate('/diagnostic-reports/new');
+  }
+
+  function handleCategoryChange(event){
+    const value = event.target.value;
+    setSelectedCategory(value);
+    if(value){
+      setSearchParams({ category: value });
+    } else {
+      setSearchParams({});
+    }
   }
 
   function handleSortOrderChange(event, newOrder){
@@ -249,7 +347,29 @@ function DiagnosticReportsPage(props){
                   <CodeIcon />
                 </ToggleButton>
               </ToggleButtonGroup>
-              
+
+              <FormControl size="small" sx={{ minWidth: 180 }}>
+                <InputLabel id="category-filter-label">Category</InputLabel>
+                <Select
+                  labelId="category-filter-label"
+                  id="categoryFilter"
+                  value={selectedCategory}
+                  label="Category"
+                  onChange={handleCategoryChange}
+                >
+                  <MenuItem value="">
+                    <em>All Categories</em>
+                  </MenuItem>
+                  {diagnosticServiceCategories.map(function(cat){
+                    return (
+                      <MenuItem key={cat.code} value={cat.code}>
+                        {cat.display}
+                      </MenuItem>
+                    );
+                  })}
+                </Select>
+              </FormControl>
+
               <Button
                 variant="contained"
                 color="primary"

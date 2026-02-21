@@ -50,13 +50,6 @@ Accounts.onLogin(() => {
     }
   }
   
-  // Check if two-factor is required
-  Meteor.call('accounts.checkTwoFactor', (error, result) => {
-    if (result?.required && !result?.verified) {
-      Session.set('twoFactorRequired', true);
-    }
-  });
-  
   // Note: Actual navigation should be handled in React components
   // that can use the useNavigate hook
 });
@@ -106,33 +99,8 @@ Accounts.onLoginFailure((error) => {
   Session.set('loginError', errorMessage);
 });
 
-// Password reset handling
-Accounts.onResetPasswordLink((token, done) => {
-  Session.set('resetPasswordToken', token);
-  // Navigation to reset password page should be handled by the app
-  done();
-});
-
-// Email verification handling
-Accounts.onEmailVerificationLink((token, done) => {
-  Accounts.verifyEmail(token, (error) => {
-    if (error) {
-      console.error('Email verification failed:', error);
-      Session.set('emailVerificationError', error.reason);
-    } else {
-      console.log('Email verified successfully');
-      Session.set('emailVerificationSuccess', true);
-    }
-  });
-  done();
-});
-
-// Enrollment handling (for invited users)
-Accounts.onEnrollmentLink((token, done) => {
-  Session.set('enrollmentToken', token);
-  // Navigation to enrollment page should be handled by the app
-  done();
-});
+// Link handlers (onResetPasswordLink, onEmailVerificationLink, onEnrollmentLink)
+// are registered in imports/accounts/client/startup.js to avoid duplicates.
 
 // Auto-logout on idle
 const idleTimeout = get(Meteor, 'settings.public.accounts.session.idleTimeout', 0);

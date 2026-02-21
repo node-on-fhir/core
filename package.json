@@ -1,6 +1,14 @@
 {
   "name": "meteor-app",
   "private": true,
+  "madge": {
+    "fontSize": "10px",
+    "graphVizOptions": {
+      "G": {
+        "rankdir": "LR"
+      }
+    }
+  },
   "workspaces": [
     "npmPackages/*",
     "npmPackages/merkalis/kastoria-core/merkle-dag-storage",
@@ -28,7 +36,6 @@
     "@accounts/mongo": "0.34.1",
     "@accounts/rest-client": "0.33.1",
     "@accounts/server": "0.33.1",
-    "@accounts/two-factor": "^0.32.4",
     "@breejs/later": "4.1.0",
     "@cornerstonejs/core": "^1.78.0",
     "@cornerstonejs/dicom-image-loader": "^1.78.0",
@@ -126,7 +133,6 @@
     "sanitize-html": "^2.17.0",
     "setimmediate": "^1.0.5",
     "simpl-schema": "^3.4.6",
-    "speakeasy": "^2.0.0",
     "superagent": "^10.0.2",
     "swagger-ui-express": "^5.0.1",
     "three-spritetext": "^1.10.0",

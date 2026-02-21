@@ -1,0 +1,1421 @@
+{
+  "../FhirClientContext.js": [],
+  "../FhirClientProvider.jsx": [
+    "../FhirClientContext.js",
+    "../FhirUtilities.js",
+    "../lib/SmartAuthManager.js",
+    "../lib/schemas/SimpleSchemas/CarePlans.js",
+    "../lib/schemas/SimpleSchemas/CareTeams.js",
+    "../lib/schemas/SimpleSchemas/Conditions.js",
+    "../lib/schemas/SimpleSchemas/Consents.js",
+    "../lib/schemas/SimpleSchemas/Encounters.js",
+    "../lib/schemas/SimpleSchemas/Immunizations.js",
+    "../lib/schemas/SimpleSchemas/Locations.js",
+    "../lib/schemas/SimpleSchemas/MedicationOrders.js",
+    "../lib/schemas/SimpleSchemas/Observations.js",
+    "../lib/schemas/SimpleSchemas/Patients.js",
+    "../lib/schemas/SimpleSchemas/Practitioners.js",
+    "../lib/schemas/SimpleSchemas/Procedures.js",
+    "../lib/schemas/SimpleSchemas/QuestionnaireResponses.js",
+    "../lib/schemas/SimpleSchemas/Questionnaires.js"
+  ],
+  "../FhirUtilities.js": [],
+  "../accounts/client/components/ForgotPasswordForm.jsx": [],
+  "../accounts/client/components/LoginForm.jsx": [
+    "../accounts/client/hooks/useDevAutoLogin.js",
+    "../accounts/lib/AccountsLogger.js"
+  ],
+  "../accounts/client/components/SignupForm.jsx": [
+    "../accounts/lib/AccountsLogger.js"
+  ],
+  "../accounts/client/hooks/useDevAutoLogin.js": [
+    "../accounts/lib/AccountsLogger.js"
+  ],
+  "../accounts/client/pages/EnrollAccountPage.jsx": [],
+  "../accounts/client/pages/ForgotPasswordPage.jsx": [
+    "../accounts/client/components/ForgotPasswordForm.jsx"
+  ],
+  "../accounts/client/pages/LoginPage.jsx": [
+    "../accounts/client/components/LoginForm.jsx"
+  ],
+  "../accounts/client/pages/RegisterPage.jsx": [
+    "../accounts/client/components/SignupForm.jsx"
+  ],
+  "../accounts/client/pages/ResetPasswordPage.jsx": [],
+  "../accounts/client/pages/TwoFactorSetupPage.jsx": [],
+  "../accounts/client/pages/VerifyEmailPage.jsx": [],
+  "../accounts/lib/AccountsLogger.js": [],
+  "../collections/OAuthClients.js": [],
+  "../components/LaunchAppsModal.jsx": [],
+  "../components/PatientSearchDialog.jsx": [],
+  "../components/PractitionerSearchDialog.jsx": [],
+  "../components/TableNoData.jsx": [],
+  "../lib/BaseModel.js": [],
+  "../lib/ConditionalReferenceResolver.js": [],
+  "../lib/FhirDehydrator.js": [
+    "../lib/FhirUtilities.js"
+  ],
+  "../lib/FhirUtilities.js": [],
+  "../lib/HipaaLogger.js": [],
+  "../lib/LayoutHelpers.js": [],
+  "../lib/LayoutHelpers.jsx": [],
+  "../lib/MedicalRecordImporter.js": [
+    "../lib/ConditionalReferenceResolver.js",
+    "../lib/schemas/SimpleSchemas/AllergyIntolerances.js",
+    "../lib/schemas/SimpleSchemas/Conditions.js",
+    "../lib/schemas/SimpleSchemas/DiagnosticReports.js",
+    "../lib/schemas/SimpleSchemas/Encounters.js",
+    "../lib/schemas/SimpleSchemas/HealthcareServices.js",
+    "../lib/schemas/SimpleSchemas/Immunizations.js",
+    "../lib/schemas/SimpleSchemas/Locations.js",
+    "../lib/schemas/SimpleSchemas/MedicationOrders.js",
+    "../lib/schemas/SimpleSchemas/MedicationStatements.js",
+    "../lib/schemas/SimpleSchemas/Medications.js",
+    "../lib/schemas/SimpleSchemas/Observations.js",
+    "../lib/schemas/SimpleSchemas/Patients.js",
+    "../lib/schemas/SimpleSchemas/Practitioners.js",
+    "../lib/schemas/SimpleSchemas/Procedures.js",
+    "../lib/schemas/SimpleSchemas/QuestionnaireResponses.js",
+    "../lib/schemas/SimpleSchemas/Questionnaires.js",
+    "../lib/schemas/SimpleSchemas/Tasks.js",
+    "../lib/schemas/SimpleSchemas/ValueSets.js"
+  ],
+  "../lib/SmartAuthManager.js": [],
+  "../lib/schemas/SimpleSchemas/ActivityDefinitions.js": [
+    "../lib/BaseModel.js"
+  ],
+  "../lib/schemas/SimpleSchemas/AllergyIntolerances.js": [
+    "../lib/BaseModel.js"
+  ],
+  "../lib/schemas/SimpleSchemas/ArtifactAssessments.js": [
+    "../lib/BaseModel.js"
+  ],
+  "../lib/schemas/SimpleSchemas/AuditEvents.js": [
+    "../lib/BaseModel.js"
+  ],
+  "../lib/schemas/SimpleSchemas/Basics.js": [
+    "../lib/BaseModel.js"
+  ],
+  "../lib/schemas/SimpleSchemas/BodyStructures.js": [
+    "../lib/BaseModel.js"
+  ],
+  "../lib/schemas/SimpleSchemas/Bundles.js": [
+    "../lib/BaseModel.js"
+  ],
+  "../lib/schemas/SimpleSchemas/CarePlans.js": [
+    "../lib/BaseModel.js"
+  ],
+  "../lib/schemas/SimpleSchemas/CareTeams.js": [
+    "../lib/BaseModel.js"
+  ],
+  "../lib/schemas/SimpleSchemas/Claims.js": [],
+  "../lib/schemas/SimpleSchemas/ClinicalImpressions.js": [
+    "../lib/BaseModel.js"
+  ],
+  "../lib/schemas/SimpleSchemas/CodeSystems.js": [
+    "../lib/BaseModel.js"
+  ],
+  "../lib/schemas/SimpleSchemas/CommunicationRequests.js": [],
+  "../lib/schemas/SimpleSchemas/Communications.js": [
+    "../lib/BaseModel.js"
+  ],
+  "../lib/schemas/SimpleSchemas/Compositions.js": [
+    "../lib/BaseModel.js"
+  ],
+  "../lib/schemas/SimpleSchemas/ConceptMaps.js": [
+    "../lib/BaseModel.js"
+  ],
+  "../lib/schemas/SimpleSchemas/Conditions.js": [
+    "../lib/BaseModel.js"
+  ],
+  "../lib/schemas/SimpleSchemas/Consents.js": [
+    "../lib/BaseModel.js"
+  ],
+  "../lib/schemas/SimpleSchemas/Devices.js": [
+    "../lib/BaseModel.js"
+  ],
+  "../lib/schemas/SimpleSchemas/DiagnosticReports.js": [
+    "../lib/BaseModel.js"
+  ],
+  "../lib/schemas/SimpleSchemas/DocumentReferences.js": [
+    "../lib/BaseModel.js"
+  ],
+  "../lib/schemas/SimpleSchemas/Encounters.js": [
+    "../lib/BaseModel.js"
+  ],
+  "../lib/schemas/SimpleSchemas/Endpoints.js": [
+    "../lib/BaseModel.js"
+  ],
+  "../lib/schemas/SimpleSchemas/Evidences.js": [
+    "../lib/BaseModel.js"
+  ],
+  "../lib/schemas/SimpleSchemas/ExplanationOfBenefits.js": [
+    "../lib/BaseModel.js"
+  ],
+  "../lib/schemas/SimpleSchemas/FamilyMemberHistories.js": [
+    "../lib/BaseModel.js"
+  ],
+  "../lib/schemas/SimpleSchemas/Goals.js": [
+    "../lib/BaseModel.js"
+  ],
+  "../lib/schemas/SimpleSchemas/Groups.js": [
+    "../lib/BaseModel.js"
+  ],
+  "../lib/schemas/SimpleSchemas/GuidanceResponses.js": [
+    "../lib/BaseModel.js"
+  ],
+  "../lib/schemas/SimpleSchemas/HealthcareServices.js": [
+    "../lib/BaseModel.js"
+  ],
+  "../lib/schemas/SimpleSchemas/ImagingStudies.js": [
+    "../lib/BaseModel.js"
+  ],
+  "../lib/schemas/SimpleSchemas/Immunizations.js": [
+    "../lib/BaseModel.js"
+  ],
+  "../lib/schemas/SimpleSchemas/InsurancePlans.js": [
+    "../lib/BaseModel.js"
+  ],
+  "../lib/schemas/SimpleSchemas/Libraries.js": [
+    "../lib/BaseModel.js"
+  ],
+  "../lib/schemas/SimpleSchemas/Lists.js": [
+    "../lib/BaseModel.js"
+  ],
+  "../lib/schemas/SimpleSchemas/Locations.js": [
+    "../lib/BaseModel.js"
+  ],
+  "../lib/schemas/SimpleSchemas/MeasureReports.js": [
+    "../lib/BaseModel.js"
+  ],
+  "../lib/schemas/SimpleSchemas/Measures.js": [
+    "../lib/BaseModel.js"
+  ],
+  "../lib/schemas/SimpleSchemas/MedicationAdministrations.js": [
+    "../lib/BaseModel.js"
+  ],
+  "../lib/schemas/SimpleSchemas/MedicationOrders.js": [
+    "../lib/BaseModel.js"
+  ],
+  "../lib/schemas/SimpleSchemas/MedicationRequests.js": [
+    "../lib/BaseModel.js"
+  ],
+  "../lib/schemas/SimpleSchemas/MedicationStatements.js": [
+    "../lib/BaseModel.js"
+  ],
+  "../lib/schemas/SimpleSchemas/Medications.js": [
+    "../lib/BaseModel.js",
+    "../lib/schemas/SimpleSchemas/Substances.js"
+  ],
+  "../lib/schemas/SimpleSchemas/MessageHeaders.js": [
+    "../lib/BaseModel.js"
+  ],
+  "../lib/schemas/SimpleSchemas/NutritionOrders.js": [
+    "../lib/BaseModel.js"
+  ],
+  "../lib/schemas/SimpleSchemas/Observations.js": [
+    "../lib/BaseModel.js"
+  ],
+  "../lib/schemas/SimpleSchemas/OperationOutcomes.js": [
+    "../lib/BaseModel.js"
+  ],
+  "../lib/schemas/SimpleSchemas/Organizations.js": [
+    "../lib/BaseModel.js"
+  ],
+  "../lib/schemas/SimpleSchemas/Patients.js": [
+    "../lib/BaseModel.js"
+  ],
+  "../lib/schemas/SimpleSchemas/PlanDefinitions.js": [
+    "../lib/BaseModel.js"
+  ],
+  "../lib/schemas/SimpleSchemas/PractitionerRoles.js": [
+    "../lib/BaseModel.js"
+  ],
+  "../lib/schemas/SimpleSchemas/Practitioners.js": [
+    "../lib/BaseModel.js"
+  ],
+  "../lib/schemas/SimpleSchemas/Procedures.js": [
+    "../lib/BaseModel.js"
+  ],
+  "../lib/schemas/SimpleSchemas/QuestionnaireResponses.js": [
+    "../lib/BaseModel.js"
+  ],
+  "../lib/schemas/SimpleSchemas/Questionnaires.js": [
+    "../lib/BaseModel.js"
+  ],
+  "../lib/schemas/SimpleSchemas/ResearchStudies.js": [
+    "../lib/BaseModel.js"
+  ],
+  "../lib/schemas/SimpleSchemas/ResearchSubjects.js": [
+    "../lib/BaseModel.js"
+  ],
+  "../lib/schemas/SimpleSchemas/ServiceRequests.js": [
+    "../lib/BaseModel.js"
+  ],
+  "../lib/schemas/SimpleSchemas/Specimens.js": [
+    "../lib/BaseModel.js"
+  ],
+  "../lib/schemas/SimpleSchemas/StructureDefinitions.js": [
+    "../lib/BaseModel.js"
+  ],
+  "../lib/schemas/SimpleSchemas/Substances.js": [],
+  "../lib/schemas/SimpleSchemas/Tasks.js": [
+    "../lib/BaseModel.js"
+  ],
+  "../lib/schemas/SimpleSchemas/ValueSets.js": [
+    "../lib/BaseModel.js"
+  ],
+  "../patient/AutoDashboard.jsx": [
+    "../FhirClientContext.js",
+    "../FhirUtilities.js",
+    "../lib/schemas/SimpleSchemas/AllergyIntolerances.js",
+    "../lib/schemas/SimpleSchemas/CarePlans.js",
+    "../lib/schemas/SimpleSchemas/CareTeams.js",
+    "../lib/schemas/SimpleSchemas/Communications.js",
+    "../lib/schemas/SimpleSchemas/Compositions.js",
+    "../lib/schemas/SimpleSchemas/Conditions.js",
+    "../lib/schemas/SimpleSchemas/Consents.js",
+    "../lib/schemas/SimpleSchemas/DocumentReferences.js",
+    "../lib/schemas/SimpleSchemas/Encounters.js",
+    "../lib/schemas/SimpleSchemas/Goals.js",
+    "../lib/schemas/SimpleSchemas/Immunizations.js",
+    "../lib/schemas/SimpleSchemas/Locations.js",
+    "../lib/schemas/SimpleSchemas/MedicationAdministrations.js",
+    "../lib/schemas/SimpleSchemas/MedicationRequests.js",
+    "../lib/schemas/SimpleSchemas/Observations.js",
+    "../lib/schemas/SimpleSchemas/Patients.js",
+    "../lib/schemas/SimpleSchemas/Procedures.js",
+    "../lib/schemas/SimpleSchemas/QuestionnaireResponses.js",
+    "../lib/schemas/SimpleSchemas/Questionnaires.js",
+    "../lib/schemas/SimpleSchemas/ServiceRequests.js",
+    "../patient/PatientCard.jsx",
+    "../ui-fhir/allergyIntolerances/AllergyIntolerancesTable.jsx",
+    "../ui-fhir/carePlans/CarePlansTable.jsx",
+    "../ui-fhir/careTeams/CareTeamsTable.jsx",
+    "../ui-fhir/communications/CommunicationsTable.jsx",
+    "../ui-fhir/compositions/CompositionsTable.jsx",
+    "../ui-fhir/conditions/ConditionsTable.jsx",
+    "../ui-fhir/documentReferences/DocumentReferencesTable.jsx",
+    "../ui-fhir/encounters/EncountersTable.jsx",
+    "../ui-fhir/goals/GoalsTable.jsx",
+    "../ui-fhir/immunizations/ImmunizationsTable.jsx",
+    "../ui-fhir/locations/LocationsTable.jsx",
+    "../ui-fhir/medicationAdministrations/MedicationAdministrationsTable.jsx",
+    "../ui-fhir/medicationRequests/MedicationRequestsTable.jsx",
+    "../ui-fhir/observations/ObservationsTable.jsx",
+    "../ui-fhir/procedures/ProceduresTable.jsx",
+    "../ui-fhir/questionnaireResponses/QuestionnaireResponsesTable.jsx",
+    "../ui-fhir/questionnaires/QuestionnairesTable.jsx",
+    "../ui-fhir/serviceRequests/ServiceRequestsTable.jsx",
+    "../ui-tables/index.js",
+    "NoDataWrapper.jsx"
+  ],
+  "../patient/Dashboard.jsx": [
+    "../FhirClientContext.js",
+    "../lib/schemas/SimpleSchemas/Conditions.js",
+    "../lib/schemas/SimpleSchemas/Devices.js",
+    "../lib/schemas/SimpleSchemas/Encounters.js",
+    "../lib/schemas/SimpleSchemas/Immunizations.js",
+    "../lib/schemas/SimpleSchemas/Locations.js",
+    "../lib/schemas/SimpleSchemas/MedicationOrders.js",
+    "../lib/schemas/SimpleSchemas/Observations.js",
+    "../lib/schemas/SimpleSchemas/Patients.js",
+    "../lib/schemas/SimpleSchemas/Procedures.js",
+    "../patient/PatientCard.jsx"
+  ],
+  "../patient/PatientCard.jsx": [],
+  "../patient/PatientChart.jsx": [
+    "../lib/LayoutHelpers.jsx",
+    "../patient/AutoDashboard.jsx",
+    "../patient/Dashboard.jsx",
+    "../patient/PatientDemographics.jsx",
+    "NotSignedInWrapper.jsx"
+  ],
+  "../patient/PatientDemographics.jsx": [
+    "../FhirClientContext.js",
+    "../lib/FhirUtilities.js"
+  ],
+  "../patient/PatientQuickChart.jsx": [
+    "../FhirClientProvider.jsx",
+    "../patient/AutoDashboard.jsx",
+    "../patient/PatientDemographics.jsx"
+  ],
+  "../patient/PatientSidebar.jsx": [],
+  "../practitioner/PractitionerCard.jsx": [],
+  "../ui-details/index.js": [
+    "../ui-fhir/activityDefinitions/ActivityDefinitionDetail.jsx",
+    "../ui-fhir/allergyIntolerances/AllergyIntoleranceDetail.jsx",
+    "../ui-fhir/artifactAssessments/ArtifactAssessmentDetail.jsx",
+    "../ui-fhir/basics/BasicDetail.jsx",
+    "../ui-fhir/bundles/BundleDetail.jsx",
+    "../ui-fhir/carePlans/CarePlanDetail.jsx",
+    "../ui-fhir/careTeams/CareTeamDetail.jsx",
+    "../ui-fhir/claims/ClaimDetail.jsx",
+    "../ui-fhir/codeSystems/CodeSystemDetail.jsx",
+    "../ui-fhir/communications/CommunicationDetail.jsx",
+    "../ui-fhir/compositions/CompositionDetail.jsx",
+    "../ui-fhir/conditions/ConditionDetail.jsx",
+    "../ui-fhir/consents/ConsentDetail.jsx",
+    "../ui-fhir/devices/DeviceDetail.jsx",
+    "../ui-fhir/diagnosticReports/DiagnosticReportDetail.jsx",
+    "../ui-fhir/documentReferences/DocumentReferenceDetail.jsx",
+    "../ui-fhir/encounters/EncounterDetail.jsx",
+    "../ui-fhir/evidences/EvidenceDetail.jsx",
+    "../ui-fhir/goals/GoalDetail.jsx",
+    "../ui-fhir/guidanceResponses/GuidanceResponseDetail.jsx",
+    "../ui-fhir/immunizations/ImmunizationDetail.jsx",
+    "../ui-fhir/libraries/LibraryDetail.jsx",
+    "../ui-fhir/lists/ListDetail.jsx",
+    "../ui-fhir/locations/LocationDetail.jsx",
+    "../ui-fhir/medicationAdministrations/MedicationAdministrationDetail.jsx",
+    "../ui-fhir/medicationRequests/MedicationRequestDetail.jsx",
+    "../ui-fhir/medicationStatements/MedicationStatementDetail.jsx",
+    "../ui-fhir/medications/MedicationDetail.jsx",
+    "../ui-fhir/nutritionOrders/NutritionOrderDetail.jsx",
+    "../ui-fhir/observations/ObservationDetail.jsx",
+    "../ui-fhir/operationOutcomes/OperationOutcomeDetail.jsx",
+    "../ui-fhir/patients/PatientDetail.jsx",
+    "../ui-fhir/planDefinitions/PlanDefinitionDetail.jsx",
+    "../ui-fhir/practitioners/PractitionerDetail.jsx",
+    "../ui-fhir/procedures/ProcedureDetail.jsx",
+    "../ui-fhir/questionnaireResponses/QuestionnaireResponseDetail.jsx",
+    "../ui-fhir/questionnaires/QuestionnaireDetail.jsx",
+    "../ui-fhir/researchStudies/ResearchStudyDetail.jsx",
+    "../ui-fhir/researchSubjects/ResearchSubjectDetail.jsx",
+    "../ui-fhir/serviceRequests/ServiceRequestDetail.jsx",
+    "../ui-fhir/supplyDeliveries/SupplyDeliveryDetail.jsx",
+    "../ui-fhir/tasks/TaskDetail.jsx",
+    "../ui-fhir/valuesets/ValueSetDetail.jsx"
+  ],
+  "../ui-fhir/activityDefinitions/ActivityDefinitionDetail.jsx": [],
+  "../ui-fhir/activityDefinitions/ActivityDefinitionsPage.jsx": [
+    "../lib/LayoutHelpers.js",
+    "../ui-fhir/activityDefinitions/ActivityDefinitionsTable.jsx"
+  ],
+  "../ui-fhir/activityDefinitions/ActivityDefinitionsTable.jsx": [
+    "../lib/FhirDehydrator.js"
+  ],
+  "../ui-fhir/allergyIntolerances/AllergyIntoleranceDetail.jsx": [],
+  "../ui-fhir/allergyIntolerances/AllergyIntolerancesPage.jsx": [
+    "../lib/LayoutHelpers.js",
+    "../ui-fhir/allergyIntolerances/AllergyIntolerancesTable.jsx"
+  ],
+  "../ui-fhir/allergyIntolerances/AllergyIntolerancesTable.jsx": [
+    "../lib/FhirDehydrator.js"
+  ],
+  "../ui-fhir/appointments/AppointmentDetail.jsx": [],
+  "../ui-fhir/appointments/AppointmentsPage.jsx": [
+    "../lib/LayoutHelpers.js",
+    "../ui-fhir/appointments/AppointmentsTable.jsx"
+  ],
+  "../ui-fhir/appointments/AppointmentsTable.jsx": [],
+  "../ui-fhir/artifactAssessments/ArtifactAssessmentDetail.jsx": [],
+  "../ui-fhir/artifactAssessments/ArtifactAssessmentsPage.jsx": [
+    "../lib/LayoutHelpers.js",
+    "../ui-fhir/artifactAssessments/ArtifactAssessmentsTable.jsx"
+  ],
+  "../ui-fhir/artifactAssessments/ArtifactAssessmentsTable.jsx": [
+    "../lib/FhirDehydrator.js",
+    "../lib/FhirUtilities.js"
+  ],
+  "../ui-fhir/auditEvents/AuditEventDetail.jsx": [
+    "../lib/schemas/SimpleSchemas/AuditEvents.js"
+  ],
+  "../ui-fhir/auditEvents/AuditEventsPage.jsx": [
+    "../lib/LayoutHelpers.js",
+    "../lib/schemas/SimpleSchemas/AuditEvents.js",
+    "../ui-fhir/auditEvents/AuditEventsTable.jsx"
+  ],
+  "../ui-fhir/auditEvents/AuditEventsTable.jsx": [
+    "../lib/FhirDehydrator.js"
+  ],
+  "../ui-fhir/basics/BasicDetail.jsx": [],
+  "../ui-fhir/basics/BasicsPage.jsx": [
+    "../lib/LayoutHelpers.js",
+    "../lib/schemas/SimpleSchemas/Basics.js",
+    "../ui-fhir/basics/BasicsTable.jsx"
+  ],
+  "../ui-fhir/basics/BasicsTable.jsx": [
+    "../lib/FhirDehydrator.js"
+  ],
+  "../ui-fhir/bodyStructures/BodyStructureDetail.jsx": [],
+  "../ui-fhir/bodyStructures/BodyStructuresPage.jsx": [
+    "../lib/LayoutHelpers.js",
+    "../ui-fhir/bodyStructures/BodyStructuresTable.jsx"
+  ],
+  "../ui-fhir/bodyStructures/BodyStructuresTable.jsx": [
+    "../lib/FhirDehydrator.js"
+  ],
+  "../ui-fhir/bundles/BundleDetail.jsx": [],
+  "../ui-fhir/bundles/BundlesPage.jsx": [
+    "../lib/LayoutHelpers.js",
+    "../ui-fhir/bundles/BundlesTable.jsx"
+  ],
+  "../ui-fhir/bundles/BundlesTable.jsx": [
+    "../lib/FhirDehydrator.js",
+    "../lib/FhirUtilities.js"
+  ],
+  "../ui-fhir/carePlans/ActivitiesTable.jsx": [
+    "../lib/FhirDehydrator.js"
+  ],
+  "../ui-fhir/carePlans/CCDAValidator.jsx": [],
+  "../ui-fhir/carePlans/CarePlanDesignerPage.jsx": [
+    "../ui-fhir/carePlans/ActivitiesTable.jsx",
+    "../ui-fhir/carePlans/CarePlansTable.jsx",
+    "../ui-fhir/goals/GoalsTable.jsx",
+    "../ui-fhir/medications/MedicationsTable.jsx",
+    "../ui-tables/index.js",
+    "DynamicSpacer.jsx"
+  ],
+  "../ui-fhir/carePlans/CarePlanDetail.jsx": [],
+  "../ui-fhir/carePlans/CarePlanDetailPage.jsx": [],
+  "../ui-fhir/carePlans/CarePlansPage.jsx": [
+    "../lib/LayoutHelpers.js",
+    "../ui-fhir/carePlans/CarePlansTable.jsx"
+  ],
+  "../ui-fhir/carePlans/CarePlansTable.jsx": [
+    "../lib/FhirDehydrator.js",
+    "../lib/FhirUtilities.js"
+  ],
+  "../ui-fhir/carePlans/ClinicalDecisionSupport.jsx": [],
+  "../ui-fhir/carePlans/EnhancedCarePlanDesigner.jsx": [
+    "../ui-fhir/carePlans/CCDAValidator.jsx",
+    "../ui-fhir/carePlans/ClinicalDecisionSupport.jsx",
+    "../ui-fhir/carePlans/HealthStatusEvaluations.jsx",
+    "../ui-fhir/carePlans/InterventionsSection.jsx"
+  ],
+  "../ui-fhir/carePlans/GoalsTable.js": [],
+  "../ui-fhir/carePlans/HealthStatusEvaluations.jsx": [
+    "../ui-fhir/visualizations/MiniChart.jsx",
+    "../ui-fhir/visualizations/Sparkline.jsx"
+  ],
+  "../ui-fhir/carePlans/InterventionsSection.jsx": [],
+  "../ui-fhir/careTeams/CareTeamDetail.jsx": [],
+  "../ui-fhir/careTeams/CareTeamsPage.jsx": [
+    "../lib/FhirDehydrator.js",
+    "../lib/LayoutHelpers.js",
+    "../ui-fhir/careTeams/CareTeamDetail.jsx",
+    "../ui-fhir/careTeams/CareTeamsTable.jsx"
+  ],
+  "../ui-fhir/careTeams/CareTeamsTable.jsx": [
+    "../lib/FhirDehydrator.js",
+    "../lib/FhirUtilities.js"
+  ],
+  "../ui-fhir/claims/ClaimDetail.jsx": [],
+  "../ui-fhir/claims/ClaimsPage.jsx": [
+    "../ui-fhir/claims/ClaimsTable.jsx"
+  ],
+  "../ui-fhir/claims/ClaimsTable.jsx": [],
+  "../ui-fhir/clinicalImpressions/ClinicalImpressionDetail.jsx": [],
+  "../ui-fhir/clinicalImpressions/ClinicalImpressionsPage.jsx": [
+    "../lib/LayoutHelpers.js",
+    "../ui-fhir/clinicalImpressions/ClinicalImpressionsTable.jsx"
+  ],
+  "../ui-fhir/clinicalImpressions/ClinicalImpressionsTable.jsx": [
+    "../lib/FhirDehydrator.js"
+  ],
+  "../ui-fhir/codeSystems/CodeSystemDetail.jsx": [
+    "../lib/FhirDehydrator.js",
+    "../lib/FhirUtilities.js"
+  ],
+  "../ui-fhir/codeSystems/CodeSystemsConceptsTable.jsx": [
+    "../lib/FhirDehydrator.js",
+    "../lib/FhirUtilities.js"
+  ],
+  "../ui-fhir/codeSystems/CodeSystemsPage.jsx": [
+    "../lib/LayoutHelpers.js",
+    "../lib/schemas/SimpleSchemas/CodeSystems.js",
+    "../ui-fhir/codeSystems/CodeSystemDetail.jsx",
+    "../ui-fhir/codeSystems/CodeSystemsTable.jsx"
+  ],
+  "../ui-fhir/codeSystems/CodeSystemsTable.jsx": [
+    "../lib/FhirDehydrator.js",
+    "../lib/FhirUtilities.js"
+  ],
+  "../ui-fhir/communications/CommunicationDetail.jsx": [],
+  "../ui-fhir/communications/CommunicationsPage.jsx": [
+    "../lib/LayoutHelpers.js",
+    "../ui-fhir/communications/CommunicationsTable.jsx"
+  ],
+  "../ui-fhir/communications/CommunicationsTable.jsx": [
+    "../lib/FhirDehydrator.js",
+    "../lib/FhirUtilities.js"
+  ],
+  "../ui-fhir/compositions/CompositionDetail.jsx": [],
+  "../ui-fhir/compositions/CompositionsPage.jsx": [
+    "../lib/LayoutHelpers.js",
+    "../ui-fhir/compositions/CompositionDetail.jsx",
+    "../ui-fhir/compositions/CompositionsTable.jsx"
+  ],
+  "../ui-fhir/compositions/CompositionsTable.jsx": [
+    "../lib/FhirDehydrator.js"
+  ],
+  "../ui-fhir/conditions/ConditionDetail.jsx": [],
+  "../ui-fhir/conditions/ConditionsPage.jsx": [
+    "../lib/LayoutHelpers.js",
+    "../ui-fhir/conditions/ConditionsTable.jsx"
+  ],
+  "../ui-fhir/conditions/ConditionsTable.jsx": [
+    "../lib/FhirDehydrator.js",
+    "../lib/FhirUtilities.js"
+  ],
+  "../ui-fhir/consents/ConsentDetail.jsx": [
+    "../lib/FhirUtilities.js"
+  ],
+  "../ui-fhir/consents/ConsentsPage.jsx": [
+    "../lib/FhirUtilities.js",
+    "../lib/LayoutHelpers.js",
+    "../ui-fhir/consents/ConsentsTable.jsx"
+  ],
+  "../ui-fhir/consents/ConsentsTable.jsx": [
+    "../lib/FhirDehydrator.js",
+    "../lib/FhirUtilities.js"
+  ],
+  "../ui-fhir/devices/DeviceDetail.jsx": [],
+  "../ui-fhir/devices/DevicesPage.jsx": [
+    "../lib/LayoutHelpers.js",
+    "../ui-fhir/devices/DevicesTable.jsx"
+  ],
+  "../ui-fhir/devices/DevicesTable.jsx": [
+    "../lib/FhirDehydrator.js",
+    "../lib/FhirUtilities.js"
+  ],
+  "../ui-fhir/diagnosticReports/DiagnosticReportDetail.jsx": [],
+  "../ui-fhir/diagnosticReports/DiagnosticReportsPage.jsx": [
+    "../ui-fhir/diagnosticReports/DiagnosticReportsTable.jsx"
+  ],
+  "../ui-fhir/diagnosticReports/DiagnosticReportsTable.jsx": [],
+  "../ui-fhir/documentReferences/DocumentReferenceDetail.jsx": [],
+  "../ui-fhir/documentReferences/DocumentReferencesPage.jsx": [
+    "../lib/FhirUtilities.js",
+    "../lib/LayoutHelpers.js",
+    "../ui-fhir/documentReferences/DocumentReferencesTable.jsx"
+  ],
+  "../ui-fhir/documentReferences/DocumentReferencesTable.jsx": [
+    "../lib/FhirDehydrator.js",
+    "../lib/FhirUtilities.js"
+  ],
+  "../ui-fhir/encounters/EncounterDetail.jsx": [],
+  "../ui-fhir/encounters/EncountersPage.jsx": [
+    "../lib/FhirUtilities.js",
+    "../lib/LayoutHelpers.js",
+    "../ui-fhir/encounters/EncountersTable.jsx"
+  ],
+  "../ui-fhir/encounters/EncountersTable.jsx": [
+    "../lib/FhirDehydrator.js",
+    "../lib/FhirUtilities.js"
+  ],
+  "../ui-fhir/endpoints/EndpointDetail.jsx": [],
+  "../ui-fhir/endpoints/EndpointsPage.jsx": [
+    "../lib/LayoutHelpers.js"
+  ],
+  "../ui-fhir/evidences/EvidenceDetail.jsx": [],
+  "../ui-fhir/evidences/EvidencesPage.jsx": [
+    "../lib/LayoutHelpers.js",
+    "../ui-fhir/evidences/EvidencesTable.jsx"
+  ],
+  "../ui-fhir/evidences/EvidencesTable.jsx": [
+    "../lib/FhirDehydrator.js",
+    "../lib/FhirUtilities.js"
+  ],
+  "../ui-fhir/goals/GoalDetail.jsx": [],
+  "../ui-fhir/goals/GoalsPage.jsx": [
+    "../lib/LayoutHelpers.js",
+    "../ui-fhir/carePlans/GoalsTable.js"
+  ],
+  "../ui-fhir/goals/GoalsTable.jsx": [],
+  "../ui-fhir/guidanceResponses/GuidanceResponseDetail.jsx": [],
+  "../ui-fhir/guidanceResponses/GuidanceResponsesPage.jsx": [
+    "../lib/LayoutHelpers.js",
+    "../ui-fhir/guidanceResponses/GuidanceResponsesTable.jsx"
+  ],
+  "../ui-fhir/guidanceResponses/GuidanceResponsesTable.jsx": [
+    "../lib/FhirDehydrator.js",
+    "../lib/FhirUtilities.js"
+  ],
+  "../ui-fhir/imagingStudies/ImagingStudiesPage.jsx": [
+    "../lib/FhirUtilities.js",
+    "../lib/LayoutHelpers.js",
+    "../ui-fhir/imagingStudies/ImagingStudiesTable.jsx"
+  ],
+  "../ui-fhir/imagingStudies/ImagingStudiesTable.jsx": [
+    "../lib/FhirDehydrator.js",
+    "../lib/FhirUtilities.js"
+  ],
+  "../ui-fhir/imagingStudies/ImagingStudyDetail.jsx": [],
+  "../ui-fhir/immunizations/ImmunizationDetail.jsx": [],
+  "../ui-fhir/immunizations/ImmunizationsPage.jsx": [
+    "../lib/LayoutHelpers.js",
+    "../ui-fhir/immunizations/ImmunizationsTable.jsx"
+  ],
+  "../ui-fhir/immunizations/ImmunizationsTable.jsx": [
+    "../lib/FhirDehydrator.js",
+    "../lib/FhirUtilities.js"
+  ],
+  "../ui-fhir/libraries/LibrariesPage.jsx": [
+    "../lib/LayoutHelpers.js",
+    "../ui-fhir/libraries/LibrariesTable.jsx"
+  ],
+  "../ui-fhir/libraries/LibrariesTable.jsx": [
+    "../lib/FhirDehydrator.js",
+    "../lib/FhirUtilities.js",
+    "../lib/schemas/SimpleSchemas/Libraries.js"
+  ],
+  "../ui-fhir/libraries/LibraryDetail.jsx": [],
+  "../ui-fhir/lists/ListDetail.jsx": [],
+  "../ui-fhir/lists/ListsPage.jsx": [
+    "../lib/LayoutHelpers.js",
+    "../ui-fhir/lists/ListsTable.jsx"
+  ],
+  "../ui-fhir/lists/ListsTable.jsx": [
+    "../lib/FhirDehydrator.js",
+    "../lib/FhirUtilities.js"
+  ],
+  "../ui-fhir/locations/LocationDetail.jsx": [],
+  "../ui-fhir/locations/LocationsPage.jsx": [
+    "../lib/LayoutHelpers.js",
+    "../ui-fhir/locations/LocationsTable.jsx"
+  ],
+  "../ui-fhir/locations/LocationsTable.jsx": [
+    "../lib/FhirDehydrator.js",
+    "../lib/FhirUtilities.js"
+  ],
+  "../ui-fhir/measureReports/MeasureReportDetail.jsx": [],
+  "../ui-fhir/measureReports/MeasureReportsPage.jsx": [
+    "../lib/FhirUtilities.js",
+    "../ui-fhir/measureReports/MeasureReportsTable.jsx"
+  ],
+  "../ui-fhir/measureReports/MeasureReportsTable.jsx": [
+    "../lib/FhirDehydrator.js",
+    "../lib/FhirUtilities.js"
+  ],
+  "../ui-fhir/measures/MeasureDetail.jsx": [],
+  "../ui-fhir/measures/MeasuresPage.jsx": [
+    "../lib/FhirUtilities.js",
+    "../lib/LayoutHelpers.js",
+    "../ui-fhir/measures/MeasuresTable.jsx"
+  ],
+  "../ui-fhir/measures/MeasuresTable.jsx": [
+    "../lib/FhirDehydrator.js",
+    "../lib/FhirUtilities.js"
+  ],
+  "../ui-fhir/medias/MediaDetail.jsx": [],
+  "../ui-fhir/medias/MediasPage.jsx": [
+    "../lib/LayoutHelpers.js",
+    "../ui-fhir/medias/MediasTable.jsx"
+  ],
+  "../ui-fhir/medias/MediasTable.jsx": [
+    "../lib/FhirDehydrator.js",
+    "../lib/FhirUtilities.js"
+  ],
+  "../ui-fhir/medicationAdministrations/MedicationAdministrationDetail.jsx": [],
+  "../ui-fhir/medicationAdministrations/MedicationAdministrationsPage.jsx": [
+    "../lib/FhirUtilities.js",
+    "../lib/LayoutHelpers.js",
+    "../ui-fhir/medicationAdministrations/MedicationAdministrationsTable.jsx"
+  ],
+  "../ui-fhir/medicationAdministrations/MedicationAdministrationsTable.jsx": [
+    "../lib/FhirDehydrator.js",
+    "../lib/FhirUtilities.js"
+  ],
+  "../ui-fhir/medicationRequests/MedicationRequestDetail.jsx": [],
+  "../ui-fhir/medicationRequests/MedicationRequestsPage.jsx": [
+    "../lib/LayoutHelpers.js",
+    "../ui-fhir/medicationRequests/MedicationRequestsTable.jsx"
+  ],
+  "../ui-fhir/medicationRequests/MedicationRequestsTable.jsx": [
+    "../lib/FhirDehydrator.js",
+    "../lib/FhirUtilities.js"
+  ],
+  "../ui-fhir/medicationStatements/MedicationStatementDetail.jsx": [],
+  "../ui-fhir/medicationStatements/MedicationStatementsPage.jsx": [
+    "../lib/LayoutHelpers.js",
+    "../ui-fhir/medicationStatements/MedicationStatementsTable.jsx"
+  ],
+  "../ui-fhir/medicationStatements/MedicationStatementsTable.jsx": [
+    "../lib/FhirDehydrator.js",
+    "../lib/FhirUtilities.js"
+  ],
+  "../ui-fhir/medications/MedicationDetail.jsx": [],
+  "../ui-fhir/medications/MedicationsPage.jsx": [
+    "../lib/LayoutHelpers.js",
+    "../ui-fhir/medications/MedicationsTable.jsx"
+  ],
+  "../ui-fhir/medications/MedicationsTable.jsx": [
+    "../lib/FhirDehydrator.js",
+    "../lib/FhirUtilities.js"
+  ],
+  "../ui-fhir/messageHeaders/MessageHeaderDetail.jsx": [],
+  "../ui-fhir/messageHeaders/MessageHeadersPage.jsx": [
+    "../lib/FhirUtilities.js",
+    "../lib/LayoutHelpers.js",
+    "../ui-fhir/messageHeaders/MessageHeadersTable.jsx"
+  ],
+  "../ui-fhir/messageHeaders/MessageHeadersTable.jsx": [
+    "../lib/FhirDehydrator.js",
+    "../lib/FhirUtilities.js"
+  ],
+  "../ui-fhir/nutritionIntakes/NutritionIntakeDetail.jsx": [],
+  "../ui-fhir/nutritionIntakes/NutritionIntakesPage.jsx": [
+    "../lib/FhirDehydrator.js",
+    "../lib/FhirUtilities.js",
+    "../lib/LayoutHelpers.js",
+    "../ui-fhir/nutritionIntakes/NutritionIntakesTable.jsx"
+  ],
+  "../ui-fhir/nutritionIntakes/NutritionIntakesTable.jsx": [
+    "../lib/FhirDehydrator.js",
+    "../lib/FhirUtilities.js"
+  ],
+  "../ui-fhir/nutritionOrders/NutritionOrderDetail.jsx": [],
+  "../ui-fhir/nutritionOrders/NutritionOrdersPage.jsx": [
+    "../lib/FhirDehydrator.js",
+    "../lib/FhirUtilities.js",
+    "../lib/LayoutHelpers.js",
+    "../ui-fhir/nutritionOrders/NutritionOrdersTable.jsx"
+  ],
+  "../ui-fhir/nutritionOrders/NutritionOrdersTable.jsx": [
+    "../lib/FhirDehydrator.js",
+    "../lib/FhirUtilities.js"
+  ],
+  "../ui-fhir/nutritionProducts/NutritionProductDetail.jsx": [],
+  "../ui-fhir/nutritionProducts/NutritionProductsPage.jsx": [
+    "../lib/LayoutHelpers.js",
+    "../ui-fhir/nutritionProducts/NutritionProductsTable.jsx"
+  ],
+  "../ui-fhir/nutritionProducts/NutritionProductsTable.jsx": [
+    "../lib/FhirDehydrator.js",
+    "../lib/FhirUtilities.js"
+  ],
+  "../ui-fhir/observations/ObservationDetail.jsx": [],
+  "../ui-fhir/observations/ObservationsPage.jsx": [
+    "../lib/FhirUtilities.js",
+    "../lib/HipaaLogger.js",
+    "../lib/LayoutHelpers.js",
+    "../ui-fhir/observations/ObservationsTable.jsx"
+  ],
+  "../ui-fhir/observations/ObservationsTable.jsx": [
+    "../lib/FhirDehydrator.js"
+  ],
+  "../ui-fhir/operationOutcomes/OperationOutcomeDetail.jsx": [],
+  "../ui-fhir/operationOutcomes/OperationOutcomesPage.jsx": [
+    "../lib/LayoutHelpers.js",
+    "../ui-fhir/operationOutcomes/OperationOutcomesTable.jsx"
+  ],
+  "../ui-fhir/operationOutcomes/OperationOutcomesTable.jsx": [
+    "../lib/FhirDehydrator.js",
+    "../lib/FhirUtilities.js"
+  ],
+  "../ui-fhir/organizations/OrganizationDetail.jsx": [],
+  "../ui-fhir/organizations/OrganizationsPage.jsx": [
+    "../lib/LayoutHelpers.js",
+    "../ui-fhir/organizations/OrganizationsTable.jsx"
+  ],
+  "../ui-fhir/organizations/OrganizationsTable.jsx": [
+    "../lib/FhirDehydrator.js",
+    "../lib/FhirUtilities.js"
+  ],
+  "../ui-fhir/patients/PatientDetail.jsx": [],
+  "../ui-fhir/planDefinitions/PlanDefinitionDetail.jsx": [],
+  "../ui-fhir/planDefinitions/PlanDefinitionsPage.jsx": [
+    "../lib/LayoutHelpers.js",
+    "../ui-fhir/planDefinitions/PlanDefinitionsTable.jsx"
+  ],
+  "../ui-fhir/planDefinitions/PlanDefinitionsTable.jsx": [
+    "../lib/FhirDehydrator.js",
+    "../lib/FhirUtilities.js"
+  ],
+  "../ui-fhir/practitionerRoles/PractitionerRoleDetail.jsx": [],
+  "../ui-fhir/practitionerRoles/PractitionerRolesPage.jsx": [
+    "../lib/LayoutHelpers.js",
+    "../ui-fhir/practitionerRoles/PractitionerRolesTable.jsx"
+  ],
+  "../ui-fhir/practitionerRoles/PractitionerRolesTable.jsx": [
+    "../lib/FhirDehydrator.js"
+  ],
+  "../ui-fhir/practitioners/PractitionerDetail.jsx": [],
+  "../ui-fhir/practitioners/PractitionersPage.jsx": [
+    "../lib/LayoutHelpers.js",
+    "../ui-fhir/practitioners/PractitionersTable.jsx"
+  ],
+  "../ui-fhir/practitioners/PractitionersTable.jsx": [
+    "../lib/FhirDehydrator.js",
+    "../lib/FhirUtilities.js"
+  ],
+  "../ui-fhir/procedures/ProcedureDetail.jsx": [],
+  "../ui-fhir/procedures/ProceduresPage.jsx": [
+    "../lib/LayoutHelpers.js",
+    "../ui-fhir/procedures/ProceduresTable.jsx"
+  ],
+  "../ui-fhir/procedures/ProceduresTable.jsx": [
+    "../lib/FhirDehydrator.js",
+    "../lib/FhirUtilities.js",
+    "../lib/LayoutHelpers.js"
+  ],
+  "../ui-fhir/questionnaireResponses/QuestionnaireResponseDetail.jsx": [],
+  "../ui-fhir/questionnaireResponses/QuestionnaireResponsesPage.jsx": [
+    "../lib/LayoutHelpers.js",
+    "../ui-fhir/questionnaireResponses/QuestionnaireResponsesTable.jsx",
+    "../ui-fhir/questionnaireResponses/SurveyResponseSummary.jsx"
+  ],
+  "../ui-fhir/questionnaireResponses/QuestionnaireResponsesTable.jsx": [
+    "../lib/FhirDehydrator.js",
+    "../lib/FhirUtilities.js"
+  ],
+  "../ui-fhir/questionnaireResponses/SurveyResponseSummary.jsx": [
+    "../lib/FhirUtilities.js"
+  ],
+  "../ui-fhir/questionnaires/QuestionnaireDetail.jsx": [],
+  "../ui-fhir/questionnaires/QuestionnaireExpansion.jsx": [],
+  "../ui-fhir/questionnaires/QuestionnairesDesignerPartialPage.jsx": [
+    "../lib/LayoutHelpers.js",
+    "../lib/schemas/SimpleSchemas/ValueSets.js",
+    "../ui-fhir/questionnaires/QuestionnaireDetail.jsx",
+    "../ui-fhir/questionnaires/QuestionnairesTable.jsx",
+    "../ui-fhir/questionnaires/SortableQuestionnaire.jsx",
+    "DynamicSpacer.jsx"
+  ],
+  "../ui-fhir/questionnaires/QuestionnairesPage.jsx": [
+    "../lib/LayoutHelpers.js",
+    "../ui-fhir/questionnaires/QuestionnaireExpansion.jsx",
+    "../ui-fhir/questionnaires/QuestionnairesTable.jsx",
+    "DynamicSpacer.jsx"
+  ],
+  "../ui-fhir/questionnaires/QuestionnairesTable.jsx": [
+    "../lib/FhirDehydrator.js",
+    "../lib/FhirUtilities.js"
+  ],
+  "../ui-fhir/questionnaires/SortableQuestionnaire.jsx": [],
+  "../ui-fhir/researchStudies/ResearchStudiesPage.jsx": [
+    "../lib/LayoutHelpers.js",
+    "../ui-fhir/researchStudies/ResearchStudiesTable.jsx"
+  ],
+  "../ui-fhir/researchStudies/ResearchStudiesTable.jsx": [
+    "../lib/FhirDehydrator.js",
+    "../lib/FhirUtilities.js"
+  ],
+  "../ui-fhir/researchStudies/ResearchStudyDetail.jsx": [],
+  "../ui-fhir/researchSubjects/ResearchSubjectDetail.jsx": [],
+  "../ui-fhir/researchSubjects/ResearchSubjectsPage.jsx": [
+    "../lib/LayoutHelpers.js",
+    "../ui-fhir/researchSubjects/ResearchSubjectsTable.jsx"
+  ],
+  "../ui-fhir/researchSubjects/ResearchSubjectsTable.jsx": [
+    "../lib/FhirDehydrator.js",
+    "../lib/FhirUtilities.js"
+  ],
+  "../ui-fhir/riskAssessments/RiskAssessmentDetail.jsx": [],
+  "../ui-fhir/riskAssessments/RiskAssessmentsPage.jsx": [
+    "../lib/LayoutHelpers.js",
+    "../ui-fhir/riskAssessments/RiskAssessmentsTable.jsx"
+  ],
+  "../ui-fhir/riskAssessments/RiskAssessmentsTable.jsx": [
+    "../lib/FhirDehydrator.js"
+  ],
+  "../ui-fhir/schedules/ScheduleDetail.jsx": [],
+  "../ui-fhir/schedules/SchedulesPage.jsx": [
+    "../lib/LayoutHelpers.js",
+    "../ui-fhir/schedules/SchedulesTable.jsx"
+  ],
+  "../ui-fhir/schedules/SchedulesTable.jsx": [
+    "../lib/FhirDehydrator.js",
+    "../lib/FhirUtilities.js"
+  ],
+  "../ui-fhir/serviceRequests/ServiceRequestDetail.jsx": [],
+  "../ui-fhir/serviceRequests/ServiceRequestsPage.jsx": [
+    "../lib/LayoutHelpers.js",
+    "../ui-fhir/serviceRequests/ServiceRequestsTable.jsx"
+  ],
+  "../ui-fhir/serviceRequests/ServiceRequestsTable.jsx": [
+    "../components/TableNoData.jsx",
+    "../lib/FhirDehydrator.js",
+    "../lib/FhirUtilities.js"
+  ],
+  "../ui-fhir/substances/SubstanceDetail.jsx": [],
+  "../ui-fhir/substances/SubstancesPage.jsx": [
+    "../lib/LayoutHelpers.js",
+    "../ui-fhir/substances/SubstancesTable.jsx"
+  ],
+  "../ui-fhir/substances/SubstancesTable.jsx": [
+    "../lib/FhirDehydrator.js",
+    "../lib/FhirUtilities.js"
+  ],
+  "../ui-fhir/supplyDeliveries/SupplyDeliveriesPage.jsx": [
+    "../lib/LayoutHelpers.js",
+    "../ui-fhir/supplyDeliveries/SupplyDeliveriesTable.jsx"
+  ],
+  "../ui-fhir/supplyDeliveries/SupplyDeliveriesTable.jsx": [
+    "../lib/FhirDehydrator.js",
+    "../lib/FhirUtilities.js"
+  ],
+  "../ui-fhir/supplyDeliveries/SupplyDeliveryDetail.jsx": [],
+  "../ui-fhir/supplyRequests/SupplyRequestDetail.jsx": [],
+  "../ui-fhir/supplyRequests/SupplyRequestsPage.jsx": [
+    "../lib/LayoutHelpers.js",
+    "../ui-fhir/supplyRequests/SupplyRequestsTable.jsx"
+  ],
+  "../ui-fhir/supplyRequests/SupplyRequestsTable.jsx": [
+    "../lib/FhirDehydrator.js",
+    "../lib/FhirUtilities.js"
+  ],
+  "../ui-fhir/tasks/TaskDetail.jsx": [],
+  "../ui-fhir/tasks/TasksPage.jsx": [
+    "../lib/FhirUtilities.js",
+    "../lib/LayoutHelpers.js",
+    "../ui-fhir/tasks/TasksTable.jsx"
+  ],
+  "../ui-fhir/tasks/TasksTable.jsx": [
+    "../components/TableNoData.jsx",
+    "../lib/FhirDehydrator.js",
+    "../lib/FhirUtilities.js"
+  ],
+  "../ui-fhir/valuesets/ValueSetDetail.jsx": [
+    "../lib/FhirDehydrator.js",
+    "../lib/FhirUtilities.js"
+  ],
+  "../ui-fhir/valuesets/ValueSetsPage.jsx": [
+    "../lib/FhirDehydrator.js",
+    "../lib/FhirUtilities.js",
+    "../lib/LayoutHelpers.js",
+    "../ui-fhir/valuesets/ValueSetDetail.jsx",
+    "../ui-fhir/valuesets/ValueSetsTable.jsx"
+  ],
+  "../ui-fhir/valuesets/ValueSetsTable.jsx": [
+    "../lib/FhirDehydrator.js",
+    "../lib/FhirUtilities.js",
+    "../lib/LayoutHelpers.js"
+  ],
+  "../ui-fhir/visualizations/MiniChart.jsx": [],
+  "../ui-fhir/visualizations/Sparkline.jsx": [],
+  "../ui-modules/BiomarkerChartingPage.jsx": [
+    "../lib/schemas/SimpleSchemas/Observations.js"
+  ],
+  "../ui-modules/PatientsDirectory.jsx": [
+    "../components/LaunchAppsModal.jsx",
+    "../lib/LayoutHelpers.jsx",
+    "../lib/schemas/SimpleSchemas/Patients.js",
+    "../ui-tables/index.js"
+  ],
+  "../ui-pages/index.js": [
+    "../ui-fhir/activityDefinitions/ActivityDefinitionsPage.jsx",
+    "../ui-fhir/allergyIntolerances/AllergyIntolerancesPage.jsx",
+    "../ui-fhir/artifactAssessments/ArtifactAssessmentsPage.jsx",
+    "../ui-fhir/basics/BasicsPage.jsx",
+    "../ui-fhir/bundles/BundlesPage.jsx",
+    "../ui-fhir/carePlans/CarePlanDesignerPage.jsx",
+    "../ui-fhir/carePlans/CarePlanDetailPage.jsx",
+    "../ui-fhir/carePlans/CarePlansPage.jsx",
+    "../ui-fhir/careTeams/CareTeamsPage.jsx",
+    "../ui-fhir/claims/ClaimsPage.jsx",
+    "../ui-fhir/codeSystems/CodeSystemsPage.jsx",
+    "../ui-fhir/communications/CommunicationsPage.jsx",
+    "../ui-fhir/compositions/CompositionsPage.jsx",
+    "../ui-fhir/conditions/ConditionsPage.jsx",
+    "../ui-fhir/consents/ConsentsPage.jsx",
+    "../ui-fhir/devices/DevicesPage.jsx",
+    "../ui-fhir/diagnosticReports/DiagnosticReportsPage.jsx",
+    "../ui-fhir/documentReferences/DocumentReferencesPage.jsx",
+    "../ui-fhir/encounters/EncountersPage.jsx",
+    "../ui-fhir/evidences/EvidencesPage.jsx",
+    "../ui-fhir/goals/GoalsPage.jsx",
+    "../ui-fhir/guidanceResponses/GuidanceResponsesPage.jsx",
+    "../ui-fhir/immunizations/ImmunizationsPage.jsx",
+    "../ui-fhir/libraries/LibrariesPage.jsx",
+    "../ui-fhir/lists/ListsPage.jsx",
+    "../ui-fhir/locations/LocationsPage.jsx",
+    "../ui-fhir/medicationAdministrations/MedicationAdministrationsPage.jsx",
+    "../ui-fhir/medicationRequests/MedicationRequestsPage.jsx",
+    "../ui-fhir/medicationStatements/MedicationStatementsPage.jsx",
+    "../ui-fhir/medications/MedicationsPage.jsx",
+    "../ui-fhir/nutritionOrders/NutritionOrdersPage.jsx",
+    "../ui-fhir/observations/ObservationsPage.jsx",
+    "../ui-fhir/operationOutcomes/OperationOutcomesPage.jsx",
+    "../ui-fhir/planDefinitions/PlanDefinitionsPage.jsx",
+    "../ui-fhir/practitioners/PractitionersPage.jsx",
+    "../ui-fhir/procedures/ProceduresPage.jsx",
+    "../ui-fhir/questionnaireResponses/QuestionnaireResponsesPage.jsx",
+    "../ui-fhir/questionnaires/QuestionnairesDesignerPartialPage.jsx",
+    "../ui-fhir/questionnaires/QuestionnairesPage.jsx",
+    "../ui-fhir/researchStudies/ResearchStudiesPage.jsx",
+    "../ui-fhir/researchSubjects/ResearchSubjectsPage.jsx",
+    "../ui-fhir/serviceRequests/ServiceRequestsPage.jsx",
+    "../ui-fhir/supplyDeliveries/SupplyDeliveriesPage.jsx",
+    "../ui-fhir/tasks/TasksPage.jsx",
+    "../ui-fhir/valuesets/ValueSetsPage.jsx"
+  ],
+  "../ui-tables/EndpointsTable.jsx": [
+    "../lib/FhirDehydrator.js",
+    "../lib/FhirUtilities.js"
+  ],
+  "../ui-tables/PatientsTable.jsx": [
+    "../components/TableNoData.jsx",
+    "../lib/FhirDehydrator.js",
+    "DynamicSpacer.jsx"
+  ],
+  "../ui-tables/PersonsTable.jsx": [
+    "../components/TableNoData.jsx",
+    "../lib/FhirDehydrator.js",
+    "DynamicSpacer.jsx"
+  ],
+  "../ui-tables/index.js": [
+    "../ui-fhir/activityDefinitions/ActivityDefinitionsTable.jsx",
+    "../ui-fhir/allergyIntolerances/AllergyIntolerancesTable.jsx",
+    "../ui-fhir/artifactAssessments/ArtifactAssessmentsTable.jsx",
+    "../ui-fhir/basics/BasicsTable.jsx",
+    "../ui-fhir/bundles/BundlesTable.jsx",
+    "../ui-fhir/carePlans/ActivitiesTable.jsx",
+    "../ui-fhir/carePlans/CarePlansTable.jsx",
+    "../ui-fhir/careTeams/CareTeamsTable.jsx",
+    "../ui-fhir/claims/ClaimsTable.jsx",
+    "../ui-fhir/codeSystems/CodeSystemsConceptsTable.jsx",
+    "../ui-fhir/codeSystems/CodeSystemsTable.jsx",
+    "../ui-fhir/communications/CommunicationsTable.jsx",
+    "../ui-fhir/compositions/CompositionsTable.jsx",
+    "../ui-fhir/conditions/ConditionsTable.jsx",
+    "../ui-fhir/consents/ConsentsTable.jsx",
+    "../ui-fhir/devices/DevicesTable.jsx",
+    "../ui-fhir/diagnosticReports/DiagnosticReportsTable.jsx",
+    "../ui-fhir/documentReferences/DocumentReferencesTable.jsx",
+    "../ui-fhir/encounters/EncountersTable.jsx",
+    "../ui-fhir/evidences/EvidencesTable.jsx",
+    "../ui-fhir/goals/GoalsTable.jsx",
+    "../ui-fhir/guidanceResponses/GuidanceResponsesTable.jsx",
+    "../ui-fhir/immunizations/ImmunizationsTable.jsx",
+    "../ui-fhir/libraries/LibrariesTable.jsx",
+    "../ui-fhir/lists/ListsTable.jsx",
+    "../ui-fhir/locations/LocationsTable.jsx",
+    "../ui-fhir/measureReports/MeasureReportsTable.jsx",
+    "../ui-fhir/measures/MeasuresTable.jsx",
+    "../ui-fhir/medicationAdministrations/MedicationAdministrationsTable.jsx",
+    "../ui-fhir/medicationRequests/MedicationRequestsTable.jsx",
+    "../ui-fhir/medicationStatements/MedicationStatementsTable.jsx",
+    "../ui-fhir/medications/MedicationsTable.jsx",
+    "../ui-fhir/messageHeaders/MessageHeadersTable.jsx",
+    "../ui-fhir/nutritionOrders/NutritionOrdersTable.jsx",
+    "../ui-fhir/observations/ObservationsTable.jsx",
+    "../ui-fhir/operationOutcomes/OperationOutcomesTable.jsx",
+    "../ui-fhir/planDefinitions/PlanDefinitionsTable.jsx",
+    "../ui-fhir/practitioners/PractitionersTable.jsx",
+    "../ui-fhir/procedures/ProceduresTable.jsx",
+    "../ui-fhir/questionnaireResponses/QuestionnaireResponsesTable.jsx",
+    "../ui-fhir/questionnaires/QuestionnairesTable.jsx",
+    "../ui-fhir/researchStudies/ResearchStudiesTable.jsx",
+    "../ui-fhir/researchSubjects/ResearchSubjectsTable.jsx",
+    "../ui-fhir/serviceRequests/ServiceRequestsTable.jsx",
+    "../ui-fhir/tasks/TasksTable.jsx",
+    "../ui-fhir/valuesets/ValueSetsTable.jsx",
+    "../ui-tables/EndpointsTable.jsx",
+    "../ui-tables/PatientsTable.jsx",
+    "../ui-tables/PersonsTable.jsx"
+  ],
+  "../ui-vault-server/OAuthClientsPage.jsx": [
+    "../ui-vault-server/OAuthClientsTable.jsx"
+  ],
+  "../ui-vault-server/OAuthClientsTable.jsx": [
+    "../lib/LayoutHelpers.js"
+  ],
+  "../ui-vault-server/ServerConfigurationPage.jsx": [
+    "../lib/schemas/SimpleSchemas/Endpoints.js",
+    "../ui-vault-server/SubscriptionsTable.jsx",
+    "DynamicSpacer.jsx"
+  ],
+  "../ui-vault-server/SubscriptionsTable.jsx": [
+    "../lib/FhirDehydrator.js",
+    "../lib/FhirUtilities.js"
+  ],
+  "../ui-vault-server/SwaggerPage.jsx": [
+    "../lib/LayoutHelpers.js"
+  ],
+  "../ui-vault-server/UdapRegistrationPage.jsx": [],
+  "App.jsx": [
+    "../accounts/client/pages/EnrollAccountPage.jsx",
+    "../accounts/client/pages/ForgotPasswordPage.jsx",
+    "../accounts/client/pages/LoginPage.jsx",
+    "../accounts/client/pages/RegisterPage.jsx",
+    "../accounts/client/pages/ResetPasswordPage.jsx",
+    "../accounts/client/pages/TwoFactorSetupPage.jsx",
+    "../accounts/client/pages/VerifyEmailPage.jsx",
+    "../lib/FhirDehydrator.js",
+    "../lib/FhirUtilities.js",
+    "../lib/HipaaLogger.js",
+    "../lib/LayoutHelpers.js",
+    "../lib/MedicalRecordImporter.js",
+    "../lib/schemas/SimpleSchemas/ActivityDefinitions.js",
+    "../lib/schemas/SimpleSchemas/AllergyIntolerances.js",
+    "../lib/schemas/SimpleSchemas/ArtifactAssessments.js",
+    "../lib/schemas/SimpleSchemas/AuditEvents.js",
+    "../lib/schemas/SimpleSchemas/BodyStructures.js",
+    "../lib/schemas/SimpleSchemas/Bundles.js",
+    "../lib/schemas/SimpleSchemas/CarePlans.js",
+    "../lib/schemas/SimpleSchemas/CareTeams.js",
+    "../lib/schemas/SimpleSchemas/Claims.js",
+    "../lib/schemas/SimpleSchemas/ClinicalImpressions.js",
+    "../lib/schemas/SimpleSchemas/CodeSystems.js",
+    "../lib/schemas/SimpleSchemas/CommunicationRequests.js",
+    "../lib/schemas/SimpleSchemas/Communications.js",
+    "../lib/schemas/SimpleSchemas/Compositions.js",
+    "../lib/schemas/SimpleSchemas/ConceptMaps.js",
+    "../lib/schemas/SimpleSchemas/Conditions.js",
+    "../lib/schemas/SimpleSchemas/Devices.js",
+    "../lib/schemas/SimpleSchemas/DiagnosticReports.js",
+    "../lib/schemas/SimpleSchemas/DocumentReferences.js",
+    "../lib/schemas/SimpleSchemas/Encounters.js",
+    "../lib/schemas/SimpleSchemas/Endpoints.js",
+    "../lib/schemas/SimpleSchemas/Evidences.js",
+    "../lib/schemas/SimpleSchemas/ExplanationOfBenefits.js",
+    "../lib/schemas/SimpleSchemas/FamilyMemberHistories.js",
+    "../lib/schemas/SimpleSchemas/Goals.js",
+    "../lib/schemas/SimpleSchemas/Groups.js",
+    "../lib/schemas/SimpleSchemas/GuidanceResponses.js",
+    "../lib/schemas/SimpleSchemas/ImagingStudies.js",
+    "../lib/schemas/SimpleSchemas/Immunizations.js",
+    "../lib/schemas/SimpleSchemas/Libraries.js",
+    "../lib/schemas/SimpleSchemas/Lists.js",
+    "../lib/schemas/SimpleSchemas/Locations.js",
+    "../lib/schemas/SimpleSchemas/MeasureReports.js",
+    "../lib/schemas/SimpleSchemas/Measures.js",
+    "../lib/schemas/SimpleSchemas/MedicationAdministrations.js",
+    "../lib/schemas/SimpleSchemas/MedicationRequests.js",
+    "../lib/schemas/SimpleSchemas/MedicationStatements.js",
+    "../lib/schemas/SimpleSchemas/Medications.js",
+    "../lib/schemas/SimpleSchemas/MessageHeaders.js",
+    "../lib/schemas/SimpleSchemas/NutritionOrders.js",
+    "../lib/schemas/SimpleSchemas/Observations.js",
+    "../lib/schemas/SimpleSchemas/OperationOutcomes.js",
+    "../lib/schemas/SimpleSchemas/Organizations.js",
+    "../lib/schemas/SimpleSchemas/Patients.js",
+    "../lib/schemas/SimpleSchemas/PlanDefinitions.js",
+    "../lib/schemas/SimpleSchemas/Practitioners.js",
+    "../lib/schemas/SimpleSchemas/Procedures.js",
+    "../lib/schemas/SimpleSchemas/QuestionnaireResponses.js",
+    "../lib/schemas/SimpleSchemas/Questionnaires.js",
+    "../lib/schemas/SimpleSchemas/ResearchStudies.js",
+    "../lib/schemas/SimpleSchemas/ResearchSubjects.js",
+    "../lib/schemas/SimpleSchemas/ServiceRequests.js",
+    "../lib/schemas/SimpleSchemas/Specimens.js",
+    "../lib/schemas/SimpleSchemas/StructureDefinitions.js",
+    "../lib/schemas/SimpleSchemas/Tasks.js",
+    "../lib/schemas/SimpleSchemas/ValueSets.js",
+    "../patient/PatientCard.jsx",
+    "../patient/PatientChart.jsx",
+    "../patient/PatientQuickChart.jsx",
+    "../ui-details/index.js",
+    "../ui-fhir/appointments/AppointmentDetail.jsx",
+    "../ui-fhir/appointments/AppointmentsPage.jsx",
+    "../ui-fhir/auditEvents/AuditEventDetail.jsx",
+    "../ui-fhir/auditEvents/AuditEventsPage.jsx",
+    "../ui-fhir/bodyStructures/BodyStructureDetail.jsx",
+    "../ui-fhir/bodyStructures/BodyStructuresPage.jsx",
+    "../ui-fhir/carePlans/EnhancedCarePlanDesigner.jsx",
+    "../ui-fhir/clinicalImpressions/ClinicalImpressionDetail.jsx",
+    "../ui-fhir/clinicalImpressions/ClinicalImpressionsPage.jsx",
+    "../ui-fhir/diagnosticReports/DiagnosticReportDetail.jsx",
+    "../ui-fhir/diagnosticReports/DiagnosticReportsPage.jsx",
+    "../ui-fhir/endpoints/EndpointDetail.jsx",
+    "../ui-fhir/endpoints/EndpointsPage.jsx",
+    "../ui-fhir/imagingStudies/ImagingStudiesPage.jsx",
+    "../ui-fhir/imagingStudies/ImagingStudyDetail.jsx",
+    "../ui-fhir/measureReports/MeasureReportDetail.jsx",
+    "../ui-fhir/measureReports/MeasureReportsPage.jsx",
+    "../ui-fhir/measures/MeasureDetail.jsx",
+    "../ui-fhir/measures/MeasuresPage.jsx",
+    "../ui-fhir/medias/MediaDetail.jsx",
+    "../ui-fhir/medias/MediasPage.jsx",
+    "../ui-fhir/messageHeaders/MessageHeaderDetail.jsx",
+    "../ui-fhir/messageHeaders/MessageHeadersPage.jsx",
+    "../ui-fhir/nutritionIntakes/NutritionIntakeDetail.jsx",
+    "../ui-fhir/nutritionIntakes/NutritionIntakesPage.jsx",
+    "../ui-fhir/nutritionProducts/NutritionProductDetail.jsx",
+    "../ui-fhir/nutritionProducts/NutritionProductsPage.jsx",
+    "../ui-fhir/organizations/OrganizationDetail.jsx",
+    "../ui-fhir/organizations/OrganizationsPage.jsx",
+    "../ui-fhir/practitionerRoles/PractitionerRoleDetail.jsx",
+    "../ui-fhir/practitionerRoles/PractitionerRolesPage.jsx",
+    "../ui-fhir/riskAssessments/RiskAssessmentDetail.jsx",
+    "../ui-fhir/riskAssessments/RiskAssessmentsPage.jsx",
+    "../ui-fhir/schedules/ScheduleDetail.jsx",
+    "../ui-fhir/schedules/SchedulesPage.jsx",
+    "../ui-fhir/substances/SubstanceDetail.jsx",
+    "../ui-fhir/substances/SubstancesPage.jsx",
+    "../ui-fhir/supplyDeliveries/SupplyDeliveriesPage.jsx",
+    "../ui-fhir/supplyDeliveries/SupplyDeliveryDetail.jsx",
+    "../ui-fhir/supplyRequests/SupplyRequestDetail.jsx",
+    "../ui-fhir/supplyRequests/SupplyRequestsPage.jsx",
+    "../ui-modules/BiomarkerChartingPage.jsx",
+    "../ui-modules/PatientsDirectory.jsx",
+    "../ui-pages/index.js",
+    "../ui-tables/index.js",
+    "../ui-vault-server/OAuthClientsPage.jsx",
+    "../ui-vault-server/ServerConfigurationPage.jsx",
+    "../ui-vault-server/SwaggerPage.jsx",
+    "../ui-vault-server/UdapRegistrationPage.jsx",
+    "BackendAuthPage.jsx",
+    "CdsHooksDebugger.jsx",
+    "DICOM/DicomViewerPage.jsx",
+    "DICOM/StudyListPage.jsx",
+    "DICOM/UploadPage.jsx",
+    "DynamicSpacer.jsx",
+    "ExternalContentPage.jsx",
+    "ExternalContentPanel.jsx",
+    "FhirResourcesDashboard.jsx",
+    "FhirResourcesIndex.jsx",
+    "Footer.jsx",
+    "GettingStartedPage.jsx",
+    "Header.jsx",
+    "Hello.jsx",
+    "HomePage.jsx",
+    "MeteorBasic.jsx",
+    "NavigationContext.jsx",
+    "NoDataWrapper.jsx",
+    "NotSignedInWrapper.jsx",
+    "OAuthPatientPickerPage.jsx",
+    "SideDrawer.jsx",
+    "SmartAppDebugger.jsx",
+    "SmartLaunchDebugger.jsx",
+    "SmartLauncher.jsx",
+    "SmartSampleApp.jsx",
+    "StaticPatientFileLoaderPage.jsx",
+    "ThemingPage.jsx",
+    "components/AuthenticatedRoute.jsx",
+    "pages/FhirBasePage.jsx",
+    "pages/MyProfilePage.jsx",
+    "pages/index.business.js"
+  ],
+  "BackendAuthPage.jsx": [],
+  "CdsHooksDebugger.jsx": [
+    "DynamicSpacer.jsx"
+  ],
+  "DICOM/DicomViewerPage.jsx": [
+    "DICOM/components/SimpleDicomViewport.jsx"
+  ],
+  "DICOM/StudyListPage.jsx": [
+    "DICOM/components/DicomFilesTable.jsx",
+    "DICOM/components/ImagingStudiesTable.jsx",
+    "DICOM/components/KeyImagesTable.jsx"
+  ],
+  "DICOM/UploadPage.jsx": [
+    "DICOM/components/SimpleDicomViewport.jsx",
+    "DICOM/utils/DicomFhirMapping.js"
+  ],
+  "DICOM/components/DicomFilesTable.jsx": [],
+  "DICOM/components/ImagingStudiesTable.jsx": [
+    "DICOM/utils/KeyImageUtils.js"
+  ],
+  "DICOM/components/KeyImagesTable.jsx": [
+    "DICOM/utils/KeyImageUtils.js"
+  ],
+  "DICOM/components/SimpleDicomViewport.jsx": [
+    "DICOM/components/Toolbar.jsx",
+    "DICOM/hooks/useTools.js",
+    "DICOM/utils/SimpleDicomLoader.js"
+  ],
+  "DICOM/components/Toolbar.jsx": [],
+  "DICOM/hooks/useTools.js": [],
+  "DICOM/utils/DicomFhirMapping.js": [],
+  "DICOM/utils/KeyImageUtils.js": [],
+  "DICOM/utils/SimpleDicomLoader.js": [],
+  "DynamicSpacer.jsx": [],
+  "ErrorBoundary.jsx": [],
+  "ExternalContentPage.jsx": [
+    "ExternalContentPanel.jsx"
+  ],
+  "ExternalContentPanel.jsx": [],
+  "FhirResourcesDashboard.jsx": [],
+  "FhirResourcesIndex.jsx": [],
+  "Footer.jsx": [
+    "DynamicSpacer.jsx"
+  ],
+  "GettingStartedPage.jsx": [],
+  "Header.jsx": [
+    "../FhirUtilities.js",
+    "DynamicSpacer.jsx"
+  ],
+  "Hello.jsx": [
+    "Index.jsx"
+  ],
+  "HomePage.jsx": [
+    "Index.jsx"
+  ],
+  "Index.jsx": [],
+  "MeteorBasic.jsx": [
+    "Hello.jsx",
+    "Index.jsx"
+  ],
+  "NavigationContext.jsx": [],
+  "NoDataWrapper.jsx": [],
+  "NotSignedInWrapper.jsx": [],
+  "OAuthPatientPickerPage.jsx": [
+    "../accounts/client/components/LoginForm.jsx",
+    "../components/PatientSearchDialog.jsx"
+  ],
+  "SideDrawer.jsx": [
+    "../patient/PatientSidebar.jsx"
+  ],
+  "SmartAppDebugger.jsx": [
+    "../FhirClientContext.js",
+    "DynamicSpacer.jsx"
+  ],
+  "SmartLaunchDebugger.jsx": [
+    "DynamicSpacer.jsx"
+  ],
+  "SmartLauncher.jsx": [
+    "../FhirClientContext.js",
+    "../ui-tables/index.js",
+    "DynamicSpacer.jsx"
+  ],
+  "SmartSampleApp.jsx": [
+    "../FhirClientContext.js"
+  ],
+  "StaticPatientFileLoaderPage.jsx": [
+    "DynamicSpacer.jsx",
+    "ErrorBoundary.jsx",
+    "Hello.jsx",
+    "Index.jsx"
+  ],
+  "ThemingPage.jsx": [
+    "App.jsx",
+    "Index.jsx"
+  ],
+  "components/AuthenticatedRoute.jsx": [
+    "components/NotAuthorized.jsx"
+  ],
+  "components/NotAuthorized.jsx": [],
+  "pages/AboutPage.jsx": [],
+  "pages/EulaPage.jsx": [],
+  "pages/FhirBasePage.jsx": [
+    "../lib/LayoutHelpers.js",
+    "../lib/schemas/SimpleSchemas/Conditions.js",
+    "../lib/schemas/SimpleSchemas/Encounters.js",
+    "../lib/schemas/SimpleSchemas/Endpoints.js",
+    "../lib/schemas/SimpleSchemas/HealthcareServices.js",
+    "../lib/schemas/SimpleSchemas/InsurancePlans.js",
+    "../lib/schemas/SimpleSchemas/Locations.js",
+    "../lib/schemas/SimpleSchemas/MedicationRequests.js",
+    "../lib/schemas/SimpleSchemas/Observations.js",
+    "../lib/schemas/SimpleSchemas/Organizations.js",
+    "../lib/schemas/SimpleSchemas/Patients.js",
+    "../lib/schemas/SimpleSchemas/Practitioners.js",
+    "../lib/schemas/SimpleSchemas/Procedures.js"
+  ],
+  "pages/MyProfilePage.jsx": [
+    "../collections/OAuthClients.js",
+    "../components/PractitionerSearchDialog.jsx",
+    "../lib/schemas/SimpleSchemas/Conditions.js",
+    "../lib/schemas/SimpleSchemas/Observations.js",
+    "../lib/schemas/SimpleSchemas/Patients.js",
+    "../lib/schemas/SimpleSchemas/PractitionerRoles.js",
+    "../lib/schemas/SimpleSchemas/Practitioners.js",
+    "../lib/schemas/SimpleSchemas/Procedures.js",
+    "../patient/PatientCard.jsx",
+    "../practitioner/PractitionerCard.jsx"
+  ],
+  "pages/PrivacyPage.jsx": [],
+  "pages/SupportPage.jsx": [],
+  "pages/TermsPage.jsx": [],
+  "pages/index.business.js": [
+    "pages/AboutPage.jsx",
+    "pages/EulaPage.jsx",
+    "pages/PrivacyPage.jsx",
+    "pages/SupportPage.jsx",
+    "pages/TermsPage.jsx"
+  ]
+}

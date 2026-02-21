@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useLayoutEffect, useEffect, useMemo } from 'react';
 import { Hello } from './Hello.jsx';
 
-import { get } from 'lodash';
+import { get, set } from 'lodash';
 
 import { Session } from 'meteor/session';
 import { Meteor } from 'meteor/meteor';
@@ -67,7 +67,11 @@ import {
 // Account components (conditionally loaded)
 import { LoginPage } from '../accounts/client/pages/LoginPage';
 import { RegisterPage } from '../accounts/client/pages/RegisterPage';
-import { ForgotPasswordForm } from '../accounts/client/components/ForgotPasswordForm';
+import { ForgotPasswordPage } from '../accounts/client/pages/ForgotPasswordPage';
+import { VerifyEmailPage } from '../accounts/client/pages/VerifyEmailPage';
+import { ResetPasswordPage } from '../accounts/client/pages/ResetPasswordPage';
+import { EnrollAccountPage } from '../accounts/client/pages/EnrollAccountPage';
+import { TwoFactorSetupPage } from '../accounts/client/pages/TwoFactorSetupPage';
 
 import PatientQuickChart from '../patient/PatientQuickChart.jsx';
 import PatientChart from '../patient/PatientChart.jsx';
@@ -667,15 +671,23 @@ if(get(Meteor, 'settings.public.modules.accounts.enabled', true)){
   });
   dynamicRoutes.push({
     path: "/forgot-password",
-    element: (
-      <Container maxWidth="sm">
-        <Box sx={{ pt: 8, pb: 4 }}>
-          <ForgotPasswordForm 
-            onBackToLogin={() => window.location.href = '/login'}
-          />
-        </Box>
-      </Container>
-    )
+    element: <ForgotPasswordPage />
+  });
+  dynamicRoutes.push({
+    path: "/verify-email/:token",
+    element: <VerifyEmailPage />
+  });
+  dynamicRoutes.push({
+    path: "/reset-password/:token",
+    element: <ResetPasswordPage />
+  });
+  dynamicRoutes.push({
+    path: "/enroll-account/:token",
+    element: <EnrollAccountPage />
+  });
+  dynamicRoutes.push({
+    path: "/security/two-factor",
+    element: <AuthenticatedRoute><TwoFactorSetupPage /></AuthenticatedRoute>
   });
 }
 
@@ -1865,13 +1877,32 @@ export const CustomThemeProvider = ({ children }) => {
     const backgroundPageColor = isDark ? (backgroundCanvasDark || backgroundPageColorDark) : (backgroundCanvas || backgroundPageColorLight);
 
     // Get card/paper colors from settings with dark mode support
-    const paperColorLight = get(Meteor, "settings.public.theme.palette.paperColor", "");
-    const paperColorDark = get(Meteor, "settings.public.theme.palette.paperColorDark", "");
-    const paperColorFromSettings = isDark ? paperColorDark : paperColorLight;
+    // When settings are dark-oriented (darkMode: true), the unsuffixed paperColor/cardColor
+    // are dark values — don't use them as light-mode values when the user toggles to light mode
+    const settingsAreDarkOriented = get(Meteor, 'settings.public.theme.darkMode', false)
+      || get(Meteor, 'settings.public.theme.palette.mode', '') === 'dark';
 
-    const cardColorLight = get(Meteor, "settings.public.theme.palette.cardColor", "");
-    const cardColorDark = get(Meteor, "settings.public.theme.palette.cardColorDark", "");
-    const cardColorFromSettings = isDark ? cardColorDark : cardColorLight;
+    const paperColorGeneric = get(Meteor, "settings.public.theme.palette.paperColor", "");
+    const paperColorDarkExplicit = get(Meteor, "settings.public.theme.palette.paperColorDark", "");
+    const paperColorLightExplicit = get(Meteor, "settings.public.theme.palette.paperColorLight", "");
+
+    let paperColorFromSettings;
+    if (isDark) {
+      paperColorFromSettings = paperColorDarkExplicit || paperColorGeneric;
+    } else {
+      paperColorFromSettings = paperColorLightExplicit || (settingsAreDarkOriented ? '' : paperColorGeneric);
+    }
+
+    const cardColorGeneric = get(Meteor, "settings.public.theme.palette.cardColor", "");
+    const cardColorDarkExplicit = get(Meteor, "settings.public.theme.palette.cardColorDark", "");
+    const cardColorLightExplicit = get(Meteor, "settings.public.theme.palette.cardColorLight", "");
+
+    let cardColorFromSettings;
+    if (isDark) {
+      cardColorFromSettings = cardColorDarkExplicit || cardColorGeneric;
+    } else {
+      cardColorFromSettings = cardColorLightExplicit || (settingsAreDarkOriented ? '' : cardColorGeneric);
+    }
 
     const themeConfig = {
       palette: {
@@ -2156,6 +2187,36 @@ export function App(props){
 
 
   // ------------------------------------------------------------------
+  // Keyboard Shortcut Event Listeners
+  // Bridges custom DOM events from hotkeys.js to React state
+
+  useEffect(() => {
+    function onToggleDrawer() {
+      setDrawerIsOpen(prev => !prev);
+    }
+    function onToggleFhirModules() {
+      const current = get(Meteor, 'settings.public.defaults.sidebar.menuItems.FhirAutoLinks', true);
+      set(Meteor, 'settings.public.defaults.sidebar.menuItems.FhirAutoLinks', !current);
+      Session.set('settingsRefreshRequest', Date.now());
+    }
+    function onToggleIndexPage() {
+      const current = get(Meteor, 'settings.public.defaults.sidebar.menuItems.IndexPage', false);
+      set(Meteor, 'settings.public.defaults.sidebar.menuItems.IndexPage', !current);
+      Session.set('settingsRefreshRequest', Date.now());
+    }
+
+    window.addEventListener('toggleDrawer', onToggleDrawer);
+    window.addEventListener('toggleFhirModules', onToggleFhirModules);
+    window.addEventListener('toggleIndexPage', onToggleIndexPage);
+    return () => {
+      window.removeEventListener('toggleDrawer', onToggleDrawer);
+      window.removeEventListener('toggleFhirModules', onToggleFhirModules);
+      window.removeEventListener('toggleIndexPage', onToggleIndexPage);
+    };
+  }, []);
+
+
+  // ------------------------------------------------------------------
   // User Interface Methods
 
   function handleDrawerOpen(){
@@ -2326,9 +2387,11 @@ function StyledMainRouter(props){
     ...style // Merge the passed style prop
   }
 
-  // Add padding when prominent header is shown AND navbars are visible
-  // The prominent header Toolbar is 64px, so we add that to the top padding
-  if(showProminentHeader && displayNavbars !== false){
+  // Compensate for header collapsing when navbars are hidden, so content stays in place.
+  // Both maxHeight (header) and paddingTop animate with 0.3s ease-in-out, cancelling out.
+  if (displayNavbars === false) {
+    mainAppStyle.paddingTop = showProminentHeader ? '128px' : '64px';
+  } else if (showProminentHeader) {
     mainAppStyle.paddingTop = '64px';
   }
 

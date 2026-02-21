@@ -108,7 +108,8 @@ import {
   Business,                 // for business pages
   Article,                  // for legal/content pages
   Palette as PaletteIcon,   // for color picker buttons
-  Key                       // for key/security configuration
+  Key,                      // for key/security configuration
+  Email                     // for email configuration
 } from '@mui/icons-material';
 
 import InputAdornment from '@mui/material/InputAdornment';
@@ -174,6 +175,9 @@ function GettingStartedPage(props){
   const [databaseExpanded, setDatabaseExpanded] = React.useState(false);
   const [gridfsExpanded, setGridfsExpanded] = React.useState(false);
   const [gridfsStatus, setGridfsStatus] = React.useState(null);
+  const [emailConfigExpanded, setEmailConfigExpanded] = React.useState(false);
+  const [emailTestStatus, setEmailTestStatus] = React.useState(null);
+  const [emailTestError, setEmailTestError] = React.useState('');
 
   // State for color picker
   const [colorPickerOpen, setColorPickerOpen] = React.useState(false);
@@ -224,6 +228,10 @@ function GettingStartedPage(props){
     
     // Ensure private.x509 structure exists for cryptography keys
     if (!initialSettings.private.x509) initialSettings.private.x509 = {};
+
+    // Ensure private.email.smtp structure exists for email configuration
+    if (!initialSettings.private.email) initialSettings.private.email = {};
+    if (!initialSettings.private.email.smtp) initialSettings.private.email.smtp = {};
     
     // Ensure public.defaults.sidebar.menuItems structure exists with HomePage default
     if (!initialSettings.public) initialSettings.public = {};
@@ -3703,6 +3711,169 @@ function GettingStartedPage(props){
       </React.Fragment>
     );
 
+    // 9c. Email Configuration (SMTP)
+    const hasEmailConfig = !!(
+      get(settings, 'private.email.smtp.host', '') &&
+      get(settings, 'private.email.smtp.username', '') &&
+      get(settings, 'private.email.smtp.username') !== 'YOUR_SMTP_USERNAME' &&
+      get(settings, 'private.email.smtp.password', '')
+    );
+
+    function handleSendTestEmail() {
+      setEmailTestStatus('sending');
+      setEmailTestError('');
+      Meteor.call('accounts.sendTestEmail', function(error, result) {
+        if (error) {
+          console.warn('[GettingStartedPage] Test email error:', error);
+          setEmailTestStatus('error');
+          setEmailTestError(error.reason || error.message || 'Failed to send test email');
+        } else {
+          console.log('[GettingStartedPage] Test email sent to:', get(result, 'sentTo'));
+          setEmailTestStatus('success');
+          setEmailTestError('');
+        }
+      });
+    }
+
+    checklistItemsArray.push(
+      <React.Fragment key="email-config-section">
+        <Alert
+          severity={hasEmailConfig ? "success" : "info"}
+          icon={hasEmailConfig ? <CheckCircle /> : <Email />}
+          sx={{
+            backgroundColor: hasEmailConfig ? undefined : 'action.hover',
+            color: hasEmailConfig ? undefined : 'text.primary',
+            cursor: 'pointer',
+            '& .MuiAlert-icon': {
+              color: hasEmailConfig ? undefined : 'text.secondary'
+            },
+            '&:hover': {
+              backgroundColor: hasEmailConfig ? undefined : 'action.selected'
+            }
+          }}
+          onClick={() => setEmailConfigExpanded(!emailConfigExpanded)}
+          action={
+            <IconButton
+              size="small"
+              onClick={(e) => {
+                e.stopPropagation();
+                setEmailConfigExpanded(!emailConfigExpanded);
+              }}
+            >
+              {emailConfigExpanded ? <ExpandLess /> : <ExpandMore />}
+            </IconButton>
+          }
+        >
+          <Stack direction="row" alignItems="center" spacing={1}>
+            <span>Email Configuration</span>
+          </Stack>
+        </Alert>
+        <Collapse in={emailConfigExpanded} timeout="auto" unmountOnExit>
+          <Box sx={{ pl: 2, pr: 2, pb: 2, pt: 1 }}>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+              Configure SMTP email for password reset, email verification, and enrollment invitations.
+              These settings are stored in <code>private.email.smtp</code> and read by the server at startup.
+            </Typography>
+
+            <Grid container spacing={2} sx={{ mb: 2 }}>
+              <Grid item xs={12} sm={8}>
+                <TextField
+                  fullWidth
+                  label="SMTP Host"
+                  value={get(settings, 'private.email.smtp.host', '')}
+                  onChange={(e) => updateSetting('private.email.smtp.host', e.target.value)}
+                  placeholder="smtp.gmail.com"
+                  variant="outlined"
+                  size="small"
+                  helperText="e.g., smtp.gmail.com, smtp.sendgrid.net, email-smtp.us-east-1.amazonaws.com"
+                />
+              </Grid>
+              <Grid item xs={12} sm={4}>
+                <TextField
+                  fullWidth
+                  label="Port"
+                  type="number"
+                  value={get(settings, 'private.email.smtp.port', '')}
+                  onChange={(e) => updateSetting('private.email.smtp.port', parseInt(e.target.value) || '')}
+                  placeholder="587"
+                  variant="outlined"
+                  size="small"
+                  helperText="Usually 587 (TLS) or 465 (SSL)"
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label="SMTP Username"
+                  value={get(settings, 'private.email.smtp.username', '')}
+                  onChange={(e) => updateSetting('private.email.smtp.username', e.target.value)}
+                  placeholder="your-email@gmail.com"
+                  variant="outlined"
+                  size="small"
+                  helperText="Service account (e.g., your-app@gmail.com, apikey)"
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label="SMTP Password"
+                  type="password"
+                  value={get(settings, 'private.email.smtp.password', '')}
+                  onChange={(e) => updateSetting('private.email.smtp.password', e.target.value)}
+                  placeholder="app-specific password"
+                  variant="outlined"
+                  size="small"
+                  helperText="App password or API key from your email service"
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={get(settings, 'private.email.smtp.secure', false)}
+                      onChange={(e) => updateSetting('private.email.smtp.secure', e.target.checked)}
+                    />
+                  }
+                  label="Use TLS/SSL (secure connection)"
+                />
+              </Grid>
+            </Grid>
+
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1 }}>
+              <Button
+                variant="outlined"
+                size="small"
+                startIcon={<Email />}
+                onClick={handleSendTestEmail}
+                disabled={!hasEmailConfig || emailTestStatus === 'sending'}
+              >
+                {emailTestStatus === 'sending' ? 'Sending...' : 'Send Test Email'}
+              </Button>
+              {emailTestStatus === 'sending' && (
+                <Typography variant="body2" color="text.secondary">Sending test email...</Typography>
+              )}
+            </Box>
+
+            {emailTestStatus === 'success' && (
+              <Alert severity="success" sx={{ mt: 1 }}>
+                Test email sent successfully. Check your inbox.
+              </Alert>
+            )}
+            {emailTestStatus === 'error' && (
+              <Alert severity="error" sx={{ mt: 1 }}>
+                {emailTestError}
+              </Alert>
+            )}
+
+            <Typography variant="caption" color="text.secondary" sx={{ mt: 2, display: 'block' }}>
+              Note: The server reads these settings from <code>private.email.smtp</code> at startup and constructs
+              a MAIL_URL environment variable. You can also set MAIL_URL directly as an environment variable.
+            </Typography>
+          </Box>
+        </Collapse>
+      </React.Fragment>
+    );
+
     // 10. Server FHIR APIs (with collapse)
     // Check if any FHIR resources are enabled
     const fhirResources = [
@@ -5680,25 +5851,27 @@ openssl req -new -x509 -key private.pem -out certificate.pem -days 365`}
     // Public Settings (App)
     const publicSettingsItems = [];
     if (checklistItemsArray[2]) publicSettingsItems.push(checklistItemsArray[2]); // App Configuration
-    if (checklistItemsArray[3]) publicSettingsItems.push(checklistItemsArray[3]); // Theme and Color Palette  
-    if (checklistItemsArray[4]) publicSettingsItems.push(checklistItemsArray[4]); // Default App Modules
-    if (checklistItemsArray[5]) publicSettingsItems.push(checklistItemsArray[5]); // Sidebar Configuration
-    if (checklistItemsArray[10]) publicSettingsItems.push(checklistItemsArray[10]); // Business & Legal Pages
-    if (checklistItemsArray[11]) publicSettingsItems.push(checklistItemsArray[11]); // Upstream Tether (SMART on FHIR)
-    if (checklistItemsArray[12]) publicSettingsItems.push(checklistItemsArray[12]); // Custom Workflows
+    if (checklistItemsArray[3]) publicSettingsItems.push(checklistItemsArray[3]); // Theme and Color Palette
+    if (checklistItemsArray[4]) publicSettingsItems.push(checklistItemsArray[4]); // Sidebar Configuration
+    if (checklistItemsArray[5]) publicSettingsItems.push(checklistItemsArray[5]); // Default App Modules
+    if (checklistItemsArray[12]) publicSettingsItems.push(checklistItemsArray[12]); // Business & Legal Pages
+    if (checklistItemsArray[13]) publicSettingsItems.push(checklistItemsArray[13]); // Upstream Tether (SMART on FHIR)
+    if (checklistItemsArray[14]) publicSettingsItems.push(checklistItemsArray[14]); // Custom Workflows
     
     // Private Settings (Server)
     const privateSettingsItems = [];
-    if (checklistItemsArray[9]) privateSettingsItems.push(checklistItemsArray[9]); // Server FHIR APIs
+    if (checklistItemsArray[11]) privateSettingsItems.push(checklistItemsArray[11]); // Server FHIR APIs
     if (checklistItemsArray[7]) privateSettingsItems.push(checklistItemsArray[7]); // User Accounts
     if (checklistItemsArray[8]) privateSettingsItems.push(checklistItemsArray[8]); // Database
-    if (checklistItemsArray[14]) privateSettingsItems.push(checklistItemsArray[14]); // Cryptography Keys
-    if (checklistItemsArray[13]) privateSettingsItems.push(checklistItemsArray[13]); // Environment Variables
+    if (checklistItemsArray[9]) privateSettingsItems.push(checklistItemsArray[9]); // DICOM File Storage (GridFS)
+    if (checklistItemsArray[10]) privateSettingsItems.push(checklistItemsArray[10]); // Email Configuration
+    if (checklistItemsArray[16]) privateSettingsItems.push(checklistItemsArray[16]); // Cryptography Keys
+    if (checklistItemsArray[15]) privateSettingsItems.push(checklistItemsArray[15]); // Environment Variables
     if (checklistItemsArray[6]) privateSettingsItems.push(checklistItemsArray[6]); // Interfaces
     
     // Settings File and Deploy
     const settingsFileItem = checklistItemsArray[1]; // Initialize Settings File
-    const deployAppItem = checklistItemsArray[15]; // Deploy App (Hosting)
+    const deployAppItem = checklistItemsArray[17]; // Deploy App (Hosting)
     
     setupChecklistElements = <Grid item xs={12}>
       <Card sx={{ mb: 3 }}>

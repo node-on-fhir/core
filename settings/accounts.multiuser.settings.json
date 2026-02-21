@@ -34,7 +34,7 @@
         "allowSignup": true,
         "requireEmailVerification": false,
         "allowPasswordReset": true,
-        "enableTwoFactor": false
+        "enableTwoFactor": true
       },
       "passwordPolicy": {
         "minLength": 8
@@ -106,7 +106,11 @@
           "secret": "YOUR_GITHUB_SECRET"
         }
       },
-      "blockedDomains": []
+      "blockedDomains": [],
+      "twoFactor": {
+        "backupCodeCount": 10,
+        "issuerName": "Honeycomb EHR"
+      }
     },
     "security": {
       "cors": {

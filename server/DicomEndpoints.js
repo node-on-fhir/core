@@ -183,7 +183,9 @@ WebApp.connectHandlers.use('/api/dicom/upload', async function(req, res) {
               'metadata.rows': get(dicomMetadata, 'rows'),
               'metadata.columns': get(dicomMetadata, 'columns'),
               'metadata.bitsAllocated': get(dicomMetadata, 'bitsAllocated'),
-              'metadata.transferSyntaxUid': get(dicomMetadata, 'transferSyntaxUid')
+              'metadata.transferSyntaxUid': get(dicomMetadata, 'transferSyntaxUid'),
+              // Only update contentType if client provided it (non-DICOM files like MP4)
+              ...(get(dicomMetadata, 'contentType') ? { 'metadata.contentType': dicomMetadata.contentType } : {})
             }
           }
         );

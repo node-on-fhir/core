@@ -2,7 +2,7 @@
 // Table component for displaying FHIR ImagingStudy resources
 // Shows Series and Instances in expanded row with Key Image toggle
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Meteor } from 'meteor/meteor';
 import { useTracker } from 'meteor/react-meteor-data';
 import { get } from 'lodash';
@@ -23,7 +23,8 @@ import {
   CircularProgress,
   Checkbox,
   Tooltip,
-  Button
+  Button,
+  Alert
 } from '@mui/material';
 import {
   KeyboardArrowDown,
@@ -48,10 +49,41 @@ Meteor.startup(function() {
  * ImagingStudiesTable - Displays FHIR ImagingStudy resources
  * Extracted from StudyListPage for reuse in tabbed interface
  */
-export default function ImagingStudiesTable({ isDark, cardTextColor, subheaderColor, paperBgColor }) {
+export default function ImagingStudiesTable({ isDark, cardTextColor, subheaderColor, paperBgColor, aggregationResult }) {
   const navigate = useNavigate ? useNavigate() : null;
   const [expandedRows, setExpandedRows] = useState({});
   const [regenerating, setRegenerating] = useState(false);
+
+  // "Updated, not created" alert state — driven by navigation state from UploadPage
+  const [updatedStudies, setUpdatedStudies] = useState([]);
+
+  // Duplicate GridFS files alert state — driven by server method
+  const [duplicateInfo, setDuplicateInfo] = useState(null);
+
+  // Extract updated studies from aggregation result (one-time on mount/navigation)
+  useEffect(function() {
+    if (aggregationResult && aggregationResult.studies) {
+      const updated = aggregationResult.studies.filter(function(s) {
+        return s.action === 'updated';
+      });
+      if (updated.length > 0) {
+        setUpdatedStudies(updated);
+      }
+    }
+  }, [aggregationResult]);
+
+  // Check for duplicate files on mount
+  useEffect(function() {
+    Meteor.call('dicom.checkDuplicateFiles', function(error, result) {
+      if (error) {
+        console.warn('[ImagingStudiesTable] Duplicate check error:', error);
+        return;
+      }
+      if (result && result.uniqueDuplicatedImages > 0) {
+        setDuplicateInfo(result);
+      }
+    });
+  }, []);
 
   // Handle regenerate ImagingStudies from existing GridFS files
   function handleRegenerateStudies() {
@@ -194,6 +226,24 @@ export default function ImagingStudiesTable({ isDark, cardTextColor, subheaderCo
 
   return (
     <Box>
+      {/* Alert: Studies were updated, not newly created */}
+      {updatedStudies.length > 0 && (
+        <Alert severity="info" sx={{ mb: 2 }} onClose={function() { setUpdatedStudies([]); }}>
+          <strong>{updatedStudies.length} existing {updatedStudies.length === 1 ? 'study' : 'studies'} updated</strong> (not newly created).
+          The uploaded DICOM files matched {updatedStudies.length === 1 ? 'a study' : 'studies'} already in the system by StudyInstanceUID.
+          Patient and ServiceRequest references were updated on the existing {updatedStudies.length === 1 ? 'record' : 'records'}.
+        </Alert>
+      )}
+
+      {/* Alert: Duplicate DICOM files detected in GridFS storage */}
+      {duplicateInfo && duplicateInfo.uniqueDuplicatedImages > 0 && (
+        <Alert severity="warning" sx={{ mb: 2 }} onClose={function() { setDuplicateInfo(null); }}>
+          <strong>{duplicateInfo.totalDuplicateFiles} duplicate DICOM files</strong> detected
+          across {duplicateInfo.uniqueDuplicatedImages} unique {duplicateInfo.uniqueDuplicatedImages === 1 ? 'image' : 'images'}.
+          The same images were uploaded more than once. This uses extra storage but does not create duplicate studies.
+        </Alert>
+      )}
+
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
         <Typography variant="body2" sx={{ color: subheaderColor }}>
           FHIR ImagingStudy resources ({studies.length} total)

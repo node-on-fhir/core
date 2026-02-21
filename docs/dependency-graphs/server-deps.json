@@ -1,0 +1,733 @@
+{
+  "../imports/accounts/lib/AccountsLogger.js": [],
+  "../imports/accounts/server/accounts-server.js": [
+    "../imports/accounts/lib/AccountsLogger.js"
+  ],
+  "../imports/accounts/server/dev-autologin.js": [
+    "../imports/lib/schemas/SimpleSchemas/Patients.js"
+  ],
+  "../imports/accounts/server/email-config.js": [],
+  "../imports/accounts/server/methods.js": [
+    "../imports/lib/FhirUtilities.js",
+    "../imports/lib/schemas/SimpleSchemas/CarePlans.js",
+    "../imports/lib/schemas/SimpleSchemas/CareTeams.js",
+    "../imports/lib/schemas/SimpleSchemas/Conditions.js",
+    "../imports/lib/schemas/SimpleSchemas/Devices.js",
+    "../imports/lib/schemas/SimpleSchemas/MedicationStatements.js",
+    "../imports/lib/schemas/SimpleSchemas/Observations.js",
+    "../imports/lib/schemas/SimpleSchemas/Patients.js",
+    "../imports/lib/schemas/SimpleSchemas/Practitioners.js",
+    "../imports/lib/schemas/SimpleSchemas/Procedures.js"
+  ],
+  "../imports/accounts/server/middleware.js": [],
+  "../imports/accounts/server/oauth-integration.js": [],
+  "../imports/accounts/server/startup.js": [
+    "../imports/accounts/server/accounts-server.js",
+    "../imports/accounts/server/dev-autologin.js",
+    "../imports/accounts/server/email-config.js",
+    "../imports/accounts/server/methods.js",
+    "../imports/accounts/server/middleware.js",
+    "../imports/accounts/server/oauth-integration.js",
+    "../imports/accounts/server/test-methods.js"
+  ],
+  "../imports/accounts/server/test-methods.js": [],
+  "../imports/api/AuditEvents/AuditEvents.js": [
+    "../imports/lib/schemas/SimpleSchemas/AuditEvents.js"
+  ],
+  "../imports/api/activityDefinitions/methods.js": [],
+  "../imports/api/allergyIntolerances/methods.js": [],
+  "../imports/api/appointments/methods.js": [],
+  "../imports/api/bodyStructures/methods.js": [],
+  "../imports/api/carePlans/methods.js": [],
+  "../imports/api/careTeams/methods.js": [],
+  "../imports/api/clinicalImpressions/methods.js": [],
+  "../imports/api/communications/methods.js": [
+    "../imports/lib/schemas/SimpleSchemas/Communications.js",
+    "../imports/lib/validatedMethods/communications.js"
+  ],
+  "../imports/api/compositions/methods.js": [
+    "../imports/lib/schemas/SimpleSchemas/Compositions.js"
+  ],
+  "../imports/api/conditions/methods.js": [],
+  "../imports/api/consents/methods.js": [
+    "../imports/lib/FhirUtilities.js",
+    "../imports/lib/HipaaLogger.js"
+  ],
+  "../imports/api/devices/methods.js": [
+    "../imports/lib/schemas/SimpleSchemas/Devices.js"
+  ],
+  "../imports/api/diagnosticReports/methods.js": [],
+  "../imports/api/dicom/server/methods.js": [],
+  "../imports/api/documentReferences/methods.js": [
+    "../imports/lib/schemas/SimpleSchemas/DocumentReferences.js"
+  ],
+  "../imports/api/encounters/methods.js": [],
+  "../imports/api/endpoints/methods.js": [],
+  "../imports/api/imagingStudies/methods.js": [],
+  "../imports/api/lists/methods.js": [],
+  "../imports/api/locations/methods.js": [],
+  "../imports/api/measureReports/methods.js": [],
+  "../imports/api/measures/methods.js": [],
+  "../imports/api/medias/methods.js": [],
+  "../imports/api/medicationAdministrations/methods.js": [],
+  "../imports/api/medicationRequests/methods.js": [],
+  "../imports/api/medications/methods.js": [],
+  "../imports/api/messageHeaders/methods.js": [],
+  "../imports/api/nutritionIntakes/methods.js": [],
+  "../imports/api/nutritionOrders/methods.js": [],
+  "../imports/api/nutritionProducts/methods.js": [],
+  "../imports/api/observations/methods.js": [],
+  "../imports/api/organizations/methods.js": [],
+  "../imports/api/patients/methods.js": [
+    "../imports/lib/schemas/SimpleSchemas/Patients.js"
+  ],
+  "../imports/api/planDefinitions/methods.js": [],
+  "../imports/api/practitionerRoles/methods.js": [
+    "../imports/lib/schemas/SimpleSchemas/PractitionerRoles.js"
+  ],
+  "../imports/api/practitioners/methods.js": [
+    "../imports/lib/schemas/SimpleSchemas/Practitioners.js"
+  ],
+  "../imports/api/procedures/methods.js": [],
+  "../imports/api/questionnaireResponses/methods.js": [],
+  "../imports/api/questionnaires/methods.js": [],
+  "../imports/api/research-studies/methods.js": [],
+  "../imports/api/researchSubjects/methods.js": [],
+  "../imports/api/rfc7523/methods.js": [],
+  "../imports/api/riskAssessments/methods.js": [],
+  "../imports/api/schedules/methods.js": [],
+  "../imports/api/serviceRequests/methods.js": [],
+  "../imports/api/substances/methods.js": [],
+  "../imports/api/supplyRequests/methods.js": [],
+  "../imports/collections/OAuthClients.js": [],
+  "../imports/lib/BaseModel.js": [],
+  "../imports/lib/FhirDehydrator.js": [
+    "../imports/lib/FhirUtilities.js"
+  ],
+  "../imports/lib/FhirUtilities.js": [],
+  "../imports/lib/HipaaLogger.js": [],
+  "../imports/lib/LayoutHelpers.js": [],
+  "../imports/lib/UdapMethods.js": [],
+  "../imports/lib/schemas/JsonToSimpleSchemaParser.js": [],
+  "../imports/lib/schemas/SimpleSchemas/ActivityDefinitions.js": [
+    "../imports/lib/BaseModel.js"
+  ],
+  "../imports/lib/schemas/SimpleSchemas/AllergyIntolerances.js": [
+    "../imports/lib/BaseModel.js"
+  ],
+  "../imports/lib/schemas/SimpleSchemas/Appointments.js": [
+    "../imports/lib/BaseModel.js"
+  ],
+  "../imports/lib/schemas/SimpleSchemas/ArtifactAssessments.js": [
+    "../imports/lib/BaseModel.js"
+  ],
+  "../imports/lib/schemas/SimpleSchemas/AuditEvents.js": [
+    "../imports/lib/BaseModel.js"
+  ],
+  "../imports/lib/schemas/SimpleSchemas/BodyStructures.js": [
+    "../imports/lib/BaseModel.js"
+  ],
+  "../imports/lib/schemas/SimpleSchemas/Bundles.js": [
+    "../imports/lib/BaseModel.js"
+  ],
+  "../imports/lib/schemas/SimpleSchemas/CarePlans.js": [
+    "../imports/lib/BaseModel.js"
+  ],
+  "../imports/lib/schemas/SimpleSchemas/CareTeams.js": [
+    "../imports/lib/BaseModel.js"
+  ],
+  "../imports/lib/schemas/SimpleSchemas/Claims.js": [],
+  "../imports/lib/schemas/SimpleSchemas/ClinicalImpressions.js": [
+    "../imports/lib/BaseModel.js"
+  ],
+  "../imports/lib/schemas/SimpleSchemas/CodeSystems.js": [
+    "../imports/lib/BaseModel.js"
+  ],
+  "../imports/lib/schemas/SimpleSchemas/CommunicationRequests.js": [],
+  "../imports/lib/schemas/SimpleSchemas/Communications.js": [
+    "../imports/lib/BaseModel.js"
+  ],
+  "../imports/lib/schemas/SimpleSchemas/Compositions.js": [
+    "../imports/lib/BaseModel.js"
+  ],
+  "../imports/lib/schemas/SimpleSchemas/Conditions.js": [
+    "../imports/lib/BaseModel.js"
+  ],
+  "../imports/lib/schemas/SimpleSchemas/Consents.js": [
+    "../imports/lib/BaseModel.js"
+  ],
+  "../imports/lib/schemas/SimpleSchemas/Coverages.js": [
+    "../imports/lib/BaseModel.js"
+  ],
+  "../imports/lib/schemas/SimpleSchemas/Devices.js": [
+    "../imports/lib/BaseModel.js"
+  ],
+  "../imports/lib/schemas/SimpleSchemas/DiagnosticReports.js": [
+    "../imports/lib/BaseModel.js"
+  ],
+  "../imports/lib/schemas/SimpleSchemas/DocumentReferences.js": [
+    "../imports/lib/BaseModel.js"
+  ],
+  "../imports/lib/schemas/SimpleSchemas/Encounters.js": [
+    "../imports/lib/BaseModel.js"
+  ],
+  "../imports/lib/schemas/SimpleSchemas/Endpoints.js": [
+    "../imports/lib/BaseModel.js"
+  ],
+  "../imports/lib/schemas/SimpleSchemas/Evidences.js": [
+    "../imports/lib/BaseModel.js"
+  ],
+  "../imports/lib/schemas/SimpleSchemas/ExplanationOfBenefits.js": [
+    "../imports/lib/BaseModel.js"
+  ],
+  "../imports/lib/schemas/SimpleSchemas/Goals.js": [
+    "../imports/lib/BaseModel.js"
+  ],
+  "../imports/lib/schemas/SimpleSchemas/Groups.js": [
+    "../imports/lib/BaseModel.js"
+  ],
+  "../imports/lib/schemas/SimpleSchemas/GuidanceResponses.js": [
+    "../imports/lib/BaseModel.js"
+  ],
+  "../imports/lib/schemas/SimpleSchemas/HealthcareServices.js": [
+    "../imports/lib/BaseModel.js"
+  ],
+  "../imports/lib/schemas/SimpleSchemas/ImagingStudies.js": [
+    "../imports/lib/BaseModel.js"
+  ],
+  "../imports/lib/schemas/SimpleSchemas/Immunizations.js": [
+    "../imports/lib/BaseModel.js"
+  ],
+  "../imports/lib/schemas/SimpleSchemas/InsurancePlans.js": [
+    "../imports/lib/BaseModel.js"
+  ],
+  "../imports/lib/schemas/SimpleSchemas/Libraries.js": [
+    "../imports/lib/BaseModel.js"
+  ],
+  "../imports/lib/schemas/SimpleSchemas/Lists.js": [
+    "../imports/lib/BaseModel.js"
+  ],
+  "../imports/lib/schemas/SimpleSchemas/Locations.js": [
+    "../imports/lib/BaseModel.js"
+  ],
+  "../imports/lib/schemas/SimpleSchemas/MeasureReports.js": [
+    "../imports/lib/BaseModel.js"
+  ],
+  "../imports/lib/schemas/SimpleSchemas/Measures.js": [
+    "../imports/lib/BaseModel.js"
+  ],
+  "../imports/lib/schemas/SimpleSchemas/Medias.js": [
+    "../imports/lib/BaseModel.js"
+  ],
+  "../imports/lib/schemas/SimpleSchemas/MedicationAdministrations.js": [
+    "../imports/lib/BaseModel.js"
+  ],
+  "../imports/lib/schemas/SimpleSchemas/MedicationDispenses.js": [
+    "../imports/lib/BaseModel.js"
+  ],
+  "../imports/lib/schemas/SimpleSchemas/MedicationOrders.js": [
+    "../imports/lib/BaseModel.js"
+  ],
+  "../imports/lib/schemas/SimpleSchemas/MedicationRequests.js": [
+    "../imports/lib/BaseModel.js"
+  ],
+  "../imports/lib/schemas/SimpleSchemas/MedicationStatements.js": [
+    "../imports/lib/BaseModel.js"
+  ],
+  "../imports/lib/schemas/SimpleSchemas/Medications.js": [
+    "../imports/lib/BaseModel.js",
+    "../imports/lib/schemas/SimpleSchemas/Substances.js"
+  ],
+  "../imports/lib/schemas/SimpleSchemas/MessageHeaders.js": [
+    "../imports/lib/BaseModel.js"
+  ],
+  "../imports/lib/schemas/SimpleSchemas/Networks.js": [
+    "../imports/lib/BaseModel.js",
+    "../imports/lib/schemas/SimpleSchemas/Organizations.js"
+  ],
+  "../imports/lib/schemas/SimpleSchemas/NutritionIntakes.js": [
+    "../imports/lib/BaseModel.js",
+    "../imports/lib/schemas/JsonToSimpleSchemaParser.js",
+    "../imports/lib/schemas/fhir.schema.r5.js"
+  ],
+  "../imports/lib/schemas/SimpleSchemas/NutritionOrders.js": [
+    "../imports/lib/BaseModel.js"
+  ],
+  "../imports/lib/schemas/SimpleSchemas/NutritionProducts.js": [
+    "../imports/lib/BaseModel.js"
+  ],
+  "../imports/lib/schemas/SimpleSchemas/Observations.js": [
+    "../imports/lib/BaseModel.js"
+  ],
+  "../imports/lib/schemas/SimpleSchemas/OperationOutcomes.js": [
+    "../imports/lib/BaseModel.js"
+  ],
+  "../imports/lib/schemas/SimpleSchemas/OrganizationAffiliations.js": [
+    "../imports/lib/BaseModel.js"
+  ],
+  "../imports/lib/schemas/SimpleSchemas/Organizations.js": [
+    "../imports/lib/BaseModel.js"
+  ],
+  "../imports/lib/schemas/SimpleSchemas/Patients.js": [
+    "../imports/lib/BaseModel.js"
+  ],
+  "../imports/lib/schemas/SimpleSchemas/PlanDefinitions.js": [
+    "../imports/lib/BaseModel.js"
+  ],
+  "../imports/lib/schemas/SimpleSchemas/PractitionerRoles.js": [
+    "../imports/lib/BaseModel.js"
+  ],
+  "../imports/lib/schemas/SimpleSchemas/Practitioners.js": [
+    "../imports/lib/BaseModel.js"
+  ],
+  "../imports/lib/schemas/SimpleSchemas/Procedures.js": [
+    "../imports/lib/BaseModel.js"
+  ],
+  "../imports/lib/schemas/SimpleSchemas/Provenances.js": [],
+  "../imports/lib/schemas/SimpleSchemas/QuestionnaireResponses.js": [
+    "../imports/lib/BaseModel.js"
+  ],
+  "../imports/lib/schemas/SimpleSchemas/Questionnaires.js": [
+    "../imports/lib/BaseModel.js"
+  ],
+  "../imports/lib/schemas/SimpleSchemas/RelatedPersons.js": [
+    "../imports/lib/BaseModel.js"
+  ],
+  "../imports/lib/schemas/SimpleSchemas/ResearchStudies.js": [
+    "../imports/lib/BaseModel.js"
+  ],
+  "../imports/lib/schemas/SimpleSchemas/ResearchSubjects.js": [
+    "../imports/lib/BaseModel.js"
+  ],
+  "../imports/lib/schemas/SimpleSchemas/Restrictions.js": [
+    "../imports/lib/BaseModel.js",
+    "../imports/lib/schemas/SimpleSchemas/Consents.js"
+  ],
+  "../imports/lib/schemas/SimpleSchemas/RiskAssessments.js": [
+    "../imports/lib/BaseModel.js"
+  ],
+  "../imports/lib/schemas/SimpleSchemas/Schedules.js": [
+    "../imports/lib/BaseModel.js"
+  ],
+  "../imports/lib/schemas/SimpleSchemas/SearchParameters.js": [
+    "../imports/lib/BaseModel.js"
+  ],
+  "../imports/lib/schemas/SimpleSchemas/ServiceRequests.js": [
+    "../imports/lib/BaseModel.js"
+  ],
+  "../imports/lib/schemas/SimpleSchemas/Specimens.js": [
+    "../imports/lib/BaseModel.js"
+  ],
+  "../imports/lib/schemas/SimpleSchemas/StructureDefinitions.js": [
+    "../imports/lib/BaseModel.js"
+  ],
+  "../imports/lib/schemas/SimpleSchemas/Subscriptions.js": [
+    "../imports/lib/BaseModel.js"
+  ],
+  "../imports/lib/schemas/SimpleSchemas/Substances.js": [],
+  "../imports/lib/schemas/SimpleSchemas/SupplyDeliveries.js": [
+    "../imports/lib/BaseModel.js"
+  ],
+  "../imports/lib/schemas/SimpleSchemas/SupplyRequests.js": [],
+  "../imports/lib/schemas/SimpleSchemas/Tasks.js": [
+    "../imports/lib/BaseModel.js"
+  ],
+  "../imports/lib/schemas/SimpleSchemas/ValueSets.js": [
+    "../imports/lib/BaseModel.js"
+  ],
+  "../imports/lib/schemas/fhir.schema.r5.js": [],
+  "../imports/lib/validatedMethods/communications.js": [
+    "../imports/lib/schemas/SimpleSchemas/Communications.js"
+  ],
+  "../imports/methods/fhirResourceStatistics.js": [],
+  "../imports/methods/immunizations.js": [],
+  "../imports/methods/supplyDeliveries.js": [],
+  "../imports/methods/tasks.js": [
+    "../imports/lib/FhirUtilities.js"
+  ],
+  "../imports/startup/server/accounts-startup.js": [
+    "../imports/accounts/server/startup.js"
+  ],
+  "../imports/startup/server/core-startup.js": [],
+  "../imports/startup/server/index.js": [
+    "../imports/startup/server/accounts-startup.js",
+    "../imports/startup/server/core-startup.js",
+    "../imports/startup/server/middleware-anonymous.js",
+    "../imports/startup/server/middleware-mobile.js",
+    "../imports/startup/server/middleware-traditional.js",
+    "../imports/startup/server/middleware-vpn.js"
+  ],
+  "../imports/startup/server/middleware-anonymous.js": [],
+  "../imports/startup/server/middleware-mobile.js": [],
+  "../imports/startup/server/middleware-traditional.js": [],
+  "../imports/startup/server/middleware-vpn.js": [],
+  "../packages/order-catalog/lib/RadiologyCatalog.js": [],
+  "AccountsMethods.js": [],
+  "BulkData.js": [
+    "../imports/lib/schemas/SimpleSchemas/AllergyIntolerances.js",
+    "../imports/lib/schemas/SimpleSchemas/CarePlans.js",
+    "../imports/lib/schemas/SimpleSchemas/CareTeams.js",
+    "../imports/lib/schemas/SimpleSchemas/Conditions.js",
+    "../imports/lib/schemas/SimpleSchemas/Coverages.js",
+    "../imports/lib/schemas/SimpleSchemas/Devices.js",
+    "../imports/lib/schemas/SimpleSchemas/DiagnosticReports.js",
+    "../imports/lib/schemas/SimpleSchemas/DocumentReferences.js",
+    "../imports/lib/schemas/SimpleSchemas/Encounters.js",
+    "../imports/lib/schemas/SimpleSchemas/Goals.js",
+    "../imports/lib/schemas/SimpleSchemas/Groups.js",
+    "../imports/lib/schemas/SimpleSchemas/Immunizations.js",
+    "../imports/lib/schemas/SimpleSchemas/Locations.js",
+    "../imports/lib/schemas/SimpleSchemas/MedicationDispenses.js",
+    "../imports/lib/schemas/SimpleSchemas/MedicationRequests.js",
+    "../imports/lib/schemas/SimpleSchemas/Medications.js",
+    "../imports/lib/schemas/SimpleSchemas/Observations.js",
+    "../imports/lib/schemas/SimpleSchemas/Organizations.js",
+    "../imports/lib/schemas/SimpleSchemas/Patients.js",
+    "../imports/lib/schemas/SimpleSchemas/PractitionerRoles.js",
+    "../imports/lib/schemas/SimpleSchemas/Practitioners.js",
+    "../imports/lib/schemas/SimpleSchemas/Procedures.js",
+    "../imports/lib/schemas/SimpleSchemas/Provenances.js",
+    "../imports/lib/schemas/SimpleSchemas/QuestionnaireResponses.js",
+    "../imports/lib/schemas/SimpleSchemas/RelatedPersons.js",
+    "../imports/lib/schemas/SimpleSchemas/ServiceRequests.js",
+    "../imports/lib/schemas/SimpleSchemas/Specimens.js"
+  ],
+  "CdsHooksEndpoints.js": [
+    "../imports/lib/schemas/SimpleSchemas/Endpoints.js",
+    "../imports/lib/schemas/SimpleSchemas/HealthcareServices.js",
+    "../imports/lib/schemas/SimpleSchemas/InsurancePlans.js",
+    "../imports/lib/schemas/SimpleSchemas/Locations.js",
+    "../imports/lib/schemas/SimpleSchemas/Networks.js",
+    "../imports/lib/schemas/SimpleSchemas/OrganizationAffiliations.js",
+    "../imports/lib/schemas/SimpleSchemas/Organizations.js",
+    "../imports/lib/schemas/SimpleSchemas/PractitionerRoles.js",
+    "../imports/lib/schemas/SimpleSchemas/Practitioners.js"
+  ],
+  "ConsentEngineHttp.js": [
+    "../imports/lib/FhirUtilities.js",
+    "../imports/lib/schemas/SimpleSchemas/Consents.js"
+  ],
+  "ConsentEngineMethods.js": [
+    "../imports/lib/schemas/SimpleSchemas/CodeSystems.js",
+    "../imports/lib/schemas/SimpleSchemas/Consents.js",
+    "../imports/lib/schemas/SimpleSchemas/ValueSets.js"
+  ],
+  "Cron.js": [
+    "../imports/lib/schemas/SimpleSchemas/Endpoints.js",
+    "../imports/lib/schemas/SimpleSchemas/HealthcareServices.js",
+    "../imports/lib/schemas/SimpleSchemas/InsurancePlans.js",
+    "../imports/lib/schemas/SimpleSchemas/Locations.js",
+    "../imports/lib/schemas/SimpleSchemas/Networks.js",
+    "../imports/lib/schemas/SimpleSchemas/OrganizationAffiliations.js",
+    "../imports/lib/schemas/SimpleSchemas/Organizations.js",
+    "../imports/lib/schemas/SimpleSchemas/PractitionerRoles.js",
+    "../imports/lib/schemas/SimpleSchemas/Practitioners.js"
+  ],
+  "DicomEndpoints.js": [
+    "lib/FhirAuth.js",
+    "lib/GridFSManager.js"
+  ],
+  "FhirEndpoints.js": [
+    "../imports/collections/OAuthClients.js",
+    "../imports/lib/FhirUtilities.js",
+    "../imports/lib/schemas/SimpleSchemas/AllergyIntolerances.js",
+    "../imports/lib/schemas/SimpleSchemas/AuditEvents.js",
+    "../imports/lib/schemas/SimpleSchemas/Bundles.js",
+    "../imports/lib/schemas/SimpleSchemas/CarePlans.js",
+    "../imports/lib/schemas/SimpleSchemas/CareTeams.js",
+    "../imports/lib/schemas/SimpleSchemas/CodeSystems.js",
+    "../imports/lib/schemas/SimpleSchemas/CommunicationRequests.js",
+    "../imports/lib/schemas/SimpleSchemas/Communications.js",
+    "../imports/lib/schemas/SimpleSchemas/Compositions.js",
+    "../imports/lib/schemas/SimpleSchemas/Conditions.js",
+    "../imports/lib/schemas/SimpleSchemas/Consents.js",
+    "../imports/lib/schemas/SimpleSchemas/Coverages.js",
+    "../imports/lib/schemas/SimpleSchemas/Devices.js",
+    "../imports/lib/schemas/SimpleSchemas/DiagnosticReports.js",
+    "../imports/lib/schemas/SimpleSchemas/DocumentReferences.js",
+    "../imports/lib/schemas/SimpleSchemas/Encounters.js",
+    "../imports/lib/schemas/SimpleSchemas/Endpoints.js",
+    "../imports/lib/schemas/SimpleSchemas/Goals.js",
+    "../imports/lib/schemas/SimpleSchemas/Groups.js",
+    "../imports/lib/schemas/SimpleSchemas/HealthcareServices.js",
+    "../imports/lib/schemas/SimpleSchemas/Immunizations.js",
+    "../imports/lib/schemas/SimpleSchemas/InsurancePlans.js",
+    "../imports/lib/schemas/SimpleSchemas/Lists.js",
+    "../imports/lib/schemas/SimpleSchemas/Locations.js",
+    "../imports/lib/schemas/SimpleSchemas/MeasureReports.js",
+    "../imports/lib/schemas/SimpleSchemas/Measures.js",
+    "../imports/lib/schemas/SimpleSchemas/Medias.js",
+    "../imports/lib/schemas/SimpleSchemas/MedicationDispenses.js",
+    "../imports/lib/schemas/SimpleSchemas/MedicationOrders.js",
+    "../imports/lib/schemas/SimpleSchemas/MedicationRequests.js",
+    "../imports/lib/schemas/SimpleSchemas/Medications.js",
+    "../imports/lib/schemas/SimpleSchemas/Networks.js",
+    "../imports/lib/schemas/SimpleSchemas/NutritionIntakes.js",
+    "../imports/lib/schemas/SimpleSchemas/NutritionOrders.js",
+    "../imports/lib/schemas/SimpleSchemas/Observations.js",
+    "../imports/lib/schemas/SimpleSchemas/OrganizationAffiliations.js",
+    "../imports/lib/schemas/SimpleSchemas/Organizations.js",
+    "../imports/lib/schemas/SimpleSchemas/Patients.js",
+    "../imports/lib/schemas/SimpleSchemas/PractitionerRoles.js",
+    "../imports/lib/schemas/SimpleSchemas/Practitioners.js",
+    "../imports/lib/schemas/SimpleSchemas/Procedures.js",
+    "../imports/lib/schemas/SimpleSchemas/Provenances.js",
+    "../imports/lib/schemas/SimpleSchemas/QuestionnaireResponses.js",
+    "../imports/lib/schemas/SimpleSchemas/Questionnaires.js",
+    "../imports/lib/schemas/SimpleSchemas/RelatedPersons.js",
+    "../imports/lib/schemas/SimpleSchemas/ResearchStudies.js",
+    "../imports/lib/schemas/SimpleSchemas/ResearchSubjects.js",
+    "../imports/lib/schemas/SimpleSchemas/Restrictions.js",
+    "../imports/lib/schemas/SimpleSchemas/RiskAssessments.js",
+    "../imports/lib/schemas/SimpleSchemas/SearchParameters.js",
+    "../imports/lib/schemas/SimpleSchemas/ServiceRequests.js",
+    "../imports/lib/schemas/SimpleSchemas/Specimens.js",
+    "../imports/lib/schemas/SimpleSchemas/StructureDefinitions.js",
+    "../imports/lib/schemas/SimpleSchemas/Subscriptions.js",
+    "../imports/lib/schemas/SimpleSchemas/Tasks.js",
+    "../imports/lib/schemas/SimpleSchemas/ValueSets.js",
+    "OAuthServer.js",
+    "RestHelpers.js",
+    "SearchParametersEngine.js",
+    "lib/FhirAuth.js"
+  ],
+  "Metadata.js": [],
+  "Methods.js": [
+    "OAuthEndpoints.js"
+  ],
+  "OAuthEndpoints.js": [],
+  "OAuthServer.js": [
+    "OAuthEndpoints.js"
+  ],
+  "ProxyRelay.js": [],
+  "RadiologyCatalogInitializer.js": [
+    "../packages/order-catalog/lib/RadiologyCatalog.js"
+  ],
+  "RestEndpoints.js": [
+    "../imports/lib/schemas/SimpleSchemas/Endpoints.js",
+    "../imports/lib/schemas/SimpleSchemas/HealthcareServices.js",
+    "../imports/lib/schemas/SimpleSchemas/InsurancePlans.js",
+    "../imports/lib/schemas/SimpleSchemas/Locations.js",
+    "../imports/lib/schemas/SimpleSchemas/Networks.js",
+    "../imports/lib/schemas/SimpleSchemas/OrganizationAffiliations.js",
+    "../imports/lib/schemas/SimpleSchemas/Organizations.js",
+    "../imports/lib/schemas/SimpleSchemas/PractitionerRoles.js",
+    "../imports/lib/schemas/SimpleSchemas/Practitioners.js"
+  ],
+  "RestHelpers.js": [
+    "../imports/lib/FhirUtilities.js",
+    "../imports/lib/schemas/SimpleSchemas/Organizations.js",
+    "../imports/lib/schemas/SimpleSchemas/Practitioners.js"
+  ],
+  "SafeNoAuth.js": [
+    "../imports/lib/schemas/SimpleSchemas/AuditEvents.js"
+  ],
+  "SearchParameterMethods.js": [
+    "../imports/lib/schemas/SimpleSchemas/SearchParameters.js",
+    "SearchParametersEngine.js"
+  ],
+  "SearchParametersEngine.js": [
+    "RestHelpers.js"
+  ],
+  "Swagger.js": [],
+  "SyncedCron.js": [],
+  "SyntheaMethods.js": [
+    "../imports/lib/schemas/SimpleSchemas/Patients.js",
+    "../imports/lib/schemas/SimpleSchemas/ResearchStudies.js",
+    "../imports/lib/schemas/SimpleSchemas/ResearchSubjects.js"
+  ],
+  "VaultServer.js": [
+    "../imports/lib/schemas/SimpleSchemas/CodeSystems.js",
+    "../imports/lib/schemas/SimpleSchemas/Patients.js",
+    "../imports/lib/schemas/SimpleSchemas/ValueSets.js"
+  ],
+  "lib/FhirAuth.js": [
+    "../imports/collections/OAuthClients.js",
+    "../imports/lib/FhirUtilities.js",
+    "../imports/lib/schemas/SimpleSchemas/Consents.js",
+    "SafeNoAuth.js"
+  ],
+  "lib/GridFSManager.js": [],
+  "main.js": [
+    "../imports/accounts/server/methods.js",
+    "../imports/accounts/server/test-methods.js",
+    "../imports/api/AuditEvents/AuditEvents.js",
+    "../imports/api/activityDefinitions/methods.js",
+    "../imports/api/allergyIntolerances/methods.js",
+    "../imports/api/appointments/methods.js",
+    "../imports/api/bodyStructures/methods.js",
+    "../imports/api/carePlans/methods.js",
+    "../imports/api/careTeams/methods.js",
+    "../imports/api/clinicalImpressions/methods.js",
+    "../imports/api/communications/methods.js",
+    "../imports/api/compositions/methods.js",
+    "../imports/api/conditions/methods.js",
+    "../imports/api/consents/methods.js",
+    "../imports/api/devices/methods.js",
+    "../imports/api/diagnosticReports/methods.js",
+    "../imports/api/dicom/server/methods.js",
+    "../imports/api/documentReferences/methods.js",
+    "../imports/api/encounters/methods.js",
+    "../imports/api/endpoints/methods.js",
+    "../imports/api/imagingStudies/methods.js",
+    "../imports/api/lists/methods.js",
+    "../imports/api/locations/methods.js",
+    "../imports/api/measureReports/methods.js",
+    "../imports/api/measures/methods.js",
+    "../imports/api/medias/methods.js",
+    "../imports/api/medicationAdministrations/methods.js",
+    "../imports/api/medicationRequests/methods.js",
+    "../imports/api/medications/methods.js",
+    "../imports/api/messageHeaders/methods.js",
+    "../imports/api/nutritionIntakes/methods.js",
+    "../imports/api/nutritionOrders/methods.js",
+    "../imports/api/nutritionProducts/methods.js",
+    "../imports/api/observations/methods.js",
+    "../imports/api/organizations/methods.js",
+    "../imports/api/patients/methods.js",
+    "../imports/api/planDefinitions/methods.js",
+    "../imports/api/practitionerRoles/methods.js",
+    "../imports/api/practitioners/methods.js",
+    "../imports/api/procedures/methods.js",
+    "../imports/api/questionnaireResponses/methods.js",
+    "../imports/api/questionnaires/methods.js",
+    "../imports/api/research-studies/methods.js",
+    "../imports/api/researchSubjects/methods.js",
+    "../imports/api/rfc7523/methods.js",
+    "../imports/api/riskAssessments/methods.js",
+    "../imports/api/schedules/methods.js",
+    "../imports/api/serviceRequests/methods.js",
+    "../imports/api/substances/methods.js",
+    "../imports/api/supplyRequests/methods.js",
+    "../imports/lib/FhirDehydrator.js",
+    "../imports/lib/FhirUtilities.js",
+    "../imports/lib/HipaaLogger.js",
+    "../imports/lib/LayoutHelpers.js",
+    "../imports/lib/UdapMethods.js",
+    "../imports/lib/schemas/SimpleSchemas/ActivityDefinitions.js",
+    "../imports/lib/schemas/SimpleSchemas/AllergyIntolerances.js",
+    "../imports/lib/schemas/SimpleSchemas/Appointments.js",
+    "../imports/lib/schemas/SimpleSchemas/ArtifactAssessments.js",
+    "../imports/lib/schemas/SimpleSchemas/AuditEvents.js",
+    "../imports/lib/schemas/SimpleSchemas/BodyStructures.js",
+    "../imports/lib/schemas/SimpleSchemas/Bundles.js",
+    "../imports/lib/schemas/SimpleSchemas/CarePlans.js",
+    "../imports/lib/schemas/SimpleSchemas/CareTeams.js",
+    "../imports/lib/schemas/SimpleSchemas/Claims.js",
+    "../imports/lib/schemas/SimpleSchemas/ClinicalImpressions.js",
+    "../imports/lib/schemas/SimpleSchemas/CodeSystems.js",
+    "../imports/lib/schemas/SimpleSchemas/CommunicationRequests.js",
+    "../imports/lib/schemas/SimpleSchemas/Communications.js",
+    "../imports/lib/schemas/SimpleSchemas/Compositions.js",
+    "../imports/lib/schemas/SimpleSchemas/Conditions.js",
+    "../imports/lib/schemas/SimpleSchemas/Consents.js",
+    "../imports/lib/schemas/SimpleSchemas/Coverages.js",
+    "../imports/lib/schemas/SimpleSchemas/Devices.js",
+    "../imports/lib/schemas/SimpleSchemas/DiagnosticReports.js",
+    "../imports/lib/schemas/SimpleSchemas/DocumentReferences.js",
+    "../imports/lib/schemas/SimpleSchemas/Encounters.js",
+    "../imports/lib/schemas/SimpleSchemas/Endpoints.js",
+    "../imports/lib/schemas/SimpleSchemas/Evidences.js",
+    "../imports/lib/schemas/SimpleSchemas/ExplanationOfBenefits.js",
+    "../imports/lib/schemas/SimpleSchemas/Goals.js",
+    "../imports/lib/schemas/SimpleSchemas/Groups.js",
+    "../imports/lib/schemas/SimpleSchemas/GuidanceResponses.js",
+    "../imports/lib/schemas/SimpleSchemas/ImagingStudies.js",
+    "../imports/lib/schemas/SimpleSchemas/Immunizations.js",
+    "../imports/lib/schemas/SimpleSchemas/Libraries.js",
+    "../imports/lib/schemas/SimpleSchemas/Lists.js",
+    "../imports/lib/schemas/SimpleSchemas/Locations.js",
+    "../imports/lib/schemas/SimpleSchemas/MeasureReports.js",
+    "../imports/lib/schemas/SimpleSchemas/Measures.js",
+    "../imports/lib/schemas/SimpleSchemas/Medias.js",
+    "../imports/lib/schemas/SimpleSchemas/MedicationAdministrations.js",
+    "../imports/lib/schemas/SimpleSchemas/MedicationDispenses.js",
+    "../imports/lib/schemas/SimpleSchemas/MedicationRequests.js",
+    "../imports/lib/schemas/SimpleSchemas/MedicationStatements.js",
+    "../imports/lib/schemas/SimpleSchemas/Medications.js",
+    "../imports/lib/schemas/SimpleSchemas/MessageHeaders.js",
+    "../imports/lib/schemas/SimpleSchemas/NutritionIntakes.js",
+    "../imports/lib/schemas/SimpleSchemas/NutritionOrders.js",
+    "../imports/lib/schemas/SimpleSchemas/NutritionProducts.js",
+    "../imports/lib/schemas/SimpleSchemas/Observations.js",
+    "../imports/lib/schemas/SimpleSchemas/OperationOutcomes.js",
+    "../imports/lib/schemas/SimpleSchemas/Organizations.js",
+    "../imports/lib/schemas/SimpleSchemas/Patients.js",
+    "../imports/lib/schemas/SimpleSchemas/PlanDefinitions.js",
+    "../imports/lib/schemas/SimpleSchemas/PractitionerRoles.js",
+    "../imports/lib/schemas/SimpleSchemas/Practitioners.js",
+    "../imports/lib/schemas/SimpleSchemas/Procedures.js",
+    "../imports/lib/schemas/SimpleSchemas/QuestionnaireResponses.js",
+    "../imports/lib/schemas/SimpleSchemas/Questionnaires.js",
+    "../imports/lib/schemas/SimpleSchemas/RelatedPersons.js",
+    "../imports/lib/schemas/SimpleSchemas/ResearchStudies.js",
+    "../imports/lib/schemas/SimpleSchemas/ResearchSubjects.js",
+    "../imports/lib/schemas/SimpleSchemas/RiskAssessments.js",
+    "../imports/lib/schemas/SimpleSchemas/Schedules.js",
+    "../imports/lib/schemas/SimpleSchemas/SearchParameters.js",
+    "../imports/lib/schemas/SimpleSchemas/ServiceRequests.js",
+    "../imports/lib/schemas/SimpleSchemas/Specimens.js",
+    "../imports/lib/schemas/SimpleSchemas/Substances.js",
+    "../imports/lib/schemas/SimpleSchemas/SupplyDeliveries.js",
+    "../imports/lib/schemas/SimpleSchemas/SupplyRequests.js",
+    "../imports/lib/schemas/SimpleSchemas/Tasks.js",
+    "../imports/lib/schemas/SimpleSchemas/ValueSets.js",
+    "../imports/methods/fhirResourceStatistics.js",
+    "../imports/methods/immunizations.js",
+    "../imports/methods/supplyDeliveries.js",
+    "../imports/methods/tasks.js",
+    "../imports/startup/server/index.js",
+    "AccountsMethods.js",
+    "BulkData.js",
+    "CdsHooksEndpoints.js",
+    "ConsentEngineHttp.js",
+    "ConsentEngineMethods.js",
+    "Cron.js",
+    "DicomEndpoints.js",
+    "FhirEndpoints.js",
+    "Metadata.js",
+    "Methods.js",
+    "OAuthEndpoints.js",
+    "ProxyRelay.js",
+    "RadiologyCatalogInitializer.js",
+    "RestEndpoints.js",
+    "SearchParameterMethods.js",
+    "Swagger.js",
+    "SyncedCron.js",
+    "SyntheaMethods.js",
+    "VaultServer.js",
+    "lib/GridFSManager.js",
+    "publications/autopublish.js",
+    "publications/communications.js",
+    "publications/conditions.js",
+    "publications/patients.js",
+    "publications/serviceRequests.js",
+    "startup/practitionerStartup.js",
+    "verify-observations.js"
+  ],
+  "methods/practitionerMethods.js": [
+    "../imports/lib/schemas/SimpleSchemas/PractitionerRoles.js",
+    "../imports/lib/schemas/SimpleSchemas/Practitioners.js"
+  ],
+  "publications/autopublish.js": [],
+  "publications/communications.js": [
+    "../imports/lib/schemas/SimpleSchemas/Communications.js"
+  ],
+  "publications/conditions.js": [],
+  "publications/patients.js": [],
+  "publications/practitionerCommunications.js": [
+    "../imports/lib/schemas/SimpleSchemas/Communications.js",
+    "../imports/lib/schemas/SimpleSchemas/PractitionerRoles.js",
+    "../imports/lib/schemas/SimpleSchemas/Practitioners.js",
+    "../imports/lib/schemas/SimpleSchemas/ServiceRequests.js",
+    "../imports/lib/schemas/SimpleSchemas/Tasks.js"
+  ],
+  "publications/serviceRequests.js": [
+    "../imports/lib/schemas/SimpleSchemas/ServiceRequests.js"
+  ],
+  "startup/practitionerStartup.js": [
+    "methods/practitionerMethods.js",
+    "publications/practitionerCommunications.js"
+  ],
+  "verify-observations.js": []
+}
