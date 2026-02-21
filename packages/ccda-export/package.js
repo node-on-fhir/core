@@ -16,7 +16,7 @@ Package.onUse(function(api) {
     'webapp',
     'ecmascript',
     'mongo',
-    'react-meteor-data@3.0.1',
+    'react-meteor-data@4.0.1',
     'clinical:hl7-resource-datatypes@4.0.8'
   ]);
 

@@ -16,7 +16,7 @@ Package.onUse(function(api) {
   api.use('ejson');
   api.use('random');
 
-  api.use('react-meteor-data@3.0.1');
+  api.use('react-meteor-data@4.0.1');
   api.use('http@1.0.1');    
 
   api.addFiles('server/methods.xlsx.js', ['server']);

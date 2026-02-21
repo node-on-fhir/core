@@ -16,7 +16,7 @@ Package.onUse(function(api) {
     'meteor',
     'webapp',
     'ecmascript',
-    'react-meteor-data@3.0.1',
+    'react-meteor-data@4.0.1',
     'session',
     'mongo',
     'check',
