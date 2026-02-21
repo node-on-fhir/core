@@ -82,7 +82,7 @@ describe('Accounts - Login (Progressive Flow)', function() {
         const hasUsernameInput = !!document.querySelector('input[name="username"]');
         const hasPasswordInput = !!document.querySelector('input[name="password"], input[type="password"]');
         const hasSubmitButton = !!document.querySelector('button[type="submit"]');
-        const h4Text = document.querySelector('h4')?.textContent || '';
+        const toggleText = document.querySelector('.MuiToggleButton-root.Mui-selected')?.textContent || '';
         const allInputs = Array.from(document.querySelectorAll('input')).map(i => ({
           name: i.name,
           type: i.type,
@@ -99,7 +99,7 @@ describe('Accounts - Login (Progressive Flow)', function() {
           hasUsernameInput,
           hasPasswordInput,
           hasSubmitButton,
-          h4Text,
+          toggleText,
           pageTitle: document.title,
           url: window.location.href,
           allInputs,
@@ -118,7 +118,8 @@ describe('Accounts - Login (Progressive Flow)', function() {
       .verify.elementPresent('input[placeholder*="username" i], input[placeholder*="email" i]')
       .verify.elementPresent('input[placeholder*="password" i], input[type="password"]')
       .verify.elementPresent('button')
-      .assert.textContains('h4', 'Sign In')
+      .verify.elementPresent('.MuiToggleButton-root.Mui-selected')
+      .assert.textContains('.MuiToggleButton-root.Mui-selected', 'Sign In')
       .saveScreenshot('tests/nightwatch/screenshots/login/01-initial-load.png');
   });
 
