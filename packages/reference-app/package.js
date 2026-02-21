@@ -2,7 +2,7 @@
 
 Package.describe({
   name: 'clinical:reference-app',
-  version: '0.1.0',
+  version: '0.2.0',
   summary: 'Gold standard reference template for Honeycomb packages - ONC HealthIT Certification',
   git: 'https://github.com/clinical-meteor/reference-app',
   documentation: 'README.md'
@@ -16,7 +16,7 @@ Package.onUse(function(api) {
     'meteor',
     'webapp',
     'ecmascript',
-    'react-meteor-data@3.0.1',
+    'react-meteor-data@4.0.1',
     'session',
     'mongo',
     'check',
