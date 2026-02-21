@@ -35,9 +35,6 @@ function IPSImmunizationsSection(props) {
   if(immunizations.length === 0) {
     return (
       <Box>
-        <Typography variant="h6" gutterBottom>
-          Immunizations (Recommended)
-        </Typography>
         <Alert severity="info">
           No immunization records found
         </Alert>
@@ -47,9 +44,6 @@ function IPSImmunizationsSection(props) {
 
   return (
     <Box>
-      <Typography variant="h6" gutterBottom>
-        Immunizations (Recommended)
-      </Typography>
       <Typography variant="body2" sx={{ opacity: 0.7 }} paragraph>
         Patient's immunization status and history
       </Typography>

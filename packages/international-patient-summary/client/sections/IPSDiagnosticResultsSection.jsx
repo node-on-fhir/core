@@ -46,9 +46,6 @@ function IPSDiagnosticResultsSection(props) {
   if(observations.length === 0 && diagnosticReports.length === 0) {
     return (
       <Box>
-        <Typography variant="h6" gutterBottom>
-          Diagnostic Results (Recommended)
-        </Typography>
         <Alert severity="info">
           No diagnostic results available
         </Alert>
@@ -58,9 +55,6 @@ function IPSDiagnosticResultsSection(props) {
 
   return (
     <Box>
-      <Typography variant="h6" gutterBottom>
-        Diagnostic Results (Recommended)
-      </Typography>
       <Typography variant="body2" sx={{ opacity: 0.7 }} paragraph>
         Laboratory, pathology, and radiology results
       </Typography>

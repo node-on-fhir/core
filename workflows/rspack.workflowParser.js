@@ -50,6 +50,7 @@ class WorkflowParserPlugin {
           package: pkgName,
           entry: manifestEntry?.entry || './client.js',
           serverEntry: manifestEntry?.serverEntry || './server/methods',
+          hooksEntry: manifestEntry?.hooksEntry || null,
           enabled: true,
           settings: manifestEntry?.settings || {}
         });
@@ -172,6 +173,9 @@ class WorkflowParserPlugin {
       ''
     ];
 
+    // Filter workflows that have hooks
+    const workflowsWithHooks = workflows.filter(w => w.hooksEntry);
+
     if (workflows.length === 0) {
       lines.push('// No workflows enabled');
       lines.push('export function registerServerMethods() {');
@@ -191,6 +195,64 @@ class WorkflowParserPlugin {
       lines.push('');
       lines.push('export function registerServerMethods() {');
       lines.push(`  console.log('[WorkflowLoader] Server methods registered for ${workflows.length} workflow(s)');`);
+      lines.push('}');
+    }
+
+    // Generate hook imports and initializeWorkflowHooks()
+    lines.push('');
+
+    if (workflowsWithHooks.length === 0) {
+      lines.push('// No workflow hooks configured');
+      lines.push('export function initializeWorkflowHooks() {');
+      lines.push("  console.log('[WorkflowLoader] No workflow hooks to initialize');");
+      lines.push('}');
+    } else {
+      // Import hook modules (namespace import to find init* export dynamically)
+      workflowsWithHooks.forEach((workflow, index) => {
+        const hooksEntry = workflow.hooksEntry;
+        const exportPath = hooksEntry.replace('./', '').replace('.js', '');
+        const importPath = `${workflow.package}/${exportPath}`;
+        const varName = `_hooksModule${index}`;
+        lines.push(`import * as ${varName} from '${importPath}';`);
+      });
+
+      lines.push('');
+      lines.push('// Find first init*Hooks export from a module namespace');
+      lines.push('function _findInitFn(mod) {');
+      lines.push('  var keys = Object.keys(mod);');
+      lines.push('  for (var i = 0; i < keys.length; i++) {');
+      lines.push("    if (keys[i].indexOf('init') === 0 && typeof mod[keys[i]] === 'function') {");
+      lines.push('      return mod[keys[i]];');
+      lines.push('    }');
+      lines.push('  }');
+      lines.push("  return typeof mod.default === 'function' ? mod.default : null;");
+      lines.push('}');
+      lines.push('');
+      lines.push('export function initializeWorkflowHooks() {');
+      lines.push('  const hooks = [');
+
+      workflowsWithHooks.forEach((workflow, index) => {
+        const shortName = workflow.package.split('/').pop();
+        const varName = `_hooksModule${index}`;
+        lines.push(`    { name: '${shortName}', init: _findInitFn(${varName}) },`);
+      });
+
+      lines.push('  ];');
+      lines.push('');
+      lines.push('  hooks.forEach(function(h) {');
+      lines.push('    try {');
+      lines.push('      if (typeof h.init !== \'function\') {');
+      lines.push("        console.warn('[WorkflowLoader] No init function found for hooks: ' + h.name);");
+      lines.push('        return;');
+      lines.push('      }');
+      lines.push('      h.init();');
+      lines.push("      console.log('[WorkflowLoader] Initialized hooks: ' + h.name);");
+      lines.push('    } catch (e) {');
+      lines.push("      console.error('[WorkflowLoader] Failed to initialize hooks for ' + h.name + ':', e);");
+      lines.push('    }');
+      lines.push('  });');
+      lines.push('');
+      lines.push(`  console.log('[WorkflowLoader] Initialized hooks for ' + hooks.length + ' workflow(s)');`);
       lines.push('}');
     }
 

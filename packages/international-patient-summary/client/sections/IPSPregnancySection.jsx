@@ -6,9 +6,6 @@ import { Box, Typography, Alert } from '@mui/material';
 function IPSPregnancySection(props) {
   return (
     <Box>
-      <Typography variant="h6" gutterBottom>
-        History of Pregnancy (Optional)
-      </Typography>
       <Typography variant="body2" sx={{ opacity: 0.7 }} paragraph>
         Pregnancy status and history summary
       </Typography>

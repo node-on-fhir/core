@@ -103,9 +103,6 @@ function IPSMedicationsSection(props) {
   if(medications.length === 0) {
     return (
       <Box>
-        <Typography variant="h6" gutterBottom>
-          Medication Summary (Required)
-        </Typography>
         <Alert severity="info">
           No medications recorded for this patient
         </Alert>
@@ -115,9 +112,6 @@ function IPSMedicationsSection(props) {
 
   return (
     <Box>
-      <Typography variant="h6" gutterBottom>
-        Medication Summary (Required)
-      </Typography>
       <Typography variant="body2" sx={{ opacity: 0.7 }} paragraph>
         Patient's current and relevant medications
       </Typography>

@@ -6,9 +6,6 @@ import { Box, Typography, Alert } from '@mui/material';
 function IPSFunctionalStatusSection(props) {
   return (
     <Box>
-      <Typography variant="h6" gutterBottom>
-        Functional Status (Optional)
-      </Typography>
       <Typography variant="body2" sx={{ opacity: 0.7 }} paragraph>
         Patient's capability to perform activities of daily living
       </Typography>

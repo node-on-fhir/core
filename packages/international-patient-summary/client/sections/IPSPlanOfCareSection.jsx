@@ -6,9 +6,6 @@ import { Box, Typography, Alert } from '@mui/material';
 function IPSPlanOfCareSection(props) {
   return (
     <Box>
-      <Typography variant="h6" gutterBottom>
-        Plan of Care (Optional)
-      </Typography>
       <Typography variant="body2" sx={{ opacity: 0.7 }} paragraph>
         Expectations for care including proposals, goals, and orders
       </Typography>

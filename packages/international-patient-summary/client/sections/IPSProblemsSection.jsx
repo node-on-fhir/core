@@ -56,9 +56,6 @@ function IPSProblemsSection(props) {
   if(conditions.length === 0) {
     return (
       <Box>
-        <Typography variant="h6" gutterBottom>
-          Problem List (Required)
-        </Typography>
         <Alert severity="info">
           No problems recorded for this patient
         </Alert>
@@ -68,9 +65,6 @@ function IPSProblemsSection(props) {
 
   return (
     <Box>
-      <Typography variant="h6" gutterBottom>
-        Problem List (Required)
-      </Typography>
       <Typography variant="body2" sx={{ opacity: 0.7 }} paragraph>
         Clinical problems or conditions currently being monitored for the patient
       </Typography>

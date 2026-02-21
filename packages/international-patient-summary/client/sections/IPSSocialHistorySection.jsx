@@ -6,9 +6,6 @@ import { Box, Typography, Alert } from '@mui/material';
 function IPSSocialHistorySection(props) {
   return (
     <Box>
-      <Typography variant="h6" gutterBottom>
-        Social History (Optional)
-      </Typography>
       <Typography variant="body2" sx={{ opacity: 0.7 }} paragraph>
         Tobacco use, alcohol use, and other social factors
       </Typography>

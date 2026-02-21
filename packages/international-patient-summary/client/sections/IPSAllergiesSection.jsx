@@ -58,9 +58,6 @@ function IPSAllergiesSection(props) {
   if(allergies.length === 0) {
     return (
       <Box>
-        <Typography variant="h6" gutterBottom>
-          Allergies and Intolerances (Required)
-        </Typography>
         <Alert severity="info">
           No known allergies or intolerances
         </Alert>
@@ -70,9 +67,6 @@ function IPSAllergiesSection(props) {
 
   return (
     <Box>
-      <Typography variant="h6" gutterBottom>
-        Allergies and Intolerances (Required)
-      </Typography>
       <Typography variant="body2" sx={{ opacity: 0.7 }} paragraph>
         Relevant allergies or intolerances, including reaction type and criticality
       </Typography>

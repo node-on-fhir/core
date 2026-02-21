@@ -21,6 +21,7 @@ import AddIcon from '@mui/icons-material/Add';
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 import BadgeIcon from '@mui/icons-material/Badge';
+import DevicesOtherIcon from '@mui/icons-material/DevicesOther';
 
 // import DeviceDetail from './DeviceDetail';
 import DevicesTable from './DevicesTable';
@@ -99,6 +100,7 @@ export function DevicesPage(props){
   const navigate = useNavigate();
   const [sortOrder, setSortOrder] = useState('descending');
   const [showSystemId, setShowSystemId] = useState(false);
+  const [showType, setShowType] = useState(false);
   const [searchFilter, setSearchFilter] = useState('');
 
   let data = {
@@ -219,15 +221,22 @@ export function DevicesPage(props){
               </ToggleButtonGroup>
               
               <ToggleButtonGroup
-                value={showSystemId ? ['systemId'] : []}
+                value={[
+                  ...(showSystemId ? ['systemId'] : []),
+                  ...(showType ? ['type'] : [])
+                ]}
                 onChange={(event, newFormats) => {
                   setShowSystemId(newFormats.includes('systemId'));
+                  setShowType(newFormats.includes('type'));
                 }}
                 aria-label="display options"
                 size="small"
               >
                 <ToggleButton value="systemId" aria-label="show system id">
                   <BadgeIcon />
+                </ToggleButton>
+                <ToggleButton value="type" aria-label="show device type">
+                  <DevicesOtherIcon />
                 </ToggleButton>
               </ToggleButtonGroup>
               
@@ -274,13 +283,14 @@ export function DevicesPage(props){
       }}
     >
       <CardContent sx={{ p: 0 }}>
-        <DevicesTable 
+        <DevicesTable
           id='devicesTable'
           devices={data.devices}
           count={data.devices.length}
           formFactorLayout={formFactor}
           rowsPerPage={10}
           hideBarcode={!showSystemId}
+          hideTypeCodingDisplay={!showType}
           order={sortOrder}
           onRowClick={function(deviceId){
             console.log('DevicesPage.onRowClick', deviceId);
@@ -288,7 +298,7 @@ export function DevicesPage(props){
           }}
           onSetPage={function(index){
             Session.set('DevicesTable.devicesIndex', index);
-          }}                
+          }}
           page={data.devicesIndex}
         />
       </CardContent>
@@ -306,13 +316,14 @@ export function DevicesPage(props){
       }}
     >
       <CardContent sx={{ p: 0 }}>
-        <DevicesTable 
+        <DevicesTable
           id='devicesTable'
           devices={[]}
           count={0}
           formFactorLayout={formFactor}
           rowsPerPage={10}
           hideBarcode={!showSystemId}
+          hideTypeCodingDisplay={!showType}
           order={sortOrder}
           onRowClick={function(deviceId){
             console.log('DevicesPage.onRowClick', deviceId);
@@ -320,7 +331,7 @@ export function DevicesPage(props){
           }}
           onSetPage={function(index){
             Session.set('DevicesTable.devicesIndex', index);
-          }}                
+          }}
           page={data.devicesIndex}
         />
         {searchFilter && (

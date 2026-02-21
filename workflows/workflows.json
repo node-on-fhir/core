@@ -5,6 +5,7 @@
       "package": "@merkalis/node-on-fhir-merkle-storage",
       "entry": "./client.js",
       "serverEntry": "./server/methods",
+      "hooksEntry": "./server/hooks",
       "enabled": false,
       "settings": {},
       "comment": "Set enabled:true for local dev, or use EXTRA_WORKFLOWS env var"

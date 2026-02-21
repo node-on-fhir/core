@@ -7,6 +7,19 @@ import { Random } from 'meteor/random';
 import { get } from 'lodash';
 import { Devices } from '../../lib/schemas/SimpleSchemas/Devices';
 
+// Helper: find a device by _id, with ObjectID fallback for imported data (Synthea)
+async function findDeviceById(deviceId) {
+  // Try string _id first (Meteor-created records)
+  let device = await Devices.findOneAsync({ _id: deviceId });
+
+  // If not found, try as MongoDB ObjectID (Synthea/imported data)
+  if (!device && /^[0-9a-fA-F]{24}$/.test(deviceId)) {
+    device = await Devices.findOneAsync({ _id: new Mongo.ObjectID(deviceId) });
+  }
+
+  return device;
+}
+
 Meteor.methods({
   async 'devices.create'(deviceData) {
     check(deviceData, Object);
@@ -101,9 +114,15 @@ Meteor.methods({
     delete cleanDevice._id;
     
     try {
-      console.log('[devices.update] Updating device:', deviceId, cleanDevice);
+      // Find the device first to get the correct _id (handles ObjectID)
+      const existing = await findDeviceById(deviceId);
+      if (!existing) {
+        throw new Meteor.Error('not-found', 'Device not found: ' + deviceId);
+      }
+
+      console.log('[devices.update] Updating device:', existing._id, cleanDevice);
       const result = await Devices.updateAsync(
-        { $or: [{ id: deviceId }, { _id: deviceId }] },
+        { _id: existing._id },
         { $set: cleanDevice }
       );
       console.log('[devices.update] Updated device:', result);
@@ -130,12 +149,13 @@ Meteor.methods({
     // }
     
     try {
-      const result = await Devices.removeAsync({
-        $or: [
-          { id: deviceId },
-          { _id: deviceId }
-        ]
-      });
+      // Find the device first to get the correct _id (handles ObjectID)
+      const existing = await findDeviceById(deviceId);
+      if (!existing) {
+        throw new Meteor.Error('not-found', 'Device not found: ' + deviceId);
+      }
+
+      const result = await Devices.removeAsync({ _id: existing._id });
       console.log('[devices.remove] Removed device:', result);
       return result;
     } catch (error) {
@@ -153,12 +173,7 @@ Meteor.methods({
     }
     
     try {
-      const device = await Devices.findOneAsync({
-        $or: [
-          { id: deviceId },
-          { _id: deviceId }
-        ]
-      });
+      const device = await findDeviceById(deviceId);
       return device;
     } catch (error) {
       console.error('[devices.findOne] Error:', error);

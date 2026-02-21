@@ -23,9 +23,6 @@ function IPSVitalSignsSection(props) {
   if(vitalSigns.length === 0) {
     return (
       <Box>
-        <Typography variant="h6" gutterBottom>
-          Vital Signs (Optional)
-        </Typography>
         <Alert severity="info">
           No vital signs recorded
         </Alert>
@@ -45,9 +42,6 @@ function IPSVitalSignsSection(props) {
 
   return (
     <Box>
-      <Typography variant="h6" gutterBottom>
-        Vital Signs (Optional)
-      </Typography>
       <Typography variant="body2" sx={{ opacity: 0.7 }} paragraph>
         Recent vital signs including blood pressure, temperature, heart rate, and respiratory rate
       </Typography>
