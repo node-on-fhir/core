@@ -1,14 +1,6 @@
 {
   "name": "meteor-app",
   "private": true,
-  "madge": {
-    "fontSize": "10px",
-    "graphVizOptions": {
-      "G": {
-        "rankdir": "LR"
-      }
-    }
-  },
   "workspaces": [
     "npmPackages/*",
     "npmPackages/merkalis/kastoria-core/merkle-dag-storage",
