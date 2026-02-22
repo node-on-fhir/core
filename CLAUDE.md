@@ -132,6 +132,40 @@ navigate(`/patients/${fhirId}`);
 
 **More details**: See `.claude/rules/anti-patterns/id-lookup.md`
 
+## Critical Anti-Pattern: Secrets in Source Code
+
+**NEVER hardcode API keys, tokens, passwords, or credentials in source files.** Always pass secrets via `Meteor.settings` (loaded from a settings JSON file) or environment variables. Settings files containing real credentials must be `.gitignored`.
+
+```javascript
+// ❌ WRONG - Secret committed to git history
+const apiKey = 'pk.eyJ1IjoibWFwYm94IiwiYSI6...';
+const url = `https://api.example.com?key=sk_live_abc123`;
+
+// ✅ CORRECT - Read from Meteor.settings (private)
+const apiKey = get(Meteor, 'settings.private.googleMaps.apiKey', '');
+
+// ✅ CORRECT - Read from environment variable
+const apiKey = process.env.GOOGLE_MAPS_API_KEY;
+```
+
+**Settings file pattern** (`configs/settings.*.json`):
+```json
+{
+  "private": {
+    "googleMaps": {
+      "apiKey": ""
+    }
+  }
+}
+```
+
+**Why this matters:**
+- GitHub push protection blocks pushes containing detected secrets
+- Secrets in git history persist even after the code is changed — scrubbing requires force-push rebases
+- Healthcare applications face HIPAA/compliance scrutiny for credential exposure
+
+**If you need a third-party API key**, create a Meteor method that reads it server-side from `Meteor.settings.private` and returns only the data the client needs (or the key itself if the client must call the API directly).
+
 ## Development Guidelines
 
 ### Meteor v3 Async (Server-Side)

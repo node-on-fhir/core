@@ -105,25 +105,6 @@ import '../imports/methods/supplyDeliveries.js';
 import '../imports/api/lists/methods.js';
 import '../imports/methods/tasks.js';
 
-// Merkalis - Dynamic loading of workflow server methods
-// Uses dynamic import to allow graceful failure when packages are not available (CI builds)
-Meteor.startup(async function() {
-  // List of workflow server method paths to attempt loading
-  const workflowServerMethods = [
-    '@merkalis/node-on-fhir-merkle-storage/server'
-  ];
-
-  for (const pkgPath of workflowServerMethods) {
-    try {
-      await import(pkgPath);
-      console.log(`[Workflows] Loaded server methods: ${pkgPath}`);
-    } catch (err) {
-      // Package not available (expected in CI or when not installed)
-      console.log(`[Workflows] Server methods not available: ${pkgPath}`);
-    }
-  }
-});
-
 // Import test methods (for non-production environments)
 import '../imports/accounts/server/test-methods.js';
 import '../imports/accounts/server/methods.js';
