@@ -57,7 +57,7 @@ function ActivityDefinitionDetail(props) {
         ]
       };
       console.log('[ActivityDefinitionDetail] Subscribing with ID query:', query);
-      const handle = Meteor.subscribe('selectedPatient.ActivityDefinitions', Session.get('selectedPatientId'), {});
+      const handle = Meteor.subscribe('autopublish.ActivityDefinitions', {}, {});
       return handle.ready();
     }
     return true;
@@ -99,8 +99,8 @@ function ActivityDefinitionDetail(props) {
 
   // Load activity definition when subscription is ready
   useEffect(function() {
-    if (id && id !== 'new' && isSubscriptionReady) {
-      console.log('[ActivityDefinitionDetail] Subscription ready, loading from collection');
+    if (id && id !== 'new') {
+      console.log('[ActivityDefinitionDetail] Loading from collection');
       const existingActivityDefinition = ActivityDefinitions.findOne({_id: id});
 
       if (existingActivityDefinition) {
@@ -124,7 +124,7 @@ function ActivityDefinitionDetail(props) {
         }
       }
     }
-  }, [id, isSubscriptionReady]);
+  }, [id]);
 
   // Handle field changes
   function handleChange(path, value) {

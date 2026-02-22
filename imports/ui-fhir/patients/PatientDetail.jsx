@@ -361,7 +361,7 @@ function PatientDetail(props) {
         if (currentUser && !currentUser.patientId) {
           console.log('[PatientDetail] Linking patient to user...');
           try {
-            await Meteor.callAsync('users.linkPatient', patient._id);
+            await Meteor.callAsync('users.linkPatient', result);
             console.log('[PatientDetail] User link successful');
             patientWasJustLinked = true;
           } catch (linkError) {
