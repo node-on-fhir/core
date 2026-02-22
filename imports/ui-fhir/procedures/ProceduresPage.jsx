@@ -29,6 +29,7 @@ import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
 
 import ProceduresTable from './ProceduresTable';
+import FhirNoData from '../components/FhirNoData.jsx';
 import LayoutHelpers from '../../lib/LayoutHelpers';
 
 import { get } from 'lodash';
@@ -126,10 +127,10 @@ export function ProceduresPage(props){
     console.log('Procedures subscription query:', query);
 
     if(autoSubscribeEnabled){
-      const handle = Meteor.subscribe('selectedPatient.Procedures', Session.get('selectedPatientId'), { limit: 1000 });
+      const handle = Meteor.subscribe('autopublish.Procedures', query, { limit: 1000 });
       return !handle.ready();
     } else {
-      const handle = Meteor.subscribe('procedures.all');
+      const handle = Meteor.subscribe('selectedPatient.Procedures', Session.get('selectedPatientId'), { limit: 1000 });
       return !handle.ready();
     }
   }, [Session.get('selectedPatientId'), searchFilter]);
@@ -315,71 +316,11 @@ export function ProceduresPage(props){
       </CardContent>
     </Card>
   } else {
-    layoutContent = <Box
-      sx={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        minHeight: '50vh',
-        textAlign: 'center'
-      }}
-    >
-      <Card
-        sx={{
-          maxWidth: '600px',
-          width: '100%',
-          borderRadius: 3,
-          boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-          border: '1px solid',
-          borderColor: 'divider',
-          backgroundColor: 'background.paper'
-        }}
-      >
-        <CardContent sx={{ p: 6 }}>
-          <Box sx={{ mb: 3 }}>
-            <Typography
-              variant="h5"
-              sx={{
-                fontWeight: 500,
-                color: 'text.primary',
-                mb: 2
-              }}
-            >
-              {get(Meteor, 'settings.public.defaults.noData.defaultTitle', "No Data Available")}
-            </Typography>
-            <Typography
-              variant="body1"
-              sx={{
-                color: 'text.secondary',
-                lineHeight: 1.7,
-                maxWidth: '480px',
-                mx: 'auto'
-              }}
-            >
-              {get(Meteor, 'settings.public.defaults.noData.defaultMessage', "No records were found in the client data cursor. To debug, check the data cursor in the client console, then check subscriptions and publications, and relevant search queries. If the data is not loaded in, use a tool like Mongo Compass to load the records directly into the Mongo database, or use the FHIR API interfaces.")}
-            </Typography>
-          </Box>
-          <Button
-            variant="outlined"
-            startIcon={<AddIcon />}
-            onClick={handleAddProcedure}
-            sx={{
-              borderRadius: 2,
-              textTransform: 'none',
-              px: 3,
-              py: 1,
-              borderWidth: 2,
-              '&:hover': {
-                borderWidth: 2
-              }
-            }}
-          >
-            Add Your First Procedure
-          </Button>
-        </CardContent>
-      </Card>
-    </Box>
+    layoutContent = <FhirNoData
+      resourceType="Procedure"
+      searchFilter={searchFilter}
+      onAdd={handleAddProcedure}
+    />
   }
 
   return (

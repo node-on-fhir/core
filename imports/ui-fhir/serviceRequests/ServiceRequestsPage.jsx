@@ -29,6 +29,7 @@ import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
 
 import ServiceRequestsTable from './ServiceRequestsTable';
+import FhirNoData from '../components/FhirNoData.jsx';
 import LayoutHelpers from '../../lib/LayoutHelpers';
 
 import { get } from 'lodash';
@@ -127,10 +128,10 @@ export function ServiceRequestsPage(props){
     }
 
     if(autoSubscribeEnabled){
-      const handle = Meteor.subscribe('selectedPatient.ServiceRequests', Session.get('selectedPatientId'), { limit: 1000 });
+      const handle = Meteor.subscribe('autopublish.ServiceRequests', query, { limit: 1000 });
       return !handle.ready();
     } else {
-      const handle = Meteor.subscribe('servicerequests.all');
+      const handle = Meteor.subscribe('selectedPatient.ServiceRequests', Session.get('selectedPatientId'), { limit: 1000 });
       return !handle.ready();
     }
   }, [Session.get('selectedPatientId'), searchFilter]);
@@ -251,6 +252,8 @@ export function ServiceRequestsPage(props){
           <TextField
             id="serviceRequestSearchInput"
             fullWidth
+            variant="outlined"
+            size="small"
             placeholder="Search service requests by ID, status, intent, code, subject, requester, or performer..."
             value={searchFilter}
             onChange={function(e) { setSearchFilter(e.target.value); }}
@@ -281,7 +284,9 @@ export function ServiceRequestsPage(props){
   });
 
   let layoutContent;
-  if(data.serviceRequests.length > 0){
+  if(isLoading){
+    layoutContent = null;
+  } else if(data.serviceRequests.length > 0){
     layoutContent = <Card
       id="serviceRequestsCard"
       sx={{
@@ -325,76 +330,11 @@ export function ServiceRequestsPage(props){
       </CardContent>
     </Card>
   } else {
-    layoutContent = <Box
-      id="noDataCard"
-      className="no-data-card"
-      sx={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        minHeight: '50vh',
-        textAlign: 'center'
-      }}
-    >
-      <Card
-        sx={{
-          maxWidth: '600px',
-          width: '100%',
-          borderRadius: 3,
-          boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-          border: '1px solid',
-          borderColor: 'divider',
-          backgroundColor: 'background.paper'
-        }}
-      >
-        <CardContent sx={{ p: 6 }}>
-          <Box sx={{ mb: 3 }}>
-            <Typography
-              variant="h5"
-              sx={{
-                fontWeight: 500,
-                color: 'text.primary',
-                mb: 2
-              }}
-            >
-              No Service Requests Found
-            </Typography>
-            <Typography
-              variant="body1"
-              sx={{
-                color: 'text.secondary',
-                lineHeight: 1.7,
-                maxWidth: '480px',
-                mx: 'auto'
-              }}
-            >
-              {isLoading ?
-                "Loading service requests..." :
-                "No service requests were found. You can create a new service request or check your search filters."
-              }
-            </Typography>
-          </Box>
-          <Button
-            variant="outlined"
-            startIcon={<AddIcon />}
-            onClick={handleAddServiceRequest}
-            sx={{
-              borderRadius: 2,
-              textTransform: 'none',
-              px: 3,
-              py: 1,
-              borderWidth: 2,
-              '&:hover': {
-                borderWidth: 2
-              }
-            }}
-          >
-            Add Your First Service Request
-          </Button>
-        </CardContent>
-      </Card>
-    </Box>
+    layoutContent = <FhirNoData
+      resourceType="ServiceRequest"
+      searchFilter={searchFilter}
+      onAdd={handleAddServiceRequest}
+    />
   }
 
   return (

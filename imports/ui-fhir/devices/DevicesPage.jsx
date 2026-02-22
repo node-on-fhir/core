@@ -25,6 +25,7 @@ import DevicesOtherIcon from '@mui/icons-material/DevicesOther';
 
 // import DeviceDetail from './DeviceDetail';
 import DevicesTable from './DevicesTable';
+import FhirNoData from '../components/FhirNoData.jsx';
 
 import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
@@ -138,13 +139,13 @@ export function DevicesPage(props){
     console.log('[DevicesPage] Subscription query:', JSON.stringify(query));
 
     if(autoSubscribeEnabled){
-      const handle = Meteor.subscribe('selectedPatient.Devices', Session.get('selectedPatientId'), { limit: 100 });
+      const handle = Meteor.subscribe('autopublish.Devices', query, { limit: 100 });
       console.log('[DevicesPage] Subscription handle:', handle);
       console.log('[DevicesPage] Subscription ready:', handle.ready());
       return !handle.ready();
     } else {
-      const handle = Meteor.subscribe('devices.all');
-      console.log('[DevicesPage] Using devices.all subscription, ready:', handle.ready());
+      const handle = Meteor.subscribe('selectedPatient.Devices', Session.get('selectedPatientId'), { limit: 100 });
+      console.log('[DevicesPage] Using selectedPatient.Devices subscription, ready:', handle.ready());
       return !handle.ready();
     }
   }, [searchFilter]);
@@ -304,59 +305,12 @@ export function DevicesPage(props){
       </CardContent>
     </Card>
   } else {
-    // Show empty table with message instead of hiding everything
-    layoutContent = <Card 
-      sx={{ 
-        width: '100%',
-        borderRadius: 3,
-        boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-        border: '1px solid',
-        borderColor: 'divider',
-        overflow: 'hidden'
-      }}
-    >
-      <CardContent sx={{ p: 0 }}>
-        <DevicesTable
-          id='devicesTable'
-          devices={[]}
-          count={0}
-          formFactorLayout={formFactor}
-          rowsPerPage={10}
-          hideBarcode={!showSystemId}
-          hideTypeCodingDisplay={!showType}
-          order={sortOrder}
-          onRowClick={function(deviceId){
-            console.log('DevicesPage.onRowClick', deviceId);
-            navigate('/devices/' + deviceId);
-          }}
-          onSetPage={function(index){
-            Session.set('DevicesTable.devicesIndex', index);
-          }}
-          page={data.devicesIndex}
-        />
-        {searchFilter && (
-          <Box sx={{ p: 3, textAlign: 'center' }}>
-            <Typography variant="body1" color="text.secondary">
-              No devices found matching "{searchFilter}"
-            </Typography>
-            <Button
-              variant="text"
-              onClick={() => setSearchFilter('')}
-              sx={{ mt: 1 }}
-            >
-              Clear search
-            </Button>
-          </Box>
-        )}
-        {!searchFilter && (
-          <Box sx={{ p: 3, textAlign: 'center' }}>
-            <Typography variant="body1" color="text.secondary">
-              No devices found
-            </Typography>
-          </Box>
-        )}
-      </CardContent>
-    </Card>
+    layoutContent = <FhirNoData
+      resourceType="Device"
+      searchFilter={searchFilter}
+      onAdd={handleAddDevice}
+      onClearSearch={function() { setSearchFilter(''); }}
+    />
   }
 
   return (

@@ -40,6 +40,7 @@ import { PatientsTable } from '../ui-tables';
 import LayoutHelpers from '../lib/LayoutHelpers.jsx';
 import { Patients } from '../lib/schemas/SimpleSchemas/Patients';
 import LaunchAppsModal from '../components/LaunchAppsModal.jsx';
+import FhirNoData from '../ui-fhir/components/FhirNoData.jsx';
 
 import { get, has, set } from 'lodash';
 
@@ -564,75 +565,12 @@ export function PatientsDirectory(props){
       </CardContent>
     </Card>
   } else {
-    layoutContent = <Box 
-      sx={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        minHeight: '50vh',
-        textAlign: 'center'
-      }}
-    >
-      <Card 
-        className="no-data-card"
-        sx={{ 
-          maxWidth: '600px',
-          width: '100%',
-          borderRadius: 3,
-          boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-          border: '1px solid',
-          borderColor: 'divider',
-          backgroundColor: 'background.paper'
-        }}
-      >
-        <CardContent sx={{ p: 6 }}>
-          <Box sx={{ mb: 3 }}>
-            <Typography 
-              variant="h5" 
-              sx={{ 
-                fontWeight: 500,
-                color: 'text.primary',
-                mb: 2
-              }}
-            >
-              {debouncedSearchFilter ? "No Patients Found" : get(Meteor, 'settings.public.defaults.noData.defaultTitle', "No Data Available")}
-            </Typography>
-            <Typography 
-              variant="body1" 
-              sx={{ 
-                color: 'text.secondary',
-                lineHeight: 1.7,
-                maxWidth: '480px',
-                mx: 'auto'
-              }}
-            >
-              {debouncedSearchFilter ? 
-                `No patients match your search criteria "${debouncedSearchFilter}". Try adjusting your search terms.` : 
-                get(Meteor, 'settings.public.defaults.noData.defaultMessage', "No records were found in the client data cursor. To debug, check the data cursor in the client console, then check subscriptions and publications, and relevant search queries. If the data is not loaded in, use a tool like Mongo Compass to load the records directly into the Mongo database, or use the FHIR API interfaces.")
-              }
-            </Typography>
-          </Box>
-          <Button
-            variant="outlined"
-            startIcon={<AddIcon />}
-            onClick={handleAddPatient}
-            sx={{
-              borderRadius: 2,
-              textTransform: 'none',
-              px: 3,
-              py: 1,
-              borderWidth: 2,
-              '&:hover': {
-                borderWidth: 2
-              }
-            }}
-          >
-            {debouncedSearchFilter ? "Clear Search & Add Patient" : "Add Your First Patient"}
-          </Button>
-        </CardContent>
-      </Card>
-    </Box>
+    layoutContent = <FhirNoData
+      resourceType="Patient"
+      searchFilter={debouncedSearchFilter}
+      onAdd={handleAddPatient}
+      onClearSearch={handleAddPatient}
+    />
   }
   
   return (

@@ -241,6 +241,16 @@ Object.keys(collectionsMap).forEach(function(collectionName) {
       // Resolve patient ID (role-based)
       const resolvedPatientId = await resolvePatientId(this.userId, clientPatientId);
       if (!resolvedPatientId) {
+        // Approved clinician/admin roles can browse all records when no patient is selected
+        const BROWSE_ALL_ROLES = ['sysadmin', 'healthcare provider', 'healthcare practitioner'];
+        const user = await Meteor.users.findOneAsync({ _id: this.userId });
+        const userRoles = get(user, 'roles', []);
+        const canBrowseAll = Array.isArray(userRoles) && userRoles.some(function(r) { return BROWSE_ALL_ROLES.includes(r); });
+
+        if (canBrowseAll) {
+          console.log(`[selectedPatient.${collectionName}] Clinician/admin browsing all records (no patient selected)`);
+          return collection.find({}, options);
+        }
         return this.ready();
       }
 

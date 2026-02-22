@@ -29,6 +29,7 @@ import { Meteor } from 'meteor/meteor';
 import { get, has } from 'lodash';
 
 import DiagnosticReportsTable from './DiagnosticReportsTable';
+import FhirNoData from '../components/FhirNoData.jsx';
 import LayoutHelpers from '/imports/lib/LayoutHelpers';
 import { DiagnosticReports } from '/imports/lib/schemas/SimpleSchemas/DiagnosticReports';
 
@@ -186,10 +187,10 @@ function DiagnosticReportsPage(props){
     }
 
     if(autoSubscribeEnabled){
-      const handle = Meteor.subscribe('selectedPatient.DiagnosticReports', Session.get('selectedPatientId'), { limit: 1000 });
+      const handle = Meteor.subscribe('autopublish.DiagnosticReports', query, { limit: 1000 });
       return !handle.ready();
     } else {
-      const handle = Meteor.subscribe('diagnosticreports.all');
+      const handle = Meteor.subscribe('selectedPatient.DiagnosticReports', Session.get('selectedPatientId'), { limit: 1000 });
       return !handle.ready();
     }
   }, [searchFilter, selectedCategory]);
@@ -432,69 +433,12 @@ function DiagnosticReportsPage(props){
       </CardContent>
     </Card>
   } else {
-    // Show empty table with message
-    layoutContent = <Card 
-      sx={{ 
-        width: '100%',
-        borderRadius: 3,
-        boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-        border: '1px solid',
-        borderColor: 'divider',
-        overflow: 'hidden'
-      }}
-    >
-      <CardContent sx={{ p: 0 }}>
-        <DiagnosticReportsTable 
-          id='diagnosticReportsTable'
-          diagnosticReports={[]}
-          count={0}
-          formFactorLayout={formFactor}
-          rowsPerPage={10}
-          hideBarcode={!showSystemId}
-          hideSubject={!showPatientName}
-          hidePatientReference={!showPatientReference}
-          order={sortOrder}
-          onRowClick={handleRowClick}
-          onSetPage={function(index){
-            Session.set('DiagnosticReportsTable.diagnosticReportsIndex', index);
-          }}                
-          page={data.diagnosticReportsIndex}
-        />
-        {searchFilter && (
-          <Box sx={{ p: 3, textAlign: 'center' }}>
-            <Typography variant="body1" color="text.secondary">
-              No diagnostic reports found matching "{searchFilter}"
-            </Typography>
-            <Button
-              variant="text"
-              onClick={() => setSearchFilter('')}
-              sx={{ mt: 1 }}
-            >
-              Clear search
-            </Button>
-          </Box>
-        )}
-        {!searchFilter && (
-          <Box sx={{ p: 3, textAlign: 'center' }}>
-            <Typography variant="body1" color="text.secondary" gutterBottom>
-              No diagnostic reports found
-            </Typography>
-            <Button
-              variant="contained"
-              color="primary"
-              startIcon={<AddIcon />}
-              onClick={handleAddDiagnosticReport}
-              sx={{ mt: 2 }}
-            >
-              Add Your First Diagnostic Report
-            </Button>
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
-              Diagnostic reports contain the conclusions and findings from imaging studies, lab results, and other diagnostic procedures.
-            </Typography>
-          </Box>
-        )}
-      </CardContent>
-    </Card>
+    layoutContent = <FhirNoData
+      resourceType="DiagnosticReport"
+      searchFilter={searchFilter}
+      onAdd={handleAddDiagnosticReport}
+      onClearSearch={function() { setSearchFilter(''); }}
+    />
   }
 
   return (

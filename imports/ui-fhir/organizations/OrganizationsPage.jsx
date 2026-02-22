@@ -28,6 +28,7 @@ import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
 
 import OrganizationsTable from './OrganizationsTable';
+import FhirNoData from '../components/FhirNoData.jsx';
 import LayoutHelpers from '../../lib/LayoutHelpers';
 
 import { get } from 'lodash';
@@ -102,10 +103,10 @@ export function OrganizationsPage(props){
     }
 
     if(autoSubscribeEnabled){
-      const handle = Meteor.subscribe('selectedPatient.Organizations', Session.get('selectedPatientId'), { limit: 100 });
+      const handle = Meteor.subscribe('autopublish.Organizations', query, { limit: 100 });
       return !handle.ready();
     } else {
-      const handle = Meteor.subscribe('organizations.all');
+      const handle = Meteor.subscribe('selectedPatient.Organizations', Session.get('selectedPatientId'), { limit: 100 });
       return !handle.ready();
     }
   }, [searchFilter]);
@@ -260,64 +261,12 @@ export function OrganizationsPage(props){
       </CardContent>
     </Card>
   } else {
-    layoutContent = <Card
-      sx={{
-        width: '100%',
-        borderRadius: 3,
-        boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-        border: '1px solid',
-        borderColor: 'divider',
-        overflow: 'hidden'
-      }}
-    >
-      <CardContent sx={{ p: 0 }}>
-        <OrganizationsTable
-          id='organizationsTable'
-          organizations={[]}
-          count={0}
-          formFactorLayout={formFactor}
-          rowsPerPage={10}
-          hideBarcode={!showSystemId}
-          hideAddressLine={!showAddress}
-          hideCity={!showAddress}
-          hideState={!showAddress}
-          hidePostalCode={!showAddress}
-          hideCountry={!showAddress}
-          order={sortOrder}
-          onSetPage={function(index){
-            Session.set('OrganizationsTable.organizationsIndex', index);
-          }}
-          page={data.organizationsIndex}
-          onRowClick={function(organizationId){
-            const idString = typeof organizationId === 'object' && organizationId._str
-              ? organizationId._str
-              : String(organizationId);
-            navigate('/organizations/' + idString);
-          }}
-        />
-        {searchFilter && (
-          <Box sx={{ p: 3, textAlign: 'center' }}>
-            <Typography variant="body1" color="text.secondary">
-              No organizations found matching "{searchFilter}"
-            </Typography>
-            <Button
-              variant="text"
-              onClick={() => setSearchFilter('')}
-              sx={{ mt: 1 }}
-            >
-              Clear search
-            </Button>
-          </Box>
-        )}
-        {!searchFilter && (
-          <Box sx={{ p: 3, textAlign: 'center' }}>
-            <Typography variant="body1" color="text.secondary">
-              No organizations found
-            </Typography>
-          </Box>
-        )}
-      </CardContent>
-    </Card>
+    layoutContent = <FhirNoData
+      resourceType="Organization"
+      searchFilter={searchFilter}
+      onAdd={handleAddOrganization}
+      onClearSearch={function() { setSearchFilter(''); }}
+    />
   }
 
   return (

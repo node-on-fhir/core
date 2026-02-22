@@ -30,6 +30,7 @@ import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
 
 import EncountersTable from './EncountersTable';
+import FhirNoData from '../components/FhirNoData.jsx';
 import LayoutHelpers from '../../lib/LayoutHelpers';
 
 import { get } from 'lodash';
@@ -113,10 +114,10 @@ export function EncountersPage(props){
     }
 
     if(autoSubscribeEnabled){
-      const handle = Meteor.subscribe('selectedPatient.Encounters', Session.get('selectedPatientId'), { limit: 1000 });
+      const handle = Meteor.subscribe('autopublish.Encounters', query, { limit: 1000 });
       return !handle.ready();
     } else {
-      const handle = Meteor.subscribe('encounters.all');
+      const handle = Meteor.subscribe('selectedPatient.Encounters', Session.get('selectedPatientId'), { limit: 1000 });
       return !handle.ready();
     }
   }, [Session.get('selectedPatientId'), searchFilter]);
@@ -339,56 +340,12 @@ export function EncountersPage(props){
       </CardContent>
     </Card>
   } else {
-    layoutContent = <Card
-      sx={{
-        width: '100%',
-        borderRadius: 3,
-        boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-        border: '1px solid',
-        borderColor: 'divider',
-        overflow: 'hidden'
-      }}
-    >
-      <CardContent sx={{ p: 0 }}>
-        <EncountersTable
-          id='encountersTable'
-          encounters={[]}
-          count={0}
-          formFactorLayout={formFactor}
-          rowsPerPage={LayoutHelpers.calcTableRows()}
-          hidePatientName={!showPatientName}
-          hidePractitionerName={!showPractitionerName}
-          hideClass={!showClass}
-          hideBarcode={!showSystemId}
-          order={sortOrder}
-          onSetPage={function(index){
-            Session.set('EncountersTable.encountersIndex', index);
-          }}
-          page={data.encountersIndex}
-        />
-        {searchFilter && (
-          <Box sx={{ p: 3, textAlign: 'center' }}>
-            <Typography variant="body1" color="text.secondary">
-              No encounters found matching "{searchFilter}"
-            </Typography>
-            <Button
-              variant="text"
-              onClick={() => setSearchFilter('')}
-              sx={{ mt: 1 }}
-            >
-              Clear search
-            </Button>
-          </Box>
-        )}
-        {!searchFilter && (
-          <Box sx={{ p: 3, textAlign: 'center' }}>
-            <Typography variant="body1" color="text.secondary">
-              No encounters found
-            </Typography>
-          </Box>
-        )}
-      </CardContent>
-    </Card>
+    layoutContent = <FhirNoData
+      resourceType="Encounter"
+      searchFilter={searchFilter}
+      onAdd={handleAddEncounter}
+      onClearSearch={function() { setSearchFilter(''); }}
+    />
   }
 
   return (

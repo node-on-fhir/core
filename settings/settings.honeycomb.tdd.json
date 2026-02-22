@@ -217,7 +217,6 @@
       },
       "fhirPath": "baseR4",
       "autopublishSubscriptions": true,
-      "autoGenerateSubscriptions": true,
       "rest": {
         "ActivityDefinition": {
           "interactions": [
