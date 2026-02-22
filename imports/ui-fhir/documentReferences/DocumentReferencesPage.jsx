@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useTracker } from 'meteor/react-meteor-data';
 import { useNavigate } from 'react-router-dom';
 
-import { 
-  Grid, 
+import {
+  Grid,
   Container,
   Divider,
   Card,
@@ -13,10 +13,19 @@ import {
   Box,
   Typography,
   TextField,
-  InputAdornment
+  InputAdornment,
+  ToggleButton,
+  ToggleButtonGroup
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
-import SearchIcon from '@mui/icons-material/Search'; 
+import SearchIcon from '@mui/icons-material/Search';
+import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
+import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
+import BadgeIcon from '@mui/icons-material/Badge';
+import PersonIcon from '@mui/icons-material/Person';
+import EditIcon from '@mui/icons-material/Edit';
+import CategoryIcon from '@mui/icons-material/Category';
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 
 import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
@@ -59,6 +68,12 @@ Session.setDefault('DocumentReferencesTable.documentReferencesIndex', 0)
 export function DocumentReferencesPage(props){
   const navigate = useNavigate();
   const [searchFilter, setSearchFilter] = useState('');
+  const [sortOrder, setSortOrder] = useState('descending');
+  const [showSystemId, setShowSystemId] = useState(false);
+  const [showSubject, setShowSubject] = useState(true);
+  const [showAuthor, setShowAuthor] = useState(true);
+  const [showType, setShowType] = useState(false);
+  const [showStatus, setShowStatus] = useState(true);
 
   let data = {
     currentDocumentReferenceId: '',
@@ -187,6 +202,12 @@ export function DocumentReferencesPage(props){
     navigate('/document-references/new');
   }
 
+  function handleSortOrderChange(event, newOrder){
+    if(newOrder !== null){
+      setSortOrder(newOrder);
+    }
+  }
+
   function renderHeader() {
     return (
       <Box mb={2}>
@@ -200,14 +221,66 @@ export function DocumentReferencesPage(props){
             </Typography>
           </Grid>
           <Grid item>
-            <Button
-              variant="contained"
-              color="primary"
-              startIcon={<AddIcon />}
-              onClick={handleAddDocumentReference}
-            >
-              Add Document Reference
-            </Button>
+            <Box display="flex" gap={2} alignItems="center">
+              <ToggleButtonGroup
+                value={sortOrder}
+                exclusive
+                onChange={handleSortOrderChange}
+                aria-label="sort order"
+                size="small"
+              >
+                <ToggleButton value="ascending" aria-label="ascending order">
+                  <ArrowUpwardIcon />
+                </ToggleButton>
+                <ToggleButton value="descending" aria-label="descending order">
+                  <ArrowDownwardIcon />
+                </ToggleButton>
+              </ToggleButtonGroup>
+
+              <ToggleButtonGroup
+                value={[
+                  ...(showSystemId ? ['systemId'] : []),
+                  ...(showSubject ? ['subject'] : []),
+                  ...(showAuthor ? ['author'] : []),
+                  ...(showType ? ['type'] : []),
+                  ...(showStatus ? ['status'] : [])
+                ]}
+                onChange={(event, newFormats) => {
+                  setShowSystemId(newFormats.includes('systemId'));
+                  setShowSubject(newFormats.includes('subject'));
+                  setShowAuthor(newFormats.includes('author'));
+                  setShowType(newFormats.includes('type'));
+                  setShowStatus(newFormats.includes('status'));
+                }}
+                aria-label="display options"
+                size="small"
+              >
+                <ToggleButton value="systemId" aria-label="show system id">
+                  <BadgeIcon />
+                </ToggleButton>
+                <ToggleButton value="subject" aria-label="show subject">
+                  <PersonIcon />
+                </ToggleButton>
+                <ToggleButton value="author" aria-label="show author">
+                  <EditIcon />
+                </ToggleButton>
+                <ToggleButton value="type" aria-label="show type">
+                  <CategoryIcon />
+                </ToggleButton>
+                <ToggleButton value="status" aria-label="show status">
+                  <CheckCircleOutlineIcon />
+                </ToggleButton>
+              </ToggleButtonGroup>
+
+              <Button
+                variant="contained"
+                color="primary"
+                startIcon={<AddIcon />}
+                onClick={handleAddDocumentReference}
+              >
+                Add Document Reference
+              </Button>
+            </Box>
           </Grid>
         </Grid>
         <Box mt={2}>
@@ -245,20 +318,25 @@ export function DocumentReferencesPage(props){
       }}
     >
       <CardContent sx={{ p: 0 }}>
-        <DocumentReferencesTable 
+        <DocumentReferencesTable
           id='documentReferencesTable'
           documentReferences={filteredDocumentReferences}
-          count={filteredDocumentReferences.length}  
-          formFactorLayout={formFactor}
-          rowsPerPage={LayoutHelpers.calcTableRows()} 
+          count={filteredDocumentReferences.length}
+          rowsPerPage={LayoutHelpers.calcTableRows()}
           actionButtonLabel="Remove"
           hideActionButton={get(Meteor, 'settings.public.modules.fhir.DocumentReferences.hideRemoveButtonOnTable', true)}
+          hideBarcode={!showSystemId}
+          hideSubjectDisplay={!showSubject}
+          hideAuthor={!showAuthor}
+          hideTypeDisplay={!showType}
+          hideStatus={!showStatus}
+          order={sortOrder}
           onActionButtonClick={function(selectedId){
             DocumentReferences._collection.remove({_id: selectedId})
           }}
           onSetPage={function(index){
             setDocumentReferencesPageIndex(index)
-          }}        
+          }}
           page={data.documentReferencesIndex}
           onRowClick={function(documentReferenceId){
             console.log('DocumentReferencesPage.onRowClick', documentReferenceId);
@@ -345,7 +423,7 @@ export function DocumentReferencesPage(props){
         py: { xs: 3, sm: 4, md: 5 }
       }}
     >
-      { filteredDocumentReferences.length > 0 && renderHeader() }
+      { renderHeader() }
       { layoutContent }
     </Box>
   );

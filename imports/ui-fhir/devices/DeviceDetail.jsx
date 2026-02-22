@@ -561,10 +561,13 @@ function DeviceDetail(props) {
 
     return (
       <Box sx={{ maxWidth: '8.5in', mx: 'auto', py: 2 }}>
-        {/* Device name as title */}
-        <Typography variant="h5" sx={{ fontWeight: 500, mb: 1 }}>
-          {deviceName}
-        </Typography>
+        {/* Device name + status chip */}
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
+          <Typography variant="h5" sx={{ fontWeight: 500 }}>
+            {deviceName}
+          </Typography>
+          <Chip label={statusLabel} color={statusColor} size="small" />
+        </Box>
 
         {typeDisplay && (
           <Typography variant="subtitle1" color="text.secondary" sx={{ mb: 3 }}>
@@ -599,12 +602,6 @@ function DeviceDetail(props) {
             )}
           </Box>
           <Box sx={{ textAlign: 'right' }}>
-            <Typography variant="overline" color="text.secondary">
-              Status
-            </Typography>
-            <Box sx={{ mb: 1 }}>
-              <Chip label={statusLabel} color={statusColor} size="small" />
-            </Box>
             {formattedManufactureDate && (
               <>
                 <Typography variant="overline" color="text.secondary">

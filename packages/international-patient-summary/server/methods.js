@@ -267,6 +267,49 @@ Meteor.methods({
     }
   },
 
+  'ips.fetchLinkedData': async function(patientId) {
+    check(patientId, String);
+
+    if (!this.userId) {
+      throw new Meteor.Error('not-authorized');
+    }
+
+    const collectionsToSearch = [
+      { name: 'Conditions',           path: 'subject.reference' },
+      { name: 'AllergyIntolerances',  path: 'patient.reference' },
+      { name: 'MedicationStatements', path: 'subject.reference' },
+      { name: 'MedicationRequests',   path: 'subject.reference' },
+      { name: 'Immunizations',        path: 'patient.reference' },
+      { name: 'Observations',         path: 'subject.reference' },
+      { name: 'Procedures',           path: 'subject.reference' },
+      { name: 'DiagnosticReports',    path: 'subject.reference' },
+      { name: 'DeviceUseStatements',  path: 'subject.reference' },
+      { name: 'CarePlans',            path: 'subject.reference' },
+      { name: 'Goals',                path: 'subject.reference' },
+      { name: 'DocumentReferences',   path: 'subject.reference' }
+    ];
+
+    const results = {};
+    await Promise.all(collectionsToSearch.map(async function({ name, path }) {
+      const collection = global.Collections[name];
+      if (!collection) return;
+      const query = {};
+      query[path] = 'Patient/' + patientId;
+      results[name] = await collection.find(query, { limit: 100 }).fetchAsync();
+    }));
+
+    const Patients = global.Collections.Patients;
+    if (Patients) {
+      results.Patient = await Patients.findOneAsync({ _id: patientId })
+                      || await Patients.findOneAsync({ id: patientId });
+    }
+
+    console.log('[ips.fetchLinkedData] Fetched data for patient:', patientId,
+      Object.keys(results).map(function(k) { return k + ': ' + (Array.isArray(results[k]) ? results[k].length : (results[k] ? 1 : 0)); }).join(', '));
+
+    return results;
+  },
+
   'mcp.getAvailableModels': function() {
     // Return available models configuration
     return {

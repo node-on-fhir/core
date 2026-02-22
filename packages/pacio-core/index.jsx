@@ -128,6 +128,11 @@ const MainPageLazy = React.lazy(() =>
 
 const MainPageComponent = withSuspense(MainPageLazy);
 
+const ExamRoomPageLazy = React.lazy(() =>
+  import('./client/pages/ExamRoomPage').then(module => ({ default: module.ExamRoomPage }))
+);
+const ExamRoomPageComponent = withSuspense(ExamRoomPageLazy);
+
 export const MainPage = {
   'name': 'PACIO Dashboard',
   'path': '/',
@@ -184,6 +189,13 @@ export const DynamicRoutes = [
     element: <MainPageComponent />,
     requireAuth: true,
     description: 'PACIO facility dashboard and overview'
+  },
+  {
+    name: 'PacioExamRoom',
+    path: '/pacio-exam-room',
+    element: <ExamRoomPageComponent />,
+    requireAuth: true,
+    description: 'Single bed / exam room monitor view'
   },
   // List routes (no patient ID)
   {

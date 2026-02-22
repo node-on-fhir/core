@@ -96,95 +96,7 @@ function DocumentReferencesTable(props){
   // Initialize multiline variable
   let multiline = false;
 
-    // ------------------------------------------------------------------------
-  // Form Factors
-
-  if(formFactorLayout){
-    logger.verbose('formFactorLayout', formFactorLayout + ' ' + window.innerWidth);
-    switch (formFactorLayout) {
-      case "phone":
-        hideCheckbox = true;
-        hideActionIcons = true;
-        hideIdentifier = true;
-        hideMasterIdentifier = true;
-        hideStatus = true;
-        hideDocStatus = true;
-        hideTypeCode = true;
-        hideCategory = true;
-        hideSubjectDisplay = false;
-        hideSubjectReference = true;
-        hideDate = true;
-        hideDescription = true;
-        hideAuthor = true;
-        hideContentTitle = false;
-        hideContentFormat = true;
-        hideContentSize = true;
-        hideBarcode = true;  
-        multiline = true;
-        break;
-      case "tablet":
-        hideCheckbox = true;
-        hideActionIcons = true;
-        hideIdentifier = true;
-        hideMasterIdentifier = true;
-        hideStatus = false;
-        hideDocStatus = true;
-        hideTypeCode = true;
-        hideCategory = true;
-        hideSubjectDisplay = false;
-        hideSubjectReference = true;
-        hideDate = false;
-        hideDescription = true;
-        hideAuthor = false;
-        hideContentTitle = true;
-        hideContentFormat = true;
-        hideContentSize = true;
-        hideBarcode = false;   
-        multiline = false;
-        break;
-      case "web":
-        hideStatus = false;
-        hideDocStatus = true;
-        hideTypeCode = true;
-        hideSubjectDisplay = false;
-        hideAuthor = false;
-        hideContentTitle = true;
-        hideContentFormat = true;
-        hideContentSize = true;
-        hideDate = false;
-        hideBarcode = false;
-        multiline = false;
-        break;
-      case "desktop":
-        hideStatus = false;
-        hideDocStatus = true;
-        hideSubjectDisplay = false;
-        hideTypeCode = true;
-        hideTypeDisplay = false;
-        hideAuthor = false;
-        hideContentTitle = false;
-        hideContentFormat = true;
-        hideContentSize = true;
-        hideDate = false;
-        hideBarcode = false;
-        multiline = false;
-        break;
-      case "hdmi":
-        hideStatus = false;
-        hideDocStatus = false;
-        hideTypeCode = false;
-        hideTypeDisplay = false;
-        hideSubjectDisplay = false;
-        hideAuthor = false;
-        hideContentTitle = false;
-        hideContentFormat = false;
-        hideContentSize = false;
-        hideDate = false;
-        hideBarcode = false;
-        multiline = false;
-        break;            
-    }
-  }
+    // Column visibility is now controlled by toggle buttons in the Page component
 
 
 
@@ -688,8 +600,7 @@ function DocumentReferencesTable(props){
       if (i === 0) {
         console.log('DocumentReferencesTable - First document IDs:', {
           _id: documentReferencesToRender[i]._id,
-          id: documentReferencesToRender[i].id,
-          willPassToClick: documentReferencesToRender[i]._id || documentReferencesToRender[i].id
+          id: documentReferencesToRender[i].id
         });
       }
 
@@ -711,7 +622,7 @@ function DocumentReferencesTable(props){
         ); 
       } else {
         tableRows.push(
-          <TableRow className="documentReferenceRow" key={i} style={rowStyle} onClick={ handleRowClick.bind(this, documentReferencesToRender[i]._id || documentReferencesToRender[i].id)} hover={true} selected={selected} >            
+          <TableRow className="documentReferenceRow" key={i} style={rowStyle} onClick={ handleRowClick.bind(this, documentReferencesToRender[i]._id)} hover={true} selected={selected} >
             { renderCheckbox(i) }
             { renderActionIcons(documentReferencesToRender[i]) }
             { renderIdentifier(get(documentReferencesToRender[i], "identifier", "")) }
@@ -843,7 +754,7 @@ DocumentReferencesTable.defaultProps = {
   hideMasterIdentifier: true,
   hideStatus: false,
   hideDocStatus: true,
-  hideTypeDisplay: false,
+  hideTypeDisplay: true,
   hideTypeCode: true,
   hideCategory: true,
   hideSubjectDisplay: false,
@@ -854,9 +765,9 @@ DocumentReferencesTable.defaultProps = {
   hideContentTitle: false,
   hideContentFormat: true,
   hideContentSize: true,
-  hideBarcode: false,
+  hideBarcode: true,
   hideActionButton: true,
-  disablePagination: false,  
+  disablePagination: false,
   documentReferences: [],
   labels: {
     checkbox: "Checkbox",
