@@ -108,7 +108,7 @@ export function AppointmentsPage(props){
   const isLoading = useTracker(() => {
     const selectedPatientId = Session.get('selectedPatientId');
     const selectedPatient = Session.get('selectedPatient');
-    let autoPublishEnabled = get(Meteor, 'settings.public.defaults.autopublish', false);
+    let autoSubscribeEnabled = get(Meteor, 'settings.public.defaults.autoSubscribe', false);
     
     let query = {};
     
@@ -155,8 +155,8 @@ export function AppointmentsPage(props){
     console.log('Appointments subscription - FHIR id:', get(selectedPatient, 'id'));
     console.log('Appointments subscription query:', query);
     
-    if(autoPublishEnabled){
-      const handle = Meteor.subscribe('autopublish.Appointments', query, { limit: 100 });
+    if(autoSubscribeEnabled){
+      const handle = Meteor.subscribe('selectedPatient.Appointments', Session.get('selectedPatientId'), { limit: 100 });
       return !handle.ready();
     } else {
       const handle = Meteor.subscribe('appointments.all');

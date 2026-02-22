@@ -74,7 +74,7 @@
           "UserProfile": true
         }
       },
-      "autopublish": true
+      "autoSubscribe": true
     },
     "interfaces": {
       "default": {
@@ -164,6 +164,9 @@
     }
   },
   "private": {
+    "modules": {
+      "PatientDirectory": true
+    },
     "fhir": {
       "disableOauth": true,
       "schemaValidation": {

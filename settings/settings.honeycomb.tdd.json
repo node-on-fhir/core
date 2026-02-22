@@ -114,7 +114,10 @@
           "/imaging-studies"
         ]
       },
-      "autopublish": true
+      "autoSubscribe": true
+    },
+    "pacio": {
+      "autoSubscribe": false
     },
     "interfaces": {
       "default": {
@@ -200,6 +203,12 @@
     }
   },
   "private": {
+    "modules": {
+      "PatientDirectory": true
+    },
+    "pacio": {
+      "autoPublish": false
+    },
     "fhir": {
       "disableOauth": true,
       "schemaValidation": {

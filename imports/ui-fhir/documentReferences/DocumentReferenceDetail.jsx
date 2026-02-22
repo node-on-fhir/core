@@ -99,7 +99,7 @@ function DocumentReferenceDetail(props) {
 
   // Subscribe to document references
   const isSubscriptionReady = useTracker(function(){
-    const handle = Meteor.subscribe('autopublish.DocumentReferences');
+    const handle = Meteor.subscribe('selectedPatient.DocumentReferences');
     return handle.ready();
   }, []);
 

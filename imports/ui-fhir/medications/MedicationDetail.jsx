@@ -55,7 +55,7 @@ function MedicationDetail(props) {
         ]
       };
       console.log('[MedicationDetail] Subscribing with ID query:', query);
-      const handle = Meteor.subscribe('autopublish.Medications', query, {});
+      const handle = Meteor.subscribe('selectedPatient.Medications', Session.get('selectedPatientId'), {});
       return handle.ready();
     }
     return true; // No subscription needed for new medications

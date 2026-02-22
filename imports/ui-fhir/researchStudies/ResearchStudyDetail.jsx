@@ -53,9 +53,9 @@ function ResearchStudyDetail(props) {
   
   // Subscribe to research studies data
   const subscriptionReady = useTracker(() => {
-    let autoPublishEnabled = get(Meteor, 'settings.public.defaults.autopublish', false);
-    if(autoPublishEnabled){
-      const handle = Meteor.subscribe('autopublish.ResearchStudies', {}, {});
+    let autoSubscribeEnabled = get(Meteor, 'settings.public.defaults.autoSubscribe', false);
+    if(autoSubscribeEnabled){
+      const handle = Meteor.subscribe('selectedPatient.ResearchStudies', Session.get('selectedPatientId'), {});
       return handle.ready();
     } else {
       const handle = Meteor.subscribe('researchStudies.all');

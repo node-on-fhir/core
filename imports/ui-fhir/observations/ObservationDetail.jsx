@@ -156,9 +156,9 @@ function ObservationDetail(props) {
 
   // Subscribe to observations for direct URL navigation
   const isSubscriptionReady = useTracker(function(){
-    let autoPublishEnabled = get(Meteor, 'settings.public.defaults.autopublish', false);
-    if(autoPublishEnabled){
-      return Meteor.subscribe('autopublish.Observations', {}, {}).ready();
+    let autoSubscribeEnabled = get(Meteor, 'settings.public.defaults.autoSubscribe', false);
+    if(autoSubscribeEnabled){
+      return Meteor.subscribe('selectedPatient.Observations', Session.get('selectedPatientId'), {}).ready();
     } else {
       return Meteor.subscribe('observations.all').ready();
     }

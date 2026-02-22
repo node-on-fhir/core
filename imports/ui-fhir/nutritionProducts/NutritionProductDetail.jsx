@@ -55,7 +55,7 @@ function NutritionProductDetail(props) {
         ]
       };
       console.log('[NutritionProductDetail] Subscribing with ID query:', query);
-      const handle = Meteor.subscribe('autopublish.NutritionProducts', query, {});
+      const handle = Meteor.subscribe('selectedPatient.NutritionProducts', Session.get('selectedPatientId'), {});
       return handle.ready();
     }
     return true; // No subscription needed for new nutrition products

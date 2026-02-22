@@ -117,10 +117,10 @@ function DiagnosticReportDetail(props){
 
   // Subscribe to diagnostic reports
   const isSubscriptionReady = useTracker(function(){
-    let autoPublishEnabled = get(Meteor, 'settings.public.defaults.autopublish', false);
+    let autoSubscribeEnabled = get(Meteor, 'settings.public.defaults.autoSubscribe', false);
     let handle;
-    if(autoPublishEnabled){
-      handle = Meteor.subscribe('autopublish.DiagnosticReports', {}, { limit: 1000 });
+    if(autoSubscribeEnabled){
+      handle = Meteor.subscribe('selectedPatient.DiagnosticReports', Session.get('selectedPatientId'), { limit: 1000 });
     } else {
       handle = Meteor.subscribe('diagnosticreports.all');
     }

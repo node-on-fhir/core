@@ -80,7 +80,7 @@ export function SchedulesPage(props){
 
   // Subscribe to schedules data with search filter
   const isLoading = useTracker(() => {
-    let autoPublishEnabled = get(Meteor, 'settings.public.defaults.autopublish', false);
+    let autoSubscribeEnabled = get(Meteor, 'settings.public.defaults.autoSubscribe', false);
     
     // Build query for subscription
     let query = {};
@@ -99,8 +99,8 @@ export function SchedulesPage(props){
       };
     }
     
-    if(autoPublishEnabled){
-      const handle = Meteor.subscribe('autopublish.Schedules', query, { limit: 100 });
+    if(autoSubscribeEnabled){
+      const handle = Meteor.subscribe('selectedPatient.Schedules', Session.get('selectedPatientId'), { limit: 100 });
       return !handle.ready();
     } else {
       const handle = Meteor.subscribe('schedules', {});

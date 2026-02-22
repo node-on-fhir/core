@@ -65,10 +65,10 @@ function MediaDetail(props) {
   
   // Subscribe to medias and patients data
   const isSubscriptionReady = useTracker(function(){
-    let autoPublishEnabled = get(Meteor, 'settings.public.defaults.autopublish', false);
+    let autoSubscribeEnabled = get(Meteor, 'settings.public.defaults.autoSubscribe', false);
     let handle;
-    if(autoPublishEnabled){
-      handle = Meteor.subscribe('autopublish.Medias', {}, {});
+    if(autoSubscribeEnabled){
+      handle = Meteor.subscribe('selectedPatient.Medias', Session.get('selectedPatientId'), {});
     } else {
       handle = Meteor.subscribe('medias.all');
     }

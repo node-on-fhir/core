@@ -59,10 +59,10 @@ export function AuditEventDetail(props) {
 
   // Subscribe and load data
   const isSubscriptionReady = useTracker(function() {
-    let autoPublishEnabled = get(Meteor, 'settings.public.defaults.autopublish', false);
+    let autoSubscribeEnabled = get(Meteor, 'settings.public.defaults.autoSubscribe', false);
     let handle;
-    if (autoPublishEnabled) {
-      handle = Meteor.subscribe('autopublish.AuditEvents', {}, {});
+    if (autoSubscribeEnabled) {
+      handle = Meteor.subscribe('selectedPatient.AuditEvents', Session.get('selectedPatientId'), {});
     } else {
       handle = Meteor.subscribe('auditEvents', {}, {});
     }

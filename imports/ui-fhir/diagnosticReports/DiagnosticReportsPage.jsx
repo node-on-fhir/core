@@ -129,7 +129,7 @@ function DiagnosticReportsPage(props){
 
   // Subscribe and filter data
   const isLoading = useTracker(() => {
-    let autoPublishEnabled = get(Meteor, 'settings.public.defaults.autopublish', false);
+    let autoSubscribeEnabled = get(Meteor, 'settings.public.defaults.autoSubscribe', false);
     const selectedPatientId = Session.get('selectedPatientId');
     const selectedPatient = Session.get('selectedPatient');
 
@@ -185,8 +185,8 @@ function DiagnosticReportsPage(props){
       }
     }
 
-    if(autoPublishEnabled){
-      const handle = Meteor.subscribe('autopublish.DiagnosticReports', query, { limit: 1000 });
+    if(autoSubscribeEnabled){
+      const handle = Meteor.subscribe('selectedPatient.DiagnosticReports', Session.get('selectedPatientId'), { limit: 1000 });
       return !handle.ready();
     } else {
       const handle = Meteor.subscribe('diagnosticreports.all');

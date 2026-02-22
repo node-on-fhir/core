@@ -109,8 +109,8 @@ export default function ImagingStudiesTable({ isDark, cardTextColor, subheaderCo
     console.log('[ImagingStudiesTable] useTracker running...');
 
     // CRITICAL: Subscribe to autopublish publications to receive data from server
-    const studiesHandle = Meteor.subscribe('autopublish.ImagingStudies', {}, {});
-    const docRefsHandle = Meteor.subscribe('autopublish.DocumentReferences', {}, {});
+    const studiesHandle = Meteor.subscribe('selectedPatient.ImagingStudies', Session.get('selectedPatientId'), {});
+    const docRefsHandle = Meteor.subscribe('selectedPatient.DocumentReferences', Session.get('selectedPatientId'), {});
 
     const ImagingStudies = Meteor.Collections?.ImagingStudies;
     const DocumentReferences = Meteor.Collections?.DocumentReferences;

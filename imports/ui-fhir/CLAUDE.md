@@ -281,7 +281,7 @@ const fhirId = get(selectedPatient, 'id'); // FHIR resources use FHIR id, not Mo
 const isLoading = useTracker(() => {
   const selectedPatientId = Session.get('selectedPatientId');
   const selectedPatient = Session.get('selectedPatient');
-  let autoPublishEnabled = get(Meteor, 'settings.public.defaults.autopublish', false);
+  let autoSubscribeEnabled = get(Meteor, 'settings.public.defaults.autoSubscribe', false);
   
   let query = {};
   
@@ -295,7 +295,7 @@ const isLoading = useTracker(() => {
     }
   }
   
-  if(autoPublishEnabled){
+  if(autoSubscribeEnabled){
     const handle = Meteor.subscribe('autopublish.{ResourceTypes}', query, { limit: 1000 });
     return !handle.ready();
   } else {
@@ -1019,9 +1019,9 @@ for (let i = 0; i < consentsToRender.length; i++) {
 ```javascript
 // Subscribe to consents and track subscription status
 const isSubscriptionReady = useTracker(function(){
-  let autoPublishEnabled = get(Meteor, 'settings.public.defaults.autopublish', false);
+  let autoSubscribe = get(Meteor, 'settings.public.defaults.autoSubscribe', false);
   let handle;
-  if(autoPublishEnabled){
+  if(autoSubscribe){
     handle = Meteor.subscribe('autopublish.Consents', {}, {});
   } else {
     handle = Meteor.subscribe('consents.all');

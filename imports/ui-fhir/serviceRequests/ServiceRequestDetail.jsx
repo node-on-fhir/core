@@ -102,10 +102,10 @@ function ServiceRequestDetail(props) {
 
   // Subscribe to service requests
   const isSubscriptionReady = useTracker(function(){
-    let autoPublishEnabled = get(Meteor, 'settings.public.defaults.autopublish', false);
+    let autoSubscribeEnabled = get(Meteor, 'settings.public.defaults.autoSubscribe', false);
     let handle;
-    if(autoPublishEnabled){
-      handle = Meteor.subscribe('autopublish.ServiceRequests', {}, {});
+    if(autoSubscribeEnabled){
+      handle = Meteor.subscribe('selectedPatient.ServiceRequests', Session.get('selectedPatientId'), {});
     } else {
       handle = Meteor.subscribe('servicerequests.all');
     }

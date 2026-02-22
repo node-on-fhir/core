@@ -51,7 +51,7 @@ export default function KeyImagesTable({ isDark, cardTextColor, subheaderColor, 
     console.log('[KeyImagesTable] useTracker running...');
 
     // CRITICAL: Subscribe to autopublish publication to receive data from server
-    const docRefsHandle = Meteor.subscribe('autopublish.DocumentReferences', {}, {});
+    const docRefsHandle = Meteor.subscribe('selectedPatient.DocumentReferences', Session.get('selectedPatientId'), {});
 
     const DocumentReferences = Meteor.Collections?.DocumentReferences;
 

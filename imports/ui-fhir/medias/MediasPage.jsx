@@ -76,7 +76,7 @@ export function MediasPage(props){
   const isLoading = useTracker(() => {
     const selectedPatientId = Session.get('selectedPatientId');
     const selectedPatient = Session.get('selectedPatient');
-    let autoPublishEnabled = get(Meteor, 'settings.public.defaults.autopublish', false);
+    let autoSubscribeEnabled = get(Meteor, 'settings.public.defaults.autoSubscribe', false);
     
     // Build query based on search filter and patient filter
     let query = {};
@@ -135,8 +135,8 @@ export function MediasPage(props){
     console.log('Medias subscription - FHIR id:', get(selectedPatient, 'id'));
     console.log('Medias subscription query:', query);
     
-    if(autoPublishEnabled){
-      const handle = Meteor.subscribe('autopublish.Medias', query, { limit: 1000 });
+    if(autoSubscribeEnabled){
+      const handle = Meteor.subscribe('selectedPatient.Medias', Session.get('selectedPatientId'), { limit: 1000 });
       return !handle.ready();
     } else {
       const handle = Meteor.subscribe('medias.all');

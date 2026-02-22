@@ -88,10 +88,10 @@ function PractitionerRoleDetail(props) {
 
   // Subscribe to necessary collections
   const isSubscriptionReady = useTracker(function(){
-    let autoPublishEnabled = get(Meteor, 'settings.public.defaults.autopublish', false);
+    let autoSubscribeEnabled = get(Meteor, 'settings.public.defaults.autoSubscribe', false);
     let handle;
-    if(autoPublishEnabled){
-      handle = Meteor.subscribe('autopublish.PractitionerRoles', {}, {});
+    if(autoSubscribeEnabled){
+      handle = Meteor.subscribe('selectedPatient.PractitionerRoles', Session.get('selectedPatientId'), {});
     } else {
       handle = Meteor.subscribe('practitionerRoles.all');
     }

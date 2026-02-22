@@ -185,7 +185,7 @@ export function BiomarkerChartingPage(props){
   const isLoadingSubscription = useTracker(() => {
     const selectedPatientTracker = Session.get('selectedPatient');
     const selectedPatientIdTracker = Session.get('selectedPatientId');
-    let autoPublishEnabled = get(Meteor, 'settings.public.defaults.autopublish', false);
+    let autoSubscribeEnabled = get(Meteor, 'settings.public.defaults.autoSubscribe', false);
 
     let query = {};
     if (selectedPatientTracker || selectedPatientIdTracker) {
@@ -197,8 +197,8 @@ export function BiomarkerChartingPage(props){
       }
     }
 
-    if (autoPublishEnabled) {
-      const handle = Meteor.subscribe('autopublish.Observations', query, { limit: 1000 });
+    if (autoSubscribeEnabled) {
+      const handle = Meteor.subscribe('selectedPatient.Observations', Session.get('selectedPatientId'), { limit: 1000 });
       return !handle.ready();
     } else {
       const handle = Meteor.subscribe('observations.all');

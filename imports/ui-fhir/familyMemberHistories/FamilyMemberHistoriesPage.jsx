@@ -69,7 +69,7 @@ function FamilyMemberHistoriesPage() {
   const isLoading = useTracker(() => {
     const selectedPatientId = Session.get('selectedPatientId');
     const selectedPatient = Session.get('selectedPatient');
-    let autoPublishEnabled = get(Meteor, 'settings.public.defaults.autopublish', false);
+    let autoSubscribeEnabled = get(Meteor, 'settings.public.defaults.autoSubscribe', false);
     
     let query = {};
     
@@ -105,8 +105,8 @@ function FamilyMemberHistoriesPage() {
       }
     }
     
-    if(autoPublishEnabled){
-      const handle = Meteor.subscribe('autopublish.FamilyMemberHistories', query, { limit: 1000 });
+    if(autoSubscribeEnabled){
+      const handle = Meteor.subscribe('selectedPatient.FamilyMemberHistories', Session.get('selectedPatientId'), { limit: 1000 });
       return !handle.ready();
     } else {
       const handle = Meteor.subscribe('familyMemberHistories.all');

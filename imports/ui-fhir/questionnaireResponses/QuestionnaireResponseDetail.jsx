@@ -87,9 +87,9 @@ function QuestionnaireResponseDetail(props) {
 
   // Subscribe to data
   useTracker(function(){
-    let autoPublishEnabled = get(Meteor, 'settings.public.defaults.autopublish', false);
-    if(autoPublishEnabled){
-      return Meteor.subscribe('autopublish.QuestionnaireResponses', {}, {});
+    let autoSubscribeEnabled = get(Meteor, 'settings.public.defaults.autoSubscribe', false);
+    if(autoSubscribeEnabled){
+      return Meteor.subscribe('selectedPatient.QuestionnaireResponses', Session.get('selectedPatientId'), {});
     } else {
       return Meteor.subscribe('questionnaireresponses.all');
     }

@@ -102,10 +102,10 @@ function PractitionerDetail(props) {
 
   // Subscribe to practitioners
   const isSubscriptionReady = useTracker(function(){
-    let autoPublishEnabled = get(Meteor, 'settings.public.defaults.autopublish', false);
+    let autoSubscribeEnabled = get(Meteor, 'settings.public.defaults.autoSubscribe', false);
     let handle;
-    if(autoPublishEnabled){
-      handle = Meteor.subscribe('autopublish.Practitioners', {}, {});
+    if(autoSubscribeEnabled){
+      handle = Meteor.subscribe('selectedPatient.Practitioners', Session.get('selectedPatientId'), {});
     } else {
       handle = Meteor.subscribe('practitioners.all');
     }

@@ -95,7 +95,7 @@ export function MedicationsPage(props){
       }
     }
 
-    const handle = Meteor.subscribe('autopublish.Medications', query, {
+    const handle = Meteor.subscribe('selectedPatient.Medications', Session.get('selectedPatientId'), {
       limit: subscriptionLimit,
       sort: { '_id': -1 } // Most recent first
     });

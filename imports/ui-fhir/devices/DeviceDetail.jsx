@@ -109,9 +109,9 @@ function DeviceDetail(props) {
 
   // Subscribe to devices
   const isSubscriptionReady = useTracker(function(){
-    let autoPublishEnabled = get(Meteor, 'settings.public.defaults.autopublish', false);
-    if(autoPublishEnabled){
-      return Meteor.subscribe('autopublish.Devices', {}, { limit: 1000 }).ready();
+    let autoSubscribeEnabled = get(Meteor, 'settings.public.defaults.autoSubscribe', false);
+    if(autoSubscribeEnabled){
+      return Meteor.subscribe('selectedPatient.Devices', Session.get('selectedPatientId'), { limit: 1000 }).ready();
     } else {
       return Meteor.subscribe('devices.all').ready();
     }

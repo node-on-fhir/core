@@ -41,9 +41,9 @@ function SupplyRequestDetail(props) {
 
   // Subscribe to supply requests data if needed
   const subscriptionReady = useTracker(() => {
-    let autoPublishEnabled = get(Meteor, 'settings.public.defaults.autopublish', false);
-    if(autoPublishEnabled){
-      const handle = Meteor.subscribe('autopublish.SupplyRequests', {}, { limit: 1000 });
+    let autoSubscribeEnabled = get(Meteor, 'settings.public.defaults.autoSubscribe', false);
+    if(autoSubscribeEnabled){
+      const handle = Meteor.subscribe('selectedPatient.SupplyRequests', Session.get('selectedPatientId'), { limit: 1000 });
       return handle.ready();
     }
     return true;

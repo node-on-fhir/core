@@ -46,10 +46,10 @@ function NutritionIntakeDetail(props) {
 
   // Subscribe to nutrition intakes
   const isSubscriptionReady = useTracker(function(){
-    let autoPublishEnabled = get(Meteor, 'settings.public.defaults.autopublish', false);
+    let autoSubscribeEnabled = get(Meteor, 'settings.public.defaults.autoSubscribe', false);
     let handle;
-    if(autoPublishEnabled){
-      handle = Meteor.subscribe('autopublish.NutritionIntakes', {}, {});
+    if(autoSubscribeEnabled){
+      handle = Meteor.subscribe('selectedPatient.NutritionIntakes', Session.get('selectedPatientId'), {});
     } else {
       handle = Meteor.subscribe('nutritionIntakes.all');
     }

@@ -61,7 +61,7 @@ export function RiskAssessmentsPage(props) {
   const isLoading = useTracker(() => {
     const selectedPatientId = Session.get('selectedPatientId');
     const selectedPatient = Session.get('selectedPatient');
-    let autoPublishEnabled = get(Meteor, 'settings.public.defaults.autopublish', false);
+    let autoSubscribeEnabled = get(Meteor, 'settings.public.defaults.autoSubscribe', false);
 
     // Build patient filter query
     let query = {};
@@ -102,8 +102,8 @@ export function RiskAssessmentsPage(props) {
     console.log('RiskAssessments subscription - selectedPatientId:', selectedPatientId);
     console.log('RiskAssessments subscription query:', query);
 
-    if (autoPublishEnabled) {
-      const handle = Meteor.subscribe('autopublish.RiskAssessments', query, { limit: 1000 });
+    if (autoSubscribeEnabled) {
+      const handle = Meteor.subscribe('selectedPatient.RiskAssessments', Session.get('selectedPatientId'), { limit: 1000 });
       return !handle.ready();
     } else {
       const handle = Meteor.subscribe('riskassessments.all');

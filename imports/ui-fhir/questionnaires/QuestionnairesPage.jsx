@@ -138,9 +138,9 @@ export function QuestionnairesPage(props){
   
   // Subscribe to Questionnaires
   useTracker(function(){
-    let autoPublishEnabled = get(Meteor, 'settings.public.defaults.autopublish', false);
-    if(autoPublishEnabled){
-      return Meteor.subscribe('autopublish.Questionnaires', {}, {});
+    let autoSubscribeEnabled = get(Meteor, 'settings.public.defaults.autoSubscribe', false);
+    if(autoSubscribeEnabled){
+      return Meteor.subscribe('selectedPatient.Questionnaires', Session.get('selectedPatientId'), {});
     } else {
       return Meteor.subscribe('questionnaires.all');
     }

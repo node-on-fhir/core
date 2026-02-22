@@ -53,7 +53,7 @@ export function AuditEventsPage(props) {
 
   // Subscribe and fetch data
   const isLoading = useTracker(() => {
-    let autoPublishEnabled = get(Meteor, 'settings.public.defaults.autopublish', false);
+    let autoSubscribeEnabled = get(Meteor, 'settings.public.defaults.autoSubscribe', false);
 
     let query = {};
     if (searchFilter && searchFilter.length > 0) {
@@ -72,8 +72,8 @@ export function AuditEventsPage(props) {
       };
     }
 
-    if (autoPublishEnabled) {
-      const handle = Meteor.subscribe('autopublish.AuditEvents', query, { limit: 100, sort: { recorded: -1 } });
+    if (autoSubscribeEnabled) {
+      const handle = Meteor.subscribe('selectedPatient.AuditEvents', Session.get('selectedPatientId'), { limit: 100, sort: { recorded: -1 } });
       return !handle.ready();
     } else {
       const handle = Meteor.subscribe('auditEvents', query, { limit: 100, sort: { recorded: -1 } });

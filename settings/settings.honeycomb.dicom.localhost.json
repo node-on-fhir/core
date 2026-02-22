@@ -153,9 +153,10 @@
           }
         ]
       },
-      "autopublish": true
+      "autoSubscribe": true
     },
     "pacio": {
+      "autoSubscribe": false,
       "chiefMedicalOfficer": {
         "reference": "Practitioner/chief-medical-officer",
         "display": "Dr. Sarah Johnson, Chief Medical Officer"
@@ -267,6 +268,9 @@
     }
   },
   "private": {
+    "modules": {
+      "PatientDirectory": true
+    },
     "orbital": {
       "enableCron": true
     },
@@ -292,6 +296,7 @@
       }
     },
     "pacio": {
+      "autoPublish": false,
       "chiefMedicalOfficer": {
         "reference": "Practitioner/chief-medical-officer",
         "display": "Dr. Sarah Johnson, Chief Medical Officer"

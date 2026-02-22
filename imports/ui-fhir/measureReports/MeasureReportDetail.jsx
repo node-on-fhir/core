@@ -114,10 +114,10 @@ function MeasureReportDetail(props) {
 
   // Subscribe to measure reports
   const isSubscriptionReady = useTracker(function(){
-    let autoPublishEnabled = get(Meteor, 'settings.public.defaults.autopublish', false);
+    let autoSubscribeEnabled = get(Meteor, 'settings.public.defaults.autoSubscribe', false);
     let handle;
-    if(autoPublishEnabled){
-      handle = Meteor.subscribe('autopublish.MeasureReports', {}, {});
+    if(autoSubscribeEnabled){
+      handle = Meteor.subscribe('selectedPatient.MeasureReports', Session.get('selectedPatientId'), {});
     } else {
       handle = Meteor.subscribe('measurereports.all');
     }

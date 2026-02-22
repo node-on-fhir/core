@@ -50,6 +50,14 @@ function getAuthorizedRole(userRoles) {
 
 // Main patients publication with search and filtering
 Meteor.publish('patients.search', async function(query = {}, options = {}) {
+  // Check if PatientDirectory module is enabled on the server
+  const patientDirectoryEnabled = get(Meteor, 'settings.private.modules.PatientDirectory', false);
+  if (!patientDirectoryEnabled) {
+    console.warn('[patients.search] Patient Directory module is disabled in private settings');
+    this.error(new Meteor.Error('module-disabled', 'Could not establish subscription to the Patient Directory.'));
+    return;
+  }
+
   // Check if user is authenticated
   if (!this.userId) {
     // In production, always require authentication

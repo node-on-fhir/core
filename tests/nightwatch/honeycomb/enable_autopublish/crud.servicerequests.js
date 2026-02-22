@@ -984,16 +984,16 @@ describe('ServiceRequests CRUD Operations', function() {
         if (result.value.hasTable) {
         // If table exists, proceed with delete test
         browser
-          .execute(function(timestamp) {
+          .execute(function(codeDisplay) {
             const rows = document.querySelectorAll('#serviceRequestsTable tbody tr');
             for (let row of rows) {
-              if (row.textContent.includes(timestamp)) {
+              if (row.textContent.includes(codeDisplay)) {
                 row.click();
                 return true;
               }
             }
             return false;
-          }, [timestamp.toString()], function(result) {
+          }, [testServiceRequest.codeDisplay], function(result) {
             browser.assert.equal(result.value, true, 'Found and clicked service request row');
           });
 

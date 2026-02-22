@@ -57,7 +57,7 @@ function ActivityDefinitionDetail(props) {
         ]
       };
       console.log('[ActivityDefinitionDetail] Subscribing with ID query:', query);
-      const handle = Meteor.subscribe('autopublish.ActivityDefinitions', query, {});
+      const handle = Meteor.subscribe('selectedPatient.ActivityDefinitions', Session.get('selectedPatientId'), {});
       return handle.ready();
     }
     return true;

@@ -308,7 +308,7 @@ function DicomViewerPage() {
     console.log('[DicomViewerPage] useTracker running, studyId:', studyId, 'fileIdFromQuery:', fileIdFromQuery);
 
     // CRITICAL: Subscribe to ImagingStudies to receive data from server
-    const studiesHandle = Meteor.subscribe('autopublish.ImagingStudies', {}, {});
+    const studiesHandle = Meteor.subscribe('selectedPatient.ImagingStudies', Session.get('selectedPatientId'), {});
 
     const ImagingStudies = Meteor.Collections?.ImagingStudies;
 

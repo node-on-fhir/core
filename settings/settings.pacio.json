@@ -76,6 +76,7 @@
       "homePage": "/pacio-dashboard",
       "prominentHeader": true,
       "showPatientNameInHeader": true,
+      "autoSubscribe": false,
       "displayNavbars": true,
       "disableHeader": false,
       "disableFooter": false,
@@ -110,6 +111,9 @@
           "/risk-assessments"
         ]
       }
+    },
+    "pacio": {
+      "autoSubscribe": true
     },
     "interfaces": {
       "default": {
@@ -229,6 +233,9 @@
     }
   },
   "private": {
+    "modules": {
+      "PatientDirectory": true
+    },
     "debug": true,
     "fhir": {
       "disableOauth": false,
@@ -322,6 +329,7 @@
       }
     },
     "pacio": {
+      "autoPublish": true,
       "fhirServerUrl": "",
       "fhirServerAuth": {
         "type": "oauth2",

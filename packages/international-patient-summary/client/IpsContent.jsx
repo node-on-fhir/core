@@ -156,12 +156,12 @@ const IpsContent = forwardRef(function IpsContent(props, ref) {
     counts.medicalDevices = C.Devices ? C.Devices.find({}).count() : 0;
     counts.vitalSigns = C.Observations ? C.Observations.find({ 'category.coding.code': 'vital-signs' }).count() : 0;
 
-    counts.socialHistory = 0;
-    counts.pregnancy = 0;
-    counts.advanceDirectives = 0;
-    counts.functionalStatus = 0;
+    counts.socialHistory = C.Observations ? C.Observations.find({ 'category.coding.code': 'social-history' }).count() : 0;
+    counts.pregnancy = C.Observations ? C.Observations.find({ 'code.coding.code': { $in: ['82810-3', '11636-8', '11637-6', '11638-4', '11639-2', '11640-0', '33065-4'] } }).count() : 0;
+    counts.advanceDirectives = C.Consents ? C.Consents.find({}).count() : 0;
+    counts.functionalStatus = C.ClinicalImpressions ? C.ClinicalImpressions.find({}).count() : 0;
     counts.planOfCare = C.CarePlans ? C.CarePlans.find({}).count() : 0;
-    counts.pastProblems = 0;
+    counts.pastProblems = C.Conditions ? C.Conditions.find({ 'clinicalStatus.coding.0.code': { $in: ['inactive', 'resolved', 'remission'] } }).count() : 0;
 
     return counts;
   }, []);

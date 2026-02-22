@@ -84,9 +84,9 @@ export function AllergyIntolerancesPage(props){
   
   // Subscribe to Patients data for patient context
   const patientsReady = useTracker(() => {
-    let autoPublishEnabled = get(Meteor, 'settings.public.defaults.autopublish', false);
-    if(autoPublishEnabled){
-      const handle = Meteor.subscribe('autopublish.Patients', {}, { limit: 100 });
+    let autoSubscribeEnabled = get(Meteor, 'settings.public.defaults.autoSubscribe', false);
+    if(autoSubscribeEnabled){
+      const handle = Meteor.subscribe('selectedPatient.Patients', Session.get('selectedPatientId'), { limit: 100 });
       return handle.ready();
     } else {
       const handle = Meteor.subscribe('patients.search', {});
@@ -127,7 +127,7 @@ export function AllergyIntolerancesPage(props){
   const isLoading = useTracker(() => {
     const selectedPatientId = Session.get('selectedPatientId');
     const selectedPatient = Session.get('selectedPatient');
-    let autoPublishEnabled = get(Meteor, 'settings.public.defaults.autopublish', false);
+    let autoSubscribeEnabled = get(Meteor, 'settings.public.defaults.autoSubscribe', false);
     
     // Use FhirUtilities to build the query - it handles all reference formats
     let query = {};
@@ -180,8 +180,8 @@ export function AllergyIntolerancesPage(props){
       }
     }
     
-    if(autoPublishEnabled){
-      const handle = Meteor.subscribe('autopublish.AllergyIntolerances', query, { limit: 1000 });
+    if(autoSubscribeEnabled){
+      const handle = Meteor.subscribe('selectedPatient.AllergyIntolerances', Session.get('selectedPatientId'), { limit: 1000 });
       return !handle.ready();
     } else {
       const handle = Meteor.subscribe('allergyintolerances.all');

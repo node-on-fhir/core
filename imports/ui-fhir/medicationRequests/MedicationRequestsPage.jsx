@@ -88,9 +88,9 @@ export function MedicationRequestsPage(props){
 
   // Subscribe to MedicationRequests
   useTracker(function(){
-    let autoPublishEnabled = get(Meteor, 'settings.public.defaults.autopublish', false);
-    if(autoPublishEnabled){
-      return Meteor.subscribe('autopublish.MedicationRequests', {}, {});
+    let autoSubscribeEnabled = get(Meteor, 'settings.public.defaults.autoSubscribe', false);
+    if(autoSubscribeEnabled){
+      return Meteor.subscribe('selectedPatient.MedicationRequests', Session.get('selectedPatientId'), {});
     } else {
       return Meteor.subscribe('medicationRequests.all');
     }

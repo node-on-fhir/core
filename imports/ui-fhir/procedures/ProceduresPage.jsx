@@ -84,7 +84,7 @@ export function ProceduresPage(props){
   const isLoading = useTracker(function(){
     const selectedPatientId = Session.get('selectedPatientId');
     const selectedPatient = Session.get('selectedPatient');
-    let autoPublishEnabled = get(Meteor, 'settings.public.defaults.autopublish', false);
+    let autoSubscribeEnabled = get(Meteor, 'settings.public.defaults.autoSubscribe', false);
 
     let query = {};
 
@@ -125,8 +125,8 @@ export function ProceduresPage(props){
     console.log('Procedures subscription - searchFilter:', searchFilter);
     console.log('Procedures subscription query:', query);
 
-    if(autoPublishEnabled){
-      const handle = Meteor.subscribe('autopublish.Procedures', query, { limit: 1000 });
+    if(autoSubscribeEnabled){
+      const handle = Meteor.subscribe('selectedPatient.Procedures', Session.get('selectedPatientId'), { limit: 1000 });
       return !handle.ready();
     } else {
       const handle = Meteor.subscribe('procedures.all');

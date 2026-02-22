@@ -55,9 +55,9 @@ function ScheduleDetail(props) {
   
   // Subscribe to schedules data
   const subscriptionReady = useTracker(() => {
-    let autoPublishEnabled = get(Meteor, 'settings.public.defaults.autopublish', false);
+    let autoSubscribeEnabled = get(Meteor, 'settings.public.defaults.autoSubscribe', false);
     
-    if(autoPublishEnabled) {
+    if(autoSubscribeEnabled) {
       // Schedules are not patient-specific
       return true;
     }

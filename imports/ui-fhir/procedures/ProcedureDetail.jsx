@@ -114,9 +114,9 @@ function ProcedureDetail(props) {
 
   // Subscribe to procedures
   const isSubscriptionReady = useTracker(function(){
-    let autoPublishEnabled = get(Meteor, 'settings.public.defaults.autopublish', false);
-    if(autoPublishEnabled){
-      return Meteor.subscribe('autopublish.Procedures', {}, {}).ready();
+    let autoSubscribeEnabled = get(Meteor, 'settings.public.defaults.autoSubscribe', false);
+    if(autoSubscribeEnabled){
+      return Meteor.subscribe('selectedPatient.Procedures', Session.get('selectedPatientId'), {}).ready();
     } else {
       return Meteor.subscribe('procedures.all').ready();
     }

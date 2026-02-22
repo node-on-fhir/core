@@ -121,7 +121,7 @@ export function DocumentReferencesPage(props){
       }
     }
     
-    const handle = Meteor.subscribe('autopublish.DocumentReferences', query, { limit: 1000 });
+    const handle = Meteor.subscribe('selectedPatient.DocumentReferences', Session.get('selectedPatientId'), { limit: 1000 });
     return !handle.ready();
   }, [Session.get('selectedPatientId')]);
   

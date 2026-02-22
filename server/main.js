@@ -110,7 +110,7 @@ import '../imports/methods/tasks.js';
 Meteor.startup(async function() {
   // List of workflow server method paths to attempt loading
   const workflowServerMethods = [
-    '@merkalis/node-on-fhir-merkle-storage/server/methods'
+    '@merkalis/node-on-fhir-merkle-storage/server'
   ];
 
   for (const pkgPath of workflowServerMethods) {
@@ -130,6 +130,7 @@ import '../imports/accounts/server/methods.js';
 
 // Import publications
 import './publications/autopublish.js';
+import './publications/selectedPatient.js';
 import './publications/patients.js';
 import './publications/conditions.js';
 import './publications/communications.js';

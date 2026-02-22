@@ -49,7 +49,7 @@ export function ActivityDefinitionsPage(props) {
 
   // Subscribe to ActivityDefinitions data
   const isLoading = useTracker(function() {
-    const autoPublishEnabled = get(Meteor, 'settings.public.defaults.autopublish', false);
+    const autoSubscribeEnabled = get(Meteor, 'settings.public.defaults.autoSubscribe', false);
 
     let query = {};
     if (searchFilter && searchFilter.length > 0) {
@@ -65,8 +65,8 @@ export function ActivityDefinitionsPage(props) {
     }
 
     let handle;
-    if (autoPublishEnabled) {
-      handle = Meteor.subscribe('autopublish.ActivityDefinitions', query, { limit: 100 });
+    if (autoSubscribeEnabled) {
+      handle = Meteor.subscribe('selectedPatient.ActivityDefinitions', Session.get('selectedPatientId'), { limit: 100 });
     }
 
     return handle ? !handle.ready() : false;

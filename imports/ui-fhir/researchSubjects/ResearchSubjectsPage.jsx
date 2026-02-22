@@ -58,9 +58,9 @@ export function ResearchSubjectsPage(props){
 
   // Subscribe to ResearchSubjects
   useTracker(function(){
-    let autoPublishEnabled = get(Meteor, 'settings.public.defaults.autopublish', false);
-    if(autoPublishEnabled){
-      return Meteor.subscribe('autopublish.ResearchSubjects', {}, {});
+    let autoSubscribeEnabled = get(Meteor, 'settings.public.defaults.autoSubscribe', false);
+    if(autoSubscribeEnabled){
+      return Meteor.subscribe('selectedPatient.ResearchSubjects', Session.get('selectedPatientId'), {});
     } else {
       return Meteor.subscribe('researchSubjects.all');
     }

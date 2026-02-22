@@ -111,9 +111,9 @@ function OrganizationDetail(props) {
 
   // Subscribe to organizations so data is available locally
   const isSubscriptionReady = useTracker(function(){
-    let autoPublishEnabled = get(Meteor, 'settings.public.defaults.autopublish', false);
-    if(autoPublishEnabled){
-      return Meteor.subscribe('autopublish.Organizations', {}, { limit: 1000 }).ready();
+    let autoSubscribeEnabled = get(Meteor, 'settings.public.defaults.autoSubscribe', false);
+    if(autoSubscribeEnabled){
+      return Meteor.subscribe('selectedPatient.Organizations', Session.get('selectedPatientId'), { limit: 1000 }).ready();
     } else {
       return Meteor.subscribe('organizations.all').ready();
     }

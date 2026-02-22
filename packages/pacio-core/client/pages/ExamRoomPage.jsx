@@ -1,4 +1,4 @@
-// /packages/pacio-core/client/pages/MainPage.jsx
+// /packages/pacio-core/client/pages/ExamRoomPage.jsx
 
 import React, { useState, useEffect } from 'react';
 import { Meteor } from 'meteor/meteor';
@@ -55,7 +55,6 @@ import {
   SwapHoriz as SwapHorizIcon,
   Assignment as AssignmentIcon,
   Group as GroupIcon,
-  Map as MapIcon,
   MoreVert as MoreVertIcon,
   CalendarToday as CalendarTodayIcon,
   Hotel as HotelIcon,
@@ -71,11 +70,12 @@ import {
   LocalPharmacy as LocalPharmacyIcon,
   Flare as FlareIcon,
   RocketLaunch as RocketLaunchIcon,
-  PhotoCamera as PhotoCameraIcon
+  PhotoCamera as PhotoCameraIcon,
+  Map as MapIcon
 } from '@mui/icons-material';
+import LocationMap from '../components/LocationMap';
 import { Beds } from '../../lib/collections/BedsCollection';
 import { SearchPatientsModalDialog } from '../components/SearchPatientsModalDialog';
-import LocationMap from '../components/LocationMap';
 import { resolveVehicleConfig } from '../../lib/utilities/VehicleConfigResolver';
 
 // Access Communications from global namespace (initialized by main app)
@@ -121,7 +121,7 @@ const inspirationalQuotes = [
   }
 ];
 
-export function MainPage() {
+export function ExamRoomPage() {
   // Access useNavigate from Meteor object (packages can't directly import from react-router-dom)
   const useNavigate = Meteor.useNavigate;
   const navigate = useNavigate ? useNavigate() : () => console.warn('useNavigate not available');
@@ -145,7 +145,6 @@ export function MainPage() {
   const [currentQuoteIndex, setCurrentQuoteIndex] = useState(0);
   const [anchorEl, setAnchorEl] = useState(null);
   const [menuBedId, setMenuBedId] = useState(null);
-  const [customMapConfig, setCustomMapConfig] = useState(null);
   const [vehicleImageError, setVehicleImageError] = useState(false);
   const [dashboardPhotoFallback, setDashboardPhotoFallback] = useState(false);
   const [showPhoto, setShowPhoto] = useState(true);
@@ -155,17 +154,6 @@ export function MainPage() {
   // Track authentication status
   const userId = useTracker(() => Meteor.userId());
   const user = useTracker(() => Meteor.user());
-
-  // Check for CustomMap package following the DynamicRoutes pattern
-  useEffect(() => {
-    // Look for CustomMap in the Package object
-    if (typeof Package !== 'undefined' && Package.CustomMap) {
-      console.log('CustomMap found in Package object:', Package.CustomMap);
-      setCustomMapConfig(Package.CustomMap);
-    } else {
-      console.log('No CustomMap package found, using default LocationMap');
-    }
-  }, []);
 
   // Rotate through quotes
   useEffect(() => {
@@ -230,18 +218,17 @@ export function MainPage() {
 
     calculateHeight();
     window.addEventListener('resize', calculateHeight);
-    
+
     return () => window.removeEventListener('resize', calculateHeight);
   }, []);
-
 
   // Subscribe to beds and patients data
   const bedsLoading = useSubscribe('pacio.beds');
   const patientsLoading = useSubscribe('pacio.patients');
-  
+
   // Get practitioner ID through secure method
   const [practitionerId, setPractitionerId] = useState(null);
-  
+
   useEffect(() => {
     if (userId) {
       Meteor.call('users.getCurrentPractitionerId', (error, result) => {
@@ -254,17 +241,17 @@ export function MainPage() {
       });
     }
   }, [userId]);
-  
+
   // Subscribe to communications for the current practitioner
   // Server will look up practitionerId if not provided
   const communicationsLoading = useSubscribe('communications.byRecipient');
-  
+
   // Also subscribe to all communications for debugging
   const allCommunicationsLoading = useSubscribe('communications', 100);
 
   // Subscribe to SWPC space weather alerts
   const swpcAlertsLoading = useSubscribe('orbital.spaceWeatherAlerts', {}, {});
-  
+
   // Fetch Chief Medical Officer data
   const chiefMedicalOfficer = useTracker(() => {
     const Practitioners = get(Meteor, 'Collections.Practitioners');
@@ -272,7 +259,7 @@ export function MainPage() {
       console.warn('Practitioners collection not available');
       return null;
     }
-    
+
     // Find practitioner with Chief Medical Officer role
     // You may need to adjust this query based on your actual data structure
     const cmo = Practitioners.findOne({
@@ -282,17 +269,17 @@ export function MainPage() {
         { 'name.text': { $regex: /chief.*medical.*officer/i } }
       ]
     });
-    
+
     if (!cmo) {
       // Fallback: try to find any practitioner with MD qualification
       return Practitioners.findOne({
         'qualification.code.text': { $regex: /MD|M\.D\.|Doctor/i }
       });
     }
-    
+
     return cmo;
   }, []);
-  
+
   // Track selected crewed vehicle from Session (set by CrewedVehiclesPage or boot hydration)
   const selectedCrewedVehicle = useTracker(() => Session.get('selectedCrewedVehicle'), []);
   const vehicleConfig = resolveVehicleConfig(selectedCrewedVehicle);
@@ -327,7 +314,7 @@ export function MainPage() {
     // Calculate occupied beds (from limited set)
     const occupiedBeds = limitedBeds.filter(bed => bed && bed.status === 'occupied').length;
     const totalBeds = limitedBeds.length || maxBeds;
-    
+
     return {
       facility: {
         id: 'mh-001',
@@ -350,17 +337,17 @@ export function MainPage() {
         console.log('PractitionerId:', practitionerId);
         console.log('User isPractitioner:', user?.profile?.isPractitioner);
         console.log('Communications collection available:', !!Communications);
-        
+
         // If Communications not available, return empty array
         if (!Communications) {
           console.log('Communications collection not available');
           return [];
         }
-        
+
         // The server publication already filters based on practitioner status
         // We just need to filter for active alerts
         console.log('Looking for alert communications');
-        
+
         // Simple query - server already filtered by recipient
         const query = {
           $and: [
@@ -368,9 +355,9 @@ export function MainPage() {
             { 'category.0.coding.0.code': { $in: ['intervention-approval', 'alert', 'notification'] } }
           ]
         };
-        
+
         console.log('Communications query:', query);
-        
+
         // Debug: Check what's in the Communications collection
         const allComms = Communications.find({}).fetch();
         console.log('Total communications in collection:', allComms.length);
@@ -380,14 +367,14 @@ export function MainPage() {
           console.log('Sample communication:', allComms[0]);
           console.log('Communication recipients:', allComms.map(c => c.recipient));
         }
-        
+
         const communications = Communications.find(query, {
           sort: { sent: -1 },
           limit: 10
         }).fetch();
-        
+
         console.log('Found communications matching query:', communications);
-        
+
         // Transform clinical communications into alert format
         const clinicalAlerts = communications.map((comm, index) => {
           // Extract patient info from subject
@@ -457,7 +444,7 @@ export function MainPage() {
   const filteredBeds = (facilityData.beds || []).filter(bed => {
     // Ensure bed object exists and has required properties
     if (!bed || typeof bed !== 'object') return false;
-    
+
     if (selectedFilter === 'occupied' && bed.status !== 'occupied') return false;
     if (selectedFilter === 'vacant' && bed.status === 'occupied') return false;
     if (selectedFilter === 'critical' && bed.patient?.acuityLevel !== 'Critical') return false;
@@ -497,7 +484,7 @@ export function MainPage() {
       case 'fall': return <WarningIcon color="error" />;
       case 'call': return <NotificationsIcon color="primary" />;
       case 'medical': return <LocalHospitalIcon color="warning" />;
-      case 'space-weather': return <FlareIcon sx={{ color: '#ff9800' }} />;
+      case 'space-weather': return <FlareIcon color="warning" />;
       default: return <InfoIcon />;
     }
   };
@@ -549,7 +536,7 @@ export function MainPage() {
   // Handle discharge patient
   const handleDischargePatient = async () => {
     if (!menuBedId) return;
-    
+
     try {
       await Meteor.callAsync('pacio.releaseBed', menuBedId);
       console.log('Patient discharged from bed');
@@ -617,20 +604,20 @@ export function MainPage() {
   // Show loading state while data is being fetched
   const isLoadingBeds = bedsLoading && bedsLoading();
   const isLoadingPatients = patientsLoading && patientsLoading();
-  
+
   if (isLoadingBeds || isLoadingPatients) {
     return (
       <Box sx={{ p: 2, height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: isDark ? '#121212' : '#f5f5f5' }}>
         <Box textAlign="center">
           <LinearProgress sx={{ width: 200, mb: 2 }} />
-          <Typography color="textSecondary">Loading bed status...</Typography>
+          <Typography sx={{ color: isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.6)' }}>Loading bed status...</Typography>
         </Box>
       </Box>
     );
   }
 
   return (
-    <Box sx={{ p: 2, minHeight: '100vh', overflow: 'hidden', bgcolor: isDark ? '#121212' : '#f5f5f5' }}>
+    <Box sx={{ p: 2, minHeight: '100vh', overflow: 'hidden' }}>
       {/* Header */}
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
         <Box>
@@ -731,7 +718,7 @@ export function MainPage() {
                 <Tooltip title="Vehicle photo"><PhotoCameraIcon fontSize="small" /></Tooltip>
               </ToggleButton>
               <ToggleButton value="map">
-                <Tooltip title="Map"><MapIcon fontSize="small" /></Tooltip>
+                <Tooltip title="Location Map"><MapIcon fontSize="small" /></Tooltip>
               </ToggleButton>
               <ToggleButton value="alerts">
                 <Tooltip title="Alerts"><NotificationsIcon fontSize="small" /></Tooltip>
@@ -759,7 +746,7 @@ export function MainPage() {
                   <Typography variant="h5" fontWeight="bold">
                     {facilityData.facility.occupiedBeds}
                   </Typography>
-                  <Typography variant="body2" color="textSecondary">
+                  <Typography variant="body2">
                     Occupied Beds
                   </Typography>
                 </Box>
@@ -783,7 +770,7 @@ export function MainPage() {
                   <Typography variant="h5" fontWeight="bold">
                     {((facilityData.facility.occupiedBeds / facilityData.facility.totalBeds) * 100).toFixed(0)}%
                   </Typography>
-                  <Typography variant="body2" color="textSecondary">
+                  <Typography variant="body2">
                     Occupancy Rate
                   </Typography>
                 </Box>
@@ -807,7 +794,7 @@ export function MainPage() {
                   <Typography variant="h5" fontWeight="bold">
                     {facilityData.recentAlerts.length}
                   </Typography>
-                  <Typography variant="body2" color="textSecondary">
+                  <Typography variant="body2">
                     Active Alerts
                   </Typography>
                 </Box>
@@ -835,7 +822,7 @@ export function MainPage() {
                       <Typography variant="h6" fontWeight="bold" sx={{ fontSize: '1rem', lineHeight: 1.2 }}>
                         {get(chiefMedicalOfficer, 'name[0].given[0]', '')} {get(chiefMedicalOfficer, 'name[0].family', 'CMO')}
                       </Typography>
-                      <Typography variant="caption" color="textSecondary" sx={{ display: 'block' }}>
+                      <Typography variant="caption" sx={{ display: 'block' }}>
                         Chief Medical Officer
                       </Typography>
                       <Typography variant="caption" color="primary" sx={{ fontSize: '0.7rem' }}>
@@ -847,7 +834,7 @@ export function MainPage() {
                       <Typography variant="h5" fontWeight="bold">
                         CMO
                       </Typography>
-                      <Typography variant="body2" color="textSecondary">
+                      <Typography variant="body2">
                         Not Assigned
                       </Typography>
                     </>
@@ -927,25 +914,25 @@ export function MainPage() {
                 </FormControl>
               )}
             </Box>
-            
+
             {!userId ? (
-              <Box 
-                display="flex" 
-                flexDirection="column" 
-                alignItems="center" 
-                justifyContent="center" 
+              <Box
+                display="flex"
+                flexDirection="column"
+                alignItems="center"
+                justifyContent="center"
                 height="300px"
                 gap={2}
               >
-                <LocalHospitalIcon sx={{ fontSize: 60, color: 'text.secondary' }} />
-                <Typography variant="h6" color="text.secondary">
+                <LocalHospitalIcon sx={{ fontSize: 60, color: isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.5)' }} />
+                <Typography variant="h6" sx={{ color: isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.5)' }}>
                   Please log in to view bed status
                 </Typography>
-                <Typography variant="body2" color="text.secondary">
+                <Typography variant="body2" sx={{ color: isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.5)' }}>
                   Patient information is protected and requires authentication
                 </Typography>
-                <Button 
-                  variant="contained" 
+                <Button
+                  variant="contained"
                   onClick={() => navigate('/signin')}
                   sx={{ mt: 2 }}
                 >
@@ -957,7 +944,7 @@ export function MainPage() {
               {filteredBeds.map(bed => {
                 // Skip invalid bed objects
                 if (!bed || !bed._id) return null;
-                
+
                 return (
                 <Grid item xs={12} key={bed._id || bed.bedId}>
                   <Card
@@ -997,7 +984,7 @@ export function MainPage() {
                                   <Chip label="Isolation" size="small" color="error" />
                                 )}
                               </Box>
-                              <Typography variant="caption" color="textSecondary" sx={{ flex: 1 }}>
+                              <Typography variant="caption" sx={{ flex: 1 }}>
                                 Bed {bed.bedId || bed.roomNumber} • {bed.primaryCondition || 'General Care'}
                               </Typography>
                             </Box>
@@ -1059,7 +1046,7 @@ export function MainPage() {
                                     />
                                   )}
                                 </Box>
-                                <Typography variant="caption" color="textSecondary">
+                                <Typography variant="caption">
                                   Bed {bed.bedId || bed.roomNumber} • {bed.patientMRN} • Admitted {bed.admissionDate ? moment(bed.admissionDate).fromNow() : 'N/A'}
                                 </Typography>
                               </Box>
@@ -1078,13 +1065,13 @@ export function MainPage() {
                             <Grid container spacing={2}>
                               {/* Patient Info Column */}
                               <Grid item xs={12} sm={4}>
-                                <Typography variant="caption" color="textSecondary" display="block" gutterBottom>
+                                <Typography variant="caption" display="block" gutterBottom>
                                   PRIMARY CONDITION
                                 </Typography>
                                 <Typography variant="body2" gutterBottom>
                                   {bed.primaryCondition || 'General Care'}
                                 </Typography>
-                                <Typography variant="caption" color="textSecondary" display="block" mt={1}>
+                                <Typography variant="caption" display="block" mt={1}>
                                   ATTENDING
                                 </Typography>
                                 <Typography variant="body2">
@@ -1092,7 +1079,7 @@ export function MainPage() {
                                 </Typography>
                                 {bed.dietRestrictions && (
                                   <>
-                                    <Typography variant="caption" color="textSecondary" display="block" mt={1}>
+                                    <Typography variant="caption" display="block" mt={1}>
                                       DIET
                                     </Typography>
                                     <Typography variant="body2">
@@ -1104,7 +1091,7 @@ export function MainPage() {
 
                               {/* Vitals Column */}
                               <Grid item xs={12} sm={4}>
-                                <Typography variant="caption" color="textSecondary" display="block" gutterBottom>
+                                <Typography variant="caption" display="block" gutterBottom>
                                   VITALS {bed.vitals && bed.vitals.lastChecked ? `(${moment(bed.vitals.lastChecked).fromNow()})` : ''}
                                 </Typography>
                                 <Box display="flex" flexWrap="wrap" gap={1}>
@@ -1168,7 +1155,7 @@ export function MainPage() {
 
                               {/* Workflow Column */}
                               <Grid item xs={12} sm={4}>
-                                <Typography variant="caption" color="textSecondary" display="block" gutterBottom>
+                                <Typography variant="caption" display="block" gutterBottom>
                                   WORKFLOW
                                 </Typography>
                                 <Box display="flex" flexDirection="column" gap={0.5}>
@@ -1211,28 +1198,28 @@ export function MainPage() {
                       ) : (
                         <Box display="flex" alignItems="center" justifyContent="space-between">
                           <Box display="flex" alignItems="center" gap={2}>
-                            <Avatar sx={{ 
-                              bgcolor: (bed.status === 'available' || bed.status === 'vacant') ? 'grey.300' : 
-                                      bed.status === 'cleaning' ? 'warning.light' : 
-                                      bed.status === 'maintenance' ? 'error.light' : 'grey.300' 
+                            <Avatar sx={{
+                              bgcolor: (bed.status === 'available' || bed.status === 'vacant') ? 'grey.300' :
+                                      bed.status === 'cleaning' ? 'warning.light' :
+                                      bed.status === 'maintenance' ? 'error.light' : 'grey.300'
                             }}>
-                              {bed.status === 'cleaning' && CleaningIcon ? <CleaningIcon /> : 
-                               bed.status === 'maintenance' && BuildIcon ? <BuildIcon /> : 
+                              {bed.status === 'cleaning' && CleaningIcon ? <CleaningIcon /> :
+                               bed.status === 'maintenance' && BuildIcon ? <BuildIcon /> :
                                HotelIcon ? <HotelIcon /> : null}
                             </Avatar>
                             <Box>
                               <Typography variant="h6">
                                 Bed {bed.bedId || bed.roomNumber}
                               </Typography>
-                              <Typography variant="body2" color="textSecondary" sx={{ textTransform: 'capitalize' }}>
+                              <Typography variant="body2" sx={{ textTransform: 'capitalize' }}>
                                 {bed.status || 'Available'}
                               </Typography>
                             </Box>
                           </Box>
                           {(bed.status === 'available' || bed.status === 'vacant') && (
-                            <Button 
-                              variant="outlined" 
-                              size="small" 
+                            <Button
+                              variant="outlined"
+                              size="small"
                               startIcon={<PeopleIcon />}
                               onClick={() => handleAssignPatient(bed._id)}
                             >
@@ -1240,10 +1227,10 @@ export function MainPage() {
                             </Button>
                           )}
                           {bed.status === 'cleaning' && (
-                            <Button 
-                              variant="outlined" 
-                              size="small" 
-                              color="success" 
+                            <Button
+                              variant="outlined"
+                              size="small"
+                              color="success"
                               startIcon={<CheckCircleIcon />}
                               onClick={() => handleMarkClean(bed._id)}
                             >
@@ -1263,15 +1250,22 @@ export function MainPage() {
             </Grid>
             ) : (
               <Box sx={{ p: 4, textAlign: 'center' }}>
-                <Typography variant="h6" color="text.secondary">
+                <Typography variant="h6" sx={{ color: isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.5)' }}>
                   No beds available
                 </Typography>
+              </Box>
+            )}
+
+            {/* IPS Content for selected patient */}
+            {userId && Session.get('selectedPatientId') && Meteor.IpsContent && (
+              <Box sx={{ mt: 2 }}>
+                <Meteor.IpsContent />
               </Box>
             )}
           </Paper>
         </Grid>
 
-        {/* Right Side - Vehicle Image, Map and Alerts */}
+        {/* Right Side - Vehicle Image and Alerts */}
         {columnCount === 2 && (() => {
           // Calculate how many right-side panels are visible
           const hasVehicleImage = !!vehicleConfig.vehicleFhirId || !!vehicleConfig.dashboardPhoto;
@@ -1352,7 +1346,7 @@ export function MainPage() {
                 </Grid>
               )}
 
-              {/* Map View - Only show if API key is available and map toggle is on */}
+              {/* Location Map - Only show if API key available and map toggle on */}
               {showMap && (
                 <Grid item xs={12}>
                   <Paper sx={{
@@ -1363,40 +1357,15 @@ export function MainPage() {
                     '& .MuiTypography-root': { color: cardTextColor }
                   }}>
                     <Typography variant="h6" gutterBottom>
-                      {customMapConfig ? customMapConfig.defaultProps?.title || 'Lunar Surface Map' : 'Facility Location'}
+                      Facility Location
                     </Typography>
-                    {(() => {
-                      // Use CustomMap if available, otherwise default LocationMap
-                      if (customMapConfig && customMapConfig.component) {
-                        const CustomMapComponent = customMapConfig.component;
-                        return (
-                          <CustomMapComponent
-                            {...(customMapConfig.defaultProps || {})}
-                            height="calc(100% - 40px)"
-                            assets={[
-                              {
-                                id: 'facility-1',
-                                name: facilityData.facility.name,
-                                type: 'HABITAT',
-                                status: 'OPERATIONAL',
-                                coordinates: [facilityData.facility.lng, facilityData.facility.lat],
-                                o2Level: 95
-                              }
-                            ]}
-                          />
-                        );
-                      } else {
-                        return (
-                          <LocationMap
-                            latitude={facilityData.facility.lat}
-                            longitude={facilityData.facility.lng}
-                            name={facilityData.facility.name}
-                            height="calc(100% - 40px)"
-                            zoom={14}
-                          />
-                        );
-                      }
-                    })()}
+                    <LocationMap
+                      latitude={facilityData.facility.lat}
+                      longitude={facilityData.facility.lng}
+                      name={facilityData.facility.name}
+                      height="calc(100% - 40px)"
+                      zoom={14}
+                    />
                   </Paper>
                 </Grid>
               )}
@@ -1497,7 +1466,7 @@ export function MainPage() {
         onSelectPatient={handlePatientSelected}
         bedId={selectedBedId}
       />
-      
+
       {/* Bed Actions Menu */}
       <Menu
         anchorEl={anchorEl}
@@ -1546,7 +1515,7 @@ export function MainPage() {
         <Divider />
         <MenuItem onClick={handleDischargePatient}>
           <ListItemIcon>
-            <PersonOffIcon fontSize="small" color="error" />
+            <PersonOffIcon fontSize="small" sx={{ color: 'error.main' }} />
           </ListItemIcon>
           <ListItemText>Discharge Patient</ListItemText>
         </MenuItem>

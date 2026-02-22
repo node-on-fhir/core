@@ -5,6 +5,7 @@ import { useTracker } from 'meteor/react-meteor-data';
 import { useNavigate } from 'react-router-dom';
 
 import {
+  Alert,
   Grid,
   Container,
   Divider,
@@ -81,6 +82,7 @@ export function PatientsDirectory(props){
   const [searchFilter, setSearchFilter] = useState('');
   const [debouncedSearchFilter, setDebouncedSearchFilter] = useState('');
   const searchTimeoutRef = useRef(null);
+  const [subscriptionError, setSubscriptionError] = useState(null);
   const [launchModalOpen, setLaunchModalOpen] = useState(false);
   const [launchPatient, setLaunchPatient] = useState(null);
 
@@ -124,9 +126,6 @@ export function PatientsDirectory(props){
   // Subscribe to Patients data with search filter
   const isLoading = useTracker(() => {
     console.log('PatientDirectory subscription - debouncedSearchFilter:', debouncedSearchFilter);
-    
-    // Check if autopublish is enabled (for backward compatibility)
-    let autoPublishEnabled = get(Meteor, 'settings.public.defaults.autopublish', false);
     
     // Check if PatientDirectory module is enabled
     const patientDirectoryEnabled = get(Meteor, 'settings.public.modules.PatientDirectory', true);
@@ -183,24 +182,23 @@ export function PatientsDirectory(props){
       }
     }
     
-    // Choose the appropriate publication based on configuration
-    let handle;
-    console.log('PatientsDirectory - autoPublishEnabled:', autoPublishEnabled);
+    // Subscribe to patients.search which has role-based ACL
+    // - Practitioners: full access (configurable)
+    // - Patients: only see their own record
     console.log('PatientsDirectory - query keys:', Object.keys(query).length);
     console.log('PatientsDirectory - full query:', JSON.stringify(query, null, 2));
-
-    if(autoPublishEnabled){
-      // Use autopublish if explicitly enabled via settings
-      // This bypasses ACL - only use for development when needed
-      console.log('Using autopublish.Patients with query:', JSON.stringify(query));
-      handle = Meteor.subscribe('autopublish.Patients', query, { limit: 1000 });
-    } else {
-      // Always use patients.search which has role-based ACL
-      // - Practitioners: full access (configurable)
-      // - Patients: only see their own record
-      console.log('Using patients.search publication with query:', JSON.stringify(query));
-      handle = Meteor.subscribe('patients.search', query, { limit: 1000 });
-    }
+    console.log('Using patients.search publication with query:', JSON.stringify(query));
+    let handle = Meteor.subscribe('patients.search', query, { limit: 1000 }, {
+      onReady: function() {
+        setSubscriptionError(null);
+      },
+      onStop: function(error) {
+        if (error) {
+          console.error('[PatientsDirectory] Subscription error:', error.reason);
+          setSubscriptionError(error.reason || 'Could not establish subscription to the Patient Directory.');
+        }
+      }
+    });
     
     return !handle.ready();
   }, [debouncedSearchFilter]);
@@ -228,176 +226,56 @@ export function PatientsDirectory(props){
     return Patients.findOne({_id: Session.get('selectedPatientId')});
   }, [])
   data.patients = useTracker(function(){
-    // If autopublish is enabled, the subscription is already filtered
-    // so we can just return all patients in the local collection
-    let autoPublishEnabled = get(Meteor, 'settings.public.defaults.autopublish', false);
-    
-    if(autoPublishEnabled){
-      // Get all patients from collection, sorted by most recent first
-      let results = Patients.find({}, { sort: { _id: -1 } }).fetch();
-      console.log('Autopublish patients found:', results.length);
-      
-      // Debug: Check the first few patient IDs to understand sort order
-      if (results.length > 0 && !Session.get('PatientsDirectory.debugLogged')) {
-        Session.set('PatientsDirectory.debugLogged', true);
-        console.log('First 3 patients in sort order:');
-        results.slice(0, 3).forEach((p, i) => {
-          console.log(`Patient ${i}:`, {
-            name: p.name?.[0]?.text || `${p.name?.[0]?.given?.[0]} ${p.name?.[0]?.family}`,
-            _id: p._id,
-            _idType: typeof p._id,
-            _idIsObjectID: p._id && p._id._str ? 'ObjectID' : 'String',
-            _idString: p._id && p._id._str ? p._id._str : String(p._id),
-            id: p.id
-          });
-        });
-      }
-      
-      // If we have a search filter and server-side filtering didn't work, 
-      // apply client-side filtering as fallback
-      if(debouncedSearchFilter && debouncedSearchFilter.trim() !== '') {
-        const trimmedFilter = debouncedSearchFilter.trim();
-        
-        // Check if this looks like a MongoDB ObjectID (24 hex characters) or FHIR ID
-        const isObjectId = /^[a-f\d]{24}$/i.test(trimmedFilter);
-        const isFhirId = /^[a-f\d]{8}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{12}$/i.test(trimmedFilter);
-        
-        if(isObjectId || isFhirId) {
-          // Exact match for IDs
-          results = results.filter(p => {
-            // Handle different ID storage formats
-            let matches = false;
-            
-            // Check FHIR id field
-            if (p.id === trimmedFilter) {
-              matches = true;
-            }
-            
-            // Check MongoDB _id field (could be string or ObjectID)
-            if (p._id) {
-              // If _id is an ObjectID with ._str property
-              if (p._id._str && p._id._str === trimmedFilter) {
-                matches = true;
-              }
-              // If _id is an ObjectID with .toString() method
-              else if (typeof p._id.toString === 'function' && p._id.toString() === trimmedFilter) {
-                matches = true;
-              }
-              // If _id is already a string
-              else if (typeof p._id === 'string' && p._id === trimmedFilter) {
-                matches = true;
-              }
-            }
-            
-            return matches;
-          });
-          console.log('Filtered to exact matches:', results.length);
-        } else {
-          // Regex search for other fields
-          const searchRegex = new RegExp(debouncedSearchFilter, 'i');
-          results = results.filter(p => {
-            // Search in IDs
-            if (searchRegex.test(p.id || '')) return true;
-            if (p._id) {
-              const idStr = p._id._str || p._id.toString() || p._id;
-              if (searchRegex.test(idStr)) return true;
-            }
-            
-            // Search in names (handle array of names)
-            if (p.name && Array.isArray(p.name)) {
-              for (let name of p.name) {
-                if (searchRegex.test(name.text || '')) return true;
-                if (searchRegex.test(name.family || '')) return true;
-                if (name.given && Array.isArray(name.given)) {
-                  for (let given of name.given) {
-                    if (searchRegex.test(given)) return true;
-                  }
-                }
-              }
-            }
-            
-            // Search in identifiers
-            if (p.identifier && Array.isArray(p.identifier)) {
-              for (let id of p.identifier) {
-                if (searchRegex.test(id.value || '')) return true;
-              }
-            }
-            
-            // Search in telecom
-            if (p.telecom && Array.isArray(p.telecom)) {
-              for (let tel of p.telecom) {
-                if (searchRegex.test(tel.value || '')) return true;
-              }
-            }
-            
-            // Search in addresses
-            if (p.address && Array.isArray(p.address)) {
-              for (let addr of p.address) {
-                if (searchRegex.test(addr.city || '')) return true;
-                if (searchRegex.test(addr.state || '')) return true;
-                if (searchRegex.test(addr.postalCode || '')) return true;
-              }
-            }
-            
-            return false;
-          });
-          console.log('Filtered by regex search:', results.length);
-        }
-      }
-      
-      return results;
-    } else {
-      // Fall back to client-side filtering for non-autopublish mode
-      let query = {};
-      
-      if(debouncedSearchFilter && debouncedSearchFilter.trim() !== ''){
-        const trimmedFilter = debouncedSearchFilter.trim();
-        
-        // Check if this looks like a MongoDB ObjectID (24 hex characters) or FHIR ID
-        const isObjectId = /^[a-f\d]{24}$/i.test(trimmedFilter);
-        const isFhirId = /^[a-f\d]{8}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{12}$/i.test(trimmedFilter);
-        
-        if(isObjectId || isFhirId){
-          // Exact match for IDs - handle both string and ObjectID formats
-          query = {
-            $or: [
-              {'id': trimmedFilter},
-              {'_id': trimmedFilter}
-            ]
-          };
-        } else {
-          // Regex search for other fields
-          // Client-side query can use RegExp objects directly
-          const searchRegex = new RegExp(debouncedSearchFilter, 'i');
-          query = {
-            $or: [
-              {'id': {$regex: searchRegex}},
-              {'_id': {$regex: searchRegex}},
-              {'name.text': {$regex: searchRegex}},
-              {'name.0.text': {$regex: searchRegex}},
-              {'name.given': {$regex: searchRegex}},
-              {'name.0.given': {$regex: searchRegex}},
-              {'name.0.given.0': {$regex: searchRegex}},
-              {'name.family': {$regex: searchRegex}},
-              {'name.0.family': {$regex: searchRegex}},
-              {'identifier.value': {$regex: searchRegex}},
-              {'identifier.0.value': {$regex: searchRegex}},
-              {'telecom.value': {$regex: searchRegex}},
-              {'telecom.0.value': {$regex: searchRegex}},
-              {'address.city': {$regex: searchRegex}},
-              {'address.0.city': {$regex: searchRegex}},
-              {'address.state': {$regex: searchRegex}},
-              {'address.0.state': {$regex: searchRegex}},
-              {'address.postalCode': {$regex: searchRegex}},
-              {'address.0.postalCode': {$regex: searchRegex}}
-            ]
-          };
-        }
-      }
+    // Client-side query against local Minimongo (server already filtered via patients.search)
+    let query = {};
 
-      console.log('PatientsDirectory client-side query:', JSON.stringify(query));
-      return Patients.find(query, { sort: { _id: -1 } }).fetch();
+    if(debouncedSearchFilter && debouncedSearchFilter.trim() !== ''){
+      const trimmedFilter = debouncedSearchFilter.trim();
+
+      // Check if this looks like a MongoDB ObjectID (24 hex characters) or FHIR ID
+      const isObjectId = /^[a-f\d]{24}$/i.test(trimmedFilter);
+      const isFhirId = /^[a-f\d]{8}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{12}$/i.test(trimmedFilter);
+
+      if(isObjectId || isFhirId){
+        // Exact match for IDs - handle both string and ObjectID formats
+        query = {
+          $or: [
+            {'id': trimmedFilter},
+            {'_id': trimmedFilter}
+          ]
+        };
+      } else {
+        // Regex search for other fields
+        // Client-side query can use RegExp objects directly
+        const searchRegex = new RegExp(debouncedSearchFilter, 'i');
+        query = {
+          $or: [
+            {'id': {$regex: searchRegex}},
+            {'_id': {$regex: searchRegex}},
+            {'name.text': {$regex: searchRegex}},
+            {'name.0.text': {$regex: searchRegex}},
+            {'name.given': {$regex: searchRegex}},
+            {'name.0.given': {$regex: searchRegex}},
+            {'name.0.given.0': {$regex: searchRegex}},
+            {'name.family': {$regex: searchRegex}},
+            {'name.0.family': {$regex: searchRegex}},
+            {'identifier.value': {$regex: searchRegex}},
+            {'identifier.0.value': {$regex: searchRegex}},
+            {'telecom.value': {$regex: searchRegex}},
+            {'telecom.0.value': {$regex: searchRegex}},
+            {'address.city': {$regex: searchRegex}},
+            {'address.0.city': {$regex: searchRegex}},
+            {'address.state': {$regex: searchRegex}},
+            {'address.0.state': {$regex: searchRegex}},
+            {'address.postalCode': {$regex: searchRegex}},
+            {'address.0.postalCode': {$regex: searchRegex}}
+          ]
+        };
+      }
     }
+
+    console.log('PatientsDirectory client-side query:', JSON.stringify(query));
+    return Patients.find(query, { sort: { _id: -1 } }).fetch();
   }, [debouncedSearchFilter])
   data.patientsIndex = useTracker(function(){
     return Session.get('PatientsTable.patientsIndex')
@@ -580,7 +458,13 @@ export function PatientsDirectory(props){
   }
 
   let layoutContent;
-  if(data.patients.length > 0){
+  if(subscriptionError){
+    layoutContent = (
+      <Alert severity="error" sx={{ mt: 2 }}>
+        {subscriptionError}
+      </Alert>
+    );
+  } else if(data.patients.length > 0){
     layoutContent = <Card
       sx={{
         width: '100%',
