@@ -385,13 +385,12 @@ function ImagingStudyDetail(props) {
           </Tooltip>
         )}
 
-        {/* Delete — only for existing studies, gated on edit mode */}
+        {/* Delete — only for existing studies */}
         {!isNewStudy && (
           <Tooltip title="Delete">
             <IconButton
               onClick={handleDelete}
-              disabled={!isEditing}
-              sx={{ color: isEditing ? 'error.main' : 'text.disabled' }}
+              sx={{ color: 'error.main' }}
             >
               <DeleteIcon />
               <Typography sx={{

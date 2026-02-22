@@ -1,39 +1,46 @@
+// /imports/ui-fhir/observations/ObservationsPage.jsx
+
 import React, { useState } from 'react';
 import { useTracker } from 'meteor/react-meteor-data';
 import { useNavigate } from 'react-router-dom';
 
-import { 
-  Grid, 
-  Divider,
+import {
+  Grid,
   Card,
-  CardHeader,
   CardContent,
-  Container,
   Button,
-  Tab, 
-  Tabs,
+  Box,
   Typography,
-  Box
+  ToggleButton,
+  ToggleButtonGroup,
+  TextField,
+  InputAdornment,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
+import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
+import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
+import SubjectIcon from '@mui/icons-material/Subject';
+import CategoryIcon from '@mui/icons-material/Category';
+import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
+import DevicesIcon from '@mui/icons-material/Devices';
+import SearchIcon from '@mui/icons-material/Search';
 
 import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
-import { HipaaLogger } from '../../lib/HipaaLogger';
 
-// import ObservationDetail from './ObservationDetail';
 import ObservationsTable from './ObservationsTable';
 import LayoutHelpers from '../../lib/LayoutHelpers';
 import { FhirUtilities } from '../../lib/FhirUtilities';
 
-import { get, has } from 'lodash';
-import { Observations, ObservationSchema } from '/imports/lib/schemas/SimpleSchemas/Observations';
+import { get } from 'lodash';
+import { Observations } from '/imports/lib/schemas/SimpleSchemas/Observations';
 
 //=============================================================================================================================================
-// DATA CURSORS
-
-//=============================================================================================================================================
-// COMPONENT
+// SESSION VARIABLES
 
 Session.setDefault('observationPageTabIndex', 1);
 Session.setDefault('observationSearchFilter', '');
@@ -49,6 +56,13 @@ Session.setDefault('ObservationsTable.observationsIndex', 0)
 
 export function ObservationsPage(props){
   const navigate = useNavigate();
+  const [sortOrder, setSortOrder] = useState('descending');
+  const [searchFilter, setSearchFilter] = useState('');
+  const [codeFilter, setCodeFilter] = useState('');
+  const [showText, setShowText] = useState(false);
+  const [showCategory, setShowCategory] = useState(false);
+  const [showIssued, setShowIssued] = useState(false);
+  const [showDevice, setShowDevice] = useState(false);
 
   let data = {
     selectedObservationId: '',
@@ -57,7 +71,7 @@ export function ObservationsPage(props){
     onePageLayout: true,
     showSystemIds: false,
     showFhirIds: false,
-    organizationsIndex: 0
+    observationsIndex: 0
   };
 
   data.onePageLayout = useTracker(function(){
@@ -72,8 +86,9 @@ export function ObservationsPage(props){
   data.selectedObservation = useTracker(function(){
     return Observations.findOne({_id: Session.get('selectedObservationId')});
   }, [])
-  // Subscribe to observations data with patient filtering
-  const isLoading = useTracker(() => {
+
+  // Subscribe to observations data with patient filtering and search
+  const isLoading = useTracker(function(){
     const selectedPatientId = Session.get('selectedPatientId');
     const selectedPatient = Session.get('selectedPatient');
     let autoPublishEnabled = get(Meteor, 'settings.public.defaults.autopublish', false);
@@ -90,6 +105,29 @@ export function ObservationsPage(props){
       }
     }
 
+    // Add search filter to query
+    if(searchFilter && searchFilter.length > 0) {
+      const searchQuery = {
+        $or: [
+          {'_id': searchFilter},
+          {'id': searchFilter},
+          {'code.coding.0.display': {$regex: searchFilter, $options: 'i'}},
+          {'code.coding.0.code': {$regex: searchFilter, $options: 'i'}},
+          {'code.text': {$regex: searchFilter, $options: 'i'}},
+          {'subject.display': {$regex: searchFilter, $options: 'i'}},
+          {'category.0.coding.0.display': {$regex: searchFilter, $options: 'i'}},
+          {'status': {$regex: searchFilter, $options: 'i'}}
+        ]
+      };
+
+      // Merge with patient filter if exists
+      if(Object.keys(query).length > 0) {
+        query = { $and: [query, searchQuery] };
+      } else {
+        query = searchQuery;
+      }
+    }
+
     if(autoPublishEnabled){
       const handle = Meteor.subscribe('autopublish.Observations', query, { limit: 1000 });
       return !handle.ready();
@@ -97,11 +135,18 @@ export function ObservationsPage(props){
       const handle = Meteor.subscribe('observations.all');
       return !handle.ready();
     }
-  }, [Session.get('selectedPatientId')]);
-  
+  }, [Session.get('selectedPatientId'), searchFilter]);
+
   data.observations = useTracker(function(){
-    return Observations.find().fetch();
-  }, [])
+    const sortOptions = {};
+    if (sortOrder === 'ascending') {
+      sortOptions.sort = { 'effectiveDateTime': 1 };
+    } else {
+      sortOptions.sort = { 'effectiveDateTime': -1 };
+    }
+    return Observations.find({}, sortOptions).fetch();
+  }, [sortOrder])
+
   data.observationsIndex = useTracker(function(){
     return Session.get('ObservationsTable.observationsIndex')
   }, [])
@@ -112,135 +157,51 @@ export function ObservationsPage(props){
     return Session.get('showFhirIds');
   }, [])
 
-
-  function onDeleteObservation(context){
-    Observations._collection.remove({_id: get(context, 'state.observationId')}, function(error, result){
-      if (error) {
-        if(process.env.NODE_ENV === "test") console.log('Observations.insert[error]', error);
-        // Bert.alert(error.reason, 'danger');
-      }
-      if (result) {
-        Session.set('selectedObservationId', false);
-        HipaaLogger.logEvent({eventType: "delete", userId: Meteor.userId(), userName: Meteor.user().fullName(), collectionName: "Observations", recordId: context.state.observationId});
-        // Bert.alert('Observation removed!', 'success');
-      }
-    });
-    Session.set('observationPageTabIndex', 1);
-  }
-  function onUpsertObservation(context){
-    //if(process.env.NODE_ENV === "test") console.log('^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^&&')
-    console.log('Saving a new Observation...', context.state)
-
-    if(get(context, 'state.observation')){
-      let self = context;
-      let fhirObservationData = Object.assign({}, get(context, 'state.observation'));
-  
-      // if(process.env.NODE_ENV === "test") console.log('fhirObservationData', fhirObservationData);
-  
-      let observationValidator = ObservationSchema.newContext();
-      // console.log('observationValidator', observationValidator)
-      observationValidator.validate(fhirObservationData)
-  
-      if(process.env.NODE_ENV === "development"){
-        console.log('IsValid: ', observationValidator.isValid())
-        console.log('ValidationErrors: ', observationValidator.validationErrors());
-  
-      }
-  
-      console.log('Checking context.state again...', context.state)
-      if (get(context, 'state.observationId')) {
-        if(process.env.NODE_ENV === "development") {
-          console.log("Updating observation...");
-        }
-
-        delete fhirObservationData._id;
-  
-        // not sure why we're having to respecify this; fix for a bug elsewhere
-        fhirObservationData.resourceType = 'Observation';
-  
-        Observations._collection.update({_id: get(context, 'state.observationId')}, {$set: fhirObservationData }, function(error, result){
-          if (error) {
-            if(process.env.NODE_ENV === "test") console.log("Observations.insert[error]", error);
-            // Bert.alert(error.reason, 'danger');
-          }
-          if (result) {
-            HipaaLogger.logEvent({eventType: "update", userId: Meteor.userId(), userName: Meteor.user().fullName(), collectionName: "Observations", recordId: context.state.observationId});
-            Session.set('selectedObservationId', false);
-            Session.set('observationPageTabIndex', 1);
-            // Bert.alert('Observation added!', 'success');
-          }
-        });
-      } else {
-        // if(process.env.NODE_ENV === "test") 
-        console.log("Creating a new observation...", fhirObservationData);
-  
-        fhirObservationData.effectiveDateTime = new Date();
-        Observations._collection.insert(fhirObservationData, function(error, result) {
-          if (error) {
-            if(process.env.NODE_ENV === "test")  console.log('Observations.insert[error]', error);
-            // Bert.alert(error.reason, 'danger');
-          }
-          if (result) {
-            HipaaLogger.logEvent({eventType: "create", userId: Meteor.userId(), userName: Meteor.user().fullName(), collectionName: "Observations", recordId: context.state.observationId});
-            Session.set('observationPageTabIndex', 1);
-            Session.set('selectedObservationId', false);
-            // Bert.alert('Observation added!', 'success');
-          }
-        });
-      }
-    } 
-    Session.set('observationPageTabIndex', 1);
-  }
-  function onTableRowClick(observationId){
-    console.log('ObservationsPage: Row clicked with ID:', observationId);
-    navigate('/observations/' + observationId);
-  }
-  function onTableCellClick(id){
-    Session.set('observationsUpsert', false);
-    Session.set('selectedObservationId', id);
-    Session.set('observationPageTabIndex', 2);
-  }
-  function tableActionButtonClick(_id){
-    let observation = Observations.findOne({_id: _id});
-
-    // console.log("ObservationTable.onSend()", observation);
-
-    var httpEndpoint = "http://localhost:8080";
-    if (get(Meteor, 'settings.public.interfaces.default.channel.endpoint')) {
-      httpEndpoint = get(Meteor, 'settings.public.interfaces.default.channel.endpoint');
+  // Build distinct code options from the current observations
+  let codeOptions = [];
+  let codeSet = new Set();
+  data.observations.forEach(function(obs){
+    const code = get(obs, 'code.coding[0].code', '') || get(obs, 'code.coding.0.code', '');
+    const display = get(obs, 'code.coding[0].display', '') || get(obs, 'code.coding.0.display', '') || get(obs, 'code.text', '');
+    if(code && !codeSet.has(code)){
+      codeSet.add(code);
+      codeOptions.push({ code: code, display: display || code });
     }
-    HTTP.post(httpEndpoint + '/Observation', {
-      data: observation
-    }, function(error, result){
-      if (error) {
-        console.log("error", error);
-      }
-      if (result) {
-        console.log("result", result);
-      }
+  });
+  codeOptions.sort(function(a, b){ return a.display.localeCompare(b.display); });
+
+  // Apply client-side code filter
+  let filteredObservations = data.observations;
+  if(codeFilter && codeFilter.length > 0){
+    filteredObservations = data.observations.filter(function(obs){
+      const obsCode = get(obs, 'code.coding[0].code', '') || get(obs, 'code.coding.0.code', '');
+      return obsCode === codeFilter;
     });
   }
-  function onRemove(observationId){
-    Session.set('observationPageTabIndex', 1);
-    Session.set('selectedObservationId', false);
-    HipaaLogger.logEvent({eventType: "delete", userId: Meteor.userId(), userName: Meteor.user().fullName(), collectionName: "Observations", recordId: observationId});
-  }
 
-  let headerHeight = LayoutHelpers.calcHeaderHeight();
   let formFactor = LayoutHelpers.determineFormFactor();
-  let paddingWidth = LayoutHelpers.calcCanvasPaddingWidth();
-  
-  let cardWidth = window.innerWidth - paddingWidth;
-
-
-  let noDataImage = get(Meteor, 'settings.public.defaults.noData.noDataImagePath', "packages/clinical_hl7-fhir-data-infrastructure/assets/NoData.png");  
-  let noDataCardStyle = {};
-
-  // let [observationsIndex, setObservationsIndex] = setState(0);
 
   function handleAddObservation(){
     console.log('Add Observation button clicked');
     navigate('/observations/new');
+  }
+
+  function onTableRowClick(observationId){
+    console.log('ObservationsPage: Row clicked with ID:', observationId);
+    navigate('/observations/' + observationId);
+  }
+
+  function handleSortOrderChange(event, newOrder){
+    if(newOrder !== null){
+      setSortOrder(newOrder);
+    }
+  }
+
+  function handleToggleChange(event, newToggles) {
+    setShowText(newToggles.includes('text'));
+    setShowCategory(newToggles.includes('category'));
+    setShowIssued(newToggles.includes('issued'));
+    setShowDevice(newToggles.includes('device'));
   }
 
   function renderHeader() {
@@ -252,28 +213,107 @@ export function ObservationsPage(props){
               Observations
             </Typography>
             <Typography variant="subtitle2" color="textSecondary">
-              {data.observations.length} observations found
+              {filteredObservations.length} observations found
             </Typography>
           </Grid>
           <Grid item>
-            <Button
-              variant="contained"
-              color="primary"
-              startIcon={<AddIcon />}
-              onClick={handleAddObservation}
-            >
-              Add Observation
-            </Button>
+            <Box display="flex" gap={2} alignItems="center">
+              <ToggleButtonGroup
+                value={[
+                  ...(showText ? ['text'] : []),
+                  ...(showCategory ? ['category'] : []),
+                  ...(showIssued ? ['issued'] : []),
+                  ...(showDevice ? ['device'] : [])
+                ]}
+                onChange={handleToggleChange}
+                aria-label="column visibility"
+                size="small"
+              >
+                <ToggleButton value="text" aria-label="show text">
+                  <SubjectIcon />
+                </ToggleButton>
+                <ToggleButton value="category" aria-label="show category">
+                  <CategoryIcon />
+                </ToggleButton>
+                <ToggleButton value="issued" aria-label="show issued">
+                  <CalendarTodayIcon />
+                </ToggleButton>
+                <ToggleButton value="device" aria-label="show device">
+                  <DevicesIcon />
+                </ToggleButton>
+              </ToggleButtonGroup>
+              <ToggleButtonGroup
+                value={sortOrder}
+                exclusive
+                onChange={handleSortOrderChange}
+                aria-label="sort order"
+                size="small"
+              >
+                <ToggleButton value="ascending" aria-label="ascending order">
+                  <ArrowUpwardIcon />
+                </ToggleButton>
+                <ToggleButton value="descending" aria-label="descending order">
+                  <ArrowDownwardIcon />
+                </ToggleButton>
+              </ToggleButtonGroup>
+              <Button
+                variant="contained"
+                color="primary"
+                startIcon={<AddIcon />}
+                onClick={handleAddObservation}
+              >
+                Add Observation
+              </Button>
+            </Box>
           </Grid>
         </Grid>
+        <Box mt={2} display="flex" gap={2} alignItems="center">
+          <TextField
+            id="observationSearchInput"
+            fullWidth
+            placeholder="Search observations by ID, code, patient, category, or status..."
+            value={searchFilter}
+            onChange={function(e) { setSearchFilter(e.target.value); }}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon />
+                </InputAdornment>
+              ),
+            }}
+          />
+          {codeOptions.length > 0 && (
+            <FormControl sx={{ minWidth: 220 }} size="small">
+              <InputLabel id="codeFilterLabel">Code Filter</InputLabel>
+              <Select
+                labelId="codeFilterLabel"
+                id="codeFilterSelect"
+                value={codeFilter}
+                onChange={function(e) { setCodeFilter(e.target.value); }}
+                label="Code Filter"
+              >
+                <MenuItem value="">
+                  <em>All Codes</em>
+                </MenuItem>
+                {codeOptions.map(function(option) {
+                  return (
+                    <MenuItem key={option.code} value={option.code}>
+                      {option.display}
+                    </MenuItem>
+                  );
+                })}
+              </Select>
+            </FormControl>
+          )}
+        </Box>
       </Box>
     );
   }
 
   let layoutContent;
-  if(data.observations.length > 0){
-    layoutContent = <Card 
-      sx={{ 
+  if(filteredObservations.length > 0){
+    layoutContent = <Card
+      sx={{
         width: '100%',
         borderRadius: 3,
         boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
@@ -283,27 +323,28 @@ export function ObservationsPage(props){
       }}
     >
       <CardContent sx={{ p: 0 }}>
-        <ObservationsTable 
+        <ObservationsTable
           formFactorLayout={formFactor}
-          observations={ data.observations }
-          count={ data.observations.length }
+          observations={ filteredObservations }
+          count={ filteredObservations.length }
           rowsPerPage={LayoutHelpers.calcTableRows()}
           actionButtonLabel="Send"
+          hideTextIcon={!showText}
+          hideCategory={!showCategory}
+          hideIssued={!showIssued}
+          hideDevices={!showDevice}
           onRowClick={ onTableRowClick }
-          onCellClick={ onTableCellClick }
-          onActionButtonClick={tableActionButtonClick}
-          onRemoveRecord={ onDeleteObservation }
           onSetPage={function(index){
             Session.set('ObservationsTable.observationsIndex', index)
-          }}  
-          page={data.observationsIndex}                              
+          }}
+          page={data.observationsIndex}
           tableRowSize="medium"
           size="medium"
         />
-      </CardContent>            
+      </CardContent>
     </Card>
   } else {
-    layoutContent = <Box 
+    layoutContent = <Box
       sx={{
         display: 'flex',
         flexDirection: 'column',
@@ -313,8 +354,8 @@ export function ObservationsPage(props){
         textAlign: 'center'
       }}
     >
-      <Card 
-        sx={{ 
+      <Card
+        sx={{
           maxWidth: '600px',
           width: '100%',
           borderRadius: 3,
@@ -326,9 +367,9 @@ export function ObservationsPage(props){
       >
         <CardContent sx={{ p: 6 }}>
           <Box sx={{ mb: 3 }}>
-            <Typography 
-              variant="h5" 
-              sx={{ 
+            <Typography
+              variant="h5"
+              sx={{
                 fontWeight: 500,
                 color: 'text.primary',
                 mb: 2
@@ -336,16 +377,19 @@ export function ObservationsPage(props){
             >
               {get(Meteor, 'settings.public.defaults.noData.defaultTitle', "No Data Available")}
             </Typography>
-            <Typography 
-              variant="body1" 
-              sx={{ 
+            <Typography
+              variant="body1"
+              sx={{
                 color: 'text.secondary',
                 lineHeight: 1.7,
                 maxWidth: '480px',
                 mx: 'auto'
               }}
             >
-              {get(Meteor, 'settings.public.defaults.noData.defaultMessage', "No records were found in the client data cursor. To debug, check the data cursor in the client console, then check subscriptions and publications, and relevant search queries. If the data is not loaded in, use a tool like Mongo Compass to load the records directly into the Mongo database, or use the FHIR API interfaces.")}
+              {isLoading ?
+                "Loading observations..." :
+                get(Meteor, 'settings.public.defaults.noData.defaultMessage', "No records were found in the client data cursor. To debug, check the data cursor in the client console, then check subscriptions and publications, and relevant search queries. If the data is not loaded in, use a tool like Mongo Compass to load the records directly into the Mongo database, or use the FHIR API interfaces.")
+              }
             </Typography>
           </Box>
           <Button
@@ -372,8 +416,8 @@ export function ObservationsPage(props){
 
 
   return (
-    <Box 
-      id="observationsPage" 
+    <Box
+      id="observationsPage"
       sx={{
         minHeight: '100vh',
         backgroundColor: 'background.default',
@@ -381,7 +425,7 @@ export function ObservationsPage(props){
         py: { xs: 3, sm: 4, md: 5 }
       }}
     >
-      { data.observations.length > 0 && renderHeader() }
+      { renderHeader() }
       { layoutContent }
     </Box>
   );

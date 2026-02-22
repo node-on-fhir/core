@@ -20,12 +20,14 @@ import {
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
-import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward'; 
+import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
+import PersonIcon from '@mui/icons-material/Person';
+import CodeIcon from '@mui/icons-material/Code';
+import LocalHospitalIcon from '@mui/icons-material/LocalHospital';
 
 import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
 
-// import ProcedureDetail from './ProcedureDetail';
 import ProceduresTable from './ProceduresTable';
 import LayoutHelpers from '../../lib/LayoutHelpers';
 
@@ -47,8 +49,8 @@ import { FhirUtilities } from '/imports/lib/FhirUtilities';
 Session.setDefault('selectedProcedureId', false);
 
 
-Session.setDefault('procedurePageTabIndex', 1); 
-Session.setDefault('procedureSearchFilter', ''); 
+Session.setDefault('procedurePageTabIndex', 1);
+Session.setDefault('procedureSearchFilter', '');
 Session.setDefault('selectedProcedureId', false);
 Session.setDefault('selectedProcedure', false)
 Session.setDefault('ProceduresPage.onePageLayout', true)
@@ -64,6 +66,9 @@ export function ProceduresPage(props){
   const navigate = useNavigate();
   const [sortOrder, setSortOrder] = useState('descending');
   const [searchFilter, setSearchFilter] = useState('');
+  const [showSubject, setShowSubject] = useState(false);
+  const [showSubjectReference, setShowSubjectReference] = useState(false);
+  const [showPerformer, setShowPerformer] = useState(false);
 
   let data = {
     currentProcedureId: '',
@@ -175,9 +180,6 @@ export function ProceduresPage(props){
   let headerHeight = LayoutHelpers.calcHeaderHeight();
   let formFactor = LayoutHelpers.determineFormFactor();
   let paddingWidth = LayoutHelpers.calcCanvasPaddingWidth();
-  
-  let noDataImage = get(Meteor, 'settings.public.defaults.noData.noDataImagePath', "packages/clinical_hl7-fhir-data-infrastructure/assets/NoData.png");  
-  let noDataCardStyle = {};
 
   function handleAddProcedure(){
     console.log('Add Procedure button clicked');
@@ -207,16 +209,8 @@ export function ProceduresPage(props){
               {data.procedures.length} procedures found
             </Typography>
           </Grid>
-          <Grid item xs={12} sm={6}>
-            <Box display="flex" gap={2} alignItems="center" justifyContent="flex-end">
-              <TextField
-                id="procedureSearchInput"
-                size="small"
-                placeholder="Search procedures..."
-                value={searchFilter}
-                onChange={(e) => setSearchFilter(e.target.value)}
-                sx={{ minWidth: 200 }}
-              />
+          <Grid item>
+            <Box display="flex" gap={2} alignItems="center">
               <ToggleButtonGroup
                 value={sortOrder}
                 exclusive
@@ -231,6 +225,30 @@ export function ProceduresPage(props){
                   <ArrowDownwardIcon />
                 </ToggleButton>
               </ToggleButtonGroup>
+              <ToggleButtonGroup
+                value={[
+                  ...(showSubject ? ['subject'] : []),
+                  ...(showSubjectReference ? ['subjectReference'] : []),
+                  ...(showPerformer ? ['performer'] : [])
+                ]}
+                onChange={(event, newFormats) => {
+                  setShowSubject(newFormats.includes('subject'));
+                  setShowSubjectReference(newFormats.includes('subjectReference'));
+                  setShowPerformer(newFormats.includes('performer'));
+                }}
+                aria-label="column visibility"
+                size="small"
+              >
+                <ToggleButton value="subject" aria-label="show subject">
+                  <PersonIcon />
+                </ToggleButton>
+                <ToggleButton value="subjectReference" aria-label="show subject reference">
+                  <CodeIcon />
+                </ToggleButton>
+                <ToggleButton value="performer" aria-label="show performer">
+                  <LocalHospitalIcon />
+                </ToggleButton>
+              </ToggleButtonGroup>
               <Button
                 variant="contained"
                 color="primary"
@@ -242,14 +260,25 @@ export function ProceduresPage(props){
             </Box>
           </Grid>
         </Grid>
+        <Box mt={2}>
+          <TextField
+            id="procedureSearchInput"
+            fullWidth
+            placeholder="Search procedures by ID, code, performer, patient, or notes..."
+            value={searchFilter}
+            onChange={(e) => setSearchFilter(e.target.value)}
+            variant="outlined"
+            size="small"
+          />
+        </Box>
       </Box>
     );
   }
 
   let layoutContent;
   if(data.procedures.length > 0){
-    layoutContent = <Card 
-      sx={{ 
+    layoutContent = <Card
+      sx={{
         width: '100%',
         borderRadius: 3,
         boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
@@ -259,14 +288,17 @@ export function ProceduresPage(props){
       }}
     >
       <CardContent sx={{ p: 0 }}>
-        <ProceduresTable 
+        <ProceduresTable
           id='proceduresTable'
           procedures={data.procedures}
-          count={data.procedures.length}  
+          count={data.procedures.length}
           formFactorLayout={formFactor}
-          rowsPerPage={LayoutHelpers.calcTableRows()} 
+          rowsPerPage={LayoutHelpers.calcTableRows()}
           actionButtonLabel="Remove"
           hideActionButton={get(Meteor, 'settings.public.modules.fhir.Procedures.hideRemoveButtonOnTable', true)}
+          hideSubject={!showSubject}
+          hideSubjectReference={!showSubjectReference}
+          hidePerformer={!showPerformer}
           onActionButtonClick={function(selectedId){
             if (Procedures && Procedures._collection) {
               Procedures._collection.remove({_id: selectedId})
@@ -276,14 +308,14 @@ export function ProceduresPage(props){
           }}
           onSetPage={function(index){
             Session.set('ProceduresTable.proceduresIndex', index)
-          }}        
+          }}
           page={data.proceduresIndex}
           onRowClick={handleRowClick}
         />
       </CardContent>
     </Card>
   } else {
-    layoutContent = <Box 
+    layoutContent = <Box
       sx={{
         display: 'flex',
         flexDirection: 'column',
@@ -293,8 +325,8 @@ export function ProceduresPage(props){
         textAlign: 'center'
       }}
     >
-      <Card 
-        sx={{ 
+      <Card
+        sx={{
           maxWidth: '600px',
           width: '100%',
           borderRadius: 3,
@@ -306,9 +338,9 @@ export function ProceduresPage(props){
       >
         <CardContent sx={{ p: 6 }}>
           <Box sx={{ mb: 3 }}>
-            <Typography 
-              variant="h5" 
-              sx={{ 
+            <Typography
+              variant="h5"
+              sx={{
                 fontWeight: 500,
                 color: 'text.primary',
                 mb: 2
@@ -316,9 +348,9 @@ export function ProceduresPage(props){
             >
               {get(Meteor, 'settings.public.defaults.noData.defaultTitle', "No Data Available")}
             </Typography>
-            <Typography 
-              variant="body1" 
-              sx={{ 
+            <Typography
+              variant="body1"
+              sx={{
                 color: 'text.secondary',
                 lineHeight: 1.7,
                 maxWidth: '480px',
@@ -349,10 +381,10 @@ export function ProceduresPage(props){
       </Card>
     </Box>
   }
-  
+
   return (
-    <Box 
-      id="proceduresPage" 
+    <Box
+      id="proceduresPage"
       sx={{
         minHeight: '100vh',
         backgroundColor: 'background.default',
@@ -360,7 +392,7 @@ export function ProceduresPage(props){
         py: { xs: 3, sm: 4, md: 5 }
       }}
     >
-      { data.procedures.length > 0 && renderHeader() }
+      { renderHeader() }
       { layoutContent }
     </Box>
   );

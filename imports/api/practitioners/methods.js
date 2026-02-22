@@ -114,22 +114,22 @@ Meteor.methods({
   async 'practitioners.update'(practitionerId, practitionerData) {
     check(practitionerId, String);
     check(practitionerData, Object);
-    
+
     // Ensure user is logged in
     if (!this.userId) {
       throw new Meteor.Error('not-authorized', 'User must be logged in to update practitioners');
     }
-    
+
     // Clean the data similar to create
     const cleanPractitioner = { ...practitionerData };
-    
+
     // Remove _id from update data to prevent conflicts
     delete cleanPractitioner._id;
-    
+
     try {
-      console.log('[practitioners.update] Updating practitioner:', practitionerId, cleanPractitioner);
+      console.log('[practitioners.update] Updating practitioner:', practitionerId);
       const result = await Practitioners.updateAsync(
-        { $or: [{ id: practitionerId }, { _id: practitionerId }] },
+        { _id: practitionerId },
         { $set: cleanPractitioner }
       );
       console.log('[practitioners.update] Updated practitioner:', result);
@@ -139,29 +139,17 @@ Meteor.methods({
       throw new Meteor.Error('update-failed', error.message);
     }
   },
-  
+
   async 'practitioners.remove'(practitionerId) {
     check(practitionerId, String);
-    
+
     // Ensure user is logged in
     if (!this.userId) {
       throw new Meteor.Error('not-authorized', 'User must be logged in to remove practitioners');
     }
-    
-    // TODO: Add role-based access control (RBAC) here in the future
-    // For now, only authentication is required
-    // Example future implementation:
-    // if (!Roles.userIsInRole(this.userId, ['admin', 'practitioner-manager'])) {
-    //   throw new Meteor.Error('not-authorized', 'User does not have permission to delete practitioners');
-    // }
-    
+
     try {
-      const result = await Practitioners.removeAsync({
-        $or: [
-          { id: practitionerId },
-          { _id: practitionerId }
-        ]
-      });
+      const result = await Practitioners.removeAsync({ _id: practitionerId });
       console.log('[practitioners.remove] Removed practitioner:', result);
       return result;
     } catch (error) {
@@ -169,22 +157,19 @@ Meteor.methods({
       throw new Meteor.Error('remove-failed', error.message);
     }
   },
-  
+
   async 'practitioners.findOne'(practitionerId) {
     check(practitionerId, String);
-    
-    // Ensure user is logged in
-    if (!this.userId) {
-      throw new Meteor.Error('not-authorized', 'User must be logged in to view practitioners');
-    }
-    
+
     try {
-      const practitioner = await Practitioners.findOneAsync({
-        $or: [
-          { id: practitionerId },
-          { _id: practitionerId }
-        ]
-      });
+      // Try _id first
+      let practitioner = await Practitioners.findOneAsync({ _id: practitionerId });
+
+      // If not found, try FHIR id as fallback
+      if (!practitioner) {
+        practitioner = await Practitioners.findOneAsync({ id: practitionerId });
+      }
+
       return practitioner;
     } catch (error) {
       console.error('[practitioners.findOne] Error:', error);

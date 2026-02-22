@@ -596,7 +596,7 @@ describe('Encounters CRUD Operations', function() {
     browser
       .clearValue('#encounterSearchInput')
       .pause(1000)
-      .setValue('#encounterSearchInput', 'Smith')
+      .setValue('#encounterSearchInput', 'Johnson')
       .pause(3000);
 
     // First check if we have a table or no data state

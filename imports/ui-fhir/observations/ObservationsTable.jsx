@@ -117,6 +117,12 @@ function ObservationsTable(props){
   // ------------------------------------------------------------------------
   // Form Factors
 
+  // Preserve explicit prop values so form factor defaults don't override them
+  const hideTextIconFromProp = hideTextIcon;
+  const hideCategoryFromProp = hideCategory;
+  const hideIssuedFromProp = hideIssued;
+  const hideDevicesFromProp = hideDevices;
+
   if(formFactorLayout){
     logger.verbose('formFactorLayout', formFactorLayout + ' ' + window.innerWidth);
     switch (formFactorLayout) {
@@ -124,85 +130,85 @@ function ObservationsTable(props){
         hideCheckbox = true;
         hideActionIcons = true;
         hideIdentifier = true;
-        hideCategory = true;
+        hideCategory = (hideCategoryFromProp !== undefined) ? hideCategoryFromProp : true;
         hideValue = false;
         hideUnits = false;
         hideSubject = true;
         hideSubjects = true;
         hideSubjectReference = true;
         hideEffectiveDateTime = true;
-        hideIssued = true;
+        hideIssued = (hideIssuedFromProp !== undefined) ? hideIssuedFromProp : true;
         hideStatus = true;
         hideCodeValue = true;
         hideCode = false;
-        hideDevices = true;
+        hideDevices = (hideDevicesFromProp !== undefined) ? hideDevicesFromProp : true;
         hideComparator = true;
-        hideTextIcon = true;
+        hideTextIcon = (hideTextIconFromProp !== undefined) ? hideTextIconFromProp : true;
         multiline = true;
         break;
       case "tablet":
         hideCheckbox = true;
         hideActionIcons = true;
         hideIdentifier = true;
-        hideCategory = true;
+        hideCategory = (hideCategoryFromProp !== undefined) ? hideCategoryFromProp : true;
         hideValue = false;
         hideUnits = false;
         hideSubject = true;
         hideSubjects = true;
         hideSubjectReference = true;
         hideEffectiveDateTime = false;
-        hideIssued = false;
+        hideIssued = (hideIssuedFromProp !== undefined) ? hideIssuedFromProp : false;
         hideStatus = false;
         hideCodeValue = true;
         hideCode = false;
-        hideDevices = true;
+        hideDevices = (hideDevicesFromProp !== undefined) ? hideDevicesFromProp : true;
         hideComparator = true;
-        hideTextIcon = true;
+        hideTextIcon = (hideTextIconFromProp !== undefined) ? hideTextIconFromProp : true;
         multiline = false;
         break;
       case "web":
         hideCheckbox = true;
         hideActionIcons = true;
         hideIdentifier = true;
-        hideCategory = false;
+        hideCategory = (hideCategoryFromProp !== undefined) ? hideCategoryFromProp : false;
         hideValue = false;
         hideUnits = false;
         hideSubject = true;
         hideSubjects = true;
         hideSubjectReference = true;
         hideEffectiveDateTime = false;
-        hideIssued = false;
+        hideIssued = (hideIssuedFromProp !== undefined) ? hideIssuedFromProp : false;
         hideStatus = false;
         hideCodeValue = false;
         hideCode = false;
-        hideDevices = true;
+        hideDevices = (hideDevicesFromProp !== undefined) ? hideDevicesFromProp : true;
         hideComparator = true;
-        hideTextIcon = true;
+        hideTextIcon = (hideTextIconFromProp !== undefined) ? hideTextIconFromProp : true;
         multiline = false;
         break;
       case "desktop":
         hideCheckbox = true;
         hideActionIcons = true;
         hideIdentifier = true;
-        hideCategory = false;
+        hideCategory = (hideCategoryFromProp !== undefined) ? hideCategoryFromProp : false;
         hideValue = false;
         hideUnits = false;
         hideSubject = true;
         hideSubjects = true;
         hideSubjectReference = true;
         hideEffectiveDateTime = false;
-        hideIssued = false;
+        hideIssued = (hideIssuedFromProp !== undefined) ? hideIssuedFromProp : false;
         hideStatus = false;
         hideCodeValue = false;
         hideCode = false;
-        hideDevices = false;
+        hideDevices = (hideDevicesFromProp !== undefined) ? hideDevicesFromProp : false;
         hideComparator = true;
-        hideTextIcon = false;
+        hideTextIcon = (hideTextIconFromProp !== undefined) ? hideTextIconFromProp : false;
         multiline = false;
         break;
       case "hdmi":
 
-        break;            
+        break;
     }
   }
 
@@ -685,7 +691,7 @@ function ObservationsTable(props){
 
       } else {
         tableRows.push(
-          <TableRow className="observationRow" key={i} onClick={ rowClick.bind(this, observationsToRender[i].id || observationsToRender[i]._id)} hover={true} style={rowStyle}>            
+          <TableRow className="observationRow" key={i} onClick={ rowClick.bind(this, observationsToRender[i]._id)} hover={true} style={rowStyle}>
             { renderToggle() }
             { renderActionIcons(observationsToRender[i]) }
             { renderTextIcon(get(observationsToRender[i], "text.div", "")) }
