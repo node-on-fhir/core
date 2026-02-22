@@ -116,7 +116,7 @@ function ProcedureDetail(props) {
   const isSubscriptionReady = useTracker(function(){
     let autoSubscribeEnabled = get(Meteor, 'settings.public.defaults.autoSubscribe', false);
     if(autoSubscribeEnabled){
-      return Meteor.subscribe('selectedPatient.Procedures', Session.get('selectedPatientId'), {}).ready();
+      return Meteor.subscribe('autopublish.Procedures', {}, {}).ready();
     } else {
       return Meteor.subscribe('procedures.all').ready();
     }
@@ -124,8 +124,8 @@ function ProcedureDetail(props) {
 
   // Fetch existing procedure
   useEffect(() => {
-    if (isExistingRecord && isSubscriptionReady) {
-      const existingProcedure = Procedures.findOne({ _id: id });
+    if (isExistingRecord) {
+      const existingProcedure = Procedures.findOne({ _id: id }) || Procedures.findOne({ id: id });
       if (existingProcedure) {
         setProcedure(existingProcedure);
         setIsEditing(false);
@@ -147,7 +147,7 @@ function ProcedureDetail(props) {
         }));
       }
     }
-  }, [id, isSubscriptionReady]);
+  }, [id]);
 
   const handleChange = (path, value) => {
     const newProcedure = cloneDeep(procedure);

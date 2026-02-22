@@ -47,15 +47,7 @@ function MedicationDetail(props) {
   // Subscribe to medication data using ID-based query (optimized)
   const isSubscriptionReady = useTracker(function(){
     if (id && id !== 'new') {
-      // Use ID-based query to take advantage of optimization in autopublish.js
-      const query = {
-        $or: [
-          {'_id': id},
-          {'id': id}
-        ]
-      };
-      console.log('[MedicationDetail] Subscribing with ID query:', query);
-      const handle = Meteor.subscribe('selectedPatient.Medications', Session.get('selectedPatientId'), {});
+      const handle = Meteor.subscribe('autopublish.Medications', {}, {});
       return handle.ready();
     }
     return true; // No subscription needed for new medications
@@ -126,10 +118,10 @@ function MedicationDetail(props) {
 
   // Load medication when subscription is ready
   useEffect(function() {
-    if (id && id !== 'new' && isSubscriptionReady) {
-      console.log('[MedicationDetail] Subscription ready, loading medication from collection');
+    if (id && id !== 'new') {
+      console.log('[MedicationDetail] Loading medication from collection');
       // Load from client collection (populated by subscription)
-      const existingMedication = Medications.findOne({_id: id});
+      const existingMedication = Medications.findOne({_id: id}) || Medications.findOne({id: id});
 
       if (existingMedication) {
         console.log('[MedicationDetail] Loaded medication:', {
@@ -145,7 +137,7 @@ function MedicationDetail(props) {
         setError('Medication not found');
       }
     }
-  }, [id, isSubscriptionReady]);
+  }, [id]);
 
   // Handle field changes
   function handleChange(path, value) {
