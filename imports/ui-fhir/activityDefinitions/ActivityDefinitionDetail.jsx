@@ -99,8 +99,8 @@ function ActivityDefinitionDetail(props) {
 
   // Load activity definition when subscription is ready
   useEffect(function() {
-    if (id && id !== 'new') {
-      console.log('[ActivityDefinitionDetail] Loading from collection');
+    if (id && id !== 'new' && isSubscriptionReady) {
+      console.log('[ActivityDefinitionDetail] Subscription ready, loading from collection');
       const existingActivityDefinition = ActivityDefinitions.findOne({_id: id});
 
       if (existingActivityDefinition) {
@@ -124,7 +124,7 @@ function ActivityDefinitionDetail(props) {
         }
       }
     }
-  }, [id]);
+  }, [id, isSubscriptionReady]);
 
   // Handle field changes
   function handleChange(path, value) {
