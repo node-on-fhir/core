@@ -417,7 +417,7 @@ function ImagingStudyDetail(props) {
     return (
       <>
         <Stack spacing={3}>
-          <Typography variant="h6">Patient & Status</Typography>
+          <Typography variant="h6">Patient</Typography>
 
           {/* Patient Field */}
           <TextField
@@ -443,51 +443,6 @@ function ImagingStudyDetail(props) {
               ),
             }}
           />
-
-          {/* Status and Modality */}
-          <Stack direction="row" spacing={2}>
-            <FormControl fullWidth disabled={!isEditing}>
-              <InputLabel id="status-label">Status</InputLabel>
-              <Select
-                labelId="status-label"
-                id="statusSelect"
-                value={get(imagingStudy, 'status', 'available')}
-                label="Status"
-                onChange={function(e) { handleChange('status', e.target.value); }}
-              >
-                {statusOptions.map(function(option) {
-                  return (
-                    <MenuItem key={option.value} value={option.value}>
-                      {option.label}
-                    </MenuItem>
-                  );
-                })}
-              </Select>
-            </FormControl>
-
-            <FormControl fullWidth disabled={!isEditing}>
-              <InputLabel id="modality-label">Modality</InputLabel>
-              <Select
-                labelId="modality-label"
-                id="modalitySelect"
-                value={get(imagingStudy, 'modality[0].code', '')}
-                label="Modality"
-                onChange={function(e) {
-                  const selected = modalityOptions.find(function(opt){ return opt.value === e.target.value; });
-                  handleChange('modality[0].code', e.target.value);
-                  handleChange('modality[0].display', selected ? selected.label : e.target.value);
-                }}
-              >
-                {modalityOptions.map(function(option) {
-                  return (
-                    <MenuItem key={option.value} value={option.value}>
-                      {option.label}
-                    </MenuItem>
-                  );
-                })}
-              </Select>
-            </FormControl>
-          </Stack>
 
           <Divider />
           <Typography variant="h6">Study Details</Typography>
@@ -619,6 +574,54 @@ function ImagingStudyDetail(props) {
               }}
               disabled={!isEditing}
             />
+          </Stack>
+
+          <Divider />
+          <Typography variant="h6">Status & Imaging</Typography>
+
+          {/* Status and Modality */}
+          <Stack direction="row" spacing={2}>
+            <FormControl fullWidth disabled={!isEditing}>
+              <InputLabel id="status-label">Status</InputLabel>
+              <Select
+                labelId="status-label"
+                id="statusSelect"
+                value={get(imagingStudy, 'status', 'available')}
+                label="Status"
+                onChange={function(e) { handleChange('status', e.target.value); }}
+              >
+                {statusOptions.map(function(option) {
+                  return (
+                    <MenuItem key={option.value} value={option.value}>
+                      {option.label}
+                    </MenuItem>
+                  );
+                })}
+              </Select>
+            </FormControl>
+
+            <FormControl fullWidth disabled={!isEditing}>
+              <InputLabel id="modality-label">Modality</InputLabel>
+              <Select
+                labelId="modality-label"
+                id="modalitySelect"
+                value={get(imagingStudy, 'modality[0].code', '')}
+                label="Modality"
+                onChange={function(e) {
+                  const selected = modalityOptions.find(function(opt){ return opt.value === e.target.value; });
+                  handleChange('modality[0].code', e.target.value);
+                  handleChange('modality[0].display', selected ? selected.label : e.target.value);
+                }}
+              >
+                {modalityOptions.map(function(option) {
+                  return (
+                    <MenuItem key={option.value} value={option.value}>
+                      {option.label}
+                    </MenuItem>
+                  );
+                })}
+              </Select>
+            </FormControl>
           </Stack>
 
           {/* Endpoint */}

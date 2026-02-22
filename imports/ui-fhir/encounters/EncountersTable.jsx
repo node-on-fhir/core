@@ -101,13 +101,18 @@ function EncountersTable(props){
     
     order,
 
-    ...otherProps 
+    ...otherProps
   } = props;
 
+  // Save original prop values before form factor switch may overwrite them
+  const hidePatientNameFromProp = hidePatientName;
+  const hidePractitionerNameFromProp = hidePractitionerName;
+  const hideClassFromProp = hideClass;
+  const hideBarcodeFromProp = hideBarcode;
 
     // ------------------------------------------------------------------------
   // Form Factors
-  
+
   let multiline = false;
 
   if(formFactorLayout){
@@ -116,83 +121,83 @@ function EncountersTable(props){
       case "phone":
         hideCheckbox = true;
         hideActionIcons = true;
-        hidePatientName = true;
+        hidePatientName = (hidePatientNameFromProp !== undefined) ? hidePatientNameFromProp : true;
         hidePatientReference = true;
-        hidePractitionerName = false;
+        hidePractitionerName = (hidePractitionerNameFromProp !== undefined) ? hidePractitionerNameFromProp : false;
         hideStatus = true;
-        hideClass = true;
+        hideClass = (hideClassFromProp !== undefined) ? hideClassFromProp : true;
         hideTypeCode = true;
         hideTypeDisplay = false;
         hideReasonCode = true;
         hideReasonDisplay = true;
         hideStartDate = true;
         hideEndDate = true;
-        hideBarcode = true;  
+        hideBarcode = (hideBarcodeFromProp !== undefined) ? hideBarcodeFromProp : true;
         multiline = true;
         hideTextIcon = false
         break;
       case "tablet":
         hideCheckbox = true;
         hideActionIcons = true;
-        hidePatientName = false;
+        hidePatientName = (hidePatientNameFromProp !== undefined) ? hidePatientNameFromProp : false;
         hidePatientReference = true;
-        hidePractitionerName = false;
+        hidePractitionerName = (hidePractitionerNameFromProp !== undefined) ? hidePractitionerNameFromProp : false;
         hideStatus = false;
-        hideClass = true;
+        hideClass = (hideClassFromProp !== undefined) ? hideClassFromProp : true;
         hideTypeCode = true;
         hideTypeDisplay = false;
         hideReasonCode = true;
         hideReasonDisplay = true;
         hideStartDate = false;
         hideEndDate = true;
-        hideBarcode = false;   
+        hideBarcode = (hideBarcodeFromProp !== undefined) ? hideBarcodeFromProp : false;
         multiline = false;
         hideTextIcon = false
         break;
       case "web":
-        hidePractitionerName = false;
+        hidePractitionerName = (hidePractitionerNameFromProp !== undefined) ? hidePractitionerNameFromProp : false;
         hideStatus = false;
-        hideClass = false;
+        hideClass = (hideClassFromProp !== undefined) ? hideClassFromProp : false;
         hideTypeCode = true;
         hideTypeDisplay = false;
-        hidePatientName = false;
+        hidePatientName = (hidePatientNameFromProp !== undefined) ? hidePatientNameFromProp : false;
         hideReasonCode = true;
         hideReasonDisplay = true;
         hideStartDate = true;
         hideEndDate = false;
-        hideBarcode = false;
+        hideBarcode = (hideBarcodeFromProp !== undefined) ? hideBarcodeFromProp : false;
         multiline = false;
         hideTextIcon = false
         break;
       case "desktop":
-        hidePractitionerName = false;
+        hidePractitionerName = (hidePractitionerNameFromProp !== undefined) ? hidePractitionerNameFromProp : false;
         hideStatus = false;
-        hideClass = false;
+        hideClass = (hideClassFromProp !== undefined) ? hideClassFromProp : false;
         hideTypeCode = true;
         hideTypeDisplay = false;
-        hidePatientName = false;
+        hidePatientName = (hidePatientNameFromProp !== undefined) ? hidePatientNameFromProp : false;
         hideReasonCode = true;
         hideReasonDisplay = false;
         hideStartDate = false;
         hideEndDate = true;
-        hideBarcode = false;
+        hideBarcode = (hideBarcodeFromProp !== undefined) ? hideBarcodeFromProp : false;
         multiline = false;
         hideTextIcon = true;
         break;
       case "hdmi":
-        hidePractitionerName = false;
+        hidePractitionerName = (hidePractitionerNameFromProp !== undefined) ? hidePractitionerNameFromProp : false;
         hideStatus = false;
-        hideClass = false;
+        hideClass = (hideClassFromProp !== undefined) ? hideClassFromProp : false;
         hideTypeCode = false;
         hideTypeDisplay = false;
         hideReasonCode = false;
         hideReasonDisplay = false;
         hideStartDate = false;
         hideEndDate = false;
-        hideBarcode = false;
+        hideBarcode = (hideBarcodeFromProp !== undefined) ? hideBarcodeFromProp : false;
         multiline = false;
         hideTextIcon = true;
-        break;            
+        break;
     }
   }
 

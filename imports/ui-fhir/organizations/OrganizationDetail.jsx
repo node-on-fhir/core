@@ -279,13 +279,12 @@ function OrganizationDetail(props) {
           </Tooltip>
         )}
 
-        {/* Delete — gated on edit mode */}
+        {/* Delete — always available for existing organizations */}
         {!isNewOrganization && (
           <Tooltip title="Delete">
             <IconButton
               onClick={handleDelete}
-              disabled={!isEditing}
-              sx={{ color: isEditing ? 'error.main' : 'text.disabled' }}
+              sx={{ color: 'error.main' }}
             >
               <DeleteIcon />
               <Typography sx={{
