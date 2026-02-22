@@ -245,7 +245,7 @@ describe('ActivityDefinitions CRUD Operations', function() {
   // ============================================================================
   // TEST 05: CREATE NEW RECORD (Target: 8-12 assertions)
   // ============================================================================
-  it('05. Create new record', function(browser) {
+  it('05. Create new activity definition', function(browser) {
     // Use Nightwatch's native setValue which simulates real typing
     // This properly triggers React's onChange handlers
 

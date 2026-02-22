@@ -104,10 +104,10 @@ export function PlanDefinitionsPage(props){
     }
     
     if(autoSubscribeEnabled){
-      const handle = Meteor.subscribe('selectedPatient.PlanDefinitions', Session.get('selectedPatientId'), { limit: 100 });
+      const handle = Meteor.subscribe('autopublish.PlanDefinitions', query, { limit: 1000 });
       return !handle.ready();
     } else {
-      const handle = Meteor.subscribe('planDefinitions.all');
+      const handle = Meteor.subscribe('selectedPatient.PlanDefinitions', Session.get('selectedPatientId'), { limit: 1000 });
       return !handle.ready();
     }
   }, [searchFilter]);

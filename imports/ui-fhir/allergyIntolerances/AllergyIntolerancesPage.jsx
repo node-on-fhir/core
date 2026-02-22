@@ -86,10 +86,10 @@ export function AllergyIntolerancesPage(props){
   const patientsReady = useTracker(() => {
     let autoSubscribeEnabled = get(Meteor, 'settings.public.defaults.autoSubscribe', false);
     if(autoSubscribeEnabled){
-      const handle = Meteor.subscribe('selectedPatient.Patients', Session.get('selectedPatientId'), { limit: 1000 });
+      const handle = Meteor.subscribe('autopublish.Patients', {}, { limit: 1000 });
       return handle.ready();
     } else {
-      const handle = Meteor.subscribe('patients.search', {});
+      const handle = Meteor.subscribe('selectedPatient.Patients', Session.get('selectedPatientId'), { limit: 1000 });
       return handle.ready();
     }
   }, []);

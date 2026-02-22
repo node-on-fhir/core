@@ -15,9 +15,14 @@ import {
   Button,
   TextField,
   Box,
-  Typography
+  Typography,
+  ToggleButton,
+  ToggleButtonGroup
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
+import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
+import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
+import BadgeIcon from '@mui/icons-material/Badge';
 
 import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
@@ -46,6 +51,8 @@ Session.setDefault('ActivityDefinitionsTable.activityDefinitionIndex', 0);
 export function ActivityDefinitionsPage(props) {
   const navigate = useNavigate();
   const [searchFilter, setSearchFilter] = useState('');
+  const [sortOrder, setSortOrder] = useState('descending');
+  const [showSystemId, setShowSystemId] = useState(false);
 
   // Subscribe to ActivityDefinitions data
   const isLoading = useTracker(function() {
@@ -64,12 +71,13 @@ export function ActivityDefinitionsPage(props) {
       };
     }
 
-    let handle;
     if (autoSubscribeEnabled) {
-      handle = Meteor.subscribe('selectedPatient.ActivityDefinitions', Session.get('selectedPatientId'), { limit: 100 });
+      const handle = Meteor.subscribe('autopublish.ActivityDefinitions', query, { limit: 1000 });
+      return !handle.ready();
+    } else {
+      const handle = Meteor.subscribe('selectedPatient.ActivityDefinitions', Session.get('selectedPatientId'), { limit: 1000 });
+      return !handle.ready();
     }
-
-    return handle ? !handle.ready() : false;
   }, [searchFilter]);
 
   // Get activity definitions from collection
@@ -86,8 +94,8 @@ export function ActivityDefinitionsPage(props) {
         ]
       };
     }
-    return ActivityDefinitions.find(query, { sort: { _id: -1 } }).fetch();
-  }, [searchFilter]);
+    return ActivityDefinitions.find(query, { sort: { _id: sortOrder === 'ascending' ? 1 : -1 } }).fetch();
+  }, [searchFilter, sortOrder]);
 
   const showSystemIds = useTracker(function() {
     return Session.get('showSystemIds');
@@ -96,6 +104,12 @@ export function ActivityDefinitionsPage(props) {
   const showFhirIds = useTracker(function() {
     return Session.get('showFhirIds');
   }, []);
+
+  function handleSortOrderChange(event, newOrder){
+    if(newOrder !== null){
+      setSortOrder(newOrder);
+    }
+  }
 
   function handleRowClick(activityDefinitionId) {
     navigate('/activity-definitions/' + activityDefinitionId);
@@ -110,52 +124,93 @@ export function ActivityDefinitionsPage(props) {
   let formFactor = LayoutHelpers.determineFormFactor();
   let paddingWidth = LayoutHelpers.calcCanvasPaddingWidth();
 
-  // Header with search - always rendered
-  let headerContent = (
-    <Box sx={{ mb: 2 }}>
-      <Grid container spacing={2} alignItems="center" justifyContent="space-between">
-        <Grid item xs={12} sm={6}>
-          <Typography variant="h4">
-            Activity Definitions
-          </Typography>
-          <Typography variant="subtitle2" color="textSecondary">
-            {activityDefinitions.length} activity definitions found
-          </Typography>
+  function renderHeader() {
+    return (
+      <Box mb={2}>
+        <Grid container spacing={2} alignItems="center" justifyContent="space-between">
+          <Grid item xs={12} sm={6}>
+            <Typography variant="h4">
+              Activity Definitions
+            </Typography>
+            <Typography variant="subtitle2" color="textSecondary">
+              {activityDefinitions.length} activity definitions found
+            </Typography>
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <Box display="flex" gap={2} alignItems="center" justifyContent="flex-end">
+              <ToggleButtonGroup
+                value={sortOrder}
+                exclusive
+                onChange={handleSortOrderChange}
+                aria-label="sort order"
+                size="small"
+              >
+                <ToggleButton value="ascending" aria-label="ascending order">
+                  <ArrowUpwardIcon />
+                </ToggleButton>
+                <ToggleButton value="descending" aria-label="descending order">
+                  <ArrowDownwardIcon />
+                </ToggleButton>
+              </ToggleButtonGroup>
+              <ToggleButtonGroup
+                value={showSystemId ? ['systemId'] : []}
+                onChange={(event, newFormats) => {
+                  setShowSystemId(newFormats.includes('systemId'));
+                }}
+                aria-label="display options"
+                size="small"
+              >
+                <ToggleButton value="systemId" aria-label="show system id">
+                  <BadgeIcon />
+                </ToggleButton>
+              </ToggleButtonGroup>
+              <Button
+                id="newActivityDefinitionButton"
+                variant="contained"
+                color="primary"
+                startIcon={<AddIcon />}
+                onClick={handleAddNew}
+              >
+                New Activity Definition
+              </Button>
+            </Box>
+          </Grid>
+          <Grid item xs={12}>
+            <TextField
+              id="activityDefinitionSearchInput"
+              fullWidth
+              placeholder="Search by name, title, description..."
+              value={searchFilter}
+              onChange={(e) => setSearchFilter(e.target.value)}
+              variant="outlined"
+              size="small"
+              sx={{
+                backgroundColor: 'background.paper',
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: 2
+                }
+              }}
+            />
+          </Grid>
         </Grid>
-        <Grid item xs={12} sm={6}>
-          <Box display="flex" justifyContent="flex-end">
-            <Button
-              id="newActivityDefinitionButton"
-              variant="contained"
-              startIcon={<AddIcon />}
-              onClick={handleAddNew}
-            >
-              New Activity Definition
-            </Button>
-          </Box>
-        </Grid>
-      </Grid>
-      <Grid container spacing={2} sx={{ mt: 1 }}>
-        <Grid item xs={12}>
-          <TextField
-            id="activityDefinitionSearchInput"
-            fullWidth
-            placeholder="Search by name, title, description..."
-            value={searchFilter}
-            onChange={(e) => setSearchFilter(e.target.value)}
-            size="small"
-          />
-        </Grid>
-      </Grid>
-    </Box>
-  );
+      </Box>
+    );
+  }
 
-  // Content - conditional based on data
   let layoutContainer;
   if (activityDefinitions.length > 0) {
     layoutContainer = (
-      <Card sx={{ boxShadow: 3 }}>
-        <CardContent>
+      <Card
+        sx={{
+          width: '100%',
+          borderRadius: 3,
+          boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+          border: '1px solid',
+          borderColor: 'divider',
+          overflow: 'hidden'
+        }}
+      >
+        <CardContent sx={{ p: 0 }}>
           <ActivityDefinitionsTable
             id="activityDefinitionsTable"
             activityDefinitions={activityDefinitions}
@@ -164,6 +219,8 @@ export function ActivityDefinitionsPage(props) {
             rowsPerPage={LayoutHelpers.calcTableRows()}
             onRowClick={handleRowClick}
             hideActionButton={true}
+            hideBarcode={!showSystemId}
+            order={sortOrder}
           />
         </CardContent>
       </Card>
@@ -177,18 +234,63 @@ export function ActivityDefinitionsPage(props) {
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          minHeight: '30vh',
+          minHeight: '50vh',
           textAlign: 'center'
         }}
       >
-        <Card sx={{ maxWidth: '600px', width: '100%', boxShadow: 3 }}>
-          <CardContent sx={{ p: 4 }}>
-            <Typography variant="h5" sx={{ mb: 2 }}>
-              No Activity Definitions
-            </Typography>
-            <Typography variant="body1" color="textSecondary">
-              No activity definitions found. Create one to get started.
-            </Typography>
+        <Card
+          className="no-data-card"
+          sx={{
+            maxWidth: '600px',
+            width: '100%',
+            borderRadius: 3,
+            boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+            border: '1px solid',
+            borderColor: 'divider',
+            backgroundColor: 'background.paper'
+          }}
+        >
+          <CardContent sx={{ p: 6 }}>
+            <Box sx={{ mb: 3 }}>
+              <Typography
+                variant="h5"
+                sx={{
+                  fontWeight: 500,
+                  color: 'text.primary',
+                  mb: 2
+                }}
+              >
+                {get(Meteor, 'settings.public.defaults.noData.defaultTitle', "No Data Available")}
+              </Typography>
+              <Typography
+                variant="body1"
+                sx={{
+                  color: 'text.secondary',
+                  lineHeight: 1.7,
+                  maxWidth: '480px',
+                  mx: 'auto'
+                }}
+              >
+                No activity definitions found. Create one to get started.
+              </Typography>
+            </Box>
+            <Button
+              variant="outlined"
+              startIcon={<AddIcon />}
+              onClick={handleAddNew}
+              sx={{
+                borderRadius: 2,
+                textTransform: 'none',
+                px: 3,
+                py: 1,
+                borderWidth: 2,
+                '&:hover': {
+                  borderWidth: 2
+                }
+              }}
+            >
+              Add Your First Activity Definition
+            </Button>
           </CardContent>
         </Card>
       </Box>
@@ -196,10 +298,18 @@ export function ActivityDefinitionsPage(props) {
   }
 
   return (
-    <div id="activityDefinitionsPage" style={{ padding: "20px" }}>
-      {headerContent}
-      {layoutContainer}
-    </div>
+    <Box
+      id="activityDefinitionsPage"
+      sx={{
+        minHeight: '100vh',
+        backgroundColor: 'background.default',
+        px: { xs: 2, sm: 3, md: 4 },
+        py: { xs: 3, sm: 4, md: 5 }
+      }}
+    >
+      { renderHeader() }
+      { layoutContainer }
+    </Box>
   );
 }
 

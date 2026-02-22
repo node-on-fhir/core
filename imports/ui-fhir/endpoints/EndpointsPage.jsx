@@ -21,6 +21,7 @@ import {
 import AddIcon from '@mui/icons-material/Add';
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
+import BadgeIcon from '@mui/icons-material/Badge';
 
 import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
@@ -53,6 +54,7 @@ export function EndpointsPage(props){
   const navigate = useNavigate();
   const [searchFilter, setSearchFilter] = useState('');
   const [sortOrder, setSortOrder] = useState('descending');
+  const [showSystemId, setShowSystemId] = useState(false);
 
   // Subscribe to endpoints data
   const isLoading = useTracker(() => {
@@ -220,6 +222,18 @@ export function EndpointsPage(props){
                   <ArrowDownwardIcon />
                 </ToggleButton>
               </ToggleButtonGroup>
+              <ToggleButtonGroup
+                value={showSystemId ? ['systemId'] : []}
+                onChange={(event, newFormats) => {
+                  setShowSystemId(newFormats.includes('systemId'));
+                }}
+                aria-label="display options"
+                size="small"
+              >
+                <ToggleButton value="systemId" aria-label="show system id">
+                  <BadgeIcon />
+                </ToggleButton>
+              </ToggleButtonGroup>
 
               <Button
                 id="addEndpointButton"
@@ -272,7 +286,7 @@ export function EndpointsPage(props){
           hideCheckbox={true}
           hideActionIcons={true}
           hideFhirId={true}
-          hideBarcode={true}
+          hideBarcode={!showSystemId}
           onRowClick={function(endpointId){
             console.log('Endpoint row clicked:', endpointId);
             Session.set('selectedEndpointId', endpointId);
