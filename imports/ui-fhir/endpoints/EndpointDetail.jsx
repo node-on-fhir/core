@@ -53,7 +53,7 @@ function EndpointDetail(props) {
         ]
       };
       console.log('[EndpointDetail] Subscribing with ID query:', query);
-      const handle = Meteor.subscribe('selectedPatient.Endpoints', Session.get('selectedPatientId'), {});
+      const handle = Meteor.subscribe('autopublish.Endpoints', {}, {});
       return handle.ready();
     }
     return true;

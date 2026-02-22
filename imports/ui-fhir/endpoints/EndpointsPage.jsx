@@ -90,7 +90,7 @@ export function EndpointsPage(props){
       }
     }
 
-    const handle = Meteor.subscribe('selectedPatient.Endpoints', Session.get('selectedPatientId'), {
+    const handle = Meteor.subscribe('autopublish.Endpoints', query, {
       limit: subscriptionLimit,
       sort: { '_id': -1 }
     });

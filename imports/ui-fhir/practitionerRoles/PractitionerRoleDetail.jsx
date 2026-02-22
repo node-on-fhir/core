@@ -91,7 +91,7 @@ function PractitionerRoleDetail(props) {
     let autoSubscribeEnabled = get(Meteor, 'settings.public.defaults.autoSubscribe', false);
     let handle;
     if(autoSubscribeEnabled){
-      handle = Meteor.subscribe('selectedPatient.PractitionerRoles', Session.get('selectedPatientId'), {});
+      handle = Meteor.subscribe('autopublish.PractitionerRoles', {}, {});
     } else {
       handle = Meteor.subscribe('practitionerRoles.all');
     }
@@ -100,8 +100,8 @@ function PractitionerRoleDetail(props) {
 
   // Load existing practitioner role if editing
   useEffect(() => {
-    if (id && id !== 'new' && isSubscriptionReady) {
-      const existingRole = PractitionerRoles.findOne({ _id: id });
+    if (id && id !== 'new') {
+      const existingRole = PractitionerRoles.findOne({ _id: id }) || PractitionerRoles.findOne({ id: id });
       if (existingRole) {
         setPractitionerRole(existingRole);
 
@@ -126,7 +126,7 @@ function PractitionerRoleDetail(props) {
     } else if (id === 'new') {
       setIsEditing(true);
     }
-  }, [id, isSubscriptionReady]);
+  }, [id]);
 
   function handleSave() {
     setIsLoading(true);
