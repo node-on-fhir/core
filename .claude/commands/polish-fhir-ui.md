@@ -51,6 +51,9 @@ If any of files 1-3 don't exist, stop and inform the user. The resource must hav
 - [ ] `useSearchParams` import: Present or absent?
 - [ ] Status color mapping: Does a `statusColorMap` object exist?
 - [ ] Header actions: Does `renderHeaderActions()` exist with icon buttons?
+- [ ] **Subscription mismatch**: Does the Detail subscribe to `selectedPatient.*` while the Page uses `autopublish.*`? (Critical bug — causes empty fields)
+- [ ] **isSubscriptionReady gate**: Is the data-loading `useEffect` gated on `isSubscriptionReady`? (Prevents data from loading on initial render)
+- [ ] **Fallback lookup**: Does `findOne({_id: id})` have a `|| findOne({id: id})` fallback for FHIR id URLs?
 
 **Table component — check for:**
 - [ ] Action icons column: Does `renderActionIcons()` with Preview/Edit exist?
@@ -117,6 +120,9 @@ Present the checklist of polish items and ask the user which ones to apply. Grou
 - [ ] Add Lock/Unlock icon toggle (replaces Edit/Cancel button pattern)
 - [ ] Add status color mapping for Chip display
 - [ ] Remove CardActions section entirely
+- [ ] **Fix subscription mismatch**: Detail must use `autopublish.*` when autoSubscribe is enabled (match the Page)
+- [ ] **Remove isSubscriptionReady gate**: Data-loading `useEffect` should NOT depend on `isSubscriptionReady`
+- [ ] **Add fallback lookup**: `findOne({_id: id}) || findOne({id: id})` for FHIR id URL support
 
 **Table Component:**
 - [ ] Add icon column for notes/conclusion (`DescriptionIcon` instead of text)
@@ -342,6 +348,61 @@ const statusColorMap = {
 ```
 
 **Remove the entire `<CardActions>` section.** All buttons are now either in the header (Preview, Form, Lock, Delete) or inline in the form (Save, Cancel).
+
+#### Reference: Detail Component Subscription Pattern (Critical)
+
+After the pub/sub reengineering, Detail components **must** use the same subscription channel as their Page component. When `autoSubscribe` is enabled (test environments), the Page subscribes to `autopublish.*` — so the Detail must too. Using `selectedPatient.*` in the Detail while the Page uses `autopublish.*` causes a subscription mismatch where data never arrives, leaving all form fields empty.
+
+**CORRECT Detail subscription** (matches the Page pattern):
+```javascript
+const isSubscriptionReady = useTracker(function(){
+  if (id && id !== 'new') {
+    let autoSubscribeEnabled = get(Meteor, 'settings.public.defaults.autoSubscribe', false);
+    if (autoSubscribeEnabled) {
+      return Meteor.subscribe('autopublish.{ResourceTypes}', {}, {}).ready();
+    } else {
+      return Meteor.subscribe('selectedPatient.{ResourceTypes}', Session.get('selectedPatientId'), {}).ready();
+    }
+  }
+  return true;
+}, [id]);
+```
+
+**WRONG** — causes empty fields in test environments:
+```javascript
+// ❌ Always uses selectedPatient.* regardless of autoSubscribe setting
+const handle = Meteor.subscribe('selectedPatient.{ResourceTypes}', Session.get('selectedPatientId'), {});
+```
+
+**Data-loading useEffect** — do NOT gate on `isSubscriptionReady`:
+```javascript
+// ✅ CORRECT — loads data as soon as available, re-runs on id change
+useEffect(function() {
+  if (id && id !== 'new') {
+    const existing = {ResourceTypes}.findOne({ _id: id }) || {ResourceTypes}.findOne({ id: id });
+    if (existing) {
+      set{ResourceType}(existing);
+      setIsEditing(false);
+    }
+  }
+}, [id]);
+
+// ❌ WRONG — isSubscriptionReady gate prevents data loading on initial render
+useEffect(function() {
+  if (id && id !== 'new' && isSubscriptionReady) {  // ← BUG: gate blocks initial load
+    const existing = {ResourceTypes}.findOne({ _id: id });
+    // ...
+  }
+}, [id, isSubscriptionReady]);  // ← BUG: isSubscriptionReady in deps
+```
+
+**Why the gate is a bug:** The useEffect fires once when `isSubscriptionReady` is `false` (no-op), then when the subscription becomes ready the tracker updates `isSubscriptionReady` to `true`, but the useEffect may not re-fire reliably because `isSubscriptionReady` is a tracker value, not true React state. Removing the gate and the dep lets the useEffect run on mount and whenever `id` changes, finding data that the subscription has already delivered.
+
+**Fallback lookup** — handles both MongoDB `_id` and FHIR `id` in URLs:
+```javascript
+const existing = {ResourceTypes}.findOne({ _id: id }) || {ResourceTypes}.findOne({ id: id });
+```
+This is safe because we try `_id` first (primary key, unique) and only fall back to `id` if not found. This is NOT the same as the forbidden `_id || id` OR-logic anti-pattern, which uses OR in a single query/assignment.
 
 #### Reference: Table Component Patterns
 
@@ -652,6 +713,10 @@ Next steps:
 | **Table notes** | Text in cell | DescriptionIcon |
 | **Table actions** | Row click only | Preview + Edit icon buttons |
 | **Page controls** | Varies | Sort toggle + column toggle + category filter |
+| **Detail subscription** | `selectedPatient.*` always | `autopublish.*` when autoSubscribe, `selectedPatient.*` otherwise |
+| **Data-loading gate** | `if (id && isSubscriptionReady)` | `if (id)` — no subscription gate |
+| **Data-loading deps** | `[id, isSubscriptionReady]` | `[id]` only |
+| **Collection lookup** | `findOne({_id: id})` only | `findOne({_id: id}) \|\| findOne({id: id})` fallback |
 | **Test row-find** | `textContent.includes(timestamp)` | `textContent.includes(code)` |
 | **Test delete** | Direct click | Lock first, then click by icon |
 

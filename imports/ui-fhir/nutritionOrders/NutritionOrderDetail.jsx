@@ -49,7 +49,7 @@ function NutritionOrderDetail(props) {
     let autoSubscribeEnabled = get(Meteor, 'settings.public.defaults.autoSubscribe', false);
     let handle;
     if(autoSubscribeEnabled){
-      handle = Meteor.subscribe('selectedPatient.NutritionOrders', Session.get('selectedPatientId'), {});
+      handle = Meteor.subscribe('autopublish.NutritionOrders', {}, {});
     } else {
       handle = Meteor.subscribe('nutritionOrders.all');
     }
@@ -273,11 +273,11 @@ function NutritionOrderDetail(props) {
   // Load nutrition order if editing
   useEffect(function() {
     async function loadNutritionOrder() {
-      if (id && id !== 'new' && isSubscriptionReady) {
+      if (id && id !== 'new') {
         setLoading(true);
         try {
           // First try to find in local collection
-          const existingOrder = NutritionOrders.findOne({_id: id});
+          const existingOrder = NutritionOrders.findOne({_id: id}) || NutritionOrders.findOne({id: id});
           if (existingOrder) {
             setNutritionOrder(existingOrder);
             setIsEditing(false);
@@ -299,7 +299,7 @@ function NutritionOrderDetail(props) {
     }
     
     loadNutritionOrder();
-  }, [id, isSubscriptionReady]);
+  }, [id]);
 
   // Handle field changes
   function handleChange(path, value) {

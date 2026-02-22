@@ -243,7 +243,7 @@ export function ServiceRequestsPage(props){
                 startIcon={<AddIcon />}
                 onClick={handleAddServiceRequest}
               >
-                Add Request
+                Add Service Request
               </Button>
             </Box>
           </Grid>

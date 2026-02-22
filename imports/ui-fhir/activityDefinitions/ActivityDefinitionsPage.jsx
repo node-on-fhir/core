@@ -271,7 +271,7 @@ export function ActivityDefinitionsPage(props) {
                   mx: 'auto'
                 }}
               >
-                No activity definitions found. Create one to get started.
+                No Activity Definitions found. Create one to get started.
               </Typography>
             </Box>
             <Button
