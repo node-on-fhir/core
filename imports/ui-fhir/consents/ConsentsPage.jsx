@@ -124,10 +124,10 @@ export function ConsentsPage(props){
     console.log('[ConsentsPage Subscription] Query:', JSON.stringify(query, null, 2));
 
     if(autoSubscribeEnabled){
-      const handle = Meteor.subscribe('selectedPatient.Consents', Session.get('selectedPatientId'), { limit: 1000 });
+      const handle = Meteor.subscribe('autopublish.Consents', query, { limit: 1000 });
       return !handle.ready();
     } else {
-      const handle = Meteor.subscribe('consents.all');
+      const handle = Meteor.subscribe('selectedPatient.Consents', Session.get('selectedPatientId'), { limit: 1000 });
       return !handle.ready();
     }
   }, [searchFilter, Session.get('selectedPatientId')]);

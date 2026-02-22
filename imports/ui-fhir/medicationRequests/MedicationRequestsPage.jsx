@@ -90,9 +90,9 @@ export function MedicationRequestsPage(props){
   useTracker(function(){
     let autoSubscribeEnabled = get(Meteor, 'settings.public.defaults.autoSubscribe', false);
     if(autoSubscribeEnabled){
-      return Meteor.subscribe('selectedPatient.MedicationRequests', Session.get('selectedPatientId'), {});
+      return Meteor.subscribe('autopublish.MedicationRequests', {}, { limit: 1000 });
     } else {
-      return Meteor.subscribe('medicationRequests.all');
+      return Meteor.subscribe('selectedPatient.MedicationRequests', Session.get('selectedPatientId'), { limit: 1000 });
     }
   }, []);
 

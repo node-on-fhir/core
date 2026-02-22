@@ -80,10 +80,10 @@ export function CompositionsPage(props){
     let autoSubscribeEnabled = get(Meteor, 'settings.public.defaults.autoSubscribe', false);
     
     if(autoSubscribeEnabled){
-      const handle = Meteor.subscribe('selectedPatient.Compositions', Session.get('selectedPatientId'), { limit: 1000 });
+      const handle = Meteor.subscribe('autopublish.Compositions', query, { limit: 1000 });
       return !handle.ready();
     } else {
-      const handle = Meteor.subscribe('pacio.compositions', query);
+      const handle = Meteor.subscribe('selectedPatient.Compositions', Session.get('selectedPatientId'), { limit: 1000 });
       return !handle.ready();
     }
   }, [searchFilter]);

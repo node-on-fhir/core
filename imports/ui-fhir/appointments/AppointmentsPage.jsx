@@ -156,10 +156,10 @@ export function AppointmentsPage(props){
     console.log('Appointments subscription query:', query);
     
     if(autoSubscribeEnabled){
-      const handle = Meteor.subscribe('selectedPatient.Appointments', Session.get('selectedPatientId'), { limit: 100 });
+      const handle = Meteor.subscribe('autopublish.Appointments', query, { limit: 1000 });
       return !handle.ready();
     } else {
-      const handle = Meteor.subscribe('appointments.all');
+      const handle = Meteor.subscribe('selectedPatient.Appointments', Session.get('selectedPatientId'), { limit: 1000 });
       return !handle.ready();
     }
   }, [Session.get('selectedPatientId'), searchFilter]);

@@ -140,9 +140,11 @@ export function QuestionnairesPage(props){
   useTracker(function(){
     let autoSubscribeEnabled = get(Meteor, 'settings.public.defaults.autoSubscribe', false);
     if(autoSubscribeEnabled){
-      return Meteor.subscribe('selectedPatient.Questionnaires', Session.get('selectedPatientId'), {});
+      const handle = Meteor.subscribe('autopublish.Questionnaires', {}, { limit: 1000 });
+      return !handle.ready();
     } else {
-      return Meteor.subscribe('questionnaires.all');
+      const handle = Meteor.subscribe('selectedPatient.Questionnaires', Session.get('selectedPatientId'), { limit: 1000 });
+      return !handle.ready();
     }
   }, []);
   

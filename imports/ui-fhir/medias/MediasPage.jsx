@@ -136,10 +136,10 @@ export function MediasPage(props){
     console.log('Medias subscription query:', query);
     
     if(autoSubscribeEnabled){
-      const handle = Meteor.subscribe('selectedPatient.Medias', Session.get('selectedPatientId'), { limit: 1000 });
+      const handle = Meteor.subscribe('autopublish.Medias', query, { limit: 1000 });
       return !handle.ready();
     } else {
-      const handle = Meteor.subscribe('medias.all');
+      const handle = Meteor.subscribe('selectedPatient.Medias', Session.get('selectedPatientId'), { limit: 1000 });
       return !handle.ready();
     }
   }, [Session.get('selectedPatientId'), searchFilter]);

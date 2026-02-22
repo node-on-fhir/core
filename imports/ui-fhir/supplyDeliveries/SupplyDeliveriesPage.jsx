@@ -99,10 +99,10 @@ export function SupplyDeliveriesPage(props){
     console.log('SupplyDeliveries subscription query:', query);
     
     if(autoSubscribeEnabled){
-      const handle = Meteor.subscribe('selectedPatient.SupplyDeliveries', Session.get('selectedPatientId'), { limit: 1000 });
+      const handle = Meteor.subscribe('autopublish.SupplyDeliveries', query, { limit: 1000 });
       return !handle.ready();
     } else {
-      const handle = Meteor.subscribe('supplyDeliveries.all');
+      const handle = Meteor.subscribe('selectedPatient.SupplyDeliveries', Session.get('selectedPatientId'), { limit: 1000 });
       return !handle.ready();
     }
   }, [Session.get('selectedPatientId')]);

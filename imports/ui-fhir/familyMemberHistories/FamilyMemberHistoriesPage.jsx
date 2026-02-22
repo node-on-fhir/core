@@ -106,10 +106,10 @@ function FamilyMemberHistoriesPage() {
     }
     
     if(autoSubscribeEnabled){
-      const handle = Meteor.subscribe('selectedPatient.FamilyMemberHistories', Session.get('selectedPatientId'), { limit: 1000 });
+      const handle = Meteor.subscribe('autopublish.FamilyMemberHistories', query, { limit: 1000 });
       return !handle.ready();
     } else {
-      const handle = Meteor.subscribe('familyMemberHistories.all');
+      const handle = Meteor.subscribe('selectedPatient.FamilyMemberHistories', Session.get('selectedPatientId'), { limit: 1000 });
       return !handle.ready();
     }
   }, [searchFilter]);

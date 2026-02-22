@@ -58,6 +58,10 @@ If any of files 1-3 don't exist, stop and inform the user. The resource must hav
 - [ ] Column hide props: What `hide*` props are supported?
 
 **Page component — check for:**
+- [ ] Subscription routing: Does autoSubscribe branch use `autopublish.*` or `selectedPatient.*`?
+- [ ] No-data state: Does it use `<FhirNoData>` component?
+- [ ] Loading state: Does it show loading indicator when `isLoading` is true?
+- [ ] Search bar: Does it have a `<TextField>` with `SearchIcon` `InputAdornment`?
 - [ ] Sort toggle: `ToggleButtonGroup` with ascending/descending
 - [ ] Column visibility toggle: `ToggleButtonGroup` with systemId/patientName/patientReference
 - [ ] Category/type filter dropdown: `FormControl` with `Select`
@@ -120,6 +124,10 @@ Present the checklist of polish items and ask the user which ones to apply. Grou
 - [ ] Update column hide props for new defaults
 
 **Page Component:**
+- [ ] Fix subscription routing: `autopublish.*` when autoSubscribe, `selectedPatient.*` otherwise
+- [ ] Add `<FhirNoData>` component for empty state
+- [ ] Add loading state check (`isLoading` → show nothing or skeleton)
+- [ ] Add search `<TextField>` with `SearchIcon` `InputAdornment`
 - [ ] Add `ToggleButtonGroup` for sort order (ascending/descending)
 - [ ] Add `ToggleButtonGroup` for column visibility (SystemId, PatientName, PatientReference)
 - [ ] Add category/type filter dropdown (resource-specific)
@@ -477,6 +485,37 @@ function handleCategoryChange(event){
 </FormControl>
 ```
 
+#### Reference: Page Component Subscription Pattern
+
+**CORRECT subscription routing** (autoSubscribe=true uses autopublish, false uses selectedPatient):
+```javascript
+// CORRECT subscription routing
+const isLoading = useTracker(function(){
+  let autoSubscribeEnabled = get(Meteor, 'settings.public.defaults.autoSubscribe', false);
+  // ... build query with patient filter and search filter ...
+
+  if(autoSubscribeEnabled){
+    const handle = Meteor.subscribe('autopublish.{ResourceTypes}', query, { limit: 1000 });
+    return !handle.ready();
+  } else {
+    const handle = Meteor.subscribe('selectedPatient.{ResourceTypes}', Session.get('selectedPatientId'), { limit: 1000 });
+    return !handle.ready();
+  }
+}, [Session.get('selectedPatientId'), searchFilter]);
+```
+
+**FhirNoData component** for empty state:
+```jsx
+import FhirNoData from '../components/FhirNoData.jsx';
+
+// In render, when no data:
+<FhirNoData
+  resourceType="{ResourceType}"
+  searchFilter={searchFilter}
+  onAdd={handleAdd{ResourceType}}
+/>
+```
+
 Pass visibility props to the table component:
 ```jsx
 <{ResourceTypes}Table
@@ -598,6 +637,10 @@ Next steps:
 
 | Aspect | OLD Pattern | NEW Pattern |
 |--------|-------------|-------------|
+| **Subscription (autoSubscribe)** | `selectedPatient.*` or `{resource}.all` | `autopublish.*` with query |
+| **Subscription (production)** | `{resource}.all` | `selectedPatient.*` with patientId |
+| **No-data state** | Varies (some use custom cards) | `<FhirNoData>` component |
+| **Loading state** | Often missing | `isLoading` check returns null |
 | **Barcode** | `<Box>` in CardContent body | CardHeader title |
 | **Edit toggle** | Edit/Cancel buttons in CardActions | Lock/Unlock icon in header |
 | **Delete** | In CardActions, always clickable | In header, gated on `isEditing` |

@@ -57,9 +57,9 @@ export function ResearchStudiesPage(props){
   useTracker(function(){
     let autoSubscribeEnabled = get(Meteor, 'settings.public.defaults.autoSubscribe', false);
     if(autoSubscribeEnabled){
-      return Meteor.subscribe('selectedPatient.ResearchStudies', Session.get('selectedPatientId'), {});
+      return Meteor.subscribe('autopublish.ResearchStudies', {}, { limit: 1000 });
     } else {
-      return Meteor.subscribe('researchStudies.all');
+      return Meteor.subscribe('selectedPatient.ResearchStudies', Session.get('selectedPatientId'), { limit: 1000 });
     }
   }, []);
 

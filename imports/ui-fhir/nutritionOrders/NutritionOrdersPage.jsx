@@ -161,10 +161,10 @@ export function NutritionOrdersPage(props){
     }
     
     if(autoSubscribeEnabled){
-      const handle = Meteor.subscribe('selectedPatient.NutritionOrders', Session.get('selectedPatientId'), { limit: 1000 });
+      const handle = Meteor.subscribe('autopublish.NutritionOrders', query, { limit: 1000 });
       return !handle.ready();
     } else {
-      const handle = Meteor.subscribe('nutritionorders.all');
+      const handle = Meteor.subscribe('selectedPatient.NutritionOrders', Session.get('selectedPatientId'), { limit: 1000 });
       return !handle.ready();
     }
   }, [Session.get('selectedPatientId'), searchFilter]);

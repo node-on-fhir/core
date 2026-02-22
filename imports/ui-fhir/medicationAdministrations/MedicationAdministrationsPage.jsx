@@ -187,10 +187,10 @@ export function MedicationAdministrationsPage(props){
     }
     
     if(autoSubscribeEnabled){
-      const handle = Meteor.subscribe('selectedPatient.MedicationAdministrations', Session.get('selectedPatientId'), { limit: 1000 });
+      const handle = Meteor.subscribe('autopublish.MedicationAdministrations', query, { limit: 1000 });
       return !handle.ready();
     } else {
-      const handle = Meteor.subscribe('medicationAdministrations.all');
+      const handle = Meteor.subscribe('selectedPatient.MedicationAdministrations', Session.get('selectedPatientId'), { limit: 1000 });
       return !handle.ready();
     }
   }, [Session.get('selectedPatientId'), searchFilter]);

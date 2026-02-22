@@ -100,10 +100,10 @@ export function SchedulesPage(props){
     }
     
     if(autoSubscribeEnabled){
-      const handle = Meteor.subscribe('selectedPatient.Schedules', Session.get('selectedPatientId'), { limit: 100 });
+      const handle = Meteor.subscribe('autopublish.Schedules', query, { limit: 1000 });
       return !handle.ready();
     } else {
-      const handle = Meteor.subscribe('schedules', {});
+      const handle = Meteor.subscribe('selectedPatient.Schedules', Session.get('selectedPatientId'), { limit: 1000 });
       return !handle.ready();
     }
   }, [searchFilter]);

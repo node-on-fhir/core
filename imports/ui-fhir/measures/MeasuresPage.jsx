@@ -142,10 +142,10 @@ export function MeasuresPage(props){
     }
     
     if(autoSubscribeEnabled){
-      const handle = Meteor.subscribe('selectedPatient.Measures', Session.get('selectedPatientId'), { limit: 1000 });
+      const handle = Meteor.subscribe('autopublish.Measures', query, { limit: 1000 });
       return !handle.ready();
     } else {
-      const handle = Meteor.subscribe('measures.all');
+      const handle = Meteor.subscribe('selectedPatient.Measures', Session.get('selectedPatientId'), { limit: 1000 });
       return !handle.ready();
     }
   }, [searchFilter]);

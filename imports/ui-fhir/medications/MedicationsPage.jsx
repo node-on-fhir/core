@@ -95,11 +95,15 @@ export function MedicationsPage(props){
       }
     }
 
-    const handle = Meteor.subscribe('selectedPatient.Medications', Session.get('selectedPatientId'), {
-      limit: subscriptionLimit,
-      sort: { '_id': -1 } // Most recent first
-    });
-    return !handle.ready();
+    let autoSubscribeEnabled = get(Meteor, 'settings.public.defaults.autoSubscribe', false);
+
+    if(autoSubscribeEnabled){
+      const handle = Meteor.subscribe('autopublish.Medications', query, { limit: 1000 });
+      return !handle.ready();
+    } else {
+      const handle = Meteor.subscribe('selectedPatient.Medications', Session.get('selectedPatientId'), { limit: 1000 });
+      return !handle.ready();
+    }
   }, [searchFilter]);
 
   let data = {

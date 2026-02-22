@@ -101,10 +101,10 @@ export function ClinicalImpressionsPage(props) {
     console.log('ClinicalImpressions subscription query:', query);
 
     if (autoSubscribeEnabled) {
-      const handle = Meteor.subscribe('selectedPatient.ClinicalImpressions', Session.get('selectedPatientId'), { limit: 1000 });
+      const handle = Meteor.subscribe('autopublish.ClinicalImpressions', query, { limit: 1000 });
       return !handle.ready();
     } else {
-      const handle = Meteor.subscribe('clinicalimpressions.all');
+      const handle = Meteor.subscribe('selectedPatient.ClinicalImpressions', Session.get('selectedPatientId'), { limit: 1000 });
       return !handle.ready();
     }
   }, [Session.get('selectedPatientId'), searchFilter]);

@@ -113,10 +113,10 @@ export function CarePlansPage(props){
     console.log('CarePlans subscription query:', query);
     
     if(autoSubscribeEnabled){
-      const handle = Meteor.subscribe('selectedPatient.CarePlans', Session.get('selectedPatientId'), { limit: 1000 });
+      const handle = Meteor.subscribe('autopublish.CarePlans', query, { limit: 1000 });
       return !handle.ready();
     } else {
-      const handle = Meteor.subscribe('careplans.all');
+      const handle = Meteor.subscribe('selectedPatient.CarePlans', Session.get('selectedPatientId'), { limit: 1000 });
       return !handle.ready();
     }
   }, [Session.get('selectedPatientId')]);

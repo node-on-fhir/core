@@ -123,10 +123,10 @@ export function ConditionsPage(props){
     console.log('Conditions subscription query:', query);
     
     if(autoSubscribeEnabled){
-      const handle = Meteor.subscribe('selectedPatient.Conditions', Session.get('selectedPatientId'), { limit: 1000 });
+      const handle = Meteor.subscribe('autopublish.Conditions', query, { limit: 1000 });
       return !handle.ready();
     } else {
-      const handle = Meteor.subscribe('conditions.all');
+      const handle = Meteor.subscribe('selectedPatient.Conditions', Session.get('selectedPatientId'), { limit: 1000 });
       return !handle.ready();
     }
   }, [Session.get('selectedPatientId'), searchFilter]);

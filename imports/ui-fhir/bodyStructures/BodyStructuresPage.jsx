@@ -100,10 +100,10 @@ export function BodyStructuresPage(props) {
     console.log('BodyStructures subscription query:', query);
 
     if (autoSubscribeEnabled) {
-      const handle = Meteor.subscribe('selectedPatient.BodyStructures', Session.get('selectedPatientId'), { limit: 1000 });
+      const handle = Meteor.subscribe('autopublish.BodyStructures', query, { limit: 1000 });
       return !handle.ready();
     } else {
-      const handle = Meteor.subscribe('bodystructures.all');
+      const handle = Meteor.subscribe('selectedPatient.BodyStructures', Session.get('selectedPatientId'), { limit: 1000 });
       return !handle.ready();
     }
   }, [Session.get('selectedPatientId'), searchFilter]);

@@ -103,10 +103,10 @@ export function RiskAssessmentsPage(props) {
     console.log('RiskAssessments subscription query:', query);
 
     if (autoSubscribeEnabled) {
-      const handle = Meteor.subscribe('selectedPatient.RiskAssessments', Session.get('selectedPatientId'), { limit: 1000 });
+      const handle = Meteor.subscribe('autopublish.RiskAssessments', query, { limit: 1000 });
       return !handle.ready();
     } else {
-      const handle = Meteor.subscribe('riskassessments.all');
+      const handle = Meteor.subscribe('selectedPatient.RiskAssessments', Session.get('selectedPatientId'), { limit: 1000 });
       return !handle.ready();
     }
   }, [Session.get('selectedPatientId'), searchFilter]);

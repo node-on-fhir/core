@@ -100,9 +100,11 @@ export function QuestionnaireResponsesPage(props){
   useTracker(function(){
     let autoSubscribeEnabled = get(Meteor, 'settings.public.defaults.autoSubscribe', false);
     if(autoSubscribeEnabled){
-      return Meteor.subscribe('selectedPatient.QuestionnaireResponses', Session.get('selectedPatientId'), {});
+      const handle = Meteor.subscribe('autopublish.QuestionnaireResponses', {}, { limit: 1000 });
+      return !handle.ready();
     } else {
-      return Meteor.subscribe('questionnaireresponses.all');
+      const handle = Meteor.subscribe('selectedPatient.QuestionnaireResponses', Session.get('selectedPatientId'), { limit: 1000 });
+      return !handle.ready();
     }
   }, []);
 

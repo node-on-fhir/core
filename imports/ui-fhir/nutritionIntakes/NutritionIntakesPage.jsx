@@ -160,10 +160,10 @@ export function NutritionIntakesPage(props){
     }
 
     if(autoSubscribeEnabled){
-      const handle = Meteor.subscribe('selectedPatient.NutritionIntakes', Session.get('selectedPatientId'), { limit: 1000 });
+      const handle = Meteor.subscribe('autopublish.NutritionIntakes', query, { limit: 1000 });
       return !handle.ready();
     } else {
-      const handle = Meteor.subscribe('nutritionintakes.all');
+      const handle = Meteor.subscribe('selectedPatient.NutritionIntakes', Session.get('selectedPatientId'), { limit: 1000 });
       return !handle.ready();
     }
   }, [Session.get('selectedPatientId'), searchFilter]);
