@@ -769,7 +769,16 @@ describe('Procedures CRUD Operations', function() {
       .pause(500);
 
     browser
-      .click('#performerDisplay')
+      .execute(function() {
+        var input = document.querySelector('#performerDisplay');
+        if (input) {
+          input.scrollIntoView({ block: 'center' });
+          input.click();
+          input.focus();
+        }
+        return !!input;
+      })
+      .pause(300)
       .clearValue('#performerDisplay')
       .setValue('#performerDisplay', updatedProcedure.performerName)
       .click('#status')
@@ -889,16 +898,25 @@ describe('Procedures CRUD Operations', function() {
           .pause(1000)
           .waitForElementVisible('#procedureDetailPage', 5000);
 
-        // IMPORTANT: ProcedureDetail shows Delete button in VIEW mode (not edit mode)
-        // This is different from ConditionDetail which shows Delete in edit mode
+        // Unlock to enable Delete (new UI pattern: delete requires edit mode)
         browser
           .execute(function() {
-            const buttons = document.querySelectorAll('button');
-            for (let button of buttons) {
-              if (button.textContent.includes('Delete')) {
-                button.click();
-                return true;
-              }
+            var lockButton = document.querySelector('button svg[data-testid="LockIcon"]');
+            if (lockButton) {
+              lockButton.parentElement.click();
+              return true;
+            }
+            return false;
+          })
+          .pause(500);
+
+        // Click Delete icon button (no text, find by SVG data-testid)
+        browser
+          .execute(function() {
+            var deleteIcon = document.querySelector('button svg[data-testid="DeleteIcon"]');
+            if (deleteIcon) {
+              deleteIcon.parentElement.click();
+              return true;
             }
             return false;
           })
