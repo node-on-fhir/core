@@ -70,8 +70,8 @@ export function AuditEventDetail(props) {
   }, []);
 
   useEffect(() => {
-    if (id && id !== 'new' && isSubscriptionReady) {
-      const existingAuditEvent = AuditEvents.findOne({ _id: id });
+    if (id && id !== 'new') {
+      const existingAuditEvent = AuditEvents.findOne({ _id: id }) || AuditEvents.findOne({ id: id });
       if (existingAuditEvent) {
         setAuditEvent(existingAuditEvent);
         setIsEditing(false);
@@ -79,7 +79,7 @@ export function AuditEventDetail(props) {
     } else if (id === 'new' || !id) {
       setIsEditing(true);
     }
-  }, [id, isSubscriptionReady]);
+  }, [id]);
 
   function handleChange(path, value) {
     const newAuditEvent = { ...auditEvent };

@@ -145,14 +145,14 @@ function CommunicationDetail(props) {
 
   // Load existing communication
   useEffect(() => {
-    if (communicationId && communicationId !== 'new' && isSubscriptionReady) {
-      const existingCommunication = Communications.findOne({_id: communicationId});
+    if (communicationId && communicationId !== 'new') {
+      const existingCommunication = Communications.findOne({_id: communicationId}) || Communications.findOne({id: communicationId});
       if (existingCommunication) {
         setCommunication(existingCommunication);
         setIsEditing(false);
       }
     }
-  }, [communicationId, isSubscriptionReady]);
+  }, [communicationId]);
 
   // Set default values for new communications
   useEffect(() => {

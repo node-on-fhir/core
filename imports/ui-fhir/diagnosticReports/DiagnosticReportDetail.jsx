@@ -128,11 +128,11 @@ function DiagnosticReportDetail(props){
   }, []);
 
   useEffect(() => {
-    if(id && id !== 'new' && isSubscriptionReady){
+    if(id && id !== 'new'){
       setDiagnosticReportId(id);
       setIsEditing(false); // Start in read mode for existing reports
 
-      let selectedDiagnosticReport = DiagnosticReports.findOne({_id: id});
+      let selectedDiagnosticReport = DiagnosticReports.findOne({_id: id}) || DiagnosticReports.findOne({id: id});
       if(selectedDiagnosticReport){
         setDiagnosticReport(selectedDiagnosticReport);
 
@@ -211,7 +211,7 @@ function DiagnosticReportDetail(props){
         category: ''
       });
     }
-  }, [id, isSubscriptionReady]);
+  }, [id]);
 
   function handleChange(name, value){
     const newForm = Object.assign({}, form);

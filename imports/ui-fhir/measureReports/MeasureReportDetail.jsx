@@ -126,8 +126,8 @@ function MeasureReportDetail(props) {
 
   // Load existing measure report
   useEffect(() => {
-    if (id && id !== 'new' && isSubscriptionReady) {
-      const existingReport = MeasureReports.findOne({_id: id});
+    if (id && id !== 'new') {
+      const existingReport = MeasureReports.findOne({_id: id}) || MeasureReports.findOne({id: id});
       if (existingReport) {
         setMeasureReport(existingReport);
         setMeasureReportId(id);
@@ -136,14 +136,14 @@ function MeasureReportDetail(props) {
     } else if (id === 'new') {
       setIsEditing(true);
       setMeasureReportId('new');
-      
+
       // Pre-populate patient if one is selected
       if (selectedPatient) {
         handleChange('subject.display', patientName);
         handleChange('subject.reference', `Patient/${patientId}`);
       }
     }
-  }, [id, selectedPatient, isSubscriptionReady]);
+  }, [id]);
 
   function handleChange(path, value) {
     const updatedReport = cloneDeep(measureReport);

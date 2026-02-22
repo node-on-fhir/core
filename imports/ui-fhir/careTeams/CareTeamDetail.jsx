@@ -147,7 +147,7 @@ function CareTeamDetail(props) {
       }
       
       setIsEditing(true);
-    } else if (id && isSubscriptionReady) {
+    } else if (id) {
       // Load existing care team
       const existingCareTeam = CareTeams.findOne({_id: id}) || CareTeams.findOne({id: id});
       if (existingCareTeam) {
@@ -155,7 +155,7 @@ function CareTeamDetail(props) {
         setIsEditing(false); // Default to read mode for existing records
       }
     }
-  }, [id, selectedPatient, isSubscriptionReady]);
+  }, [id]);
   
   const careTeamId = id && id !== 'new' ? id : null;
   

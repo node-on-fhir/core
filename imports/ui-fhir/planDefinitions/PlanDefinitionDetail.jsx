@@ -248,14 +248,14 @@ function PlanDefinitionDetail(props) {
 
   // Load plan definition if editing
   useEffect(function() {
-    if (id && id !== 'new' && isSubscriptionReady) {
-      const existingPlanDefinition = PlanDefinitions.findOne({_id: id});
+    if (id && id !== 'new') {
+      const existingPlanDefinition = PlanDefinitions.findOne({_id: id}) || PlanDefinitions.findOne({id: id});
       if (existingPlanDefinition) {
         setPlanDefinition(existingPlanDefinition);
         setIsEditing(false);
       }
     }
-  }, [id, isSubscriptionReady]);
+  }, [id]);
 
   // Handle accordion expansion
   const handleAccordionChange = (panel) => (event, isExpanded) => {

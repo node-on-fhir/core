@@ -134,14 +134,14 @@ function MessageHeaderDetail(props) {
 
   // Load message header if editing
   useEffect(function() {
-    if (id && id !== 'new' && isSubscriptionReady) {
-      const existingMessageHeader = MessageHeaders.findOne({_id: id});
+    if (id && id !== 'new') {
+      const existingMessageHeader = MessageHeaders.findOne({_id: id}) || MessageHeaders.findOne({id: id});
       if (existingMessageHeader) {
         setMessageHeader(existingMessageHeader);
         setIsEditing(false);
       }
     }
-  }, [id, isSubscriptionReady]);
+  }, [id]);
 
   // Handle field changes
   function handleChange(path, value) {

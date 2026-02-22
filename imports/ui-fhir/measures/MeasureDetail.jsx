@@ -137,14 +137,14 @@ function MeasureDetail(props) {
 
   // Load measure if editing existing
   useEffect(function() {
-    if (id && id !== 'new' && isSubscriptionReady) {
-      const existingMeasure = Measures.findOne({_id: id});
+    if (id && id !== 'new') {
+      const existingMeasure = Measures.findOne({_id: id}) || Measures.findOne({id: id});
       if (existingMeasure) {
         setMeasure(existingMeasure);
         setIsEditing(false);
       }
     }
-  }, [id, isSubscriptionReady]);
+  }, [id]);
 
   // Handle field changes
   function handleChange(path, value) {

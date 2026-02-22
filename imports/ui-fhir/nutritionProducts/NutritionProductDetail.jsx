@@ -115,12 +115,12 @@ function NutritionProductDetail(props) {
     }
   }, [id]);
 
-  // Load nutrition product when subscription is ready
+  // Load nutrition product from collection
   useEffect(function() {
-    if (id && id !== 'new' && isSubscriptionReady) {
-      console.log('[NutritionProductDetail] Subscription ready, loading nutrition product from collection');
+    if (id && id !== 'new') {
+      console.log('[NutritionProductDetail] Loading nutrition product from collection');
       // Load from client collection (populated by subscription)
-      const existingNutritionProduct = NutritionProducts.findOne({_id: id});
+      const existingNutritionProduct = NutritionProducts.findOne({_id: id}) || NutritionProducts.findOne({id: id});
 
       if (existingNutritionProduct) {
         console.log('[NutritionProductDetail] Loaded nutrition product:', {
@@ -136,7 +136,7 @@ function NutritionProductDetail(props) {
         setError('Nutrition product not found');
       }
     }
-  }, [id, isSubscriptionReady]);
+  }, [id]);
 
   // Handle field changes
   function handleChange(path, value) {

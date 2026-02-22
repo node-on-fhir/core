@@ -171,16 +171,16 @@ function TaskDetail(props) {
     }
   }, [taskId, selectedPatient, currentUser]);
 
-  // Load task when subscription is ready
+  // Load task from collection
   useEffect(() => {
-    if (taskId && taskId !== 'new' && isSubscriptionReady) {
-      const existingTask = Tasks.findOne({_id: taskId});
+    if (taskId && taskId !== 'new') {
+      const existingTask = Tasks.findOne({_id: taskId}) || Tasks.findOne({id: taskId});
       if (existingTask) {
         setTask(existingTask);
         setIsEditing(false);
       }
     }
-  }, [taskId, isSubscriptionReady]);
+  }, [taskId]);
 
   function handleChange(field, value) {
     setTask(prev => {

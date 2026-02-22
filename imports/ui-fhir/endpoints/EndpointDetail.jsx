@@ -105,11 +105,11 @@ function EndpointDetail(props) {
     }
   }, [id]);
 
-  // Load endpoint when subscription is ready
+  // Load endpoint from collection
   useEffect(function() {
-    if (id && id !== 'new' && isSubscriptionReady) {
-      console.log('[EndpointDetail] Subscription ready, loading endpoint from collection');
-      const existingEndpoint = Endpoints.findOne({_id: id});
+    if (id && id !== 'new') {
+      console.log('[EndpointDetail] Loading endpoint from collection');
+      const existingEndpoint = Endpoints.findOne({_id: id}) || Endpoints.findOne({id: id});
 
       if (existingEndpoint) {
         console.log('[EndpointDetail] Loaded endpoint:', {
@@ -125,7 +125,7 @@ function EndpointDetail(props) {
         setError('Endpoint not found');
       }
     }
-  }, [id, isSubscriptionReady]);
+  }, [id]);
 
   // Handle field changes
   function handleChange(path, value) {
