@@ -241,6 +241,10 @@ const IpsContent = forwardRef(function IpsContent(props, ref) {
         '& .MuiChip-outlined': {
           borderColor: isDark ? 'rgba(255,255,255,0.23)' : undefined,
           color: isDark ? cardTextColor : undefined
+        },
+        '& .MuiPaper-root': {
+          bgcolor: isDark ? '#1e1e1e' : '#ffffff',
+          borderColor: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.12)'
         }
       }}>
         <CardHeader
