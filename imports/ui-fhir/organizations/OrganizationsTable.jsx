@@ -93,11 +93,21 @@ function OrganizationsTable(props){
     page,
     onSetPage,
 
+    order,
+
     ...otherProps
   } = props;
 
+  // ------------------------------------------------------------------------
+  // Store original prop values before form factor overrides
+  const hideBarcodeFromProp = hideBarcode;
+  const hideAddressLineFromProp = hideAddressLine;
+  const hideCityFromProp = hideCity;
+  const hideStateFromProp = hideState;
+  const hidePostalCodeFromProp = hidePostalCode;
+  const hideCountryFromProp = hideCountry;
 
-    // ------------------------------------------------------------------------
+  // ------------------------------------------------------------------------
   // Form Factors
 
   let multiline = false;
@@ -113,12 +123,12 @@ function OrganizationsTable(props){
         hideActive = true;
         hidePhone = true;
         hideEmail = true;
-        hideAddressLine = true;
-        hideCity = true;
-        hideState = true;
-        hidePostalCode = true;
-        hideCountry = true;
-        hideBarcode = true;
+        hideAddressLine = (hideAddressLineFromProp !== undefined) ? hideAddressLineFromProp : true;
+        hideCity = (hideCityFromProp !== undefined) ? hideCityFromProp : true;
+        hideState = (hideStateFromProp !== undefined) ? hideStateFromProp : true;
+        hidePostalCode = (hidePostalCodeFromProp !== undefined) ? hidePostalCodeFromProp : true;
+        hideCountry = (hideCountryFromProp !== undefined) ? hideCountryFromProp : true;
+        hideBarcode = (hideBarcodeFromProp !== undefined) ? hideBarcodeFromProp : true;
         multiline = true;
         break;
       case "tablet":
@@ -129,12 +139,12 @@ function OrganizationsTable(props){
         hideActive = false;
         hidePhone = true;
         hideEmail = true;
-        hideAddressLine = true;
-        hideCity = true;
-        hideState = true;
-        hidePostalCode = true;
-        hideCountry = true;
-        hideBarcode = false;
+        hideAddressLine = (hideAddressLineFromProp !== undefined) ? hideAddressLineFromProp : true;
+        hideCity = (hideCityFromProp !== undefined) ? hideCityFromProp : true;
+        hideState = (hideStateFromProp !== undefined) ? hideStateFromProp : true;
+        hidePostalCode = (hidePostalCodeFromProp !== undefined) ? hidePostalCodeFromProp : true;
+        hideCountry = (hideCountryFromProp !== undefined) ? hideCountryFromProp : true;
+        hideBarcode = (hideBarcodeFromProp !== undefined) ? hideBarcodeFromProp : false;
         multiline = false;
         break;
       case "web":
@@ -143,12 +153,12 @@ function OrganizationsTable(props){
         hideActive = false;
         hidePhone = false;
         hideEmail = false;
-        hideAddressLine = true;
-        hideCity = false;
-        hideState = false;
-        hidePostalCode = true;
-        hideCountry = true;
-        hideBarcode = false;
+        hideAddressLine = (hideAddressLineFromProp !== undefined) ? hideAddressLineFromProp : true;
+        hideCity = (hideCityFromProp !== undefined) ? hideCityFromProp : false;
+        hideState = (hideStateFromProp !== undefined) ? hideStateFromProp : false;
+        hidePostalCode = (hidePostalCodeFromProp !== undefined) ? hidePostalCodeFromProp : true;
+        hideCountry = (hideCountryFromProp !== undefined) ? hideCountryFromProp : true;
+        hideBarcode = (hideBarcodeFromProp !== undefined) ? hideBarcodeFromProp : false;
         multiline = false;
         break;
       case "desktop":
@@ -157,12 +167,12 @@ function OrganizationsTable(props){
         hideActive = false;
         hidePhone = false;
         hideEmail = false;
-        hideAddressLine = false;
-        hideCity = false;
-        hideState = false;
-        hidePostalCode = false;
-        hideCountry = false;
-        hideBarcode = false;
+        hideAddressLine = (hideAddressLineFromProp !== undefined) ? hideAddressLineFromProp : false;
+        hideCity = (hideCityFromProp !== undefined) ? hideCityFromProp : false;
+        hideState = (hideStateFromProp !== undefined) ? hideStateFromProp : false;
+        hidePostalCode = (hidePostalCodeFromProp !== undefined) ? hidePostalCodeFromProp : false;
+        hideCountry = (hideCountryFromProp !== undefined) ? hideCountryFromProp : false;
+        hideBarcode = (hideBarcodeFromProp !== undefined) ? hideBarcodeFromProp : false;
         multiline = false;
         break;
       case "hdmi":
@@ -171,12 +181,12 @@ function OrganizationsTable(props){
         hideActive = false;
         hidePhone = false;
         hideEmail = false;
-        hideAddressLine = false;
-        hideCity = false;
-        hideState = false;
-        hidePostalCode = false;
-        hideCountry = false;
-        hideBarcode = false;
+        hideAddressLine = (hideAddressLineFromProp !== undefined) ? hideAddressLineFromProp : false;
+        hideCity = (hideCityFromProp !== undefined) ? hideCityFromProp : false;
+        hideState = (hideStateFromProp !== undefined) ? hideStateFromProp : false;
+        hidePostalCode = (hidePostalCodeFromProp !== undefined) ? hidePostalCodeFromProp : false;
+        hideCountry = (hideCountryFromProp !== undefined) ? hideCountryFromProp : false;
+        hideBarcode = (hideBarcodeFromProp !== undefined) ? hideBarcodeFromProp : false;
         multiline = false;
         break;
     }
@@ -639,7 +649,8 @@ OrganizationsTable.propTypes = {
   tableRowSize: PropTypes.string,
   formFactorLayout: PropTypes.string,
 
-  labels: PropTypes.object
+  labels: PropTypes.object,
+  order: PropTypes.string
 };
 
 OrganizationsTable.defaultProps = {

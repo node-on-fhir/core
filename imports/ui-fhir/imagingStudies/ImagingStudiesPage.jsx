@@ -25,6 +25,9 @@ import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 import PersonIcon from '@mui/icons-material/Person';
 import CodeIcon from '@mui/icons-material/Code';
 import BadgeIcon from '@mui/icons-material/Badge';
+import FingerprintIcon from '@mui/icons-material/Fingerprint';
+import SendIcon from '@mui/icons-material/Send';
+import LocationOnIcon from '@mui/icons-material/LocationOn';
 import SearchIcon from '@mui/icons-material/Search';
 
 import { Meteor } from 'meteor/meteor';
@@ -60,6 +63,9 @@ export function ImagingStudiesPage(props){
   const [showPatientName, setShowPatientName] = useState(false);
   const [showPatientReference, setShowPatientReference] = useState(false);
   const [showSystemId, setShowSystemId] = useState(false);
+  const [showIdentifier, setShowIdentifier] = useState(false);
+  const [showReferrer, setShowReferrer] = useState(false);
+  const [showLocation, setShowLocation] = useState(false);
 
   let data = {
     currentImagingStudyId: '',
@@ -195,6 +201,9 @@ export function ImagingStudiesPage(props){
     setShowPatientName(newToggles.includes('patientName'));
     setShowPatientReference(newToggles.includes('patientReference'));
     setShowSystemId(newToggles.includes('systemId'));
+    setShowIdentifier(newToggles.includes('identifier'));
+    setShowReferrer(newToggles.includes('referrer'));
+    setShowLocation(newToggles.includes('location'));
   }
 
   function renderHeader() {
@@ -219,7 +228,10 @@ export function ImagingStudiesPage(props){
                 value={[
                   ...(showPatientName ? ['patientName'] : []),
                   ...(showPatientReference ? ['patientReference'] : []),
-                  ...(showSystemId ? ['systemId'] : [])
+                  ...(showSystemId ? ['systemId'] : []),
+                  ...(showIdentifier ? ['identifier'] : []),
+                  ...(showReferrer ? ['referrer'] : []),
+                  ...(showLocation ? ['location'] : [])
                 ]}
                 onChange={handleToggleChange}
                 aria-label="column visibility"
@@ -233,6 +245,15 @@ export function ImagingStudiesPage(props){
                 </ToggleButton>
                 <ToggleButton value="systemId" aria-label="show system id">
                   <BadgeIcon />
+                </ToggleButton>
+                <ToggleButton value="identifier" aria-label="show identifier">
+                  <FingerprintIcon />
+                </ToggleButton>
+                <ToggleButton value="referrer" aria-label="show referrer">
+                  <SendIcon />
+                </ToggleButton>
+                <ToggleButton value="location" aria-label="show location">
+                  <LocationOnIcon />
                 </ToggleButton>
               </ToggleButtonGroup>
               <ToggleButtonGroup
@@ -319,6 +340,9 @@ export function ImagingStudiesPage(props){
           hidePatientDisplay={!showPatientName}
           hidePatientReference={!showPatientReference}
           hideBarcode={!showSystemId}
+          hideIdentifier={!showIdentifier}
+          hideReferrer={!showReferrer}
+          hideLocation={!showLocation}
           onActionButtonClick={function(selectedId){
             if(window.confirm('Are you sure you want to delete this imaging study?')){
               ImagingStudies._collection.remove({_id: selectedId})
