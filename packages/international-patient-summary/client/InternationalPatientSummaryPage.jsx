@@ -97,6 +97,7 @@ function InternationalPatientSummaryPage(props) {
   const [ipsBundle, setIpsBundle] = useState(null);
   const [narrativeDialogOpen, setNarrativeDialogOpen] = useState(false);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'info' });
+  const [displayMode, setDisplayMode] = useState('all');
 
   // Track session variables
   const selectedPatientId = useTracker(function(){
@@ -908,7 +909,43 @@ ${prompt}
       case 'accordion':
         return (
           <Box>
-            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2, gap: 1 }}>
+              <ButtonGroup size="small" sx={{
+                '& .MuiButton-root': {
+                  borderColor: isDark ? 'rgba(255,255,255,0.23)' : undefined
+                }
+              }}>
+                <Button
+                  variant={displayMode === 'all' ? 'contained' : 'outlined'}
+                  onClick={function() { setDisplayMode('all'); }}
+                  sx={{
+                    textTransform: 'none',
+                    ...(displayMode === 'all' ? {
+                      bgcolor: isDark ? 'rgba(144, 202, 249, 0.2)' : undefined,
+                      color: isDark ? '#90caf9' : undefined
+                    } : {
+                      color: isDark ? 'rgba(255,255,255,0.7)' : undefined
+                    })
+                  }}
+                >
+                  All
+                </Button>
+                <Button
+                  variant={displayMode === 'terse' ? 'contained' : 'outlined'}
+                  onClick={function() { setDisplayMode('terse'); }}
+                  sx={{
+                    textTransform: 'none',
+                    ...(displayMode === 'terse' ? {
+                      bgcolor: isDark ? 'rgba(144, 202, 249, 0.2)' : undefined,
+                      color: isDark ? '#90caf9' : undefined
+                    } : {
+                      color: isDark ? 'rgba(255,255,255,0.7)' : undefined
+                    })
+                  }}
+                >
+                  Terse
+                </Button>
+              </ButtonGroup>
               <ButtonGroup variant="outlined" size="small" sx={{
                 '& .MuiButton-root': {
                   color: isDark ? 'rgba(255,255,255,0.7)' : undefined,
@@ -923,7 +960,7 @@ ${prompt}
                 </Button>
               </ButtonGroup>
             </Box>
-            <IpsContent ref={ipsContentRef} expanded={expanded} />
+            <IpsContent ref={ipsContentRef} expanded={expanded} displayMode={displayMode} />
           </Box>
         );
       case 'tabbed':

@@ -579,7 +579,7 @@ describe('ServiceRequests CRUD Operations', function() {
           // Assert on what we can verify
           browser
             .assert.containsText('#serviceRequestsTable', testServiceRequest.codeDisplay)
-            .assert.containsText('#serviceRequestsTable', testServiceRequest.performerName); // Performer should still be as entered
+            .assert.containsText('#serviceRequestsTable', testServiceRequest.status); // Status is visible in default columns
         });
       } else {
         // Check if this is a patient context issue

@@ -2,12 +2,15 @@
 
 import React, { useState, useImperativeHandle, forwardRef } from 'react';
 import { Meteor } from 'meteor/meteor';
+import { Session } from 'meteor/session';
+import { useTracker } from 'meteor/react-meteor-data';
 
 import {
   Box,
   Card,
   CardContent,
   CardHeader,
+  Chip,
   Typography,
   IconButton,
   Divider,
@@ -118,7 +121,7 @@ function buildInitialExpanded(expanded) {
 }
 
 const IpsContent = forwardRef(function IpsContent(props, ref) {
-  const { expanded } = props;
+  const { expanded, displayMode } = props;
   const theme = useTheme();
 
   const [expandedSections, setExpandedSections] = useState(function() {
@@ -130,6 +133,38 @@ const IpsContent = forwardRef(function IpsContent(props, ref) {
   const isDark = appTheme.theme === 'dark';
   const cardBgColor = isDark ? '#1e1e1e' : '#ffffff';
   const cardTextColor = isDark ? 'rgba(255, 255, 255, 0.87)' : 'rgba(0, 0, 0, 0.87)';
+
+  // Reactive collection counts for each IPS section
+  const sectionCounts = useTracker(function() {
+    const counts = {};
+    const C = window.Collections || {};
+
+    counts.problems = C.Conditions ? C.Conditions.find({}).count() : 0;
+    counts.allergies = C.AllergyIntolerances ? C.AllergyIntolerances.find({}).count() : 0;
+
+    const medStatements = C.MedicationStatements ? C.MedicationStatements.find({}).count() : 0;
+    const medRequests = C.MedicationRequests ? C.MedicationRequests.find({}).count() : 0;
+    counts.medications = medStatements + medRequests;
+
+    counts.immunizations = C.Immunizations ? C.Immunizations.find({}).count() : 0;
+
+    const labObs = C.Observations ? C.Observations.find({ 'category.coding.code': { $in: ['laboratory', 'vital-signs'] } }).count() : 0;
+    const diagReports = C.DiagnosticReports ? C.DiagnosticReports.find({}).count() : 0;
+    counts.diagnosticResults = labObs + diagReports;
+
+    counts.procedures = C.Procedures ? C.Procedures.find({}).count() : 0;
+    counts.medicalDevices = C.Devices ? C.Devices.find({}).count() : 0;
+    counts.vitalSigns = C.Observations ? C.Observations.find({ 'category.coding.code': 'vital-signs' }).count() : 0;
+
+    counts.socialHistory = 0;
+    counts.pregnancy = 0;
+    counts.advanceDirectives = 0;
+    counts.functionalStatus = 0;
+    counts.planOfCare = C.CarePlans ? C.CarePlans.find({}).count() : 0;
+    counts.pastProblems = 0;
+
+    return counts;
+  }, []);
 
   function toggleSection(sectionKey) {
     setExpandedSections(function(prev) {
@@ -157,9 +192,17 @@ const IpsContent = forwardRef(function IpsContent(props, ref) {
     return { expandAll, collapseAll };
   });
 
-  const requiredSections = ipsSections.filter(function(s) { return s.required; });
-  const recommendedSections = ipsSections.filter(function(s) { return s.recommended; });
-  const optionalSections = ipsSections.filter(function(s) { return s.optional; });
+  const isTerse = displayMode === 'terse';
+
+  const requiredSections = ipsSections.filter(function(s) {
+    return s.required && (!isTerse || sectionCounts[s.key] > 0);
+  });
+  const recommendedSections = ipsSections.filter(function(s) {
+    return s.recommended && (!isTerse || sectionCounts[s.key] > 0);
+  });
+  const optionalSections = ipsSections.filter(function(s) {
+    return s.optional && (!isTerse || sectionCounts[s.key] > 0);
+  });
 
   function renderSectionCard(section) {
     const idx = ipsSections.indexOf(section);
@@ -214,7 +257,20 @@ const IpsContent = forwardRef(function IpsContent(props, ref) {
               {expandedSections[section.key] ? <ExpandLessIcon /> : <ExpandMoreIcon />}
             </IconButton>
           }
-          title={<Typography variant="h6" sx={{ color: cardTextColor }}>{section.label}</Typography>}
+          title={
+            <Box display="flex" alignItems="center" gap={1.5}>
+              <Typography variant="h6" sx={{ color: cardTextColor }}>{section.label}</Typography>
+              <Chip
+                label={sectionCounts[section.key] || 0}
+                size="small"
+                sx={{
+                  bgcolor: isDark ? 'rgba(144, 202, 249, 0.15)' : alpha(theme.palette.primary.main, 0.1),
+                  color: isDark ? '#90caf9' : theme.palette.primary.main,
+                  fontWeight: 600
+                }}
+              />
+            </Box>
+          }
           sx={{ cursor: 'pointer' }}
           onClick={function() { toggleSection(section.key); }}
         />
@@ -242,16 +298,36 @@ const IpsContent = forwardRef(function IpsContent(props, ref) {
     );
   }
 
+  const allEmpty = requiredSections.length === 0 && recommendedSections.length === 0 && optionalSections.length === 0;
+
   return (
     <Box>
-      {renderCategoryHeader('Required Sections')}
-      {requiredSections.map(renderSectionCard)}
+      {allEmpty && (
+        <Typography variant="body1" sx={{ color: isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.5)', textAlign: 'center', py: 4 }}>
+          No sections with data to display. Switch to "All" to see every section.
+        </Typography>
+      )}
 
-      {renderCategoryHeader('Recommended Sections')}
-      {recommendedSections.map(renderSectionCard)}
+      {requiredSections.length > 0 && (
+        <>
+          {renderCategoryHeader('Required Sections')}
+          {requiredSections.map(renderSectionCard)}
+        </>
+      )}
 
-      {renderCategoryHeader('Optional Sections')}
-      {optionalSections.map(renderSectionCard)}
+      {recommendedSections.length > 0 && (
+        <>
+          {renderCategoryHeader('Recommended Sections')}
+          {recommendedSections.map(renderSectionCard)}
+        </>
+      )}
+
+      {optionalSections.length > 0 && (
+        <>
+          {renderCategoryHeader('Optional Sections')}
+          {optionalSections.map(renderSectionCard)}
+        </>
+      )}
     </Box>
   );
 });
