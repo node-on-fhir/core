@@ -938,7 +938,16 @@ Meteor.methods({
       const currentUser = await Meteor.users.findOneAsync({ _id: this.userId });
       const username = currentUser?.username || currentUser?.emails?.[0]?.address || 'unknown';
 
-      const patientId = get(Meteor, 'settings.public.defaults.patientId', 'unknown-patient');
+      // Look up actual patient from the ImagingStudy (required for pub/sub patient filtering)
+      const ImagingStudies = global.Collections?.ImagingStudies;
+      let patientId = 'unknown-patient';
+      if (ImagingStudies) {
+        const imagingStudy = await ImagingStudies.findOneAsync({ _id: options.imagingStudyId });
+        if (imagingStudy) {
+          const subjectRef = get(imagingStudy, 'subject.reference', '');
+          patientId = subjectRef.replace('Patient/', '') || patientId;
+        }
+      }
       const timestamp = new Date().toISOString();
 
       // Build Key Image DocumentReference using both meta.tag AND type.coding

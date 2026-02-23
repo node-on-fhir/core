@@ -262,12 +262,15 @@ function DicomViewerPage() {
   const appTheme = useAppTheme ? useAppTheme() : { theme: 'light' };
   const isDark = appTheme.theme === 'dark';
 
-  // Get file query parameter for single-file viewing mode
+  // Get query parameters for single-file viewing mode and reading panel state
   let fileIdFromQuery = null;
+  let searchParamsRef = null;
+  let setSearchParamsRef = null;
   if (useSearchParams) {
     const searchParamsResult = useSearchParams();
-    const searchParams = searchParamsResult[0];
-    fileIdFromQuery = searchParams.get('file');
+    searchParamsRef = searchParamsResult[0];
+    setSearchParamsRef = searchParamsResult[1];
+    fileIdFromQuery = searchParamsRef.get('file');
   }
 
   // Get theme colors from settings
@@ -279,7 +282,24 @@ function DicomViewerPage() {
     : 'rgba(0, 0, 0, 0.87)';
 
   // Layout state (1 = single pane, 2 = split pane with reading panel)
-  const [paneLayout, setPaneLayout] = useState(1);
+  const readingPanelParam = searchParamsRef ? searchParamsRef.get('reading-panel') : null;
+  const [paneLayout, setPaneLayout] = useState(readingPanelParam === 'false' ? 1 : 2);
+
+  // Update URL when toggling pane layout
+  function handlePaneLayoutChange(layout) {
+    setPaneLayout(layout);
+    if (setSearchParamsRef) {
+      setSearchParamsRef(function(prev) {
+        const next = new URLSearchParams(prev);
+        if (layout === 2) {
+          next.delete('reading-panel');
+        } else {
+          next.set('reading-panel', 'false');
+        }
+        return next;
+      }, { replace: true });
+    }
+  }
 
   // Reading panel state
   const [findings, setFindings] = useState([]);
@@ -624,14 +644,14 @@ function DicomViewerPage() {
                 <ButtonGroup size="small" sx={{ ml: 1 }}>
                   <Button
                     variant={paneLayout === 1 ? 'contained' : 'outlined'}
-                    onClick={function() { setPaneLayout(1); }}
+                    onClick={function() { handlePaneLayoutChange(1); }}
                     sx={{ minWidth: 36 }}
                   >
                     1
                   </Button>
                   <Button
                     variant={paneLayout === 2 ? 'contained' : 'outlined'}
-                    onClick={function() { setPaneLayout(2); }}
+                    onClick={function() { handlePaneLayoutChange(2); }}
                     sx={{ minWidth: 36 }}
                   >
                     2
@@ -650,15 +670,21 @@ function DicomViewerPage() {
           }}
         />
         <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-          {paneLayout === 2 ? (
-            <Grid container spacing={2} sx={{ flex: 1, overflow: 'hidden' }}>
-              {/* Main Viewer - 8 columns */}
-              <Grid item xs={8} sx={{ display: 'flex', flexDirection: 'column', overflow: 'auto' }}>
-                {renderViewerContent()}
-              </Grid>
+          <Box sx={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
+            {/* Viewer - always rendered, width adjusts to prevent remount */}
+            <Box sx={{
+              flex: paneLayout === 2 ? '0 0 66.67%' : '1 1 100%',
+              display: 'flex',
+              flexDirection: 'column',
+              overflow: 'auto',
+              transition: 'flex-basis 0.2s ease'
+            }}>
+              {renderViewerContent()}
+            </Box>
 
-              {/* Reading Panel - 4 columns */}
-              <Grid item xs={4} sx={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+            {/* Reading Panel - shown/hidden based on layout */}
+            {paneLayout === 2 && (
+              <Box sx={{ flex: '0 0 33.33%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
                 <ReadingPanelContent
                   study={study}
                   findings={findings}
@@ -669,11 +695,9 @@ function DicomViewerPage() {
                   onSignReport={handleSignReport}
                   cardTextColor={cardTextColor}
                 />
-              </Grid>
-            </Grid>
-          ) : (
-            renderViewerContent()
-          )}
+              </Box>
+            )}
+          </Box>
         </CardContent>
       </Card>
 

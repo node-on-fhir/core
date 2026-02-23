@@ -601,7 +601,7 @@ function UploadPage() {
             {/* Selected Files List */}
             {files.length > 0 && (
               <Box sx={{ mt: 3 }}>
-                <List>
+                <List dense>
                   {files.map(function(file, index) {
                     return (
                       <ListItem
@@ -703,7 +703,7 @@ function UploadPage() {
             <Typography variant="h6" gutterBottom sx={{ color: cardTextColor }}>
               Upload Results
             </Typography>
-            <List>
+            <List dense>
               {uploadResults.map(function(result, index) {
                 return (
                   <ListItem

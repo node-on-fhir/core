@@ -71,6 +71,19 @@ export function Toolbar({
             </Tooltip>
           );
         })}
+        {totalImages > 1 && (
+          <Button
+            variant="outlined"
+            disabled
+            sx={{
+              minWidth: 120,
+              color: 'text.primary !important',
+              borderColor: 'divider',
+            }}
+          >
+            Image {currentImage} / {totalImages}
+          </Button>
+        )}
       </ButtonGroup>
 
       <Divider orientation="vertical" flexItem />
@@ -97,26 +110,6 @@ export function Toolbar({
           </IconButton>
         </Tooltip>
       </Box>
-
-      {/* Image counter for multi-image stacks */}
-      {totalImages > 1 && (
-        <Box sx={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 1,
-          px: 2,
-          py: 0.5,
-          bgcolor: 'action.hover',
-          borderRadius: 1,
-        }}>
-          <Box sx={{ fontSize: '0.85rem', fontWeight: 'bold', color: 'text.primary' }}>
-            Image {currentImage} / {totalImages}
-          </Box>
-          <Box sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>
-            (scroll to navigate)
-          </Box>
-        </Box>
-      )}
 
       {/* Active tool indicator */}
       <Box sx={{ ml: 'auto', display: 'flex', alignItems: 'center', gap: 1 }}>

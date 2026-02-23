@@ -278,9 +278,14 @@ export default function ImagingStudiesTable({ isDark, cardTextColor, subheaderCo
             <TableRow>
               <TableCell style={{ width: '50px' }} />
               <TableCell style={{ width: '80px' }}>Actions</TableCell>
+              <TableCell>Patient</TableCell>
               <TableCell>Study Date</TableCell>
               <TableCell>Study Description</TableCell>
               <TableCell>Modality</TableCell>
+              <TableCell>Accession #</TableCell>
+              <TableCell>Study UID</TableCell>
+              <TableCell>Referrer</TableCell>
+              <TableCell>Body Part</TableCell>
               <TableCell>Series</TableCell>
               <TableCell>Images</TableCell>
               <TableCell>Status</TableCell>
@@ -289,7 +294,7 @@ export default function ImagingStudiesTable({ isDark, cardTextColor, subheaderCo
           <TableBody>
             {studies.length === 0 && (
               <TableRow>
-                <TableCell colSpan={8} align="center">
+                <TableCell colSpan={13} align="center">
                   <Typography
                     variant="body2"
                     sx={{ py: 3, color: subheaderColor }}
@@ -311,6 +316,19 @@ export default function ImagingStudiesTable({ isDark, cardTextColor, subheaderCo
               const studyId = study._id;
               const isExpanded = expandedRows[studyId] || false;
               const studyDocRefs = getDocumentReferencesForStudy(studyId);
+
+              // FHIR fields
+              const patientDisplay = get(study, 'subject.display', '') || get(study, 'subject.reference', '-');
+              const accessionIdentifier = get(study, 'identifier', []).find(function(id) {
+                return get(id, 'type.coding.0.code') === 'ACSN';
+              });
+              const accessionNumber = accessionIdentifier ? accessionIdentifier.value : '-';
+              const uidIdentifier = get(study, 'identifier', []).find(function(id) {
+                return get(id, 'system') === 'urn:dicom:uid';
+              });
+              const studyInstanceUid = uidIdentifier ? truncateUid(uidIdentifier.value) : '-';
+              const referrerDisplay = get(study, 'referrer.display', '-');
+              const bodyPart = get(study, 'series.0.bodySite.display', '-');
 
               return (
                 <React.Fragment key={studyId}>
@@ -344,11 +362,23 @@ export default function ImagingStudiesTable({ isDark, cardTextColor, subheaderCo
                         <ViewIcon />
                       </IconButton>
                     </TableCell>
+                    <TableCell>{patientDisplay}</TableCell>
                     <TableCell>{studyDate}</TableCell>
                     <TableCell>{description}</TableCell>
                     <TableCell>
                       <Chip label={modality} size="small" variant="outlined" />
                     </TableCell>
+                    <TableCell>{accessionNumber}</TableCell>
+                    <TableCell>
+                      <Typography
+                        variant="body2"
+                        sx={{ fontFamily: 'monospace', fontSize: '0.75rem', color: subheaderColor }}
+                      >
+                        {studyInstanceUid}
+                      </Typography>
+                    </TableCell>
+                    <TableCell>{referrerDisplay}</TableCell>
+                    <TableCell>{bodyPart}</TableCell>
                     <TableCell>{numberOfSeries}</TableCell>
                     <TableCell>{numberOfInstances}</TableCell>
                     <TableCell>
@@ -362,7 +392,7 @@ export default function ImagingStudiesTable({ isDark, cardTextColor, subheaderCo
 
                   {/* Expanded row with Series and Instances */}
                   <TableRow>
-                    <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={8}>
+                    <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={13}>
                       <Collapse in={isExpanded} timeout="auto" unmountOnExit>
                         <Box sx={{
                           py: 2,
