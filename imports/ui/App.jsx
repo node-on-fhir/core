@@ -1574,27 +1574,6 @@ dynamicRoutes.push({
 // ==============================================================================
 // Dynamic Routes
 
-// Determine which component should render at the root path
-// Check if a default route is specified in settings
-let defaultRoutePath = get(Meteor, 'settings.public.defaults.route', '/');
-let homeRouteElement = <GettingStartedPage />;
-
-// If a specific route is configured (and it's not just "/"),
-// find the corresponding route component
-if (defaultRoutePath && defaultRoutePath !== '/') {
-  const matchingRoute = dynamicRoutes.find(route => route.path === defaultRoutePath);
-  if (matchingRoute && matchingRoute.element) {
-    homeRouteElement = matchingRoute.element;
-  } else {
-    console.warn(`Default route "${defaultRoutePath}" specified in settings but no matching route found. Using GettingStartedPage.`);
-  }
-}
-
-let homeRoute = {
-  path: "/",
-  element: homeRouteElement
-}
-
 let headerNavigation;
 let foundMainPage = false;
 
@@ -1615,7 +1594,7 @@ Object.keys(Package).forEach(function(packageName){
       // if(route.component && !route.element) {
       //   route.element = React.createElement(route.component);
       // }
-      
+
       // Debug logging for swarm route
       if(route.path === '/swarm') {
         console.log('[APP] Swarm route found:', route);
@@ -1625,27 +1604,52 @@ Object.keys(Package).forEach(function(packageName){
           console.log('[APP] Swarm element $$typeof:', route.element.$$typeof.toString());
         }
       }
-      
+
       // Debug logging for routes with requireAuth
       if(route.requireAuth) {
         console.log('[APP] Route requires authentication:', route.path, route);
       }
-      
-      dynamicRoutes.push(route);      
-    });    
+
+      dynamicRoutes.push(route);
+    });
     if(Package[packageName].MainPage){
-      dynamicRoutes.push(Package[packageName].MainPage);      
+      dynamicRoutes.push(Package[packageName].MainPage);
       foundMainPage = true;
-      // if(typeof homeRoute.element === "undefined"){
-      //   homeRoute.element = Package[packageName].MainPage
-      // } else {
-      //   console.warn("Hmmm.  Appears that a package has already loaded a MainPage.  You'll probably want to check Atmosphere packages for more than one package setting MainPage.")
-      // }
     }
   }
 });
-if(!foundMainPage){
-  dynamicRoutes.push(homeRoute);      
+
+// ==============================================================================
+// Root Route Resolution
+// Priority: settings.public.defaults.route > Atmosphere MainPage > GettingStartedPage
+//
+// This runs AFTER Atmosphere packages are scanned so that all routes
+// (including package-provided ones like /pacio-exam-room) are available.
+
+let defaultRoutePath = get(Meteor, 'settings.public.defaults.route', '/');
+
+if (defaultRoutePath && defaultRoutePath !== '/') {
+  const matchingRoute = dynamicRoutes.find(route => route.path === defaultRoutePath);
+  if (matchingRoute && matchingRoute.element) {
+    // Replace or add the "/" route with the settings-specified component
+    const rootIndex = dynamicRoutes.findIndex(r => r.path === '/');
+    if (rootIndex !== -1) {
+      dynamicRoutes[rootIndex] = {
+        ...dynamicRoutes[rootIndex],
+        element: matchingRoute.element
+      };
+    } else {
+      dynamicRoutes.push({ path: '/', element: matchingRoute.element });
+    }
+    console.log('[APP] Root route overridden by settings.public.defaults.route:', defaultRoutePath);
+  } else {
+    console.warn(`[APP] Default route "${defaultRoutePath}" not found in dynamicRoutes. Using existing "/" route.`);
+    if (!foundMainPage) {
+      dynamicRoutes.push({ path: '/', element: <GettingStartedPage /> });
+    }
+  }
+} else if (!foundMainPage) {
+  dynamicRoutes.push({ path: '/', element: <GettingStartedPage /> });
 }
 
 // ==============================================================================
@@ -2195,7 +2199,7 @@ export function App(props){
       setDrawerIsOpen(prev => !prev);
     }
     function onToggleFhirModules() {
-      const current = get(Meteor, 'settings.public.defaults.sidebar.menuItems.FhirAutoLinks', true);
+      const current = get(Meteor, 'settings.public.defaults.sidebar.menuItems.FhirAutoLinks', false);
       set(Meteor, 'settings.public.defaults.sidebar.menuItems.FhirAutoLinks', !current);
       Session.set('settingsRefreshRequest', Date.now());
     }

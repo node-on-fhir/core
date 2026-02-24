@@ -16,6 +16,7 @@
 const WorkflowRegistry = {
   routes: [],
   sidebarItems: [],
+  footerButtons: [],
   registeredWorkflows: [],
   onChangeCallbacks: [],
 
@@ -44,6 +45,11 @@ const WorkflowRegistry = {
     if (workflow.sidebarItems && Array.isArray(workflow.sidebarItems)) {
       this.sidebarItems.push(...workflow.sidebarItems);
       console.log(`[WorkflowRegistry] Registered ${workflow.sidebarItems.length} sidebar item(s) from "${workflowName}"`);
+    }
+
+    if (workflow.footerButtons && Array.isArray(workflow.footerButtons)) {
+      this.footerButtons.push(...workflow.footerButtons);
+      console.log(`[WorkflowRegistry] Registered ${workflow.footerButtons.length} footer button(s) from "${workflowName}"`);
     }
 
     this.registeredWorkflows.push(workflowName);
@@ -81,6 +87,14 @@ const WorkflowRegistry = {
   },
 
   /**
+   * Get all registered footer buttons
+   * @returns {Array} Array of footer button objects
+   */
+  getFooterButtons() {
+    return this.footerButtons;
+  },
+
+  /**
    * Get list of registered workflow names
    * @returns {Array} Array of workflow names
    */
@@ -94,6 +108,7 @@ const WorkflowRegistry = {
   clear() {
     this.routes = [];
     this.sidebarItems = [];
+    this.footerButtons = [];
     this.registeredWorkflows = [];
     this.onChangeCallbacks = [];
   }

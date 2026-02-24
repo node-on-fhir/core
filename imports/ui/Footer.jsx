@@ -41,6 +41,7 @@ import { logger } from '/client/ClientLogger';
 
 import { useNavigate, useLocation } from "react-router-dom";
 import { DynamicSpacer } from './DynamicSpacer';
+import WorkflowRegistry from '/imports/lib/WorkflowRegistry.js';
 
 //----------------------------------------------------------------------
 // Helper Components
@@ -104,17 +105,30 @@ function Footer({
       if(Package[packageName].FooterButtons){
         // we try to build up a route from what's specified in the package
         Package[packageName].FooterButtons.forEach(function(route){
-          buttonRenderArray.push(route);      
-        });    
+          buttonRenderArray.push(route);
+        });
       }
+    });
+
+    // Also collect footer buttons from NPM workflow packages via WorkflowRegistry
+    WorkflowRegistry.getFooterButtons().forEach(function(route){
+      buttonRenderArray.push(route);
     });
 
     // console.debug('Generated array of buttons to display.', buttonRenderArray)
 
     let renderDom;
     buttonRenderArray.forEach(function(buttonConfig){
-      // right route
-      if (pathname && pathname.includes(buttonConfig.pathname)){
+      // right route — support pathname as a string or an array of strings
+      let pathnameMatch = false;
+      if (pathname && buttonConfig.pathname) {
+        if (Array.isArray(buttonConfig.pathname)) {
+          pathnameMatch = buttonConfig.pathname.some(function(p){ return pathname.includes(p); });
+        } else {
+          pathnameMatch = pathname.includes(buttonConfig.pathname);
+        }
+      }
+      if (pathnameMatch){
         // console.debug('Found a route match for Footer buttons', pathname)
         // right security/function enabled
         if(buttonConfig.settings && (get(Meteor, buttonConfig.settings) === false)){
