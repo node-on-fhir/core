@@ -359,6 +359,7 @@ import { ValueSets } from '../lib/schemas/SimpleSchemas/ValueSets';
 import PatientCard from '../patient/PatientCard.jsx'
 import { FhirUtilities } from '../lib/FhirUtilities.js'
 import { FhirDehydrator } from '../lib/FhirDehydrator.js'
+import { DynamicFhirDetail, getDynamicFhirComponent } from '../lib/DynamicFhirDetail.js'
 import { LayoutHelpers } from '../lib/LayoutHelpers.js'
 import { DynamicSpacer } from './DynamicSpacer'
 import MedicalRecordImporter from '../lib/MedicalRecordImporter.js'
@@ -431,6 +432,8 @@ Meteor.NotSignedInWrapper = NotSignedInWrapper;
 Meteor.MedicalRecordImporter = MedicalRecordImporter;
 Meteor.PatientCard = PatientCard;
 Meteor.HipaaLogger = HipaaLogger;
+Meteor.DynamicFhirDetail = DynamicFhirDetail;
+Meteor.getDynamicFhirComponent = getDynamicFhirComponent;
 Meteor.React = React;
 
 

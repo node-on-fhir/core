@@ -1,10 +1,10 @@
 // imports/startup/client/fhir-resource-registry.js
 //
-// Registers all Honeycomb Detail components with the HoneycombFhirResource dispatcher.
-// This lets HoneycombFhirResource route any FHIR resource to the right
+// Registers all Honeycomb Detail components with the DynamicFhirDetail dispatcher.
+// This lets DynamicFhirDetail route any FHIR resource to the right
 // Detail component in embedded mode (e.g. inside ResourceEditor / Column B).
 
-import { registerHoneycombComponents } from '@merkalis/node-on-fhir-merkle-storage/lib/HoneycombFhirResource';
+import { registerDynamicFhirComponents } from '/imports/lib/DynamicFhirDetail';
 
 import ActivityDefinitionDetail from '/imports/ui-fhir/activityDefinitions/ActivityDefinitionDetail';
 import AllergyIntoleranceDetail from '/imports/ui-fhir/allergyIntolerances/AllergyIntoleranceDetail';
@@ -70,7 +70,7 @@ import TaskDetail from '/imports/ui-fhir/tasks/TaskDetail';
 import ValueSetDetail from '/imports/ui-fhir/valuesets/ValueSetDetail';
 
 // Keys are FHIR resourceType strings (exact match from resource.resourceType)
-registerHoneycombComponents({
+registerDynamicFhirComponents({
   'ActivityDefinition': ActivityDefinitionDetail,
   'AllergyIntolerance': AllergyIntoleranceDetail,
   'Appointment': AppointmentDetail,
@@ -135,4 +135,4 @@ registerHoneycombComponents({
   'ValueSet': ValueSetDetail
 });
 
-console.log('[fhir-resource-registry] Registered 62 Honeycomb Detail components with HoneycombFhirResource dispatcher');
+console.log('[fhir-resource-registry] Registered 62 Honeycomb Detail components with DynamicFhirDetail dispatcher');
