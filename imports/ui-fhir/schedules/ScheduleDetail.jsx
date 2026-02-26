@@ -50,11 +50,17 @@ import { FhirUtilities } from '/imports/lib/FhirUtilities';
 import { Schedules } from '/imports/lib/schemas/SimpleSchemas/Schedules';
 
 function ScheduleDetail(props) {
-  const navigate = useNavigate();
-  const { id } = useParams();
+  // Embedded mode support (for HoneycombFhirResource dispatcher)
+  var isEmbedded = props.embedded || false;
+
+  var _rawNavigate = useNavigate();
+  var navigate = isEmbedded ? function() {} : _rawNavigate;
+  var _params = isEmbedded ? {} : useParams();
+  var id = _params.id || null;
   
   // Subscribe to schedules data
   const subscriptionReady = useTracker(() => {
+    if (isEmbedded) return true; // Skip subscription in embedded mode
     let autoSubscribeEnabled = get(Meteor, 'settings.public.defaults.autoSubscribe', false);
     
     if(autoSubscribeEnabled) {
@@ -112,9 +118,33 @@ function ScheduleDetail(props) {
     notes: ""
   });
 
+  // Initialise from fhirResource prop when in embedded mode
+  var hasReceivedProps = React.useRef(false);
+  var pendingUpdate = React.useRef(false);
+  useEffect(function() {
+    if (isEmbedded && props.fhirResource) {
+      hasReceivedProps.current = true;
+      setSchedule(function(prev) {
+        if (JSON.stringify(props.fhirResource) !== JSON.stringify(prev)) {
+          return props.fhirResource;
+        }
+        return prev;
+      });
+    }
+  }, [props.fhirResource]);
+
+  // onResourceChange: notify parent when state changes in embedded mode
+  useEffect(function() {
+    if (isEmbedded && pendingUpdate.current && props.onResourceChange) {
+      pendingUpdate.current = false;
+      props.onResourceChange(schedule);
+    }
+  }, [schedule]);
+
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [isEditing, setIsEditing] = useState(id === 'new');
+  const [isEditing, setIsEditing] = useState(isEmbedded || id === 'new');
   const [forceUpdate, setForceUpdate] = useState(0); // Force re-render counter
   
   // Load schedule if id is provided
@@ -139,6 +169,7 @@ function ScheduleDetail(props) {
 
   // Form field handlers
   const handleFieldChange = (field, value) => {
+    pendingUpdate.current = true;
     setSchedule(prev => {
       const updated = {...prev};
       set(updated, field, value);
@@ -216,6 +247,202 @@ function ScheduleDetail(props) {
       });
     }
   };
+
+  if (isEmbedded) {
+    return (
+      <Grid container spacing={3}>
+        <Grid item xs={12}>
+          <FormControlLabel
+            control={
+              <Switch
+                id="activeCheckbox"
+                checked={get(schedule, 'active', true)}
+                onChange={(e) => handleFieldChange('active', e.target.checked)}
+              />
+            }
+            label="Active"
+          />
+        </Grid>
+
+        <Grid item xs={12} md={6}>
+          <TextField
+            id="identifierInput"
+            label="Identifier"
+            fullWidth
+            value={get(schedule, 'identifier[0].value', '')}
+            onChange={(e) => handleFieldChange('identifier[0].value', e.target.value)}
+            variant="outlined"
+          />
+        </Grid>
+
+        <Grid item xs={12} md={6}>
+          <TextField
+            id="identifierSystem"
+            label="Identifier System"
+            fullWidth
+            value={get(schedule, 'identifier[0].system', '')}
+            onChange={(e) => handleFieldChange('identifier[0].system', e.target.value)}
+            variant="outlined"
+          />
+        </Grid>
+
+        <Grid item xs={12} md={6}>
+          <TextField
+            id="serviceCategoryInput"
+            label="Service Category Code"
+            fullWidth
+            value={get(schedule, 'serviceCategory[0].coding[0].code', '')}
+            onChange={(e) => handleFieldChange('serviceCategory[0].coding[0].code', e.target.value)}
+            variant="outlined"
+          />
+        </Grid>
+
+        <Grid item xs={12} md={6}>
+          <TextField
+            id="serviceCategoryDisplayInput"
+            label="Service Category Display"
+            fullWidth
+            value={get(schedule, 'serviceCategory[0].coding[0].display', '')}
+            onChange={(e) => handleFieldChange('serviceCategory[0].coding[0].display', e.target.value)}
+            variant="outlined"
+          />
+        </Grid>
+
+        <Grid item xs={12} md={6}>
+          <TextField
+            id="serviceTypeInput"
+            label="Service Type Code"
+            fullWidth
+            value={get(schedule, 'serviceType[0].coding[0].code', '')}
+            onChange={(e) => handleFieldChange('serviceType[0].coding[0].code', e.target.value)}
+            variant="outlined"
+          />
+        </Grid>
+
+        <Grid item xs={12} md={6}>
+          <TextField
+            id="serviceTypeDisplayInput"
+            label="Service Type Display"
+            fullWidth
+            value={get(schedule, 'serviceType[0].coding[0].display', '')}
+            onChange={(e) => handleFieldChange('serviceType[0].coding[0].display', e.target.value)}
+            variant="outlined"
+          />
+        </Grid>
+
+        <Grid item xs={12} md={6}>
+          <TextField
+            id="specialtyInput"
+            label="Specialty Code"
+            fullWidth
+            value={get(schedule, 'specialty[0].coding[0].code', '')}
+            onChange={(e) => handleFieldChange('specialty[0].coding[0].code', e.target.value)}
+            variant="outlined"
+          />
+        </Grid>
+
+        <Grid item xs={12} md={6}>
+          <TextField
+            id="specialtyDisplayInput"
+            label="Specialty Display"
+            fullWidth
+            value={get(schedule, 'specialty[0].coding[0].display', '')}
+            onChange={(e) => handleFieldChange('specialty[0].coding[0].display', e.target.value)}
+            variant="outlined"
+          />
+        </Grid>
+
+        <Grid item xs={12} md={4}>
+          <TextField
+            id="actorInput"
+            label="Actor"
+            fullWidth
+            value={get(schedule, 'actor[0].display', '')}
+            onChange={(e) => handleFieldChange('actor[0].display', e.target.value)}
+            variant="outlined"
+          />
+        </Grid>
+
+        <Grid item xs={12} md={4}>
+          <TextField
+            id="actorReferenceInput"
+            label="Actor Reference"
+            fullWidth
+            value={get(schedule, 'actor[0].reference', '')}
+            onChange={(e) => handleFieldChange('actor[0].reference', e.target.value)}
+            variant="outlined"
+          />
+        </Grid>
+
+        <Grid item xs={12} md={4}>
+          <TextField
+            id="actorDisplayInput"
+            label="Actor Display"
+            fullWidth
+            value={get(schedule, 'actor[0].display', '')}
+            onChange={(e) => handleFieldChange('actor[0].display', e.target.value)}
+            variant="outlined"
+          />
+        </Grid>
+
+        <Grid item xs={12} md={6}>
+          <TextField
+            id="planningHorizonStartInput"
+            label="Planning Horizon Start"
+            type="date"
+            fullWidth
+            value={get(schedule, 'planningHorizon.start', '')}
+            onChange={(e) => handleFieldChange('planningHorizon.start', e.target.value)}
+            variant="outlined"
+            InputLabelProps={{
+              shrink: true,
+            }}
+          />
+        </Grid>
+
+        <Grid item xs={12} md={6}>
+          <TextField
+            id="planningHorizonEndInput"
+            label="Planning Horizon End"
+            type="date"
+            fullWidth
+            value={get(schedule, 'planningHorizon.end', '')}
+            onChange={(e) => handleFieldChange('planningHorizon.end', e.target.value)}
+            variant="outlined"
+            InputLabelProps={{
+              shrink: true,
+            }}
+          />
+        </Grid>
+
+        <Grid item xs={12}>
+          <TextField
+            id="commentTextarea"
+            label="Comment"
+            fullWidth
+            multiline
+            rows={2}
+            value={get(schedule, 'comment', '')}
+            onChange={(e) => handleFieldChange('comment', e.target.value)}
+            variant="outlined"
+          />
+        </Grid>
+
+        <Grid item xs={12}>
+          <TextField
+            id="notesTextarea"
+            label="Notes (Custom Field)"
+            fullWidth
+            multiline
+            rows={3}
+            value={get(schedule, 'notes', '')}
+            onChange={(e) => handleFieldChange('notes', e.target.value)}
+            variant="outlined"
+          />
+        </Grid>
+      </Grid>
+    );
+  }
 
   return (
     <Container id="scheduleDetailPage" maxWidth="md" style={{ paddingTop: '20px', paddingBottom: '80px' }}>

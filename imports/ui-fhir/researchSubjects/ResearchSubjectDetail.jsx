@@ -57,11 +57,17 @@ Meteor.startup(function(){
 });
 
 function ResearchSubjectDetail(props) {
-  const navigate = useNavigate();
-  const { id } = useParams();
+  // Embedded mode support (for HoneycombFhirResource dispatcher)
+  var isEmbedded = props.embedded || false;
+
+  var _rawNavigate = useNavigate();
+  var navigate = isEmbedded ? function() {} : _rawNavigate;
+  var _params = isEmbedded ? {} : useParams();
+  var id = _params.id || null;
   
   // Subscribe to research subjects and patients data
   const subscriptionReady = useTracker(() => {
+    if (isEmbedded) return true; // Skip subscription in embedded mode
     const researchSubjectsHandle = Meteor.subscribe('selectedPatient.ResearchSubjects');
     const patientsHandle = Meteor.subscribe('patients.search', {});
     return researchSubjectsHandle.ready() && patientsHandle.ready();
@@ -105,9 +111,33 @@ function ResearchSubjectDetail(props) {
     }
   });
 
+  // Initialise from fhirResource prop when in embedded mode
+  var hasReceivedProps = React.useRef(false);
+  var pendingUpdate = React.useRef(false);
+  useEffect(function() {
+    if (isEmbedded && props.fhirResource) {
+      hasReceivedProps.current = true;
+      setResearchSubject(function(prev) {
+        if (JSON.stringify(props.fhirResource) !== JSON.stringify(prev)) {
+          return props.fhirResource;
+        }
+        return prev;
+      });
+    }
+  }, [props.fhirResource]);
+
+  // onResourceChange: notify parent when state changes in embedded mode
+  useEffect(function() {
+    if (isEmbedded && pendingUpdate.current && props.onResourceChange) {
+      pendingUpdate.current = false;
+      props.onResourceChange(researchSubject);
+    }
+  }, [researchSubject]);
+
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [isEditing, setIsEditing] = useState(!id || id === 'new');
+  const [isEditing, setIsEditing] = useState(isEmbedded || !id || id === 'new');
   const [patientSearchOpen, setPatientSearchOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   
@@ -144,6 +174,7 @@ function ResearchSubjectDetail(props) {
 
   // Handle form field changes
   const handleChange = (field, value) => {
+    pendingUpdate.current = true;
     console.log('handleChange', field, value);
     let newSubject = Object.assign({}, researchSubject);
     
@@ -321,9 +352,151 @@ function ResearchSubjectDetail(props) {
     return statusMap[status] || status;
   };
 
+  if (isEmbedded) {
+    return (
+      <Grid container spacing={3}>
+        <Grid item xs={12}>
+          <TextField
+            id="subjectDisplay"
+            fullWidth
+            label="Subject/Patient *"
+            placeholder="Search for patient"
+            helperText="Required: The patient enrolled in this study"
+            value={get(researchSubject, 'subject.display', '')}
+            onChange={(e) => handleChange('subject.display', e.target.value)}
+            disabled={!isEditing}
+            required
+            error={!!error && error.includes('Patient')}
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <Tooltip title="Search for patient">
+                    <IconButton
+                      onClick={handleSearchUser}
+                      edge="end"
+                      disabled={!isEditing}
+                    >
+                      <SearchIcon />
+                    </IconButton>
+                  </Tooltip>
+                </InputAdornment>
+              ),
+            }}
+          />
+        </Grid>
+
+        <Grid item xs={12}>
+          <TextField
+            id="studyDisplay"
+            fullWidth
+            label="Research Study *"
+            placeholder="Enter study name or identifier"
+            helperText="Required: The research study this subject is enrolled in"
+            value={get(researchSubject, 'study.display', '')}
+            onChange={(e) => handleChange('study.display', e.target.value)}
+            disabled={!isEditing}
+            required
+            error={!!error && error.includes('Study')}
+          />
+        </Grid>
+
+        <Grid item xs={12} sm={6}>
+          <FormControl fullWidth>
+            <InputLabel id="status-label">Status</InputLabel>
+            <Select
+              labelId="status-label"
+              id="status"
+              value={get(researchSubject, 'status', 'on-study')}
+              onChange={(e) => handleChange('status', e.target.value)}
+              disabled={!isEditing}
+              label="Status"
+            >
+              <MenuItem value="candidate">Candidate</MenuItem>
+              <MenuItem value="eligible">Eligible</MenuItem>
+              <MenuItem value="follow-up">Follow-up</MenuItem>
+              <MenuItem value="ineligible">Ineligible</MenuItem>
+              <MenuItem value="not-registered">Not Registered</MenuItem>
+              <MenuItem value="off-study">Off Study</MenuItem>
+              <MenuItem value="on-study">On Study</MenuItem>
+              <MenuItem value="on-study-intervention">On Study Intervention</MenuItem>
+              <MenuItem value="on-study-observation">On Study Observation</MenuItem>
+              <MenuItem value="pending-on-study">Pending On Study</MenuItem>
+              <MenuItem value="potential-candidate">Potential Candidate</MenuItem>
+              <MenuItem value="screening">Screening</MenuItem>
+              <MenuItem value="withdrawn">Withdrawn</MenuItem>
+            </Select>
+          </FormControl>
+        </Grid>
+
+        <Grid item xs={12} sm={6}>
+          <TextField
+            id="periodStart"
+            fullWidth
+            label="Period Start"
+            type="date"
+            value={get(researchSubject, 'period.start', '')}
+            onChange={(e) => handleChange('period.start', e.target.value)}
+            disabled={!isEditing}
+            InputLabelProps={{
+              shrink: true,
+            }}
+          />
+        </Grid>
+
+        <Grid item xs={12} sm={6}>
+          <TextField
+            id="periodEnd"
+            fullWidth
+            label="Period End"
+            type="date"
+            value={get(researchSubject, 'period.end', '')}
+            onChange={(e) => handleChange('period.end', e.target.value)}
+            disabled={!isEditing}
+            InputLabelProps={{
+              shrink: true,
+            }}
+          />
+        </Grid>
+
+        <Grid item xs={12} sm={6}>
+          <TextField
+            id="assignedArm"
+            fullWidth
+            label="Assigned Arm"
+            value={get(researchSubject, 'assignedArm', '')}
+            onChange={(e) => handleChange('assignedArm', e.target.value)}
+            disabled={!isEditing}
+          />
+        </Grid>
+
+        <Grid item xs={12} sm={6}>
+          <TextField
+            id="actualArm"
+            fullWidth
+            label="Actual Arm"
+            value={get(researchSubject, 'actualArm', '')}
+            onChange={(e) => handleChange('actualArm', e.target.value)}
+            disabled={!isEditing}
+          />
+        </Grid>
+
+        <Grid item xs={12}>
+          <TextField
+            id="consentDisplay"
+            fullWidth
+            label="Consent"
+            value={get(researchSubject, 'consent.display', '')}
+            onChange={(e) => handleChange('consent.display', e.target.value)}
+            disabled={!isEditing}
+          />
+        </Grid>
+      </Grid>
+    );
+  }
+
   return (
     <Container maxWidth="md" sx={{ py: 4 }}>
-      <Card 
+      <Card
         id="researchSubjectDetailPage"
         sx={{ 
           borderRadius: 2,

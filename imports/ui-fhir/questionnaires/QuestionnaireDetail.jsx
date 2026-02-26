@@ -48,11 +48,17 @@ import { FhirUtilities } from '/imports/lib/FhirUtilities';
 import { Questionnaires } from '/imports/lib/schemas/SimpleSchemas/Questionnaires';
 
 function QuestionnaireDetail(props) {
-  const navigate = useNavigate();
-  const { id } = useParams();
+  // Embedded mode support (for HoneycombFhirResource dispatcher)
+  var isEmbedded = props.embedded || false;
+
+  var _rawNavigate = useNavigate();
+  var navigate = isEmbedded ? function() {} : _rawNavigate;
+  var _params = isEmbedded ? {} : useParams();
+  var id = _params.id || null;
   
   // Subscribe to questionnaires data
   const subscriptionReady = useTracker(() => {
+    if (isEmbedded) return true; // Skip subscription in embedded mode
     let autoSubscribeEnabled = get(Meteor, 'settings.public.defaults.autoSubscribe', false);
     if(autoSubscribeEnabled){
       return Meteor.subscribe('selectedPatient.Questionnaires', Session.get('selectedPatientId'), {});
@@ -94,9 +100,25 @@ function QuestionnaireDetail(props) {
     item: []
   });
 
+  // Initialise from fhirResource prop when in embedded mode
+  var hasReceivedProps = React.useRef(false);
+  var pendingUpdate = React.useRef(false);
+  useEffect(function() {
+    if (isEmbedded && props.fhirResource) {
+      hasReceivedProps.current = true;
+      setQuestionnaire(function(prev) {
+        if (JSON.stringify(props.fhirResource) !== JSON.stringify(prev)) {
+          return props.fhirResource;
+        }
+        return prev;
+      });
+    }
+  }, [props.fhirResource]);
+
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [isEditing, setIsEditing] = useState(false);
+  const [isEditing, setIsEditing] = useState(isEmbedded);
   const [notes, setNotes] = useState("");
   
   // Set initial state on component mount
@@ -162,6 +184,7 @@ function QuestionnaireDetail(props) {
   // Handle field changes
   function handleChange(path, value) {
     console.log('handleChange called with path:', path, 'value:', value);
+    pendingUpdate.current = true;
     setQuestionnaire(prevQuestionnaire => {
       const updatedQuestionnaire = JSON.parse(JSON.stringify(prevQuestionnaire)); // Deep clone
       set(updatedQuestionnaire, path, value);
@@ -169,6 +192,15 @@ function QuestionnaireDetail(props) {
       return updatedQuestionnaire;
     });
   }
+
+  // onResourceChange useEffect: notify parent when state changes in embedded mode
+  useEffect(function() {
+    if (isEmbedded && pendingUpdate.current && props.onResourceChange) {
+      pendingUpdate.current = false;
+      props.onResourceChange(questionnaire);
+    }
+  }, [questionnaire]);
+
 
   // Handle save
   async function handleSave() {
@@ -253,6 +285,207 @@ function QuestionnaireDetail(props) {
     { value: 'retired', label: 'Retired' },
     { value: 'unknown', label: 'Unknown' }
   ];
+
+  if (isEmbedded) {
+    return (
+      <Grid container spacing={3}>
+        <Grid item xs={12}>
+          <TextField
+            id="title"
+            fullWidth
+            label="Title"
+            value={get(questionnaire, 'title', '')}
+            onChange={(e) => handleChange('title', e.target.value)}
+            disabled={!isEditing}
+            helperText="Human-readable name for this questionnaire"
+          />
+        </Grid>
+
+        <Grid item xs={12} md={6}>
+          <TextField
+            id="name"
+            fullWidth
+            label="Computer Name"
+            value={get(questionnaire, 'name', '')}
+            onChange={(e) => handleChange('name', e.target.value)}
+            disabled={!isEditing}
+            helperText="Computer-friendly name (no spaces)"
+          />
+        </Grid>
+
+        <Grid item xs={12} md={6}>
+          <TextField
+            id="version"
+            fullWidth
+            label="Version"
+            value={get(questionnaire, 'version', '')}
+            onChange={(e) => handleChange('version', e.target.value)}
+            disabled={!isEditing}
+          />
+        </Grid>
+
+        <Grid item xs={12} md={6}>
+          <TextField
+            id="publisher"
+            fullWidth
+            label="Publisher"
+            value={get(questionnaire, 'publisher', '')}
+            onChange={(e) => handleChange('publisher', e.target.value)}
+            disabled={!isEditing}
+          />
+        </Grid>
+
+        <Grid item xs={12} md={6}>
+          <FormControl fullWidth disabled={!isEditing}>
+            <InputLabel id="status-label">Status</InputLabel>
+            <Select
+              id="status"
+              labelId="status-label"
+              value={get(questionnaire, 'status', 'active')}
+              onChange={(e) => handleChange('status', e.target.value)}
+              label="Status"
+            >
+              {statusOptions.map(option => (
+                <MenuItem key={option.value} value={option.value}>
+                  {option.label}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Grid>
+
+        <Grid item xs={12}>
+          <TextField
+            id="description"
+            fullWidth
+            multiline
+            rows={2}
+            label="Description"
+            value={get(questionnaire, 'description', '')}
+            onChange={(e) => handleChange('description', e.target.value)}
+            disabled={!isEditing}
+            helperText="Natural language description of the questionnaire"
+          />
+        </Grid>
+
+        <Grid item xs={12}>
+          <TextField
+            id="purpose"
+            fullWidth
+            multiline
+            rows={2}
+            label="Purpose"
+            value={get(questionnaire, 'purpose', '')}
+            onChange={(e) => handleChange('purpose', e.target.value)}
+            disabled={!isEditing}
+            helperText="Why this questionnaire is defined"
+          />
+        </Grid>
+
+        <Grid item xs={12} md={4}>
+          <TextField
+            id="approvalDate"
+            fullWidth
+            label="Approval Date"
+            type="date"
+            value={get(questionnaire, 'approvalDate', '')}
+            onChange={(e) => handleChange('approvalDate', e.target.value)}
+            disabled={!isEditing}
+            InputLabelProps={{ shrink: true }}
+          />
+        </Grid>
+
+        <Grid item xs={12} md={4}>
+          <TextField
+            id="lastReviewDate"
+            fullWidth
+            label="Last Review Date"
+            type="date"
+            value={get(questionnaire, 'lastReviewDate', '')}
+            onChange={(e) => handleChange('lastReviewDate', e.target.value)}
+            disabled={!isEditing}
+            InputLabelProps={{ shrink: true }}
+          />
+        </Grid>
+
+        <Grid item xs={12} md={4}>
+          <TextField
+            id="subjectType"
+            fullWidth
+            label="Subject Type"
+            value={get(questionnaire, 'subjectType[0]', 'Patient')}
+            onChange={(e) => handleChange('subjectType[0]', e.target.value)}
+            disabled={!isEditing}
+            helperText="Resource type that can answer this questionnaire"
+          />
+        </Grid>
+
+        <Grid item xs={12} md={6}>
+          <TextField
+            id="effectivePeriodStart"
+            fullWidth
+            label="Effective Period Start"
+            type="date"
+            value={get(questionnaire, 'effectivePeriod.start', '')}
+            onChange={(e) => handleChange('effectivePeriod.start', e.target.value)}
+            disabled={!isEditing}
+            InputLabelProps={{ shrink: true }}
+          />
+        </Grid>
+
+        <Grid item xs={12} md={6}>
+          <TextField
+            id="effectivePeriodEnd"
+            fullWidth
+            label="Effective Period End"
+            type="date"
+            value={get(questionnaire, 'effectivePeriod.end', '')}
+            onChange={(e) => handleChange('effectivePeriod.end', e.target.value)}
+            disabled={!isEditing}
+            InputLabelProps={{ shrink: true }}
+          />
+        </Grid>
+
+        <Grid item xs={12} md={6}>
+          <TextField
+            id="codeCode"
+            fullWidth
+            label="Code"
+            value={get(questionnaire, 'code[0].code', '')}
+            onChange={(e) => handleChange('code[0].code', e.target.value)}
+            disabled={!isEditing}
+            helperText="LOINC or other coding system code"
+          />
+        </Grid>
+
+        <Grid item xs={12} md={6}>
+          <TextField
+            id="codeDisplay"
+            fullWidth
+            label="Code Display"
+            value={get(questionnaire, 'code[0].display', '')}
+            onChange={(e) => handleChange('code[0].display', e.target.value)}
+            disabled={!isEditing}
+            helperText="Human-readable meaning of the code"
+          />
+        </Grid>
+
+        <Grid item xs={12}>
+          <TextField
+            id="notesTextarea"
+            fullWidth
+            multiline
+            rows={3}
+            label="Notes"
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            disabled={!isEditing}
+            helperText="Additional notes or comments about this questionnaire"
+          />
+        </Grid>
+      </Grid>
+    );
+  }
 
   return (
     <Container id="questionnaireDetailPage" maxWidth="md" sx={{ mt: 4, mb: 4 }}>

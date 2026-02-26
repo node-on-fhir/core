@@ -42,6 +42,8 @@ Meteor.startup(function(){
 // MAIN COMPONENT
 
 export function CompositionDetail(props){
+  // Embedded mode support (for HoneycombFhirResource dispatcher)
+  var isEmbedded = props.embedded || false;
 
   let {
     children,

@@ -38,12 +38,18 @@ import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
 
 function ImmunizationDetail(props) {
-  const navigate = useNavigate();
-  const { id } = useParams();
+  // Embedded mode support (for HoneycombFhirResource dispatcher)
+  var isEmbedded = props.embedded || false;
+
+  var _rawNavigate = useNavigate();
+  var navigate = isEmbedded ? function() {} : _rawNavigate;
+  var _params = isEmbedded ? {} : useParams();
+  var id = _params.id || null;
   const immunizationId = id;
   
   // Subscribe to immunizations data
   const isSubscriptionReady = useTracker(function(){
+    if (isEmbedded) return true; // Skip subscription in embedded mode
     let autoSubscribeEnabled = get(Meteor, 'settings.public.defaults.autoSubscribe', false);
     let handle;
     if(autoSubscribeEnabled){
@@ -120,9 +126,24 @@ function ImmunizationDetail(props) {
     }]
   });
 
+  // Initialise from fhirResource prop when in embedded mode
+  var hasReceivedProps = React.useRef(false);
+  useEffect(function() {
+    if (isEmbedded && props.fhirResource) {
+      hasReceivedProps.current = true;
+      setImmunization(function(prev) {
+        if (JSON.stringify(props.fhirResource) !== JSON.stringify(prev)) {
+          return props.fhirResource;
+        }
+        return prev;
+      });
+    }
+  }, [props.fhirResource]);
+
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [isEditing, setIsEditing] = useState(false);
+  const [isEditing, setIsEditing] = useState(isEmbedded);
   const [searchPatientOpen, setSearchPatientOpen] = useState(false);
 
   // Set patient name and performer on component mount for new immunizations
@@ -204,6 +225,11 @@ function ImmunizationDetail(props) {
     }
     
     setImmunization(updatedImmunization);
+  
+    // Notify parent of changes in embedded mode
+    if (props.onResourceChange) {
+      props.onResourceChange(updatedImmunization);
+    }
   }
 
   // Handle search for patient
@@ -346,10 +372,249 @@ function ImmunizationDetail(props) {
     { value: 'IN', code: 'IN', label: 'Intranasal' }
   ];
 
+  if (isEmbedded) {
+    return (
+      <Stack spacing={3}>
+        <TextField
+          id="subjectDisplay"
+          fullWidth
+          label="Patient"
+          value={get(immunization, 'patient.display', '')}
+          onChange={(e) => handleChange('patient.display', e.target.value)}
+          helperText={get(immunization, 'patient.reference', '') || 'Patient reference will be assigned'}
+          disabled={!isEditing}
+          InputProps={{
+            endAdornment: (
+              <InputAdornment position="end">
+                <Tooltip title="Search for patient">
+                  <IconButton
+                    onClick={handleSearchUser}
+                    edge="end"
+                    disabled={!isEditing}
+                  >
+                    <SearchIcon />
+                  </IconButton>
+                </Tooltip>
+              </InputAdornment>
+            ),
+          }}
+        />
+
+        <Stack direction="row" spacing={2}>
+          <TextField
+            id="vaccineDisplay"
+            fullWidth
+            label="Vaccine Name"
+            value={get(immunization, 'vaccineCode.text', '') ||
+                   get(immunization, 'vaccineCode.coding[0].display', '')}
+            onChange={(e) => {
+              handleChange('vaccineCode.text', e.target.value);
+              handleChange('vaccineCode.coding[0].display', e.target.value);
+            }}
+            helperText="Name of the vaccine administered"
+            disabled={!isEditing}
+          />
+
+          <TextField
+            id="vaccineCode"
+            fullWidth
+            label="CVX Code"
+            value={get(immunization, 'vaccineCode.coding[0].code', '')}
+            onChange={(e) => handleChange('vaccineCode.coding[0].code', e.target.value)}
+            helperText="CVX vaccine code"
+            disabled={!isEditing}
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <Tooltip title="Lookup CVX codes">
+                    <IconButton
+                      onClick={() => window.open('https://www2a.cdc.gov/vaccines/iis/iisstandards/vaccines.asp?rpt=cvx', '_blank')}
+                      edge="end"
+                      disabled={!isEditing}
+                    >
+                      <SearchIcon />
+                    </IconButton>
+                  </Tooltip>
+                </InputAdornment>
+              ),
+            }}
+          />
+        </Stack>
+
+        <Stack direction="row" spacing={2}>
+          <FormControl fullWidth disabled={!isEditing}>
+            <InputLabel id="statusSelect-label">Status</InputLabel>
+            <Select
+              labelId="statusSelect-label"
+              id="statusSelect"
+              value={get(immunization, 'status', 'completed')}
+              onChange={(e) => handleChange('status', e.target.value)}
+              label="Status"
+            >
+              {statusOptions.map(option => (
+                <MenuItem key={option.value} value={option.value}>
+                  {option.label}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          <TextField
+            id="occurrenceDateTime"
+            fullWidth
+            type="datetime-local"
+            label="Administration Date/Time"
+            value={moment(get(immunization, 'occurrenceDateTime', '')).format('YYYY-MM-DDTHH:mm')}
+            onChange={(e) => handleChange('occurrenceDateTime', e.target.value)}
+            InputLabelProps={{ shrink: true }}
+            disabled={!isEditing}
+          />
+        </Stack>
+
+        <FormControlLabel
+          control={
+            <Checkbox
+              id="primarySource"
+              checked={get(immunization, 'primarySource', true)}
+              onChange={(e) => handleChange('primarySource', e.target.checked)}
+              disabled={!isEditing}
+            />
+          }
+          label="Primary Source (indicates information obtained from the person who administered the vaccine)"
+        />
+
+        <Stack direction="row" spacing={2}>
+          <TextField
+            id="lotNumber"
+            fullWidth
+            label="Lot Number"
+            value={get(immunization, 'lotNumber', '')}
+            onChange={(e) => handleChange('lotNumber', e.target.value)}
+            disabled={!isEditing}
+          />
+
+          <TextField
+            id="expirationDate"
+            fullWidth
+            type="date"
+            label="Expiration Date"
+            value={moment(get(immunization, 'expirationDate', '')).format('YYYY-MM-DD')}
+            onChange={(e) => handleChange('expirationDate', e.target.value)}
+            InputLabelProps={{ shrink: true }}
+            disabled={!isEditing}
+          />
+        </Stack>
+
+        <TextField
+          id="manufacturerDisplay"
+          fullWidth
+          label="Manufacturer"
+          value={get(immunization, 'manufacturer.display', '')}
+          onChange={(e) => handleChange('manufacturer.display', e.target.value)}
+          helperText="e.g., Pfizer, Moderna, Johnson & Johnson"
+          disabled={!isEditing}
+        />
+
+        <Stack direction="row" spacing={2}>
+          <FormControl fullWidth disabled={!isEditing}>
+            <InputLabel id="siteSelect-label">Injection Site</InputLabel>
+            <Select
+              labelId="siteSelect-label"
+              id="siteSelect"
+              value={get(immunization, 'site.coding[0].code', '')}
+              onChange={(e) => {
+                const selectedSite = siteOptions.find(opt => opt.code === e.target.value);
+                handleChange('site.coding[0].code', e.target.value);
+                handleChange('site.coding[0].display', selectedSite?.label || '');
+                handleChange('site.text', selectedSite?.label || '');
+              }}
+              label="Injection Site"
+            >
+              {siteOptions.map(option => (
+                <MenuItem key={option.code} value={option.code}>
+                  {option.label}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          <FormControl fullWidth disabled={!isEditing}>
+            <InputLabel id="routeSelect-label">Route</InputLabel>
+            <Select
+              labelId="routeSelect-label"
+              id="routeSelect"
+              value={get(immunization, 'route.coding[0].code', '')}
+              onChange={(e) => {
+                const selectedRoute = routeOptions.find(opt => opt.code === e.target.value);
+                handleChange('route.coding[0].code', e.target.value);
+                handleChange('route.coding[0].display', selectedRoute?.label || '');
+                handleChange('route.text', selectedRoute?.label || '');
+              }}
+              label="Route"
+            >
+              {routeOptions.map(option => (
+                <MenuItem key={option.code} value={option.code}>
+                  {option.label}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Stack>
+
+        <Stack direction="row" spacing={2}>
+          <TextField
+            id="doseQuantityValue"
+            fullWidth
+            type="number"
+            label="Dose Amount"
+            value={get(immunization, 'doseQuantity.value', '')}
+            onChange={(e) => handleChange('doseQuantity.value', parseFloat(e.target.value) || null)}
+            disabled={!isEditing}
+          />
+
+          <TextField
+            id="doseQuantityUnit"
+            fullWidth
+            label="Dose Unit"
+            value={get(immunization, 'doseQuantity.unit', '')}
+            onChange={(e) => {
+              handleChange('doseQuantity.unit', e.target.value);
+              handleChange('doseQuantity.code', e.target.value);
+            }}
+            helperText="e.g., mL, mg"
+            disabled={!isEditing}
+          />
+        </Stack>
+
+        <TextField
+          id="performerDisplay"
+          fullWidth
+          label="Administered By"
+          value={get(immunization, 'performer[0].actor.display', '')}
+          onChange={(e) => handleChange('performer[0].actor.display', e.target.value)}
+          helperText={get(immunization, 'performer[0].actor.reference', '') || 'Practitioner reference will be assigned'}
+          disabled={!isEditing}
+        />
+
+        <TextField
+          id="noteText"
+          fullWidth
+          multiline
+          rows={3}
+          label="Notes"
+          value={get(immunization, 'note[0].text', '')}
+          onChange={(e) => handleChange('note[0].text', e.target.value)}
+          helperText="Additional notes about this immunization"
+          disabled={!isEditing}
+        />
+      </Stack>
+    );
+  }
+
   return (
     <Container id="immunizationDetailPage" maxWidth="md" sx={{ py: 4 }}>
       <Card sx={{ boxShadow: 3 }}>
-        <CardHeader 
+        <CardHeader
           title={immunizationId && immunizationId !== 'new' ? 'Edit Immunization' : 'New Immunization'}
           sx={{ bgcolor: 'primary.main', color: 'primary.contrastText' }}
         />

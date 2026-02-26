@@ -1,5 +1,7 @@
 ._*
+_build/meteor/
 kastoria-core/
 workflows/
 npmPackages/merkalis/
-npmPackages/honeycomb-desktop/
+npmPackages/desktop-honeycomb/
+npmPackages/desktop-*

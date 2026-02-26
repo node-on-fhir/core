@@ -36,8 +36,13 @@ import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
 
 function MedicationRequestDetail(props) {
-  const navigate = useNavigate();
-  const { id } = useParams();
+  // Embedded mode support (for HoneycombFhirResource dispatcher)
+  var isEmbedded = props.embedded || false;
+
+  var _rawNavigate = useNavigate();
+  var navigate = isEmbedded ? function() {} : _rawNavigate;
+  var _params = isEmbedded ? {} : useParams();
+  var id = _params.id || null;
   
   // Get selected patient and current user from session/tracker
   const selectedPatient = useTracker(function() {
@@ -108,9 +113,24 @@ function MedicationRequestDetail(props) {
     }
   });
 
+  // Initialise from fhirResource prop when in embedded mode
+  var hasReceivedProps = React.useRef(false);
+  useEffect(function() {
+    if (isEmbedded && props.fhirResource) {
+      hasReceivedProps.current = true;
+      setMedicationRequest(function(prev) {
+        if (JSON.stringify(props.fhirResource) !== JSON.stringify(prev)) {
+          return props.fhirResource;
+        }
+        return prev;
+      });
+    }
+  }, [props.fhirResource]);
+
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [isEditing, setIsEditing] = useState(false);
+  const [isEditing, setIsEditing] = useState(isEmbedded);
 
   // Set patient name and requester on component mount for new requests
   useEffect(function() {
@@ -191,6 +211,11 @@ function MedicationRequestDetail(props) {
     const updatedMedicationRequest = { ...medicationRequest };
     set(updatedMedicationRequest, path, value);
     setMedicationRequest(updatedMedicationRequest);
+  
+    // Notify parent of changes in embedded mode
+    if (props.onResourceChange) {
+      props.onResourceChange(updatedMedicationRequest);
+    }
   }
 
   // Handle save
@@ -283,10 +308,317 @@ function MedicationRequestDetail(props) {
     { value: 'a', label: 'Year' }
   ];
 
+  if (isEmbedded) {
+    return (
+      <Stack spacing={3}>
+        <TextField
+          id="subjectDisplay"
+          fullWidth
+          label="Patient"
+          value={get(medicationRequest, 'subject.display', '')}
+          helperText={get(medicationRequest, 'subject.reference', '') || 'Patient reference will be assigned'}
+          disabled
+        />
+
+        <Stack direction="row" spacing={2}>
+          <TextField
+            id="medicationDisplay"
+            fullWidth
+            label="Medication Name"
+            value={get(medicationRequest, 'medicationCodeableConcept.text', '') ||
+                   get(medicationRequest, 'medicationCodeableConcept.coding[0].display', '')}
+            onChange={(e) => handleChange('medicationCodeableConcept.text', e.target.value)}
+            helperText="Name of the medication"
+            disabled={!isEditing}
+          />
+
+          <TextField
+            id="medicationCode"
+            fullWidth
+            label="Medication Code"
+            value={get(medicationRequest, 'medicationCodeableConcept.coding[0].code', '')}
+            onChange={(e) => handleChange('medicationCodeableConcept.coding[0].code', e.target.value)}
+            helperText="RxNorm code"
+            disabled={!isEditing}
+          />
+        </Stack>
+
+        <Stack direction="row" spacing={2}>
+          <FormControl fullWidth disabled={!isEditing}>
+            <InputLabel>Status</InputLabel>
+            <Select
+              id="status"
+              value={get(medicationRequest, 'status', 'active')}
+              onChange={(e) => handleChange('status', e.target.value)}
+              label="Status"
+            >
+              {statusOptions.map(option => (
+                <MenuItem key={option.value} value={option.value}>
+                  {option.label}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          <FormControl fullWidth disabled={!isEditing}>
+            <InputLabel>Intent</InputLabel>
+            <Select
+              id="intent"
+              value={get(medicationRequest, 'intent', 'order')}
+              onChange={(e) => handleChange('intent', e.target.value)}
+              label="Intent"
+            >
+              {intentOptions.map(option => (
+                <MenuItem key={option.value} value={option.value}>
+                  {option.label}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          <FormControl fullWidth disabled={!isEditing}>
+            <InputLabel>Priority</InputLabel>
+            <Select
+              id="priority"
+              value={get(medicationRequest, 'priority', 'routine')}
+              onChange={(e) => handleChange('priority', e.target.value)}
+              label="Priority"
+            >
+              {priorityOptions.map(option => (
+                <MenuItem key={option.value} value={option.value}>
+                  {option.label}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          <TextField
+            id="authoredOn"
+            fullWidth
+            type="date"
+            label="Authored On"
+            value={moment(get(medicationRequest, 'authoredOn', '')).format('YYYY-MM-DD')}
+            onChange={(e) => handleChange('authoredOn', e.target.value)}
+            InputLabelProps={{ shrink: true }}
+            disabled={!isEditing}
+          />
+        </Stack>
+
+        <TextField
+          id="requesterDisplay"
+          fullWidth
+          label="Requester"
+          value={get(medicationRequest, 'requester.display', '')}
+          onChange={(e) => handleChange('requester.display', e.target.value)}
+          helperText={get(medicationRequest, 'requester.reference', '') || 'Practitioner reference will be assigned'}
+          disabled={!isEditing}
+        />
+
+        <Typography variant="h6" sx={{ mt: 2 }}>Dosage Instructions</Typography>
+
+        <TextField
+          id="dosageInstruction"
+          fullWidth
+          multiline
+          rows={2}
+          label="Dosage Instructions Text"
+          value={get(medicationRequest, 'dosageInstruction[0].text', '')}
+          onChange={(e) => handleChange('dosageInstruction[0].text', e.target.value)}
+          helperText="e.g., Take 2 tablets by mouth every 6 hours"
+          disabled={!isEditing}
+        />
+
+        <Stack direction="row" spacing={2}>
+          <TextField
+            fullWidth
+            type="number"
+            label="Dose Amount"
+            value={get(medicationRequest, 'dosageInstruction[0].doseAndRate[0].doseQuantity.value', '')}
+            onChange={(e) => handleChange('dosageInstruction[0].doseAndRate[0].doseQuantity.value', parseFloat(e.target.value) || null)}
+            disabled={!isEditing}
+          />
+
+          <TextField
+            fullWidth
+            label="Dose Unit"
+            value={get(medicationRequest, 'dosageInstruction[0].doseAndRate[0].doseQuantity.unit', '')}
+            onChange={(e) => {
+              handleChange('dosageInstruction[0].doseAndRate[0].doseQuantity.unit', e.target.value);
+              handleChange('dosageInstruction[0].doseAndRate[0].doseQuantity.code', e.target.value);
+            }}
+            helperText="e.g., mg, mL, tablets"
+            disabled={!isEditing}
+          />
+        </Stack>
+
+        <Stack direction="row" spacing={2}>
+          <TextField
+            fullWidth
+            type="number"
+            label="Frequency"
+            value={get(medicationRequest, 'dosageInstruction[0].timing.repeat.frequency', '')}
+            onChange={(e) => handleChange('dosageInstruction[0].timing.repeat.frequency', parseInt(e.target.value) || null)}
+            helperText="Times per period"
+            disabled={!isEditing}
+          />
+
+          <TextField
+            fullWidth
+            type="number"
+            label="Period"
+            value={get(medicationRequest, 'dosageInstruction[0].timing.repeat.period', '')}
+            onChange={(e) => handleChange('dosageInstruction[0].timing.repeat.period', parseInt(e.target.value) || null)}
+            disabled={!isEditing}
+          />
+
+          <FormControl fullWidth disabled={!isEditing}>
+            <InputLabel>Period Unit</InputLabel>
+            <Select
+              value={get(medicationRequest, 'dosageInstruction[0].timing.repeat.periodUnit', 'd')}
+              onChange={(e) => handleChange('dosageInstruction[0].timing.repeat.periodUnit', e.target.value)}
+              label="Period Unit"
+            >
+              {periodUnitOptions.map(option => (
+                <MenuItem key={option.value} value={option.value}>
+                  {option.label}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          <TextField
+            id="dosageTiming"
+            fullWidth
+            label="Timing"
+            value={get(medicationRequest, 'dosageInstruction[0].timing.code.text', '')}
+            onChange={(e) => handleChange('dosageInstruction[0].timing.code.text', e.target.value)}
+            helperText="e.g., 1/d, BID, TID"
+            disabled={!isEditing}
+          />
+        </Stack>
+
+        <Stack direction="row" spacing={2}>
+          <TextField
+            id="dosageRouteCode"
+            fullWidth
+            label="Route Code"
+            value={get(medicationRequest, 'dosageInstruction[0].route.coding[0].code', '')}
+            onChange={(e) => handleChange('dosageInstruction[0].route.coding[0].code', e.target.value)}
+            helperText="SNOMED code"
+            disabled={!isEditing}
+          />
+
+          <TextField
+            id="dosageRouteDisplay"
+            fullWidth
+            label="Route Display"
+            value={get(medicationRequest, 'dosageInstruction[0].route.coding[0].display', '')}
+            onChange={(e) => handleChange('dosageInstruction[0].route.coding[0].display', e.target.value)}
+            helperText="e.g., oral, IV, IM"
+            disabled={!isEditing}
+          />
+        </Stack>
+
+        <Typography variant="h6" sx={{ mt: 2 }}>Dispense Request</Typography>
+
+        <Stack direction="row" spacing={2}>
+          <TextField
+            id="dispenseQuantity"
+            fullWidth
+            type="number"
+            label="Dispense Quantity"
+            value={get(medicationRequest, 'dispenseRequest.quantity.value', '')}
+            onChange={(e) => handleChange('dispenseRequest.quantity.value', parseFloat(e.target.value) || null)}
+            disabled={!isEditing}
+          />
+
+          <TextField
+            id="dispenseUnit"
+            fullWidth
+            label="Dispense Unit"
+            value={get(medicationRequest, 'dispenseRequest.quantity.unit', '')}
+            onChange={(e) => handleChange('dispenseRequest.quantity.unit', e.target.value)}
+            helperText="e.g., tablets, mL"
+            disabled={!isEditing}
+          />
+
+          <TextField
+            id="numberOfRepeats"
+            fullWidth
+            type="number"
+            label="Number of Repeats"
+            value={get(medicationRequest, 'dispenseRequest.numberOfRepeatsAllowed', '')}
+            onChange={(e) => handleChange('dispenseRequest.numberOfRepeatsAllowed', parseInt(e.target.value) || null)}
+            helperText="Number of refills allowed"
+            disabled={!isEditing}
+          />
+        </Stack>
+
+        <Stack direction="row" spacing={2}>
+          <TextField
+            fullWidth
+            type="date"
+            label="Valid From"
+            value={moment(get(medicationRequest, 'dispenseRequest.validityPeriod.start', '')).format('YYYY-MM-DD')}
+            onChange={(e) => handleChange('dispenseRequest.validityPeriod.start', e.target.value)}
+            InputLabelProps={{ shrink: true }}
+            disabled={!isEditing}
+          />
+
+          <TextField
+            fullWidth
+            type="date"
+            label="Valid Until"
+            value={moment(get(medicationRequest, 'dispenseRequest.validityPeriod.end', '')).format('YYYY-MM-DD')}
+            onChange={(e) => handleChange('dispenseRequest.validityPeriod.end', e.target.value)}
+            InputLabelProps={{ shrink: true }}
+            disabled={!isEditing}
+          />
+        </Stack>
+
+        <Typography variant="h6" sx={{ mt: 2 }}>Clinical Information</Typography>
+
+        <Stack direction="row" spacing={2}>
+          <TextField
+            id="reasonCode"
+            fullWidth
+            label="Reason Code"
+            value={get(medicationRequest, 'reasonCode[0].coding[0].code', '')}
+            onChange={(e) => handleChange('reasonCode[0].coding[0].code', e.target.value)}
+            helperText="SNOMED code for condition"
+            disabled={!isEditing}
+          />
+
+          <TextField
+            id="reasonDisplay"
+            fullWidth
+            label="Reason Display"
+            value={get(medicationRequest, 'reasonCode[0].text', '') || get(medicationRequest, 'reasonCode[0].coding[0].display', '')}
+            onChange={(e) => handleChange('reasonCode[0].text', e.target.value)}
+            helperText="e.g., Hypertension, Diabetes"
+            disabled={!isEditing}
+          />
+        </Stack>
+
+        <TextField
+          id="notesTextarea"
+          fullWidth
+          multiline
+          rows={3}
+          label="Notes"
+          value={get(medicationRequest, 'note[0].text', '')}
+          onChange={(e) => handleChange('note[0].text', e.target.value)}
+          helperText="Additional notes or instructions"
+          disabled={!isEditing}
+        />
+      </Stack>
+    );
+  }
+
   return (
     <Container id="medicationRequestDetailPage" maxWidth="md" sx={{ py: 4 }}>
       <Card sx={{ boxShadow: 3 }}>
-        <CardHeader 
+        <CardHeader
           title={id && id !== 'new' ? 'Edit Medication Request' : 'New Medication Request'}
           sx={{ bgcolor: 'primary.main', color: 'primary.contrastText' }}
         />

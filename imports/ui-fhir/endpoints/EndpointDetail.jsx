@@ -35,8 +35,13 @@ import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
 
 function EndpointDetail(props) {
-  const navigate = useNavigate();
-  const { id } = useParams();
+  // Embedded mode support (for HoneycombFhirResource dispatcher)
+  var isEmbedded = props.embedded || false;
+
+  var _rawNavigate = useNavigate();
+  var navigate = isEmbedded ? function() {} : _rawNavigate;
+  var _params = isEmbedded ? {} : useParams();
+  var id = _params.id || null;
 
   // Get current user from session/tracker
   const currentUser = useTracker(function() {
@@ -45,6 +50,7 @@ function EndpointDetail(props) {
 
   // Subscribe to endpoint data using ID-based query (optimized)
   const isSubscriptionReady = useTracker(function(){
+    if (isEmbedded) return true; // Skip subscription in embedded mode
     if (id && id !== 'new') {
       const query = {
         $or: [
@@ -92,9 +98,24 @@ function EndpointDetail(props) {
     header: []
   });
 
+  // Initialise from fhirResource prop when in embedded mode
+  var hasReceivedProps = React.useRef(false);
+  useEffect(function() {
+    if (isEmbedded && props.fhirResource) {
+      hasReceivedProps.current = true;
+      setEndpoint(function(prev) {
+        if (JSON.stringify(props.fhirResource) !== JSON.stringify(prev)) {
+          return props.fhirResource;
+        }
+        return prev;
+      });
+    }
+  }, [props.fhirResource]);
+
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [isEditing, setIsEditing] = useState(false);
+  const [isEditing, setIsEditing] = useState(isEmbedded);
 
   // Set default values on component mount for new endpoints
   useEffect(function() {
@@ -132,6 +153,11 @@ function EndpointDetail(props) {
     const updatedEndpoint = { ...endpoint };
     set(updatedEndpoint, path, value);
     setEndpoint(updatedEndpoint);
+  
+    // Notify parent of changes in embedded mode
+    if (props.onResourceChange) {
+      props.onResourceChange(updatedEndpoint);
+    }
   }
 
   // Handle save
@@ -211,6 +237,158 @@ function EndpointDetail(props) {
     { value: 'dicom-qido-rs', label: 'DICOM QIDO-RS' },
     { value: 'dicom-stow-rs', label: 'DICOM STOW-RS' }
   ];
+
+  if (isEmbedded) {
+    return (
+      <Stack spacing={3}>
+        <TextField
+          id="nameInput"
+          fullWidth
+          label="Endpoint Name"
+          value={get(endpoint, 'name', '')}
+          onChange={(e) => handleChange('name', e.target.value)}
+          helperText="A friendly name for this endpoint"
+          disabled={!isEditing}
+        />
+
+        <TextField
+          id="addressInput"
+          fullWidth
+          label="Address (URL)"
+          value={get(endpoint, 'address', '')}
+          onChange={(e) => handleChange('address', e.target.value)}
+          helperText="The URL for connecting to this endpoint"
+          disabled={!isEditing}
+        />
+
+        <Stack direction="row" spacing={2}>
+          <FormControl fullWidth disabled={!isEditing}>
+            <InputLabel>Status</InputLabel>
+            <Select
+              id="statusSelect"
+              value={get(endpoint, 'status', 'active')}
+              onChange={(e) => handleChange('status', e.target.value)}
+              label="Status"
+            >
+              {statusOptions.map(option => (
+                <MenuItem key={option.value} value={option.value}>
+                  {option.label}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          <FormControl fullWidth disabled={!isEditing}>
+            <InputLabel>Connection Type</InputLabel>
+            <Select
+              id="connectionTypeSelect"
+              value={get(endpoint, 'connectionType[0].coding[0].code', '')}
+              onChange={(e) => {
+                const selectedOption = connectionTypeOptions.find(opt => opt.value === e.target.value);
+                handleChange('connectionType[0].coding[0].code', e.target.value);
+                handleChange('connectionType[0].coding[0].display', selectedOption?.label || e.target.value);
+              }}
+              label="Connection Type"
+            >
+              {connectionTypeOptions.map(option => (
+                <MenuItem key={option.value} value={option.value}>
+                  {option.label}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Stack>
+
+        <Typography variant="h6" sx={{ mt: 2 }}>Managing Organization</Typography>
+
+        <Stack direction="row" spacing={2}>
+          <TextField
+            id="managingOrganizationDisplay"
+            fullWidth
+            label="Organization Name"
+            value={get(endpoint, 'managingOrganization.display', '')}
+            onChange={(e) => handleChange('managingOrganization.display', e.target.value)}
+            helperText="Name of the organization managing this endpoint"
+            disabled={!isEditing}
+          />
+
+          <TextField
+            id="managingOrganizationReference"
+            fullWidth
+            label="Organization Reference"
+            value={get(endpoint, 'managingOrganization.reference', '')}
+            onChange={(e) => handleChange('managingOrganization.reference', e.target.value)}
+            helperText="e.g., Organization/123"
+            disabled={!isEditing}
+          />
+        </Stack>
+
+        <Typography variant="h6" sx={{ mt: 2 }}>Payload Configuration</Typography>
+
+        <Stack direction="row" spacing={2}>
+          <TextField
+            id="payloadTypeText"
+            fullWidth
+            label="Payload Type"
+            value={get(endpoint, 'payloadType[0].text', '')}
+            onChange={(e) => handleChange('payloadType[0].text', e.target.value)}
+            helperText="Type of content this endpoint accepts"
+            disabled={!isEditing}
+          />
+
+          <TextField
+            id="payloadMimeType"
+            fullWidth
+            label="MIME Type"
+            value={get(endpoint, 'payloadMimeType[0]', 'application/fhir+json')}
+            onChange={(e) => handleChange('payloadMimeType[0]', e.target.value)}
+            helperText="e.g., application/fhir+json"
+            disabled={!isEditing}
+          />
+        </Stack>
+
+        <Typography variant="h6" sx={{ mt: 2 }}>Validity Period</Typography>
+
+        <Stack direction="row" spacing={2}>
+          <TextField
+            id="periodStart"
+            fullWidth
+            type="date"
+            label="Start Date"
+            value={get(endpoint, 'period.start', '') ? moment(get(endpoint, 'period.start')).format('YYYY-MM-DD') : ''}
+            onChange={(e) => handleChange('period.start', e.target.value)}
+            InputLabelProps={{ shrink: true }}
+            disabled={!isEditing}
+          />
+
+          <TextField
+            id="periodEnd"
+            fullWidth
+            type="date"
+            label="End Date"
+            value={get(endpoint, 'period.end', '') ? moment(get(endpoint, 'period.end')).format('YYYY-MM-DD') : ''}
+            onChange={(e) => handleChange('period.end', e.target.value)}
+            InputLabelProps={{ shrink: true }}
+            disabled={!isEditing}
+          />
+        </Stack>
+
+        <Typography variant="h6" sx={{ mt: 2 }}>Headers</Typography>
+
+        <TextField
+          id="headersInput"
+          fullWidth
+          multiline
+          rows={3}
+          label="Custom Headers"
+          value={get(endpoint, 'header', []).join('\n')}
+          onChange={(e) => handleChange('header', e.target.value.split('\n').filter(h => h.trim()))}
+          helperText="One header per line (e.g., Authorization: Bearer token)"
+          disabled={!isEditing}
+        />
+      </Stack>
+    );
+  }
 
   return (
     <Container id="endpointDetailPage" maxWidth="md" sx={{ py: 4 }}>

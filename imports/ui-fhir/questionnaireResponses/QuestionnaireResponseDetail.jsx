@@ -58,8 +58,13 @@ Meteor.startup(function(){
 });
 
 function QuestionnaireResponseDetail(props) {
-  const navigate = useNavigate();
-  const { id } = useParams();
+  // Embedded mode support (for HoneycombFhirResource dispatcher)
+  var isEmbedded = props.embedded || false;
+
+  var _rawNavigate = useNavigate();
+  var navigate = isEmbedded ? function() {} : _rawNavigate;
+  var _params = isEmbedded ? {} : useParams();
+  var id = _params.id || null;
   
   console.log('QuestionnaireResponseDetail mounted with id:', id);
   console.log('Type of id:', typeof id);
@@ -79,7 +84,22 @@ function QuestionnaireResponseDetail(props) {
     authored: moment().format('YYYY-MM-DDTHH:mm:ss')
   });
 
-  const [isEditing, setIsEditing] = useState(isNew);
+  // Initialise from fhirResource prop when in embedded mode
+  var hasReceivedProps = React.useRef(false);
+  useEffect(function() {
+    if (isEmbedded && props.fhirResource) {
+      hasReceivedProps.current = true;
+      setQuestionnaireResponse(function(prev) {
+        if (JSON.stringify(props.fhirResource) !== JSON.stringify(prev)) {
+          return props.fhirResource;
+        }
+        return prev;
+      });
+    }
+  }, [props.fhirResource]);
+
+
+  const [isEditing, setIsEditing] = useState(isEmbedded || isNew);
   const [showPatientSearch, setShowPatientSearch] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [error, setError] = useState('');
@@ -184,6 +204,11 @@ function QuestionnaireResponseDetail(props) {
     const updatedResponse = cloneDeep(questionnaireResponse);
     set(updatedResponse, path, value);
     setQuestionnaireResponse(updatedResponse);
+  
+    // Notify parent of changes in embedded mode
+    if (props.onResourceChange) {
+      props.onResourceChange(updatedResponse);
+    }
   }
 
   function handleSearchUser() {
@@ -394,6 +419,207 @@ function QuestionnaireResponseDetail(props) {
           </Box>
         )}
       </Box>
+    );
+  }
+
+  if (isEmbedded) {
+    return (
+      <Grid container spacing={3}>
+        {/* Basic Information */}
+        <Grid item xs={12} md={6}>
+          <TextField
+            id="identifier"
+            fullWidth
+            label="Identifier"
+            value={get(questionnaireResponse, 'identifier[0].value', '')}
+            onChange={(e) => handleChange('identifier[0].value', e.target.value)}
+            disabled={!isEditing}
+            margin="normal"
+          />
+        </Grid>
+
+        <Grid item xs={12} md={6}>
+          <FormControl id="status" fullWidth margin="normal" disabled={!isEditing}>
+            <InputLabel>Status</InputLabel>
+            <Select
+              value={get(questionnaireResponse, 'status', 'in-progress')}
+              onChange={(e) => handleChange('status', e.target.value)}
+              label="Status"
+            >
+              <MenuItem value="in-progress">In Progress</MenuItem>
+              <MenuItem value="completed">Completed</MenuItem>
+              <MenuItem value="amended">Amended</MenuItem>
+              <MenuItem value="entered-in-error">Entered in Error</MenuItem>
+              <MenuItem value="stopped">Stopped</MenuItem>
+            </Select>
+          </FormControl>
+        </Grid>
+
+        {/* Subject/Patient */}
+        <Grid item xs={12} md={6}>
+          <TextField
+            id="subjectDisplay"
+            fullWidth
+            label="Patient"
+            value={get(questionnaireResponse, 'subject.display', '')}
+            onChange={(e) => handleChange('subject.display', e.target.value)}
+            disabled={!isEditing}
+            margin="normal"
+            InputProps={{
+              endAdornment: isEditing && (
+                <InputAdornment position="end">
+                  <Tooltip title="Search for patient">
+                    <IconButton onClick={handleSearchUser} edge="end">
+                      <SearchIcon />
+                    </IconButton>
+                  </Tooltip>
+                </InputAdornment>
+              )
+            }}
+          />
+        </Grid>
+
+        {/* Author */}
+        <Grid item xs={12} md={6}>
+          <TextField
+            id="authorDisplay"
+            fullWidth
+            label="Author"
+            value={get(questionnaireResponse, 'author.display', '')}
+            onChange={(e) => handleChange('author.display', e.target.value)}
+            disabled={!isEditing}
+            margin="normal"
+          />
+        </Grid>
+
+        {/* Questionnaire Reference */}
+        <Grid item xs={12} md={6}>
+          <TextField
+            id="questionnaire"
+            fullWidth
+            label="Questionnaire Reference"
+            value={get(questionnaireResponse, 'questionnaire', '')}
+            onChange={(e) => handleChange('questionnaire', e.target.value)}
+            disabled={!isEditing}
+            margin="normal"
+            helperText="Format: Questionnaire/id"
+          />
+        </Grid>
+
+        {/* Questionnaire Display */}
+        <Grid item xs={12} md={6}>
+          <TextField
+            id="questionnaireDisplay"
+            fullWidth
+            label="Questionnaire Display"
+            value={get(questionnaireResponse, 'questionnaireDisplay', '')}
+            onChange={(e) => handleChange('questionnaireDisplay', e.target.value)}
+            disabled={!isEditing}
+            margin="normal"
+          />
+        </Grid>
+
+        {/* Authored Date */}
+        <Grid item xs={12} md={6}>
+          <TextField
+            id="authored"
+            fullWidth
+            label="Authored"
+            type="datetime-local"
+            value={moment(get(questionnaireResponse, 'authored', '')).format('YYYY-MM-DDTHH:mm')}
+            onChange={(e) => handleChange('authored', moment(e.target.value).toISOString())}
+            disabled={!isEditing}
+            margin="normal"
+            InputLabelProps={{
+              shrink: true,
+            }}
+          />
+        </Grid>
+
+        {/* Source */}
+        <Grid item xs={12} md={6}>
+          <TextField
+            id="source"
+            fullWidth
+            label="Source"
+            value={get(questionnaireResponse, 'source.display', '')}
+            onChange={(e) => handleChange('source.display', e.target.value)}
+            disabled={!isEditing}
+            margin="normal"
+            helperText="Who answered the questions"
+          />
+        </Grid>
+
+        {/* Based On */}
+        <Grid item xs={12} md={6}>
+          <TextField
+            id="basedOn"
+            fullWidth
+            label="Based On"
+            value={get(questionnaireResponse, 'basedOn[0].reference', '')}
+            onChange={(e) => handleChange('basedOn[0].reference', e.target.value)}
+            disabled={!isEditing}
+            margin="normal"
+            helperText="ServiceRequest or CarePlan reference"
+          />
+        </Grid>
+
+        {/* Part Of */}
+        <Grid item xs={12} md={6}>
+          <TextField
+            id="partOf"
+            fullWidth
+            label="Part Of"
+            value={get(questionnaireResponse, 'partOf[0].reference', '')}
+            onChange={(e) => handleChange('partOf[0].reference', e.target.value)}
+            disabled={!isEditing}
+            margin="normal"
+            helperText="Encounter or Procedure reference"
+          />
+        </Grid>
+
+        {/* Reason Code */}
+        <Grid item xs={12} md={6}>
+          <TextField
+            id="reasonCode"
+            fullWidth
+            label="Reason Code"
+            value={get(questionnaireResponse, 'reasonCode[0].coding[0].code', '')}
+            onChange={(e) => handleChange('reasonCode[0].coding[0].code', e.target.value)}
+            disabled={!isEditing}
+            margin="normal"
+            helperText="SNOMED CT code"
+          />
+        </Grid>
+
+        {/* Reason Display */}
+        <Grid item xs={12} md={6}>
+          <TextField
+            id="reasonDisplay"
+            fullWidth
+            label="Reason Display"
+            value={get(questionnaireResponse, 'reasonCode[0].coding[0].display', '')}
+            onChange={(e) => handleChange('reasonCode[0].coding[0].display', e.target.value)}
+            disabled={!isEditing}
+            margin="normal"
+          />
+        </Grid>
+
+        {/* Notes */}
+        <Grid item xs={12}>
+          <TextField
+            id="notesTextarea"
+            fullWidth
+            multiline
+            rows={4}
+            label="Notes"
+            value={get(questionnaireResponse, 'note[0].text', '')}
+            onChange={(e) => handleChange('note[0].text', e.target.value)}
+            disabled={!isEditing}
+            margin="normal"
+          />
+        </Grid>
+      </Grid>
     );
   }
 

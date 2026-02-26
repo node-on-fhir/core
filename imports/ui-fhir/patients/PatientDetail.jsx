@@ -44,8 +44,13 @@ import { Session } from 'meteor/session';
 import { Random } from 'meteor/random';
 
 function PatientDetail(props) {
-  const navigate = useNavigate();
-  const { id } = useParams();
+  // Embedded mode support (for HoneycombFhirResource dispatcher)
+  var isEmbedded = props.embedded || false;
+
+  var _rawNavigate = useNavigate();
+  var navigate = isEmbedded ? function() {} : _rawNavigate;
+  var _params = isEmbedded ? {} : useParams();
+  var id = _params.id || null;
   
   // Get current user from session/tracker
   const currentUser = useTracker(function() {
@@ -55,6 +60,7 @@ function PatientDetail(props) {
   // Track subscription readiness to avoid race conditions
   // Use targeted subscription for existing patients to ensure the specific patient is included
   const isSubscriptionReady = useTracker(function() {
+    if (isEmbedded) return true; // Skip subscription in embedded mode
     if (id && id !== 'new') {
       // For existing patients, use patients.byId to fetch this specific patient
       // This is the same approach used by MyProfilePage
@@ -139,6 +145,29 @@ function PatientDetail(props) {
       }
     ]
   });
+
+  // Initialise from fhirResource prop when in embedded mode
+  var hasReceivedProps = React.useRef(false);
+  var pendingUpdate = React.useRef(false);
+  useEffect(function() {
+    if (isEmbedded && props.fhirResource) {
+      hasReceivedProps.current = true;
+      setPatient(function(prev) {
+        if (JSON.stringify(props.fhirResource) !== JSON.stringify(prev)) {
+          return props.fhirResource;
+        }
+        return prev;
+      });
+    }
+  }, [props.fhirResource]);
+
+  // onResourceChange: notify parent when state changes in embedded mode
+  useEffect(function() {
+    if (isEmbedded && pendingUpdate.current && props.onResourceChange) {
+      pendingUpdate.current = false;
+      props.onResourceChange(patient);
+    }
+  }, [patient]);
 
   const [errors, setErrors] = useState({});
   const [successMessage, setSuccessMessage] = useState('');
@@ -257,6 +286,7 @@ function PatientDetail(props) {
 
   // Handle form field changes
   const handleChange = (path, value) => {
+    pendingUpdate.current = true;
     const updatedPatient = { ...patient };
     set(updatedPatient, path, value);
     
@@ -477,6 +507,419 @@ function PatientDetail(props) {
     { value: 'mobile', label: 'Mobile' }
   ];
 
+  if (isEmbedded) {
+    return (
+      <LocalizationProvider dateAdapter={AdapterMoment}>
+        <Stack spacing={3}>
+          {/* Name Section */}
+          <Box>
+            <Typography variant="h6" gutterBottom>Name</Typography>
+            <Grid container spacing={2}>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  id="givenNameInput"
+                  data-testid="patient-firstname-field"
+                  fullWidth
+                  label="Given Name(s)"
+                  value={get(patient, 'name[0].given[0]', '')}
+                  onChange={(e) => handleChange('name[0].given[0]', e.target.value)}
+                  required
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  id="familyNameInput"
+                  data-testid="patient-lastname-field"
+                  fullWidth
+                  label="Family Name"
+                  value={get(patient, 'name[0].family', '')}
+                  onChange={(e) => handleChange('name[0].family', e.target.value)}
+                  required
+                />
+              </Grid>
+            </Grid>
+          </Box>
+
+          {/* Identifier Section */}
+          <Box>
+            <Typography variant="h6" gutterBottom>Identifier</Typography>
+            <Grid container spacing={2}>
+              <Grid item xs={12}>
+                <TextField
+                  id="identifierInput"
+                  data-testid="patient-mrn-field"
+                  fullWidth
+                  label="Medical Record Number"
+                  value={get(patient, 'identifier[0].value', '')}
+                  onChange={(e) => {
+                    const updated = { ...patient };
+                    if (!updated.identifier) {
+                      updated.identifier = [{
+                        system: 'http://hospital.example.org/identifiers/mrn',
+                        value: ''
+                      }];
+                    }
+                    set(updated, 'identifier[0].value', e.target.value);
+                    setPatient(updated);
+                  }}
+                  helperText="Medical record number or other identifier"
+                />
+              </Grid>
+            </Grid>
+          </Box>
+
+          {/* Demographics Section */}
+          <Box>
+            <Typography variant="h6" gutterBottom>Demographics</Typography>
+            <Grid container spacing={2}>
+              {/* Row 1: Birth Date | Birth Sex */}
+              <Grid item xs={12} sm={6}>
+                <DatePicker
+                  label="Birth Date"
+                  value={patient.birthDate ? moment(patient.birthDate) : null}
+                  onChange={(newValue) => handleChange('birthDate', newValue ? newValue.format('YYYY-MM-DD') : '')}
+                  slotProps={{ textField: { id: 'birthDateInput', 'data-testid': 'patient-birthdate-field', fullWidth: true } }}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <FormControl fullWidth>
+                  <InputLabel>Birth Sex</InputLabel>
+                  <Select
+                    data-testid="patient-birthsex-select"
+                    value={(() => {
+                      const ext = (patient.extension || []).find(e =>
+                        e.url === 'http://hl7.org/fhir/us/core/StructureDefinition/us-core-birthsex'
+                      );
+                      return ext?.valueCode || '';
+                    })()}
+                    onChange={(e) => {
+                      const updatedPatient = { ...patient };
+                      if (!updatedPatient.extension) {
+                        updatedPatient.extension = [];
+                      }
+                      const birthSexIndex = updatedPatient.extension.findIndex(ext =>
+                        ext.url === 'http://hl7.org/fhir/us/core/StructureDefinition/us-core-birthsex'
+                      );
+                      if (birthSexIndex >= 0) {
+                        updatedPatient.extension[birthSexIndex].valueCode = e.target.value;
+                      } else {
+                        updatedPatient.extension.push({
+                          url: 'http://hl7.org/fhir/us/core/StructureDefinition/us-core-birthsex',
+                          valueCode: e.target.value
+                        });
+                      }
+                      setPatient(updatedPatient);
+                    }}
+                    label="Birth Sex"
+                  >
+                    {sexAtBirthOptions.map(option => (
+                      <MenuItem key={option.value} value={option.value}>
+                        {option.label}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+
+              {/* Row 2: Language | Karyotype */}
+              <Grid item xs={12} sm={6}>
+                <FormControl fullWidth>
+                  <InputLabel>Language</InputLabel>
+                  <Select
+                    data-testid="patient-language-select"
+                    value={get(patient, 'communication[0].language.coding[0].code', '')}
+                    onChange={(e) => {
+                      const selected = languageOptions.find(opt => opt.code === e.target.value);
+                      handleChange('communication[0].language.coding[0].code', e.target.value);
+                      handleChange('communication[0].language.coding[0].display', selected?.display || '');
+                    }}
+                    label="Language"
+                  >
+                    {languageOptions.map(option => (
+                      <MenuItem key={option.code} value={option.code}>
+                        {option.display}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <FormControl fullWidth>
+                  <InputLabel>Karyotype</InputLabel>
+                  <Select
+                    data-testid="patient-karyotype-select"
+                    value={(() => {
+                      const ext = (patient.extension || []).find(e =>
+                        e.url === 'http://hl7.org/fhir/StructureDefinition/patient-karyotype'
+                      );
+                      return ext?.valueCodeableConcept?.coding?.[0]?.code || '';
+                    })()}
+                    onChange={(e) => {
+                      const selected = karyotypeOptions.find(opt => opt.value === e.target.value);
+                      const updatedPatient = { ...patient };
+                      if (!updatedPatient.extension) {
+                        updatedPatient.extension = [];
+                      }
+                      const karyotypeIndex = updatedPatient.extension.findIndex(ext =>
+                        ext.url === 'http://hl7.org/fhir/StructureDefinition/patient-karyotype'
+                      );
+                      const karyotypeExtension = {
+                        url: 'http://hl7.org/fhir/StructureDefinition/patient-karyotype',
+                        valueCodeableConcept: {
+                          coding: [{
+                            system: 'http://snomed.info/sct',
+                            code: e.target.value,
+                            display: selected?.label || ''
+                          }]
+                        }
+                      };
+                      if (karyotypeIndex >= 0) {
+                        updatedPatient.extension[karyotypeIndex] = karyotypeExtension;
+                      } else {
+                        updatedPatient.extension.push(karyotypeExtension);
+                      }
+                      setPatient(updatedPatient);
+                    }}
+                    label="Karyotype"
+                  >
+                    {karyotypeOptions.map(option => (
+                      <MenuItem key={option.value} value={option.value}>
+                        {option.label}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+
+              {/* Row 3: Marital Status | Gender */}
+              <Grid item xs={12} sm={6}>
+                <FormControl fullWidth>
+                  <InputLabel>Marital Status</InputLabel>
+                  <Select
+                    data-testid="patient-maritalstatus-select"
+                    value={get(patient, 'maritalStatus.coding[0].code', '')}
+                    onChange={(e) => {
+                      const selected = maritalStatusOptions.find(opt => opt.value === e.target.value);
+                      handleChange('maritalStatus.coding[0].code', e.target.value);
+                      handleChange('maritalStatus.coding[0].display', selected?.label || '');
+                    }}
+                    label="Marital Status"
+                  >
+                    {maritalStatusOptions.map(option => (
+                      <MenuItem key={option.value} value={option.value}>
+                        {option.label}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <FormControl fullWidth>
+                  <InputLabel>Gender</InputLabel>
+                  <Select
+                    id="genderSelect"
+                    data-testid="patient-gender-select"
+                    value={patient.gender || ''}
+                    onChange={(e) => handleChange('gender', e.target.value)}
+                    label="Gender"
+                  >
+                    {genderOptions.map(option => (
+                      <MenuItem key={option.value} value={option.value}>
+                        {option.label}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+            </Grid>
+          </Box>
+
+          {/* Contact Information */}
+          <Box>
+            <Typography variant="h6" gutterBottom>
+              Contact Information
+              <Button
+                startIcon={<AddIcon />}
+                onClick={handleAddTelecom}
+                size="small"
+                sx={{ ml: 2 }}
+                data-testid="add-telecom-button"
+              >
+                Add Contact
+              </Button>
+            </Typography>
+
+            {(patient.telecom || []).map((telecom, index) => (
+              <Grid container spacing={2} key={index} sx={{ mb: 2 }}>
+                <Grid item xs={12} sm={3}>
+                  <FormControl fullWidth>
+                    <InputLabel>System</InputLabel>
+                    <Select
+                      data-testid={`patient-telecom-system-${index}`}
+                      value={telecom.system || 'phone'}
+                      onChange={(e) => handleChange(`telecom[${index}].system`, e.target.value)}
+                      label="System"
+                    >
+                      {telecomSystemOptions.map(option => (
+                        <MenuItem key={option.value} value={option.value}>
+                          {option.label}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </Grid>
+                <Grid item xs={12} sm={5}>
+                  <TextField
+                    id={(() => {
+                      if(index === 0 && telecom.system === 'phone') return 'phoneInput';
+                      if(index === 0 && telecom.system === 'email') return 'emailInput';
+                      if(index === 1 && telecom.system === 'email') return 'emailInput';
+                      return `telecom${index}Input`;
+                    })()}
+                    data-testid={`patient-telecom-value-${index}`}
+                    fullWidth
+                    label={(() => {
+                      switch(telecom.system) {
+                        case 'email': return 'Email Address';
+                        case 'url': return 'Website URL';
+                        case 'fax': return 'Fax Number';
+                        case 'pager': return 'Pager Number';
+                        case 'sms': return 'SMS Number';
+                        default: return 'Phone Number';
+                      }
+                    })()}
+                    type={telecom.system === 'email' ? 'email' : telecom.system === 'url' ? 'url' : 'text'}
+                    value={telecom.value || ''}
+                    onChange={(e) => handleChange(`telecom[${index}].value`, e.target.value)}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          {(() => {
+                            switch(telecom.system) {
+                              case 'email': return '📧';
+                              case 'url': return '🌐';
+                              case 'fax': return '📠';
+                              case 'pager': return '📟';
+                              case 'sms': return '💬';
+                              default: return '📱';
+                            }
+                          })()}
+                        </InputAdornment>
+                      )
+                    }}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={3}>
+                  <FormControl fullWidth>
+                    <InputLabel>Use</InputLabel>
+                    <Select
+                      data-testid={`patient-telecom-use-${index}`}
+                      value={telecom.use || 'home'}
+                      onChange={(e) => handleChange(`telecom[${index}].use`, e.target.value)}
+                      label="Use"
+                    >
+                      {telecomUseOptions.map(option => (
+                        <MenuItem key={option.value} value={option.value}>
+                          {option.label}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </Grid>
+                <Grid item xs={12} sm={1}>
+                  <IconButton
+                    data-testid={`patient-telecom-delete-${index}`}
+                    onClick={() => handleRemoveTelecom(index)}
+                    disabled={patient.telecom.length <= 1}
+                    color="error"
+                    sx={{ mt: 1 }}
+                  >
+                    <DeleteIcon />
+                  </IconButton>
+                </Grid>
+              </Grid>
+            ))}
+
+            {(!patient.telecom || patient.telecom.length === 0) && (
+              <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                No contact information added. Click "Add Contact" to add phone, email, or other contact methods.
+              </Typography>
+            )}
+          </Box>
+
+          {/* Address */}
+          <Box>
+            <Typography variant="h6" gutterBottom>Address</Typography>
+            <Grid container spacing={2}>
+              <Grid item xs={12}>
+                <TextField
+                  id="addressLineInput"
+                  data-testid="patient-address-line"
+                  fullWidth
+                  label="Street Address"
+                  value={get(patient, 'address[0].line[0]', '')}
+                  onChange={(e) => handleChange('address[0].line[0]', e.target.value)}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  id="cityInput"
+                  data-testid="patient-address-city"
+                  fullWidth
+                  label="City"
+                  value={get(patient, 'address[0].city', '')}
+                  onChange={(e) => handleChange('address[0].city', e.target.value)}
+                />
+              </Grid>
+              <Grid item xs={12} sm={3}>
+                <TextField
+                  id="stateInput"
+                  data-testid="patient-address-state"
+                  fullWidth
+                  label="State"
+                  value={get(patient, 'address[0].state', '')}
+                  onChange={(e) => handleChange('address[0].state', e.target.value)}
+                />
+              </Grid>
+              <Grid item xs={12} sm={3}>
+                <TextField
+                  id="postalCodeInput"
+                  data-testid="patient-address-postalcode"
+                  fullWidth
+                  label="ZIP Code"
+                  value={get(patient, 'address[0].postalCode', '')}
+                  onChange={(e) => handleChange('address[0].postalCode', e.target.value)}
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  id="countryInput"
+                  data-testid="patient-address-country"
+                  fullWidth
+                  label="Country"
+                  value={get(patient, 'address[0].country', '')}
+                  onChange={(e) => handleChange('address[0].country', e.target.value)}
+                />
+              </Grid>
+            </Grid>
+          </Box>
+
+          {/* Error/Success Messages */}
+          {errors.save && (
+            <Typography color="error" variant="body2">
+              {errors.save}
+            </Typography>
+          )}
+          {successMessage && (
+            <Typography color="success.main" variant="body2">
+              {successMessage}
+            </Typography>
+          )}
+        </Stack>
+      </LocalizationProvider>
+    );
+  }
+
   return (
     <LocalizationProvider dateAdapter={AdapterMoment}>
       <Container id="patientDetailPage" data-testid="patient-detail-page" maxWidth="md" sx={{ py: 4 }}>
@@ -486,7 +929,7 @@ function PatientDetail(props) {
             title={id && id !== 'new' ? 'Edit Patient' : 'Create New Patient'}
             subheader={`Patient ID: ${patient.id}`}
           />
-          
+
           <CardContent>
             <Stack spacing={3}>
               {/* Name Section */}

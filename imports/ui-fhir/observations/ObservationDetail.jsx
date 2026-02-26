@@ -83,8 +83,13 @@ const categoryOptions = [
 // COMPONENT
 
 function ObservationDetail(props) {
-  const navigate = useNavigate();
-  const { id } = useParams();
+  // Embedded mode support (for HoneycombFhirResource dispatcher)
+  var isEmbedded = props.embedded || false;
+
+  var _rawNavigate = useNavigate();
+  var navigate = isEmbedded ? function() {} : _rawNavigate;
+  var _params = isEmbedded ? {} : useParams();
+  var id = _params.id || null;
   const [searchParams, setSearchParams] = useSearchParams();
   const viewMode = searchParams.get('view') || 'form';
 
@@ -150,12 +155,28 @@ function ObservationDetail(props) {
     }]
   });
 
+  // Initialise from fhirResource prop when in embedded mode
+  var hasReceivedProps = React.useRef(false);
+  useEffect(function() {
+    if (isEmbedded && props.fhirResource) {
+      hasReceivedProps.current = true;
+      setObservation(function(prev) {
+        if (JSON.stringify(props.fhirResource) !== JSON.stringify(prev)) {
+          return props.fhirResource;
+        }
+        return prev;
+      });
+    }
+  }, [props.fhirResource]);
+
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [isEditing, setIsEditing] = useState(isNewRecord);
+  const [isEditing, setIsEditing] = useState(isEmbedded || isNewRecord);
 
   // Subscribe to observations for direct URL navigation
   const isSubscriptionReady = useTracker(function(){
+    if (isEmbedded) return true; // Skip subscription in embedded mode
     let autoSubscribeEnabled = get(Meteor, 'settings.public.defaults.autoSubscribe', false);
     if(autoSubscribeEnabled){
       return Meteor.subscribe('selectedPatient.Observations', Session.get('selectedPatientId'), {}).ready();
@@ -240,6 +261,11 @@ function ObservationDetail(props) {
     const updatedObservation = cloneDeep(observation);
     set(updatedObservation, path, value);
     setObservation(updatedObservation);
+  
+    // Notify parent of changes in embedded mode
+    if (props.onResourceChange) {
+      props.onResourceChange(updatedObservation);
+    }
   }
 
   // Handle save
@@ -901,7 +927,7 @@ function ObservationDetail(props) {
         </Grid>
 
         {/* Inline Save/Cancel bar */}
-        {isEditing && (
+        {isEditing && !isEmbedded && (
           <Box sx={{
             display: 'flex',
             justifyContent: 'flex-end',
@@ -1121,6 +1147,12 @@ function ObservationDetail(props) {
         )}
       </Box>
     );
+  }
+
+  
+  // In embedded mode, render form content without Container/Card wrapper
+  if (isEmbedded) {
+    return renderFormView();
   }
 
   return (

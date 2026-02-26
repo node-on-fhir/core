@@ -36,8 +36,13 @@ import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
 
 function AllergyIntoleranceDetail(props) {
-  const navigate = useNavigate();
-  const { id } = useParams();
+  // Embedded mode support (for HoneycombFhirResource dispatcher)
+  var isEmbedded = props.embedded || false;
+
+  var _rawNavigate = useNavigate();
+  var navigate = isEmbedded ? function() {} : _rawNavigate;
+  var _params = isEmbedded ? {} : useParams();
+  var id = _params.id || null;
   
   // Get selected patient and current user from session/tracker
   const selectedPatient = useTracker(function() {
@@ -50,6 +55,7 @@ function AllergyIntoleranceDetail(props) {
 
   // Subscribe to allergy intolerances and track subscription status
   const isSubscriptionReady = useTracker(function(){
+    if (isEmbedded) return true; // Skip subscription in embedded mode
     let autoSubscribeEnabled = get(Meteor, 'settings.public.defaults.autoSubscribe', false);
     let handle;
     if(autoSubscribeEnabled){
@@ -117,9 +123,32 @@ function AllergyIntoleranceDetail(props) {
     }]
   });
 
+  // Initialise from fhirResource prop when in embedded mode
+  var hasReceivedProps = React.useRef(false);
+  var pendingUpdate = React.useRef(false);
+  useEffect(function() {
+    if (isEmbedded && props.fhirResource) {
+      hasReceivedProps.current = true;
+      setAllergyIntolerance(function(prev) {
+        if (JSON.stringify(props.fhirResource) !== JSON.stringify(prev)) {
+          return props.fhirResource;
+        }
+        return prev;
+      });
+    }
+  }, [props.fhirResource]);
+
+  // onResourceChange: notify parent when state changes in embedded mode
+  useEffect(function() {
+    if (isEmbedded && pendingUpdate.current && props.onResourceChange) {
+      pendingUpdate.current = false;
+      props.onResourceChange(allergyIntolerance);
+    }
+  }, [allergyIntolerance]);
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [isEditing, setIsEditing] = useState(false);
+  const [isEditing, setIsEditing] = useState(isEmbedded);
 
   // Set patient name and recorder on component mount for new allergy intolerances ONLY
   useEffect(function() {
@@ -209,6 +238,7 @@ function AllergyIntoleranceDetail(props) {
 
   // Handle input changes
   const handleChange = (path, value) => {
+    pendingUpdate.current = true;
     setAllergyIntolerance(prev => {
       const updated = {...prev};
       set(updated, path, value);
@@ -312,10 +342,258 @@ function AllergyIntoleranceDetail(props) {
     // TODO: Implement patient search dialog
   }
 
+  if (isEmbedded) {
+    return (
+      <Stack spacing={3}>
+        {/* Patient field with search */}
+        <TextField
+          id="patientDisplay"
+          fullWidth
+          label="Patient"
+          value={get(allergyIntolerance, 'patient.display', '')}
+          onChange={(e) => handleChange('patient.display', e.target.value)}
+          disabled={!isEditing}
+          InputProps={{
+            endAdornment: (
+              <InputAdornment position="end">
+                <Tooltip title="Search for patient">
+                  <IconButton
+                    onClick={handleSearchUser}
+                    edge="end"
+                    disabled={!isEditing}
+                  >
+                    <SearchIcon />
+                  </IconButton>
+                </Tooltip>
+              </InputAdornment>
+            ),
+          }}
+        />
+
+        {/* Code fields */}
+        <TextField
+          id="codeInput"
+          fullWidth
+          label="Code"
+          placeholder="e.g., 91935009"
+          value={get(allergyIntolerance, 'code.coding[0].code', '')}
+          onChange={(e) => handleChange('code.coding[0].code', e.target.value)}
+          disabled={!isEditing}
+          helperText="SNOMED CT code for the allergen"
+        />
+
+        <TextField
+          id="codeDisplayInput"
+          fullWidth
+          label="Code Display"
+          placeholder="e.g., Allergy to peanuts"
+          value={get(allergyIntolerance, 'code.coding[0].display', '')}
+          onChange={(e) => handleChange('code.coding[0].display', e.target.value)}
+          disabled={!isEditing}
+          helperText="Human readable name for the allergen"
+        />
+
+        {/* Status fields */}
+        <FormControl fullWidth>
+          <InputLabel>Clinical Status</InputLabel>
+          <Select
+            id="clinicalStatusSelect"
+            label="Clinical Status"
+            value={get(allergyIntolerance, 'clinicalStatus.coding[0].code', 'active')}
+            onChange={(e) => {
+              const code = e.target.value;
+              const display = code.charAt(0).toUpperCase() + code.slice(1);
+              handleChange('clinicalStatus', {
+                coding: [{
+                  system: "http://terminology.hl7.org/CodeSystem/allergyintolerance-clinical",
+                  code: code,
+                  display: display
+                }]
+              });
+            }}
+            disabled={!isEditing}
+          >
+            <MenuItem value="active">Active</MenuItem>
+            <MenuItem value="inactive">Inactive</MenuItem>
+            <MenuItem value="resolved">Resolved</MenuItem>
+          </Select>
+        </FormControl>
+
+        <FormControl fullWidth>
+          <InputLabel>Verification Status</InputLabel>
+          <Select
+            id="verificationStatusSelect"
+            label="Verification Status"
+            value={get(allergyIntolerance, 'verificationStatus.coding[0].code', 'unconfirmed')}
+            onChange={(e) => {
+              const code = e.target.value;
+              const displayMap = {
+                'unconfirmed': 'Unconfirmed',
+                'confirmed': 'Confirmed',
+                'refuted': 'Refuted',
+                'entered-in-error': 'Entered in Error'
+              };
+              handleChange('verificationStatus', {
+                coding: [{
+                  system: "http://terminology.hl7.org/CodeSystem/allergyintolerance-verification",
+                  code: code,
+                  display: displayMap[code]
+                }]
+              });
+            }}
+            disabled={!isEditing}
+          >
+            <MenuItem value="unconfirmed">Unconfirmed</MenuItem>
+            <MenuItem value="confirmed">Confirmed</MenuItem>
+            <MenuItem value="refuted">Refuted</MenuItem>
+            <MenuItem value="entered-in-error">Entered in Error</MenuItem>
+          </Select>
+        </FormControl>
+
+        {/* Type and Category */}
+        <FormControl fullWidth>
+          <InputLabel>Type</InputLabel>
+          <Select
+            id="typeSelect"
+            label="Type"
+            value={get(allergyIntolerance, 'type', 'allergy')}
+            onChange={(e) => handleChange('type', e.target.value)}
+            disabled={!isEditing}
+          >
+            <MenuItem value="allergy">Allergy</MenuItem>
+            <MenuItem value="intolerance">Intolerance</MenuItem>
+          </Select>
+        </FormControl>
+
+        <FormControl fullWidth>
+          <InputLabel>Category</InputLabel>
+          <Select
+            id="categorySelect"
+            label="Category"
+            value={get(allergyIntolerance, 'category[0]', 'food')}
+            onChange={(e) => handleChange('category', [e.target.value])}
+            disabled={!isEditing}
+          >
+            <MenuItem value="food">Food</MenuItem>
+            <MenuItem value="medication">Medication</MenuItem>
+            <MenuItem value="environment">Environment</MenuItem>
+            <MenuItem value="biologic">Biologic</MenuItem>
+          </Select>
+        </FormControl>
+
+        {/* Criticality */}
+        <FormControl fullWidth>
+          <InputLabel>Criticality</InputLabel>
+          <Select
+            id="criticalitySelect"
+            label="Criticality"
+            value={get(allergyIntolerance, 'criticality', 'low')}
+            onChange={(e) => handleChange('criticality', e.target.value)}
+            disabled={!isEditing}
+          >
+            <MenuItem value="low">Low</MenuItem>
+            <MenuItem value="high">High</MenuItem>
+            <MenuItem value="unable-to-assess">Unable to Assess</MenuItem>
+          </Select>
+        </FormControl>
+
+        {/* Reaction */}
+        <TextField
+          id="reactionInput"
+          fullWidth
+          label="Reaction"
+          placeholder="e.g., Hives, Anaphylaxis, Rash"
+          value={get(allergyIntolerance, 'reaction[0].manifestation[0].text', '')}
+          onChange={(e) => {
+            const updated = {...allergyIntolerance};
+            set(updated, 'reaction[0].manifestation[0].text', e.target.value);
+            setAllergyIntolerance(updated);
+          }}
+          disabled={!isEditing}
+          multiline
+          rows={2}
+        />
+
+        {/* Severity */}
+        <FormControl fullWidth>
+          <InputLabel>Reaction Severity</InputLabel>
+          <Select
+            id="reactionSeveritySelect"
+            label="Reaction Severity"
+            value={get(allergyIntolerance, 'reaction[0].severity', 'mild')}
+            onChange={(e) => {
+              const updated = {...allergyIntolerance};
+              set(updated, 'reaction[0].severity', e.target.value);
+              setAllergyIntolerance(updated);
+            }}
+            disabled={!isEditing}
+          >
+            <MenuItem value="mild">Mild</MenuItem>
+            <MenuItem value="moderate">Moderate</MenuItem>
+            <MenuItem value="severe">Severe</MenuItem>
+          </Select>
+        </FormControl>
+
+        {/* Onset Date */}
+        <TextField
+          id="onsetDateTimeInput"
+          fullWidth
+          label="Onset Date"
+          type="date"
+          value={moment(get(allergyIntolerance, 'onsetDateTime', '')).format('YYYY-MM-DD')}
+          onChange={(e) => handleChange('onsetDateTime', e.target.value)}
+          disabled={!isEditing}
+          InputLabelProps={{
+            shrink: true,
+          }}
+        />
+
+        {/* Recorder */}
+        <TextField
+          id="recorderInput"
+          fullWidth
+          label="Recorded By"
+          value={get(allergyIntolerance, 'recorder.display', '')}
+          onChange={(e) => handleChange('recorder.display', e.target.value)}
+          disabled={!isEditing}
+          helperText="The person who recorded this allergy"
+        />
+
+        {/* Asserter */}
+        <TextField
+          id="asserterInput"
+          fullWidth
+          label="Asserted By"
+          value={get(allergyIntolerance, 'asserter.display', '')}
+          onChange={(e) => handleChange('asserter.display', e.target.value)}
+          disabled={!isEditing}
+          helperText="The person who asserted this allergy"
+        />
+
+        {/* Notes */}
+        <TextField
+          id="notesTextarea"
+          fullWidth
+          label="Notes"
+          multiline
+          rows={3}
+          value={get(allergyIntolerance, 'note[0].text', '')}
+          onChange={(e) => {
+            const updated = {...allergyIntolerance};
+            set(updated, 'note[0].text', e.target.value);
+            setAllergyIntolerance(updated);
+          }}
+          disabled={!isEditing}
+          helperText="Additional notes about this allergy"
+        />
+      </Stack>
+    );
+  }
+
   return (
     <Container id="allergyIntoleranceDetailPage" maxWidth="md" sx={{ py: 4 }}>
       <Card sx={{ boxShadow: 3 }}>
-        <CardHeader 
+        <CardHeader
           title={id && id !== 'new' ? 'Edit Allergy/Intolerance' : 'New Allergy/Intolerance'}
           sx={{ bgcolor: 'primary.main', color: 'primary.contrastText' }}
         />

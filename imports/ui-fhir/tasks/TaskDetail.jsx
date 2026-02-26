@@ -34,8 +34,13 @@ import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
 
 function TaskDetail(props) {
-  const navigate = useNavigate();
-  const { id: taskId } = useParams();
+  // Embedded mode support (for HoneycombFhirResource dispatcher)
+  var isEmbedded = props.embedded || false;
+
+  var _rawNavigate = useNavigate();
+  var navigate = isEmbedded ? function() {} : _rawNavigate;
+  var _params = isEmbedded ? {} : useParams();
+  var taskId = _params.id || null;
   
   // Get selected patient and current user from session/tracker
   const selectedPatient = useTracker(function() {
@@ -48,6 +53,7 @@ function TaskDetail(props) {
 
   // Subscribe to Tasks
   const isSubscriptionReady = useTracker(function(){
+    if (isEmbedded) return true; // Skip subscription in embedded mode
     let autoSubscribeEnabled = get(Meteor, 'settings.public.defaults.autoSubscribe', false);
     let handle;
     if(autoSubscribeEnabled){
@@ -116,9 +122,25 @@ function TaskDetail(props) {
     }]
   });
 
+  // Initialise from fhirResource prop when in embedded mode
+  var hasReceivedProps = React.useRef(false);
+  var pendingUpdate = React.useRef(false);
+  useEffect(function() {
+    if (isEmbedded && props.fhirResource) {
+      hasReceivedProps.current = true;
+      setTask(function(prev) {
+        if (JSON.stringify(props.fhirResource) !== JSON.stringify(prev)) {
+          return props.fhirResource;
+        }
+        return prev;
+      });
+    }
+  }, [props.fhirResource]);
+
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [isEditing, setIsEditing] = useState(false);
+  const [isEditing, setIsEditing] = useState(isEmbedded);
 
   // Set patient name and requester on component mount for new tasks
   useEffect(function() {
@@ -183,12 +205,22 @@ function TaskDetail(props) {
   }, [taskId]);
 
   function handleChange(field, value) {
+    pendingUpdate.current = true;
     setTask(prev => {
       const updated = { ...prev };
       set(updated, field, value);
       return updated;
     });
   }
+
+  // onResourceChange useEffect: notify parent when state changes in embedded mode
+  useEffect(function() {
+    if (isEmbedded && pendingUpdate.current && props.onResourceChange) {
+      pendingUpdate.current = false;
+      props.onResourceChange(task);
+    }
+  }, [task]);
+
 
   function handleSearchUser() {
     console.log('Search for patient/user');
@@ -282,10 +314,232 @@ function TaskDetail(props) {
     );
   }
 
+  if (isEmbedded) {
+    return (
+      <>
+        <TextField
+          id="forDisplay"
+          fullWidth
+          label="Patient"
+          value={get(task, 'for.display', '')}
+          onChange={(e) => handleChange('for.display', e.target.value)}
+          disabled={!isEditing}
+          margin="normal"
+          InputProps={{
+            endAdornment: (
+              <InputAdornment position="end">
+                <Tooltip title="Search for patient">
+                  <IconButton
+                    onClick={handleSearchUser}
+                    edge="end"
+                    disabled={!isEditing}
+                  >
+                    <SearchIcon />
+                  </IconButton>
+                </Tooltip>
+              </InputAdornment>
+            ),
+          }}
+        />
+
+        <TextField
+          id="requesterDisplay"
+          fullWidth
+          label="Requester"
+          value={get(task, 'requester.display', '')}
+          onChange={(e) => handleChange('requester.display', e.target.value)}
+          disabled={!isEditing}
+          margin="normal"
+        />
+
+        <TextField
+          id="ownerDisplay"
+          fullWidth
+          label="Owner"
+          value={get(task, 'owner.display', '')}
+          onChange={(e) => handleChange('owner.display', e.target.value)}
+          disabled={!isEditing}
+          margin="normal"
+        />
+
+        <Box sx={{ display: 'flex', gap: 2 }}>
+          <TextField
+            id="codeCode"
+            fullWidth
+            label="Code"
+            value={get(task, 'code.coding[0].code', '')}
+            onChange={(e) => handleChange('code.coding[0].code', e.target.value)}
+            disabled={!isEditing}
+            margin="normal"
+          />
+          <TextField
+            id="codeDisplay"
+            fullWidth
+            label="Code Display"
+            value={get(task, 'code.coding[0].display', '')}
+            onChange={(e) => {
+              handleChange('code.coding[0].display', e.target.value);
+              handleChange('code.text', e.target.value);
+            }}
+            disabled={!isEditing}
+            margin="normal"
+          />
+        </Box>
+
+        <FormControl fullWidth margin="normal">
+          <InputLabel id="status-label">Status</InputLabel>
+          <Select
+            labelId="status-label"
+            id="status"
+            value={get(task, 'status', 'requested')}
+            onChange={(e) => handleChange('status', e.target.value)}
+            disabled={!isEditing}
+            label="Status"
+          >
+            {statusOptions.map(option => (
+              <MenuItem key={option} value={option}>{option}</MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+
+        <Box sx={{ display: 'flex', gap: 2 }}>
+          <FormControl fullWidth margin="normal">
+            <InputLabel id="intent-label">Intent</InputLabel>
+            <Select
+              labelId="intent-label"
+              id="intent"
+              value={get(task, 'intent', 'order')}
+              onChange={(e) => handleChange('intent', e.target.value)}
+              disabled={!isEditing}
+              label="Intent"
+            >
+              {intentOptions.map(option => (
+                <MenuItem key={option} value={option}>{option}</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          <FormControl fullWidth margin="normal">
+            <InputLabel id="priority-label">Priority</InputLabel>
+            <Select
+              labelId="priority-label"
+              id="priority"
+              value={get(task, 'priority', 'routine')}
+              onChange={(e) => handleChange('priority', e.target.value)}
+              disabled={!isEditing}
+              label="Priority"
+            >
+              {priorityOptions.map(option => (
+                <MenuItem key={option} value={option}>{option}</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Box>
+
+        <TextField
+          id="description"
+          fullWidth
+          label="Description"
+          value={get(task, 'description', '')}
+          onChange={(e) => handleChange('description', e.target.value)}
+          disabled={!isEditing}
+          multiline
+          rows={3}
+          margin="normal"
+        />
+
+        <TextField
+          id="authoredOn"
+          fullWidth
+          label="Authored On"
+          type="datetime-local"
+          value={get(task, 'authoredOn', '').substring(0, 16)}
+          onChange={(e) => handleChange('authoredOn', e.target.value + ':00')}
+          disabled={!isEditing}
+          margin="normal"
+          InputLabelProps={{ shrink: true }}
+        />
+
+        <TextField
+          id="lastModified"
+          fullWidth
+          label="Last Modified"
+          type="datetime-local"
+          value={get(task, 'lastModified', '').substring(0, 16)}
+          onChange={(e) => handleChange('lastModified', e.target.value + ':00')}
+          disabled={!isEditing}
+          margin="normal"
+          InputLabelProps={{ shrink: true }}
+        />
+
+        <Box sx={{ display: 'flex', gap: 2 }}>
+          <TextField
+            id="businessStatusCode"
+            fullWidth
+            label="Business Status Code"
+            value={get(task, 'businessStatus.coding[0].code', '')}
+            onChange={(e) => {
+              handleChange('businessStatus.coding[0].code', e.target.value);
+              handleChange('businessStatus.text', e.target.value);
+            }}
+            disabled={!isEditing}
+            margin="normal"
+          />
+          <TextField
+            id="businessStatusDisplay"
+            fullWidth
+            label="Business Status Display"
+            value={get(task, 'businessStatus.coding[0].display', '')}
+            onChange={(e) => handleChange('businessStatus.coding[0].display', e.target.value)}
+            disabled={!isEditing}
+            margin="normal"
+          />
+        </Box>
+
+        <Box sx={{ display: 'flex', gap: 2 }}>
+          <TextField
+            id="executionPeriodStart"
+            fullWidth
+            label="Execution Start"
+            type="datetime-local"
+            value={get(task, 'executionPeriod.start', '').substring(0, 16)}
+            onChange={(e) => handleChange('executionPeriod.start', e.target.value + ':00')}
+            disabled={!isEditing}
+            margin="normal"
+            InputLabelProps={{ shrink: true }}
+          />
+          <TextField
+            id="executionPeriodEnd"
+            fullWidth
+            label="Execution End"
+            type="datetime-local"
+            value={get(task, 'executionPeriod.end', '').substring(0, 16)}
+            onChange={(e) => handleChange('executionPeriod.end', e.target.value + ':00')}
+            disabled={!isEditing}
+            margin="normal"
+            InputLabelProps={{ shrink: true }}
+          />
+        </Box>
+
+        <TextField
+          id="notesTextarea"
+          fullWidth
+          label="Notes"
+          value={get(task, 'note[0].text', '')}
+          onChange={(e) => handleChange('note[0].text', e.target.value)}
+          disabled={!isEditing}
+          multiline
+          rows={3}
+          margin="normal"
+        />
+      </>
+    );
+  }
+
   return (
     <Container id='taskDetailPage' maxWidth="md" sx={{ py: 4 }}>
       <Card sx={{ boxShadow: 3 }}>
-        <CardHeader 
+        <CardHeader
           title={taskId && taskId !== 'new' ? 'Edit Task' : 'New Task'}
           sx={{ bgcolor: 'primary.main', color: 'primary.contrastText' }}
           action={

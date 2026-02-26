@@ -132,7 +132,8 @@
             "icon": "fire",
             "openSecondPanel": true
           }
-        ]
+        ],
+        "constructionZoneLinks": []
       },
       "autoSubscribe": true
     },

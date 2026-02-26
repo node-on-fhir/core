@@ -9,6 +9,9 @@ import './core-startup';
 // Initialize collections (always runs)
 import './collections';
 
+// Register FHIR Detail components with fhir-react dispatcher
+import './fhir-resource-registry';
+
 // Session overrides for ObjectID handling
 import './session-overrides';
 

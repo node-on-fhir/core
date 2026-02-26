@@ -25,11 +25,13 @@ import { get, set } from 'lodash';
 
 
 function BasicDetail(props){
+  // Embedded mode support (for HoneycombFhirResource dispatcher)
+  var isEmbedded = props.embedded || false;
 
-  let { 
-    children, 
+  let {
+    children,
     basic,
-    ...otherProps 
+    ...otherProps
   } = props;
 
   return(

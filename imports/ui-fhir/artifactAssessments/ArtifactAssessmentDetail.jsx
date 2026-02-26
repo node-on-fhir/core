@@ -446,4 +446,20 @@ ArtifactAssessmentsDetail.propTypes = {
   onCancel: PropTypes.func
 };
 
-export default ArtifactAssessmentsDetail;
+
+// Embedded mode wrapper for HoneycombFhirResource dispatcher
+function ArtifactAssessmentsDetailEmbeddedWrapper(props) {
+  var isEmbedded = props.embedded || false;
+  var fhirResource = props.fhirResource;
+  var onResourceChange = props.onResourceChange;
+
+  // Pass through to legacy class component
+  var classProps = Object.assign({}, props);
+  if (isEmbedded && fhirResource) {
+    classProps.artifactAssessments = fhirResource;
+  }
+
+  return React.createElement(ArtifactAssessmentsDetail, classProps);
+}
+
+export default ArtifactAssessmentsDetailEmbeddedWrapper;

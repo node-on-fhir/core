@@ -36,8 +36,13 @@ import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
 
 function MedicationAdministrationDetail(props) {
-  const navigate = useNavigate();
-  const { id } = useParams();
+  // Embedded mode support (for HoneycombFhirResource dispatcher)
+  var isEmbedded = props.embedded || false;
+
+  var _rawNavigate = useNavigate();
+  var navigate = isEmbedded ? function() {} : _rawNavigate;
+  var _params = isEmbedded ? {} : useParams();
+  var id = _params.id || null;
   
   // Get selected patient and current user from session/tracker
   const selectedPatient = useTracker(function() {
@@ -89,9 +94,24 @@ function MedicationAdministrationDetail(props) {
     }
   });
 
+  // Initialise from fhirResource prop when in embedded mode
+  var hasReceivedProps = React.useRef(false);
+  useEffect(function() {
+    if (isEmbedded && props.fhirResource) {
+      hasReceivedProps.current = true;
+      setMedicationAdministration(function(prev) {
+        if (JSON.stringify(props.fhirResource) !== JSON.stringify(prev)) {
+          return props.fhirResource;
+        }
+        return prev;
+      });
+    }
+  }, [props.fhirResource]);
+
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [isEditing, setIsEditing] = useState(false);
+  const [isEditing, setIsEditing] = useState(isEmbedded);
 
   // Set patient name and performer on component mount for new administrations
   useEffect(function() {
@@ -175,6 +195,11 @@ function MedicationAdministrationDetail(props) {
     const updatedMedicationAdministration = { ...medicationAdministration };
     set(updatedMedicationAdministration, path, value);
     setMedicationAdministration(updatedMedicationAdministration);
+  
+    // Notify parent of changes in embedded mode
+    if (props.onResourceChange) {
+      props.onResourceChange(updatedMedicationAdministration);
+    }
   }
 
   // Handle save
@@ -238,10 +263,149 @@ function MedicationAdministrationDetail(props) {
     { value: 'unknown', label: 'Unknown' }
   ];
 
+  if (isEmbedded) {
+    return (
+      <Stack spacing={3}>
+        <TextField
+          id="subjectDisplay"
+          fullWidth
+          label="Patient"
+          value={get(medicationAdministration, 'subject.display', '')}
+          helperText={get(medicationAdministration, 'subject.reference', '') || 'Patient reference will be assigned'}
+          disabled
+        />
+
+        <Stack direction="row" spacing={2}>
+          <TextField
+            id="medicationDisplay"
+            fullWidth
+            label="Medication Name"
+            value={get(medicationAdministration, 'medicationCodeableConcept.text', '') ||
+                   get(medicationAdministration, 'medicationCodeableConcept.coding[0].display', '')}
+            onChange={(e) => handleChange('medicationCodeableConcept.text', e.target.value)}
+            helperText="Name of the medication administered"
+            disabled={!isEditing}
+          />
+
+          <TextField
+            id="medicationCode"
+            fullWidth
+            label="Medication Code"
+            value={get(medicationAdministration, 'medicationCodeableConcept.coding[0].code', '')}
+            onChange={(e) => handleChange('medicationCodeableConcept.coding[0].code', e.target.value)}
+            helperText="RxNorm code"
+            disabled={!isEditing}
+          />
+        </Stack>
+
+        <Stack direction="row" spacing={2}>
+          <FormControl fullWidth disabled={!isEditing}>
+            <InputLabel>Status</InputLabel>
+            <Select
+              id="status"
+              value={get(medicationAdministration, 'status', 'completed')}
+              onChange={(e) => handleChange('status', e.target.value)}
+              label="Status"
+            >
+              {statusOptions.map(option => (
+                <MenuItem key={option.value} value={option.value}>
+                  {option.label}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          <TextField
+            id="effectiveDateTime"
+            fullWidth
+            type="datetime-local"
+            label="Administration Date/Time"
+            value={moment(get(medicationAdministration, 'effectiveDateTime', '')).format('YYYY-MM-DDTHH:mm')}
+            onChange={(e) => handleChange('effectiveDateTime', e.target.value)}
+            InputLabelProps={{ shrink: true }}
+            disabled={!isEditing}
+          />
+        </Stack>
+
+        <FormControl fullWidth disabled={!isEditing}>
+          <InputLabel>Category</InputLabel>
+          <Select
+            id="category"
+            value={get(medicationAdministration, 'category.coding[0].code', 'inpatient')}
+            onChange={(e) => handleChange('category.coding[0].code', e.target.value)}
+            label="Category"
+          >
+            <MenuItem value="inpatient">Inpatient</MenuItem>
+            <MenuItem value="outpatient">Outpatient</MenuItem>
+            <MenuItem value="community">Community</MenuItem>
+            <MenuItem value="discharge">Discharge</MenuItem>
+          </Select>
+        </FormControl>
+
+        <TextField
+          id="performerDisplay"
+          fullWidth
+          label="Administered By"
+          value={get(medicationAdministration, 'performer[0].actor.display', '')}
+          onChange={(e) => handleChange('performer[0].actor.display', e.target.value)}
+          helperText={get(medicationAdministration, 'performer[0].actor.reference', '') || 'Practitioner reference will be assigned'}
+          disabled={!isEditing}
+        />
+
+        <TextField
+          id="dosageText"
+          fullWidth
+          multiline
+          rows={2}
+          label="Dosage Instructions"
+          value={get(medicationAdministration, 'dosage.text', '')}
+          onChange={(e) => handleChange('dosage.text', e.target.value)}
+          helperText="e.g., Take 2 tablets by mouth every 6 hours"
+          disabled={!isEditing}
+        />
+
+        <Stack direction="row" spacing={2}>
+          <TextField
+            id="dosageDose"
+            fullWidth
+            type="number"
+            label="Dose Amount"
+            value={get(medicationAdministration, 'dosage.dose.value', '')}
+            onChange={(e) => handleChange('dosage.dose.value', parseFloat(e.target.value) || null)}
+            disabled={!isEditing}
+          />
+
+          <TextField
+            id="dosageDoseUnit"
+            fullWidth
+            label="Dose Unit"
+            value={get(medicationAdministration, 'dosage.dose.unit', '')}
+            onChange={(e) => {
+              handleChange('dosage.dose.unit', e.target.value);
+              handleChange('dosage.dose.code', e.target.value);
+            }}
+            helperText="e.g., mg, mL, tablets"
+            disabled={!isEditing}
+          />
+
+          <TextField
+            id="dosageRouteDisplay"
+            fullWidth
+            label="Route"
+            value={get(medicationAdministration, 'dosage.route.coding[0].display', '')}
+            onChange={(e) => handleChange('dosage.route.coding[0].display', e.target.value)}
+            helperText="e.g., oral, IV, IM"
+            disabled={!isEditing}
+          />
+        </Stack>
+      </Stack>
+    );
+  }
+
   return (
     <Container id="medicationAdministrationDetailPage" maxWidth="md" sx={{ py: 4 }}>
       <Card sx={{ boxShadow: 3 }}>
-        <CardHeader 
+        <CardHeader
           title={id && id !== 'new' ? 'Edit Medication Administration' : 'New Medication Administration'}
           sx={{ bgcolor: 'primary.main', color: 'primary.contrastText' }}
         />

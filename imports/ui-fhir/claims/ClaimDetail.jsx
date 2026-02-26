@@ -446,4 +446,20 @@ ClaimDetail.propTypes = {
   onCancel: PropTypes.func
 };
 
-export default ClaimDetail;
+
+// Embedded mode wrapper for HoneycombFhirResource dispatcher
+function ClaimDetailEmbeddedWrapper(props) {
+  var isEmbedded = props.embedded || false;
+  var fhirResource = props.fhirResource;
+  var onResourceChange = props.onResourceChange;
+
+  // Pass through to legacy class component
+  var classProps = Object.assign({}, props);
+  if (isEmbedded && fhirResource) {
+    classProps.claim = fhirResource;
+  }
+
+  return React.createElement(ClaimDetail, classProps);
+}
+
+export default ClaimDetailEmbeddedWrapper;

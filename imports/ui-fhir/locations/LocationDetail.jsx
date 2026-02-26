@@ -82,8 +82,13 @@ const LocationMarker = function({ text }) {
 };
 
 function LocationDetail(props) {
-  const navigate = useNavigate();
-  const { id } = useParams();
+  // Embedded mode support (for HoneycombFhirResource dispatcher)
+  var isEmbedded = props.embedded || false;
+
+  var _rawNavigate = useNavigate();
+  var navigate = isEmbedded ? function() {} : _rawNavigate;
+  var _params = isEmbedded ? {} : useParams();
+  var id = _params.id || null;
   
   // Get current user from session/tracker
   const currentUser = useTracker(function() {
@@ -139,9 +144,24 @@ function LocationDetail(props) {
     }
   });
 
+  // Initialise from fhirResource prop when in embedded mode
+  var hasReceivedProps = React.useRef(false);
+  useEffect(function() {
+    if (isEmbedded && props.fhirResource) {
+      hasReceivedProps.current = true;
+      setLocation(function(prev) {
+        if (JSON.stringify(props.fhirResource) !== JSON.stringify(prev)) {
+          return props.fhirResource;
+        }
+        return prev;
+      });
+    }
+  }, [props.fhirResource]);
+
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [isEditing, setIsEditing] = useState(false);
+  const [isEditing, setIsEditing] = useState(isEmbedded);
   
   // Google Maps state
   const [googleMapsApiKey, setGoogleMapsApiKey] = useState('');
@@ -208,6 +228,11 @@ function LocationDetail(props) {
     const updatedLocation = { ...location };
     set(updatedLocation, path, value);
     setLocation(updatedLocation);
+  
+    // Notify parent of changes in embedded mode
+    if (props.onResourceChange) {
+      props.onResourceChange(updatedLocation);
+    }
   }
 
   // Geocode address to get coordinates
@@ -327,10 +352,261 @@ function LocationDetail(props) {
   const statusOptions = ['active', 'suspended', 'inactive'];
   const modeOptions = ['instance', 'kind'];
 
+  if (isEmbedded) {
+    return (
+      <Stack spacing={3}>
+        <TextField
+          id="nameInput"
+          fullWidth
+          label="Name"
+          value={get(location, 'name', '')}
+          onChange={(e) => handleChange('name', e.target.value)}
+          helperText="Name of the location"
+          disabled={!isEditing}
+        />
+
+        <TextField
+          id="identifierInput"
+          fullWidth
+          label="Identifier"
+          value={get(location, 'identifier[0].value', '')}
+          onChange={(e) => handleChange('identifier[0].value', e.target.value)}
+          helperText="Unique identifier for the location"
+          disabled={!isEditing}
+        />
+
+        <TextField
+          id="descriptionTextarea"
+          fullWidth
+          multiline
+          rows={3}
+          label="Description"
+          value={get(location, 'description', '')}
+          onChange={(e) => handleChange('description', e.target.value)}
+          helperText="Description of the location"
+          disabled={!isEditing}
+        />
+
+        <TextField
+          id="emailInput"
+          fullWidth
+          label="Email"
+          value={get(location, 'telecom[1].value', '')}
+          onChange={(e) => {
+            handleChange('telecom[1].system', 'email');
+            handleChange('telecom[1].value', e.target.value);
+          }}
+          helperText="Contact email address"
+          disabled={!isEditing}
+        />
+
+        <FormControl fullWidth disabled={!isEditing}>
+          <InputLabel>Status</InputLabel>
+          <Select
+            id="statusSelect"
+            value={get(location, 'status', 'active')}
+            onChange={(e) => handleChange('status', e.target.value)}
+            label="Status"
+          >
+            {statusOptions.map(status => (
+              <MenuItem key={status} value={status}>
+                {status.charAt(0).toUpperCase() + status.slice(1)}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+
+        <FormControl fullWidth disabled={!isEditing}>
+          <InputLabel>Operational Status</InputLabel>
+          <Select
+            id="operationalStatusSelect"
+            value={get(location, 'operationalStatus.code', '')}
+            onChange={(e) => handleChange('operationalStatus.code', e.target.value)}
+            label="Operational Status"
+          >
+            <MenuItem value="operational">Operational</MenuItem>
+            <MenuItem value="housekeeping">Housekeeping</MenuItem>
+            <MenuItem value="overflow">Overflow</MenuItem>
+            <MenuItem value="contaminated">Contaminated</MenuItem>
+            <MenuItem value="decontamination">Decontamination</MenuItem>
+            <MenuItem value="underway">Underway</MenuItem>
+          </Select>
+        </FormControl>
+
+        <FormControl fullWidth disabled={!isEditing}>
+          <InputLabel>Mode</InputLabel>
+          <Select
+            value={get(location, 'mode', 'instance')}
+            onChange={(e) => handleChange('mode', e.target.value)}
+            label="Mode"
+          >
+            {modeOptions.map(mode => (
+              <MenuItem key={mode} value={mode}>
+                {mode.charAt(0).toUpperCase() + mode.slice(1)}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+
+        <TextField
+          id="typeSelect"
+          fullWidth
+          label="Type Code"
+          value={get(location, 'type.coding[0].code', '')}
+          onChange={(e) => handleChange('type.coding[0].code', e.target.value)}
+          helperText="Location type code (e.g., ER, ICU)"
+          disabled={!isEditing}
+        />
+
+        <TextField
+          id="typeDisplayInput"
+          fullWidth
+          label="Type Display"
+          value={get(location, 'type.coding[0].display', '')}
+          onChange={(e) => handleChange('type.coding[0].display', e.target.value)}
+          helperText="Human-readable location type"
+          disabled={!isEditing}
+        />
+
+        <TextField
+          fullWidth
+          label="Physical Type Code"
+          value={get(location, 'physicalType.coding[0].code', '')}
+          onChange={(e) => handleChange('physicalType.coding[0].code', e.target.value)}
+          helperText="Physical type code (e.g., ro for room)"
+          disabled={!isEditing}
+        />
+
+        <TextField
+          fullWidth
+          label="Physical Type Display"
+          value={get(location, 'physicalType.coding[0].display', '')}
+          onChange={(e) => handleChange('physicalType.coding[0].display', e.target.value)}
+          helperText="Human-readable physical type"
+          disabled={!isEditing}
+        />
+
+        <Typography variant="h6" sx={{ mt: 2 }}>Address</Typography>
+
+        <TextField
+          id="addressLineInput"
+          fullWidth
+          label="Address Line"
+          value={get(location, 'address.line[0]', '')}
+          onChange={(e) => handleChange('address.line[0]', e.target.value)}
+          helperText="Street address"
+          disabled={!isEditing}
+        />
+
+        <Stack direction="row" spacing={2}>
+          <TextField
+            id="cityInput"
+            fullWidth
+            label="City"
+            value={get(location, 'address.city', '')}
+            onChange={(e) => handleChange('address.city', e.target.value)}
+            disabled={!isEditing}
+          />
+
+          <TextField
+            id="stateInput"
+            fullWidth
+            label="State"
+            value={get(location, 'address.state', '')}
+            onChange={(e) => handleChange('address.state', e.target.value)}
+            disabled={!isEditing}
+          />
+        </Stack>
+
+        <Stack direction="row" spacing={2}>
+          <TextField
+            id="postalCodeInput"
+            fullWidth
+            label="Postal Code"
+            value={get(location, 'address.postalCode', '')}
+            onChange={(e) => handleChange('address.postalCode', e.target.value)}
+            disabled={!isEditing}
+          />
+
+          <TextField
+            id="countryInput"
+            fullWidth
+            label="Country"
+            value={get(location, 'address.country', '')}
+            onChange={(e) => handleChange('address.country', e.target.value)}
+            disabled={!isEditing}
+          />
+        </Stack>
+
+        <TextField
+          id="phoneInput"
+          fullWidth
+          label="Phone"
+          value={get(location, 'telecom[0].value', '')}
+          onChange={(e) => handleChange('telecom[0].value', e.target.value)}
+          helperText="Contact phone number"
+          disabled={!isEditing}
+        />
+
+        <Typography variant="h6" sx={{ mt: 2 }}>Position</Typography>
+
+        <Stack direction="row" spacing={2}>
+          <TextField
+            fullWidth
+            label="Latitude"
+            value={get(location, 'position.latitude', '')}
+            onChange={(e) => handleChange('position.latitude', parseFloat(e.target.value) || null)}
+            type="number"
+            disabled={!isEditing}
+          />
+
+          <TextField
+            fullWidth
+            label="Longitude"
+            value={get(location, 'position.longitude', '')}
+            onChange={(e) => handleChange('position.longitude', parseFloat(e.target.value) || null)}
+            type="number"
+            disabled={!isEditing}
+          />
+
+          <TextField
+            fullWidth
+            label="Altitude"
+            value={get(location, 'position.altitude', '')}
+            onChange={(e) => handleChange('position.altitude', parseFloat(e.target.value) || null)}
+            type="number"
+            disabled={!isEditing}
+          />
+        </Stack>
+
+        <Typography variant="h6" sx={{ mt: 2 }}>Organization</Typography>
+
+        <TextField
+          id="managingOrgInput"
+          fullWidth
+          label="Managing Organization"
+          value={get(location, 'managingOrganization.display', '')}
+          onChange={(e) => handleChange('managingOrganization.display', e.target.value)}
+          helperText="Organization that manages this location"
+          disabled={!isEditing}
+        />
+
+        <TextField
+          fullWidth
+          label="Part Of"
+          value={get(location, 'partOf.display', '')}
+          onChange={(e) => handleChange('partOf.display', e.target.value)}
+          helperText="Another location this one is part of"
+          disabled={!isEditing}
+        />
+      </Stack>
+    );
+  }
+
   return (
     <Container id="locationDetailPage" maxWidth="md" sx={{ py: 4 }}>
       <Card sx={{ boxShadow: 3 }}>
-        <CardHeader 
+        <CardHeader
           title={id && id !== 'new' ? 'Edit Location' : 'New Location'}
           sx={{ bgcolor: 'primary.main', color: 'primary.contrastText' }}
         />

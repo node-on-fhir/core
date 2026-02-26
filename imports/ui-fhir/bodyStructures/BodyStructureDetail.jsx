@@ -30,8 +30,12 @@ import { get, set } from 'lodash';
 import { BodyStructures } from '/imports/lib/schemas/SimpleSchemas/BodyStructures';
 
 export function BodyStructureDetail(props) {
-  const { id } = useParams();
-  const navigate = useNavigate();
+  // Embedded mode support (for HoneycombFhirResource dispatcher)
+  var isEmbedded = props.embedded || false;
+  var _params = isEmbedded ? {} : useParams();
+  var id = _params.id || null;
+  var _rawNavigate = useNavigate();
+  var navigate = isEmbedded ? function() {} : _rawNavigate;
 
   const [bodyStructure, setBodyStructure] = useState({
     resourceType: 'BodyStructure',
@@ -41,11 +45,28 @@ export function BodyStructureDetail(props) {
     includedStructure: [],
     patient: {}
   });
-  const [isEditing, setIsEditing] = useState(id === 'new' || !id);
+
+  // Initialise from fhirResource prop when in embedded mode
+  var hasReceivedProps = React.useRef(false);
+  var pendingUpdate = React.useRef(false);
+  useEffect(function() {
+    if (isEmbedded && props.fhirResource) {
+      hasReceivedProps.current = true;
+      setBodyStructure(function(prev) {
+        if (JSON.stringify(props.fhirResource) !== JSON.stringify(prev)) {
+          return props.fhirResource;
+        }
+        return prev;
+      });
+    }
+  }, [props.fhirResource]);
+
+  const [isEditing, setIsEditing] = useState(isEmbedded || id === 'new' || !id);
   const [isLoading, setIsLoading] = useState(false);
 
   // Subscribe and load data
   const isSubscriptionReady = useTracker(function() {
+    if (isEmbedded) return true; // Skip subscription in embedded mode
     let autoSubscribeEnabled = get(Meteor, 'settings.public.defaults.autoSubscribe', false);
     let handle;
     if (autoSubscribeEnabled) {
@@ -91,12 +112,22 @@ export function BodyStructureDetail(props) {
   }, [id, isSubscriptionReady]);
 
   function handleChange(path, value) {
+    pendingUpdate.current = true;
     setBodyStructure(prev => {
       const updated = { ...prev };
       set(updated, path, value);
       return updated;
     });
   }
+
+  // onResourceChange useEffect: notify parent when state changes in embedded mode
+  useEffect(function() {
+    if (isEmbedded && pendingUpdate.current && props.onResourceChange) {
+      pendingUpdate.current = false;
+      props.onResourceChange(bodyStructure);
+    }
+  }, [bodyStructure]);
+
 
   function handleSearchPatient() {
     console.log('Patient search clicked');
@@ -165,6 +196,122 @@ export function BodyStructureDetail(props) {
 
   function handleBack() {
     navigate('/body-structures');
+  }
+
+  if (isEmbedded) {
+    return (
+      <Grid container spacing={3}>
+        {/* Active Checkbox */}
+        <Grid item xs={12}>
+          <FormControlLabel
+            control={
+              <Checkbox
+                id="activeCheckbox"
+                checked={get(bodyStructure, 'active', true)}
+                onChange={(e) => handleChange('active', e.target.checked)}
+                disabled={!isEditing}
+              />
+            }
+            label="Active"
+          />
+        </Grid>
+
+        {/* Description */}
+        <Grid item xs={12}>
+          <TextField
+            id="descriptionInput"
+            fullWidth
+            label="Description"
+            value={get(bodyStructure, 'description', '')}
+            onChange={(e) => handleChange('description', e.target.value)}
+            disabled={!isEditing}
+            multiline
+            rows={2}
+          />
+        </Grid>
+
+        {/* Morphology */}
+        <Grid item xs={12} sm={6}>
+          <TextField
+            id="morphologyInput"
+            fullWidth
+            label="Morphology"
+            value={get(bodyStructure, 'morphology.text', get(bodyStructure, 'morphology.coding.0.display', ''))}
+            onChange={(e) => handleChange('morphology', {
+              coding: [{
+                system: 'http://snomed.info/sct',
+                display: e.target.value
+              }],
+              text: e.target.value
+            })}
+            disabled={!isEditing}
+            helperText="What type of structure (e.g., Normal anatomical structure)"
+          />
+        </Grid>
+
+        {/* Structure */}
+        <Grid item xs={12} sm={6}>
+          <TextField
+            id="structureInput"
+            fullWidth
+            label="Body Structure Location"
+            value={get(bodyStructure, 'includedStructure.0.structure.text',
+              get(bodyStructure, 'includedStructure.0.structure.coding.0.display', ''))}
+            onChange={(e) => handleChange('includedStructure', [{
+              structure: {
+                coding: [{
+                  system: 'http://snomed.info/sct',
+                  display: e.target.value
+                }],
+                text: e.target.value
+              }
+            }])}
+            disabled={!isEditing}
+            helperText="Where on the body (e.g., Left upper arm)"
+          />
+        </Grid>
+
+        {/* Patient */}
+        <Grid item xs={12}>
+          <TextField
+            id="patientDisplay"
+            fullWidth
+            label="Patient"
+            value={get(bodyStructure, 'patient.display', '')}
+            onChange={(e) => handleChange('patient.display', e.target.value)}
+            disabled={!isEditing}
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <Tooltip title="Search for patient">
+                    <IconButton
+                      onClick={handleSearchPatient}
+                      edge="end"
+                      disabled={!isEditing}
+                    >
+                      <SearchIcon />
+                    </IconButton>
+                  </Tooltip>
+                </InputAdornment>
+              ),
+            }}
+          />
+        </Grid>
+
+        {/* Patient Reference (hidden but set) */}
+        <Grid item xs={12}>
+          <TextField
+            id="patientReference"
+            fullWidth
+            label="Patient Reference"
+            value={get(bodyStructure, 'patient.reference', '')}
+            disabled
+            size="small"
+            sx={{ display: 'none' }}
+          />
+        </Grid>
+      </Grid>
+    );
   }
 
   return (

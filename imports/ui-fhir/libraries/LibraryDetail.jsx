@@ -446,4 +446,20 @@ LibraryDetail.propTypes = {
   onCancel: PropTypes.func
 };
 
-export default LibraryDetail;
+
+// Embedded mode wrapper for HoneycombFhirResource dispatcher
+function LibraryDetailEmbeddedWrapper(props) {
+  var isEmbedded = props.embedded || false;
+  var fhirResource = props.fhirResource;
+  var onResourceChange = props.onResourceChange;
+
+  // Pass through to legacy class component
+  var classProps = Object.assign({}, props);
+  if (isEmbedded && fhirResource) {
+    classProps.library = fhirResource;
+  }
+
+  return React.createElement(LibraryDetail, classProps);
+}
+
+export default LibraryDetailEmbeddedWrapper;

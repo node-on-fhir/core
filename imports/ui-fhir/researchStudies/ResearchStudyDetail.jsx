@@ -48,11 +48,17 @@ import { FhirUtilities } from '/imports/lib/FhirUtilities';
 import { ResearchStudies } from '/imports/lib/schemas/SimpleSchemas/ResearchStudies';
 
 function ResearchStudyDetail(props) {
-  const navigate = useNavigate();
-  const { id } = useParams();
+  // Embedded mode support (for HoneycombFhirResource dispatcher)
+  var isEmbedded = props.embedded || false;
+
+  var _rawNavigate = useNavigate();
+  var navigate = isEmbedded ? function() {} : _rawNavigate;
+  var _params = isEmbedded ? {} : useParams();
+  var id = _params.id || null;
   
   // Subscribe to research studies data
   const subscriptionReady = useTracker(() => {
+    if (isEmbedded) return true; // Skip subscription in embedded mode
     let autoSubscribeEnabled = get(Meteor, 'settings.public.defaults.autoSubscribe', false);
     if(autoSubscribeEnabled){
       const handle = Meteor.subscribe('selectedPatient.ResearchStudies', Session.get('selectedPatientId'), {});
@@ -115,10 +121,34 @@ function ResearchStudyDetail(props) {
     }]
   });
 
+  // Initialise from fhirResource prop when in embedded mode
+  var hasReceivedProps = React.useRef(false);
+  var pendingUpdate = React.useRef(false);
+  useEffect(function() {
+    if (isEmbedded && props.fhirResource) {
+      hasReceivedProps.current = true;
+      setResearchStudy(function(prev) {
+        if (JSON.stringify(props.fhirResource) !== JSON.stringify(prev)) {
+          return props.fhirResource;
+        }
+        return prev;
+      });
+    }
+  }, [props.fhirResource]);
+
+  // onResourceChange: notify parent when state changes in embedded mode
+  useEffect(function() {
+    if (isEmbedded && pendingUpdate.current && props.onResourceChange) {
+      pendingUpdate.current = false;
+      props.onResourceChange(researchStudy);
+    }
+  }, [researchStudy]);
+
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [isEditing, setIsEditing] = useState(!id || id === 'new');
-  
+  const [isEditing, setIsEditing] = useState(isEmbedded || !id || id === 'new');
+
   // Load existing research study if editing
   useEffect(() => {
     if (id && id !== 'new' && ResearchStudies) {
@@ -142,6 +172,7 @@ function ResearchStudyDetail(props) {
 
   // Handle field changes
   const handleChange = (path, value) => {
+    pendingUpdate.current = true;
     const newResearchStudy = { ...researchStudy };
     set(newResearchStudy, path, value);
     setResearchStudy(newResearchStudy);
@@ -280,6 +311,276 @@ function ResearchStudyDetail(props) {
       });
     }
   };
+
+  if (isEmbedded) {
+    return (
+      <Grid container spacing={3}>
+        <Grid item xs={12}>
+          <TextField
+            id="title"
+            label="Title"
+            fullWidth
+            value={get(researchStudy, 'title', '')}
+            onChange={(e) => handleChange('title', e.target.value)}
+            disabled={!isEditing}
+            margin="normal"
+          />
+        </Grid>
+
+        <Grid item xs={12} md={6}>
+          <TextField
+            id="principalInvestigatorDisplay"
+            label="Principal Investigator"
+            fullWidth
+            value={get(researchStudy, 'principalInvestigator.display', '')}
+            onChange={(e) => handleChange('principalInvestigator.display', e.target.value)}
+            disabled={!isEditing}
+            margin="normal"
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <Tooltip title="Search for investigator">
+                    <IconButton
+                      edge="end"
+                      disabled={!isEditing}
+                    >
+                      <SearchIcon />
+                    </IconButton>
+                  </Tooltip>
+                </InputAdornment>
+              ),
+            }}
+          />
+        </Grid>
+
+        <Grid item xs={12} md={6}>
+          <FormControl fullWidth margin="normal">
+            <InputLabel id="status-label">Status</InputLabel>
+            <Select
+              labelId="status-label"
+              id="status"
+              value={get(researchStudy, 'status', 'active')}
+              onChange={(e) => handleChange('status', e.target.value)}
+              disabled={!isEditing}
+              label="Status"
+            >
+              <MenuItem value="active">Active</MenuItem>
+              <MenuItem value="administratively-completed">Administratively Completed</MenuItem>
+              <MenuItem value="approved">Approved</MenuItem>
+              <MenuItem value="closed-to-accrual">Closed to Accrual</MenuItem>
+              <MenuItem value="closed-to-accrual-and-intervention">Closed to Accrual and Intervention</MenuItem>
+              <MenuItem value="completed">Completed</MenuItem>
+              <MenuItem value="disapproved">Disapproved</MenuItem>
+              <MenuItem value="in-review">In Review</MenuItem>
+              <MenuItem value="temporarily-closed-to-accrual">Temporarily Closed to Accrual</MenuItem>
+              <MenuItem value="temporarily-closed-to-accrual-and-intervention">Temporarily Closed to Accrual and Intervention</MenuItem>
+              <MenuItem value="withdrawn">Withdrawn</MenuItem>
+            </Select>
+          </FormControl>
+        </Grid>
+
+        <Grid item xs={12} md={6}>
+          <FormControl fullWidth margin="normal">
+            <InputLabel id="phase-label">Phase</InputLabel>
+            <Select
+              labelId="phase-label"
+              id="phase"
+              value={get(researchStudy, 'phase.coding[0].code', 'phase-3')}
+              onChange={(e) => {
+                const phaseMap = {
+                  'n-a': 'N/A',
+                  'early-phase-1': 'Early Phase 1',
+                  'phase-1': 'Phase 1',
+                  'phase-1-phase-2': 'Phase 1/Phase 2',
+                  'phase-2': 'Phase 2',
+                  'phase-2-phase-3': 'Phase 2/Phase 3',
+                  'phase-3': 'Phase 3',
+                  'phase-4': 'Phase 4'
+                };
+                handleChange('phase.coding[0].code', e.target.value);
+                handleChange('phase.coding[0].display', phaseMap[e.target.value]);
+              }}
+              disabled={!isEditing}
+              label="Phase"
+            >
+              <MenuItem value="n-a">N/A</MenuItem>
+              <MenuItem value="early-phase-1">Early Phase 1</MenuItem>
+              <MenuItem value="phase-1">Phase 1</MenuItem>
+              <MenuItem value="phase-1-phase-2">Phase 1/Phase 2</MenuItem>
+              <MenuItem value="phase-2">Phase 2</MenuItem>
+              <MenuItem value="phase-2-phase-3">Phase 2/Phase 3</MenuItem>
+              <MenuItem value="phase-3">Phase 3</MenuItem>
+              <MenuItem value="phase-4">Phase 4</MenuItem>
+            </Select>
+          </FormControl>
+        </Grid>
+
+        <Grid item xs={12} md={6}>
+          <FormControl fullWidth margin="normal">
+            <InputLabel id="category-label">Category</InputLabel>
+            <Select
+              labelId="category-label"
+              id="category"
+              value={get(researchStudy, 'category[0].coding[0].code', 'interventional')}
+              onChange={(e) => {
+                const categoryMap = {
+                  'interventional': 'Interventional',
+                  'observational': 'Observational',
+                  'expanded-access': 'Expanded Access'
+                };
+                handleChange('category[0].coding[0].code', e.target.value);
+                handleChange('category[0].coding[0].display', categoryMap[e.target.value]);
+              }}
+              disabled={!isEditing}
+              label="Category"
+            >
+              <MenuItem value="interventional">Interventional</MenuItem>
+              <MenuItem value="observational">Observational</MenuItem>
+              <MenuItem value="expanded-access">Expanded Access</MenuItem>
+            </Select>
+          </FormControl>
+        </Grid>
+
+        <Grid item xs={12} md={6}>
+          <FormControl fullWidth margin="normal">
+            <InputLabel id="focusType-label">Focus Type</InputLabel>
+            <Select
+              labelId="focusType-label"
+              id="focusType"
+              value={get(researchStudy, 'focus[0].coding[0].system', 'http://snomed.info/sct')}
+              onChange={(e) => handleChange('focus[0].coding[0].system', e.target.value)}
+              disabled={!isEditing}
+              label="Focus Type"
+            >
+              <MenuItem value="http://snomed.info/sct">SNOMED CT</MenuItem>
+              <MenuItem value="http://www.nlm.nih.gov/research/umls/rxnorm">RxNorm</MenuItem>
+              <MenuItem value="http://loinc.org">LOINC</MenuItem>
+              <MenuItem value="medication">Medication</MenuItem>
+              <MenuItem value="device">Device</MenuItem>
+              <MenuItem value="procedure">Procedure</MenuItem>
+              <MenuItem value="condition">Condition</MenuItem>
+            </Select>
+          </FormControl>
+        </Grid>
+
+        <Grid item xs={12} md={6}>
+          <TextField
+            id="focusCode"
+            label="Focus Code"
+            fullWidth
+            value={get(researchStudy, 'focus[0].coding[0].code', '')}
+            onChange={(e) => handleChange('focus[0].coding[0].code', e.target.value)}
+            disabled={!isEditing}
+            margin="normal"
+          />
+        </Grid>
+
+        <Grid item xs={12} md={6}>
+          <TextField
+            id="focusDisplay"
+            label="Focus Display"
+            fullWidth
+            value={get(researchStudy, 'focus[0].coding[0].display', '')}
+            onChange={(e) => handleChange('focus[0].coding[0].display', e.target.value)}
+            disabled={!isEditing}
+            margin="normal"
+          />
+        </Grid>
+
+        <Grid item xs={12}>
+          <TextField
+            id="descriptionTextarea"
+            label="Description"
+            fullWidth
+            multiline
+            rows={4}
+            value={get(researchStudy, 'description', '')}
+            onChange={(e) => handleChange('description', e.target.value)}
+            disabled={!isEditing}
+            margin="normal"
+          />
+        </Grid>
+
+        <Grid item xs={12} md={6}>
+          <TextField
+            id="periodStart"
+            label="Period Start"
+            type="date"
+            fullWidth
+            value={get(researchStudy, 'period.start', '')}
+            onChange={(e) => handleChange('period.start', e.target.value)}
+            disabled={!isEditing}
+            margin="normal"
+            InputLabelProps={{
+              shrink: true,
+            }}
+          />
+        </Grid>
+
+        <Grid item xs={12} md={6}>
+          <TextField
+            id="periodEnd"
+            label="Period End"
+            type="date"
+            fullWidth
+            value={get(researchStudy, 'period.end', '')}
+            onChange={(e) => handleChange('period.end', e.target.value)}
+            disabled={!isEditing}
+            margin="normal"
+            InputLabelProps={{
+              shrink: true,
+            }}
+          />
+        </Grid>
+
+        <Grid item xs={12} md={6}>
+          <TextField
+            id="enrollmentTarget"
+            label="Enrollment Target"
+            fullWidth
+            type="number"
+            value={get(researchStudy, 'enrollment[0].display', '').split('/')[1] || ''}
+            onChange={(e) => {
+              const actual = get(researchStudy, 'enrollment[0].display', '').split('/')[0] || '0';
+              handleChange('enrollment[0].display', `${actual}/${e.target.value}`);
+            }}
+            disabled={!isEditing}
+            margin="normal"
+          />
+        </Grid>
+
+        <Grid item xs={12} md={6}>
+          <TextField
+            id="enrollmentActual"
+            label="Enrollment Actual"
+            fullWidth
+            type="number"
+            value={get(researchStudy, 'enrollment[0].display', '').split('/')[0] || ''}
+            onChange={(e) => {
+              const target = get(researchStudy, 'enrollment[0].display', '').split('/')[1] || '0';
+              handleChange('enrollment[0].display', `${e.target.value}/${target}`);
+            }}
+            disabled={!isEditing}
+            margin="normal"
+          />
+        </Grid>
+
+        <Grid item xs={12}>
+          <TextField
+            id="notesTextarea"
+            label="Notes"
+            fullWidth
+            multiline
+            rows={3}
+            value={get(researchStudy, 'note[0].text', '')}
+            onChange={(e) => handleChange('note[0].text', e.target.value)}
+            disabled={!isEditing}
+            margin="normal"
+          />
+        </Grid>
+      </Grid>
+    );
+  }
 
   return (
     <Container maxWidth="md" style={{ marginTop: '20px' }}>

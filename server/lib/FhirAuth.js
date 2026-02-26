@@ -702,6 +702,7 @@ export {
   // Access control
   acl,
   initializeAccessControl,
+  accessControlList,
   accessControlListsInitialized,
 
   // Auth functions

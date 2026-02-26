@@ -36,8 +36,13 @@ import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
 
 function NutritionProductDetail(props) {
-  const navigate = useNavigate();
-  const { id } = useParams();
+  // Embedded mode support (for HoneycombFhirResource dispatcher)
+  var isEmbedded = props.embedded || false;
+
+  var _rawNavigate = useNavigate();
+  var navigate = isEmbedded ? function() {} : _rawNavigate;
+  var _params = isEmbedded ? {} : useParams();
+  var id = _params.id || null;
 
   // Get current user from session/tracker
   const currentUser = useTracker(function() {
@@ -46,6 +51,7 @@ function NutritionProductDetail(props) {
 
   // Subscribe to nutrition product data using ID-based query (optimized)
   const isSubscriptionReady = useTracker(function(){
+    if (isEmbedded) return true; // Skip subscription in embedded mode
     if (id && id !== 'new') {
       // Use ID-based query to take advantage of optimization in autopublish.js
       const query = {
@@ -100,9 +106,24 @@ function NutritionProductDetail(props) {
     }]
   });
 
+  // Initialise from fhirResource prop when in embedded mode
+  var hasReceivedProps = React.useRef(false);
+  useEffect(function() {
+    if (isEmbedded && props.fhirResource) {
+      hasReceivedProps.current = true;
+      setNutritionProduct(function(prev) {
+        if (JSON.stringify(props.fhirResource) !== JSON.stringify(prev)) {
+          return props.fhirResource;
+        }
+        return prev;
+      });
+    }
+  }, [props.fhirResource]);
+
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [isEditing, setIsEditing] = useState(false);
+  const [isEditing, setIsEditing] = useState(isEmbedded);
 
   // Set default values on component mount for new nutrition products
   useEffect(function() {
@@ -143,6 +164,11 @@ function NutritionProductDetail(props) {
     const updatedNutritionProduct = { ...nutritionProduct };
     set(updatedNutritionProduct, path, value);
     setNutritionProduct(updatedNutritionProduct);
+  
+    // Notify parent of changes in embedded mode
+    if (props.onResourceChange) {
+      props.onResourceChange(updatedNutritionProduct);
+    }
   }
 
   // Handle save
@@ -230,6 +256,134 @@ function NutritionProductDetail(props) {
     { value: 'parenteral-nutrition', label: 'Parenteral Nutrition' },
     { value: 'food', label: 'Food' }
   ];
+
+  if (isEmbedded) {
+    return (
+      <Stack spacing={3}>
+        <TextField
+          id="codeText"
+          fullWidth
+          label="Product Name"
+          value={get(nutritionProduct, 'code.text', '')}
+          onChange={(e) => handleChange('code.text', e.target.value)}
+          helperText="Common name for the nutrition product"
+          disabled={!isEditing}
+        />
+
+        <Stack direction="row" spacing={2}>
+          <TextField
+            id="codeCode"
+            fullWidth
+            label="SNOMED CT Code"
+            value={get(nutritionProduct, 'code.coding[0].code', '')}
+            onChange={(e) => handleChange('code.coding[0].code', e.target.value)}
+            helperText="SNOMED CT nutrition product code"
+            disabled={!isEditing}
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <Tooltip title="Lookup SNOMED CT codes">
+                    <IconButton
+                      onClick={() => window.open('https://browser.ihtsdotools.org/', '_blank')}
+                      edge="end"
+                      disabled={!isEditing}
+                    >
+                      <SearchIcon />
+                    </IconButton>
+                  </Tooltip>
+                </InputAdornment>
+              ),
+            }}
+          />
+
+          <TextField
+            id="codeDisplay"
+            fullWidth
+            label="Display Name"
+            value={get(nutritionProduct, 'code.coding[0].display', '')}
+            onChange={(e) => handleChange('code.coding[0].display', e.target.value)}
+            helperText="Formal product name"
+            disabled={!isEditing}
+          />
+        </Stack>
+
+        <Stack direction="row" spacing={2}>
+          <FormControl fullWidth disabled={!isEditing}>
+            <InputLabel>Status</InputLabel>
+            <Select
+              id="status"
+              value={get(nutritionProduct, 'status', 'active')}
+              onChange={(e) => handleChange('status', e.target.value)}
+              label="Status"
+            >
+              {statusOptions.map(option => (
+                <MenuItem key={option.value} value={option.value}>
+                  {option.label}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          <FormControl fullWidth disabled={!isEditing}>
+            <InputLabel>Category</InputLabel>
+            <Select
+              id="category"
+              value={get(nutritionProduct, 'category[0].coding[0].code', '')}
+              onChange={(e) => {
+                handleChange('category[0].coding[0].code', e.target.value);
+                const selectedCategory = categoryOptions.find(opt => opt.value === e.target.value);
+                if (selectedCategory) {
+                  handleChange('category[0].coding[0].display', selectedCategory.label);
+                  handleChange('category[0].text', selectedCategory.label);
+                }
+              }}
+              label="Category"
+            >
+              {categoryOptions.map(option => (
+                <MenuItem key={option.value} value={option.value}>
+                  {option.label}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Stack>
+
+        <TextField
+          id="manufacturerDisplay"
+          fullWidth
+          label="Manufacturer"
+          value={get(nutritionProduct, 'manufacturer[0].display', '')}
+          onChange={(e) => handleChange('manufacturer[0].display', e.target.value)}
+          helperText="Company that produces this product"
+          disabled={!isEditing}
+        />
+
+        <TextField
+          id="description"
+          fullWidth
+          multiline
+          rows={3}
+          label="Description"
+          value={get(nutritionProduct, 'productCharacteristic[0].valueString', '')}
+          onChange={(e) => handleChange('productCharacteristic[0].valueString', e.target.value)}
+          helperText="Detailed description of the product"
+          disabled={!isEditing}
+        />
+
+        <TextField
+          id="notesTextarea"
+          fullWidth
+          multiline
+          rows={2}
+          label="Notes"
+          value={get(nutritionProduct, 'note[0].text', '')}
+          onChange={(e) => handleChange('note[0].text', e.target.value)}
+          helperText="Additional notes or comments"
+          disabled={!isEditing}
+        />
+      </Stack>
+    );
+  }
 
   return (
     <Container id="nutritionProductDetailPage" maxWidth="md" sx={{ py: 4 }}>

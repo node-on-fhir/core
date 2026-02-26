@@ -17,6 +17,7 @@ const WorkflowRegistry = {
   routes: [],
   sidebarItems: [],
   footerButtons: [],
+  serverConfigs: [],
   registeredWorkflows: [],
   onChangeCallbacks: [],
 
@@ -50,6 +51,11 @@ const WorkflowRegistry = {
     if (workflow.footerButtons && Array.isArray(workflow.footerButtons)) {
       this.footerButtons.push(...workflow.footerButtons);
       console.log(`[WorkflowRegistry] Registered ${workflow.footerButtons.length} footer button(s) from "${workflowName}"`);
+    }
+
+    if (workflow.serverConfigs && Array.isArray(workflow.serverConfigs)) {
+      this.serverConfigs.push(...workflow.serverConfigs);
+      console.log(`[WorkflowRegistry] Registered ${workflow.serverConfigs.length} server config(s) from "${workflowName}"`);
     }
 
     this.registeredWorkflows.push(workflowName);
@@ -95,6 +101,14 @@ const WorkflowRegistry = {
   },
 
   /**
+   * Get all registered server config components
+   * @returns {Array} Array of React elements for server configuration page
+   */
+  getServerConfigs() {
+    return this.serverConfigs;
+  },
+
+  /**
    * Get list of registered workflow names
    * @returns {Array} Array of workflow names
    */
@@ -109,6 +123,7 @@ const WorkflowRegistry = {
     this.routes = [];
     this.sidebarItems = [];
     this.footerButtons = [];
+    this.serverConfigs = [];
     this.registeredWorkflows = [];
     this.onChangeCallbacks = [];
   }

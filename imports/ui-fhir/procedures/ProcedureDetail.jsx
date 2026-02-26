@@ -73,8 +73,13 @@ const statusColorMap = {
 // COMPONENT
 
 function ProcedureDetail(props) {
-  const navigate = useNavigate();
-  const { id } = useParams();
+  // Embedded mode support (for HoneycombFhirResource dispatcher)
+  var isEmbedded = props.embedded || false;
+
+  var _rawNavigate = useNavigate();
+  var navigate = isEmbedded ? function() {} : _rawNavigate;
+  var _params = isEmbedded ? {} : useParams();
+  var id = _params.id || null;
   const [searchParams, setSearchParams] = useSearchParams();
   const viewMode = searchParams.get('view') || 'form';
 
@@ -107,13 +112,38 @@ function ProcedureDetail(props) {
     note: [{}]
   });
 
-  const [isEditing, setIsEditing] = useState(isNewRecord);
+  // Initialise from fhirResource prop when in embedded mode
+  var hasReceivedProps = React.useRef(false);
+  var pendingUpdate = React.useRef(false);
+  useEffect(function() {
+    if (isEmbedded && props.fhirResource) {
+      hasReceivedProps.current = true;
+      setProcedure(function(prev) {
+        if (JSON.stringify(props.fhirResource) !== JSON.stringify(prev)) {
+          return props.fhirResource;
+        }
+        return prev;
+      });
+    }
+  }, [props.fhirResource]);
+
+  // onResourceChange: notify parent when state changes in embedded mode
+  useEffect(function() {
+    if (isEmbedded && pendingUpdate.current && props.onResourceChange) {
+      pendingUpdate.current = false;
+      props.onResourceChange(procedure);
+    }
+  }, [procedure]);
+
+
+  const [isEditing, setIsEditing] = useState(isNewRecord || isEmbedded);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [patientSearchOpen, setPatientSearchOpen] = useState(false);
 
   // Subscribe to procedures
   const isSubscriptionReady = useTracker(function(){
+    if (isEmbedded) return true; // Skip subscription in embedded mode
     let autoSubscribeEnabled = get(Meteor, 'settings.public.defaults.autoSubscribe', false);
     if(autoSubscribeEnabled){
       return Meteor.subscribe('autopublish.Procedures', {}, {}).ready();
@@ -150,6 +180,7 @@ function ProcedureDetail(props) {
   }, [id]);
 
   const handleChange = (path, value) => {
+    pendingUpdate.current = true;
     const newProcedure = cloneDeep(procedure);
     set(newProcedure, path, value);
     setProcedure(newProcedure);
@@ -550,7 +581,7 @@ function ProcedureDetail(props) {
         </Grid>
 
         {/* Inline Save/Cancel bar */}
-        {isEditing && (
+        {isEditing && !isEmbedded && (
           <Box sx={{
             display: 'flex',
             justifyContent: 'flex-end',
@@ -779,6 +810,10 @@ function ProcedureDetail(props) {
         )}
       </Box>
     );
+  }
+
+  if (isEmbedded) {
+    return renderFormView();
   }
 
   return (

@@ -36,8 +36,13 @@ import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
 
 function MedicationDetail(props) {
-  const navigate = useNavigate();
-  const { id } = useParams();
+  // Embedded mode support (for HoneycombFhirResource dispatcher)
+  var isEmbedded = props.embedded || false;
+
+  var _rawNavigate = useNavigate();
+  var navigate = isEmbedded ? function() {} : _rawNavigate;
+  var _params = isEmbedded ? {} : useParams();
+  var id = _params.id || null;
   
   // Get current user from session/tracker
   const currentUser = useTracker(function() {
@@ -46,6 +51,7 @@ function MedicationDetail(props) {
 
   // Subscribe to medication data using ID-based query (optimized)
   const isSubscriptionReady = useTracker(function(){
+    if (isEmbedded) return true; // Skip subscription in embedded mode
     if (id && id !== 'new') {
       const handle = Meteor.subscribe('autopublish.Medications', {}, {});
       return handle.ready();
@@ -101,9 +107,24 @@ function MedicationDetail(props) {
     }]
   });
 
+  // Initialise from fhirResource prop when in embedded mode
+  var hasReceivedProps = React.useRef(false);
+  useEffect(function() {
+    if (isEmbedded && props.fhirResource) {
+      hasReceivedProps.current = true;
+      setMedication(function(prev) {
+        if (JSON.stringify(props.fhirResource) !== JSON.stringify(prev)) {
+          return props.fhirResource;
+        }
+        return prev;
+      });
+    }
+  }, [props.fhirResource]);
+
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [isEditing, setIsEditing] = useState(false);
+  const [isEditing, setIsEditing] = useState(isEmbedded);
 
   // Set default values on component mount for new medications
   useEffect(function() {
@@ -144,6 +165,11 @@ function MedicationDetail(props) {
     const updatedMedication = { ...medication };
     set(updatedMedication, path, value);
     setMedication(updatedMedication);
+  
+    // Notify parent of changes in embedded mode
+    if (props.onResourceChange) {
+      props.onResourceChange(updatedMedication);
+    }
   }
 
   // Handle save
@@ -245,10 +271,195 @@ function MedicationDetail(props) {
     handleChange('ingredient', ingredients);
   }
 
+  if (isEmbedded) {
+    return (
+      <Stack spacing={3}>
+        <TextField
+          fullWidth
+          label="Medication Name"
+          value={get(medication, 'code.text', '')}
+          onChange={(e) => handleChange('code.text', e.target.value)}
+          helperText="Common name for the medication"
+          disabled={!isEditing}
+        />
+
+        <Stack direction="row" spacing={2}>
+          <TextField
+            id="codeCode"
+            fullWidth
+            label="RxNorm Code"
+            value={get(medication, 'code.coding[0].code', '')}
+            onChange={(e) => handleChange('code.coding[0].code', e.target.value)}
+            helperText="RxNorm medication code"
+            disabled={!isEditing}
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <Tooltip title="Lookup RxNorm codes">
+                    <IconButton
+                      onClick={() => window.open('https://mor.nlm.nih.gov/RxNav/', '_blank')}
+                      edge="end"
+                      disabled={!isEditing}
+                    >
+                      <SearchIcon />
+                    </IconButton>
+                  </Tooltip>
+                </InputAdornment>
+              ),
+            }}
+          />
+
+          <TextField
+            id="codeDisplay"
+            fullWidth
+            label="Display Name"
+            value={get(medication, 'code.coding[0].display', '')}
+            onChange={(e) => handleChange('code.coding[0].display', e.target.value)}
+            helperText="Formal medication name"
+            disabled={!isEditing}
+          />
+        </Stack>
+
+        <Stack direction="row" spacing={2}>
+          <FormControl fullWidth disabled={!isEditing}>
+            <InputLabel>Status</InputLabel>
+            <Select
+              id="status"
+              value={get(medication, 'status', 'active')}
+              onChange={(e) => handleChange('status', e.target.value)}
+              label="Status"
+            >
+              {statusOptions.map(option => (
+                <MenuItem key={option.value} value={option.value}>
+                  {option.label}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          <TextField
+            id="formCode"
+            fullWidth
+            label="Form Code"
+            value={get(medication, 'form.coding[0].code', '')}
+            onChange={(e) => handleChange('form.coding[0].code', e.target.value)}
+            helperText="SNOMED code"
+            disabled={!isEditing}
+          />
+
+          <TextField
+            id="formDisplay"
+            fullWidth
+            label="Form"
+            value={get(medication, 'form.coding[0].display', '') || get(medication, 'form.text', '')}
+            onChange={(e) => {
+              handleChange('form.coding[0].display', e.target.value);
+              handleChange('form.text', e.target.value);
+            }}
+            helperText="e.g., tablet, capsule, liquid"
+            disabled={!isEditing}
+          />
+
+          <TextField
+            id="manufacturerDisplay"
+            fullWidth
+            label="Manufacturer"
+            value={get(medication, 'manufacturer.display', '')}
+            onChange={(e) => handleChange('manufacturer.display', e.target.value)}
+            helperText="Pharmaceutical company"
+            disabled={!isEditing}
+          />
+        </Stack>
+
+        <Typography variant="h6" sx={{ mt: 2 }}>Ingredients</Typography>
+
+        <Stack direction="row" spacing={2}>
+          <TextField
+            id="ingredientCode"
+            fullWidth
+            label="Ingredient Code"
+            value={get(medication, 'ingredient[0].itemCodeableConcept.coding[0].code', '')}
+            onChange={(e) => handleChange('ingredient[0].itemCodeableConcept.coding[0].code', e.target.value)}
+            helperText="SNOMED code"
+            disabled={!isEditing}
+          />
+
+          <TextField
+            id="ingredientDisplay"
+            fullWidth
+            label="Ingredient Display"
+            value={get(medication, 'ingredient[0].itemCodeableConcept.coding[0].display', '')}
+            onChange={(e) => handleChange('ingredient[0].itemCodeableConcept.coding[0].display', e.target.value)}
+            helperText="Active ingredient name"
+            disabled={!isEditing}
+          />
+        </Stack>
+
+        <Stack direction="row" spacing={2}>
+          <TextField
+            id="ingredientStrength"
+            fullWidth
+            label="Ingredient Strength"
+            value={get(medication, 'ingredient[0].strength.numerator.value', '')}
+            onChange={(e) => handleChange('ingredient[0].strength.numerator.value', e.target.value)}
+            helperText="Numeric value"
+            disabled={!isEditing}
+          />
+
+          <TextField
+            id="ingredientStrengthUnit"
+            fullWidth
+            label="Strength Unit"
+            value={get(medication, 'ingredient[0].strength.numerator.unit', '')}
+            onChange={(e) => handleChange('ingredient[0].strength.numerator.unit', e.target.value)}
+            helperText="e.g., mg, ml, units"
+            disabled={!isEditing}
+          />
+        </Stack>
+
+        <Typography variant="h6" sx={{ mt: 2 }}>Batch Information</Typography>
+
+        <Stack direction="row" spacing={2}>
+          <TextField
+            id="batchNumber"
+            fullWidth
+            label="Lot Number"
+            value={get(medication, 'batch.lotNumber', '')}
+            onChange={(e) => handleChange('batch.lotNumber', e.target.value)}
+            disabled={!isEditing}
+          />
+
+          <TextField
+            id="expirationDate"
+            fullWidth
+            type="date"
+            label="Expiration Date"
+            value={moment(get(medication, 'batch.expirationDate', '')).format('YYYY-MM-DD')}
+            onChange={(e) => handleChange('batch.expirationDate', e.target.value)}
+            InputLabelProps={{ shrink: true }}
+            disabled={!isEditing}
+          />
+        </Stack>
+
+        <TextField
+          id="notesTextarea"
+          fullWidth
+          multiline
+          rows={3}
+          label="Notes"
+          value={get(medication, 'note[0].text', '')}
+          onChange={(e) => handleChange('note[0].text', e.target.value)}
+          helperText="Additional notes or comments"
+          disabled={!isEditing}
+        />
+      </Stack>
+    );
+  }
+
   return (
     <Container id="medicationDetailPage" maxWidth="md" sx={{ py: 4 }}>
       <Card sx={{ boxShadow: 3 }}>
-        <CardHeader 
+        <CardHeader
           title={id && id !== 'new' ? 'Edit Medication' : 'New Medication'}
           sx={{ bgcolor: 'primary.main', color: 'primary.contrastText' }}
         />

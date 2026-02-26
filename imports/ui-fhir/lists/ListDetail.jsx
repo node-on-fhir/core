@@ -38,8 +38,13 @@ import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
 
 function ListDetail(props) {
-  const navigate = useNavigate();
-  const { id } = useParams();
+  // Embedded mode support (for HoneycombFhirResource dispatcher)
+  var isEmbedded = props.embedded || false;
+
+  var _rawNavigate = useNavigate();
+  var navigate = isEmbedded ? function() {} : _rawNavigate;
+  var _params = isEmbedded ? {} : useParams();
+  var id = _params.id || null;
   
   // Get selected patient and current user from session/tracker
   const selectedPatient = useTracker(function() {
@@ -90,9 +95,24 @@ function ListDetail(props) {
     entry: []
   });
 
+  // Initialise from fhirResource prop when in embedded mode
+  var hasReceivedProps = React.useRef(false);
+  useEffect(function() {
+    if (isEmbedded && props.fhirResource) {
+      hasReceivedProps.current = true;
+      setList(function(prev) {
+        if (JSON.stringify(props.fhirResource) !== JSON.stringify(prev)) {
+          return props.fhirResource;
+        }
+        return prev;
+      });
+    }
+  }, [props.fhirResource]);
+
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [isEditing, setIsEditing] = useState(false);
+  const [isEditing, setIsEditing] = useState(isEmbedded);
   const [newItemReference, setNewItemReference] = useState('');
   const [newItemDisplay, setNewItemDisplay] = useState('');
 
@@ -175,6 +195,11 @@ function ListDetail(props) {
     const updatedList = { ...list };
     set(updatedList, path, value);
     setList(updatedList);
+  
+    // Notify parent of changes in embedded mode
+    if (props.onResourceChange) {
+      props.onResourceChange(updatedList);
+    }
   }
 
   // Handle adding new item to list
@@ -295,10 +320,196 @@ function ListDetail(props) {
     { code: 'entry-date', display: 'Sorted by Entry Date' }
   ];
 
+  if (isEmbedded) {
+    return (
+      <Stack spacing={3}>
+        <TextField
+          fullWidth
+          label="List Title"
+          value={get(list, 'title', '')}
+          onChange={(e) => handleChange('title', e.target.value)}
+          helperText="Title of the list"
+          disabled={!isEditing}
+        />
+
+        <TextField
+          fullWidth
+          label="Patient Name"
+          value={get(list, 'subject.display', '')}
+          helperText={get(list, 'subject.reference', '') || 'Patient reference will be assigned'}
+          disabled
+        />
+
+        <TextField
+          fullWidth
+          label="Source Name"
+          value={get(list, 'source.display', '')}
+          onChange={(e) => handleChange('source.display', e.target.value)}
+          helperText={get(list, 'source.reference', '') || 'Source reference will be assigned'}
+          disabled={!isEditing}
+        />
+
+        <FormControl fullWidth disabled={!isEditing}>
+          <InputLabel>Status</InputLabel>
+          <Select
+            value={get(list, 'status', 'current')}
+            onChange={(e) => handleChange('status', e.target.value)}
+            label="Status"
+          >
+            {statusOptions.map(option => (
+              <MenuItem key={option.code} value={option.code}>
+                {option.display}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+
+        <FormControl fullWidth disabled={!isEditing}>
+          <InputLabel>Mode</InputLabel>
+          <Select
+            value={get(list, 'mode', 'working')}
+            onChange={(e) => handleChange('mode', e.target.value)}
+            label="Mode"
+          >
+            {modeOptions.map(option => (
+              <MenuItem key={option.code} value={option.code}>
+                {option.display}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+
+        <FormControl fullWidth disabled={!isEditing}>
+          <InputLabel>List Type</InputLabel>
+          <Select
+            value={get(list, 'code.coding[0].code', '')}
+            onChange={(e) => {
+              const option = listTypeOptions.find(o => o.code === e.target.value);
+              handleChange('code.coding[0].code', option.code);
+              handleChange('code.coding[0].display', option.display);
+              handleChange('code.text', option.display);
+            }}
+            label="List Type"
+          >
+            {listTypeOptions.map(option => (
+              <MenuItem key={option.code} value={option.code}>
+                {option.display}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+
+        <FormControl fullWidth disabled={!isEditing}>
+          <InputLabel>Order By</InputLabel>
+          <Select
+            value={get(list, 'orderedBy.coding[0].code', 'system')}
+            onChange={(e) => {
+              const option = orderByOptions.find(o => o.code === e.target.value);
+              handleChange('orderedBy.coding[0].code', option.code);
+              handleChange('orderedBy.coding[0].display', option.display);
+            }}
+            label="Order By"
+          >
+            {orderByOptions.map(option => (
+              <MenuItem key={option.code} value={option.code}>
+                {option.display}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+
+        <TextField
+          fullWidth
+          type="datetime-local"
+          label="Date"
+          value={moment(get(list, 'date', '')).format('YYYY-MM-DDTHH:mm')}
+          onChange={(e) => handleChange('date', e.target.value)}
+          InputLabelProps={{ shrink: true }}
+          disabled={!isEditing}
+        />
+
+        <TextField
+          fullWidth
+          multiline
+          rows={3}
+          label="Notes"
+          value={get(list, 'note[0].text', '')}
+          onChange={(e) => handleChange('note[0].text', e.target.value)}
+          helperText="Additional notes about the list"
+          disabled={!isEditing}
+        />
+
+        {/* List Items Section */}
+        <Box>
+          <Typography variant="h6" sx={{ mb: 2 }}>
+            List Items ({get(list, 'entry', []).length})
+          </Typography>
+
+          {isEditing && (
+            <Box sx={{ mb: 2, display: 'flex', gap: 1 }}>
+              <TextField
+                label="Item Reference"
+                value={newItemReference}
+                onChange={(e) => setNewItemReference(e.target.value)}
+                placeholder="e.g., Condition/123"
+                size="small"
+                sx={{ flex: 1 }}
+              />
+              <TextField
+                label="Item Display"
+                value={newItemDisplay}
+                onChange={(e) => setNewItemDisplay(e.target.value)}
+                placeholder="e.g., Hypertension"
+                size="small"
+                sx={{ flex: 1 }}
+              />
+              <IconButton
+                color="primary"
+                onClick={handleAddItem}
+                disabled={!newItemReference || !newItemDisplay}
+              >
+                <AddIcon />
+              </IconButton>
+            </Box>
+          )}
+
+          <MuiList sx={{ bgcolor: 'background.paper', border: 1, borderColor: 'divider', borderRadius: 1 }}>
+            {get(list, 'entry', []).length === 0 ? (
+              <ListItem>
+                <ListItemText primary="No items in this list" secondary="Add items using the form above" />
+              </ListItem>
+            ) : (
+              get(list, 'entry', []).map((entry, index) => (
+                <ListItem key={index} divider>
+                  <ListItemText
+                    primary={get(entry, 'item.display', 'Unnamed Item')}
+                    secondary={
+                      <>
+                        {get(entry, 'item.reference', 'No reference')}
+                        {get(entry, 'date') && ` • Added: ${moment(get(entry, 'date')).format('MMM D, YYYY')}`}
+                      </>
+                    }
+                  />
+                  {isEditing && (
+                    <ListItemSecondaryAction>
+                      <IconButton edge="end" onClick={() => handleRemoveItem(index)}>
+                        <DeleteIcon />
+                      </IconButton>
+                    </ListItemSecondaryAction>
+                  )}
+                </ListItem>
+              ))
+            )}
+          </MuiList>
+        </Box>
+      </Stack>
+    );
+  }
+
   return (
     <Container maxWidth="md" sx={{ py: 4 }}>
       <Card sx={{ boxShadow: 3 }}>
-        <CardHeader 
+        <CardHeader
           title={id && id !== 'new' ? 'Edit List' : 'New List'}
           sx={{ bgcolor: 'primary.main', color: 'primary.contrastText' }}
         />

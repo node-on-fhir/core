@@ -51,9 +51,11 @@ Session.setDefault('ValueSet.Current', defaultValueSet)
 // MAIN COMPONENT
 
 export function ValueSetDetail(props){
+  // Embedded mode support (for HoneycombFhirResource dispatcher)
+  var isEmbedded = props.embedded || false;
 
-  let { 
-    children, 
+  let {
+    children,
     valueSet,
     hideTitleElements,
     hideDescriptionElements,

@@ -87,8 +87,13 @@ const languageOptions = [
 ];
 
 function PractitionerDetail(props) {
-  const navigate = useNavigate();
-  const { id } = useParams();
+  // Embedded mode support (for HoneycombFhirResource dispatcher)
+  var isEmbedded = props.embedded || false;
+
+  var _rawNavigate = useNavigate();
+  var navigate = isEmbedded ? function() {} : _rawNavigate;
+  var _params = isEmbedded ? {} : useParams();
+  var id = _params.id || null;
   const practitionerId = id;
   const [searchParams, setSearchParams] = useSearchParams();
   const viewMode = searchParams.get('view') || 'form';
@@ -102,6 +107,7 @@ function PractitionerDetail(props) {
 
   // Subscribe to practitioners
   const isSubscriptionReady = useTracker(function(){
+    if (isEmbedded) return true; // Skip subscription in embedded mode
     let autoSubscribeEnabled = get(Meteor, 'settings.public.defaults.autoSubscribe', false);
     let handle;
     if(autoSubscribeEnabled){
@@ -189,9 +195,24 @@ function PractitionerDetail(props) {
     }]
   });
 
+  // Initialise from fhirResource prop when in embedded mode
+  var hasReceivedProps = React.useRef(false);
+  useEffect(function() {
+    if (isEmbedded && props.fhirResource) {
+      hasReceivedProps.current = true;
+      setPractitioner(function(prev) {
+        if (JSON.stringify(props.fhirResource) !== JSON.stringify(prev)) {
+          return props.fhirResource;
+        }
+        return prev;
+      });
+    }
+  }, [props.fhirResource]);
+
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [isEditing, setIsEditing] = useState(false);
+  const [isEditing, setIsEditing] = useState(isEmbedded);
 
   // Set editing mode for new practitioners
   useEffect(function() {
@@ -225,6 +246,11 @@ function PractitionerDetail(props) {
     const updatedPractitioner = { ...practitioner };
     set(updatedPractitioner, path, value);
     setPractitioner(updatedPractitioner);
+  
+    // Notify parent of changes in embedded mode
+    if (props.onResourceChange) {
+      props.onResourceChange(updatedPractitioner);
+    }
   }
 
   // Handle save
@@ -681,7 +707,7 @@ function PractitionerDetail(props) {
         </Stack>
 
         {/* In-form Save/Cancel bar when editing */}
-        {isEditing && (
+        {isEditing && !isEmbedded && (
           <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, mt: 3, pt: 2, borderTop: 1, borderColor: 'divider' }}>
             <Button id="cancelButton" onClick={handleCancel}>
               Cancel
@@ -918,6 +944,12 @@ function PractitionerDetail(props) {
         )}
       </Box>
     );
+  }
+
+  
+  // In embedded mode, render form content without Container/Card wrapper
+  if (isEmbedded) {
+    return renderFormView();
   }
 
   return (

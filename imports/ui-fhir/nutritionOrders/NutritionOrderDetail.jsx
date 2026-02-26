@@ -32,8 +32,13 @@ import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
 
 function NutritionOrderDetail(props) {
-  const navigate = useNavigate();
-  const { id } = useParams();
+  // Embedded mode support (for HoneycombFhirResource dispatcher)
+  var isEmbedded = props.embedded || false;
+
+  var _rawNavigate = useNavigate();
+  var navigate = isEmbedded ? function() {} : _rawNavigate;
+  var _params = isEmbedded ? {} : useParams();
+  var id = _params.id || null;
   
   // Get selected patient and current user from session/tracker
   const selectedPatient = useTracker(function() {
@@ -46,6 +51,7 @@ function NutritionOrderDetail(props) {
   
   // Subscribe to nutrition orders
   const isSubscriptionReady = useTracker(function(){
+    if (isEmbedded) return true; // Skip subscription in embedded mode
     let autoSubscribeEnabled = get(Meteor, 'settings.public.defaults.autoSubscribe', false);
     let handle;
     if(autoSubscribeEnabled){
@@ -214,9 +220,24 @@ function NutritionOrderDetail(props) {
     }]
   });
 
+  // Initialise from fhirResource prop when in embedded mode
+  var hasReceivedProps = React.useRef(false);
+  useEffect(function() {
+    if (isEmbedded && props.fhirResource) {
+      hasReceivedProps.current = true;
+      setNutritionOrder(function(prev) {
+        if (JSON.stringify(props.fhirResource) !== JSON.stringify(prev)) {
+          return props.fhirResource;
+        }
+        return prev;
+      });
+    }
+  }, [props.fhirResource]);
+
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [isEditing, setIsEditing] = useState(false);
+  const [isEditing, setIsEditing] = useState(isEmbedded);
 
   // Set patient name and orderer on component mount for new nutrition orders
   useEffect(function() {
@@ -306,6 +327,11 @@ function NutritionOrderDetail(props) {
     const updatedNutritionOrder = { ...nutritionOrder };
     set(updatedNutritionOrder, path, value);
     setNutritionOrder(updatedNutritionOrder);
+  
+    // Notify parent of changes in embedded mode
+    if (props.onResourceChange) {
+      props.onResourceChange(updatedNutritionOrder);
+    }
   }
 
   // Handle save
@@ -418,10 +444,311 @@ function NutritionOrderDetail(props) {
     { code: '439091000124107', display: 'Pudding thick liquid' }
   ];
 
+  if (isEmbedded) {
+    return (
+      <Stack spacing={3}>
+        <TextField
+          id="patientDisplay"
+          fullWidth
+          label="Patient Name"
+          value={get(nutritionOrder, 'patient.display', '')}
+          helperText={get(nutritionOrder, 'patient.reference', '') || 'Patient reference will be assigned'}
+          disabled
+        />
+
+        <TextField
+          id="ordererDisplay"
+          fullWidth
+          label="Orderer Name"
+          value={get(nutritionOrder, 'orderer.display', '')}
+          onChange={(e) => handleChange('orderer.display', e.target.value)}
+          helperText={get(nutritionOrder, 'orderer.reference', '') || 'Orderer reference will be assigned'}
+          disabled={!isEditing}
+        />
+
+        <FormControl fullWidth disabled={!isEditing}>
+          <InputLabel id="statusSelectLabel">Status</InputLabel>
+          <Select
+            id="statusSelect"
+            labelId="statusSelectLabel"
+            value={get(nutritionOrder, 'status', 'active')}
+            onChange={(e) => handleChange('status', e.target.value)}
+            label="Status"
+          >
+            {statusOptions.map(option => (
+              <MenuItem key={option.code} value={option.code}>
+                {option.display}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+
+        <FormControl fullWidth disabled={!isEditing}>
+          <InputLabel id="intentSelectLabel">Intent</InputLabel>
+          <Select
+            id="intentSelect"
+            labelId="intentSelectLabel"
+            value={get(nutritionOrder, 'intent', 'order')}
+            onChange={(e) => handleChange('intent', e.target.value)}
+            label="Intent"
+          >
+            {intentOptions.map(option => (
+              <MenuItem key={option.code} value={option.code}>
+                {option.display}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+
+        <TextField
+          id="dateTimeInput"
+          fullWidth
+          type="datetime-local"
+          label="Order Date/Time"
+          value={moment(get(nutritionOrder, 'dateTime', '')).format('YYYY-MM-DDTHH:mm')}
+          onChange={(e) => handleChange('dateTime', e.target.value)}
+          InputLabelProps={{ shrink: true }}
+          disabled={!isEditing}
+        />
+
+        <Typography variant="h6" sx={{ mt: 2 }}>
+          Oral Diet
+        </Typography>
+
+        <FormControl fullWidth disabled={!isEditing}>
+          <InputLabel id="dietTypeSelectLabel">Diet Type</InputLabel>
+          <Select
+            id="dietTypeSelect"
+            labelId="dietTypeSelectLabel"
+            value={get(nutritionOrder, 'oralDiet.type[0].coding[0].code', '')}
+            onChange={(e) => {
+              const option = dietTypeOptions.find(o => o.code === e.target.value);
+              if (option) {
+                handleChange('oralDiet.type[0].coding[0].code', option.code);
+                handleChange('oralDiet.type[0].coding[0].display', option.display);
+                handleChange('oralDiet.type[0].text', option.display);
+              }
+            }}
+            label="Diet Type"
+          >
+            {dietTypeOptions.map(option => (
+              <MenuItem key={option.code} value={option.code}>
+                {option.display}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+
+        <FormControl fullWidth disabled={!isEditing}>
+          <InputLabel>Texture Modifier</InputLabel>
+          <Select
+            value={get(nutritionOrder, 'oralDiet.texture[0].modifier.coding[0].code', '')}
+            onChange={(e) => {
+              const option = textureOptions.find(o => o.code === e.target.value);
+              if (option) {
+                handleChange('oralDiet.texture[0].modifier.coding[0].code', option.code);
+                handleChange('oralDiet.texture[0].modifier.coding[0].display', option.display);
+              }
+            }}
+            label="Texture Modifier"
+          >
+            <MenuItem value="">
+              <em>None</em>
+            </MenuItem>
+            {textureOptions.map(option => (
+              <MenuItem key={option.code} value={option.code}>
+                {option.display}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+
+        <FormControl fullWidth disabled={!isEditing}>
+          <InputLabel>Fluid Consistency</InputLabel>
+          <Select
+            value={get(nutritionOrder, 'oralDiet.fluidConsistencyType[0].coding[0].code', '')}
+            onChange={(e) => {
+              const option = fluidConsistencyOptions.find(o => o.code === e.target.value);
+              if (option) {
+                handleChange('oralDiet.fluidConsistencyType[0].coding[0].code', option.code);
+                handleChange('oralDiet.fluidConsistencyType[0].coding[0].display', option.display);
+              }
+            }}
+            label="Fluid Consistency"
+          >
+            <MenuItem value="">
+              <em>None</em>
+            </MenuItem>
+            {fluidConsistencyOptions.map(option => (
+              <MenuItem key={option.code} value={option.code}>
+                {option.display}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+
+        <TextField
+          fullWidth
+          type="number"
+          label="Frequency (times per day)"
+          value={get(nutritionOrder, 'oralDiet.schedule[0].repeat.frequency', 3)}
+          onChange={(e) => handleChange('oralDiet.schedule[0].repeat.frequency', parseInt(e.target.value))}
+          InputProps={{ inputProps: { min: 1, max: 10 } }}
+          disabled={!isEditing}
+        />
+
+        <TextField
+          fullWidth
+          type="date"
+          label="Start Date"
+          value={moment(get(nutritionOrder, 'oralDiet.schedule[0].repeat.boundsPeriod.start', '')).format('YYYY-MM-DD')}
+          onChange={(e) => handleChange('oralDiet.schedule[0].repeat.boundsPeriod.start', e.target.value)}
+          InputLabelProps={{ shrink: true }}
+          disabled={!isEditing}
+        />
+
+        <TextField
+          fullWidth
+          type="date"
+          label="End Date"
+          value={moment(get(nutritionOrder, 'oralDiet.schedule[0].repeat.boundsPeriod.end', '')).format('YYYY-MM-DD')}
+          onChange={(e) => handleChange('oralDiet.schedule[0].repeat.boundsPeriod.end', e.target.value)}
+          InputLabelProps={{ shrink: true }}
+          disabled={!isEditing}
+        />
+
+        <TextField
+          id="instructionsInput"
+          fullWidth
+          multiline
+          rows={3}
+          label="Instructions"
+          value={get(nutritionOrder, 'oralDiet.instruction', '')}
+          onChange={(e) => handleChange('oralDiet.instruction', e.target.value)}
+          helperText="Special instructions for the diet"
+          disabled={!isEditing}
+        />
+
+        <Typography variant="h6" sx={{ mt: 2 }}>
+          Supplement
+        </Typography>
+
+        <TextField
+          id="supplementTypeInput"
+          fullWidth
+          label="Supplement Type"
+          value={get(nutritionOrder, 'supplement[0].type[0].text', '')}
+          onChange={(e) => {
+            handleChange('supplement[0].type[0].text', e.target.value);
+            handleChange('supplement[0].type[0].coding[0].display', e.target.value);
+          }}
+          disabled={!isEditing}
+        />
+
+        <TextField
+          id="supplementProductNameInput"
+          fullWidth
+          label="Product Name"
+          value={get(nutritionOrder, 'supplement[0].productName', '')}
+          onChange={(e) => handleChange('supplement[0].productName', e.target.value)}
+          disabled={!isEditing}
+        />
+
+        <TextField
+          id="supplementInstructionInput"
+          fullWidth
+          multiline
+          rows={2}
+          label="Supplement Instructions"
+          value={get(nutritionOrder, 'supplement[0].instruction', '')}
+          onChange={(e) => handleChange('supplement[0].instruction', e.target.value)}
+          disabled={!isEditing}
+        />
+
+        <Typography variant="h6" sx={{ mt: 2 }}>
+          Enteral Formula
+        </Typography>
+
+        <TextField
+          id="enteralFormulaTypeInput"
+          fullWidth
+          label="Formula Type"
+          value={get(nutritionOrder, 'enteralFormula.baseFormulaType[0].text', '')}
+          onChange={(e) => {
+            handleChange('enteralFormula.baseFormulaType[0].text', e.target.value);
+            handleChange('enteralFormula.baseFormulaType[0].coding[0].display', e.target.value);
+          }}
+          disabled={!isEditing}
+        />
+
+        <TextField
+          id="enteralFormulaProductNameInput"
+          fullWidth
+          label="Formula Product Name"
+          value={get(nutritionOrder, 'enteralFormula.baseFormulaProductName', '')}
+          onChange={(e) => handleChange('enteralFormula.baseFormulaProductName', e.target.value)}
+          disabled={!isEditing}
+        />
+
+        <Typography variant="h6" sx={{ mt: 2 }}>
+          Additional Information
+        </Typography>
+
+        <TextField
+          id="allergyIntoleranceInput"
+          fullWidth
+          label="Allergy/Intolerance"
+          value={get(nutritionOrder, 'allergyIntolerance[0]', '')}
+          onChange={(e) => handleChange('allergyIntolerance[0]', e.target.value)}
+          helperText="Known allergies or intolerances"
+          disabled={!isEditing}
+        />
+
+        <TextField
+          id="foodPreferenceModifierInput"
+          fullWidth
+          label="Food Preference Modifier"
+          value={get(nutritionOrder, 'foodPreferenceModifier[0].text', '')}
+          onChange={(e) => {
+            handleChange('foodPreferenceModifier[0].text', e.target.value);
+            handleChange('foodPreferenceModifier[0].coding[0].display', e.target.value);
+          }}
+          helperText="e.g., Vegetarian, Kosher, Halal"
+          disabled={!isEditing}
+        />
+
+        <TextField
+          id="excludeFoodModifierInput"
+          fullWidth
+          label="Exclude Food Modifier"
+          value={get(nutritionOrder, 'excludeFoodModifier[0].text', '')}
+          onChange={(e) => {
+            handleChange('excludeFoodModifier[0].text', e.target.value);
+            handleChange('excludeFoodModifier[0].coding[0].display', e.target.value);
+          }}
+          helperText="Foods to exclude from the diet"
+          disabled={!isEditing}
+        />
+
+        <TextField
+          id="notesInput"
+          fullWidth
+          multiline
+          rows={3}
+          label="Notes"
+          value={get(nutritionOrder, 'note[0].text', '')}
+          onChange={(e) => handleChange('note[0].text', e.target.value)}
+          helperText="Additional notes about the nutrition order"
+          disabled={!isEditing}
+        />
+      </Stack>
+    );
+  }
+
   return (
     <Container id="nutritionOrderDetailPage" maxWidth="md" sx={{ py: 4 }}>
       <Card sx={{ boxShadow: 3 }}>
-        <CardHeader 
+        <CardHeader
           title={id && id !== 'new' ? 'Edit Nutrition Order' : 'New Nutrition Order'}
           sx={{ bgcolor: 'primary.main', color: 'primary.contrastText' }}
         />

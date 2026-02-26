@@ -2208,14 +2208,21 @@ export function App(props){
       set(Meteor, 'settings.public.defaults.sidebar.menuItems.IndexPage', !current);
       Session.set('settingsRefreshRequest', Date.now());
     }
+    function onToggleConstructionZone() {
+      const current = get(Meteor, 'settings.public.defaults.sidebar.menuItems.ConstructionZone', false);
+      set(Meteor, 'settings.public.defaults.sidebar.menuItems.ConstructionZone', !current);
+      Session.set('settingsRefreshRequest', Date.now());
+    }
 
     window.addEventListener('toggleDrawer', onToggleDrawer);
     window.addEventListener('toggleFhirModules', onToggleFhirModules);
     window.addEventListener('toggleIndexPage', onToggleIndexPage);
+    window.addEventListener('toggleConstructionZone', onToggleConstructionZone);
     return () => {
       window.removeEventListener('toggleDrawer', onToggleDrawer);
       window.removeEventListener('toggleFhirModules', onToggleFhirModules);
       window.removeEventListener('toggleIndexPage', onToggleIndexPage);
+      window.removeEventListener('toggleConstructionZone', onToggleConstructionZone);
     };
   }, []);
 

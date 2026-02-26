@@ -52,8 +52,13 @@ const orgTypeOptions = [
 ];
 
 function OrganizationDetail(props) {
-  const navigate = useNavigate();
-  const { id } = useParams();
+  // Embedded mode support (for HoneycombFhirResource dispatcher)
+  var isEmbedded = props.embedded || false;
+
+  var _rawNavigate = useNavigate();
+  var navigate = isEmbedded ? function() {} : _rawNavigate;
+  var _params = isEmbedded ? {} : useParams();
+  var id = _params.id || null;
   const [searchParams, setSearchParams] = useSearchParams();
   const viewMode = searchParams.get('view') || 'form';
 
@@ -105,12 +110,28 @@ function OrganizationDetail(props) {
     endpoint: []
   });
 
+  // Initialise from fhirResource prop when in embedded mode
+  var hasReceivedProps = React.useRef(false);
+  useEffect(function() {
+    if (isEmbedded && props.fhirResource) {
+      hasReceivedProps.current = true;
+      setOrganization(function(prev) {
+        if (JSON.stringify(props.fhirResource) !== JSON.stringify(prev)) {
+          return props.fhirResource;
+        }
+        return prev;
+      });
+    }
+  }, [props.fhirResource]);
+
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [isEditing, setIsEditing] = useState(false);
+  const [isEditing, setIsEditing] = useState(isEmbedded);
 
   // Subscribe to organizations so data is available locally
   const isSubscriptionReady = useTracker(function(){
+    if (isEmbedded) return true; // Skip subscription in embedded mode
     let autoSubscribeEnabled = get(Meteor, 'settings.public.defaults.autoSubscribe', false);
     if(autoSubscribeEnabled){
       return Meteor.subscribe('selectedPatient.Organizations', Session.get('selectedPatientId'), { limit: 1000 }).ready();
@@ -158,6 +179,11 @@ function OrganizationDetail(props) {
     const updatedOrganization = { ...organization };
     set(updatedOrganization, path, value);
     setOrganization(updatedOrganization);
+  
+    // Notify parent of changes in embedded mode
+    if (props.onResourceChange) {
+      props.onResourceChange(updatedOrganization);
+    }
   }
 
   // Handle save
@@ -460,7 +486,7 @@ function OrganizationDetail(props) {
         </Stack>
 
         {/* In-form Save/Cancel bar when editing */}
-        {isEditing && (
+        {isEditing && !isEmbedded && (
           <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, mt: 3, pt: 2, borderTop: 1, borderColor: 'divider' }}>
             <Button id="cancelButton" onClick={handleCancel}>
               Cancel
@@ -599,6 +625,12 @@ function OrganizationDetail(props) {
         )}
       </Box>
     );
+  }
+
+  
+  // In embedded mode, render form content without Container/Card wrapper
+  if (isEmbedded) {
+    return renderFormView();
   }
 
   return (

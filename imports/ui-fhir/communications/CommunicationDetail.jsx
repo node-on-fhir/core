@@ -50,14 +50,20 @@ import { Session } from 'meteor/session';
 import { FhirUtilities } from '/imports/lib/FhirUtilities';
 
 function CommunicationDetail(props) {
-  const navigate = useNavigate();
-  const { id: communicationId } = useParams();
+  // Embedded mode support (for HoneycombFhirResource dispatcher)
+  var isEmbedded = props.embedded || false;
+
+  var _rawNavigate = useNavigate();
+  var navigate = isEmbedded ? function() {} : _rawNavigate;
+  var _params = isEmbedded ? {} : useParams();
+  var communicationId = _params.id || null;
   
   console.log('CommunicationDetail - communicationId from params:', communicationId);
   console.log('Is new communication?', communicationId === 'new');
   
   // Subscribe to Communications collection
   const isSubscriptionReady = useTracker(function(){
+    if (isEmbedded) return true; // Skip subscription in embedded mode
     let autoSubscribeEnabled = get(Meteor, 'settings.public.defaults.autoSubscribe', false);
     let handle;
     if(autoSubscribeEnabled){
@@ -136,9 +142,32 @@ function CommunicationDetail(props) {
     }]
   });
 
+  // Initialise from fhirResource prop when in embedded mode
+  var hasReceivedProps = React.useRef(false);
+  var pendingUpdate = React.useRef(false);
+  useEffect(function() {
+    if (isEmbedded && props.fhirResource) {
+      hasReceivedProps.current = true;
+      setCommunication(function(prev) {
+        if (JSON.stringify(props.fhirResource) !== JSON.stringify(prev)) {
+          return props.fhirResource;
+        }
+        return prev;
+      });
+    }
+  }, [props.fhirResource]);
+
+  // onResourceChange: notify parent when state changes in embedded mode
+  useEffect(function() {
+    if (isEmbedded && pendingUpdate.current && props.onResourceChange) {
+      pendingUpdate.current = false;
+      props.onResourceChange(communication);
+    }
+  }, [communication]);
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [isEditing, setIsEditing] = useState(false);
+  const [isEditing, setIsEditing] = useState(isEmbedded);
   const [searchDialogOpen, setSearchDialogOpen] = useState(false);
   const [searchType, setSearchType] = useState('');
   const [searchResults, setSearchResults] = useState([]);
@@ -203,6 +232,7 @@ function CommunicationDetail(props) {
 
   // Handler functions
   const handleChange = (path, value) => {
+    pendingUpdate.current = true;
     const newCommunication = {...communication};
     set(newCommunication, path, value);
     setCommunication(newCommunication);
@@ -324,10 +354,252 @@ function CommunicationDetail(props) {
     }
   };
 
+  if (isEmbedded) {
+    return (
+      <Grid container spacing={3}>
+        {/* Subject (Patient) */}
+        <Grid item xs={12}>
+          <TextField
+            id="subjectDisplay"
+            fullWidth
+            label="Patient"
+            value={get(communication, 'subject.display', '')}
+            onChange={(e) => handleChange('subject.display', e.target.value)}
+            disabled={!isEditing}
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <Tooltip title="Search for patient">
+                    <IconButton
+                      onClick={() => handleSearchUser('subject')}
+                      edge="end"
+                      disabled={!isEditing}
+                    >
+                      <SearchIcon />
+                    </IconButton>
+                  </Tooltip>
+                </InputAdornment>
+              ),
+            }}
+          />
+        </Grid>
+
+        {/* Sender */}
+        <Grid item xs={12} md={6}>
+          <TextField
+            id="senderDisplay"
+            fullWidth
+            label="Sender"
+            value={get(communication, 'sender.display', '')}
+            onChange={(e) => handleChange('sender.display', e.target.value)}
+            disabled={!isEditing}
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <Tooltip title="Search for sender">
+                    <IconButton
+                      onClick={() => handleSearchUser('sender')}
+                      edge="end"
+                      disabled={!isEditing}
+                    >
+                      <SearchIcon />
+                    </IconButton>
+                  </Tooltip>
+                </InputAdornment>
+              ),
+            }}
+          />
+        </Grid>
+
+        {/* Recipient */}
+        <Grid item xs={12} md={6}>
+          <TextField
+            id="recipientDisplay"
+            fullWidth
+            label="Recipient"
+            value={get(communication, 'recipient.0.display', '')}
+            onChange={(e) => handleChange('recipient.0.display', e.target.value)}
+            disabled={!isEditing}
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <Tooltip title="Search for recipient">
+                    <IconButton
+                      onClick={() => handleSearchUser('recipient')}
+                      edge="end"
+                      disabled={!isEditing}
+                    >
+                      <SearchIcon />
+                    </IconButton>
+                  </Tooltip>
+                </InputAdornment>
+              ),
+            }}
+          />
+        </Grid>
+
+        {/* Category */}
+        <Grid item xs={12} md={6}>
+          <TextField
+            id="categoryCode"
+            fullWidth
+            label="Category Code"
+            value={get(communication, 'category.0.coding.0.code', '')}
+            onChange={(e) => handleChange('category.0.coding.0.code', e.target.value)}
+            disabled={!isEditing}
+          />
+        </Grid>
+        <Grid item xs={12} md={6}>
+          <TextField
+            id="categoryDisplay"
+            fullWidth
+            label="Category Display"
+            value={get(communication, 'category.0.coding.0.display', '')}
+            onChange={(e) => handleChange('category.0.coding.0.display', e.target.value)}
+            disabled={!isEditing}
+          />
+        </Grid>
+
+        {/* Status */}
+        <Grid item xs={12}>
+          <FormControl fullWidth disabled={!isEditing}>
+            <InputLabel id="status-label">Status</InputLabel>
+            <Select
+              id="status"
+              labelId="status-label"
+              value={get(communication, 'status', 'in-progress')}
+              label="Status"
+              onChange={(e) => handleChange('status', e.target.value)}
+            >
+              <MenuItem value="preparation">Preparation</MenuItem>
+              <MenuItem value="in-progress">In Progress</MenuItem>
+              <MenuItem value="not-done">Not Done</MenuItem>
+              <MenuItem value="on-hold">On Hold</MenuItem>
+              <MenuItem value="stopped">Stopped</MenuItem>
+              <MenuItem value="completed">Completed</MenuItem>
+              <MenuItem value="entered-in-error">Entered in Error</MenuItem>
+              <MenuItem value="unknown">Unknown</MenuItem>
+            </Select>
+          </FormControl>
+        </Grid>
+
+        {/* Medium */}
+        <Grid item xs={12} md={6}>
+          <TextField
+            id="mediumCode"
+            fullWidth
+            label="Medium Code"
+            value={get(communication, 'medium.0.coding.0.code', '')}
+            onChange={(e) => handleChange('medium.0.coding.0.code', e.target.value)}
+            disabled={!isEditing}
+          />
+        </Grid>
+        <Grid item xs={12} md={6}>
+          <TextField
+            id="mediumDisplay"
+            fullWidth
+            label="Medium Display"
+            value={get(communication, 'medium.0.coding.0.display', '')}
+            onChange={(e) => handleChange('medium.0.coding.0.display', e.target.value)}
+            disabled={!isEditing}
+          />
+        </Grid>
+
+        {/* Topic */}
+        <Grid item xs={12} md={6}>
+          <TextField
+            id="topicCode"
+            fullWidth
+            label="Topic Code"
+            value={get(communication, 'topic.0.coding.0.code', '')}
+            onChange={(e) => handleChange('topic.0.coding.0.code', e.target.value)}
+            disabled={!isEditing}
+          />
+        </Grid>
+        <Grid item xs={12} md={6}>
+          <TextField
+            id="topicDisplay"
+            fullWidth
+            label="Topic Display"
+            value={get(communication, 'topic.0.coding.0.display', '')}
+            onChange={(e) => handleChange('topic.0.coding.0.display', e.target.value)}
+            disabled={!isEditing}
+          />
+        </Grid>
+
+        {/* Sent DateTime */}
+        <Grid item xs={12}>
+          <TextField
+            id="sentDateTime"
+            fullWidth
+            label="Sent Date/Time"
+            type="datetime-local"
+            value={moment(get(communication, 'sent', '')).format('YYYY-MM-DDTHH:mm')}
+            onChange={(e) => handleChange('sent', moment(e.target.value).format('YYYY-MM-DDTHH:mm:ss'))}
+            disabled={!isEditing}
+            InputLabelProps={{
+              shrink: true,
+            }}
+          />
+        </Grid>
+
+        {/* Reason */}
+        <Grid item xs={12} md={6}>
+          <TextField
+            id="reasonCode"
+            fullWidth
+            label="Reason Code"
+            value={get(communication, 'reasonCode.0.coding.0.code', '')}
+            onChange={(e) => handleChange('reasonCode.0.coding.0.code', e.target.value)}
+            disabled={!isEditing}
+          />
+        </Grid>
+        <Grid item xs={12} md={6}>
+          <TextField
+            id="reasonDisplay"
+            fullWidth
+            label="Reason Display"
+            value={get(communication, 'reasonCode.0.coding.0.display', '')}
+            onChange={(e) => handleChange('reasonCode.0.coding.0.display', e.target.value)}
+            disabled={!isEditing}
+          />
+        </Grid>
+
+        {/* Payload Content */}
+        <Grid item xs={12}>
+          <TextField
+            id="payloadContent"
+            fullWidth
+            multiline
+            rows={4}
+            label="Message Content"
+            value={get(communication, 'payload.0.contentString', '')}
+            onChange={(e) => handleChange('payload.0.contentString', e.target.value)}
+            disabled={!isEditing}
+          />
+        </Grid>
+
+        {/* Notes */}
+        <Grid item xs={12}>
+          <TextField
+            id="notesTextarea"
+            fullWidth
+            multiline
+            rows={3}
+            label="Additional Notes"
+            value={get(communication, 'note.0.text', '')}
+            onChange={(e) => handleChange('note.0.text', e.target.value)}
+            disabled={!isEditing}
+          />
+        </Grid>
+      </Grid>
+    );
+  }
+
   return (
     <Container id="communicationDetailPage" maxWidth="md" sx={{ py: 4 }}>
       <Card sx={{ boxShadow: 3 }}>
-        <CardHeader 
+        <CardHeader
           title={(!communicationId || communicationId === 'new') ? 'New Communication' : 'Edit Communication'}
           sx={{ bgcolor: 'primary.main', color: 'primary.contrastText' }}
         />

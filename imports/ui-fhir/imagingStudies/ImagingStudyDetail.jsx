@@ -77,8 +77,13 @@ const modalityOptions = [
 ];
 
 function ImagingStudyDetail(props) {
-  const navigate = useNavigate();
-  const { id } = useParams();
+  // Embedded mode support (for HoneycombFhirResource dispatcher)
+  var isEmbedded = props.embedded || false;
+
+  var _rawNavigate = useNavigate();
+  var navigate = isEmbedded ? function() {} : _rawNavigate;
+  var _params = isEmbedded ? {} : useParams();
+  var id = _params.id || null;
   const imagingStudyId = id;
   const [searchParams, setSearchParams] = useSearchParams();
   const viewMode = searchParams.get('view') || 'form';
@@ -97,6 +102,7 @@ function ImagingStudyDetail(props) {
 
   // Subscribe to imaging studies
   const isSubscriptionReady = useTracker(function(){
+    if (isEmbedded) return true; // Skip subscription in embedded mode
     let autoSubscribeEnabled = get(Meteor, 'settings.public.defaults.autoSubscribe', false);
     let handle;
     if(autoSubscribeEnabled){
@@ -146,9 +152,24 @@ function ImagingStudyDetail(props) {
     }
   });
 
+  // Initialise from fhirResource prop when in embedded mode
+  var hasReceivedProps = React.useRef(false);
+  useEffect(function() {
+    if (isEmbedded && props.fhirResource) {
+      hasReceivedProps.current = true;
+      setImagingStudy(function(prev) {
+        if (JSON.stringify(props.fhirResource) !== JSON.stringify(prev)) {
+          return props.fhirResource;
+        }
+        return prev;
+      });
+    }
+  }, [props.fhirResource]);
+
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [isEditing, setIsEditing] = useState(false);
+  const [isEditing, setIsEditing] = useState(isEmbedded);
 
   // Set patient on component mount for new imaging studies
   useEffect(function() {
@@ -204,6 +225,11 @@ function ImagingStudyDetail(props) {
     const updatedImagingStudy = { ...imagingStudy };
     set(updatedImagingStudy, path, value);
     setImagingStudy(updatedImagingStudy);
+  
+    // Notify parent of changes in embedded mode
+    if (props.onResourceChange) {
+      props.onResourceChange(updatedImagingStudy);
+    }
   }
 
   // Handle search for patient
@@ -663,7 +689,7 @@ function ImagingStudyDetail(props) {
         </Stack>
 
         {/* In-form Save/Cancel bar when editing */}
-        {isEditing && (
+        {isEditing && !isEmbedded && (
           <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, mt: 3, pt: 2, borderTop: 1, borderColor: 'divider' }}>
             <Button id="cancelButton" onClick={handleCancel}>
               Cancel
@@ -899,6 +925,12 @@ function ImagingStudyDetail(props) {
         )}
       </Box>
     );
+  }
+
+  
+  // In embedded mode, render form content without Container/Card wrapper
+  if (isEmbedded) {
+    return renderFormView();
   }
 
   return (

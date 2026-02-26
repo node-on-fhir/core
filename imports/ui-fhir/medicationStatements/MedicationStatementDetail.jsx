@@ -657,4 +657,20 @@ MedicationStatementDetail.propTypes = {
   onCancel: PropTypes.func
 };
 
-export default MedicationStatementDetail;
+
+// Embedded mode wrapper for HoneycombFhirResource dispatcher
+function MedicationStatementDetailEmbeddedWrapper(props) {
+  var isEmbedded = props.embedded || false;
+  var fhirResource = props.fhirResource;
+  var onResourceChange = props.onResourceChange;
+
+  // Pass through to legacy class component
+  var classProps = Object.assign({}, props);
+  if (isEmbedded && fhirResource) {
+    classProps.medicationStatement = fhirResource;
+  }
+
+  return React.createElement(MedicationStatementDetail, classProps);
+}
+
+export default MedicationStatementDetailEmbeddedWrapper;

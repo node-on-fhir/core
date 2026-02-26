@@ -29,8 +29,12 @@ import { Consents } from '/imports/lib/schemas/SimpleSchemas/Consents';
 import { FhirUtilities } from '../../lib/FhirUtilities';
 
 export function ConsentDetail(props) {
-  const { id } = useParams();
-  const navigate = useNavigate();
+  // Embedded mode support (for HoneycombFhirResource dispatcher)
+  var isEmbedded = props.embedded || false;
+  var _params = isEmbedded ? {} : useParams();
+  var id = _params.id || null;
+  var _rawNavigate = useNavigate();
+  var navigate = isEmbedded ? function() {} : _rawNavigate;
   
   const [consent, setConsent] = useState({
     resourceType: 'Consent',
@@ -58,11 +62,36 @@ export function ConsentDetail(props) {
       }]
     }
   });
-  
-  const [isEditing, setIsEditing] = useState(!id);
+
+  // Initialise from fhirResource prop when in embedded mode
+  var hasReceivedProps = React.useRef(false);
+  var pendingUpdate = React.useRef(false);
+  useEffect(function() {
+    if (isEmbedded && props.fhirResource) {
+      hasReceivedProps.current = true;
+      setConsent(function(prev) {
+        if (JSON.stringify(props.fhirResource) !== JSON.stringify(prev)) {
+          return props.fhirResource;
+        }
+        return prev;
+      });
+    }
+  }, [props.fhirResource]);
+
+  // onResourceChange: notify parent when state changes in embedded mode
+  useEffect(function() {
+    if (isEmbedded && pendingUpdate.current && props.onResourceChange) {
+      pendingUpdate.current = false;
+      props.onResourceChange(consent);
+    }
+  }, [consent]);
+
+
+  const [isEditing, setIsEditing] = useState(!id || isEmbedded);
 
   // Subscribe to consents and track subscription status
   const isSubscriptionReady = useTracker(function(){
+    if (isEmbedded) return true; // Skip subscription in embedded mode
     let autoSubscribeEnabled = get(Meteor, 'settings.public.defaults.autoSubscribe', false);
     let handle;
     if(autoSubscribeEnabled){
@@ -132,6 +161,7 @@ export function ConsentDetail(props) {
   }, [id, selectedPatient, selectedPatientId]);
 
   const handleChange = (path, value) => {
+    pendingUpdate.current = true;
     console.log('=== handleChange called ===');
     console.log('Path:', path);
     console.log('Value:', typeof value === 'object' ? JSON.stringify(value, null, 2) : value);
@@ -229,10 +259,378 @@ export function ConsentDetail(props) {
     }
   };
 
+  if (isEmbedded) {
+    return (
+      <Grid container spacing={3}>
+        {/* Status */}
+        <Grid item xs={12} sm={6}>
+          <TextField
+            id="statusSelect"
+            fullWidth
+            select
+            SelectProps={{ native: true }}
+            label="Status"
+            value={get(consent, 'status', '')}
+            onChange={(e) => handleChange('status', e.target.value)}
+            disabled={!isEditing}
+          >
+            <option value="draft">Draft</option>
+            <option value="proposed">Proposed</option>
+            <option value="active">Active</option>
+            <option value="rejected">Rejected</option>
+            <option value="inactive">Inactive</option>
+            <option value="entered-in-error">Entered in Error</option>
+          </TextField>
+        </Grid>
+
+        {/* Date/Time */}
+        <Grid item xs={12} sm={6}>
+          <TextField
+            id="dateTimeInput"
+            fullWidth
+            type="date"
+            label="Date"
+            value={moment(get(consent, 'dateTime')).format('YYYY-MM-DD')}
+            onChange={(e) => handleChange('dateTime', e.target.value)}
+            disabled={!isEditing}
+            InputLabelProps={{ shrink: true }}
+          />
+        </Grid>
+
+        {/* Category */}
+        <Grid item xs={12} sm={6}>
+          <TextField
+            id="categoryInput"
+            fullWidth
+            select
+            SelectProps={{ native: true }}
+            label="Category"
+            value={get(consent, 'category.0.coding.0.code', '')}
+            onChange={(e) => {
+              console.log('=== Category select onChange fired ===');
+              console.log('Selected value:', e.target.value);
+
+              const categoryMap = {
+                'IDSCL': 'Information disclosure',
+                'RESEARCH': 'Research information access',
+                'RSDID': 'Research subject directory',
+                'RSREID': 'Research re-identification'
+              };
+
+              const newCategory = {
+                coding: [{
+                  system: 'http://terminology.hl7.org/CodeSystem/v3-ActCode',
+                  code: e.target.value,
+                  display: categoryMap[e.target.value] || e.target.value
+                }],
+                text: categoryMap[e.target.value] || e.target.value
+              };
+
+              console.log('Calling handleChange with category:', JSON.stringify(newCategory, null, 2));
+              handleChange('category.0', newCategory);
+            }}
+            disabled={!isEditing}
+          >
+            <option value="">Select a category</option>
+            <option value="IDSCL">Information disclosure</option>
+            <option value="RESEARCH">Research information access</option>
+            <option value="RSDID">Research subject directory</option>
+            <option value="RSREID">Research re-identification</option>
+          </TextField>
+        </Grid>
+
+        {/* Patient */}
+        <Grid item xs={12}>
+          <TextField
+            id="patientDisplay"
+            fullWidth
+            label="Patient"
+            value={get(consent, 'patient.display', '')}
+            onChange={(e) => handleChange('patient.display', e.target.value)}
+            disabled={!isEditing}
+            helperText={get(consent, 'patient.reference', '') || 'No patient reference set'}
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <Tooltip title="Search for patient">
+                    <IconButton
+                      onClick={handleSearchUser}
+                      edge="end"
+                      disabled={!isEditing}
+                    >
+                      <SearchIcon />
+                    </IconButton>
+                  </Tooltip>
+                </InputAdornment>
+              ),
+            }}
+          />
+        </Grid>
+
+        {/* Scope */}
+        <Grid item xs={12} sm={6}>
+          <TextField
+            id="scopeInput"
+            fullWidth
+            select
+            SelectProps={{ native: true }}
+            label="Scope"
+            value={get(consent, 'scope.coding.0.code', '')}
+            onChange={(e) => {
+              const scopeMap = {
+                'patient-privacy': 'Privacy Consent',
+                'treatment': 'Treatment',
+                'research': 'Research',
+                'adr': 'Advanced Care Directive'
+              };
+              handleChange('scope', {
+                coding: [{
+                  system: 'http://terminology.hl7.org/CodeSystem/consentscope',
+                  code: e.target.value,
+                  display: scopeMap[e.target.value] || e.target.value
+                }]
+              });
+            }}
+            disabled={!isEditing}
+          >
+            <option value="">Select a scope</option>
+            <option value="patient-privacy">Privacy Consent</option>
+            <option value="treatment">Treatment</option>
+            <option value="research">Research</option>
+            <option value="adr">Advanced Care Directive</option>
+          </TextField>
+        </Grid>
+
+        {/* Policy Rule */}
+        <Grid item xs={12} sm={6}>
+          <TextField
+            id="policyRuleInput"
+            fullWidth
+            label="Policy Rule"
+            value={get(consent, 'policyRule.text', '')}
+            onChange={(e) => {
+              handleChange('policyRule', {
+                coding: [{
+                  system: 'http://terminology.hl7.org/CodeSystem/v3-ActCode',
+                  code: 'OPTIN'
+                }],
+                text: e.target.value
+              });
+            }}
+            disabled={!isEditing}
+            helperText="Policy rule for consent"
+          />
+        </Grid>
+
+        {/* Security Label */}
+        <Grid item xs={12} sm={6}>
+          <TextField
+            id="securityLabelSelect"
+            fullWidth
+            select
+            SelectProps={{ native: true }}
+            label="Security Label"
+            value={get(consent, 'provision.securityLabel.0.code', '') || get(consent, 'provision.provision.0.securityLabel.0.code', '')}
+            onChange={(e) => {
+              const securityLabelMap = {
+                'N': 'normal',
+                'R': 'restricted',
+                'V': 'very restricted'
+              };
+              // Try to set at the most nested provision level
+              if (get(consent, 'provision.provision.0')) {
+                handleChange('provision.provision.0.securityLabel.0', {
+                  system: 'http://terminology.hl7.org/CodeSystem/v3-Confidentiality',
+                  code: e.target.value,
+                  display: securityLabelMap[e.target.value] || e.target.value
+                });
+              } else {
+                handleChange('provision.securityLabel.0', {
+                  system: 'http://terminology.hl7.org/CodeSystem/v3-Confidentiality',
+                  code: e.target.value,
+                  display: securityLabelMap[e.target.value] || e.target.value
+                });
+              }
+            }}
+            disabled={!isEditing}
+          >
+            <option value="">Select security label</option>
+            <option value="N">Normal</option>
+            <option value="R">Restricted</option>
+            <option value="V">Very Restricted</option>
+          </TextField>
+        </Grid>
+
+        {/* Class */}
+        <Grid item xs={12} sm={6}>
+          <TextField
+            id="classInput"
+            fullWidth
+            label="Resource Classes"
+            value={(() => {
+              const classes = get(consent, 'provision.class') ||
+                            get(consent, 'provision.provision.0.class') || [];
+              return classes.map(c => c.code || c.display || c).join(', ');
+            })()}
+            onChange={(e) => {
+              const classValues = e.target.value.split(',').map(v => v.trim()).filter(v => v);
+              const classes = classValues.map(code => ({
+                code: code,
+                display: code
+              }));
+              // Try to set at the most nested provision level
+              if (get(consent, 'provision.provision.0')) {
+                handleChange('provision.provision.0.class', classes);
+              } else {
+                handleChange('provision.class', classes);
+              }
+            }}
+            disabled={!isEditing}
+            helperText="Comma-separated resource types (e.g., Patient, Observation, Procedure)"
+          />
+        </Grid>
+
+        {/* Actor Role */}
+        <Grid item xs={12} sm={6}>
+          <TextField
+            id="actorRoleSelect"
+            fullWidth
+            select
+            SelectProps={{ native: true }}
+            label="Actor Role"
+            value={get(consent, 'provision.actor.0.role.coding.0.code', '') ||
+                   get(consent, 'provision.provision.0.actor.0.role.coding.0.code', '')}
+            onChange={(e) => {
+              const roleMap = {
+                'PAT': 'patient',
+                'PROV': 'provider',
+                'DELEGATEE': 'delegatee',
+                'GUAR': 'guarantor',
+                'CONSENTER': 'consenter',
+                'CONSENTEE': 'consentee',
+                'SUBJECT': 'subject of consent',
+                'DELEGATOR': 'delegator',
+                'SYSTEM': 'system'
+              };
+              // Try to set at the most nested provision level
+              const path = get(consent, 'provision.provision.0') ? 'provision.provision.0' : 'provision';
+              handleChange(`${path}.actor.0.role`, {
+                coding: [{
+                  system: 'http://terminology.hl7.org/CodeSystem/v3-RoleClass',
+                  code: e.target.value,
+                  display: roleMap[e.target.value] || e.target.value
+                }]
+              });
+            }}
+            disabled={!isEditing}
+          >
+            <option value="">Select actor role</option>
+            <option value="PAT">Patient</option>
+            <option value="PROV">Provider</option>
+            <option value="DELEGATEE">Delegatee</option>
+            <option value="GUAR">Guarantor</option>
+            <option value="CONSENTER">Consenter</option>
+            <option value="CONSENTEE">Consentee</option>
+            <option value="SUBJECT">Subject of Consent</option>
+            <option value="DELEGATOR">Delegator</option>
+            <option value="SYSTEM">System</option>
+          </TextField>
+        </Grid>
+
+        {/* Actor Reference */}
+        <Grid item xs={12} sm={6}>
+          <TextField
+            id="actorReferenceInput"
+            fullWidth
+            label="Actor Reference"
+            value={get(consent, 'provision.actor.0.reference.reference', '') ||
+                   get(consent, 'provision.provision.0.actor.0.reference.reference', '')}
+            onChange={(e) => {
+              const path = get(consent, 'provision.provision.0') ? 'provision.provision.0' : 'provision';
+              handleChange(`${path}.actor.0.reference.reference`, e.target.value);
+            }}
+            disabled={!isEditing}
+            helperText="Reference to the actor (e.g., Patient/123, Practitioner/456)"
+          />
+        </Grid>
+
+        {/* Actor Display */}
+        <Grid item xs={12}>
+          <TextField
+            id="actorDisplayInput"
+            fullWidth
+            label="Actor Display Name"
+            value={get(consent, 'provision.actor.0.reference.display', '') ||
+                   get(consent, 'provision.provision.0.actor.0.reference.display', '')}
+            onChange={(e) => {
+              const path = get(consent, 'provision.provision.0') ? 'provision.provision.0' : 'provision';
+              handleChange(`${path}.actor.0.reference.display`, e.target.value);
+            }}
+            disabled={!isEditing}
+            helperText="Display name for the actor"
+          />
+        </Grid>
+
+        {/* Organization */}
+        <Grid item xs={12}>
+          <TextField
+            id="organizationInput"
+            fullWidth
+            label="Organization"
+            value={get(consent, 'organization.0.display', '')}
+            onChange={(e) => handleChange('organization.0.display', e.target.value)}
+            disabled={!isEditing}
+            helperText="Organization that manages the consent"
+          />
+        </Grid>
+
+        {/* Source Reference */}
+        <Grid item xs={12} sm={6}>
+          <TextField
+            id="sourceReferenceInput"
+            fullWidth
+            label="Source Reference"
+            value={get(consent, 'sourceReference.reference', '')}
+            onChange={(e) => handleChange('sourceReference.reference', e.target.value)}
+            disabled={!isEditing}
+            helperText="Reference to source consent document"
+          />
+        </Grid>
+
+        {/* Source Display */}
+        <Grid item xs={12} sm={6}>
+          <TextField
+            id="sourceDisplayInput"
+            fullWidth
+            label="Source Display"
+            value={get(consent, 'sourceReference.display', '')}
+            onChange={(e) => handleChange('sourceReference.display', e.target.value)}
+            disabled={!isEditing}
+            helperText="Display text for source document"
+          />
+        </Grid>
+
+        {/* Notes */}
+        <Grid item xs={12}>
+          <TextField
+            id="notesTextarea"
+            fullWidth
+            multiline
+            rows={4}
+            label="Notes"
+            value={get(consent, 'note.0.text', '')}
+            onChange={(e) => handleChange('note.0.text', e.target.value)}
+            disabled={!isEditing}
+          />
+        </Grid>
+      </Grid>
+    );
+  }
+
   return (
     <Container id="consentDetailPage" maxWidth="md" sx={{ py: 4 }}>
       <Card sx={{ boxShadow: 3 }}>
-        <CardHeader 
+        <CardHeader
           title={id && id !== 'new' ? 'Edit Consent' : 'New Consent'}
           sx={{ bgcolor: 'primary.main', color: 'primary.contrastText' }}
         />

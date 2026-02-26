@@ -44,11 +44,17 @@ import { Meteor } from 'meteor/meteor';
  * - priority: routine, urgent, asap, stat
  */
 function ActivityDefinitionDetail(props) {
-  const navigate = useNavigate();
-  const { id } = useParams();
+  // Embedded mode support (for HoneycombFhirResource dispatcher)
+  var isEmbedded = props.embedded || false;
+
+  var _rawNavigate = useNavigate();
+  var navigate = isEmbedded ? function() {} : _rawNavigate;
+  var _params = isEmbedded ? {} : useParams();
+  var id = _params.id || null;
 
   // Subscribe to ActivityDefinition data using ID-based query
   const isSubscriptionReady = useTracker(function(){
+    if (isEmbedded) return true; // Skip subscription in embedded mode
     if (id && id !== 'new') {
       const query = {
         $or: [
@@ -84,9 +90,24 @@ function ActivityDefinitionDetail(props) {
     url: ""
   });
 
+  // Initialise from fhirResource prop when in embedded mode
+  var hasReceivedProps = React.useRef(false);
+  useEffect(function() {
+    if (isEmbedded && props.fhirResource) {
+      hasReceivedProps.current = true;
+      setActivityDefinition(function(prev) {
+        if (JSON.stringify(props.fhirResource) !== JSON.stringify(prev)) {
+          return props.fhirResource;
+        }
+        return prev;
+      });
+    }
+  }, [props.fhirResource]);
+
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [isEditing, setIsEditing] = useState(false);
+  const [isEditing, setIsEditing] = useState(isEmbedded);
 
   // Set default values on component mount for new activity definitions
   useEffect(function() {
@@ -131,6 +152,11 @@ function ActivityDefinitionDetail(props) {
     const updated = { ...activityDefinition };
     set(updated, path, value);
     setActivityDefinition(updated);
+  
+    // Notify parent of changes in embedded mode
+    if (props.onResourceChange) {
+      props.onResourceChange(updated);
+    }
   }
 
   // Handle save
@@ -234,6 +260,221 @@ function ActivityDefinitionDetail(props) {
     { value: 'asap', label: 'ASAP' },
     { value: 'stat', label: 'STAT' }
   ];
+
+  if (isEmbedded) {
+    return (
+      <Stack spacing={3}>
+        {/* Identity Section */}
+        <Typography variant="h6">Identity</Typography>
+
+        <Stack direction="row" spacing={2}>
+          <TextField
+            id="nameInput"
+            fullWidth
+            label="Name (Computer-Friendly)"
+            value={get(activityDefinition, 'name', '')}
+            onChange={(e) => handleChange('name', e.target.value)}
+            helperText="A machine-friendly name for this activity definition"
+            disabled={!isEditing}
+          />
+
+          <TextField
+            id="titleInput"
+            fullWidth
+            label="Title (Human-Friendly)"
+            value={get(activityDefinition, 'title', '')}
+            onChange={(e) => handleChange('title', e.target.value)}
+            helperText="A human-friendly name for this activity definition"
+            disabled={!isEditing}
+          />
+        </Stack>
+
+        <Stack direction="row" spacing={2}>
+          <FormControl fullWidth disabled={!isEditing}>
+            <InputLabel>Status</InputLabel>
+            <Select
+              id="statusSelect"
+              value={get(activityDefinition, 'status', 'draft')}
+              onChange={(e) => handleChange('status', e.target.value)}
+              label="Status"
+            >
+              {statusOptions.map(option => (
+                <MenuItem key={option.value} value={option.value}>
+                  {option.label}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          <TextField
+            id="versionInput"
+            fullWidth
+            label="Version"
+            value={get(activityDefinition, 'version', '')}
+            onChange={(e) => handleChange('version', e.target.value)}
+            helperText="Business version identifier"
+            disabled={!isEditing}
+          />
+        </Stack>
+
+        <TextField
+          id="descriptionInput"
+          fullWidth
+          multiline
+          rows={3}
+          label="Description"
+          value={get(activityDefinition, 'description', '')}
+          onChange={(e) => handleChange('description', e.target.value)}
+          helperText="Natural language description of the activity definition"
+          disabled={!isEditing}
+        />
+
+        {/* Activity Type Section */}
+        <Typography variant="h6" sx={{ mt: 2 }}>Activity Type</Typography>
+
+        <Stack direction="row" spacing={2}>
+          <FormControl fullWidth disabled={!isEditing}>
+            <InputLabel>Kind</InputLabel>
+            <Select
+              id="kindSelect"
+              value={get(activityDefinition, 'kind', '')}
+              onChange={(e) => handleChange('kind', e.target.value)}
+              label="Kind"
+            >
+              {kindOptions.map(option => (
+                <MenuItem key={option.value} value={option.value}>
+                  {option.label}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          <FormControl fullWidth disabled={!isEditing}>
+            <InputLabel>Intent</InputLabel>
+            <Select
+              id="intentSelect"
+              value={get(activityDefinition, 'intent', '')}
+              onChange={(e) => handleChange('intent', e.target.value)}
+              label="Intent"
+            >
+              {intentOptions.map(option => (
+                <MenuItem key={option.value} value={option.value}>
+                  {option.label}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          <FormControl fullWidth disabled={!isEditing}>
+            <InputLabel>Priority</InputLabel>
+            <Select
+              id="prioritySelect"
+              value={get(activityDefinition, 'priority', 'routine')}
+              onChange={(e) => handleChange('priority', e.target.value)}
+              label="Priority"
+            >
+              {priorityOptions.map(option => (
+                <MenuItem key={option.value} value={option.value}>
+                  {option.label}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Stack>
+
+        {/* Publisher Section */}
+        <Typography variant="h6" sx={{ mt: 2 }}>Publisher Information</Typography>
+
+        <Stack direction="row" spacing={2}>
+          <TextField
+            id="publisherInput"
+            fullWidth
+            label="Publisher"
+            value={get(activityDefinition, 'publisher', '')}
+            onChange={(e) => handleChange('publisher', e.target.value)}
+            helperText="Name of the publisher (organization or individual)"
+            disabled={!isEditing}
+          />
+
+          <TextField
+            id="urlInput"
+            fullWidth
+            label="Canonical URL"
+            value={get(activityDefinition, 'url', '')}
+            onChange={(e) => handleChange('url', e.target.value)}
+            helperText="Canonical identifier for this activity definition"
+            disabled={!isEditing}
+          />
+        </Stack>
+
+        {/* Purpose and Usage */}
+        <Typography variant="h6" sx={{ mt: 2 }}>Purpose and Usage</Typography>
+
+        <TextField
+          id="purposeInput"
+          fullWidth
+          multiline
+          rows={2}
+          label="Purpose"
+          value={get(activityDefinition, 'purpose', '')}
+          onChange={(e) => handleChange('purpose', e.target.value)}
+          helperText="Why this activity definition is defined"
+          disabled={!isEditing}
+        />
+
+        <TextField
+          id="usageInput"
+          fullWidth
+          multiline
+          rows={2}
+          label="Usage"
+          value={get(activityDefinition, 'usage', '')}
+          onChange={(e) => handleChange('usage', e.target.value)}
+          helperText="Describes the clinical usage of the activity definition"
+          disabled={!isEditing}
+        />
+
+        {/* Dates */}
+        <Typography variant="h6" sx={{ mt: 2 }}>Review Dates</Typography>
+
+        <Stack direction="row" spacing={2}>
+          <TextField
+            id="approvalDateInput"
+            fullWidth
+            type="date"
+            label="Approval Date"
+            value={get(activityDefinition, 'approvalDate', '')}
+            onChange={(e) => handleChange('approvalDate', e.target.value)}
+            InputLabelProps={{ shrink: true }}
+            disabled={!isEditing}
+          />
+
+          <TextField
+            id="lastReviewDateInput"
+            fullWidth
+            type="date"
+            label="Last Review Date"
+            value={get(activityDefinition, 'lastReviewDate', '')}
+            onChange={(e) => handleChange('lastReviewDate', e.target.value)}
+            InputLabelProps={{ shrink: true }}
+            disabled={!isEditing}
+          />
+        </Stack>
+
+        <TextField
+          id="copyrightInput"
+          fullWidth
+          multiline
+          rows={2}
+          label="Copyright"
+          value={get(activityDefinition, 'copyright', '')}
+          onChange={(e) => handleChange('copyright', e.target.value)}
+          helperText="Use and/or publishing restrictions"
+          disabled={!isEditing}
+        />
+      </Stack>
+    );
+  }
 
   return (
     <Container id="activityDefinitionDetailPage" maxWidth="md" sx={{ py: 4 }}>

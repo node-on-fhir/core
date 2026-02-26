@@ -446,4 +446,20 @@ OperationOutcomeDetail.propTypes = {
   onCancel: PropTypes.func
 };
 
-export default OperationOutcomeDetail;
+
+// Embedded mode wrapper for HoneycombFhirResource dispatcher
+function OperationOutcomeDetailEmbeddedWrapper(props) {
+  var isEmbedded = props.embedded || false;
+  var fhirResource = props.fhirResource;
+  var onResourceChange = props.onResourceChange;
+
+  // Pass through to legacy class component
+  var classProps = Object.assign({}, props);
+  if (isEmbedded && fhirResource) {
+    classProps.operationOutcome = fhirResource;
+  }
+
+  return React.createElement(OperationOutcomeDetail, classProps);
+}
+
+export default OperationOutcomeDetailEmbeddedWrapper;

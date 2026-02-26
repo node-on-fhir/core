@@ -376,19 +376,28 @@ export function PatientSidebar(props){
     
   let constructionZone = [];
   if(get(Meteor, 'settings.public.defaults.sidebar.menuItems.ConstructionZone')){
-    // if(!['iPhone'].includes(window.navigator.platform)){
-      
-      constructionZone.push(
-        <ListItem id='constructionZoneItem' key='constructionZoneItem' button onClick={function(){ openPage('/construction-zone'); }} >
-          <ListItemIcon >
-            <Icon icon={modx} />
-          </ListItemIcon>
-          <ListItemText primary='Construction Zone'  />
-        </ListItem>
-      );
+      let constructionZoneLinks = get(Meteor, 'settings.public.defaults.sidebar.constructionZoneLinks', []);
+      constructionZoneLinks.forEach(function(czLink, index){
+        let clonedIcon = parseIcon(get(czLink, 'icon', 'fire'));
+        if(clonedIcon){
+          clonedIcon = React.cloneElement(clonedIcon, {});
+        } else {
+          clonedIcon = <Icon icon={fire} />
+        }
 
-      constructionZone.push(<Divider key='construction-hr' />);
-    // }
+        constructionZone.push(
+          <ListItem id={'constructionZoneLink-' + index} key={'constructionZoneLink-' + index} button onClick={function(){ openPage(get(czLink, 'to', '/')); }} >
+            <ListItemIcon >
+              { clonedIcon }
+            </ListItemIcon>
+            <ListItemText primary={get(czLink, 'label')}  />
+          </ListItem>
+        );
+      });
+
+      if(constructionZoneLinks.length > 0){
+        constructionZone.push(<Divider key='construction-hr' />);
+      }
   }
   
   //----------------------------------------------------------------------

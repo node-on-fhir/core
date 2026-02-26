@@ -46,11 +46,13 @@ Session.setDefault('CodeSystem.Current', defaultCodeSystem)
 // MAIN COMPONENT
 
 export function CodeSystemDetail(props){
+  // Embedded mode support (for HoneycombFhirResource dispatcher)
+  var isEmbedded = props.embedded || false;
 
-  let { 
-    children, 
+  let {
+    children,
     codeSystem,
-    ...otherProps 
+    ...otherProps
   } = props;
 
   let classes = useStyles();

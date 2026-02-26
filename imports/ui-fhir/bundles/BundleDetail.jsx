@@ -281,6 +281,9 @@ function BundleDetail(props){
 
   // REFACTOR: extract into shared hydration/dehydration library
   function dehydrateFhirResource(bundle) {
+  // Embedded mode support (for HoneycombFhirResource dispatcher)
+  var isEmbedded = props.embedded || false;
+
     // let formData = Object.assign({}, this.state.form);
     let result = {}
 

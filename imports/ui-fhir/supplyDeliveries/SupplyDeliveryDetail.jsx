@@ -52,11 +52,17 @@ import { SupplyDeliveries } from '/imports/lib/schemas/SimpleSchemas/SupplyDeliv
 import { Patients } from '/imports/lib/schemas/SimpleSchemas/Patients';
 
 function SupplyDeliveryDetail(props) {
-  const navigate = useNavigate();
-  const { id } = useParams();
+  // Embedded mode support (for HoneycombFhirResource dispatcher)
+  var isEmbedded = props.embedded || false;
+
+  var _rawNavigate = useNavigate();
+  var navigate = isEmbedded ? function() {} : _rawNavigate;
+  var _params = isEmbedded ? {} : useParams();
+  var id = _params.id || null;
   
   // Subscribe to supply deliveries data if needed
   const subscriptionReady = useTracker(() => {
+    if (isEmbedded) return true; // Skip subscription in embedded mode
     // For now, just return true since we're not using subscriptions in this component
     return true;
   }, []);
@@ -134,10 +140,34 @@ function SupplyDeliveryDetail(props) {
     }]
   });
 
+  // Initialise from fhirResource prop when in embedded mode
+  var hasReceivedProps = React.useRef(false);
+  var pendingUpdate = React.useRef(false);
+  useEffect(function() {
+    if (isEmbedded && props.fhirResource) {
+      hasReceivedProps.current = true;
+      setSupplyDelivery(function(prev) {
+        if (JSON.stringify(props.fhirResource) !== JSON.stringify(prev)) {
+          return props.fhirResource;
+        }
+        return prev;
+      });
+    }
+  }, [props.fhirResource]);
+
+  // onResourceChange: notify parent when state changes in embedded mode
+  useEffect(function() {
+    if (isEmbedded && pendingUpdate.current && props.onResourceChange) {
+      pendingUpdate.current = false;
+      props.onResourceChange(supplyDelivery);
+    }
+  }, [supplyDelivery]);
+
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   // Initialize isEditing based on whether we're creating new or viewing existing
-  const [isEditing, setIsEditing] = useState(!id || id === 'new');
+  const [isEditing, setIsEditing] = useState(isEmbedded || !id || id === 'new');
   const [patientSearchOpen, setPatientSearchOpen] = useState(false);
   const [forceUpdate, setForceUpdate] = useState(0); // Force re-render counter
   
@@ -175,6 +205,7 @@ function SupplyDeliveryDetail(props) {
   }, [id, selectedPatient]);
 
   const handleInputChange = (path, value) => {
+    pendingUpdate.current = true;
     console.log('handleInputChange:', path, value);
     setSupplyDelivery(prevDelivery => {
       const newDelivery = JSON.parse(JSON.stringify(prevDelivery)); // Deep clone
@@ -300,10 +331,221 @@ function SupplyDeliveryDetail(props) {
     }
   }, [id, isEditing]);
 
+  if (isEmbedded) {
+    return (
+      <Stack spacing={3}>
+        {/* Debug info - remove after testing */}
+        <Typography variant="caption" color="text.secondary">
+          Debug: id={id}, isEditing={String(isEditing)}
+        </Typography>
+
+        {/* Status */}
+        <FormControl fullWidth>
+          <InputLabel id="status-label">Status</InputLabel>
+          <Select
+            labelId="status-label"
+            id="statusInput"
+            name="status"
+            value={get(supplyDelivery, 'status', 'in-progress')}
+            label="Status"
+            onChange={(e) => handleInputChange('status', e.target.value)}
+            disabled={!isEditing}
+          >
+            <MenuItem value="in-progress">In Progress</MenuItem>
+            <MenuItem value="completed">Completed</MenuItem>
+            <MenuItem value="abandoned">Abandoned</MenuItem>
+            <MenuItem value="entered-in-error">Entered in Error</MenuItem>
+          </Select>
+        </FormControl>
+
+        {/* Type */}
+        <TextField
+          fullWidth
+          id="typeInput"
+          name="type"
+          label="Type"
+          value={get(supplyDelivery, 'type.text', '')}
+          onChange={(e) => handleInputChange('type.text', e.target.value)}
+          disabled={!isEditing}
+          helperText="Type of supply delivery (e.g., device, medication)"
+        />
+
+        {/* Occurrence Date/Time */}
+        <TextField
+          fullWidth
+          id="occurrenceDateTimeInput"
+          name="occurrenceDateTime"
+          label="Occurrence Date/Time"
+          type="datetime-local"
+          value={moment(get(supplyDelivery, 'occurrenceDateTime', '')).format('YYYY-MM-DDTHH:mm')}
+          onChange={(e) => handleInputChange('occurrenceDateTime', e.target.value)}
+          disabled={!isEditing}
+          InputLabelProps={{
+            shrink: true,
+          }}
+        />
+
+        {/* Supplier */}
+        <TextField
+          fullWidth
+          id="supplierInput"
+          name="supplier"
+          label="Supplier"
+          value={get(supplyDelivery, 'supplier.display', '')}
+          onChange={(e) => handleInputChange('supplier.display', e.target.value)}
+          disabled={!isEditing}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <LocalShippingIcon />
+              </InputAdornment>
+            ),
+          }}
+        />
+
+        {/* Destination */}
+        <TextField
+          fullWidth
+          id="destinationInput"
+          name="destination"
+          label="Destination"
+          value={get(supplyDelivery, 'destination.display', '')}
+          onChange={(e) => handleInputChange('destination.display', e.target.value)}
+          disabled={!isEditing}
+        />
+
+        {/* Receiver */}
+        <TextField
+          fullWidth
+          id="receiverInput"
+          name="receiver"
+          label="Receiver"
+          value={get(supplyDelivery, 'receiver[0].display', '')}
+          onChange={(e) => handleInputChange('receiver[0].display', e.target.value)}
+          disabled={!isEditing}
+        />
+
+        {/* Supplied Item Section */}
+        <Paper elevation={0} sx={{ p: 2, bgcolor: 'grey.50' }}>
+          <Typography variant="h6" gutterBottom>
+            <InventoryIcon sx={{ verticalAlign: 'middle', mr: 1 }} />
+            Supplied Item
+          </Typography>
+
+          <Stack spacing={2}>
+            {/* Quantity */}
+            <Grid container spacing={2} sx={{ ml: 0, width: 'calc(100% + 16px)' }}>
+              <Grid item xs={6}>
+                <TextField
+                  fullWidth
+                  id="suppliedItemQuantityInput"
+                  name="quantity"
+                  label="Quantity"
+                  type="number"
+                  value={get(supplyDelivery, 'suppliedItem.quantity.value', '')}
+                  onChange={(e) => handleInputChange('suppliedItem.quantity.value', e.target.value)}
+                  disabled={!isEditing}
+                />
+              </Grid>
+              <Grid item xs={6}>
+                <TextField
+                  fullWidth
+                  id="suppliedItemQuantityUnitInput"
+                  name="quantityUnit"
+                  label="Unit"
+                  value={get(supplyDelivery, 'suppliedItem.quantity.unit', '')}
+                  onChange={(e) => handleInputChange('suppliedItem.quantity.unit', e.target.value)}
+                  disabled={!isEditing}
+                />
+              </Grid>
+            </Grid>
+
+            {/* Item Codeable Concept */}
+            <TextField
+              fullWidth
+              id="suppliedItemCodeableConceptInput"
+              name="itemCodeableConcept"
+              label="Item Description"
+              value={get(supplyDelivery, 'suppliedItem.itemCodeableConcept.text', '')}
+              onChange={(e) => handleInputChange('suppliedItem.itemCodeableConcept.text', e.target.value)}
+              disabled={!isEditing}
+            />
+          </Stack>
+        </Paper>
+
+        {/* References Section */}
+        <Paper elevation={0} sx={{ p: 2, bgcolor: 'grey.50' }}>
+          <Typography variant="h6" gutterBottom>
+            References
+          </Typography>
+
+          <Stack spacing={2}>
+            {/* Based On */}
+            <TextField
+              fullWidth
+              id="basedOnInput"
+              name="basedOn"
+              label="Based On (Supply Request Reference)"
+              value={get(supplyDelivery, 'basedOn[0].reference', '')}
+              onChange={(e) => handleInputChange('basedOn[0].reference', e.target.value)}
+              disabled={!isEditing}
+              helperText="Reference to the supply request this delivery fulfills"
+            />
+
+            {/* Part Of */}
+            <TextField
+              fullWidth
+              id="partOfInput"
+              name="partOf"
+              label="Part Of (Parent Supply Delivery)"
+              value={get(supplyDelivery, 'partOf[0].reference', '')}
+              onChange={(e) => handleInputChange('partOf[0].reference', e.target.value)}
+              disabled={!isEditing}
+              helperText="Reference to a parent supply delivery"
+            />
+          </Stack>
+        </Paper>
+
+        {/* Patient */}
+        <TextField
+          fullWidth
+          label="Patient"
+          value={get(supplyDelivery, 'patient.display', '')}
+          disabled={!isEditing}
+          InputProps={{
+            endAdornment: (
+              <InputAdornment position="end">
+                <IconButton
+                  onClick={() => setPatientSearchOpen(true)}
+                  disabled={!isEditing}
+                >
+                  <SearchIcon />
+                </IconButton>
+              </InputAdornment>
+            ),
+          }}
+        />
+
+        {/* Notes */}
+        <TextField
+          fullWidth
+          id="notesInput"
+          name="notes"
+          label="Notes"
+          multiline={true}
+          rows={4}
+          value={get(supplyDelivery, 'note[0].text', '')}
+          onChange={(e) => handleInputChange('note[0].text', e.target.value)}
+          disabled={!isEditing}
+        />
+      </Stack>
+    );
+  }
+
   return (
     <Container id="supplyDeliveryDetailsPage" maxWidth="md" sx={{ py: 4 }}>
       <Card sx={{ boxShadow: 3 }}>
-        <CardHeader 
+        <CardHeader
           title={id && id !== 'new' ? 'Edit Supply Delivery' : 'New Supply Delivery'}
           sx={{ bgcolor: 'primary.main', color: 'primary.contrastText' }}
         />

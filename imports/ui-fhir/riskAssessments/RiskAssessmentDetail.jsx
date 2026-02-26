@@ -31,8 +31,12 @@ import { get, set } from 'lodash';
 import { RiskAssessments } from '/imports/lib/schemas/SimpleSchemas/RiskAssessments';
 
 export function RiskAssessmentDetail(props) {
-  const { id } = useParams();
-  const navigate = useNavigate();
+  // Embedded mode support (for HoneycombFhirResource dispatcher)
+  var isEmbedded = props.embedded || false;
+  var _params = isEmbedded ? {} : useParams();
+  var id = _params.id || null;
+  var _rawNavigate = useNavigate();
+  var navigate = isEmbedded ? function() {} : _rawNavigate;
 
   const [riskAssessment, setRiskAssessment] = useState({
     resourceType: 'RiskAssessment',
@@ -46,11 +50,28 @@ export function RiskAssessmentDetail(props) {
     prediction: [],
     mitigation: ''
   });
-  const [isEditing, setIsEditing] = useState(id === 'new' || !id);
+
+  // Initialise from fhirResource prop when in embedded mode
+  var hasReceivedProps = React.useRef(false);
+  var pendingUpdate = React.useRef(false);
+  useEffect(function() {
+    if (isEmbedded && props.fhirResource) {
+      hasReceivedProps.current = true;
+      setRiskAssessment(function(prev) {
+        if (JSON.stringify(props.fhirResource) !== JSON.stringify(prev)) {
+          return props.fhirResource;
+        }
+        return prev;
+      });
+    }
+  }, [props.fhirResource]);
+
+  const [isEditing, setIsEditing] = useState(isEmbedded || id === 'new' || !id);
   const [isLoading, setIsLoading] = useState(false);
 
   // Subscribe and load data
   const isSubscriptionReady = useTracker(function() {
+    if (isEmbedded) return true; // Skip subscription in embedded mode
     let autoSubscribeEnabled = get(Meteor, 'settings.public.defaults.autoSubscribe', false);
     let handle;
     if (autoSubscribeEnabled) {
@@ -96,12 +117,22 @@ export function RiskAssessmentDetail(props) {
   }, [id, isSubscriptionReady]);
 
   function handleChange(path, value) {
+    pendingUpdate.current = true;
     setRiskAssessment(prev => {
       const updated = { ...prev };
       set(updated, path, value);
       return updated;
     });
   }
+
+  // onResourceChange useEffect: notify parent when state changes in embedded mode
+  useEffect(function() {
+    if (isEmbedded && pendingUpdate.current && props.onResourceChange) {
+      pendingUpdate.current = false;
+      props.onResourceChange(riskAssessment);
+    }
+  }, [riskAssessment]);
+
 
   function handleSearchPatient() {
     console.log('Patient search clicked');
@@ -173,6 +204,174 @@ export function RiskAssessmentDetail(props) {
 
   function handleBack() {
     navigate('/risk-assessments');
+  }
+
+  if (isEmbedded) {
+    return (
+      <Grid container spacing={3}>
+        {/* Status */}
+        <Grid item xs={12} sm={6}>
+          <FormControl fullWidth>
+            <InputLabel id="status-label">Status</InputLabel>
+            <Select
+              labelId="status-label"
+              id="statusSelect"
+              value={get(riskAssessment, 'status', 'preliminary')}
+              onChange={(e) => handleChange('status', e.target.value)}
+              disabled={!isEditing}
+              label="Status"
+            >
+              <MenuItem value="registered">Registered</MenuItem>
+              <MenuItem value="preliminary">Preliminary</MenuItem>
+              <MenuItem value="final">Final</MenuItem>
+              <MenuItem value="amended">Amended</MenuItem>
+              <MenuItem value="corrected">Corrected</MenuItem>
+              <MenuItem value="cancelled">Cancelled</MenuItem>
+              <MenuItem value="entered-in-error">Entered in Error</MenuItem>
+              <MenuItem value="unknown">Unknown</MenuItem>
+            </Select>
+          </FormControl>
+        </Grid>
+
+        {/* Date */}
+        <Grid item xs={12} sm={6}>
+          <TextField
+            id="dateInput"
+            fullWidth
+            label="Date"
+            type="date"
+            value={get(riskAssessment, 'date', '').split('T')[0]}
+            onChange={(e) => handleChange('date', e.target.value)}
+            disabled={!isEditing}
+            InputLabelProps={{ shrink: true }}
+          />
+        </Grid>
+
+        {/* Code (Type of Assessment) */}
+        <Grid item xs={12}>
+          <TextField
+            id="codeInput"
+            fullWidth
+            label="Assessment Type"
+            value={get(riskAssessment, 'code.text', get(riskAssessment, 'code.coding.0.display', ''))}
+            onChange={(e) => handleChange('code.text', e.target.value)}
+            disabled={!isEditing}
+            helperText="Type of risk assessment (e.g., Cardiovascular risk assessment)"
+          />
+        </Grid>
+
+        {/* Method */}
+        <Grid item xs={12}>
+          <TextField
+            id="methodInput"
+            fullWidth
+            label="Method"
+            value={get(riskAssessment, 'method.text', get(riskAssessment, 'method.coding.0.display', ''))}
+            onChange={(e) => handleChange('method.text', e.target.value)}
+            disabled={!isEditing}
+            helperText="Algorithm or methodology used (e.g., Framingham Risk Score)"
+          />
+        </Grid>
+
+        {/* Prediction */}
+        <Grid item xs={12}>
+          <TextField
+            id="predictionInput"
+            fullWidth
+            label="Prediction"
+            value={get(riskAssessment, 'prediction.0.outcome.text', '')}
+            onChange={(e) => handleChange('prediction.0.outcome.text', e.target.value)}
+            disabled={!isEditing}
+            multiline
+            rows={2}
+            helperText="Predicted outcome of the assessment"
+          />
+        </Grid>
+
+        {/* Mitigation */}
+        <Grid item xs={12}>
+          <TextField
+            id="mitigationInput"
+            fullWidth
+            label="Mitigation"
+            value={get(riskAssessment, 'mitigation', '')}
+            onChange={(e) => handleChange('mitigation', e.target.value)}
+            disabled={!isEditing}
+            multiline
+            rows={2}
+            helperText="How to reduce the risk"
+          />
+        </Grid>
+
+        {/* Occurrence DateTime */}
+        <Grid item xs={12} sm={6}>
+          <TextField
+            id="occurrenceDateTimeInput"
+            fullWidth
+            label="Occurrence Date/Time"
+            type="datetime-local"
+            value={get(riskAssessment, 'occurrenceDateTime', '').substring(0, 16)}
+            onChange={(e) => handleChange('occurrenceDateTime', e.target.value)}
+            disabled={!isEditing}
+            InputLabelProps={{ shrink: true }}
+            helperText="When the assessment was performed"
+          />
+        </Grid>
+
+        {/* Performer Display */}
+        <Grid item xs={12} sm={6}>
+          <TextField
+            id="performerDisplay"
+            fullWidth
+            label="Performer"
+            value={get(riskAssessment, 'performer.display', '')}
+            onChange={(e) => handleChange('performer.display', e.target.value)}
+            disabled={!isEditing}
+            helperText="Who performed the assessment"
+          />
+        </Grid>
+
+        {/* Patient / Subject */}
+        <Grid item xs={12}>
+          <TextField
+            id="subjectDisplay"
+            fullWidth
+            label="Patient"
+            value={get(riskAssessment, 'subject.display', '')}
+            onChange={(e) => handleChange('subject.display', e.target.value)}
+            disabled={!isEditing}
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <Tooltip title="Search for patient">
+                    <IconButton
+                      onClick={handleSearchPatient}
+                      edge="end"
+                      disabled={!isEditing}
+                    >
+                      <SearchIcon />
+                    </IconButton>
+                  </Tooltip>
+                </InputAdornment>
+              ),
+            }}
+          />
+        </Grid>
+
+        {/* Patient Reference (hidden but set) */}
+        <Grid item xs={12}>
+          <TextField
+            id="subjectReference"
+            fullWidth
+            label="Patient Reference"
+            value={get(riskAssessment, 'subject.reference', '')}
+            disabled
+            size="small"
+            sx={{ display: 'none' }}
+          />
+        </Grid>
+      </Grid>
+    );
   }
 
   return (

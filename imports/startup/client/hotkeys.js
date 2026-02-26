@@ -36,6 +36,12 @@ export function initializeKeyboardShortcuts() {
       window.dispatchEvent(new CustomEvent('toggleIndexPage'));
     }
 
+    // Cmd/Ctrl + Shift + C — Toggle Construction Zone sidebar visibility
+    if ((event.metaKey || event.ctrlKey) && event.shiftKey && (event.key === 'C' || event.key === 'c')) {
+      event.preventDefault();
+      window.dispatchEvent(new CustomEvent('toggleConstructionZone'));
+    }
+
     // Escape — Close dialogs
     if (event.key === 'Escape') {
       Session.set('mainAppDialogOpen', false);

@@ -446,4 +446,20 @@ EvidenceDetail.propTypes = {
   onCancel: PropTypes.func
 };
 
-export default EvidenceDetail;
+
+// Embedded mode wrapper for HoneycombFhirResource dispatcher
+function EvidenceDetailEmbeddedWrapper(props) {
+  var isEmbedded = props.embedded || false;
+  var fhirResource = props.fhirResource;
+  var onResourceChange = props.onResourceChange;
+
+  // Pass through to legacy class component
+  var classProps = Object.assign({}, props);
+  if (isEmbedded && fhirResource) {
+    classProps.evidence = fhirResource;
+  }
+
+  return React.createElement(EvidenceDetail, classProps);
+}
+
+export default EvidenceDetailEmbeddedWrapper;

@@ -30,8 +30,13 @@ import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
 
 function MeasureDetail(props) {
-  const navigate = useNavigate();
-  const { id } = useParams();
+  // Embedded mode support (for HoneycombFhirResource dispatcher)
+  var isEmbedded = props.embedded || false;
+
+  var _rawNavigate = useNavigate();
+  var navigate = isEmbedded ? function() {} : _rawNavigate;
+  var _params = isEmbedded ? {} : useParams();
+  var id = _params.id || null;
   
   // Get current user from session/tracker
   const currentUser = useTracker(function() {
@@ -40,6 +45,7 @@ function MeasureDetail(props) {
 
   // Subscribe to Measures
   const isSubscriptionReady = useTracker(function(){
+    if (isEmbedded) return true; // Skip subscription in embedded mode
     let autoSubscribeEnabled = get(Meteor, 'settings.public.defaults.autoSubscribe', false);
     let handle;
     if(autoSubscribeEnabled){
@@ -100,9 +106,24 @@ function MeasureDetail(props) {
     rationale: ""
   });
 
+  // Initialise from fhirResource prop when in embedded mode
+  var hasReceivedProps = React.useRef(false);
+  useEffect(function() {
+    if (isEmbedded && props.fhirResource) {
+      hasReceivedProps.current = true;
+      setMeasure(function(prev) {
+        if (JSON.stringify(props.fhirResource) !== JSON.stringify(prev)) {
+          return props.fhirResource;
+        }
+        return prev;
+      });
+    }
+  }, [props.fhirResource]);
+
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [isEditing, setIsEditing] = useState(false);
+  const [isEditing, setIsEditing] = useState(isEmbedded);
 
   // Set author on component mount for new measures
   useEffect(function() {
@@ -151,6 +172,11 @@ function MeasureDetail(props) {
     const updatedMeasure = { ...measure };
     set(updatedMeasure, path, value);
     setMeasure(updatedMeasure);
+  
+    // Notify parent of changes in embedded mode
+    if (props.onResourceChange) {
+      props.onResourceChange(updatedMeasure);
+    }
   }
 
   // Handle save
@@ -218,10 +244,307 @@ function MeasureDetail(props) {
     }
   }
 
+  if (isEmbedded) {
+    return (
+      <Grid container spacing={3}>
+        {/* Basic Information */}
+        <Grid item xs={12}>
+          <Typography variant="h6" gutterBottom>Basic Information</Typography>
+        </Grid>
+
+        <Grid item xs={12} md={6}>
+          <TextField
+            id="identifierInput"
+            fullWidth
+            label="Identifier"
+            value={get(measure, 'identifier[0].value', '')}
+            onChange={(e) => handleChange('identifier[0].value', e.target.value)}
+            disabled={!isEditing}
+            required
+          />
+        </Grid>
+
+        <Grid item xs={12} md={6}>
+          <TextField
+            id="versionInput"
+            fullWidth
+            label="Version"
+            value={get(measure, 'version', '')}
+            onChange={(e) => handleChange('version', e.target.value)}
+            disabled={!isEditing}
+            required
+          />
+        </Grid>
+
+        <Grid item xs={12}>
+          <TextField
+            id="nameInput"
+            fullWidth
+            label="Name (Computer Friendly)"
+            value={get(measure, 'name', '')}
+            onChange={(e) => handleChange('name', e.target.value)}
+            disabled={!isEditing}
+            required
+          />
+        </Grid>
+
+        <Grid item xs={12}>
+          <TextField
+            id="titleInput"
+            fullWidth
+            label="Title (Human Friendly)"
+            value={get(measure, 'title', '')}
+            onChange={(e) => handleChange('title', e.target.value)}
+            disabled={!isEditing}
+            required
+          />
+        </Grid>
+
+        <Grid item xs={12} md={6}>
+          <FormControl fullWidth>
+            <InputLabel id="status-label">Status</InputLabel>
+            <Select
+              id="statusSelect"
+              labelId="status-label"
+              value={get(measure, 'status', 'draft')}
+              onChange={(e) => handleChange('status', e.target.value)}
+              disabled={!isEditing}
+              label="Status"
+            >
+              <MenuItem value="draft">Draft</MenuItem>
+              <MenuItem value="active">Active</MenuItem>
+              <MenuItem value="retired">Retired</MenuItem>
+              <MenuItem value="unknown">Unknown</MenuItem>
+            </Select>
+          </FormControl>
+        </Grid>
+
+        <Grid item xs={12} md={6}>
+          <FormControl fullWidth>
+            <InputLabel id="improvement-notation-label">Improvement Notation</InputLabel>
+            <Select
+              id="improvementNotationSelect"
+              labelId="improvement-notation-label"
+              value={get(measure, 'improvementNotation.coding[0].code', 'increase')}
+              onChange={(e) => {
+                const notations = {
+                  'increase': 'Increased score indicates improvement',
+                  'decrease': 'Decreased score indicates improvement'
+                };
+                handleChange('improvementNotation.coding[0].code', e.target.value);
+                handleChange('improvementNotation.coding[0].display', notations[e.target.value]);
+              }}
+              disabled={!isEditing}
+              label="Improvement Notation"
+            >
+              <MenuItem value="increase">Increase</MenuItem>
+              <MenuItem value="decrease">Decrease</MenuItem>
+            </Select>
+          </FormControl>
+        </Grid>
+
+        {/* Descriptions */}
+        <Grid item xs={12}>
+          <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>Descriptions</Typography>
+        </Grid>
+
+        <Grid item xs={12}>
+          <TextField
+            id="descriptionTextarea"
+            fullWidth
+            multiline
+            rows={3}
+            label="Description"
+            value={get(measure, 'description', '')}
+            onChange={(e) => handleChange('description', e.target.value)}
+            disabled={!isEditing}
+          />
+        </Grid>
+
+        <Grid item xs={12}>
+          <TextField
+            id="purposeTextarea"
+            fullWidth
+            multiline
+            rows={3}
+            label="Purpose"
+            value={get(measure, 'purpose', '')}
+            onChange={(e) => handleChange('purpose', e.target.value)}
+            disabled={!isEditing}
+          />
+        </Grid>
+
+        <Grid item xs={12}>
+          <TextField
+            id="usageTextarea"
+            fullWidth
+            multiline
+            rows={2}
+            label="Usage"
+            value={get(measure, 'usage', '')}
+            onChange={(e) => handleChange('usage', e.target.value)}
+            disabled={!isEditing}
+          />
+        </Grid>
+
+        {/* Dates */}
+        <Grid item xs={12}>
+          <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>Dates</Typography>
+        </Grid>
+
+        <Grid item xs={12} md={6}>
+          <TextField
+            id="effectivePeriodStartInput"
+            fullWidth
+            label="Effective Period Start"
+            type="date"
+            value={get(measure, 'effectivePeriod.start', '')}
+            onChange={(e) => handleChange('effectivePeriod.start', e.target.value)}
+            disabled={!isEditing}
+            InputLabelProps={{ shrink: true }}
+          />
+        </Grid>
+
+        <Grid item xs={12} md={6}>
+          <TextField
+            id="effectivePeriodEndInput"
+            fullWidth
+            label="Effective Period End"
+            type="date"
+            value={get(measure, 'effectivePeriod.end', '')}
+            onChange={(e) => handleChange('effectivePeriod.end', e.target.value)}
+            disabled={!isEditing}
+            InputLabelProps={{ shrink: true }}
+          />
+        </Grid>
+
+        <Grid item xs={12} md={6}>
+          <TextField
+            id="lastReviewDateInput"
+            fullWidth
+            label="Last Review Date"
+            type="date"
+            value={get(measure, 'lastReviewDate', '')}
+            onChange={(e) => handleChange('lastReviewDate', e.target.value)}
+            disabled={!isEditing}
+            InputLabelProps={{ shrink: true }}
+          />
+        </Grid>
+
+        <Grid item xs={12} md={6}>
+          <TextField
+            id="approvalDateInput"
+            fullWidth
+            label="Approval Date"
+            type="date"
+            value={get(measure, 'approvalDate', '')}
+            onChange={(e) => handleChange('approvalDate', e.target.value)}
+            disabled={!isEditing}
+            InputLabelProps={{ shrink: true }}
+          />
+        </Grid>
+
+        {/* Additional Fields */}
+        <Grid item xs={12}>
+          <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>Additional Information</Typography>
+        </Grid>
+
+        <Grid item xs={12}>
+          <TextField
+            id="copyrightTextarea"
+            fullWidth
+            multiline
+            rows={2}
+            label="Copyright"
+            value={get(measure, 'copyright', '')}
+            onChange={(e) => handleChange('copyright', e.target.value)}
+            disabled={!isEditing}
+          />
+        </Grid>
+
+        <Grid item xs={12}>
+          <TextField
+            id="guidanceTextarea"
+            fullWidth
+            multiline
+            rows={3}
+            label="Guidance"
+            value={get(measure, 'guidance', '')}
+            onChange={(e) => handleChange('guidance', e.target.value)}
+            disabled={!isEditing}
+          />
+        </Grid>
+
+        <Grid item xs={12}>
+          <TextField
+            id="rateAggregationInput"
+            fullWidth
+            label="Rate Aggregation"
+            value={get(measure, 'rateAggregation', '')}
+            onChange={(e) => handleChange('rateAggregation', e.target.value)}
+            disabled={!isEditing}
+          />
+        </Grid>
+
+        <Grid item xs={12}>
+          <TextField
+            id="clinicalRecommendationStatementTextarea"
+            fullWidth
+            multiline
+            rows={3}
+            label="Clinical Recommendation Statement"
+            value={get(measure, 'clinicalRecommendationStatement', '')}
+            onChange={(e) => handleChange('clinicalRecommendationStatement', e.target.value)}
+            disabled={!isEditing}
+          />
+        </Grid>
+
+        <Grid item xs={12}>
+          <TextField
+            id="disclaimerTextarea"
+            fullWidth
+            multiline
+            rows={2}
+            label="Disclaimer"
+            value={get(measure, 'disclaimer', '')}
+            onChange={(e) => handleChange('disclaimer', e.target.value)}
+            disabled={!isEditing}
+          />
+        </Grid>
+
+        <Grid item xs={12}>
+          <TextField
+            id="riskAdjustmentTextarea"
+            fullWidth
+            multiline
+            rows={2}
+            label="Risk Adjustment"
+            value={get(measure, 'riskAdjustment', '')}
+            onChange={(e) => handleChange('riskAdjustment', e.target.value)}
+            disabled={!isEditing}
+          />
+        </Grid>
+
+        <Grid item xs={12}>
+          <TextField
+            id="rationaleTextarea"
+            fullWidth
+            multiline
+            rows={3}
+            label="Rationale"
+            value={get(measure, 'rationale', '')}
+            onChange={(e) => handleChange('rationale', e.target.value)}
+            disabled={!isEditing}
+          />
+        </Grid>
+      </Grid>
+    );
+  }
+
   return (
     <Container id="measureDetailPage" maxWidth="md" sx={{ py: 4 }}>
       <Card sx={{ boxShadow: 3 }}>
-        <CardHeader 
+        <CardHeader
           title={id && id !== 'new' ? 'Edit Measure' : 'New Measure'}
           sx={{ bgcolor: 'primary.main', color: 'primary.contrastText' }}
         />

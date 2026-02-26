@@ -57,3 +57,4 @@ imports/workflows/server-loader.js
 
 # Auto-generated workflow assets (copied by rspack.workflowParser.js)
 public/workflows/
+

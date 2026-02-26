@@ -63,11 +63,17 @@ Meteor.startup(function(){
 });
 
 function CarePlanDetail(props) {
-  const navigate = useNavigate();
-  const { id } = useParams();
+  // Embedded mode support (for HoneycombFhirResource dispatcher)
+  var isEmbedded = props.embedded || false;
+
+  var _rawNavigate = useNavigate();
+  var navigate = isEmbedded ? function() {} : _rawNavigate;
+  var _params = isEmbedded ? {} : useParams();
+  var id = _params.id || null;
   
   // Subscribe to care plans and patients data
   const subscriptionReady = useTracker(() => {
+    if (isEmbedded) return true; // Skip subscription in embedded mode
     const carePlansHandle = Meteor.subscribe('careplans.all');
     const patientsHandle = Meteor.subscribe('patients.search', {});
     return carePlansHandle.ready() && patientsHandle.ready();
@@ -116,9 +122,25 @@ function CarePlanDetail(props) {
     activity: []
   });
 
+  // Initialise from fhirResource prop when in embedded mode
+  var hasReceivedProps = React.useRef(false);
+  var pendingUpdate = React.useRef(false);
+  useEffect(function() {
+    if (isEmbedded && props.fhirResource) {
+      hasReceivedProps.current = true;
+      setCarePlan(function(prev) {
+        if (JSON.stringify(props.fhirResource) !== JSON.stringify(prev)) {
+          return props.fhirResource;
+        }
+        return prev;
+      });
+    }
+  }, [props.fhirResource]);
+
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [isEditing, setIsEditing] = useState(false);
+  const [isEditing, setIsEditing] = useState(isEmbedded);
   const [patientSearchOpen, setPatientSearchOpen] = useState(false);
   
   // Debug effect to monitor care plan changes
@@ -301,7 +323,7 @@ function CarePlanDetail(props) {
 
   function handleChange(path, value) {
     console.log('handleChange called with path:', path, 'value:', value);
-    
+
     // Add specific logging for author field changes
     if (path.startsWith('author')) {
       console.log('=== Author field change detected ===');
@@ -309,21 +331,31 @@ function CarePlanDetail(props) {
       console.log('New value:', value);
       console.log('Current author before change:', get(carePlan, 'author'));
     }
-    
+
+    pendingUpdate.current = true;
     setCarePlan(prevCarePlan => {
       const updatedCarePlan = JSON.parse(JSON.stringify(prevCarePlan)); // Deep clone
       set(updatedCarePlan, path, value);
       console.log('Updated care plan:', updatedCarePlan);
-      
+
       // Log author field after update
       if (path.startsWith('author')) {
         console.log('Author after update:', get(updatedCarePlan, 'author'));
         console.log('=== End author field change ===');
       }
-      
+
       return updatedCarePlan;
     });
   }
+
+  // onResourceChange useEffect: notify parent when state changes in embedded mode
+  useEffect(function() {
+    if (isEmbedded && pendingUpdate.current && props.onResourceChange) {
+      pendingUpdate.current = false;
+      props.onResourceChange(carePlan);
+    }
+  }, [carePlan]);
+
 
   // Handle search for users/patients
   function handleSearchUser() {
@@ -484,10 +516,365 @@ function CarePlanDetail(props) {
     { value: 'option', label: 'Option' }
   ];
 
+  if (isEmbedded) {
+    return (
+      <>
+        <Grid container spacing={3} sx={{ pt: 5 }}>
+          {/* Patient and Author - Half width each */}
+          <Grid item xs={12} sm={6}>
+            <TextField
+              id="subjectDisplay"
+              fullWidth
+              label="Patient"
+              value={get(carePlan, 'subject.display', '')}
+              onChange={(e) => handleChange('subject.display', e.target.value)}
+              helperText={get(carePlan, 'subject.reference', '') || 'Patient reference will be assigned'}
+              disabled={!isEditing}
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <Tooltip title="Search for patient">
+                      <IconButton
+                        onClick={handleSearchUser}
+                        edge="end"
+                        disabled={!isEditing}
+                      >
+                        <SearchIcon />
+                      </IconButton>
+                    </Tooltip>
+                  </InputAdornment>
+                ),
+              }}
+            />
+          </Grid>
+
+          <Grid item xs={12} sm={6}>
+            <TextField
+              id="authorDisplay"
+              fullWidth
+              label="Author"
+              value={get(carePlan, 'author[0].display', '')}
+              onChange={(e) => {
+                console.log('Author field onChange triggered');
+                console.log('New value:', e.target.value);
+                handleChange('author[0].display', e.target.value);
+              }}
+              helperText={get(carePlan, 'author[0].reference', '') || 'Practitioner reference will be assigned'}
+              disabled={!isEditing}
+            />
+          </Grid>
+
+          {/* Title - Full width */}
+          <Grid item xs={12}>
+            <TextField
+              id="title"
+              fullWidth
+              label="Title"
+              value={get(carePlan, 'title', '')}
+              onChange={(e) => handleChange('title', e.target.value)}
+              disabled={!isEditing}
+            />
+          </Grid>
+
+          {/* Status and Intent - Half width each */}
+          <Grid item xs={12} sm={6}>
+            <FormControl fullWidth disabled={!isEditing}>
+              <InputLabel>Status</InputLabel>
+              <Select
+                id="status"
+                value={get(carePlan, 'status', 'active')}
+                onChange={(e) => handleChange('status', e.target.value)}
+                label="Status"
+              >
+                {statusOptions.map(option => (
+                  <MenuItem key={option.value} value={option.value}>
+                    {option.label}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Grid>
+
+          <Grid item xs={12} sm={6}>
+            <FormControl fullWidth disabled={!isEditing}>
+              <InputLabel>Intent</InputLabel>
+              <Select
+                id="intent"
+                value={get(carePlan, 'intent', 'plan')}
+                onChange={(e) => handleChange('intent', e.target.value)}
+                label="Intent"
+              >
+                {intentOptions.map(option => (
+                  <MenuItem key={option.value} value={option.value}>
+                    {option.label}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Grid>
+
+          {/* Category Code and Display - Half width each */}
+          <Grid item xs={12} sm={6}>
+            <TextField
+              id="categoryCode"
+              fullWidth
+              label="Category Code (SNOMED)"
+              value={get(carePlan, 'category[0].coding[0].code', '')}
+              onChange={(e) => handleChange('category[0].coding[0].code', e.target.value)}
+              disabled={!isEditing}
+            />
+          </Grid>
+
+          <Grid item xs={12} sm={6}>
+            <TextField
+              id="categoryDisplay"
+              fullWidth
+              label="Category Display"
+              value={get(carePlan, 'category[0].coding[0].display', '')}
+              onChange={(e) => handleChange('category[0].coding[0].display', e.target.value)}
+              disabled={!isEditing}
+            />
+          </Grid>
+
+          {/* Description - Full width */}
+          <Grid item xs={12}>
+            <TextField
+              id="description"
+              fullWidth
+              multiline
+              rows={2}
+              label="Description"
+              value={get(carePlan, 'description', '')}
+              onChange={(e) => handleChange('description', e.target.value)}
+              disabled={!isEditing}
+            />
+          </Grid>
+
+          {/* Start and End Dates - Half width each */}
+          <Grid item xs={12} sm={6}>
+            <TextField
+              id="periodStart"
+              fullWidth
+              type="date"
+              label="Start Date"
+              value={moment(get(carePlan, 'period.start', '')).format('YYYY-MM-DD')}
+              onChange={(e) => handleChange('period.start', e.target.value)}
+              InputLabelProps={{ shrink: true }}
+              disabled={!isEditing}
+            />
+          </Grid>
+
+          <Grid item xs={12} sm={6}>
+            <TextField
+              id="periodEnd"
+              fullWidth
+              type="date"
+              label="End Date"
+              value={moment(get(carePlan, 'period.end', '')).format('YYYY-MM-DD')}
+              onChange={(e) => handleChange('period.end', e.target.value)}
+              InputLabelProps={{ shrink: true }}
+              disabled={!isEditing}
+            />
+          </Grid>
+
+          {/* Notes - Full width */}
+          <Grid item xs={12}>
+            <TextField
+              id="notesTextarea"
+              fullWidth
+              multiline
+              rows={3}
+              label="Notes"
+              value={get(carePlan, 'note[0].text', '')}
+              onChange={(e) => handleChange('note[0].text', e.target.value)}
+              helperText="Additional notes about the care plan"
+              disabled={!isEditing}
+            />
+          </Grid>
+        </Grid>
+
+        {/* Activities Section */}
+        <Grid item xs={12}>
+          <Divider sx={{ my: 3 }} />
+          <Box sx={{ mb: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Typography variant="h6">Activities</Typography>
+            {isEditing && (
+              <Button
+                startIcon={<AddIcon />}
+                onClick={handleAddActivity}
+                variant="outlined"
+                size="small"
+              >
+                Add Activity
+              </Button>
+            )}
+          </Box>
+
+          {(!carePlan.activity || carePlan.activity.length === 0) ? (
+            <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
+              No activities defined yet. {isEditing && 'Click "Add Activity" to create one.'}
+            </Typography>
+          ) : (
+            <Stack spacing={2}>
+              {carePlan.activity.map((activity, index) => (
+                <Paper key={index} sx={{ p: 2 }} variant="outlined">
+                  <Grid container spacing={2}>
+                    {/* Activity Header with Remove Button */}
+                    <Grid item xs={12}>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                        <Typography variant="subtitle2" color="primary">
+                          Activity {index + 1}
+                        </Typography>
+                        {isEditing && (
+                          <IconButton
+                            size="small"
+                            onClick={() => handleRemoveActivity(index)}
+                            color="error"
+                          >
+                            <DeleteIcon fontSize="small" />
+                          </IconButton>
+                        )}
+                      </Box>
+                    </Grid>
+
+                    {/* Description */}
+                    <Grid item xs={12}>
+                      <TextField
+                        fullWidth
+                        label="Description"
+                        value={get(activity, 'detail.description', '')}
+                        onChange={(e) => handleActivityChange(index, 'detail.description', e.target.value)}
+                        disabled={!isEditing}
+                        size="small"
+                      />
+                    </Grid>
+
+                    {/* Code and Display */}
+                    <Grid item xs={12} sm={6}>
+                      <TextField
+                        fullWidth
+                        label="SNOMED Code"
+                        value={get(activity, 'detail.code.coding[0].code', '')}
+                        onChange={(e) => handleActivityChange(index, 'detail.code.coding[0].code', e.target.value)}
+                        disabled={!isEditing}
+                        size="small"
+                      />
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                      <TextField
+                        fullWidth
+                        label="Code Display"
+                        value={get(activity, 'detail.code.coding[0].display', '')}
+                        onChange={(e) => handleActivityChange(index, 'detail.code.coding[0].display', e.target.value)}
+                        disabled={!isEditing}
+                        size="small"
+                      />
+                    </Grid>
+
+                    {/* Status */}
+                    <Grid item xs={12} sm={6}>
+                      <FormControl fullWidth size="small">
+                        <InputLabel>Status</InputLabel>
+                        <Select
+                          value={get(activity, 'detail.status', 'not-started')}
+                          onChange={(e) => handleActivityChange(index, 'detail.status', e.target.value)}
+                          label="Status"
+                          disabled={!isEditing}
+                        >
+                          <MenuItem value="not-started">Not Started</MenuItem>
+                          <MenuItem value="scheduled">Scheduled</MenuItem>
+                          <MenuItem value="in-progress">In Progress</MenuItem>
+                          <MenuItem value="on-hold">On Hold</MenuItem>
+                          <MenuItem value="completed">Completed</MenuItem>
+                          <MenuItem value="cancelled">Cancelled</MenuItem>
+                          <MenuItem value="stopped">Stopped</MenuItem>
+                          <MenuItem value="unknown">Unknown</MenuItem>
+                          <MenuItem value="entered-in-error">Entered in Error</MenuItem>
+                        </Select>
+                      </FormControl>
+                    </Grid>
+
+                    {/* Kind */}
+                    <Grid item xs={12} sm={6}>
+                      <FormControl fullWidth size="small">
+                        <InputLabel>Kind</InputLabel>
+                        <Select
+                          value={get(activity, 'detail.kind', 'Task')}
+                          onChange={(e) => handleActivityChange(index, 'detail.kind', e.target.value)}
+                          label="Kind"
+                          disabled={!isEditing}
+                        >
+                          <MenuItem value="Appointment">Appointment</MenuItem>
+                          <MenuItem value="CommunicationRequest">Communication Request</MenuItem>
+                          <MenuItem value="DeviceRequest">Device Request</MenuItem>
+                          <MenuItem value="MedicationRequest">Medication Request</MenuItem>
+                          <MenuItem value="NutritionOrder">Nutrition Order</MenuItem>
+                          <MenuItem value="Task">Task</MenuItem>
+                          <MenuItem value="ServiceRequest">Service Request</MenuItem>
+                          <MenuItem value="VisionPrescription">Vision Prescription</MenuItem>
+                        </Select>
+                      </FormControl>
+                    </Grid>
+
+                    {/* Reason Reference */}
+                    <Grid item xs={12} sm={6}>
+                      <TextField
+                        fullWidth
+                        label="Reason Reference"
+                        value={get(activity, 'detail.reasonReference[0].reference', '')}
+                        onChange={(e) => handleActivityChange(index, 'detail.reasonReference[0].reference', e.target.value)}
+                        disabled={!isEditing}
+                        size="small"
+                        helperText="e.g., Condition/123"
+                      />
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                      <TextField
+                        fullWidth
+                        label="Reason Display"
+                        value={get(activity, 'detail.reasonReference[0].display', '')}
+                        onChange={(e) => handleActivityChange(index, 'detail.reasonReference[0].display', e.target.value)}
+                        disabled={!isEditing}
+                        size="small"
+                      />
+                    </Grid>
+
+                    {/* Location */}
+                    <Grid item xs={12} sm={6}>
+                      <TextField
+                        fullWidth
+                        label="Location Reference"
+                        value={get(activity, 'detail.location.reference', '')}
+                        onChange={(e) => handleActivityChange(index, 'detail.location.reference', e.target.value)}
+                        disabled={!isEditing}
+                        size="small"
+                        helperText="e.g., Location/456"
+                      />
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                      <TextField
+                        fullWidth
+                        label="Location Display"
+                        value={get(activity, 'detail.location.display', '')}
+                        onChange={(e) => handleActivityChange(index, 'detail.location.display', e.target.value)}
+                        disabled={!isEditing}
+                        size="small"
+                      />
+                    </Grid>
+                  </Grid>
+                </Paper>
+              ))}
+            </Stack>
+          )}
+        </Grid>
+      </>
+    );
+  }
+
   return (
     <Container id="carePlanDetailPage" maxWidth="md" sx={{ py: 4 }}>
       <Card sx={{ boxShadow: 3 }}>
-        <CardHeader 
+        <CardHeader
           title={
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <Typography variant="h6" className={id && id !== 'new' ? "barcode helveticas" : ""}>

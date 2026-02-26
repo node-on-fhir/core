@@ -446,4 +446,20 @@ GuidanceResponseDetail.propTypes = {
   onCancel: PropTypes.func
 };
 
-export default GuidanceResponseDetail;
+
+// Embedded mode wrapper for HoneycombFhirResource dispatcher
+function GuidanceResponseDetailEmbeddedWrapper(props) {
+  var isEmbedded = props.embedded || false;
+  var fhirResource = props.fhirResource;
+  var onResourceChange = props.onResourceChange;
+
+  // Pass through to legacy class component
+  var classProps = Object.assign({}, props);
+  if (isEmbedded && fhirResource) {
+    classProps.guidanceResponse = fhirResource;
+  }
+
+  return React.createElement(GuidanceResponseDetail, classProps);
+}
+
+export default GuidanceResponseDetailEmbeddedWrapper;

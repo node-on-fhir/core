@@ -60,11 +60,17 @@ Meteor.startup(function(){
 });
 
 function MediaDetail(props) {
-  const navigate = useNavigate();
-  const { id } = useParams();
+  // Embedded mode support (for HoneycombFhirResource dispatcher)
+  var isEmbedded = props.embedded || false;
+
+  var _rawNavigate = useNavigate();
+  var navigate = isEmbedded ? function() {} : _rawNavigate;
+  var _params = isEmbedded ? {} : useParams();
+  var id = _params.id || null;
   
   // Subscribe to medias and patients data
   const isSubscriptionReady = useTracker(function(){
+    if (isEmbedded) return true; // Skip subscription in embedded mode
     let autoSubscribeEnabled = get(Meteor, 'settings.public.defaults.autoSubscribe', false);
     let handle;
     if(autoSubscribeEnabled){
@@ -162,9 +168,25 @@ function MediaDetail(props) {
     }]
   });
 
+  // Initialise from fhirResource prop when in embedded mode
+  var hasReceivedProps = React.useRef(false);
+  var pendingUpdate = React.useRef(false);
+  useEffect(function() {
+    if (isEmbedded && props.fhirResource) {
+      hasReceivedProps.current = true;
+      setMedia(function(prev) {
+        if (JSON.stringify(props.fhirResource) !== JSON.stringify(prev)) {
+          return props.fhirResource;
+        }
+        return prev;
+      });
+    }
+  }, [props.fhirResource]);
+
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [isEditing, setIsEditing] = useState(id === 'new'); // Start in edit mode for new medias
+  const [isEditing, setIsEditing] = useState(isEmbedded || id === 'new'); // Start in edit mode for embedded or new medias
   const [patientSearchOpen, setPatientSearchOpen] = useState(false);
   const [forceUpdate, setForceUpdate] = useState(0); // Force re-render counter
 
@@ -243,6 +265,7 @@ function MediaDetail(props) {
   // Handle field changes
   function handleChange(path, value) {
     console.log('handleChange called with path:', path, 'value:', value);
+    pendingUpdate.current = true;
     setMedia(prevMedia => {
       const updatedMedia = JSON.parse(JSON.stringify(prevMedia)); // Deep clone
       set(updatedMedia, path, value);
@@ -250,6 +273,15 @@ function MediaDetail(props) {
       return updatedMedia;
     });
   }
+
+  // onResourceChange useEffect: notify parent when state changes in embedded mode
+  useEffect(function() {
+    if (isEmbedded && pendingUpdate.current && props.onResourceChange) {
+      pendingUpdate.current = false;
+      props.onResourceChange(media);
+    }
+  }, [media]);
+
 
   // Handle search for users/patients
   function handleSearchUser() {
@@ -395,11 +427,354 @@ function MediaDetail(props) {
     navigate('/medias');
   }
 
+  if (isEmbedded) {
+    return (
+      <Grid container spacing={3}>
+        <Grid item xs={12} md={6}>
+          <FormControl fullWidth>
+            <InputLabel id="statusLabel">Status</InputLabel>
+            <Select
+              id="statusSelect"
+              labelId="statusLabel"
+              value={get(media, 'status', 'completed')}
+              onChange={(e) => handleChange('status', e.target.value)}
+              disabled={!isEditing}
+              label="Status"
+            >
+              <MenuItem value="preparation">Preparation</MenuItem>
+              <MenuItem value="in-progress">In Progress</MenuItem>
+              <MenuItem value="not-done">Not Done</MenuItem>
+              <MenuItem value="on-hold">On Hold</MenuItem>
+              <MenuItem value="stopped">Stopped</MenuItem>
+              <MenuItem value="completed">Completed</MenuItem>
+              <MenuItem value="entered-in-error">Entered in Error</MenuItem>
+              <MenuItem value="unknown">Unknown</MenuItem>
+            </Select>
+          </FormControl>
+        </Grid>
+
+        <Grid item xs={12} md={6}>
+          <FormControl fullWidth>
+            <InputLabel id="typeLabel">Type</InputLabel>
+            <Select
+              id="typeSelect"
+              labelId="typeLabel"
+              value={get(media, 'type.coding[0].code', 'photo')}
+              onChange={(e) => {
+                const typeMap = {
+                  'image': 'Image',
+                  'video': 'Video',
+                  'audio': 'Audio',
+                  'photo': 'Photo'
+                };
+                handleChange('type.coding[0].code', e.target.value);
+                handleChange('type.coding[0].display', typeMap[e.target.value]);
+                handleChange('type.text', typeMap[e.target.value]);
+              }}
+              disabled={!isEditing}
+              label="Type"
+            >
+              <MenuItem value="image">Image</MenuItem>
+              <MenuItem value="video">Video</MenuItem>
+              <MenuItem value="audio">Audio</MenuItem>
+              <MenuItem value="photo">Photo</MenuItem>
+            </Select>
+          </FormControl>
+        </Grid>
+
+        <Grid item xs={12} md={6}>
+          <TextField
+            id="modalityInput"
+            fullWidth
+            label="Modality Code"
+            value={get(media, 'modality.coding[0].code', '')}
+            onChange={(e) => handleChange('modality.coding[0].code', e.target.value)}
+            disabled={!isEditing}
+          />
+        </Grid>
+
+        <Grid item xs={12} md={6}>
+          <TextField
+            id="modalityDisplayInput"
+            fullWidth
+            label="Modality Display"
+            value={get(media, 'modality.coding[0].display', '') || get(media, 'modality.text', '')}
+            onChange={(e) => {
+              handleChange('modality.coding[0].display', e.target.value);
+              handleChange('modality.text', e.target.value);
+            }}
+            disabled={!isEditing}
+          />
+        </Grid>
+
+        <Grid item xs={12} md={6}>
+          <TextField
+            id="viewInput"
+            fullWidth
+            label="View Code"
+            value={get(media, 'view.coding[0].code', '')}
+            onChange={(e) => handleChange('view.coding[0].code', e.target.value)}
+            disabled={!isEditing}
+          />
+        </Grid>
+
+        <Grid item xs={12} md={6}>
+          <TextField
+            id="viewDisplayInput"
+            fullWidth
+            label="View Display"
+            value={get(media, 'view.coding[0].display', '') || get(media, 'view.text', '')}
+            onChange={(e) => {
+              handleChange('view.coding[0].display', e.target.value);
+              handleChange('view.text', e.target.value);
+            }}
+            disabled={!isEditing}
+          />
+        </Grid>
+
+        <Grid item xs={12}>
+          <TextField
+            id="subjectDisplay"
+            fullWidth
+            label="Patient"
+            value={get(media, 'subject.display', '')}
+            onChange={(e) => handleChange('subject.display', e.target.value)}
+            disabled={!isEditing}
+          />
+        </Grid>
+
+        <Grid item xs={12} md={6}>
+          <TextField
+            id="operatorInput"
+            fullWidth
+            label="Operator Name"
+            value={get(media, 'operator[0].display', '')}
+            onChange={(e) => handleChange('operator[0].display', e.target.value)}
+            disabled={!isEditing}
+          />
+        </Grid>
+
+        <Grid item xs={12} md={6}>
+          <TextField
+            id="operatorReferenceInput"
+            fullWidth
+            label="Operator Reference"
+            value={get(media, 'operator[0].reference', '')}
+            onChange={(e) => handleChange('operator[0].reference', e.target.value)}
+            disabled={!isEditing}
+          />
+        </Grid>
+
+        <Grid item xs={12} md={6}>
+          <TextField
+            id="reasonCodeInput"
+            fullWidth
+            label="Reason Code"
+            value={get(media, 'reasonCode[0].text', '')}
+            onChange={(e) => handleChange('reasonCode[0].text', e.target.value)}
+            disabled={!isEditing}
+          />
+        </Grid>
+
+        <Grid item xs={12} md={6}>
+          <TextField
+            id="reasonCodeDisplayInput"
+            fullWidth
+            label="Reason Code Display"
+            value={get(media, 'reasonCode[0].coding[0].display', '')}
+            onChange={(e) => handleChange('reasonCode[0].coding[0].display', e.target.value)}
+            disabled={!isEditing}
+          />
+        </Grid>
+
+        <Grid item xs={12} md={6}>
+          <TextField
+            id="bodySiteInput"
+            fullWidth
+            label="Body Site"
+            value={get(media, 'bodySite.text', '')}
+            onChange={(e) => handleChange('bodySite.text', e.target.value)}
+            disabled={!isEditing}
+          />
+        </Grid>
+
+        <Grid item xs={12} md={6}>
+          <TextField
+            id="bodySiteDisplayInput"
+            fullWidth
+            label="Body Site Display"
+            value={get(media, 'bodySite.coding[0].display', '')}
+            onChange={(e) => handleChange('bodySite.coding[0].display', e.target.value)}
+            disabled={!isEditing}
+          />
+        </Grid>
+
+        <Grid item xs={12} md={6}>
+          <TextField
+            id="deviceNameInput"
+            fullWidth
+            label="Device Name"
+            value={get(media, 'deviceName', '')}
+            onChange={(e) => handleChange('deviceName', e.target.value)}
+            disabled={!isEditing}
+          />
+        </Grid>
+
+        <Grid item xs={12} md={6}>
+          <TextField
+            id="deviceReferenceInput"
+            fullWidth
+            label="Device Reference"
+            value={get(media, 'device.reference', '')}
+            onChange={(e) => handleChange('device.reference', e.target.value)}
+            disabled={!isEditing}
+          />
+        </Grid>
+
+        <Grid item xs={12} md={3}>
+          <TextField
+            id="heightInput"
+            fullWidth
+            label="Height"
+            type="number"
+            value={get(media, 'height', '')}
+            onChange={(e) => handleChange('height', e.target.value ? parseInt(e.target.value) : null)}
+            disabled={!isEditing}
+          />
+        </Grid>
+
+        <Grid item xs={12} md={3}>
+          <TextField
+            id="widthInput"
+            fullWidth
+            label="Width"
+            type="number"
+            value={get(media, 'width', '')}
+            onChange={(e) => handleChange('width', e.target.value ? parseInt(e.target.value) : null)}
+            disabled={!isEditing}
+          />
+        </Grid>
+
+        <Grid item xs={12} md={3}>
+          <TextField
+            id="framesInput"
+            fullWidth
+            label="Frames"
+            type="number"
+            value={get(media, 'frames', '')}
+            onChange={(e) => handleChange('frames', e.target.value ? parseInt(e.target.value) : null)}
+            disabled={!isEditing}
+          />
+        </Grid>
+
+        <Grid item xs={12} md={3}>
+          <TextField
+            id="durationInput"
+            fullWidth
+            label="Duration (s)"
+            type="number"
+            value={get(media, 'duration', '')}
+            onChange={(e) => handleChange('duration', e.target.value ? parseFloat(e.target.value) : null)}
+            disabled={!isEditing}
+          />
+        </Grid>
+
+        <Grid item xs={12} md={6}>
+          <TextField
+            id="createdInput"
+            fullWidth
+            label="Created Date"
+            type="date"
+            value={moment(get(media, 'created', '')).format('YYYY-MM-DD')}
+            onChange={(e) => handleChange('created', e.target.value)}
+            disabled={!isEditing}
+            InputLabelProps={{
+              shrink: true,
+            }}
+          />
+        </Grid>
+
+        <Grid item xs={12} md={6}>
+          <TextField
+            id="issuedInput"
+            fullWidth
+            label="Issued Date"
+            type="date"
+            value={moment(get(media, 'issued', '')).format('YYYY-MM-DD')}
+            onChange={(e) => handleChange('issued', e.target.value)}
+            disabled={!isEditing}
+            InputLabelProps={{
+              shrink: true,
+            }}
+          />
+        </Grid>
+
+        <Grid item xs={12} md={6}>
+          <TextField
+            id="contentTypeInput"
+            fullWidth
+            label="Content Type"
+            value={get(media, 'content.contentType', '')}
+            onChange={(e) => handleChange('content.contentType', e.target.value)}
+            disabled={!isEditing}
+          />
+        </Grid>
+
+        <Grid item xs={12} md={6}>
+          <TextField
+            id="contentSizeInput"
+            fullWidth
+            label="Content Size (bytes)"
+            type="number"
+            value={get(media, 'content.size', '')}
+            onChange={(e) => handleChange('content.size', e.target.value ? parseInt(e.target.value) : null)}
+            disabled={!isEditing}
+          />
+        </Grid>
+
+        <Grid item xs={12}>
+          <TextField
+            id="contentUrlInput"
+            fullWidth
+            label="Content URL"
+            value={get(media, 'content.url', '')}
+            onChange={(e) => handleChange('content.url', e.target.value)}
+            disabled={!isEditing}
+          />
+        </Grid>
+
+        <Grid item xs={12}>
+          <TextField
+            id="contentTitleInput"
+            fullWidth
+            label="Content Title"
+            value={get(media, 'content.title', '')}
+            onChange={(e) => handleChange('content.title', e.target.value)}
+            disabled={!isEditing}
+          />
+        </Grid>
+
+        <Grid item xs={12}>
+          <TextField
+            id="notesTextarea"
+            fullWidth
+            multiline
+            rows={4}
+            label="Notes"
+            value={get(media, 'note[0].text', '')}
+            onChange={(e) => handleChange('note[0].text', e.target.value)}
+            disabled={!isEditing}
+          />
+        </Grid>
+      </Grid>
+    );
+  }
+
   // Render
   return (
     <Container id='mediaDetailPage' maxWidth="md" sx={{ py: 4 }}>
       <Card sx={{ boxShadow: 3 }}>
-        <CardHeader 
+        <CardHeader
           title={id && id !== 'new' ? 'Edit Media' : 'New Media'}
           sx={{ bgcolor: 'primary.main', color: 'primary.contrastText' }}
         />

@@ -130,11 +130,31 @@ const arrayItemStyle = (theme) => ({
 });
 
 function PlanDefinitionDetail(props) {
-  const navigate = useNavigate();
-  const { id } = useParams();
+  // Embedded mode support (for HoneycombFhirResource dispatcher)
+  var isEmbedded = props.embedded || false;
+
+  var _rawNavigate = useNavigate();
+  var navigate = isEmbedded ? function() {} : _rawNavigate;
+  var _params = isEmbedded ? {} : useParams();
+  var id = _params.id || null;
   
   // Tab state for organizing sections
   const [activeTab, setActiveTab] = useState(0);
+
+  // Initialise from fhirResource prop when in embedded mode
+  var hasReceivedProps = React.useRef(false);
+  useEffect(function() {
+    if (isEmbedded && props.fhirResource) {
+      hasReceivedProps.current = true;
+      setActiveTab(function(prev) {
+        if (JSON.stringify(props.fhirResource) !== JSON.stringify(prev)) {
+          return props.fhirResource;
+        }
+        return prev;
+      });
+    }
+  }, [props.fhirResource]);
+
   const [expandedAccordions, setExpandedAccordions] = useState({});
   
   // Dialog states
@@ -149,6 +169,7 @@ function PlanDefinitionDetail(props) {
 
   // Subscribe to PlanDefinitions
   const isSubscriptionReady = useTracker(function(){
+    if (isEmbedded) return true; // Skip subscription in embedded mode
     let autoSubscribeEnabled = get(Meteor, 'settings.public.defaults.autoSubscribe', false);
     let handle;
     if(autoSubscribeEnabled){
@@ -219,7 +240,7 @@ function PlanDefinitionDetail(props) {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [isEditing, setIsEditing] = useState(false);
+  const [isEditing, setIsEditing] = useState(isEmbedded);
   const [showAdvanced, setShowAdvanced] = useState(false);
 
   // Set default values on component mount for new plan definitions
@@ -271,6 +292,11 @@ function PlanDefinitionDetail(props) {
     const updatedPlanDefinition = { ...planDefinition };
     set(updatedPlanDefinition, path, value);
     setPlanDefinition(updatedPlanDefinition);
+  
+    // Notify parent of changes in embedded mode
+    if (props.onResourceChange) {
+      props.onResourceChange(updatedPlanDefinition);
+    }
   }
 
   // Array field handlers
@@ -783,10 +809,390 @@ function PlanDefinitionDetail(props) {
     <Box sx={{ flex: 2 }}>{children}</Box>
   );
 
+  if (isEmbedded) {
+    return (
+      <>
+        <Tabs value={activeTab} onChange={(e, v) => setActiveTab(v)} sx={{ mb: 3 }}>
+          <Tab icon={<InfoIcon />} label="Basic Info" />
+          <Tab icon={<TargetIcon />} label="Goals & Actions" />
+          <Tab icon={<GroupIcon />} label="Contributors" />
+          <Tab icon={<LibraryBooksIcon />} label="Resources" />
+          <Tab icon={<SecurityIcon />} label="Governance" />
+        </Tabs>
+
+        {/* Tab 0: Basic Information */}
+        {activeTab === 0 && (
+          <Stack spacing={3}>
+            <Accordion
+              expanded={expandedAccordions['identifiers'] !== false}
+              onChange={handleAccordionChange('identifiers')}
+              sx={sectionStyle}
+            >
+              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                <Typography variant="h6">Identifiers & Metadata</Typography>
+              </AccordionSummary>
+              <AccordionDetails>
+                <Stack spacing={3}>
+                  {renderIdentifiers()}
+                  <Divider />
+                  <TextField
+                    id="urlInput"
+                    fullWidth
+                    label="Canonical URL"
+                    value={get(planDefinition, 'url', '')}
+                    onChange={(e) => handleChange('url', e.target.value)}
+                    disabled={!isEditing}
+                    helperText="Canonical identifier for this plan definition"
+                  />
+                  <Box display="flex" gap={2}>
+                    <TextField
+                      id="versionInput"
+                      sx={{ flex: 1 }}
+                      label="Version"
+                      value={get(planDefinition, 'version', '')}
+                      onChange={(e) => handleChange('version', e.target.value)}
+                      disabled={!isEditing}
+                      helperText="Business version"
+                    />
+                    <FormControlLabel
+                      control={
+                        <Switch
+                          checked={get(planDefinition, 'experimental', false)}
+                          onChange={(e) => handleChange('experimental', e.target.checked)}
+                          disabled={!isEditing}
+                        />
+                      }
+                      label="Experimental"
+                    />
+                  </Box>
+                </Stack>
+              </AccordionDetails>
+            </Accordion>
+
+            <Accordion
+              defaultExpanded
+              expanded={expandedAccordions['basic'] !== false}
+              onChange={handleAccordionChange('basic')}
+              sx={sectionStyle}
+            >
+              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                <Typography variant="h6">Basic Information</Typography>
+              </AccordionSummary>
+              <AccordionDetails>
+                <Stack spacing={2}>
+                  <TextField
+                    id="nameInput"
+                    fullWidth
+                    label="Name (Computer Friendly)"
+                    value={get(planDefinition, 'name', '')}
+                    onChange={(e) => handleChange('name', e.target.value)}
+                    disabled={!isEditing}
+                    required
+                    helperText="Computer-friendly name (no spaces)"
+                  />
+                  <TextField
+                    id="titleInput"
+                    fullWidth
+                    label="Title (Human Friendly)"
+                    value={get(planDefinition, 'title', '')}
+                    onChange={(e) => handleChange('title', e.target.value)}
+                    disabled={!isEditing}
+                    required
+                    helperText="Human-readable title"
+                  />
+                  <TextField
+                    fullWidth
+                    label="Subtitle"
+                    value={get(planDefinition, 'subtitle', '')}
+                    onChange={(e) => handleChange('subtitle', e.target.value)}
+                    disabled={!isEditing}
+                    helperText="Subordinate title"
+                  />
+                  <Box display="flex" gap={2}>
+                    <FormControl sx={{ flex: 1 }} required>
+                      <InputLabel>Type</InputLabel>
+                      <Select
+                        id="typeSelect"
+                        value={get(planDefinition, 'type.coding[0].code', 'clinical-protocol')}
+                        onChange={(e) => {
+                          const typeMap = {
+                            'eca-rule': 'ECA Rule',
+                            'clinical-protocol': 'Clinical Protocol',
+                            'order-set': 'Order Set',
+                            'workflow-definition': 'Workflow Definition'
+                          };
+                          handleChange('type.coding[0].code', e.target.value);
+                          handleChange('type.coding[0].display', typeMap[e.target.value]);
+                        }}
+                        disabled={!isEditing}
+                      >
+                        <MenuItem value="clinical-protocol">Clinical Protocol</MenuItem>
+                        <MenuItem value="eca-rule">ECA Rule</MenuItem>
+                        <MenuItem value="order-set">Order Set</MenuItem>
+                        <MenuItem value="workflow-definition">Workflow Definition</MenuItem>
+                      </Select>
+                    </FormControl>
+                    <FormControl sx={{ flex: 1 }} required>
+                      <InputLabel>Status</InputLabel>
+                      <Select
+                        id="statusSelect"
+                        value={get(planDefinition, 'status', 'draft')}
+                        onChange={(e) => handleChange('status', e.target.value)}
+                        disabled={!isEditing}
+                      >
+                        <MenuItem value="draft">Draft</MenuItem>
+                        <MenuItem value="active">Active</MenuItem>
+                        <MenuItem value="retired">Retired</MenuItem>
+                        <MenuItem value="unknown">Unknown</MenuItem>
+                      </Select>
+                    </FormControl>
+                  </Box>
+                  <TextField
+                    id="descriptionTextarea"
+                    fullWidth
+                    multiline
+                    rows={4}
+                    label="Description"
+                    value={get(planDefinition, 'description', '')}
+                    onChange={(e) => handleChange('description', e.target.value)}
+                    disabled={!isEditing}
+                    helperText="Natural language description"
+                  />
+                  <TextField
+                    id="purposeTextarea"
+                    fullWidth
+                    multiline
+                    rows={3}
+                    label="Purpose"
+                    value={get(planDefinition, 'purpose', '')}
+                    onChange={(e) => handleChange('purpose', e.target.value)}
+                    disabled={!isEditing}
+                    helperText="Why this plan definition is defined"
+                  />
+                  <TextField
+                    id="usageTextarea"
+                    fullWidth
+                    multiline
+                    rows={3}
+                    label="Usage"
+                    value={get(planDefinition, 'usage', '')}
+                    onChange={(e) => handleChange('usage', e.target.value)}
+                    disabled={!isEditing}
+                    helperText="Describes clinical usage"
+                  />
+                </Stack>
+              </AccordionDetails>
+            </Accordion>
+
+            <Accordion
+              expanded={expandedAccordions['dates'] !== false}
+              onChange={handleAccordionChange('dates')}
+              sx={sectionStyle}
+            >
+              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                <Typography variant="h6">Important Dates</Typography>
+              </AccordionSummary>
+              <AccordionDetails>
+                <Grid container spacing={2}>
+                  <Grid item xs={12} md={6}>
+                    <TextField
+                      id="dateInput"
+                      fullWidth
+                      label="Publication Date"
+                      type="date"
+                      value={get(planDefinition, 'date', '')}
+                      onChange={(e) => handleChange('date', e.target.value)}
+                      disabled={!isEditing}
+                      InputLabelProps={{ shrink: true }}
+                    />
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <TextField
+                      id="approvalDateInput"
+                      fullWidth
+                      label="Approval Date"
+                      type="date"
+                      value={get(planDefinition, 'approvalDate', '')}
+                      onChange={(e) => handleChange('approvalDate', e.target.value)}
+                      disabled={!isEditing}
+                      InputLabelProps={{ shrink: true }}
+                    />
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <TextField
+                      id="lastReviewDateInput"
+                      fullWidth
+                      label="Last Review Date"
+                      type="date"
+                      value={get(planDefinition, 'lastReviewDate', '')}
+                      onChange={(e) => handleChange('lastReviewDate', e.target.value)}
+                      disabled={!isEditing}
+                      InputLabelProps={{ shrink: true }}
+                    />
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <TextField
+                      fullWidth
+                      label="Next Review Date"
+                      type="date"
+                      value={get(planDefinition, 'nextReviewDate', '')}
+                      onChange={(e) => handleChange('nextReviewDate', e.target.value)}
+                      disabled={!isEditing}
+                      InputLabelProps={{ shrink: true }}
+                      helperText="When next review is expected"
+                    />
+                  </Grid>
+                  <Grid item xs={12}>
+                    <Typography variant="subtitle2" gutterBottom>Effective Period</Typography>
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <TextField
+                      id="effectivePeriodStartInput"
+                      fullWidth
+                      label="Start Date"
+                      type="date"
+                      value={get(planDefinition, 'effectivePeriod.start', '')}
+                      onChange={(e) => handleChange('effectivePeriod.start', e.target.value)}
+                      disabled={!isEditing}
+                      InputLabelProps={{ shrink: true }}
+                    />
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <TextField
+                      id="effectivePeriodEndInput"
+                      fullWidth
+                      label="End Date"
+                      type="date"
+                      value={get(planDefinition, 'effectivePeriod.end', '')}
+                      onChange={(e) => handleChange('effectivePeriod.end', e.target.value)}
+                      disabled={!isEditing}
+                      InputLabelProps={{ shrink: true }}
+                    />
+                  </Grid>
+                </Grid>
+              </AccordionDetails>
+            </Accordion>
+          </Stack>
+        )}
+
+        {/* Tab 1: Goals & Actions */}
+        {activeTab === 1 && (
+          <Stack spacing={3}>
+            {renderGoals()}
+            <Divider />
+            {renderActions()}
+          </Stack>
+        )}
+
+        {/* Tab 2: Contributors */}
+        {activeTab === 2 && (
+          <Stack spacing={3}>
+            <TextField
+              id="publisherInput"
+              fullWidth
+              label="Publisher"
+              value={get(planDefinition, 'publisher', '')}
+              onChange={(e) => handleChange('publisher', e.target.value)}
+              disabled={!isEditing}
+            />
+
+            {/* Authors */}
+            <Box>
+              <Typography variant="h6" gutterBottom>Authors</Typography>
+              {get(planDefinition, 'author', []).map((author, index) => (
+                <Paper key={index} sx={arrayItemStyle}>
+                  <Grid container spacing={2} alignItems="center">
+                    <Grid item xs={12} md={6}>
+                      <TextField
+                        fullWidth
+                        label="Name"
+                        value={author.name || ''}
+                        onChange={(e) => {
+                          const authors = [...get(planDefinition, 'author', [])];
+                          authors[index] = {...author, name: e.target.value};
+                          handleChange('author', authors);
+                        }}
+                        disabled={!isEditing}
+                      />
+                    </Grid>
+                    <Grid item xs={12} md={5}>
+                      <TextField
+                        fullWidth
+                        label="Email"
+                        value={get(author, 'telecom[0].value', '')}
+                        onChange={(e) => {
+                          const authors = [...get(planDefinition, 'author', [])];
+                          set(authors[index], 'telecom[0]', {system: 'email', value: e.target.value});
+                          handleChange('author', authors);
+                        }}
+                        disabled={!isEditing}
+                      />
+                    </Grid>
+                    <Grid item xs={12} md={1}>
+                      {isEditing && (
+                        <IconButton onClick={() => removeArrayItem('author', index)} color="error">
+                          <DeleteIcon />
+                        </IconButton>
+                      )}
+                    </Grid>
+                  </Grid>
+                </Paper>
+              ))}
+              {isEditing && (
+                <Button
+                  startIcon={<AddIcon />}
+                  onClick={() => addArrayItem('author', {name: '', telecom: [{system: 'email', value: ''}]})}
+                >
+                  Add Author
+                </Button>
+              )}
+            </Box>
+
+            {showAdvanced && (
+              <>
+                <Divider />
+                <Typography variant="body2" color="text.secondary">
+                  Additional contributor types (Editor, Reviewer, Endorser) available in advanced mode
+                </Typography>
+              </>
+            )}
+          </Stack>
+        )}
+
+        {/* Tab 3: Resources */}
+        {activeTab === 3 && (
+          <Stack spacing={3}>
+            <Typography variant="h6">Related Artifacts</Typography>
+            <Typography variant="h6">Libraries</Typography>
+            <Typography variant="h6">Topics</Typography>
+          </Stack>
+        )}
+
+        {/* Tab 4: Governance */}
+        {activeTab === 4 && (
+          <Stack spacing={3}>
+            <TextField
+              id="copyrightTextarea"
+              fullWidth
+              multiline
+              rows={3}
+              label="Copyright"
+              value={get(planDefinition, 'copyright', '')}
+              onChange={(e) => handleChange('copyright', e.target.value)}
+              disabled={!isEditing}
+            />
+            <Typography variant="h6">Use Context</Typography>
+            <Typography variant="h6">Jurisdiction</Typography>
+          </Stack>
+        )}
+      </>
+    );
+  }
+
   return (
     <Container id="planDefinitionDetailPage" maxWidth="lg" sx={{ py: 4 }}>
       <Card sx={{ boxShadow: 3 }}>
-        <CardHeader 
+        <CardHeader
           title={
             <Box display="flex" alignItems="center" gap={2}>
               <LocalHospitalIcon />
@@ -804,14 +1210,14 @@ function PlanDefinitionDetail(props) {
               )}
             </Box>
           }
-          sx={{ 
-            bgcolor: theme => theme.palette.mode === 'dark' 
-              ? 'primary.dark' 
+          sx={{
+            bgcolor: theme => theme.palette.mode === 'dark'
+              ? 'primary.dark'
               : 'primary.main',
-            color: 'primary.contrastText' 
+            color: 'primary.contrastText'
           }}
         />
-        
+
         <CardContent>
           {error && (
             <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>

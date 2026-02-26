@@ -58,17 +58,17 @@ const statusOptions = [
 ];
 
 const classOptions = [
-  { code: 'ambulatory', display: 'Ambulatory' },
-  { code: 'emergency', display: 'Emergency' },
-  { code: 'field', display: 'Field' },
-  { code: 'home health', display: 'Home Health' },
-  { code: 'inpatient encounter', display: 'Inpatient Encounter' },
-  { code: 'inpatient acute', display: 'Inpatient Acute' },
-  { code: 'inpatient non-acute', display: 'Inpatient Non-Acute' },
-  { code: 'pre-admission', display: 'Pre-Admission' },
-  { code: 'short stay', display: 'Short Stay' },
-  { code: 'virtual', display: 'Virtual' },
-  { code: 'other', display: 'Other' }
+  { code: 'AMB', display: 'Ambulatory' },
+  { code: 'EMER', display: 'Emergency' },
+  { code: 'FLD', display: 'Field' },
+  { code: 'HH', display: 'Home Health' },
+  { code: 'IMP', display: 'Inpatient Encounter' },
+  { code: 'ACUTE', display: 'Inpatient Acute' },
+  { code: 'NONAC', display: 'Inpatient Non-Acute' },
+  { code: 'PRENC', display: 'Pre-Admission' },
+  { code: 'SS', display: 'Short Stay' },
+  { code: 'VR', display: 'Virtual' },
+  { code: 'OTHER', display: 'Other' }
 ];
 
 function statusColor(status) {
@@ -85,8 +85,13 @@ function statusColor(status) {
 }
 
 function EncounterDetail(props) {
-  const navigate = useNavigate();
-  const { id } = useParams();
+  // Embedded mode support (for HoneycombFhirResource dispatcher)
+  var isEmbedded = props.embedded || false;
+
+  var _rawNavigate = useNavigate();
+  var navigate = isEmbedded ? function() {} : _rawNavigate;
+  var _params = isEmbedded ? {} : useParams();
+  var id = _params.id || null;
   const [searchParams, setSearchParams] = useSearchParams();
   const viewMode = searchParams.get('view') || 'form';
 
@@ -112,7 +117,7 @@ function EncounterDetail(props) {
     status: "in-progress",
     class: {
       system: "http://terminology.hl7.org/CodeSystem/v3-ActCode",
-      code: "ambulatory",
+      code: "AMB",
       display: "Ambulatory"
     },
     type: [{
@@ -156,13 +161,30 @@ function EncounterDetail(props) {
     }]
   });
 
+  // Initialise from fhirResource prop when in embedded mode
+  var hasReceivedProps = React.useRef(false);
+  var pendingUpdate = React.useRef(false);
+  useEffect(function() {
+    if (isEmbedded && props.fhirResource) {
+      hasReceivedProps.current = true;
+      setEncounter(function(prev) {
+        if (JSON.stringify(props.fhirResource) !== JSON.stringify(prev)) {
+          return props.fhirResource;
+        }
+        return prev;
+      });
+    }
+  }, [props.fhirResource]);
+
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [isEditing, setIsEditing] = useState(false);
+  const [isEditing, setIsEditing] = useState(isEmbedded);
   const [patientSearchOpen, setPatientSearchOpen] = useState(false);
 
   // Subscribe to encounters so data is available locally
   const isSubscriptionReady = useTracker(function(){
+    if (isEmbedded) return true; // Skip subscription in embedded mode
     let autoSubscribeEnabled = get(Meteor, 'settings.public.defaults.autoSubscribe', false);
     if(autoSubscribeEnabled){
       return Meteor.subscribe('selectedPatient.Encounters', Session.get('selectedPatientId'), { limit: 1000 }).ready();
@@ -173,6 +195,7 @@ function EncounterDetail(props) {
 
   // Set initial state and practitioner on component mount
   useEffect(function() {
+    if (isEmbedded) return; // Resource comes from props in embedded mode
     if (isNewEncounter) {
       // Enable editing for new encounters
       setIsEditing(true);
@@ -250,12 +273,22 @@ function EncounterDetail(props) {
 
   // Handle field changes
   function handleChange(path, value) {
+    pendingUpdate.current = true;
     setEncounter(prevEncounter => {
       const updatedEncounter = JSON.parse(JSON.stringify(prevEncounter)); // Deep clone
       set(updatedEncounter, path, value);
       return updatedEncounter;
     });
   }
+
+  // onResourceChange useEffect: notify parent when state changes in embedded mode
+  useEffect(function() {
+    if (isEmbedded && pendingUpdate.current && props.onResourceChange) {
+      pendingUpdate.current = false;
+      props.onResourceChange(encounter);
+    }
+  }, [encounter]);
+
 
   // Handle search for users/patients
   function handleSearchUser() {
@@ -551,7 +584,7 @@ function EncounterDetail(props) {
               <InputLabel>Class</InputLabel>
               <Select
                 id="classCode"
-                value={get(encounter, 'class.code', 'ambulatory')}
+                value={get(encounter, 'class.code', 'AMB')}
                 onChange={(e) => {
                   const option = classOptions.find(o => o.code === e.target.value);
                   handleChange('class.code', option.code);
@@ -636,7 +669,7 @@ function EncounterDetail(props) {
         </Stack>
 
         {/* In-form Save/Cancel bar when editing */}
-        {isEditing && (
+        {isEditing && !isEmbedded && (
           <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, mt: 3, pt: 2, borderTop: 1, borderColor: 'divider' }}>
             <Button id="cancelButton" onClick={handleCancel}>
               Cancel
@@ -819,6 +852,12 @@ function EncounterDetail(props) {
         )}
       </Box>
     );
+  }
+
+  
+  // In embedded mode, render form content without Container/Card wrapper
+  if (isEmbedded) {
+    return renderFormView();
   }
 
   return (

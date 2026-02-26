@@ -45,9 +45,14 @@ import { MeasureReports } from '/imports/lib/schemas/SimpleSchemas/MeasureReport
 import { Patients } from '/imports/lib/schemas/SimpleSchemas/Patients';
 
 function MeasureReportDetail(props) {
-  const navigate = useNavigate();
+  // Embedded mode support (for HoneycombFhirResource dispatcher)
+  var isEmbedded = props.embedded || false;
+
+  var _rawNavigate = useNavigate();
+  var navigate = isEmbedded ? function() {} : _rawNavigate;
   const location = useLocation();
-  const { id } = useParams();
+  var _params = isEmbedded ? {} : useParams();
+  var id = _params.id || null;
 
   const [measureReport, setMeasureReport] = useState({
     resourceType: 'MeasureReport',
@@ -103,6 +108,21 @@ function MeasureReportDetail(props) {
     }]
   });
 
+  // Initialise from fhirResource prop when in embedded mode
+  var hasReceivedProps = React.useRef(false);
+  useEffect(function() {
+    if (isEmbedded && props.fhirResource) {
+      hasReceivedProps.current = true;
+      setMeasureReport(function(prev) {
+        if (JSON.stringify(props.fhirResource) !== JSON.stringify(prev)) {
+          return props.fhirResource;
+        }
+        return prev;
+      });
+    }
+  }, [props.fhirResource]);
+
+
   const [isEditing, setIsEditing] = useState(true);
   const [measureReportId, setMeasureReportId] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -114,6 +134,7 @@ function MeasureReportDetail(props) {
 
   // Subscribe to measure reports
   const isSubscriptionReady = useTracker(function(){
+    if (isEmbedded) return true; // Skip subscription in embedded mode
     let autoSubscribeEnabled = get(Meteor, 'settings.public.defaults.autoSubscribe', false);
     let handle;
     if(autoSubscribeEnabled){
@@ -149,6 +170,11 @@ function MeasureReportDetail(props) {
     const updatedReport = cloneDeep(measureReport);
     set(updatedReport, path, value);
     setMeasureReport(updatedReport);
+  
+    // Notify parent of changes in embedded mode
+    if (props.onResourceChange) {
+      props.onResourceChange(updatedReport);
+    }
   }
 
   function handleSearchUser() {
@@ -230,10 +256,273 @@ function MeasureReportDetail(props) {
     navigate('/measure-reports');
   }
 
+  if (isEmbedded) {
+    return (
+      <Grid container spacing={3}>
+        <Grid item xs={12} md={6}>
+          <TextField
+            id="identifierInput"
+            fullWidth
+            label="Identifier"
+            value={get(measureReport, 'identifier[0].value', '')}
+            onChange={(e) => handleChange('identifier[0].value', e.target.value)}
+            disabled={!isEditing}
+            margin="normal"
+          />
+        </Grid>
+
+        <Grid item xs={12} md={3}>
+          <FormControl fullWidth margin="normal">
+            <InputLabel id="status-label">Status</InputLabel>
+            <Select
+              labelId="status-label"
+              id="statusSelect"
+              value={get(measureReport, 'status', 'complete')}
+              label="Status"
+              onChange={(e) => handleChange('status', e.target.value)}
+              disabled={!isEditing}
+            >
+              <MenuItem value="complete">Complete</MenuItem>
+              <MenuItem value="pending">Pending</MenuItem>
+              <MenuItem value="error">Error</MenuItem>
+            </Select>
+          </FormControl>
+        </Grid>
+
+        <Grid item xs={12} md={3}>
+          <FormControl fullWidth margin="normal">
+            <InputLabel id="type-label">Type</InputLabel>
+            <Select
+              labelId="type-label"
+              id="typeSelect"
+              value={get(measureReport, 'type', 'individual')}
+              label="Type"
+              onChange={(e) => handleChange('type', e.target.value)}
+              disabled={!isEditing}
+            >
+              <MenuItem value="individual">Individual</MenuItem>
+              <MenuItem value="subject-list">Subject List</MenuItem>
+              <MenuItem value="summary">Summary</MenuItem>
+              <MenuItem value="data-exchange">Data Exchange</MenuItem>
+            </Select>
+          </FormControl>
+        </Grid>
+
+        <Grid item xs={12} md={6}>
+          <TextField
+            id="subjectInput"
+            fullWidth
+            label="Subject"
+            value={get(measureReport, 'subject.display', '')}
+            onChange={(e) => handleChange('subject.display', e.target.value)}
+            disabled={!isEditing}
+            margin="normal"
+          />
+        </Grid>
+
+        <Grid item xs={12} md={6}>
+          <TextField
+            id="measureReferenceInput"
+            fullWidth
+            label="Measure Reference"
+            value={get(measureReport, 'measure', '')}
+            onChange={(e) => handleChange('measure', e.target.value)}
+            disabled={!isEditing}
+            margin="normal"
+          />
+        </Grid>
+
+        <Grid item xs={12} md={4}>
+          <TextField
+            id="dateInput"
+            fullWidth
+            label="Date"
+            type="date"
+            value={get(measureReport, 'date') && moment(get(measureReport, 'date')).isValid() ? moment(get(measureReport, 'date')).format('YYYY-MM-DD') : ''}
+            onChange={(e) => handleChange('date', new Date(e.target.value))}
+            disabled={!isEditing}
+            margin="normal"
+            InputLabelProps={{
+              shrink: true,
+            }}
+          />
+        </Grid>
+
+        <Grid item xs={12} md={4}>
+          <TextField
+            id="periodStartInput"
+            fullWidth
+            label="Period Start"
+            type="date"
+            value={get(measureReport, 'period.start') && moment(get(measureReport, 'period.start')).isValid() ? moment(get(measureReport, 'period.start')).format('YYYY-MM-DD') : ''}
+            onChange={(e) => handleChange('period.start', e.target.value)}
+            disabled={!isEditing}
+            margin="normal"
+            InputLabelProps={{
+              shrink: true,
+            }}
+          />
+        </Grid>
+
+        <Grid item xs={12} md={4}>
+          <TextField
+            id="periodEndInput"
+            fullWidth
+            label="Period End"
+            type="date"
+            value={get(measureReport, 'period.end') && moment(get(measureReport, 'period.end')).isValid() ? moment(get(measureReport, 'period.end')).format('YYYY-MM-DD') : ''}
+            onChange={(e) => handleChange('period.end', e.target.value)}
+            disabled={!isEditing}
+            margin="normal"
+            InputLabelProps={{
+              shrink: true,
+            }}
+          />
+        </Grid>
+
+        <Grid item xs={12} md={6}>
+          <TextField
+            id="reporterInput"
+            fullWidth
+            label="Reporter"
+            value={get(measureReport, 'reporter.display', '')}
+            onChange={(e) => handleChange('reporter.display', e.target.value)}
+            disabled={!isEditing}
+            margin="normal"
+          />
+        </Grid>
+
+        <Grid item xs={12} md={6}>
+          <FormControl fullWidth margin="normal">
+            <InputLabel id="improvement-notation-label">Improvement Notation</InputLabel>
+            <Select
+              labelId="improvement-notation-label"
+              id="improvementNotationSelect"
+              value={get(measureReport, 'improvementNotation.text', '')}
+              label="Improvement Notation"
+              onChange={(e) => handleChange('improvementNotation.text', e.target.value)}
+              disabled={!isEditing}
+            >
+              <MenuItem value="">None</MenuItem>
+              <MenuItem value="increase">Increase</MenuItem>
+              <MenuItem value="decrease">Decrease</MenuItem>
+            </Select>
+          </FormControl>
+        </Grid>
+
+        <Grid item xs={12}>
+          <Divider sx={{ my: 2 }} />
+          <Typography variant="h6" gutterBottom>Group Information</Typography>
+        </Grid>
+
+        <Grid item xs={12} md={6}>
+          <TextField
+            id="groupCodeInput"
+            fullWidth
+            label="Group Code"
+            value={get(measureReport, 'group[0].code.text', '')}
+            onChange={(e) => handleChange('group[0].code.text', e.target.value)}
+            disabled={!isEditing}
+            margin="normal"
+          />
+        </Grid>
+
+        <Grid item xs={12} md={6}>
+          <TextField
+            id="groupDescriptionTextarea"
+            fullWidth
+            label="Group Description"
+            value={get(measureReport, 'group[0].code.text', '')}
+            onChange={(e) => handleChange('group[0].code.text', e.target.value)}
+            disabled={!isEditing}
+            margin="normal"
+            multiline
+            rows={2}
+          />
+        </Grid>
+
+        <Grid item xs={12} md={4}>
+          <TextField
+            id="populationCodeInput"
+            fullWidth
+            label="Population Code"
+            value={get(measureReport, 'group[0].population[0].code.text', '')}
+            onChange={(e) => handleChange('group[0].population[0].code.text', e.target.value)}
+            disabled={!isEditing}
+            margin="normal"
+          />
+        </Grid>
+
+        <Grid item xs={12} md={4}>
+          <TextField
+            id="populationCountInput"
+            fullWidth
+            label="Population Count"
+            type="number"
+            value={get(measureReport, 'group[0].population[0].count', 0)}
+            onChange={(e) => handleChange('group[0].population[0].count', parseInt(e.target.value))}
+            disabled={!isEditing}
+            margin="normal"
+          />
+        </Grid>
+
+        <Grid item xs={12} md={4}>
+          <TextField
+            id="measureScoreValueInput"
+            fullWidth
+            label="Measure Score"
+            type="number"
+            inputProps={{ step: 0.01 }}
+            value={get(measureReport, 'group[0].measureScore.value', 0)}
+            onChange={(e) => handleChange('group[0].measureScore.value', parseFloat(e.target.value))}
+            disabled={!isEditing}
+            margin="normal"
+          />
+        </Grid>
+
+        <Grid item xs={12} md={6}>
+          <TextField
+            id="stratifierCodeInput"
+            fullWidth
+            label="Stratifier Code"
+            value={get(measureReport, 'group[0].stratifier[0].code[0].text', '')}
+            onChange={(e) => handleChange('group[0].stratifier[0].code[0].text', e.target.value)}
+            disabled={!isEditing}
+            margin="normal"
+          />
+        </Grid>
+
+        <Grid item xs={12} md={6}>
+          <TextField
+            id="stratifierValueInput"
+            fullWidth
+            label="Stratifier Value"
+            value={get(measureReport, 'group[0].stratifier[0].stratum[0].value.text', '')}
+            onChange={(e) => handleChange('group[0].stratifier[0].stratum[0].value.text', e.target.value)}
+            disabled={!isEditing}
+            margin="normal"
+          />
+        </Grid>
+
+        <Grid item xs={12}>
+          <TextField
+            id="measureUrlInput"
+            fullWidth
+            label="Measure URL"
+            value={get(measureReport, 'measure', '')}
+            onChange={(e) => handleChange('measure', e.target.value)}
+            disabled={!isEditing}
+            margin="normal"
+          />
+        </Grid>
+      </Grid>
+    );
+  }
+
   return (
     <Container id='measureReportDetailPage' maxWidth="md" sx={{ py: 4 }}>
       <Card sx={{ boxShadow: 3 }}>
-        <CardHeader 
+        <CardHeader
           title={id && id !== 'new' ? 'Edit Measure Report' : 'New Measure Report'}
           sx={{ bgcolor: 'primary.main', color: 'primary.contrastText' }}
         />

@@ -83,7 +83,6 @@
     "emitter": "^0.0.5",
     "express": "^4.19.2",
     "express-oauth-server": "^2.0.0",
-    "fhir-react": "2.1.0",
     "fhirclient": "^2.5.4",
     "fhirpath": "^4.8.0",
     "file-dialog": "0.0.8",
@@ -166,11 +165,6 @@
     "bson": "^6.8.0",
     "mongodb": "^6.8.0",
     "color-convert": "^3.1.2",
-    "glob": "^11.0.0",
-    "fhir-react": {
-      "@nivo/core": "^0.84.0",
-      "@nivo/pie": "^0.84.0",
-      "@nivo/tooltip": "^0.84.0"
-    }
+    "glob": "^11.0.0"
   }
 }

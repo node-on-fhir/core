@@ -49,8 +49,12 @@ import { get, set } from 'lodash';
 // MAIN COMPONENT
 
 function PractitionerRoleDetail(props) {
-  const { id } = useParams();
-  const navigate = useNavigate();
+  // Embedded mode support (for HoneycombFhirResource dispatcher)
+  var isEmbedded = props.embedded || false;
+  var _params = isEmbedded ? {} : useParams();
+  var id = _params.id || null;
+  var _rawNavigate = useNavigate();
+  var navigate = isEmbedded ? function() {} : _rawNavigate;
 
   // State
   const [practitionerRole, setPractitionerRole] = useState({
@@ -66,7 +70,31 @@ function PractitionerRoleDetail(props) {
     period: { start: '', end: '' },
     availabilityExceptions: ''
   });
-  const [isEditing, setIsEditing] = useState(false);
+
+  // Initialise from fhirResource prop when in embedded mode
+  var hasReceivedProps = React.useRef(false);
+  var pendingUpdate = React.useRef(false);
+  useEffect(function() {
+    if (isEmbedded && props.fhirResource) {
+      hasReceivedProps.current = true;
+      setPractitionerRole(function(prev) {
+        if (JSON.stringify(props.fhirResource) !== JSON.stringify(prev)) {
+          return props.fhirResource;
+        }
+        return prev;
+      });
+    }
+  }, [props.fhirResource]);
+
+  // onResourceChange: notify parent when state changes in embedded mode
+  useEffect(function() {
+    if (isEmbedded && pendingUpdate.current && props.onResourceChange) {
+      pendingUpdate.current = false;
+      props.onResourceChange(practitionerRole);
+    }
+  }, [practitionerRole]);
+
+  const [isEditing, setIsEditing] = useState(isEmbedded);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -88,6 +116,7 @@ function PractitionerRoleDetail(props) {
 
   // Subscribe to necessary collections
   const isSubscriptionReady = useTracker(function(){
+    if (isEmbedded) return true; // Skip subscription in embedded mode
     let autoSubscribeEnabled = get(Meteor, 'settings.public.defaults.autoSubscribe', false);
     let handle;
     if(autoSubscribeEnabled){
@@ -240,6 +269,226 @@ function PractitionerRoleDetail(props) {
 
   function handleBack() {
     navigate('/practitioner-roles');
+  }
+
+  if (isEmbedded) {
+    return (
+      <Grid container spacing={3}>
+        {/* Active Status */}
+        <Grid item xs={12}>
+          <FormControlLabel
+            control={
+              <Switch
+                id="activeSwitch"
+                checked={active}
+                onChange={(e) => setActive(e.target.checked)}
+                disabled={!isEditing}
+              />
+            }
+            label="Active"
+          />
+        </Grid>
+
+        <Grid item xs={12}>
+          <Divider>
+            <Typography variant="subtitle2" color="textSecondary">
+              Practitioner & Organization
+            </Typography>
+          </Divider>
+        </Grid>
+
+        {/* Practitioner */}
+        <Grid item xs={12} md={6}>
+          <TextField
+            id="practitionerDisplayInput"
+            fullWidth
+            label="Practitioner"
+            value={practitionerDisplay}
+            onChange={(e) => setPractitionerDisplay(e.target.value)}
+            disabled={!isEditing}
+            helperText="Display name of the practitioner"
+          />
+        </Grid>
+
+        <Grid item xs={12} md={6}>
+          <TextField
+            id="practitionerReferenceInput"
+            fullWidth
+            label="Practitioner Reference"
+            value={practitionerReference}
+            onChange={(e) => setPractitionerReference(e.target.value)}
+            disabled={!isEditing}
+            helperText="e.g., Practitioner/123"
+          />
+        </Grid>
+
+        {/* Organization */}
+        <Grid item xs={12} md={6}>
+          <TextField
+            id="organizationDisplayInput"
+            fullWidth
+            label="Organization"
+            value={organizationDisplay}
+            onChange={(e) => setOrganizationDisplay(e.target.value)}
+            disabled={!isEditing}
+            helperText="Display name of the organization"
+          />
+        </Grid>
+
+        <Grid item xs={12} md={6}>
+          <TextField
+            id="organizationReferenceInput"
+            fullWidth
+            label="Organization Reference"
+            value={organizationReference}
+            onChange={(e) => setOrganizationReference(e.target.value)}
+            disabled={!isEditing}
+            helperText="e.g., Organization/456"
+          />
+        </Grid>
+
+        <Grid item xs={12}>
+          <Divider>
+            <Typography variant="subtitle2" color="textSecondary">
+              Role & Specialty
+            </Typography>
+          </Divider>
+        </Grid>
+
+        {/* Role/Code */}
+        <Grid item xs={12} md={6}>
+          <TextField
+            id="roleCodeInput"
+            fullWidth
+            label="Role Code"
+            value={roleCode}
+            onChange={(e) => setRoleCode(e.target.value)}
+            disabled={!isEditing}
+            helperText="e.g., doctor, nurse, pharmacist"
+          />
+        </Grid>
+
+        <Grid item xs={12} md={6}>
+          <TextField
+            id="roleDisplayInput"
+            fullWidth
+            label="Role Display"
+            value={roleDisplay}
+            onChange={(e) => setRoleDisplay(e.target.value)}
+            disabled={!isEditing}
+            helperText="Human-readable role name"
+          />
+        </Grid>
+
+        {/* Specialty */}
+        <Grid item xs={12} md={6}>
+          <TextField
+            id="specialtyCodeInput"
+            fullWidth
+            label="Specialty Code"
+            value={specialtyCode}
+            onChange={(e) => setSpecialtyCode(e.target.value)}
+            disabled={!isEditing}
+            helperText="e.g., 394814009 (General Practice)"
+          />
+        </Grid>
+
+        <Grid item xs={12} md={6}>
+          <TextField
+            id="specialtyDisplayInput"
+            fullWidth
+            label="Specialty Display"
+            value={specialtyDisplay}
+            onChange={(e) => setSpecialtyDisplay(e.target.value)}
+            disabled={!isEditing}
+            helperText="Human-readable specialty name"
+          />
+        </Grid>
+
+        <Grid item xs={12}>
+          <Divider>
+            <Typography variant="subtitle2" color="textSecondary">
+              Contact Information
+            </Typography>
+          </Divider>
+        </Grid>
+
+        {/* Phone */}
+        <Grid item xs={12} md={6}>
+          <TextField
+            id="phoneInput"
+            fullWidth
+            label="Phone"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            disabled={!isEditing}
+          />
+        </Grid>
+
+        {/* Email */}
+        <Grid item xs={12} md={6}>
+          <TextField
+            id="emailInput"
+            fullWidth
+            label="Email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            disabled={!isEditing}
+          />
+        </Grid>
+
+        <Grid item xs={12}>
+          <Divider>
+            <Typography variant="subtitle2" color="textSecondary">
+              Period
+            </Typography>
+          </Divider>
+        </Grid>
+
+        {/* Period Start */}
+        <Grid item xs={12} md={6}>
+          <TextField
+            id="periodStartInput"
+            fullWidth
+            label="Period Start"
+            type="date"
+            value={periodStart}
+            onChange={(e) => setPeriodStart(e.target.value)}
+            disabled={!isEditing}
+            InputLabelProps={{ shrink: true }}
+          />
+        </Grid>
+
+        {/* Period End */}
+        <Grid item xs={12} md={6}>
+          <TextField
+            id="periodEndInput"
+            fullWidth
+            label="Period End"
+            type="date"
+            value={periodEnd}
+            onChange={(e) => setPeriodEnd(e.target.value)}
+            disabled={!isEditing}
+            InputLabelProps={{ shrink: true }}
+          />
+        </Grid>
+
+        {/* Availability Exceptions */}
+        <Grid item xs={12}>
+          <TextField
+            id="availabilityExceptionsInput"
+            fullWidth
+            multiline
+            rows={3}
+            label="Availability Exceptions"
+            value={availabilityExceptions}
+            onChange={(e) => setAvailabilityExceptions(e.target.value)}
+            disabled={!isEditing}
+            helperText="Description of availability exceptions"
+          />
+        </Grid>
+      </Grid>
+    );
   }
 
   return (

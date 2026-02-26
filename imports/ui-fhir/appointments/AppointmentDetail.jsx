@@ -41,8 +41,13 @@ import { Appointments } from '/imports/lib/schemas/SimpleSchemas/Appointments';
 import { Patients } from '/imports/lib/schemas/SimpleSchemas/Patients';
 
 export function AppointmentDetail(props){
-  const navigate = useNavigate();
-  const { id } = useParams();
+  // Embedded mode support (for HoneycombFhirResource dispatcher)
+  var isEmbedded = props.embedded || false;
+
+  var _rawNavigate = useNavigate();
+  var navigate = isEmbedded ? function() {} : _rawNavigate;
+  var _params = isEmbedded ? {} : useParams();
+  var id = _params.id || null;
   const appointmentId = id;
   
   // Initialize with subject and participant slot for patient
@@ -61,7 +66,22 @@ export function AppointmentDetail(props){
       status: 'needs-action'
     }]
   });
-  const [isEditing, setIsEditing] = useState(!appointmentId || appointmentId === 'new');
+
+  // Initialise from fhirResource prop when in embedded mode
+  var hasReceivedProps = React.useRef(false);
+  useEffect(function() {
+    if (isEmbedded && props.fhirResource) {
+      hasReceivedProps.current = true;
+      setAppointment(function(prev) {
+        if (JSON.stringify(props.fhirResource) !== JSON.stringify(prev)) {
+          return props.fhirResource;
+        }
+        return prev;
+      });
+    }
+  }, [props.fhirResource]);
+
+  const [isEditing, setIsEditing] = useState(isEmbedded || !appointmentId || appointmentId === 'new');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [searchDialogOpen, setSearchDialogOpen] = useState(false);
@@ -70,6 +90,7 @@ export function AppointmentDetail(props){
 
   // Subscribe to appointments and track subscription status
   const isSubscriptionReady = useTracker(function(){
+    if (isEmbedded) return true; // Skip subscription in embedded mode
     let autoSubscribeEnabled = get(Meteor, 'settings.public.defaults.autoSubscribe', false);
     let handle;
     if(autoSubscribeEnabled){
@@ -148,6 +169,11 @@ export function AppointmentDetail(props){
     }
     
     setAppointment(updatedAppointment);
+  
+    // Notify parent of changes in embedded mode
+    if (props.onResourceChange) {
+      props.onResourceChange(updatedAppointment);
+    }
   }
 
   function handleEditClick() {
@@ -381,10 +407,292 @@ export function AppointmentDetail(props){
   }
 
 
+  if (isEmbedded) {
+    return (
+      <Grid container spacing={3}>
+        {/* Row 1: Status and Priority */}
+        <Grid item xs={12} md={6}>
+          <TextField
+            id="statusSelect"
+            select
+            fullWidth
+            label="Status"
+            value={get(appointment, 'status', '')}
+            onChange={(e) => handleChange('status', e.target.value)}
+            disabled={!isEditing}
+          >
+            <MenuItem value="proposed">Proposed</MenuItem>
+            <MenuItem value="pending">Pending</MenuItem>
+            <MenuItem value="booked">Booked</MenuItem>
+            <MenuItem value="arrived">Arrived</MenuItem>
+            <MenuItem value="fulfilled">Fulfilled</MenuItem>
+            <MenuItem value="cancelled">Cancelled</MenuItem>
+            <MenuItem value="noshow">No Show</MenuItem>
+            <MenuItem value="entered-in-error">Entered in Error</MenuItem>
+            <MenuItem value="checked-in">Checked In</MenuItem>
+            <MenuItem value="waitlist">Waitlist</MenuItem>
+          </TextField>
+        </Grid>
+        <Grid item xs={12} md={6}>
+          <TextField
+            id="priorityInput"
+            fullWidth
+            type="number"
+            label="Priority"
+            value={get(appointment, 'priority', 5)}
+            onChange={(e) => handleChange('priority', parseInt(e.target.value))}
+            disabled={!isEditing}
+            inputProps={{ min: 0, max: 9 }}
+          />
+        </Grid>
+
+        {/* Row 2: Patient */}
+        <Grid item xs={12}>
+          <TextField
+            id="subjectDisplay"
+            fullWidth
+            label="Patient"
+            value={get(appointment, 'subject.display', '')}
+            onChange={(e) => handleChange('subject.display', e.target.value)}
+            helperText={get(appointment, 'subject.reference', '') || 'Patient reference will be assigned'}
+            disabled={!isEditing}
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <Tooltip title="Search for patient">
+                    <IconButton
+                      onClick={handleSearchUser}
+                      edge="end"
+                      disabled={!isEditing}
+                    >
+                      <SearchIcon />
+                    </IconButton>
+                  </Tooltip>
+                </InputAdornment>
+              ),
+            }}
+          />
+        </Grid>
+
+        {/* Row 3: Appointment Type */}
+        <Grid item xs={12}>
+          <TextField
+            id="appointmentTypeInput"
+            fullWidth
+            label="Appointment Type"
+            value={get(appointment, 'appointmentType.text', '')}
+            onChange={(e) => handleChange('appointmentType.text', e.target.value)}
+            disabled={!isEditing}
+          />
+        </Grid>
+
+        {/* Row 4: Start and End Times */}
+        <Grid item xs={12} md={6}>
+          <TextField
+            id="startInput"
+            fullWidth
+            label="Start Time"
+            type="datetime-local"
+            value={moment(get(appointment, 'start', new Date())).format('YYYY-MM-DDTHH:mm')}
+            onChange={(e) => handleChange('start', moment(e.target.value).toISOString())}
+            disabled={!isEditing}
+            InputLabelProps={{ shrink: true }}
+          />
+        </Grid>
+        <Grid item xs={12} md={6}>
+          <TextField
+            id="endInput"
+            fullWidth
+            label="End Time"
+            type="datetime-local"
+            value={moment(get(appointment, 'end', new Date())).format('YYYY-MM-DDTHH:mm')}
+            onChange={(e) => handleChange('end', moment(e.target.value).toISOString())}
+            disabled={!isEditing}
+            InputLabelProps={{ shrink: true }}
+          />
+        </Grid>
+
+        {/* Row 5: Duration */}
+        <Grid item xs={12}>
+          <TextField
+            id="minutesDurationInput"
+            fullWidth
+            type="number"
+            label="Duration (minutes)"
+            value={get(appointment, 'minutesDuration', 30)}
+            onChange={(e) => handleChange('minutesDuration', parseInt(e.target.value))}
+            disabled={!isEditing}
+            inputProps={{ min: 5 }}
+          />
+        </Grid>
+
+        {/* Row 5b: Created Date */}
+        <Grid item xs={12}>
+          <TextField
+            id="createdInput"
+            fullWidth
+            label="Created"
+            type="datetime-local"
+            value={moment(get(appointment, 'created', new Date())).format('YYYY-MM-DDTHH:mm')}
+            disabled={true}
+            InputLabelProps={{ shrink: true }}
+          />
+        </Grid>
+
+        {/* Row 6: Reason */}
+        <Grid item xs={12}>
+          <TextField
+            id="reasonInput"
+            fullWidth
+            label="Reason"
+            value={get(appointment, 'reasonCode[0].text', '')}
+            onChange={(e) => handleChange('reasonCode[0].text', e.target.value)}
+            disabled={!isEditing}
+          />
+        </Grid>
+
+        {/* Row 7: Description */}
+        <Grid item xs={12}>
+          <TextField
+            id="descriptionInput"
+            fullWidth
+            multiline
+            rows={2}
+            label="Description"
+            value={get(appointment, 'description', '')}
+            onChange={(e) => handleChange('description', e.target.value)}
+            disabled={!isEditing}
+          />
+        </Grid>
+
+        {/* Row 8: Comment */}
+        <Grid item xs={12}>
+          <TextField
+            id="commentInput"
+            fullWidth
+            multiline
+            rows={2}
+            label="Comment"
+            value={get(appointment, 'comment', '')}
+            onChange={(e) => handleChange('comment', e.target.value)}
+            disabled={!isEditing}
+          />
+        </Grid>
+
+        {/* Row 9: Patient Instructions */}
+        <Grid item xs={12}>
+          <TextField
+            id="patientInstructionInput"
+            fullWidth
+            multiline
+            rows={2}
+            label="Patient Instructions"
+            value={get(appointment, 'patientInstruction', '')}
+            onChange={(e) => handleChange('patientInstruction', e.target.value)}
+            disabled={!isEditing}
+          />
+        </Grid>
+
+        {/* Row 10: Service Category */}
+        <Grid item xs={12} md={6}>
+          <TextField
+            id="serviceCategoryInput"
+            fullWidth
+            label="Service Category"
+            value={get(appointment, 'serviceCategory[0].text', '')}
+            onChange={(e) => handleChange('serviceCategory[0].text', e.target.value)}
+            disabled={!isEditing}
+          />
+        </Grid>
+
+        {/* Row 11: Service Type */}
+        <Grid item xs={12} md={6}>
+          <TextField
+            id="serviceTypeInput"
+            fullWidth
+            label="Service Type"
+            value={get(appointment, 'serviceType[0].text', '')}
+            onChange={(e) => handleChange('serviceType[0].text', e.target.value)}
+            disabled={!isEditing}
+          />
+        </Grid>
+
+        {/* Row 12: Specialty */}
+        <Grid item xs={12}>
+          <TextField
+            id="specialtyInput"
+            fullWidth
+            label="Specialty"
+            value={get(appointment, 'specialty[0].text', '')}
+            onChange={(e) => handleChange('specialty[0].text', e.target.value)}
+            disabled={!isEditing}
+          />
+        </Grid>
+
+        {/* Row 13: Notes */}
+        <Grid item xs={12}>
+          <TextField
+            id="notesInput"
+            fullWidth
+            multiline
+            rows={3}
+            label="Notes"
+            value={get(appointment, 'note[0].text', '')}
+            onChange={(e) => handleChange('note[0].text', e.target.value)}
+            disabled={!isEditing}
+          />
+        </Grid>
+
+        {/* Participants Section */}
+        <Grid item xs={12}>
+          <Typography variant="h6" sx={{ mt: 2, mb: 1 }}>Participants</Typography>
+          {get(appointment, 'participant', []).map((participant, index) => {
+            const isPractitioner = get(participant, 'actor.reference', '').startsWith('Practitioner/');
+            const isLocation = get(participant, 'actor.reference', '').startsWith('Location/');
+            const isPatient = get(participant, 'actor.reference', '').startsWith('Patient/');
+
+            if(isPatient) return null; // Already shown above
+
+            return (
+              <Box key={index} sx={{ mb: 2 }}>
+                <Grid container spacing={2}>
+                  <Grid item xs={12} md={6}>
+                    <TextField
+                      fullWidth
+                      label={isPractitioner ? 'Practitioner' : isLocation ? 'Location' : 'Participant'}
+                      value={get(participant, 'actor.display', '')}
+                      onChange={(e) => handleChange(`participant[${index}].actor.display`, e.target.value)}
+                      disabled={!isEditing}
+                    />
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <TextField
+                      fullWidth
+                      label="Reference"
+                      value={get(participant, 'actor.reference', '')}
+                      onChange={(e) => handleChange(`participant[${index}].actor.reference`, e.target.value)}
+                      disabled={!isEditing}
+                    />
+                  </Grid>
+                </Grid>
+              </Box>
+            );
+          })}
+          {isEditing && (
+            <Box sx={{ mt: 1 }}>
+              <Button onClick={handleAddPractitioner} sx={{ mr: 1 }}>Add Practitioner</Button>
+              <Button onClick={handleAddLocation}>Add Location</Button>
+            </Box>
+          )}
+        </Grid>
+      </Grid>
+    );
+  }
+
   return (
     <Container id='appointmentDetailPage' maxWidth="md" sx={{ py: 4 }}>
       <Card sx={{ boxShadow: 3 }}>
-        <CardHeader 
+        <CardHeader
           title={appointmentId && appointmentId !== 'new' ? 'Edit Appointment' : 'New Appointment'}
           sx={{ bgcolor: 'primary.main', color: 'primary.contrastText' }}
         />

@@ -94,6 +94,7 @@ import { SubscriptionsTable } from './SubscriptionsTable';
 
 import { useNavigate } from "react-router-dom";
 import { DynamicSpacer } from '../ui/DynamicSpacer';
+import WorkflowRegistry from '/imports/lib/WorkflowRegistry.js';
 
 
 //----------------------------------------------------------------------
@@ -137,9 +138,14 @@ function ServerConfigurationPage(props){
   Object.keys(Package).forEach(function(packageName){
     if(Package[packageName].ServerConfigs){
       Package[packageName].ServerConfigs.forEach(function(component){
-        serverConfigComponents.push(component);      
-      });    
+        serverConfigComponents.push(component);
+      });
     }
+  });
+
+  // Also collect server configs from NPM workflow packages via WorkflowRegistry
+  WorkflowRegistry.getServerConfigs().forEach(function(component){
+    serverConfigComponents.push(component);
   });
 
   useEffect(function(){

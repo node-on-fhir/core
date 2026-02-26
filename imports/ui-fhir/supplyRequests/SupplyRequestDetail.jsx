@@ -36,11 +36,17 @@ import { Session } from 'meteor/session';
 import { SupplyRequests } from '/imports/lib/schemas/SimpleSchemas/SupplyRequests';
 
 function SupplyRequestDetail(props) {
-  const navigate = useNavigate();
-  const { id } = useParams();
+  // Embedded mode support (for HoneycombFhirResource dispatcher)
+  var isEmbedded = props.embedded || false;
+
+  var _rawNavigate = useNavigate();
+  var navigate = isEmbedded ? function() {} : _rawNavigate;
+  var _params = isEmbedded ? {} : useParams();
+  var id = _params.id || null;
 
   // Subscribe to supply requests data if needed
   const subscriptionReady = useTracker(() => {
+    if (isEmbedded) return true; // Skip subscription in embedded mode
     let autoSubscribeEnabled = get(Meteor, 'settings.public.defaults.autoSubscribe', false);
     if(autoSubscribeEnabled){
       const handle = Meteor.subscribe('selectedPatient.SupplyRequests', Session.get('selectedPatientId'), { limit: 1000 });
@@ -114,10 +120,34 @@ function SupplyRequestDetail(props) {
     }
   });
 
+  // Initialise from fhirResource prop when in embedded mode
+  var hasReceivedProps = React.useRef(false);
+  var pendingUpdate = React.useRef(false);
+  useEffect(function() {
+    if (isEmbedded && props.fhirResource) {
+      hasReceivedProps.current = true;
+      setSupplyRequest(function(prev) {
+        if (JSON.stringify(props.fhirResource) !== JSON.stringify(prev)) {
+          return props.fhirResource;
+        }
+        return prev;
+      });
+    }
+  }, [props.fhirResource]);
+
+  // onResourceChange: notify parent when state changes in embedded mode
+  useEffect(function() {
+    if (isEmbedded && pendingUpdate.current && props.onResourceChange) {
+      pendingUpdate.current = false;
+      props.onResourceChange(supplyRequest);
+    }
+  }, [supplyRequest]);
+
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   // Initialize isEditing based on whether we're creating new or viewing existing
-  const [isEditing, setIsEditing] = useState(!id || id === 'new');
+  const [isEditing, setIsEditing] = useState(isEmbedded || !id || id === 'new');
 
   // Load existing supply request or set defaults for new
   useEffect(function() {
@@ -150,6 +180,7 @@ function SupplyRequestDetail(props) {
   }, [id, subscriptionReady, currentUser]);
 
   const handleInputChange = (path, value) => {
+    pendingUpdate.current = true;
     console.log('handleInputChange:', path, value);
     setSupplyRequest(prevRequest => {
       const newRequest = JSON.parse(JSON.stringify(prevRequest)); // Deep clone
@@ -266,6 +297,216 @@ function SupplyRequestDetail(props) {
       window.__supplyRequestIsEditing = isEditing;
     }
   }, [id, isEditing]);
+
+  if (isEmbedded) {
+    return (
+      <Stack spacing={3}>
+        {/* Status */}
+        <FormControl fullWidth>
+          <InputLabel id="status-label">Status</InputLabel>
+          <Select
+            labelId="status-label"
+            id="statusInput"
+            name="status"
+            value={get(supplyRequest, 'status', 'draft')}
+            label="Status"
+            onChange={(e) => handleInputChange('status', e.target.value)}
+            disabled={!isEditing}
+          >
+            <MenuItem value="draft">Draft</MenuItem>
+            <MenuItem value="active">Active</MenuItem>
+            <MenuItem value="suspended">Suspended</MenuItem>
+            <MenuItem value="cancelled">Cancelled</MenuItem>
+            <MenuItem value="completed">Completed</MenuItem>
+            <MenuItem value="entered-in-error">Entered in Error</MenuItem>
+            <MenuItem value="unknown">Unknown</MenuItem>
+          </Select>
+        </FormControl>
+
+        {/* Priority */}
+        <FormControl fullWidth>
+          <InputLabel id="priority-label">Priority</InputLabel>
+          <Select
+            labelId="priority-label"
+            id="priorityInput"
+            name="priority"
+            value={get(supplyRequest, 'priority', 'routine')}
+            label="Priority"
+            onChange={(e) => handleInputChange('priority', e.target.value)}
+            disabled={!isEditing}
+          >
+            <MenuItem value="routine">Routine</MenuItem>
+            <MenuItem value="urgent">Urgent</MenuItem>
+            <MenuItem value="asap">ASAP</MenuItem>
+            <MenuItem value="stat">Stat</MenuItem>
+          </Select>
+        </FormControl>
+
+        {/* Category */}
+        <TextField
+          fullWidth
+          id="categoryInput"
+          name="category"
+          label="Category"
+          value={get(supplyRequest, 'category.text', '')}
+          onChange={(e) => handleInputChange('category.text', e.target.value)}
+          disabled={!isEditing}
+          helperText="Category of supply (e.g., central, non-stock)"
+        />
+
+        {/* Item Section */}
+        <Paper elevation={0} sx={{ p: 2, bgcolor: 'grey.50' }}>
+          <Typography variant="h6" gutterBottom>
+            <InventoryIcon sx={{ verticalAlign: 'middle', mr: 1 }} />
+            Item Details
+          </Typography>
+
+          <Stack spacing={2}>
+            {/* Item Description */}
+            <TextField
+              fullWidth
+              id="itemCodeableConceptInput"
+              name="itemCodeableConcept"
+              label="Item Description"
+              value={get(supplyRequest, 'itemCodeableConcept.text', '')}
+              onChange={(e) => handleInputChange('itemCodeableConcept.text', e.target.value)}
+              disabled={!isEditing}
+              helperText="Description of the item being requested"
+            />
+
+            {/* Item Code */}
+            <TextField
+              fullWidth
+              id="itemCodeInput"
+              name="itemCode"
+              label="Item Code"
+              value={get(supplyRequest, 'itemCodeableConcept.coding[0].code', '')}
+              onChange={(e) => handleInputChange('itemCodeableConcept.coding[0].code', e.target.value)}
+              disabled={!isEditing}
+              helperText="Code identifying the item"
+            />
+
+            {/* Quantity */}
+            <Grid container spacing={2} sx={{ ml: 0, width: 'calc(100% + 16px)' }}>
+              <Grid item xs={6}>
+                <TextField
+                  fullWidth
+                  id="quantityValueInput"
+                  name="quantityValue"
+                  label="Quantity"
+                  type="number"
+                  value={get(supplyRequest, 'quantity.value', '')}
+                  onChange={(e) => handleInputChange('quantity.value', e.target.value)}
+                  disabled={!isEditing}
+                />
+              </Grid>
+              <Grid item xs={6}>
+                <TextField
+                  fullWidth
+                  id="quantityUnitInput"
+                  name="quantityUnit"
+                  label="Unit"
+                  value={get(supplyRequest, 'quantity.unit', '')}
+                  onChange={(e) => handleInputChange('quantity.unit', e.target.value)}
+                  disabled={!isEditing}
+                />
+              </Grid>
+            </Grid>
+          </Stack>
+        </Paper>
+
+        {/* Dates */}
+        <TextField
+          fullWidth
+          id="authoredOnInput"
+          name="authoredOn"
+          label="Authored On"
+          type="datetime-local"
+          value={get(supplyRequest, 'authoredOn') ? moment(get(supplyRequest, 'authoredOn')).format('YYYY-MM-DDTHH:mm') : ''}
+          onChange={(e) => handleInputChange('authoredOn', e.target.value)}
+          disabled={!isEditing}
+          InputLabelProps={{
+            shrink: true,
+          }}
+        />
+
+        <TextField
+          fullWidth
+          id="occurrenceDateTimeInput"
+          name="occurrenceDateTime"
+          label="Occurrence Date/Time (When Needed)"
+          type="datetime-local"
+          value={get(supplyRequest, 'occurrenceDateTime') ? moment(get(supplyRequest, 'occurrenceDateTime')).format('YYYY-MM-DDTHH:mm') : ''}
+          onChange={(e) => handleInputChange('occurrenceDateTime', e.target.value)}
+          disabled={!isEditing}
+          InputLabelProps={{
+            shrink: true,
+          }}
+          helperText="When the request should be fulfilled"
+        />
+
+        {/* Requester and Supplier */}
+        <TextField
+          fullWidth
+          id="requesterInput"
+          name="requester"
+          label="Requester"
+          value={get(supplyRequest, 'requester.display', '')}
+          onChange={(e) => handleInputChange('requester.display', e.target.value)}
+          disabled={!isEditing}
+          helperText="Who initiated the request"
+        />
+
+        <TextField
+          fullWidth
+          id="supplierInput"
+          name="supplier"
+          label="Supplier"
+          value={get(supplyRequest, 'supplier[0].display', '')}
+          onChange={(e) => handleInputChange('supplier[0].display', e.target.value)}
+          disabled={!isEditing}
+          helperText="Who is intended to fulfill the request"
+        />
+
+        {/* Delivery Locations */}
+        <TextField
+          fullWidth
+          id="deliverFromInput"
+          name="deliverFrom"
+          label="Deliver From"
+          value={get(supplyRequest, 'deliverFrom.display', '')}
+          onChange={(e) => handleInputChange('deliverFrom.display', e.target.value)}
+          disabled={!isEditing}
+          helperText="Where the supply is expected to come from"
+        />
+
+        <TextField
+          fullWidth
+          id="deliverToInput"
+          name="deliverTo"
+          label="Deliver To"
+          value={get(supplyRequest, 'deliverTo.display', '')}
+          onChange={(e) => handleInputChange('deliverTo.display', e.target.value)}
+          disabled={!isEditing}
+          helperText="Where the supply is destined to go"
+        />
+
+        {/* Reason */}
+        <TextField
+          fullWidth
+          id="reasonInput"
+          name="reason"
+          label="Reason"
+          multiline={true}
+          rows={2}
+          value={get(supplyRequest, 'reasonCode[0].text', '')}
+          onChange={(e) => handleInputChange('reasonCode[0].text', e.target.value)}
+          disabled={!isEditing}
+          helperText="Why the supply item was requested"
+        />
+      </Stack>
+    );
+  }
 
   return (
     <Container id="supplyRequestDetailPage" maxWidth="md" sx={{ py: 4 }}>

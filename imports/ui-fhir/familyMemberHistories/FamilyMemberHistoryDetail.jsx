@@ -54,11 +54,17 @@ import { Patients } from '/imports/lib/schemas/SimpleSchemas/Patients';
 // COMPONENT
 
 function FamilyMemberHistoryDetail(props) {
-  const navigate = useNavigate();
-  const { id } = useParams();
+  // Embedded mode support (for HoneycombFhirResource dispatcher)
+  var isEmbedded = props.embedded || false;
+
+  var _rawNavigate = useNavigate();
+  var navigate = isEmbedded ? function() {} : _rawNavigate;
+  var _params = isEmbedded ? {} : useParams();
+  var id = _params.id || null;
   
   // Subscribe to data
   const subscriptionReady = useTracker(() => {
+    if (isEmbedded) return true; // Skip subscription in embedded mode
     const familyMemberHistoriesHandle = Meteor.subscribe('familyMemberHistories.all');
     const patientsHandle = Meteor.subscribe('patients.search', {});
     return familyMemberHistoriesHandle.ready() && patientsHandle.ready();
@@ -107,7 +113,23 @@ function FamilyMemberHistoryDetail(props) {
     condition: []
   });
 
-  const [isEditing, setIsEditing] = useState(id === 'new');
+  // Initialise from fhirResource prop when in embedded mode
+  var hasReceivedProps = React.useRef(false);
+  var pendingUpdate = React.useRef(false);
+  useEffect(function() {
+    if (isEmbedded && props.fhirResource) {
+      hasReceivedProps.current = true;
+      setFamilyMemberHistory(function(prev) {
+        if (JSON.stringify(props.fhirResource) !== JSON.stringify(prev)) {
+          return props.fhirResource;
+        }
+        return prev;
+      });
+    }
+  }, [props.fhirResource]);
+
+
+  const [isEditing, setIsEditing] = useState(isEmbedded || id === 'new');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [searchUserDialogOpen, setSearchUserDialogOpen] = useState(false);
@@ -189,12 +211,22 @@ function FamilyMemberHistoryDetail(props) {
 
   // Handlers
   function handleChange(path, value) {
+    pendingUpdate.current = true;
     setFamilyMemberHistory(prev => {
       const updated = { ...prev };
       set(updated, path, value);
       return updated;
     });
   }
+
+  // onResourceChange useEffect: notify parent when state changes in embedded mode
+  useEffect(function() {
+    if (isEmbedded && pendingUpdate.current && props.onResourceChange) {
+      pendingUpdate.current = false;
+      props.onResourceChange(familyMemberHistory);
+    }
+  }, [familyMemberHistory]);
+
 
   function handleRelationshipChange(event) {
     const selectedRelationship = relationshipOptions.find(r => r.code === event.target.value);
@@ -315,10 +347,224 @@ function FamilyMemberHistoryDetail(props) {
     }
   }
 
+  if (isEmbedded) {
+    return (
+      <Grid container spacing={3}>
+        {/* Patient Reference */}
+        <Grid item xs={12}>
+          <TextField
+            id="patientDisplay"
+            fullWidth
+            label="Patient"
+            value={get(familyMemberHistory, 'patient.display', '')}
+            onChange={(e) => handleChange('patient.display', e.target.value)}
+            disabled={!isEditing}
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <Tooltip title="Search for patient">
+                    <IconButton
+                      onClick={handleSearchUser}
+                      edge="end"
+                      disabled={!isEditing}
+                    >
+                      <SearchIcon />
+                    </IconButton>
+                  </Tooltip>
+                </InputAdornment>
+              ),
+            }}
+          />
+        </Grid>
+
+        {/* Status */}
+        <Grid item xs={12} md={6}>
+          <FormControl fullWidth disabled={!isEditing}>
+            <InputLabel>Status</InputLabel>
+            <Select
+              value={get(familyMemberHistory, 'status', '')}
+              onChange={(e) => handleChange('status', e.target.value)}
+              label="Status"
+            >
+              <MenuItem value="partial">Partial</MenuItem>
+              <MenuItem value="completed">Completed</MenuItem>
+              <MenuItem value="entered-in-error">Entered in Error</MenuItem>
+              <MenuItem value="health-unknown">Health Unknown</MenuItem>
+            </Select>
+          </FormControl>
+        </Grid>
+
+        {/* Relationship */}
+        <Grid item xs={12} md={6}>
+          <FormControl fullWidth disabled={!isEditing}>
+            <InputLabel>Relationship</InputLabel>
+            <Select
+              value={get(familyMemberHistory, 'relationship.coding.0.code', '')}
+              onChange={handleRelationshipChange}
+              label="Relationship"
+            >
+              {relationshipOptions.map(relationship => (
+                <MenuItem key={relationship.code} value={relationship.code}>
+                  {relationship.display}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Grid>
+
+        {/* Name */}
+        <Grid item xs={12} md={6}>
+          <TextField
+            fullWidth
+            label="Family Member Name (Optional)"
+            value={get(familyMemberHistory, 'name', '')}
+            onChange={(e) => handleChange('name', e.target.value)}
+            disabled={!isEditing}
+            helperText="Leave blank to use relationship type"
+          />
+        </Grid>
+
+        {/* Born Date */}
+        <Grid item xs={12} md={6}>
+          <TextField
+            fullWidth
+            type="date"
+            label="Birth Date"
+            value={get(familyMemberHistory, 'bornDate', '')}
+            onChange={(e) => handleChange('bornDate', e.target.value)}
+            disabled={!isEditing}
+            InputLabelProps={{ shrink: true }}
+          />
+        </Grid>
+
+        {/* Age */}
+        <Grid item xs={12} md={6}>
+          <TextField
+            fullWidth
+            type="number"
+            label="Current Age (years)"
+            value={get(familyMemberHistory, 'ageAge.value', '')}
+            onChange={(e) => handleChange('ageAge.value', parseInt(e.target.value) || null)}
+            disabled={!isEditing || get(familyMemberHistory, 'deceasedBoolean', false)}
+            helperText={get(familyMemberHistory, 'deceasedBoolean', false) ? "Disabled for deceased" : ""}
+          />
+        </Grid>
+
+        {/* Deceased Toggle */}
+        <Grid item xs={12} md={6}>
+          <FormControlLabel
+            control={
+              <Switch
+                checked={get(familyMemberHistory, 'deceasedBoolean', false)}
+                onChange={(e) => handleChange('deceasedBoolean', e.target.checked)}
+                disabled={!isEditing}
+              />
+            }
+            label="Deceased"
+          />
+          {get(familyMemberHistory, 'deceasedBoolean', false) && (
+            <TextField
+              fullWidth
+              type="number"
+              label="Age at Death (years)"
+              value={get(familyMemberHistory, 'deceasedAge.value', '')}
+              onChange={(e) => handleChange('deceasedAge.value', parseInt(e.target.value) || null)}
+              disabled={!isEditing}
+              sx={{ mt: 1 }}
+            />
+          )}
+        </Grid>
+
+        {/* Conditions */}
+        <Grid item xs={12}>
+          <Typography variant="h6" gutterBottom>
+            Health Conditions
+          </Typography>
+
+          {/* Existing conditions */}
+          <Box sx={{ mb: 2 }}>
+            {get(familyMemberHistory, 'condition', []).map((condition, index) => (
+              <Chip
+                key={index}
+                label={get(condition, 'code.text', '')}
+                onDelete={isEditing ? () => handleRemoveCondition(index) : undefined}
+                color="primary"
+                sx={{ mr: 1, mb: 1 }}
+              />
+            ))}
+          </Box>
+
+          {/* Add new condition */}
+          {isEditing && (
+            <Box sx={{ border: 1, borderColor: 'divider', p: 2, borderRadius: 1 }}>
+              <Grid container spacing={2} alignItems="center">
+                <Grid item xs={12} md={6}>
+                  <Autocomplete
+                    freeSolo
+                    options={commonConditions}
+                    value={currentCondition.code.text}
+                    onChange={(event, newValue) => {
+                      setCurrentCondition(prev => ({
+                        ...prev,
+                        code: { ...prev.code, text: newValue || '' }
+                      }));
+                    }}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label="Condition"
+                        placeholder="Type or select condition"
+                      />
+                    )}
+                  />
+                </Grid>
+                <Grid item xs={12} md={3}>
+                  <TextField
+                    type="number"
+                    label="Age at Onset"
+                    value={currentCondition.onsetAge.value || ''}
+                    onChange={(e) => setCurrentCondition(prev => ({
+                      ...prev,
+                      onsetAge: { ...prev.onsetAge, value: parseInt(e.target.value) || null }
+                    }))}
+                  />
+                </Grid>
+                <Grid item xs={12} md={3}>
+                  <Button
+                    variant="contained"
+                    startIcon={<AddIcon />}
+                    onClick={handleAddCondition}
+                    disabled={!currentCondition.code.text}
+                    fullWidth
+                  >
+                    Add
+                  </Button>
+                </Grid>
+                <Grid item xs={12}>
+                  <TextField
+                    fullWidth
+                    multiline
+                    rows={2}
+                    label="Additional Notes"
+                    value={currentCondition.note[0]?.text || ''}
+                    onChange={(e) => setCurrentCondition(prev => ({
+                      ...prev,
+                      note: [{ text: e.target.value }]
+                    }))}
+                  />
+                </Grid>
+              </Grid>
+            </Box>
+          )}
+        </Grid>
+      </Grid>
+    );
+  }
+
   return (
     <Container id="familyMemberHistoryDetailPage" maxWidth="md" sx={{ py: 4 }}>
       <Card sx={{ boxShadow: 3 }}>
-        <CardHeader 
+        <CardHeader
           title={
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
               <FamilyRestroomIcon />
@@ -327,7 +573,7 @@ function FamilyMemberHistoryDetail(props) {
           }
           sx={{ bgcolor: 'primary.main', color: 'primary.contrastText' }}
         />
-        
+
         <CardContent>
           {error && (
             <Alert severity="error" sx={{ mb: 3 }}>

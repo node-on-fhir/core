@@ -60,11 +60,17 @@ Meteor.startup(function(){
 });
 
 function ConditionDetail(props) {
-  const navigate = useNavigate();
-  const { id } = useParams();
+  // Embedded mode support (for HoneycombFhirResource dispatcher)
+  var isEmbedded = props.embedded || false;
+
+  var _rawNavigate = useNavigate();
+  var navigate = isEmbedded ? function() {} : _rawNavigate;
+  var _params = isEmbedded ? {} : useParams();
+  var id = _params.id || null;
   
   // Subscribe to conditions and patients data
   const subscriptionReady = useTracker(() => {
+    if (isEmbedded) return true; // Skip subscription in embedded mode
     const conditionsHandle = Meteor.subscribe('conditions.all');
     const patientsHandle = Meteor.subscribe('patients.search', {});
     return conditionsHandle.ready() && patientsHandle.ready();
@@ -141,14 +147,34 @@ function ConditionDetail(props) {
     }]
   });
 
+  // Initialise from fhirResource prop when in embedded mode
+  // Use JSON comparison to avoid infinite re-render loop:
+  // parent re-parses JSON each render → new object ref → without this guard,
+  // setCondition fires → onResourceChange fires → parent re-renders → loop
+  var hasReceivedProps = React.useRef(false);
+  var pendingUpdate = React.useRef(false);
+  useEffect(function() {
+    if (isEmbedded && props.fhirResource) {
+      hasReceivedProps.current = true;
+      setCondition(function(prev) {
+        if (JSON.stringify(props.fhirResource) !== JSON.stringify(prev)) {
+          return props.fhirResource;
+        }
+        return prev;
+      });
+    }
+  }, [props.fhirResource]);
+
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [patientSearchOpen, setPatientSearchOpen] = useState(false);
   const [forceUpdate, setForceUpdate] = useState(0); // Force re-render counter
   
-  // Debug effect to monitor condition changes
+  // Debug effect to monitor condition changes (standalone only)
   useEffect(() => {
+    if (isEmbedded) return;
     console.log('=== Condition state changed ===');
     console.log('Full condition:', JSON.stringify(condition, null, 2));
     console.log('Subject display:', get(condition, 'subject.display'));
@@ -157,8 +183,9 @@ function ConditionDetail(props) {
   }, [condition]);
 
 
-  // Set initial state and asserter on component mount
+  // Set initial state and asserter on component mount (standalone only)
   useEffect(function() {
+    if (isEmbedded) return; // Resource comes from props in embedded mode
     if (!id || id === 'new') {
       // Enable editing for new conditions
       setIsEditing(true);
@@ -226,8 +253,9 @@ function ConditionDetail(props) {
     }
   }, [id, currentUser, selectedPatient, selectedPatientId]);
 
-  // Load condition if editing
+  // Load condition if editing (standalone only)
   useEffect(function() {
+    if (isEmbedded) return; // Resource comes from props in embedded mode
     async function loadCondition() {
       if (id && id !== 'new') {
         setLoading(true);
@@ -254,6 +282,7 @@ function ConditionDetail(props) {
   // Handle field changes
   function handleChange(path, value) {
     console.log('handleChange called with path:', path, 'value:', value);
+    pendingUpdate.current = true;
     setCondition(prevCondition => {
       const updatedCondition = JSON.parse(JSON.stringify(prevCondition)); // Deep clone
       set(updatedCondition, path, value);
@@ -261,6 +290,15 @@ function ConditionDetail(props) {
       return updatedCondition;
     });
   }
+
+  // onResourceChange useEffect: notify parent when state changes in embedded mode
+  useEffect(function() {
+    if (isEmbedded && pendingUpdate.current && props.onResourceChange) {
+      pendingUpdate.current = false;
+      props.onResourceChange(condition);
+    }
+  }, [condition]);
+
 
   // Handle search for users/patients
   function handleSearchUser() {
@@ -444,6 +482,163 @@ function ConditionDetail(props) {
     { code: 'encounter-diagnosis', display: 'Encounter Diagnosis' }
   ];
 
+  // Embedded mode: return only the form fields, no page chrome
+  if (isEmbedded) {
+    return (
+      <Grid container spacing={3}>
+        {/* Patient and Asserter */}
+        <Grid item xs={12} sm={6}>
+          <TextField
+            id="patientDisplay"
+            fullWidth
+            label="Patient Name"
+            value={get(condition, 'subject.display', '')}
+            onChange={(e) => handleChange('subject.display', e.target.value)}
+            helperText={get(condition, 'subject.reference', '') || 'Patient reference will be assigned'}
+          />
+        </Grid>
+        <Grid item xs={12} sm={6}>
+          <TextField
+            id="asserterDisplay"
+            fullWidth
+            label="Asserter Name"
+            value={get(condition, 'asserter.display', '')}
+            onChange={(e) => handleChange('asserter.display', e.target.value)}
+            helperText={get(condition, 'asserter.reference', '') || 'Practitioner reference will be assigned'}
+          />
+        </Grid>
+
+        {/* Onset and Recorded Dates */}
+        <Grid item xs={12} sm={6}>
+          <TextField
+            id="onsetDate"
+            fullWidth
+            type="date"
+            label="Onset Date"
+            value={moment(get(condition, 'onsetDateTime', '')).format('YYYY-MM-DD')}
+            onChange={(e) => handleChange('onsetDateTime', e.target.value)}
+            InputLabelProps={{ shrink: true }}
+          />
+        </Grid>
+        <Grid item xs={12} sm={6}>
+          <TextField
+            id="recordedDate"
+            fullWidth
+            type="date"
+            label="Recorded Date"
+            value={moment(get(condition, 'recordedDate', '')).format('YYYY-MM-DD')}
+            onChange={(e) => handleChange('recordedDate', e.target.value)}
+            InputLabelProps={{ shrink: true }}
+          />
+        </Grid>
+
+        {/* SNOMED Code and Condition Name */}
+        <Grid item xs={12} sm={4}>
+          <TextField
+            id="snomedCode"
+            fullWidth
+            label="SNOMED Code"
+            value={get(condition, 'code.coding[0].code', '')}
+            onChange={(e) => handleChange('code.coding[0].code', e.target.value)}
+            helperText="SNOMED CT code"
+            InputLabelProps={{ shrink: true }}
+          />
+        </Grid>
+        <Grid item xs={12} sm={8}>
+          <TextField
+            id="snomedDisplay"
+            fullWidth
+            label="Condition Name"
+            value={get(condition, 'code.coding[0].display', '')}
+            onChange={(e) => handleChange('code.coding[0].display', e.target.value)}
+            helperText="Human-readable name of the condition"
+            InputLabelProps={{ shrink: true }}
+          />
+        </Grid>
+
+        {/* Clinical Status, Verification Status, Category */}
+        <Grid item xs={12} sm={4}>
+          <FormControl fullWidth>
+            <InputLabel>Clinical Status</InputLabel>
+            <Select
+              id="clinicalStatus"
+              value={get(condition, 'clinicalStatus.coding[0].code', 'active')}
+              onChange={(e) => {
+                const option = clinicalStatusOptions.find(o => o.code === e.target.value);
+                handleChange('clinicalStatus.coding[0].code', option.code);
+                handleChange('clinicalStatus.coding[0].display', option.display);
+              }}
+              label="Clinical Status"
+            >
+              {clinicalStatusOptions.map(option => (
+                <MenuItem key={option.code} value={option.code}>
+                  {option.display}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Grid>
+        <Grid item xs={12} sm={4}>
+          <FormControl fullWidth>
+            <InputLabel>Verification Status</InputLabel>
+            <Select
+              id="verificationStatus"
+              value={get(condition, 'verificationStatus.coding[0].code', 'confirmed')}
+              onChange={(e) => {
+                const option = verificationStatusOptions.find(o => o.code === e.target.value);
+                handleChange('verificationStatus.coding[0].code', option.code);
+                handleChange('verificationStatus.coding[0].display', option.display);
+              }}
+              label="Verification Status"
+            >
+              {verificationStatusOptions.map(option => (
+                <MenuItem key={option.code} value={option.code}>
+                  {option.display}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Grid>
+        <Grid item xs={12} sm={4}>
+          <FormControl fullWidth>
+            <InputLabel>Category</InputLabel>
+            <Select
+              id="category"
+              value={get(condition, 'category[0].coding[0].code', 'problem-list-item')}
+              onChange={(e) => {
+                const option = categoryOptions.find(o => o.code === e.target.value);
+                handleChange('category[0].coding[0].code', option.code);
+                handleChange('category[0].coding[0].display', option.display);
+              }}
+              label="Category"
+            >
+              {categoryOptions.map(option => (
+                <MenuItem key={option.code} value={option.code}>
+                  {option.display}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Grid>
+
+        {/* Notes */}
+        <Grid item xs={12}>
+          <TextField
+            id="notesTextarea"
+            fullWidth
+            multiline
+            rows={3}
+            label="Notes"
+            value={get(condition, 'note[0].text', '')}
+            onChange={(e) => handleChange('note[0].text', e.target.value)}
+            helperText="Additional notes about the condition"
+          />
+        </Grid>
+      </Grid>
+    );
+  }
+
+  // Standalone mode: full page with Container, Card, CardHeader, etc.
   return (
     <Container id="conditionDetailPage" maxWidth="md" sx={{ py: 4 }}>
       <Card sx={{ boxShadow: 3 }}>

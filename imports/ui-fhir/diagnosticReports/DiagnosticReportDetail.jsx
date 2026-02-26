@@ -81,10 +81,29 @@ Session.setDefault('diagnosticReportFormData', {
 });
 
 function DiagnosticReportDetail(props){
-  const { id } = useParams();
-  const navigate = useNavigate();
+  // Embedded mode support (for HoneycombFhirResource dispatcher)
+  var isEmbedded = props.embedded || false;
+  var _params = isEmbedded ? {} : useParams();
+  var id = _params.id || null;
+  var _rawNavigate = useNavigate();
+  var navigate = isEmbedded ? function() {} : _rawNavigate;
 
   const [diagnosticReportId, setDiagnosticReportId] = useState(false);
+
+  // Initialise from fhirResource prop when in embedded mode
+  var hasReceivedProps = React.useRef(false);
+  useEffect(function() {
+    if (isEmbedded && props.fhirResource) {
+      hasReceivedProps.current = true;
+      setDiagnosticReportId(function(prev) {
+        if (JSON.stringify(props.fhirResource) !== JSON.stringify(prev)) {
+          return props.fhirResource;
+        }
+        return prev;
+      });
+    }
+  }, [props.fhirResource]);
+
   const [diagnosticReport, setDiagnosticReport] = useState({
     resourceType: 'DiagnosticReport',
     status: 'final',
@@ -106,7 +125,7 @@ function DiagnosticReportDetail(props){
     conclusion: '',
     category: ''
   });
-  const [isEditing, setIsEditing] = useState(false);
+  const [isEditing, setIsEditing] = useState(isEmbedded);
   const [searchParams, setSearchParams] = useSearchParams();
   const viewMode = searchParams.get('view') || 'form';
   const [loading, setLoading] = useState(false);
@@ -117,6 +136,7 @@ function DiagnosticReportDetail(props){
 
   // Subscribe to diagnostic reports
   const isSubscriptionReady = useTracker(function(){
+    if (isEmbedded) return true; // Skip subscription in embedded mode
     let autoSubscribeEnabled = get(Meteor, 'settings.public.defaults.autoSubscribe', false);
     let handle;
     if(autoSubscribeEnabled){
@@ -217,6 +237,11 @@ function DiagnosticReportDetail(props){
     const newForm = Object.assign({}, form);
     newForm[name] = value;
     setForm(newForm);
+  
+    // Notify parent of changes in embedded mode
+    if (props.onResourceChange) {
+      props.onResourceChange(newForm);
+    }
   }
 
   async function handleSaveButton(){
@@ -450,7 +475,7 @@ function DiagnosticReportDetail(props){
         </Stack>
 
         {/* In-form Save/Cancel bar when editing */}
-        {isEditing && (
+        {isEditing && !isEmbedded && (
           <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, mt: 3, pt: 2, borderTop: 1, borderColor: 'divider' }}>
             <Button id="cancelButton" onClick={handleCancelButton}>
               Cancel
@@ -561,6 +586,12 @@ function DiagnosticReportDetail(props){
         )}
       </Box>
     );
+  }
+
+  
+  // In embedded mode, render form content without Container/Card wrapper
+  if (isEmbedded) {
+    return renderFormView();
   }
 
   return (

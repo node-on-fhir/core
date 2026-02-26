@@ -31,8 +31,12 @@ import { get, set } from 'lodash';
 import { ClinicalImpressions } from '/imports/lib/schemas/SimpleSchemas/ClinicalImpressions';
 
 export function ClinicalImpressionDetail(props) {
-  const { id } = useParams();
-  const navigate = useNavigate();
+  // Embedded mode support (for HoneycombFhirResource dispatcher)
+  var isEmbedded = props.embedded || false;
+  var _params = isEmbedded ? {} : useParams();
+  var id = _params.id || null;
+  var _rawNavigate = useNavigate();
+  var navigate = isEmbedded ? function() {} : _rawNavigate;
 
   const [clinicalImpression, setClinicalImpression] = useState({
     resourceType: 'ClinicalImpression',
@@ -44,11 +48,28 @@ export function ClinicalImpressionDetail(props) {
     date: new Date().toISOString().split('T')[0],
     effectiveDateTime: ''
   });
-  const [isEditing, setIsEditing] = useState(id === 'new' || !id);
+
+  // Initialise from fhirResource prop when in embedded mode
+  var hasReceivedProps = React.useRef(false);
+  var pendingUpdate = React.useRef(false);
+  useEffect(function() {
+    if (isEmbedded && props.fhirResource) {
+      hasReceivedProps.current = true;
+      setClinicalImpression(function(prev) {
+        if (JSON.stringify(props.fhirResource) !== JSON.stringify(prev)) {
+          return props.fhirResource;
+        }
+        return prev;
+      });
+    }
+  }, [props.fhirResource]);
+
+  const [isEditing, setIsEditing] = useState(isEmbedded || id === 'new' || !id);
   const [isLoading, setIsLoading] = useState(false);
 
   // Subscribe and load data
   const isSubscriptionReady = useTracker(function() {
+    if (isEmbedded) return true; // Skip subscription in embedded mode
     let autoSubscribeEnabled = get(Meteor, 'settings.public.defaults.autoSubscribe', false);
     let handle;
     if (autoSubscribeEnabled) {
@@ -94,12 +115,22 @@ export function ClinicalImpressionDetail(props) {
   }, [id, isSubscriptionReady]);
 
   function handleChange(path, value) {
+    pendingUpdate.current = true;
     setClinicalImpression(prev => {
       const updated = { ...prev };
       set(updated, path, value);
       return updated;
     });
   }
+
+  // onResourceChange useEffect: notify parent when state changes in embedded mode
+  useEffect(function() {
+    if (isEmbedded && pendingUpdate.current && props.onResourceChange) {
+      pendingUpdate.current = false;
+      props.onResourceChange(clinicalImpression);
+    }
+  }, [clinicalImpression]);
+
 
   function handleSearchPatient() {
     console.log('Patient search clicked');
@@ -168,6 +199,143 @@ export function ClinicalImpressionDetail(props) {
 
   function handleBack() {
     navigate('/clinical-impressions');
+  }
+
+  if (isEmbedded) {
+    return (
+      <Grid container spacing={3}>
+        {/* Status */}
+        <Grid item xs={12} sm={6}>
+          <FormControl fullWidth>
+            <InputLabel id="status-label">Status</InputLabel>
+            <Select
+              labelId="status-label"
+              id="statusSelect"
+              value={get(clinicalImpression, 'status', 'in-progress')}
+              onChange={(e) => handleChange('status', e.target.value)}
+              disabled={!isEditing}
+              label="Status"
+            >
+              <MenuItem value="in-progress">In Progress</MenuItem>
+              <MenuItem value="completed">Completed</MenuItem>
+              <MenuItem value="entered-in-error">Entered in Error</MenuItem>
+            </Select>
+          </FormControl>
+        </Grid>
+
+        {/* Date */}
+        <Grid item xs={12} sm={6}>
+          <TextField
+            id="dateInput"
+            fullWidth
+            label="Date"
+            type="date"
+            value={get(clinicalImpression, 'date', '').split('T')[0]}
+            onChange={(e) => handleChange('date', e.target.value)}
+            disabled={!isEditing}
+            InputLabelProps={{ shrink: true }}
+          />
+        </Grid>
+
+        {/* Description */}
+        <Grid item xs={12}>
+          <TextField
+            id="descriptionInput"
+            fullWidth
+            label="Description"
+            value={get(clinicalImpression, 'description', '')}
+            onChange={(e) => handleChange('description', e.target.value)}
+            disabled={!isEditing}
+            multiline
+            rows={2}
+            helperText="A summary of the context and/or cause of the assessment"
+          />
+        </Grid>
+
+        {/* Summary */}
+        <Grid item xs={12}>
+          <TextField
+            id="summaryInput"
+            fullWidth
+            label="Summary"
+            value={get(clinicalImpression, 'summary', '')}
+            onChange={(e) => handleChange('summary', e.target.value)}
+            disabled={!isEditing}
+            multiline
+            rows={3}
+            helperText="Summary of the assessment"
+          />
+        </Grid>
+
+        {/* Effective DateTime */}
+        <Grid item xs={12} sm={6}>
+          <TextField
+            id="effectiveDateTimeInput"
+            fullWidth
+            label="Effective Date/Time"
+            type="datetime-local"
+            value={get(clinicalImpression, 'effectiveDateTime', '').substring(0, 16)}
+            onChange={(e) => handleChange('effectiveDateTime', e.target.value)}
+            disabled={!isEditing}
+            InputLabelProps={{ shrink: true }}
+            helperText="When the assessment was made"
+          />
+        </Grid>
+
+        {/* Assessor Display */}
+        <Grid item xs={12} sm={6}>
+          <TextField
+            id="assessorDisplay"
+            fullWidth
+            label="Assessor"
+            value={get(clinicalImpression, 'assessor.display', '')}
+            onChange={(e) => handleChange('assessor.display', e.target.value)}
+            disabled={!isEditing}
+            helperText="The clinician performing the assessment"
+          />
+        </Grid>
+
+        {/* Patient / Subject */}
+        <Grid item xs={12}>
+          <TextField
+            id="subjectDisplay"
+            fullWidth
+            label="Patient"
+            value={get(clinicalImpression, 'subject.display', '')}
+            onChange={(e) => handleChange('subject.display', e.target.value)}
+            disabled={!isEditing}
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <Tooltip title="Search for patient">
+                    <IconButton
+                      onClick={handleSearchPatient}
+                      edge="end"
+                      disabled={!isEditing}
+                    >
+                      <SearchIcon />
+                    </IconButton>
+                  </Tooltip>
+                </InputAdornment>
+              ),
+            }}
+          />
+        </Grid>
+
+        {/* Patient Reference (hidden but set) */}
+        <Grid item xs={12}>
+          <TextField
+            id="subjectReference"
+            fullWidth
+            label="Patient Reference"
+            value={get(clinicalImpression, 'subject.reference', '')}
+            disabled
+            size="small"
+            sx={{ display: 'none' }}
+          />
+        </Grid>
+      </Grid>
+    );
   }
 
   return (
