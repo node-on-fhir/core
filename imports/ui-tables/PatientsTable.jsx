@@ -1047,7 +1047,7 @@ export function PatientsTable(props = {}){
       tableRows.push(
         <TableRow key={`${i}-expanded`}>
           <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={numberOfColumns}>
-            <Collapse in={isExpanded} timeout={250} unmountOnExit>
+            <Collapse in={isExpanded} timeout="auto" unmountOnExit>
               <Box sx={{ py: 2, px: 1 }}>
                 <Stack direction="row" spacing={2} flexWrap="wrap">
                   {/* Static Buttons */}
