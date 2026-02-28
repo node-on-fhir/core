@@ -240,13 +240,11 @@ function NutritionIntakeDetail(props) {
           const existingIntake = NutritionIntakes.findOne({_id: id});
           if (existingIntake) {
             setNutritionIntake(existingIntake);
-            setIsEditing(false);
           } else {
             // Fall back to method call
             const result = await Meteor.callAsync('nutritionIntakes.get', id);
             if (result) {
               setNutritionIntake(result);
-              setIsEditing(false);
             }
           }
         } catch (err) {

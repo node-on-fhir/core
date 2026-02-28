@@ -92,6 +92,11 @@ import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import Snackbar from '@mui/material/Snackbar';
 import Alert from '@mui/material/Alert';
 
+import Collapse from '@mui/material/Collapse';
+import Chip from '@mui/material/Chip';
+import DnsIcon from '@mui/icons-material/Dns';
+import LinkIcon from '@mui/icons-material/Link';
+
 import { Endpoints } from '../lib/schemas/SimpleSchemas/Endpoints';
 import { SubscriptionsTable } from './SubscriptionsTable';
 
@@ -131,6 +136,10 @@ function ServerConfigurationPage(props){
   let [ copySuccess, setCopySuccess ] = useState(false);
   let [ copyMessage, setCopyMessage ] = useState("");
 
+  let [endpointExpanded, setEndpointExpanded] = useState({});
+  let [endpointContent, setEndpointContent] = useState({});
+  let [endpointLoading, setEndpointLoading] = useState({});
+
   let [checked, setChecked] = React.useState(true);
   let [defaultDirectoryQuery, setDefaultDirectoryQuery] = React.useState(get(Meteor, 'settings.public.interfaces.upstreamDirectory.channel.path', ""));
 
@@ -160,13 +169,13 @@ function ServerConfigurationPage(props){
   });
 
   // Build slug-to-index map for URL param sync
-  let coreTabSlugs = ['keys-certs', 'smart-on-fhir', 'upstream', 'tefca', 'init-data'];
+  let coreTabSlugs = ['server-info', 'keys-certs', 'smart-on-fhir', 'upstream', 'tefca', 'init-data'];
   let tabSlugMap = {};
   coreTabSlugs.forEach(function(slug, i){
     tabSlugMap[slug] = i;
   });
   extensionTabs.forEach(function(ext, i){
-    tabSlugMap[ext.slug] = 5 + i;
+    tabSlugMap[ext.slug] = 6 + i;
   });
 
   // Resolve activeTab from URL ?tab= param
@@ -249,6 +258,51 @@ function ServerConfigurationPage(props){
     }, function(err) {
       console.error('Could not copy text: ', err);
     });
+  }
+
+  function toggleEndpoint(slug, url){
+    let isExpanding = !endpointExpanded[slug];
+    setEndpointExpanded(function(prev){
+      let next = Object.assign({}, prev);
+      next[slug] = !prev[slug];
+      return next;
+    });
+
+    // Fetch content on first expand
+    if(isExpanding && !endpointContent[slug]){
+      setEndpointLoading(function(prev){
+        let next = Object.assign({}, prev);
+        next[slug] = true;
+        return next;
+      });
+
+      fetch(url, { headers: { 'Accept': 'application/json' } })
+        .then(function(response){ return response.json(); })
+        .then(function(data){
+          setEndpointContent(function(prev){
+            let next = Object.assign({}, prev);
+            next[slug] = JSON.stringify(data, null, 2);
+            return next;
+          });
+          setEndpointLoading(function(prev){
+            let next = Object.assign({}, prev);
+            next[slug] = false;
+            return next;
+          });
+        })
+        .catch(function(err){
+          setEndpointContent(function(prev){
+            let next = Object.assign({}, prev);
+            next[slug] = 'Error fetching: ' + err.message;
+            return next;
+          });
+          setEndpointLoading(function(prev){
+            let next = Object.assign({}, prev);
+            next[slug] = false;
+            return next;
+          });
+        });
+    }
   }
 
   function handelUpdateWellKnownUdapUrl(event){
@@ -1038,6 +1092,7 @@ function ServerConfigurationPage(props){
 
   // Build tab list dynamically with per-extension tabs
   let tabDefinitions = [
+    { label: 'Server Info', slug: 'server-info' },
     { label: 'Keys & Certs', slug: 'keys-certs' },
     { label: 'SMART on FHIR', slug: 'smart-on-fhir' },
     { label: 'Upstream', slug: 'upstream' },
@@ -1056,7 +1111,7 @@ function ServerConfigurationPage(props){
   });
 
   function handleTabChange(event, newValue){
-    let slug = indexToSlug[newValue] || 'keys-certs';
+    let slug = indexToSlug[newValue] || 'server-info';
     navigate('/server-configuration?tab=' + slug, { replace: true });
   }
 
@@ -1095,6 +1150,87 @@ function ServerConfigurationPage(props){
           <Grid item xs={10}>
             {activeTab === 0 && (
               <Box sx={{ minHeight: '60vh' }}>
+                <Card sx={{ mb: 2 }}>
+                  <CardHeader
+                    avatar={<DnsIcon color="primary" />}
+                    title="FHIR Server"
+                  />
+                  <CardContent>
+                    <Alert
+                      severity="info"
+                      icon={<LinkIcon />}
+                      action={
+                        <IconButton size="small" onClick={function(){ copyToClipboard(Meteor.absoluteUrl() + 'baseR4', "FHIR Base URL copied!"); }}>
+                          <ContentCopyIcon fontSize="small" />
+                        </IconButton>
+                      }
+                    >
+                      <Typography variant="body2" sx={{ fontFamily: 'monospace' }}>
+                        {Meteor.absoluteUrl() + 'baseR4'}
+                      </Typography>
+                    </Alert>
+                  </CardContent>
+                </Card>
+
+                <Card sx={{ mb: 2 }}>
+                  <CardHeader
+                    avatar={<SearchIcon color="primary" />}
+                    title="Discovery & Metadata Endpoints"
+                  />
+                  <CardContent>
+                    {[
+                      { slug: 'metadata', label: 'Capability Statement', url: Meteor.absoluteUrl() + 'baseR4/metadata' },
+                      { slug: 'smart-config', label: 'SMART Configuration', url: Meteor.absoluteUrl() + '.well-known/smart-configuration' },
+                      { slug: 'udap', label: 'UDAP Discovery', url: Meteor.absoluteUrl() + '.well-known/udap' },
+                      { slug: 'jwks', label: 'JWK Set', url: Meteor.absoluteUrl() + '.well-known/jwks.json' }
+                    ].map(function(endpoint){
+                      return (
+                        <Alert
+                          key={endpoint.slug}
+                          severity="info"
+                          icon={<LinkIcon />}
+                          action={
+                            <IconButton size="small" onClick={function(e){ e.stopPropagation(); copyToClipboard(endpoint.url, endpoint.label + " URL copied!"); }}>
+                              <ContentCopyIcon fontSize="small" />
+                            </IconButton>
+                          }
+                          sx={{ mb: 1, cursor: 'pointer', '& .MuiAlert-message': { width: '100%', overflow: 'hidden' } }}
+                          onClick={function(){ toggleEndpoint(endpoint.slug, endpoint.url); }}
+                        >
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <Chip label={endpoint.label} size="small" sx={{ flexShrink: 0 }} />
+                            <Typography variant="body2" sx={{ fontFamily: 'monospace', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
+                              {endpoint.url}
+                            </Typography>
+                          </Box>
+                          <Collapse in={endpointExpanded[endpoint.slug] || false}>
+                            <Typography
+                              component="pre"
+                              sx={{
+                                fontFamily: 'monospace',
+                                fontSize: '0.75rem',
+                                mt: 1,
+                                p: 1,
+                                bgcolor: theme === 'dark' ? 'rgba(0,0,0,0.2)' : 'rgba(0,0,0,0.05)',
+                                borderRadius: 1,
+                                overflow: 'auto',
+                                maxHeight: 300,
+                                whiteSpace: 'pre-wrap',
+                                wordBreak: 'break-word'
+                              }}
+                            >
+                              {endpointLoading[endpoint.slug] ? 'Loading...' : (endpointContent[endpoint.slug] || 'Click to fetch')}
+                            </Typography>
+                          </Collapse>
+                        </Alert>
+                      );
+                    })}
+                  </CardContent>
+                </Card>
+              </Box>
+            )}
+            {activeTab === 1 && (
+              <Box sx={{ minHeight: '60vh' }}>
                 { serverPrivateKeyElems }
                 { serverPublicKeyElems }
                 { serverPublicCertElems }
@@ -1102,31 +1238,31 @@ function ServerConfigurationPage(props){
                 { generateCertElems }
               </Box>
             )}
-            {activeTab === 1 && (
+            {activeTab === 2 && (
               <Box sx={{ minHeight: '60vh' }}>
                 { smartOnFhirElems }
               </Box>
             )}
-            {activeTab === 2 && (
+            {activeTab === 3 && (
               <Box sx={{ minHeight: '60vh' }}>
                 { upstreamServerElements }
                 { subscribeUpstreamCard }
                 { subscriptionsCard }
               </Box>
             )}
-            {activeTab === 3 && (
+            {activeTab === 4 && (
               <Box sx={{ minHeight: '60vh' }}>
                 { tefcaEndpointsElements }
               </Box>
             )}
-            {activeTab === 4 && (
+            {activeTab === 5 && (
               <Box sx={{ minHeight: '60vh' }}>
                 { initSampleDataElements }
                 { syntheaDbUtilsElements }
               </Box>
             )}
             {extensionTabs.map(function(ext, i){
-              let tabIndex = 5 + i;
+              let tabIndex = 6 + i;
               return activeTab === tabIndex ? (
                 <Box key={ext.slug} sx={{ minHeight: '60vh' }}>
                   { ext.components }

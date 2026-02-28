@@ -307,13 +307,11 @@ function NutritionOrderDetail(props) {
           const existingOrder = NutritionOrders.findOne({_id: id}) || NutritionOrders.findOne({id: id});
           if (existingOrder) {
             setNutritionOrder(existingOrder);
-            setIsEditing(false);
           } else {
             // Fall back to method call
             const result = await Meteor.callAsync('nutritionOrders.get', id);
             if (result) {
               setNutritionOrder(result);
-              setIsEditing(false);
             }
           }
         } catch (err) {

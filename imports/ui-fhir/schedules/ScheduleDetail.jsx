@@ -153,12 +153,19 @@ function ScheduleDetail(props) {
   const isNewSchedule = !id || id === 'new';
   const isExistingSchedule = scheduleId && scheduleId !== 'new';
 
-  // Load schedule if id is provided
+  // Initialize edit state based on id
   useEffect(function() {
-    if (id && id !== 'new' && subscriptionReady) {
+    if (id && id !== 'new') {
       setScheduleId(id);
       setIsEditing(false);
+    } else {
+      setIsEditing(true);
+    }
+  }, [id]);
 
+  // Load schedule data when subscription is ready
+  useEffect(function() {
+    if (id && id !== 'new' && subscriptionReady) {
       var foundSchedule = Schedules.findOne({_id: id});
       if (foundSchedule) {
         console.log('Found schedule:', foundSchedule);
@@ -183,8 +190,6 @@ function ScheduleDetail(props) {
       } else {
         console.warn('Schedule not found with id:', id);
       }
-    } else {
-      setIsEditing(true);
     }
   }, [id, subscriptionReady]);
 
@@ -231,7 +236,7 @@ function ScheduleDetail(props) {
             setError(saveError.message);
           } else {
             console.log('Schedule updated successfully');
-            setIsEditing(false);
+            navigate('/schedules');
           }
         });
       } else {
