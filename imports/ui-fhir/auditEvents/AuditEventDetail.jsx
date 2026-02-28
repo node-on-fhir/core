@@ -1,33 +1,36 @@
 // imports/ui-fhir/auditEvents/AuditEventDetail.jsx
 
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useTracker } from 'meteor/react-meteor-data';
 
 import {
   Box,
-  Container,
-  Card,
-  CardHeader,
-  CardContent,
-  CardActions,
-  TextField,
   Button,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
+  Card,
+  CardContent,
+  CardHeader,
+  Container,
+  IconButton,
+  Tooltip,
   Typography,
-  Divider,
-  Grid,
   Alert
 } from '@mui/material';
+
+import ArticleIcon from '@mui/icons-material/Article';
+import EditNoteIcon from '@mui/icons-material/EditNote';
+import LockIcon from '@mui/icons-material/Lock';
+import LockOpenIcon from '@mui/icons-material/LockOpen';
+import DeleteIcon from '@mui/icons-material/Delete';
 
 import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
 import { get, set } from 'lodash';
 
 import { AuditEvents } from '../../lib/schemas/SimpleSchemas/AuditEvents';
+
+import AuditEventFormView from './AuditEventFormView';
+import AuditEventPreview from './AuditEventPreview';
 
 export function AuditEventDetail(props) {
   // Embedded mode support (for HoneycombFhirResource dispatcher)
@@ -73,8 +76,12 @@ export function AuditEventDetail(props) {
   }, [props.fhirResource]);
 
   const [isEditing, setIsEditing] = useState(isEmbedded);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const viewMode = searchParams.get('view') || 'form';
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
+
+  const isNewRecord = !id || id === 'new';
 
   // Subscribe and load data
   const isSubscriptionReady = useTracker(function() {
@@ -105,7 +112,7 @@ export function AuditEventDetail(props) {
     const newAuditEvent = { ...auditEvent };
     set(newAuditEvent, path, value);
     setAuditEvent(newAuditEvent);
-  
+
     // Notify parent of changes in embedded mode
     if (props.onResourceChange) {
       props.onResourceChange(newAuditEvent);
@@ -170,191 +177,136 @@ export function AuditEventDetail(props) {
     }
   }
 
-  function handleEdit() {
-    setIsEditing(true);
+  // Build the header title
+  let headerTitle = 'New Audit Event';
+  if (!isNewRecord) {
+    headerTitle = <span className="barcode helveticas" style={{ fontSize: '1.5rem' }}>{id}</span>;
   }
 
-  function handleBack() {
-    navigate('/audit-events');
-  }
-
-  if (isEmbedded) {
+  // Build the header action buttons
+  function renderHeaderActions(){
     return (
-      <Grid container spacing={3}>
-        <Grid item xs={12}>
-          <Typography variant="h6" gutterBottom>Event Type</Typography>
-          <Divider sx={{ mb: 2 }} />
-        </Grid>
-
-        <Grid item xs={12} md={4}>
-          <TextField
-            id="typeCodeInput"
-            fullWidth
-            label="Type Code"
-            value={get(auditEvent, 'type.code', '')}
-            onChange={(e) => handleChange('type.code', e.target.value)}
-            disabled={!isEditing}
-          />
-        </Grid>
-
-        <Grid item xs={12} md={8}>
-          <TextField
-            id="typeDisplayInput"
-            fullWidth
-            label="Type Display"
-            value={get(auditEvent, 'type.display', '')}
-            onChange={(e) => handleChange('type.display', e.target.value)}
-            disabled={!isEditing}
-          />
-        </Grid>
-
-        <Grid item xs={12} md={6}>
-          <FormControl fullWidth>
-            <InputLabel id="action-label">Action</InputLabel>
-            <Select
-              id="actionSelect"
-              labelId="action-label"
-              value={get(auditEvent, 'action', '')}
-              onChange={(e) => handleChange('action', e.target.value)}
-              label="Action"
-              disabled={!isEditing}
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+        {/* Preview toggle */}
+        {!isNewRecord && (
+          <Tooltip title="Preview">
+            <IconButton
+              onClick={() => setSearchParams({ view: 'page' })}
+              sx={{
+                color: viewMode === 'page' ? 'primary.main' : 'text.secondary'
+              }}
             >
-              <MenuItem value="C">Create (C)</MenuItem>
-              <MenuItem value="R">Read (R)</MenuItem>
-              <MenuItem value="U">Update (U)</MenuItem>
-              <MenuItem value="D">Delete (D)</MenuItem>
-              <MenuItem value="E">Execute (E)</MenuItem>
-            </Select>
-          </FormControl>
-        </Grid>
+              <ArticleIcon />
+            </IconButton>
+          </Tooltip>
+        )}
 
-        <Grid item xs={12} md={6}>
-          <FormControl fullWidth>
-            <InputLabel id="outcome-label">Outcome</InputLabel>
-            <Select
-              id="outcomeSelect"
-              labelId="outcome-label"
-              value={get(auditEvent, 'outcome', '')}
-              onChange={(e) => handleChange('outcome', e.target.value)}
-              label="Outcome"
-              disabled={!isEditing}
+        {/* Form toggle */}
+        {!isNewRecord && (
+          <Tooltip title="Form">
+            <IconButton
+              onClick={() => setSearchParams({ view: 'form' })}
+              sx={{
+                color: viewMode === 'form' ? 'primary.main' : 'text.secondary'
+              }}
             >
-              <MenuItem value="0">Success (0)</MenuItem>
-              <MenuItem value="4">Minor Failure (4)</MenuItem>
-              <MenuItem value="8">Serious Failure (8)</MenuItem>
-              <MenuItem value="12">Major Failure (12)</MenuItem>
-            </Select>
-          </FormControl>
-        </Grid>
+              <EditNoteIcon />
+            </IconButton>
+          </Tooltip>
+        )}
 
-        <Grid item xs={12}>
-          <TextField
-            id="outcomeDescInput"
-            fullWidth
-            label="Outcome Description"
-            value={get(auditEvent, 'outcomeDesc', '')}
-            onChange={(e) => handleChange('outcomeDesc', e.target.value)}
-            disabled={!isEditing}
-            multiline
-            rows={2}
-          />
-        </Grid>
+        {/* Lock / Unlock toggle */}
+        {!isNewRecord && (
+          <Tooltip title={isEditing ? 'Lock (read-only)' : 'Unlock (edit)'}>
+            <IconButton
+              onClick={() => setIsEditing(!isEditing)}
+            >
+              {isEditing ? <LockOpenIcon /> : <LockIcon />}
+            </IconButton>
+          </Tooltip>
+        )}
 
-        <Grid item xs={12}>
-          <TextField
-            id="recordedInput"
-            fullWidth
-            label="Recorded Date/Time"
-            type="datetime-local"
-            value={get(auditEvent, 'recorded', '').substring(0, 16)}
-            onChange={(e) => handleChange('recorded', new Date(e.target.value).toISOString())}
-            disabled={!isEditing}
-            InputLabelProps={{ shrink: true }}
-          />
-        </Grid>
-
-        <Grid item xs={12}>
-          <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>Agent</Typography>
-          <Divider sx={{ mb: 2 }} />
-        </Grid>
-
-        <Grid item xs={12}>
-          <TextField
-            id="agentWhoDisplayInput"
-            fullWidth
-            label="Agent (Who)"
-            value={get(auditEvent, 'agent.0.who.display', '')}
-            onChange={(e) => handleChange('agent.0.who.display', e.target.value)}
-            disabled={!isEditing}
-            helperText="The actor involved in the event"
-          />
-        </Grid>
-
-        <Grid item xs={12}>
-          <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>Source</Typography>
-          <Divider sx={{ mb: 2 }} />
-        </Grid>
-
-        <Grid item xs={12}>
-          <TextField
-            id="sourceObserverDisplayInput"
-            fullWidth
-            label="Source Observer"
-            value={get(auditEvent, 'source.observer.display', '')}
-            onChange={(e) => handleChange('source.observer.display', e.target.value)}
-            disabled={!isEditing}
-            helperText="The system reporting the event"
-          />
-        </Grid>
-
-        <Grid item xs={12}>
-          <TextField
-            id="sourceSiteInput"
-            fullWidth
-            label="Source Site"
-            value={get(auditEvent, 'source.site', '')}
-            onChange={(e) => handleChange('source.site', e.target.value)}
-            disabled={!isEditing}
-          />
-        </Grid>
-
-        <Grid item xs={12}>
-          <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>Entity</Typography>
-          <Divider sx={{ mb: 2 }} />
-        </Grid>
-
-        <Grid item xs={12}>
-          <TextField
-            id="entityWhatReferenceInput"
-            fullWidth
-            label="Entity Reference"
-            value={get(auditEvent, 'entity.0.what.reference', '')}
-            onChange={(e) => handleChange('entity.0.what.reference', e.target.value)}
-            disabled={!isEditing}
-            helperText="Reference to the data/object accessed (e.g., Patient/123)"
-          />
-        </Grid>
-
-        <Grid item xs={12}>
-          <TextField
-            id="entityWhatDisplayInput"
-            fullWidth
-            label="Entity Display"
-            value={get(auditEvent, 'entity.0.what.display', '')}
-            onChange={(e) => handleChange('entity.0.what.display', e.target.value)}
-            disabled={!isEditing}
-          />
-        </Grid>
-      </Grid>
+        {/* Delete */}
+        {!isNewRecord && (
+          <Tooltip title="Delete">
+            <IconButton
+              onClick={handleDelete}
+              disabled={!isEditing}
+              sx={{ color: isEditing ? 'error.main' : 'text.disabled' }}
+            >
+              <DeleteIcon />
+              <Typography sx={{
+                position: 'absolute',
+                width: '1px',
+                height: '1px',
+                padding: 0,
+                margin: '-1px',
+                overflow: 'hidden',
+                clip: 'rect(0, 0, 0, 0)',
+                whiteSpace: 'nowrap',
+                borderWidth: 0
+              }}>Delete</Typography>
+            </IconButton>
+          </Tooltip>
+        )}
+      </Box>
     );
+  }
+
+  // Render the form view
+  function renderFormView(){
+    return (
+      <>
+        <AuditEventFormView
+          resource={auditEvent}
+          isEditing={isEditing}
+          onChange={handleChange}
+          isEmbedded={isEmbedded}
+        />
+
+        {/* In-form Save/Cancel bar when editing */}
+        {isEditing && !isEmbedded && (
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, mt: 3, pt: 2, borderTop: 1, borderColor: 'divider' }}>
+            <Button id="cancelButton" onClick={handleCancel}>
+              Cancel
+            </Button>
+            <Button
+              id="saveAuditEventButton"
+              onClick={handleSave}
+              variant="contained"
+              color="primary"
+              disabled={loading}
+            >
+              {loading ? 'Saving...' : (id && id !== 'new' ? 'Update' : 'Save')}
+            </Button>
+          </Box>
+        )}
+      </>
+    );
+  }
+
+  // Render the preview view
+  function renderPreviewView(){
+    return (
+      <AuditEventPreview
+        resource={auditEvent}
+        resourceId={id}
+      />
+    );
+  }
+
+  // In embedded mode, render form content without Container/Card wrapper
+  if (isEmbedded) {
+    return renderFormView();
   }
 
   return (
     <Container id="auditEventDetailPage" maxWidth="md" sx={{ py: 4 }}>
       <Card sx={{ boxShadow: 3 }}>
         <CardHeader
-          title={id && id !== 'new' ? 'Audit Event Details' : 'New Audit Event'}
-          sx={{ bgcolor: 'primary.main', color: 'primary.contrastText' }}
+          title={headerTitle}
+          sx={{ borderBottom: 1, borderColor: 'divider' }}
+          action={renderHeaderActions()}
         />
         <CardContent>
           {error && (
@@ -363,224 +315,9 @@ export function AuditEventDetail(props) {
             </Alert>
           )}
 
-          {(id && id !== 'new') && (
-            <Box sx={{ mb: 3, textAlign: 'right' }}>
-              <span className="barcode helveticas" style={{ fontSize: '2rem' }}>{id}</span>
-            </Box>
-          )}
-
-          <Grid container spacing={3}>
-            <Grid item xs={12}>
-              <Typography variant="h6" gutterBottom>Event Type</Typography>
-              <Divider sx={{ mb: 2 }} />
-            </Grid>
-
-            <Grid item xs={12} md={4}>
-              <TextField
-                id="typeCodeInput"
-                fullWidth
-                label="Type Code"
-                value={get(auditEvent, 'type.code', '')}
-                onChange={(e) => handleChange('type.code', e.target.value)}
-                disabled={!isEditing}
-              />
-            </Grid>
-
-            <Grid item xs={12} md={8}>
-              <TextField
-                id="typeDisplayInput"
-                fullWidth
-                label="Type Display"
-                value={get(auditEvent, 'type.display', '')}
-                onChange={(e) => handleChange('type.display', e.target.value)}
-                disabled={!isEditing}
-              />
-            </Grid>
-
-            <Grid item xs={12} md={6}>
-              <FormControl fullWidth>
-                <InputLabel id="action-label">Action</InputLabel>
-                <Select
-                  id="actionSelect"
-                  labelId="action-label"
-                  value={get(auditEvent, 'action', '')}
-                  onChange={(e) => handleChange('action', e.target.value)}
-                  label="Action"
-                  disabled={!isEditing}
-                >
-                  <MenuItem value="C">Create (C)</MenuItem>
-                  <MenuItem value="R">Read (R)</MenuItem>
-                  <MenuItem value="U">Update (U)</MenuItem>
-                  <MenuItem value="D">Delete (D)</MenuItem>
-                  <MenuItem value="E">Execute (E)</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
-
-            <Grid item xs={12} md={6}>
-              <FormControl fullWidth>
-                <InputLabel id="outcome-label">Outcome</InputLabel>
-                <Select
-                  id="outcomeSelect"
-                  labelId="outcome-label"
-                  value={get(auditEvent, 'outcome', '')}
-                  onChange={(e) => handleChange('outcome', e.target.value)}
-                  label="Outcome"
-                  disabled={!isEditing}
-                >
-                  <MenuItem value="0">Success (0)</MenuItem>
-                  <MenuItem value="4">Minor Failure (4)</MenuItem>
-                  <MenuItem value="8">Serious Failure (8)</MenuItem>
-                  <MenuItem value="12">Major Failure (12)</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
-
-            <Grid item xs={12}>
-              <TextField
-                id="outcomeDescInput"
-                fullWidth
-                label="Outcome Description"
-                value={get(auditEvent, 'outcomeDesc', '')}
-                onChange={(e) => handleChange('outcomeDesc', e.target.value)}
-                disabled={!isEditing}
-                multiline
-                rows={2}
-              />
-            </Grid>
-
-            <Grid item xs={12}>
-              <TextField
-                id="recordedInput"
-                fullWidth
-                label="Recorded Date/Time"
-                type="datetime-local"
-                value={get(auditEvent, 'recorded', '').substring(0, 16)}
-                onChange={(e) => handleChange('recorded', new Date(e.target.value).toISOString())}
-                disabled={!isEditing}
-                InputLabelProps={{ shrink: true }}
-              />
-            </Grid>
-
-            <Grid item xs={12}>
-              <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>Agent</Typography>
-              <Divider sx={{ mb: 2 }} />
-            </Grid>
-
-            <Grid item xs={12}>
-              <TextField
-                id="agentWhoDisplayInput"
-                fullWidth
-                label="Agent (Who)"
-                value={get(auditEvent, 'agent.0.who.display', '')}
-                onChange={(e) => handleChange('agent.0.who.display', e.target.value)}
-                disabled={!isEditing}
-                helperText="The actor involved in the event"
-              />
-            </Grid>
-
-            <Grid item xs={12}>
-              <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>Source</Typography>
-              <Divider sx={{ mb: 2 }} />
-            </Grid>
-
-            <Grid item xs={12}>
-              <TextField
-                id="sourceObserverDisplayInput"
-                fullWidth
-                label="Source Observer"
-                value={get(auditEvent, 'source.observer.display', '')}
-                onChange={(e) => handleChange('source.observer.display', e.target.value)}
-                disabled={!isEditing}
-                helperText="The system reporting the event"
-              />
-            </Grid>
-
-            <Grid item xs={12}>
-              <TextField
-                id="sourceSiteInput"
-                fullWidth
-                label="Source Site"
-                value={get(auditEvent, 'source.site', '')}
-                onChange={(e) => handleChange('source.site', e.target.value)}
-                disabled={!isEditing}
-              />
-            </Grid>
-
-            <Grid item xs={12}>
-              <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>Entity</Typography>
-              <Divider sx={{ mb: 2 }} />
-            </Grid>
-
-            <Grid item xs={12}>
-              <TextField
-                id="entityWhatReferenceInput"
-                fullWidth
-                label="Entity Reference"
-                value={get(auditEvent, 'entity.0.what.reference', '')}
-                onChange={(e) => handleChange('entity.0.what.reference', e.target.value)}
-                disabled={!isEditing}
-                helperText="Reference to the data/object accessed (e.g., Patient/123)"
-              />
-            </Grid>
-
-            <Grid item xs={12}>
-              <TextField
-                id="entityWhatDisplayInput"
-                fullWidth
-                label="Entity Display"
-                value={get(auditEvent, 'entity.0.what.display', '')}
-                onChange={(e) => handleChange('entity.0.what.display', e.target.value)}
-                disabled={!isEditing}
-              />
-            </Grid>
-          </Grid>
+          {viewMode === 'form' && renderFormView()}
+          {viewMode === 'page' && renderPreviewView()}
         </CardContent>
-
-        <CardActions sx={{ justifyContent: 'space-between', p: 2 }}>
-          <Box>
-            <Button onClick={handleBack} sx={{ mr: 1 }}>
-              Back
-            </Button>
-            {id && id !== 'new' && !isEditing && (
-              <Button
-                id="deleteAuditEventButton"
-                color="error"
-                onClick={handleDelete}
-                disabled={loading}
-              >
-                Delete
-              </Button>
-            )}
-          </Box>
-          <Box>
-            {isEditing ? (
-              <>
-                <Button onClick={handleCancel} sx={{ mr: 1 }}>
-                  Cancel
-                </Button>
-                <Button
-                  id="saveAuditEventButton"
-                  variant="contained"
-                  color="primary"
-                  onClick={handleSave}
-                  disabled={loading}
-                >
-                  {id && id !== 'new' ? 'Update' : 'Save'}
-                </Button>
-              </>
-            ) : (
-              <Button
-                id="editAuditEventButton"
-                variant="contained"
-                color="primary"
-                onClick={handleEdit}
-              >
-                Edit
-              </Button>
-            )}
-          </Box>
-        </CardActions>
       </Card>
     </Container>
   );

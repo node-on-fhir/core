@@ -320,11 +320,7 @@ export function AppointmentsPage(props){
   }
 
   let layoutContent;
-  if(isLoading) {
-    layoutContent = <Box sx={{ textAlign: 'center', py: 4 }}>
-      <Typography>Loading appointments...</Typography>
-    </Box>
-  } else if(data.appointments.length > 0){
+  if(data.appointments.length > 0){
     layoutContent = <Card 
       sx={{ 
         width: '100%',

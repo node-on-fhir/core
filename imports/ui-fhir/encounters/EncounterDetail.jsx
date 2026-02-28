@@ -10,17 +10,8 @@ import {
   CardContent,
   CardHeader,
   Container,
-  Divider,
-  TextField,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
   Typography,
   Box,
-  Stack,
-  Chip,
-  InputAdornment,
   IconButton,
   Tooltip,
   Alert,
@@ -29,7 +20,6 @@ import {
 
 import ArticleIcon from '@mui/icons-material/Article';
 import EditNoteIcon from '@mui/icons-material/EditNote';
-import SearchIcon from '@mui/icons-material/Search';
 import LockIcon from '@mui/icons-material/Lock';
 import LockOpenIcon from '@mui/icons-material/LockOpen';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -43,46 +33,12 @@ import { Session } from 'meteor/session';
 import PatientSearchDialog from '/imports/components/PatientSearchDialog';
 import { FhirUtilities } from '/imports/lib/FhirUtilities';
 
+import EncounterFormView from './EncounterFormView';
+import EncounterPreview from './EncounterPreview';
+
 // Direct imports - avoid Meteor.startup timing issues
 import { Encounters } from '/imports/lib/schemas/SimpleSchemas/Encounters';
 import { Patients } from '/imports/lib/schemas/SimpleSchemas/Patients';
-
-const statusOptions = [
-  { code: 'planned', display: 'Planned' },
-  { code: 'arrived', display: 'Arrived' },
-  { code: 'triaged', display: 'Triaged' },
-  { code: 'in-progress', display: 'In Progress' },
-  { code: 'onleave', display: 'On Leave' },
-  { code: 'finished', display: 'Finished' },
-  { code: 'cancelled', display: 'Cancelled' }
-];
-
-const classOptions = [
-  { code: 'AMB', display: 'Ambulatory' },
-  { code: 'EMER', display: 'Emergency' },
-  { code: 'FLD', display: 'Field' },
-  { code: 'HH', display: 'Home Health' },
-  { code: 'IMP', display: 'Inpatient Encounter' },
-  { code: 'ACUTE', display: 'Inpatient Acute' },
-  { code: 'NONAC', display: 'Inpatient Non-Acute' },
-  { code: 'PRENC', display: 'Pre-Admission' },
-  { code: 'SS', display: 'Short Stay' },
-  { code: 'VR', display: 'Virtual' },
-  { code: 'OTHER', display: 'Other' }
-];
-
-function statusColor(status) {
-  switch (status) {
-    case 'in-progress': return 'info';
-    case 'finished': return 'success';
-    case 'cancelled': return 'error';
-    case 'planned': return 'warning';
-    case 'arrived': return 'info';
-    case 'triaged': return 'warning';
-    case 'onleave': return 'default';
-    default: return 'default';
-  }
-}
 
 function EncounterDetail(props) {
   // Embedded mode support (for HoneycombFhirResource dispatcher)
@@ -495,178 +451,14 @@ function EncounterDetail(props) {
   function renderFormView() {
     return (
       <>
-        <Stack spacing={3}>
-          <Typography variant="h6">Patient & Practitioner</Typography>
-
-          <Stack direction="row" spacing={2}>
-            <TextField
-              id="subjectDisplay"
-              fullWidth
-              label="Patient Name"
-              value={get(encounter, 'subject.display', '')}
-              onChange={(e) => handleChange('subject.display', e.target.value)}
-              helperText={get(encounter, 'subject.reference', '') || 'Patient reference will be assigned'}
-              disabled={!isEditing}
-              InputProps={{
-                endAdornment: (
-                  <InputAdornment position="end">
-                    <Tooltip title="Search for patient">
-                      <IconButton
-                        onClick={handleSearchUser}
-                        edge="end"
-                        disabled={!isEditing}
-                      >
-                        <SearchIcon />
-                      </IconButton>
-                    </Tooltip>
-                  </InputAdornment>
-                ),
-              }}
-            />
-
-            <TextField
-              id="practitionerDisplay"
-              fullWidth
-              label="Practitioner Name"
-              value={get(encounter, 'participant[0].individual.display', '')}
-              onChange={(e) => handleChange('participant[0].individual.display', e.target.value)}
-              helperText={get(encounter, 'participant[0].individual.reference', '') || 'Practitioner reference will be assigned'}
-              disabled={!isEditing}
-            />
-          </Stack>
-
-          <Typography variant="h6">Encounter Type</Typography>
-
-          <Stack direction="row" spacing={2}>
-            <TextField
-              id="encounterType"
-              fullWidth
-              label="Type Code (SNOMED)"
-              value={get(encounter, 'type[0].coding[0].code', '')}
-              onChange={(e) => handleChange('type[0].coding[0].code', e.target.value)}
-              helperText="SNOMED CT code for encounter type"
-              disabled={!isEditing}
-              sx={{ flex: 1 }}
-            />
-
-            <TextField
-              id="encounterTypeDisplay"
-              fullWidth
-              label="Type Description"
-              value={get(encounter, 'type[0].coding[0].display', '')}
-              onChange={(e) => handleChange('type[0].coding[0].display', e.target.value)}
-              helperText="Human-readable encounter type"
-              disabled={!isEditing}
-              sx={{ flex: 2 }}
-            />
-          </Stack>
-
-          <Typography variant="h6">Status & Classification</Typography>
-
-          <Stack direction="row" spacing={2}>
-            <FormControl fullWidth disabled={!isEditing}>
-              <InputLabel>Status</InputLabel>
-              <Select
-                id="status"
-                value={get(encounter, 'status', 'in-progress')}
-                onChange={(e) => handleChange('status', e.target.value)}
-                label="Status"
-              >
-                {statusOptions.map(option => (
-                  <MenuItem key={option.code} value={option.code}>
-                    {option.display}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-
-            <FormControl fullWidth disabled={!isEditing}>
-              <InputLabel>Class</InputLabel>
-              <Select
-                id="classCode"
-                value={get(encounter, 'class.code', 'AMB')}
-                onChange={(e) => {
-                  const option = classOptions.find(o => o.code === e.target.value);
-                  handleChange('class.code', option.code);
-                  handleChange('class.display', option.display);
-                }}
-                label="Class"
-              >
-                {classOptions.map(option => (
-                  <MenuItem key={option.code} value={option.code}>
-                    {option.display}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Stack>
-
-          <Typography variant="h6">Reason for Visit</Typography>
-
-          <Stack direction="row" spacing={2}>
-            <TextField
-              id="reasonCode"
-              fullWidth
-              label="Reason Code (SNOMED)"
-              value={get(encounter, 'reasonCode[0].coding[0].code', '')}
-              onChange={(e) => handleChange('reasonCode[0].coding[0].code', e.target.value)}
-              helperText="SNOMED CT code for visit reason"
-              disabled={!isEditing}
-              sx={{ flex: 1 }}
-            />
-
-            <TextField
-              id="reasonDisplay"
-              fullWidth
-              label="Reason for Visit"
-              value={get(encounter, 'reasonCode[0].coding[0].display', '')}
-              onChange={(e) => handleChange('reasonCode[0].coding[0].display', e.target.value)}
-              helperText="Human-readable reason for visit"
-              disabled={!isEditing}
-              sx={{ flex: 2 }}
-            />
-          </Stack>
-
-          <Typography variant="h6">Period</Typography>
-
-          <Stack direction="row" spacing={2}>
-            <TextField
-              id="startDateTime"
-              fullWidth
-              type="datetime-local"
-              label="Start Date/Time"
-              value={moment(get(encounter, 'period.start', '')).format('YYYY-MM-DDTHH:mm')}
-              onChange={(e) => handleChange('period.start', moment(e.target.value).format('YYYY-MM-DDTHH:mm:ss'))}
-              InputLabelProps={{ shrink: true }}
-              disabled={!isEditing}
-            />
-
-            <TextField
-              id="endDateTime"
-              fullWidth
-              type="datetime-local"
-              label="End Date/Time"
-              value={moment(get(encounter, 'period.end', '')).format('YYYY-MM-DDTHH:mm')}
-              onChange={(e) => handleChange('period.end', moment(e.target.value).format('YYYY-MM-DDTHH:mm:ss'))}
-              InputLabelProps={{ shrink: true }}
-              disabled={!isEditing}
-            />
-          </Stack>
-
-          <Typography variant="h6">Notes</Typography>
-
-          <TextField
-            id="notesTextarea"
-            fullWidth
-            multiline
-            rows={3}
-            label="Notes"
-            value={get(encounter, 'note[0].text', '')}
-            onChange={(e) => handleChange('note[0].text', e.target.value)}
-            helperText="Additional notes about the encounter"
-            disabled={!isEditing}
-          />
-        </Stack>
+        <EncounterFormView
+          resource={encounter}
+          form={encounter}
+          isEditing={isEditing}
+          onChange={handleChange}
+          isEmbedded={isEmbedded}
+          onSearchPatient={handleSearchUser}
+        />
 
         {/* In-form Save/Cancel bar when editing */}
         {isEditing && !isEmbedded && (
@@ -691,166 +483,13 @@ function EncounterDetail(props) {
 
   // Render the preview view
   function renderPreviewView() {
-    const patientDisplay = get(encounter, 'subject.display', '');
-    const patientReference = get(encounter, 'subject.reference', '');
-    const practitionerDisplay = get(encounter, 'participant[0].individual.display', '');
-    const practitionerReference = get(encounter, 'participant[0].individual.reference', '');
-    const status = get(encounter, 'status', '');
-    const statusDisplay = statusOptions.find(o => o.code === status)?.display || status;
-    const classCode = get(encounter, 'class.code', '');
-    const classDisplay = get(encounter, 'class.display', '');
-    const typeCode = get(encounter, 'type[0].coding[0].code', '');
-    const typeDisplay = get(encounter, 'type[0].coding[0].display', '');
-    const reasonCode = get(encounter, 'reasonCode[0].coding[0].code', '');
-    const reasonDisplay = get(encounter, 'reasonCode[0].coding[0].display', '');
-    const periodStart = get(encounter, 'period.start', '');
-    const periodEnd = get(encounter, 'period.end', '');
-    const noteText = get(encounter, 'note[0].text', '');
-
     return (
-      <Box sx={{ maxWidth: '8.5in', mx: 'auto', py: 2 }}>
-        {/* Type + status chip */}
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
-          <Typography variant="h5" sx={{ fontWeight: 500 }}>
-            {typeDisplay || 'Encounter'}
-          </Typography>
-          <Chip
-            label={statusDisplay}
-            color={statusColor(status)}
-            size="small"
-          />
-        </Box>
-
-        {classDisplay && (
-          <Typography variant="subtitle1" color="text.secondary" sx={{ mb: 3 }}>
-            {classDisplay}{classCode ? ' (' + classCode + ')' : ''}
-          </Typography>
-        )}
-
-        <Divider />
-
-        {/* Two-column metadata: Patient/Practitioner */}
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', py: 2.5 }}>
-          <Box>
-            {patientDisplay && (
-              <>
-                <Typography variant="overline" color="text.secondary">
-                  Patient
-                </Typography>
-                <Typography variant="body1" sx={{ fontWeight: 500, mb: 1 }}>
-                  {patientDisplay}
-                </Typography>
-              </>
-            )}
-            {patientReference && (
-              <Typography variant="caption" color="text.secondary">
-                {patientReference}
-              </Typography>
-            )}
-          </Box>
-          <Box sx={{ textAlign: 'right' }}>
-            {practitionerDisplay && (
-              <>
-                <Typography variant="overline" color="text.secondary">
-                  Practitioner
-                </Typography>
-                <Typography variant="body1" sx={{ fontWeight: 500, mb: 1 }}>
-                  {practitionerDisplay}
-                </Typography>
-              </>
-            )}
-            {practitionerReference && (
-              <Typography variant="caption" color="text.secondary">
-                {practitionerReference}
-              </Typography>
-            )}
-          </Box>
-        </Box>
-
-        <Divider />
-
-        {/* Type & Reason */}
-        {(typeCode || reasonDisplay) && (
-          <>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', py: 2.5 }}>
-              {typeCode && (
-                <Box>
-                  <Typography variant="overline" color="text.secondary">
-                    Type Code
-                  </Typography>
-                  <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                    {typeCode}
-                  </Typography>
-                </Box>
-              )}
-              {(reasonDisplay || reasonCode) && (
-                <Box sx={{ textAlign: 'right' }}>
-                  <Typography variant="overline" color="text.secondary">
-                    Reason for Visit
-                  </Typography>
-                  <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                    {reasonDisplay}{reasonCode ? ' (' + reasonCode + ')' : ''}
-                  </Typography>
-                </Box>
-              )}
-            </Box>
-            <Divider />
-          </>
-        )}
-
-        {/* Period */}
-        {(periodStart || periodEnd) && (
-          <>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', py: 2.5 }}>
-              {periodStart && (
-                <Box>
-                  <Typography variant="overline" color="text.secondary">
-                    Start
-                  </Typography>
-                  <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                    {moment(periodStart).format('MMM DD, YYYY HH:mm')}
-                  </Typography>
-                </Box>
-              )}
-              {periodEnd && (
-                <Box sx={{ textAlign: 'right' }}>
-                  <Typography variant="overline" color="text.secondary">
-                    End
-                  </Typography>
-                  <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                    {moment(periodEnd).format('MMM DD, YYYY HH:mm')}
-                  </Typography>
-                </Box>
-              )}
-            </Box>
-            <Divider />
-          </>
-        )}
-
-        {/* Notes */}
-        {noteText && (
-          <>
-            <Box sx={{ py: 2 }}>
-              <Typography variant="overline" color="text.secondary">
-                Notes
-              </Typography>
-              <Typography variant="body1" sx={{ fontWeight: 500, whiteSpace: 'pre-wrap' }}>
-                {noteText}
-              </Typography>
-            </Box>
-            <Divider />
-          </>
-        )}
-
-        {/* Footer with encounter ID */}
-        {isExistingEncounter && (
-          <Box sx={{ pt: 2 }}>
-            <Typography variant="caption" color="text.secondary">
-              Encounter ID: {id}
-            </Typography>
-          </Box>
-        )}
-      </Box>
+      <EncounterPreview
+        resource={encounter}
+        form={encounter}
+        resourceId={isExistingEncounter ? id : null}
+        embedded={isEmbedded}
+      />
     );
   }
 

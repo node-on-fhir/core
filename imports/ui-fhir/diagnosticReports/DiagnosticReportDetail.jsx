@@ -8,19 +8,11 @@ import {
   Card,
   CardContent,
   CardHeader,
-  Chip,
   Container,
-  Divider,
   IconButton,
-  TextField,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
   Tooltip,
   Typography,
-  Box,
-  Stack
+  Box
 } from '@mui/material';
 
 import ArticleIcon from '@mui/icons-material/Article';
@@ -29,7 +21,7 @@ import LockIcon from '@mui/icons-material/Lock';
 import LockOpenIcon from '@mui/icons-material/LockOpen';
 import DeleteIcon from '@mui/icons-material/Delete';
 
-import { get, has, set } from 'lodash';
+import { get } from 'lodash';
 import moment from 'moment';
 
 import { Meteor } from 'meteor/meteor';
@@ -37,34 +29,9 @@ import { Session } from 'meteor/session';
 import { useTracker } from 'meteor/react-meteor-data';
 
 import { DiagnosticReports } from '/imports/lib/schemas/SimpleSchemas/DiagnosticReports';
-import { FhirUtilities } from '/imports/lib/FhirUtilities';
-import { lookupReferenceName } from '/imports/lib/FhirDehydrator';
 
-const statusOptions = [
-  { value: 'registered', label: 'Registered' },
-  { value: 'partial', label: 'Partial' },
-  { value: 'preliminary', label: 'Preliminary' },
-  { value: 'final', label: 'Final' },
-  { value: 'amended', label: 'Amended' },
-  { value: 'corrected', label: 'Corrected' },
-  { value: 'appended', label: 'Appended' },
-  { value: 'cancelled', label: 'Cancelled' },
-  { value: 'entered-in-error', label: 'Entered in Error' },
-  { value: 'unknown', label: 'Unknown' }
-];
-
-const statusColorMap = {
-  'registered': 'default',
-  'partial': 'warning',
-  'preliminary': 'warning',
-  'final': 'success',
-  'amended': 'info',
-  'corrected': 'info',
-  'appended': 'info',
-  'cancelled': 'error',
-  'entered-in-error': 'error',
-  'unknown': 'default'
-};
+import DiagnosticReportFormView from './DiagnosticReportFormView';
+import DiagnosticReportPreview from './DiagnosticReportPreview';
 
 Session.setDefault('diagnosticReportFormData', {
   resourceType: 'DiagnosticReport',
@@ -140,9 +107,9 @@ function DiagnosticReportDetail(props){
     let autoSubscribeEnabled = get(Meteor, 'settings.public.defaults.autoSubscribe', false);
     let handle;
     if(autoSubscribeEnabled){
-      handle = Meteor.subscribe('selectedPatient.DiagnosticReports', Session.get('selectedPatientId'), { limit: 1000 });
+      handle = Meteor.subscribe('autopublish.DiagnosticReports', {}, { limit: 1000 });
     } else {
-      handle = Meteor.subscribe('diagnosticreports.all');
+      handle = Meteor.subscribe('autopublish.DiagnosticReports', {}, { limit: 1000 });
     }
     return handle.ready();
   }, []);
@@ -400,79 +367,13 @@ function DiagnosticReportDetail(props){
   function renderFormView(){
     return (
       <>
-        <Stack spacing={3}>
-          <TextField
-            id='subjectInput'
-            fullWidth
-            label='Patient'
-            value={form.subject}
-            disabled
-            helperText={get(diagnosticReport, 'subject.reference', '') || 'Patient reference will be assigned'}
-          />
-
-          <Stack direction="row" spacing={2}>
-            <TextField
-              id='codeInput'
-              fullWidth
-              label='LOINC Code'
-              value={form.code}
-              onChange={(e) => handleChange('code', e.target.value)}
-              helperText="Enter LOINC code (e.g., 24323-8)"
-              disabled={!isEditing}
-            />
-
-            <TextField
-              id='categoryInput'
-              fullWidth
-              label='Category'
-              value={form.category}
-              onChange={(e) => handleChange('category', e.target.value)}
-              helperText="e.g., LAB, RAD, SP, CP"
-              disabled={!isEditing}
-            />
-          </Stack>
-
-          <Stack direction="row" spacing={2}>
-            <FormControl fullWidth disabled={!isEditing}>
-              <InputLabel>Status</InputLabel>
-              <Select
-                id='statusSelect'
-                value={form.status}
-                onChange={(e) => handleChange('status', e.target.value)}
-                label="Status"
-              >
-                {statusOptions.map((option) => (
-                  <MenuItem key={option.value} value={option.value}>
-                    {option.label}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-
-            <TextField
-              id='effectiveDateTimeInput'
-              fullWidth
-              type='date'
-              label='Effective Date'
-              value={form.effectiveDateTime}
-              onChange={(e) => handleChange('effectiveDateTime', e.target.value)}
-              InputLabelProps={{ shrink: true }}
-              disabled={!isEditing}
-            />
-          </Stack>
-
-          <TextField
-            id='conclusionInput'
-            fullWidth
-            multiline
-            rows={4}
-            label='Conclusion'
-            value={form.conclusion}
-            onChange={(e) => handleChange('conclusion', e.target.value)}
-            helperText="Summary and interpretation of the diagnostic report"
-            disabled={!isEditing}
-          />
-        </Stack>
+        <DiagnosticReportFormView
+          resource={diagnosticReport}
+          form={form}
+          isEditing={isEditing}
+          onChange={handleChange}
+          isEmbedded={isEmbedded}
+        />
 
         {/* In-form Save/Cancel bar when editing */}
         {isEditing && !isEmbedded && (
@@ -497,94 +398,12 @@ function DiagnosticReportDetail(props){
 
   // Render the preview view
   function renderPreviewView(){
-    // Derive display values from current form state (live preview of edits)
-    const statusLabel = get(statusOptions.find(function(opt){ return opt.value === form.status; }), 'label', form.status);
-    const statusColor = get(statusColorMap, form.status, 'default');
-    const formattedDate = form.effectiveDateTime ? moment(form.effectiveDateTime).format('MMMM D, YYYY') : '';
-    const subjectReference = get(diagnosticReport, 'subject.reference', '');
-
-    // Build subtitle from category and code
-    let subtitleParts = [];
-    if (form.category) {
-      subtitleParts.push(form.category);
-    }
-    if (form.code) {
-      subtitleParts.push('LOINC ' + form.code);
-    }
-    const subtitle = subtitleParts.join(' \u2014 ');
-
     return (
-      <Box sx={{ maxWidth: '8.5in', mx: 'auto', py: 2 }}>
-        {subtitle && (
-          <Typography variant="subtitle1" color="text.secondary" sx={{ mb: 3 }}>
-            {subtitle}
-          </Typography>
-        )}
-
-        <Divider />
-
-        {/* Two-column metadata */}
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', py: 2.5 }}>
-          <Box>
-            <Typography variant="overline" color="text.secondary">
-              Patient
-            </Typography>
-            <Typography variant="body1" sx={{ fontWeight: 500 }}>
-              {form.subject || 'Unspecified'}
-            </Typography>
-            {subjectReference && (
-              <Typography variant="caption" color="text.secondary">
-                {subjectReference}
-              </Typography>
-            )}
-          </Box>
-          <Box sx={{ textAlign: 'right' }}>
-            <Typography variant="overline" color="text.secondary">
-              Report Date
-            </Typography>
-            <Typography variant="body1" sx={{ fontWeight: 500 }}>
-              {formattedDate || 'No date'}
-            </Typography>
-          </Box>
-        </Box>
-
-        <Divider />
-
-        {/* Status */}
-        <Box sx={{ py: 2 }}>
-          <Chip label={statusLabel} color={statusColor} size="small" />
-        </Box>
-
-        <Divider />
-
-        {/* Conclusion */}
-        <Box sx={{ py: 3 }}>
-          <Typography variant="overline" color="text.secondary" sx={{ mb: 1, display: 'block' }}>
-            Conclusion
-          </Typography>
-          <Typography
-            variant="body1"
-            sx={{
-              whiteSpace: 'pre-wrap',
-              lineHeight: 1.8,
-              minHeight: '200px'
-            }}
-          >
-            {form.conclusion || 'No conclusion provided.'}
-          </Typography>
-        </Box>
-
-        <Divider />
-
-        {/* Footer with report ID */}
-        {isExistingReport && (
-          <Box sx={{ pt: 2 }}>
-            <Typography variant="caption" color="text.secondary">
-              Report ID: {diagnosticReportId}
-            </Typography>
-          </Box>
-        )}
-      </Box>
+      <DiagnosticReportPreview
+        resource={diagnosticReport}
+        form={form}
+        resourceId={diagnosticReportId}
+      />
     );
   }
 

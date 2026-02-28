@@ -1,465 +1,334 @@
-// =======================================================================
-// Using DSTU2  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-//
-// https://www.hl7.org/fhir/DSTU2/artifactAssessmentss.html
-//
-//
-// =======================================================================
+// imports/ui-fhir/artifactAssessments/ArtifactAssessmentDetail.jsx
 
-import React from 'react';
-import PropTypes from 'prop-types';
-
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useTracker } from 'meteor/react-meteor-data';
 
-import { 
+import {
+  Box,
   Button,
   Card,
-  Checkbox,
-  CardActions,
   CardContent,
   CardHeader,
-  Grid,
-  TextField,
-  Select,
-  MenuItem,
+  Container,
+  IconButton,
+  Tooltip,
+  Typography,
+  Alert
 } from '@mui/material';
+
+import ArticleIcon from '@mui/icons-material/Article';
+import EditNoteIcon from '@mui/icons-material/EditNote';
+import LockIcon from '@mui/icons-material/Lock';
+import LockOpenIcon from '@mui/icons-material/LockOpen';
+import DeleteIcon from '@mui/icons-material/Delete';
 
 import { get, set } from 'lodash';
 
+import { Meteor } from 'meteor/meteor';
+import { Session } from 'meteor/session';
 
-export class ArtifactAssessmentsDetail extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      artifactAssessmentsId: false,
-      artifactAssessments: {
-        resourceType: "ArtifactAssessments",
-        patient: {
-          reference: "",
-          display: ""
-        },
-        asserter: {
-          reference: "",
-          display: ""
-        },
-        dateRecorded: null,
-        code: {
-          coding: [
-            {
-              system: "http://snomed.info/sct",
-              code: "",
-              display: ""
-            }
-          ]
-        },
-        clinicalStatus: "active",
-        verificationStatus: "confirmed",
-        artifactAssessments: [],
-        onsetDateTime: null
-      }, 
-      form: {
-        patientDisplay: '',
-        asserterDisplay: '',
-        snomedCode: '',
-        snomedDisplay: '',
-        clinicalStatus: '',
-        verificationStatus: '',
-        artifactAssessmentsDisplay: '',
-        onsetDateTime: ''
-      }
+import ArtifactAssessmentFormView from './ArtifactAssessmentFormView';
+import ArtifactAssessmentPreview from './ArtifactAssessmentPreview';
+
+function ArtifactAssessmentDetail(props){
+  // Embedded mode support (for HoneycombFhirResource dispatcher)
+  var isEmbedded = props.embedded || false;
+  var _params = isEmbedded ? {} : useParams();
+  var id = _params.id || null;
+  var _rawNavigate = useNavigate();
+  var navigate = isEmbedded ? function() {} : _rawNavigate;
+
+  const [artifactAssessment, setArtifactAssessment] = useState({
+    resourceType: 'ArtifactAssessment',
+    patient: {
+      reference: '',
+      display: ''
+    },
+    asserter: {
+      reference: '',
+      display: ''
+    },
+    code: {
+      coding: [{
+        system: 'http://snomed.info/sct',
+        code: '',
+        display: ''
+      }]
+    },
+    clinicalStatus: 'active',
+    verificationStatus: 'confirmed',
+    onsetDateTime: ''
+  });
+
+  // Initialise from fhirResource prop when in embedded mode
+  var hasReceivedProps = React.useRef(false);
+  useEffect(function() {
+    if (isEmbedded && props.fhirResource) {
+      hasReceivedProps.current = true;
+      setArtifactAssessment(function(prev) {
+        if (JSON.stringify(props.fhirResource) !== JSON.stringify(prev)) {
+          return props.fhirResource;
+        }
+        return prev;
+      });
     }
-  }
-  dehydrateFhirResource(artifactAssessments) {
-    let formData = Object.assign({}, this.state.form);
+  }, [props.fhirResource]);
 
-    formData.patientDisplay = get(artifactAssessments, 'patient.display')
-    formData.asserterDisplay = get(artifactAssessments, 'asserter.display')    
-    formData.snomedCode = get(artifactAssessments, 'code.coding[0].code')
-    formData.snomedDisplay = get(artifactAssessments, 'code.coding[0].display')
-    formData.clinicalStatus = get(artifactAssessments, 'clinicalStatus')
-    formData.verificationStatus = get(artifactAssessments, 'verificationStatus')
-    formData.onsetDateTime = get(artifactAssessments, 'onsetDateTime')
+  const [isEditing, setIsEditing] = useState(isEmbedded);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const viewMode = searchParams.get('view') || 'form';
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-    return formData;
-  }
-  shouldComponentUpdate(nextProps){
-    get(Meteor, 'settings.public.logging') === "debug" && console.log('ArtifactAssessmentsDetail.shouldComponentUpdate()', nextProps, this.state)
-    let shouldUpdate = true;
+  const isNewRecord = !id || id === 'new';
 
-    // received an artifactAssessments from the table; okay lets update again
-    if(nextProps.artifactAssessmentsId !== this.state.artifactAssessmentsId){
-      
-      if(nextProps.artifactAssessments){
-        this.setState({artifactAssessments: nextProps.artifactAssessments})     
-        this.setState({form: this.dehydrateFhirResource(nextProps.artifactAssessments)})       
-      }
-
-      this.setState({artifactAssessmentsId: nextProps.artifactAssessmentsId})
-      shouldUpdate = true;
-    }
-
-    // both false; don't take any more updates
-    if(nextProps.artifactAssessments === this.state.artifactAssessments){
-      shouldUpdate = false;
-    }
- 
-    return shouldUpdate;
-  }
-
-  getMeteorData() {
-    let data = {
-      artifactAssessmentsId: this.props.artifactAssessmentsId,
-      artifactAssessments: false,
-      showDatePicker: false,
-      form: this.state.form
-    };
-
-    if(this.props.showDatePicker){
-      data.showDatePicker = this.props.showDatePicker
-    }
-    if(this.props.artifactAssessments){
-      data.artifactAssessments = this.props.artifactAssessments;
-      data.form = this.dehydrateFhirResource(this.props.artifactAssessments);
-    }
-
-    return data;
-  }
-  renderDatePicker(showDatePicker, form){
-    let datePickerValue;
-
-    if(get(form, 'onsetDateTime')){
-      datePickerValue = get(form, 'onsetDateTime');
-    }
-    if(get(form, 'onsetPeriod.start')){
-      datePickerValue = get(form, 'onsetPeriod.start');
-    }
-    if (typeof datePickerValue === "string"){
-      datePickerValue = new Date(datePickerValue);
-    }
-    if (showDatePicker) {
-      return (<div></div>)
-      // return (
-      //   <DatePicker 
-      //     name='onsetDateTime'
-      //     hintText="Onset Date" 
-      //     container="inline" 
-      //     mode="landscape"
-      //     value={ datePickerValue ? datePickerValue : null }    
-      //     onChange={ this.changeState.bind(this, 'onsetDateTime')}      
-      //     />
-      // );      
-    }
-  }
-  setHint(text){
-    if(this.props.showHints !== false){
-      return text;
+  // Subscribe and load data
+  const isSubscriptionReady = useTracker(function() {
+    if (isEmbedded) return true;
+    let autoSubscribeEnabled = get(Meteor, 'settings.public.defaults.autoSubscribe', false);
+    let handle;
+    if (autoSubscribeEnabled) {
+      handle = Meteor.subscribe('autopublish.ArtifactAssessments', {}, {});
     } else {
-      return '';
+      handle = Meteor.subscribe('autopublish.ArtifactAssessments', {}, {});
+    }
+    return handle.ready();
+  }, []);
+
+  useEffect(function() {
+    if (id && id !== 'new') {
+      // Try to find by _id first, then fall back to FHIR id
+      let ArtifactAssessments = get(Meteor, 'Collections.ArtifactAssessments');
+      if (ArtifactAssessments) {
+        let existing = ArtifactAssessments.findOne({ _id: id });
+        if (!existing) {
+          existing = ArtifactAssessments.findOne({ id: id });
+        }
+        if (existing) {
+          setArtifactAssessment(existing);
+          setIsEditing(false);
+        }
+      }
+    } else if (!id || id === 'new') {
+      setIsEditing(true);
+    }
+  }, [id, isSubscriptionReady]);
+
+  function handleChange(path, value) {
+    const updated = Object.assign({}, artifactAssessment);
+    set(updated, path, value);
+    setArtifactAssessment(updated);
+
+    // Notify parent of changes in embedded mode
+    if (props.onResourceChange) {
+      props.onResourceChange(updated);
     }
   }
-  render() {
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log('ArtifactAssessmentsDetail.render()', this.state)
 
+  async function handleSave() {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const dataToSave = {
+        patient: artifactAssessment.patient,
+        asserter: artifactAssessment.asserter,
+        code: artifactAssessment.code,
+        clinicalStatus: artifactAssessment.clinicalStatus,
+        verificationStatus: artifactAssessment.verificationStatus,
+        onsetDateTime: artifactAssessment.onsetDateTime
+      };
+
+      if (id && id !== 'new') {
+        await Meteor.callAsync('artifactAssessments.update', id, dataToSave);
+        setIsEditing(false);
+      } else {
+        const newId = await Meteor.callAsync('artifactAssessments.insert', dataToSave);
+        navigate('/artifact-assessments');
+      }
+    } catch (err) {
+      console.error('[ArtifactAssessmentDetail] Error saving:', err);
+      setError(err.message || 'Failed to save artifact assessment');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleDelete() {
+    if (window.confirm('Are you sure you want to delete this artifact assessment?')) {
+      setLoading(true);
+      try {
+        await Meteor.callAsync('artifactAssessments.remove', id);
+        navigate('/artifact-assessments');
+      } catch (err) {
+        console.error('[ArtifactAssessmentDetail] Error deleting:', err);
+        setError(err.message || 'Failed to delete artifact assessment');
+      } finally {
+        setLoading(false);
+      }
+    }
+  }
+
+  function handleCancel() {
+    if (id && id !== 'new') {
+      let ArtifactAssessments = get(Meteor, 'Collections.ArtifactAssessments');
+      if (ArtifactAssessments) {
+        const existing = ArtifactAssessments.findOne({ _id: id });
+        if (existing) {
+          setArtifactAssessment(existing);
+        }
+      }
+      setIsEditing(false);
+    } else {
+      navigate('/artifact-assessments');
+    }
+  }
+
+  // Build the header title
+  let headerTitle = 'New Artifact Assessment';
+  if (!isNewRecord) {
+    headerTitle = <span className="barcode helveticas" style={{ fontSize: '1.5rem' }}>{id}</span>;
+  }
+
+  // Build the header action buttons
+  function renderHeaderActions(){
     return (
-      <div id={this.props.id} className="artifactAssessmentsDetail">
-        <CardContent>
-          <Grid container spacing={3}>
-            <Grid item xs={6}>
-              <TextField
-                id='patientDisplayInput'
-                name='patientDisplay'
-                label='Patient'
-                value={ get(this, 'data.form.patientDisplay', '') }
-                onChange={ this.changeState.bind(this, 'patientDisplay')}
-                hintText={ this.setHint('Jane Doe') }
-                //floatingLabelFixed={true}
-                fullWidth
-                /><br/>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+        {/* Preview toggle */}
+        {!isNewRecord && (
+          <Tooltip title="Preview">
+            <IconButton
+              onClick={() => setSearchParams({ view: 'page' })}
+              sx={{
+                color: viewMode === 'page' ? 'primary.main' : 'text.secondary'
+              }}
+            >
+              <ArticleIcon />
+            </IconButton>
+          </Tooltip>
+        )}
 
-              <TextField
-                id='asserterDisplayInput'
-                name='asserterDisplay'
-                label='Asserter'
-                value={ get(this, 'data.form.asserterDisplay', '') }
-                onChange={ this.changeState.bind(this, 'asserterDisplay')}
-                hintText={ this.setHint('Nurse Jackie') }
-                //floatingLabelFixed={true}
-                fullWidth
-                /><br/>
+        {/* Form toggle */}
+        {!isNewRecord && (
+          <Tooltip title="Form">
+            <IconButton
+              onClick={() => setSearchParams({ view: 'form' })}
+              sx={{
+                color: viewMode === 'form' ? 'primary.main' : 'text.secondary'
+              }}
+            >
+              <EditNoteIcon />
+            </IconButton>
+          </Tooltip>
+        )}
 
-              <TextField
-                id='snomedCodeInput'
-                name='snomedCode'
-                label='SNOMED Code'
-                value={ get(this, 'data.form.snomedCode', '') }
-                hintText={ this.setHint('307343001') }
-                onChange={ this.changeState.bind(this, 'snomedCode')}
-                //floatingLabelFixed={true}
-                fullWidth
-                /><br/>
+        {/* Lock / Unlock toggle */}
+        {!isNewRecord && (
+          <Tooltip title={isEditing ? 'Lock (read-only)' : 'Unlock (edit)'}>
+            <IconButton
+              onClick={() => setIsEditing(!isEditing)}
+            >
+              {isEditing ? <LockOpenIcon /> : <LockIcon />}
+            </IconButton>
+          </Tooltip>
+        )}
 
-              <TextField
-                id='snomedDisplayInput'
-                name='snomedDisplay'
-                label='SNOMED Display'
-                value={ get(this, 'data.form.snomedDisplay', '') }
-                onChange={ this.changeState.bind(this, 'snomedDisplay')}
-                hintText={ this.setHint('Acquired hemoglobin H disease (disorder)') }
-                //floatingLabelFixed={true}
-                fullWidth
-                /><br/>
-
-              <TextField
-                id='clinicalStatusInput'
-                name='clinicalStatus'
-                label='Clinical Status'
-                value={ get(this, 'data.form.clinicalStatus', '') }
-                hintText={ this.setHint('active | recurrence | inactive | remission | resolved') }
-                onChange={ this.changeState.bind(this, 'clinicalStatus')}
-                //floatingLabelFixed={true}
-                fullWidth
-                /><br/>
-
-              <TextField
-                id='verificationStatusInput'
-                name='verificationStatus'
-                label='Verification Status'
-                value={ get(this, 'data.form.verificationStatus', '') }
-                hintText={ this.setHint('provisional | differential | confirmed | refuted | entered-in-error | unknown') }
-                onChange={ this.changeState.bind(this, 'verificationStatus')}
-                //floatingLabelFixed={true}
-                fullWidth
-                /><br/>
-            </Grid>
-            <Grid item xs={6}>
-            </Grid>
-          </Grid>
-
-          <br/>
-          { this.renderDatePicker(this.data.showDatePicker, get(this, 'data.form') ) }
-          <br/>
-
-          <a href='http://browser.ihtsdotools.org/?perspective=full&conceptId1=404684003&edition=us-edition&release=v20180301&server=https://prod-browser-exten.ihtsdotools.org/api/snomed&langRefset=900000000000509007'>Lookup codes with the SNOMED CT Browser</a>
-
-        </CardContent>
-        <CardActions>
-          { this.determineButtons(this.state.artifactAssessmentsId) }
-        </CardActions>
-      </div>
+        {/* Delete */}
+        {!isNewRecord && (
+          <Tooltip title="Delete">
+            <IconButton
+              onClick={handleDelete}
+              disabled={!isEditing}
+              sx={{ color: isEditing ? 'error.main' : 'text.disabled' }}
+            >
+              <DeleteIcon />
+              <Typography sx={{
+                position: 'absolute',
+                width: '1px',
+                height: '1px',
+                padding: 0,
+                margin: '-1px',
+                overflow: 'hidden',
+                clip: 'rect(0, 0, 0, 0)',
+                whiteSpace: 'nowrap',
+                borderWidth: 0
+              }}>Delete</Typography>
+            </IconButton>
+          </Tooltip>
+        )}
+      </Box>
     );
   }
 
-  determineButtons(artifactAssessmentsId){
-    if (artifactAssessmentsId) {
-      return (
-        <div>
-          <Button id="updateArtifactAssessmentsButton" primary={true} onClick={this.handleSaveButton.bind(this)} style={{marginRight: '20px'}} >Save</Button>
-          <Button id="deleteArtifactAssessmentsButton" onClick={this.handleDeleteButton.bind(this)} >Delete</Button>
-        </div>
-      );
-    } else {
-      return(
-        <Button id="saveArtifactAssessmentsButton" primary={true} onClick={this.handleSaveButton.bind(this)} >Save</Button>
-      );
-    }
+  // Render the form view
+  function renderFormView(){
+    return (
+      <>
+        <ArtifactAssessmentFormView
+          resource={artifactAssessment}
+          isEditing={isEditing}
+          onChange={handleChange}
+          isEmbedded={isEmbedded}
+        />
+
+        {/* In-form Save/Cancel bar when editing */}
+        {isEditing && !isEmbedded && (
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, mt: 3, pt: 2, borderTop: 1, borderColor: 'divider' }}>
+            <Button id="cancelButton" onClick={handleCancel}>
+              Cancel
+            </Button>
+            <Button
+              id="saveArtifactAssessmentButton"
+              onClick={handleSave}
+              variant="contained"
+              color="primary"
+              disabled={loading}
+            >
+              {loading ? 'Saving...' : 'Save'}
+            </Button>
+          </Box>
+        )}
+      </>
+    );
   }
 
-
-  updateFormData(formData, field, textValue){
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log("ArtifactAssessmentsDetail.updateFormData", formData, field, textValue);
-
-    switch (field) {
-      case "patientDisplay":
-        set(formData, 'patientDisplay', textValue)
-        break;
-      case "asserterDisplay":
-        set(formData, 'asserterDisplay', textValue)
-        break;        
-      case "verificationStatus":
-        set(formData, 'verificationStatus', textValue)
-        break;
-      case "clinicalStatus":
-        set(formData, 'clinicalStatus', textValue)
-        break;
-      case "snomedCode":
-        set(formData, 'snomedCode', textValue)
-        break;
-      case "snomedDisplay":
-        set(formData, 'snomedDisplay', textValue)
-        break;
-      case "artifactAssessmentsDisplay":
-        set(formData, 'artifactAssessmentsDisplay', textValue)
-        break;
-      case "onsetDateTime":
-        set(formData, 'onsetDateTime', textValue)
-        break;
-      default:
-    }
-
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log("formData", formData);
-    return formData;
-  }
-  updateArtifactAssessments(artifactAssessmentsData, field, textValue){
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log("ArtifactAssessmentsDetail.updateArtifactAssessments", artifactAssessmentsData, field, textValue);
-
-    switch (field) {
-      case "patientDisplay":
-        set(artifactAssessmentsData, 'patient.display', textValue)
-        break;
-      case "asserterDisplay":
-        set(artifactAssessmentsData, 'asserter.display', textValue)
-        break;
-      case "verificationStatus":
-        set(artifactAssessmentsData, 'verificationStatus', textValue)
-        break;
-      case "clinicalStatus":
-        set(artifactAssessmentsData, 'clinicalStatus', textValue)
-        break;
-      case "snomedCode":
-        set(artifactAssessmentsData, 'code.coding[0].code', textValue)
-        break;
-      case "snomedDisplay":
-        set(artifactAssessmentsData, 'code.coding[0].display', textValue)
-        break;
-      case "artifactAssessmentsDisplay":
-        set(artifactAssessmentsData, 'artifactAssessments[0].detail[0].display', textValue)
-        break;  
-      case "datePicker":
-        set(artifactAssessmentsData, 'onsetDateTime', textValue)
-        break;
-      case "onsetDateTime":
-        set(artifactAssessmentsData, 'onsetDateTime', textValue)
-        break;
-  
-    }
-    return artifactAssessmentsData;
-  }
-  componentDidUpdate(props){
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log('ArtifactAssessmentsDisplay.componentDidUpdate()', props, this.state)
-  }
-  // this could be a mixin
-  changeState(field, event, textValue){
-
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log("   ");
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log("ArtifactAssessmentsDetail.changeState", field, textValue);
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log("this.state", this.state);
-
-    let formData = Object.assign({}, this.state.form);
-    let artifactAssessmentsData = Object.assign({}, this.state.artifactAssessments);
-
-    formData = this.updateFormData(formData, field, textValue);
-    artifactAssessmentsData = this.updateArtifactAssessments(artifactAssessmentsData, field, textValue);
-
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log("artifactAssessmentsData", artifactAssessmentsData);
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log("formData", formData);
-
-    this.setState({artifactAssessments: artifactAssessmentsData})
-    this.setState({form: formData})
-
+  // Render the preview view
+  function renderPreviewView(){
+    return (
+      <ArtifactAssessmentPreview
+        resource={artifactAssessment}
+        resourceId={id}
+      />
+    );
   }
 
-  handleSaveButton(){
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log('^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^&&')
-    console.log('Saving a new ArtifactAssessments...', this.state)
-
-    let self = this;
-    let fhirArtifactAssessmentsData = Object.assign({}, this.state.artifactAssessments);
-
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log('fhirArtifactAssessmentsData', fhirArtifactAssessmentsData);
-
-
-    let artifactAssessmentsValidator = ArtifactAssessmentsSchema.newContext();
-    artifactAssessmentsValidator.validate(fhirArtifactAssessmentsData)
-
-    console.log('IsValid: ', artifactAssessmentsValidator.isValid())
-    console.log('ValidationErrors: ', artifactAssessmentsValidator.validationErrors());
-
-    if (this.state.artifactAssessmentsId) {
-      if(get(Meteor, 'settings.public.logging') === "debug") console.log("Updating ArtifactAssessments...");
-      delete fhirArtifactAssessmentsData._id;
-
-      ArtifactAssessmentss._collection.update(
-        {_id: this.state.artifactAssessmentsId}, {$set: fhirArtifactAssessmentsData }, function(error, result) {
-          if (error) {
-            console.log("error", error);
-            // Bert.alert(error.reason, 'danger');
-          }
-          if (result) {
-            if(self.props.onUpdate){
-              self.props.onUpdate(self.data.artifactAssessmentsId);
-            }
-            // Bert.alert('ArtifactAssessments updated!', 'success');
-          }
-        });
-    } else {
-
-      if(get(Meteor, 'settings.public.logging') === "debug") console.log("Create a new ArtifactAssessments", fhirArtifactAssessmentsData);
-
-      ArtifactAssessmentss._collection.insert(fhirArtifactAssessmentsData, function(error, result) {
-        if (error) {
-          console.log("error", error);
-          // Bert.alert(error.reason, 'danger');
-        }
-        if (result) {
-          if(self.props.onInsert){
-            self.props.onInsert(self.data.artifactAssessmentsId);
-          }
-          // Bert.alert('ArtifactAssessments added!', 'success');
-        }
-      });
-    }
+  // In embedded mode, render form content without Container/Card wrapper
+  if (isEmbedded) {
+    return renderFormView();
   }
 
-  handleCancelButton(){
-    if(this.props.onCancel){
-      this.props.onCancel();
-    }
-  }
+  return (
+    <Container id="artifactAssessmentDetailPage" maxWidth="md" sx={{ py: 4 }}>
+      <Card sx={{ boxShadow: 3 }}>
+        <CardHeader
+          title={headerTitle}
+          sx={{ borderBottom: 1, borderColor: 'divider' }}
+          action={renderHeaderActions()}
+        />
+        <CardContent>
+          {error && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {error}
+            </Alert>
+          )}
 
-  handleDeleteButton(){
-    console.log('ArtifactAssessmentsDetail.handleDeleteButton()', this.state.artifactAssessmentsId)
-
-    let self = this;
-    ArtifactAssessmentss._collection.remove({_id: this.state.artifactAssessmentsId}, function(error, result){
-      if (error) {
-        // Bert.alert(error.reason, 'danger');
-      }
-      if (result) {
-        if(this.props.onInsert){
-          this.props.onInsert(self.data.artifactAssessmentsId);
-        }
-        // Bert.alert('ArtifactAssessments removed!', 'success');
-      }
-    });
-  }
+          {viewMode === 'form' && renderFormView()}
+          {viewMode === 'page' && renderPreviewView()}
+        </CardContent>
+      </Card>
+    </Container>
+  );
 }
 
-ArtifactAssessmentsDetail.propTypes = {
-  id: PropTypes.string,
-  artifactAssessmentsId: PropTypes.oneOfType([PropTypes.string, PropTypes.bool]),
-  artifactAssessments: PropTypes.oneOfType([PropTypes.object, PropTypes.bool]),
-  showDatePicker: PropTypes.bool,
-  showHints: PropTypes.bool,
-  onInsert: PropTypes.func,
-  onUpdate: PropTypes.func,
-  onRemove: PropTypes.func,
-  onCancel: PropTypes.func
-};
-
-
-// Embedded mode wrapper for HoneycombFhirResource dispatcher
-function ArtifactAssessmentsDetailEmbeddedWrapper(props) {
-  var isEmbedded = props.embedded || false;
-  var fhirResource = props.fhirResource;
-  var onResourceChange = props.onResourceChange;
-
-  // Pass through to legacy class component
-  var classProps = Object.assign({}, props);
-  if (isEmbedded && fhirResource) {
-    classProps.artifactAssessments = fhirResource;
-  }
-
-  return React.createElement(ArtifactAssessmentsDetail, classProps);
-}
-
-export default ArtifactAssessmentsDetailEmbeddedWrapper;
+export default ArtifactAssessmentDetail;

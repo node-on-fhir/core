@@ -1,44 +1,40 @@
 // /imports/ui-fhir/locations/LocationDetail.jsx
 
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useTracker } from 'meteor/react-meteor-data';
 
-import { 
+import {
+  Alert,
   Button,
   Card,
-  CardActions,
   CardContent,
   CardHeader,
+  CircularProgress,
   Container,
-  TextField,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
+  IconButton,
+  Stack,
   Typography,
   Box,
-  Stack,
-  Chip,
-  InputAdornment,
-  IconButton,
-  Tooltip,
-  Link,
-  CircularProgress,
-  Alert
+  Tooltip
 } from '@mui/material';
 
-import QrCodeIcon from '@mui/icons-material/QrCode';
-import SearchIcon from '@mui/icons-material/Search';
+import ArticleIcon from '@mui/icons-material/Article';
+import EditNoteIcon from '@mui/icons-material/EditNote';
+import LockIcon from '@mui/icons-material/Lock';
+import LockOpenIcon from '@mui/icons-material/LockOpen';
+import DeleteIcon from '@mui/icons-material/Delete';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 
 import { get, set } from 'lodash';
-import moment from 'moment';
 import GoogleMapReact from 'google-map-react';
 
 import { Locations } from '/imports/lib/schemas/SimpleSchemas/Locations';
 import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
+
+import LocationFormView from './LocationFormView';
+import LocationPreview from './LocationPreview';
 
 // Map marker component
 const LocationMarker = function({ text }) {
@@ -89,12 +85,17 @@ function LocationDetail(props) {
   var navigate = isEmbedded ? function() {} : _rawNavigate;
   var _params = isEmbedded ? {} : useParams();
   var id = _params.id || null;
-  
+  const [searchParams, setSearchParams] = useSearchParams();
+  const viewMode = searchParams.get('view') || 'form';
+
+  const isNewLocation = !id || id === 'new';
+  const isExistingLocation = id && id !== 'new';
+
   // Get current user from session/tracker
   const currentUser = useTracker(function() {
     return Meteor.user();
   }, []);
-  
+
   // Initialize state with proper FHIR R4 structure
   const [location, setLocation] = useState({
     resourceType: "Location",
@@ -162,7 +163,7 @@ function LocationDetail(props) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [isEditing, setIsEditing] = useState(isEmbedded);
-  
+
   // Google Maps state
   const [googleMapsApiKey, setGoogleMapsApiKey] = useState('');
   const [mapLoading, setMapLoading] = useState(true);
@@ -170,19 +171,15 @@ function LocationDetail(props) {
 
   // Set default values on component mount for new locations
   useEffect(function() {
-    if (!id || id === 'new') {
-      // Enable editing for new locations
+    if (isNewLocation) {
       setIsEditing(true);
-    } else {
-      // Viewing existing location - start in read-only mode
-      setIsEditing(false);
     }
   }, [id]);
 
   // Load location if editing
   useEffect(function() {
     async function loadLocation() {
-      if (id && id !== 'new') {
+      if (isExistingLocation) {
         setLoading(true);
         try {
           const result = await Meteor.callAsync('locations.get', id);
@@ -190,14 +187,14 @@ function LocationDetail(props) {
             setLocation(result);
           }
         } catch (err) {
-          console.error('Error loading location:', err);
+          console.error('[LocationDetail] Error loading location:', err);
           setError(err.message);
         } finally {
           setLoading(false);
         }
       }
     }
-    
+
     loadLocation();
   }, [id]);
 
@@ -219,7 +216,7 @@ function LocationDetail(props) {
         setMapLoading(false);
       }
     }
-    
+
     fetchApiKey();
   }, []);
 
@@ -228,7 +225,7 @@ function LocationDetail(props) {
     const updatedLocation = { ...location };
     set(updatedLocation, path, value);
     setLocation(updatedLocation);
-  
+
     // Notify parent of changes in embedded mode
     if (props.onResourceChange) {
       props.onResourceChange(updatedLocation);
@@ -238,7 +235,7 @@ function LocationDetail(props) {
   // Geocode address to get coordinates
   async function geocodeAddress() {
     if (!isEditing) return;
-    
+
     const address = [
       get(location, 'address.line[0]', ''),
       get(location, 'address.city', ''),
@@ -246,21 +243,21 @@ function LocationDetail(props) {
       get(location, 'address.postalCode', ''),
       get(location, 'address.country', '')
     ].filter(Boolean).join(', ');
-    
+
     if (!address.trim()) {
       console.log('No address to geocode');
       setError('Please enter an address before geocoding');
       return;
     }
-    
+
     setLoading(true);
     setError(null);
-    
+
     try {
       console.log('Geocoding address:', address);
-      
+
       const result = await Meteor.callAsync('geocodeAddress', address);
-      
+
       if (result) {
         handleChange('position.latitude', result.latitude);
         handleChange('position.longitude', result.longitude);
@@ -285,40 +282,22 @@ function LocationDetail(props) {
 
   // Handle save
   async function handleSave() {
-    console.log('=== handleSave called ===');
-    console.log('Location data to save:', JSON.stringify(location, null, 2));
-    console.log('Current user:', Meteor.userId());
-    
+    console.log('[LocationDetail] handleSave called');
     setLoading(true);
     setError(null);
-    
+
     try {
-      if (id && id !== 'new') {
-        // Update existing location
-        console.log('Updating existing location with id:', id);
+      if (isExistingLocation) {
         await Meteor.callAsync('locations.update', id, location);
-        console.log('Location updated successfully');
-        // Exit edit mode after successful save
+        console.log('[LocationDetail] Location updated successfully');
         setIsEditing(false);
       } else {
-        // Create new location
-        console.log('Creating new location...');
         const newId = await Meteor.callAsync('locations.create', location);
-        console.log('Location created with ID:', newId);
-        
-        // Check if location was actually saved
-        if (typeof Locations !== 'undefined') {
-          const savedLocation = Locations.findOne({_id: newId});
-          console.log('Verification - saved location:', savedLocation);
-          console.log('Total locations in collection:', Locations.find().count());
-        }
-        
-        // Navigate back to locations list for new locations
+        console.log('[LocationDetail] Location created with ID:', newId);
         navigate('/locations');
       }
     } catch (err) {
-      console.error('Error saving location:', err);
-      console.error('Error details:', err.error, err.reason, err.details);
+      console.error('[LocationDetail] Error saving location:', err);
       setError(err.message || err.reason || 'Failed to save location');
     } finally {
       setLoading(false);
@@ -327,16 +306,16 @@ function LocationDetail(props) {
 
   // Handle delete
   async function handleDelete() {
-    if (!id || id === 'new') return;
-    
+    if (!isExistingLocation) return;
+
     if (window.confirm('Are you sure you want to delete this location?')) {
       setLoading(true);
       try {
         await Meteor.callAsync('locations.remove', id);
-        console.log('Location deleted successfully');
+        console.log('[LocationDetail] Location deleted successfully');
         navigate('/locations');
       } catch (err) {
-        console.error('Error deleting location:', err);
+        console.error('[LocationDetail] Error deleting location:', err);
         setError(err.message);
       } finally {
         setLoading(false);
@@ -346,269 +325,318 @@ function LocationDetail(props) {
 
   // Handle cancel
   function handleCancel() {
-    navigate('/locations');
+    if (isExistingLocation) {
+      setIsEditing(false);
+      setError(null);
+      async function reloadLocation() {
+        try {
+          const result = await Meteor.callAsync('locations.get', id);
+          if (result) {
+            setLocation(result);
+          }
+        } catch (err) {
+          console.error('[LocationDetail] Error reloading location:', err);
+        }
+      }
+      reloadLocation();
+    } else {
+      navigate('/locations');
+    }
   }
 
-  const statusOptions = ['active', 'suspended', 'inactive'];
-  const modeOptions = ['instance', 'kind'];
+  // Build the header title
+  let headerTitle = 'New Location';
+  if (isExistingLocation) {
+    headerTitle = <span className="barcode helveticas" style={{ fontSize: '1.5rem' }}>{id}</span>;
+  }
 
-  if (isEmbedded) {
+  // Render Google Maps section (stays in Detail, not in FormView)
+  function renderMapSection() {
+    const lat = get(location, 'position.latitude');
+    const lng = get(location, 'position.longitude');
+    const hasCoordinates = lat !== null && lat !== undefined && lat !== '' &&
+                          lng !== null && lng !== undefined && lng !== '';
+
     return (
-      <Stack spacing={3}>
-        <TextField
-          id="nameInput"
-          fullWidth
-          label="Name"
-          value={get(location, 'name', '')}
-          onChange={(e) => handleChange('name', e.target.value)}
-          helperText="Name of the location"
-          disabled={!isEditing}
-        />
+      <Box sx={{ mt: 3 }}>
+        <Typography variant="h6" sx={{ mb: 2 }}>Map</Typography>
 
-        <TextField
-          id="identifierInput"
-          fullWidth
-          label="Identifier"
-          value={get(location, 'identifier[0].value', '')}
-          onChange={(e) => handleChange('identifier[0].value', e.target.value)}
-          helperText="Unique identifier for the location"
-          disabled={!isEditing}
-        />
+        {/* Geocode buttons when editing */}
+        {isEditing && (
+          <Stack direction="row" spacing={2} sx={{ mb: 2 }}>
+            <Button
+              variant="outlined"
+              onClick={geocodeAddress}
+              disabled={loading}
+            >
+              Geocode Full Address
+            </Button>
+            <Button
+              variant="outlined"
+              onClick={async () => {
+                const simpleAddress = [
+                  get(location, 'address.city', ''),
+                  get(location, 'address.state', '')
+                ].filter(Boolean).join(', ');
 
-        <TextField
-          id="descriptionTextarea"
-          fullWidth
-          multiline
-          rows={3}
-          label="Description"
-          value={get(location, 'description', '')}
-          onChange={(e) => handleChange('description', e.target.value)}
-          helperText="Description of the location"
-          disabled={!isEditing}
-        />
+                if (!simpleAddress.trim()) {
+                  setError('Please enter at least city and state');
+                  return;
+                }
 
-        <TextField
-          id="emailInput"
-          fullWidth
-          label="Email"
-          value={get(location, 'telecom[1].value', '')}
-          onChange={(e) => {
-            handleChange('telecom[1].system', 'email');
-            handleChange('telecom[1].value', e.target.value);
-          }}
-          helperText="Contact email address"
-          disabled={!isEditing}
-        />
+                setLoading(true);
+                setError(null);
 
-        <FormControl fullWidth disabled={!isEditing}>
-          <InputLabel>Status</InputLabel>
-          <Select
-            id="statusSelect"
-            value={get(location, 'status', 'active')}
-            onChange={(e) => handleChange('status', e.target.value)}
-            label="Status"
-          >
-            {statusOptions.map(status => (
-              <MenuItem key={status} value={status}>
-                {status.charAt(0).toUpperCase() + status.slice(1)}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
+                try {
+                  const result = await Meteor.callAsync('geocodeAddress', simpleAddress);
 
-        <FormControl fullWidth disabled={!isEditing}>
-          <InputLabel>Operational Status</InputLabel>
-          <Select
-            id="operationalStatusSelect"
-            value={get(location, 'operationalStatus.code', '')}
-            onChange={(e) => handleChange('operationalStatus.code', e.target.value)}
-            label="Operational Status"
-          >
-            <MenuItem value="operational">Operational</MenuItem>
-            <MenuItem value="housekeeping">Housekeeping</MenuItem>
-            <MenuItem value="overflow">Overflow</MenuItem>
-            <MenuItem value="contaminated">Contaminated</MenuItem>
-            <MenuItem value="decontamination">Decontamination</MenuItem>
-            <MenuItem value="underway">Underway</MenuItem>
-          </Select>
-        </FormControl>
+                  if (result) {
+                    handleChange('position.latitude', result.latitude);
+                    handleChange('position.longitude', result.longitude);
+                    console.log('Successfully geocoded city/state to:', result);
+                  }
+                } catch (err) {
+                  if (err.error === 'no-results') {
+                    setError('Could not find coordinates for city/state');
+                  } else {
+                    setError('Geocoding failed');
+                  }
+                } finally {
+                  setLoading(false);
+                }
+              }}
+              disabled={loading}
+            >
+              Geocode City/State Only
+            </Button>
+          </Stack>
+        )}
 
-        <FormControl fullWidth disabled={!isEditing}>
-          <InputLabel>Mode</InputLabel>
-          <Select
-            value={get(location, 'mode', 'instance')}
-            onChange={(e) => handleChange('mode', e.target.value)}
-            label="Mode"
-          >
-            {modeOptions.map(mode => (
-              <MenuItem key={mode} value={mode}>
-                {mode.charAt(0).toUpperCase() + mode.slice(1)}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
+        {(() => {
+          if (!hasCoordinates) {
+            return (
+              <Alert severity="info">
+                Enter latitude and longitude coordinates or use the "Geocode Address" button to display a map.
+              </Alert>
+            );
+          }
 
-        <TextField
-          id="typeSelect"
-          fullWidth
-          label="Type Code"
-          value={get(location, 'type.coding[0].code', '')}
-          onChange={(e) => handleChange('type.coding[0].code', e.target.value)}
-          helperText="Location type code (e.g., ER, ICU)"
-          disabled={!isEditing}
-        />
+          if (mapLoading) {
+            return (
+              <Box
+                sx={{
+                  height: 300,
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  bgcolor: 'grey.100',
+                  borderRadius: 1
+                }}
+              >
+                <CircularProgress />
+              </Box>
+            );
+          }
 
-        <TextField
-          id="typeDisplayInput"
-          fullWidth
-          label="Type Display"
-          value={get(location, 'type.coding[0].display', '')}
-          onChange={(e) => handleChange('type.coding[0].display', e.target.value)}
-          helperText="Human-readable location type"
-          disabled={!isEditing}
-        />
+          if (mapError) {
+            return <Alert severity="error">Error loading map: {mapError}</Alert>;
+          }
 
-        <TextField
-          fullWidth
-          label="Physical Type Code"
-          value={get(location, 'physicalType.coding[0].code', '')}
-          onChange={(e) => handleChange('physicalType.coding[0].code', e.target.value)}
-          helperText="Physical type code (e.g., ro for room)"
-          disabled={!isEditing}
-        />
+          if (!googleMapsApiKey) {
+            return (
+              <Box
+                sx={{
+                  height: 300,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  borderRadius: 1,
+                  bgcolor: 'action.hover'
+                }}
+              >
+                <LocationOnIcon
+                  sx={{
+                    fontSize: 40,
+                    color: 'text.secondary',
+                    mb: 1
+                  }}
+                />
+                <Typography variant="caption" color="text.secondary">
+                  Map requires Google Maps API key
+                </Typography>
+              </Box>
+            );
+          }
 
-        <TextField
-          fullWidth
-          label="Physical Type Display"
-          value={get(location, 'physicalType.coding[0].display', '')}
-          onChange={(e) => handleChange('physicalType.coding[0].display', e.target.value)}
-          helperText="Human-readable physical type"
-          disabled={!isEditing}
-        />
-
-        <Typography variant="h6" sx={{ mt: 2 }}>Address</Typography>
-
-        <TextField
-          id="addressLineInput"
-          fullWidth
-          label="Address Line"
-          value={get(location, 'address.line[0]', '')}
-          onChange={(e) => handleChange('address.line[0]', e.target.value)}
-          helperText="Street address"
-          disabled={!isEditing}
-        />
-
-        <Stack direction="row" spacing={2}>
-          <TextField
-            id="cityInput"
-            fullWidth
-            label="City"
-            value={get(location, 'address.city', '')}
-            onChange={(e) => handleChange('address.city', e.target.value)}
-            disabled={!isEditing}
-          />
-
-          <TextField
-            id="stateInput"
-            fullWidth
-            label="State"
-            value={get(location, 'address.state', '')}
-            onChange={(e) => handleChange('address.state', e.target.value)}
-            disabled={!isEditing}
-          />
-        </Stack>
-
-        <Stack direction="row" spacing={2}>
-          <TextField
-            id="postalCodeInput"
-            fullWidth
-            label="Postal Code"
-            value={get(location, 'address.postalCode', '')}
-            onChange={(e) => handleChange('address.postalCode', e.target.value)}
-            disabled={!isEditing}
-          />
-
-          <TextField
-            id="countryInput"
-            fullWidth
-            label="Country"
-            value={get(location, 'address.country', '')}
-            onChange={(e) => handleChange('address.country', e.target.value)}
-            disabled={!isEditing}
-          />
-        </Stack>
-
-        <TextField
-          id="phoneInput"
-          fullWidth
-          label="Phone"
-          value={get(location, 'telecom[0].value', '')}
-          onChange={(e) => handleChange('telecom[0].value', e.target.value)}
-          helperText="Contact phone number"
-          disabled={!isEditing}
-        />
-
-        <Typography variant="h6" sx={{ mt: 2 }}>Position</Typography>
-
-        <Stack direction="row" spacing={2}>
-          <TextField
-            fullWidth
-            label="Latitude"
-            value={get(location, 'position.latitude', '')}
-            onChange={(e) => handleChange('position.latitude', parseFloat(e.target.value) || null)}
-            type="number"
-            disabled={!isEditing}
-          />
-
-          <TextField
-            fullWidth
-            label="Longitude"
-            value={get(location, 'position.longitude', '')}
-            onChange={(e) => handleChange('position.longitude', parseFloat(e.target.value) || null)}
-            type="number"
-            disabled={!isEditing}
-          />
-
-          <TextField
-            fullWidth
-            label="Altitude"
-            value={get(location, 'position.altitude', '')}
-            onChange={(e) => handleChange('position.altitude', parseFloat(e.target.value) || null)}
-            type="number"
-            disabled={!isEditing}
-          />
-        </Stack>
-
-        <Typography variant="h6" sx={{ mt: 2 }}>Organization</Typography>
-
-        <TextField
-          id="managingOrgInput"
-          fullWidth
-          label="Managing Organization"
-          value={get(location, 'managingOrganization.display', '')}
-          onChange={(e) => handleChange('managingOrganization.display', e.target.value)}
-          helperText="Organization that manages this location"
-          disabled={!isEditing}
-        />
-
-        <TextField
-          fullWidth
-          label="Part Of"
-          value={get(location, 'partOf.display', '')}
-          onChange={(e) => handleChange('partOf.display', e.target.value)}
-          helperText="Another location this one is part of"
-          disabled={!isEditing}
-        />
-      </Stack>
+          // Google Maps with API key
+          return (
+            <Box sx={{ height: 300, width: '100%', borderRadius: 1, overflow: 'hidden' }}>
+              <GoogleMapReact
+                bootstrapURLKeys={{ key: googleMapsApiKey }}
+                defaultCenter={{
+                  lat: parseFloat(lat),
+                  lng: parseFloat(lng)
+                }}
+                center={{
+                  lat: parseFloat(lat),
+                  lng: parseFloat(lng)
+                }}
+                defaultZoom={14}
+                options={{
+                  fullscreenControl: false,
+                  zoomControl: true,
+                  mapTypeControl: false,
+                  scaleControl: false,
+                  streetViewControl: false,
+                  rotateControl: false
+                }}
+              >
+                <LocationMarker
+                  lat={parseFloat(lat)}
+                  lng={parseFloat(lng)}
+                  text={get(location, 'name', 'Location')}
+                />
+              </GoogleMapReact>
+            </Box>
+          );
+        })()}
+      </Box>
     );
+  }
+
+  // Header action buttons
+  function renderHeaderActions() {
+    return (
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+        {/* Preview toggle - hidden for new locations */}
+        {!isNewLocation && (
+          <Tooltip title="Preview">
+            <IconButton
+              onClick={() => setSearchParams({ view: 'page' })}
+              sx={{
+                color: viewMode === 'page' ? 'primary.main' : 'text.secondary'
+              }}
+            >
+              <ArticleIcon />
+            </IconButton>
+          </Tooltip>
+        )}
+
+        {/* Form toggle - hidden for new locations */}
+        {!isNewLocation && (
+          <Tooltip title="Form">
+            <IconButton
+              onClick={() => setSearchParams({ view: 'form' })}
+              sx={{
+                color: viewMode === 'form' ? 'primary.main' : 'text.secondary'
+              }}
+            >
+              <EditNoteIcon />
+            </IconButton>
+          </Tooltip>
+        )}
+
+        {/* Lock / Unlock toggle */}
+        {!isNewLocation && (
+          <Tooltip title={isEditing ? 'Lock (read-only)' : 'Unlock (edit)'}>
+            <IconButton
+              onClick={() => setIsEditing(!isEditing)}
+            >
+              {isEditing ? <LockOpenIcon /> : <LockIcon />}
+            </IconButton>
+          </Tooltip>
+        )}
+
+        {/* Delete - always available for existing locations */}
+        {!isNewLocation && (
+          <Tooltip title="Delete">
+            <IconButton
+              onClick={handleDelete}
+              sx={{ color: 'error.main' }}
+            >
+              <DeleteIcon />
+              <Typography sx={{
+                position: 'absolute',
+                width: '1px',
+                height: '1px',
+                padding: 0,
+                margin: '-1px',
+                overflow: 'hidden',
+                clip: 'rect(0, 0, 0, 0)',
+                whiteSpace: 'nowrap',
+                borderWidth: 0
+              }}>Delete</Typography>
+            </IconButton>
+          </Tooltip>
+        )}
+      </Box>
+    );
+  }
+
+  // Render the form view
+  function renderFormView() {
+    return (
+      <>
+        <LocationFormView
+          resource={location}
+          isEditing={isEditing}
+          onChange={handleChange}
+          isEmbedded={isEmbedded}
+        />
+
+        {/* Google Maps section - kept in Detail, rendered after form fields */}
+        {renderMapSection()}
+
+        {/* In-form Save/Cancel bar when editing */}
+        {isEditing && !isEmbedded && (
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, mt: 3, pt: 2, borderTop: 1, borderColor: 'divider' }}>
+            <Button id="cancelButton" onClick={handleCancel}>
+              Cancel
+            </Button>
+            <Button
+              id="saveLocationButton"
+              onClick={handleSave}
+              variant="contained"
+              color="primary"
+              disabled={loading}
+            >
+              {loading ? 'Saving...' : 'Save'}
+            </Button>
+          </Box>
+        )}
+      </>
+    );
+  }
+
+  // Render the preview view
+  function renderPreviewView() {
+    return (
+      <>
+        <LocationPreview
+          resource={location}
+          resourceId={isExistingLocation ? id : null}
+          embedded={isEmbedded}
+        />
+
+        {/* Show map in preview mode too */}
+        {renderMapSection()}
+      </>
+    );
+  }
+
+  // In embedded mode, render form content without Container/Card wrapper
+  if (isEmbedded) {
+    return renderFormView();
   }
 
   return (
     <Container id="locationDetailPage" maxWidth="md" sx={{ py: 4 }}>
       <Card sx={{ boxShadow: 3 }}>
         <CardHeader
-          title={id && id !== 'new' ? 'Edit Location' : 'New Location'}
-          sx={{ bgcolor: 'primary.main', color: 'primary.contrastText' }}
+          title={headerTitle}
+          sx={{ borderBottom: 1, borderColor: 'divider' }}
+          action={renderHeaderActions()}
         />
         <CardContent>
           {error && (
@@ -616,491 +644,10 @@ function LocationDetail(props) {
               Error: {error}
             </Typography>
           )}
-          
-          {/* System ID Barcode */}
-          {(id && id !== 'new') && (
-            <Box sx={{ mb: 3, textAlign: 'right' }}>
-              <span className="barcode helveticas" style={{ fontSize: '2rem' }}>{id}</span>
-            </Box>
-          )}
-          
-          <Stack spacing={3}>
-            <TextField
-              id="nameInput"
-              fullWidth
-              label="Name"
-              value={get(location, 'name', '')}
-              onChange={(e) => handleChange('name', e.target.value)}
-              helperText="Name of the location"
-              disabled={!isEditing}
-            />
-            
-            <TextField
-              id="identifierInput"
-              fullWidth
-              label="Identifier"
-              value={get(location, 'identifier[0].value', '')}
-              onChange={(e) => handleChange('identifier[0].value', e.target.value)}
-              helperText="Unique identifier for the location"
-              disabled={!isEditing}
-            />
-            
-            <TextField
-              id="descriptionTextarea"
-              fullWidth
-              multiline
-              rows={3}
-              label="Description"
-              value={get(location, 'description', '')}
-              onChange={(e) => handleChange('description', e.target.value)}
-              helperText="Description of the location"
-              disabled={!isEditing}
-            />
-            
-            <TextField
-              id="emailInput"
-              fullWidth
-              label="Email"
-              value={get(location, 'telecom[1].value', '')}
-              onChange={(e) => {
-                handleChange('telecom[1].system', 'email');
-                handleChange('telecom[1].value', e.target.value);
-              }}
-              helperText="Contact email address"
-              disabled={!isEditing}
-            />
-            
-            <FormControl fullWidth disabled={!isEditing}>
-              <InputLabel>Status</InputLabel>
-              <Select
-                id="statusSelect"
-                value={get(location, 'status', 'active')}
-                onChange={(e) => handleChange('status', e.target.value)}
-                label="Status"
-              >
-                {statusOptions.map(status => (
-                  <MenuItem key={status} value={status}>
-                    {status.charAt(0).toUpperCase() + status.slice(1)}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-            
-            <FormControl fullWidth disabled={!isEditing}>
-              <InputLabel>Operational Status</InputLabel>
-              <Select
-                id="operationalStatusSelect"
-                value={get(location, 'operationalStatus.code', '')}
-                onChange={(e) => handleChange('operationalStatus.code', e.target.value)}
-                label="Operational Status"
-              >
-                <MenuItem value="operational">Operational</MenuItem>
-                <MenuItem value="housekeeping">Housekeeping</MenuItem>
-                <MenuItem value="overflow">Overflow</MenuItem>
-                <MenuItem value="contaminated">Contaminated</MenuItem>
-                <MenuItem value="decontamination">Decontamination</MenuItem>
-                <MenuItem value="underway">Underway</MenuItem>
-              </Select>
-            </FormControl>
-            
-            <FormControl fullWidth disabled={!isEditing}>
-              <InputLabel>Mode</InputLabel>
-              <Select
-                value={get(location, 'mode', 'instance')}
-                onChange={(e) => handleChange('mode', e.target.value)}
-                label="Mode"
-              >
-                {modeOptions.map(mode => (
-                  <MenuItem key={mode} value={mode}>
-                    {mode.charAt(0).toUpperCase() + mode.slice(1)}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-            
-            <TextField
-              id="typeSelect"
-              fullWidth
-              label="Type Code"
-              value={get(location, 'type.coding[0].code', '')}
-              onChange={(e) => handleChange('type.coding[0].code', e.target.value)}
-              helperText="Location type code (e.g., ER, ICU)"
-              disabled={!isEditing}
-            />
-            
-            <TextField
-              id="typeDisplayInput"
-              fullWidth
-              label="Type Display"
-              value={get(location, 'type.coding[0].display', '')}
-              onChange={(e) => handleChange('type.coding[0].display', e.target.value)}
-              helperText="Human-readable location type"
-              disabled={!isEditing}
-            />
-            
-            <TextField
-              fullWidth
-              label="Physical Type Code"
-              value={get(location, 'physicalType.coding[0].code', '')}
-              onChange={(e) => handleChange('physicalType.coding[0].code', e.target.value)}
-              helperText="Physical type code (e.g., ro for room)"
-              disabled={!isEditing}
-            />
-            
-            <TextField
-              fullWidth
-              label="Physical Type Display"
-              value={get(location, 'physicalType.coding[0].display', '')}
-              onChange={(e) => handleChange('physicalType.coding[0].display', e.target.value)}
-              helperText="Human-readable physical type"
-              disabled={!isEditing}
-            />
-            
-            <Typography variant="h6" sx={{ mt: 2 }}>Address</Typography>
-            
-            <TextField
-              id="addressLineInput"
-              fullWidth
-              label="Address Line"
-              value={get(location, 'address.line[0]', '')}
-              onChange={(e) => handleChange('address.line[0]', e.target.value)}
-              helperText="Street address"
-              disabled={!isEditing}
-            />
-            
-            <Stack direction="row" spacing={2}>
-              <TextField
-                id="cityInput"
-                fullWidth
-                label="City"
-                value={get(location, 'address.city', '')}
-                onChange={(e) => handleChange('address.city', e.target.value)}
-                disabled={!isEditing}
-              />
-              
-              <TextField
-                id="stateInput"
-                fullWidth
-                label="State"
-                value={get(location, 'address.state', '')}
-                onChange={(e) => handleChange('address.state', e.target.value)}
-                disabled={!isEditing}
-              />
-            </Stack>
-            
-            <Stack direction="row" spacing={2}>
-              <TextField
-                id="postalCodeInput"
-                fullWidth
-                label="Postal Code"
-                value={get(location, 'address.postalCode', '')}
-                onChange={(e) => handleChange('address.postalCode', e.target.value)}
-                disabled={!isEditing}
-              />
-              
-              <TextField
-                id="countryInput"
-                fullWidth
-                label="Country"
-                value={get(location, 'address.country', '')}
-                onChange={(e) => handleChange('address.country', e.target.value)}
-                disabled={!isEditing}
-              />
-            </Stack>
-            
-            <TextField
-              id="phoneInput"
-              fullWidth
-              label="Phone"
-              value={get(location, 'telecom[0].value', '')}
-              onChange={(e) => handleChange('telecom[0].value', e.target.value)}
-              helperText="Contact phone number"
-              disabled={!isEditing}
-            />
-            
-            <Typography variant="h6" sx={{ mt: 2 }}>Position</Typography>
-            
-            <Stack direction="row" spacing={2}>
-              <TextField
-                fullWidth
-                label="Latitude"
-                value={get(location, 'position.latitude', '')}
-                onChange={(e) => handleChange('position.latitude', parseFloat(e.target.value) || null)}
-                type="number"
-                disabled={!isEditing}
-              />
-              
-              <TextField
-                fullWidth
-                label="Longitude"
-                value={get(location, 'position.longitude', '')}
-                onChange={(e) => handleChange('position.longitude', parseFloat(e.target.value) || null)}
-                type="number"
-                disabled={!isEditing}
-              />
-              
-              <TextField
-                fullWidth
-                label="Altitude"
-                value={get(location, 'position.altitude', '')}
-                onChange={(e) => handleChange('position.altitude', parseFloat(e.target.value) || null)}
-                type="number"
-                disabled={!isEditing}
-              />
-            </Stack>
-            
-            {/* Add Geocode button when editing */}
-            {isEditing && (
-              <Stack direction="row" spacing={2} sx={{ mt: 1 }}>
-                <Button
-                  variant="outlined"
-                  onClick={geocodeAddress}
-                  disabled={loading}
-                >
-                  Geocode Full Address
-                </Button>
-                <Button
-                  variant="outlined"
-                  onClick={async () => {
-                    // Try geocoding with just city and state
-                    const simpleAddress = [
-                      get(location, 'address.city', ''),
-                      get(location, 'address.state', '')
-                    ].filter(Boolean).join(', ');
-                    
-                    if (!simpleAddress.trim()) {
-                      setError('Please enter at least city and state');
-                      return;
-                    }
-                    
-                    setLoading(true);
-                    setError(null);
-                    
-                    try {
-                      const result = await Meteor.callAsync('geocodeAddress', simpleAddress);
-                      
-                      if (result) {
-                        handleChange('position.latitude', result.latitude);
-                        handleChange('position.longitude', result.longitude);
-                        console.log('Successfully geocoded city/state to:', result);
-                      }
-                    } catch (err) {
-                      if (err.error === 'no-results') {
-                        setError('Could not find coordinates for city/state');
-                      } else {
-                        setError('Geocoding failed');
-                      }
-                    } finally {
-                      setLoading(false);
-                    }
-                  }}
-                  disabled={loading}
-                >
-                  Geocode City/State Only
-                </Button>
-              </Stack>
-            )}
-            
-            {/* Google Maps Display */}
-            <Box sx={{ mt: 3 }}>
-              <Typography variant="h6" sx={{ mb: 2 }}>Map</Typography>
-              
-              {(() => {
-                const lat = get(location, 'position.latitude');
-                const lng = get(location, 'position.longitude');
-                const hasCoordinates = lat !== null && lat !== undefined && lat !== '' && 
-                                      lng !== null && lng !== undefined && lng !== '';
-                
-                if (!hasCoordinates) {
-                  return (
-                    <Alert severity="info">
-                      Enter latitude and longitude coordinates or use the "Geocode Address" button to display a map.
-                    </Alert>
-                  );
-                }
-                
-                if (mapLoading) {
-                  return (
-                    <Box 
-                      sx={{ 
-                        height: 300, 
-                        display: 'flex', 
-                        justifyContent: 'center', 
-                        alignItems: 'center',
-                        bgcolor: 'grey.100',
-                        borderRadius: 1
-                      }}
-                    >
-                      <CircularProgress />
-                    </Box>
-                  );
-                }
-                
-                if (mapError) {
-                  return <Alert severity="error">Error loading map: {mapError}</Alert>;
-                }
-                
-                if (!googleMapsApiKey) {
-                  return (
-                    <Box
-                      sx={{
-                        height: 300,
-                        display: 'flex',
-                        flexDirection: 'column',
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                        borderRadius: 1,
-                        bgcolor: 'action.hover'
-                      }}
-                    >
-                      <LocationOnIcon
-                        sx={{
-                          fontSize: 40,
-                          color: 'text.secondary',
-                          mb: 1
-                        }}
-                      />
-                      <Typography variant="caption" color="text.secondary">
-                        Map requires Google Maps API key
-                      </Typography>
-                    </Box>
-                  );
-                }
-                
-                // Google Maps with API key
-                return (
-                  <Box sx={{ height: 300, width: '100%', borderRadius: 1, overflow: 'hidden' }}>
-                    <GoogleMapReact
-                      bootstrapURLKeys={{ key: googleMapsApiKey }}
-                      defaultCenter={{ 
-                        lat: parseFloat(lat), 
-                        lng: parseFloat(lng) 
-                      }}
-                      center={{
-                        lat: parseFloat(lat), 
-                        lng: parseFloat(lng)
-                      }}
-                      defaultZoom={14}
-                      options={{
-                        fullscreenControl: false,
-                        zoomControl: true,
-                        mapTypeControl: false,
-                        scaleControl: false,
-                        streetViewControl: false,
-                        rotateControl: false
-                      }}
-                    >
-                      <LocationMarker
-                        lat={parseFloat(lat)}
-                        lng={parseFloat(lng)}
-                        text={get(location, 'name', 'Location')}
-                      />
-                    </GoogleMapReact>
-                  </Box>
-                );
-              })()}
-            </Box>
-            
-            <Typography variant="h6" sx={{ mt: 2 }}>Organization</Typography>
-            
-            <TextField
-              id="managingOrgInput"
-              fullWidth
-              label="Managing Organization"
-              value={get(location, 'managingOrganization.display', '')}
-              onChange={(e) => handleChange('managingOrganization.display', e.target.value)}
-              helperText="Organization that manages this location"
-              disabled={!isEditing}
-            />
-            
-            <TextField
-              fullWidth
-              label="Part Of"
-              value={get(location, 'partOf.display', '')}
-              onChange={(e) => handleChange('partOf.display', e.target.value)}
-              helperText="Another location this one is part of"
-              disabled={!isEditing}
-            />
-            
-            <Box sx={{ mt: 2 }}>
-              <Link href="https://www.hl7.org/fhir/valueset-c80-facilitycodes.html" target="_blank" rel="noopener">
-                Location Type Codes
-              </Link>
-              {' | '}
-              <Link href="https://www.hl7.org/fhir/valueset-location-physical-type.html" target="_blank" rel="noopener">
-                Physical Type Codes
-              </Link>
-            </Box>
-          </Stack>
+
+          {viewMode === 'form' && renderFormView()}
+          {viewMode === 'page' && renderPreviewView()}
         </CardContent>
-        
-        <CardActions sx={{ justifyContent: 'flex-end', p: 2 }}>
-          {!isEditing && id && id !== 'new' ? (
-            // Read-only mode buttons
-            <>
-              <Button 
-                onClick={() => navigate('/locations')}
-              >
-                Back
-              </Button>
-              <Button 
-                onClick={() => setIsEditing(true)}
-                variant="contained"
-                color="primary"
-              >
-                Edit
-              </Button>
-            </>
-          ) : (
-            // Edit mode buttons
-            <>
-              <Button 
-                onClick={() => {
-                  if (id && id !== 'new') {
-                    // Cancel editing and reload original data
-                    setIsEditing(false);
-                    // Reload the location to discard changes
-                    async function reloadLocation() {
-                      try {
-                        const result = await Meteor.callAsync('locations.get', id);
-                        if (result) {
-                          setLocation(result);
-                        }
-                      } catch (err) {
-                        console.error('Error reloading location:', err);
-                      }
-                    }
-                    reloadLocation();
-                  } else {
-                    // For new locations, go back
-                    navigate('/locations');
-                  }
-                }}
-                disabled={loading}
-              >
-                Cancel
-              </Button>
-              {id && id !== 'new' && (
-                <Button 
-                  onClick={handleDelete}
-                  color="error"
-                  disabled={loading}
-                >
-                  Delete
-                </Button>
-              )}
-              <Button 
-                id="saveLocationButton"
-                onClick={handleSave}
-                variant="contained"
-                color="primary"
-                disabled={loading}
-              >
-                {loading ? 'Saving...' : 'Save'}
-              </Button>
-            </>
-          )}
-        </CardActions>
       </Card>
     </Container>
   );

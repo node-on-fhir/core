@@ -318,9 +318,7 @@ export function ImagingStudiesPage(props){
   });
 
   let layoutContent;
-  if(isLoading){
-    layoutContent = null;
-  } else if(data.imagingStudies.length > 0){
+  if(data.imagingStudies.length > 0){
     layoutContent = <Card
       id="imagingStudiesCard"
       sx={{

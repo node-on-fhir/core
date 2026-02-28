@@ -360,6 +360,7 @@ import PatientCard from '../patient/PatientCard.jsx'
 import { FhirUtilities } from '../lib/FhirUtilities.js'
 import { FhirDehydrator } from '../lib/FhirDehydrator.js'
 import { DynamicFhirDetail, getDynamicFhirComponent } from '../lib/DynamicFhirDetail.js'
+import { DynamicFhirViews, getDynamicFhirViewComponent } from '../lib/DynamicFhirViews.js'
 import { LayoutHelpers } from '../lib/LayoutHelpers.js'
 import { DynamicSpacer } from './DynamicSpacer'
 import MedicalRecordImporter from '../lib/MedicalRecordImporter.js'
@@ -434,6 +435,8 @@ Meteor.PatientCard = PatientCard;
 Meteor.HipaaLogger = HipaaLogger;
 Meteor.DynamicFhirDetail = DynamicFhirDetail;
 Meteor.getDynamicFhirComponent = getDynamicFhirComponent;
+Meteor.DynamicFhirViews = DynamicFhirViews;
+Meteor.getDynamicFhirViewComponent = getDynamicFhirViewComponent;
 Meteor.React = React;
 
 

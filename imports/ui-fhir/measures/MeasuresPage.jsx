@@ -272,11 +272,7 @@ export function MeasuresPage(props){
   }
   
   let layoutContent;
-  if(isLoading) {
-    layoutContent = <Box sx={{ textAlign: 'center', py: 4 }}>
-      <Typography>Loading measures...</Typography>
-    </Box>
-  } else if(data.measures.length > 0){
+  if(data.measures.length > 0){
     layoutContent = <Card 
       sx={{ 
         width: '100%',

@@ -1,26 +1,26 @@
 // /imports/ui-fhir/measures/MeasureDetail.jsx
 
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useTracker } from 'meteor/react-meteor-data';
 
-import { 
+import {
   Button,
   Card,
-  CardActions,
   CardContent,
   CardHeader,
   Container,
-  TextField,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
+  IconButton,
   Typography,
   Box,
-  Stack,
-  Grid
+  Tooltip
 } from '@mui/material';
+
+import ArticleIcon from '@mui/icons-material/Article';
+import EditNoteIcon from '@mui/icons-material/EditNote';
+import LockIcon from '@mui/icons-material/Lock';
+import LockOpenIcon from '@mui/icons-material/LockOpen';
+import DeleteIcon from '@mui/icons-material/Delete';
 
 import { get, set } from 'lodash';
 import moment from 'moment';
@@ -28,6 +28,9 @@ import moment from 'moment';
 import { Measures } from '/imports/lib/schemas/SimpleSchemas/Measures';
 import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
+
+import MeasureFormView from './MeasureFormView';
+import MeasurePreview from './MeasurePreview';
 
 function MeasureDetail(props) {
   // Embedded mode support (for HoneycombFhirResource dispatcher)
@@ -37,7 +40,12 @@ function MeasureDetail(props) {
   var navigate = isEmbedded ? function() {} : _rawNavigate;
   var _params = isEmbedded ? {} : useParams();
   var id = _params.id || null;
-  
+  const [searchParams, setSearchParams] = useSearchParams();
+  const viewMode = searchParams.get('view') || 'form';
+
+  const isNewMeasure = !id || id === 'new';
+  const isExistingMeasure = id && id !== 'new';
+
   // Get current user from session/tracker
   const currentUser = useTracker(function() {
     return Meteor.user();
@@ -55,7 +63,7 @@ function MeasureDetail(props) {
     }
     return handle.ready();
   }, []);
-  
+
   // Initialize state with proper FHIR R4 structure
   const [measure, setMeasure] = useState({
     resourceType: "Measure",
@@ -127,21 +135,21 @@ function MeasureDetail(props) {
 
   // Set author on component mount for new measures
   useEffect(function() {
-    if (!id || id === 'new') {
+    if (isNewMeasure) {
       // Enable editing for new measures
       setIsEditing(true);
-      
+
       // Set author to current user
       let authorName = '';
       let authorReference = '';
-      
+
       if (currentUser) {
         authorName = get(currentUser, 'profile.name.text', '') ||
                     `${get(currentUser, 'profile.name.given[0]', '')} ${get(currentUser, 'profile.name.family', '')}`.trim() ||
                     get(currentUser, 'username', '');
         authorReference = `Practitioner/${get(currentUser, '_id', '')}`;
       }
-      
+
       setMeasure(prev => ({
         ...prev,
         publisher: authorName,
@@ -150,15 +158,12 @@ function MeasureDetail(props) {
           reference: authorReference
         }]
       }));
-    } else {
-      // Viewing existing measure - start in read-only mode
-      setIsEditing(false);
     }
   }, [id, currentUser]);
 
   // Load measure if editing existing
   useEffect(function() {
-    if (id && id !== 'new') {
+    if (isExistingMeasure) {
       const existingMeasure = Measures.findOne({_id: id}) || Measures.findOne({id: id});
       if (existingMeasure) {
         setMeasure(existingMeasure);
@@ -172,7 +177,7 @@ function MeasureDetail(props) {
     const updatedMeasure = { ...measure };
     set(updatedMeasure, path, value);
     setMeasure(updatedMeasure);
-  
+
     // Notify parent of changes in embedded mode
     if (props.onResourceChange) {
       props.onResourceChange(updatedMeasure);
@@ -183,7 +188,7 @@ function MeasureDetail(props) {
   async function handleSave() {
     setLoading(true);
     setError(null);
-    
+
     try {
       const dataToSave = {
         identifier: get(measure, 'identifier[0].value', ''),
@@ -208,21 +213,21 @@ function MeasureDetail(props) {
         rationale: get(measure, 'rationale', '')
       };
 
-      if (id && id !== 'new') {
+      if (isExistingMeasure) {
         // Update existing measure
         await Meteor.callAsync('updateMeasure', id, dataToSave);
-        console.log('Measure updated successfully');
+        console.log('[MeasureDetail] Measure updated successfully');
         // Exit edit mode after successful save
         setIsEditing(false);
       } else {
         // Create new measure
         const newId = await Meteor.callAsync('createMeasure', dataToSave);
-        console.log('Measure created with ID:', newId);
+        console.log('[MeasureDetail] Measure created with ID:', newId);
         // Navigate back to measures list for new measures
         navigate('/measures');
       }
     } catch (err) {
-      console.error('Error saving measure:', err);
+      console.error('[MeasureDetail] Error saving measure:', err);
       setError(err.message);
     } finally {
       setLoading(false);
@@ -231,672 +236,178 @@ function MeasureDetail(props) {
 
   // Handle delete
   async function handleDelete() {
+    if (!isExistingMeasure) return;
+
     if (window.confirm('Are you sure you want to delete this measure?')) {
       setLoading(true);
       try {
         await Meteor.callAsync('removeMeasure', id);
+        console.log('[MeasureDetail] Measure deleted successfully');
         navigate('/measures');
       } catch (err) {
-        console.error('Error deleting measure:', err);
+        console.error('[MeasureDetail] Error deleting measure:', err);
         setError(err.message);
         setLoading(false);
       }
     }
   }
 
-  if (isEmbedded) {
+  // Handle cancel
+  function handleCancel() {
+    if (isExistingMeasure) {
+      setIsEditing(false);
+      setError(null);
+      // Reload the measure to discard changes
+      const existingMeasure = Measures.findOne({_id: id}) || Measures.findOne({id: id});
+      if (existingMeasure) {
+        setMeasure(existingMeasure);
+      }
+    } else {
+      navigate('/measures');
+    }
+  }
+
+  // Build the header title
+  let headerTitle = 'New Measure';
+  if (isExistingMeasure) {
+    headerTitle = <span className="barcode helveticas" style={{ fontSize: '1.5rem' }}>{id}</span>;
+  }
+
+  // Header action buttons
+  function renderHeaderActions() {
     return (
-      <Grid container spacing={3}>
-        {/* Basic Information */}
-        <Grid item xs={12}>
-          <Typography variant="h6" gutterBottom>Basic Information</Typography>
-        </Grid>
-
-        <Grid item xs={12} md={6}>
-          <TextField
-            id="identifierInput"
-            fullWidth
-            label="Identifier"
-            value={get(measure, 'identifier[0].value', '')}
-            onChange={(e) => handleChange('identifier[0].value', e.target.value)}
-            disabled={!isEditing}
-            required
-          />
-        </Grid>
-
-        <Grid item xs={12} md={6}>
-          <TextField
-            id="versionInput"
-            fullWidth
-            label="Version"
-            value={get(measure, 'version', '')}
-            onChange={(e) => handleChange('version', e.target.value)}
-            disabled={!isEditing}
-            required
-          />
-        </Grid>
-
-        <Grid item xs={12}>
-          <TextField
-            id="nameInput"
-            fullWidth
-            label="Name (Computer Friendly)"
-            value={get(measure, 'name', '')}
-            onChange={(e) => handleChange('name', e.target.value)}
-            disabled={!isEditing}
-            required
-          />
-        </Grid>
-
-        <Grid item xs={12}>
-          <TextField
-            id="titleInput"
-            fullWidth
-            label="Title (Human Friendly)"
-            value={get(measure, 'title', '')}
-            onChange={(e) => handleChange('title', e.target.value)}
-            disabled={!isEditing}
-            required
-          />
-        </Grid>
-
-        <Grid item xs={12} md={6}>
-          <FormControl fullWidth>
-            <InputLabel id="status-label">Status</InputLabel>
-            <Select
-              id="statusSelect"
-              labelId="status-label"
-              value={get(measure, 'status', 'draft')}
-              onChange={(e) => handleChange('status', e.target.value)}
-              disabled={!isEditing}
-              label="Status"
-            >
-              <MenuItem value="draft">Draft</MenuItem>
-              <MenuItem value="active">Active</MenuItem>
-              <MenuItem value="retired">Retired</MenuItem>
-              <MenuItem value="unknown">Unknown</MenuItem>
-            </Select>
-          </FormControl>
-        </Grid>
-
-        <Grid item xs={12} md={6}>
-          <FormControl fullWidth>
-            <InputLabel id="improvement-notation-label">Improvement Notation</InputLabel>
-            <Select
-              id="improvementNotationSelect"
-              labelId="improvement-notation-label"
-              value={get(measure, 'improvementNotation.coding[0].code', 'increase')}
-              onChange={(e) => {
-                const notations = {
-                  'increase': 'Increased score indicates improvement',
-                  'decrease': 'Decreased score indicates improvement'
-                };
-                handleChange('improvementNotation.coding[0].code', e.target.value);
-                handleChange('improvementNotation.coding[0].display', notations[e.target.value]);
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+        {/* Preview toggle - hidden for new measures */}
+        {!isNewMeasure && (
+          <Tooltip title="Preview">
+            <IconButton
+              onClick={() => setSearchParams({ view: 'page' })}
+              sx={{
+                color: viewMode === 'page' ? 'primary.main' : 'text.secondary'
               }}
-              disabled={!isEditing}
-              label="Improvement Notation"
             >
-              <MenuItem value="increase">Increase</MenuItem>
-              <MenuItem value="decrease">Decrease</MenuItem>
-            </Select>
-          </FormControl>
-        </Grid>
+              <ArticleIcon />
+            </IconButton>
+          </Tooltip>
+        )}
 
-        {/* Descriptions */}
-        <Grid item xs={12}>
-          <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>Descriptions</Typography>
-        </Grid>
+        {/* Form toggle - hidden for new measures */}
+        {!isNewMeasure && (
+          <Tooltip title="Form">
+            <IconButton
+              onClick={() => setSearchParams({ view: 'form' })}
+              sx={{
+                color: viewMode === 'form' ? 'primary.main' : 'text.secondary'
+              }}
+            >
+              <EditNoteIcon />
+            </IconButton>
+          </Tooltip>
+        )}
 
-        <Grid item xs={12}>
-          <TextField
-            id="descriptionTextarea"
-            fullWidth
-            multiline
-            rows={3}
-            label="Description"
-            value={get(measure, 'description', '')}
-            onChange={(e) => handleChange('description', e.target.value)}
-            disabled={!isEditing}
-          />
-        </Grid>
+        {/* Lock / Unlock toggle */}
+        {!isNewMeasure && (
+          <Tooltip title={isEditing ? 'Lock (read-only)' : 'Unlock (edit)'}>
+            <IconButton
+              onClick={() => setIsEditing(!isEditing)}
+            >
+              {isEditing ? <LockOpenIcon /> : <LockIcon />}
+            </IconButton>
+          </Tooltip>
+        )}
 
-        <Grid item xs={12}>
-          <TextField
-            id="purposeTextarea"
-            fullWidth
-            multiline
-            rows={3}
-            label="Purpose"
-            value={get(measure, 'purpose', '')}
-            onChange={(e) => handleChange('purpose', e.target.value)}
-            disabled={!isEditing}
-          />
-        </Grid>
-
-        <Grid item xs={12}>
-          <TextField
-            id="usageTextarea"
-            fullWidth
-            multiline
-            rows={2}
-            label="Usage"
-            value={get(measure, 'usage', '')}
-            onChange={(e) => handleChange('usage', e.target.value)}
-            disabled={!isEditing}
-          />
-        </Grid>
-
-        {/* Dates */}
-        <Grid item xs={12}>
-          <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>Dates</Typography>
-        </Grid>
-
-        <Grid item xs={12} md={6}>
-          <TextField
-            id="effectivePeriodStartInput"
-            fullWidth
-            label="Effective Period Start"
-            type="date"
-            value={get(measure, 'effectivePeriod.start', '')}
-            onChange={(e) => handleChange('effectivePeriod.start', e.target.value)}
-            disabled={!isEditing}
-            InputLabelProps={{ shrink: true }}
-          />
-        </Grid>
-
-        <Grid item xs={12} md={6}>
-          <TextField
-            id="effectivePeriodEndInput"
-            fullWidth
-            label="Effective Period End"
-            type="date"
-            value={get(measure, 'effectivePeriod.end', '')}
-            onChange={(e) => handleChange('effectivePeriod.end', e.target.value)}
-            disabled={!isEditing}
-            InputLabelProps={{ shrink: true }}
-          />
-        </Grid>
-
-        <Grid item xs={12} md={6}>
-          <TextField
-            id="lastReviewDateInput"
-            fullWidth
-            label="Last Review Date"
-            type="date"
-            value={get(measure, 'lastReviewDate', '')}
-            onChange={(e) => handleChange('lastReviewDate', e.target.value)}
-            disabled={!isEditing}
-            InputLabelProps={{ shrink: true }}
-          />
-        </Grid>
-
-        <Grid item xs={12} md={6}>
-          <TextField
-            id="approvalDateInput"
-            fullWidth
-            label="Approval Date"
-            type="date"
-            value={get(measure, 'approvalDate', '')}
-            onChange={(e) => handleChange('approvalDate', e.target.value)}
-            disabled={!isEditing}
-            InputLabelProps={{ shrink: true }}
-          />
-        </Grid>
-
-        {/* Additional Fields */}
-        <Grid item xs={12}>
-          <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>Additional Information</Typography>
-        </Grid>
-
-        <Grid item xs={12}>
-          <TextField
-            id="copyrightTextarea"
-            fullWidth
-            multiline
-            rows={2}
-            label="Copyright"
-            value={get(measure, 'copyright', '')}
-            onChange={(e) => handleChange('copyright', e.target.value)}
-            disabled={!isEditing}
-          />
-        </Grid>
-
-        <Grid item xs={12}>
-          <TextField
-            id="guidanceTextarea"
-            fullWidth
-            multiline
-            rows={3}
-            label="Guidance"
-            value={get(measure, 'guidance', '')}
-            onChange={(e) => handleChange('guidance', e.target.value)}
-            disabled={!isEditing}
-          />
-        </Grid>
-
-        <Grid item xs={12}>
-          <TextField
-            id="rateAggregationInput"
-            fullWidth
-            label="Rate Aggregation"
-            value={get(measure, 'rateAggregation', '')}
-            onChange={(e) => handleChange('rateAggregation', e.target.value)}
-            disabled={!isEditing}
-          />
-        </Grid>
-
-        <Grid item xs={12}>
-          <TextField
-            id="clinicalRecommendationStatementTextarea"
-            fullWidth
-            multiline
-            rows={3}
-            label="Clinical Recommendation Statement"
-            value={get(measure, 'clinicalRecommendationStatement', '')}
-            onChange={(e) => handleChange('clinicalRecommendationStatement', e.target.value)}
-            disabled={!isEditing}
-          />
-        </Grid>
-
-        <Grid item xs={12}>
-          <TextField
-            id="disclaimerTextarea"
-            fullWidth
-            multiline
-            rows={2}
-            label="Disclaimer"
-            value={get(measure, 'disclaimer', '')}
-            onChange={(e) => handleChange('disclaimer', e.target.value)}
-            disabled={!isEditing}
-          />
-        </Grid>
-
-        <Grid item xs={12}>
-          <TextField
-            id="riskAdjustmentTextarea"
-            fullWidth
-            multiline
-            rows={2}
-            label="Risk Adjustment"
-            value={get(measure, 'riskAdjustment', '')}
-            onChange={(e) => handleChange('riskAdjustment', e.target.value)}
-            disabled={!isEditing}
-          />
-        </Grid>
-
-        <Grid item xs={12}>
-          <TextField
-            id="rationaleTextarea"
-            fullWidth
-            multiline
-            rows={3}
-            label="Rationale"
-            value={get(measure, 'rationale', '')}
-            onChange={(e) => handleChange('rationale', e.target.value)}
-            disabled={!isEditing}
-          />
-        </Grid>
-      </Grid>
+        {/* Delete - always available for existing measures */}
+        {!isNewMeasure && (
+          <Tooltip title="Delete">
+            <IconButton
+              onClick={handleDelete}
+              sx={{ color: 'error.main' }}
+            >
+              <DeleteIcon />
+              <Typography sx={{
+                position: 'absolute',
+                width: '1px',
+                height: '1px',
+                padding: 0,
+                margin: '-1px',
+                overflow: 'hidden',
+                clip: 'rect(0, 0, 0, 0)',
+                whiteSpace: 'nowrap',
+                borderWidth: 0
+              }}>Delete</Typography>
+            </IconButton>
+          </Tooltip>
+        )}
+      </Box>
     );
+  }
+
+  // Render the form view
+  function renderFormView() {
+    return (
+      <>
+        <MeasureFormView
+          resource={measure}
+          isEditing={isEditing}
+          onChange={handleChange}
+          isEmbedded={isEmbedded}
+        />
+
+        {/* In-form Save/Cancel bar when editing */}
+        {isEditing && !isEmbedded && (
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, mt: 3, pt: 2, borderTop: 1, borderColor: 'divider' }}>
+            <Button id="cancelButton" onClick={handleCancel}>
+              Cancel
+            </Button>
+            <Button
+              id="saveMeasureButton"
+              onClick={handleSave}
+              variant="contained"
+              color="primary"
+              disabled={loading}
+            >
+              {loading ? 'Saving...' : 'Save'}
+            </Button>
+          </Box>
+        )}
+      </>
+    );
+  }
+
+  // Render the preview view
+  function renderPreviewView() {
+    return (
+      <MeasurePreview
+        resource={measure}
+        resourceId={isExistingMeasure ? id : null}
+        embedded={isEmbedded}
+      />
+    );
+  }
+
+  // In embedded mode, render form content without Container/Card wrapper
+  if (isEmbedded) {
+    return renderFormView();
   }
 
   return (
     <Container id="measureDetailPage" maxWidth="md" sx={{ py: 4 }}>
       <Card sx={{ boxShadow: 3 }}>
         <CardHeader
-          title={id && id !== 'new' ? 'Edit Measure' : 'New Measure'}
-          sx={{ bgcolor: 'primary.main', color: 'primary.contrastText' }}
+          title={headerTitle}
+          sx={{ borderBottom: 1, borderColor: 'divider' }}
+          action={renderHeaderActions()}
         />
         <CardContent>
-          {/* Barcode display for existing measures */}
-          {(id && id !== 'new') && (
-            <Box sx={{ mb: 3, textAlign: 'right' }}>
-              <span className="barcode helveticas" style={{ fontSize: '2rem' }}>{id}</span>
-            </Box>
-          )}
-
           {error && (
             <Typography color="error" sx={{ mb: 2 }}>
-              {error}
+              Error: {error}
             </Typography>
           )}
 
-          <Grid container spacing={3}>
-            {/* Basic Information */}
-            <Grid item xs={12}>
-              <Typography variant="h6" gutterBottom>Basic Information</Typography>
-            </Grid>
-
-            <Grid item xs={12} md={6}>
-              <TextField
-                id="identifierInput"
-                fullWidth
-                label="Identifier"
-                value={get(measure, 'identifier[0].value', '')}
-                onChange={(e) => handleChange('identifier[0].value', e.target.value)}
-                disabled={!isEditing}
-                required
-              />
-            </Grid>
-
-            <Grid item xs={12} md={6}>
-              <TextField
-                id="versionInput"
-                fullWidth
-                label="Version"
-                value={get(measure, 'version', '')}
-                onChange={(e) => handleChange('version', e.target.value)}
-                disabled={!isEditing}
-                required
-              />
-            </Grid>
-
-            <Grid item xs={12}>
-              <TextField
-                id="nameInput"
-                fullWidth
-                label="Name (Computer Friendly)"
-                value={get(measure, 'name', '')}
-                onChange={(e) => handleChange('name', e.target.value)}
-                disabled={!isEditing}
-                required
-              />
-            </Grid>
-
-            <Grid item xs={12}>
-              <TextField
-                id="titleInput"
-                fullWidth
-                label="Title (Human Friendly)"
-                value={get(measure, 'title', '')}
-                onChange={(e) => handleChange('title', e.target.value)}
-                disabled={!isEditing}
-                required
-              />
-            </Grid>
-
-            <Grid item xs={12} md={6}>
-              <FormControl fullWidth>
-                <InputLabel id="status-label">Status</InputLabel>
-                <Select
-                  id="statusSelect"
-                  labelId="status-label"
-                  value={get(measure, 'status', 'draft')}
-                  onChange={(e) => handleChange('status', e.target.value)}
-                  disabled={!isEditing}
-                  label="Status"
-                >
-                  <MenuItem value="draft">Draft</MenuItem>
-                  <MenuItem value="active">Active</MenuItem>
-                  <MenuItem value="retired">Retired</MenuItem>
-                  <MenuItem value="unknown">Unknown</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
-
-            <Grid item xs={12} md={6}>
-              <FormControl fullWidth>
-                <InputLabel id="improvement-notation-label">Improvement Notation</InputLabel>
-                <Select
-                  id="improvementNotationSelect"
-                  labelId="improvement-notation-label"
-                  value={get(measure, 'improvementNotation.coding[0].code', 'increase')}
-                  onChange={(e) => {
-                    const notations = {
-                      'increase': 'Increased score indicates improvement',
-                      'decrease': 'Decreased score indicates improvement'
-                    };
-                    handleChange('improvementNotation.coding[0].code', e.target.value);
-                    handleChange('improvementNotation.coding[0].display', notations[e.target.value]);
-                  }}
-                  disabled={!isEditing}
-                  label="Improvement Notation"
-                >
-                  <MenuItem value="increase">Increase</MenuItem>
-                  <MenuItem value="decrease">Decrease</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
-
-            {/* Descriptions */}
-            <Grid item xs={12}>
-              <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>Descriptions</Typography>
-            </Grid>
-
-            <Grid item xs={12}>
-              <TextField
-                id="descriptionTextarea"
-                fullWidth
-                multiline
-                rows={3}
-                label="Description"
-                value={get(measure, 'description', '')}
-                onChange={(e) => handleChange('description', e.target.value)}
-                disabled={!isEditing}
-              />
-            </Grid>
-
-            <Grid item xs={12}>
-              <TextField
-                id="purposeTextarea"
-                fullWidth
-                multiline
-                rows={3}
-                label="Purpose"
-                value={get(measure, 'purpose', '')}
-                onChange={(e) => handleChange('purpose', e.target.value)}
-                disabled={!isEditing}
-              />
-            </Grid>
-
-            <Grid item xs={12}>
-              <TextField
-                id="usageTextarea"
-                fullWidth
-                multiline
-                rows={2}
-                label="Usage"
-                value={get(measure, 'usage', '')}
-                onChange={(e) => handleChange('usage', e.target.value)}
-                disabled={!isEditing}
-              />
-            </Grid>
-
-            {/* Dates */}
-            <Grid item xs={12}>
-              <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>Dates</Typography>
-            </Grid>
-
-            <Grid item xs={12} md={6}>
-              <TextField
-                id="effectivePeriodStartInput"
-                fullWidth
-                label="Effective Period Start"
-                type="date"
-                value={get(measure, 'effectivePeriod.start', '')}
-                onChange={(e) => handleChange('effectivePeriod.start', e.target.value)}
-                disabled={!isEditing}
-                InputLabelProps={{ shrink: true }}
-              />
-            </Grid>
-
-            <Grid item xs={12} md={6}>
-              <TextField
-                id="effectivePeriodEndInput"
-                fullWidth
-                label="Effective Period End"
-                type="date"
-                value={get(measure, 'effectivePeriod.end', '')}
-                onChange={(e) => handleChange('effectivePeriod.end', e.target.value)}
-                disabled={!isEditing}
-                InputLabelProps={{ shrink: true }}
-              />
-            </Grid>
-
-            <Grid item xs={12} md={6}>
-              <TextField
-                id="lastReviewDateInput"
-                fullWidth
-                label="Last Review Date"
-                type="date"
-                value={get(measure, 'lastReviewDate', '')}
-                onChange={(e) => handleChange('lastReviewDate', e.target.value)}
-                disabled={!isEditing}
-                InputLabelProps={{ shrink: true }}
-              />
-            </Grid>
-
-            <Grid item xs={12} md={6}>
-              <TextField
-                id="approvalDateInput"
-                fullWidth
-                label="Approval Date"
-                type="date"
-                value={get(measure, 'approvalDate', '')}
-                onChange={(e) => handleChange('approvalDate', e.target.value)}
-                disabled={!isEditing}
-                InputLabelProps={{ shrink: true }}
-              />
-            </Grid>
-
-            {/* Additional Fields */}
-            <Grid item xs={12}>
-              <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>Additional Information</Typography>
-            </Grid>
-
-            <Grid item xs={12}>
-              <TextField
-                id="copyrightTextarea"
-                fullWidth
-                multiline
-                rows={2}
-                label="Copyright"
-                value={get(measure, 'copyright', '')}
-                onChange={(e) => handleChange('copyright', e.target.value)}
-                disabled={!isEditing}
-              />
-            </Grid>
-
-            <Grid item xs={12}>
-              <TextField
-                id="guidanceTextarea"
-                fullWidth
-                multiline
-                rows={3}
-                label="Guidance"
-                value={get(measure, 'guidance', '')}
-                onChange={(e) => handleChange('guidance', e.target.value)}
-                disabled={!isEditing}
-              />
-            </Grid>
-
-            <Grid item xs={12}>
-              <TextField
-                id="rateAggregationInput"
-                fullWidth
-                label="Rate Aggregation"
-                value={get(measure, 'rateAggregation', '')}
-                onChange={(e) => handleChange('rateAggregation', e.target.value)}
-                disabled={!isEditing}
-              />
-            </Grid>
-
-            <Grid item xs={12}>
-              <TextField
-                id="clinicalRecommendationStatementTextarea"
-                fullWidth
-                multiline
-                rows={3}
-                label="Clinical Recommendation Statement"
-                value={get(measure, 'clinicalRecommendationStatement', '')}
-                onChange={(e) => handleChange('clinicalRecommendationStatement', e.target.value)}
-                disabled={!isEditing}
-              />
-            </Grid>
-
-            <Grid item xs={12}>
-              <TextField
-                id="disclaimerTextarea"
-                fullWidth
-                multiline
-                rows={2}
-                label="Disclaimer"
-                value={get(measure, 'disclaimer', '')}
-                onChange={(e) => handleChange('disclaimer', e.target.value)}
-                disabled={!isEditing}
-              />
-            </Grid>
-
-            <Grid item xs={12}>
-              <TextField
-                id="riskAdjustmentTextarea"
-                fullWidth
-                multiline
-                rows={2}
-                label="Risk Adjustment"
-                value={get(measure, 'riskAdjustment', '')}
-                onChange={(e) => handleChange('riskAdjustment', e.target.value)}
-                disabled={!isEditing}
-              />
-            </Grid>
-
-            <Grid item xs={12}>
-              <TextField
-                id="rationaleTextarea"
-                fullWidth
-                multiline
-                rows={3}
-                label="Rationale"
-                value={get(measure, 'rationale', '')}
-                onChange={(e) => handleChange('rationale', e.target.value)}
-                disabled={!isEditing}
-              />
-            </Grid>
-          </Grid>
+          {viewMode === 'form' && renderFormView()}
+          {viewMode === 'page' && renderPreviewView()}
         </CardContent>
-        <CardActions sx={{ justifyContent: 'flex-end', p: 2 }}>
-          {!isEditing ? (
-            <>
-              <Button onClick={() => navigate('/measures')}>
-                Back
-              </Button>
-              {(id && id !== 'new') && (
-                <>
-                  <Button onClick={handleDelete} color="error">
-                    Delete
-                  </Button>
-                  <Button 
-                    variant="contained" 
-                    onClick={() => setIsEditing(true)}
-                  >
-                    Edit
-                  </Button>
-                </>
-              )}
-            </>
-          ) : (
-            <>
-              <Button onClick={() => {
-                if (id && id !== 'new') {
-                  setIsEditing(false);
-                } else {
-                  navigate('/measures');
-                }
-              }}>
-                Cancel
-              </Button>
-              <Button 
-                id="saveMeasureButton"
-                variant="contained" 
-                onClick={handleSave}
-                disabled={loading}
-              >
-                {loading ? 'Saving...' : 'Save'}
-              </Button>
-            </>
-          )}
-        </CardActions>
       </Card>
     </Container>
   );

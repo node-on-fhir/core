@@ -12,6 +12,9 @@ import './collections';
 // Register FHIR Detail components with fhir-react dispatcher
 import './fhir-resource-registry';
 
+// Register FHIR Preview components with DynamicFhirViews dispatcher
+import './fhir-preview-registry';
+
 // Session overrides for ObjectID handling
 import './session-overrides';
 

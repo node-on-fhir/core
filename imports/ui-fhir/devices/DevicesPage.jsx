@@ -268,11 +268,7 @@ export function DevicesPage(props){
   }
   
   let layoutContent;
-  if(isLoading) {
-    layoutContent = <Box sx={{ textAlign: 'center', py: 4 }}>
-      <Typography>Loading devices...</Typography>
-    </Box>
-  } else if(data.devices.length > 0){
+  if(data.devices.length > 0){
     layoutContent = <Card 
       sx={{ 
         width: '100%',

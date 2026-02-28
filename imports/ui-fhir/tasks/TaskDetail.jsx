@@ -1,30 +1,26 @@
 // /imports/ui-fhir/tasks/TaskDetail.jsx
 
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useTracker } from 'meteor/react-meteor-data';
 
-import { 
+import {
   Button,
   Card,
-  CardActions,
   CardContent,
   CardHeader,
   Container,
-  TextField,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
   Typography,
   Box,
   IconButton,
-  InputAdornment,
   Tooltip
 } from '@mui/material';
+
+import ArticleIcon from '@mui/icons-material/Article';
+import EditNoteIcon from '@mui/icons-material/EditNote';
 import LockIcon from '@mui/icons-material/Lock';
 import LockOpenIcon from '@mui/icons-material/LockOpen';
-import SearchIcon from '@mui/icons-material/Search';
+import DeleteIcon from '@mui/icons-material/Delete';
 
 import { get, set } from 'lodash';
 import moment from 'moment';
@@ -32,6 +28,9 @@ import moment from 'moment';
 import { Tasks } from '/imports/lib/schemas/SimpleSchemas/Tasks';
 import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
+
+import TaskFormView from './TaskFormView';
+import TaskPreview from './TaskPreview';
 
 function TaskDetail(props) {
   // Embedded mode support (for HoneycombFhirResource dispatcher)
@@ -41,12 +40,12 @@ function TaskDetail(props) {
   var navigate = isEmbedded ? function() {} : _rawNavigate;
   var _params = isEmbedded ? {} : useParams();
   var taskId = _params.id || null;
-  
+
   // Get selected patient and current user from session/tracker
   const selectedPatient = useTracker(function() {
     return Session.get('selectedPatient');
   }, []);
-  
+
   const currentUser = useTracker(function() {
     return Meteor.user();
   }, []);
@@ -63,7 +62,7 @@ function TaskDetail(props) {
     }
     return handle.ready();
   }, []);
-  
+
   // Initialize state with proper FHIR R4 structure
   const [task, setTask] = useState({
     resourceType: "Task",
@@ -122,6 +121,25 @@ function TaskDetail(props) {
     }]
   });
 
+  const [form, setForm] = useState({
+    forDisplay: '',
+    requesterDisplay: '',
+    ownerDisplay: '',
+    codeCode: '',
+    codeDisplay: '',
+    status: 'requested',
+    intent: 'order',
+    priority: 'routine',
+    description: '',
+    authoredOn: moment().format('YYYY-MM-DDTHH:mm:ss').substring(0, 16),
+    lastModified: moment().format('YYYY-MM-DDTHH:mm:ss').substring(0, 16),
+    businessStatusCode: '',
+    businessStatusDisplay: '',
+    executionPeriodStart: '',
+    executionPeriodEnd: '',
+    notes: ''
+  });
+
   // Initialise from fhirResource prop when in embedded mode
   var hasReceivedProps = React.useRef(false);
   var pendingUpdate = React.useRef(false);
@@ -141,24 +159,26 @@ function TaskDetail(props) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [isEditing, setIsEditing] = useState(isEmbedded);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const viewMode = searchParams.get('view') || 'form';
+
+  const isNewTask = !taskId || taskId === 'new';
 
   // Set patient name and requester on component mount for new tasks
   useEffect(function() {
     if (!taskId || taskId === 'new') {
-      // Enable editing for new tasks
       setIsEditing(true);
-      
-      // For new tasks, set the patient name
+
       let patientName = '';
       let patientReference = '';
-      
+      let requesterName = '';
+      let requesterReference = '';
+
       if (selectedPatient) {
-        // Prefer selected patient
-        patientName = get(selectedPatient, 'name[0].text', '') || 
+        patientName = get(selectedPatient, 'name[0].text', '') ||
                      `${get(selectedPatient, 'name[0].given[0]', '')} ${get(selectedPatient, 'name[0].family', '')}`.trim();
         patientReference = `Patient/${get(selectedPatient, 'id', get(selectedPatient, '_id', ''))}`;
-        
-        // Update the task with patient information
+
         setTask(prev => ({
           ...prev,
           for: {
@@ -167,18 +187,13 @@ function TaskDetail(props) {
           }
         }));
       }
-      
-      // Set requester to current user
-      let requesterName = '';
-      let requesterReference = '';
-      
+
       if (currentUser) {
         requesterName = get(currentUser, 'profile.name.text', '') ||
                        `${get(currentUser, 'profile.name.given[0]', '')} ${get(currentUser, 'profile.name.family', '')}`.trim() ||
                        get(currentUser, 'username', '');
         requesterReference = `Practitioner/${get(currentUser, '_id', '')}`;
-        
-        // Update the task with requester information
+
         setTask(prev => ({
           ...prev,
           requester: {
@@ -187,8 +202,26 @@ function TaskDetail(props) {
           }
         }));
       }
+
+      setForm({
+        forDisplay: patientName,
+        requesterDisplay: requesterName,
+        ownerDisplay: '',
+        codeCode: '',
+        codeDisplay: '',
+        status: 'requested',
+        intent: 'order',
+        priority: 'routine',
+        description: '',
+        authoredOn: moment().format('YYYY-MM-DDTHH:mm:ss').substring(0, 16),
+        lastModified: moment().format('YYYY-MM-DDTHH:mm:ss').substring(0, 16),
+        businessStatusCode: '',
+        businessStatusDisplay: '',
+        executionPeriodStart: '',
+        executionPeriodEnd: '',
+        notes: ''
+      });
     } else {
-      // Viewing existing task - start in read-only mode
       setIsEditing(false);
     }
   }, [taskId, selectedPatient, currentUser]);
@@ -200,15 +233,92 @@ function TaskDetail(props) {
       if (existingTask) {
         setTask(existingTask);
         setIsEditing(false);
+
+        setForm({
+          forDisplay: get(existingTask, 'for.display', ''),
+          requesterDisplay: get(existingTask, 'requester.display', ''),
+          ownerDisplay: get(existingTask, 'owner.display', ''),
+          codeCode: get(existingTask, 'code.coding[0].code', ''),
+          codeDisplay: get(existingTask, 'code.coding[0].display', ''),
+          status: get(existingTask, 'status', 'requested'),
+          intent: get(existingTask, 'intent', 'order'),
+          priority: get(existingTask, 'priority', 'routine'),
+          description: get(existingTask, 'description', ''),
+          authoredOn: get(existingTask, 'authoredOn', '').substring(0, 16),
+          lastModified: get(existingTask, 'lastModified', '').substring(0, 16),
+          businessStatusCode: get(existingTask, 'businessStatus.coding[0].code', ''),
+          businessStatusDisplay: get(existingTask, 'businessStatus.coding[0].display', ''),
+          executionPeriodStart: get(existingTask, 'executionPeriod.start', '').substring(0, 16),
+          executionPeriodEnd: get(existingTask, 'executionPeriod.end', '').substring(0, 16),
+          notes: get(existingTask, 'note[0].text', '')
+        });
       }
     }
   }, [taskId]);
 
-  function handleChange(field, value) {
+  function handleChange(name, value){
     pendingUpdate.current = true;
-    setTask(prev => {
+    const newForm = Object.assign({}, form);
+    newForm[name] = value;
+    setForm(newForm);
+
+    // Also update the underlying FHIR resource
+    setTask(function(prev){
       const updated = { ...prev };
-      set(updated, field, value);
+      switch(name){
+        case 'forDisplay':
+          set(updated, 'for.display', value);
+          break;
+        case 'requesterDisplay':
+          set(updated, 'requester.display', value);
+          break;
+        case 'ownerDisplay':
+          set(updated, 'owner.display', value);
+          break;
+        case 'codeCode':
+          set(updated, 'code.coding[0].code', value);
+          break;
+        case 'codeDisplay':
+          set(updated, 'code.coding[0].display', value);
+          set(updated, 'code.text', value);
+          break;
+        case 'status':
+          set(updated, 'status', value);
+          break;
+        case 'intent':
+          set(updated, 'intent', value);
+          break;
+        case 'priority':
+          set(updated, 'priority', value);
+          break;
+        case 'description':
+          set(updated, 'description', value);
+          break;
+        case 'authoredOn':
+          set(updated, 'authoredOn', value + ':00');
+          break;
+        case 'lastModified':
+          set(updated, 'lastModified', value + ':00');
+          break;
+        case 'businessStatusCode':
+          set(updated, 'businessStatus.coding[0].code', value);
+          set(updated, 'businessStatus.text', value);
+          break;
+        case 'businessStatusDisplay':
+          set(updated, 'businessStatus.coding[0].display', value);
+          break;
+        case 'executionPeriodStart':
+          set(updated, 'executionPeriod.start', value + ':00');
+          break;
+        case 'executionPeriodEnd':
+          set(updated, 'executionPeriod.end', value + ':00');
+          break;
+        case 'notes':
+          set(updated, 'note[0].text', value);
+          break;
+        default:
+          break;
+      }
       return updated;
     });
   }
@@ -221,36 +331,28 @@ function TaskDetail(props) {
     }
   }, [task]);
 
-
-  function handleSearchUser() {
-    console.log('Search for patient/user');
-    // TODO: Implement patient search dialog
-  }
-
   async function handleSaveButton() {
     console.log('TaskDetail.handleSaveButton', task);
     setLoading(true);
     setError(null);
-    
+
     try {
       let dataToSave = {
         ...task,
         lastModified: moment().format('YYYY-MM-DDTHH:mm:ss')
       };
-      
+
       // Remove _id for FHIR compliance
       delete dataToSave._id;
-      
+
       if (taskId && taskId !== 'new') {
-        // Update existing task
         await Meteor.callAsync('updateTask', taskId, dataToSave);
         console.log('Task updated successfully');
-        setIsEditing(false); // Stay on page, switch to read mode
+        setIsEditing(false);
       } else {
-        // Create new task
         const id = await Meteor.callAsync('createTask', dataToSave);
         console.log('Task created successfully:', id);
-        navigate('/tasks'); // Navigate to list after create
+        navigate('/tasks');
       }
     } catch (err) {
       console.error('Error saving task:', err);
@@ -278,33 +380,36 @@ function TaskDetail(props) {
 
   function handleCancelButton() {
     if (taskId && taskId !== 'new') {
-      // If editing existing, just switch back to read mode
       setIsEditing(false);
-      // Reload original data
+      setError(null);
       if (isSubscriptionReady) {
         const existingTask = Tasks.findOne({_id: taskId});
         if (existingTask) {
           setTask(existingTask);
+          setForm({
+            forDisplay: get(existingTask, 'for.display', ''),
+            requesterDisplay: get(existingTask, 'requester.display', ''),
+            ownerDisplay: get(existingTask, 'owner.display', ''),
+            codeCode: get(existingTask, 'code.coding[0].code', ''),
+            codeDisplay: get(existingTask, 'code.coding[0].display', ''),
+            status: get(existingTask, 'status', 'requested'),
+            intent: get(existingTask, 'intent', 'order'),
+            priority: get(existingTask, 'priority', 'routine'),
+            description: get(existingTask, 'description', ''),
+            authoredOn: get(existingTask, 'authoredOn', '').substring(0, 16),
+            lastModified: get(existingTask, 'lastModified', '').substring(0, 16),
+            businessStatusCode: get(existingTask, 'businessStatus.coding[0].code', ''),
+            businessStatusDisplay: get(existingTask, 'businessStatus.coding[0].display', ''),
+            executionPeriodStart: get(existingTask, 'executionPeriod.start', '').substring(0, 16),
+            executionPeriodEnd: get(existingTask, 'executionPeriod.end', '').substring(0, 16),
+            notes: get(existingTask, 'note[0].text', '')
+          });
         }
       }
     } else {
-      // If new, navigate back to list
       navigate('/tasks');
     }
   }
-
-  const statusOptions = [
-    'draft', 'requested', 'received', 'accepted', 'rejected', 
-    'ready', 'cancelled', 'in-progress', 'on-hold', 'failed', 
-    'completed', 'entered-in-error'
-  ];
-
-  const priorityOptions = ['routine', 'urgent', 'asap', 'stat'];
-  
-  const intentOptions = [
-    'unknown', 'proposal', 'plan', 'order', 'original-order',
-    'reflex-order', 'filler-order', 'instance-order', 'option'
-  ];
 
   if (loading && (!taskId || taskId === 'new')) {
     return (
@@ -314,511 +419,148 @@ function TaskDetail(props) {
     );
   }
 
-  if (isEmbedded) {
+  // Build the header title
+  let headerTitle = 'New Task';
+  if (taskId && taskId !== 'new') {
+    headerTitle = <span className="barcode helveticas" style={{ fontSize: '1.5rem' }}>{taskId}</span>;
+  }
+
+  // Build the header action buttons
+  function renderHeaderActions(){
+    return (
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+        {/* Preview toggle - hidden for new tasks */}
+        {!isNewTask && (
+          <Tooltip title="Preview">
+            <IconButton
+              onClick={() => setSearchParams({ view: 'page' })}
+              sx={{
+                color: viewMode === 'page' ? 'primary.main' : 'text.secondary'
+              }}
+            >
+              <ArticleIcon />
+            </IconButton>
+          </Tooltip>
+        )}
+
+        {/* Form toggle - hidden for new tasks */}
+        {!isNewTask && (
+          <Tooltip title="Form">
+            <IconButton
+              onClick={() => setSearchParams({ view: 'form' })}
+              sx={{
+                color: viewMode === 'form' ? 'primary.main' : 'text.secondary'
+              }}
+            >
+              <EditNoteIcon />
+            </IconButton>
+          </Tooltip>
+        )}
+
+        {/* Lock / Unlock toggle - only for existing tasks */}
+        {!isNewTask && (
+          <Tooltip title={isEditing ? 'Lock (read-only)' : 'Unlock (edit)'}>
+            <IconButton
+              onClick={() => setIsEditing(!isEditing)}
+            >
+              {isEditing ? <LockOpenIcon /> : <LockIcon />}
+            </IconButton>
+          </Tooltip>
+        )}
+
+        {/* Delete - only for existing tasks, gated on edit mode */}
+        {!isNewTask && (
+          <Tooltip title="Delete">
+            <IconButton
+              onClick={handleDeleteButton}
+              disabled={!isEditing}
+              sx={{ color: isEditing ? 'error.main' : 'text.disabled' }}
+            >
+              <DeleteIcon />
+              <Typography sx={{
+                position: 'absolute',
+                width: '1px',
+                height: '1px',
+                padding: 0,
+                margin: '-1px',
+                overflow: 'hidden',
+                clip: 'rect(0, 0, 0, 0)',
+                whiteSpace: 'nowrap',
+                borderWidth: 0
+              }}>Delete</Typography>
+            </IconButton>
+          </Tooltip>
+        )}
+      </Box>
+    );
+  }
+
+  // Render the form view
+  function renderFormView(){
     return (
       <>
-        <TextField
-          id="forDisplay"
-          fullWidth
-          label="Patient"
-          value={get(task, 'for.display', '')}
-          onChange={(e) => handleChange('for.display', e.target.value)}
-          disabled={!isEditing}
-          margin="normal"
-          InputProps={{
-            endAdornment: (
-              <InputAdornment position="end">
-                <Tooltip title="Search for patient">
-                  <IconButton
-                    onClick={handleSearchUser}
-                    edge="end"
-                    disabled={!isEditing}
-                  >
-                    <SearchIcon />
-                  </IconButton>
-                </Tooltip>
-              </InputAdornment>
-            ),
-          }}
+        <TaskFormView
+          resource={task}
+          form={form}
+          isEditing={isEditing}
+          onChange={handleChange}
+          isEmbedded={isEmbedded}
         />
 
-        <TextField
-          id="requesterDisplay"
-          fullWidth
-          label="Requester"
-          value={get(task, 'requester.display', '')}
-          onChange={(e) => handleChange('requester.display', e.target.value)}
-          disabled={!isEditing}
-          margin="normal"
-        />
-
-        <TextField
-          id="ownerDisplay"
-          fullWidth
-          label="Owner"
-          value={get(task, 'owner.display', '')}
-          onChange={(e) => handleChange('owner.display', e.target.value)}
-          disabled={!isEditing}
-          margin="normal"
-        />
-
-        <Box sx={{ display: 'flex', gap: 2 }}>
-          <TextField
-            id="codeCode"
-            fullWidth
-            label="Code"
-            value={get(task, 'code.coding[0].code', '')}
-            onChange={(e) => handleChange('code.coding[0].code', e.target.value)}
-            disabled={!isEditing}
-            margin="normal"
-          />
-          <TextField
-            id="codeDisplay"
-            fullWidth
-            label="Code Display"
-            value={get(task, 'code.coding[0].display', '')}
-            onChange={(e) => {
-              handleChange('code.coding[0].display', e.target.value);
-              handleChange('code.text', e.target.value);
-            }}
-            disabled={!isEditing}
-            margin="normal"
-          />
-        </Box>
-
-        <FormControl fullWidth margin="normal">
-          <InputLabel id="status-label">Status</InputLabel>
-          <Select
-            labelId="status-label"
-            id="status"
-            value={get(task, 'status', 'requested')}
-            onChange={(e) => handleChange('status', e.target.value)}
-            disabled={!isEditing}
-            label="Status"
-          >
-            {statusOptions.map(option => (
-              <MenuItem key={option} value={option}>{option}</MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-
-        <Box sx={{ display: 'flex', gap: 2 }}>
-          <FormControl fullWidth margin="normal">
-            <InputLabel id="intent-label">Intent</InputLabel>
-            <Select
-              labelId="intent-label"
-              id="intent"
-              value={get(task, 'intent', 'order')}
-              onChange={(e) => handleChange('intent', e.target.value)}
-              disabled={!isEditing}
-              label="Intent"
+        {/* In-form Save/Cancel bar when editing */}
+        {isEditing && !isEmbedded && (
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, mt: 3, pt: 2, borderTop: 1, borderColor: 'divider' }}>
+            <Button id="cancelButton" onClick={handleCancelButton}>
+              Cancel
+            </Button>
+            <Button
+              id="saveTaskButton"
+              onClick={handleSaveButton}
+              variant="contained"
+              color="primary"
+              disabled={loading}
             >
-              {intentOptions.map(option => (
-                <MenuItem key={option} value={option}>{option}</MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-
-          <FormControl fullWidth margin="normal">
-            <InputLabel id="priority-label">Priority</InputLabel>
-            <Select
-              labelId="priority-label"
-              id="priority"
-              value={get(task, 'priority', 'routine')}
-              onChange={(e) => handleChange('priority', e.target.value)}
-              disabled={!isEditing}
-              label="Priority"
-            >
-              {priorityOptions.map(option => (
-                <MenuItem key={option} value={option}>{option}</MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        </Box>
-
-        <TextField
-          id="description"
-          fullWidth
-          label="Description"
-          value={get(task, 'description', '')}
-          onChange={(e) => handleChange('description', e.target.value)}
-          disabled={!isEditing}
-          multiline
-          rows={3}
-          margin="normal"
-        />
-
-        <TextField
-          id="authoredOn"
-          fullWidth
-          label="Authored On"
-          type="datetime-local"
-          value={get(task, 'authoredOn', '').substring(0, 16)}
-          onChange={(e) => handleChange('authoredOn', e.target.value + ':00')}
-          disabled={!isEditing}
-          margin="normal"
-          InputLabelProps={{ shrink: true }}
-        />
-
-        <TextField
-          id="lastModified"
-          fullWidth
-          label="Last Modified"
-          type="datetime-local"
-          value={get(task, 'lastModified', '').substring(0, 16)}
-          onChange={(e) => handleChange('lastModified', e.target.value + ':00')}
-          disabled={!isEditing}
-          margin="normal"
-          InputLabelProps={{ shrink: true }}
-        />
-
-        <Box sx={{ display: 'flex', gap: 2 }}>
-          <TextField
-            id="businessStatusCode"
-            fullWidth
-            label="Business Status Code"
-            value={get(task, 'businessStatus.coding[0].code', '')}
-            onChange={(e) => {
-              handleChange('businessStatus.coding[0].code', e.target.value);
-              handleChange('businessStatus.text', e.target.value);
-            }}
-            disabled={!isEditing}
-            margin="normal"
-          />
-          <TextField
-            id="businessStatusDisplay"
-            fullWidth
-            label="Business Status Display"
-            value={get(task, 'businessStatus.coding[0].display', '')}
-            onChange={(e) => handleChange('businessStatus.coding[0].display', e.target.value)}
-            disabled={!isEditing}
-            margin="normal"
-          />
-        </Box>
-
-        <Box sx={{ display: 'flex', gap: 2 }}>
-          <TextField
-            id="executionPeriodStart"
-            fullWidth
-            label="Execution Start"
-            type="datetime-local"
-            value={get(task, 'executionPeriod.start', '').substring(0, 16)}
-            onChange={(e) => handleChange('executionPeriod.start', e.target.value + ':00')}
-            disabled={!isEditing}
-            margin="normal"
-            InputLabelProps={{ shrink: true }}
-          />
-          <TextField
-            id="executionPeriodEnd"
-            fullWidth
-            label="Execution End"
-            type="datetime-local"
-            value={get(task, 'executionPeriod.end', '').substring(0, 16)}
-            onChange={(e) => handleChange('executionPeriod.end', e.target.value + ':00')}
-            disabled={!isEditing}
-            margin="normal"
-            InputLabelProps={{ shrink: true }}
-          />
-        </Box>
-
-        <TextField
-          id="notesTextarea"
-          fullWidth
-          label="Notes"
-          value={get(task, 'note[0].text', '')}
-          onChange={(e) => handleChange('note[0].text', e.target.value)}
-          disabled={!isEditing}
-          multiline
-          rows={3}
-          margin="normal"
-        />
+              {loading ? 'Saving...' : 'Save'}
+            </Button>
+          </Box>
+        )}
       </>
     );
+  }
+
+  // Render the preview view
+  function renderPreviewView(){
+    return (
+      <TaskPreview
+        resource={task}
+        resourceId={taskId}
+      />
+    );
+  }
+
+  // In embedded mode, render form content without Container/Card wrapper
+  if (isEmbedded) {
+    return renderFormView();
   }
 
   return (
     <Container id='taskDetailPage' maxWidth="md" sx={{ py: 4 }}>
       <Card sx={{ boxShadow: 3 }}>
         <CardHeader
-          title={taskId && taskId !== 'new' ? 'Edit Task' : 'New Task'}
-          sx={{ bgcolor: 'primary.main', color: 'primary.contrastText' }}
-          action={
-            taskId && taskId !== 'new' && (
-              <IconButton onClick={() => setIsEditing(!isEditing)} sx={{ color: 'primary.contrastText' }}>
-                {isEditing ? <LockOpenIcon /> : <LockIcon />}
-              </IconButton>
-            )
-          }
+          title={headerTitle}
+          sx={{ borderBottom: 1, borderColor: 'divider' }}
+          action={renderHeaderActions()}
         />
         <CardContent>
-          {(taskId && taskId !== 'new') && (
-            <Box sx={{ mb: 3, textAlign: 'right' }}>
-              <span className="barcode helveticas" style={{ fontSize: '2rem' }}>{taskId}</span>
-            </Box>
-          )}
-          
           {error && (
-            <Typography color="error" sx={{ mb: 2 }}>{error}</Typography>
+            <Typography color="error" sx={{ mb: 2 }}>
+              Error: {error}
+            </Typography>
           )}
 
-          <TextField
-            id="forDisplay"
-            fullWidth
-            label="Patient"
-            value={get(task, 'for.display', '')}
-            onChange={(e) => handleChange('for.display', e.target.value)}
-            disabled={!isEditing}
-            margin="normal"
-            InputProps={{
-              endAdornment: (
-                <InputAdornment position="end">
-                  <Tooltip title="Search for patient">
-                    <IconButton
-                      onClick={handleSearchUser}
-                      edge="end"
-                      disabled={!isEditing}
-                    >
-                      <SearchIcon />
-                    </IconButton>
-                  </Tooltip>
-                </InputAdornment>
-              ),
-            }}
-          />
-
-          <TextField
-            id="requesterDisplay"
-            fullWidth
-            label="Requester"
-            value={get(task, 'requester.display', '')}
-            onChange={(e) => handleChange('requester.display', e.target.value)}
-            disabled={!isEditing}
-            margin="normal"
-          />
-
-          <TextField
-            id="ownerDisplay"
-            fullWidth
-            label="Owner"
-            value={get(task, 'owner.display', '')}
-            onChange={(e) => handleChange('owner.display', e.target.value)}
-            disabled={!isEditing}
-            margin="normal"
-          />
-
-          <Box sx={{ display: 'flex', gap: 2 }}>
-            <TextField
-              id="codeCode"
-              fullWidth
-              label="Code"
-              value={get(task, 'code.coding[0].code', '')}
-              onChange={(e) => handleChange('code.coding[0].code', e.target.value)}
-              disabled={!isEditing}
-              margin="normal"
-            />
-            <TextField
-              id="codeDisplay"
-              fullWidth
-              label="Code Display"
-              value={get(task, 'code.coding[0].display', '')}
-              onChange={(e) => {
-                handleChange('code.coding[0].display', e.target.value);
-                handleChange('code.text', e.target.value);
-              }}
-              disabled={!isEditing}
-              margin="normal"
-            />
-          </Box>
-
-          <FormControl fullWidth margin="normal">
-            <InputLabel id="status-label">Status</InputLabel>
-            <Select
-              labelId="status-label"
-              id="status"
-              value={get(task, 'status', 'requested')}
-              onChange={(e) => handleChange('status', e.target.value)}
-              disabled={!isEditing}
-              label="Status"
-            >
-              {statusOptions.map(option => (
-                <MenuItem key={option} value={option}>{option}</MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-
-          <Box sx={{ display: 'flex', gap: 2 }}>
-            <FormControl fullWidth margin="normal">
-              <InputLabel id="intent-label">Intent</InputLabel>
-              <Select
-                labelId="intent-label"
-                id="intent"
-                value={get(task, 'intent', 'order')}
-                onChange={(e) => handleChange('intent', e.target.value)}
-                disabled={!isEditing}
-                label="Intent"
-              >
-                {intentOptions.map(option => (
-                  <MenuItem key={option} value={option}>{option}</MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-
-            <FormControl fullWidth margin="normal">
-              <InputLabel id="priority-label">Priority</InputLabel>
-              <Select
-                labelId="priority-label"
-                id="priority"
-                value={get(task, 'priority', 'routine')}
-                onChange={(e) => handleChange('priority', e.target.value)}
-                disabled={!isEditing}
-                label="Priority"
-              >
-                {priorityOptions.map(option => (
-                  <MenuItem key={option} value={option}>{option}</MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Box>
-
-          <TextField
-            id="description"
-            fullWidth
-            label="Description"
-            value={get(task, 'description', '')}
-            onChange={(e) => handleChange('description', e.target.value)}
-            disabled={!isEditing}
-            multiline
-            rows={3}
-            margin="normal"
-          />
-
-          <TextField
-            id="authoredOn"
-            fullWidth
-            label="Authored On"
-            type="datetime-local"
-            value={get(task, 'authoredOn', '').substring(0, 16)}
-            onChange={(e) => handleChange('authoredOn', e.target.value + ':00')}
-            disabled={!isEditing}
-            margin="normal"
-            InputLabelProps={{ shrink: true }}
-          />
-
-          <TextField
-            id="lastModified"
-            fullWidth
-            label="Last Modified"
-            type="datetime-local"
-            value={get(task, 'lastModified', '').substring(0, 16)}
-            onChange={(e) => handleChange('lastModified', e.target.value + ':00')}
-            disabled={!isEditing}
-            margin="normal"
-            InputLabelProps={{ shrink: true }}
-          />
-
-          <Box sx={{ display: 'flex', gap: 2 }}>
-            <TextField
-              id="businessStatusCode"
-              fullWidth
-              label="Business Status Code"
-              value={get(task, 'businessStatus.coding[0].code', '')}
-              onChange={(e) => {
-                handleChange('businessStatus.coding[0].code', e.target.value);
-                handleChange('businessStatus.text', e.target.value);
-              }}
-              disabled={!isEditing}
-              margin="normal"
-            />
-            <TextField
-              id="businessStatusDisplay"
-              fullWidth
-              label="Business Status Display"
-              value={get(task, 'businessStatus.coding[0].display', '')}
-              onChange={(e) => handleChange('businessStatus.coding[0].display', e.target.value)}
-              disabled={!isEditing}
-              margin="normal"
-            />
-          </Box>
-
-          <Box sx={{ display: 'flex', gap: 2 }}>
-            <TextField
-              id="executionPeriodStart"
-              fullWidth
-              label="Execution Start"
-              type="datetime-local"
-              value={get(task, 'executionPeriod.start', '').substring(0, 16)}
-              onChange={(e) => handleChange('executionPeriod.start', e.target.value + ':00')}
-              disabled={!isEditing}
-              margin="normal"
-              InputLabelProps={{ shrink: true }}
-            />
-            <TextField
-              id="executionPeriodEnd"
-              fullWidth
-              label="Execution End"
-              type="datetime-local"
-              value={get(task, 'executionPeriod.end', '').substring(0, 16)}
-              onChange={(e) => handleChange('executionPeriod.end', e.target.value + ':00')}
-              disabled={!isEditing}
-              margin="normal"
-              InputLabelProps={{ shrink: true }}
-            />
-          </Box>
-
-          <TextField
-            id="notesTextarea"
-            fullWidth
-            label="Notes"
-            value={get(task, 'note[0].text', '')}
-            onChange={(e) => handleChange('note[0].text', e.target.value)}
-            disabled={!isEditing}
-            multiline
-            rows={3}
-            margin="normal"
-          />
+          {viewMode === 'form' && renderFormView()}
+          {viewMode === 'page' && renderPreviewView()}
         </CardContent>
-
-        <CardActions sx={{ justifyContent: 'flex-end', p: 2 }}>
-          {taskId && taskId !== 'new' && !isEditing && (
-            <>
-              <Button onClick={() => navigate('/tasks')}>
-                Back
-              </Button>
-              <Button 
-                color="error"
-                onClick={handleDeleteButton}
-                disabled={loading}
-              >
-                Delete
-              </Button>
-              <Button 
-                variant="contained"
-                onClick={() => setIsEditing(true)}
-              >
-                Edit
-              </Button>
-            </>
-          )}
-          
-          {isEditing && (
-            <>
-              <Button 
-                onClick={handleCancelButton}
-                disabled={loading}
-              >
-                Cancel
-              </Button>
-              <Button 
-                variant="contained"
-                color="primary"
-                onClick={handleSaveButton}
-                disabled={loading}
-              >
-                {taskId && taskId !== 'new' ? 'Update' : 'Save'} Task
-              </Button>
-            </>
-          )}
-        </CardActions>
       </Card>
     </Container>
   );

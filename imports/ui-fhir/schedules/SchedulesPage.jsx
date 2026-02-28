@@ -233,11 +233,7 @@ export function SchedulesPage(props){
   }
 
   let layoutContent;
-  if(isLoading) {
-    layoutContent = <Box sx={{ textAlign: 'center', py: 4 }}>
-      <Typography>Loading schedules...</Typography>
-    </Box>
-  } else if(schedules.length > 0){
+  if(schedules.length > 0){
     layoutContent = <Card 
       sx={{ 
         width: '100%',

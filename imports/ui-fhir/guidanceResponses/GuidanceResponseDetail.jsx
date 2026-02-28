@@ -1,465 +1,333 @@
-// =======================================================================
-// Using DSTU2  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-//
-// https://www.hl7.org/fhir/DSTU2/guidanceResponses.html
-//
-//
-// =======================================================================
+// imports/ui-fhir/guidanceResponses/GuidanceResponseDetail.jsx
 
-import React from 'react';
-import PropTypes from 'prop-types';
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 
-import { useTracker } from 'meteor/react-meteor-data';
-
-import { 
+import {
   Button,
   Card,
-  Checkbox,
-  CardActions,
   CardContent,
   CardHeader,
-  Grid,
-  TextField,
-  Select,
-  MenuItem,
+  Container,
+  IconButton,
+  Tooltip,
+  Typography,
+  Box
 } from '@mui/material';
+
+import ArticleIcon from '@mui/icons-material/Article';
+import EditNoteIcon from '@mui/icons-material/EditNote';
+import LockIcon from '@mui/icons-material/Lock';
+import LockOpenIcon from '@mui/icons-material/LockOpen';
+import DeleteIcon from '@mui/icons-material/Delete';
 
 import { get, set } from 'lodash';
 
+import { Meteor } from 'meteor/meteor';
+import { useTracker } from 'meteor/react-meteor-data';
 
-export class GuidanceResponseDetail extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      guidanceResponseId: false,
-      guidanceResponse: {
-        resourceType: "GuidanceResponse",
-        patient: {
-          reference: "",
-          display: ""
-        },
-        asserter: {
-          reference: "",
-          display: ""
-        },
-        dateRecorded: null,
-        code: {
-          coding: [
-            {
-              system: "http://snomed.info/sct",
-              code: "",
-              display: ""
-            }
-          ]
-        },
-        clinicalStatus: "active",
-        verificationStatus: "confirmed",
-        guidanceResponse: [],
-        onsetDateTime: null
-      }, 
-      form: {
-        patientDisplay: '',
-        asserterDisplay: '',
-        snomedCode: '',
-        snomedDisplay: '',
-        clinicalStatus: '',
-        verificationStatus: '',
-        guidanceResponseDisplay: '',
-        onsetDateTime: ''
+import GuidanceResponseFormView from './GuidanceResponseFormView';
+import GuidanceResponsePreview from './GuidanceResponsePreview';
+
+function GuidanceResponseDetail(props) {
+  // Embedded mode support (for HoneycombFhirResource dispatcher)
+  var isEmbedded = props.embedded || false;
+
+  var _rawNavigate = useNavigate();
+  var navigate = isEmbedded ? function() {} : _rawNavigate;
+  var _params = isEmbedded ? {} : useParams();
+  var id = _params.id || null;
+
+  const [guidanceResponseId, setGuidanceResponseId] = useState(false);
+  const [guidanceResponse, setGuidanceResponse] = useState({
+    resourceType: 'GuidanceResponse',
+    patient: {
+      reference: '',
+      display: ''
+    },
+    asserter: {
+      reference: '',
+      display: ''
+    },
+    code: {
+      coding: [{
+        system: 'http://snomed.info/sct',
+        code: '',
+        display: ''
+      }]
+    },
+    clinicalStatus: '',
+    verificationStatus: '',
+    onsetDateTime: null
+  });
+  const [isEditing, setIsEditing] = useState(isEmbedded);
+  const [searchParams, setSearchParams] = useSearchParams();
+  var viewMode = searchParams.get('view') || 'form';
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  var isNewRecord = !id || id === 'new';
+  var isExistingRecord = guidanceResponseId && guidanceResponseId !== 'new';
+
+  // Initialise from fhirResource prop when in embedded mode
+  var hasReceivedProps = React.useRef(false);
+  useEffect(function() {
+    if (isEmbedded && props.fhirResource) {
+      hasReceivedProps.current = true;
+      setGuidanceResponse(function(prev) {
+        if (JSON.stringify(props.fhirResource) !== JSON.stringify(prev)) {
+          return props.fhirResource;
+        }
+        return prev;
+      });
+    }
+  }, [props.fhirResource]);
+
+  // Subscribe to guidance responses
+  var isSubscriptionReady = useTracker(function() {
+    if (isEmbedded) return true;
+    var handle = Meteor.subscribe('autopublish.GuidanceResponses', {}, { limit: 1000 });
+    return handle.ready();
+  }, []);
+
+  // Load record or initialize new one
+  useEffect(function() {
+    if (id && id !== 'new') {
+      setGuidanceResponseId(id);
+      setIsEditing(false);
+
+      // Try to find the record in local collection
+      if (typeof GuidanceResponses !== 'undefined') {
+        var existing = GuidanceResponses.findOne({ _id: id }) || GuidanceResponses.findOne({ id: id });
+        if (existing) {
+          setGuidanceResponse(existing);
+        }
       }
+    } else if (!id || id === 'new') {
+      setIsEditing(true);
+    }
+  }, [id]);
+
+  // Handle field changes
+  function handleChange(path, value) {
+    var updated = Object.assign({}, guidanceResponse);
+    set(updated, path, value);
+    setGuidanceResponse(updated);
+
+    // Notify parent of changes in embedded mode
+    if (props.onResourceChange) {
+      props.onResourceChange(updated);
     }
   }
-  dehydrateFhirResource(guidanceResponse) {
-    let formData = Object.assign({}, this.state.form);
 
-    formData.patientDisplay = get(guidanceResponse, 'patient.display')
-    formData.asserterDisplay = get(guidanceResponse, 'asserter.display')    
-    formData.snomedCode = get(guidanceResponse, 'code.coding[0].code')
-    formData.snomedDisplay = get(guidanceResponse, 'code.coding[0].display')
-    formData.clinicalStatus = get(guidanceResponse, 'clinicalStatus')
-    formData.verificationStatus = get(guidanceResponse, 'verificationStatus')
-    formData.onsetDateTime = get(guidanceResponse, 'onsetDateTime')
+  // Handle save
+  async function handleSaveButton() {
+    setLoading(true);
+    setError(null);
 
-    return formData;
-  }
-  shouldComponentUpdate(nextProps){
-    get(Meteor, 'settings.public.logging') === "debug" && console.log('GuidanceResponseDetail.shouldComponentUpdate()', nextProps, this.state)
-    let shouldUpdate = true;
+    try {
+      var dataToSave = Object.assign({}, guidanceResponse);
+      delete dataToSave._id;
 
-    // received an guidanceResponse from the table; okay lets update again
-    if(nextProps.guidanceResponseId !== this.state.guidanceResponseId){
-      
-      if(nextProps.guidanceResponse){
-        this.setState({guidanceResponse: nextProps.guidanceResponse})     
-        this.setState({form: this.dehydrateFhirResource(nextProps.guidanceResponse)})       
+      console.log('Saving GuidanceResponse:', dataToSave);
+
+      if (guidanceResponseId && guidanceResponseId !== 'new') {
+        await Meteor.callAsync('updateGuidanceResponse', guidanceResponseId, dataToSave);
+        console.log('GuidanceResponse updated successfully');
+        setIsEditing(false);
+      } else {
+        var newId = await Meteor.callAsync('createGuidanceResponse', dataToSave);
+        console.log('GuidanceResponse created with ID:', newId);
+        navigate('/guidance-responses');
       }
-
-      this.setState({guidanceResponseId: nextProps.guidanceResponseId})
-      shouldUpdate = true;
-    }
-
-    // both false; don't take any more updates
-    if(nextProps.guidanceResponse === this.state.guidanceResponse){
-      shouldUpdate = false;
-    }
- 
-    return shouldUpdate;
-  }
-
-  getMeteorData() {
-    let data = {
-      guidanceResponseId: this.props.guidanceResponseId,
-      guidanceResponse: false,
-      showDatePicker: false,
-      form: this.state.form
-    };
-
-    if(this.props.showDatePicker){
-      data.showDatePicker = this.props.showDatePicker
-    }
-    if(this.props.guidanceResponse){
-      data.guidanceResponse = this.props.guidanceResponse;
-      data.form = this.dehydrateFhirResource(this.props.guidanceResponse);
-    }
-
-    return data;
-  }
-  renderDatePicker(showDatePicker, form){
-    let datePickerValue;
-
-    if(get(form, 'onsetDateTime')){
-      datePickerValue = get(form, 'onsetDateTime');
-    }
-    if(get(form, 'onsetPeriod.start')){
-      datePickerValue = get(form, 'onsetPeriod.start');
-    }
-    if (typeof datePickerValue === "string"){
-      datePickerValue = new Date(datePickerValue);
-    }
-    if (showDatePicker) {
-      return (<div></div>)
-      // return (
-      //   <DatePicker 
-      //     name='onsetDateTime'
-      //     hintText="Onset Date" 
-      //     container="inline" 
-      //     mode="landscape"
-      //     value={ datePickerValue ? datePickerValue : null }    
-      //     onChange={ this.changeState.bind(this, 'onsetDateTime')}      
-      //     />
-      // );      
+    } catch (err) {
+      console.error('Error saving guidance response:', err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
     }
   }
-  setHint(text){
-    if(this.props.showHints !== false){
-      return text;
+
+  // Handle cancel
+  function handleCancelButton() {
+    if (guidanceResponseId && guidanceResponseId !== 'new') {
+      setIsEditing(false);
+      setError(null);
+      // Reload original data
+      if (typeof GuidanceResponses !== 'undefined') {
+        var existing = GuidanceResponses.findOne({ _id: guidanceResponseId });
+        if (existing) {
+          setGuidanceResponse(existing);
+        }
+      }
     } else {
-      return '';
+      navigate('/guidance-responses');
     }
   }
-  render() {
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log('GuidanceResponseDetail.render()', this.state)
 
+  // Handle delete
+  async function handleDeleteButton() {
+    if (!guidanceResponseId || guidanceResponseId === 'new') return;
+
+    if (window.confirm('Are you sure you want to delete this guidance response?')) {
+      setLoading(true);
+      try {
+        await Meteor.callAsync('removeGuidanceResponse', guidanceResponseId);
+        console.log('GuidanceResponse deleted successfully');
+        navigate('/guidance-responses');
+      } catch (err) {
+        console.error('Error deleting guidance response:', err);
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    }
+  }
+
+  // Build the header title
+  var headerTitle = 'New Guidance Response';
+  if (isExistingRecord) {
+    headerTitle = <span className="barcode helveticas" style={{ fontSize: '1.5rem' }}>{guidanceResponseId}</span>;
+  }
+
+  // Build the header action buttons
+  function renderHeaderActions() {
     return (
-      <div id={this.props.id} className="guidanceResponseDetail">
-        <CardContent>
-          <Grid container spacing={3}>
-            <Grid item xs={6}>
-              <TextField
-                id='patientDisplayInput'
-                name='patientDisplay'
-                label='Patient'
-                value={ get(this, 'data.form.patientDisplay', '') }
-                onChange={ this.changeState.bind(this, 'patientDisplay')}
-                hintText={ this.setHint('Jane Doe') }
-                //floatingLabelFixed={true}
-                fullWidth
-                /><br/>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+        {/* Preview toggle -- hidden for new records */}
+        {!isNewRecord && (
+          <Tooltip title="Preview">
+            <IconButton
+              onClick={function() { setSearchParams({ view: 'page' }); }}
+              sx={{
+                color: viewMode === 'page' ? 'primary.main' : 'text.secondary'
+              }}
+            >
+              <ArticleIcon />
+            </IconButton>
+          </Tooltip>
+        )}
 
-              <TextField
-                id='asserterDisplayInput'
-                name='asserterDisplay'
-                label='Asserter'
-                value={ get(this, 'data.form.asserterDisplay', '') }
-                onChange={ this.changeState.bind(this, 'asserterDisplay')}
-                hintText={ this.setHint('Nurse Jackie') }
-                //floatingLabelFixed={true}
-                fullWidth
-                /><br/>
+        {/* Form toggle -- hidden for new records (always form) */}
+        {!isNewRecord && (
+          <Tooltip title="Form">
+            <IconButton
+              onClick={function() { setSearchParams({ view: 'form' }); }}
+              sx={{
+                color: viewMode === 'form' ? 'primary.main' : 'text.secondary'
+              }}
+            >
+              <EditNoteIcon />
+            </IconButton>
+          </Tooltip>
+        )}
 
-              <TextField
-                id='snomedCodeInput'
-                name='snomedCode'
-                label='SNOMED Code'
-                value={ get(this, 'data.form.snomedCode', '') }
-                hintText={ this.setHint('307343001') }
-                onChange={ this.changeState.bind(this, 'snomedCode')}
-                //floatingLabelFixed={true}
-                fullWidth
-                /><br/>
+        {/* Lock / Unlock toggle -- only for existing records */}
+        {!isNewRecord && (
+          <Tooltip title={isEditing ? 'Lock (read-only)' : 'Unlock (edit)'}>
+            <IconButton
+              onClick={function() { setIsEditing(!isEditing); }}
+            >
+              {isEditing ? <LockOpenIcon /> : <LockIcon />}
+            </IconButton>
+          </Tooltip>
+        )}
 
-              <TextField
-                id='snomedDisplayInput'
-                name='snomedDisplay'
-                label='SNOMED Display'
-                value={ get(this, 'data.form.snomedDisplay', '') }
-                onChange={ this.changeState.bind(this, 'snomedDisplay')}
-                hintText={ this.setHint('Acquired hemoglobin H disease (disorder)') }
-                //floatingLabelFixed={true}
-                fullWidth
-                /><br/>
-
-              <TextField
-                id='clinicalStatusInput'
-                name='clinicalStatus'
-                label='Clinical Status'
-                value={ get(this, 'data.form.clinicalStatus', '') }
-                hintText={ this.setHint('active | recurrence | inactive | remission | resolved') }
-                onChange={ this.changeState.bind(this, 'clinicalStatus')}
-                //floatingLabelFixed={true}
-                fullWidth
-                /><br/>
-
-              <TextField
-                id='verificationStatusInput'
-                name='verificationStatus'
-                label='Verification Status'
-                value={ get(this, 'data.form.verificationStatus', '') }
-                hintText={ this.setHint('provisional | differential | confirmed | refuted | entered-in-error | unknown') }
-                onChange={ this.changeState.bind(this, 'verificationStatus')}
-                //floatingLabelFixed={true}
-                fullWidth
-                /><br/>
-            </Grid>
-            <Grid item xs={6}>
-            </Grid>
-          </Grid>
-
-          <br/>
-          { this.renderDatePicker(this.data.showDatePicker, get(this, 'data.form') ) }
-          <br/>
-
-          <a href='http://browser.ihtsdotools.org/?perspective=full&conceptId1=404684003&edition=us-edition&release=v20180301&server=https://prod-browser-exten.ihtsdotools.org/api/snomed&langRefset=900000000000509007'>Lookup codes with the SNOMED CT Browser</a>
-
-        </CardContent>
-        <CardActions>
-          { this.determineButtons(this.state.guidanceResponseId) }
-        </CardActions>
-      </div>
+        {/* Delete -- only for existing records, gated on edit mode */}
+        {!isNewRecord && (
+          <Tooltip title="Delete">
+            <IconButton
+              onClick={handleDeleteButton}
+              disabled={!isEditing}
+              sx={{ color: isEditing ? 'error.main' : 'text.disabled' }}
+            >
+              <DeleteIcon />
+              <Typography sx={{
+                position: 'absolute',
+                width: '1px',
+                height: '1px',
+                padding: 0,
+                margin: '-1px',
+                overflow: 'hidden',
+                clip: 'rect(0, 0, 0, 0)',
+                whiteSpace: 'nowrap',
+                borderWidth: 0
+              }}>Delete</Typography>
+            </IconButton>
+          </Tooltip>
+        )}
+      </Box>
     );
   }
 
-  determineButtons(guidanceResponseId){
-    if (guidanceResponseId) {
-      return (
-        <div>
-          <Button id="updateGuidanceResponseButton" primary={true} onClick={this.handleSaveButton.bind(this)} style={{marginRight: '20px'}} >Save</Button>
-          <Button id="deleteGuidanceResponseButton" onClick={this.handleDeleteButton.bind(this)} >Delete</Button>
-        </div>
-      );
-    } else {
-      return(
-        <Button id="saveGuidanceResponseButton" primary={true} onClick={this.handleSaveButton.bind(this)} >Save</Button>
-      );
-    }
+  // Render the form view
+  function renderFormView() {
+    return (
+      <>
+        <GuidanceResponseFormView
+          resource={guidanceResponse}
+          isEditing={isEditing}
+          onChange={handleChange}
+          isEmbedded={isEmbedded}
+        />
+
+        {/* In-form Save/Cancel bar when editing */}
+        {isEditing && !isEmbedded && (
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, mt: 3, pt: 2, borderTop: 1, borderColor: 'divider' }}>
+            <Button id="cancelButton" onClick={handleCancelButton}>
+              Cancel
+            </Button>
+            <Button
+              id="saveGuidanceResponseButton"
+              onClick={handleSaveButton}
+              variant="contained"
+              color="primary"
+              disabled={loading}
+            >
+              {loading ? 'Saving...' : 'Save'}
+            </Button>
+          </Box>
+        )}
+      </>
+    );
   }
 
-
-  updateFormData(formData, field, textValue){
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log("GuidanceResponseDetail.updateFormData", formData, field, textValue);
-
-    switch (field) {
-      case "patientDisplay":
-        set(formData, 'patientDisplay', textValue)
-        break;
-      case "asserterDisplay":
-        set(formData, 'asserterDisplay', textValue)
-        break;        
-      case "verificationStatus":
-        set(formData, 'verificationStatus', textValue)
-        break;
-      case "clinicalStatus":
-        set(formData, 'clinicalStatus', textValue)
-        break;
-      case "snomedCode":
-        set(formData, 'snomedCode', textValue)
-        break;
-      case "snomedDisplay":
-        set(formData, 'snomedDisplay', textValue)
-        break;
-      case "guidanceResponseDisplay":
-        set(formData, 'guidanceResponseDisplay', textValue)
-        break;
-      case "onsetDateTime":
-        set(formData, 'onsetDateTime', textValue)
-        break;
-      default:
-    }
-
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log("formData", formData);
-    return formData;
-  }
-  updateGuidanceResponse(guidanceResponseData, field, textValue){
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log("GuidanceResponseDetail.updateGuidanceResponse", guidanceResponseData, field, textValue);
-
-    switch (field) {
-      case "patientDisplay":
-        set(guidanceResponseData, 'patient.display', textValue)
-        break;
-      case "asserterDisplay":
-        set(guidanceResponseData, 'asserter.display', textValue)
-        break;
-      case "verificationStatus":
-        set(guidanceResponseData, 'verificationStatus', textValue)
-        break;
-      case "clinicalStatus":
-        set(guidanceResponseData, 'clinicalStatus', textValue)
-        break;
-      case "snomedCode":
-        set(guidanceResponseData, 'code.coding[0].code', textValue)
-        break;
-      case "snomedDisplay":
-        set(guidanceResponseData, 'code.coding[0].display', textValue)
-        break;
-      case "guidanceResponseDisplay":
-        set(guidanceResponseData, 'guidanceResponse[0].detail[0].display', textValue)
-        break;  
-      case "datePicker":
-        set(guidanceResponseData, 'onsetDateTime', textValue)
-        break;
-      case "onsetDateTime":
-        set(guidanceResponseData, 'onsetDateTime', textValue)
-        break;
-  
-    }
-    return guidanceResponseData;
-  }
-  componentDidUpdate(props){
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log('GuidanceResponseDisplay.componentDidUpdate()', props, this.state)
-  }
-  // this could be a mixin
-  changeState(field, event, textValue){
-
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log("   ");
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log("GuidanceResponseDetail.changeState", field, textValue);
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log("this.state", this.state);
-
-    let formData = Object.assign({}, this.state.form);
-    let guidanceResponseData = Object.assign({}, this.state.guidanceResponse);
-
-    formData = this.updateFormData(formData, field, textValue);
-    guidanceResponseData = this.updateGuidanceResponse(guidanceResponseData, field, textValue);
-
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log("guidanceResponseData", guidanceResponseData);
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log("formData", formData);
-
-    this.setState({guidanceResponse: guidanceResponseData})
-    this.setState({form: formData})
-
+  // Render the preview view
+  function renderPreviewView() {
+    return (
+      <GuidanceResponsePreview
+        resource={guidanceResponse}
+        resourceId={guidanceResponseId}
+      />
+    );
   }
 
-  handleSaveButton(){
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log('^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^&&')
-    console.log('Saving a new GuidanceResponse...', this.state)
-
-    let self = this;
-    let fhirGuidanceResponseData = Object.assign({}, this.state.guidanceResponse);
-
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log('fhirGuidanceResponseData', fhirGuidanceResponseData);
-
-
-    let guidanceResponseValidator = GuidanceResponseSchema.newContext();
-    guidanceResponseValidator.validate(fhirGuidanceResponseData)
-
-    console.log('IsValid: ', guidanceResponseValidator.isValid())
-    console.log('ValidationErrors: ', guidanceResponseValidator.validationErrors());
-
-    if (this.state.guidanceResponseId) {
-      if(get(Meteor, 'settings.public.logging') === "debug") console.log("Updating GuidanceResponse...");
-      delete fhirGuidanceResponseData._id;
-
-      GuidanceResponses._collection.update(
-        {_id: this.state.guidanceResponseId}, {$set: fhirGuidanceResponseData }, function(error, result) {
-          if (error) {
-            console.log("error", error);
-            // Bert.alert(error.reason, 'danger');
-          }
-          if (result) {
-            if(self.props.onUpdate){
-              self.props.onUpdate(self.data.guidanceResponseId);
-            }
-            // Bert.alert('GuidanceResponse updated!', 'success');
-          }
-        });
-    } else {
-
-      if(get(Meteor, 'settings.public.logging') === "debug") console.log("Create a new GuidanceResponse", fhirGuidanceResponseData);
-
-      GuidanceResponses._collection.insert(fhirGuidanceResponseData, function(error, result) {
-        if (error) {
-          console.log("error", error);
-          // Bert.alert(error.reason, 'danger');
-        }
-        if (result) {
-          if(self.props.onInsert){
-            self.props.onInsert(self.data.guidanceResponseId);
-          }
-          // Bert.alert('GuidanceResponse added!', 'success');
-        }
-      });
-    }
+  // In embedded mode, render form content without Container/Card wrapper
+  if (isEmbedded) {
+    return renderFormView();
   }
 
-  handleCancelButton(){
-    if(this.props.onCancel){
-      this.props.onCancel();
-    }
-  }
+  return (
+    <Container id="guidanceResponseDetailPage" maxWidth="md" sx={{ py: 4 }}>
+      <Card sx={{ boxShadow: 3 }}>
+        <CardHeader
+          title={headerTitle}
+          sx={{ borderBottom: 1, borderColor: 'divider' }}
+          action={renderHeaderActions()}
+        />
+        <CardContent>
+          {error && (
+            <Typography color="error" sx={{ mb: 2 }}>
+              Error: {error}
+            </Typography>
+          )}
 
-  handleDeleteButton(){
-    console.log('GuidanceResponseDetail.handleDeleteButton()', this.state.guidanceResponseId)
-
-    let self = this;
-    GuidanceResponses._collection.remove({_id: this.state.guidanceResponseId}, function(error, result){
-      if (error) {
-        // Bert.alert(error.reason, 'danger');
-      }
-      if (result) {
-        if(this.props.onInsert){
-          this.props.onInsert(self.data.guidanceResponseId);
-        }
-        // Bert.alert('GuidanceResponse removed!', 'success');
-      }
-    });
-  }
+          {viewMode === 'form' && renderFormView()}
+          {viewMode === 'page' && renderPreviewView()}
+        </CardContent>
+      </Card>
+    </Container>
+  );
 }
 
-GuidanceResponseDetail.propTypes = {
-  id: PropTypes.string,
-  guidanceResponseId: PropTypes.oneOfType([PropTypes.string, PropTypes.bool]),
-  guidanceResponse: PropTypes.oneOfType([PropTypes.object, PropTypes.bool]),
-  showDatePicker: PropTypes.bool,
-  showHints: PropTypes.bool,
-  onInsert: PropTypes.func,
-  onUpdate: PropTypes.func,
-  onRemove: PropTypes.func,
-  onCancel: PropTypes.func
-};
-
-
-// Embedded mode wrapper for HoneycombFhirResource dispatcher
-function GuidanceResponseDetailEmbeddedWrapper(props) {
-  var isEmbedded = props.embedded || false;
-  var fhirResource = props.fhirResource;
-  var onResourceChange = props.onResourceChange;
-
-  // Pass through to legacy class component
-  var classProps = Object.assign({}, props);
-  if (isEmbedded && fhirResource) {
-    classProps.guidanceResponse = fhirResource;
-  }
-
-  return React.createElement(GuidanceResponseDetail, classProps);
-}
-
-export default GuidanceResponseDetailEmbeddedWrapper;
+export default GuidanceResponseDetail;

@@ -5,31 +5,20 @@ import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 
 import {
   Container,
-  Grid,
-  TextField,
   Button,
   Box,
-  Typography,
   Card,
   CardHeader,
   CardContent,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
   IconButton,
-  InputAdornment,
   Tooltip,
-  Chip,
   Alert,
-  Divider,
   Dialog
 } from '@mui/material';
 
 import LockIcon from '@mui/icons-material/Lock';
 import LockOpenIcon from '@mui/icons-material/LockOpen';
 import DeleteIcon from '@mui/icons-material/Delete';
-import SearchIcon from '@mui/icons-material/Search';
 import ArticleIcon from '@mui/icons-material/Article';
 import EditNoteIcon from '@mui/icons-material/EditNote';
 
@@ -42,32 +31,11 @@ import { get, set, cloneDeep } from 'lodash';
 import moment from 'moment';
 
 import PatientSearchDialog from '/imports/components/PatientSearchDialog';
+import ProcedureFormView from '/imports/ui-fhir/procedures/ProcedureFormView';
+import ProcedurePreview from '/imports/ui-fhir/procedures/ProcedurePreview';
 
 // Import the collections directly - avoids timing issues
 import { Procedures } from '/imports/lib/schemas/SimpleSchemas/Procedures';
-
-//===========================================================================
-// STATUS OPTIONS
-
-const statusOptions = [
-  { value: 'preparation', label: 'Preparation' },
-  { value: 'in-progress', label: 'In Progress' },
-  { value: 'suspended', label: 'Suspended' },
-  { value: 'aborted', label: 'Aborted' },
-  { value: 'completed', label: 'Completed' },
-  { value: 'entered-in-error', label: 'Entered in Error' },
-  { value: 'unknown', label: 'Unknown' }
-];
-
-const statusColorMap = {
-  'preparation': 'info',
-  'in-progress': 'warning',
-  'suspended': 'default',
-  'aborted': 'error',
-  'completed': 'success',
-  'entered-in-error': 'error',
-  'unknown': 'default'
-};
 
 //===========================================================================
 // COMPONENT
@@ -371,214 +339,14 @@ function ProcedureDetail(props) {
   function renderFormView() {
     return (
       <Box>
-        <Grid container spacing={3}>
-          {/* Patient Field */}
-          <Grid item xs={12} md={6}>
-            <TextField
-              id="subjectDisplay"
-              fullWidth
-              label="Patient"
-              value={get(procedure, 'subject.display', '')}
-              onChange={(e) => handleChange('subject.display', e.target.value)}
-              disabled={!isEditing}
-              InputProps={{
-                endAdornment: (
-                  <InputAdornment position="end">
-                    <Tooltip title="Search for patient">
-                      <IconButton
-                        onClick={handleSearchUser}
-                        edge="end"
-                        disabled={!isEditing}
-                      >
-                        <SearchIcon />
-                      </IconButton>
-                    </Tooltip>
-                  </InputAdornment>
-                ),
-              }}
-            />
-          </Grid>
-
-          {/* Performer Field */}
-          <Grid item xs={12} md={6}>
-            <TextField
-              id="performerDisplay"
-              fullWidth
-              label="Performer"
-              value={get(procedure, 'performer[0].actor.display', '')}
-              onChange={(e) => handleChange('performer[0].actor.display', e.target.value)}
-              disabled={!isEditing}
-            />
-          </Grid>
-
-          {/* Status */}
-          <Grid item xs={12} md={6}>
-            <FormControl fullWidth disabled={!isEditing}>
-              <InputLabel id="status-label">Status</InputLabel>
-              <Select
-                id="status"
-                labelId="status-label"
-                value={get(procedure, 'status', '')}
-                onChange={(e) => handleChange('status', e.target.value)}
-                label="Status"
-              >
-                {statusOptions.map(function(option) {
-                  return <MenuItem key={option.value} value={option.value}>{option.label}</MenuItem>;
-                })}
-              </Select>
-            </FormControl>
-          </Grid>
-
-          {/* Performed Date/Time */}
-          <Grid item xs={12} md={6}>
-            <TextField
-              id="performedDateTime"
-              fullWidth
-              label="Performed Date/Time"
-              type="datetime-local"
-              value={get(procedure, 'performedDateTime', '') ? String(get(procedure, 'performedDateTime', '')).substring(0, 16) : ''}
-              onChange={(e) => handleChange('performedDateTime', e.target.value)}
-              disabled={!isEditing}
-              InputLabelProps={{
-                shrink: true,
-              }}
-            />
-          </Grid>
-
-          {/* Code */}
-          <Grid item xs={12} md={6}>
-            <TextField
-              id="codeCode"
-              fullWidth
-              label="Procedure Code"
-              value={get(procedure, 'code.coding[0].code', '')}
-              onChange={(e) => handleChange('code.coding[0].code', e.target.value)}
-              disabled={!isEditing}
-            />
-          </Grid>
-
-          {/* Code Display */}
-          <Grid item xs={12} md={6}>
-            <TextField
-              id="codeDisplay"
-              fullWidth
-              label="Procedure Name"
-              value={get(procedure, 'code.coding[0].display', '')}
-              onChange={(e) => handleChange('code.coding[0].display', e.target.value)}
-              disabled={!isEditing}
-            />
-          </Grid>
-
-          {/* Category Code */}
-          <Grid item xs={12} md={6}>
-            <TextField
-              id="categoryCode"
-              fullWidth
-              label="Category Code"
-              value={get(procedure, 'category.coding[0].code', '')}
-              onChange={(e) => handleChange('category.coding[0].code', e.target.value)}
-              disabled={!isEditing}
-            />
-          </Grid>
-
-          {/* Category Display */}
-          <Grid item xs={12} md={6}>
-            <TextField
-              id="categoryDisplay"
-              fullWidth
-              label="Category"
-              value={get(procedure, 'category.coding[0].display', '')}
-              onChange={(e) => handleChange('category.coding[0].display', e.target.value)}
-              disabled={!isEditing}
-            />
-          </Grid>
-
-          {/* Body Site Code */}
-          <Grid item xs={12} md={6}>
-            <TextField
-              id="bodySiteCode"
-              fullWidth
-              label="Body Site Code"
-              value={get(procedure, 'bodySite[0].coding[0].code', '')}
-              onChange={(e) => handleChange('bodySite[0].coding[0].code', e.target.value)}
-              disabled={!isEditing}
-            />
-          </Grid>
-
-          {/* Body Site Display */}
-          <Grid item xs={12} md={6}>
-            <TextField
-              id="bodySiteDisplay"
-              fullWidth
-              label="Body Site"
-              value={get(procedure, 'bodySite[0].coding[0].display', '')}
-              onChange={(e) => handleChange('bodySite[0].coding[0].display', e.target.value)}
-              disabled={!isEditing}
-            />
-          </Grid>
-
-          {/* Outcome */}
-          <Grid item xs={12} md={6}>
-            <TextField
-              id="outcome"
-              fullWidth
-              label="Outcome"
-              value={get(procedure, 'outcome.text', '')}
-              onChange={(e) => handleChange('outcome.text', e.target.value)}
-              disabled={!isEditing}
-            />
-          </Grid>
-
-          {/* Location */}
-          <Grid item xs={12} md={6}>
-            <TextField
-              id="locationDisplay"
-              fullWidth
-              label="Location"
-              value={get(procedure, 'location.display', '')}
-              onChange={(e) => handleChange('location.display', e.target.value)}
-              disabled={!isEditing}
-            />
-          </Grid>
-
-          {/* Reason Code */}
-          <Grid item xs={12} md={6}>
-            <TextField
-              id="reasonCode"
-              fullWidth
-              label="Reason Code"
-              value={get(procedure, 'reasonCode[0].coding[0].code', '')}
-              onChange={(e) => handleChange('reasonCode[0].coding[0].code', e.target.value)}
-              disabled={!isEditing}
-            />
-          </Grid>
-
-          {/* Reason Display */}
-          <Grid item xs={12} md={6}>
-            <TextField
-              id="reasonDisplay"
-              fullWidth
-              label="Reason"
-              value={get(procedure, 'reasonCode[0].coding[0].display', '')}
-              onChange={(e) => handleChange('reasonCode[0].coding[0].display', e.target.value)}
-              disabled={!isEditing}
-            />
-          </Grid>
-
-          {/* Notes */}
-          <Grid item xs={12}>
-            <TextField
-              id="notesTextarea"
-              fullWidth
-              multiline
-              rows={4}
-              label="Notes"
-              value={get(procedure, 'note[0].text', '')}
-              onChange={(e) => handleChange('note[0].text', e.target.value)}
-              disabled={!isEditing}
-            />
-          </Grid>
-        </Grid>
+        <ProcedureFormView
+          resource={procedure}
+          form={procedure}
+          isEditing={isEditing}
+          onChange={handleChange}
+          isEmbedded={isEmbedded}
+          onSearchPatient={handleSearchUser}
+        />
 
         {/* Inline Save/Cancel bar */}
         {isEditing && !isEmbedded && (
@@ -611,204 +379,12 @@ function ProcedureDetail(props) {
 
   // Preview view with formatted read-only display
   function renderPreviewView() {
-    const procedureName = get(procedure, 'code.coding[0].display', '') || get(procedure, 'code.text', 'Unnamed Procedure');
-    const procedureCode = get(procedure, 'code.coding[0].code', '');
-    const statusValue = get(procedure, 'status', 'unknown');
-    const statusLabel = get(statusOptions.find(function(opt) { return opt.value === statusValue; }), 'label', statusValue);
-    const statusColor = get(statusColorMap, statusValue, 'default');
-
-    const patientDisplay = get(procedure, 'subject.display', '');
-    const patientReference = get(procedure, 'subject.reference', '');
-    const performedDate = get(procedure, 'performedDateTime', '');
-    const formattedDate = performedDate ? moment(performedDate).format('MMMM D, YYYY [at] h:mm A') : '';
-
-    const performerDisplay = get(procedure, 'performer[0].actor.display', '');
-    const performerReference = get(procedure, 'performer[0].actor.reference', '');
-
-    const categoryDisplay = get(procedure, 'category.coding[0].display', '');
-    const categoryCode = get(procedure, 'category.coding[0].code', '');
-
-    const bodySiteDisplay = get(procedure, 'bodySite[0].coding[0].display', '');
-    const bodySiteCode = get(procedure, 'bodySite[0].coding[0].code', '');
-
-    const reasonDisplay = get(procedure, 'reasonCode[0].coding[0].display', '');
-    const reasonCode = get(procedure, 'reasonCode[0].coding[0].code', '');
-
-    const outcomeText = get(procedure, 'outcome.text', '');
-    const locationDisplay = get(procedure, 'location.display', '');
-    const noteText = get(procedure, 'note[0].text', '');
-
     return (
-      <Box sx={{ maxWidth: '8.5in', mx: 'auto', py: 2 }}>
-        {/* Procedure name + status chip */}
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
-          <Typography variant="h5" sx={{ fontWeight: 500 }}>
-            {procedureName}
-          </Typography>
-          <Chip label={statusLabel} color={statusColor} size="small" />
-        </Box>
-
-        {procedureCode && (
-          <Typography variant="subtitle1" color="text.secondary" sx={{ mb: 3 }}>
-            Code: {procedureCode}
-          </Typography>
-        )}
-
-        <Divider />
-
-        {/* Two-column metadata: Patient left, Date right */}
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', py: 2.5 }}>
-          <Box>
-            {(patientDisplay || patientReference) && (
-              <>
-                <Typography variant="overline" color="text.secondary">
-                  Patient
-                </Typography>
-                <Typography variant="body1" sx={{ fontWeight: 500, mb: 1 }}>
-                  {patientDisplay || 'Unspecified'}
-                </Typography>
-                {patientReference && (
-                  <Typography variant="caption" color="text.secondary">
-                    {patientReference}
-                  </Typography>
-                )}
-              </>
-            )}
-          </Box>
-          <Box sx={{ textAlign: 'right' }}>
-            {formattedDate && (
-              <>
-                <Typography variant="overline" color="text.secondary">
-                  Performed
-                </Typography>
-                <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                  {formattedDate}
-                </Typography>
-              </>
-            )}
-            {locationDisplay && (
-              <>
-                <Typography variant="overline" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
-                  Location
-                </Typography>
-                <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                  {locationDisplay}
-                </Typography>
-              </>
-            )}
-          </Box>
-        </Box>
-
-        <Divider />
-
-        {/* Performer */}
-        {(performerDisplay || performerReference) && (
-          <>
-            <Box sx={{ py: 2 }}>
-              <Typography variant="overline" color="text.secondary">
-                Performer
-              </Typography>
-              <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                {performerDisplay || 'Unspecified'}
-              </Typography>
-              {performerReference && (
-                <Typography variant="caption" color="text.secondary">
-                  {performerReference}
-                </Typography>
-              )}
-            </Box>
-            <Divider />
-          </>
-        )}
-
-        {/* Category */}
-        {(categoryDisplay || categoryCode) && (
-          <>
-            <Box sx={{ py: 2 }}>
-              <Typography variant="overline" color="text.secondary">
-                Category
-              </Typography>
-              <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                {categoryDisplay}{categoryCode ? ' (' + categoryCode + ')' : ''}
-              </Typography>
-            </Box>
-            <Divider />
-          </>
-        )}
-
-        {/* Body Site */}
-        {(bodySiteDisplay || bodySiteCode) && (
-          <>
-            <Box sx={{ py: 2 }}>
-              <Typography variant="overline" color="text.secondary">
-                Body Site
-              </Typography>
-              <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                {bodySiteDisplay}{bodySiteCode ? ' (' + bodySiteCode + ')' : ''}
-              </Typography>
-            </Box>
-            <Divider />
-          </>
-        )}
-
-        {/* Reason */}
-        {(reasonDisplay || reasonCode) && (
-          <>
-            <Box sx={{ py: 2 }}>
-              <Typography variant="overline" color="text.secondary">
-                Reason
-              </Typography>
-              <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                {reasonDisplay}{reasonCode ? ' (' + reasonCode + ')' : ''}
-              </Typography>
-            </Box>
-            <Divider />
-          </>
-        )}
-
-        {/* Outcome */}
-        {outcomeText && (
-          <>
-            <Box sx={{ py: 2 }}>
-              <Typography variant="overline" color="text.secondary">
-                Outcome
-              </Typography>
-              <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                {outcomeText}
-              </Typography>
-            </Box>
-            <Divider />
-          </>
-        )}
-
-        {/* Notes */}
-        <Box sx={{ py: 3 }}>
-          <Typography variant="overline" color="text.secondary" sx={{ mb: 1, display: 'block' }}>
-            Notes
-          </Typography>
-          <Typography
-            variant="body1"
-            sx={{
-              whiteSpace: 'pre-wrap',
-              lineHeight: 1.8,
-              minHeight: '100px'
-            }}
-          >
-            {noteText || 'No notes provided.'}
-          </Typography>
-        </Box>
-
-        <Divider />
-
-        {/* Footer with record ID */}
-        {isExistingRecord && (
-          <Box sx={{ pt: 2 }}>
-            <Typography variant="caption" color="text.secondary">
-              Procedure ID: {id}
-            </Typography>
-          </Box>
-        )}
-      </Box>
+      <ProcedurePreview
+        resource={procedure}
+        resourceId={isExistingRecord ? id : null}
+        embedded={isEmbedded}
+      />
     );
   }
 

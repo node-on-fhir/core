@@ -271,11 +271,7 @@ export function MessageHeadersPage(props){
   }
   
   let layoutContent;
-  if(isLoading) {
-    layoutContent = <Box sx={{ textAlign: 'center', py: 4 }}>
-      <Typography>Loading message headers...</Typography>
-    </Box>
-  } else if(data.messageHeaders.length > 0){
+  if(data.messageHeaders.length > 0){
     layoutContent = <Card 
       sx={{ 
         width: '100%',

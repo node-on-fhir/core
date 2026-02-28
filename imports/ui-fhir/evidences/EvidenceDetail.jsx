@@ -1,465 +1,352 @@
-// =======================================================================
-// Using DSTU2  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-//
-// https://www.hl7.org/fhir/DSTU2/evidences.html
-//
-//
-// =======================================================================
+// imports/ui-fhir/evidences/EvidenceDetail.jsx
 
-import React from 'react';
-import PropTypes from 'prop-types';
-
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useTracker } from 'meteor/react-meteor-data';
 
-import { 
+import {
   Button,
   Card,
-  Checkbox,
-  CardActions,
   CardContent,
   CardHeader,
-  Grid,
-  TextField,
-  Select,
-  MenuItem,
+  Container,
+  IconButton,
+  Tooltip,
+  Typography,
+  Box
 } from '@mui/material';
+
+import ArticleIcon from '@mui/icons-material/Article';
+import EditNoteIcon from '@mui/icons-material/EditNote';
+import LockIcon from '@mui/icons-material/Lock';
+import LockOpenIcon from '@mui/icons-material/LockOpen';
+import DeleteIcon from '@mui/icons-material/Delete';
 
 import { get, set } from 'lodash';
 
+import { Meteor } from 'meteor/meteor';
+import { Session } from 'meteor/session';
 
-export class EvidenceDetail extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      evidenceId: false,
-      evidence: {
-        resourceType: "Evidence",
-        patient: {
-          reference: "",
-          display: ""
-        },
-        asserter: {
-          reference: "",
-          display: ""
-        },
-        dateRecorded: null,
-        code: {
-          coding: [
-            {
-              system: "http://snomed.info/sct",
-              code: "",
-              display: ""
-            }
-          ]
-        },
-        clinicalStatus: "active",
-        verificationStatus: "confirmed",
-        evidence: [],
-        onsetDateTime: null
-      }, 
-      form: {
-        patientDisplay: '',
-        asserterDisplay: '',
-        snomedCode: '',
-        snomedDisplay: '',
-        clinicalStatus: '',
-        verificationStatus: '',
-        evidenceDisplay: '',
-        onsetDateTime: ''
-      }
+import EvidenceFormView from './EvidenceFormView';
+import EvidencePreview from './EvidencePreview';
+
+// Direct import
+import { Evidences } from '/imports/lib/schemas/SimpleSchemas/Evidences';
+
+function EvidenceDetail(props) {
+  // Embedded mode support (for HoneycombFhirResource dispatcher)
+  var isEmbedded = props.embedded || false;
+
+  var _rawNavigate = useNavigate();
+  var navigate = isEmbedded ? function() {} : _rawNavigate;
+  var _params = isEmbedded ? {} : useParams();
+  var id = _params.id || null;
+  const [searchParams, setSearchParams] = useSearchParams();
+  const viewMode = searchParams.get('view') || 'form';
+
+  const [evidence, setEvidence] = useState({
+    resourceType: "Evidence",
+    patient: {
+      reference: "",
+      display: ""
+    },
+    asserter: {
+      reference: "",
+      display: ""
+    },
+    dateRecorded: null,
+    code: {
+      coding: [{
+        system: "http://snomed.info/sct",
+        code: "",
+        display: ""
+      }]
+    },
+    clinicalStatus: "active",
+    verificationStatus: "confirmed",
+    evidence: [],
+    onsetDateTime: null
+  });
+
+  // Initialise from fhirResource prop when in embedded mode
+  var hasReceivedProps = React.useRef(false);
+  useEffect(function() {
+    if (isEmbedded && props.fhirResource) {
+      hasReceivedProps.current = true;
+      setEvidence(function(prev) {
+        if (JSON.stringify(props.fhirResource) !== JSON.stringify(prev)) {
+          return props.fhirResource;
+        }
+        return prev;
+      });
     }
-  }
-  dehydrateFhirResource(evidence) {
-    let formData = Object.assign({}, this.state.form);
+  }, [props.fhirResource]);
 
-    formData.patientDisplay = get(evidence, 'patient.display')
-    formData.asserterDisplay = get(evidence, 'asserter.display')    
-    formData.snomedCode = get(evidence, 'code.coding[0].code')
-    formData.snomedDisplay = get(evidence, 'code.coding[0].display')
-    formData.clinicalStatus = get(evidence, 'clinicalStatus')
-    formData.verificationStatus = get(evidence, 'verificationStatus')
-    formData.onsetDateTime = get(evidence, 'onsetDateTime')
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [isEditing, setIsEditing] = useState(isEmbedded);
 
-    return formData;
-  }
-  shouldComponentUpdate(nextProps){
-    get(Meteor, 'settings.public.logging') === "debug" && console.log('EvidenceDetail.shouldComponentUpdate()', nextProps, this.state)
-    let shouldUpdate = true;
+  const isNewEvidence = !id || id === 'new';
+  const isExistingEvidence = id && id !== 'new';
 
-    // received an evidence from the table; okay lets update again
-    if(nextProps.evidenceId !== this.state.evidenceId){
-      
-      if(nextProps.evidence){
-        this.setState({evidence: nextProps.evidence})     
-        this.setState({form: this.dehydrateFhirResource(nextProps.evidence)})       
-      }
-
-      this.setState({evidenceId: nextProps.evidenceId})
-      shouldUpdate = true;
-    }
-
-    // both false; don't take any more updates
-    if(nextProps.evidence === this.state.evidence){
-      shouldUpdate = false;
-    }
- 
-    return shouldUpdate;
-  }
-
-  getMeteorData() {
-    let data = {
-      evidenceId: this.props.evidenceId,
-      evidence: false,
-      showDatePicker: false,
-      form: this.state.form
-    };
-
-    if(this.props.showDatePicker){
-      data.showDatePicker = this.props.showDatePicker
-    }
-    if(this.props.evidence){
-      data.evidence = this.props.evidence;
-      data.form = this.dehydrateFhirResource(this.props.evidence);
-    }
-
-    return data;
-  }
-  renderDatePicker(showDatePicker, form){
-    let datePickerValue;
-
-    if(get(form, 'onsetDateTime')){
-      datePickerValue = get(form, 'onsetDateTime');
-    }
-    if(get(form, 'onsetPeriod.start')){
-      datePickerValue = get(form, 'onsetPeriod.start');
-    }
-    if (typeof datePickerValue === "string"){
-      datePickerValue = new Date(datePickerValue);
-    }
-    if (showDatePicker) {
-      return (<div></div>)
-      // return (
-      //   <DatePicker 
-      //     name='onsetDateTime'
-      //     hintText="Onset Date" 
-      //     container="inline" 
-      //     mode="landscape"
-      //     value={ datePickerValue ? datePickerValue : null }    
-      //     onChange={ this.changeState.bind(this, 'onsetDateTime')}      
-      //     />
-      // );      
-    }
-  }
-  setHint(text){
-    if(this.props.showHints !== false){
-      return text;
+  // Subscribe to evidences
+  const isSubscriptionReady = useTracker(function() {
+    if (isEmbedded) return true;
+    let autoSubscribeEnabled = get(Meteor, 'settings.public.defaults.autoSubscribe', false);
+    if (autoSubscribeEnabled) {
+      return Meteor.subscribe('autopublish.Evidences', {}, { limit: 1000 }).ready();
     } else {
-      return '';
+      return Meteor.subscribe('evidences.all').ready();
+    }
+  }, []);
+
+  // Load evidence data when subscription is ready
+  useEffect(function() {
+    if (id && id !== 'new' && isSubscriptionReady) {
+      let existingEvidence = Evidences.findOne({ _id: id });
+
+      if (!existingEvidence) {
+        async function loadViaMethod() {
+          try {
+            const result = await Meteor.callAsync('evidences.findOne', id);
+            if (result) {
+              setEvidence(result);
+            }
+          } catch (err) {
+            console.error('[EvidenceDetail] Error loading evidence via method:', err);
+            setError(err.message);
+          }
+        }
+        loadViaMethod();
+      } else {
+        setEvidence(existingEvidence);
+      }
+
+      setIsEditing(false);
+    } else if (!id || id === 'new') {
+      setIsEditing(true);
+    }
+  }, [id, isSubscriptionReady]);
+
+  // Handle field changes
+  function handleChange(path, value) {
+    const updatedEvidence = { ...evidence };
+    set(updatedEvidence, path, value);
+    setEvidence(updatedEvidence);
+
+    // Notify parent of changes in embedded mode
+    if (props.onResourceChange) {
+      props.onResourceChange(updatedEvidence);
     }
   }
-  render() {
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log('EvidenceDetail.render()', this.state)
 
+  // Handle save
+  async function handleSave() {
+    setLoading(true);
+    setError(null);
+
+    try {
+      if (isExistingEvidence) {
+        await Meteor.callAsync('evidences.update', id, evidence);
+        console.log('[EvidenceDetail] Evidence updated successfully');
+        setIsEditing(false);
+      } else {
+        const newId = await Meteor.callAsync('evidences.create', evidence);
+        console.log('[EvidenceDetail] Evidence created with ID:', newId);
+        navigate('/evidences');
+      }
+    } catch (err) {
+      console.error('[EvidenceDetail] Error saving evidence:', err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  // Handle cancel
+  function handleCancel() {
+    if (isExistingEvidence) {
+      setIsEditing(false);
+      setError(null);
+      const existingEvidence = Evidences.findOne({ _id: id });
+      if (existingEvidence) {
+        setEvidence(existingEvidence);
+      } else {
+        async function reloadEvidence() {
+          try {
+            const result = await Meteor.callAsync('evidences.findOne', id);
+            if (result) {
+              setEvidence(result);
+            }
+          } catch (err) {
+            console.error('[EvidenceDetail] Error reloading evidence:', err);
+          }
+        }
+        reloadEvidence();
+      }
+    } else {
+      navigate('/evidences');
+    }
+  }
+
+  // Handle delete
+  async function handleDelete() {
+    if (!isExistingEvidence) return;
+
+    if (window.confirm('Are you sure you want to delete this evidence?')) {
+      setLoading(true);
+      try {
+        await Meteor.callAsync('evidences.remove', id);
+        console.log('[EvidenceDetail] Evidence deleted successfully');
+        navigate('/evidences');
+      } catch (err) {
+        console.error('[EvidenceDetail] Error deleting evidence:', err);
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    }
+  }
+
+  // Build the header title
+  let headerTitle = 'New Evidence';
+  if (isExistingEvidence) {
+    headerTitle = <span className="barcode helveticas" style={{ fontSize: '1.5rem' }}>{id}</span>;
+  }
+
+  // Build the header action buttons
+  function renderHeaderActions() {
     return (
-      <div id={this.props.id} className="evidenceDetail">
-        <CardContent>
-          <Grid container spacing={3}>
-            <Grid item xs={6}>
-              <TextField
-                id='patientDisplayInput'
-                name='patientDisplay'
-                label='Patient'
-                value={ get(this, 'data.form.patientDisplay', '') }
-                onChange={ this.changeState.bind(this, 'patientDisplay')}
-                hintText={ this.setHint('Jane Doe') }
-                //floatingLabelFixed={true}
-                fullWidth
-                /><br/>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+        {/* Preview toggle */}
+        {!isNewEvidence && (
+          <Tooltip title="Preview">
+            <IconButton
+              onClick={() => setSearchParams({ view: 'page' })}
+              sx={{
+                color: viewMode === 'page' ? 'primary.main' : 'text.secondary'
+              }}
+            >
+              <ArticleIcon />
+            </IconButton>
+          </Tooltip>
+        )}
 
-              <TextField
-                id='asserterDisplayInput'
-                name='asserterDisplay'
-                label='Asserter'
-                value={ get(this, 'data.form.asserterDisplay', '') }
-                onChange={ this.changeState.bind(this, 'asserterDisplay')}
-                hintText={ this.setHint('Nurse Jackie') }
-                //floatingLabelFixed={true}
-                fullWidth
-                /><br/>
+        {/* Form toggle */}
+        {!isNewEvidence && (
+          <Tooltip title="Form">
+            <IconButton
+              onClick={() => setSearchParams({ view: 'form' })}
+              sx={{
+                color: viewMode === 'form' ? 'primary.main' : 'text.secondary'
+              }}
+            >
+              <EditNoteIcon />
+            </IconButton>
+          </Tooltip>
+        )}
 
-              <TextField
-                id='snomedCodeInput'
-                name='snomedCode'
-                label='SNOMED Code'
-                value={ get(this, 'data.form.snomedCode', '') }
-                hintText={ this.setHint('307343001') }
-                onChange={ this.changeState.bind(this, 'snomedCode')}
-                //floatingLabelFixed={true}
-                fullWidth
-                /><br/>
+        {/* Lock / Unlock toggle */}
+        {!isNewEvidence && (
+          <Tooltip title={isEditing ? 'Lock (read-only)' : 'Unlock (edit)'}>
+            <IconButton
+              onClick={() => setIsEditing(!isEditing)}
+            >
+              {isEditing ? <LockOpenIcon /> : <LockIcon />}
+            </IconButton>
+          </Tooltip>
+        )}
 
-              <TextField
-                id='snomedDisplayInput'
-                name='snomedDisplay'
-                label='SNOMED Display'
-                value={ get(this, 'data.form.snomedDisplay', '') }
-                onChange={ this.changeState.bind(this, 'snomedDisplay')}
-                hintText={ this.setHint('Acquired hemoglobin H disease (disorder)') }
-                //floatingLabelFixed={true}
-                fullWidth
-                /><br/>
-
-              <TextField
-                id='clinicalStatusInput'
-                name='clinicalStatus'
-                label='Clinical Status'
-                value={ get(this, 'data.form.clinicalStatus', '') }
-                hintText={ this.setHint('active | recurrence | inactive | remission | resolved') }
-                onChange={ this.changeState.bind(this, 'clinicalStatus')}
-                //floatingLabelFixed={true}
-                fullWidth
-                /><br/>
-
-              <TextField
-                id='verificationStatusInput'
-                name='verificationStatus'
-                label='Verification Status'
-                value={ get(this, 'data.form.verificationStatus', '') }
-                hintText={ this.setHint('provisional | differential | confirmed | refuted | entered-in-error | unknown') }
-                onChange={ this.changeState.bind(this, 'verificationStatus')}
-                //floatingLabelFixed={true}
-                fullWidth
-                /><br/>
-            </Grid>
-            <Grid item xs={6}>
-            </Grid>
-          </Grid>
-
-          <br/>
-          { this.renderDatePicker(this.data.showDatePicker, get(this, 'data.form') ) }
-          <br/>
-
-          <a href='http://browser.ihtsdotools.org/?perspective=full&conceptId1=404684003&edition=us-edition&release=v20180301&server=https://prod-browser-exten.ihtsdotools.org/api/snomed&langRefset=900000000000509007'>Lookup codes with the SNOMED CT Browser</a>
-
-        </CardContent>
-        <CardActions>
-          { this.determineButtons(this.state.evidenceId) }
-        </CardActions>
-      </div>
+        {/* Delete */}
+        {!isNewEvidence && (
+          <Tooltip title="Delete">
+            <IconButton
+              onClick={handleDelete}
+              disabled={!isEditing}
+              sx={{ color: isEditing ? 'error.main' : 'text.disabled' }}
+            >
+              <DeleteIcon />
+              <Typography sx={{
+                position: 'absolute',
+                width: '1px',
+                height: '1px',
+                padding: 0,
+                margin: '-1px',
+                overflow: 'hidden',
+                clip: 'rect(0, 0, 0, 0)',
+                whiteSpace: 'nowrap',
+                borderWidth: 0
+              }}>Delete</Typography>
+            </IconButton>
+          </Tooltip>
+        )}
+      </Box>
     );
   }
 
-  determineButtons(evidenceId){
-    if (evidenceId) {
-      return (
-        <div>
-          <Button id="updateEvidenceButton" primary={true} onClick={this.handleSaveButton.bind(this)} style={{marginRight: '20px'}} >Save</Button>
-          <Button id="deleteEvidenceButton" onClick={this.handleDeleteButton.bind(this)} >Delete</Button>
-        </div>
-      );
-    } else {
-      return(
-        <Button id="saveEvidenceButton" primary={true} onClick={this.handleSaveButton.bind(this)} >Save</Button>
-      );
-    }
+  // Render the form view
+  function renderFormView() {
+    return (
+      <>
+        <EvidenceFormView
+          resource={evidence}
+          isEditing={isEditing}
+          onChange={handleChange}
+          isEmbedded={isEmbedded}
+        />
+
+        {/* In-form Save/Cancel bar when editing */}
+        {isEditing && !isEmbedded && (
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, mt: 3, pt: 2, borderTop: 1, borderColor: 'divider' }}>
+            <Button id="cancelButton" onClick={handleCancel}>
+              Cancel
+            </Button>
+            <Button
+              id="saveEvidenceButton"
+              onClick={handleSave}
+              variant="contained"
+              color="primary"
+              disabled={loading}
+            >
+              {loading ? 'Saving...' : 'Save'}
+            </Button>
+          </Box>
+        )}
+      </>
+    );
   }
 
-
-  updateFormData(formData, field, textValue){
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log("EvidenceDetail.updateFormData", formData, field, textValue);
-
-    switch (field) {
-      case "patientDisplay":
-        set(formData, 'patientDisplay', textValue)
-        break;
-      case "asserterDisplay":
-        set(formData, 'asserterDisplay', textValue)
-        break;        
-      case "verificationStatus":
-        set(formData, 'verificationStatus', textValue)
-        break;
-      case "clinicalStatus":
-        set(formData, 'clinicalStatus', textValue)
-        break;
-      case "snomedCode":
-        set(formData, 'snomedCode', textValue)
-        break;
-      case "snomedDisplay":
-        set(formData, 'snomedDisplay', textValue)
-        break;
-      case "evidenceDisplay":
-        set(formData, 'evidenceDisplay', textValue)
-        break;
-      case "onsetDateTime":
-        set(formData, 'onsetDateTime', textValue)
-        break;
-      default:
-    }
-
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log("formData", formData);
-    return formData;
-  }
-  updateEvidence(evidenceData, field, textValue){
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log("EvidenceDetail.updateEvidence", evidenceData, field, textValue);
-
-    switch (field) {
-      case "patientDisplay":
-        set(evidenceData, 'patient.display', textValue)
-        break;
-      case "asserterDisplay":
-        set(evidenceData, 'asserter.display', textValue)
-        break;
-      case "verificationStatus":
-        set(evidenceData, 'verificationStatus', textValue)
-        break;
-      case "clinicalStatus":
-        set(evidenceData, 'clinicalStatus', textValue)
-        break;
-      case "snomedCode":
-        set(evidenceData, 'code.coding[0].code', textValue)
-        break;
-      case "snomedDisplay":
-        set(evidenceData, 'code.coding[0].display', textValue)
-        break;
-      case "evidenceDisplay":
-        set(evidenceData, 'evidence[0].detail[0].display', textValue)
-        break;  
-      case "datePicker":
-        set(evidenceData, 'onsetDateTime', textValue)
-        break;
-      case "onsetDateTime":
-        set(evidenceData, 'onsetDateTime', textValue)
-        break;
-  
-    }
-    return evidenceData;
-  }
-  componentDidUpdate(props){
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log('EvidenceDisplay.componentDidUpdate()', props, this.state)
-  }
-  // this could be a mixin
-  changeState(field, event, textValue){
-
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log("   ");
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log("EvidenceDetail.changeState", field, textValue);
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log("this.state", this.state);
-
-    let formData = Object.assign({}, this.state.form);
-    let evidenceData = Object.assign({}, this.state.evidence);
-
-    formData = this.updateFormData(formData, field, textValue);
-    evidenceData = this.updateEvidence(evidenceData, field, textValue);
-
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log("evidenceData", evidenceData);
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log("formData", formData);
-
-    this.setState({evidence: evidenceData})
-    this.setState({form: formData})
-
+  // Render the preview view
+  function renderPreviewView() {
+    return <EvidencePreview resource={evidence} resourceId={id} />;
   }
 
-  handleSaveButton(){
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log('^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^&&')
-    console.log('Saving a new Evidence...', this.state)
-
-    let self = this;
-    let fhirEvidenceData = Object.assign({}, this.state.evidence);
-
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log('fhirEvidenceData', fhirEvidenceData);
-
-
-    let evidenceValidator = EvidenceSchema.newContext();
-    evidenceValidator.validate(fhirEvidenceData)
-
-    console.log('IsValid: ', evidenceValidator.isValid())
-    console.log('ValidationErrors: ', evidenceValidator.validationErrors());
-
-    if (this.state.evidenceId) {
-      if(get(Meteor, 'settings.public.logging') === "debug") console.log("Updating Evidence...");
-      delete fhirEvidenceData._id;
-
-      Evidences._collection.update(
-        {_id: this.state.evidenceId}, {$set: fhirEvidenceData }, function(error, result) {
-          if (error) {
-            console.log("error", error);
-            // Bert.alert(error.reason, 'danger');
-          }
-          if (result) {
-            if(self.props.onUpdate){
-              self.props.onUpdate(self.data.evidenceId);
-            }
-            // Bert.alert('Evidence updated!', 'success');
-          }
-        });
-    } else {
-
-      if(get(Meteor, 'settings.public.logging') === "debug") console.log("Create a new Evidence", fhirEvidenceData);
-
-      Evidences._collection.insert(fhirEvidenceData, function(error, result) {
-        if (error) {
-          console.log("error", error);
-          // Bert.alert(error.reason, 'danger');
-        }
-        if (result) {
-          if(self.props.onInsert){
-            self.props.onInsert(self.data.evidenceId);
-          }
-          // Bert.alert('Evidence added!', 'success');
-        }
-      });
-    }
+  // In embedded mode, render form content without Container/Card wrapper
+  if (isEmbedded) {
+    return renderFormView();
   }
 
-  handleCancelButton(){
-    if(this.props.onCancel){
-      this.props.onCancel();
-    }
-  }
+  return (
+    <Container id="evidenceDetailPage" maxWidth="md" sx={{ py: 4 }}>
+      <Card sx={{ boxShadow: 3 }}>
+        <CardHeader
+          title={headerTitle}
+          sx={{ borderBottom: 1, borderColor: 'divider' }}
+          action={renderHeaderActions()}
+        />
+        <CardContent>
+          {error && (
+            <Typography color="error" sx={{ mb: 2 }}>
+              Error: {error}
+            </Typography>
+          )}
 
-  handleDeleteButton(){
-    console.log('EvidenceDetail.handleDeleteButton()', this.state.evidenceId)
-
-    let self = this;
-    Evidences._collection.remove({_id: this.state.evidenceId}, function(error, result){
-      if (error) {
-        // Bert.alert(error.reason, 'danger');
-      }
-      if (result) {
-        if(this.props.onInsert){
-          this.props.onInsert(self.data.evidenceId);
-        }
-        // Bert.alert('Evidence removed!', 'success');
-      }
-    });
-  }
+          {viewMode === 'form' && renderFormView()}
+          {viewMode === 'page' && renderPreviewView()}
+        </CardContent>
+      </Card>
+    </Container>
+  );
 }
 
-EvidenceDetail.propTypes = {
-  id: PropTypes.string,
-  evidenceId: PropTypes.oneOfType([PropTypes.string, PropTypes.bool]),
-  evidence: PropTypes.oneOfType([PropTypes.object, PropTypes.bool]),
-  showDatePicker: PropTypes.bool,
-  showHints: PropTypes.bool,
-  onInsert: PropTypes.func,
-  onUpdate: PropTypes.func,
-  onRemove: PropTypes.func,
-  onCancel: PropTypes.func
-};
-
-
-// Embedded mode wrapper for HoneycombFhirResource dispatcher
-function EvidenceDetailEmbeddedWrapper(props) {
-  var isEmbedded = props.embedded || false;
-  var fhirResource = props.fhirResource;
-  var onResourceChange = props.onResourceChange;
-
-  // Pass through to legacy class component
-  var classProps = Object.assign({}, props);
-  if (isEmbedded && fhirResource) {
-    classProps.evidence = fhirResource;
-  }
-
-  return React.createElement(EvidenceDetail, classProps);
-}
-
-export default EvidenceDetailEmbeddedWrapper;
+export default EvidenceDetail;

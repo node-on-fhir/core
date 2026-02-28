@@ -1,28 +1,26 @@
 // /imports/ui-fhir/nutritionIntakes/NutritionIntakeDetail.jsx
 
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useTracker } from 'meteor/react-meteor-data';
 
 import {
   Button,
   Card,
-  CardActions,
   CardContent,
   CardHeader,
   Container,
-  TextField,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
+  IconButton,
+  Tooltip,
   Typography,
-  Box,
-  Stack,
-  Chip,
-  FormControlLabel,
-  Switch
+  Box
 } from '@mui/material';
+
+import ArticleIcon from '@mui/icons-material/Article';
+import EditNoteIcon from '@mui/icons-material/EditNote';
+import LockIcon from '@mui/icons-material/Lock';
+import LockOpenIcon from '@mui/icons-material/LockOpen';
+import DeleteIcon from '@mui/icons-material/Delete';
 
 import { get, set } from 'lodash';
 import moment from 'moment';
@@ -30,6 +28,9 @@ import moment from 'moment';
 import { NutritionIntakes } from '/imports/lib/schemas/SimpleSchemas/NutritionIntakes';
 import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
+
+import NutritionIntakeFormView from './NutritionIntakeFormView';
+import NutritionIntakePreview from './NutritionIntakePreview';
 
 function NutritionIntakeDetail(props) {
   // Embedded mode support (for HoneycombFhirResource dispatcher)
@@ -169,6 +170,10 @@ function NutritionIntakeDetail(props) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [isEditing, setIsEditing] = useState(isEmbedded);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const viewMode = searchParams.get('view') || 'form';
+
+  const isNewRecord = !id || id === 'new';
 
   // Set patient name on component mount for new nutrition intakes
   useEffect(function() {
@@ -204,19 +209,21 @@ function NutritionIntakeDetail(props) {
         performerReference = `Practitioner/${get(currentUser, '_id', '')}`;
       }
 
-      setNutritionIntake(prev => ({
-        ...prev,
-        subject: {
-          reference: patientReference,
-          display: patientName
-        },
-        performer: [{
-          actor: {
-            reference: performerReference,
-            display: performerName
-          }
-        }]
-      }));
+      setNutritionIntake(function(prev) {
+        return {
+          ...prev,
+          subject: {
+            reference: patientReference,
+            display: patientName
+          },
+          performer: [{
+            actor: {
+              reference: performerReference,
+              display: performerName
+            }
+          }]
+        };
+      });
     } else {
       // Viewing existing nutrition intake - start in read-only mode
       setIsEditing(false);
@@ -259,7 +266,7 @@ function NutritionIntakeDetail(props) {
     const updatedNutritionIntake = { ...nutritionIntake };
     set(updatedNutritionIntake, path, value);
     setNutritionIntake(updatedNutritionIntake);
-  
+
     // Notify parent of changes in embedded mode
     if (props.onResourceChange) {
       props.onResourceChange(updatedNutritionIntake);
@@ -321,263 +328,156 @@ function NutritionIntakeDetail(props) {
 
   // Handle cancel
   function handleCancel() {
-    navigate('/nutrition-intakes');
+    if (id && id !== 'new') {
+      // Cancel editing and reload original data
+      setIsEditing(false);
+      setError(null);
+      async function reloadNutritionIntake() {
+        try {
+          const result = await Meteor.callAsync('nutritionIntakes.get', id);
+          if (result) {
+            setNutritionIntake(result);
+          }
+        } catch (err) {
+          console.error('Error reloading nutrition intake:', err);
+        }
+      }
+      reloadNutritionIntake();
+    } else {
+      navigate('/nutrition-intakes');
+    }
   }
 
-  const statusOptions = [
-    { code: 'preparation', display: 'Preparation' },
-    { code: 'in-progress', display: 'In Progress' },
-    { code: 'not-done', display: 'Not Done' },
-    { code: 'on-hold', display: 'On Hold' },
-    { code: 'stopped', display: 'Stopped' },
-    { code: 'completed', display: 'Completed' },
-    { code: 'entered-in-error', display: 'Entered in Error' },
-    { code: 'unknown', display: 'Unknown' }
-  ];
+  // Build the header title
+  var headerTitle = 'New Nutrition Intake';
+  if (!isNewRecord) {
+    headerTitle = <span className="barcode helveticas" style={{ fontSize: '1.5rem' }}>{id}</span>;
+  }
 
-  const consumedItemTypeOptions = [
-    { code: 'food', display: 'Food' },
-    { code: 'fluid', display: 'Fluid' },
-    { code: 'supplement', display: 'Supplement' },
-    { code: 'enteral', display: 'Enteral' }
-  ];
-
-  if (isEmbedded) {
+  // Build the header action buttons
+  function renderHeaderActions() {
     return (
-      <Stack spacing={3}>
-        <TextField
-          id="subjectDisplay"
-          fullWidth
-          label="Subject (Patient) Name"
-          value={get(nutritionIntake, 'subject.display', '')}
-          helperText={get(nutritionIntake, 'subject.reference', '') || 'Subject reference will be assigned'}
-          disabled
-        />
-
-        <FormControl fullWidth disabled={!isEditing}>
-          <InputLabel id="statusSelectLabel">Status</InputLabel>
-          <Select
-            id="statusSelect"
-            labelId="statusSelectLabel"
-            value={get(nutritionIntake, 'status', 'completed')}
-            onChange={(e) => handleChange('status', e.target.value)}
-            label="Status"
-          >
-            {statusOptions.map(option => (
-              <MenuItem key={option.code} value={option.code}>
-                {option.display}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-
-        <TextField
-          id="occurrenceDateTimeInput"
-          fullWidth
-          type="datetime-local"
-          label="Occurrence Date/Time"
-          value={moment(get(nutritionIntake, 'occurrenceDateTime', '')).format('YYYY-MM-DDTHH:mm')}
-          onChange={(e) => handleChange('occurrenceDateTime', e.target.value)}
-          InputLabelProps={{ shrink: true }}
-          disabled={!isEditing}
-        />
-
-        <TextField
-          id="recordedDateTimeInput"
-          fullWidth
-          type="datetime-local"
-          label="Recorded Date/Time"
-          value={moment(get(nutritionIntake, 'recorded', '')).format('YYYY-MM-DDTHH:mm')}
-          onChange={(e) => handleChange('recorded', e.target.value)}
-          InputLabelProps={{ shrink: true }}
-          disabled={!isEditing}
-        />
-
-        <Typography variant="h6" sx={{ mt: 2 }}>
-          Overall Code
-        </Typography>
-
-        <TextField
-          id="codeDisplayInput"
-          fullWidth
-          label="Code Display"
-          value={get(nutritionIntake, 'code.text', '')}
-          onChange={(e) => {
-            handleChange('code.text', e.target.value);
-            handleChange('code.coding[0].display', e.target.value);
-          }}
-          helperText="Overall type of nutrition intake"
-          disabled={!isEditing}
-        />
-
-        <Typography variant="h6" sx={{ mt: 2 }}>
-          Consumed Item
-        </Typography>
-
-        <FormControl fullWidth disabled={!isEditing}>
-          <InputLabel id="consumedItemTypeSelectLabel">Consumed Item Type</InputLabel>
-          <Select
-            id="consumedItemTypeSelect"
-            labelId="consumedItemTypeSelectLabel"
-            value={get(nutritionIntake, 'consumedItem[0].type.coding[0].code', 'food')}
-            onChange={(e) => {
-              const option = consumedItemTypeOptions.find(o => o.code === e.target.value);
-              if (option) {
-                handleChange('consumedItem[0].type.coding[0].code', option.code);
-                handleChange('consumedItem[0].type.coding[0].display', option.display);
-                handleChange('consumedItem[0].type.text', option.display);
-              }
-            }}
-            label="Consumed Item Type"
-          >
-            {consumedItemTypeOptions.map(option => (
-              <MenuItem key={option.code} value={option.code}>
-                {option.display}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-
-        <TextField
-          id="nutritionProductInput"
-          fullWidth
-          label="Nutrition Product"
-          value={get(nutritionIntake, 'consumedItem[0].nutritionProduct.concept.text', '')}
-          onChange={(e) => {
-            handleChange('consumedItem[0].nutritionProduct.concept.text', e.target.value);
-            handleChange('consumedItem[0].nutritionProduct.concept.coding[0].display', e.target.value);
-          }}
-          helperText="Name or description of the food/fluid consumed"
-          disabled={!isEditing}
-        />
-
-        <TextField
-          id="amountValueInput"
-          fullWidth
-          type="number"
-          label="Amount"
-          value={get(nutritionIntake, 'consumedItem[0].amount.value', '') || ''}
-          onChange={(e) => handleChange('consumedItem[0].amount.value', e.target.value ? parseFloat(e.target.value) : null)}
-          disabled={!isEditing}
-        />
-
-        <TextField
-          id="amountUnitInput"
-          fullWidth
-          label="Amount Unit"
-          value={get(nutritionIntake, 'consumedItem[0].amount.unit', 'serving')}
-          onChange={(e) => handleChange('consumedItem[0].amount.unit', e.target.value)}
-          helperText="e.g., serving, cup, mL, oz"
-          disabled={!isEditing}
-        />
-
-        <FormControlLabel
-          control={
-            <Switch
-              checked={get(nutritionIntake, 'consumedItem[0].notConsumed', false)}
-              onChange={(e) => handleChange('consumedItem[0].notConsumed', e.target.checked)}
-              disabled={!isEditing}
-            />
-          }
-          label="Not Consumed"
-        />
-
-        {get(nutritionIntake, 'consumedItem[0].notConsumed', false) && (
-          <TextField
-            id="notConsumedReasonInput"
-            fullWidth
-            label="Not Consumed Reason"
-            value={get(nutritionIntake, 'consumedItem[0].notConsumedReason.text', '')}
-            onChange={(e) => {
-              handleChange('consumedItem[0].notConsumedReason.text', e.target.value);
-              handleChange('consumedItem[0].notConsumedReason.coding[0].display', e.target.value);
-            }}
-            disabled={!isEditing}
-          />
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+        {/* Preview toggle -- hidden for new records */}
+        {!isNewRecord && (
+          <Tooltip title="Preview">
+            <IconButton
+              onClick={function() { setSearchParams({ view: 'page' }); }}
+              sx={{
+                color: viewMode === 'page' ? 'primary.main' : 'text.secondary'
+              }}
+            >
+              <ArticleIcon />
+            </IconButton>
+          </Tooltip>
         )}
 
-        <Typography variant="h6" sx={{ mt: 2 }}>
-          Ingredient Label (Optional)
-        </Typography>
+        {/* Form toggle -- hidden for new records (always form) */}
+        {!isNewRecord && (
+          <Tooltip title="Form">
+            <IconButton
+              onClick={function() { setSearchParams({ view: 'form' }); }}
+              sx={{
+                color: viewMode === 'form' ? 'primary.main' : 'text.secondary'
+              }}
+            >
+              <EditNoteIcon />
+            </IconButton>
+          </Tooltip>
+        )}
 
-        <TextField
-          id="nutrientInput"
-          fullWidth
-          label="Nutrient"
-          value={get(nutritionIntake, 'ingredientLabel[0].nutrient.text', '')}
-          onChange={(e) => {
-            handleChange('ingredientLabel[0].nutrient.text', e.target.value);
-            handleChange('ingredientLabel[0].nutrient.coding[0].display', e.target.value);
-          }}
-          helperText="e.g., Calories, Protein, Carbohydrates"
-          disabled={!isEditing}
-        />
+        {/* Lock / Unlock toggle -- only for existing records */}
+        {!isNewRecord && (
+          <Tooltip title={isEditing ? 'Lock (read-only)' : 'Unlock (edit)'}>
+            <IconButton
+              onClick={function() { setIsEditing(!isEditing); }}
+            >
+              {isEditing ? <LockOpenIcon /> : <LockIcon />}
+            </IconButton>
+          </Tooltip>
+        )}
 
-        <TextField
-          id="nutrientAmountInput"
-          fullWidth
-          type="number"
-          label="Nutrient Amount"
-          value={get(nutritionIntake, 'ingredientLabel[0].amount.value', '') || ''}
-          onChange={(e) => handleChange('ingredientLabel[0].amount.value', e.target.value ? parseFloat(e.target.value) : null)}
-          disabled={!isEditing}
-        />
-
-        <TextField
-          id="nutrientUnitInput"
-          fullWidth
-          label="Nutrient Unit"
-          value={get(nutritionIntake, 'ingredientLabel[0].amount.unit', 'g')}
-          onChange={(e) => handleChange('ingredientLabel[0].amount.unit', e.target.value)}
-          helperText="e.g., g, mg, kcal"
-          disabled={!isEditing}
-        />
-
-        <Typography variant="h6" sx={{ mt: 2 }}>
-          Additional Information
-        </Typography>
-
-        <TextField
-          id="performerDisplay"
-          fullWidth
-          label="Performer Name"
-          value={get(nutritionIntake, 'performer[0].actor.display', '')}
-          onChange={(e) => handleChange('performer[0].actor.display', e.target.value)}
-          helperText={get(nutritionIntake, 'performer[0].actor.reference', '') || 'Who performed the intake'}
-          disabled={!isEditing}
-        />
-
-        <TextField
-          id="locationDisplay"
-          fullWidth
-          label="Location"
-          value={get(nutritionIntake, 'location.display', '')}
-          onChange={(e) => handleChange('location.display', e.target.value)}
-          helperText="Where the intake occurred"
-          disabled={!isEditing}
-        />
-
-        <TextField
-          id="notesInput"
-          fullWidth
-          multiline
-          rows={3}
-          label="Notes"
-          value={get(nutritionIntake, 'note[0].text', '')}
-          onChange={(e) => handleChange('note[0].text', e.target.value)}
-          helperText="Additional notes about the nutrition intake"
-          disabled={!isEditing}
-        />
-      </Stack>
+        {/* Delete -- only for existing records, gated on edit mode */}
+        {!isNewRecord && (
+          <Tooltip title="Delete">
+            <IconButton
+              onClick={handleDelete}
+              disabled={!isEditing}
+              sx={{ color: isEditing ? 'error.main' : 'text.disabled' }}
+            >
+              <DeleteIcon />
+              <Typography sx={{
+                position: 'absolute',
+                width: '1px',
+                height: '1px',
+                padding: 0,
+                margin: '-1px',
+                overflow: 'hidden',
+                clip: 'rect(0, 0, 0, 0)',
+                whiteSpace: 'nowrap',
+                borderWidth: 0
+              }}>Delete</Typography>
+            </IconButton>
+          </Tooltip>
+        )}
+      </Box>
     );
+  }
+
+  // Render the form view
+  function renderFormView() {
+    return (
+      <>
+        <NutritionIntakeFormView
+          resource={nutritionIntake}
+          isEditing={isEditing}
+          onChange={handleChange}
+          isEmbedded={isEmbedded}
+        />
+
+        {/* In-form Save/Cancel bar when editing */}
+        {isEditing && !isEmbedded && (
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, mt: 3, pt: 2, borderTop: 1, borderColor: 'divider' }}>
+            <Button id="cancelButton" onClick={handleCancel} disabled={loading}>
+              Cancel
+            </Button>
+            <Button
+              id="saveNutritionIntakeButton"
+              onClick={handleSave}
+              variant="contained"
+              color="primary"
+              disabled={loading}
+            >
+              {loading ? 'Saving...' : 'Save'}
+            </Button>
+          </Box>
+        )}
+      </>
+    );
+  }
+
+  // Render the preview view
+  function renderPreviewView() {
+    return (
+      <NutritionIntakePreview
+        resource={nutritionIntake}
+        resourceId={id}
+      />
+    );
+  }
+
+  // In embedded mode, render form content without Container/Card wrapper
+  if (isEmbedded) {
+    return renderFormView();
   }
 
   return (
     <Container id="nutritionIntakeDetailPage" maxWidth="md" sx={{ py: 4 }}>
       <Card sx={{ boxShadow: 3 }}>
         <CardHeader
-          title={id && id !== 'new' ? 'Edit Nutrition Intake' : 'New Nutrition Intake'}
-          sx={{ bgcolor: 'primary.main', color: 'primary.contrastText' }}
+          title={headerTitle}
+          sx={{ borderBottom: 1, borderColor: 'divider' }}
+          action={renderHeaderActions()}
         />
         <CardContent>
           {error && (
@@ -586,316 +486,9 @@ function NutritionIntakeDetail(props) {
             </Typography>
           )}
 
-          {/* System ID Barcode */}
-          {(id && id !== 'new') && (
-            <Box sx={{ mb: 3, textAlign: 'right' }}>
-              <span className="barcode helveticas" style={{ fontSize: '2rem' }}>{id}</span>
-            </Box>
-          )}
-
-          <Stack spacing={3}>
-            <TextField
-              id="subjectDisplay"
-              fullWidth
-              label="Subject (Patient) Name"
-              value={get(nutritionIntake, 'subject.display', '')}
-              helperText={get(nutritionIntake, 'subject.reference', '') || 'Subject reference will be assigned'}
-              disabled // Always disabled to prevent editing
-            />
-
-            <FormControl fullWidth disabled={!isEditing}>
-              <InputLabel id="statusSelectLabel">Status</InputLabel>
-              <Select
-                id="statusSelect"
-                labelId="statusSelectLabel"
-                value={get(nutritionIntake, 'status', 'completed')}
-                onChange={(e) => handleChange('status', e.target.value)}
-                label="Status"
-              >
-                {statusOptions.map(option => (
-                  <MenuItem key={option.code} value={option.code}>
-                    {option.display}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-
-            <TextField
-              id="occurrenceDateTimeInput"
-              fullWidth
-              type="datetime-local"
-              label="Occurrence Date/Time"
-              value={moment(get(nutritionIntake, 'occurrenceDateTime', '')).format('YYYY-MM-DDTHH:mm')}
-              onChange={(e) => handleChange('occurrenceDateTime', e.target.value)}
-              InputLabelProps={{ shrink: true }}
-              disabled={!isEditing}
-            />
-
-            <TextField
-              id="recordedDateTimeInput"
-              fullWidth
-              type="datetime-local"
-              label="Recorded Date/Time"
-              value={moment(get(nutritionIntake, 'recorded', '')).format('YYYY-MM-DDTHH:mm')}
-              onChange={(e) => handleChange('recorded', e.target.value)}
-              InputLabelProps={{ shrink: true }}
-              disabled={!isEditing}
-            />
-
-            <Typography variant="h6" sx={{ mt: 2 }}>
-              Overall Code
-            </Typography>
-
-            <TextField
-              id="codeDisplayInput"
-              fullWidth
-              label="Code Display"
-              value={get(nutritionIntake, 'code.text', '')}
-              onChange={(e) => {
-                handleChange('code.text', e.target.value);
-                handleChange('code.coding[0].display', e.target.value);
-              }}
-              helperText="Overall type of nutrition intake"
-              disabled={!isEditing}
-            />
-
-            <Typography variant="h6" sx={{ mt: 2 }}>
-              Consumed Item
-            </Typography>
-
-            <FormControl fullWidth disabled={!isEditing}>
-              <InputLabel id="consumedItemTypeSelectLabel">Consumed Item Type</InputLabel>
-              <Select
-                id="consumedItemTypeSelect"
-                labelId="consumedItemTypeSelectLabel"
-                value={get(nutritionIntake, 'consumedItem[0].type.coding[0].code', 'food')}
-                onChange={(e) => {
-                  const option = consumedItemTypeOptions.find(o => o.code === e.target.value);
-                  if (option) {
-                    handleChange('consumedItem[0].type.coding[0].code', option.code);
-                    handleChange('consumedItem[0].type.coding[0].display', option.display);
-                    handleChange('consumedItem[0].type.text', option.display);
-                  }
-                }}
-                label="Consumed Item Type"
-              >
-                {consumedItemTypeOptions.map(option => (
-                  <MenuItem key={option.code} value={option.code}>
-                    {option.display}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-
-            <TextField
-              id="nutritionProductInput"
-              fullWidth
-              label="Nutrition Product"
-              value={get(nutritionIntake, 'consumedItem[0].nutritionProduct.concept.text', '')}
-              onChange={(e) => {
-                handleChange('consumedItem[0].nutritionProduct.concept.text', e.target.value);
-                handleChange('consumedItem[0].nutritionProduct.concept.coding[0].display', e.target.value);
-              }}
-              helperText="Name or description of the food/fluid consumed"
-              disabled={!isEditing}
-            />
-
-            <TextField
-              id="amountValueInput"
-              fullWidth
-              type="number"
-              label="Amount"
-              value={get(nutritionIntake, 'consumedItem[0].amount.value', '') || ''}
-              onChange={(e) => handleChange('consumedItem[0].amount.value', e.target.value ? parseFloat(e.target.value) : null)}
-              disabled={!isEditing}
-            />
-
-            <TextField
-              id="amountUnitInput"
-              fullWidth
-              label="Amount Unit"
-              value={get(nutritionIntake, 'consumedItem[0].amount.unit', 'serving')}
-              onChange={(e) => handleChange('consumedItem[0].amount.unit', e.target.value)}
-              helperText="e.g., serving, cup, mL, oz"
-              disabled={!isEditing}
-            />
-
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={get(nutritionIntake, 'consumedItem[0].notConsumed', false)}
-                  onChange={(e) => handleChange('consumedItem[0].notConsumed', e.target.checked)}
-                  disabled={!isEditing}
-                />
-              }
-              label="Not Consumed"
-            />
-
-            {get(nutritionIntake, 'consumedItem[0].notConsumed', false) && (
-              <TextField
-                id="notConsumedReasonInput"
-                fullWidth
-                label="Not Consumed Reason"
-                value={get(nutritionIntake, 'consumedItem[0].notConsumedReason.text', '')}
-                onChange={(e) => {
-                  handleChange('consumedItem[0].notConsumedReason.text', e.target.value);
-                  handleChange('consumedItem[0].notConsumedReason.coding[0].display', e.target.value);
-                }}
-                disabled={!isEditing}
-              />
-            )}
-
-            <Typography variant="h6" sx={{ mt: 2 }}>
-              Ingredient Label (Optional)
-            </Typography>
-
-            <TextField
-              id="nutrientInput"
-              fullWidth
-              label="Nutrient"
-              value={get(nutritionIntake, 'ingredientLabel[0].nutrient.text', '')}
-              onChange={(e) => {
-                handleChange('ingredientLabel[0].nutrient.text', e.target.value);
-                handleChange('ingredientLabel[0].nutrient.coding[0].display', e.target.value);
-              }}
-              helperText="e.g., Calories, Protein, Carbohydrates"
-              disabled={!isEditing}
-            />
-
-            <TextField
-              id="nutrientAmountInput"
-              fullWidth
-              type="number"
-              label="Nutrient Amount"
-              value={get(nutritionIntake, 'ingredientLabel[0].amount.value', '') || ''}
-              onChange={(e) => handleChange('ingredientLabel[0].amount.value', e.target.value ? parseFloat(e.target.value) : null)}
-              disabled={!isEditing}
-            />
-
-            <TextField
-              id="nutrientUnitInput"
-              fullWidth
-              label="Nutrient Unit"
-              value={get(nutritionIntake, 'ingredientLabel[0].amount.unit', 'g')}
-              onChange={(e) => handleChange('ingredientLabel[0].amount.unit', e.target.value)}
-              helperText="e.g., g, mg, kcal"
-              disabled={!isEditing}
-            />
-
-            <Typography variant="h6" sx={{ mt: 2 }}>
-              Additional Information
-            </Typography>
-
-            <TextField
-              id="performerDisplay"
-              fullWidth
-              label="Performer Name"
-              value={get(nutritionIntake, 'performer[0].actor.display', '')}
-              onChange={(e) => handleChange('performer[0].actor.display', e.target.value)}
-              helperText={get(nutritionIntake, 'performer[0].actor.reference', '') || 'Who performed the intake'}
-              disabled={!isEditing}
-            />
-
-            <TextField
-              id="locationDisplay"
-              fullWidth
-              label="Location"
-              value={get(nutritionIntake, 'location.display', '')}
-              onChange={(e) => handleChange('location.display', e.target.value)}
-              helperText="Where the intake occurred"
-              disabled={!isEditing}
-            />
-
-            <TextField
-              id="notesInput"
-              fullWidth
-              multiline
-              rows={3}
-              label="Notes"
-              value={get(nutritionIntake, 'note[0].text', '')}
-              onChange={(e) => handleChange('note[0].text', e.target.value)}
-              helperText="Additional notes about the nutrition intake"
-              disabled={!isEditing}
-            />
-          </Stack>
+          {viewMode === 'form' && renderFormView()}
+          {viewMode === 'page' && renderPreviewView()}
         </CardContent>
-
-        <CardActions sx={{ justifyContent: 'flex-end', p: 2 }}>
-          {!isEditing && id && id !== 'new' ? (
-            // Read-only mode buttons
-            <>
-              <Button
-                onClick={() => navigate('/nutrition-intakes')}
-              >
-                Back
-              </Button>
-              <Button
-                id="deleteNutritionIntakeButton"
-                onClick={handleDelete}
-                color="error"
-              >
-                Delete
-              </Button>
-              <Button
-                id="editNutritionIntakeButton"
-                onClick={() => setIsEditing(true)}
-                variant="contained"
-                color="primary"
-              >
-                Edit
-              </Button>
-            </>
-          ) : (
-            // Edit mode buttons
-            <>
-              <Button
-                onClick={() => {
-                  if (id && id !== 'new') {
-                    // Cancel editing and reload original data
-                    setIsEditing(false);
-                    // Reload the nutrition intake to discard changes
-                    async function reloadNutritionIntake() {
-                      try {
-                        const result = await Meteor.callAsync('nutritionIntakes.get', id);
-                        if (result) {
-                          setNutritionIntake(result);
-                        }
-                      } catch (err) {
-                        console.error('Error reloading nutrition intake:', err);
-                      }
-                    }
-                    reloadNutritionIntake();
-                  } else {
-                    // For new nutrition intakes, go back
-                    navigate('/nutrition-intakes');
-                  }
-                }}
-                disabled={loading}
-              >
-                Cancel
-              </Button>
-              {id && id !== 'new' && (
-                <Button
-                  id="deleteNutritionIntakeButton"
-                  onClick={handleDelete}
-                  color="error"
-                  disabled={loading}
-                >
-                  Delete
-                </Button>
-              )}
-              <Button
-                id="saveNutritionIntakeButton"
-                onClick={handleSave}
-                variant="contained"
-                color="primary"
-                disabled={loading}
-              >
-                {loading ? 'Saving...' : 'Save'}
-              </Button>
-            </>
-          )}
-        </CardActions>
       </Card>
     </Container>
   );

@@ -284,9 +284,7 @@ export function ServiceRequestsPage(props){
   });
 
   let layoutContent;
-  if(isLoading){
-    layoutContent = null;
-  } else if(data.serviceRequests.length > 0){
+  if(data.serviceRequests.length > 0){
     layoutContent = <Card
       id="serviceRequestsCard"
       sx={{

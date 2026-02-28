@@ -9,18 +9,11 @@ import {
   Card,
   CardContent,
   CardHeader,
-  Chip,
   Container,
-  Divider,
   IconButton,
-  TextField,
   Typography,
   Box,
-  Stack,
-  Tooltip,
-  Link,
-  FormControlLabel,
-  Switch
+  Tooltip
 } from '@mui/material';
 
 import ArticleIcon from '@mui/icons-material/Article';
@@ -30,11 +23,13 @@ import LockOpenIcon from '@mui/icons-material/LockOpen';
 import DeleteIcon from '@mui/icons-material/Delete';
 
 import { get, set } from 'lodash';
-import moment from 'moment';
 
 import { Organizations } from '/imports/lib/schemas/SimpleSchemas/Organizations';
 import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
+
+import OrganizationFormView from './OrganizationFormView';
+import OrganizationPreview from './OrganizationPreview';
 
 const orgTypeOptions = [
   { code: 'prov', display: 'Healthcare Provider' },
@@ -335,155 +330,12 @@ function OrganizationDetail(props) {
   function renderFormView() {
     return (
       <>
-        <Stack spacing={3}>
-          <Typography variant="h6">Organization Information</Typography>
-
-          <TextField
-            id="nameInput"
-            fullWidth
-            label="Name"
-            value={get(organization, 'name', '')}
-            onChange={(e) => handleChange('name', e.target.value)}
-            helperText="Name of the organization"
-            disabled={!isEditing}
-          />
-
-          <TextField
-            id="identifierInput"
-            fullWidth
-            label="Identifier"
-            value={get(organization, 'identifier[0].value', '')}
-            onChange={(e) => handleChange('identifier[0].value', e.target.value)}
-            helperText="Unique identifier for the organization"
-            disabled={!isEditing}
-          />
-
-          <FormControlLabel
-            control={
-              <Switch
-                id="activeSwitch"
-                checked={get(organization, 'active', true)}
-                onChange={(e) => handleChange('active', e.target.checked)}
-                disabled={!isEditing}
-              />
-            }
-            label="Active"
-          />
-
-          <Typography variant="h6">Type</Typography>
-
-          <TextField
-            id="typeCodeInput"
-            fullWidth
-            label="Type Code"
-            value={get(organization, 'type[0].coding[0].code', '')}
-            onChange={(e) => handleChange('type[0].coding[0].code', e.target.value)}
-            helperText="Organization type code (e.g., prov, dept, team)"
-            disabled={!isEditing}
-          />
-
-          <TextField
-            id="typeDisplayInput"
-            fullWidth
-            label="Type Display"
-            value={get(organization, 'type[0].coding[0].display', '')}
-            onChange={(e) => handleChange('type[0].coding[0].display', e.target.value)}
-            helperText="Human-readable organization type"
-            disabled={!isEditing}
-          />
-
-          <Typography variant="h6">Contact Information</Typography>
-
-          <TextField
-            id="phoneInput"
-            fullWidth
-            label="Phone"
-            value={get(organization, 'telecom[0].value', '')}
-            onChange={(e) => handleChange('telecom[0].value', e.target.value)}
-            helperText="Contact phone number"
-            disabled={!isEditing}
-          />
-
-          <TextField
-            id="emailInput"
-            fullWidth
-            label="Email"
-            value={get(organization, 'telecom[1].value', '')}
-            onChange={(e) => handleChange('telecom[1].value', e.target.value)}
-            helperText="Contact email address"
-            disabled={!isEditing}
-          />
-
-          <Typography variant="h6">Address</Typography>
-
-          <TextField
-            id="addressLineInput"
-            fullWidth
-            label="Address Line"
-            value={get(organization, 'address[0].line[0]', '')}
-            onChange={(e) => handleChange('address[0].line[0]', e.target.value)}
-            helperText="Street address"
-            disabled={!isEditing}
-          />
-
-          <Stack direction="row" spacing={2}>
-            <TextField
-              id="cityInput"
-              fullWidth
-              label="City"
-              value={get(organization, 'address[0].city', '')}
-              onChange={(e) => handleChange('address[0].city', e.target.value)}
-              disabled={!isEditing}
-            />
-
-            <TextField
-              id="stateInput"
-              fullWidth
-              label="State"
-              value={get(organization, 'address[0].state', '')}
-              onChange={(e) => handleChange('address[0].state', e.target.value)}
-              disabled={!isEditing}
-            />
-          </Stack>
-
-          <Stack direction="row" spacing={2}>
-            <TextField
-              id="postalCodeInput"
-              fullWidth
-              label="Postal Code"
-              value={get(organization, 'address[0].postalCode', '')}
-              onChange={(e) => handleChange('address[0].postalCode', e.target.value)}
-              disabled={!isEditing}
-            />
-
-            <TextField
-              id="countryInput"
-              fullWidth
-              label="Country"
-              value={get(organization, 'address[0].country', '')}
-              onChange={(e) => handleChange('address[0].country', e.target.value)}
-              disabled={!isEditing}
-            />
-          </Stack>
-
-          <Typography variant="h6">Parent Organization</Typography>
-
-          <TextField
-            id="partOfInput"
-            fullWidth
-            label="Part Of"
-            value={get(organization, 'partOf.display', '')}
-            onChange={(e) => handleChange('partOf.display', e.target.value)}
-            helperText="Parent organization this one is part of"
-            disabled={!isEditing}
-          />
-
-          <Box sx={{ mt: 2 }}>
-            <Link href="https://www.hl7.org/fhir/valueset-organization-type.html" target="_blank" rel="noopener">
-              Organization Type Codes
-            </Link>
-          </Box>
-        </Stack>
+        <OrganizationFormView
+          resource={organization}
+          isEditing={isEditing}
+          onChange={handleChange}
+          isEmbedded={isEmbedded}
+        />
 
         {/* In-form Save/Cancel bar when editing */}
         {isEditing && !isEmbedded && (
@@ -508,122 +360,12 @@ function OrganizationDetail(props) {
 
   // Render the preview view
   function renderPreviewView() {
-    const orgName = get(organization, 'name', 'Unnamed Organization');
-    const isActive = get(organization, 'active', true);
-    const typeCode = get(organization, 'type[0].coding[0].code', '');
-    const typeDisplay = get(organization, 'type[0].coding[0].display', '');
-    const identifier = get(organization, 'identifier[0].value', '');
-    const phone = get(organization, 'telecom[0].value', '');
-    const email = get(organization, 'telecom[1].value', '');
-    const addressLine = get(organization, 'address[0].line[0]', '');
-    const city = get(organization, 'address[0].city', '');
-    const state = get(organization, 'address[0].state', '');
-    const postalCode = get(organization, 'address[0].postalCode', '');
-    const country = get(organization, 'address[0].country', '');
-    const partOfDisplay = get(organization, 'partOf.display', '');
-
-    // Build formatted address
-    const addressParts = [addressLine, city, state, postalCode, country].filter(Boolean);
-    const formattedAddress = addressParts.join(', ');
-
     return (
-      <Box sx={{ maxWidth: '8.5in', mx: 'auto', py: 2 }}>
-        {/* Organization name + active chip */}
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
-          <Typography variant="h5" sx={{ fontWeight: 500 }}>
-            {orgName}
-          </Typography>
-          <Chip
-            label={isActive ? 'Active' : 'Inactive'}
-            color={isActive ? 'success' : 'default'}
-            size="small"
-          />
-        </Box>
-
-        {typeDisplay && (
-          <Typography variant="subtitle1" color="text.secondary" sx={{ mb: 3 }}>
-            {typeDisplay}{typeCode ? ' (' + typeCode + ')' : ''}
-          </Typography>
-        )}
-
-        <Divider />
-
-        {/* Two-column metadata */}
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', py: 2.5 }}>
-          <Box>
-            {identifier && (
-              <>
-                <Typography variant="overline" color="text.secondary">
-                  Identifier
-                </Typography>
-                <Typography variant="body1" sx={{ fontWeight: 500, mb: 1 }}>
-                  {identifier}
-                </Typography>
-              </>
-            )}
-            {partOfDisplay && (
-              <>
-                <Typography variant="overline" color="text.secondary">
-                  Part Of
-                </Typography>
-                <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                  {partOfDisplay}
-                </Typography>
-              </>
-            )}
-          </Box>
-          <Box sx={{ textAlign: 'right' }}>
-            {phone && (
-              <>
-                <Typography variant="overline" color="text.secondary">
-                  Phone
-                </Typography>
-                <Typography variant="body1" sx={{ fontWeight: 500, mb: 1 }}>
-                  {phone}
-                </Typography>
-              </>
-            )}
-            {email && (
-              <>
-                <Typography variant="overline" color="text.secondary">
-                  Email
-                </Typography>
-                <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                  {email}
-                </Typography>
-              </>
-            )}
-          </Box>
-        </Box>
-
-        <Divider />
-
-        {/* Address section */}
-        {formattedAddress && (
-          <>
-            <Box sx={{ py: 2 }}>
-              <Typography variant="overline" color="text.secondary">
-                Address
-              </Typography>
-              <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                {addressLine && <>{addressLine}<br /></>}
-                {[city, state, postalCode].filter(Boolean).join(', ')}
-                {country && <><br />{country}</>}
-              </Typography>
-            </Box>
-            <Divider />
-          </>
-        )}
-
-        {/* Footer with organization ID */}
-        {isExistingOrganization && (
-          <Box sx={{ pt: 2 }}>
-            <Typography variant="caption" color="text.secondary">
-              Organization ID: {id}
-            </Typography>
-          </Box>
-        )}
-      </Box>
+      <OrganizationPreview
+        resource={organization}
+        resourceId={isExistingOrganization ? id : null}
+        embedded={isEmbedded}
+      />
     );
   }
 

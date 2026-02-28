@@ -1,7 +1,7 @@
 // imports/ui-fhir/bodyStructures/BodyStructureDetail.jsx
 
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useTracker } from 'meteor/react-meteor-data';
 
 import {
@@ -9,25 +9,27 @@ import {
   Card,
   CardHeader,
   CardContent,
-  CardActions,
-  TextField,
   Button,
   Box,
-  Grid,
-  FormControlLabel,
-  Checkbox,
   Typography,
   IconButton,
-  InputAdornment,
   Tooltip
 } from '@mui/material';
-import SearchIcon from '@mui/icons-material/Search';
+
+import ArticleIcon from '@mui/icons-material/Article';
+import EditNoteIcon from '@mui/icons-material/EditNote';
+import LockIcon from '@mui/icons-material/Lock';
+import LockOpenIcon from '@mui/icons-material/LockOpen';
+import DeleteIcon from '@mui/icons-material/Delete';
 
 import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
 import { get, set } from 'lodash';
 
 import { BodyStructures } from '/imports/lib/schemas/SimpleSchemas/BodyStructures';
+
+import BodyStructureFormView from './BodyStructureFormView';
+import BodyStructurePreview from './BodyStructurePreview';
 
 export function BodyStructureDetail(props) {
   // Embedded mode support (for HoneycombFhirResource dispatcher)
@@ -36,6 +38,8 @@ export function BodyStructureDetail(props) {
   var id = _params.id || null;
   var _rawNavigate = useNavigate();
   var navigate = isEmbedded ? function() {} : _rawNavigate;
+  const [searchParams, setSearchParams] = useSearchParams();
+  const viewMode = searchParams.get('view') || 'form';
 
   const [bodyStructure, setBodyStructure] = useState({
     resourceType: 'BodyStructure',
@@ -63,6 +67,10 @@ export function BodyStructureDetail(props) {
 
   const [isEditing, setIsEditing] = useState(isEmbedded || id === 'new' || !id);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  const isNewRecord = !id || id === 'new';
+  const isExistingRecord = id && id !== 'new';
 
   // Subscribe and load data
   const isSubscriptionReady = useTracker(function() {
@@ -130,12 +138,13 @@ export function BodyStructureDetail(props) {
 
 
   function handleSearchPatient() {
-    console.log('Patient search clicked');
+    console.log('[BodyStructureDetail] Patient search clicked');
     // Could open a patient search dialog here
   }
 
   async function handleSave() {
     setIsLoading(true);
+    setError(null);
 
     try {
       const dataToSave = {
@@ -152,16 +161,16 @@ export function BodyStructureDetail(props) {
 
       if (id && id !== 'new') {
         await Meteor.callAsync('bodyStructures.update', id, dataToSave);
-        console.log('Body structure updated:', id);
+        console.log('[BodyStructureDetail] Body structure updated:', id);
         setIsEditing(false);
       } else {
         const newId = await Meteor.callAsync('bodyStructures.insert', dataToSave);
-        console.log('Body structure created:', newId);
+        console.log('[BodyStructureDetail] Body structure created:', newId);
         navigate('/body-structures');
       }
-    } catch (error) {
-      console.error('Error saving body structure:', error);
-      alert('Error saving body structure: ' + error.message);
+    } catch (err) {
+      console.error('[BodyStructureDetail] Error saving body structure:', err);
+      setError(err.message);
     } finally {
       setIsLoading(false);
     }
@@ -169,12 +178,12 @@ export function BodyStructureDetail(props) {
 
   function handleDelete() {
     if (window.confirm('Are you sure you want to delete this body structure?')) {
-      Meteor.call('bodyStructures.remove', id, function(error) {
-        if (error) {
-          console.error('Error deleting body structure:', error);
-          alert('Error deleting body structure: ' + error.message);
+      Meteor.call('bodyStructures.remove', id, function(err) {
+        if (err) {
+          console.error('[BodyStructureDetail] Error deleting body structure:', err);
+          setError(err.message);
         } else {
-          console.log('Body structure deleted:', id);
+          console.log('[BodyStructureDetail] Body structure deleted:', id);
           navigate('/body-structures');
         }
       });
@@ -189,288 +198,150 @@ export function BodyStructureDetail(props) {
         setBodyStructure(existingBodyStructure);
       }
       setIsEditing(false);
+      setError(null);
     } else {
       navigate('/body-structures');
     }
   }
 
-  function handleBack() {
-    navigate('/body-structures');
+  // Build header title
+  let headerTitle = 'New Body Structure';
+  if (isExistingRecord) {
+    headerTitle = <span className="barcode helveticas" style={{ fontSize: '1.5rem' }}>{id}</span>;
   }
 
-  if (isEmbedded) {
+  // Build header action buttons
+  function renderHeaderActions() {
     return (
-      <Grid container spacing={3}>
-        {/* Active Checkbox */}
-        <Grid item xs={12}>
-          <FormControlLabel
-            control={
-              <Checkbox
-                id="activeCheckbox"
-                checked={get(bodyStructure, 'active', true)}
-                onChange={(e) => handleChange('active', e.target.checked)}
-                disabled={!isEditing}
-              />
-            }
-            label="Active"
-          />
-        </Grid>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+        {/* Preview toggle */}
+        {!isNewRecord && (
+          <Tooltip title="Preview">
+            <IconButton
+              onClick={() => setSearchParams({ view: 'page' })}
+              sx={{
+                color: viewMode === 'page' ? 'primary.main' : 'text.secondary'
+              }}
+            >
+              <ArticleIcon />
+            </IconButton>
+          </Tooltip>
+        )}
 
-        {/* Description */}
-        <Grid item xs={12}>
-          <TextField
-            id="descriptionInput"
-            fullWidth
-            label="Description"
-            value={get(bodyStructure, 'description', '')}
-            onChange={(e) => handleChange('description', e.target.value)}
-            disabled={!isEditing}
-            multiline
-            rows={2}
-          />
-        </Grid>
+        {/* Form toggle */}
+        {!isNewRecord && (
+          <Tooltip title="Form">
+            <IconButton
+              onClick={() => setSearchParams({ view: 'form' })}
+              sx={{
+                color: viewMode === 'form' ? 'primary.main' : 'text.secondary'
+              }}
+            >
+              <EditNoteIcon />
+            </IconButton>
+          </Tooltip>
+        )}
 
-        {/* Morphology */}
-        <Grid item xs={12} sm={6}>
-          <TextField
-            id="morphologyInput"
-            fullWidth
-            label="Morphology"
-            value={get(bodyStructure, 'morphology.text', get(bodyStructure, 'morphology.coding.0.display', ''))}
-            onChange={(e) => handleChange('morphology', {
-              coding: [{
-                system: 'http://snomed.info/sct',
-                display: e.target.value
-              }],
-              text: e.target.value
-            })}
-            disabled={!isEditing}
-            helperText="What type of structure (e.g., Normal anatomical structure)"
-          />
-        </Grid>
+        {/* Lock / Unlock toggle */}
+        {!isNewRecord && (
+          <Tooltip title={isEditing ? 'Lock (read-only)' : 'Unlock (edit)'}>
+            <IconButton
+              onClick={() => setIsEditing(!isEditing)}
+            >
+              {isEditing ? <LockOpenIcon /> : <LockIcon />}
+            </IconButton>
+          </Tooltip>
+        )}
 
-        {/* Structure */}
-        <Grid item xs={12} sm={6}>
-          <TextField
-            id="structureInput"
-            fullWidth
-            label="Body Structure Location"
-            value={get(bodyStructure, 'includedStructure.0.structure.text',
-              get(bodyStructure, 'includedStructure.0.structure.coding.0.display', ''))}
-            onChange={(e) => handleChange('includedStructure', [{
-              structure: {
-                coding: [{
-                  system: 'http://snomed.info/sct',
-                  display: e.target.value
-                }],
-                text: e.target.value
-              }
-            }])}
-            disabled={!isEditing}
-            helperText="Where on the body (e.g., Left upper arm)"
-          />
-        </Grid>
-
-        {/* Patient */}
-        <Grid item xs={12}>
-          <TextField
-            id="patientDisplay"
-            fullWidth
-            label="Patient"
-            value={get(bodyStructure, 'patient.display', '')}
-            onChange={(e) => handleChange('patient.display', e.target.value)}
-            disabled={!isEditing}
-            InputProps={{
-              endAdornment: (
-                <InputAdornment position="end">
-                  <Tooltip title="Search for patient">
-                    <IconButton
-                      onClick={handleSearchPatient}
-                      edge="end"
-                      disabled={!isEditing}
-                    >
-                      <SearchIcon />
-                    </IconButton>
-                  </Tooltip>
-                </InputAdornment>
-              ),
-            }}
-          />
-        </Grid>
-
-        {/* Patient Reference (hidden but set) */}
-        <Grid item xs={12}>
-          <TextField
-            id="patientReference"
-            fullWidth
-            label="Patient Reference"
-            value={get(bodyStructure, 'patient.reference', '')}
-            disabled
-            size="small"
-            sx={{ display: 'none' }}
-          />
-        </Grid>
-      </Grid>
+        {/* Delete */}
+        {!isNewRecord && (
+          <Tooltip title="Delete">
+            <IconButton
+              onClick={handleDelete}
+              disabled={!isEditing}
+              sx={{ color: isEditing ? 'error.main' : 'text.disabled' }}
+            >
+              <DeleteIcon />
+              <Typography sx={{
+                position: 'absolute',
+                width: '1px',
+                height: '1px',
+                padding: 0,
+                margin: '-1px',
+                overflow: 'hidden',
+                clip: 'rect(0, 0, 0, 0)',
+                whiteSpace: 'nowrap',
+                borderWidth: 0
+              }}>Delete</Typography>
+            </IconButton>
+          </Tooltip>
+        )}
+      </Box>
     );
+  }
+
+  // Render the form view
+  function renderFormView() {
+    return (
+      <>
+        <BodyStructureFormView
+          resource={bodyStructure}
+          form={bodyStructure}
+          isEditing={isEditing}
+          onChange={handleChange}
+          isEmbedded={isEmbedded}
+          onSearchPatient={handleSearchPatient}
+        />
+
+        {/* In-form Save/Cancel bar when editing */}
+        {isEditing && !isEmbedded && (
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, mt: 3, pt: 2, borderTop: 1, borderColor: 'divider' }}>
+            <Button id="cancelButton" onClick={handleCancel}>
+              Cancel
+            </Button>
+            <Button
+              id="saveBodyStructureButton"
+              onClick={handleSave}
+              variant="contained"
+              color="primary"
+              disabled={isLoading}
+            >
+              {isLoading ? 'Saving...' : 'Save'}
+            </Button>
+          </Box>
+        )}
+      </>
+    );
+  }
+
+  // Render the preview view
+  function renderPreviewView() {
+    return <BodyStructurePreview resource={bodyStructure} form={bodyStructure} resourceId={id} />;
+  }
+
+  // In embedded mode, render form content without Container/Card wrapper
+  if (isEmbedded) {
+    return renderFormView();
   }
 
   return (
     <Container id="bodyStructureDetailPage" maxWidth="md" sx={{ py: 4 }}>
       <Card sx={{ boxShadow: 3 }}>
         <CardHeader
-          title={id && id !== 'new' ? 'Edit Body Structure' : 'New Body Structure'}
-          sx={{ bgcolor: 'primary.main', color: 'primary.contrastText' }}
+          title={headerTitle}
+          sx={{ borderBottom: 1, borderColor: 'divider' }}
+          action={renderHeaderActions()}
         />
         <CardContent>
-          {/* Barcode display for existing records */}
-          {(id && id !== 'new') && (
-            <Box sx={{ mb: 3, textAlign: 'right' }}>
-              <span className="barcode helveticas" style={{ fontSize: '2rem' }}>{id}</span>
-            </Box>
+          {error && (
+            <Typography color="error" sx={{ mb: 2 }}>
+              Error: {error}
+            </Typography>
           )}
 
-          <Grid container spacing={3}>
-            {/* Active Checkbox */}
-            <Grid item xs={12}>
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    id="activeCheckbox"
-                    checked={get(bodyStructure, 'active', true)}
-                    onChange={(e) => handleChange('active', e.target.checked)}
-                    disabled={!isEditing}
-                  />
-                }
-                label="Active"
-              />
-            </Grid>
-
-            {/* Description */}
-            <Grid item xs={12}>
-              <TextField
-                id="descriptionInput"
-                fullWidth
-                label="Description"
-                value={get(bodyStructure, 'description', '')}
-                onChange={(e) => handleChange('description', e.target.value)}
-                disabled={!isEditing}
-                multiline
-                rows={2}
-              />
-            </Grid>
-
-            {/* Morphology */}
-            <Grid item xs={12} sm={6}>
-              <TextField
-                id="morphologyInput"
-                fullWidth
-                label="Morphology"
-                value={get(bodyStructure, 'morphology.text', get(bodyStructure, 'morphology.coding.0.display', ''))}
-                onChange={(e) => handleChange('morphology', {
-                  coding: [{
-                    system: 'http://snomed.info/sct',
-                    display: e.target.value
-                  }],
-                  text: e.target.value
-                })}
-                disabled={!isEditing}
-                helperText="What type of structure (e.g., Normal anatomical structure)"
-              />
-            </Grid>
-
-            {/* Structure */}
-            <Grid item xs={12} sm={6}>
-              <TextField
-                id="structureInput"
-                fullWidth
-                label="Body Structure Location"
-                value={get(bodyStructure, 'includedStructure.0.structure.text',
-                  get(bodyStructure, 'includedStructure.0.structure.coding.0.display', ''))}
-                onChange={(e) => handleChange('includedStructure', [{
-                  structure: {
-                    coding: [{
-                      system: 'http://snomed.info/sct',
-                      display: e.target.value
-                    }],
-                    text: e.target.value
-                  }
-                }])}
-                disabled={!isEditing}
-                helperText="Where on the body (e.g., Left upper arm)"
-              />
-            </Grid>
-
-            {/* Patient */}
-            <Grid item xs={12}>
-              <TextField
-                id="patientDisplay"
-                fullWidth
-                label="Patient"
-                value={get(bodyStructure, 'patient.display', '')}
-                onChange={(e) => handleChange('patient.display', e.target.value)}
-                disabled={!isEditing}
-                InputProps={{
-                  endAdornment: (
-                    <InputAdornment position="end">
-                      <Tooltip title="Search for patient">
-                        <IconButton
-                          onClick={handleSearchPatient}
-                          edge="end"
-                          disabled={!isEditing}
-                        >
-                          <SearchIcon />
-                        </IconButton>
-                      </Tooltip>
-                    </InputAdornment>
-                  ),
-                }}
-              />
-            </Grid>
-
-            {/* Patient Reference (hidden but set) */}
-            <Grid item xs={12}>
-              <TextField
-                id="patientReference"
-                fullWidth
-                label="Patient Reference"
-                value={get(bodyStructure, 'patient.reference', '')}
-                disabled
-                size="small"
-                sx={{ display: 'none' }}
-              />
-            </Grid>
-          </Grid>
+          {viewMode === 'form' && renderFormView()}
+          {viewMode === 'page' && renderPreviewView()}
         </CardContent>
-        <CardActions sx={{ justifyContent: 'flex-end', p: 2 }}>
-          {!isEditing ? (
-            <>
-              <Button onClick={handleBack}>
-                Back
-              </Button>
-              <Button color="error" onClick={handleDelete}>
-                Delete
-              </Button>
-              <Button variant="contained" onClick={() => setIsEditing(true)}>
-                Edit
-              </Button>
-            </>
-          ) : (
-            <>
-              <Button onClick={handleCancel}>
-                Cancel
-              </Button>
-              <Button
-                id="saveBodyStructureButton"
-                variant="contained"
-                color="primary"
-                onClick={handleSave}
-                disabled={isLoading}
-              >
-                {isLoading ? 'Saving...' : (id && id !== 'new' ? 'Update' : 'Save')}
-              </Button>
-            </>
-          )}
-        </CardActions>
       </Card>
     </Container>
   );

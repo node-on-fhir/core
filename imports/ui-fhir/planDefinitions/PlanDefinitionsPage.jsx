@@ -220,11 +220,7 @@ export function PlanDefinitionsPage(props){
   }
   
   let layoutContent;
-  if(isLoading) {
-    layoutContent = <Box sx={{ textAlign: 'center', py: 4 }}>
-      <Typography>Loading plan definitions...</Typography>
-    </Box>
-  } else if(data.planDefinitions.length > 0){
+  if(data.planDefinitions.length > 0){
     layoutContent = <Card 
       sx={{ 
         width: '100%',

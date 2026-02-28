@@ -1,465 +1,345 @@
-// =======================================================================
-// Using DSTU2  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-//
-// https://www.hl7.org/fhir/DSTU2/operationOutcomes.html
-//
-//
-// =======================================================================
+// /imports/ui-fhir/operationOutcomes/OperationOutcomeDetail.jsx
 
-import React from 'react';
-import PropTypes from 'prop-types';
-
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useTracker } from 'meteor/react-meteor-data';
 
-import { 
+import {
   Button,
   Card,
-  Checkbox,
-  CardActions,
   CardContent,
   CardHeader,
-  Grid,
-  TextField,
-  Select,
-  MenuItem,
+  Container,
+  IconButton,
+  Tooltip,
+  Typography,
+  Box
 } from '@mui/material';
+
+import ArticleIcon from '@mui/icons-material/Article';
+import EditNoteIcon from '@mui/icons-material/EditNote';
+import LockIcon from '@mui/icons-material/Lock';
+import LockOpenIcon from '@mui/icons-material/LockOpen';
+import DeleteIcon from '@mui/icons-material/Delete';
 
 import { get, set } from 'lodash';
 
+import { Meteor } from 'meteor/meteor';
+import { Session } from 'meteor/session';
 
-export class OperationOutcomeDetail extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      operationOutcomeId: false,
-      operationOutcome: {
-        resourceType: "OperationOutcome",
-        patient: {
-          reference: "",
+import OperationOutcomeFormView from './OperationOutcomeFormView';
+import OperationOutcomePreview from './OperationOutcomePreview';
+
+// Attempt to import collection; may not exist in all configurations
+var OperationOutcomes;
+try {
+  OperationOutcomes = require('/imports/lib/schemas/SimpleSchemas/OperationOutcomes').OperationOutcomes;
+} catch (e) {
+  console.warn('[OperationOutcomeDetail] OperationOutcomes collection not available');
+}
+
+function OperationOutcomeDetail(props) {
+  // Embedded mode support (for HoneycombFhirResource dispatcher)
+  var isEmbedded = props.embedded || false;
+
+  var _rawNavigate = useNavigate();
+  var navigate = isEmbedded ? function() {} : _rawNavigate;
+  var _params = isEmbedded ? {} : useParams();
+  var id = _params.id || null;
+  const [searchParams, setSearchParams] = useSearchParams();
+  const viewMode = searchParams.get('view') || 'form';
+
+  // Subscribe to operation outcome data
+  const isSubscriptionReady = useTracker(function() {
+    if (isEmbedded) return true;
+    if (id && id !== 'new') {
+      const handle = Meteor.subscribe('autopublish.OperationOutcomes', {}, {});
+      return handle.ready();
+    }
+    return true;
+  }, [id]);
+
+  // Initialize state with proper FHIR R4 structure
+  const [operationOutcome, setOperationOutcome] = useState({
+    resourceType: "OperationOutcome",
+    issue: [{
+      severity: "",
+      code: "",
+      diagnostics: "",
+      details: {
+        coding: [{
+          system: "",
+          code: "",
           display: ""
-        },
-        asserter: {
-          reference: "",
-          display: ""
-        },
-        dateRecorded: null,
-        code: {
-          coding: [
-            {
-              system: "http://snomed.info/sct",
-              code: "",
-              display: ""
-            }
-          ]
-        },
-        clinicalStatus: "active",
-        verificationStatus: "confirmed",
-        operationOutcome: [],
-        onsetDateTime: null
-      }, 
-      form: {
-        patientDisplay: '',
-        asserterDisplay: '',
-        snomedCode: '',
-        snomedDisplay: '',
-        clinicalStatus: '',
-        verificationStatus: '',
-        operationOutcomeDisplay: '',
-        onsetDateTime: ''
-      }
-    }
-  }
-  dehydrateFhirResource(operationOutcome) {
-    let formData = Object.assign({}, this.state.form);
+        }],
+        text: ""
+      },
+      expression: [""],
+      location: [""]
+    }]
+  });
 
-    formData.patientDisplay = get(operationOutcome, 'patient.display')
-    formData.asserterDisplay = get(operationOutcome, 'asserter.display')    
-    formData.snomedCode = get(operationOutcome, 'code.coding[0].code')
-    formData.snomedDisplay = get(operationOutcome, 'code.coding[0].display')
-    formData.clinicalStatus = get(operationOutcome, 'clinicalStatus')
-    formData.verificationStatus = get(operationOutcome, 'verificationStatus')
-    formData.onsetDateTime = get(operationOutcome, 'onsetDateTime')
-
-    return formData;
-  }
-  shouldComponentUpdate(nextProps){
-    get(Meteor, 'settings.public.logging') === "debug" && console.log('OperationOutcomeDetail.shouldComponentUpdate()', nextProps, this.state)
-    let shouldUpdate = true;
-
-    // received an operationOutcome from the table; okay lets update again
-    if(nextProps.operationOutcomeId !== this.state.operationOutcomeId){
-      
-      if(nextProps.operationOutcome){
-        this.setState({operationOutcome: nextProps.operationOutcome})     
-        this.setState({form: this.dehydrateFhirResource(nextProps.operationOutcome)})       
-      }
-
-      this.setState({operationOutcomeId: nextProps.operationOutcomeId})
-      shouldUpdate = true;
+  // Initialise from fhirResource prop when in embedded mode
+  var hasReceivedProps = React.useRef(false);
+  useEffect(function() {
+    if (isEmbedded && props.fhirResource) {
+      hasReceivedProps.current = true;
+      setOperationOutcome(function(prev) {
+        if (JSON.stringify(props.fhirResource) !== JSON.stringify(prev)) {
+          return props.fhirResource;
+        }
+        return prev;
+      });
     }
+  }, [props.fhirResource]);
 
-    // both false; don't take any more updates
-    if(nextProps.operationOutcome === this.state.operationOutcome){
-      shouldUpdate = false;
-    }
- 
-    return shouldUpdate;
-  }
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [isEditing, setIsEditing] = useState(isEmbedded);
 
-  getMeteorData() {
-    let data = {
-      operationOutcomeId: this.props.operationOutcomeId,
-      operationOutcome: false,
-      showDatePicker: false,
-      form: this.state.form
-    };
+  const isNewOutcome = !id || id === 'new';
+  const isExistingOutcome = id && id !== 'new';
 
-    if(this.props.showDatePicker){
-      data.showDatePicker = this.props.showDatePicker
-    }
-    if(this.props.operationOutcome){
-      data.operationOutcome = this.props.operationOutcome;
-      data.form = this.dehydrateFhirResource(this.props.operationOutcome);
-    }
-
-    return data;
-  }
-  renderDatePicker(showDatePicker, form){
-    let datePickerValue;
-
-    if(get(form, 'onsetDateTime')){
-      datePickerValue = get(form, 'onsetDateTime');
-    }
-    if(get(form, 'onsetPeriod.start')){
-      datePickerValue = get(form, 'onsetPeriod.start');
-    }
-    if (typeof datePickerValue === "string"){
-      datePickerValue = new Date(datePickerValue);
-    }
-    if (showDatePicker) {
-      return (<div></div>)
-      // return (
-      //   <DatePicker 
-      //     name='onsetDateTime'
-      //     hintText="Onset Date" 
-      //     container="inline" 
-      //     mode="landscape"
-      //     value={ datePickerValue ? datePickerValue : null }    
-      //     onChange={ this.changeState.bind(this, 'onsetDateTime')}      
-      //     />
-      // );      
-    }
-  }
-  setHint(text){
-    if(this.props.showHints !== false){
-      return text;
+  // Set default values on component mount
+  useEffect(function() {
+    if (!id || id === 'new') {
+      setIsEditing(true);
     } else {
-      return '';
+      setIsEditing(false);
+    }
+  }, [id]);
+
+  // Load operation outcome from collection
+  useEffect(function() {
+    if (id && id !== 'new' && OperationOutcomes) {
+      console.log('[OperationOutcomeDetail] Loading operation outcome from collection');
+      var existingOutcome = OperationOutcomes.findOne({_id: id});
+      if (!existingOutcome) {
+        existingOutcome = OperationOutcomes.findOne({id: id});
+      }
+
+      if (existingOutcome) {
+        console.log('[OperationOutcomeDetail] Loaded operation outcome:', existingOutcome._id);
+        setOperationOutcome(existingOutcome);
+        setIsEditing(false);
+      } else {
+        console.warn('[OperationOutcomeDetail] Operation outcome not found:', id);
+        setError('Operation outcome not found');
+      }
+    }
+  }, [id, isSubscriptionReady]);
+
+  // Handle field changes
+  function handleChange(path, value) {
+    var updatedOutcome = { ...operationOutcome };
+    set(updatedOutcome, path, value);
+    setOperationOutcome(updatedOutcome);
+
+    // Notify parent of changes in embedded mode
+    if (props.onResourceChange) {
+      props.onResourceChange(updatedOutcome);
     }
   }
-  render() {
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log('OperationOutcomeDetail.render()', this.state)
 
+  // Handle save
+  async function handleSave() {
+    setLoading(true);
+    setError(null);
+
+    console.log('[OperationOutcomeDetail] Saving operation outcome:', operationOutcome);
+
+    try {
+      if (isExistingOutcome) {
+        await Meteor.callAsync('operationOutcomes.update', id, operationOutcome);
+        console.log('[OperationOutcomeDetail] Operation outcome updated successfully');
+        setIsEditing(false);
+      } else {
+        var newId = await Meteor.callAsync('operationOutcomes.create', operationOutcome);
+        console.log('[OperationOutcomeDetail] Operation outcome created with ID:', newId);
+        navigate('/operation-outcomes');
+      }
+    } catch (err) {
+      console.error('[OperationOutcomeDetail] Error saving operation outcome:', err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  // Handle delete
+  async function handleDelete() {
+    if (!isExistingOutcome) return;
+
+    if (window.confirm('Are you sure you want to delete this operation outcome?')) {
+      setLoading(true);
+      try {
+        await Meteor.callAsync('operationOutcomes.remove', id);
+        console.log('[OperationOutcomeDetail] Operation outcome deleted successfully');
+        navigate('/operation-outcomes');
+      } catch (err) {
+        console.error('[OperationOutcomeDetail] Error deleting operation outcome:', err);
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    }
+  }
+
+  // Handle cancel
+  function handleCancel() {
+    if (isExistingOutcome) {
+      setIsEditing(false);
+      setError(null);
+      if (OperationOutcomes) {
+        var existingOutcome = OperationOutcomes.findOne({_id: id});
+        if (existingOutcome) {
+          setOperationOutcome(existingOutcome);
+        }
+      }
+    } else {
+      navigate('/operation-outcomes');
+    }
+  }
+
+  // Build the header title
+  var headerTitle = 'New OperationOutcome';
+  if (isExistingOutcome) {
+    headerTitle = <span className="barcode helveticas" style={{ fontSize: '1.5rem' }}>{id}</span>;
+  }
+
+  // Build the header action buttons
+  function renderHeaderActions() {
     return (
-      <div id={this.props.id} className="operationOutcomeDetail">
-        <CardContent>
-          <Grid container spacing={3}>
-            <Grid item xs={6}>
-              <TextField
-                id='patientDisplayInput'
-                name='patientDisplay'
-                label='Patient'
-                value={ get(this, 'data.form.patientDisplay', '') }
-                onChange={ this.changeState.bind(this, 'patientDisplay')}
-                hintText={ this.setHint('Jane Doe') }
-                //floatingLabelFixed={true}
-                fullWidth
-                /><br/>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+        {/* Preview toggle - hidden for new outcomes */}
+        {!isNewOutcome && (
+          <Tooltip title="Preview">
+            <IconButton
+              onClick={function() { setSearchParams({ view: 'page' }); }}
+              sx={{
+                color: viewMode === 'page' ? 'primary.main' : 'text.secondary'
+              }}
+            >
+              <ArticleIcon />
+            </IconButton>
+          </Tooltip>
+        )}
 
-              <TextField
-                id='asserterDisplayInput'
-                name='asserterDisplay'
-                label='Asserter'
-                value={ get(this, 'data.form.asserterDisplay', '') }
-                onChange={ this.changeState.bind(this, 'asserterDisplay')}
-                hintText={ this.setHint('Nurse Jackie') }
-                //floatingLabelFixed={true}
-                fullWidth
-                /><br/>
+        {/* Form toggle - hidden for new outcomes (always form) */}
+        {!isNewOutcome && (
+          <Tooltip title="Form">
+            <IconButton
+              onClick={function() { setSearchParams({ view: 'form' }); }}
+              sx={{
+                color: viewMode === 'form' ? 'primary.main' : 'text.secondary'
+              }}
+            >
+              <EditNoteIcon />
+            </IconButton>
+          </Tooltip>
+        )}
 
-              <TextField
-                id='snomedCodeInput'
-                name='snomedCode'
-                label='SNOMED Code'
-                value={ get(this, 'data.form.snomedCode', '') }
-                hintText={ this.setHint('307343001') }
-                onChange={ this.changeState.bind(this, 'snomedCode')}
-                //floatingLabelFixed={true}
-                fullWidth
-                /><br/>
+        {/* Lock / Unlock toggle - only for existing outcomes */}
+        {!isNewOutcome && (
+          <Tooltip title={isEditing ? 'Lock (read-only)' : 'Unlock (edit)'}>
+            <IconButton
+              onClick={function() { setIsEditing(!isEditing); }}
+            >
+              {isEditing ? <LockOpenIcon /> : <LockIcon />}
+            </IconButton>
+          </Tooltip>
+        )}
 
-              <TextField
-                id='snomedDisplayInput'
-                name='snomedDisplay'
-                label='SNOMED Display'
-                value={ get(this, 'data.form.snomedDisplay', '') }
-                onChange={ this.changeState.bind(this, 'snomedDisplay')}
-                hintText={ this.setHint('Acquired hemoglobin H disease (disorder)') }
-                //floatingLabelFixed={true}
-                fullWidth
-                /><br/>
-
-              <TextField
-                id='clinicalStatusInput'
-                name='clinicalStatus'
-                label='Clinical Status'
-                value={ get(this, 'data.form.clinicalStatus', '') }
-                hintText={ this.setHint('active | recurrence | inactive | remission | resolved') }
-                onChange={ this.changeState.bind(this, 'clinicalStatus')}
-                //floatingLabelFixed={true}
-                fullWidth
-                /><br/>
-
-              <TextField
-                id='verificationStatusInput'
-                name='verificationStatus'
-                label='Verification Status'
-                value={ get(this, 'data.form.verificationStatus', '') }
-                hintText={ this.setHint('provisional | differential | confirmed | refuted | entered-in-error | unknown') }
-                onChange={ this.changeState.bind(this, 'verificationStatus')}
-                //floatingLabelFixed={true}
-                fullWidth
-                /><br/>
-            </Grid>
-            <Grid item xs={6}>
-            </Grid>
-          </Grid>
-
-          <br/>
-          { this.renderDatePicker(this.data.showDatePicker, get(this, 'data.form') ) }
-          <br/>
-
-          <a href='http://browser.ihtsdotools.org/?perspective=full&conceptId1=404684003&edition=us-edition&release=v20180301&server=https://prod-browser-exten.ihtsdotools.org/api/snomed&langRefset=900000000000509007'>Lookup codes with the SNOMED CT Browser</a>
-
-        </CardContent>
-        <CardActions>
-          { this.determineButtons(this.state.operationOutcomeId) }
-        </CardActions>
-      </div>
+        {/* Delete - only for existing outcomes, gated on edit mode */}
+        {!isNewOutcome && (
+          <Tooltip title="Delete">
+            <IconButton
+              onClick={handleDelete}
+              disabled={!isEditing}
+              sx={{ color: isEditing ? 'error.main' : 'text.disabled' }}
+            >
+              <DeleteIcon />
+              <Typography sx={{
+                position: 'absolute',
+                width: '1px',
+                height: '1px',
+                padding: 0,
+                margin: '-1px',
+                overflow: 'hidden',
+                clip: 'rect(0, 0, 0, 0)',
+                whiteSpace: 'nowrap',
+                borderWidth: 0
+              }}>Delete</Typography>
+            </IconButton>
+          </Tooltip>
+        )}
+      </Box>
     );
   }
 
-  determineButtons(operationOutcomeId){
-    if (operationOutcomeId) {
-      return (
-        <div>
-          <Button id="updateOperationOutcomeButton" primary={true} onClick={this.handleSaveButton.bind(this)} style={{marginRight: '20px'}} >Save</Button>
-          <Button id="deleteOperationOutcomeButton" onClick={this.handleDeleteButton.bind(this)} >Delete</Button>
-        </div>
-      );
-    } else {
-      return(
-        <Button id="saveOperationOutcomeButton" primary={true} onClick={this.handleSaveButton.bind(this)} >Save</Button>
-      );
-    }
+  // Render the form view
+  function renderFormView() {
+    return (
+      <>
+        <OperationOutcomeFormView
+          resource={operationOutcome}
+          isEditing={isEditing}
+          onChange={handleChange}
+          isEmbedded={isEmbedded}
+        />
+
+        {/* In-form Save/Cancel bar when editing */}
+        {isEditing && !isEmbedded && (
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, mt: 3, pt: 2, borderTop: 1, borderColor: 'divider' }}>
+            <Button id="cancelButton" onClick={handleCancel}>
+              Cancel
+            </Button>
+            <Button
+              id="saveOperationOutcomeButton"
+              onClick={handleSave}
+              variant="contained"
+              color="primary"
+              disabled={loading}
+            >
+              {loading ? 'Saving...' : 'Save'}
+            </Button>
+          </Box>
+        )}
+      </>
+    );
   }
 
-
-  updateFormData(formData, field, textValue){
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log("OperationOutcomeDetail.updateFormData", formData, field, textValue);
-
-    switch (field) {
-      case "patientDisplay":
-        set(formData, 'patientDisplay', textValue)
-        break;
-      case "asserterDisplay":
-        set(formData, 'asserterDisplay', textValue)
-        break;        
-      case "verificationStatus":
-        set(formData, 'verificationStatus', textValue)
-        break;
-      case "clinicalStatus":
-        set(formData, 'clinicalStatus', textValue)
-        break;
-      case "snomedCode":
-        set(formData, 'snomedCode', textValue)
-        break;
-      case "snomedDisplay":
-        set(formData, 'snomedDisplay', textValue)
-        break;
-      case "operationOutcomeDisplay":
-        set(formData, 'operationOutcomeDisplay', textValue)
-        break;
-      case "onsetDateTime":
-        set(formData, 'onsetDateTime', textValue)
-        break;
-      default:
-    }
-
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log("formData", formData);
-    return formData;
-  }
-  updateOperationOutcome(operationOutcomeData, field, textValue){
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log("OperationOutcomeDetail.updateOperationOutcome", operationOutcomeData, field, textValue);
-
-    switch (field) {
-      case "patientDisplay":
-        set(operationOutcomeData, 'patient.display', textValue)
-        break;
-      case "asserterDisplay":
-        set(operationOutcomeData, 'asserter.display', textValue)
-        break;
-      case "verificationStatus":
-        set(operationOutcomeData, 'verificationStatus', textValue)
-        break;
-      case "clinicalStatus":
-        set(operationOutcomeData, 'clinicalStatus', textValue)
-        break;
-      case "snomedCode":
-        set(operationOutcomeData, 'code.coding[0].code', textValue)
-        break;
-      case "snomedDisplay":
-        set(operationOutcomeData, 'code.coding[0].display', textValue)
-        break;
-      case "operationOutcomeDisplay":
-        set(operationOutcomeData, 'operationOutcome[0].detail[0].display', textValue)
-        break;  
-      case "datePicker":
-        set(operationOutcomeData, 'onsetDateTime', textValue)
-        break;
-      case "onsetDateTime":
-        set(operationOutcomeData, 'onsetDateTime', textValue)
-        break;
-  
-    }
-    return operationOutcomeData;
-  }
-  componentDidUpdate(props){
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log('OperationOutcomeDisplay.componentDidUpdate()', props, this.state)
-  }
-  // this could be a mixin
-  changeState(field, event, textValue){
-
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log("   ");
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log("OperationOutcomeDetail.changeState", field, textValue);
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log("this.state", this.state);
-
-    let formData = Object.assign({}, this.state.form);
-    let operationOutcomeData = Object.assign({}, this.state.operationOutcome);
-
-    formData = this.updateFormData(formData, field, textValue);
-    operationOutcomeData = this.updateOperationOutcome(operationOutcomeData, field, textValue);
-
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log("operationOutcomeData", operationOutcomeData);
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log("formData", formData);
-
-    this.setState({operationOutcome: operationOutcomeData})
-    this.setState({form: formData})
-
+  // Render the preview view
+  function renderPreviewView() {
+    return <OperationOutcomePreview resource={operationOutcome} resourceId={id} />;
   }
 
-  handleSaveButton(){
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log('^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^&&')
-    console.log('Saving a new OperationOutcome...', this.state)
-
-    let self = this;
-    let fhirOperationOutcomeData = Object.assign({}, this.state.operationOutcome);
-
-    if(get(Meteor, 'settings.public.logging') === "debug") console.log('fhirOperationOutcomeData', fhirOperationOutcomeData);
-
-
-    let operationOutcomeValidator = OperationOutcomeSchema.newContext();
-    operationOutcomeValidator.validate(fhirOperationOutcomeData)
-
-    console.log('IsValid: ', operationOutcomeValidator.isValid())
-    console.log('ValidationErrors: ', operationOutcomeValidator.validationErrors());
-
-    if (this.state.operationOutcomeId) {
-      if(get(Meteor, 'settings.public.logging') === "debug") console.log("Updating OperationOutcome...");
-      delete fhirOperationOutcomeData._id;
-
-      OperationOutcomes._collection.update(
-        {_id: this.state.operationOutcomeId}, {$set: fhirOperationOutcomeData }, function(error, result) {
-          if (error) {
-            console.log("error", error);
-            // Bert.alert(error.reason, 'danger');
-          }
-          if (result) {
-            if(self.props.onUpdate){
-              self.props.onUpdate(self.data.operationOutcomeId);
-            }
-            // Bert.alert('OperationOutcome updated!', 'success');
-          }
-        });
-    } else {
-
-      if(get(Meteor, 'settings.public.logging') === "debug") console.log("Create a new OperationOutcome", fhirOperationOutcomeData);
-
-      OperationOutcomes._collection.insert(fhirOperationOutcomeData, function(error, result) {
-        if (error) {
-          console.log("error", error);
-          // Bert.alert(error.reason, 'danger');
-        }
-        if (result) {
-          if(self.props.onInsert){
-            self.props.onInsert(self.data.operationOutcomeId);
-          }
-          // Bert.alert('OperationOutcome added!', 'success');
-        }
-      });
-    }
+  // In embedded mode, render form content without Container/Card wrapper
+  if (isEmbedded) {
+    return renderFormView();
   }
 
-  handleCancelButton(){
-    if(this.props.onCancel){
-      this.props.onCancel();
-    }
-  }
+  return (
+    <Container id="operationOutcomeDetailPage" maxWidth="md" sx={{ py: 4 }}>
+      <Card sx={{ boxShadow: 3 }}>
+        <CardHeader
+          title={headerTitle}
+          sx={{ borderBottom: 1, borderColor: 'divider' }}
+          action={renderHeaderActions()}
+        />
+        <CardContent>
+          {error && (
+            <Typography color="error" sx={{ mb: 2 }}>
+              Error: {error}
+            </Typography>
+          )}
 
-  handleDeleteButton(){
-    console.log('OperationOutcomeDetail.handleDeleteButton()', this.state.operationOutcomeId)
-
-    let self = this;
-    OperationOutcomes._collection.remove({_id: this.state.operationOutcomeId}, function(error, result){
-      if (error) {
-        // Bert.alert(error.reason, 'danger');
-      }
-      if (result) {
-        if(this.props.onInsert){
-          this.props.onInsert(self.data.operationOutcomeId);
-        }
-        // Bert.alert('OperationOutcome removed!', 'success');
-      }
-    });
-  }
+          {viewMode === 'form' && renderFormView()}
+          {viewMode === 'page' && renderPreviewView()}
+        </CardContent>
+      </Card>
+    </Container>
+  );
 }
 
-OperationOutcomeDetail.propTypes = {
-  id: PropTypes.string,
-  operationOutcomeId: PropTypes.oneOfType([PropTypes.string, PropTypes.bool]),
-  operationOutcome: PropTypes.oneOfType([PropTypes.object, PropTypes.bool]),
-  showDatePicker: PropTypes.bool,
-  showHints: PropTypes.bool,
-  onInsert: PropTypes.func,
-  onUpdate: PropTypes.func,
-  onRemove: PropTypes.func,
-  onCancel: PropTypes.func
-};
-
-
-// Embedded mode wrapper for HoneycombFhirResource dispatcher
-function OperationOutcomeDetailEmbeddedWrapper(props) {
-  var isEmbedded = props.embedded || false;
-  var fhirResource = props.fhirResource;
-  var onResourceChange = props.onResourceChange;
-
-  // Pass through to legacy class component
-  var classProps = Object.assign({}, props);
-  if (isEmbedded && fhirResource) {
-    classProps.operationOutcome = fhirResource;
-  }
-
-  return React.createElement(OperationOutcomeDetail, classProps);
-}
-
-export default OperationOutcomeDetailEmbeddedWrapper;
+export default OperationOutcomeDetail;

@@ -1,44 +1,28 @@
 // /imports/ui-fhir/questionnaireResponses/QuestionnaireResponseDetail.jsx
 
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useTracker } from 'meteor/react-meteor-data';
 
-import { 
-  Alert,
-  Box,
+import {
   Button,
   Card,
-  CardActions,
   CardContent,
   CardHeader,
-  Chip,
   Container,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogContentText,
-  DialogTitle,
-  FormControl,
-  Grid,
   IconButton,
-  InputAdornment,
-  InputLabel,
-  MenuItem,
-  Select,
-  Stack,
-  TextField,
   Tooltip,
-  Typography
+  Typography,
+  Box
 } from '@mui/material';
 
-import EditIcon from '@mui/icons-material/Edit';
+import ArticleIcon from '@mui/icons-material/Article';
+import EditNoteIcon from '@mui/icons-material/EditNote';
 import LockIcon from '@mui/icons-material/Lock';
 import LockOpenIcon from '@mui/icons-material/LockOpen';
-import SearchIcon from '@mui/icons-material/Search';
-import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import DeleteIcon from '@mui/icons-material/Delete';
 
-import { get, set, has, cloneDeep } from 'lodash';
+import { get, set, cloneDeep } from 'lodash';
 import moment from 'moment';
 
 import { Meteor } from 'meteor/meteor';
@@ -47,6 +31,9 @@ import { Random } from 'meteor/random';
 
 import PatientSearchDialog from '/imports/components/PatientSearchDialog';
 import { FhirUtilities } from '/imports/lib/FhirUtilities';
+
+import QuestionnaireResponseFormView from './QuestionnaireResponseFormView';
+import QuestionnaireResponsePreview from './QuestionnaireResponsePreview';
 
 // Collections are initialized globally
 let QuestionnaireResponses;
@@ -65,17 +52,10 @@ function QuestionnaireResponseDetail(props) {
   var navigate = isEmbedded ? function() {} : _rawNavigate;
   var _params = isEmbedded ? {} : useParams();
   var id = _params.id || null;
-  
-  console.log('QuestionnaireResponseDetail mounted with id:', id);
-  console.log('Type of id:', typeof id);
-  console.log('id === "new":', id === 'new');
-  console.log('id is undefined:', id === undefined);
-  console.log('pathname:', window.location.pathname);
-  
+
   // Check if we're creating a new response
   const isNew = !id || window.location.pathname.endsWith('/new');
-  console.log('isNew:', isNew);
-  
+
   // State
   const [questionnaireResponse, setQuestionnaireResponse] = useState({
     resourceType: 'QuestionnaireResponse',
@@ -83,6 +63,34 @@ function QuestionnaireResponseDetail(props) {
     status: 'in-progress',
     authored: moment().format('YYYY-MM-DDTHH:mm:ss')
   });
+
+  const [questionnaireResponseId, setQuestionnaireResponseId] = useState(false);
+
+  const [form, setForm] = useState({
+    identifier: '',
+    status: 'in-progress',
+    subject: '',
+    author: '',
+    questionnaire: '',
+    questionnaireDisplay: '',
+    authored: moment().format('YYYY-MM-DDTHH:mm'),
+    source: '',
+    basedOn: '',
+    partOf: '',
+    reasonCode: '',
+    reasonDisplay: '',
+    notes: ''
+  });
+
+  const [isEditing, setIsEditing] = useState(isEmbedded || isNew);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const viewMode = searchParams.get('view') || 'form';
+  const [showPatientSearch, setShowPatientSearch] = useState(false);
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const isNewResponse = !id || id === 'new' || isNew;
+  const isExistingResponse = questionnaireResponseId && questionnaireResponseId !== 'new';
 
   // Initialise from fhirResource prop when in embedded mode
   var hasReceivedProps = React.useRef(false);
@@ -97,13 +105,6 @@ function QuestionnaireResponseDetail(props) {
       });
     }
   }, [props.fhirResource]);
-
-
-  const [isEditing, setIsEditing] = useState(isEmbedded || isNew);
-  const [showPatientSearch, setShowPatientSearch] = useState(false);
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
 
   // Subscribe to data
   useTracker(function(){
@@ -122,52 +123,53 @@ function QuestionnaireResponseDetail(props) {
 
   // Load questionnaire response if editing
   useEffect(function() {
-    async function loadQuestionnaireResponse() {
-      console.log('loadQuestionnaireResponse called with id:', id, 'isNew:', isNew);
-      console.log('QuestionnaireResponses collection available:', !!QuestionnaireResponses);
-      
-      if (id && !isNew) {
+    if (id && !isNew) {
+      setQuestionnaireResponseId(id);
+      setIsEditing(false);
+
+      async function loadQuestionnaireResponse() {
         try {
           setLoading(true);
-          
-          // First, try to get from local collection if available
+
+          let localResponse = null;
           if (QuestionnaireResponses) {
-            let localResponse = QuestionnaireResponses.findOne(id) || 
-                                QuestionnaireResponses.findOne({_id: id}) || 
-                                QuestionnaireResponses.findOne({id: id});
-            if (localResponse) {
-              console.log('Found questionnaire response in local collection:', localResponse);
-              
-              // Extract questionnaireDisplay from extension if present
-              if (localResponse.extension && Array.isArray(localResponse.extension)) {
-                const displayExtension = localResponse.extension.find(ext => 
-                  ext.url === 'http://example.org/fhir/StructureDefinition/questionnaire-display'
-                );
-                if (displayExtension && displayExtension.valueString) {
-                  localResponse.questionnaireDisplay = displayExtension.valueString;
-                }
-              }
-              
-              setQuestionnaireResponse(localResponse);
-              setLoading(false);
-              return;
-            }
+            localResponse = QuestionnaireResponses.findOne({_id: id}) ||
+                            QuestionnaireResponses.findOne({id: id});
           }
-          
-          // If not found locally, call the method
-          console.log('Calling method to get questionnaire response...');
-          const response = await Meteor.callAsync('questionnaireResponses.get', id);
-          if (response) {
+
+          if (!localResponse) {
+            const response = await Meteor.callAsync('questionnaireResponses.get', id);
+            localResponse = response;
+          }
+
+          if (localResponse) {
             // Extract questionnaireDisplay from extension if present
-            if (response.extension && Array.isArray(response.extension)) {
-              const displayExtension = response.extension.find(ext => 
-                ext.url === 'http://example.org/fhir/StructureDefinition/questionnaire-display'
-              );
+            if (localResponse.extension && Array.isArray(localResponse.extension)) {
+              const displayExtension = localResponse.extension.find(function(ext){
+                return ext.url === 'http://example.org/fhir/StructureDefinition/questionnaire-display';
+              });
               if (displayExtension && displayExtension.valueString) {
-                response.questionnaireDisplay = displayExtension.valueString;
+                localResponse.questionnaireDisplay = displayExtension.valueString;
               }
             }
-            setQuestionnaireResponse(response);
+
+            setQuestionnaireResponse(localResponse);
+
+            setForm({
+              identifier: get(localResponse, 'identifier[0].value', ''),
+              status: get(localResponse, 'status', 'in-progress'),
+              subject: get(localResponse, 'subject.display', ''),
+              author: get(localResponse, 'author.display', ''),
+              questionnaire: get(localResponse, 'questionnaire', ''),
+              questionnaireDisplay: get(localResponse, 'questionnaireDisplay', ''),
+              authored: moment(get(localResponse, 'authored', '')).format('YYYY-MM-DDTHH:mm'),
+              source: get(localResponse, 'source.display', ''),
+              basedOn: get(localResponse, 'basedOn[0].reference', ''),
+              partOf: get(localResponse, 'partOf[0].reference', ''),
+              reasonCode: get(localResponse, 'reasonCode[0].coding[0].code', ''),
+              reasonDisplay: get(localResponse, 'reasonCode[0].coding[0].display', ''),
+              notes: get(localResponse, 'note[0].text', '')
+            });
           } else {
             setError('Questionnaire response not found');
           }
@@ -178,713 +180,385 @@ function QuestionnaireResponseDetail(props) {
           setLoading(false);
         }
       }
-    }
-    loadQuestionnaireResponse();
-  }, [id, isNew, QuestionnaireResponses]);
+      loadQuestionnaireResponse();
+    } else if (isNew) {
+      setIsEditing(true);
 
-  // Set patient info when selected patient changes
-  useEffect(function() {
-    if (selectedPatient && isEditing) {
-      handleChange('subject.reference', `Patient/${selectedPatient._id}`);
-      handleChange('subject.display', FhirUtilities.pluckName(selectedPatient));
-    }
-  }, [selectedPatient, isEditing]);
+      // Set patient info from session
+      const patient = Session.get('selectedPatient');
+      let patientDisplay = '';
+      let patientReference = '';
+      if (patient) {
+        patientReference = 'Patient/' + get(patient, '_id', '');
+        patientDisplay = FhirUtilities.pluckName(patient);
+      }
 
-  // Set author info for new records
-  useEffect(function() {
-    if (isNew && Meteor.user()) {
-      const user = Meteor.user();
-      const authorName = get(user, 'profile.name.text', user.username || 'Unknown User');
-      handleChange('author.display', authorName);
-      handleChange('author.reference', `Practitioner/${user._id}`);
+      // Set author info
+      let authorDisplay = '';
+      let authorReference = '';
+      if (Meteor.user()) {
+        const user = Meteor.user();
+        authorDisplay = get(user, 'profile.name.text', user.username || 'Unknown User');
+        authorReference = 'Practitioner/' + user._id;
+      }
+
+      let newResponse = {
+        resourceType: 'QuestionnaireResponse',
+        questionnaire: '',
+        status: 'in-progress',
+        authored: moment().format('YYYY-MM-DDTHH:mm:ss'),
+        subject: {
+          reference: patientReference,
+          display: patientDisplay
+        },
+        author: {
+          reference: authorReference,
+          display: authorDisplay
+        }
+      };
+
+      setQuestionnaireResponse(newResponse);
+      setForm({
+        identifier: '',
+        status: 'in-progress',
+        subject: patientDisplay,
+        author: authorDisplay,
+        questionnaire: '',
+        questionnaireDisplay: '',
+        authored: moment().format('YYYY-MM-DDTHH:mm'),
+        source: '',
+        basedOn: '',
+        partOf: '',
+        reasonCode: '',
+        reasonDisplay: '',
+        notes: ''
+      });
     }
   }, [id]);
 
-  function handleChange(path, value) {
-    const updatedResponse = cloneDeep(questionnaireResponse);
-    set(updatedResponse, path, value);
-    setQuestionnaireResponse(updatedResponse);
-  
+  function handleChange(name, value) {
+    const newForm = Object.assign({}, form);
+    newForm[name] = value;
+    setForm(newForm);
+
     // Notify parent of changes in embedded mode
     if (props.onResourceChange) {
-      props.onResourceChange(updatedResponse);
+      props.onResourceChange(newForm);
     }
   }
 
-  function handleSearchUser() {
+  function handleSearchPatient() {
     setShowPatientSearch(true);
   }
 
   function handleSelectPatient(patient) {
     if (patient) {
-      handleChange('subject.reference', `Patient/${patient._id}`);
-      handleChange('subject.display', FhirUtilities.pluckName(patient));
+      const updatedResponse = cloneDeep(questionnaireResponse);
+      set(updatedResponse, 'subject.reference', 'Patient/' + patient._id);
+      set(updatedResponse, 'subject.display', FhirUtilities.pluckName(patient));
+      setQuestionnaireResponse(updatedResponse);
+
+      handleChange('subject', FhirUtilities.pluckName(patient));
     }
     setShowPatientSearch(false);
   }
 
-  async function handleSave() {
-    console.log('handleSave called');
-    console.log('Current ID:', id);
-    console.log('Is new:', isNew);
-    
+  async function handleSaveButton() {
     try {
       setLoading(true);
       setError('');
 
-      // Log the current form data
-      console.log('Current questionnaireResponse state:', questionnaireResponse);
-      
-      // Create a minimal valid QuestionnaireResponse
       const responseToSave = {
         resourceType: 'QuestionnaireResponse',
-        status: get(questionnaireResponse, 'status', 'in-progress'),
-        authored: get(questionnaireResponse, 'authored') ? moment(get(questionnaireResponse, 'authored')).toISOString() : moment().toISOString()
+        status: form.status,
+        authored: form.authored ? moment(form.authored).toISOString() : moment().toISOString()
       };
 
       // Add questionnaire if present
-      const questionnaire = get(questionnaireResponse, 'questionnaire', '').trim();
-      if (questionnaire) {
-        responseToSave.questionnaire = questionnaire;
+      if (form.questionnaire && form.questionnaire.trim()) {
+        responseToSave.questionnaire = form.questionnaire.trim();
       }
-      
+
       // Add questionnaire display as extension
-      const questionnaireDisplay = get(questionnaireResponse, 'questionnaireDisplay', '').trim();
-      if (questionnaireDisplay) {
+      if (form.questionnaireDisplay && form.questionnaireDisplay.trim()) {
         responseToSave.extension = responseToSave.extension || [];
         responseToSave.extension.push({
           url: 'http://example.org/fhir/StructureDefinition/questionnaire-display',
-          valueString: questionnaireDisplay
+          valueString: form.questionnaireDisplay.trim()
         });
       }
-      
-      // Only include nested objects if they have actual data
-      if (get(questionnaireResponse, 'subject.reference') || get(questionnaireResponse, 'subject.display')) {
+
+      // Include subject from resource (has reference)
+      if (get(questionnaireResponse, 'subject.reference') || form.subject) {
         responseToSave.subject = {
           reference: get(questionnaireResponse, 'subject.reference', ''),
-          display: get(questionnaireResponse, 'subject.display', '')
+          display: form.subject
         };
       }
-      
-      if (get(questionnaireResponse, 'author.reference') || get(questionnaireResponse, 'author.display')) {
+
+      // Include author
+      if (get(questionnaireResponse, 'author.reference') || form.author) {
         responseToSave.author = {
           reference: get(questionnaireResponse, 'author.reference', ''),
-          display: get(questionnaireResponse, 'author.display', '')
+          display: form.author
         };
       }
-      
-      if (get(questionnaireResponse, 'source.reference') || get(questionnaireResponse, 'source.display')) {
+
+      // Include source
+      if (form.source) {
         responseToSave.source = {
           reference: get(questionnaireResponse, 'source.reference', ''),
-          display: get(questionnaireResponse, 'source.display', '')
+          display: form.source
         };
       }
-      
-      // Handle identifier array properly
-      const identifierValue = get(questionnaireResponse, 'identifier[0].value', '');
-      if (identifierValue) {
+
+      // Handle identifier
+      if (form.identifier) {
         responseToSave.identifier = [{
           system: 'http://example.org/identifier',
-          value: identifierValue
+          value: form.identifier
         }];
       }
-      
-      // Handle basedOn array
-      const basedOnRef = get(questionnaireResponse, 'basedOn[0].reference', '');
-      if (basedOnRef) {
-        responseToSave.basedOn = [{
-          reference: basedOnRef
-        }];
+
+      // Handle basedOn
+      if (form.basedOn) {
+        responseToSave.basedOn = [{ reference: form.basedOn }];
       }
-      
-      // Handle partOf array
-      const partOfRef = get(questionnaireResponse, 'partOf[0].reference', '');
-      if (partOfRef) {
-        responseToSave.partOf = [{
-          reference: partOfRef
-        }];
+
+      // Handle partOf
+      if (form.partOf) {
+        responseToSave.partOf = [{ reference: form.partOf }];
       }
-      
-      // Handle reasonCode array
-      const reasonCode = get(questionnaireResponse, 'reasonCode[0].coding[0].code', '');
-      const reasonDisplay = get(questionnaireResponse, 'reasonCode[0].coding[0].display', '');
-      if (reasonCode || reasonDisplay) {
+
+      // Handle reasonCode
+      if (form.reasonCode || form.reasonDisplay) {
         responseToSave.reasonCode = [{
           coding: [{
             system: 'http://snomed.info/sct',
-            code: reasonCode,
-            display: reasonDisplay
+            code: form.reasonCode,
+            display: form.reasonDisplay
           }]
         }];
       }
-      
-      // Handle note array
-      const noteText = get(questionnaireResponse, 'note[0].text', '');
-      if (noteText) {
+
+      // Handle note
+      if (form.notes) {
         responseToSave.note = [{
-          text: noteText,
+          text: form.notes,
           time: new Date().toISOString()
         }];
       }
 
-      if (isNew) {
-        // Create new questionnaire response
-        console.log('Attempting to save questionnaire response:', JSON.stringify(responseToSave, null, 2));
-        
-        // First check if the method exists with minimal data
-        try {
-          const testData = { resourceType: 'QuestionnaireResponse', status: 'in-progress' };
-          console.log('Testing method with minimal data:', testData);
-          const testResult = await Meteor.callAsync('questionnaireResponses.create', testData);
-          console.log('Method test succeeded with ID:', testResult);
-        } catch (testErr) {
-          console.error('Method test failed:', testErr);
-          console.error('Error details:', testErr.details || testErr.error || testErr.message);
-        }
-        
+      if (isNewResponse) {
+        console.log('Creating questionnaire response:', responseToSave);
         const newId = await Meteor.callAsync('questionnaireResponses.create', responseToSave);
         console.log('Created questionnaire response with ID:', newId);
         navigate('/questionnaire-responses');
       } else {
-        // Update existing questionnaire response
-        await Meteor.callAsync('questionnaireResponses.update', id, responseToSave);
-        console.log('Updated questionnaire response:', id);
+        await Meteor.callAsync('questionnaireResponses.update', questionnaireResponseId, responseToSave);
+        console.log('Updated questionnaire response:', questionnaireResponseId);
         setIsEditing(false);
       }
     } catch (err) {
       console.error('Error saving questionnaire response:', err);
-      console.error('Error details:', err.details || err.error || err);
       setError(err.message || err.reason || 'Unknown error');
     } finally {
       setLoading(false);
     }
   }
 
-  async function handleDelete() {
-    try {
-      setLoading(true);
-      await Meteor.callAsync('questionnaireResponses.remove', id);
+  function handleCancelButton() {
+    if (isNewResponse) {
       navigate('/questionnaire-responses');
-    } catch (err) {
-      console.error('Error deleting questionnaire response:', err);
-      setError(err.message);
-    } finally {
-      setLoading(false);
-      setShowDeleteDialog(false);
+    } else {
+      setIsEditing(false);
+      setError('');
+      // Reload original data
+      if (QuestionnaireResponses) {
+        let original = QuestionnaireResponses.findOne({_id: questionnaireResponseId});
+        if (original) {
+          setForm({
+            identifier: get(original, 'identifier[0].value', ''),
+            status: get(original, 'status', 'in-progress'),
+            subject: get(original, 'subject.display', ''),
+            author: get(original, 'author.display', ''),
+            questionnaire: get(original, 'questionnaire', ''),
+            questionnaireDisplay: get(original, 'questionnaireDisplay', ''),
+            authored: moment(get(original, 'authored', '')).format('YYYY-MM-DDTHH:mm'),
+            source: get(original, 'source.display', ''),
+            basedOn: get(original, 'basedOn[0].reference', ''),
+            partOf: get(original, 'partOf[0].reference', ''),
+            reasonCode: get(original, 'reasonCode[0].coding[0].code', ''),
+            reasonDisplay: get(original, 'reasonCode[0].coding[0].display', ''),
+            notes: get(original, 'note[0].text', '')
+          });
+        }
+      }
     }
   }
 
-  function renderHeader() {
+  async function handleDeleteButton() {
+    if (!questionnaireResponseId || questionnaireResponseId === 'new') return;
+
+    if (window.confirm('Are you sure you want to delete this questionnaire response?')) {
+      setLoading(true);
+      try {
+        await Meteor.callAsync('questionnaireResponses.remove', questionnaireResponseId);
+        console.log('QuestionnaireResponse deleted successfully');
+        navigate('/questionnaire-responses');
+      } catch (err) {
+        console.error('Error deleting questionnaire response:', err);
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    }
+  }
+
+  // Build the header title
+  let headerTitle = 'New Questionnaire Response';
+  if (isExistingResponse) {
+    headerTitle = <span className="barcode helveticas" style={{ fontSize: '1.5rem' }}>{questionnaireResponseId}</span>;
+  }
+
+  // Build the header action buttons
+  function renderHeaderActions(){
     return (
-      <Box sx={{ mb: 3 }}>
-        <Grid container spacing={2} alignItems="center">
-          <Grid item xs>
-            <Typography variant="h4" component="h1">
-              {isNew ? 'New Questionnaire Response' : 'Questionnaire Response Details'}
-            </Typography>
-          </Grid>
-          {!isNew && (
-            <>
-              <Grid item>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <AccessTimeIcon fontSize="small" color="action" />
-                  <Typography variant="body2" color="text.secondary">
-                    {moment(get(questionnaireResponse, 'meta.lastUpdated')).format('MMM DD, YYYY')}
-                  </Typography>
-                </Box>
-              </Grid>
-              <Grid item>
-                <Chip 
-                  label={`v${get(questionnaireResponse, 'meta.versionId', '1')}`}
-                  size="small"
-                  color="primary"
-                  variant="outlined"
-                />
-              </Grid>
-              <Grid item>
-                <Tooltip title={isEditing ? "Lock to prevent editing" : "Unlock to edit"}>
-                  <IconButton onClick={() => setIsEditing(!isEditing)}>
-                    {isEditing ? <LockOpenIcon /> : <LockIcon />}
-                  </IconButton>
-                </Tooltip>
-              </Grid>
-            </>
-          )}
-        </Grid>
-        {id !== 'new' && (
-          <Box sx={{ mt: 1 }}>
-            <Typography variant="caption" className="barcode helveticas">
-              {id}
-            </Typography>
-          </Box>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+        {/* Preview toggle -- hidden for new responses */}
+        {!isNewResponse && (
+          <Tooltip title="Preview">
+            <IconButton
+              onClick={() => setSearchParams({ view: 'page' })}
+              sx={{
+                color: viewMode === 'page' ? 'primary.main' : 'text.secondary'
+              }}
+            >
+              <ArticleIcon />
+            </IconButton>
+          </Tooltip>
+        )}
+
+        {/* Form toggle -- hidden for new responses (always form) */}
+        {!isNewResponse && (
+          <Tooltip title="Form">
+            <IconButton
+              onClick={() => setSearchParams({ view: 'form' })}
+              sx={{
+                color: viewMode === 'form' ? 'primary.main' : 'text.secondary'
+              }}
+            >
+              <EditNoteIcon />
+            </IconButton>
+          </Tooltip>
+        )}
+
+        {/* Lock / Unlock toggle -- only for existing responses */}
+        {!isNewResponse && (
+          <Tooltip title={isEditing ? 'Lock (read-only)' : 'Unlock (edit)'}>
+            <IconButton
+              onClick={() => setIsEditing(!isEditing)}
+            >
+              {isEditing ? <LockOpenIcon /> : <LockIcon />}
+            </IconButton>
+          </Tooltip>
+        )}
+
+        {/* Delete -- only for existing responses, gated on edit mode */}
+        {!isNewResponse && (
+          <Tooltip title="Delete">
+            <IconButton
+              onClick={handleDeleteButton}
+              disabled={!isEditing}
+              sx={{ color: isEditing ? 'error.main' : 'text.disabled' }}
+            >
+              <DeleteIcon />
+              <Typography sx={{
+                position: 'absolute',
+                width: '1px',
+                height: '1px',
+                padding: 0,
+                margin: '-1px',
+                overflow: 'hidden',
+                clip: 'rect(0, 0, 0, 0)',
+                whiteSpace: 'nowrap',
+                borderWidth: 0
+              }}>Delete</Typography>
+            </IconButton>
+          </Tooltip>
         )}
       </Box>
     );
   }
 
-  if (isEmbedded) {
+  // Render the form view
+  function renderFormView(){
     return (
-      <Grid container spacing={3}>
-        {/* Basic Information */}
-        <Grid item xs={12} md={6}>
-          <TextField
-            id="identifier"
-            fullWidth
-            label="Identifier"
-            value={get(questionnaireResponse, 'identifier[0].value', '')}
-            onChange={(e) => handleChange('identifier[0].value', e.target.value)}
-            disabled={!isEditing}
-            margin="normal"
-          />
-        </Grid>
+      <>
+        <QuestionnaireResponseFormView
+          resource={questionnaireResponse}
+          form={form}
+          isEditing={isEditing}
+          onChange={handleChange}
+          isEmbedded={isEmbedded}
+          onSearchPatient={handleSearchPatient}
+        />
 
-        <Grid item xs={12} md={6}>
-          <FormControl id="status" fullWidth margin="normal" disabled={!isEditing}>
-            <InputLabel>Status</InputLabel>
-            <Select
-              value={get(questionnaireResponse, 'status', 'in-progress')}
-              onChange={(e) => handleChange('status', e.target.value)}
-              label="Status"
+        {/* In-form Save/Cancel bar when editing */}
+        {isEditing && !isEmbedded && (
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, mt: 3, pt: 2, borderTop: 1, borderColor: 'divider' }}>
+            <Button id="cancelButton" onClick={handleCancelButton}>
+              Cancel
+            </Button>
+            <Button
+              id="saveQuestionnaireResponseButton"
+              onClick={handleSaveButton}
+              variant="contained"
+              color="primary"
+              disabled={loading}
             >
-              <MenuItem value="in-progress">In Progress</MenuItem>
-              <MenuItem value="completed">Completed</MenuItem>
-              <MenuItem value="amended">Amended</MenuItem>
-              <MenuItem value="entered-in-error">Entered in Error</MenuItem>
-              <MenuItem value="stopped">Stopped</MenuItem>
-            </Select>
-          </FormControl>
-        </Grid>
-
-        {/* Subject/Patient */}
-        <Grid item xs={12} md={6}>
-          <TextField
-            id="subjectDisplay"
-            fullWidth
-            label="Patient"
-            value={get(questionnaireResponse, 'subject.display', '')}
-            onChange={(e) => handleChange('subject.display', e.target.value)}
-            disabled={!isEditing}
-            margin="normal"
-            InputProps={{
-              endAdornment: isEditing && (
-                <InputAdornment position="end">
-                  <Tooltip title="Search for patient">
-                    <IconButton onClick={handleSearchUser} edge="end">
-                      <SearchIcon />
-                    </IconButton>
-                  </Tooltip>
-                </InputAdornment>
-              )
-            }}
-          />
-        </Grid>
-
-        {/* Author */}
-        <Grid item xs={12} md={6}>
-          <TextField
-            id="authorDisplay"
-            fullWidth
-            label="Author"
-            value={get(questionnaireResponse, 'author.display', '')}
-            onChange={(e) => handleChange('author.display', e.target.value)}
-            disabled={!isEditing}
-            margin="normal"
-          />
-        </Grid>
-
-        {/* Questionnaire Reference */}
-        <Grid item xs={12} md={6}>
-          <TextField
-            id="questionnaire"
-            fullWidth
-            label="Questionnaire Reference"
-            value={get(questionnaireResponse, 'questionnaire', '')}
-            onChange={(e) => handleChange('questionnaire', e.target.value)}
-            disabled={!isEditing}
-            margin="normal"
-            helperText="Format: Questionnaire/id"
-          />
-        </Grid>
-
-        {/* Questionnaire Display */}
-        <Grid item xs={12} md={6}>
-          <TextField
-            id="questionnaireDisplay"
-            fullWidth
-            label="Questionnaire Display"
-            value={get(questionnaireResponse, 'questionnaireDisplay', '')}
-            onChange={(e) => handleChange('questionnaireDisplay', e.target.value)}
-            disabled={!isEditing}
-            margin="normal"
-          />
-        </Grid>
-
-        {/* Authored Date */}
-        <Grid item xs={12} md={6}>
-          <TextField
-            id="authored"
-            fullWidth
-            label="Authored"
-            type="datetime-local"
-            value={moment(get(questionnaireResponse, 'authored', '')).format('YYYY-MM-DDTHH:mm')}
-            onChange={(e) => handleChange('authored', moment(e.target.value).toISOString())}
-            disabled={!isEditing}
-            margin="normal"
-            InputLabelProps={{
-              shrink: true,
-            }}
-          />
-        </Grid>
-
-        {/* Source */}
-        <Grid item xs={12} md={6}>
-          <TextField
-            id="source"
-            fullWidth
-            label="Source"
-            value={get(questionnaireResponse, 'source.display', '')}
-            onChange={(e) => handleChange('source.display', e.target.value)}
-            disabled={!isEditing}
-            margin="normal"
-            helperText="Who answered the questions"
-          />
-        </Grid>
-
-        {/* Based On */}
-        <Grid item xs={12} md={6}>
-          <TextField
-            id="basedOn"
-            fullWidth
-            label="Based On"
-            value={get(questionnaireResponse, 'basedOn[0].reference', '')}
-            onChange={(e) => handleChange('basedOn[0].reference', e.target.value)}
-            disabled={!isEditing}
-            margin="normal"
-            helperText="ServiceRequest or CarePlan reference"
-          />
-        </Grid>
-
-        {/* Part Of */}
-        <Grid item xs={12} md={6}>
-          <TextField
-            id="partOf"
-            fullWidth
-            label="Part Of"
-            value={get(questionnaireResponse, 'partOf[0].reference', '')}
-            onChange={(e) => handleChange('partOf[0].reference', e.target.value)}
-            disabled={!isEditing}
-            margin="normal"
-            helperText="Encounter or Procedure reference"
-          />
-        </Grid>
-
-        {/* Reason Code */}
-        <Grid item xs={12} md={6}>
-          <TextField
-            id="reasonCode"
-            fullWidth
-            label="Reason Code"
-            value={get(questionnaireResponse, 'reasonCode[0].coding[0].code', '')}
-            onChange={(e) => handleChange('reasonCode[0].coding[0].code', e.target.value)}
-            disabled={!isEditing}
-            margin="normal"
-            helperText="SNOMED CT code"
-          />
-        </Grid>
-
-        {/* Reason Display */}
-        <Grid item xs={12} md={6}>
-          <TextField
-            id="reasonDisplay"
-            fullWidth
-            label="Reason Display"
-            value={get(questionnaireResponse, 'reasonCode[0].coding[0].display', '')}
-            onChange={(e) => handleChange('reasonCode[0].coding[0].display', e.target.value)}
-            disabled={!isEditing}
-            margin="normal"
-          />
-        </Grid>
-
-        {/* Notes */}
-        <Grid item xs={12}>
-          <TextField
-            id="notesTextarea"
-            fullWidth
-            multiline
-            rows={4}
-            label="Notes"
-            value={get(questionnaireResponse, 'note[0].text', '')}
-            onChange={(e) => handleChange('note[0].text', e.target.value)}
-            disabled={!isEditing}
-            margin="normal"
-          />
-        </Grid>
-      </Grid>
+              {loading ? 'Saving...' : 'Save'}
+            </Button>
+          </Box>
+        )}
+      </>
     );
   }
 
+  // Render the preview view
+  function renderPreviewView(){
+    return (
+      <QuestionnaireResponsePreview
+        resource={questionnaireResponse}
+        form={form}
+        resourceId={questionnaireResponseId}
+      />
+    );
+  }
+
+  // In embedded mode, render form content without Container/Card wrapper
+  if (isEmbedded) {
+    return renderFormView();
+  }
+
   return (
-    <Container id="questionnaireResponseDetailPage" maxWidth="lg" sx={{ py: 4 }}>
-      {error && (
-        <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError('')}>
-          {error}
-        </Alert>
-      )}
-
-      {renderHeader()}
-
-      <Card>
+    <Container id="questionnaireResponseDetailPage" maxWidth="md" sx={{ py: 4 }}>
+      <Card sx={{ boxShadow: 3 }}>
+        <CardHeader
+          title={headerTitle}
+          sx={{ borderBottom: 1, borderColor: 'divider' }}
+          action={renderHeaderActions()}
+        />
         <CardContent>
-          <Grid container spacing={3}>
-            {/* Basic Information */}
-            <Grid item xs={12} md={6}>
-              <TextField
-                id="identifier"
-                fullWidth
-                label="Identifier"
-                value={get(questionnaireResponse, 'identifier[0].value', '')}
-                onChange={(e) => handleChange('identifier[0].value', e.target.value)}
-                disabled={!isEditing}
-                margin="normal"
-              />
-            </Grid>
-            
-            <Grid item xs={12} md={6}>
-              <FormControl id="status" fullWidth margin="normal" disabled={!isEditing}>
-                <InputLabel>Status</InputLabel>
-                <Select
-                  value={get(questionnaireResponse, 'status', 'in-progress')}
-                  onChange={(e) => handleChange('status', e.target.value)}
-                  label="Status"
-                >
-                  <MenuItem value="in-progress">In Progress</MenuItem>
-                  <MenuItem value="completed">Completed</MenuItem>
-                  <MenuItem value="amended">Amended</MenuItem>
-                  <MenuItem value="entered-in-error">Entered in Error</MenuItem>
-                  <MenuItem value="stopped">Stopped</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
-
-            {/* Subject/Patient */}
-            <Grid item xs={12} md={6}>
-              <TextField
-                id="subjectDisplay"
-                fullWidth
-                label="Patient"
-                value={get(questionnaireResponse, 'subject.display', '')}
-                onChange={(e) => handleChange('subject.display', e.target.value)}
-                disabled={!isEditing}
-                margin="normal"
-                InputProps={{
-                  endAdornment: isEditing && (
-                    <InputAdornment position="end">
-                      <Tooltip title="Search for patient">
-                        <IconButton onClick={handleSearchUser} edge="end">
-                          <SearchIcon />
-                        </IconButton>
-                      </Tooltip>
-                    </InputAdornment>
-                  )
-                }}
-              />
-            </Grid>
-
-            {/* Author */}
-            <Grid item xs={12} md={6}>
-              <TextField
-                id="authorDisplay"
-                fullWidth
-                label="Author"
-                value={get(questionnaireResponse, 'author.display', '')}
-                onChange={(e) => handleChange('author.display', e.target.value)}
-                disabled={!isEditing}
-                margin="normal"
-              />
-            </Grid>
-
-            {/* Questionnaire Reference */}
-            <Grid item xs={12} md={6}>
-              <TextField
-                id="questionnaire"
-                fullWidth
-                label="Questionnaire Reference"
-                value={get(questionnaireResponse, 'questionnaire', '')}
-                onChange={(e) => handleChange('questionnaire', e.target.value)}
-                disabled={!isEditing}
-                margin="normal"
-                helperText="Format: Questionnaire/id"
-              />
-            </Grid>
-
-            {/* Questionnaire Display */}
-            <Grid item xs={12} md={6}>
-              <TextField
-                id="questionnaireDisplay"
-                fullWidth
-                label="Questionnaire Display"
-                value={get(questionnaireResponse, 'questionnaireDisplay', '')}
-                onChange={(e) => handleChange('questionnaireDisplay', e.target.value)}
-                disabled={!isEditing}
-                margin="normal"
-              />
-            </Grid>
-
-            {/* Authored Date */}
-            <Grid item xs={12} md={6}>
-              <TextField
-                id="authored"
-                fullWidth
-                label="Authored"
-                type="datetime-local"
-                value={moment(get(questionnaireResponse, 'authored', '')).format('YYYY-MM-DDTHH:mm')}
-                onChange={(e) => handleChange('authored', moment(e.target.value).toISOString())}
-                disabled={!isEditing}
-                margin="normal"
-                InputLabelProps={{
-                  shrink: true,
-                }}
-              />
-            </Grid>
-
-            {/* Source */}
-            <Grid item xs={12} md={6}>
-              <TextField
-                id="source"
-                fullWidth
-                label="Source"
-                value={get(questionnaireResponse, 'source.display', '')}
-                onChange={(e) => handleChange('source.display', e.target.value)}
-                disabled={!isEditing}
-                margin="normal"
-                helperText="Who answered the questions"
-              />
-            </Grid>
-
-            {/* Based On */}
-            <Grid item xs={12} md={6}>
-              <TextField
-                id="basedOn"
-                fullWidth
-                label="Based On"
-                value={get(questionnaireResponse, 'basedOn[0].reference', '')}
-                onChange={(e) => handleChange('basedOn[0].reference', e.target.value)}
-                disabled={!isEditing}
-                margin="normal"
-                helperText="ServiceRequest or CarePlan reference"
-              />
-            </Grid>
-
-            {/* Part Of */}
-            <Grid item xs={12} md={6}>
-              <TextField
-                id="partOf"
-                fullWidth
-                label="Part Of"
-                value={get(questionnaireResponse, 'partOf[0].reference', '')}
-                onChange={(e) => handleChange('partOf[0].reference', e.target.value)}
-                disabled={!isEditing}
-                margin="normal"
-                helperText="Encounter or Procedure reference"
-              />
-            </Grid>
-
-            {/* Reason Code */}
-            <Grid item xs={12} md={6}>
-              <TextField
-                id="reasonCode"
-                fullWidth
-                label="Reason Code"
-                value={get(questionnaireResponse, 'reasonCode[0].coding[0].code', '')}
-                onChange={(e) => handleChange('reasonCode[0].coding[0].code', e.target.value)}
-                disabled={!isEditing}
-                margin="normal"
-                helperText="SNOMED CT code"
-              />
-            </Grid>
-
-            {/* Reason Display */}
-            <Grid item xs={12} md={6}>
-              <TextField
-                id="reasonDisplay"
-                fullWidth
-                label="Reason Display"
-                value={get(questionnaireResponse, 'reasonCode[0].coding[0].display', '')}
-                onChange={(e) => handleChange('reasonCode[0].coding[0].display', e.target.value)}
-                disabled={!isEditing}
-                margin="normal"
-              />
-            </Grid>
-
-            {/* Notes */}
-            <Grid item xs={12}>
-              <TextField
-                id="notesTextarea"
-                fullWidth
-                multiline
-                rows={4}
-                label="Notes"
-                value={get(questionnaireResponse, 'note[0].text', '')}
-                onChange={(e) => handleChange('note[0].text', e.target.value)}
-                disabled={!isEditing}
-                margin="normal"
-              />
-            </Grid>
-          </Grid>
-        </CardContent>
-
-        <CardActions sx={{ justifyContent: 'flex-end', p: 2 }}>
-          {!isEditing && !isNew ? (
-            <>
-              <Button onClick={() => navigate('/questionnaire-responses')}>
-                Back
-              </Button>
-              <Button
-                variant="contained"
-                color="primary"
-                startIcon={<EditIcon />}
-                onClick={() => setIsEditing(true)}
-              >
-                Edit
-              </Button>
-            </>
-          ) : (
-            <>
-              <Button
-                onClick={() => {
-                  if (isNew) {
-                    navigate('/questionnaire-responses');
-                  } else {
-                    setIsEditing(false);
-                    // Reload original data
-                    window.location.reload();
-                  }
-                }}
-                disabled={loading}
-              >
-                Cancel
-              </Button>
-              {!isNew && (
-                <Button
-                  color="error"
-                  onClick={() => setShowDeleteDialog(true)}
-                  disabled={loading}
-                >
-                  Delete
-                </Button>
-              )}
-              <Button
-                id="saveQuestionnaireResponseButton"
-                variant="contained"
-                color="primary"
-                onClick={handleSave}
-                disabled={loading}
-              >
-                {loading ? 'Saving...' : 'Save'}
-              </Button>
-            </>
+          {error && (
+            <Typography color="error" sx={{ mb: 2 }}>
+              Error: {error}
+            </Typography>
           )}
-        </CardActions>
+
+          {viewMode === 'form' && renderFormView()}
+          {viewMode === 'page' && renderPreviewView()}
+        </CardContent>
       </Card>
 
       {/* Patient Search Dialog */}
@@ -893,25 +567,6 @@ function QuestionnaireResponseDetail(props) {
         onClose={() => setShowPatientSearch(false)}
         onSelect={handleSelectPatient}
       />
-
-      {/* Delete Confirmation Dialog */}
-      <Dialog
-        open={showDeleteDialog}
-        onClose={() => setShowDeleteDialog(false)}
-      >
-        <DialogTitle>Delete Questionnaire Response</DialogTitle>
-        <DialogContent>
-          <DialogContentText>
-            Are you sure you want to delete this questionnaire response? This action cannot be undone.
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setShowDeleteDialog(false)}>Cancel</Button>
-          <Button onClick={handleDelete} color="error" autoFocus>
-            Delete
-          </Button>
-        </DialogActions>
-      </Dialog>
     </Container>
   );
 }

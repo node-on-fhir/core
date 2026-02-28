@@ -314,9 +314,7 @@ export function ObservationsPage(props){
   }
 
   let layoutContent;
-  if(isLoading){
-    layoutContent = null;
-  } else if(filteredObservations.length > 0){
+  if(filteredObservations.length > 0){
     layoutContent = <Card
       sx={{
         width: '100%',

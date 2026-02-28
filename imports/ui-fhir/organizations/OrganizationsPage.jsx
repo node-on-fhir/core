@@ -216,11 +216,7 @@ export function OrganizationsPage(props){
   }
 
   let layoutContent;
-  if(isLoading) {
-    layoutContent = <Box sx={{ textAlign: 'center', py: 4 }}>
-      <Typography>Loading organizations...</Typography>
-    </Box>
-  } else if(data.organizations.length > 0){
+  if(data.organizations.length > 0){
     layoutContent = <Card
       sx={{
         width: '100%',

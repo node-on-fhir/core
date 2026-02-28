@@ -238,11 +238,7 @@ export function PractitionerRolesPage(props){
   }
 
   let layoutContent;
-  if(isLoading) {
-    layoutContent = <Box sx={{ textAlign: 'center', py: 4 }}>
-      <Typography>Loading practitioner roles...</Typography>
-    </Box>;
-  } else if(filteredPractitionerRoles.length > 0){
+  if(filteredPractitionerRoles.length > 0){
     layoutContent = <Card
       sx={{
         width: '100%',

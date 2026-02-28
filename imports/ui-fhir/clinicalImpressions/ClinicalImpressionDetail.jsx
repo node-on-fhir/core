@@ -1,7 +1,7 @@
 // imports/ui-fhir/clinicalImpressions/ClinicalImpressionDetail.jsx
 
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useTracker } from 'meteor/react-meteor-data';
 
 import {
@@ -9,26 +9,30 @@ import {
   Card,
   CardHeader,
   CardContent,
-  CardActions,
-  TextField,
   Button,
   Box,
-  Grid,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
   IconButton,
-  InputAdornment,
-  Tooltip
+  Tooltip,
+  Alert
 } from '@mui/material';
-import SearchIcon from '@mui/icons-material/Search';
+
+import LockIcon from '@mui/icons-material/Lock';
+import LockOpenIcon from '@mui/icons-material/LockOpen';
+import DeleteIcon from '@mui/icons-material/Delete';
+import ArticleIcon from '@mui/icons-material/Article';
+import EditNoteIcon from '@mui/icons-material/EditNote';
 
 import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
-import { get, set } from 'lodash';
+import { get, set, cloneDeep } from 'lodash';
 
 import { ClinicalImpressions } from '/imports/lib/schemas/SimpleSchemas/ClinicalImpressions';
+
+import ClinicalImpressionFormView from './ClinicalImpressionFormView';
+import ClinicalImpressionPreview from './ClinicalImpressionPreview';
+
+//===========================================================================
+// COMPONENT
 
 export function ClinicalImpressionDetail(props) {
   // Embedded mode support (for HoneycombFhirResource dispatcher)
@@ -37,6 +41,11 @@ export function ClinicalImpressionDetail(props) {
   var id = _params.id || null;
   var _rawNavigate = useNavigate();
   var navigate = isEmbedded ? function() {} : _rawNavigate;
+  const [searchParams, setSearchParams] = useSearchParams();
+  const viewMode = searchParams.get('view') || 'form';
+
+  const isNewRecord = !id || id === 'new';
+  const isExistingRecord = id && id !== 'new';
 
   const [clinicalImpression, setClinicalImpression] = useState({
     resourceType: 'ClinicalImpression',
@@ -64,8 +73,9 @@ export function ClinicalImpressionDetail(props) {
     }
   }, [props.fhirResource]);
 
-  const [isEditing, setIsEditing] = useState(isEmbedded || id === 'new' || !id);
+  const [isEditing, setIsEditing] = useState(isEmbedded || isNewRecord);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   // Subscribe and load data
   const isSubscriptionReady = useTracker(function() {
@@ -81,17 +91,17 @@ export function ClinicalImpressionDetail(props) {
   }, []);
 
   // Load clinical impression data
-  useEffect(() => {
-    if (id && id !== 'new') {
+  useEffect(function() {
+    if (isExistingRecord) {
       // Try to load from collection first
-      const existingClinicalImpression = ClinicalImpressions.findOne({_id: id});
+      var existingClinicalImpression = ClinicalImpressions.findOne({_id: id});
 
       if (existingClinicalImpression) {
         setClinicalImpression(existingClinicalImpression);
         setIsEditing(false);
       } else {
         // Fallback: try by id field
-        const byId = ClinicalImpressions.findOne({id: id});
+        var byId = ClinicalImpressions.findOne({id: id});
         if (byId) {
           setClinicalImpression(byId);
           setIsEditing(false);
@@ -99,16 +109,18 @@ export function ClinicalImpressionDetail(props) {
       }
     } else {
       // New clinical impression - set patient from Session
-      const selectedPatient = Session.get('selectedPatient');
+      var selectedPatient = Session.get('selectedPatient');
       if (selectedPatient) {
-        setClinicalImpression(prev => ({
-          ...prev,
-          subject: {
-            reference: 'Patient/' + get(selectedPatient, 'id', selectedPatient._id),
-            display: get(selectedPatient, 'name.0.text',
-              get(selectedPatient, 'name.0.given.0', '') + ' ' + get(selectedPatient, 'name.0.family', ''))
-          }
-        }));
+        setClinicalImpression(function(prev) {
+          return {
+            ...prev,
+            subject: {
+              reference: 'Patient/' + get(selectedPatient, 'id', selectedPatient._id),
+              display: get(selectedPatient, 'name.0.text',
+                get(selectedPatient, 'name.0.given.0', '') + ' ' + get(selectedPatient, 'name.0.family', ''))
+            }
+          };
+        });
       }
       setIsEditing(true);
     }
@@ -116,11 +128,9 @@ export function ClinicalImpressionDetail(props) {
 
   function handleChange(path, value) {
     pendingUpdate.current = true;
-    setClinicalImpression(prev => {
-      const updated = { ...prev };
-      set(updated, path, value);
-      return updated;
-    });
+    var updated = cloneDeep(clinicalImpression);
+    set(updated, path, value);
+    setClinicalImpression(updated);
   }
 
   // onResourceChange useEffect: notify parent when state changes in embedded mode
@@ -131,17 +141,12 @@ export function ClinicalImpressionDetail(props) {
     }
   }, [clinicalImpression]);
 
-
-  function handleSearchPatient() {
-    console.log('Patient search clicked');
-    // Could open a patient search dialog here
-  }
-
   async function handleSave() {
     setIsLoading(true);
+    setError(null);
 
     try {
-      const dataToSave = {
+      var dataToSave = {
         status: get(clinicalImpression, 'status', 'in-progress'),
         description: get(clinicalImpression, 'description', ''),
         summary: get(clinicalImpression, 'summary', ''),
@@ -153,29 +158,35 @@ export function ClinicalImpressionDetail(props) {
         effectiveDateTime: get(clinicalImpression, 'effectiveDateTime', '')
       };
 
-      if (id && id !== 'new') {
+      if (isExistingRecord) {
         await Meteor.callAsync('clinicalImpressions.update', id, dataToSave);
         console.log('Clinical impression updated:', id);
         setIsEditing(false);
       } else {
-        const newId = await Meteor.callAsync('clinicalImpressions.insert', dataToSave);
+        var newId = await Meteor.callAsync('clinicalImpressions.insert', dataToSave);
         console.log('Clinical impression created:', newId);
         navigate('/clinical-impressions');
       }
-    } catch (error) {
-      console.error('Error saving clinical impression:', error);
-      alert('Error saving clinical impression: ' + error.message);
+    } catch (err) {
+      console.error('Error saving clinical impression:', err);
+      setError(err.message || 'Error saving clinical impression');
     } finally {
       setIsLoading(false);
     }
   }
 
   function handleDelete() {
+    if (isNewRecord) return;
+
     if (window.confirm('Are you sure you want to delete this clinical impression?')) {
-      Meteor.call('clinicalImpressions.remove', id, function(error) {
-        if (error) {
-          console.error('Error deleting clinical impression:', error);
-          alert('Error deleting clinical impression: ' + error.message);
+      setIsLoading(true);
+      setError(null);
+
+      Meteor.call('clinicalImpressions.remove', id, function(err) {
+        if (err) {
+          console.error('Error deleting clinical impression:', err);
+          setError(err.message || 'Error deleting clinical impression');
+          setIsLoading(false);
         } else {
           console.log('Clinical impression deleted:', id);
           navigate('/clinical-impressions');
@@ -185,9 +196,9 @@ export function ClinicalImpressionDetail(props) {
   }
 
   function handleCancel() {
-    if (id && id !== 'new') {
+    if (isExistingRecord) {
       // Reload from collection
-      const existingClinicalImpression = ClinicalImpressions.findOne({_id: id});
+      var existingClinicalImpression = ClinicalImpressions.findOne({_id: id});
       if (existingClinicalImpression) {
         setClinicalImpression(existingClinicalImpression);
       }
@@ -197,325 +208,145 @@ export function ClinicalImpressionDetail(props) {
     }
   }
 
-  function handleBack() {
-    navigate('/clinical-impressions');
+  // Build the header title
+  let headerTitle = 'New Record';
+  if (isExistingRecord) {
+    headerTitle = <span className="barcode helveticas" style={{ fontSize: '1.5rem' }}>{id}</span>;
   }
 
-  if (isEmbedded) {
+  // Header action buttons
+  function renderHeaderActions() {
     return (
-      <Grid container spacing={3}>
-        {/* Status */}
-        <Grid item xs={12} sm={6}>
-          <FormControl fullWidth>
-            <InputLabel id="status-label">Status</InputLabel>
-            <Select
-              labelId="status-label"
-              id="statusSelect"
-              value={get(clinicalImpression, 'status', 'in-progress')}
-              onChange={(e) => handleChange('status', e.target.value)}
-              disabled={!isEditing}
-              label="Status"
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+        {/* Preview toggle -- hidden for new records */}
+        {isExistingRecord && (
+          <Tooltip title="Preview">
+            <IconButton
+              onClick={function() { setSearchParams({ view: 'page' }); }}
+              sx={{
+                color: viewMode === 'page' ? 'primary.main' : 'text.secondary'
+              }}
             >
-              <MenuItem value="in-progress">In Progress</MenuItem>
-              <MenuItem value="completed">Completed</MenuItem>
-              <MenuItem value="entered-in-error">Entered in Error</MenuItem>
-            </Select>
-          </FormControl>
-        </Grid>
+              <ArticleIcon />
+            </IconButton>
+          </Tooltip>
+        )}
 
-        {/* Date */}
-        <Grid item xs={12} sm={6}>
-          <TextField
-            id="dateInput"
-            fullWidth
-            label="Date"
-            type="date"
-            value={get(clinicalImpression, 'date', '').split('T')[0]}
-            onChange={(e) => handleChange('date', e.target.value)}
-            disabled={!isEditing}
-            InputLabelProps={{ shrink: true }}
-          />
-        </Grid>
+        {/* Form toggle -- hidden for new records */}
+        {isExistingRecord && (
+          <Tooltip title="Form">
+            <IconButton
+              onClick={function() { setSearchParams({ view: 'form' }); }}
+              sx={{
+                color: viewMode === 'form' ? 'primary.main' : 'text.secondary'
+              }}
+            >
+              <EditNoteIcon />
+            </IconButton>
+          </Tooltip>
+        )}
 
-        {/* Description */}
-        <Grid item xs={12}>
-          <TextField
-            id="descriptionInput"
-            fullWidth
-            label="Description"
-            value={get(clinicalImpression, 'description', '')}
-            onChange={(e) => handleChange('description', e.target.value)}
-            disabled={!isEditing}
-            multiline
-            rows={2}
-            helperText="A summary of the context and/or cause of the assessment"
-          />
-        </Grid>
+        {/* Lock / Unlock toggle -- only for existing records */}
+        {isExistingRecord && (
+          <Tooltip title={isEditing ? 'Lock (read-only)' : 'Unlock (edit)'}>
+            <IconButton
+              onClick={function() { setIsEditing(!isEditing); }}
+            >
+              {isEditing ? <LockOpenIcon /> : <LockIcon />}
+            </IconButton>
+          </Tooltip>
+        )}
 
-        {/* Summary */}
-        <Grid item xs={12}>
-          <TextField
-            id="summaryInput"
-            fullWidth
-            label="Summary"
-            value={get(clinicalImpression, 'summary', '')}
-            onChange={(e) => handleChange('summary', e.target.value)}
-            disabled={!isEditing}
-            multiline
-            rows={3}
-            helperText="Summary of the assessment"
-          />
-        </Grid>
-
-        {/* Effective DateTime */}
-        <Grid item xs={12} sm={6}>
-          <TextField
-            id="effectiveDateTimeInput"
-            fullWidth
-            label="Effective Date/Time"
-            type="datetime-local"
-            value={get(clinicalImpression, 'effectiveDateTime', '').substring(0, 16)}
-            onChange={(e) => handleChange('effectiveDateTime', e.target.value)}
-            disabled={!isEditing}
-            InputLabelProps={{ shrink: true }}
-            helperText="When the assessment was made"
-          />
-        </Grid>
-
-        {/* Assessor Display */}
-        <Grid item xs={12} sm={6}>
-          <TextField
-            id="assessorDisplay"
-            fullWidth
-            label="Assessor"
-            value={get(clinicalImpression, 'assessor.display', '')}
-            onChange={(e) => handleChange('assessor.display', e.target.value)}
-            disabled={!isEditing}
-            helperText="The clinician performing the assessment"
-          />
-        </Grid>
-
-        {/* Patient / Subject */}
-        <Grid item xs={12}>
-          <TextField
-            id="subjectDisplay"
-            fullWidth
-            label="Patient"
-            value={get(clinicalImpression, 'subject.display', '')}
-            onChange={(e) => handleChange('subject.display', e.target.value)}
-            disabled={!isEditing}
-            InputProps={{
-              endAdornment: (
-                <InputAdornment position="end">
-                  <Tooltip title="Search for patient">
-                    <IconButton
-                      onClick={handleSearchPatient}
-                      edge="end"
-                      disabled={!isEditing}
-                    >
-                      <SearchIcon />
-                    </IconButton>
-                  </Tooltip>
-                </InputAdornment>
-              ),
-            }}
-          />
-        </Grid>
-
-        {/* Patient Reference (hidden but set) */}
-        <Grid item xs={12}>
-          <TextField
-            id="subjectReference"
-            fullWidth
-            label="Patient Reference"
-            value={get(clinicalImpression, 'subject.reference', '')}
-            disabled
-            size="small"
-            sx={{ display: 'none' }}
-          />
-        </Grid>
-      </Grid>
+        {/* Delete -- only for existing records, gated on edit mode */}
+        {isExistingRecord && (
+          <Tooltip title="Delete">
+            <IconButton
+              onClick={handleDelete}
+              disabled={!isEditing}
+              sx={{ color: isEditing ? 'error.main' : 'text.disabled' }}
+            >
+              <DeleteIcon />
+            </IconButton>
+          </Tooltip>
+        )}
+      </Box>
     );
+  }
+
+  // Form view with all editable fields
+  function renderFormView() {
+    return (
+      <Box>
+        <ClinicalImpressionFormView
+          resource={clinicalImpression}
+          isEditing={isEditing}
+          onChange={handleChange}
+          isEmbedded={isEmbedded}
+        />
+
+        {/* Inline Save/Cancel bar */}
+        {isEditing && !isEmbedded && (
+          <Box sx={{
+            display: 'flex',
+            justifyContent: 'flex-end',
+            gap: 1,
+            mt: 3,
+            pt: 2,
+            borderTop: 1,
+            borderColor: 'divider'
+          }}>
+            <Button id="cancelButton" onClick={handleCancel}>
+              Cancel
+            </Button>
+            <Button
+              id="saveClinicalImpressionButton"
+              onClick={handleSave}
+              variant="contained"
+              color="primary"
+              disabled={isLoading}
+            >
+              {isLoading ? 'Saving...' : 'Save'}
+            </Button>
+          </Box>
+        )}
+      </Box>
+    );
+  }
+
+  // Preview view with formatted read-only display
+  function renderPreviewView() {
+    return (
+      <ClinicalImpressionPreview
+        resource={clinicalImpression}
+        resourceId={id}
+        embedded={isEmbedded}
+      />
+    );
+  }
+
+  // In embedded mode, render form content without Container/Card wrapper
+  if (isEmbedded) {
+    return renderFormView();
   }
 
   return (
     <Container id="clinicalImpressionDetailPage" maxWidth="md" sx={{ py: 4 }}>
       <Card sx={{ boxShadow: 3 }}>
         <CardHeader
-          title={id && id !== 'new' ? 'Edit Clinical Impression' : 'New Clinical Impression'}
-          sx={{ bgcolor: 'primary.main', color: 'primary.contrastText' }}
+          title={headerTitle}
+          sx={{ borderBottom: 1, borderColor: 'divider' }}
+          action={renderHeaderActions()}
         />
         <CardContent>
-          {/* Barcode display for existing records */}
-          {(id && id !== 'new') && (
-            <Box sx={{ mb: 3, textAlign: 'right' }}>
-              <span className="barcode helveticas" style={{ fontSize: '2rem' }}>{id}</span>
-            </Box>
+          {error && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {error}
+            </Alert>
           )}
 
-          <Grid container spacing={3}>
-            {/* Status */}
-            <Grid item xs={12} sm={6}>
-              <FormControl fullWidth>
-                <InputLabel id="status-label">Status</InputLabel>
-                <Select
-                  labelId="status-label"
-                  id="statusSelect"
-                  value={get(clinicalImpression, 'status', 'in-progress')}
-                  onChange={(e) => handleChange('status', e.target.value)}
-                  disabled={!isEditing}
-                  label="Status"
-                >
-                  <MenuItem value="in-progress">In Progress</MenuItem>
-                  <MenuItem value="completed">Completed</MenuItem>
-                  <MenuItem value="entered-in-error">Entered in Error</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
-
-            {/* Date */}
-            <Grid item xs={12} sm={6}>
-              <TextField
-                id="dateInput"
-                fullWidth
-                label="Date"
-                type="date"
-                value={get(clinicalImpression, 'date', '').split('T')[0]}
-                onChange={(e) => handleChange('date', e.target.value)}
-                disabled={!isEditing}
-                InputLabelProps={{ shrink: true }}
-              />
-            </Grid>
-
-            {/* Description */}
-            <Grid item xs={12}>
-              <TextField
-                id="descriptionInput"
-                fullWidth
-                label="Description"
-                value={get(clinicalImpression, 'description', '')}
-                onChange={(e) => handleChange('description', e.target.value)}
-                disabled={!isEditing}
-                multiline
-                rows={2}
-                helperText="A summary of the context and/or cause of the assessment"
-              />
-            </Grid>
-
-            {/* Summary */}
-            <Grid item xs={12}>
-              <TextField
-                id="summaryInput"
-                fullWidth
-                label="Summary"
-                value={get(clinicalImpression, 'summary', '')}
-                onChange={(e) => handleChange('summary', e.target.value)}
-                disabled={!isEditing}
-                multiline
-                rows={3}
-                helperText="Summary of the assessment"
-              />
-            </Grid>
-
-            {/* Effective DateTime */}
-            <Grid item xs={12} sm={6}>
-              <TextField
-                id="effectiveDateTimeInput"
-                fullWidth
-                label="Effective Date/Time"
-                type="datetime-local"
-                value={get(clinicalImpression, 'effectiveDateTime', '').substring(0, 16)}
-                onChange={(e) => handleChange('effectiveDateTime', e.target.value)}
-                disabled={!isEditing}
-                InputLabelProps={{ shrink: true }}
-                helperText="When the assessment was made"
-              />
-            </Grid>
-
-            {/* Assessor Display */}
-            <Grid item xs={12} sm={6}>
-              <TextField
-                id="assessorDisplay"
-                fullWidth
-                label="Assessor"
-                value={get(clinicalImpression, 'assessor.display', '')}
-                onChange={(e) => handleChange('assessor.display', e.target.value)}
-                disabled={!isEditing}
-                helperText="The clinician performing the assessment"
-              />
-            </Grid>
-
-            {/* Patient / Subject */}
-            <Grid item xs={12}>
-              <TextField
-                id="subjectDisplay"
-                fullWidth
-                label="Patient"
-                value={get(clinicalImpression, 'subject.display', '')}
-                onChange={(e) => handleChange('subject.display', e.target.value)}
-                disabled={!isEditing}
-                InputProps={{
-                  endAdornment: (
-                    <InputAdornment position="end">
-                      <Tooltip title="Search for patient">
-                        <IconButton
-                          onClick={handleSearchPatient}
-                          edge="end"
-                          disabled={!isEditing}
-                        >
-                          <SearchIcon />
-                        </IconButton>
-                      </Tooltip>
-                    </InputAdornment>
-                  ),
-                }}
-              />
-            </Grid>
-
-            {/* Patient Reference (hidden but set) */}
-            <Grid item xs={12}>
-              <TextField
-                id="subjectReference"
-                fullWidth
-                label="Patient Reference"
-                value={get(clinicalImpression, 'subject.reference', '')}
-                disabled
-                size="small"
-                sx={{ display: 'none' }}
-              />
-            </Grid>
-          </Grid>
+          {viewMode === 'form' && renderFormView()}
+          {viewMode === 'page' && renderPreviewView()}
         </CardContent>
-        <CardActions sx={{ justifyContent: 'flex-end', p: 2 }}>
-          {!isEditing ? (
-            <>
-              <Button onClick={handleBack}>
-                Back
-              </Button>
-              <Button color="error" onClick={handleDelete}>
-                Delete
-              </Button>
-              <Button variant="contained" onClick={() => setIsEditing(true)}>
-                Edit
-              </Button>
-            </>
-          ) : (
-            <>
-              <Button onClick={handleCancel}>
-                Cancel
-              </Button>
-              <Button
-                id="saveClinicalImpressionButton"
-                variant="contained"
-                color="primary"
-                onClick={handleSave}
-                disabled={isLoading}
-              >
-                {isLoading ? 'Saving...' : (id && id !== 'new' ? 'Update' : 'Save')}
-              </Button>
-            </>
-          )}
-        </CardActions>
       </Card>
     </Container>
   );

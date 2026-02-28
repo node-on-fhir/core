@@ -1,32 +1,26 @@
 // /imports/ui-fhir/substances/SubstanceDetail.jsx
 
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useTracker } from 'meteor/react-meteor-data';
 
 import {
   Button,
   Card,
-  CardActions,
   CardContent,
   CardHeader,
   Container,
-  TextField,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
   Typography,
   Box,
-  Stack,
-  Chip,
-  InputAdornment,
   IconButton,
   Tooltip
 } from '@mui/material';
 
-import QrCodeIcon from '@mui/icons-material/QrCode';
-import SearchIcon from '@mui/icons-material/Search';
+import ArticleIcon from '@mui/icons-material/Article';
+import EditNoteIcon from '@mui/icons-material/EditNote';
+import LockIcon from '@mui/icons-material/Lock';
+import LockOpenIcon from '@mui/icons-material/LockOpen';
+import DeleteIcon from '@mui/icons-material/Delete';
 
 import { get, set } from 'lodash';
 import moment from 'moment';
@@ -35,37 +29,25 @@ import { Substances } from '/imports/lib/schemas/SimpleSchemas/Substances';
 import { Meteor } from 'meteor/meteor';
 import { Session } from 'meteor/session';
 
-// Use Meteor.useNavigate pattern per project requirements
-let useNavigate;
-Meteor.startup(function() {
-  useNavigate = Meteor.useNavigate;
-});
+import SubstanceFormView from './SubstanceFormView';
+import SubstancePreview from './SubstancePreview';
 
 function SubstanceDetail(props) {
-  const navigate = useNavigate ? useNavigate() : function() {
   // Embedded mode support (for HoneycombFhirResource dispatcher)
   var isEmbedded = props.embedded || false;
-};
+  var _rawNavigate = useNavigate();
+  var navigate = isEmbedded ? function() {} : _rawNavigate;
   var _params = isEmbedded ? {} : useParams();
   var id = _params.id || null;
 
-  // Get current user from session/tracker
-  const currentUser = useTracker(function() {
-    return Meteor.user();
-  }, []);
+  const [substanceId, setSubstanceId] = useState(false);
 
-  // Subscribe to substance data using ID-based query (optimized)
+  // Subscribe to substance data
   const isSubscriptionReady = useTracker(function(){
     if (isEmbedded) return true; // Skip subscription in embedded mode
     if (id && id !== 'new') {
-      const query = {
-        $or: [
-          {'_id': id},
-          {'id': id}
-        ]
-      };
-      console.log('[SubstanceDetail] Subscribing with ID query:', query);
-      const handle = Meteor.subscribe('selectedPatient.Substances', Session.get('selectedPatientId'), {});
+      console.log('[SubstanceDetail] Subscribing for substance:', id);
+      var handle = Meteor.subscribe('selectedPatient.Substances', Session.get('selectedPatientId'), {});
       return handle.ready();
     }
     return true;
@@ -125,8 +107,29 @@ function SubstanceDetail(props) {
     }]
   });
 
+  const [form, setForm] = useState({
+    status: 'active',
+    codeText: '',
+    codeCode: '',
+    codeDisplay: '',
+    categoryCode: '',
+    categoryDisplay: '',
+    description: '',
+    instanceIdentifier: '',
+    instanceExpiry: moment().add(1, 'year').format('YYYY-MM-DD'),
+    instanceQuantityValue: '',
+    instanceQuantityUnit: '',
+    ingredientCode: '',
+    ingredientDisplay: '',
+    ingredientNumeratorValue: '',
+    ingredientNumeratorUnit: '',
+    ingredientDenominatorValue: '',
+    ingredientDenominatorUnit: ''
+  });
+
   // Initialise from fhirResource prop when in embedded mode
   var hasReceivedProps = React.useRef(false);
+  var pendingUpdate = React.useRef(false);
   useEffect(function() {
     if (isEmbedded && props.fhirResource) {
       hasReceivedProps.current = true;
@@ -139,52 +142,83 @@ function SubstanceDetail(props) {
     }
   }, [props.fhirResource]);
 
+  // onResourceChange: notify parent when state changes in embedded mode
+  useEffect(function() {
+    if (isEmbedded && pendingUpdate.current && props.onResourceChange) {
+      pendingUpdate.current = false;
+      props.onResourceChange(substance);
+    }
+  }, [substance]);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [isEditing, setIsEditing] = useState(isEmbedded);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const viewMode = searchParams.get('view') || 'form';
 
-  // Set default values on component mount for new substances
+  const isNewSubstance = !id || id === 'new';
+  const isExistingSubstance = substanceId && substanceId !== 'new';
+
+  // Helper to extract form from a substance resource
+  function extractFormFromSubstance(substanceResource) {
+    return {
+      status: get(substanceResource, 'status', 'active'),
+      codeText: get(substanceResource, 'code.text', ''),
+      codeCode: get(substanceResource, 'code.coding[0].code', ''),
+      codeDisplay: get(substanceResource, 'code.coding[0].display', ''),
+      categoryCode: get(substanceResource, 'category[0].coding[0].code', ''),
+      categoryDisplay: get(substanceResource, 'category[0].coding[0].display', get(substanceResource, 'category[0].text', '')),
+      description: get(substanceResource, 'description', ''),
+      instanceIdentifier: get(substanceResource, 'instance[0].identifier.value', ''),
+      instanceExpiry: moment(get(substanceResource, 'instance[0].expiry', '')).format('YYYY-MM-DD'),
+      instanceQuantityValue: get(substanceResource, 'instance[0].quantity.value', ''),
+      instanceQuantityUnit: get(substanceResource, 'instance[0].quantity.unit', ''),
+      ingredientCode: get(substanceResource, 'ingredient[0].substanceCodeableConcept.coding[0].code', ''),
+      ingredientDisplay: get(substanceResource, 'ingredient[0].substanceCodeableConcept.coding[0].display', ''),
+      ingredientNumeratorValue: get(substanceResource, 'ingredient[0].quantity.numerator.value', ''),
+      ingredientNumeratorUnit: get(substanceResource, 'ingredient[0].quantity.numerator.unit', ''),
+      ingredientDenominatorValue: get(substanceResource, 'ingredient[0].quantity.denominator.value', ''),
+      ingredientDenominatorUnit: get(substanceResource, 'ingredient[0].quantity.denominator.unit', '')
+    };
+  }
+
+  // Set editing mode based on id
   useEffect(function() {
     if (!id || id === 'new') {
       setIsEditing(true);
-    } else {
-      setIsEditing(false);
     }
   }, [id]);
 
   // Load substance with polling retry when subscription data may be delayed
   useEffect(function() {
-    let cancelled = false;
-    let retryCount = 0;
-    const maxRetries = 5;
-    const retryDelay = 500; // 500ms between retries
+    var cancelled = false;
+    var retryCount = 0;
+    var maxRetries = 5;
+    var retryDelay = 500;
 
     function tryLoadSubstance() {
       if (cancelled) return;
       if (!id || id === 'new') return;
 
       console.log('[SubstanceDetail] Attempting to load substance:', id, 'attempt:', retryCount + 1);
-      console.log('[SubstanceDetail] Subscription ready:', isSubscriptionReady);
-      console.log('[SubstanceDetail] Total substances in collection:', Substances.find({}).count());
 
       // Try to find in client collection
-      let existingSubstance = Substances.findOne({_id: id});
+      var existingSubstance = Substances.findOne({_id: id});
 
       // Fallback: try finding by id field (FHIR identifier)
       if (!existingSubstance) {
-        console.log('[SubstanceDetail] Not found by _id, trying id field');
         existingSubstance = Substances.findOne({id: id});
       }
 
       if (existingSubstance) {
-        console.log('[SubstanceDetail] Loaded substance from client collection:', {
+        console.log('[SubstanceDetail] Loaded substance:', {
           _id: existingSubstance._id,
           codeText: get(existingSubstance, 'code.text'),
-          codeCode: get(existingSubstance, 'code.coding[0].code'),
           status: get(existingSubstance, 'status')
         });
         setSubstance(existingSubstance);
+        setSubstanceId(existingSubstance._id);
+        setForm(extractFormFromSubstance(existingSubstance));
         setIsEditing(false);
         setError(null);
         return;
@@ -213,6 +247,8 @@ function SubstanceDetail(props) {
               status: get(serverSubstance, 'status')
             });
             setSubstance(serverSubstance);
+            setSubstanceId(serverSubstance._id);
+            setForm(extractFormFromSubstance(serverSubstance));
             setIsEditing(false);
             setError(null);
           } else {
@@ -231,15 +267,37 @@ function SubstanceDetail(props) {
   }, [id, isSubscriptionReady]);
 
   // Handle field changes
-  function handleChange(path, value) {
-    const updatedSubstance = { ...substance };
-    set(updatedSubstance, path, value);
-    setSubstance(updatedSubstance);
-  
-    // Notify parent of changes in embedded mode
-    if (props.onResourceChange) {
-      props.onResourceChange(updatedSubstance);
-    }
+  function handleChange(name, value) {
+    pendingUpdate.current = true;
+    var newForm = Object.assign({}, form);
+    newForm[name] = value;
+    setForm(newForm);
+
+    // Also update the resource object
+    setSubstance(function(prev) {
+      var updated = Object.assign({}, prev);
+      if (name === 'status') { set(updated, 'status', value); }
+      if (name === 'codeText') { set(updated, 'code.text', value); }
+      if (name === 'codeCode') { set(updated, 'code.coding[0].code', value); }
+      if (name === 'codeDisplay') { set(updated, 'code.coding[0].display', value); }
+      if (name === 'categoryCode') { set(updated, 'category[0].coding[0].code', value); }
+      if (name === 'categoryDisplay') {
+        set(updated, 'category[0].coding[0].display', value);
+        set(updated, 'category[0].text', value);
+      }
+      if (name === 'description') { set(updated, 'description', value); }
+      if (name === 'instanceIdentifier') { set(updated, 'instance[0].identifier.value', value); }
+      if (name === 'instanceExpiry') { set(updated, 'instance[0].expiry', value); }
+      if (name === 'instanceQuantityValue') { set(updated, 'instance[0].quantity.value', value); }
+      if (name === 'instanceQuantityUnit') { set(updated, 'instance[0].quantity.unit', value); }
+      if (name === 'ingredientCode') { set(updated, 'ingredient[0].substanceCodeableConcept.coding[0].code', value); }
+      if (name === 'ingredientDisplay') { set(updated, 'ingredient[0].substanceCodeableConcept.coding[0].display', value); }
+      if (name === 'ingredientNumeratorValue') { set(updated, 'ingredient[0].quantity.numerator.value', value); }
+      if (name === 'ingredientNumeratorUnit') { set(updated, 'ingredient[0].quantity.numerator.unit', value); }
+      if (name === 'ingredientDenominatorValue') { set(updated, 'ingredient[0].quantity.denominator.value', value); }
+      if (name === 'ingredientDenominatorUnit') { set(updated, 'ingredient[0].quantity.denominator.unit', value); }
+      return updated;
+    });
   }
 
   // Handle save
@@ -250,18 +308,16 @@ function SubstanceDetail(props) {
     console.log('[SubstanceDetail] Saving substance:', {
       codeText: get(substance, 'code.text'),
       codeCode: get(substance, 'code.coding[0].code'),
-      codeDisplay: get(substance, 'code.coding[0].display'),
-      status: get(substance, 'status'),
-      fullSubstance: substance
+      status: get(substance, 'status')
     });
 
     try {
-      if (id && id !== 'new') {
-        await Meteor.callAsync('substances.update', id, substance);
+      if (substanceId && substanceId !== 'new') {
+        await Meteor.callAsync('substances.update', substanceId, substance);
         console.log('Substance updated successfully');
         setIsEditing(false);
       } else {
-        const newId = await Meteor.callAsync('substances.create', substance);
+        var newId = await Meteor.callAsync('substances.create', substance);
         console.log('Substance created with ID:', newId);
         navigate('/substances');
       }
@@ -275,12 +331,12 @@ function SubstanceDetail(props) {
 
   // Handle delete
   async function handleDelete() {
-    if (!id || id === 'new') return;
+    if (!substanceId || substanceId === 'new') return;
 
     if (window.confirm('Are you sure you want to delete this substance?')) {
       setLoading(true);
       try {
-        await Meteor.callAsync('substances.remove', id);
+        await Meteor.callAsync('substances.remove', substanceId);
         console.log('Substance deleted successfully');
         navigate('/substances');
       } catch (err) {
@@ -294,251 +350,151 @@ function SubstanceDetail(props) {
 
   // Handle cancel
   function handleCancel() {
-    navigate('/substances');
+    if (substanceId && substanceId !== 'new') {
+      setIsEditing(false);
+      setError(null);
+      var existingSubstance = Substances.findOne({_id: substanceId});
+      if (existingSubstance) {
+        setSubstance(existingSubstance);
+        setForm(extractFormFromSubstance(existingSubstance));
+      }
+    } else {
+      navigate('/substances');
+    }
   }
 
-  const statusOptions = [
-    { value: 'active', label: 'Active' },
-    { value: 'inactive', label: 'Inactive' },
-    { value: 'entered-in-error', label: 'Entered in Error' }
-  ];
+  // Build the header title
+  var headerTitle = 'New Substance';
+  if (isExistingSubstance) {
+    headerTitle = <span className="barcode helveticas" style={{ fontSize: '1.5rem' }}>{substanceId}</span>;
+  }
 
-  const categoryOptions = [
-    { value: 'allergen', label: 'Allergen' },
-    { value: 'biological', label: 'Biological Substance' },
-    { value: 'body', label: 'Body Substance' },
-    { value: 'chemical', label: 'Chemical' },
-    { value: 'food', label: 'Dietary Substance' },
-    { value: 'drug', label: 'Drug or Medicament' },
-    { value: 'material', label: 'Material' }
-  ];
-
-  if (isEmbedded) {
+  // Build the header action buttons
+  function renderHeaderActions(){
     return (
-      <Stack spacing={3}>
-        <TextField
-          id="codeText"
-          fullWidth
-          label="Substance Name"
-          value={get(substance, 'code.text', '')}
-          onChange={(e) => handleChange('code.text', e.target.value)}
-          helperText="Common name for the substance"
-          disabled={!isEditing}
-        />
-
-        <Stack direction="row" spacing={2}>
-          <TextField
-            id="codeCode"
-            fullWidth
-            label="SNOMED Code"
-            value={get(substance, 'code.coding[0].code', '')}
-            onChange={(e) => handleChange('code.coding[0].code', e.target.value)}
-            helperText="SNOMED CT code"
-            disabled={!isEditing}
-            InputProps={{
-              endAdornment: (
-                <InputAdornment position="end">
-                  <Tooltip title="Lookup SNOMED codes">
-                    <IconButton
-                      onClick={() => window.open('https://browser.ihtsdotools.org/', '_blank')}
-                      edge="end"
-                      disabled={!isEditing}
-                    >
-                      <SearchIcon />
-                    </IconButton>
-                  </Tooltip>
-                </InputAdornment>
-              ),
-            }}
-          />
-
-          <TextField
-            id="codeDisplay"
-            fullWidth
-            label="Display Name"
-            value={get(substance, 'code.coding[0].display', '')}
-            onChange={(e) => handleChange('code.coding[0].display', e.target.value)}
-            helperText="Formal substance name"
-            disabled={!isEditing}
-          />
-        </Stack>
-
-        <Stack direction="row" spacing={2}>
-          <FormControl fullWidth disabled={!isEditing}>
-            <InputLabel>Status</InputLabel>
-            <Select
-              id="status"
-              value={get(substance, 'status', 'active')}
-              onChange={(e) => handleChange('status', e.target.value)}
-              label="Status"
-            >
-              {statusOptions.map(option => (
-                <MenuItem key={option.value} value={option.value}>
-                  {option.label}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-
-          <FormControl fullWidth disabled={!isEditing}>
-            <InputLabel>Category</InputLabel>
-            <Select
-              id="categorySelect"
-              value={get(substance, 'category[0].coding[0].code', '')}
-              onChange={(e) => {
-                const selectedOption = categoryOptions.find(opt => opt.value === e.target.value);
-                handleChange('category[0].coding[0].code', e.target.value);
-                handleChange('category[0].coding[0].display', selectedOption?.label || '');
-                handleChange('category[0].text', selectedOption?.label || '');
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+        {/* Preview toggle -- hidden for new substances */}
+        {!isNewSubstance && (
+          <Tooltip title="Preview">
+            <IconButton
+              onClick={function(){ setSearchParams({ view: 'page' }); }}
+              sx={{
+                color: viewMode === 'page' ? 'primary.main' : 'text.secondary'
               }}
-              label="Category"
             >
-              {categoryOptions.map(option => (
-                <MenuItem key={option.value} value={option.value}>
-                  {option.label}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        </Stack>
+              <ArticleIcon />
+            </IconButton>
+          </Tooltip>
+        )}
 
-        <TextField
-          id="description"
-          fullWidth
-          multiline
-          rows={3}
-          label="Description"
-          value={get(substance, 'description', '')}
-          onChange={(e) => handleChange('description', e.target.value)}
-          helperText="Textual description of the substance"
-          disabled={!isEditing}
+        {/* Form toggle -- hidden for new substances (always form) */}
+        {!isNewSubstance && (
+          <Tooltip title="Form">
+            <IconButton
+              onClick={function(){ setSearchParams({ view: 'form' }); }}
+              sx={{
+                color: viewMode === 'form' ? 'primary.main' : 'text.secondary'
+              }}
+            >
+              <EditNoteIcon />
+            </IconButton>
+          </Tooltip>
+        )}
+
+        {/* Lock / Unlock toggle -- only for existing substances */}
+        {!isNewSubstance && (
+          <Tooltip title={isEditing ? 'Lock (read-only)' : 'Unlock (edit)'}>
+            <IconButton
+              onClick={function(){ setIsEditing(!isEditing); }}
+            >
+              {isEditing ? <LockOpenIcon /> : <LockIcon />}
+            </IconButton>
+          </Tooltip>
+        )}
+
+        {/* Delete -- only for existing substances, gated on edit mode */}
+        {!isNewSubstance && (
+          <Tooltip title="Delete">
+            <IconButton
+              onClick={handleDelete}
+              disabled={!isEditing}
+              sx={{ color: isEditing ? 'error.main' : 'text.disabled' }}
+            >
+              <DeleteIcon />
+              <Typography sx={{
+                position: 'absolute',
+                width: '1px',
+                height: '1px',
+                padding: 0,
+                margin: '-1px',
+                overflow: 'hidden',
+                clip: 'rect(0, 0, 0, 0)',
+                whiteSpace: 'nowrap',
+                borderWidth: 0
+              }}>Delete</Typography>
+            </IconButton>
+          </Tooltip>
+        )}
+      </Box>
+    );
+  }
+
+  // Render the form view
+  function renderFormView(){
+    return (
+      <>
+        <SubstanceFormView
+          resource={substance}
+          form={form}
+          isEditing={isEditing}
+          onChange={handleChange}
+          isEmbedded={isEmbedded}
         />
 
-        <Typography variant="h6" sx={{ mt: 2 }}>Instance Information</Typography>
-
-        <Stack direction="row" spacing={2}>
-          <TextField
-            id="instanceIdentifier"
-            fullWidth
-            label="Instance Identifier"
-            value={get(substance, 'instance[0].identifier.value', '')}
-            onChange={(e) => handleChange('instance[0].identifier.value', e.target.value)}
-            helperText="Lot number or batch identifier"
-            disabled={!isEditing}
-          />
-
-          <TextField
-            id="instanceExpiry"
-            fullWidth
-            type="date"
-            label="Expiry Date"
-            value={moment(get(substance, 'instance[0].expiry', '')).format('YYYY-MM-DD')}
-            onChange={(e) => handleChange('instance[0].expiry', e.target.value)}
-            InputLabelProps={{ shrink: true }}
-            disabled={!isEditing}
-          />
-        </Stack>
-
-        <Stack direction="row" spacing={2}>
-          <TextField
-            id="instanceQuantityValue"
-            fullWidth
-            label="Quantity Value"
-            type="number"
-            value={get(substance, 'instance[0].quantity.value', '')}
-            onChange={(e) => handleChange('instance[0].quantity.value', e.target.value)}
-            helperText="Amount available"
-            disabled={!isEditing}
-          />
-
-          <TextField
-            id="instanceQuantityUnit"
-            fullWidth
-            label="Quantity Unit"
-            value={get(substance, 'instance[0].quantity.unit', '')}
-            onChange={(e) => handleChange('instance[0].quantity.unit', e.target.value)}
-            helperText="e.g., mg, ml, g"
-            disabled={!isEditing}
-          />
-        </Stack>
-
-        <Typography variant="h6" sx={{ mt: 2 }}>Ingredient Information</Typography>
-
-        <Stack direction="row" spacing={2}>
-          <TextField
-            id="ingredientCode"
-            fullWidth
-            label="Ingredient Code"
-            value={get(substance, 'ingredient[0].substanceCodeableConcept.coding[0].code', '')}
-            onChange={(e) => handleChange('ingredient[0].substanceCodeableConcept.coding[0].code', e.target.value)}
-            helperText="SNOMED code for ingredient"
-            disabled={!isEditing}
-          />
-
-          <TextField
-            id="ingredientDisplay"
-            fullWidth
-            label="Ingredient Name"
-            value={get(substance, 'ingredient[0].substanceCodeableConcept.coding[0].display', '')}
-            onChange={(e) => handleChange('ingredient[0].substanceCodeableConcept.coding[0].display', e.target.value)}
-            helperText="Name of ingredient substance"
-            disabled={!isEditing}
-          />
-        </Stack>
-
-        <Stack direction="row" spacing={2}>
-          <TextField
-            id="ingredientNumeratorValue"
-            fullWidth
-            label="Ratio Numerator"
-            type="number"
-            value={get(substance, 'ingredient[0].quantity.numerator.value', '')}
-            onChange={(e) => handleChange('ingredient[0].quantity.numerator.value', e.target.value)}
-            helperText="Amount of ingredient"
-            disabled={!isEditing}
-          />
-
-          <TextField
-            id="ingredientNumeratorUnit"
-            fullWidth
-            label="Numerator Unit"
-            value={get(substance, 'ingredient[0].quantity.numerator.unit', '')}
-            onChange={(e) => handleChange('ingredient[0].quantity.numerator.unit', e.target.value)}
-            helperText="e.g., mg"
-            disabled={!isEditing}
-          />
-
-          <TextField
-            id="ingredientDenominatorValue"
-            fullWidth
-            label="Ratio Denominator"
-            type="number"
-            value={get(substance, 'ingredient[0].quantity.denominator.value', '')}
-            onChange={(e) => handleChange('ingredient[0].quantity.denominator.value', e.target.value)}
-            helperText="Per this amount"
-            disabled={!isEditing}
-          />
-
-          <TextField
-            id="ingredientDenominatorUnit"
-            fullWidth
-            label="Denominator Unit"
-            value={get(substance, 'ingredient[0].quantity.denominator.unit', '')}
-            onChange={(e) => handleChange('ingredient[0].quantity.denominator.unit', e.target.value)}
-            helperText="e.g., ml, tablet"
-            disabled={!isEditing}
-          />
-        </Stack>
-      </Stack>
+        {/* In-form Save/Cancel bar when editing */}
+        {isEditing && !isEmbedded && (
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, mt: 3, pt: 2, borderTop: 1, borderColor: 'divider' }}>
+            <Button id="cancelButton" onClick={handleCancel} disabled={loading}>
+              Cancel
+            </Button>
+            <Button
+              id="saveSubstanceButton"
+              onClick={handleSave}
+              variant="contained"
+              color="primary"
+              disabled={loading}
+            >
+              {loading ? 'Saving...' : 'Save'}
+            </Button>
+          </Box>
+        )}
+      </>
     );
+  }
+
+  // Render the preview view
+  function renderPreviewView(){
+    return (
+      <SubstancePreview
+        resource={substance}
+        form={form}
+        resourceId={substanceId}
+      />
+    );
+  }
+
+  // In embedded mode, render form content without Container/Card wrapper
+  if (isEmbedded) {
+    return renderFormView();
   }
 
   return (
     <Container id="substanceDetailPage" maxWidth="md" sx={{ py: 4 }}>
       <Card sx={{ boxShadow: 3 }}>
         <CardHeader
-          title={id && id !== 'new' ? 'Edit Substance' : 'New Substance'}
-          sx={{ bgcolor: 'primary.main', color: 'primary.contrastText' }}
+          title={headerTitle}
+          sx={{ borderBottom: 1, borderColor: 'divider' }}
+          action={renderHeaderActions()}
         />
         <CardContent>
           {error && (
@@ -547,287 +503,9 @@ function SubstanceDetail(props) {
             </Typography>
           )}
 
-          {/* System ID Barcode */}
-          {(id && id !== 'new') && (
-            <Box sx={{ mb: 3, textAlign: 'right' }}>
-              <span className="barcode helveticas" style={{ fontSize: '2rem' }}>
-                {get(substance, '_id') || id}
-              </span>
-            </Box>
-          )}
-
-          <Stack spacing={3}>
-            <TextField
-              id="codeText"
-              fullWidth
-              label="Substance Name"
-              value={get(substance, 'code.text', '')}
-              onChange={(e) => handleChange('code.text', e.target.value)}
-              helperText="Common name for the substance"
-              disabled={!isEditing}
-            />
-
-            <Stack direction="row" spacing={2}>
-              <TextField
-                id="codeCode"
-                fullWidth
-                label="SNOMED Code"
-                value={get(substance, 'code.coding[0].code', '')}
-                onChange={(e) => handleChange('code.coding[0].code', e.target.value)}
-                helperText="SNOMED CT code"
-                disabled={!isEditing}
-                InputProps={{
-                  endAdornment: (
-                    <InputAdornment position="end">
-                      <Tooltip title="Lookup SNOMED codes">
-                        <IconButton
-                          onClick={() => window.open('https://browser.ihtsdotools.org/', '_blank')}
-                          edge="end"
-                          disabled={!isEditing}
-                        >
-                          <SearchIcon />
-                        </IconButton>
-                      </Tooltip>
-                    </InputAdornment>
-                  ),
-                }}
-              />
-
-              <TextField
-                id="codeDisplay"
-                fullWidth
-                label="Display Name"
-                value={get(substance, 'code.coding[0].display', '')}
-                onChange={(e) => handleChange('code.coding[0].display', e.target.value)}
-                helperText="Formal substance name"
-                disabled={!isEditing}
-              />
-            </Stack>
-
-            <Stack direction="row" spacing={2}>
-              <FormControl fullWidth disabled={!isEditing}>
-                <InputLabel>Status</InputLabel>
-                <Select
-                  id="status"
-                  value={get(substance, 'status', 'active')}
-                  onChange={(e) => handleChange('status', e.target.value)}
-                  label="Status"
-                >
-                  {statusOptions.map(option => (
-                    <MenuItem key={option.value} value={option.value}>
-                      {option.label}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-
-              <FormControl fullWidth disabled={!isEditing}>
-                <InputLabel>Category</InputLabel>
-                <Select
-                  id="categorySelect"
-                  value={get(substance, 'category[0].coding[0].code', '')}
-                  onChange={(e) => {
-                    const selectedOption = categoryOptions.find(opt => opt.value === e.target.value);
-                    handleChange('category[0].coding[0].code', e.target.value);
-                    handleChange('category[0].coding[0].display', selectedOption?.label || '');
-                    handleChange('category[0].text', selectedOption?.label || '');
-                  }}
-                  label="Category"
-                >
-                  {categoryOptions.map(option => (
-                    <MenuItem key={option.value} value={option.value}>
-                      {option.label}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Stack>
-
-            <TextField
-              id="description"
-              fullWidth
-              multiline
-              rows={3}
-              label="Description"
-              value={get(substance, 'description', '')}
-              onChange={(e) => handleChange('description', e.target.value)}
-              helperText="Textual description of the substance"
-              disabled={!isEditing}
-            />
-
-            <Typography variant="h6" sx={{ mt: 2 }}>Instance Information</Typography>
-
-            <Stack direction="row" spacing={2}>
-              <TextField
-                id="instanceIdentifier"
-                fullWidth
-                label="Instance Identifier"
-                value={get(substance, 'instance[0].identifier.value', '')}
-                onChange={(e) => handleChange('instance[0].identifier.value', e.target.value)}
-                helperText="Lot number or batch identifier"
-                disabled={!isEditing}
-              />
-
-              <TextField
-                id="instanceExpiry"
-                fullWidth
-                type="date"
-                label="Expiry Date"
-                value={moment(get(substance, 'instance[0].expiry', '')).format('YYYY-MM-DD')}
-                onChange={(e) => handleChange('instance[0].expiry', e.target.value)}
-                InputLabelProps={{ shrink: true }}
-                disabled={!isEditing}
-              />
-            </Stack>
-
-            <Stack direction="row" spacing={2}>
-              <TextField
-                id="instanceQuantityValue"
-                fullWidth
-                label="Quantity Value"
-                type="number"
-                value={get(substance, 'instance[0].quantity.value', '')}
-                onChange={(e) => handleChange('instance[0].quantity.value', e.target.value)}
-                helperText="Amount available"
-                disabled={!isEditing}
-              />
-
-              <TextField
-                id="instanceQuantityUnit"
-                fullWidth
-                label="Quantity Unit"
-                value={get(substance, 'instance[0].quantity.unit', '')}
-                onChange={(e) => handleChange('instance[0].quantity.unit', e.target.value)}
-                helperText="e.g., mg, ml, g"
-                disabled={!isEditing}
-              />
-            </Stack>
-
-            <Typography variant="h6" sx={{ mt: 2 }}>Ingredient Information</Typography>
-
-            <Stack direction="row" spacing={2}>
-              <TextField
-                id="ingredientCode"
-                fullWidth
-                label="Ingredient Code"
-                value={get(substance, 'ingredient[0].substanceCodeableConcept.coding[0].code', '')}
-                onChange={(e) => handleChange('ingredient[0].substanceCodeableConcept.coding[0].code', e.target.value)}
-                helperText="SNOMED code for ingredient"
-                disabled={!isEditing}
-              />
-
-              <TextField
-                id="ingredientDisplay"
-                fullWidth
-                label="Ingredient Name"
-                value={get(substance, 'ingredient[0].substanceCodeableConcept.coding[0].display', '')}
-                onChange={(e) => handleChange('ingredient[0].substanceCodeableConcept.coding[0].display', e.target.value)}
-                helperText="Name of ingredient substance"
-                disabled={!isEditing}
-              />
-            </Stack>
-
-            <Stack direction="row" spacing={2}>
-              <TextField
-                id="ingredientNumeratorValue"
-                fullWidth
-                label="Ratio Numerator"
-                type="number"
-                value={get(substance, 'ingredient[0].quantity.numerator.value', '')}
-                onChange={(e) => handleChange('ingredient[0].quantity.numerator.value', e.target.value)}
-                helperText="Amount of ingredient"
-                disabled={!isEditing}
-              />
-
-              <TextField
-                id="ingredientNumeratorUnit"
-                fullWidth
-                label="Numerator Unit"
-                value={get(substance, 'ingredient[0].quantity.numerator.unit', '')}
-                onChange={(e) => handleChange('ingredient[0].quantity.numerator.unit', e.target.value)}
-                helperText="e.g., mg"
-                disabled={!isEditing}
-              />
-
-              <TextField
-                id="ingredientDenominatorValue"
-                fullWidth
-                label="Ratio Denominator"
-                type="number"
-                value={get(substance, 'ingredient[0].quantity.denominator.value', '')}
-                onChange={(e) => handleChange('ingredient[0].quantity.denominator.value', e.target.value)}
-                helperText="Per this amount"
-                disabled={!isEditing}
-              />
-
-              <TextField
-                id="ingredientDenominatorUnit"
-                fullWidth
-                label="Denominator Unit"
-                value={get(substance, 'ingredient[0].quantity.denominator.unit', '')}
-                onChange={(e) => handleChange('ingredient[0].quantity.denominator.unit', e.target.value)}
-                helperText="e.g., ml, tablet"
-                disabled={!isEditing}
-              />
-            </Stack>
-          </Stack>
+          {viewMode === 'form' && renderFormView()}
+          {viewMode === 'page' && renderPreviewView()}
         </CardContent>
-
-        <CardActions sx={{ justifyContent: 'flex-end', p: 2 }}>
-          {!isEditing && id && id !== 'new' ? (
-            // Read-only mode buttons
-            <>
-              <Button
-                onClick={() => navigate('/substances')}
-              >
-                Back
-              </Button>
-              <Button
-                onClick={handleDelete}
-                color="error"
-                disabled={loading}
-              >
-                Delete
-              </Button>
-              <Button
-                onClick={() => setIsEditing(true)}
-                variant="contained"
-                color="primary"
-              >
-                Edit
-              </Button>
-            </>
-          ) : (
-            // Edit mode buttons
-            <>
-              <Button
-                onClick={() => {
-                  if (id && id !== 'new') {
-                    setIsEditing(false);
-                    const existingSubstance = Substances.findOne({_id: id});
-                    if (existingSubstance) {
-                      setSubstance(existingSubstance);
-                    }
-                  } else {
-                    navigate('/substances');
-                  }
-                }}
-                disabled={loading}
-              >
-                Cancel
-              </Button>
-              <Button
-                id="saveSubstanceButton"
-                onClick={handleSave}
-                variant="contained"
-                color="primary"
-                disabled={loading}
-              >
-                {loading ? 'Saving...' : 'Save'}
-              </Button>
-            </>
-          )}
-        </CardActions>
       </Card>
     </Container>
   );

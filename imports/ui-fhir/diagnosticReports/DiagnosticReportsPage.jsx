@@ -28,6 +28,7 @@ import { Meteor } from 'meteor/meteor';
 
 import { get, has } from 'lodash';
 
+import { FhirUtilities } from '/imports/lib/FhirUtilities';
 import DiagnosticReportsTable from './DiagnosticReportsTable';
 import FhirNoData from '../components/FhirNoData.jsx';
 import LayoutHelpers from '/imports/lib/LayoutHelpers';
@@ -398,11 +399,7 @@ function DiagnosticReportsPage(props){
   }
 
   let layoutContent;
-  if(isLoading) {
-    layoutContent = <Box sx={{ textAlign: 'center', py: 4 }}>
-      <Typography>Loading diagnostic reports...</Typography>
-    </Box>
-  } else if(data.diagnosticReports.length > 0){
+  if(data.diagnosticReports.length > 0){
     layoutContent = <Card 
       sx={{ 
         width: '100%',
