@@ -598,7 +598,15 @@ describe('SupplyDeliveries CRUD Operations', function() {
 
     // Verify we're back on the list page or wait for navigation
     browser
-      .pause(2000)
+      .pause(2000);
+
+    // Scroll to top to ensure list page container is visible
+    browser.execute(function() {
+      window.scrollTo(0, 0);
+    });
+    browser.pause(500);
+
+    browser
       .waitForElementVisible('#supplyDeliveriesPage', 10000)
       .execute(function() {
         return {

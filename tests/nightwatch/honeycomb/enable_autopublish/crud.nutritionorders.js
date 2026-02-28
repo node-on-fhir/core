@@ -893,7 +893,13 @@ describe('NutritionOrders CRUD Operations', function() {
       .waitForElementVisible('#editNutritionOrderButton', 5000)
       .click('#editNutritionOrderButton')
       .pause(1000); // Wait for form to switch to edit mode
-    
+
+    // Scroll to top to ensure Save button is visible
+    browser.execute(function() {
+      window.scrollTo(0, 0);
+    });
+    browser.pause(500);
+
     // Verify we're now in edit mode by checking for the save button
     browser.waitForElementVisible('#saveNutritionOrderButton', 5000);
     browser.assert.visible('#saveNutritionOrderButton', 'Save button should be visible in edit mode');

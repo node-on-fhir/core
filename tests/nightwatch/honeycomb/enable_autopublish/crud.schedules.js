@@ -678,7 +678,13 @@ describe('Schedules CRUD Operations', function() {
       .clearValue('#notesTextarea')
       .setValue('#notesTextarea', updatedSchedule.notes)
       .pause(500);
-    
+
+    // Scroll to top to ensure Save button is clickable
+    browser.execute(function() {
+      window.scrollTo(0, 0);
+    });
+    browser.pause(500);
+
     // Save changes
     browser
       .execute(function() {

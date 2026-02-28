@@ -607,6 +607,12 @@ describe('NutritionIntakes CRUD Operations', function() {
       .click('#editNutritionIntakeButton')
       .pause(1000);
 
+    // Scroll to top to ensure form controls are visible
+    browser.execute(function() {
+      window.scrollTo(0, 0);
+    });
+    browser.pause(500);
+
     // Verify we're in edit mode
     browser.waitForElementVisible('#saveNutritionIntakeButton', 5000);
 
