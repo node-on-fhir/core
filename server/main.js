@@ -104,6 +104,7 @@ import '../imports/api/supplyRequests/methods.js';
 import '../imports/methods/supplyDeliveries.js';
 import '../imports/api/lists/methods.js';
 import '../imports/methods/tasks.js';
+import '../imports/api/serverConfiguration/methods.js';
 
 // Import test methods (for non-production environments)
 import '../imports/accounts/server/test-methods.js';
@@ -216,6 +217,7 @@ import { SupplyRequests } from '../imports/lib/schemas/SimpleSchemas/SupplyReque
 import { SupplyDeliveries } from '../imports/lib/schemas/SimpleSchemas/SupplyDeliveries';
 import { Tasks } from '../imports/lib/schemas/SimpleSchemas/Tasks';
 import { ValueSets } from '../imports/lib/schemas/SimpleSchemas/ValueSets';
+import { ServerConfiguration } from '../imports/lib/schemas/SimpleSchemas/ServerConfiguration';
 
 import { FhirUtilities } from '../imports/lib/FhirUtilities.js'
 import { FhirDehydrator } from '../imports/lib/FhirDehydrator.js'
@@ -285,6 +287,7 @@ Meteor.Collections = {
   RiskAssessments,
   Schedules,
   SearchParameters,
+  ServerConfiguration,
   ServiceRequests,
   Specimens,
   Substances,
@@ -362,6 +365,7 @@ Object.assign(global.Collections, {
   RiskAssessments,
   Schedules,
   SearchParameters,
+  ServerConfiguration,
   ServiceRequests,
   Specimens,
   Substances,

@@ -538,6 +538,12 @@ describe('SupplyDeliveries CRUD Operations', function() {
       .waitForElementVisible('#supplyDeliveryDetailsPage', 5000)
       .pause(500);
 
+    // Scroll to top to ensure header buttons are visible
+    browser.execute(function() {
+      window.scrollTo(0, 0);
+    });
+    browser.pause(500);
+
     // Verify we're logged in before attempting deletion
     browser.execute(function() {
       return {

@@ -89,6 +89,9 @@ import forge from 'node-forge';
 let pki = forge.pki;
 
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+import StorageIcon from '@mui/icons-material/Storage';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import CircularProgress from '@mui/material/CircularProgress';
 import Snackbar from '@mui/material/Snackbar';
 import Alert from '@mui/material/Alert';
 
@@ -139,6 +142,10 @@ function ServerConfigurationPage(props){
   let [endpointExpanded, setEndpointExpanded] = useState({});
   let [endpointContent, setEndpointContent] = useState({});
   let [endpointLoading, setEndpointLoading] = useState({});
+
+  let [ keysStoredInDb, setKeysStoredInDb ] = useState(false);
+  let [ keysStoredDetails, setKeysStoredDetails ] = useState(null);
+  let [ savingKeysToDb, setSavingKeysToDb ] = useState(false);
 
   let [checked, setChecked] = React.useState(true);
   let [defaultDirectoryQuery, setDefaultDirectoryQuery] = React.useState(get(Meteor, 'settings.public.interfaces.upstreamDirectory.channel.path', ""));
@@ -205,8 +212,16 @@ function ServerConfigurationPage(props){
             });
           }
         }
-      })  
-    }    
+      });
+
+      // Check if keys are stored in database
+      Meteor.call('serverConfiguration.hasStoredKeys', function(error, result){
+        if(result && result.stored){
+          setKeysStoredInDb(true);
+          setKeysStoredDetails(result);
+        }
+      });
+    }
 
 
   }, []);
@@ -363,6 +378,24 @@ function ServerConfigurationPage(props){
 
     setPrivateKeyText(JSON.stringify(privateKeyText))
   }
+  function handleSaveKeysToDb(){
+    setSavingKeysToDb(true);
+    Meteor.call('serverConfiguration.saveX509Keys', function(error, result){
+      setSavingKeysToDb(false);
+      if(error){
+        console.error('[ServerConfigurationPage] Error saving keys to DB:', error);
+        setCopyMessage("Error saving keys: " + error.reason);
+        setCopySuccess(true);
+      }
+      if(result && result.success){
+        setKeysStoredInDb(true);
+        setKeysStoredDetails({ stored: true, keys: result.keysStored, updatedAt: new Date() });
+        setCopyMessage("Keys saved to database successfully!");
+        setCopySuccess(true);
+      }
+    });
+  }
+
   function handleGenerateCert(){
     console.log("Generating certificate...");
 
@@ -1236,6 +1269,36 @@ function ServerConfigurationPage(props){
                 { serverPublicCertElems }
                 { generateKeyElems }
                 { generateCertElems }
+
+                <Card sx={{ width: '100%', mb: 2 }}>
+                  <CardHeader
+                    avatar={<StorageIcon />}
+                    title="Database Key Storage"
+                    subheader="Save X.509 keys to the database for Electron deployments where --settings file cannot be passed at launch."
+                  />
+                  <CardContent>
+                    {keysStoredInDb ? (
+                      <Alert severity="success" icon={<CheckCircleIcon />} sx={{ mb: 2 }}>
+                        Keys are stored in the database.
+                        {get(keysStoredDetails, 'keys') ? (' Fields: ' + keysStoredDetails.keys.join(', ') + '.') : ''}
+                        {get(keysStoredDetails, 'updatedAt') ? (' Last updated: ' + new Date(keysStoredDetails.updatedAt).toLocaleString() + '.') : ''}
+                      </Alert>
+                    ) : (
+                      <Alert severity="info" sx={{ mb: 2 }}>
+                        No keys stored in database. Keys are currently loaded from the settings file or environment variables.
+                      </Alert>
+                    )}
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      onClick={handleSaveKeysToDb}
+                      disabled={savingKeysToDb || (!serverHasPublicKey && !serverHasPrivateKey)}
+                      startIcon={savingKeysToDb ? <CircularProgress size={20} /> : <StorageIcon />}
+                    >
+                      {savingKeysToDb ? 'Saving...' : (keysStoredInDb ? 'Update Keys in Database' : 'Save Keys to Database')}
+                    </Button>
+                  </CardContent>
+                </Card>
               </Box>
             )}
             {activeTab === 2 && (

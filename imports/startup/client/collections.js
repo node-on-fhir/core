@@ -60,6 +60,7 @@ import { ResearchStudies } from '/imports/lib/schemas/SimpleSchemas/ResearchStud
 import { ResearchSubjects } from '/imports/lib/schemas/SimpleSchemas/ResearchSubjects';
 import { RiskAssessments } from '/imports/lib/schemas/SimpleSchemas/RiskAssessments';
 import { Schedules } from '/imports/lib/schemas/SimpleSchemas/Schedules';
+import { ServerConfiguration } from '/imports/lib/schemas/SimpleSchemas/ServerConfiguration';
 import { ServiceRequests } from '/imports/lib/schemas/SimpleSchemas/ServiceRequests';
 import { Substances } from '/imports/lib/schemas/SimpleSchemas/Substances';
 import { SupplyDeliveries } from '/imports/lib/schemas/SimpleSchemas/SupplyDeliveries';
@@ -127,6 +128,7 @@ if (Meteor.isClient) {
     ResearchSubjects,
     RiskAssessments,
     Schedules,
+    ServerConfiguration,
     ServiceRequests,
     Substances,
     SupplyDeliveries,
