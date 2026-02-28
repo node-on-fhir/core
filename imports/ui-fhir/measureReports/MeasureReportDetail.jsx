@@ -150,7 +150,7 @@ function MeasureReportDetail(props) {
         setMeasureReportId(id);
         setIsEditing(false);
       }
-    } else if (id === 'new') {
+    } else {
       setIsEditing(true);
       setMeasureReportId('new');
 

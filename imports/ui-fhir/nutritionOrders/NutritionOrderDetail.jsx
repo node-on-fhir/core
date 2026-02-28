@@ -295,7 +295,7 @@ function NutritionOrderDetail(props) {
       // Viewing existing nutrition order - start in read-only mode
       setIsEditing(false);
     }
-  }, [id, selectedPatient, currentUser]);
+  }, [id]);
 
   // Load nutrition order if editing
   useEffect(function() {

@@ -241,7 +241,7 @@ function SupplyDeliveryDetail(props) {
         setError('Supply delivery not found');
       }
     }
-  }, [id, selectedPatient]);
+  }, [id]);
 
   function handleChange(name, value){
     pendingUpdate.current = true;

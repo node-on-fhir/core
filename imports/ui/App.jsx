@@ -2219,23 +2219,23 @@ export function App(props){
       set(Meteor, 'settings.public.defaults.sidebar.menuItems.ConstructionZone', !current);
       Session.set('settingsRefreshRequest', Date.now());
     }
-    function onNavigateServerConfig() {
-      if (get(Meteor, 'settings.public.defaults.sidebar.menuItems.ConstructionZone', false)) {
-        navigate('/server-configuration');
-      }
+    function onToggleServerConfiguration() {
+      const current = get(Meteor, 'settings.public.defaults.sidebar.menuItems.ServerConfiguration', false);
+      set(Meteor, 'settings.public.defaults.sidebar.menuItems.ServerConfiguration', !current);
+      Session.set('settingsRefreshRequest', Date.now());
     }
 
     window.addEventListener('toggleDrawer', onToggleDrawer);
     window.addEventListener('toggleFhirModules', onToggleFhirModules);
     window.addEventListener('toggleIndexPage', onToggleIndexPage);
     window.addEventListener('toggleConstructionZone', onToggleConstructionZone);
-    window.addEventListener('navigateServerConfig', onNavigateServerConfig);
+    window.addEventListener('toggleServerConfiguration', onToggleServerConfiguration);
     return () => {
       window.removeEventListener('toggleDrawer', onToggleDrawer);
       window.removeEventListener('toggleFhirModules', onToggleFhirModules);
       window.removeEventListener('toggleIndexPage', onToggleIndexPage);
       window.removeEventListener('toggleConstructionZone', onToggleConstructionZone);
-      window.removeEventListener('navigateServerConfig', onNavigateServerConfig);
+      window.removeEventListener('toggleServerConfiguration', onToggleServerConfiguration);
     };
   }, []);
 

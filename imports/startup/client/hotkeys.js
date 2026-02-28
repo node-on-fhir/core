@@ -42,10 +42,10 @@ export function initializeKeyboardShortcuts() {
       window.dispatchEvent(new CustomEvent('toggleConstructionZone'));
     }
 
-    // Cmd/Ctrl + Shift + W — Navigate to Server Configuration
+    // Cmd/Ctrl + Shift + W — Toggle Server Configuration sidebar link
     if ((event.metaKey || event.ctrlKey) && event.shiftKey && (event.key === 'W' || event.key === 'w')) {
       event.preventDefault();
-      window.dispatchEvent(new CustomEvent('navigateServerConfig'));
+      window.dispatchEvent(new CustomEvent('toggleServerConfiguration'));
     }
 
     // Escape — Close dialogs

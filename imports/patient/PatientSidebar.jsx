@@ -399,7 +399,23 @@ export function PatientSidebar(props){
         constructionZone.push(<Divider key='construction-hr' />);
       }
   }
-  
+
+  //----------------------------------------------------------------------
+  // Server Configuration
+
+  let serverConfiguration = [];
+  if(get(Meteor, 'settings.public.defaults.sidebar.menuItems.ServerConfiguration')){
+    serverConfiguration.push(
+      <ListItem id='serverConfigItem' key='serverConfigItem' button onClick={function(){ openPage('/server-configuration'); }} >
+        <ListItemIcon >
+          <Icon icon={ic_devices} />
+        </ListItemIcon>
+        <ListItemText primary='Server Configuration' />
+      </ListItem>
+    );
+    serverConfiguration.push(<Divider key='server-config-hr' />);
+  }
+
   //----------------------------------------------------------------------
   // Settings Zone
     
@@ -1465,7 +1481,8 @@ export function PatientSidebar(props){
 
 
       { fhirResourcesPage }         
-      { constructionZone }     
+      { constructionZone }
+      { serverConfiguration }
       { settings }    
       { customSettingsElements }    
       

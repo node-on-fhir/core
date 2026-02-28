@@ -183,7 +183,7 @@ function ScheduleDetail(props) {
       } else {
         console.warn('Schedule not found with id:', id);
       }
-    } else if (id === 'new') {
+    } else {
       setIsEditing(true);
     }
   }, [id, subscriptionReady]);

@@ -14,7 +14,8 @@ import { Random } from 'meteor/random'
 
 import { useFormik, FormikErrors } from 'formik';
 
-import { 
+import {
+  Box,
   Button,
   Card,
   CardActionArea,
@@ -23,7 +24,9 @@ import {
   CardContent,
   CardMedia,
   Container,
-  Grid,  
+  Grid,
+  Tab,
+  Tabs,
   TextField,
   Table,
   TableBody,
@@ -92,7 +95,7 @@ import Alert from '@mui/material/Alert';
 import { Endpoints } from '../lib/schemas/SimpleSchemas/Endpoints';
 import { SubscriptionsTable } from './SubscriptionsTable';
 
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { DynamicSpacer } from '../ui/DynamicSpacer';
 import WorkflowRegistry from '/imports/lib/WorkflowRegistry.js';
 
@@ -109,6 +112,7 @@ Meteor.startup(function(){
 function ServerConfigurationPage(props){
   
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { theme, toggleTheme } = useTheme();
 
   let [ wellKnownUdapUrl, setWellKnownUdapUrl ] = useState(Meteor.absoluteUrl() + ".well-known/udap");
@@ -122,31 +126,55 @@ function ServerConfigurationPage(props){
   let [ publicKeyText, setPublicKeyText ] = useState("");
   let [ privateKeyText, setPrivateKeyText ] = useState("");
   let [ publicCertPem, setPublicCertPem ] = useState("");
-  
+
   let [ publicKeyJwk, setPublicKeyJwk ] = useState(null);
   let [ copySuccess, setCopySuccess ] = useState(false);
   let [ copyMessage, setCopyMessage ] = useState("");
 
   let [checked, setChecked] = React.useState(true);
   let [defaultDirectoryQuery, setDefaultDirectoryQuery] = React.useState(get(Meteor, 'settings.public.interfaces.upstreamDirectory.channel.path', ""));
-  
+
   let handleChange = (event) => {
     setChecked(event.target.checked);
   };
 
-  let serverConfigComponents = []
+  // Collect extension tabs with package name metadata
+  let extensionTabs = [];
   Object.keys(Package).forEach(function(packageName){
     if(Package[packageName].ServerConfigs){
-      Package[packageName].ServerConfigs.forEach(function(component){
-        serverConfigComponents.push(component);
+      extensionTabs.push({
+        label: packageName,
+        slug: packageName,
+        components: Package[packageName].ServerConfigs
       });
     }
   });
 
   // Also collect server configs from NPM workflow packages via WorkflowRegistry
-  WorkflowRegistry.getServerConfigs().forEach(function(component){
-    serverConfigComponents.push(component);
+  WorkflowRegistry.getServerConfigsWithNames().forEach(function(entry){
+    extensionTabs.push({
+      label: entry.name,
+      slug: entry.name,
+      components: entry.components
+    });
   });
+
+  // Build slug-to-index map for URL param sync
+  let coreTabSlugs = ['keys-certs', 'smart-on-fhir', 'upstream', 'tefca', 'init-data'];
+  let tabSlugMap = {};
+  coreTabSlugs.forEach(function(slug, i){
+    tabSlugMap[slug] = i;
+  });
+  extensionTabs.forEach(function(ext, i){
+    tabSlugMap[ext.slug] = 5 + i;
+  });
+
+  // Resolve activeTab from URL ?tab= param
+  let tabParam = searchParams.get('tab');
+  let activeTab = 0;
+  if(tabParam && tabSlugMap.hasOwnProperty(tabParam)){
+    activeTab = tabSlugMap[tabParam];
+  }
 
   useEffect(function(){
     if(Meteor.isClient){
@@ -1008,29 +1036,107 @@ function ServerConfigurationPage(props){
 
 
 
+  // Build tab list dynamically with per-extension tabs
+  let tabDefinitions = [
+    { label: 'Keys & Certs', slug: 'keys-certs' },
+    { label: 'SMART on FHIR', slug: 'smart-on-fhir' },
+    { label: 'Upstream', slug: 'upstream' },
+    { label: 'TEFCA', slug: 'tefca' },
+    { label: 'Init Data', slug: 'init-data' }
+  ];
+
+  extensionTabs.forEach(function(ext){
+    tabDefinitions.push({ label: ext.label, slug: ext.slug });
+  });
+
+  // Build reverse map: index → slug
+  let indexToSlug = {};
+  tabDefinitions.forEach(function(tab, i){
+    indexToSlug[i] = tab.slug;
+  });
+
+  function handleTabChange(event, newValue){
+    let slug = indexToSlug[newValue] || 'keys-certs';
+    navigate('/server-configuration?tab=' + slug, { replace: true });
+  }
+
   return (
-    <div id='ServerConfigurationPage' style={{'height': window.innerHeight, 'overflow': "auto", paddingBottom: '128px', paddingTop: '20px'}} >
-      
+    <div id='ServerConfigurationPage' style={{height: window.innerHeight, overflow: "auto", paddingBottom: '128px', paddingTop: '20px'}} >
+
       <Container maxWidth="lg" style={{paddingBottom: '80px'}}>
-        <Grid container spacing={3} justify="center" style={{marginBottom: '20px'}}>
-          <Grid item xs={10} sm={10}>
-            { serverPrivateKeyElems }
-            { serverPublicKeyElems }
-            { serverPublicCertElems }
-            { generateKeyElems }
-            { generateCertElems }
-            { smartOnFhirElems }
-            { upstreamServerElements }
-            { subscribeUpstreamCard }
-            { subscriptionsCard }
-            { tefcaEndpointsElements }
-            { initSampleDataElements }
-            { syntheaDbUtilsElements }
-            { serverConfigComponents }
+        <Grid container spacing={3}>
+          <Grid item xs={2}>
+            <Tabs
+              orientation="vertical"
+              value={activeTab}
+              onChange={handleTabChange}
+              sx={{
+                borderRight: 1,
+                borderColor: 'divider',
+                position: 'sticky',
+                top: 20,
+                '& .MuiTab-root': {
+                  alignItems: 'flex-end',
+                  textAlign: 'right',
+                  textTransform: 'none',
+                  minHeight: 48,
+                  fontSize: '0.875rem'
+                },
+                '& .Mui-selected': {
+                  fontWeight: 600
+                }
+              }}
+            >
+              {tabDefinitions.map(function(tab, index){
+                return <Tab key={index} label={tab.label} />;
+              })}
+            </Tabs>
+          </Grid>
+          <Grid item xs={10}>
+            {activeTab === 0 && (
+              <Box sx={{ minHeight: '60vh' }}>
+                { serverPrivateKeyElems }
+                { serverPublicKeyElems }
+                { serverPublicCertElems }
+                { generateKeyElems }
+                { generateCertElems }
+              </Box>
+            )}
+            {activeTab === 1 && (
+              <Box sx={{ minHeight: '60vh' }}>
+                { smartOnFhirElems }
+              </Box>
+            )}
+            {activeTab === 2 && (
+              <Box sx={{ minHeight: '60vh' }}>
+                { upstreamServerElements }
+                { subscribeUpstreamCard }
+                { subscriptionsCard }
+              </Box>
+            )}
+            {activeTab === 3 && (
+              <Box sx={{ minHeight: '60vh' }}>
+                { tefcaEndpointsElements }
+              </Box>
+            )}
+            {activeTab === 4 && (
+              <Box sx={{ minHeight: '60vh' }}>
+                { initSampleDataElements }
+                { syntheaDbUtilsElements }
+              </Box>
+            )}
+            {extensionTabs.map(function(ext, i){
+              let tabIndex = 5 + i;
+              return activeTab === tabIndex ? (
+                <Box key={ext.slug} sx={{ minHeight: '60vh' }}>
+                  { ext.components }
+                </Box>
+              ) : null;
+            })}
           </Grid>
         </Grid>
       </Container>
-      
+
       <Snackbar
         open={copySuccess}
         autoHideDuration={3000}

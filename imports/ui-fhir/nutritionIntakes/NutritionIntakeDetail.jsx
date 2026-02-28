@@ -228,7 +228,7 @@ function NutritionIntakeDetail(props) {
       // Viewing existing nutrition intake - start in read-only mode
       setIsEditing(false);
     }
-  }, [id, selectedPatient, currentUser]);
+  }, [id]);
 
   // Load nutrition intake if editing
   useEffect(function() {
