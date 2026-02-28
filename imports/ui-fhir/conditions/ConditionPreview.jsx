@@ -44,9 +44,12 @@ const verificationStatusOptions = [
 //===========================================================================
 // COMPONENT
 
-function ConditionPreview({ resource, resourceId, embedded }) {
+function ConditionPreview({ resource, resourceId, embedded, isDark }) {
   var condition = resource || {};
   var isExistingRecord = !!resourceId;
+
+  var textColor = isDark ? 'rgba(255, 255, 255, 0.87)' : undefined;
+  var secondaryColor = isDark ? 'rgba(255, 255, 255, 0.6)' : 'text.secondary';
 
   var conditionName = get(condition, 'code.coding[0].display', '') || get(condition, 'code.text', 'Unnamed Condition');
   var snomedCode = get(condition, 'code.coding[0].code', '');
@@ -78,14 +81,14 @@ function ConditionPreview({ resource, resourceId, embedded }) {
     <Box sx={{ maxWidth: '8.5in', mx: 'auto', py: 2 }}>
       {/* Condition name + clinical status chip */}
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
-        <Typography variant="h5" sx={{ fontWeight: 500 }}>
+        <Typography variant="h5" sx={{ fontWeight: 500, color: textColor }}>
           {conditionName}
         </Typography>
         <Chip label={clinicalStatusLabel} color={clinicalStatusColor} size="small" />
       </Box>
 
       {snomedCode && (
-        <Typography variant="subtitle1" color="text.secondary" sx={{ mb: 3 }}>
+        <Typography variant="subtitle1" sx={{ color: secondaryColor, mb: 3 }}>
           SNOMED: {snomedCode}
         </Typography>
       )}
@@ -97,14 +100,14 @@ function ConditionPreview({ resource, resourceId, embedded }) {
         <Box>
           {(patientDisplay || patientReference) && (
             <>
-              <Typography variant="overline" color="text.secondary">
+              <Typography variant="overline" sx={{ color: secondaryColor }}>
                 Patient
               </Typography>
-              <Typography variant="body1" sx={{ fontWeight: 500, mb: 1 }}>
+              <Typography variant="body1" sx={{ fontWeight: 500, mb: 1, color: textColor }}>
                 {patientDisplay || 'Unspecified'}
               </Typography>
               {patientReference && (
-                <Typography variant="caption" color="text.secondary">
+                <Typography variant="caption" sx={{ color: secondaryColor }}>
                   {patientReference}
                 </Typography>
               )}
@@ -114,10 +117,10 @@ function ConditionPreview({ resource, resourceId, embedded }) {
         <Box sx={{ textAlign: 'right' }}>
           {formattedOnset && (
             <>
-              <Typography variant="overline" color="text.secondary">
+              <Typography variant="overline" sx={{ color: secondaryColor }}>
                 Onset Date
               </Typography>
-              <Typography variant="body1" sx={{ fontWeight: 500 }}>
+              <Typography variant="body1" sx={{ fontWeight: 500, color: textColor }}>
                 {formattedOnset}
               </Typography>
             </>
@@ -131,11 +134,11 @@ function ConditionPreview({ resource, resourceId, embedded }) {
       {verificationStatusCode && (
         <>
           <Box sx={{ py: 2 }}>
-            <Typography variant="overline" color="text.secondary">
+            <Typography variant="overline" sx={{ color: secondaryColor }}>
               Verification Status
             </Typography>
             <Box sx={{ mt: 0.5 }}>
-              <Chip label={verificationStatusLabel} variant="outlined" size="small" />
+              <Chip label={verificationStatusLabel} variant="outlined" size="small" sx={{ color: textColor, borderColor: isDark ? 'rgba(255, 255, 255, 0.23)' : undefined }} />
             </Box>
           </Box>
           <Divider />
@@ -146,10 +149,10 @@ function ConditionPreview({ resource, resourceId, embedded }) {
       {categoryDisplay && (
         <>
           <Box sx={{ py: 2 }}>
-            <Typography variant="overline" color="text.secondary">
+            <Typography variant="overline" sx={{ color: secondaryColor }}>
               Category
             </Typography>
-            <Typography variant="body1" sx={{ fontWeight: 500 }}>
+            <Typography variant="body1" sx={{ fontWeight: 500, color: textColor }}>
               {categoryDisplay}
             </Typography>
           </Box>
@@ -161,14 +164,14 @@ function ConditionPreview({ resource, resourceId, embedded }) {
       {(asserterDisplay || asserterReference) && (
         <>
           <Box sx={{ py: 2 }}>
-            <Typography variant="overline" color="text.secondary">
+            <Typography variant="overline" sx={{ color: secondaryColor }}>
               Asserter
             </Typography>
-            <Typography variant="body1" sx={{ fontWeight: 500 }}>
+            <Typography variant="body1" sx={{ fontWeight: 500, color: textColor }}>
               {asserterDisplay || 'Unspecified'}
             </Typography>
             {asserterReference && (
-              <Typography variant="caption" color="text.secondary">
+              <Typography variant="caption" sx={{ color: secondaryColor }}>
                 {asserterReference}
               </Typography>
             )}
@@ -181,10 +184,10 @@ function ConditionPreview({ resource, resourceId, embedded }) {
       {formattedRecorded && (
         <>
           <Box sx={{ py: 2 }}>
-            <Typography variant="overline" color="text.secondary">
+            <Typography variant="overline" sx={{ color: secondaryColor }}>
               Recorded Date
             </Typography>
-            <Typography variant="body1" sx={{ fontWeight: 500 }}>
+            <Typography variant="body1" sx={{ fontWeight: 500, color: textColor }}>
               {formattedRecorded}
             </Typography>
           </Box>
@@ -194,7 +197,7 @@ function ConditionPreview({ resource, resourceId, embedded }) {
 
       {/* Notes */}
       <Box sx={{ py: 3 }}>
-        <Typography variant="overline" color="text.secondary" sx={{ mb: 1, display: 'block' }}>
+        <Typography variant="overline" sx={{ color: secondaryColor, mb: 1, display: 'block' }}>
           Notes
         </Typography>
         <Typography
@@ -202,7 +205,8 @@ function ConditionPreview({ resource, resourceId, embedded }) {
           sx={{
             whiteSpace: 'pre-wrap',
             lineHeight: 1.8,
-            minHeight: '100px'
+            minHeight: '100px',
+            color: textColor
           }}
         >
           {noteText || 'No notes provided.'}
@@ -214,7 +218,7 @@ function ConditionPreview({ resource, resourceId, embedded }) {
       {/* Footer with record ID */}
       {isExistingRecord && (
         <Box sx={{ pt: 2 }}>
-          <Typography variant="caption" color="text.secondary">
+          <Typography variant="caption" sx={{ color: secondaryColor }}>
             Condition ID: {resourceId}
           </Typography>
         </Box>

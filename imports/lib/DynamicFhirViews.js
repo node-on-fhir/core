@@ -35,11 +35,15 @@ export function getDynamicFhirViewComponent(resourceType) {
  */
 function GenericPreview(props) {
   var resource = props.resource || {};
+  var isDark = props.isDark || false;
   var resourceType = get(resource, 'resourceType', 'Unknown');
   var resourceId = get(resource, '_id', get(resource, 'id', ''));
 
+  var textColor = isDark ? 'rgba(255, 255, 255, 0.87)' : undefined;
+  var secondaryColor = isDark ? 'rgba(255, 255, 255, 0.6)' : 'text.secondary';
+
   return React.createElement(Box, { sx: { maxWidth: '8.5in', mx: 'auto', py: 2 } },
-    React.createElement(Typography, { variant: 'subtitle1', color: 'text.secondary', sx: { mb: 2 } },
+    React.createElement(Typography, { variant: 'subtitle1', sx: { color: secondaryColor, mb: 2 } },
       resourceType
     ),
     React.createElement(Divider, null),
@@ -50,13 +54,14 @@ function GenericPreview(props) {
           wordBreak: 'break-word',
           fontFamily: 'monospace',
           fontSize: '0.85rem',
-          lineHeight: 1.6
+          lineHeight: 1.6,
+          color: isDark ? 'rgba(255, 255, 255, 0.87)' : 'inherit'
         }
       }, JSON.stringify(resource, null, 2))
     ),
     React.createElement(Divider, null),
     resourceId && React.createElement(Box, { sx: { pt: 2 } },
-      React.createElement(Typography, { variant: 'caption', color: 'text.secondary' },
+      React.createElement(Typography, { variant: 'caption', sx: { color: secondaryColor } },
         'Resource ID: ' + resourceId
       )
     )
@@ -76,20 +81,23 @@ export function DynamicFhirViews(props) {
   var fhirResource = props.fhirResource;
   var embedded = props.embedded || false;
   var onEdit = props.onEdit;
+  var isDark = props.isDark || false;
 
   var resourceType = fhirResource ? fhirResource.resourceType : '';
   var Component = _componentMap[resourceType];
 
   if (!Component) {
     return React.createElement(GenericPreview, {
-      resource: fhirResource
+      resource: fhirResource,
+      isDark: isDark
     });
   }
 
   return React.createElement(Component, {
     resource: fhirResource,
     embedded: embedded,
-    onEdit: onEdit
+    onEdit: onEdit,
+    isDark: isDark
   });
 }
 

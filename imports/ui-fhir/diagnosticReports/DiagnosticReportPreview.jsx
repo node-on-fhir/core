@@ -39,19 +39,21 @@ const statusColorMap = {
 };
 
 function DiagnosticReportPreview({ resource, form, resourceId, embedded }){
+  const data = form || resource || {};
+
   // Derive display values from current form state (live preview of edits)
-  const statusLabel = get(statusOptions.find(function(opt){ return opt.value === form.status; }), 'label', form.status);
-  const statusColor = get(statusColorMap, form.status, 'default');
-  const formattedDate = form.effectiveDateTime ? moment(form.effectiveDateTime).format('MMMM D, YYYY') : '';
+  const statusLabel = get(statusOptions.find(function(opt){ return opt.value === data.status; }), 'label', data.status);
+  const statusColor = get(statusColorMap, data.status, 'default');
+  const formattedDate = data.effectiveDateTime ? moment(data.effectiveDateTime).format('MMMM D, YYYY') : '';
   const subjectReference = get(resource, 'subject.reference', '');
 
   // Build subtitle from category and code
   let subtitleParts = [];
-  if (form.category) {
-    subtitleParts.push(form.category);
+  if (data.category) {
+    subtitleParts.push(data.category);
   }
-  if (form.code) {
-    subtitleParts.push('LOINC ' + form.code);
+  if (data.code) {
+    subtitleParts.push('LOINC ' + data.code);
   }
   const subtitle = subtitleParts.join(' \u2014 ');
 
@@ -74,7 +76,7 @@ function DiagnosticReportPreview({ resource, form, resourceId, embedded }){
             Patient
           </Typography>
           <Typography variant="body1" sx={{ fontWeight: 500 }}>
-            {form.subject || 'Unspecified'}
+            {typeof data.subject === 'string' ? data.subject : get(data, 'subject.display', 'Unspecified')}
           </Typography>
           {subjectReference && (
             <Typography variant="caption" color="text.secondary">
@@ -114,7 +116,7 @@ function DiagnosticReportPreview({ resource, form, resourceId, embedded }){
             minHeight: '200px'
           }}
         >
-          {form.conclusion || 'No conclusion provided.'}
+          {data.conclusion || 'No conclusion provided.'}
         </Typography>
       </Box>
 

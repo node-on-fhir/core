@@ -80,7 +80,8 @@ Object.keys(Package).forEach(function(packageName){
 function Header({ drawerIsOpen, handleDrawerOpen, lastUpdated }) {
 
   const navigate = useNavigate();
-  const { theme, toggleTheme } = useTheme();
+  const appTheme = useTheme ? useTheme() : { theme: 'light', toggleTheme: function(){} };
+  const { theme, toggleTheme } = appTheme;
   const muiTheme = useMuiTheme();
 
   // if(typeof logger === "undefined"){

@@ -53,6 +53,7 @@ import UdapRegistrationPage from '../ui-vault-server/UdapRegistrationPage.jsx';
 import OAuthClientsPage from '../ui-vault-server/OAuthClientsPage.jsx';
 import OAuthPatientPickerPage from './OAuthPatientPickerPage.jsx';
 import FhirBasePage from './pages/FhirBasePage.jsx';
+import NotFoundPage from './pages/NotFoundPage.jsx';
 import SwaggerPage from '../ui-vault-server/SwaggerPage.jsx';
 
 // Business page components
@@ -429,6 +430,7 @@ Meteor.FhirDehydrator = FhirDehydrator;
 Meteor.LayoutHelpers = LayoutHelpers;
 Meteor.DynamicSpacer = DynamicSpacer;
 Meteor.NoDataWrapper = NoDataWrapper;
+Meteor.NotFoundPage = NotFoundPage;
 Meteor.NotSignedInWrapper = NotSignedInWrapper;
 Meteor.MedicalRecordImporter = MedicalRecordImporter;
 Meteor.PatientCard = PatientCard;
@@ -2379,6 +2381,11 @@ function StyledMainRouter(props){
     return routes;
   }, [workflowRoutes]);
 
+  // Resolve custom 404 page from WorkflowRegistry (if a workflow registered one)
+  const workflowNotFoundPage = useMemo(function() {
+    return WorkflowRegistry.getNotFoundPage() || null;
+  }, [workflowRoutes]);
+
   // Track if prominent header is shown
   const showProminentHeader = useTracker(function(){
     const prominentHeaderSetting = get(Meteor, 'settings.public.defaults.prominentHeader', false);
@@ -2447,7 +2454,7 @@ function StyledMainRouter(props){
         return <Route key={index} path={route.path} element={routeElement} />;
       })}
       {/* Fallback route for 404 Not Found */}
-      <Route path="*" />
+      <Route path="*" element={workflowNotFoundPage || <NotFoundPage />} />
     </Routes>
   </main>)
 }
