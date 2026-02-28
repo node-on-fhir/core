@@ -225,37 +225,29 @@ function BundleDetail(props) {
 
         {/* Lock / Unlock toggle */}
         {!isNewBundle && (
-          <Tooltip title={isEditing ? 'Lock (read-only)' : 'Unlock (edit)'}>
-            <IconButton
-              onClick={() => setIsEditing(!isEditing)}
+          <Button
+              id="editButton"
+              onClick={function() { setIsEditing(!isEditing); }}
+              variant="outlined"
+              size="small"
+              startIcon={isEditing ? <LockOpenIcon /> : <LockIcon />}
             >
-              {isEditing ? <LockOpenIcon /> : <LockIcon />}
-            </IconButton>
-          </Tooltip>
+              {isEditing ? 'Editing' : 'Edit'}
+            </Button>
         )}
 
         {/* Delete */}
         {!isNewBundle && (
-          <Tooltip title="Delete">
-            <IconButton
+          <Button
+              id="deleteButton"
               onClick={handleDelete}
-              disabled={!isEditing}
-              sx={{ color: isEditing ? 'error.main' : 'text.disabled' }}
+              variant="outlined"
+              size="small"
+              color="error"
+              startIcon={<DeleteIcon />}
             >
-              <DeleteIcon />
-              <Typography sx={{
-                position: 'absolute',
-                width: '1px',
-                height: '1px',
-                padding: 0,
-                margin: '-1px',
-                overflow: 'hidden',
-                clip: 'rect(0, 0, 0, 0)',
-                whiteSpace: 'nowrap',
-                borderWidth: 0
-              }}>Delete</Typography>
-            </IconButton>
-          </Tooltip>
+              Delete
+            </Button>
         )}
       </Box>
     );

@@ -126,7 +126,7 @@ function ScheduleFormView({ resource, form, isEditing, onChange, isEmbedded }){
 
       <Grid item xs={12} md={6}>
         <TextField
-          id="actorInput"
+          id="actorDisplayInput"
           label="Actor Display"
           fullWidth
           value={get(form, 'actorDisplay', '')}

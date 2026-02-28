@@ -72,7 +72,7 @@ function ResearchSubjectFormView({ resource, form, isEditing, onChange, isEmbedd
         <FormControl fullWidth disabled={!isEditing}>
           <InputLabel>Status</InputLabel>
           <Select
-            id="statusSelect"
+            id="status"
             value={form.status}
             onChange={(e) => onChange('status', e.target.value)}
             label="Status"

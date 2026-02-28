@@ -96,7 +96,7 @@ function ResearchStudyFormView({ resource, form, isEditing, onChange, isEmbedded
         <FormControl fullWidth disabled={!isEditing}>
           <InputLabel>Status</InputLabel>
           <Select
-            id="statusSelect"
+            id="status"
             value={form.status}
             onChange={(e) => onChange('status', e.target.value)}
             label="Status"
@@ -114,7 +114,7 @@ function ResearchStudyFormView({ resource, form, isEditing, onChange, isEmbedded
         <FormControl fullWidth disabled={!isEditing}>
           <InputLabel>Phase</InputLabel>
           <Select
-            id="phaseSelect"
+            id="phase"
             value={form.phase}
             onChange={(e) => onChange('phase', e.target.value)}
             label="Phase"
@@ -130,7 +130,7 @@ function ResearchStudyFormView({ resource, form, isEditing, onChange, isEmbedded
         <FormControl fullWidth disabled={!isEditing}>
           <InputLabel>Category</InputLabel>
           <Select
-            id="categorySelect"
+            id="category"
             value={form.category}
             onChange={(e) => onChange('category', e.target.value)}
             label="Category"
@@ -148,7 +148,7 @@ function ResearchStudyFormView({ resource, form, isEditing, onChange, isEmbedded
         <FormControl fullWidth disabled={!isEditing}>
           <InputLabel>Focus Type</InputLabel>
           <Select
-            id="focusTypeSelect"
+            id="focusType"
             value={form.focusType}
             onChange={(e) => onChange('focusType', e.target.value)}
             label="Focus Type"

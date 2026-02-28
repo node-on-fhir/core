@@ -215,7 +215,7 @@ function QuestionnaireFormView({ resource, isEditing, onChange, isEmbedded }) {
       </Grid>
 
       <TextField
-        id="copyrightTextarea"
+        id="notesTextarea"
         fullWidth
         multiline
         rows={2}

@@ -279,37 +279,29 @@ function FamilyMemberHistoryDetail(props) {
 
         {/* Lock / Unlock toggle */}
         {!isNewRecord && (
-          <Tooltip title={isEditing ? 'Lock (read-only)' : 'Unlock (edit)'}>
-            <IconButton
+          <Button
+              id="editButton"
               onClick={function() { setIsEditing(!isEditing); }}
+              variant="outlined"
+              size="small"
+              startIcon={isEditing ? <LockOpenIcon /> : <LockIcon />}
             >
-              {isEditing ? <LockOpenIcon /> : <LockIcon />}
-            </IconButton>
-          </Tooltip>
+              {isEditing ? 'Editing' : 'Edit'}
+            </Button>
         )}
 
         {/* Delete */}
         {!isNewRecord && (
-          <Tooltip title="Delete">
-            <IconButton
+          <Button
+              id="deleteButton"
               onClick={handleDeleteButton}
-              disabled={!isEditing}
-              sx={{ color: isEditing ? 'error.main' : 'text.disabled' }}
+              variant="outlined"
+              size="small"
+              color="error"
+              startIcon={<DeleteIcon />}
             >
-              <DeleteIcon />
-              <Typography sx={{
-                position: 'absolute',
-                width: '1px',
-                height: '1px',
-                padding: 0,
-                margin: '-1px',
-                overflow: 'hidden',
-                clip: 'rect(0, 0, 0, 0)',
-                whiteSpace: 'nowrap',
-                borderWidth: 0
-              }}>Delete</Typography>
-            </IconButton>
-          </Tooltip>
+              Delete
+            </Button>
         )}
       </Box>
     );

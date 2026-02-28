@@ -43,7 +43,7 @@ function QuestionnaireResponseFormView({ resource, form, isEditing, onChange, is
         <FormControl fullWidth disabled={!isEditing}>
           <InputLabel>Status</InputLabel>
           <Select
-            id="statusSelect"
+            id="status"
             value={form.status}
             onChange={(e) => onChange('status', e.target.value)}
             label="Status"

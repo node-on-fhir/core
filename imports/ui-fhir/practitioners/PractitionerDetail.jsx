@@ -325,27 +325,31 @@ function PractitionerDetail(props) {
           </Tooltip>
         )}
 
-        {/* Lock / Unlock toggle — only for existing practitioners */}
+        {/* Edit toggle — only for existing records */}
         {!isNewPractitioner && (
-          <Tooltip title={isEditing ? 'Lock (read-only)' : 'Unlock (edit)'}>
-            <IconButton
+          <Button
+              id="editButton"
               onClick={function() { setIsEditing(!isEditing); }}
+              variant="outlined"
+              size="small"
+              startIcon={isEditing ? <LockOpenIcon /> : <LockIcon />}
             >
-              {isEditing ? <LockOpenIcon /> : <LockIcon />}
-            </IconButton>
-          </Tooltip>
+              {isEditing ? 'Editing' : 'Edit'}
+            </Button>
         )}
 
-        {/* Delete — only for existing practitioners */}
+        {/* Delete — only for existing records */}
         {!isNewPractitioner && (
-          <Tooltip title="Delete">
-            <IconButton
+          <Button
+              id="deleteButton"
               onClick={handleDelete}
-              sx={{ color: 'error.main' }}
+              variant="outlined"
+              size="small"
+              color="error"
+              startIcon={<DeleteIcon />}
             >
-              <DeleteIcon />
-            </IconButton>
-          </Tooltip>
+              Delete
+            </Button>
         )}
       </Box>
     );

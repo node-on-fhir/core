@@ -42,6 +42,12 @@ export function initializeKeyboardShortcuts() {
       window.dispatchEvent(new CustomEvent('toggleConstructionZone'));
     }
 
+    // Cmd/Ctrl + Shift + W — Navigate to Server Configuration
+    if ((event.metaKey || event.ctrlKey) && event.shiftKey && (event.key === 'W' || event.key === 'w')) {
+      event.preventDefault();
+      window.dispatchEvent(new CustomEvent('navigateServerConfig'));
+    }
+
     // Escape — Close dialogs
     if (event.key === 'Escape') {
       Session.set('mainAppDialogOpen', false);

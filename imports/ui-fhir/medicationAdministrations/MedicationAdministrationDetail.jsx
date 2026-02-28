@@ -315,26 +315,29 @@ function MedicationAdministrationDetail(props) {
 
         {/* Lock / Unlock toggle -- only for existing records */}
         {isExistingRecord && (
-          <Tooltip title={isEditing ? 'Lock (read-only)' : 'Unlock (edit)'}>
-            <IconButton
+          <Button
+              id="editButton"
               onClick={function() { setIsEditing(!isEditing); }}
+              variant="outlined"
+              size="small"
+              startIcon={isEditing ? <LockOpenIcon /> : <LockIcon />}
             >
-              {isEditing ? <LockOpenIcon /> : <LockIcon />}
-            </IconButton>
-          </Tooltip>
+              {isEditing ? 'Editing' : 'Edit'}
+            </Button>
         )}
 
         {/* Delete -- only for existing records, gated on edit mode */}
         {isExistingRecord && (
-          <Tooltip title="Delete">
-            <IconButton
+          <Button
+              id="deleteButton"
               onClick={handleDelete}
-              disabled={!isEditing}
-              sx={{ color: isEditing ? 'error.main' : 'text.disabled' }}
+              variant="outlined"
+              size="small"
+              color="error"
+              startIcon={<DeleteIcon />}
             >
-              <DeleteIcon />
-            </IconButton>
-          </Tooltip>
+              Delete
+            </Button>
         )}
       </Box>
     );
