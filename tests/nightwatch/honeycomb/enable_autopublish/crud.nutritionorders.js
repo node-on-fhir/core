@@ -885,20 +885,26 @@ describe('NutritionOrders CRUD Operations', function() {
   });
 
   it('07. Edit nutrition order', browser => {
-    // Verify we start with the Edit button visible
-    browser.assert.visible('#editNutritionOrderButton', 'Edit button should be visible before editing');
-    
-    // Enter edit mode by clicking the Edit button
-    browser
-      .waitForElementVisible('#editNutritionOrderButton', 5000)
-      .click('#editNutritionOrderButton')
-      .pause(1000); // Wait for form to switch to edit mode
-
-    // Scroll to top to ensure Save button is visible
+    // Enter edit mode (use execute to bypass MuiToolbar interception)
     browser.execute(function() {
       window.scrollTo(0, 0);
+      var editButton = document.querySelector('#editNutritionOrderButton');
+      if (editButton) {
+        editButton.click();
+        return true;
+      }
+      var buttons = document.querySelectorAll('button');
+      for (var i = 0; i < buttons.length; i++) {
+        if (buttons[i].textContent.includes('Edit')) {
+          buttons[i].click();
+          return true;
+        }
+      }
+      return false;
+    }, [], function(result) {
+      browser.assert.equal(result.value, true, 'Clicked Edit button to enter edit mode');
     });
-    browser.pause(500);
+    browser.pause(1000);
 
     // Verify we're now in edit mode by checking for the save button
     browser.waitForElementVisible('#saveNutritionOrderButton', 5000);

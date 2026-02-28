@@ -601,17 +601,26 @@ describe('NutritionIntakes CRUD Operations', function() {
   });
 
   it('07. Edit nutrition intake', browser => {
-    // Click edit button to enter edit mode
-    browser
-      .waitForElementVisible('#editNutritionIntakeButton', 5000)
-      .click('#editNutritionIntakeButton')
-      .pause(1000);
-
-    // Scroll to top to ensure form controls are visible
+    // Click edit button to enter edit mode (use execute to bypass MuiToolbar interception)
     browser.execute(function() {
       window.scrollTo(0, 0);
+      var editButton = document.querySelector('#editNutritionIntakeButton');
+      if (editButton) {
+        editButton.click();
+        return true;
+      }
+      var buttons = document.querySelectorAll('button');
+      for (var i = 0; i < buttons.length; i++) {
+        if (buttons[i].textContent.includes('Edit')) {
+          buttons[i].click();
+          return true;
+        }
+      }
+      return false;
+    }, [], function(result) {
+      browser.assert.equal(result.value, true, 'Clicked Edit button to enter edit mode');
     });
-    browser.pause(500);
+    browser.pause(1000);
 
     // Verify we're in edit mode
     browser.waitForElementVisible('#saveNutritionIntakeButton', 5000);

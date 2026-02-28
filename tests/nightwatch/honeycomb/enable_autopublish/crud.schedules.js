@@ -658,7 +658,33 @@ describe('Schedules CRUD Operations', function() {
     browser
       .waitForElementVisible('#scheduleDetailPage', 5000)
       .pause(500);
-    
+
+    // Enter edit mode (use execute to bypass MuiToolbar interception)
+    browser.execute(function() {
+      window.scrollTo(0, 0);
+      var lockButton = document.querySelector('button svg[data-testid="LockIcon"]');
+      if (lockButton && lockButton.parentElement) {
+        lockButton.parentElement.click();
+        return true;
+      }
+      var editButton = document.querySelector('#editButton');
+      if (editButton) {
+        editButton.click();
+        return true;
+      }
+      var buttons = document.querySelectorAll('button');
+      for (var i = 0; i < buttons.length; i++) {
+        if (buttons[i].textContent.includes('Edit')) {
+          buttons[i].click();
+          return true;
+        }
+      }
+      return false;
+    }, [], function(result) {
+      browser.assert.equal(result.value, true, 'Clicked Edit/Lock button to enter edit mode');
+    });
+    browser.pause(500);
+
     // Update fields
     browser
       .execute(function() {
@@ -678,12 +704,6 @@ describe('Schedules CRUD Operations', function() {
       .clearValue('#notesTextarea')
       .setValue('#notesTextarea', updatedSchedule.notes)
       .pause(500);
-
-    // Scroll to top to ensure Save button is clickable
-    browser.execute(function() {
-      window.scrollTo(0, 0);
-    });
-    browser.pause(500);
 
     // Save changes
     browser
