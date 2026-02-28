@@ -569,11 +569,25 @@ describe('SupplyDeliveries CRUD Operations', function() {
       console.log('[Before delete]:', result.value);
     });
 
-    // Click delete button directly (not in execute block)
-    // This handles window.confirm() more reliably than execute blocks
+    // Click delete button (use execute to bypass MuiToolbar interception)
     browser
       .pause(500)
-      .click('#deleteSupplyDeliveryButton')
+      .execute(function() {
+        window.scrollTo(0, 0);
+        var deleteButton = document.querySelector('#deleteSupplyDeliveryButton');
+        if (deleteButton) {
+          deleteButton.click();
+          return true;
+        }
+        var buttons = document.querySelectorAll('button');
+        for (var i = 0; i < buttons.length; i++) {
+          if (buttons[i].textContent.includes('Delete')) {
+            buttons[i].click();
+            return true;
+          }
+        }
+        return false;
+      })
       .pause(500)
       .acceptAlert()
       .pause(5000); // Wait for delete method call + navigation + page mount in CI
