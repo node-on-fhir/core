@@ -453,7 +453,7 @@ function SupplyRequestDetail(props) {
         {/* Edit toggle — only for existing records */}
         {!isNewRequest && (
           <Button
-              id="editButton"
+              id="editSupplyRequestButton"
               onClick={function() { setIsEditing(!isEditing); }}
               variant="outlined"
               size="small"
@@ -466,7 +466,7 @@ function SupplyRequestDetail(props) {
         {/* Delete — only for existing records */}
         {!isNewRequest && (
           <Button
-              id="deleteButton"
+              id="deleteSupplyRequestButton"
               onClick={handleDelete}
               variant="outlined"
               size="small"

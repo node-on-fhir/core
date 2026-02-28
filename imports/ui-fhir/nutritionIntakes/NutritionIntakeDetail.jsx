@@ -389,7 +389,7 @@ function NutritionIntakeDetail(props) {
         {/* Lock / Unlock toggle -- only for existing records */}
         {!isNewRecord && (
           <Button
-              id="editButton"
+              id="editNutritionIntakeButton"
               onClick={function() { setIsEditing(!isEditing); }}
               variant="outlined"
               size="small"
@@ -402,7 +402,7 @@ function NutritionIntakeDetail(props) {
         {/* Delete -- only for existing records, gated on edit mode */}
         {!isNewRecord && (
           <Button
-              id="deleteButton"
+              id="deleteNutritionIntakeButton"
               onClick={handleDelete}
               variant="outlined"
               size="small"

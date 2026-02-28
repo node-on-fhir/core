@@ -260,7 +260,7 @@ function EndpointDetail(props) {
         {/* Edit toggle — only for existing records */}
         {!isNewEndpoint && (
           <Button
-              id="editButton"
+              id="editEndpointButton"
               onClick={function() { setIsEditing(!isEditing); }}
               variant="outlined"
               size="small"
@@ -273,7 +273,7 @@ function EndpointDetail(props) {
         {/* Delete — only for existing records */}
         {!isNewEndpoint && (
           <Button
-              id="deleteButton"
+              id="deleteEndpointButton"
               onClick={handleDelete}
               variant="outlined"
               size="small"

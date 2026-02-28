@@ -124,7 +124,19 @@ function ScheduleFormView({ resource, form, isEditing, onChange, isEmbedded }){
         />
       </Grid>
 
-      <Grid item xs={12} md={6}>
+      <Grid item xs={12} md={4}>
+        <TextField
+          id="actorInput"
+          label="Actor"
+          fullWidth
+          value={get(form, 'actor', '')}
+          onChange={(e) => onChange('actor', e.target.value)}
+          variant="outlined"
+          disabled={!isEditing}
+        />
+      </Grid>
+
+      <Grid item xs={12} md={4}>
         <TextField
           id="actorDisplayInput"
           label="Actor Display"
@@ -136,7 +148,7 @@ function ScheduleFormView({ resource, form, isEditing, onChange, isEmbedded }){
         />
       </Grid>
 
-      <Grid item xs={12} md={6}>
+      <Grid item xs={12} md={4}>
         <TextField
           id="actorReferenceInput"
           label="Actor Reference"

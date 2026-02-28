@@ -477,7 +477,7 @@ function SupplyDeliveryDetail(props) {
         {/* Edit toggle — only for existing records */}
         {!isNewDelivery && (
           <Button
-              id="editButton"
+              id="editSupplyDeliveryButton"
               onClick={function() { setIsEditing(!isEditing); }}
               variant="outlined"
               size="small"
@@ -490,7 +490,7 @@ function SupplyDeliveryDetail(props) {
         {/* Delete — only for existing records */}
         {!isNewDelivery && (
           <Button
-              id="deleteButton"
+              id="deleteSupplyDeliveryButton"
               onClick={handleDelete}
               variant="outlined"
               size="small"

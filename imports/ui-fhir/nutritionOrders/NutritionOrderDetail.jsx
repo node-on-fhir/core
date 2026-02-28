@@ -456,7 +456,7 @@ function NutritionOrderDetail(props) {
         {/* Lock / Unlock toggle -- only for existing records */}
         {!isNewRecord && (
           <Button
-              id="editButton"
+              id="editNutritionOrderButton"
               onClick={function() { setIsEditing(!isEditing); }}
               variant="outlined"
               size="small"
@@ -469,7 +469,7 @@ function NutritionOrderDetail(props) {
         {/* Delete -- only for existing records, gated on edit mode */}
         {!isNewRecord && (
           <Button
-              id="deleteButton"
+              id="deleteNutritionOrderButton"
               onClick={handleDelete}
               variant="outlined"
               size="small"

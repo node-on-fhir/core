@@ -10,6 +10,10 @@ import {
   CardContent,
   CardHeader,
   Container,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
   IconButton,
   Tooltip,
   Typography,
@@ -86,6 +90,7 @@ function QuestionnaireResponseDetail(props) {
   const [searchParams, setSearchParams] = useSearchParams();
   const viewMode = searchParams.get('view') || 'form';
   const [showPatientSearch, setShowPatientSearch] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -397,21 +402,23 @@ function QuestionnaireResponseDetail(props) {
     }
   }
 
-  async function handleDeleteButton() {
+  function handleDeleteButton() {
     if (!questionnaireResponseId || questionnaireResponseId === 'new') return;
+    setShowDeleteConfirm(true);
+  }
 
-    if (window.confirm('Are you sure you want to delete this questionnaire response?')) {
-      setLoading(true);
-      try {
-        await Meteor.callAsync('questionnaireResponses.remove', questionnaireResponseId);
-        console.log('QuestionnaireResponse deleted successfully');
-        navigate('/questionnaire-responses');
-      } catch (err) {
-        console.error('Error deleting questionnaire response:', err);
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
+  async function handleConfirmDelete() {
+    setShowDeleteConfirm(false);
+    setLoading(true);
+    try {
+      await Meteor.callAsync('questionnaireResponses.remove', questionnaireResponseId);
+      console.log('QuestionnaireResponse deleted successfully');
+      navigate('/questionnaire-responses');
+    } catch (err) {
+      console.error('Error deleting questionnaire response:', err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -559,6 +566,18 @@ function QuestionnaireResponseDetail(props) {
         onClose={() => setShowPatientSearch(false)}
         onSelect={handleSelectPatient}
       />
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={showDeleteConfirm} onClose={() => setShowDeleteConfirm(false)}>
+        <DialogTitle>Confirm Delete</DialogTitle>
+        <DialogContent>
+          Are you sure you want to delete this questionnaire response?
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setShowDeleteConfirm(false)}>Cancel</Button>
+          <Button onClick={handleConfirmDelete} color="error">Delete</Button>
+        </DialogActions>
+      </Dialog>
     </Container>
   );
 }

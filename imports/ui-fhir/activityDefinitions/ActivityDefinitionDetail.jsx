@@ -283,7 +283,7 @@ function ActivityDefinitionDetail(props) {
         {/* Delete — only for existing records */}
         {!isNewRecord && (
           <Button
-              id="deleteButton"
+              id="deleteActivityDefinitionButton"
               onClick={handleDelete}
               variant="outlined"
               size="small"
