@@ -8,6 +8,7 @@ import {
   Box,
   Card,
   CardContent,
+  IconButton,
   Typography,
   Table,
   TableBody,
@@ -22,6 +23,7 @@ import {
 
 import { get } from 'lodash';
 import moment from 'moment';
+import SearchIcon from '@mui/icons-material/Search';
 
 function IPSProblemsSection(props) {
   const selectedPatientId = useTracker(function(){
@@ -78,13 +80,19 @@ function IPSProblemsSection(props) {
               <TableCell>Severity</TableCell>
               <TableCell>Onset</TableCell>
               <TableCell>Recorded</TableCell>
+              <TableCell padding="checkbox" />
             </TableRow>
           </TableHead>
           <TableBody>
             {conditions.map((condition, index) => {
               const { status, color } = getClinicalStatus(condition);
               return (
-                <TableRow key={condition._id || index}>
+                <TableRow
+                  key={condition._id || index}
+                  hover
+                  onClick={function() { if(props.onResourceClick) props.onResourceClick(condition); }}
+                  sx={{ cursor: props.onResourceClick ? 'pointer' : 'default' }}
+                >
                   <TableCell>
                     <Typography variant="body2">
                       {get(condition, 'code.coding[0].display', 
@@ -110,9 +118,14 @@ function IPSProblemsSection(props) {
                         : '-'}
                   </TableCell>
                   <TableCell>
-                    {get(condition, 'recordedDate') 
+                    {get(condition, 'recordedDate')
                       ? moment(get(condition, 'recordedDate')).format('YYYY-MM-DD')
                       : '-'}
+                  </TableCell>
+                  <TableCell padding="checkbox">
+                    <IconButton size="small" onClick={function(e) { e.stopPropagation(); if(props.onResourceClick) props.onResourceClick(condition); }}>
+                      <SearchIcon fontSize="small" />
+                    </IconButton>
                   </TableCell>
                 </TableRow>
               );

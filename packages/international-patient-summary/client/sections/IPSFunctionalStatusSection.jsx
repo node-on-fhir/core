@@ -15,11 +15,13 @@ import {
   TableRow,
   Paper,
   Chip,
-  Alert
+  Alert,
+  IconButton
 } from '@mui/material';
 
 import { get } from 'lodash';
 import moment from 'moment';
+import SearchIcon from '@mui/icons-material/Search';
 
 function IPSFunctionalStatusSection(props) {
   const selectedPatientId = useTracker(function(){
@@ -69,13 +71,19 @@ function IPSFunctionalStatusSection(props) {
               <TableCell>Status</TableCell>
               <TableCell>Finding</TableCell>
               <TableCell>Date</TableCell>
+              <TableCell padding="checkbox" />
             </TableRow>
           </TableHead>
           <TableBody>
             {clinicalImpressions.map(function(impression, index) {
               const { status, color } = getStatus(impression);
               return (
-                <TableRow key={impression._id || index}>
+                <TableRow
+                  key={impression._id || index}
+                  hover
+                  onClick={function() { if(props.onResourceClick) props.onResourceClick(impression); }}
+                  sx={{ cursor: props.onResourceClick ? 'pointer' : 'default' }}
+                >
                   <TableCell>
                     <Typography variant="body2">
                       {get(impression, 'description',
@@ -101,6 +109,11 @@ function IPSFunctionalStatusSection(props) {
                         : get(impression, 'date')
                           ? moment(get(impression, 'date')).format('YYYY-MM-DD')
                           : '-'}
+                  </TableCell>
+                  <TableCell padding="checkbox">
+                    <IconButton size="small" onClick={function(e) { e.stopPropagation(); if(props.onResourceClick) props.onResourceClick(impression); }}>
+                      <SearchIcon fontSize="small" />
+                    </IconButton>
                   </TableCell>
                 </TableRow>
               );

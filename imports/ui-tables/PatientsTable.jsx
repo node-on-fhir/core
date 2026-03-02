@@ -1046,8 +1046,8 @@ export function PatientsTable(props = {}){
       const numberOfColumns = 20; // Adjust based on actual columns shown
       tableRows.push(
         <TableRow key={`${i}-expanded`}>
-          <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={numberOfColumns}>
-            <Collapse in={isExpanded} timeout="auto" unmountOnExit>
+          <TableCell style={{ paddingBottom: 0, paddingTop: 0, overflow: 'hidden' }} colSpan={numberOfColumns}>
+            <Collapse in={isExpanded} timeout={300}>
               <Box sx={{ py: 2, px: 1 }}>
                 <Stack direction="row" spacing={2} flexWrap="wrap">
                   {/* Static Buttons */}

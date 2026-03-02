@@ -23,6 +23,12 @@ Meteor.startup(function(){
   useAppTheme = Meteor.useTheme;
 });
 
+// Use Meteor.DynamicFhirViews for resource inspector panel
+let DynamicFhirViews;
+Meteor.startup(function(){
+  DynamicFhirViews = Meteor.DynamicFhirViews;
+});
+
 import {
   Box,
   Card,
@@ -38,7 +44,11 @@ import {
   ToggleButton,
   Snackbar,
   Alert,
-  useTheme
+  Dialog,
+  Slide,
+  IconButton,
+  useTheme,
+  useMediaQuery
 } from '@mui/material';
 
 import TabIcon from '@mui/icons-material/Tab';
@@ -46,6 +56,7 @@ import ViewDayIcon from '@mui/icons-material/ViewDay';
 import CodeIcon from '@mui/icons-material/Code';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
+import CloseIcon from '@mui/icons-material/Close';
 
 import { get } from 'lodash';
 
@@ -80,6 +91,11 @@ if(Meteor.isClient){
   Session.setDefault('ipsNarrativeText', '');
 }
 
+// Slide transition for mobile inspector dialog (defined outside component to prevent remounting)
+const SlideTransition = React.forwardRef(function SlideTransition(transitionProps, ref) {
+  return <Slide direction="up" ref={ref} {...transitionProps} />;
+});
+
 function InternationalPatientSummaryPage(props) {
   console.log('InternationalPatientSummaryPage.props', props);
 
@@ -98,6 +114,10 @@ function InternationalPatientSummaryPage(props) {
   const [narrativeDialogOpen, setNarrativeDialogOpen] = useState(false);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'info' });
   const [displayMode, setDisplayMode] = useState('all');
+  const [selectedResource, setSelectedResource] = useState(null);
+
+  const isDesktop = useMediaQuery(theme.breakpoints.up('lg'));
+  const isPanelOpen = selectedResource !== null;
 
   // Track session variables
   const selectedPatientId = useTracker(function(){
@@ -116,6 +136,14 @@ function InternationalPatientSummaryPage(props) {
   const cardBgColor = isDark ? '#1e1e1e' : '#ffffff';
   const cardTextColor = isDark ? 'rgba(255, 255, 255, 0.87)' : 'rgba(0, 0, 0, 0.87)';
   const pageBgColor = isDark ? '#121212' : '#f5f5f5';
+
+  function handleResourceClick(resource) {
+    setSelectedResource(resource);
+  }
+
+  function handleCloseInspector() {
+    setSelectedResource(null);
+  }
 
   // Load IPS data based on selected patient
   useEffect(function(){
@@ -829,20 +857,20 @@ ${prompt}
 
   function renderSectionContent() {
     switch(tabIndex) {
-      case 0: return <IPSProblemsSection />;
-      case 1: return <IPSAllergiesSection />;
-      case 2: return <IPSMedicationsSection />;
-      case 3: return <IPSImmunizationsSection />;
-      case 4: return <IPSDiagnosticResultsSection />;
-      case 5: return <IPSProceduresSection />;
-      case 6: return <IPSMedicalDevicesSection />;
-      case 7: return <IPSVitalSignsSection />;
-      case 8: return <IPSSocialHistorySection />;
-      case 9: return <IPSPregnancySection />;
-      case 10: return <IPSAdvanceDirectivesSection />;
-      case 11: return <IPSFunctionalStatusSection />;
-      case 12: return <IPSPlanOfCareSection />;
-      case 13: return <IPSPastProblemsSection />;
+      case 0: return <IPSProblemsSection onResourceClick={handleResourceClick} />;
+      case 1: return <IPSAllergiesSection onResourceClick={handleResourceClick} />;
+      case 2: return <IPSMedicationsSection onResourceClick={handleResourceClick} />;
+      case 3: return <IPSImmunizationsSection onResourceClick={handleResourceClick} />;
+      case 4: return <IPSDiagnosticResultsSection onResourceClick={handleResourceClick} />;
+      case 5: return <IPSProceduresSection onResourceClick={handleResourceClick} />;
+      case 6: return <IPSMedicalDevicesSection onResourceClick={handleResourceClick} />;
+      case 7: return <IPSVitalSignsSection onResourceClick={handleResourceClick} />;
+      case 8: return <IPSSocialHistorySection onResourceClick={handleResourceClick} />;
+      case 9: return <IPSPregnancySection onResourceClick={handleResourceClick} />;
+      case 10: return <IPSAdvanceDirectivesSection onResourceClick={handleResourceClick} />;
+      case 11: return <IPSFunctionalStatusSection onResourceClick={handleResourceClick} />;
+      case 12: return <IPSPlanOfCareSection onResourceClick={handleResourceClick} />;
+      case 13: return <IPSPastProblemsSection onResourceClick={handleResourceClick} />;
       default: return <Typography>Select a section</Typography>;
     }
   }
@@ -960,7 +988,7 @@ ${prompt}
                 </Button>
               </ButtonGroup>
             </Box>
-            <IpsContent ref={ipsContentRef} expanded={expanded} displayMode={displayMode} />
+            <IpsContent ref={ipsContentRef} expanded={expanded} displayMode={displayMode} onResourceClick={handleResourceClick} />
           </Box>
         );
       case 'tabbed':
@@ -998,6 +1026,44 @@ ${prompt}
     }
   }
 
+  // Render the resource inspector panel content
+  function renderInspectorContent() {
+    if (!selectedResource) return null;
+
+    var resourceType = get(selectedResource, 'resourceType', 'Unknown');
+
+    return (
+      <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+        <Box sx={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          px: 2, py: 1.5, flexShrink: 0,
+          borderBottom: '1px solid',
+          borderColor: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.12)'
+        }}>
+          <Typography variant="subtitle1" sx={{ fontWeight: 600, color: cardTextColor }}>
+            {resourceType}
+          </Typography>
+          <IconButton onClick={handleCloseInspector} size="small" sx={{ color: cardTextColor }}>
+            <CloseIcon />
+          </IconButton>
+        </Box>
+        <Box sx={{ flex: 1, minHeight: 0, overflow: 'auto', p: 2 }}>
+          {DynamicFhirViews
+            ? <DynamicFhirViews fhirResource={selectedResource} embedded={true} isDark={isDark} />
+            : <pre style={{
+                whiteSpace: 'pre-wrap',
+                wordBreak: 'break-word',
+                fontFamily: 'monospace',
+                fontSize: '0.85rem',
+                lineHeight: 1.6,
+                color: isDark ? 'rgba(255, 255, 255, 0.87)' : 'inherit'
+              }}>{JSON.stringify(selectedResource, null, 2)}</pre>
+          }
+        </Box>
+      </Box>
+    );
+  }
+
   // Single column responsive layout
   function renderSingleColumnLayout() {
     return (
@@ -1007,7 +1073,21 @@ ${prompt}
         pt: 3,
         pb: 3
       }}>
-        <Container maxWidth="lg">
+        <Box sx={{
+          maxWidth: isPanelOpen && isDesktop ? 1600 : 1200,
+          mx: 'auto',
+          px: { xs: 2, sm: 3 },
+          display: 'flex',
+          gap: 3,
+          transition: 'max-width 0.4s cubic-bezier(0.4, 0, 0.2, 1)'
+        }}>
+          {/* Left panel — IPS content */}
+          <Box sx={{
+            flex: isPanelOpen && isDesktop ? '0 0 50%' : '1 1 100%',
+            maxWidth: isPanelOpen && isDesktop ? '50%' : '100%',
+            minWidth: 0,
+            transition: 'flex 0.4s cubic-bezier(0.4, 0, 0.2, 1), max-width 0.4s cubic-bezier(0.4, 0, 0.2, 1)'
+          }}>
           <Card sx={{
             bgcolor: cardBgColor,
             color: cardTextColor,
@@ -1101,7 +1181,40 @@ ${prompt}
               </Typography>
             </Box>
           )}
-        </Container>
+          </Box>
+
+          {/* Right panel — Resource Inspector (desktop only) */}
+          {isDesktop && (
+            <Box sx={{
+              flex: isPanelOpen ? '0 0 50%' : '0 0 0%',
+              maxWidth: isPanelOpen ? '50%' : '0%',
+              opacity: isPanelOpen ? 1 : 0,
+              overflow: isPanelOpen ? 'visible' : 'clip',
+              transition: 'flex 0.4s cubic-bezier(0.4, 0, 0.2, 1), max-width 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease 0.1s'
+            }}>
+              {isPanelOpen && (
+                <Card sx={{
+                  position: 'sticky',
+                  top: 'calc(var(--header-height, 128px) + 20px)',
+                  height: 'calc(100vh - var(--header-height, 128px) - 40px)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  overflowY: 'auto',
+                  bgcolor: cardBgColor,
+                  color: cardTextColor,
+                  border: '1px solid',
+                  borderColor: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.12)',
+                  '& .MuiTableCell-root': {
+                    color: cardTextColor,
+                    borderColor: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.12)'
+                  }
+                }}>
+                  {renderInspectorContent()}
+                </Card>
+              )}
+            </Box>
+          )}
+        </Box>
       </Box>
     );
   }
@@ -1110,7 +1223,25 @@ ${prompt}
   return (
     <Box id="internationalPatientSummaryPage">
       {renderSingleColumnLayout()}
-      
+
+      {/* Mobile Dialog — Resource Inspector (below lg breakpoint) */}
+      {!isDesktop && (
+        <Dialog
+          fullScreen
+          open={isPanelOpen}
+          onClose={handleCloseInspector}
+          TransitionComponent={SlideTransition}
+          PaperProps={{
+            sx: {
+              bgcolor: cardBgColor,
+              color: cardTextColor
+            }
+          }}
+        >
+          {renderInspectorContent()}
+        </Dialog>
+      )}
+
       <GenerateNarrativeDialog
         open={narrativeDialogOpen}
         onClose={() => setNarrativeDialogOpen(false)}

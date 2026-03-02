@@ -38,10 +38,21 @@ import {
   Checkbox,
   FormControl,
   FormControlLabel,
+  FormLabel,
+  FormGroup,
   InputAdornment,
   Input,
   InputLabel,
-  IconButton
+  IconButton,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
+  Select,
+  MenuItem
 } from '@mui/material';
 
 import SearchIcon from '@mui/icons-material/Search';
@@ -53,7 +64,7 @@ import CollectionsBookmarkIcon from '@mui/icons-material/CollectionsBookmark';
 import LocalPlayIcon from '@mui/icons-material/LocalPlay';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 
-import { get, has } from 'lodash';
+import { get, has, set } from 'lodash';
 
 import { useTracker } from 'meteor/react-meteor-data';
 
@@ -91,6 +102,8 @@ let pki = forge.pki;
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import StorageIcon from '@mui/icons-material/Storage';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import BuildIcon from '@mui/icons-material/Build';
+import SyncIcon from '@mui/icons-material/Sync';
 import CircularProgress from '@mui/material/CircularProgress';
 import Snackbar from '@mui/material/Snackbar';
 import Alert from '@mui/material/Alert';
@@ -99,9 +112,15 @@ import Collapse from '@mui/material/Collapse';
 import Chip from '@mui/material/Chip';
 import DnsIcon from '@mui/icons-material/Dns';
 import LinkIcon from '@mui/icons-material/Link';
+import AddIcon from '@mui/icons-material/Add';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import VpnKeyIcon from '@mui/icons-material/VpnKey';
+import SaveIcon from '@mui/icons-material/Save';
+import TravelExploreIcon from '@mui/icons-material/TravelExplore';
 
 import { Endpoints } from '../lib/schemas/SimpleSchemas/Endpoints';
 import { SubscriptionsTable } from './SubscriptionsTable';
+import { OAuthClients } from '/imports/collections/OAuthClients';
 
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { DynamicSpacer } from '../ui/DynamicSpacer';
@@ -115,6 +134,590 @@ let useTheme;
 Meteor.startup(function(){
   useTheme = Meteor.useTheme;
 })
+
+
+// =============================================================================
+// UDAP CLIENTS TAB COMPONENT
+// =============================================================================
+
+function UdapClientsTab(props){
+  let {
+    udapClients, setUdapClients,
+    udapModalOpen, setUdapModalOpen,
+    udapSecretDialogOpen, setUdapSecretDialogOpen,
+    udapRegisteredClient, setUdapRegisteredClient,
+    udapFormData, setUdapFormData,
+    remoteServerUrl, setRemoteServerUrl,
+    remoteUdapMetadata, setRemoteUdapMetadata,
+    fetchingRemoteMetadata, setFetchingRemoteMetadata,
+    remoteMetadataError, setRemoteMetadataError,
+    copyToClipboard, setCopyMessage, setSnackbarSeverity, setCopySuccess,
+    theme
+  } = props;
+
+  // Subscribe to OAuthClients
+  useEffect(function(){
+    Meteor.subscribe('OAuthClients');
+  }, []);
+
+  let oauthClients = useTracker(function(){
+    return OAuthClients.find({}, { sort: { created_at: -1 } }).fetch();
+  }, []);
+
+  function handleOpenUdapModal(){
+    setUdapFormData({
+      client_id: Random.id(),
+      client_name: '',
+      scope: 'system/*.read',
+      redirect_uris: '',
+      launch_uri: '',
+      jwks_uri: '',
+      grant_types: ['client_credentials'],
+      response_types: ['code'],
+      token_endpoint_auth_method: 'private_key_jwt',
+      pkce_enabled: false,
+      pkce_method: 'S256',
+      tos_uri: ''
+    });
+    setUdapModalOpen(true);
+  }
+
+  function handleCloseUdapModal(){
+    setUdapModalOpen(false);
+  }
+
+  function handleUdapFormChange(field, value){
+    setUdapFormData(function(prev){
+      let next = Object.assign({}, prev);
+      next[field] = value;
+      return next;
+    });
+  }
+
+  function handleUdapCheckboxChange(field, value){
+    setUdapFormData(function(prev){
+      let next = Object.assign({}, prev);
+      let current = next[field] || [];
+      if(current.includes(value)){
+        next[field] = current.filter(function(item){ return item !== value; });
+      } else {
+        next[field] = current.concat([value]);
+      }
+      return next;
+    });
+  }
+
+  async function handleUdapSubmit(){
+    try {
+      let payload = {
+        client_id: udapFormData.client_id,
+        client_name: udapFormData.client_name,
+        scope: udapFormData.scope,
+        redirect_uris: udapFormData.redirect_uris.split('\n').filter(function(uri){ return uri.trim() !== ''; }),
+        grant_types: udapFormData.grant_types,
+        response_types: udapFormData.response_types,
+        token_endpoint_auth_method: udapFormData.token_endpoint_auth_method
+      };
+
+      if(udapFormData.tos_uri){
+        payload.tos_uri = udapFormData.tos_uri;
+      }
+      if(udapFormData.launch_uri){
+        payload.launch_uri = udapFormData.launch_uri;
+      }
+      if(udapFormData.jwks_uri){
+        payload.jwks_uri = udapFormData.jwks_uri;
+      }
+
+      console.log('[UDAP Clients] Submitting registration:', payload);
+
+      let response = await fetch('/oauth/registration', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      });
+
+      let result = await response.json();
+
+      if(response.ok){
+        console.log('[UDAP Clients] Client registered:', result);
+        setUdapRegisteredClient(result);
+        setUdapModalOpen(false);
+        setCopyMessage('OAuth client registered successfully!');
+        setSnackbarSeverity('success');
+        setCopySuccess(true);
+        setUdapSecretDialogOpen(true);
+        Meteor.subscribe('OAuthClients');
+      } else {
+        console.error('[UDAP Clients] Registration failed:', result);
+        setCopyMessage('Registration failed: ' + (result.error || result.description || 'Unknown error'));
+        setSnackbarSeverity('error');
+        setCopySuccess(true);
+      }
+    } catch(error){
+      console.error('[UDAP Clients] Error:', error);
+      setCopyMessage('Error: ' + error.message);
+      setSnackbarSeverity('error');
+      setCopySuccess(true);
+    }
+  }
+
+  function handleDiscoverRemoteServer(){
+    if(!remoteServerUrl){
+      setRemoteMetadataError('Please enter a FHIR server URL');
+      return;
+    }
+
+    setFetchingRemoteMetadata(true);
+    setRemoteMetadataError('');
+    setRemoteUdapMetadata(null);
+
+    Meteor.call('serverConfiguration.fetchRemoteUdapMetadata', remoteServerUrl, function(error, result){
+      setFetchingRemoteMetadata(false);
+      if(error){
+        console.error('[UDAP Clients] Remote discovery error:', error);
+        setRemoteMetadataError(error.reason || error.message || 'Failed to fetch UDAP metadata');
+      }
+      if(result){
+        console.log('[UDAP Clients] Remote metadata:', result);
+        setRemoteUdapMetadata(result);
+      }
+    });
+  }
+
+  function handleRegisterFromDiscovery(){
+    // Pre-fill the registration form from discovered metadata
+    let scopes = get(remoteUdapMetadata, 'scopes_supported', []).join(' ') || 'system/*.read';
+    let grantTypes = get(remoteUdapMetadata, 'grant_types_supported', ['client_credentials']);
+
+    setUdapFormData({
+      client_id: Random.id(),
+      client_name: 'Client for ' + remoteServerUrl,
+      scope: scopes,
+      redirect_uris: '',
+      launch_uri: '',
+      jwks_uri: '',
+      grant_types: grantTypes,
+      response_types: ['code'],
+      token_endpoint_auth_method: 'private_key_jwt',
+      pkce_enabled: false,
+      pkce_method: 'S256',
+      tos_uri: ''
+    });
+    setUdapModalOpen(true);
+  }
+
+  function getAuthTypeLabel(client){
+    let method = get(client, 'token_endpoint_auth_method', '');
+    if(method === 'private_key_jwt') return 'Asymmetric';
+    if(method === 'client_secret_basic' || method === 'client_secret_post') return 'Symmetric';
+    if(method === 'none') return 'Public';
+    return method || 'Unknown';
+  }
+
+  function getAuthTypeColor(client){
+    let method = get(client, 'token_endpoint_auth_method', '');
+    if(method === 'private_key_jwt') return 'primary';
+    if(method === 'client_secret_basic' || method === 'client_secret_post') return 'warning';
+    if(method === 'none') return 'default';
+    return 'default';
+  }
+
+  return (
+    <Box sx={{ minHeight: '60vh' }}>
+      {/* Client list */}
+      <Card sx={{ mb: 2 }}>
+        <CardHeader
+          avatar={<VpnKeyIcon color="primary" />}
+          title={oauthClients.length + ' Registered OAuth Clients'}
+          action={
+            <Button
+              variant="contained"
+              color="primary"
+              startIcon={<AddIcon />}
+              onClick={handleOpenUdapModal}
+            >
+              Register New Client
+            </Button>
+          }
+        />
+        <CardContent>
+          {oauthClients.length === 0 && (
+            <Alert severity="info">No OAuth clients registered yet. Click "Register New Client" to add one.</Alert>
+          )}
+          {oauthClients.map(function(client){
+            return (
+              <Accordion key={client._id} sx={{ mb: 1 }}>
+                <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flex: 1, overflow: 'hidden' }}>
+                    <Typography sx={{ fontWeight: 500, minWidth: '150px' }}>
+                      {get(client, 'client_name', 'Unnamed')}
+                    </Typography>
+                    <Chip
+                      label={getAuthTypeLabel(client)}
+                      color={getAuthTypeColor(client)}
+                      size="small"
+                    />
+                    <Typography variant="body2" sx={{ fontFamily: 'monospace', color: 'text.secondary', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {get(client, 'client_id', '')}
+                    </Typography>
+                    {get(client, 'created_at') && (
+                      <Typography variant="caption" sx={{ color: 'text.secondary', ml: 'auto', flexShrink: 0 }}>
+                        {new Date(client.created_at).toLocaleDateString()}
+                      </Typography>
+                    )}
+                  </Box>
+                </AccordionSummary>
+                <AccordionDetails>
+                  <Grid container spacing={2}>
+                    <Grid item xs={6}>
+                      <Typography variant="caption" color="text.secondary">Client ID</Typography>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Typography variant="body2" sx={{ fontFamily: 'monospace', wordBreak: 'break-all' }}>
+                          {get(client, 'client_id', '')}
+                        </Typography>
+                        <IconButton size="small" onClick={function(){ copyToClipboard(get(client, 'client_id', ''), 'Client ID copied!'); }}>
+                          <ContentCopyIcon fontSize="small" />
+                        </IconButton>
+                      </Box>
+                    </Grid>
+                    <Grid item xs={6}>
+                      <Typography variant="caption" color="text.secondary">Auth Method</Typography>
+                      <Typography variant="body2">{get(client, 'token_endpoint_auth_method', 'N/A')}</Typography>
+                    </Grid>
+                    <Grid item xs={6}>
+                      <Typography variant="caption" color="text.secondary">Scope</Typography>
+                      <Typography variant="body2" sx={{ wordBreak: 'break-word' }}>{get(client, 'scope', 'N/A')}</Typography>
+                    </Grid>
+                    <Grid item xs={6}>
+                      <Typography variant="caption" color="text.secondary">Grant Types</Typography>
+                      <Typography variant="body2">{(get(client, 'grant_types') || []).join(', ') || 'N/A'}</Typography>
+                    </Grid>
+                    {get(client, 'redirect_uris') && (
+                      <Grid item xs={6}>
+                        <Typography variant="caption" color="text.secondary">Redirect URIs</Typography>
+                        <Typography variant="body2" sx={{ wordBreak: 'break-word' }}>{(get(client, 'redirect_uris') || []).join(', ')}</Typography>
+                      </Grid>
+                    )}
+                    {get(client, 'jwks_uri') && (
+                      <Grid item xs={6}>
+                        <Typography variant="caption" color="text.secondary">JWK Set URL</Typography>
+                        <Typography variant="body2" sx={{ fontFamily: 'monospace', wordBreak: 'break-all' }}>{get(client, 'jwks_uri', '')}</Typography>
+                      </Grid>
+                    )}
+                  </Grid>
+                </AccordionDetails>
+              </Accordion>
+            );
+          })}
+        </CardContent>
+      </Card>
+
+      {/* Discover Remote FHIR Server */}
+      <Card sx={{ mb: 2 }}>
+        <CardHeader
+          avatar={<TravelExploreIcon color="primary" />}
+          title="Discover Remote FHIR Server"
+          subheader="Fetch UDAP metadata from a remote FHIR server to discover registration endpoints and supported scopes."
+        />
+        <CardContent>
+          <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
+            <TextField
+              fullWidth
+              label="Remote FHIR Server URL"
+              value={remoteServerUrl}
+              onChange={function(e){ setRemoteServerUrl(e.target.value); }}
+              placeholder="https://example.com/fhir"
+              helperText="Enter the base URL of a FHIR server (e.g., https://example.com/fhir)"
+            />
+            <Button
+              variant="contained"
+              onClick={handleDiscoverRemoteServer}
+              disabled={fetchingRemoteMetadata || !remoteServerUrl}
+              startIcon={fetchingRemoteMetadata ? <CircularProgress size={20} /> : <TravelExploreIcon />}
+              sx={{ minWidth: '120px', alignSelf: 'flex-start', mt: '8px' }}
+            >
+              {fetchingRemoteMetadata ? 'Fetching...' : 'Discover'}
+            </Button>
+          </Box>
+
+          {remoteMetadataError && (
+            <Alert severity="error" sx={{ mb: 2 }}>{remoteMetadataError}</Alert>
+          )}
+
+          {remoteUdapMetadata && (
+            <Box>
+              <Alert severity="success" sx={{ mb: 2 }}>
+                UDAP metadata discovered from {remoteServerUrl}
+              </Alert>
+
+              <Grid container spacing={2} sx={{ mb: 2 }}>
+                {get(remoteUdapMetadata, 'registration_endpoint') && (
+                  <Grid item xs={6}>
+                    <Typography variant="caption" color="text.secondary">Registration Endpoint</Typography>
+                    <Typography variant="body2" sx={{ fontFamily: 'monospace', wordBreak: 'break-all' }}>
+                      {get(remoteUdapMetadata, 'registration_endpoint')}
+                    </Typography>
+                  </Grid>
+                )}
+                {get(remoteUdapMetadata, 'token_endpoint') && (
+                  <Grid item xs={6}>
+                    <Typography variant="caption" color="text.secondary">Token Endpoint</Typography>
+                    <Typography variant="body2" sx={{ fontFamily: 'monospace', wordBreak: 'break-all' }}>
+                      {get(remoteUdapMetadata, 'token_endpoint')}
+                    </Typography>
+                  </Grid>
+                )}
+                {get(remoteUdapMetadata, 'grant_types_supported') && (
+                  <Grid item xs={6}>
+                    <Typography variant="caption" color="text.secondary">Supported Grant Types</Typography>
+                    <Typography variant="body2">{get(remoteUdapMetadata, 'grant_types_supported', []).join(', ')}</Typography>
+                  </Grid>
+                )}
+                {get(remoteUdapMetadata, 'scopes_supported') && (
+                  <Grid item xs={6}>
+                    <Typography variant="caption" color="text.secondary">Supported Scopes</Typography>
+                    <Typography variant="body2" sx={{ wordBreak: 'break-word' }}>{get(remoteUdapMetadata, 'scopes_supported', []).join(', ')}</Typography>
+                  </Grid>
+                )}
+              </Grid>
+
+              <AceEditor
+                mode="json"
+                theme={theme === 'light' ? "tomorrow" : "monokai"}
+                wrapEnabled={true}
+                readOnly={true}
+                name="remoteUdapMetadataEditor"
+                editorProps={{ $blockScrolling: true }}
+                value={JSON.stringify(remoteUdapMetadata, null, 2)}
+                style={{ width: '100%', height: '200px', borderRadius: '4px', marginBottom: '10px' }}
+                setOptions={{
+                  showLineNumbers: true,
+                  tabSize: 2
+                }}
+              />
+
+              <Button
+                variant="contained"
+                color="primary"
+                startIcon={<AddIcon />}
+                onClick={handleRegisterFromDiscovery}
+              >
+                Register as Client
+              </Button>
+            </Box>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Registration Dialog */}
+      <Dialog
+        open={udapModalOpen}
+        onClose={handleCloseUdapModal}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle>Register New OAuth Client</DialogTitle>
+        <DialogContent>
+          <Grid container spacing={2} style={{ marginTop: '8px' }}>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label="Client ID"
+                value={udapFormData.client_id}
+                onChange={function(e){ handleUdapFormChange('client_id', e.target.value); }}
+                InputProps={{
+                  endAdornment: (
+                    <>
+                      <IconButton onClick={function(){ handleUdapFormChange('client_id', Random.id()); }} size="small">
+                        <AddIcon />
+                      </IconButton>
+                      <IconButton onClick={function(){ copyToClipboard(udapFormData.client_id, 'Client ID copied!'); }} size="small">
+                        <ContentCopyIcon />
+                      </IconButton>
+                    </>
+                  )
+                }}
+                helperText="Unique identifier for this client"
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                required
+                label="Client Name"
+                value={udapFormData.client_name}
+                onChange={function(e){ handleUdapFormChange('client_name', e.target.value); }}
+                helperText="Human-readable name"
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                multiline
+                rows={3}
+                label="Redirect URIs"
+                value={udapFormData.redirect_uris}
+                onChange={function(e){ handleUdapFormChange('redirect_uris', e.target.value); }}
+                helperText="One URL per line"
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                multiline
+                rows={2}
+                label="Scopes"
+                value={udapFormData.scope}
+                onChange={function(e){ handleUdapFormChange('scope', e.target.value); }}
+                helperText="Space-separated SMART/UDAP scopes"
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <FormControl component="fieldset">
+                <FormLabel component="legend">Grant Types</FormLabel>
+                <FormGroup row>
+                  {['authorization_code', 'client_credentials', 'refresh_token'].map(function(gt){
+                    return (
+                      <FormControlLabel
+                        key={gt}
+                        control={
+                          <Checkbox
+                            checked={udapFormData.grant_types.includes(gt)}
+                            onChange={function(){ handleUdapCheckboxChange('grant_types', gt); }}
+                          />
+                        }
+                        label={gt}
+                      />
+                    );
+                  })}
+                </FormGroup>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12}>
+              <FormControl fullWidth>
+                <InputLabel>Token Endpoint Auth Method</InputLabel>
+                <Select
+                  value={udapFormData.token_endpoint_auth_method}
+                  onChange={function(e){ handleUdapFormChange('token_endpoint_auth_method', e.target.value); }}
+                  label="Token Endpoint Auth Method"
+                >
+                  <MenuItem value="client_secret_basic">client_secret_basic (Confidential Symmetric)</MenuItem>
+                  <MenuItem value="client_secret_post">client_secret_post (Confidential Symmetric)</MenuItem>
+                  <MenuItem value="private_key_jwt">private_key_jwt (Confidential Asymmetric)</MenuItem>
+                  <MenuItem value="none">none (Public)</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label="JWK Set URL (Optional)"
+                value={udapFormData.jwks_uri}
+                onChange={function(e){ handleUdapFormChange('jwks_uri', e.target.value); }}
+                helperText="For asymmetric authentication"
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label="Terms of Service URI (Optional)"
+                value={udapFormData.tos_uri}
+                onChange={function(e){ handleUdapFormChange('tos_uri', e.target.value); }}
+              />
+            </Grid>
+          </Grid>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseUdapModal}>Cancel</Button>
+          <Button
+            onClick={handleUdapSubmit}
+            variant="contained"
+            color="primary"
+            disabled={!udapFormData.client_name}
+          >
+            Register Client
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Client Secret Display Dialog */}
+      <Dialog
+        open={udapSecretDialogOpen}
+        onClose={function(){ setUdapSecretDialogOpen(false); }}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>Client Registered Successfully!</DialogTitle>
+        <DialogContent>
+          <Alert severity="warning" sx={{ mb: 2 }}>
+            <strong>Important:</strong> Save these credentials now. The client secret will not be shown again!
+          </Alert>
+          <Grid container spacing={2}>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label="Client ID"
+                value={get(udapRegisteredClient, 'client_id', '')}
+                InputProps={{
+                  readOnly: true,
+                  endAdornment: (
+                    <IconButton onClick={function(){ copyToClipboard(get(udapRegisteredClient, 'client_id', ''), 'Client ID copied!'); }} size="small">
+                      <ContentCopyIcon />
+                    </IconButton>
+                  )
+                }}
+              />
+            </Grid>
+            {get(udapRegisteredClient, 'client_secret') && (
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  label="Client Secret"
+                  value={get(udapRegisteredClient, 'client_secret', '')}
+                  InputProps={{
+                    readOnly: true,
+                    endAdornment: (
+                      <IconButton onClick={function(){ copyToClipboard(get(udapRegisteredClient, 'client_secret', ''), 'Client secret copied!'); }} size="small">
+                        <ContentCopyIcon />
+                      </IconButton>
+                    )
+                  }}
+                  helperText="This secret will only be shown once. Copy it now!"
+                />
+              </Grid>
+            )}
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label="Client Name"
+                value={get(udapRegisteredClient, 'client_name', '')}
+                InputProps={{ readOnly: true }}
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                multiline
+                rows={2}
+                label="Scopes"
+                value={get(udapRegisteredClient, 'scope', '')}
+                InputProps={{ readOnly: true }}
+              />
+            </Grid>
+          </Grid>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={function(){ setUdapSecretDialogOpen(false); }} variant="contained" color="primary">
+            I've Saved The Credentials
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </Box>
+  );
+}
 
 
 function ServerConfigurationPage(props){
@@ -147,6 +750,40 @@ function ServerConfigurationPage(props){
   let [ keysStoredDetails, setKeysStoredDetails ] = useState(null);
   let [ savingKeysToDb, setSavingKeysToDb ] = useState(false);
 
+  let [ loadingAction, setLoadingAction ] = useState('');
+  let [ snackbarSeverity, setSnackbarSeverity ] = useState('success');
+
+  let [ keysGeneratedNotSaved, setKeysGeneratedNotSaved ] = useState(false);
+  let [ savingGeneratedKeys, setSavingGeneratedKeys ] = useState(false);
+  let [ certGeneratedNotSaved, setCertGeneratedNotSaved ] = useState(false);
+  let [ savingCert, setSavingCert ] = useState(false);
+
+  // UDAP Clients tab state
+  let [ udapClients, setUdapClients ] = useState([]);
+  let [ udapModalOpen, setUdapModalOpen ] = useState(false);
+  let [ udapSecretDialogOpen, setUdapSecretDialogOpen ] = useState(false);
+  let [ udapRegisteredClient, setUdapRegisteredClient ] = useState(null);
+  let [ udapFormData, setUdapFormData ] = useState({
+    client_id: '',
+    client_name: '',
+    scope: 'system/*.read',
+    redirect_uris: '',
+    launch_uri: '',
+    jwks_uri: '',
+    grant_types: ['client_credentials'],
+    response_types: ['code'],
+    token_endpoint_auth_method: 'private_key_jwt',
+    pkce_enabled: false,
+    pkce_method: 'S256',
+    tos_uri: ''
+  });
+
+  // Remote UDAP discovery state
+  let [ remoteServerUrl, setRemoteServerUrl ] = useState('');
+  let [ remoteUdapMetadata, setRemoteUdapMetadata ] = useState(null);
+  let [ fetchingRemoteMetadata, setFetchingRemoteMetadata ] = useState(false);
+  let [ remoteMetadataError, setRemoteMetadataError ] = useState('');
+
   let [checked, setChecked] = React.useState(true);
   let [defaultDirectoryQuery, setDefaultDirectoryQuery] = React.useState(get(Meteor, 'settings.public.interfaces.upstreamDirectory.channel.path', ""));
 
@@ -176,13 +813,13 @@ function ServerConfigurationPage(props){
   });
 
   // Build slug-to-index map for URL param sync
-  let coreTabSlugs = ['server-info', 'keys-certs', 'smart-on-fhir', 'upstream', 'tefca', 'init-data'];
+  let coreTabSlugs = ['server-info', 'keys-certs', 'smart-on-fhir', 'udap-clients', 'upstream', 'tefca', 'init-data'];
   let tabSlugMap = {};
   coreTabSlugs.forEach(function(slug, i){
     tabSlugMap[slug] = i;
   });
   extensionTabs.forEach(function(ext, i){
-    tabSlugMap[ext.slug] = 6 + i;
+    tabSlugMap[ext.slug] = coreTabSlugs.length + i;
   });
 
   // Resolve activeTab from URL ?tab= param
@@ -273,6 +910,12 @@ function ServerConfigurationPage(props){
     }, function(err) {
       console.error('Could not copy text: ', err);
     });
+  }
+
+  function showSnackbar(message, severity){
+    setSnackbarSeverity(severity || 'success');
+    setCopyMessage(message);
+    setCopySuccess(true);
   }
 
   function toggleEndpoint(slug, url){
@@ -377,6 +1020,31 @@ function ServerConfigurationPage(props){
     console.log('privateKeyText', JSON.stringify(privateKeyText));
 
     setPrivateKeyText(JSON.stringify(privateKeyText))
+
+    // Flag that keys need to be saved to server before cert generation
+    setKeysGeneratedNotSaved(true);
+  }
+  function handleSaveGeneratedKeysToServer(){
+    setSavingGeneratedKeys(true);
+    Meteor.call('serverConfiguration.saveGeneratedX509Keys', publicKeyText, privateKeyText, function(error, result){
+      setSavingGeneratedKeys(false);
+      if(error){
+        console.error('[ServerConfigurationPage] Error saving generated keys:', error);
+        setCopyMessage("Error saving keys: " + error.reason);
+        setSnackbarSeverity('error');
+        setCopySuccess(true);
+      }
+      if(result && result.success){
+        setKeysGeneratedNotSaved(false);
+        setServerHasPublicKey(true);
+        setServerHasPrivateKey(true);
+        setKeysStoredInDb(true);
+        setKeysStoredDetails({ stored: true, keys: result.keysStored, updatedAt: new Date() });
+        setCopyMessage("Keys saved to server and database!");
+        setSnackbarSeverity('success');
+        setCopySuccess(true);
+      }
+    });
   }
   function handleSaveKeysToDb(){
     setSavingKeysToDb(true);
@@ -401,83 +1069,120 @@ function ServerConfigurationPage(props){
 
     Meteor.call('generateCertificate', function(error, certificatePem){
       if(error){
-        console.error('error', error)
+        console.error('error', error);
+        setCopyMessage("Error generating certificate: " + error.reason);
+        setSnackbarSeverity('error');
+        setCopySuccess(true);
       }
       if(certificatePem){
         console.log('certificatePem', certificatePem)
-
-        setPublicCertPem(certificatePem)
+        setPublicCertPem(certificatePem);
+        setCertGeneratedNotSaved(true);
       }
     })
   }
+  function handleSaveGeneratedCert(){
+    setSavingCert(true);
+    Meteor.call('serverConfiguration.saveGeneratedCert', publicCertPem, function(error, result){
+      setSavingCert(false);
+      if(error){
+        console.error('[ServerConfigurationPage] Error saving cert:', error);
+        setCopyMessage("Error saving certificate: " + error.reason);
+        setSnackbarSeverity('error');
+        setCopySuccess(true);
+      }
+      if(result && result.success){
+        setCertGeneratedNotSaved(false);
+        setServerHasPublicCert(true);
+        setCopyMessage("Certificate saved to server and database!");
+        setSnackbarSeverity('success');
+        setCopySuccess(true);
+      }
+    });
+  }
   function handleSyncLantern(){
     console.log("Syncing lantern...")
+    setLoadingAction('syncLantern');
 
     Meteor.call('syncLantern', function(error, result){
+      setLoadingAction('');
       if(error){
         console.error('error', error)
+        showSnackbar('Error syncing Lantern: ' + error.reason, 'error');
       }
       if(result){
         console.log('result', result)
+        showSnackbar('Lantern sync complete');
       }
     })
   }
   
   function generateResearchStudies(){
     console.log("Generating Research Studies...")
+    setLoadingAction('generateResearchStudies');
 
     Meteor.call('generateResearchStudies', 10, function(error, result){
+      setLoadingAction('');
       if(error){
         console.error('error', error)
-        alert('Error generating Research Studies: ' + error.message)
+        showSnackbar('Error generating Research Studies: ' + error.message, 'error');
       }
       if(result){
         console.log('result', result)
-        alert(result.message)
+        showSnackbar(result.message);
       }
     })
   }
   
   function generateResearchSubjects(){
     console.log("Generating Research Subjects...")
+    setLoadingAction('generateResearchSubjects');
 
     Meteor.call('generateResearchSubjects', 20, function(error, result){
+      setLoadingAction('');
       if(error){
         console.error('error', error)
-        alert('Error generating Research Subjects: ' + error.message)
+        showSnackbar('Error generating Research Subjects: ' + error.message, 'error');
       }
       if(result){
         console.log('result', result)
-        alert(result.message)
+        showSnackbar(result.message);
       }
     })
   }
   
   function clearResearchData(){
     console.log("Clearing Research Data...")
-    
+
     if(confirm("Are you sure you want to clear all Research Studies and Subjects?")){
+      setLoadingAction('clearResearchData');
+
       Meteor.call('clearResearchData', function(error, result){
+        setLoadingAction('');
         if(error){
           console.error('error', error)
-          alert('Error clearing Research Data: ' + error.message)
+          showSnackbar('Error clearing Research Data: ' + error.message, 'error');
         }
         if(result){
           console.log('result', result)
-          alert(result.message)
+          showSnackbar(result.message);
         }
       })
     }
   }
   function handleSyncProviderDirectory(){
     console.log("Syncing provider directory...")
+    setLoadingAction('syncProviderDirectory');
 
     Meteor.call('syncProviderDirectory', function(error, result){
+      setLoadingAction('');
       if(error){
         console.error('error', error)
+        showSnackbar('Error syncing provider directory: ' + error.reason, 'error');
       }
       if(result){
         console.log('result', result)
+        showSnackbar('Provider directory sync complete');
       }
     })
   }
@@ -519,61 +1224,81 @@ function ServerConfigurationPage(props){
   }
   function initCodeSystems(){
     console.log("Initializing code systems...");
+    setLoadingAction('initCodeSystems');
 
     Meteor.call('initCodeSystems', function(error, result){
+      setLoadingAction('');
       if(error){
         console.error('error', error)
+        showSnackbar('Error initializing code systems: ' + error.reason, 'error');
       }
       if(result){
         console.log('result', result)
+        showSnackbar('Code systems initialized');
       }
     })
   }
   function initUsCore(){
     console.log("Initializing US Core...");
+    setLoadingAction('initUsCore');
 
     Meteor.call('initUsCore', function(error, result){
+      setLoadingAction('');
       if(error){
         console.error('error', error)
+        showSnackbar('Error initializing US Core: ' + error.reason, 'error');
       }
       if(result){
         console.log('result', result)
+        showSnackbar('US Core initialized');
       }
     })
   }
   function initSearchParameters(){
     console.log("Initializing search parameters...");
+    setLoadingAction('initSearchParameters');
 
     Meteor.call('initSearchParameters', function(error, result){
+      setLoadingAction('');
       if(error){
         console.error('error', error)
+        showSnackbar('Error initializing search parameters: ' + error.reason, 'error');
       }
       if(result){
         console.log('result', result)
+        showSnackbar('Search parameters initialized');
       }
     })
   }
   function initStructureDefinitions(){
     console.log("Initializing structure definitions...");
+    setLoadingAction('initStructureDefinitions');
 
     Meteor.call('initStructureDefinitions', function(error, result){
+      setLoadingAction('');
       if(error){
         console.error('error', error)
+        showSnackbar('Error initializing structure definitions: ' + error.reason, 'error');
       }
       if(result){
         console.log('result', result)
+        showSnackbar('Structure definitions initialized');
       }
     })
   }
   function initValueSets(){
     console.log("Initializing value sets...");
+    setLoadingAction('initValueSets');
 
     Meteor.call('initValueSets', function(error, result){
+      setLoadingAction('');
       if(error){
         console.error('error', error)
+        showSnackbar('Error initializing value sets: ' + error.reason, 'error');
       }
       if(result){
         console.log('result', result)
+        showSnackbar('Value sets initialized');
       }
     })
   }
@@ -813,29 +1538,70 @@ function ServerConfigurationPage(props){
           variant="contained"
           color="primary"
           onClick={generateKeys.bind(this)}
+          style={{marginRight: '10px'}}
         >Generate Keys</Button>
+        {keysGeneratedNotSaved && (
+          <Button
+            variant="contained"
+            color="secondary"
+            onClick={handleSaveGeneratedKeysToServer}
+            disabled={savingGeneratedKeys}
+            startIcon={savingGeneratedKeys ? <CircularProgress size={20} /> : <SaveIcon />}
+            style={{marginRight: '10px'}}
+          >
+            {savingGeneratedKeys ? 'Saving...' : 'Save Keys to Server'}
+          </Button>
+        )}
+        {keysGeneratedNotSaved && (
+          <Alert severity="warning" sx={{ mt: 1 }}>
+            Keys generated in browser only. Click "Save Keys to Server" before generating a certificate.
+          </Alert>
+        )}
       </CardContent>
     </Card>)
-    generateKeyElems.push(<DynamicSpacer key={Random.id()} />);    
+    generateKeyElems.push(<DynamicSpacer key={Random.id()} />);
   }
 
   let generateCertButton;
   let generateCertElems = [];
-  let initSampleDataElements;
   let isDisabled = true;
 
-  
+
   if(!serverHasPublicCert){
-    generateCertButton = <Button
-      variant="contained"
-      color="primary"
-      onClick={handleGenerateCert.bind(this)}
-      // disabled={currentUser ? false : true}
-    >Generate Cert</Button>
-  } 
+    generateCertButton = <Box>
+      <Button
+        variant="contained"
+        color="primary"
+        onClick={handleGenerateCert.bind(this)}
+        disabled={keysGeneratedNotSaved || (!serverHasPublicKey && !serverHasPrivateKey)}
+        style={{marginRight: '10px'}}
+      >Generate Cert</Button>
+      {certGeneratedNotSaved && (
+        <Button
+          variant="contained"
+          color="secondary"
+          onClick={handleSaveGeneratedCert}
+          disabled={savingCert}
+          startIcon={savingCert ? <CircularProgress size={20} /> : <SaveIcon />}
+        >
+          {savingCert ? 'Saving...' : 'Save Cert to Database'}
+        </Button>
+      )}
+      {(!serverHasPublicKey && !serverHasPrivateKey && !keysGeneratedNotSaved) && (
+        <Alert severity="info" sx={{ mt: 1 }}>
+          Generate and save keys first before generating a certificate.
+        </Alert>
+      )}
+      {keysGeneratedNotSaved && (
+        <Alert severity="warning" sx={{ mt: 1 }}>
+          Save the generated keys to the server before generating a certificate.
+        </Alert>
+      )}
+    </Box>
+  }
 
   generateCertElems.push(<Card key={Random.id()} margin={20} style={{width: '100%', fontSize: '80%'}}  >
-    <CardHeader title="Generate Cert" subheader="No X.509 certificates were detected on the server. You will want to generate the certificate and then copy it to the Meteor settings file. " />
+    <CardHeader title="Generate Cert" subheader="Generate an X.509 self-signed certificate from the server keys." />
     <CardContent >
       <TextField
         label="Public Cert"
@@ -853,7 +1619,7 @@ function ServerConfigurationPage(props){
         }}
         disabled={currentUser ? false : true}
       />
-      { generateCertButton }          
+      { generateCertButton }
     </CardContent>
   </Card>)
   generateCertElems.push(<DynamicSpacer key={Random.id()} />)
@@ -861,87 +1627,131 @@ function ServerConfigurationPage(props){
 
   if(currentUser){
     isDisabled = false;
-  
-    initSampleDataElements = <Card key={Random.id()} margin={20} style={{marginBottom: '20px', width: '100%'}}>
-      <CardContent>        
+  }
+
+  // FHIR Infrastructure card
+  let fhirInfrastructureElements;
+  if(currentUser){
+    fhirInfrastructureElements = <Card sx={{ mb: 2, width: '100%' }}>
+      <CardHeader
+        avatar={<BuildIcon />}
+        title="FHIR Infrastructure"
+        subheader="Initialize conformance resources required by the FHIR server"
+      />
+      <CardContent>
         <Button
           variant="contained"
           fullWidth
-          onClick={ initUsCore.bind(this) }
-        >Init US Core</Button>
-        <br />
+          onClick={initUsCore}
+          disabled={!!loadingAction}
+          startIcon={loadingAction === 'initUsCore' ? <CircularProgress size={20} /> : <StorageIcon />}
+          sx={{ mb: 1 }}
+        >{loadingAction === 'initUsCore' ? 'Initializing US Core...' : 'Init US Core'}</Button>
         <Button
           variant="contained"
           fullWidth
-          onClick={ initCodeSystems.bind(this) }
-        >Init Code Systems</Button>
-        <br />
+          onClick={initCodeSystems}
+          disabled={!!loadingAction}
+          startIcon={loadingAction === 'initCodeSystems' ? <CircularProgress size={20} /> : <ClassIcon />}
+          sx={{ mb: 1 }}
+        >{loadingAction === 'initCodeSystems' ? 'Initializing Code Systems...' : 'Init Code Systems'}</Button>
         <Button
           variant="contained"
           fullWidth
-          onClick={ initSearchParameters.bind(this) }
-        >Init Search Parameters</Button>
-        <br />
+          onClick={initSearchParameters}
+          disabled={!!loadingAction}
+          startIcon={loadingAction === 'initSearchParameters' ? <CircularProgress size={20} /> : <SearchIcon />}
+          sx={{ mb: 1 }}
+        >{loadingAction === 'initSearchParameters' ? 'Initializing Search Parameters...' : 'Init Search Parameters'}</Button>
         <Button
           variant="contained"
           fullWidth
-          onClick={ initStructureDefinitions.bind(this) }
-        >Init Structure Definitions</Button>
-        <br />
+          onClick={initStructureDefinitions}
+          disabled={!!loadingAction}
+          startIcon={loadingAction === 'initStructureDefinitions' ? <CircularProgress size={20} /> : <CollectionsBookmarkIcon />}
+          sx={{ mb: 1 }}
+        >{loadingAction === 'initStructureDefinitions' ? 'Initializing Structure Definitions...' : 'Init Structure Definitions'}</Button>
         <Button
           variant="contained"
           fullWidth
-          onClick={ initValueSets.bind(this) }
-        >Init Value Sets</Button>
-        <br />
-        <Button
-          variant="contained"
-          fullWidth
-          onClick={ handleSyncLantern.bind(this) }
-        >Sync Lantern</Button>
-        <br />
-        <Button
-          variant="contained"
-          fullWidth
-          onClick={ handleSyncProviderDirectory.bind(this) }
-        >Sync Provider Directory</Button>
-        
+          onClick={initValueSets}
+          disabled={!!loadingAction}
+          startIcon={loadingAction === 'initValueSets' ? <CircularProgress size={20} /> : <CollectionsBookmarkIcon />}
+          sx={{ mb: 1 }}
+        >{loadingAction === 'initValueSets' ? 'Initializing Value Sets...' : 'Init Value Sets'}</Button>
       </CardContent>
     </Card>
   }
-  
+
+  // Directory Sync card
+  let directorySyncElements;
+  if(currentUser){
+    directorySyncElements = <Card sx={{ mb: 2, width: '100%' }}>
+      <CardHeader
+        avatar={<SyncIcon />}
+        title="Directory Sync"
+        subheader="Sync endpoint directories from external sources"
+      />
+      <CardContent>
+        <Button
+          variant="contained"
+          fullWidth
+          onClick={handleSyncLantern}
+          disabled={!!loadingAction}
+          startIcon={loadingAction === 'syncLantern' ? <CircularProgress size={20} /> : <SyncIcon />}
+          sx={{ mb: 1 }}
+        >{loadingAction === 'syncLantern' ? 'Syncing Lantern...' : 'Sync Lantern'}</Button>
+        <Button
+          variant="contained"
+          fullWidth
+          onClick={handleSyncProviderDirectory}
+          disabled={!!loadingAction}
+          startIcon={loadingAction === 'syncProviderDirectory' ? <CircularProgress size={20} /> : <SyncIcon />}
+          sx={{ mb: 1 }}
+        >{loadingAction === 'syncProviderDirectory' ? 'Syncing Provider Directory...' : 'Sync Provider Directory'}</Button>
+      </CardContent>
+    </Card>
+  }
+
   // Synthea DB Utils - Research Study/Subject generation
   let syntheaDbUtilsElements;
   if(currentUser && get(Meteor, 'settings.public.enableSyntheaDbUtils')){
-    syntheaDbUtilsElements = <Card key={Random.id()} margin={20} style={{marginBottom: '20px', width: '100%'}}>
-      <CardHeader 
-        title="Synthea Database Utilities" 
+    syntheaDbUtilsElements = <Card sx={{ mb: 2, width: '100%' }}>
+      <CardHeader
+        title="Synthea Database Utilities"
         subheader="Generate synthetic Research Studies and Subjects for testing"
       />
-      <CardContent>        
+      <CardContent>
         <Button
           variant="contained"
           fullWidth
           size="small"
           color="primary"
-          onClick={ generateResearchStudies.bind(this) }
-          style={{marginBottom: '5px'}}
-        >Generate Research Studies (10)</Button>
+          onClick={generateResearchStudies}
+          disabled={!!loadingAction}
+          startIcon={loadingAction === 'generateResearchStudies' ? <CircularProgress size={20} /> : <StorageIcon />}
+          sx={{ mb: 1 }}
+        >{loadingAction === 'generateResearchStudies' ? 'Generating Research Studies...' : 'Generate Research Studies (10)'}</Button>
         <Button
           variant="contained"
           fullWidth
           size="small"
           color="primary"
-          onClick={ generateResearchSubjects.bind(this) }
-          style={{marginBottom: '5px'}}
-        >Generate Research Subjects (20)</Button>
+          onClick={generateResearchSubjects}
+          disabled={!!loadingAction}
+          startIcon={loadingAction === 'generateResearchSubjects' ? <CircularProgress size={20} /> : <StorageIcon />}
+          sx={{ mb: 1 }}
+        >{loadingAction === 'generateResearchSubjects' ? 'Generating Research Subjects...' : 'Generate Research Subjects (20)'}</Button>
         <Button
           variant="outlined"
           fullWidth
           size="small"
           color="error"
-          onClick={ clearResearchData.bind(this) }
-        >Clear All Research Data</Button>
+          onClick={clearResearchData}
+          disabled={!!loadingAction}
+          startIcon={loadingAction === 'clearResearchData' ? <CircularProgress size={20} /> : null}
+          sx={{ mb: 1 }}
+        >{loadingAction === 'clearResearchData' ? 'Clearing Research Data...' : 'Clear All Research Data'}</Button>
       </CardContent>
     </Card>
   }
@@ -1128,6 +1938,7 @@ function ServerConfigurationPage(props){
     { label: 'Server Info', slug: 'server-info' },
     { label: 'Keys & Certs', slug: 'keys-certs' },
     { label: 'SMART on FHIR', slug: 'smart-on-fhir' },
+    { label: 'UDAP Clients', slug: 'udap-clients' },
     { label: 'Upstream', slug: 'upstream' },
     { label: 'TEFCA', slug: 'tefca' },
     { label: 'Init Data', slug: 'init-data' }
@@ -1307,25 +2118,53 @@ function ServerConfigurationPage(props){
               </Box>
             )}
             {activeTab === 3 && (
+              <UdapClientsTab
+                udapClients={udapClients}
+                setUdapClients={setUdapClients}
+                udapModalOpen={udapModalOpen}
+                setUdapModalOpen={setUdapModalOpen}
+                udapSecretDialogOpen={udapSecretDialogOpen}
+                setUdapSecretDialogOpen={setUdapSecretDialogOpen}
+                udapRegisteredClient={udapRegisteredClient}
+                setUdapRegisteredClient={setUdapRegisteredClient}
+                udapFormData={udapFormData}
+                setUdapFormData={setUdapFormData}
+                remoteServerUrl={remoteServerUrl}
+                setRemoteServerUrl={setRemoteServerUrl}
+                remoteUdapMetadata={remoteUdapMetadata}
+                setRemoteUdapMetadata={setRemoteUdapMetadata}
+                fetchingRemoteMetadata={fetchingRemoteMetadata}
+                setFetchingRemoteMetadata={setFetchingRemoteMetadata}
+                remoteMetadataError={remoteMetadataError}
+                setRemoteMetadataError={setRemoteMetadataError}
+                copyToClipboard={copyToClipboard}
+                setCopyMessage={setCopyMessage}
+                setSnackbarSeverity={setSnackbarSeverity}
+                setCopySuccess={setCopySuccess}
+                theme={theme}
+              />
+            )}
+            {activeTab === 4 && (
               <Box sx={{ minHeight: '60vh' }}>
                 { upstreamServerElements }
                 { subscribeUpstreamCard }
                 { subscriptionsCard }
               </Box>
             )}
-            {activeTab === 4 && (
+            {activeTab === 5 && (
               <Box sx={{ minHeight: '60vh' }}>
                 { tefcaEndpointsElements }
               </Box>
             )}
-            {activeTab === 5 && (
+            {activeTab === 6 && (
               <Box sx={{ minHeight: '60vh' }}>
-                { initSampleDataElements }
+                { fhirInfrastructureElements }
+                { directorySyncElements }
                 { syntheaDbUtilsElements }
               </Box>
             )}
             {extensionTabs.map(function(ext, i){
-              let tabIndex = 6 + i;
+              let tabIndex = coreTabSlugs.length + i;
               return activeTab === tabIndex ? (
                 <Box key={ext.slug} sx={{ minHeight: '60vh' }}>
                   { ext.components }
@@ -1342,7 +2181,7 @@ function ServerConfigurationPage(props){
         onClose={() => setCopySuccess(false)}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
       >
-        <Alert onClose={() => setCopySuccess(false)} severity="success" sx={{ width: '100%' }}>
+        <Alert onClose={() => setCopySuccess(false)} severity={snackbarSeverity} sx={{ width: '100%' }}>
           {copyMessage}
         </Alert>
       </Snackbar>

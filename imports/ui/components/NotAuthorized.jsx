@@ -63,6 +63,7 @@ export default function NotAuthorized(props) {
   if (!upMd) {
     return (
       <Box
+        id="notAuthorizedPage"
         sx={{
           display: 'flex',
           flexDirection: 'column',
@@ -229,6 +230,7 @@ export default function NotAuthorized(props) {
   if (!upLg) {
     return (
       <Box
+        id="notAuthorizedPage"
         sx={{
           display: 'flex',
           minHeight: '100vh',
@@ -441,6 +443,7 @@ export default function NotAuthorized(props) {
   // Widescreen layout (3-panel) - large screens
   return (
     <Box
+      id="notAuthorizedPage"
       sx={{
         display: 'flex',
         minHeight: '100vh',

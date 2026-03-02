@@ -15,11 +15,13 @@ import {
   TableRow,
   Paper,
   Alert,
-  Chip
+  Chip,
+  IconButton
 } from '@mui/material';
 
 import { get } from 'lodash';
 import moment from 'moment';
+import SearchIcon from '@mui/icons-material/Search';
 
 function IPSImmunizationsSection(props) {
   const selectedPatientId = useTracker(function(){
@@ -57,11 +59,17 @@ function IPSImmunizationsSection(props) {
               <TableCell>Date</TableCell>
               <TableCell>Site</TableCell>
               <TableCell>Lot Number</TableCell>
+              <TableCell padding="checkbox" />
             </TableRow>
           </TableHead>
           <TableBody>
             {immunizations.map((immunization, index) => (
-              <TableRow key={immunization._id || index}>
+              <TableRow
+                key={immunization._id || index}
+                hover
+                onClick={function() { if(props.onResourceClick) props.onResourceClick(immunization); }}
+                sx={{ cursor: props.onResourceClick ? 'pointer' : 'default' }}
+              >
                 <TableCell>
                   <Typography variant="body2">
                     {get(immunization, 'vaccineCode.coding[0].display', 
@@ -85,6 +93,11 @@ function IPSImmunizationsSection(props) {
                 </TableCell>
                 <TableCell>
                   {get(immunization, 'lotNumber', '-')}
+                </TableCell>
+                <TableCell padding="checkbox">
+                  <IconButton size="small" onClick={function(e) { e.stopPropagation(); if(props.onResourceClick) props.onResourceClick(immunization); }}>
+                    <SearchIcon fontSize="small" />
+                  </IconButton>
                 </TableCell>
               </TableRow>
             ))}

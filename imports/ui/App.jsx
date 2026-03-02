@@ -526,6 +526,31 @@ export const history = createBrowserHistory();
 import { NavigationProvider, useNavigation } from './NavigationContext';
 
 //===============================================================================================================
+// FHIR Module Config Helpers
+
+// Helper to read FHIR module config (supports both boolean and object format)
+// Boolean: "AllergyIntolerances": true
+// Object:  "Observations": { "enabled": true, "requireAuth": false }
+function getFhirModuleConfig(moduleKey) {
+  const moduleValue = get(Meteor, 'settings.public.modules.fhir.' + moduleKey);
+  const globalRequireAuth = get(Meteor, 'settings.public.modules.fhir.requireAuth', false);
+
+  if (!moduleValue) {
+    return { enabled: false, requireAuth: globalRequireAuth };
+  }
+
+  if (typeof moduleValue === 'object' && moduleValue !== null) {
+    return {
+      enabled: get(moduleValue, 'enabled', true),
+      requireAuth: 'requireAuth' in moduleValue ? moduleValue.requireAuth : globalRequireAuth
+    };
+  }
+
+  // moduleValue is truthy (boolean true, or other truthy primitive)
+  return { enabled: true, requireAuth: globalRequireAuth };
+}
+
+//===============================================================================================================
 // Static Routes
 
 
@@ -605,8 +630,24 @@ let dynamicRoutes = [
   }, {
     path: "/swagger",
     element: <SwaggerPage />
-  }  
+  }
 ]
+
+// Push FHIR routes with requireAuth from settings
+// forceEnabled: for always-on routes (Tasks, Practitioners, etc.) that should be present
+//               even when not explicitly configured in settings
+function pushFhirRoutes(moduleKey, routes, forceEnabled) {
+  const config = getFhirModuleConfig(moduleKey);
+  if (!config.enabled && !forceEnabled) return;
+
+  routes.forEach(function(route) {
+    dynamicRoutes.push({
+      path: route.path,
+      element: route.element,
+      requireAuth: route.requireAuth !== undefined ? route.requireAuth : config.requireAuth
+    });
+  });
+}
 
 // External Content / iFrame route
 if(get(Meteor, 'settings.public.iframe.enabled', false)){
@@ -702,7 +743,8 @@ if(get(Meteor, 'settings.public.modules.accounts.enabled', true)){
 if(get(Meteor, 'settings.public.modules.PatientDirectory')){
   dynamicRoutes.push({
     path: "/patient-directory",
-    element: <AuthenticatedRoute><PatientsDirectory /></AuthenticatedRoute>
+    element: <PatientsDirectory />,
+    requireAuth: true
   })
 }
 if(get(Meteor, 'settings.public.modules.Theming')){
@@ -744,834 +786,295 @@ if(get(Meteor, 'settings.public.modules.DicomViewer')){
 
 
 
-if(get(Meteor, 'settings.public.modules.fhir.AllergyIntolerances')){
-  dynamicRoutes.push({
-    path: "/allergy-intolerances",
-    element: <AllergyIntolerancesPage />
-  })
-  dynamicRoutes.push({
-    path: "/allergy-intolerances/new",
-    element: <AllergyIntoleranceDetail />
-  })
-  dynamicRoutes.push({
-    path: "/allergy-intolerances/:id",
-    element: <AllergyIntoleranceDetail />
-  })
-}
-if(get(Meteor, 'settings.public.modules.fhir.Appointments')){
-  dynamicRoutes.push({
-    path: "/appointments",
-    element: <AppointmentsPage />
-  })
-  dynamicRoutes.push({
-    path: "/appointments/new",
-    element: <AppointmentDetail />
-  })
-  dynamicRoutes.push({
-    path: "/appointments/:id",
-    element: <AppointmentDetail />
-  })
-}
-if(get(Meteor, 'settings.public.modules.fhir.ArtifactAssessments')){
-  dynamicRoutes.push({
-    path: "/artifact-assessments",
-    element: <ArtifactAssessmentsPage />
-  })
-}
-if(get(Meteor, 'settings.public.modules.fhir.BodyStructures')){
-  dynamicRoutes.push({
-    path: "/body-structures",
-    element: <BodyStructuresPage />
-  })
-  dynamicRoutes.push({
-    path: "/body-structures/new",
-    element: <BodyStructureDetail />
-  })
-  dynamicRoutes.push({
-    path: "/body-structures/:id",
-    element: <BodyStructureDetail />
-  })
-}
-if(get(Meteor, 'settings.public.modules.fhir.ClinicalImpressions')){
-  dynamicRoutes.push({
-    path: "/clinical-impressions",
-    element: <ClinicalImpressionsPage />
-  })
-  dynamicRoutes.push({
-    path: "/clinical-impressions/new",
-    element: <ClinicalImpressionDetail />
-  })
-  dynamicRoutes.push({
-    path: "/clinical-impressions/:id",
-    element: <ClinicalImpressionDetail />
-  })
-}
-if(get(Meteor, 'settings.public.modules.fhir.RiskAssessments')){
-  dynamicRoutes.push({
-    path: "/risk-assessments",
-    element: <RiskAssessmentsPage />
-  })
-  dynamicRoutes.push({
-    path: "/risk-assessments/new",
-    element: <RiskAssessmentDetail />
-  })
-  dynamicRoutes.push({
-    path: "/risk-assessments/:id",
-    element: <RiskAssessmentDetail />
-  })
-}
-if(get(Meteor, 'settings.public.modules.fhir.ActivityDefinitions')){
-  dynamicRoutes.push({
-    path: "/activity-definitions",
-    element: <ActivityDefinitionsPage />
-  })
-  dynamicRoutes.push({
-    path: "/activity-definitions/new",
-    element: <ActivityDefinitionDetail />
-  })
-  dynamicRoutes.push({
-    path: "/activity-definitions/:id",
-    element: <ActivityDefinitionDetail />
-  })
-}
-if(get(Meteor, 'settings.public.modules.fhir.AuditEvents')){
-  dynamicRoutes.push({
-    path: "/audit-events",
-    element: <AuditEventsPage />
-  })
-  dynamicRoutes.push({
-    path: "/audit-events/new",
-    element: <AuditEventDetail />
-  })
-  dynamicRoutes.push({
-    path: "/audit-events/:id",
-    element: <AuditEventDetail />
-  })
-}
-if(get(Meteor, 'settings.public.modules.fhir.Bundles')){
-  dynamicRoutes.push({
-    path: "/bundles",
-    element: <BundlesPage />
-  })
-}
-if(get(Meteor, 'settings.public.modules.fhir.CareTeams')){
-  dynamicRoutes.push({
-    path: "/care-teams",
-    element: <CareTeamsPage />
-  })
-  dynamicRoutes.push({
-    path: "/care-teams/new",
-    element: <CareTeamDetail />
-  })
-  dynamicRoutes.push({
-    path: "/care-teams/:id",
-    element: <CareTeamDetail />
-  })
-}
-if(get(Meteor, 'settings.public.modules.fhir.CarePlans')){
-  dynamicRoutes.push({
-    path: "/careplans",
-    element: <CarePlansPage />
-  })
-  dynamicRoutes.push({
-    path: "/care-plans",
-    element: <CarePlansPage />
-  })
-  dynamicRoutes.push({
-    path: "/careplans/new",
-    element: <CarePlanDetail />
-  })
-  dynamicRoutes.push({
-    path: "/careplans/:id",
-    element: <CarePlanDetail />
-  })
-  dynamicRoutes.push({
-    path: "/care-plan-designer",
-    element: <EnhancedCarePlanDesigner />,
-    requireAuth: true
-  })
-}
-if(get(Meteor, 'settings.public.modules.fhir.CodeSystems')){
-  dynamicRoutes.push({
-    path: "/code-systems",
-    element: <CodeSystemsPage />
-  })
-}
-if(get(Meteor, 'settings.public.modules.fhir.Compositions')){
-  dynamicRoutes.push({
-    path: "/compositions",
-    element: <CompositionsPage />
-  })
-  dynamicRoutes.push({
-    path: "/compositions/new",
-    element: <CompositionDetail />
-  })
-  dynamicRoutes.push({
-    path: "/compositions/:id",
-    element: <CompositionDetail />
-  })
-}
-if(get(Meteor, 'settings.public.modules.fhir.Conditions')){
-  dynamicRoutes.push({
-    path: "/conditions",
-    element: <ConditionsPage />
-  })
-  dynamicRoutes.push({
-    path: "/conditions/new",
-    element: <ConditionDetail />
-  })
-  dynamicRoutes.push({
-    path: "/conditions/:id",
-    element: <ConditionDetail />
-  })
-}
-if(get(Meteor, 'settings.public.modules.fhir.DiagnosticReports')){
-  
-  dynamicRoutes.push({
-    path: "/diagnostic-reports",
-    element: <DiagnosticReportsPage />
-  })
-  dynamicRoutes.push({
-    path: "/diagnostic-reports/new",
-    element: <DiagnosticReportDetail />
-  })
-  dynamicRoutes.push({
-    path: "/diagnostic-reports/:id",
-    element: <DiagnosticReportDetail />
-  })
-}
-if(get(Meteor, 'settings.public.modules.fhir.Devices')){
-  dynamicRoutes.push({
-    path: "/devices",
-    element: <DevicesPage />
-  })
-  dynamicRoutes.push({
-    path: "/devices/new",
-    element: <DeviceDetail />
-  })
-  dynamicRoutes.push({
-    path: "/devices/:id",
-    element: <DeviceDetail />
-  })
-} else {
-  console.log('Devices module is NOT enabled in settings');
-  console.log('Setting value:', get(Meteor, 'settings.public.modules.fhir.Devices'));
-}
-if(get(Meteor, 'settings.public.modules.fhir.DocumentReferences')){
-  dynamicRoutes.push({
-    path: "/document-references",
-    element: <DocumentReferencesPage />
-  })
-  dynamicRoutes.push({
-    path: "/document-references/new",
-    element: <DocumentReferenceDetail />
-  })
-  dynamicRoutes.push({
-    path: "/document-references/:id",
-    element: <DocumentReferenceDetail />
-  })
-}
-if(get(Meteor, 'settings.public.modules.fhir.Encounters')){
-  dynamicRoutes.push({
-    path: "/encounters",
-    element: <EncountersPage />
-  })
-  dynamicRoutes.push({
-    path: "/encounters/new",
-    element: <EncounterDetail />
-  })
-  dynamicRoutes.push({
-    path: "/encounters/:id",
-    element: <EncounterDetail />
-  })
-}
-if(get(Meteor, 'settings.public.modules.fhir.Endpoints')){
-  dynamicRoutes.push({
-    path: "/endpoints",
-    element: <EndpointsPage />
-  })
-  dynamicRoutes.push({
-    path: "/endpoints/new",
-    element: <EndpointDetail />
-  })
-  dynamicRoutes.push({
-    path: "/endpoints/:id",
-    element: <EndpointDetail />
-  })
-}
-// TEMP: Adding ResearchStudies routes directly for testing
-// Commented out - routes are now added conditionally above
-// dynamicRoutes.push({
-//   path: "/research-studies",
-//   element: <ResearchStudiesPage />
-// })
-// dynamicRoutes.push({
-//   path: "/research-studies/new",
-//   element: <ResearchStudyDetail />
-// })
-// dynamicRoutes.push({
-//   path: "/research-studies/:id",
-//   element: <ResearchStudyDetail />
-// })
-if(get(Meteor, 'settings.public.modules.fhir.Evidences')){
-  dynamicRoutes.push({
-    path: "/evidences",
-    element: <EvidencesPage />
-  })
-}
-if(get(Meteor, 'settings.public.modules.fhir.Goals')){
-  dynamicRoutes.push({
-    path: "/goals",
-    element: <GoalsPage />
-  })
-  dynamicRoutes.push({
-    path: "/goals/new",
-    element: <GoalDetail />
-  })
-  dynamicRoutes.push({
-    path: "/goals/:id",
-    element: <GoalDetail />
-  })
-}
-if(get(Meteor, 'settings.public.modules.fhir.GuidanceResponses')){
-  dynamicRoutes.push({
-    path: "/guidance-responses",
-    element: <GuidanceResponsesPage />
-  })
-}
-if(get(Meteor, 'settings.public.modules.fhir.Immunizations')){
-  dynamicRoutes.push({
-    path: "/immunizations",
-    element: <ImmunizationsPage />
-  })
-  dynamicRoutes.push({
-    path: "/immunizations/new",
-    element: <ImmunizationDetail />
-  })
-  dynamicRoutes.push({
-    path: "/immunizations/:id",
-    element: <ImmunizationDetail />
-  })
-}
-if(get(Meteor, 'settings.public.modules.fhir.Libraries')){
-  dynamicRoutes.push({
-    path: "/libraries",
-    element: <LibrariesPage />
-  })
-}
-if(get(Meteor, 'settings.public.modules.fhir.Locations')){
-  dynamicRoutes.push({
-    path: "/locations",
-    element: <LocationsPage />
-  })
-  dynamicRoutes.push({
-    path: "/locations/new",
-    element: <LocationDetail />
-  })
-  dynamicRoutes.push({
-    path: "/locations/:id",
-    element: <LocationDetail />
-  })
-}
-if(get(Meteor, 'settings.public.modules.fhir.Organizations')){
-  dynamicRoutes.push({
-    path: "/organizations",
-    element: <OrganizationsPage />
-  })
-  dynamicRoutes.push({
-    path: "/organizations/new",
-    element: <OrganizationDetail />
-  })
-  dynamicRoutes.push({
-    path: "/organizations/:id",
-    element: <OrganizationDetail />
-  })
-}
-if(get(Meteor, 'settings.public.modules.fhir.Observations')){
-  dynamicRoutes.push({
-    path: "/observations",
-    element: <ObservationsPage />
-  })
-  dynamicRoutes.push({
-    path: "/observations/new",
-    element: <ObservationDetail />
-  })
-  dynamicRoutes.push({
-    path: "/observations/:id",
-    element: <ObservationDetail />
-  })
-}
-if(get(Meteor, 'settings.public.modules.fhir.Patients')){
-  dynamicRoutes.push({
-    path: "/patients",
-    element: <AuthenticatedRoute><PatientsDirectory /></AuthenticatedRoute>
-  })
-  dynamicRoutes.push({
-    path: "/patients/new",
-    element: <AuthenticatedRoute><PatientDetail /></AuthenticatedRoute>
-  })
-  dynamicRoutes.push({
-    path: "/patients/:id",
-    element: <AuthenticatedRoute><PatientDetail /></AuthenticatedRoute>
-  })
-}
-if(get(Meteor, 'settings.public.modules.fhir.OperationOutcomes')){
-  dynamicRoutes.push({
-    path: "/operation-outcomes",
-    element: <OperationOutcomesPage />
-  })
-}
-if(get(Meteor, 'settings.public.modules.fhir.PlanDefinitions')){
-  dynamicRoutes.push({
-    path: "/plan-definitions",
-    element: <PlanDefinitionsPage />
-  })
-  dynamicRoutes.push({
-    path: "/plan-definitions/new",
-    element: <PlanDefinitionDetail />
-  })
-  dynamicRoutes.push({
-    path: "/plan-definitions/:id",
-    element: <PlanDefinitionDetail />
-  })
-}
-if(get(Meteor, 'settings.public.modules.fhir.Procedures')){
-  dynamicRoutes.push({
-    path: "/procedures",
-    element: <ProceduresPage />
-  })
-  dynamicRoutes.push({
-    path: "/procedures/new",
-    element: <ProcedureDetail />
-  })
-  dynamicRoutes.push({
-    path: "/procedures/:id",
-    element: <ProcedureDetail />
-  })
-}
-if(get(Meteor, 'settings.public.modules.fhir.Questionnaires')){
-  dynamicRoutes.push({
-    path: "/questionnaires",
-    element: <QuestionnairesPage />
-  })
-  dynamicRoutes.push({
-    path: "/questionnaires/new",
-    element: <QuestionnaireDetail />
-  })
-  dynamicRoutes.push({
-    path: "/questionnaires/:id",
-    element: <QuestionnaireDetail />
-  })
-}
-if(get(Meteor, 'settings.public.modules.fhir.QuestionnaireResponses')){
-  dynamicRoutes.push({
-    path: "/questionnaire-responses",
-    element: <QuestionnaireResponsesPage />
-  })
-  dynamicRoutes.push({
-    path: "/questionnaire-responses/new",
-    element: <QuestionnaireResponseDetail />
-  })
-  dynamicRoutes.push({
-    path: "/questionnaire-responses/:id",
-    element: <QuestionnaireResponseDetail />
-  })
-}
-if(get(Meteor, 'settings.public.modules.fhir.ResearchSubjects')){
-  dynamicRoutes.push({
-    path: "/research-subjects",
-    element: <ResearchSubjectsPage />
-  })
-  dynamicRoutes.push({
-    path: "/research-subjects/new",
-    element: <ResearchSubjectDetail />
-  })
-  dynamicRoutes.push({
-    path: "/research-subjects/:id",
-    element: <ResearchSubjectDetail />
-  })
-}
-if(get(Meteor, 'settings.public.modules.fhir.ResearchStudies')){
-  dynamicRoutes.push({
-    path: "/research-studies",
-    element: <ResearchStudiesPage />
-  })
-  dynamicRoutes.push({
-    path: "/research-studies/new",
-    element: <ResearchStudyDetail />
-  })
-  dynamicRoutes.push({
-    path: "/research-studies/:id",
-    element: <ResearchStudyDetail />
-  })
-}
-if(get(Meteor, 'settings.public.modules.fhir.ServiceRequests')){
-  dynamicRoutes.push({
-    path: "/service-requests",
-    element: <ServiceRequestsPage />
-  })
-  dynamicRoutes.push({
-    path: "/service-requests/new",
-    element: <ServiceRequestDetail />
-  })
-  dynamicRoutes.push({
-    path: "/service-requests/:id",
-    element: <ServiceRequestDetail />
-  })
-}
-// Always include Tasks route since it's in the pacio-core sidebar
-dynamicRoutes.push({
-  path: "/tasks",
-  element: <TasksPage />
-})
-dynamicRoutes.push({
-  path: "/tasks/new",
-  element: <TaskDetail />
-})
-dynamicRoutes.push({
-  path: "/tasks/:id",
-  element: <TaskDetail />
-})
+// FHIR Resource Routes
+// Uses pushFhirRoutes() to automatically apply requireAuth from settings.public.modules.fhir
+// Supports: global "requireAuth": true on fhir object, or per-resource { "enabled": true, "requireAuth": false }
 
-// Add missing FHIR resource routes
-if(get(Meteor, 'settings.public.modules.fhir.Consents')){
-  dynamicRoutes.push({
-    path: "/consents",
-    element: <ConsentsPage />
-  })
-  dynamicRoutes.push({
-    path: "/consents/new",
-    element: <ConsentDetail />
-  })
-  dynamicRoutes.push({
-    path: "/consents/:id",
-    element: <ConsentDetail />
-  })
-}
+pushFhirRoutes('ActivityDefinitions', [
+  { path: "/activity-definitions", element: <ActivityDefinitionsPage /> },
+  { path: "/activity-definitions/new", element: <ActivityDefinitionDetail /> },
+  { path: "/activity-definitions/:id", element: <ActivityDefinitionDetail /> }
+]);
+pushFhirRoutes('AllergyIntolerances', [
+  { path: "/allergy-intolerances", element: <AllergyIntolerancesPage /> },
+  { path: "/allergy-intolerances/new", element: <AllergyIntoleranceDetail /> },
+  { path: "/allergy-intolerances/:id", element: <AllergyIntoleranceDetail /> }
+]);
+pushFhirRoutes('Appointments', [
+  { path: "/appointments", element: <AppointmentsPage /> },
+  { path: "/appointments/new", element: <AppointmentDetail /> },
+  { path: "/appointments/:id", element: <AppointmentDetail /> }
+]);
+pushFhirRoutes('ArtifactAssessments', [
+  { path: "/artifact-assessments", element: <ArtifactAssessmentsPage /> }
+]);
+pushFhirRoutes('AuditEvents', [
+  { path: "/audit-events", element: <AuditEventsPage /> },
+  { path: "/audit-events/new", element: <AuditEventDetail /> },
+  { path: "/audit-events/:id", element: <AuditEventDetail /> }
+]);
+pushFhirRoutes('BodyStructures', [
+  { path: "/body-structures", element: <BodyStructuresPage /> },
+  { path: "/body-structures/new", element: <BodyStructureDetail /> },
+  { path: "/body-structures/:id", element: <BodyStructureDetail /> }
+]);
+pushFhirRoutes('Bundles', [
+  { path: "/bundles", element: <BundlesPage /> }
+]);
+pushFhirRoutes('CarePlans', [
+  { path: "/careplans", element: <CarePlansPage /> },
+  { path: "/care-plans", element: <CarePlansPage /> },
+  { path: "/careplans/new", element: <CarePlanDetail /> },
+  { path: "/careplans/:id", element: <CarePlanDetail /> },
+  { path: "/care-plan-designer", element: <EnhancedCarePlanDesigner />, requireAuth: true }
+]);
+pushFhirRoutes('CareTeams', [
+  { path: "/care-teams", element: <CareTeamsPage /> },
+  { path: "/care-teams/new", element: <CareTeamDetail /> },
+  { path: "/care-teams/:id", element: <CareTeamDetail /> }
+]);
+pushFhirRoutes('Claims', [
+  { path: "/claims", element: <ClaimsPage /> }
+]);
+pushFhirRoutes('ClinicalImpressions', [
+  { path: "/clinical-impressions", element: <ClinicalImpressionsPage /> },
+  { path: "/clinical-impressions/new", element: <ClinicalImpressionDetail /> },
+  { path: "/clinical-impressions/:id", element: <ClinicalImpressionDetail /> }
+]);
+pushFhirRoutes('CodeSystems', [
+  { path: "/code-systems", element: <CodeSystemsPage /> }
+]);
+pushFhirRoutes('Compositions', [
+  { path: "/compositions", element: <CompositionsPage /> },
+  { path: "/compositions/new", element: <CompositionDetail /> },
+  { path: "/compositions/:id", element: <CompositionDetail /> }
+]);
+pushFhirRoutes('Conditions', [
+  { path: "/conditions", element: <ConditionsPage /> },
+  { path: "/conditions/new", element: <ConditionDetail /> },
+  { path: "/conditions/:id", element: <ConditionDetail /> }
+]);
+pushFhirRoutes('Consents', [
+  { path: "/consents", element: <ConsentsPage /> },
+  { path: "/consents/new", element: <ConsentDetail /> },
+  { path: "/consents/:id", element: <ConsentDetail /> }
+]);
+pushFhirRoutes('Devices', [
+  { path: "/devices", element: <DevicesPage /> },
+  { path: "/devices/new", element: <DeviceDetail /> },
+  { path: "/devices/:id", element: <DeviceDetail /> }
+]);
+pushFhirRoutes('DiagnosticReports', [
+  { path: "/diagnostic-reports", element: <DiagnosticReportsPage /> },
+  { path: "/diagnostic-reports/new", element: <DiagnosticReportDetail /> },
+  { path: "/diagnostic-reports/:id", element: <DiagnosticReportDetail /> }
+]);
+pushFhirRoutes('DocumentReferences', [
+  { path: "/document-references", element: <DocumentReferencesPage /> },
+  { path: "/document-references/new", element: <DocumentReferenceDetail /> },
+  { path: "/document-references/:id", element: <DocumentReferenceDetail /> }
+]);
+pushFhirRoutes('Encounters', [
+  { path: "/encounters", element: <EncountersPage /> },
+  { path: "/encounters/new", element: <EncounterDetail /> },
+  { path: "/encounters/:id", element: <EncounterDetail /> }
+]);
+pushFhirRoutes('Endpoints', [
+  { path: "/endpoints", element: <EndpointsPage /> },
+  { path: "/endpoints/new", element: <EndpointDetail /> },
+  { path: "/endpoints/:id", element: <EndpointDetail /> }
+]);
+pushFhirRoutes('Evidences', [
+  { path: "/evidences", element: <EvidencesPage /> }
+]);
+pushFhirRoutes('Goals', [
+  { path: "/goals", element: <GoalsPage /> },
+  { path: "/goals/new", element: <GoalDetail /> },
+  { path: "/goals/:id", element: <GoalDetail /> }
+]);
+pushFhirRoutes('GuidanceResponses', [
+  { path: "/guidance-responses", element: <GuidanceResponsesPage /> }
+]);
+pushFhirRoutes('ImagingStudies', [
+  { path: "/imaging-studies", element: <ImagingStudiesPage /> },
+  { path: "/imaging-studies/new", element: <ImagingStudyDetail /> },
+  { path: "/imaging-studies/:id", element: <ImagingStudyDetail /> }
+]);
+pushFhirRoutes('Immunizations', [
+  { path: "/immunizations", element: <ImmunizationsPage /> },
+  { path: "/immunizations/new", element: <ImmunizationDetail /> },
+  { path: "/immunizations/:id", element: <ImmunizationDetail /> }
+]);
+pushFhirRoutes('Libraries', [
+  { path: "/libraries", element: <LibrariesPage /> }
+]);
+pushFhirRoutes('Locations', [
+  { path: "/locations", element: <LocationsPage /> },
+  { path: "/locations/new", element: <LocationDetail /> },
+  { path: "/locations/:id", element: <LocationDetail /> }
+]);
+pushFhirRoutes('Measures', [
+  { path: "/measures", element: <MeasuresPage /> },
+  { path: "/measures/new", element: <MeasureDetail /> },
+  { path: "/measures/:id", element: <MeasureDetail /> }
+]);
+pushFhirRoutes('MeasureReports', [
+  { path: "/measure-reports", element: <MeasureReportsPage /> },
+  { path: "/measure-reports/new", element: <MeasureReportDetail /> },
+  { path: "/measure-reports/:id", element: <MeasureReportDetail /> }
+]);
+pushFhirRoutes('Medias', [
+  { path: "/medias", element: <MediasPage /> },
+  { path: "/medias/new", element: <MediaDetail /> },
+  { path: "/medias/:id", element: <MediaDetail /> }
+]);
+pushFhirRoutes('Medications', [
+  { path: "/medications", element: <MedicationsPage /> },
+  { path: "/medications/new", element: <MedicationDetail /> },
+  { path: "/medications/:id", element: <MedicationDetail /> }
+]);
+pushFhirRoutes('MedicationAdministrations', [
+  { path: "/medication-administrations", element: <MedicationAdministrationsPage /> },
+  { path: "/medication-administrations/new", element: <MedicationAdministrationDetail /> },
+  { path: "/medication-administrations/:id", element: <MedicationAdministrationDetail /> }
+]);
+pushFhirRoutes('MedicationRequests', [
+  { path: "/medication-requests", element: <MedicationRequestsPage /> },
+  { path: "/medication-requests/new", element: <MedicationRequestDetail /> },
+  { path: "/medication-requests/:id", element: <MedicationRequestDetail /> }
+]);
+pushFhirRoutes('MedicationStatements', [
+  { path: "/medication-statements", element: <MedicationStatementsPage /> }
+]);
+pushFhirRoutes('MessageHeaders', [
+  { path: "/message-headers", element: <MessageHeadersPage /> },
+  { path: "/message-headers/new", element: <MessageHeaderDetail /> },
+  { path: "/message-headers/:id", element: <MessageHeaderDetail /> }
+]);
+pushFhirRoutes('NutritionIntakes', [
+  { path: "/nutrition-intakes", element: <NutritionIntakesPage /> },
+  { path: "/nutrition-intakes/new", element: <NutritionIntakeDetail /> },
+  { path: "/nutrition-intakes/:id", element: <NutritionIntakeDetail /> }
+]);
+pushFhirRoutes('NutritionOrders', [
+  { path: "/nutrition-orders", element: <NutritionOrdersPage /> },
+  { path: "/nutrition-orders/new", element: <NutritionOrderDetail /> },
+  { path: "/nutrition-orders/:id", element: <NutritionOrderDetail /> }
+]);
+pushFhirRoutes('NutritionProducts', [
+  { path: "/nutrition-products", element: <NutritionProductsPage /> },
+  { path: "/nutrition-products/new", element: <NutritionProductDetail /> },
+  { path: "/nutrition-products/:id", element: <NutritionProductDetail /> }
+]);
+pushFhirRoutes('Observations', [
+  { path: "/observations", element: <ObservationsPage /> },
+  { path: "/observations/new", element: <ObservationDetail /> },
+  { path: "/observations/:id", element: <ObservationDetail /> }
+]);
+pushFhirRoutes('OperationOutcomes', [
+  { path: "/operation-outcomes", element: <OperationOutcomesPage /> }
+]);
+pushFhirRoutes('Organizations', [
+  { path: "/organizations", element: <OrganizationsPage /> },
+  { path: "/organizations/new", element: <OrganizationDetail /> },
+  { path: "/organizations/:id", element: <OrganizationDetail /> }
+]);
+pushFhirRoutes('Patients', [
+  { path: "/patients", element: <PatientsDirectory /> },
+  { path: "/patients/new", element: <PatientDetail /> },
+  { path: "/patients/:id", element: <PatientDetail /> }
+]);
+pushFhirRoutes('PlanDefinitions', [
+  { path: "/plan-definitions", element: <PlanDefinitionsPage /> },
+  { path: "/plan-definitions/new", element: <PlanDefinitionDetail /> },
+  { path: "/plan-definitions/:id", element: <PlanDefinitionDetail /> }
+]);
+pushFhirRoutes('Procedures', [
+  { path: "/procedures", element: <ProceduresPage /> },
+  { path: "/procedures/new", element: <ProcedureDetail /> },
+  { path: "/procedures/:id", element: <ProcedureDetail /> }
+]);
+pushFhirRoutes('Questionnaires', [
+  { path: "/questionnaires", element: <QuestionnairesPage /> },
+  { path: "/questionnaires/new", element: <QuestionnaireDetail /> },
+  { path: "/questionnaires/:id", element: <QuestionnaireDetail /> }
+]);
+pushFhirRoutes('QuestionnaireResponses', [
+  { path: "/questionnaire-responses", element: <QuestionnaireResponsesPage /> },
+  { path: "/questionnaire-responses/new", element: <QuestionnaireResponseDetail /> },
+  { path: "/questionnaire-responses/:id", element: <QuestionnaireResponseDetail /> }
+]);
+pushFhirRoutes('ResearchStudies', [
+  { path: "/research-studies", element: <ResearchStudiesPage /> },
+  { path: "/research-studies/new", element: <ResearchStudyDetail /> },
+  { path: "/research-studies/:id", element: <ResearchStudyDetail /> }
+]);
+pushFhirRoutes('ResearchSubjects', [
+  { path: "/research-subjects", element: <ResearchSubjectsPage /> },
+  { path: "/research-subjects/new", element: <ResearchSubjectDetail /> },
+  { path: "/research-subjects/:id", element: <ResearchSubjectDetail /> }
+]);
+pushFhirRoutes('RiskAssessments', [
+  { path: "/risk-assessments", element: <RiskAssessmentsPage /> },
+  { path: "/risk-assessments/new", element: <RiskAssessmentDetail /> },
+  { path: "/risk-assessments/:id", element: <RiskAssessmentDetail /> }
+]);
+pushFhirRoutes('Schedules', [
+  { path: "/schedules", element: <SchedulesPage /> },
+  { path: "/schedules/new", element: <ScheduleDetail /> },
+  { path: "/schedules/:id", element: <ScheduleDetail /> }
+]);
+pushFhirRoutes('ServiceRequests', [
+  { path: "/service-requests", element: <ServiceRequestsPage /> },
+  { path: "/service-requests/new", element: <ServiceRequestDetail /> },
+  { path: "/service-requests/:id", element: <ServiceRequestDetail /> }
+]);
+pushFhirRoutes('Substances', [
+  { path: "/substances", element: <SubstancesPage /> },
+  { path: "/substances/new", element: <SubstanceDetail /> },
+  { path: "/substances/:id", element: <SubstanceDetail /> }
+]);
+pushFhirRoutes('SupplyDeliveries', [
+  { path: "/supply-deliveries", element: <SupplyDeliveriesPage /> },
+  { path: "/supply-deliveries/new", element: <SupplyDeliveryDetail /> },
+  { path: "/supply-deliveries/:id", element: <SupplyDeliveryDetail /> }
+]);
+pushFhirRoutes('SupplyRequests', [
+  { path: "/supply-requests", element: <SupplyRequestsPage /> },
+  { path: "/supply-requests/new", element: <SupplyRequestDetail /> },
+  { path: "/supply-requests/:id", element: <SupplyRequestDetail /> }
+]);
+pushFhirRoutes('ValueSets', [
+  { path: "/value-sets", element: <ValueSetsPage /> }
+]);
 
-if(get(Meteor, 'settings.public.modules.fhir.ImagingStudies')){
-  dynamicRoutes.push({
-    path: "/imaging-studies",
-    element: <ImagingStudiesPage />
-  })
-  dynamicRoutes.push({
-    path: "/imaging-studies/new",
-    element: <ImagingStudyDetail />
-  })
-  dynamicRoutes.push({
-    path: "/imaging-studies/:id",
-    element: <ImagingStudyDetail />
-  })
-}
-if(get(Meteor, 'settings.public.modules.fhir.Appointments')){
-  dynamicRoutes.push({
-    path: "/appointments",
-    element: <AppointmentsPage />
-  })
-  dynamicRoutes.push({
-    path: "/appointments/new",
-    element: <AppointmentDetail />
-  })
-  dynamicRoutes.push({
-    path: "/appointments/:id",
-    element: <AppointmentDetail />
-  })
-}
-if(get(Meteor, 'settings.public.modules.fhir.Schedules')){
-  dynamicRoutes.push({
-    path: "/schedules",
-    element: <SchedulesPage />
-  })
-  dynamicRoutes.push({
-    path: "/schedules/new",
-    element: <ScheduleDetail />
-  })
-  dynamicRoutes.push({
-    path: "/schedules/:id",
-    element: <ScheduleDetail />
-  })
-}
-if(get(Meteor, 'settings.public.modules.fhir.Medias')){
-  dynamicRoutes.push({
-    path: "/medias",
-    element: <MediasPage />
-  })
-  dynamicRoutes.push({
-    path: "/medias/new",
-    element: <MediaDetail />
-  })
-  dynamicRoutes.push({
-    path: "/medias/:id",
-    element: <MediaDetail />
-  })
-}
-if(get(Meteor, 'settings.public.modules.fhir.SupplyDeliveries')){
-  dynamicRoutes.push({
-    path: "/supply-deliveries",
-    element: <SupplyDeliveriesPage />
-  })
-  dynamicRoutes.push({
-    path: "/supply-deliveries/new",
-    element: <SupplyDeliveryDetail />
-  })
-  dynamicRoutes.push({
-    path: "/supply-deliveries/:id",
-    element: <SupplyDeliveryDetail />
-  })
-}
-if(get(Meteor, 'settings.public.modules.fhir.SupplyRequests')){
-  dynamicRoutes.push({
-    path: "/supply-requests",
-    element: <SupplyRequestsPage />
-  })
-  dynamicRoutes.push({
-    path: "/supply-requests/new",
-    element: <SupplyRequestDetail />
-  })
-  dynamicRoutes.push({
-    path: "/supply-requests/:id",
-    element: <SupplyRequestDetail />
-  })
-}
-if(get(Meteor, 'settings.public.modules.fhir.ValueSets')){
-  dynamicRoutes.push({
-    path: "/value-sets",
-    element: <ValueSetsPage />
-  })
-}
-if(get(Meteor, 'settings.public.modules.fhir.MedicationStatements')){
-  dynamicRoutes.push({
-    path: "/medication-statements",
-    element: <MedicationStatementsPage />
-  })
-}
-if(get(Meteor, 'settings.public.modules.fhir.Medications')){
-  dynamicRoutes.push({
-    path: "/medications",
-    element: <MedicationsPage />
-  })
-  dynamicRoutes.push({
-    path: "/medications/new",
-    element: <MedicationDetail />
-  })
-  dynamicRoutes.push({
-    path: "/medications/:id",
-    element: <MedicationDetail />
-  })
-}
-if(get(Meteor, 'settings.public.modules.fhir.Medias')){
-  dynamicRoutes.push({
-    path: "/medias",
-    element: <MediasPage />
-  })
-  dynamicRoutes.push({
-    path: "/medias/new",
-    element: <MediaDetail />
-  })
-  dynamicRoutes.push({
-    path: "/medias/:id",
-    element: <MediaDetail />
-  })
-}
-if(get(Meteor, 'settings.public.modules.fhir.MedicationRequests')){
-  dynamicRoutes.push({
-    path: "/medication-requests",
-    element: <MedicationRequestsPage />
-  })
-  dynamicRoutes.push({
-    path: "/medication-requests/new",
-    element: <MedicationRequestDetail />
-  })
-  dynamicRoutes.push({
-    path: "/medication-requests/:id",
-    element: <MedicationRequestDetail />
-  })
-}
-if(get(Meteor, 'settings.public.modules.fhir.MedicationAdministrations')){
-  dynamicRoutes.push({
-    path: "/medication-administrations",
-    element: <MedicationAdministrationsPage />
-  })
-  dynamicRoutes.push({
-    path: "/medication-administrations/new",
-    element: <MedicationAdministrationDetail />
-  })
-  dynamicRoutes.push({
-    path: "/medication-administrations/:id",
-    element: <MedicationAdministrationDetail />
-  })
-}
-if(get(Meteor, 'settings.public.modules.fhir.MessageHeaders')){
-  dynamicRoutes.push({
-    path: "/message-headers",
-    element: <MessageHeadersPage />
-  })
-  dynamicRoutes.push({
-    path: "/message-headers/new",
-    element: <MessageHeaderDetail />
-  })
-  dynamicRoutes.push({
-    path: "/message-headers/:id",
-    element: <MessageHeaderDetail />
-  })
-}
-if(get(Meteor, 'settings.public.modules.fhir.Measures')){
-  dynamicRoutes.push({
-    path: "/measures",
-    element: <MeasuresPage />
-  })
-  dynamicRoutes.push({
-    path: "/measures/new",
-    element: <MeasureDetail />
-  })
-  dynamicRoutes.push({
-    path: "/measures/:id",
-    element: <MeasureDetail />
-  })
-}
-if(get(Meteor, 'settings.public.modules.fhir.MeasureReports')){
-  dynamicRoutes.push({
-    path: "/measure-reports",
-    element: <MeasureReportsPage />
-  })
-  dynamicRoutes.push({
-    path: "/measure-reports/new",
-    element: <MeasureReportDetail />
-  })
-  dynamicRoutes.push({
-    path: "/measure-reports/:id",
-    element: <MeasureReportDetail />
-  })
-}
-if(get(Meteor, 'settings.public.modules.fhir.NutritionOrders')){
-  dynamicRoutes.push({
-    path: "/nutrition-orders",
-    element: <NutritionOrdersPage />
-  })
-  dynamicRoutes.push({
-    path: "/nutrition-orders/new",
-    element: <NutritionOrderDetail />
-  })
-  dynamicRoutes.push({
-    path: "/nutrition-orders/:id",
-    element: <NutritionOrderDetail />
-  })
-}
-if(get(Meteor, 'settings.public.modules.fhir.NutritionIntakes')){
-  dynamicRoutes.push({
-    path: "/nutrition-intakes",
-    element: <NutritionIntakesPage />
-  })
-  dynamicRoutes.push({
-    path: "/nutrition-intakes/new",
-    element: <NutritionIntakeDetail />
-  })
-  dynamicRoutes.push({
-    path: "/nutrition-intakes/:id",
-    element: <NutritionIntakeDetail />
-  })
-}
-if(get(Meteor, 'settings.public.modules.fhir.NutritionProducts')){
-  dynamicRoutes.push({
-    path: "/nutrition-products",
-    element: <NutritionProductsPage />
-  })
-  dynamicRoutes.push({
-    path: "/nutrition-products/new",
-    element: <NutritionProductDetail />
-  })
-  dynamicRoutes.push({
-    path: "/nutrition-products/:id",
-    element: <NutritionProductDetail />
-  })
-}
-if(get(Meteor, 'settings.public.modules.fhir.Substances')){
-  dynamicRoutes.push({
-    path: "/substances",
-    element: <SubstancesPage />
-  })
-  dynamicRoutes.push({
-    path: "/substances/new",
-    element: <SubstanceDetail />
-  })
-  dynamicRoutes.push({
-    path: "/substances/:id",
-    element: <SubstanceDetail />
-  })
-}
-if(get(Meteor, 'settings.public.modules.fhir.PlanDefinitions')){
-  dynamicRoutes.push({
-    path: "/plan-definitions",
-    element: <PlanDefinitionsPage />
-  })
-  dynamicRoutes.push({
-    path: "/plan-definitions/new",
-    element: <PlanDefinitionDetail />
-  })
-  dynamicRoutes.push({
-    path: "/plan-definitions/:id",
-    element: <PlanDefinitionDetail />
-  })
-}
-// Always include these routes since they're in the pacio-core sidebar
-dynamicRoutes.push({
-  path: "/practitioners",
-  element: <PractitionersPage />
-})
-dynamicRoutes.push({
-  path: "/practitioners/new",
-  element: <PractitionerDetail />
-})
-dynamicRoutes.push({
-  path: "/practitioners/:id",
-  element: <PractitionerDetail />
-})
-dynamicRoutes.push({
-  path: "/practitioner-roles",
-  element: <PractitionerRolesPage />
-})
-dynamicRoutes.push({
-  path: "/practitioner-roles/new",
-  element: <PractitionerRoleDetail />
-})
-dynamicRoutes.push({
-  path: "/practitioner-roles/:id",
-  element: <PractitionerRoleDetail />
-})
-dynamicRoutes.push({
-  path: "/lists",
-  element: <ListsPage />
-})
-dynamicRoutes.push({
-  path: "/lists/new",
-  element: <ListDetail />
-})
-dynamicRoutes.push({
-  path: "/lists/:id",
-  element: <ListDetail />
-})
-dynamicRoutes.push({
-  path: "/communications",
-  element: <CommunicationsPage />
-})
-dynamicRoutes.push({
-  path: "/communications/new",
-  element: <CommunicationDetail />
-})
-dynamicRoutes.push({
-  path: "/communications/:id",
-  element: <CommunicationDetail />
-})
-
-
-
-
-if(get(Meteor, 'settings.public.modules.fhir.Claims')){
-  dynamicRoutes.push({
-    path: "/claims",
-    element: <ClaimsPage />
-  })
-}
+// Always-on routes (present even without explicit settings config)
+// These still respect global requireAuth if set
+pushFhirRoutes('Tasks', [
+  { path: "/tasks", element: <TasksPage /> },
+  { path: "/tasks/new", element: <TaskDetail /> },
+  { path: "/tasks/:id", element: <TaskDetail /> }
+], true);
+pushFhirRoutes('Practitioners', [
+  { path: "/practitioners", element: <PractitionersPage /> },
+  { path: "/practitioners/new", element: <PractitionerDetail /> },
+  { path: "/practitioners/:id", element: <PractitionerDetail /> }
+], true);
+pushFhirRoutes('PractitionerRoles', [
+  { path: "/practitioner-roles", element: <PractitionerRolesPage /> },
+  { path: "/practitioner-roles/new", element: <PractitionerRoleDetail /> },
+  { path: "/practitioner-roles/:id", element: <PractitionerRoleDetail /> }
+], true);
+pushFhirRoutes('Lists', [
+  { path: "/lists", element: <ListsPage /> },
+  { path: "/lists/new", element: <ListDetail /> },
+  { path: "/lists/:id", element: <ListDetail /> }
+], true);
+pushFhirRoutes('Communications', [
+  { path: "/communications", element: <CommunicationsPage /> },
+  { path: "/communications/new", element: <CommunicationDetail /> },
+  { path: "/communications/:id", element: <CommunicationDetail /> }
+], true);
 
 // PACIO Routes are now handled by the pacio-core package
 dynamicRoutes.push({

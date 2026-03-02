@@ -3,7 +3,8 @@
 import React from 'react';
 import { Session } from 'meteor/session';
 import { useTracker } from 'meteor/react-meteor-data';
-import { Box, Typography, Alert, Paper, Grid, Card, CardContent } from '@mui/material';
+import { Box, Typography, Alert, Paper, Grid, Card, CardContent, IconButton } from '@mui/material';
+import SearchIcon from '@mui/icons-material/Search';
 import { get } from 'lodash';
 import moment from 'moment';
 
@@ -51,11 +52,22 @@ function IPSVitalSignsSection(props) {
           const latestVital = vitals[0];
           return (
             <Grid item xs={12} sm={6} md={4} key={type}>
-              <Card variant="outlined">
+              <Card
+                variant="outlined"
+                onClick={function() { if(props.onResourceClick) props.onResourceClick(latestVital); }}
+                sx={{ cursor: props.onResourceClick ? 'pointer' : 'default', '&:hover': props.onResourceClick ? { boxShadow: 2 } : {} }}
+              >
                 <CardContent>
-                  <Typography variant="subtitle2" sx={{ opacity: 0.7 }}>
-                    {get(latestVital, 'code.coding[0].display', type)}
-                  </Typography>
+                  <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+                    <Typography variant="subtitle2" sx={{ opacity: 0.7 }}>
+                      {get(latestVital, 'code.coding[0].display', type)}
+                    </Typography>
+                    {props.onResourceClick && (
+                      <IconButton size="small" onClick={function(e) { e.stopPropagation(); props.onResourceClick(latestVital); }}>
+                        <SearchIcon fontSize="small" />
+                      </IconButton>
+                    )}
+                  </Box>
                   <Typography variant="h5">
                     {get(latestVital, 'valueQuantity.value', '-')} {get(latestVital, 'valueQuantity.unit', '')}
                   </Typography>

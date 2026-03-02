@@ -121,7 +121,7 @@ function buildInitialExpanded(expanded) {
 }
 
 const IpsContent = forwardRef(function IpsContent(props, ref) {
-  const { expanded, displayMode } = props;
+  const { expanded, displayMode, onResourceClick } = props;
   const theme = useTheme();
 
   const [expandedSections, setExpandedSections] = useState(function() {
@@ -245,6 +245,9 @@ const IpsContent = forwardRef(function IpsContent(props, ref) {
         '& .MuiPaper-root': {
           bgcolor: isDark ? '#1e1e1e' : '#ffffff',
           borderColor: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.12)'
+        },
+        '& .MuiIconButton-root': {
+          color: cardTextColor
         }
       }}>
         <CardHeader
@@ -281,7 +284,9 @@ const IpsContent = forwardRef(function IpsContent(props, ref) {
         <Collapse in={expandedSections[section.key]} timeout="auto" unmountOnExit>
           <Divider />
           <CardContent sx={{ pt: 2, pb: 2 }}>
-            {sectionComponents[idx]}
+            {onResourceClick
+              ? React.cloneElement(sectionComponents[idx], { onResourceClick: onResourceClick })
+              : sectionComponents[idx]}
           </CardContent>
         </Collapse>
       </Card>

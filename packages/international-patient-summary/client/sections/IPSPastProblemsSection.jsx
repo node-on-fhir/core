@@ -15,11 +15,13 @@ import {
   TableRow,
   Paper,
   Chip,
-  Alert
+  Alert,
+  IconButton
 } from '@mui/material';
 
 import { get } from 'lodash';
 import moment from 'moment';
+import SearchIcon from '@mui/icons-material/Search';
 
 function IPSPastProblemsSection(props) {
   const selectedPatientId = useTracker(function(){
@@ -78,13 +80,19 @@ function IPSPastProblemsSection(props) {
               <TableCell>Severity</TableCell>
               <TableCell>Onset</TableCell>
               <TableCell>Recorded</TableCell>
+              <TableCell padding="checkbox" />
             </TableRow>
           </TableHead>
           <TableBody>
             {pastConditions.map(function(condition, index) {
               const { status, color } = getClinicalStatus(condition);
               return (
-                <TableRow key={condition._id || index}>
+                <TableRow
+                  key={condition._id || index}
+                  hover
+                  onClick={function() { if(props.onResourceClick) props.onResourceClick(condition); }}
+                  sx={{ cursor: props.onResourceClick ? 'pointer' : 'default' }}
+                >
                   <TableCell>
                     <Typography variant="body2">
                       {get(condition, 'code.coding[0].display',
@@ -113,6 +121,11 @@ function IPSPastProblemsSection(props) {
                     {get(condition, 'recordedDate')
                       ? moment(get(condition, 'recordedDate')).format('YYYY-MM-DD')
                       : '-'}
+                  </TableCell>
+                  <TableCell padding="checkbox">
+                    <IconButton size="small" onClick={function(e) { e.stopPropagation(); if(props.onResourceClick) props.onResourceClick(condition); }}>
+                      <SearchIcon fontSize="small" />
+                    </IconButton>
                   </TableCell>
                 </TableRow>
               );

@@ -6,6 +6,7 @@ import { useTracker } from 'meteor/react-meteor-data';
 
 import {
   Box,
+  IconButton,
   Typography,
   Table,
   TableBody,
@@ -20,6 +21,7 @@ import {
 
 import { get } from 'lodash';
 import moment from 'moment';
+import SearchIcon from '@mui/icons-material/Search';
 
 function IPSProceduresSection(props) {
   const selectedPatientId = useTracker(function(){
@@ -70,13 +72,19 @@ function IPSProceduresSection(props) {
               <TableCell>Status</TableCell>
               <TableCell>Performed</TableCell>
               <TableCell>Body Site</TableCell>
+              <TableCell padding="checkbox" />
             </TableRow>
           </TableHead>
           <TableBody>
             {procedures.map(function(procedure, index) {
               const { status, color } = getStatus(procedure);
               return (
-                <TableRow key={procedure._id || index}>
+                <TableRow
+                  key={procedure._id || index}
+                  hover
+                  onClick={function() { if(props.onResourceClick) props.onResourceClick(procedure); }}
+                  sx={{ cursor: props.onResourceClick ? 'pointer' : 'default' }}
+                >
                   <TableCell>
                     <Typography variant="body2">
                       {get(procedure, 'code.coding[0].display',
@@ -103,6 +111,11 @@ function IPSProceduresSection(props) {
                   <TableCell>
                     {get(procedure, 'bodySite[0].coding[0].display',
                       get(procedure, 'bodySite[0].text', '-'))}
+                  </TableCell>
+                  <TableCell padding="checkbox">
+                    <IconButton size="small" onClick={function(e) { e.stopPropagation(); if(props.onResourceClick) props.onResourceClick(procedure); }}>
+                      <SearchIcon fontSize="small" />
+                    </IconButton>
                   </TableCell>
                 </TableRow>
               );

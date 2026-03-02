@@ -15,10 +15,12 @@ import {
   TableRow,
   Paper,
   Chip,
-  Alert
+  Alert,
+  IconButton
 } from '@mui/material';
 
 import { get } from 'lodash';
+import SearchIcon from '@mui/icons-material/Search';
 
 function IPSMedicalDevicesSection(props) {
   const selectedPatientId = useTracker(function(){
@@ -66,13 +68,19 @@ function IPSMedicalDevicesSection(props) {
               <TableCell>Manufacturer</TableCell>
               <TableCell>Model</TableCell>
               <TableCell>Serial Number</TableCell>
+              <TableCell padding="checkbox" />
             </TableRow>
           </TableHead>
           <TableBody>
             {devices.map(function(device, index) {
               const { status, color } = getStatus(device);
               return (
-                <TableRow key={device._id || index}>
+                <TableRow
+                  key={device._id || index}
+                  hover
+                  onClick={function() { if(props.onResourceClick) props.onResourceClick(device); }}
+                  sx={{ cursor: props.onResourceClick ? 'pointer' : 'default' }}
+                >
                   <TableCell>
                     <Typography variant="body2">
                       {get(device, 'deviceName[0].name',
@@ -98,6 +106,11 @@ function IPSMedicalDevicesSection(props) {
                   </TableCell>
                   <TableCell>
                     {get(device, 'serialNumber', '-')}
+                  </TableCell>
+                  <TableCell padding="checkbox">
+                    <IconButton size="small" onClick={function(e) { e.stopPropagation(); if(props.onResourceClick) props.onResourceClick(device); }}>
+                      <SearchIcon fontSize="small" />
+                    </IconButton>
                   </TableCell>
                 </TableRow>
               );

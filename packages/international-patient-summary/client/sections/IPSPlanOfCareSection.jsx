@@ -15,11 +15,14 @@ import {
   TableRow,
   Paper,
   Chip,
-  Alert
+  Alert,
+  IconButton
 } from '@mui/material';
 
 import { get } from 'lodash';
 import moment from 'moment';
+
+import SearchIcon from '@mui/icons-material/Search';
 
 function IPSPlanOfCareSection(props) {
   const selectedPatientId = useTracker(function(){
@@ -74,6 +77,7 @@ function IPSPlanOfCareSection(props) {
               <TableCell>Category</TableCell>
               <TableCell>Period</TableCell>
               <TableCell>Description</TableCell>
+              <TableCell padding="checkbox" />
             </TableRow>
           </TableHead>
           <TableBody>
@@ -90,7 +94,12 @@ function IPSPlanOfCareSection(props) {
               }
 
               return (
-                <TableRow key={carePlan._id || index}>
+                <TableRow
+                  key={carePlan._id || index}
+                  hover
+                  onClick={function() { if(props.onResourceClick) props.onResourceClick(carePlan); }}
+                  sx={{ cursor: props.onResourceClick ? 'pointer' : 'default' }}
+                >
                   <TableCell>
                     <Typography variant="body2">
                       {get(carePlan, 'title', 'Untitled care plan')}
@@ -117,6 +126,11 @@ function IPSPlanOfCareSection(props) {
                     <Typography variant="body2" sx={{ maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {get(carePlan, 'description', '-')}
                     </Typography>
+                  </TableCell>
+                  <TableCell padding="checkbox">
+                    <IconButton size="small" onClick={function(e) { e.stopPropagation(); if(props.onResourceClick) props.onResourceClick(carePlan); }}>
+                      <SearchIcon fontSize="small" />
+                    </IconButton>
                   </TableCell>
                 </TableRow>
               );

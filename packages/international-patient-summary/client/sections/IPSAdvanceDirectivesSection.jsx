@@ -15,11 +15,13 @@ import {
   TableRow,
   Paper,
   Chip,
-  Alert
+  Alert,
+  IconButton
 } from '@mui/material';
 
 import { get } from 'lodash';
 import moment from 'moment';
+import SearchIcon from '@mui/icons-material/Search';
 
 function IPSAdvanceDirectivesSection(props) {
   const selectedPatientId = useTracker(function(){
@@ -73,6 +75,7 @@ function IPSAdvanceDirectivesSection(props) {
               <TableCell>Scope</TableCell>
               <TableCell>Period</TableCell>
               <TableCell>Policy Rule</TableCell>
+              <TableCell padding="checkbox" />
             </TableRow>
           </TableHead>
           <TableBody>
@@ -89,7 +92,12 @@ function IPSAdvanceDirectivesSection(props) {
               }
 
               return (
-                <TableRow key={consent._id || index}>
+                <TableRow
+                  key={consent._id || index}
+                  hover
+                  onClick={function() { if(props.onResourceClick) props.onResourceClick(consent); }}
+                  sx={{ cursor: props.onResourceClick ? 'pointer' : 'default' }}
+                >
                   <TableCell>
                     <Typography variant="body2">
                       {get(consent, 'category[0].coding[0].display',
@@ -113,6 +121,11 @@ function IPSAdvanceDirectivesSection(props) {
                   <TableCell>
                     {get(consent, 'policyRule.coding[0].display',
                       get(consent, 'policyRule.text', '-'))}
+                  </TableCell>
+                  <TableCell padding="checkbox">
+                    <IconButton size="small" onClick={function(e) { e.stopPropagation(); if(props.onResourceClick) props.onResourceClick(consent); }}>
+                      <SearchIcon fontSize="small" />
+                    </IconButton>
                   </TableCell>
                 </TableRow>
               );

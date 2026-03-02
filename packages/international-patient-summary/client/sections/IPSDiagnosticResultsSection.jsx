@@ -16,11 +16,13 @@ import {
   Paper,
   Alert,
   Tabs,
-  Tab
+  Tab,
+  IconButton
 } from '@mui/material';
 
 import { get } from 'lodash';
 import moment from 'moment';
+import SearchIcon from '@mui/icons-material/Search';
 
 function IPSDiagnosticResultsSection(props) {
   const [tabIndex, setTabIndex] = useState(0);
@@ -74,13 +76,19 @@ function IPSDiagnosticResultsSection(props) {
                 <TableCell>Reference Range</TableCell>
                 <TableCell>Date</TableCell>
                 <TableCell>Status</TableCell>
+                <TableCell padding="checkbox" />
               </TableRow>
             </TableHead>
             <TableBody>
               {observations.map((obs, index) => (
-                <TableRow key={obs._id || index}>
+                <TableRow
+                  key={obs._id || index}
+                  hover
+                  onClick={function() { if(props.onResourceClick) props.onResourceClick(obs); }}
+                  sx={{ cursor: props.onResourceClick ? 'pointer' : 'default' }}
+                >
                   <TableCell>
-                    {get(obs, 'code.coding[0].display', 
+                    {get(obs, 'code.coding[0].display',
                       get(obs, 'code.text', 'Unknown test'))}
                   </TableCell>
                   <TableCell>
@@ -91,12 +99,17 @@ function IPSDiagnosticResultsSection(props) {
                     {get(obs, 'referenceRange[0].text', '-')}
                   </TableCell>
                   <TableCell>
-                    {get(obs, 'effectiveDateTime') 
+                    {get(obs, 'effectiveDateTime')
                       ? moment(get(obs, 'effectiveDateTime')).format('YYYY-MM-DD')
                       : '-'}
                   </TableCell>
                   <TableCell>
                     {get(obs, 'status', 'unknown')}
+                  </TableCell>
+                  <TableCell padding="checkbox">
+                    <IconButton size="small" onClick={function(e) { e.stopPropagation(); if(props.onResourceClick) props.onResourceClick(obs); }}>
+                      <SearchIcon fontSize="small" />
+                    </IconButton>
                   </TableCell>
                 </TableRow>
               ))}
@@ -114,25 +127,36 @@ function IPSDiagnosticResultsSection(props) {
                 <TableCell>Category</TableCell>
                 <TableCell>Date</TableCell>
                 <TableCell>Status</TableCell>
+                <TableCell padding="checkbox" />
               </TableRow>
             </TableHead>
             <TableBody>
               {diagnosticReports.map((report, index) => (
-                <TableRow key={report._id || index}>
+                <TableRow
+                  key={report._id || index}
+                  hover
+                  onClick={function() { if(props.onResourceClick) props.onResourceClick(report); }}
+                  sx={{ cursor: props.onResourceClick ? 'pointer' : 'default' }}
+                >
                   <TableCell>
-                    {get(report, 'code.coding[0].display', 
+                    {get(report, 'code.coding[0].display',
                       get(report, 'code.text', 'Unknown report'))}
                   </TableCell>
                   <TableCell>
                     {get(report, 'category[0].coding[0].display', '-')}
                   </TableCell>
                   <TableCell>
-                    {get(report, 'effectiveDateTime') 
+                    {get(report, 'effectiveDateTime')
                       ? moment(get(report, 'effectiveDateTime')).format('YYYY-MM-DD')
                       : '-'}
                   </TableCell>
                   <TableCell>
                     {get(report, 'status', 'unknown')}
+                  </TableCell>
+                  <TableCell padding="checkbox">
+                    <IconButton size="small" onClick={function(e) { e.stopPropagation(); if(props.onResourceClick) props.onResourceClick(report); }}>
+                      <SearchIcon fontSize="small" />
+                    </IconButton>
                   </TableCell>
                 </TableRow>
               ))}

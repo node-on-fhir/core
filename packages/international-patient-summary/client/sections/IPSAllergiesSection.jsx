@@ -17,11 +17,13 @@ import {
   TableRow,
   Paper,
   Chip,
-  Alert
+  Alert,
+  IconButton
 } from '@mui/material';
 
 import { get } from 'lodash';
 import moment from 'moment';
+import SearchIcon from '@mui/icons-material/Search';
 
 function IPSAllergiesSection(props) {
   const selectedPatientId = useTracker(function(){
@@ -81,6 +83,7 @@ function IPSAllergiesSection(props) {
               <TableCell>Status</TableCell>
               <TableCell>Reaction</TableCell>
               <TableCell>Onset</TableCell>
+              <TableCell padding="checkbox" />
             </TableRow>
           </TableHead>
           <TableBody>
@@ -88,7 +91,12 @@ function IPSAllergiesSection(props) {
               const { criticality, color: critColor } = getCriticality(allergy);
               const { status, color: statusColor } = getVerificationStatus(allergy);
               return (
-                <TableRow key={allergy._id || index}>
+                <TableRow
+                  key={allergy._id || index}
+                  hover
+                  onClick={function() { if(props.onResourceClick) props.onResourceClick(allergy); }}
+                  sx={{ cursor: props.onResourceClick ? 'pointer' : 'default' }}
+                >
                   <TableCell>
                     <Typography variant="body2">
                       {get(allergy, 'code.coding[0].display', 
@@ -121,11 +129,16 @@ function IPSAllergiesSection(props) {
                       get(allergy, 'reaction[0].manifestation[0].text', '-'))}
                   </TableCell>
                   <TableCell>
-                    {get(allergy, 'onsetDateTime') 
+                    {get(allergy, 'onsetDateTime')
                       ? moment(get(allergy, 'onsetDateTime')).format('YYYY-MM-DD')
-                      : get(allergy, 'onsetPeriod.start') 
+                      : get(allergy, 'onsetPeriod.start')
                         ? moment(get(allergy, 'onsetPeriod.start')).format('YYYY-MM-DD')
                         : '-'}
+                  </TableCell>
+                  <TableCell padding="checkbox">
+                    <IconButton size="small" onClick={function(e) { e.stopPropagation(); if(props.onResourceClick) props.onResourceClick(allergy); }}>
+                      <SearchIcon fontSize="small" />
+                    </IconButton>
                   </TableCell>
                 </TableRow>
               );

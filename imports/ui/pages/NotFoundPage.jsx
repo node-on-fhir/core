@@ -3,10 +3,15 @@
 import React from 'react';
 import { get } from 'lodash';
 import { Meteor } from 'meteor/meteor';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 
 import { Box, Card, CardContent, Typography, Button } from '@mui/material';
 import HomeIcon from '@mui/icons-material/Home';
+
+let useNavigate;
+Meteor.startup(function() {
+  useNavigate = Meteor.useNavigate;
+});
 
 export function NotFoundPage() {
   const navigate = useNavigate();

@@ -17,11 +17,13 @@ import {
   TableRow,
   Paper,
   Chip,
-  Alert
+  Alert,
+  IconButton
 } from '@mui/material';
 
 import { get } from 'lodash';
 import moment from 'moment';
+import SearchIcon from '@mui/icons-material/Search';
 
 function IPSMedicationsSection(props) {
   const selectedPatientId = useTracker(function(){
@@ -126,13 +128,19 @@ function IPSMedicationsSection(props) {
               <TableCell>Route</TableCell>
               <TableCell>Start Date</TableCell>
               <TableCell>Source</TableCell>
+              <TableCell padding="checkbox" />
             </TableRow>
           </TableHead>
           <TableBody>
             {medications.map((medication, index) => {
               const status = getStatus(medication);
               return (
-                <TableRow key={medication._id || index}>
+                <TableRow
+                  key={medication._id || index}
+                  hover
+                  onClick={function() { if(props.onResourceClick) props.onResourceClick(medication); }}
+                  sx={{ cursor: props.onResourceClick ? 'pointer' : 'default' }}
+                >
                   <TableCell>
                     <Typography variant="body2">
                       {getMedicationName(medication)}
@@ -166,11 +174,16 @@ function IPSMedicationsSection(props) {
                           : '-'}
                   </TableCell>
                   <TableCell>
-                    <Chip 
-                      label={medication._source} 
-                      size="small" 
+                    <Chip
+                      label={medication._source}
+                      size="small"
                       variant="outlined"
                     />
+                  </TableCell>
+                  <TableCell padding="checkbox">
+                    <IconButton size="small" onClick={function(e) { e.stopPropagation(); if(props.onResourceClick) props.onResourceClick(medication); }}>
+                      <SearchIcon fontSize="small" />
+                    </IconButton>
                   </TableCell>
                 </TableRow>
               );

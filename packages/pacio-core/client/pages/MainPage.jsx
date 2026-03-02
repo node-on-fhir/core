@@ -151,10 +151,27 @@ export function MainPage() {
   const [showPhoto, setShowPhoto] = useState(true);
   const [showMap, setShowMap] = useState(true);
   const [showAlerts, setShowAlerts] = useState(true);
+  const [hasMapApiKey, setHasMapApiKey] = useState(false);
 
   // Track authentication status
   const userId = useTracker(() => Meteor.userId());
   const user = useTracker(() => Meteor.user());
+
+  // Check if Google Maps API key is configured
+  useEffect(function() {
+    async function checkMapApiKey() {
+      try {
+        const key = await Meteor.callAsync('pacio.getGoogleMapsApiKey');
+        if (key) {
+          setHasMapApiKey(true);
+        }
+      } catch (err) {
+        console.log('[MainPage] No Google Maps API key configured');
+        setHasMapApiKey(false);
+      }
+    }
+    checkMapApiKey();
+  }, []);
 
   // Check for CustomMap package following the DynamicRoutes pattern
   useEffect(() => {
@@ -730,9 +747,11 @@ export function MainPage() {
               <ToggleButton value="photo">
                 <Tooltip title="Vehicle photo"><PhotoCameraIcon fontSize="small" /></Tooltip>
               </ToggleButton>
-              <ToggleButton value="map">
-                <Tooltip title="Map"><MapIcon fontSize="small" /></Tooltip>
-              </ToggleButton>
+              {hasMapApiKey && (
+                <ToggleButton value="map">
+                  <Tooltip title="Map"><MapIcon fontSize="small" /></Tooltip>
+                </ToggleButton>
+              )}
               <ToggleButton value="alerts">
                 <Tooltip title="Alerts"><NotificationsIcon fontSize="small" /></Tooltip>
               </ToggleButton>
@@ -1277,7 +1296,7 @@ export function MainPage() {
           const hasVehicleImage = !!vehicleConfig.vehicleFhirId || !!vehicleConfig.dashboardPhoto;
           const rightPanelCount =
             (hasVehicleImage && showPhoto ? 1 : 0) +
-            (showMap ? 1 : 0) +
+            (showMap && hasMapApiKey ? 1 : 0) +
             (showAlerts && userId ? 1 : 0) +
             (!userId ? 1 : 0);
           const rightPanelHeight = rightPanelCount > 0
@@ -1353,7 +1372,7 @@ export function MainPage() {
               )}
 
               {/* Map View - Only show if API key is available and map toggle is on */}
-              {showMap && (
+              {showMap && hasMapApiKey && (
                 <Grid item xs={12}>
                   <Paper sx={{
                     p: 2,

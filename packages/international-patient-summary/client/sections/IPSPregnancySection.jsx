@@ -14,8 +14,11 @@ import {
   TableHead,
   TableRow,
   Paper,
-  Alert
+  Alert,
+  IconButton
 } from '@mui/material';
+
+import SearchIcon from '@mui/icons-material/Search';
 
 import { get } from 'lodash';
 import moment from 'moment';
@@ -99,12 +102,18 @@ function IPSPregnancySection(props) {
               <TableCell>Observation</TableCell>
               <TableCell>Value</TableCell>
               <TableCell>Date</TableCell>
+              <TableCell padding="checkbox" />
             </TableRow>
           </TableHead>
           <TableBody>
             {observations.map(function(observation, index) {
               return (
-                <TableRow key={observation._id || index}>
+                <TableRow
+                  key={observation._id || index}
+                  hover
+                  onClick={function() { if(props.onResourceClick) props.onResourceClick(observation); }}
+                  sx={{ cursor: props.onResourceClick ? 'pointer' : 'default' }}
+                >
                   <TableCell>
                     <Typography variant="body2">
                       {get(observation, 'code.coding[0].display',
@@ -123,6 +132,11 @@ function IPSPregnancySection(props) {
                       : get(observation, 'effectivePeriod.start')
                         ? moment(get(observation, 'effectivePeriod.start')).format('YYYY-MM-DD')
                         : '-'}
+                  </TableCell>
+                  <TableCell padding="checkbox">
+                    <IconButton size="small" onClick={function(e) { e.stopPropagation(); if(props.onResourceClick) props.onResourceClick(observation); }}>
+                      <SearchIcon fontSize="small" />
+                    </IconButton>
                   </TableCell>
                 </TableRow>
               );
