@@ -8,6 +8,8 @@ import { Box } from '@mui/material';
 
 import { get } from 'lodash';
 
+import MedicalRecordImporter from '../lib/MedicalRecordImporter';
+
 //========================================================================================================
 // Theming 
 
@@ -43,8 +45,12 @@ import {
   });
 
   let useTheme;
+  let useNavigate;
   Meteor.startup(function(){
     useTheme = Meteor.useTheme;
+    if (window.ReactRouter) {
+      useNavigate = window.ReactRouter.useNavigate;
+    }
   })
 
 
@@ -64,6 +70,31 @@ Session.setDefault('editorWrapEnabled', false);
 export function ImportButtons(props){
 
   const { theme, toggleTheme } = useTheme();
+  const navigate = useNavigate ? useNavigate() : null;
+
+  function loadData(){
+    let data = Session.get('previewBuffer') || Session.get('importBuffer');
+    let fileExtension = Session.get('fileExtension') || 'json';
+
+    if(!data){
+      console.warn('[ImportButtons.loadData] No data to import');
+      return;
+    }
+
+    const ndjsonExtensions = ['ndjson', 'phr', 'sphr', 'application/ndjson', 'application/ndjson+fhir', 'application/phr', 'application/sphr'];
+
+    if(ndjsonExtensions.includes(fileExtension)){
+      console.log('[ImportButtons.loadData] Importing NDJSON data');
+      MedicalRecordImporter.importNdjson(data);
+    } else {
+      console.log('[ImportButtons.loadData] Importing Bundle data');
+      MedicalRecordImporter.importBundle(data);
+    }
+
+    if(navigate){
+      navigate('/');
+    }
+  }
 
   function enableEditorWrap(){
     Session.toggle('editorWrapEnabled');
@@ -158,6 +189,9 @@ export function ImportButtons(props){
 
   return (
     <Box>
+      <Button onClick={ loadData } sx={appStyle}>
+        Load Data
+      </Button>
       <Button onClick={ enableEditorWrap.bind(this) } sx={appStyle}>
         Editor Wrap
       </Button>

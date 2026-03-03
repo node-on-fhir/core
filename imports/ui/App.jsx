@@ -45,7 +45,9 @@ import CdsHooksDebugger from './CdsHooksDebugger.jsx';
 
 import NoDataWrapper from './NoDataWrapper.jsx';
 import NotSignedInWrapper from './NotSignedInWrapper.jsx';
+import NoPatientSelectedCard from './components/NoPatientSelectedCard.jsx';
 import AuthenticatedRoute from './components/AuthenticatedRoute.jsx';
+import WelcomeDialog from './components/WelcomeDialog.jsx';
 
 import HomePage from './HomePage.jsx';
 import ServerConfigurationPage from '../ui-vault-server/ServerConfigurationPage.jsx';
@@ -434,6 +436,7 @@ Meteor.NotFoundPage = NotFoundPage;
 Meteor.NotSignedInWrapper = NotSignedInWrapper;
 Meteor.MedicalRecordImporter = MedicalRecordImporter;
 Meteor.PatientCard = PatientCard;
+Meteor.NoPatientSelectedCard = NoPatientSelectedCard;
 Meteor.HipaaLogger = HipaaLogger;
 Meteor.DynamicFhirDetail = DynamicFhirDetail;
 Meteor.getDynamicFhirComponent = getDynamicFhirComponent;
@@ -1843,6 +1846,7 @@ export function App(props){
               location={props.location}
               history={window.history}
               { ...otherProps } />
+            <WelcomeDialog />
             <Box sx={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
               <StyledMainRouter style={{flex: 1}} />
               <SecondaryIframePanel />

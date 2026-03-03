@@ -438,6 +438,7 @@ export function ImportEditorBindings(props){
   const [showPreviewData, setShowPreviewData] = useState(false);
   const [appleHealthTimeRange, setAppleHealthTimeRange] = useState('all');
   const [showAppleHealthOptions, setShowAppleHealthOptions] = useState(false);
+  const [isDragOver, setIsDragOver] = useState(false);
 
   let paginationCount = 0;
   if(Array.isArray(importQueue)){
@@ -478,12 +479,8 @@ export function ImportEditorBindings(props){
 
     // this.openDialog();
   }
-  function selectFiles(variable, event, value){
-    logger.debug('ImportEditorBindings: Selecting files.')
-
-    // fileDialog({ multiple: true, accept: ['application/json', 'application/json', 'application/json+fhir', 'application/csv', 'text/csv', 'application/x-ndjson', 'text/ndjson', 'text/phr',  'application/phr', 'application/x-phr', 'phr', 'sphr',  'application/sphr', 'application/x-sphr', 'text/*', 'application/*', '*/*'  ] }, function(fileList){
-    fileDialog({ multiple: true }, function(fileList){
-      console.log('ImportEditorBindings.selectFile().fileDialog().fileList', fileList)
+  function processFileList(fileList){
+    console.log('ImportEditorBindings.processFileList()', fileList)
 
       let promises = Object.keys(fileList).map(function(fileIndex){
 
@@ -610,7 +607,35 @@ export function ImportEditorBindings(props){
         // Session.set('importQueue', collatedData)
         Session.set('lastUpdated', new Date())
       });
+  }
+
+  function selectFiles(variable, event, value){
+    logger.debug('ImportEditorBindings: Selecting files.')
+    fileDialog({ multiple: true }, function(fileList){
+      processFileList(fileList);
     });
+  }
+
+  function handleDragOver(event){
+    event.preventDefault();
+    event.stopPropagation();
+    setIsDragOver(true);
+  }
+
+  function handleDragLeave(event){
+    event.preventDefault();
+    event.stopPropagation();
+    setIsDragOver(false);
+  }
+
+  function handleDrop(event){
+    event.preventDefault();
+    event.stopPropagation();
+    setIsDragOver(false);
+
+    if(event.dataTransfer && event.dataTransfer.files && event.dataTransfer.files.length > 0){
+      processFileList(event.dataTransfer.files);
+    }
   }
 
   function changeMappingAlgorithm(event){
@@ -2031,85 +2056,27 @@ export function ImportEditorBindings(props){
 
   let cardWidth = window.innerWidth - paddingWidth;
 
-  let columnWidth = 4;
-  let previewDataContent;
-  if(showPreviewData){
-    columnWidth = 3;
-    previewDataContent = <Grid item md={12} lg={columnWidth} style={{width: '100%'}}>
-      <CardHeader
-        title="Step 2.1 - Preview Data"
-        style={{cursor: 'pointer', color: cardTextColor}}
-        onClick={ setShowPreviewData.bind(this, false)}
-      />
-      <Card style={{height: window.innerHeight - 300, backgroundColor: cardBgColor, color: cardTextColor}} width={cardWidth + 'px'}>
-        <PreviewDataCard
-          readyToImport={readyToImport}
-          progressMax={importQueueLength}
-          progressValue={progressValue}
-          previewBuffer={strigifiedPreviewBuffer}
-          mappingAlgorithm={mappingAlgorithm}
-          fileExtension={fileExtension}
-          onImportFile={importFile.bind(this)}
-          onScanData={scanData}
-          onChangeMappingAlgorithm={changeMappingAlgorithm}
-          onMapData={mapData}
-        />
-      </Card>
-    </Grid>
-  }
-
-  let workflowButton = [];
-  
-  let proxyUrl = get(Meteor, 'settings.public.interfaces.fhirRelay.channel.endpoint', false)
-  if(proxyUrl){
-    workflowButton.push(<DynamicSpacer key={0} />)
-    workflowButton.push(<Button 
-      key="sendEachToServerButton"
-      id='sendEachToServerButton'
-      onClick={ sendEachToServer.bind(this)}
-      color="primary"
-      variant="contained"
-      fullWidth                
-    >Send Each to Server!</Button>)    
-  }
-
-  let searchParams = new URLSearchParams(window.location.search);
-
-  let dataImporterNextPageUrl = get(Meteor, 'settings.public.defaults.dataImporterNextPageUrl', false)
-  if((dataImporterNextPageUrl && (Object.keys(resourcePreview).length)) || searchParams.get('next')){    
-
-    if(searchParams.get('next')){
-      console.log("searchParams.get('next')", searchParams.get('next'))
-      dataImporterNextPageUrl = searchParams.get('next');
-    }
-
-    workflowButton.push(<DynamicSpacer key={1} />)
-    workflowButton.push(<Button 
-      key='nextButton'
-      id='nextButton'
-      onClick={ openPageUrl.bind(this, "/" + dataImporterNextPageUrl)}
-      color="primary"
-      variant="contained"
-      fullWidth          
-      style={{marginBottom: '200px'}}      
-    >Next</Button>)    
-  }
-
-
-
   return(
 
       <div id="ImportCanvas" style={{"height": window.innerHeight }} >
 
         <Grid container spacing={4} justify='center' style={{marginBottom: '100px'}}>
-          <Grid item md={12} lg={columnWidth} style={{width: '100%'}}>
-            <CardHeader title="Step 1 - File Scanner" />
+          <Grid item xs={12} md={8} style={{width: '100%'}}>
+            <CardHeader title="FILE SYSTEM" />
 
             <Card
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
               width={cardWidth + 'px'}
               sx={{
                 bgcolor: cardBgColor,
                 color: cardTextColor,
+                border: isDragOver
+                  ? (isDark ? '2px dashed rgba(255,255,255,0.5)' : '2px dashed #888')
+                  : (isDark ? '2px dashed rgba(255,255,255,0.2)' : '2px dashed #C7C7C7'),
+                minHeight: 'calc(100vh - 200px)',
+                transition: 'border-color 0.2s ease',
                 '& .MuiTableCell-root': {
                   color: cardTextColor,
                   borderColor: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.12)'
@@ -2121,8 +2088,8 @@ export function ImportEditorBindings(props){
                 '& .MuiSelect-icon': { color: cardTextColor }
               }}
             >
-              <CardContent>        
-                <Button 
+              <CardContent>
+                <Button
                   id='selectFileButton'
                   onClick={ selectFiles.bind(this) }
                   color='primary'
@@ -2130,7 +2097,9 @@ export function ImportEditorBindings(props){
                   style={{marginBottom: '20px'}}
                   fullWidth
                   disabled={(importQueue.length > 0) ? true : false }
-                >Select Files</Button>   
+                >Select Files</Button>
+
+                <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 'bold', color: cardTextColor }}>Files and Directories</Typography>
 
                 <Table>
                   <TableHead>
@@ -2182,15 +2151,15 @@ export function ImportEditorBindings(props){
 
               <CardActions style={{display: 'inline-flex', width: '100%'}} >
                 <Grid item md={9} style={{paddingRight: '10px'}}>
-                <Button disabled={(importQueue.length > 0) ? false : true } id="autoImportBtn" fullWidth variant="contained" onClick={toggleAutoImport.bind(this)} >{queueToggleText}</Button>                   
+                <Button disabled={(importQueue.length > 0) ? false : true } id="autoImportBtn" fullWidth variant="contained" onClick={toggleAutoImport.bind(this)} >{queueToggleText}</Button>
                 {/* <Button disabled={(importQueue.length > 0) ? false : true } id="autoImportBtn" fullWidth variant="contained" color={queueButtonColor} onClick={toggleAutoImport.bind(this)} >{queueToggleText}</Button>                    */}
                 </Grid>
                 <Grid item md={3} style={{paddingLeft: '10px'}}>
-                  <Button id="clearConditionsBtn" fullWidth variant="contained" onClick={clearImportQueue.bind(this)} >Clear</Button>             
+                  <Button id="clearConditionsBtn" fullWidth variant="contained" onClick={clearImportQueue.bind(this)} >Clear</Button>
                 </Grid>
               </CardActions>
             </Card>
-            
+
             {/* Show warning if multiple patients detected */}
             {importedPatientCount > 1 && autoSelectFirstPatient && (
               <Alert severity="warning" style={{marginTop: '16px'}}>
@@ -2199,11 +2168,10 @@ export function ImportEditorBindings(props){
             )}
 
           </Grid>
-          <Grid item md={12} lg={columnWidth} style={{width: '100%'}}>
+          <Grid item xs={12} md={4} style={{width: '100%'}}>
             <CardHeader
-              title="Step 2 - Raw Data"
+              title="Resource Editor"
               style={{cursor: 'pointer', color: cardTextColor}}
-              onClick={ setShowPreviewData.bind(this, true)}
             />
             <Card
               style={{height: window.innerHeight - 300}}
@@ -2234,68 +2202,7 @@ export function ImportEditorBindings(props){
               />
             </Card>
           </Grid>
-          { previewDataContent }
-          <Grid item md={12} lg={columnWidth} style={{width: '100%'}} key="last-grid-item">
-            <CardHeader title="Step 3 - Collection Preview" />
-            <Card
-              style={{height: window.innerHeight - 300, marginBottom: '20px', display: 'flex', flexDirection: 'column'}}
-              width={cardWidth + 'px'}
-              sx={{
-                bgcolor: cardBgColor,
-                color: cardTextColor,
-                '& .MuiInputLabel-root': { color: cardTextColor },
-                '& .MuiSelect-root': { color: cardTextColor },
-                '& .MuiSelect-icon': { color: cardTextColor },
-                '& .MuiTableCell-root': { color: cardTextColor },
-                '& .MuiCheckbox-root': { color: cardTextColor },
-                '& .MuiButton-root': { color: cardTextColor }
-              }}
-            >
-                <CardContent style={{paddingBottom: 0}}>
-                  <InputLabel id="import-algorithm-label">Import Algorithm</InputLabel>
-                  <Select
-                    // floatingLabelText="Mapping Algorithm"
-                    value={importAlgorithm}
-                    onChange={handleChangeImportAlgorithm}
-                    fullWidth
-                    style={{color: cardTextColor}}
-                    sx={{
-                      '& .MuiSelect-icon': { color: cardTextColor }
-                    }}
-                  >
-                    <MenuItem value="all" id="import-all" key="import-all">all</MenuItem>
-                    <MenuItem value="import" id="import-import" key="import-import" >import</MenuItem>
-                    <MenuItem value="export" id="import-export" key="import-export" >export</MenuItem>
-                    <MenuItem value="specific" id="import-specific" key="import-specific" >specific</MenuItem>
-                    <MenuItem value="additive" id="import-additive" key="import-algorithm-menu-item-4" >additive</MenuItem>
-                  </Select>
-                </CardContent>
-                { dynamicAlgorithmItems }
-                <div style={{flex: 1, overflow: 'auto', padding: '0 16px 16px 16px', color: cardTextColor}}>
-                  <CollectionManagement
-                    mode={importAlgorithm}
-                    resourceTypes={scannedResourceTypes}
-                    displayImportButton={true}
-                    displayImportCheckmarks={true}
-                    displayExportCheckmarks={false}
-                    displayExportButton={false}
-                    displayLocalClientCount={true}
-                    displayClientCount={false}
-                    displayDropButton={true}
-                    displayPubSubEnabled={false}
-                    noDataMessage="Please select a file to import."
-                    preview={resourcePreview}
-                    textColor={cardTextColor}
-                    onSelectionChange={function(selectionState){
-                      console.log('onSelectionChange', selectionState)
-                      setCollectionsToExport(selectionState);
-                    }}
-                  />
-                </div>
-            </Card>
-            { workflowButton }
-          </Grid> 
-        </Grid>   
+        </Grid>
       </div>
 
   );

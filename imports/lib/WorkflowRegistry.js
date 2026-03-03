@@ -20,6 +20,7 @@ const WorkflowRegistry = {
   serverConfigs: [],
   serverConfigsByWorkflow: [],
   notFoundPage: null,
+  welcomeComponent: null,
   registeredWorkflows: [],
   onChangeCallbacks: [],
 
@@ -67,6 +68,11 @@ const WorkflowRegistry = {
     if (workflow.notFoundPage) {
       this.notFoundPage = workflow.notFoundPage;
       console.log(`[WorkflowRegistry] Registered custom 404 page from "${workflowName}"`);
+    }
+
+    if (workflow.welcomeComponent) {
+      this.welcomeComponent = workflow.welcomeComponent;
+      console.log(`[WorkflowRegistry] Registered custom welcome component from "${workflowName}"`);
     }
 
     this.registeredWorkflows.push(workflowName);
@@ -136,6 +142,14 @@ const WorkflowRegistry = {
   },
 
   /**
+   * Get custom welcome component if registered by a workflow
+   * @returns {React.Element|null} Custom welcome component or null
+   */
+  getWelcomeComponent() {
+    return this.welcomeComponent;
+  },
+
+  /**
    * Get list of registered workflow names
    * @returns {Array} Array of workflow names
    */
@@ -153,6 +167,7 @@ const WorkflowRegistry = {
     this.serverConfigs = [];
     this.serverConfigsByWorkflow = [];
     this.notFoundPage = null;
+    this.welcomeComponent = null;
     this.registeredWorkflows = [];
     this.onChangeCallbacks = [];
   }

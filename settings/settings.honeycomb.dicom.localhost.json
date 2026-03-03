@@ -48,6 +48,15 @@
         "nivoTheme": "dark"
       }
     },
+    "welcome": {
+      "enabled": true,
+      "title": "Welcome to Honeycomb",
+      "message": "Honeycomb is a FHIR-compliant electronic health records platform.\n\nGet started by selecting a patient from the sidebar, or explore the available FHIR resources.",
+      "buttonText": "Get Started",
+      "linkTo": "",
+      "imageUrl": "",
+      "iconName": ""
+    },
     "iframe": {
       "enabled": true,
       "url": "https://www.ncbi.nlm.nih.gov",

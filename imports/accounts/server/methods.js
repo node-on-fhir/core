@@ -423,5 +423,26 @@ Meteor.methods({
       console.error('[users.clearPractitionerLink] Error:', error);
       throw new Meteor.Error(500, 'Failed to clear practitioner link');
     }
+  },
+
+  async 'users.setWelcomeSeen'(hasSeen) {
+    check(hasSeen, Boolean);
+
+    if (!this.userId) {
+      throw new Meteor.Error(401, 'User must be logged in');
+    }
+
+    try {
+      const result = await Meteor.users.updateAsync(
+        { _id: this.userId },
+        { $set: { 'profile.hasSeenWelcome': hasSeen } }
+      );
+
+      console.log(`[users.setWelcomeSeen] Set hasSeenWelcome=${hasSeen} for user ${this.userId}`);
+      return result;
+    } catch (error) {
+      console.error('[users.setWelcomeSeen] Error:', error);
+      throw new Meteor.Error(500, 'Failed to update welcome status');
+    }
   }
 });
